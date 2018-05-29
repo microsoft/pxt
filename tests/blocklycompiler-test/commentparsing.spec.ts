@@ -388,6 +388,28 @@ describe("comment attribute parser", () => {
                 parseDef("%hello\\world", param`hello`, `world`);
             });
 
+            describe("parameter references", () => {
+                it("should parse curly braces as parameter references", () => {
+                    parseDef("%hello=world{whatever}", param`hello=world=whatever`)
+                });
+
+                it("should associate parameter references with the correct parameter", () => {
+                    parseDef("%first=param{ref1} %second=param{ref2}", param`first=param=ref1`, ` `, param`second=param=ref2`)
+                });
+
+                describe("errors", () => {
+                    it("should not allow unclosed curly braces", () => {
+                        parseDef("%param{nogood ")
+                    });
+
+                    it("should require curly braces to be immediately after the parameter", () => {
+                        parseDef("{nogood} %param ")
+                        parseDef("%param1 some text {nogood}")
+                        parseDef("{nogood}{nogood}")
+                    });
+                });
+            });
+
             describe("errors", () => {
                 it("should not allow parameters with too many equals", () => {
                     parseDef("%no=good=")
@@ -428,7 +450,13 @@ function tag(parts: TemplateStringsArray): pxtc.BlockLabel {
 
 function param(parts: TemplateStringsArray): pxtc.BlockParameter {
     const split = parts[0].split("=");
-    return { kind: "param", name: split[0], shadowBlockId: split[1] };
+
+    const res = { kind: "param", name: split[0], shadowBlockId: split[1] } as pxtc.BlockParameter;
+    if (split.length > 2) {
+        res.ref = split[2];
+    }
+
+    return res;
 }
 
 function parseDef(def: string, ...expected: (string | pxtc.BlockPart)[]) {

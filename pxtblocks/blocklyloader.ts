@@ -612,10 +612,18 @@ namespace pxt.blocks {
                     }
                     else {
                         // find argument
-                        let pr = firstParam ? comp.thisParameter : comp.definitionNameToParam[part.name];
+                        let pr: BlockParameter;
+
+                        if (part.ref) {
+                            pr = part.ref === "this" ? comp.thisParameter : comp.actualNameToParam[part.ref];
+                        }
+                        else {
+                            pr = firstParam ? comp.thisParameter : comp.definitionNameToParam[part.name];
+                        }
+
                         firstParam = false;
                         if (!pr) {
-                            console.error("block " + fn.attributes.blockId + ": unkown parameter " + part.name);
+                            console.error("block " + fn.attributes.blockId + ": unkown parameter " + part.name + (part.ref ? ` (${part.ref})` : ""));
                             return;
                         }
                         let typeInfo = U.lookup(info.apis.byQName, pr.type)

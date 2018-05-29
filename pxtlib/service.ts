@@ -160,7 +160,7 @@ namespace ts.pxtc {
         groupIcons?: string[];
         labelLineWidth?: string;
         handlerStatement?: boolean; // indicates a block with a callback that can be used as a statement
-        blockHandlerKey?: string; // optional field for explicitly declaring the handler key to use to compare duplicate events 
+        blockHandlerKey?: string; // optional field for explicitly declaring the handler key to use to compare duplicate events
         afterOnStart?: boolean; // indicates an event that should be compiled after on start when converting to typescript
 
         // on interfaces
@@ -208,6 +208,7 @@ namespace ts.pxtc {
 
     export interface BlockParameter {
         kind: "param";
+        ref?: string;
         name: string;
         shadowBlockId?: string;
     }
@@ -326,6 +327,7 @@ namespace ts.pxtc {
         Word = 1 << 7,
         Image = 1 << 8,
         TaggedText = 1 << 9,
+        ParamRef = 1 << 10,
 
         TripleUnderscore = SingleUnderscore | DoubleUnderscore,
         TripleAsterisk = SingleAsterisk | DoubleAsterisk,
@@ -779,6 +781,13 @@ namespace ts.pxtc {
                     if (param.length > 2) return undefined; // error: invalid parameter
                     newToken = { kind: TokenKind.Parameter, content: param[0], type: param[1] };
                     break;
+                case "{":
+                    const paramRef = eatEnclosure("}");
+                    if (paramRef === undefined) return undefined; // error: not terminated
+                    const lastToken = tokens[tokens.length - 1];
+                    if (currentWord || !lastToken || lastToken.kind !== TokenKind.Parameter) return undefined; // error: must come after paremeter
+                    newToken = { kind: TokenKind.ParamRef, content: paramRef };
+                    break;
             }
 
             if (newToken) {
@@ -844,6 +853,7 @@ namespace ts.pxtc {
                         break;
                     case TokenKind.Pipe:
                     case TokenKind.Parameter:
+                    case TokenKind.ParamRef:
                         if (open) {
                             return undefined; // error: style marks should be closed
                         }
@@ -873,6 +883,12 @@ namespace ts.pxtc {
             }
             else if (token == TokenKind.Pipe) {
                 parts.push({ kind: "break" });
+            }
+            else if (token == TokenKind.ParamRef) {
+                U.assert(parameters.length > 0);
+                const lastParam = parameters[parameters.length - 1];
+                if (lastParam.ref) return undefined; // error: double curly brace
+                lastParam.ref = tokens[i].content;
             }
             /* tslint:enable:possible-timing-attack */
         }
