@@ -1,6 +1,6 @@
-let d = 0;
+let d = 0
 
-testNamespace.callbackWithDraggableParams((hello, goodbye) => {
+testNamespace.callbackWithDraggableParams(function (hello, goodbye) {
 
 })
 
@@ -8,10 +8,10 @@ testNamespace.callbackWithDraggableParams(function (sure, whatever) {
 
 })
 
-testNamespace.callbackWithDraggableParams(function (okay) {
+testNamespace.callbackWithDraggableParams(function (okay, d) {
 
 })
 
-testNamespace.callbackWithDraggableParams(function () {
+testNamespace.callbackWithDraggableParams(function (c, d) {
 
 })
