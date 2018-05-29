@@ -128,6 +128,7 @@ namespace pxt {
 
     export interface WebConfig {
         relprefix: string; // "/beta---",
+        verprefix: string; // "v1"
         workerjs: string;  // "/beta---worker",
         monacoworkerjs: string; // "/beta---monacoworker",
         pxtVersion: string; // "?",

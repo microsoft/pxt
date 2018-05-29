@@ -1031,6 +1031,7 @@ function uploadCoreAsync(opts: UploadOptions) {
     if (opts.localDir) {
         let cfg: pxt.WebConfig = {
             "relprefix": opts.localDir,
+            "verprefix": "",
             "workerjs": opts.localDir + "worker.js",
             "monacoworkerjs": opts.localDir + "monacoworker.js",
             "pxtVersion": pxtVersion(),

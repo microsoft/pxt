@@ -80,27 +80,25 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
             if (!/\/$/.test(shareUrl)) shareUrl += '/';
             let rootUrl = pxt.appTarget.appTheme.embedUrl
             if (!/\/$/.test(rootUrl)) rootUrl += '/';
-            const v = pxt.semver.tryParse(pxt.appTarget.versions.target);
-            if (v)
-                rootUrl += `v${v.major}/`;
             let currentPubId = (header ? header.pubId : undefined) || this.state.currentPubId;
+            const verPrefix = pxt.webConfig.verprefix || '';
 
             ready = (!!currentPubId && header.pubCurrent);
             if (ready) {
                 url = `${shareUrl}${currentPubId}`;
-                let editUrl = `${rootUrl}#pub:${currentPubId}`;
+                let editUrl = `${rootUrl}${verPrefix}#pub:${currentPubId}`;
                 switch (mode) {
                     case ShareMode.Code:
-                        embed = pxt.docs.codeEmbedUrl(rootUrl, header.pubId);
+                        embed = pxt.docs.codeEmbedUrl(`${rootUrl}${verPrefix}`, header.pubId);
                         break;
                     case ShareMode.Editor:
-                        embed = pxt.docs.embedUrl(rootUrl, "pub", header.pubId);
+                        embed = pxt.docs.embedUrl(`${rootUrl}${verPrefix}`, "pub", header.pubId);
                         break;
                     case ShareMode.Simulator:
                         let padding = '81.97%';
                         // TODO: parts aspect ratio
                         if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio).toPrecision(4) + '%';
-                        const runUrl = rootUrl + (pxt.webConfig.runUrl || "--run").replace(/^\//, '');
+                        const runUrl = rootUrl + (pxt.webConfig.runUrl || `${verPrefix}--run`).replace(/^\//, '');
                         embed = pxt.docs.runUrl(runUrl, padding, header.pubId);
                         break;
                     case ShareMode.Url:
