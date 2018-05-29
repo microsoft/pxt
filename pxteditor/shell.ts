@@ -15,13 +15,13 @@ namespace pxt.shell {
             // in iframe
             || pxt.BrowserUtils.isIFrame();
         const nosandbox = /nosandbox=1/i.test(window.location.href);
-        const controller = /controller=1/i.test(window.location.href) && pxt.BrowserUtils.isIFrame();
+        const lmscontroller = /lmscontroller=1/i.test(window.location.href) && pxt.BrowserUtils.isIFrame();
         const layout = /editorlayout=(widget|sandbox|ide)/i.exec(window.location.href);
 
         layoutType = EditorLayoutType.IDE;
         if (nosandbox)
             layoutType = EditorLayoutType.Widget;
-        else if (controller)
+        else if (lmscontroller)
             layoutType = EditorLayoutType.Controller;
         else if (sandbox)
             layoutType = EditorLayoutType.Sandbox;
