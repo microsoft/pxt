@@ -58,9 +58,9 @@
 
 ## #other
 
-## Miscellanous #misc
+## Miscellaneous #misc
 
-* Miscellanous
+* Miscellaneous
     * [About](/about)
     * [Support](/support)
     * [FAQ](/faq)
