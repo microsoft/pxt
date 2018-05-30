@@ -209,7 +209,7 @@ namespace ts.pxtc {
 
     export interface BlockParameter {
         kind: "param";
-        ref?: string;
+        ref: boolean;
         name: string;
         shadowBlockId?: string;
     }
@@ -778,17 +778,11 @@ namespace ts.pxtc {
                     if (contentClass === undefined) return undefined; // error: not terminated
                     newToken = { kind: TokenKind.TaggedText, content: contentText, type: contentClass };
                     break;
+                case "$":
                 case "%":
                     const param = eatToken(c => /[a-zA-Z0-9_=]/.test(c), true).split("=");
                     if (param.length > 2) return undefined; // error: invalid parameter
-                    newToken = { kind: TokenKind.Parameter, content: param[0], type: param[1] };
-                    break;
-                case "{":
-                    const paramRef = eatEnclosure("}");
-                    if (paramRef === undefined) return undefined; // error: not terminated
-                    const lastToken = tokens[tokens.length - 1];
-                    if (currentWord || !lastToken || lastToken.kind !== TokenKind.Parameter) return undefined; // error: must come after paremeter
-                    newToken = { kind: TokenKind.ParamRef, content: paramRef };
+                    newToken = { kind: (char === "$") ? TokenKind.ParamRef : TokenKind.Parameter, content: param[0], type: param[1] };
                     break;
             }
 
@@ -873,7 +867,12 @@ namespace ts.pxtc {
 
             /* tslint:disable:possible-timing-attack  (not a security critical codepath) */
             if (token == TokenKind.Parameter) {
-                const param: BlockParameter = { kind: "param", name: tokens[i].content, shadowBlockId: tokens[i].type };
+                const param: BlockParameter = { kind: "param", name: tokens[i].content, shadowBlockId: tokens[i].type, ref: false };
+                parts.push(param);
+                parameters.push(param);
+            }
+            else if (token == TokenKind.ParamRef) {
+                const param: BlockParameter = { kind: "param", name: tokens[i].content, shadowBlockId: tokens[i].type, ref: true };
                 parts.push(param);
                 parameters.push(param);
             }
@@ -885,12 +884,6 @@ namespace ts.pxtc {
             }
             else if (token == TokenKind.Pipe) {
                 parts.push({ kind: "break" });
-            }
-            else if (token == TokenKind.ParamRef) {
-                U.assert(parameters.length > 0);
-                const lastParam = parameters[parameters.length - 1];
-                if (lastParam.ref) return undefined; // error: double curly brace
-                lastParam.ref = tokens[i].content;
             }
             /* tslint:enable:possible-timing-attack */
         }

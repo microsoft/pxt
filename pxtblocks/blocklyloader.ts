@@ -538,14 +538,14 @@ namespace pxt.blocks {
                 initVariableArgsBlock(block, comp.handlerArgs);
             }
             else if (fn.attributes.draggableParameters) {
-                comp.handlerArgs.forEach(arg => {
+                comp.handlerArgs.filter(a => !a.inBlockDef).forEach(arg => {
                     const i = block.appendValueInput("HANDLER_DRAG_PARAM_" + arg.name);
                     i.setCheck("Variable");
                 });
             }
             else {
                 let i = block.appendDummyInput();
-                comp.handlerArgs.forEach(arg => {
+                comp.handlerArgs.filter(a => !a.inBlockDef).forEach(arg => {
                     i.appendField(new Blockly.FieldVariable(arg.name), "HANDLER_" + arg.name);
                 });
             }
@@ -647,20 +647,20 @@ namespace pxt.blocks {
                     }
                     else {
                         // find argument
-                        let pr: BlockParameter;
-
-                        if (part.ref) {
-                            pr = part.ref === "this" ? comp.thisParameter : comp.actualNameToParam[part.ref];
-                        }
-                        else {
-                            pr = firstParam ? comp.thisParameter : comp.definitionNameToParam[part.name];
-                        }
+                        let pr = getParameterFromDef(part, comp, firstParam);
 
                         firstParam = false;
                         if (!pr) {
                             console.error("block " + fn.attributes.blockId + ": unkown parameter " + part.name + (part.ref ? ` (${part.ref})` : ""));
                             return;
                         }
+
+                        if (isHandlerArg(pr)) {
+                            inputName = "HANDLER_DRAG_PARAM_" + pr.name;
+                            inputCheck = "Variable";
+                            return;
+                        }
+
                         let typeInfo = U.lookup(info.apis.byQName, pr.type)
 
                         hasParameter = true;
@@ -717,7 +717,7 @@ namespace pxt.blocks {
                             if (pr.defaultValue) {
                                 let shadowValueIndex = -1;
                                 dd.some((v, i) => {
-                                    if (v[1] === pr.defaultValue) {
+                                    if (v[1] === (pr as BlockParameter).defaultValue) {
                                         shadowValueIndex = i;
                                         return true;
                                     }
@@ -803,6 +803,28 @@ namespace pxt.blocks {
 
             imgConv.logTime()
         }
+    }
+
+    function getParameterFromDef(part: pxtc.BlockParameter, comp: BlockCompileInfo, isThis = false): HandlerArg | BlockParameter {
+        if (part.ref) {
+            const result = (part.name === "this") ? comp.thisParameter : comp.actualNameToParam[part.name];
+
+            if (!result) {
+                let ha: HandlerArg;
+                comp.handlerArgs.forEach(arg => {
+                    if (arg.name === part.name) ha = arg;
+                });
+                if (ha) return ha;
+            }
+            return result;
+        }
+        else {
+            return isThis ? comp.thisParameter : comp.definitionNameToParam[part.name];
+        }
+    }
+
+    function isHandlerArg(arg: HandlerArg | BlockParameter): arg is HandlerArg {
+        return !(arg as BlockParameter).definitionName;
     }
 
     export function hasArrowFunction(fn: pxtc.SymbolInfo): boolean {
