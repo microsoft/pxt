@@ -134,7 +134,7 @@ namespace pxtblockly {
             }
         }
 
-        private createTextNode_(text: string) {
+        protected createTextNode_(text: string) {
             const textSpan = document.createElement('span');
             textSpan.setAttribute('class', 'blocklyDropdownTextLabel');
             textSpan.textContent = text;
