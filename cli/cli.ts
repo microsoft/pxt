@@ -3644,7 +3644,7 @@ interface BuildCoreOptions {
     mode: BuildOption;
 
     debug?: boolean;
-    compat?: boolean;
+    warnDiv?: boolean;
 
     // docs
     locs?: boolean;
@@ -3672,7 +3672,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
     return prepBuildOptionsAsync(buildOpts.mode)
         .then((opts) => {
             compileOptions = opts;
-            if (buildOpts.compat) {
+            if (buildOpts.warnDiv) {
                 pxt.debug(`warning on division operators`);
                 opts.warnDiv = true;
             }
@@ -4246,8 +4246,8 @@ export function buildAsync(parsed: commandParser.ParsedCommand) {
     if (parsed.flags["debug"]) {
         mode = BuildOption.DebugSim;
     }
-    const compat = !!parsed.flags["compat"];
-    return buildCoreAsync({ mode, compat })
+    const warnDiv = !!parsed.flags["warndiv"];
+    return buildCoreAsync({ mode, warnDiv })
         .then((compileOpts) => { });
 }
 
@@ -5008,7 +5008,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
         pxt.log(`targetconfig.json not found`);
         return Promise.resolve();
     }
-    const compat = !!parsed.flags["compat"];
+    const warnDiv = !!parsed.flags["warndiv"];
     const targetConfig = nodeutil.readJson("targetconfig.json") as pxt.TargetConfig;
     const packages = targetConfig.packages;
     if (!packages) {
@@ -5049,7 +5049,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
         const pkgdir = path.join(pkgsroot, pkgpgh);
         return gitAsync(".", "clone", "-q", "-b", repos[pkgpgh].tag, `https://github.com/${pkgpgh}`, pkgdir)
             .then(() => pxtAsync(pkgdir, "install"))
-            .then(() => compat ? pxtAsync(pkgdir, "build", "--compat") : pxtAsync(pkgdir, "build"))
+            .then(() => warnDiv ? pxtAsync(pkgdir, "build", "--warndiv") : pxtAsync(pkgdir, "build"))
             .catch(e => {
                 errors++;
                 pxt.log(e);
@@ -5136,7 +5136,7 @@ function initCommands() {
         flags: {
             cloud: { description: "Force build to happen in the cloud" },
             debug: { description: "Emit debug information with build" },
-            compat: { description: "Perform additional compatilibity checks"}
+            warndiv: { description: "Warns about division operators"}
         }
     }, buildAsync);
 
@@ -5442,7 +5442,7 @@ function initCommands() {
         name: "testghpkgs",
         help: "Download and build approved github packages",
         flags: {
-            compat: { description: "Execute additional compat checks"}
+            warndiv: { description: "Warns about division operators"}
         }
     }, testGithubPackagesAsync);
 
