@@ -90,7 +90,7 @@ namespace ts.pxtc {
         console.log(stringKind(n))
     }
 
-    // next free error 9274
+    // next free error 9275
     function userError(code: number, msg: string, secondary = false): Error {
         let e = new Error(msg);
         (<any>e).ksEmitterUserError = true;
@@ -715,7 +715,7 @@ namespace ts.pxtc {
                     let subPropDecl = <PropertyDeclaration>find[0].valueDeclaration
                     // TODO: record the property on which we have a mismatch
                     let [retSub, msgSub] = checkSubtype(checker.getTypeAtLocation(subPropDecl), checker.getTypeAtLocation(superPropDecl))
-                    if (ret && !retSub)[ret, msg] = [retSub, msgSub]
+                    if (ret && !retSub) [ret, msg] = [retSub, msgSub]
                 } else if (find.length == 0) {
                     if (!(superProp.flags & SymbolFlags.Optional)) {
                         // we have a cast to an interface with more properties (unsound)
@@ -781,13 +781,13 @@ namespace ts.pxtc {
                     let subParamType = checker.getTypeAtLocation(subFun.parameters[i].valueDeclaration)
                     // Check parameter types (contra-variant)
                     let [retSub, msgSub] = checkSubtype(superParamType, subParamType)
-                    if (ret && !retSub)[ret, msg] = [retSub, msgSub]
+                    if (ret && !retSub) [ret, msg] = [retSub, msgSub]
                 }
                 // check return type (co-variant)
                 let superRetType = superFun.getReturnType()
                 let subRetType = superFun.getReturnType()
                 let [retSub, msgSub] = checkSubtype(subRetType, superRetType)
-                if (ret && !retSub)[ret, msg] = [retSub, msgSub]
+                if (ret && !retSub) [ret, msg] = [retSub, msgSub]
                 return insertSubtype(key, [ret, msg])
             }
         } else if (isInterfaceType(superType)) {
@@ -1072,13 +1072,21 @@ namespace ts.pxtc {
             emitSkipped: !!opts.noEmit
         }
 
-        function error(node: Node, code: number, msg: string, arg0?: any, arg1?: any, arg2?: any) {
+        function diag(category: DiagnosticCategory, node: Node, code: number, message: string, arg0?: any, arg1?: any, arg2?: any) {
             diagnostics.add(createDiagnosticForNode(node, <any>{
-                code: code,
-                message: msg,
-                key: msg.replace(/^[a-zA-Z]+/g, "_"),
-                category: DiagnosticCategory.Error,
+                code,
+                message,
+                key: message.replace(/^[a-zA-Z]+/g, "_"),
+                category,
             }, arg0, arg1, arg2));
+        }
+
+        function warning(node: Node, code: number, msg: string, arg0?: any, arg1?: any, arg2?: any) {
+            diag(DiagnosticCategory.Warning, node, code, msg, arg0, arg1, arg2);
+        }
+
+        function error(node: Node, code: number, msg: string, arg0?: any, arg1?: any, arg2?: any) {
+            diag(DiagnosticCategory.Error, node, code, msg, arg0, arg1, arg2);
         }
 
         function unhandled(n: Node, info?: string, code: number = 9202) {
@@ -3352,12 +3360,16 @@ ${lbl}: .short 0xffff
             proc.emit(st)
         }
 
-        function simpleInstruction(k: SyntaxKind) {
+        function simpleInstruction(node: Node, k: SyntaxKind) {
             switch (k) {
                 case SK.PlusToken: return "numops::adds";
                 case SK.MinusToken: return "numops::subs";
                 // we could expose __aeabi_idiv directly...
-                case SK.SlashToken: return "numops::div";
+                case SK.SlashToken: {
+                    if (opts.warnDiv)
+                        warning(node, 9274, "usage of / operator");
+                    return "numops::div";
+                }
                 case SK.PercentToken: return "numops::mod";
                 case SK.AsteriskToken: return "numops::muls";
                 case SK.AsteriskAsteriskToken: return "Math_::pow";
@@ -3419,7 +3431,7 @@ ${lbl}: .short 0xffff
 
             if (isNumericalType(lt) && isNumericalType(rt)) {
                 let noEq = stripEquals(node.operatorToken.kind)
-                let shimName = simpleInstruction(noEq || node.operatorToken.kind)
+                let shimName = simpleInstruction(node, noEq || node.operatorToken.kind)
                 if (!shimName)
                     unhandled(node.operatorToken, lf("unsupported numeric operator"), 9250)
                 if (noEq)
@@ -3461,7 +3473,7 @@ ${lbl}: .short 0xffff
                     case SK.GreaterThanEqualsToken:
                     case SK.GreaterThanToken:
                         return ir.rtcallMask(
-                            mapIntOpName(simpleInstruction(node.operatorToken.kind)),
+                            mapIntOpName(simpleInstruction(node, node.operatorToken.kind)),
                             opts.target.boxDebug ? 1 : 0,
                             ir.CallingConvention.Plain,
                             [fromInt(shim("String_::compare")), emitLit(0)])
@@ -3586,7 +3598,7 @@ ${lbl}: .short 0xffff
                 let lt = typeOf(be.left)
                 let rt = typeOf(be.right)
                 if ((lt.flags & TypeFlags.NumberLike) && (rt.flags & TypeFlags.NumberLike)) {
-                    let mapped = U.lookup(thumbCmpMap, simpleInstruction(be.operatorToken.kind))
+                    let mapped = U.lookup(thumbCmpMap, simpleInstruction(be, be.operatorToken.kind))
                     if (mapped) {
                         return ir.rtcall(mapped, [emitExpr(be.left), emitExpr(be.right)])
                     }
