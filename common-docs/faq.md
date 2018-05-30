@@ -13,7 +13,7 @@ These domains need to be unblocked to allow the web editor to load:
 
 ## Where are my projects saved?
 
-Projects are kept in the browser's local indexed data store. You can save your project with a name. If you don't name your project, it's kept as an "Untitled" project. Read more about [saving](/save-project) projects.
+Projects are kept in the browser's local indexed data store. You can save your project with a name. If you don't name your project, it's kept as an "Untitled" project. Read more about [saving](/save) projects.
 
 ## Can I use MakeCode when I'm not connected to the internet? #work-offline
 

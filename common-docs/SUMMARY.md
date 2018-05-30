@@ -67,7 +67,7 @@
     * [Translate](/translate)
     * [Sharing projects](/share)
     * [Offline support](/offline)
-    * [Save](/save-project)
+    * [Save](/save)
 
 ## Developers #devs
 
