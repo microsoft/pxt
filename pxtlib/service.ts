@@ -160,7 +160,7 @@ namespace ts.pxtc {
         groupIcons?: string[];
         labelLineWidth?: string;
         handlerStatement?: boolean; // indicates a block with a callback that can be used as a statement
-        blockHandlerKey?: string; // optional field for explicitly declaring the handler key to use to compare duplicate events 
+        blockHandlerKey?: string; // optional field for explicitly declaring the handler key to use to compare duplicate events
         afterOnStart?: boolean; // indicates an event that should be compiled after on start when converting to typescript
 
         // on interfaces
@@ -174,6 +174,7 @@ namespace ts.pxtc {
         mutatePropertyEnum?: string;
         inlineInputMode?: string; // can be inline, external, or auto
         expandableArgumentMode?: string; // can be disabled, enabled, or toggle
+        draggableParameters?: boolean;
 
         optionalVariableArgs?: boolean;
         toolboxVariableArgs?: string;
@@ -591,7 +592,8 @@ namespace ts.pxtc {
         "blockHidden",
         "constantShim",
         "blockCombine",
-        "decompileIndirectFixedInstances"
+        "decompileIndirectFixedInstances",
+        "draggableParameters"
     ];
 
     export function parseCommentString(cmt: string): CommentAttrs {

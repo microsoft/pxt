@@ -1,0 +1,58 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+    <block type="test_handler_arguments3">
+    <value name="HANDLER_DRAG_PARAM_c">
+    <shadow type="variables_get_reporter">
+    <field name="VAR">hello</field>
+    </shadow>
+    </value>
+    <value name="HANDLER_DRAG_PARAM_d">
+    <shadow type="variables_get_reporter">
+    <field name="VAR">goodbye</field>
+    </shadow>
+    </value>
+    <statement name="HANDLER">
+    </statement>
+    </block>
+    <block type="test_handler_arguments3">
+    <value name="HANDLER_DRAG_PARAM_c">
+    <shadow type="variables_get_reporter">
+    <field name="VAR">sure</field>
+    </shadow>
+    </value>
+    <value name="HANDLER_DRAG_PARAM_d">
+    <shadow type="variables_get_reporter">
+    <field name="VAR">whatever</field>
+    </shadow>
+    </value>
+    <statement name="HANDLER">
+    </statement>
+    </block>
+    <block type="test_handler_arguments3">
+    <value name="HANDLER_DRAG_PARAM_c">
+    <shadow type="variables_get_reporter">
+    <field name="VAR">okay</field>
+    </shadow>
+    </value>
+    <value name="HANDLER_DRAG_PARAM_d">
+    <shadow type="variables_get_reporter">
+    <field name="VAR">d</field>
+    </shadow>
+    </value>
+    <statement name="HANDLER">
+    </statement>
+    </block>
+    <block type="test_handler_arguments3">
+    <value name="HANDLER_DRAG_PARAM_c">
+    <shadow type="variables_get_reporter">
+    <field name="VAR">c</field>
+    </shadow>
+    </value>
+    <value name="HANDLER_DRAG_PARAM_d">
+    <shadow type="variables_get_reporter">
+    <field name="VAR">d</field>
+    </shadow>
+    </value>
+    <statement name="HANDLER">
+    </statement>
+    </block>
+    </xml>
