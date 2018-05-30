@@ -279,6 +279,7 @@ export function pokeRepoAsync(parsed: commandParser.ParsedCommand): Promise<void
 }
 
 export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> {
+    pxt.log(`executing Crowdin command ${cmd}...`);
     const prj = pxt.appTarget.appTheme.crowdinProject;
     if (!prj) {
         console.log(`crowdin operation skipped, crowdin project not specified in pxtarget.json`);
@@ -504,6 +505,7 @@ function travisAsync() {
 
     let pkg = readJson("package.json")
     if (pkg["name"] == "pxt-core") {
+        pxt.log("pxt-core build");
         let p = npmPublishAsync();
         if (uploadLocs)
             p = p
@@ -513,6 +515,7 @@ function travisAsync() {
                 .then(() => internalUploadTargetTranslationsAsync(!!rel));
         return p;
     } else {
+        pxt.log("target build");
         return internalBuildTargetAsync()
             .then(() => internalCheckDocsAsync(true))
             .then(() => npmPublishAsync())
@@ -522,14 +525,21 @@ function travisAsync() {
                     pxt.log('no token, skipping upload')
                     return Promise.resolve();
                 }
-                const trg = readLocalPxTarget()
-                if (rel)
-                    return uploadTargetAsync(trg.id + "/" + rel)
-                        .then(() => uploadLocs ? internalUploadTargetTranslationsAsync(!!rel) : Promise.resolve());
-                else
-                    return uploadTargetAsync(trg.id + "/" + latest)
-                        .then(() => uploadLocs ? internalUploadTargetTranslationsAsync(!!rel) : Promise.resolve());
+                const trg = readLocalPxTarget();
+                const label = `${trg.id}/${rel || latest}`;
+                pxt.log(`uploading target with label ${label}...`);
+                return uploadTargetAsync(label);
             })
+            .then(() => {
+                pxt.log("target uploaded");
+                if (uploadLocs) {
+                    pxt.log("uploading translations...");
+                    return internalUploadTargetTranslationsAsync(!!rel)
+                        .then(() => pxt.log("translations uploaded"));
+                }
+                pxt.log("skipping translations upload");
+                return Promise.resolve();
+            });
     }
 }
 
@@ -626,9 +636,9 @@ function tagReleaseAsync(parsed: commandParser.ParsedCommand) {
     // check that tag exists in github
     pxt.log(`checking github ${pxt.appTarget.appTheme.githubUrl} tag v${v}`);
     return U.requestAsync({
-            url: pxt.appTarget.appTheme.githubUrl.replace(/\/$/, '') + "/releases/tag/v" + v,
-            method: "GET"
-        })
+        url: pxt.appTarget.appTheme.githubUrl.replace(/\/$/, '') + "/releases/tag/v" + v,
+        method: "GET"
+    })
         // check that release exists in npm
         .then(() => {
             if (!npm) return Promise.resolve();
@@ -3775,31 +3785,45 @@ export function uploadTargetTranslationsAsync(parsed?: commandParser.ParsedComma
 }
 
 function internalUploadTargetTranslationsAsync(uploadDocs: boolean) {
+    pxt.log("retrieving Crowdin credentials...");
     return crowdinCredentialsAsync()
         .then(cred => {
-            if (!cred) return Promise.resolve();
+            if (!cred) {
+                pxt.log("could not get Crowdin credentials, aborting");
+                return Promise.resolve();
+            }
+            pxt.log("got Crowdin credentials");
             const crowdinDir = pxt.appTarget.id;
             if (crowdinDir == "core") {
                 if (!uploadDocs) {
                     pxt.log('missing --docs flag, skipping')
                     return Promise.resolve();
                 }
+                pxt.log("uploading core translations...");
                 return uploadDocsTranslationsAsync("docs", crowdinDir, cred.branch, cred.prj, cred.key)
                     .then(() => uploadDocsTranslationsAsync("common-docs", crowdinDir, cred.branch, cred.prj, cred.key))
             } else {
+                pxt.log("uploading target translations...");
                 return execCrowdinAsync("upload", "built/target-strings.json", crowdinDir)
                     .then(() => execCrowdinAsync("upload", "built/sim-strings.json", crowdinDir))
                     .then(() => uploadBundledTranslationsAsync(crowdinDir, cred.branch, cred.prj, cred.key))
-                    .then(() => uploadDocs
-                        ? uploadDocsTranslationsAsync("docs", crowdinDir, cred.branch, cred.prj, cred.key)
-                            // scan for docs in bundled packages
-                            .then(() => Promise.all(pxt.appTarget.bundleddirs
-                                // there must be a folder under .../docs
-                                .filter(pkgDir => nodeutil.existsDirSync(path.join(pkgDir, "docs")))
-                                // upload to crowdin
-                                .map(pkgDir => uploadDocsTranslationsAsync(path.join(pkgDir, "docs"), crowdinDir, cred.branch, cred.prj, cred.key)
-                                )).then(() => { }))
-                        : Promise.resolve());
+                    .then(() => {
+                        if (uploadDocs) {
+                            pxt.log("uploading docs...");
+                            return uploadDocsTranslationsAsync("docs", crowdinDir, cred.branch, cred.prj, cred.key)
+                                // scan for docs in bundled packages
+                                .then(() => Promise.all(pxt.appTarget.bundleddirs
+                                    // there must be a folder under .../docs
+                                    .filter(pkgDir => nodeutil.existsDirSync(path.join(pkgDir, "docs")))
+                                    // upload to crowdin
+                                    .map(pkgDir => uploadDocsTranslationsAsync(path.join(pkgDir, "docs"), crowdinDir, cred.branch, cred.prj, cred.key)
+                                    )).then(() => {
+                                        pxt.log("docs uploaded");
+                                    }))
+                        }
+                        pxt.log("skipping docs upload (not a release)");
+                        return Promise.resolve();
+                    });
             }
         });
 }
@@ -3850,7 +3874,7 @@ function uploadBundledTranslationsAsync(crowdinDir: string, branch: string, prj:
                 .forEach(f => todo.push(path.join(locdir, f)))
     });
 
-    pxt.log(`uploading ${todo.length} files to crowdin`);
+    pxt.log(`uploading bundled translations to Crowdin (${todo.length} files)`);
     const nextFileAsync = (): Promise<void> => {
         const f = todo.pop();
         if (!f) return Promise.resolve();
