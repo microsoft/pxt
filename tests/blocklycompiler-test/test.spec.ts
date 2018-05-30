@@ -34,6 +34,7 @@ pxt.setAppTarget({
 // Webworker needs this config to run
 pxt.webConfig = {
     relprefix: undefined,
+    verprefix: undefined,
     workerjs: WEB_PREFIX + "/blb/worker.js",
     monacoworkerjs: undefined,
     pxtVersion: undefined,

@@ -311,6 +311,7 @@ declare namespace ts.pxtc {
         useMkcd?: boolean;
         useELF?: boolean;
         saveAsPNG?: boolean;
+        noSourceInFlash?: boolean;
         useModulator?: boolean;
         webUSB?: boolean; // use WebUSB when supported
         hexMimeType?: string;
@@ -354,6 +355,7 @@ declare namespace ts.pxtc {
         justMyCode?: boolean;
         computeUsedSymbols?: boolean;
         name?: string;
+        warnDiv?: boolean; // warn when emitting division operator
 
         alwaysDecompileOnStart?: boolean; // decompiler only
 

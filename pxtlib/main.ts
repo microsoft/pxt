@@ -38,6 +38,8 @@ namespace pxt {
         }
         if (!comp.vtableShift)
             comp.vtableShift = 2
+        if (!comp.useUF2 && !comp.useELF && comp.noSourceInFlash == undefined)
+            comp.noSourceInFlash = true // no point putting sources in hex to be flashed
         if (!appTarget.appTheme) appTarget.appTheme = {}
         if (!appTarget.appTheme.embedUrl)
             appTarget.appTheme.embedUrl = appTarget.appTheme.homeUrl
@@ -145,6 +147,7 @@ namespace pxt {
         runUrl?: string; // "/beta---run"
         docsUrl?: string; // "/beta---docs"
         isStatic?: boolean;
+        verprefix?: string; // "v1"
     }
 
     export function localWebConfig() {

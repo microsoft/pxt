@@ -87,6 +87,7 @@ namespace pxt.Cloud {
 
     export function downloadMarkdownAsync(docid: string, locale?: string, live?: boolean): Promise<string> {
         const packaged = pxt.webConfig && pxt.webConfig.isStatic;
+        const targetVersion = pxt.appTarget.versions && pxt.appTarget.versions.target || '?';
         let url: string;
 
         if (packaged) {
@@ -100,7 +101,7 @@ namespace pxt.Cloud {
                 url = `${url}.md`;
             }
         } else {
-            url = `md/${pxt.appTarget.id}/${docid.replace(/^\//, "")}?targetVersion=${encodeURIComponent(pxt.webConfig.targetVersion)}`;
+            url = `md/${pxt.appTarget.id}/${docid.replace(/^\//, "")}?targetVersion=${encodeURIComponent(targetVersion)}`;
         }
         if (!packaged && locale != "en") {
             url += `&lang=${encodeURIComponent(Util.userLanguage())}`
