@@ -19,3 +19,4 @@ When running on actual hardware, the code you write in JavaScript is compiled in
 ## Hosting MakeCode locally #local-serve
 
 The open source editions of MakeCode can be served locally on your own computer. More experienced users can download the entire [PXT Toolchain](https://github.com/Microsoft/pxt) and use the [command line interface](/cli) (CLI) to compile and deploy scripts locally. PXT provides a great out-of-the-box experience when used with [Visual Studio Code](/code), a lightweight cross-platform code editor. See the @githubUrl@ project page for instructions on setting up a MakeCode local server.
+
