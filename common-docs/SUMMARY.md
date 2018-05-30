@@ -1,6 +1,7 @@
 # Summary
 
 * [About](/about)
+* [FAQ](/faq)
 
 ## #support
 
@@ -63,7 +64,6 @@
 * Miscellaneous
     * [About](/about)
     * [Support](/support)
-    * [FAQ](/faq)
     * [Translate](/translate)
     * [Sharing projects](/share)
     * [Offline support](/offline)
@@ -75,4 +75,3 @@
     * [Command Line Interface](/cli)
     * [Visual Studio Code support](/code)
     * [Blocks Embed](/blocks-embed)
-
