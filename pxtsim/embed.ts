@@ -117,6 +117,12 @@ namespace pxsim {
         toolboxSubset?: { [index: string]: number };
     }
 
+    export interface ImportFileMessage extends SimulatorMessage {
+        type: "importfile";
+        filename: string;
+        parts: (string | ArrayBuffer)[];
+    }
+
     export interface TutorialStepChangeMessage extends TutorialMessage {
         subtype: "stepchange";
         step: number;
