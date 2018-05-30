@@ -30,8 +30,8 @@ When you share a project it's saved to the public cloud for MakeCode. Anyone can
 ## What are some addtional ways I can share projects with teachers and friends? #share-options
 
 * Use the share button to publish your project to the MakeCode cloud. You can send the share URL that's created to anyone.
-* The share URL can be pasted into a OneNote page or inserted as an embedded link on a website. In some cases, the link will be automatically expanded into a read-only editor view of your project.
-* You can save the project and copy it to a class website or to an approved location on class or school network.
+* The share URL can be pasted into a OneNote page or inserted as an embedded link on a website. In some cases, the link will be automatically expand into a read-only editor view of your project.
+* You can save the project and copy it to a class website or to an approved location on the class or school network.
 * You can copy code from and paste code into the JavaScript view of the editor. This let's you move code between MakeCode and other applications on your computer or device.
 
 Can't find your question? Pleae see our [support](/support) page.
