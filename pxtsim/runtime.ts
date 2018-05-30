@@ -457,7 +457,8 @@ namespace pxsim {
 
             function setupDebugger(numBreakpoints: number) {
                 breakpoints = new Uint8Array(numBreakpoints)
-                breakAlways = true
+                // start running and let user put a breakpoint on start
+                // breakAlways = true
             }
 
             function isBreakFrame(s: StackFrame) {
