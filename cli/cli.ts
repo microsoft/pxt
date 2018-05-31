@@ -3767,9 +3767,17 @@ function crowdinCredentialsAsync(): Promise<{ prj: string; key: string; branch: 
         pxt.log(`crowdin upload skipped, Crowdin project missing in target theme`);
         return Promise.resolve(undefined);
     }
-    return passwordGetAsync(CROWDIN_KEY)
+
+    return Promise.resolve()
+        .then(() => {
+            // Env var overrides credentials manager
+            const envKey = process.env[pxt.crowdin.KEY_VARIABLE];
+            if (envKey) {
+                return Promise.resolve(envKey);
+            }
+            return passwordGetAsync(CROWDIN_KEY);
+        })
         .then(key => {
-            key = key || process.env[pxt.crowdin.KEY_VARIABLE] as string;
             if (!key) {
                 pxt.log(`crowdin upload skipped, crowdin token or '${pxt.crowdin.KEY_VARIABLE}' variable missing`);
                 return undefined;
