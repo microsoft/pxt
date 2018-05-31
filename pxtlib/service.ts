@@ -86,6 +86,14 @@ namespace ts.pxtc {
         apis: ApisInfo;
         blocks: SymbolInfo[];
         blocksById: pxt.Map<SymbolInfo>;
+        enumsByName: pxt.Map<EnumInfo>;
+    }
+
+    export interface EnumInfo {
+        name: string;
+        blockId: string;
+        isBitMask: boolean;
+        firstValue?: number;
     }
 
     export interface CompletionEntry {
@@ -160,7 +168,7 @@ namespace ts.pxtc {
         groupIcons?: string[];
         labelLineWidth?: string;
         handlerStatement?: boolean; // indicates a block with a callback that can be used as a statement
-        blockHandlerKey?: string; // optional field for explicitly declaring the handler key to use to compare duplicate events 
+        blockHandlerKey?: string; // optional field for explicitly declaring the handler key to use to compare duplicate events
         afterOnStart?: boolean; // indicates an event that should be compiled after on start when converting to typescript
 
         // on interfaces
@@ -174,6 +182,12 @@ namespace ts.pxtc {
         mutatePropertyEnum?: string;
         inlineInputMode?: string; // can be inline, external, or auto
         expandableArgumentMode?: string; // can be disabled, enabled, or toggle
+
+
+        // Only for enum "getter" blocks (i.e. shim=ENUM_GET)
+        enumName?: string;
+        enumStartValue?: number;
+        enumIsBitMask?: boolean;
 
         optionalVariableArgs?: boolean;
         toolboxVariableArgs?: string;
@@ -388,6 +402,7 @@ namespace ts.pxtc {
         const combinedSet: pxt.Map<SymbolInfo> = {}
         const combinedGet: pxt.Map<SymbolInfo> = {}
         const combinedChange: pxt.Map<SymbolInfo> = {}
+        const enumsByName: pxt.Map<EnumInfo> = {};
 
         function addCombined(rtp: string, s: SymbolInfo) {
             const isGet = rtp == "get"
@@ -479,7 +494,19 @@ namespace ts.pxtc {
                     }
                     addCombined("set", s)
                 }
-            } else if (!!s.attributes.block
+            } else if (s.attributes.shim === "ENUM_GET" && s.attributes.enumName && s.attributes.blockId) {
+                if (enumsByName[s.attributes.enumName]) {
+                    console.warn("Trying to overwrite enum " + s.attributes.enumName);
+                    continue;
+                }
+                enumsByName[s.attributes.enumName] = {
+                    blockId: s.attributes.blockId,
+                    name: s.attributes.enumName,
+                    firstValue: parseInt(s.attributes.enumStartValue as any),
+                    isBitMask: s.attributes.enumIsBitMask
+                };
+            }
+            else if (!!s.attributes.block
                 && !s.attributes.fixedInstance
                 && s.kind != pxtc.SymbolKind.EnumMember
                 && s.kind != pxtc.SymbolKind.Module
@@ -518,7 +545,8 @@ namespace ts.pxtc {
         return {
             apis: info,
             blocks,
-            blocksById: pxt.Util.toDictionary(blocks, b => b.attributes.blockId)
+            blocksById: pxt.Util.toDictionary(blocks, b => b.attributes.blockId),
+            enumsByName
         }
     }
 
@@ -591,6 +619,7 @@ namespace ts.pxtc {
         "blockHidden",
         "constantShim",
         "blockCombine",
+        "enumIsBitMask",
         "decompileIndirectFixedInstances"
     ];
 

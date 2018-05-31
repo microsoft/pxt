@@ -44,4 +44,27 @@ namespace enumTest {
     export function enumShadowArg(value: number) {
 
     }
+
+    //% shim=ENUM_GET
+    //% blockId=enum_user_shim
+    //% enumName="PlainOldEnum"
+    export function userEnumShim(arg: number) {
+        return arg;
+    }
+
+    //% shim=ENUM_GET
+    //% blockId=enum_user_shim_with_start_value
+    //% enumName="EnumWithStart"
+    //% enumStartValue=3
+    export function userEnumShimStartValue(arg: number) {
+        return arg;
+    }
+
+    //% shim=ENUM_GET
+    //% blockId=enum_user_shim_bit_mask
+    //% enumName="EnumOfFlags"
+    //% enumIsBitMask=true
+    export function userEnumShimBitMask(arg: number) {
+        return arg;
+    }
 }
