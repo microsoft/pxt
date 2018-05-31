@@ -3639,6 +3639,7 @@ interface BuildCoreOptions {
     mode: BuildOption;
 
     debug?: boolean;
+    warnDiv?: boolean;
 
     // docs
     locs?: boolean;
@@ -3667,6 +3668,10 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
     return prepBuildOptionsAsync(buildOpts.mode)
         .then((opts) => {
             compileOptions = opts;
+            if (buildOpts.warnDiv) {
+                pxt.debug(`warning on division operators`);
+                opts.warnDiv = true;
+            }
             opts.breakpoints = buildOpts.mode === BuildOption.DebugSim;
             if (buildOpts.debug) {
                 opts.breakpoints = true
@@ -4237,8 +4242,8 @@ export function buildAsync(parsed: commandParser.ParsedCommand) {
     if (parsed.flags["debug"]) {
         mode = BuildOption.DebugSim;
     }
-
-    return buildCoreAsync({ mode })
+    const warnDiv = !!parsed.flags["warndiv"];
+    return buildCoreAsync({ mode, warnDiv })
         .then((compileOpts) => { });
 }
 
@@ -4991,12 +4996,13 @@ function extractLocStringsAsync(output: string, dirs: string[]): Promise<void> {
     return Promise.resolve();
 }
 
-function testGithubPackagesAsync(c?: commandParser.ParsedCommand): Promise<void> {
+function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<void> {
     pxt.log(`testing github packages`);
     if (!fs.existsSync("targetconfig.json")) {
         pxt.log(`targetconfig.json not found`);
         return Promise.resolve();
     }
+    const warnDiv = !!parsed.flags["warndiv"];
     const targetConfig = nodeutil.readJson("targetconfig.json") as pxt.TargetConfig;
     const packages = targetConfig.packages;
     if (!packages) {
@@ -5005,7 +5011,7 @@ function testGithubPackagesAsync(c?: commandParser.ParsedCommand): Promise<void>
     let errors = 0;
     let todo: string[];
     const repos: pxt.Map<{ fullname: string; tag: string }> = {};
-    const pkgsroot = path.join("built", "ghpkgs");
+    const pkgsroot = path.join("temp", "ghpkgs");
 
     function gitAsync(dir: string, ...args: string[]) {
         return nodeutil.spawnAsync({
@@ -5037,7 +5043,7 @@ function testGithubPackagesAsync(c?: commandParser.ParsedCommand): Promise<void>
         const pkgdir = path.join(pkgsroot, pkgpgh);
         return gitAsync(".", "clone", "-q", "-b", repos[pkgpgh].tag, `https://github.com/${pkgpgh}`, pkgdir)
             .then(() => pxtAsync(pkgdir, "install"))
-            .then(() => pxtAsync(pkgdir, "build"))
+            .then(() => warnDiv ? pxtAsync(pkgdir, "build", "--warndiv") : pxtAsync(pkgdir, "build"))
             .catch(e => {
                 errors++;
                 pxt.log(e);
@@ -5123,7 +5129,8 @@ function initCommands() {
         onlineHelp: true,
         flags: {
             cloud: { description: "Force build to happen in the cloud" },
-            debug: { description: "Emit debug information with build" }
+            debug: { description: "Emit debug information with build" },
+            warndiv: { description: "Warns about division operators"}
         }
     }, buildAsync);
 
@@ -5425,7 +5432,13 @@ function initCommands() {
         advanced: true
     }, gendocsAsync);
 
-    simpleCmd("testghpkgs", "Download and build github packages", testGithubPackagesAsync);
+    p.defineCommand({
+        name: "testghpkgs",
+        help: "Download and build approved github packages",
+        flags: {
+            warndiv: { description: "Warns about division operators"}
+        }
+    }, testGithubPackagesAsync);
 
     function simpleCmd(name: string, help: string, callback: (c?: commandParser.ParsedCommand) => Promise<void>, argString?: string, onlineHelp?: boolean): void {
         p.defineCommand({ name, help, onlineHelp, argString }, callback);

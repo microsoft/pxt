@@ -388,6 +388,10 @@ describe("comment attribute parser", () => {
                 parseDef("%hello\\world", param`hello`, `world`);
             });
 
+            it("should mark parameters starting with $ as refs", () => {
+                parseDef("$hello|world", paramRef`hello`, brk(), `world`);
+            });
+
             describe("errors", () => {
                 it("should not allow parameters with too many equals", () => {
                     parseDef("%no=good=")
@@ -428,7 +432,14 @@ function tag(parts: TemplateStringsArray): pxtc.BlockLabel {
 
 function param(parts: TemplateStringsArray): pxtc.BlockParameter {
     const split = parts[0].split("=");
-    return { kind: "param", name: split[0], shadowBlockId: split[1] };
+
+    return { kind: "param", name: split[0], shadowBlockId: split[1], ref: false } as pxtc.BlockParameter;
+}
+
+function paramRef(parts: TemplateStringsArray): pxtc.BlockParameter {
+    const res = param(parts);
+    res.ref = true;
+    return res;
 }
 
 function parseDef(def: string, ...expected: (string | pxtc.BlockPart)[]) {

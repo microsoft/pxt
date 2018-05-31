@@ -36,10 +36,12 @@ export function showAboutDialogAsync() {
                     <a href={`${pxt.Util.htmlEscape("https://github.com/" + compileService.githubCorePackage + '/releases/tag/' + compileService.gittag)}`}
                         title={`${lf("{0} version: {1}", "C++ runtime", pxt.Util.htmlEscape(compileService.gittag))}`}
                         target="_blank" rel="noopener noreferrer">{pxt.Util.htmlEscape(compileService.gittag)}</a></p> : undefined}
+            <p><br /></p>
             <p>
                 {targetTheme.termsOfUseUrl ? <a target="_blank" className="item" href={targetTheme.termsOfUseUrl} rel="noopener noreferrer">{lf("Terms of Use")}</a> : undefined}
                 &nbsp;&nbsp;&nbsp; {targetTheme.privacyUrl ? <a target="_blank" className="item" href={targetTheme.privacyUrl} rel="noopener noreferrer">{lf("Privacy")}</a> : undefined}
             </p>
+            {targetTheme.copyrightText ? <p> {targetTheme.copyrightText} </p> : undefined}
         </div>
 
     }).done();
