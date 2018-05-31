@@ -2,7 +2,8 @@ namespace pxt.shell {
     export enum EditorLayoutType {
         IDE,
         Sandbox,
-        Widget
+        Widget,
+        Controller
     }
 
     let layoutType: EditorLayoutType;
@@ -14,11 +15,14 @@ namespace pxt.shell {
             // in iframe
             || pxt.BrowserUtils.isIFrame();
         const nosandbox = /nosandbox=1/i.test(window.location.href);
+        const controller = /controller=1/i.test(window.location.href) && pxt.BrowserUtils.isIFrame();
         const layout = /editorlayout=(widget|sandbox|ide)/i.exec(window.location.href);
 
         layoutType = EditorLayoutType.IDE;
         if (nosandbox)
             layoutType = EditorLayoutType.Widget;
+        else if (controller)
+            layoutType = EditorLayoutType.Controller;
         else if (sandbox)
             layoutType = EditorLayoutType.Sandbox;
 
@@ -45,5 +49,10 @@ namespace pxt.shell {
     export function isReadOnly() {
         return isSandboxMode()
             && !/[?&]edit=1/i.test(window.location.href);
+    }
+
+    export function isControllerMode() {
+        init();
+        return layoutType == EditorLayoutType.Controller;
     }
 }

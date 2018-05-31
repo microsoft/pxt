@@ -136,6 +136,8 @@ namespace pxt.editor {
         projects: pxt.workspace.Project[];
         // (optional) filtering argument
         editor?: EditorSyncState;
+        // (optional) controller id, used for determining what the parent controller is
+        controllerId?: string;
     }
 
     export interface EditorWorkspaceSaveRequest extends EditorMessageRequest {
@@ -215,7 +217,8 @@ namespace pxt.editor {
      * Some commands may be async, use the ``id`` field to correlate to the original request.
      */
     export function bindEditorMessages(projectView: IProjectView) {
-        const allowEditorMessages = pxt.appTarget.appTheme.allowParentController && pxt.BrowserUtils.isIFrame();
+        const allowEditorMessages = (pxt.appTarget.appTheme.allowParentController || pxt.shell.isControllerMode())
+                                    && pxt.BrowserUtils.isIFrame();
         const allowExtensionMessages = pxt.appTarget.appTheme.allowPackageExtensions;
         const allowSimTelemetry = pxt.appTarget.appTheme.allowSimulatorTelemetry;
 

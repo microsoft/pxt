@@ -98,6 +98,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         if (home) return <div />; // Don't render if we're in the home screen
 
         const sandbox = pxt.shell.isSandboxMode();
+        const isController = pxt.shell.isControllerMode();
         const readOnly = pxt.shell.isReadOnly();
         const tutorial = tutorialOptions ? tutorialOptions.tutorial : false;
         const collapsed = (hideEditorFloats || collapseEditorTools) && !tutorial;
@@ -119,7 +120,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const hasRedo = this.props.parent.editor.hasRedo();
 
         const showCollapsed = !tutorial && !sandbox;
-        const showProjectRename = !tutorial && !readOnly;
+        const showProjectRename = !tutorial && !readOnly && !isController;
         const showUndoRedo = !tutorial && !readOnly;
         const showZoomControls = !tutorial;
 
