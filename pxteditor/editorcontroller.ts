@@ -136,6 +136,8 @@ namespace pxt.editor {
         projects: pxt.workspace.Project[];
         // (optional) filtering argument
         editor?: EditorSyncState;
+        // (optional) controller id, used for determining what the parent controller is
+        controllerId?: string;
     }
 
     export interface EditorWorkspaceSaveRequest extends EditorMessageRequest {
