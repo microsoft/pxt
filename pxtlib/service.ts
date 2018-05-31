@@ -160,7 +160,7 @@ namespace ts.pxtc {
         groupIcons?: string[];
         labelLineWidth?: string;
         handlerStatement?: boolean; // indicates a block with a callback that can be used as a statement
-        blockHandlerKey?: string; // optional field for explicitly declaring the handler key to use to compare duplicate events 
+        blockHandlerKey?: string; // optional field for explicitly declaring the handler key to use to compare duplicate events
         afterOnStart?: boolean; // indicates an event that should be compiled after on start when converting to typescript
 
         // on interfaces
@@ -174,6 +174,7 @@ namespace ts.pxtc {
         mutatePropertyEnum?: string;
         inlineInputMode?: string; // can be inline, external, or auto
         expandableArgumentMode?: string; // can be disabled, enabled, or toggle
+        draggableParameters?: boolean;
 
         optionalVariableArgs?: boolean;
         toolboxVariableArgs?: string;
@@ -208,6 +209,7 @@ namespace ts.pxtc {
 
     export interface BlockParameter {
         kind: "param";
+        ref: boolean;
         name: string;
         shadowBlockId?: string;
     }
@@ -326,6 +328,7 @@ namespace ts.pxtc {
         Word = 1 << 7,
         Image = 1 << 8,
         TaggedText = 1 << 9,
+        ParamRef = 1 << 10,
 
         TripleUnderscore = SingleUnderscore | DoubleUnderscore,
         TripleAsterisk = SingleAsterisk | DoubleAsterisk,
@@ -591,7 +594,8 @@ namespace ts.pxtc {
         "blockHidden",
         "constantShim",
         "blockCombine",
-        "decompileIndirectFixedInstances"
+        "decompileIndirectFixedInstances",
+        "draggableParameters"
     ];
 
     export function parseCommentString(cmt: string): CommentAttrs {
@@ -774,10 +778,11 @@ namespace ts.pxtc {
                     if (contentClass === undefined) return undefined; // error: not terminated
                     newToken = { kind: TokenKind.TaggedText, content: contentText, type: contentClass };
                     break;
+                case "$":
                 case "%":
                     const param = eatToken(c => /[a-zA-Z0-9_=]/.test(c), true).split("=");
                     if (param.length > 2) return undefined; // error: invalid parameter
-                    newToken = { kind: TokenKind.Parameter, content: param[0], type: param[1] };
+                    newToken = { kind: (char === "$") ? TokenKind.ParamRef : TokenKind.Parameter, content: param[0], type: param[1] };
                     break;
             }
 
@@ -844,6 +849,7 @@ namespace ts.pxtc {
                         break;
                     case TokenKind.Pipe:
                     case TokenKind.Parameter:
+                    case TokenKind.ParamRef:
                         if (open) {
                             return undefined; // error: style marks should be closed
                         }
@@ -861,7 +867,12 @@ namespace ts.pxtc {
 
             /* tslint:disable:possible-timing-attack  (not a security critical codepath) */
             if (token == TokenKind.Parameter) {
-                const param: BlockParameter = { kind: "param", name: tokens[i].content, shadowBlockId: tokens[i].type };
+                const param: BlockParameter = { kind: "param", name: tokens[i].content, shadowBlockId: tokens[i].type, ref: false };
+                parts.push(param);
+                parameters.push(param);
+            }
+            else if (token == TokenKind.ParamRef) {
+                const param: BlockParameter = { kind: "param", name: tokens[i].content, shadowBlockId: tokens[i].type, ref: true };
                 parts.push(param);
                 parameters.push(param);
             }

@@ -62,7 +62,8 @@ namespace pxt.blocks {
 
     export interface HandlerArg {
         name: string,
-        type: string
+        type: string,
+        inBlockDef: boolean
     }
 
     // Information for blocks that compile to function calls but are defined by vanilla Blockly
@@ -104,12 +105,23 @@ namespace pxt.blocks {
             defParameters.push(...fn.attributes._expandedDef.parameters);
         }
 
+        const refMap: Map<pxtc.BlockParameter> = {};
+
+        const definitionsWithoutRefs = defParameters ? defParameters.filter(p =>  {
+            if (p.ref) {
+                refMap[p.name] = p;
+                return false;
+            }
+            return true;
+        }) : [];
+
         if (instance && hasBlockDef && defParameters.length) {
-            const defName = defParameters[0].name;
+            const def = refMap[THIS_NAME] || defParameters[0];
+            const defName = def.name;
             res.thisParameter = {
                 actualName: THIS_NAME,
                 definitionName: defName,
-                shadowBlockId: defParameters[0].shadowBlockId,
+                shadowBlockId: def.shadowBlockId,
                 type: fn.namespace,
 
                 // Normally we pass ths actual parameter name, but the "this" parameter doesn't have one
@@ -120,16 +132,25 @@ namespace pxt.blocks {
         }
 
         if (fn.parameters) {
+            let defIndex = (instance && !refMap[THIS_NAME]) ? 1 : 0;
             fn.parameters.forEach((p, i) => {
-                const defIndex = instance ? i + 1 : i;
-                if (!hasBlockDef || defIndex < defParameters.length) {
-                    const def = hasBlockDef && defParameters[defIndex];
+                let def: pxtc.BlockParameter;
+
+                if (refMap[p.name]) {
+                    def = refMap[p.name];
+                }
+                else if (defIndex < definitionsWithoutRefs.length) {
+                    def = definitionsWithoutRefs[defIndex];
+                    ++defIndex;
+                }
+
+                if (def || !hasBlockDef) {
                     let range: { min: number, max: number } = undefined;
                     if (p.options && p.options["min"] && p.options["max"]) {
                         range = { min: p.options["min"].value, max: p.options["max"].value };
                     }
 
-                    const defName = def ? def.name : (bInfo ? bInfo.params[defIndex] : p.name);
+                    const defName = def ? def.name : (bInfo ? bInfo.params[defIndex++] : p.name);
 
                     (res.parameters as BlockParameter[]).push({
                         actualName: p.name,
@@ -137,17 +158,22 @@ namespace pxt.blocks {
                         defaultValue: p.default,
                         definitionName: defName,
                         shadowBlockId: def && def.shadowBlockId,
-                        isOptional: defIndex >= optionalStart,
+                        isOptional: defParameters ? defParameters.indexOf(def) >= optionalStart : false,
                         fieldEditor: fieldEditor(defName, p.name),
                         fieldOptions: fieldOptions(defName, p.name),
                         shadowOptions: shadowOptions(defName, p.name),
                         range
                     });
-
                 }
 
                 if (p.handlerParameters) {
-                    p.handlerParameters.forEach(arg => res.handlerArgs.push(arg))
+                    p.handlerParameters.forEach(arg => {
+                        res.handlerArgs.push({
+                            name: arg.name,
+                            type: arg.type,
+                            inBlockDef: defParameters ? defParameters.some(def => def.ref && def.name === arg.name) : false
+                        });
+                    })
                 }
             });
         }
