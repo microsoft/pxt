@@ -1,6 +1,7 @@
 # Summary
 
 * [About](/about)
+* [FAQ](/faq)
 
 ## #support
 
@@ -58,15 +59,15 @@
 
 ## #other
 
-## Miscellanous #misc
+## Miscellaneous #misc
 
-* Miscellanous
+* Miscellaneous
     * [About](/about)
     * [Support](/support)
-    * [FAQ](/faq)
     * [Translate](/translate)
     * [Sharing projects](/share)
     * [Offline support](/offline)
+    * [Save](/save)
 
 ## Developers #devs
 
@@ -74,4 +75,3 @@
     * [Command Line Interface](/cli)
     * [Visual Studio Code support](/code)
     * [Blocks Embed](/blocks-embed)
-
