@@ -286,14 +286,10 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
         return Promise.resolve();
     }
     const branch = pxt.appTarget.appTheme.crowdinBranch;
-    return passwordGetAsync(CROWDIN_KEY)
-        .then(key => {
-            key = key || process.env[pxt.crowdin.KEY_VARIABLE] as string;
-            if (!key) {
-                pxt.log(`crowdin operation skipped, crowdin token or '${pxt.crowdin.KEY_VARIABLE}' variable missing`);
-                return Promise.resolve();
-            }
-
+    return crowdinCredentialsAsync()
+        .then(crowdinCredentials => {
+            if (!crowdinCredentials) return Promise.resolve();
+            const key = crowdinCredentials.key;
             cmd = cmd.toLowerCase();
             if (!args[0] && (cmd != "clean" && cmd != "stats")) throw new Error(cmd == "status" ? "language missing" : "filename missing");
             switch (cmd) {
@@ -3779,7 +3775,7 @@ function crowdinCredentialsAsync(): Promise<{ prj: string; key: string; branch: 
         })
         .then(key => {
             if (!key) {
-                pxt.log(`crowdin upload skipped, crowdin token or '${pxt.crowdin.KEY_VARIABLE}' variable missing`);
+                pxt.log(`Crowdin operation skipped: credentials not found locally and '${pxt.crowdin.KEY_VARIABLE}' variable is missing`);
                 return undefined;
             }
             const branch = pxt.appTarget.appTheme.crowdinBranch;
@@ -3796,10 +3792,7 @@ function internalUploadTargetTranslationsAsync(uploadDocs: boolean) {
     pxt.log("retrieving Crowdin credentials...");
     return crowdinCredentialsAsync()
         .then(cred => {
-            if (!cred) {
-                pxt.log("could not get Crowdin credentials, aborting");
-                return Promise.resolve();
-            }
+            if (!cred) return Promise.resolve();
             pxt.log("got Crowdin credentials");
             const crowdinDir = pxt.appTarget.id;
             if (crowdinDir == "core") {
