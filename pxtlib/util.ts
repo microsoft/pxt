@@ -738,9 +738,12 @@ namespace ts.pxtc.Util {
     }
 
     export function normalizeLanguageCode(code: string): string {
-        if (!/^(es|pt|si|sv|zh)/i.test(code))
-            code = code.split("-")[0]
-        return code;
+        const langParts = /^(\w{2})-(\w{2}$)/i.exec(code);
+        if (langParts && langParts[1] && langParts[2]) {
+            return `${langParts[1].toLowerCase()}-${langParts[2].toUpperCase()}`;
+        } else {
+            return code.toLowerCase();
+        }
     }
 
     export function isLocaleEnabled(code: string): boolean {
