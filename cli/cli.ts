@@ -5034,7 +5034,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
     if (!packages) {
         pxt.log(`packages section not found in targetconfig.json`)
     }
-    let errors = 0;
+    let errors: string[] = [];
     let todo: string[];
     const repos: pxt.Map<{ fullname: string; tag: string }> = {};
     const pkgsroot = path.join("temp", "ghpkgs");
@@ -5060,7 +5060,8 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
         const pkgpgh = todo.pop();
         if (!pkgpgh) {
             pxt.log(`------------------------`)
-            pxt.log(`${errors} packages with errors`);
+            pxt.log(`${errors.length} packages with errors`);
+            errors.forEach(er => pxt.log(`  ${er}`));
             return Promise.resolve();
         }
 
@@ -5074,7 +5075,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
             .then(() => pxtAsync(pkgdir, ["install"]))
             .then(() => pxtAsync(pkgdir, buildArgs))
             .catch(e => {
-                errors++;
+                errors.push(pkgpgh);
                 pxt.log(e);
                 return Promise.resolve();
             })
