@@ -1211,18 +1211,7 @@ namespace pxt.blocks {
             argumentDeclaration = b.mutation.compileMutation(e, comments);
         }
         else if (stdfun.comp.handlerArgs.length) {
-            let handlerArgs: string[] = []; // = stdfun.handlerArgs.map(arg => escapeVarName(b.getFieldValue("HANDLER_" + arg.name), e));
-            for (let i = 0; i < stdfun.comp.handlerArgs.length; i++) {
-                const arg = stdfun.comp.handlerArgs[i];
-                const varField = b.getField("HANDLER_" + arg.name);
-                const varName = varField && varField.getText();
-                if (varName !== null) {
-                    handlerArgs.push(escapeVarName(varName, e));
-                }
-                else {
-                    break;
-                }
-            }
+            let handlerArgs = getEscapedCBParameters(b, stdfun, e);
             argumentDeclaration = mkText(`function (${handlerArgs.join(", ")})`)
         }
 
@@ -1496,14 +1485,13 @@ namespace pxt.blocks {
 
             if (stdFunc && stdFunc.comp.handlerArgs.length) {
                 let foundIt = false;
-                stdFunc.comp.handlerArgs.forEach(arg => {
+                const names = getEscapedCBParameters(b, stdFunc, e);
+                names.forEach(varName => {
                     if (foundIt) return;
-                    const varField = b.getField("HANDLER_" + arg.name);
-                    let varName = varField && varField.getText();
-                    if (varName != null && escapeVarName(varName, e) === name) {
+                    if (varName === name) {
                         foundIt = true;
                     }
-                });
+                })
                 if (foundIt) {
                     return true;
                 }
@@ -1546,11 +1534,10 @@ namespace pxt.blocks {
 
             let stdFunc = e.stdCallTable[b.type];
             if (stdFunc && stdFunc.comp.handlerArgs.length) {
-                stdFunc.comp.handlerArgs.forEach(arg => {
-                    const varField = b.getField("HANDLER_" + arg.name)
-                    let varName = varField && varField.getText();
+                const names = getEscapedCBParameters(b, stdFunc, e);
+                names.forEach((varName, index) => {
                     if (varName != null) {
-                        trackLocalDeclaration(escapeVarName(varName, e), arg.type);
+                        trackLocalDeclaration(escapeVarName(varName, e), stdFunc.comp.handlerArgs[index].type);
                     }
                 });
             }
@@ -1914,6 +1901,37 @@ namespace pxt.blocks {
         });
 
         return res;
+    }
+
+    function getEscapedCBParameters(b: Blockly.Block, stdfun: StdFunc, e: Environment) {
+        let handlerArgs: string[] = [];
+        if (stdfun.attrs.draggableParameters) {
+            for (let i = 0; i < stdfun.comp.handlerArgs.length; i++) {
+                const arg = stdfun.comp.handlerArgs[i];
+                const varBlock = getInputTargetBlock(b, "HANDLER_DRAG_PARAM_" + arg.name) as Blockly.Block;
+                const varName = varBlock && varBlock.getField("VAR").getText();
+                if (varName !== null) {
+                    handlerArgs.push(escapeVarName(varName, e));
+                }
+                else {
+                    break;
+                }
+            }
+        }
+        else {
+            for (let i = 0; i < stdfun.comp.handlerArgs.length; i++) {
+                const arg = stdfun.comp.handlerArgs[i];
+                const varField = b.getField("HANDLER_" + arg.name);
+                const varName = varField && varField.getText();
+                if (varName !== null) {
+                    handlerArgs.push(escapeVarName(varName, e));
+                }
+                else {
+                    break;
+                }
+            }
+        }
+        return handlerArgs;
     }
 
     interface Rect {

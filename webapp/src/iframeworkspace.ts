@@ -50,6 +50,9 @@ function syncAsync(): Promise<pxt.editor.EditorSyncState> {
         data.invalidate("header:");
         data.invalidate("text:");
 
+        // controllerId is a unique identifier of the controller source
+        pxt.tickEvent("pxt.controller", {controllerId: msg.controllerId});
+
         return msg.editor;
     })
 }

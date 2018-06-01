@@ -821,6 +821,11 @@ ${output}</xml>`;
             return r;
         }
 
+        function getDraggableVariableBlock(valueName: string, varName: string) {
+            return mkValue(valueName,
+                getFieldBlock("variables_get_reporter", "VAR", varName, true), "variables_get_reporter");
+        }
+
         function getField(name: string, value: string): FieldNode {
             return {
                 kind: "field",
@@ -1225,8 +1230,7 @@ ${output}</xml>`;
                 r.fields = [];
                 r.inputs = [];
                 r.handlers = [];
-                r.inputs = [mkValue("VAR",
-                    getFieldBlock("variables_get_reporter", "VAR", renamed, true), "variables_get_reporter")];
+                r.inputs = [getDraggableVariableBlock("VAR", renamed)];
 
                 if (condition.operatorToken.kind === SK.LessThanToken) {
                     const ex = mkExpr("math_arithmetic");
@@ -1482,6 +1486,8 @@ ${output}</xml>`;
                         }
                         else {
                             let arrow = e as ArrowFunction;
+                            const sym = blocksInfo.blocksById[attributes.blockId];
+                            const paramDesc = sym.parameters[comp.thisParameter ? i - 1 : i];
                             if (arrow.parameters.length) {
                                 if (attributes.optionalVariableArgs) {
                                     r.mutation = {
@@ -1492,12 +1498,24 @@ ${output}</xml>`;
                                     });
                                 }
                                 else {
-                                    const sym = blocksInfo.blocksById[attributes.blockId];
-                                    const paramDesc = sym.parameters[comp.thisParameter ? i - 1 : i];
                                     arrow.parameters.forEach((parameter, i) => {
                                         const arg = paramDesc.handlerParameters[i];
-                                        addField(getField("HANDLER_" + arg.name, (parameter.name as ts.Identifier).text));
+                                        if (attributes.draggableParameters) {
+                                            addInput(getDraggableVariableBlock("HANDLER_DRAG_PARAM_" + arg.name, (parameter.name as ts.Identifier).text));
+                                        }
+                                        else {
+                                            addField(getField("HANDLER_" + arg.name, (parameter.name as ts.Identifier).text));
+                                        }
                                     });
+
+                                }
+                            }
+                            if (attributes.draggableParameters) {
+                                if (arrow.parameters.length < paramDesc.handlerParameters.length) {
+                                    for (let i = arrow.parameters.length; i < paramDesc.handlerParameters.length; i++) {
+                                        const arg = paramDesc.handlerParameters[i];
+                                        addInput(getDraggableVariableBlock("HANDLER_DRAG_PARAM_" + arg.name, arg.name));
+                                    }
                                 }
                             }
                         }

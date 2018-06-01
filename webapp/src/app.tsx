@@ -119,6 +119,7 @@ export class ProjectView
         // Only show the start screen if there are no initial projects requested
         // (e.g. from the URL hash or from WinRT activation arguments)
         const skipStartScreen = pxt.appTarget.appTheme.allowParentController
+            || pxt.shell.isControllerMode()
             || window.location.hash == "#editor";
         return !isSandbox && !skipStartScreen && !isProjectRelatedHash(hash);
     }
@@ -451,7 +452,10 @@ export class ProjectView
             },
             editor: this.state.header ? this.state.header.editor : ''
         })
-        if (pxt.appTarget.appTheme.allowParentController || pxt.appTarget.appTheme.allowPackageExtensions || pxt.appTarget.appTheme.allowSimulatorTelemetry)
+        if (pxt.appTarget.appTheme.allowParentController
+            || pxt.appTarget.appTheme.allowPackageExtensions
+            || pxt.appTarget.appTheme.allowSimulatorTelemetry
+            || pxt.shell.isControllerMode())
             pxt.editor.bindEditorMessages(this);
         this.forceUpdate(); // we now have editors prepared
     }
@@ -1093,6 +1097,9 @@ export class ProjectView
     ///////////////////////////////////////////////////////////
 
     openHome() {
+        const hasHome = !pxt.shell.isControllerMode();
+        if (!hasHome) return;
+
         this.stopSimulator();
         if (this.editor) this.editor.unloadFileAsync();
         // clear the hash
@@ -1992,7 +1999,7 @@ export class ProjectView
         //  ${targetTheme.accentColor ? "inverted accent " : ''}
         const targetTheme = pxt.appTarget.appTheme;
         const simOpts = pxt.appTarget.simulator;
-        const sharingEnabled = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing;
+        const sharingEnabled = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && !pxt.shell.isControllerMode();
         const sandbox = pxt.shell.isSandboxMode();
         const isBlocks = !this.editor.isVisible || this.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
         const sideDocs = !(sandbox || targetTheme.hideSideDocs);
@@ -2505,8 +2512,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const ws = /ws=(\w+)/.exec(window.location.href)
     const isSandbox = pxt.shell.isSandboxMode() || pxt.shell.isReadOnly();
+    const isController = pxt.shell.isControllerMode();
     if (ws) workspace.setupWorkspace(ws[1]);
-    else if (pxt.appTarget.appTheme.allowParentController) workspace.setupWorkspace("iframe");
+    else if (pxt.appTarget.appTheme.allowParentController || isController) workspace.setupWorkspace("iframe");
     else if (isSandbox) workspace.setupWorkspace("mem");
     else if (pxt.winrt.isWinRT()) workspace.setupWorkspace("uwp");
     else if (Cloud.isLocalHost() || electron.isPxtElectron) workspace.setupWorkspace("fs");
