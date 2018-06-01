@@ -91,6 +91,7 @@ namespace ts.pxtc {
 
     export interface EnumInfo {
         name: string;
+        memberName: string;
         blockId: string;
         isBitMask: boolean;
         firstValue?: number;
@@ -184,10 +185,14 @@ namespace ts.pxtc {
         expandableArgumentMode?: string; // can be disabled, enabled, or toggle
 
 
-        // Only for enum "getter" blocks (i.e. shim=ENUM_GET)
-        enumName?: string;
-        enumStartValue?: number;
-        enumIsBitMask?: boolean;
+        /* start enum-only attributes (i.e. a block with shim=ENUM_GET) */
+
+        enumName?: string; // The name of the enum as it will appear in the code
+        enumMemberName?: string; // If the name of the enum was "Colors", this would be "color"
+        enumStartValue?: number; // The lowest value to emit when going from blocks to TS
+        enumIsBitMask?: boolean; // if true then values will be emitted in the form "1 << n"
+
+        /* end enum-only attributes */
 
         optionalVariableArgs?: boolean;
         toolboxVariableArgs?: string;
@@ -483,6 +488,28 @@ namespace ts.pxtc {
         }
 
         for (let s of pxtc.Util.values(info.byQName)) {
+            if (s.attributes.shim === "ENUM_GET" && s.attributes.enumName && s.attributes.blockId) {
+                if (enumsByName[s.attributes.enumName]) {
+                    console.warn("Trying to overwrite enum " + s.attributes.enumName);
+                    continue;
+                }
+
+                if (!s.attributes.enumMemberName) {
+                    console.warn(`Enum block ${s.attributes.blockId} should specify enumMemberName`);
+                    continue;
+                }
+
+                const firstValue = parseInt(s.attributes.enumStartValue as any);
+
+                enumsByName[s.attributes.enumName] = {
+                    blockId: s.attributes.blockId,
+                    name: s.attributes.enumName,
+                    memberName: s.attributes.enumMemberName,
+                    firstValue: isNaN(firstValue) ? undefined : firstValue,
+                    isBitMask: s.attributes.enumIsBitMask
+                };
+            }
+
             if (s.attributes.blockCombine) {
                 if (!/@set/.test(s.name)) {
                     addCombined("get", s)
@@ -494,19 +521,7 @@ namespace ts.pxtc {
                     }
                     addCombined("set", s)
                 }
-            } else if (s.attributes.shim === "ENUM_GET" && s.attributes.enumName && s.attributes.blockId) {
-                if (enumsByName[s.attributes.enumName]) {
-                    console.warn("Trying to overwrite enum " + s.attributes.enumName);
-                    continue;
-                }
-                enumsByName[s.attributes.enumName] = {
-                    blockId: s.attributes.blockId,
-                    name: s.attributes.enumName,
-                    firstValue: parseInt(s.attributes.enumStartValue as any),
-                    isBitMask: s.attributes.enumIsBitMask
-                };
-            }
-            else if (!!s.attributes.block
+            } else if (!!s.attributes.block
                 && !s.attributes.fixedInstance
                 && s.kind != pxtc.SymbolKind.EnumMember
                 && s.kind != pxtc.SymbolKind.Module

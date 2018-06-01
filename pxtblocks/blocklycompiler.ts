@@ -397,6 +397,7 @@ namespace pxt.blocks {
                     default:
                         if (b.type in e.stdCallTable) {
                             const call = e.stdCallTable[b.type];
+                            if (call.attrs.shim === "ENUM_GET") return;
                             visibleParams(call, countOptionals(b)).forEach((p, i) => {
                                 const isInstance = call.isExtensionMethod && i === 0;
                                 if (p.definitionName && !b.getFieldValue(p.definitionName)) {
@@ -816,6 +817,7 @@ namespace pxt.blocks {
         errors: Blockly.Block[];
         renames: RenameMap;
         stats: pxt.Map<number>;
+        enums: pxtc.EnumInfo[];
     }
 
     export interface RenameMap {
@@ -850,7 +852,8 @@ namespace pxt.blocks {
             stdCallTable: e.stdCallTable,
             errors: e.errors,
             renames: e.renames,
-            stats: e.stats
+            stats: e.stats,
+            enums: e.enums
         };
     }
 
@@ -880,7 +883,8 @@ namespace pxt.blocks {
                 takenNames: {},
                 oldToNewFunctions: {}
             },
-            stats: {}
+            stats: {},
+            enums: []
         }
     };
 
@@ -1108,6 +1112,11 @@ namespace pxt.blocks {
         let args: JsNode[]
         if (isMutatingBlock(b) && b.mutation.getMutationType() === MutatorTypes.RestParameterMutator) {
             args = b.mutation.compileMutation(e, comments).children;
+        }
+        else if (func.attrs.shim === "ENUM_GET") {
+            const enumName = func.attrs.enumName;
+            const enumMember = b.getFieldValue("MEMBER").replace(/^\d+/, "");
+            return H.mkPropertyAccess(enumMember, mkText(enumName));
         }
         else {
             args = visibleParams(func, countOptionals(b)).map((p, i) => compileArgument(e, b, p, comments, func.isExtensionMethod && i === 0 && !func.isExpression));
@@ -1441,6 +1450,10 @@ namespace pxt.blocks {
                 }
             });
 
+            if (blockInfo.enumsByName) {
+                Object.keys(blockInfo.enumsByName).forEach(k => e.enums.push(blockInfo.enumsByName[k]));
+            }
+
             blockInfo.blocks
                 .forEach(fn => {
                     if (e.stdCallTable[fn.attributes.blockId]) {
@@ -1618,6 +1631,49 @@ namespace pxt.blocks {
                 }
             });
 
+            const stmtsEnums: JsNode[] = [];
+            e.enums.forEach(info => {
+                const models = w.getVariablesOfType(info.name);
+                if (models && models.length) {
+                    const members: [string, number][] = models.map(m => {
+                        const match = /^(\d+)([^0-9].*)$/.exec(m.name);
+                        if (match) {
+                            return [match[2], parseInt(match[1])] as [string, number];
+                        }
+                        else {
+                            // Someone has been messing with the XML...
+                            return [m.name, -1] as [string, number];
+                        }
+                    });
+
+                    members.sort((a, b) => a[1] - b[1]);
+
+                    const nodes: JsNode[] = [];
+                    let lastValue = -1;
+                    members.forEach(([name, value], index) => {
+                        if (value === lastValue + 1) {
+                            nodes.push(mkText(name));
+                        }
+                        else {
+                            let valueNode = H.mkNumberLiteral(value);
+                            if (info.isBitMask) {
+                                const shift = Math.log2(value);
+                                if (Math.floor(shift) === shift) {
+                                    valueNode = H.mkSimpleCall("<<", [H.mkNumberLiteral(1), H.mkNumberLiteral(shift)]);
+                                }
+                            }
+
+                            nodes.push(H.mkAssign(mkText(name), valueNode));
+                        }
+                        lastValue = value;
+                    });
+                    stmtsEnums.push(mkGroup([
+                        mkText(`enum ${info.name}`),
+                        mkBlock([mkCommaSep(nodes, true)])
+                    ]));
+                }
+            });
+
             // All variables in this script are compiled as locals within main unless loop or previsouly assigned
             const stmtsVariables = e.bindings.filter(b => !isCompiledAsLocalVariable(b) && b.assigned != VarUsage.Assign)
                 .map(b => {
@@ -1648,7 +1704,7 @@ namespace pxt.blocks {
                     return mkStmt(mkText("let " + b.name + tp + " = "), defl)
                 });
 
-            return stmtsVariables.concat(stmtsMain);
+            return stmtsEnums.concat(stmtsVariables.concat(stmtsMain));
         } catch (err) {
             let be: Blockly.Block = (err as any).block;
             if (be) {

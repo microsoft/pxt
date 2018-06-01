@@ -873,7 +873,7 @@ ${output}</xml>`;
                 if (env.declaredEnums[enumName]) {
                     const enumInfo = blocksInfo.enumsByName[enumName];
                     if (enumInfo && enumInfo.blockId) {
-                        return getFieldBlock(enumInfo.blockId, "VALUE", n.name.text);
+                        return getFieldBlock(enumInfo.blockId, "MEMBER", n.name.text);
                     }
                 }
             }
