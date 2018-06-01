@@ -5101,8 +5101,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
             pxt.log(`found ${todo.length} packages`);
             // 2. process each repo
             return nextAsync();
-        })
-        );
+        });
 }
 
 function initCommands() {
