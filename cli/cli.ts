@@ -3292,7 +3292,7 @@ function testDirAsync(parsed: commandParser.ParsedCommand) {
                 .then(testAsync)
                 .then(() => {
                     if (pxt.appTarget.compile.hasHex)
-                    nodeutil.writeFileSync(hexPath, fs.readFileSync(`built/binary.${pxt.appTarget.compile.useUF2 ? "uf2" : "hex"}`))
+                        nodeutil.writeFileSync(hexPath, fs.readFileSync(`built/binary.${pxt.appTarget.compile.useUF2 ? "uf2" : "hex"}`))
                 })
         } else {
             let start = Date.now()
@@ -5027,6 +5027,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
         pxt.log(`targetconfig.json not found`);
         return Promise.resolve();
     }
+    const cloud = !!parsed.flags["cloud"];
     const warnDiv = !!parsed.flags["warndiv"];
     const targetConfig = nodeutil.readJson("targetconfig.json") as pxt.TargetConfig;
     const packages = targetConfig.packages;
@@ -5046,7 +5047,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
         })
     }
 
-    function pxtAsync(dir: string, ...args: string[]) {
+    function pxtAsync(dir: string, args: string[]) {
         return nodeutil.spawnAsync({
             cmd: "node",
             args: [path.join(process.cwd(), "node_modules/pxt-core/pxt-cli/cli.js")].concat(args),
@@ -5065,10 +5066,13 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
 
         pxt.log(`  ${pkgpgh}`)
         // clone or sync package
+        const buildArgs = ["build"];
+        if (warnDiv) buildArgs.push("--warndiv");
+        if (cloud) buildArgs.push("--cloud");
         const pkgdir = path.join(pkgsroot, pkgpgh);
         return gitAsync(".", "clone", "-q", "-b", repos[pkgpgh].tag, `https://github.com/${pkgpgh}`, pkgdir)
-            .then(() => pxtAsync(pkgdir, "install"))
-            .then(() => warnDiv ? pxtAsync(pkgdir, "build", "--warndiv") : pxtAsync(pkgdir, "build"))
+            .then(() => pxtAsync(pkgdir, ["install"]))
+            .then(() => pxtAsync(pkgdir, buildArgs))
             .catch(e => {
                 errors++;
                 pxt.log(e);
@@ -5083,18 +5087,21 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
         .then(() => pxt.github.searchAsync("", packages))
         .then(ghrepos => ghrepos.filter(ghrepo => ghrepo.status == pxt.github.GitRepoStatus.Approved)
             .map(ghrepo => ghrepo.fullName).concat(packages.approvedRepos || []))
-        .then(fullnames => Promise.all(fullnames.map(fullname => pxt.github.listRefsAsync(fullname)
-            .then(tags => {
-                const tag = tags.reverse()[0] || "master";
-                repos[fullname] = { fullname, tag };
-            }))
-        ).then(() => {
+        .then(fullnames => {
+            pxt.log(`found ${fullnames.length} packages`);
+            fullnames.forEach(fn => pxt.log(`  ${fn}`));
+            return Promise.all(fullnames.map(fullname => pxt.github.listRefsAsync(fullname)
+                .then(tags => {
+                    const tag = tags.reverse()[0] || "master";
+                    repos[fullname] = { fullname, tag };
+                }))
+            );
+        }).then(() => {
             todo = Object.keys(repos);
             pxt.log(`found ${todo.length} packages`);
             // 2. process each repo
             return nextAsync();
-        })
-        );
+        });
 }
 
 function initCommands() {
@@ -5155,7 +5162,7 @@ function initCommands() {
         flags: {
             cloud: { description: "Force build to happen in the cloud" },
             debug: { description: "Emit debug information with build" },
-            warndiv: { description: "Warns about division operators"}
+            warndiv: { description: "Warns about division operators" }
         }
     }, buildAsync);
 
@@ -5461,7 +5468,8 @@ function initCommands() {
         name: "testghpkgs",
         help: "Download and build approved github packages",
         flags: {
-            warndiv: { description: "Warns about division operators"}
+            warndiv: { description: "Warns about division operators" },
+            cloud: { description: "use cloud compiler" }
         }
     }, testGithubPackagesAsync);
 
