@@ -59,7 +59,8 @@ namespace pxtblockly {
                 }
 
                 if (!nameIsValid) {
-                    promptAndCreateEnum(ws, opts, lf("Names must be valid JavaScript identifiers"));
+                    Blockly.alert(lf("Names must start with a letter and can only contain letters, numbers, '$', and '_'."),
+                        () => promptAndCreateEnum(ws, opts, message));
                     return;
                 }
 
@@ -68,7 +69,8 @@ namespace pxtblockly {
                 for (let i = 0; i < existing.length; i++) {
                     const [name, value] = parseName(existing[i]);
                     if (name === response) {
-                        promptAndCreateEnum(ws, opts, lf("The name '{0}' is already taken", response));
+                        Blockly.alert(lf("A {0} named '{1}' already exists.", opts.memberName, response),
+                            () => promptAndCreateEnum(ws, opts, message));
                         return;
                     }
                     highestValue = Math.max(highestValue, value);
