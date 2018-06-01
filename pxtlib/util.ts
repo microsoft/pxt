@@ -737,7 +737,7 @@ namespace ts.pxtc.Util {
 
     }
 
-    function normalizeLanguageCode(code: string): string {
+    export function normalizeLanguageCode(code: string): string {
         if (!/^(es|pt|si|sv|zh)/i.test(code))
             code = code.split("-")[0]
         return code;
