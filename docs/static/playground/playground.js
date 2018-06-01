@@ -205,7 +205,7 @@
 
             samplePath = 'static/playground/samples/' + samplePath;
 
-            var js = xhr(samplePath + '/sample.ts').then(function (response) { return response.responseText });
+            var js = xhr(samplePath + '/sample.js').then(function (response) { return response.responseText });
             monaco.Promise.join([js]).then(function (_) {
                 var js = _[0];
                 LOADED_SAMPLES.push({
