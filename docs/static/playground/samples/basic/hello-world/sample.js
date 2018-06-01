@@ -1,4 +1,5 @@
 
+//% color="#AA278D"
 namespace basic {
 
     //% block
