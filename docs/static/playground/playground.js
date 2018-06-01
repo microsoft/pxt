@@ -301,10 +301,10 @@
             return data[lang].model.getValue();
         };
 
-        var commonPromise = xhr("/static/playground/pxt-common/pxt-core.d.ts")
+        var commonPromise = xhr("/static/playground/pxt-common/pxt-core.d.js")
             .then(function (response) { return response.responseText });
 
-        var helperPromise = xhr("/static/playground/pxt-common/pxt-helpers.ts")
+        var helperPromise = xhr("/static/playground/pxt-common/pxt-helpers.js")
             .then(function (response) { return response.responseText });
 
         Promise.all([commonPromise, helperPromise]).then(function (all) {
