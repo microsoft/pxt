@@ -324,7 +324,12 @@
             runContainer.appendChild(runIframe);
 
             runIframe.addEventListener('load', function (e) {
-                runIframe.contentWindow.load(getLang('js'), common, helpers);
+                var msg = {
+                    js: getLang('js'),
+                    common: common,
+                    helpers: helpers
+                }
+                runIframe.contentWindow.postMessage(msg, "*");
             });
 
         });

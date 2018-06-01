@@ -32,17 +32,6 @@
             padding: 10px;
         }
     </style>
-
-    <script type="text/javascript">
-        var receivedCall = null;
-        window.load = function (js, common, helpers) {
-            receivedCall = {
-                js: js,
-                common: common,
-                helpers: helpers
-            };
-        };
-    </script>
 </head>
 
 <body>
@@ -92,7 +81,12 @@
             corepkg: undefined
         });
 
-        window.load = function (js, common, helpers) {
+        window.addEventListener("message", function (ev) {
+            var msg = ev.data;
+            handleMessage(msg.js, msg.common, msg.helpers);
+        });
+
+        var handleMessage = function (js, common, helpers) {
             if (js) {
                 console.log(js);
                 // Get opts
@@ -164,9 +158,6 @@
                     });
             }
         };
-        if (receivedCall) {
-            window.load(receivedCall.js, receivedCall.common, receivedCall.helpers);
-        }
     </script>
 </body>
 
