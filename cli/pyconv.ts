@@ -912,7 +912,7 @@ function typeAnnot(t: Type) {
     return B.mkText(": " + t2s(t))
 }
 
-function gardedScope(v: py.AST, f: () => B.JsNode) {
+function guardedScope(v: py.AST, f: () => B.JsNode) {
     try {
         return scope(f);
     }
@@ -922,7 +922,7 @@ function gardedScope(v: py.AST, f: () => B.JsNode) {
 }
 
 const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
-    FunctionDef: (n: py.FunctionDef) => gardedScope(n, () => {
+    FunctionDef: (n: py.FunctionDef) => guardedScope(n, () => {
         let isMethod = !!ctx.currClass && !ctx.currFun
         if (!isMethod)
             defvar(n.name, { fundef: n })
@@ -1028,7 +1028,7 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
         return B.mkStmt(B.mkGroup(nodes))
     }),
 
-    ClassDef: (n: py.ClassDef) => gardedScope(n, () => {
+    ClassDef: (n: py.ClassDef) => guardedScope(n, () => {
         setupScope(n)
         defvar(n.name, { classdef: n })
         U.assert(!ctx.currClass)
