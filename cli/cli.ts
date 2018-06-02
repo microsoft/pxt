@@ -4040,7 +4040,61 @@ interface SpriteInfo {
     frames?: string[];
 }
 
+function compressImg(data: ArrayLike<number>, width: number, height: number) {
+    U.assert(data.length == width * height)
+    let outp: number[] = []
+    let currcol = -1
+    let currnum = 0
 
+    let s = ""
+
+    let flush = () => {
+        if (currnum > 0) {
+            s += `${currcol}x${currnum} `
+            if (currnum <= 15) {
+                outp.push((currcol << 4) | currnum)
+            } else {
+                while (currnum) {
+                    outp.push((currcol << 4) | 0)
+                    let n = Math.min(255, currnum)
+                    outp.push(n)
+                    currnum -= n
+                }
+            }
+        }
+        currcol = -1
+        currnum = 0
+    }
+
+    for (let x = 0; x < width; ++x) {
+        let p = x
+        for (let y = 0; y < height; ++y) {
+            let c = data[p]
+            p += width
+            if (c != currcol) {
+                flush()
+                currcol = c
+            }
+            currnum++
+        }
+        flush()
+        console.log(s)
+        s = ""
+    }
+
+    return new Uint8Array(outp)
+}
+
+export function compressImageAsync(parsed: commandParser.ParsedCommand) {
+    ensurePkgDir()
+    return loadPkgAsync()
+        .then(() => {
+            let img = loadPNG(parsed.args[0])
+            let arr = compressImg(img.data, img.width, img.height)
+            console.log(new Buffer(arr).toString("hex"))
+            console.log(arr.length)
+        })
+}
 
 export function buildJResSpritesAsync(parsed: commandParser.ParsedCommand) {
     ensurePkgDir()
@@ -4048,8 +4102,70 @@ export function buildJResSpritesAsync(parsed: commandParser.ParsedCommand) {
         .then(() => buildJResSpritesCoreAsync(parsed))
 }
 
-function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
+function loadPNG(pngName: string) {
     const PNG: any = require("pngjs").PNG;
+
+    if (!pxt.appTarget.runtime || !pxt.appTarget.runtime.palette)
+        U.userError(`palette not defined in pxt.json`)
+
+    const palette = pxt.appTarget.runtime.palette.map(s => {
+        let v = parseInt(s.replace(/#/, ""), 16)
+        return [(v >> 16) & 0xff, (v >> 8) & 0xff, (v >> 0) & 0xff]
+    })
+
+    // use geometric distance on colors
+    function scale(v: number) {
+        return v * v
+    }
+
+    function closestColor(buf: Buffer, pix: number, alpha = true) {
+        if (alpha && buf[pix + 3] < 100)
+            return 0 // transparent
+        let mindelta = 0
+        let idx = -1
+        for (let i = alpha ? 1 : 0; i < palette.length; ++i) {
+            let delta = scale(palette[i][0] - buf[pix + 0]) + scale(palette[i][1] - buf[pix + 1]) + scale(palette[i][1] - buf[pix + 2])
+            if (idx < 0 || delta < mindelta) {
+                idx = i
+                mindelta = delta
+            }
+        }
+        return idx
+    }
+
+    let img = PNG.sync.read(fs.readFileSync(pngName)) as PNGImage
+
+    // add alpha channel
+    if (img.colorType != 6) {
+        img.depth = 8
+        for (let i = 0; i < img.data.length; i += 4) {
+            if (closestColor(img.data, i, false) == 0)
+                img.data[i + 3] = 0x00
+        }
+    }
+
+    if (img.depth != 8)
+        U.userError(`only 8 bit per channel png images supported`)
+    if (img.width > 255 || img.height > 255)
+        U.userError(`PNG image too big`)
+    if (img.data.length != 4 * img.width * img.height)
+        U.userError(`PNG size invalid`)
+
+    let data = new Buffer(img.data.length / 4)
+    let outp = 0
+    for (let i = 0; i < img.data.length; i += 4) {
+        data[outp++] = closestColor(img.data, i)
+    }
+
+    return {
+        width: img.width,
+        height: img.height,
+        data: data
+    }
+}
+
+
+function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
 
     const dir = parsed.args[0]
     if (!dir)
@@ -4078,14 +4194,6 @@ function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
 
     star.dataEncoding = star.dataEncoding || "base64"
 
-    if (!pxt.appTarget.runtime || !pxt.appTarget.runtime.palette)
-        U.userError(`palette not defined in pxt.json`)
-
-    const palette = pxt.appTarget.runtime.palette.map(s => {
-        let v = parseInt(s.replace(/#/, ""), 16)
-        return [(v >> 16) & 0xff, (v >> 8) & 0xff, (v >> 0) & 0xff]
-    })
-
     let ts = `namespace ${metaInfo.star.namespace} {\n`
 
     for (let fn of nodeutil.allFiles(dir, 1)) {
@@ -4106,26 +4214,6 @@ function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
 
     return Promise.resolve()
 
-    // use geometric distance on colors
-    function scale(v: number) {
-        return v * v
-    }
-
-    function closestColor(buf: Buffer, pix: number, alpha = true) {
-        if (alpha && buf[pix + 3] < 100)
-            return 0 // transparent
-        let mindelta = 0
-        let idx = -1
-        for (let i = alpha ? 1 : 0; i < palette.length; ++i) {
-            let delta = scale(palette[i][0] - buf[pix + 0]) + scale(palette[i][1] - buf[pix + 1]) + scale(palette[i][1] - buf[pix + 2])
-            if (idx < 0 || delta < mindelta) {
-                idx = i
-                mindelta = delta
-            }
-        }
-        return idx
-    }
-
     function processImage(basename: string, pngName: string, jsonName: string) {
         let info: SpriteInfo = {}
         if (nodeutil.fileExistsSync(jsonName))
@@ -4133,26 +4221,9 @@ function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
         if (!info.width) info.width = metaInfo.width
         if (!info.height) info.height = metaInfo.height
 
-        let sheet = PNG.sync.read(fs.readFileSync(pngName)) as PNGImage
         let imgIdx = 0
 
-        // add alpha channel
-        if (sheet.colorType == 0) {
-            sheet.colorType = 6
-            sheet.depth = 8
-            let transparent = palette[0][0] < 10 ? 0x00 : 0xff
-            for (let i = 0; i < sheet.data.length; i += 4) {
-                if (closestColor(sheet.data, i, false) == 0)
-                    sheet.data[i + 3] = 0x00
-            }
-        }
-
-        if (sheet.colorType != 6)
-            U.userError(`only RGBA png images supported`)
-        if (sheet.depth != 8)
-            U.userError(`only 8 bit per channel png images supported`)
-        if (sheet.width > 255 || sheet.height > 255)
-            U.userError(`PNG image too big`)
+        const sheet = loadPNG(pngName)
 
         if (!info.width) info.width = sheet.width
         if (!info.height) info.height = sheet.height
@@ -4168,8 +4239,8 @@ function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
                 img.width = info.width
                 img.height = info.height
                 for (let i = 0; i < info.height; ++i) {
-                    let src = x * 4 + (y + i) * sheet.width * 4
-                    sheet.data.copy(img.data, i * info.width * 4, src, src + info.width * 4)
+                    let src = x + (y + i) * sheet.width
+                    sheet.data.copy(img.data, i * info.width, src, src + info.width)
                 }
                 let key = basename + imgIdx
                 if (info.frames && info.frames[imgIdx]) {
@@ -4181,23 +4252,13 @@ function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
                     key = basename
                 }
 
-                let hex = pxtc.f4EncodeImg(img.width, img.height, bpp, (x, y) =>
-                    closestColor(img.data, 4 * (x + y * img.width)))
+                let hex = pxtc.f4EncodeImg(img.width, img.height, bpp,
+                    (x, y) => img.data[x + y * img.width])
                 let data = new Buffer(hex, "hex").toString(star.dataEncoding)
 
-                let storeIcon = false
 
-                if (storeIcon) {
-                    let jres = jresources[key]
-                    if (!jres) {
-                        jres = jresources[key] = {} as any
-                    }
-                    jres.data = data
-                    jres.icon = 'data:image/png;base64,' + PNG.sync.write(img).toString('base64');
-                } else {
-                    // use the short form
-                    jresources[key] = data as any
-                }
+                // use the short form
+                jresources[key] = data as any
 
                 ts += `    //% fixedInstance jres blockIdentity=${metaInfo.blockIdentity}\n`
                 ts += `    export const ${key} = ${metaInfo.creator}(hex\`\`);\n`
@@ -5274,6 +5335,13 @@ function initCommands() {
         help: "collects sprites into a .jres file",
         argString: "<directory>",
     }, buildJResSpritesAsync);
+
+
+    p.defineCommand({
+        name: "compressimg",
+        help: "RLE compresses a png image",
+        argString: "<PNG image>",
+    }, compressImageAsync);
 
     p.defineCommand({
         name: "gist",
