@@ -114,6 +114,10 @@
                         var apiInfo = pxtc.getApiInfo(opts, resp.ast);
                         var blockInfo = pxtc.getBlocksInfo(apiInfo);
 
+                        // Initialize blocks in Blockly
+                        pxt.blocks.initialize(blockInfo);
+
+                        // Inject blocks
                         var nsMap = {};
                         pxt.blocks.injectBlocks(blockInfo).forEach(fn => {
                             let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
@@ -137,9 +141,15 @@
 
                             // Go through every block and get it's toolbox xml. 
                             blocks.forEach(fn => {
-                                let comp = pxt.blocks.compileInfo(fn);
-                                blockXml = pxt.blocks.createToolboxBlock(this.blockInfo, fn, comp);
-                                blocksDiv.appendChild(blockXml);
+                                if (fn.attributes.debug && !pxt.options.debug) return;
+                                if (fn.attributes.deprecated || fn.attributes.blockHidden) return;
+                                try {
+                                    let comp = pxt.blocks.compileInfo(fn);
+                                    blockXml = pxt.blocks.createToolboxBlock(blockInfo, fn, comp);
+                                    blocksDiv.appendChild(blockXml);
+                                } catch (e) {
+                                    console.log(e);
+                                }
                             })
                         })
 

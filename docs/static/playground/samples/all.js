@@ -18,6 +18,12 @@
             name: "Types of Blocks",
             id: "basic-types",
             path: "basic/types"
+        },
+        {
+            chapter: "Field editors",
+            name: "Color wheel",
+            id: "field-editors-color",
+            path: "field-editors/color"
         }
     ];
     
