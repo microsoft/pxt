@@ -21,9 +21,15 @@
         },
         {
             chapter: "Field editors",
-            name: "Color wheel",
+            name: "Color",
             id: "field-editors-color",
             path: "field-editors/color"
+        },
+        {
+            chapter: "Field editors",
+            name: "Dropdowns",
+            id: "field-editors-dropdowns",
+            path: "field-editors/dropdowns"
         }
     ];
     
