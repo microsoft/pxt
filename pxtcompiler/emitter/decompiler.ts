@@ -2379,7 +2379,6 @@ ${output}</xml>`;
             if (!info) return Util.lf("Enum declarations in user code must have a block")
 
             let fail = false;
-            let values: number[] = [];
 
             // Initializers can either be a numeric literal or of the form a << b
             n.members.forEach(member => {
@@ -2387,7 +2386,6 @@ ${output}</xml>`;
                 if (fail) return;
                 if (member.initializer) {
                     if (member.initializer.kind === SK.NumericLiteral) {
-                        values.push(parseInt((member.initializer as NumericLiteral).text));
                         return;
                     }
                     else if (member.initializer.kind === SK.BinaryExpression) {
@@ -2395,8 +2393,6 @@ ${output}</xml>`;
                         if (ex.operatorToken.kind === SK.LessThanLessThanToken) {
                             if (ex.left.kind === SK.NumericLiteral && ex.right.kind === SK.NumericLiteral) {
                                 if ((ex.left as NumericLiteral).text == "1") {
-                                    const rightValue = parseInt((ex.right as NumericLiteral).text);
-                                    values.push(1 << rightValue);
                                     return;
                                 }
                             }
@@ -2404,40 +2400,7 @@ ${output}</xml>`;
                     }
                     fail = true;
                 }
-                else if (values.length === 0) {
-                    values.push(0);
-                }
-                else {
-                    values.push(values[values.length - 1] + 1)
-                }
             });
-
-            if (!fail) {
-                values.sort((a, b) => a - b);
-                if (!info.isBitMask) {
-                    const start = info.firstValue || 0;
-                    for (let i = 0; i < values.length; i++) {
-                        if (isNaN(values[i])) {
-                            fail = true;
-                            break;
-                        }
-                        if (values[i] !== start + i) {
-                            return Util.lf("Enum members must be squential with no gaps")
-                        }
-                    }
-                }
-                else {
-                    for (let i = 0; i < values.length; i++) {
-                        if (isNaN(values[i])) {
-                            fail = true;
-                            break;
-                        }
-                        if (values[i] !== 1 << i) {
-                            return Util.lf("Enum members for bit masks must be sequential powers of 2");
-                        }
-                    }
-                }
-            }
 
             if (fail) {
                 return Util.lf("Invalid initializer for enum member")

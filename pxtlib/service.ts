@@ -95,6 +95,10 @@ namespace ts.pxtc {
         blockId: string;
         isBitMask: boolean;
         firstValue?: number;
+        initialMembers: string[];
+
+        promptMemberName: string;
+        promptHint: string;
     }
 
     export interface CompletionEntry {
@@ -191,7 +195,9 @@ namespace ts.pxtc {
         enumName?: string; // The name of the enum as it will appear in the code
         enumMemberName?: string; // If the name of the enum was "Colors", this would be "color"
         enumStartValue?: number; // The lowest value to emit when going from blocks to TS
-        enumIsBitMask?: boolean; // if true then values will be emitted in the form "1 << n"
+        enumIsBitMask?: boolean; // If true then values will be emitted in the form "1 << n"
+        enumPromptHint?: string; // The hint that will be displayed in the member creation prompt
+        enumInitialMembers?: string[]; // The initial enum values which will be given the lowest values available
 
         /* end enum-only attributes */
 
@@ -492,13 +498,28 @@ namespace ts.pxtc {
 
         for (let s of pxtc.Util.values(info.byQName)) {
             if (s.attributes.shim === "ENUM_GET" && s.attributes.enumName && s.attributes.blockId) {
+                let didFail = false;
                 if (enumsByName[s.attributes.enumName]) {
-                    console.warn("Trying to overwrite enum " + s.attributes.enumName);
-                    continue;
+                    console.warn(`Enum block ${s.attributes.blockId} trying to overwrite enum ${s.attributes.enumName}`);
+                    didFail = true;
                 }
 
                 if (!s.attributes.enumMemberName) {
                     console.warn(`Enum block ${s.attributes.blockId} should specify enumMemberName`);
+                    didFail = true;
+                }
+
+                if (!s.attributes.enumPromptHint) {
+                    console.warn(`Enum block ${s.attributes.blockId} should specify enumPromptHint`);
+                    didFail = true;
+                }
+
+                if (!s.attributes.enumInitialMembers || !s.attributes.enumInitialMembers.length) {
+                    console.warn(`Enum block ${s.attributes.blockId} should specify enumInitialMembers`);
+                    didFail = true;
+                }
+
+                if (didFail) {
                     continue;
                 }
 
@@ -509,7 +530,10 @@ namespace ts.pxtc {
                     name: s.attributes.enumName,
                     memberName: s.attributes.enumMemberName,
                     firstValue: isNaN(firstValue) ? undefined : firstValue,
-                    isBitMask: s.attributes.enumIsBitMask
+                    isBitMask: s.attributes.enumIsBitMask,
+                    initialMembers: s.attributes.enumInitialMembers,
+                    promptHint: s.attributes.enumPromptHint,
+                    promptMemberName: s.attributes.enumMemberName
                 };
             }
 
@@ -703,6 +727,10 @@ namespace ts.pxtc {
 
         if (res.trackArgs) {
             res.trackArgs = ((res.trackArgs as any) as string).split(/[ ,]+/).map(s => parseInt(s) || 0)
+        }
+
+        if (res.enumInitialMembers) {
+            res.enumInitialMembers = ((res.enumInitialMembers as any) as string).split(/[ ,]+/);
         }
 
         if (res.blockExternalInputs && !res.inlineInputMode) {

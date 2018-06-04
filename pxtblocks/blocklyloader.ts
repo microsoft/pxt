@@ -653,12 +653,10 @@ namespace pxt.blocks {
                         }
                     }
                     else if (fn.attributes.shim === "ENUM_GET") {
+                        U.assert(!!fn.attributes.enumName, "Trying to create an ENUM_GET block without a valid enum name")
                         fields.push({
                             name: "MEMBER",
-                            field: new pxtblockly.FieldUserEnum({
-                                enumName: fn.attributes.enumName,
-                                memberName: fn.attributes.enumMemberName
-                            })
+                            field: new pxtblockly.FieldUserEnum(info.enumsByName[fn.attributes.enumName])
                         });
                         return;
                     }
