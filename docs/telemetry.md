@@ -67,10 +67,10 @@ Property | Description
 
 #### User Session telemetry
 
-A session represents a series of user actions. A session starts with a user action. Sessions expire on either of these conditions:
+A session represents a series of user actions. A session starts with a user action. Sessions expire when one of these conditions occurs:
 
 * 30 minutes of inactivity.
-* After 24 hours while any period of inactivity is less than 30 minutes.
+* A session maximum duration of 24 hours, regardless of any measured activity.
 
 Property | Description
 ---|---
