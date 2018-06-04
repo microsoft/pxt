@@ -24,6 +24,8 @@ namespace pxtblockly {
         private initVariables() {
             if (this.sourceBlock_ && this.sourceBlock_.workspace) {
                 if (this.sourceBlock_.isInFlyout) {
+                    // Can't create variables from within the flyout, so we just have to fake it
+                    // by setting the text instead of the value
                     this.setText(this.opts.initialMembers[0]);
                 }
                 else {

@@ -47,14 +47,14 @@ namespace enumTest {
 
     //% shim=ENUM_GET
     //% blockId=enum_user_shim
-    //% enumName="PlainOldEnum"
+    //% enumName="PlainOldEnum" enumMemberName="whatever" enumPromptHint="whatever" enumInitialMembers="whatever"
     export function userEnumShim(arg: number) {
         return arg;
     }
 
     //% shim=ENUM_GET
     //% blockId=enum_user_shim_with_start_value
-    //% enumName="EnumWithStart"
+    //% enumName="EnumWithStart" enumMemberName="whatever" enumPromptHint="whatever" enumInitialMembers="whatever"
     //% enumStartValue=3
     export function userEnumShimStartValue(arg: number) {
         return arg;
@@ -62,7 +62,7 @@ namespace enumTest {
 
     //% shim=ENUM_GET
     //% blockId=enum_user_shim_bit_mask
-    //% enumName="EnumOfFlags"
+    //% enumName="EnumOfFlags" enumMemberName="whatever" enumPromptHint="whatever" enumInitialMembers="whatever"
     //% enumIsBitMask=true
     export function userEnumShimBitMask(arg: number) {
         return arg;
