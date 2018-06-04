@@ -129,7 +129,7 @@ namespace pxt.github {
 
     export function listRefsExtAsync(repopath: string, namespace = "tags"): Promise<RefsResult> {
         let head: string = null
-        let fetch = !useProxy ?
+        const fetch = !useProxy() ?
             U.httpGetJsonAsync("https://api.github.com/repos/" + repopath + "/git/refs/" + namespace + "/?per_page=100") :
             U.httpGetJsonAsync(`${pxt.Cloud.apiRoot}gh/${repopath}/refs`)
                 .then(r => {
