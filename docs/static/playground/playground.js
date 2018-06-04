@@ -314,7 +314,7 @@
             // Load new iframe
             runIframe = document.createElement('iframe');
             runIframe.id = 'runner';
-            runIframe.src = 'playground-runner.html';
+            runIframe.src = 'playground-runner';
             runIframe.className = 'run-iframe';
             runIframe.style.boxSizing = 'border-box';
             runIframe.style.height = runIframeHeight + 'px';
