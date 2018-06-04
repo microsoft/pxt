@@ -541,14 +541,4 @@ file('docs/playground.html', ['built/web/pxtworker.js', 'built/web/pxtblockly.js
     jake.cpR("libs/pxt-common/pxt-core.d.ts", "docs/static/playground/pxt-common/pxt-core.d.js");
     jake.cpR("libs/pxt-common/pxt-helpers.ts", "docs/static/playground/pxt-common/pxt-helpers.js");
     jake.cpR("webapp/public/blockly/media", "docs/static/playground/blockly/media");
-
-    // These built files live in pxt-deployment-config/doccdn and are hosted for the playground to use
-    // Every so often we'd need to check a new version in, this step moves those files to the right spot for you 
-    if (fs.existsSync("../pxt-deployment-config/doccdn")) {
-        jake.cpR("built/web/pxtworker.js", "../pxt-deployment-config/doccdn/");
-        jake.cpR("built/web/pxtsim.js", "../pxt-deployment-config/doccdn/");
-        jake.cpR("built/web/pxtblockly.js", "../pxt-deployment-config/doccdn/");
-        jake.cpR("built/web/semantic.css", "../pxt-deployment-config/doccdn/");
-        jake.cpR("built/web/blockly.css", "../pxt-deployment-config/doccdn/");   
-    } 
 })
