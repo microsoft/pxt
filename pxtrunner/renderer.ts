@@ -553,7 +553,7 @@ namespace pxt.runner {
             cd.className = "ui cards";
             cd.setAttribute("role", "listbox")
             cards.forEach(card => {
-                // patch card url with version if necessary
+                // patch card url with version if necessary, we don't do this in the editor because that goes through the backend and passes the targetVersion then
                 const mC = /^\/(v\d+)/.exec(card.url);
                 const mP = /^\/(v\d+)/.exec(window.location.pathname);
                 const inEditor = /#doc/i.test(window.location.pathname);
