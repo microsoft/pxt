@@ -65,7 +65,7 @@ const defaultLanguages = ["en"];
 export let initialLang: string;
 
 export function setInitialLang(lang: string) {
-    initialLang = lang;
+    initialLang = pxt.Util.normalizeLanguageCode(lang);
 }
 
 export function getCookieLang() {
