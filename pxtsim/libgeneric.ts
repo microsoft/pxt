@@ -201,6 +201,11 @@ namespace pxsim {
         }
 
         export function round(n: number) { return Math.round(n) }
+        export function roundWithPrecision(x: number, digits: number): number {
+            if (digits <= 0) return Math.round(x);
+            let d = Math.pow(10, digits);
+            return Math.round(x * d) / d;
+        }
         export function ceil(n: number) { return Math.ceil(n) }
         export function floor(n: number) { return Math.floor(n) }
         export function sqrt(n: number) { return Math.sqrt(n) }
