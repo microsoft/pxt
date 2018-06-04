@@ -20,6 +20,12 @@
             path: "basic/types"
         },
         {
+            chapter: "Basic",
+            name: "Enumerations",
+            id: "basic-enums",
+            path: "basic/enums"
+        },
+        {
             chapter: "Field editors",
             name: "Color",
             id: "field-editors-color",
