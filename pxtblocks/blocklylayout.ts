@@ -146,10 +146,10 @@ namespace pxt.blocks.layout {
     }
 
     export function serializeNode(sg: Node): string {
-        return serializeSvg(new XMLSerializer().serializeToString(sg));
+        return serializeSvgString(new XMLSerializer().serializeToString(sg));
     }
 
-    export function serializeSvg(xmlString: string): string {
+    export function serializeSvgString(xmlString: string): string {
         return xmlString
             .replace(new RegExp('&nbsp;','g'), '&#160;'); // Replace &nbsp; with &#160; as a workaround for having nbsp missing from SVG xml
     }
