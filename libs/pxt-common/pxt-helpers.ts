@@ -200,8 +200,15 @@ namespace Math {
     //%
     export function roundWithPrecision(x: number, digits: number): number {
         digits = digits | 0;
+        // invalid digits input
         if (digits <= 0) return Math.round(x);
-        let d = Math.pow(10, digits);
-        return Math.round(x * d) / d;
+        if (x == 0) return 0;
+        let r = 0;
+        do {
+            const d = Math.pow(10, digits);
+            r = Math.round(x * d) / d;
+            digits++;
+        } while (r == 0);
+        return r;
     }
 }
