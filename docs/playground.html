@@ -7,10 +7,12 @@
     <meta name="Description" content="@description@" />
 
     <!-- @include meta.html -->
-    <!-- @include head.html -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width,height=device-height,user-scalable=no,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0">
 
-    <link rel="stylesheet" href="/static/playground/semantic.css" type="text/css">
-    
+
+    <link rel="stylesheet" href="/doccdn/semantic.css" type="text/css">
+
     <link data-inline="yes-please" href="/static/playground/spinner.css" rel="stylesheet" />
     <link data-inline="yes-please" href="/static/playground/playground.css" rel="stylesheet" />
 
@@ -21,8 +23,25 @@
     <pre data-preload="/playground/samples/basic/hello-world/sample.ts"></pre>
 
     <nav class="ui menu inverted fixed borderless">
-        <div class="ui item">
-            MakeCode Playground
+        <div class="menu left">
+            <div class="ui item">
+                MakeCode Playground
+            </div>
+        </div>
+
+        <div class="menu right">
+            <a href="/docs" class="ui item">
+                Home
+            </a>
+            <a href="/playground" class="ui item">
+                Playground
+            </a>
+            <a href="/defining-blocks" class="ui item">
+                Help defining blocks
+            </a>
+            <a href="https://github.com/Microsoft/pxt-sample" class="ui item" style="background-color:black">
+                Sample target
+            </a>
         </div>
     </nav>
     <div id="loading">

@@ -538,10 +538,7 @@ ju.catFiles("built/web/semantic.js",
     "")
 
 file('docs/playground.html', ['built/web/pxtworker.js', 'built/web/pxtblockly.js', 'built/web/semantic.css'], function () {
-    jake.cpR("built/web/pxtworker.js", "docs/static/playground/");
-    jake.cpR("built/web/pxtblockly.js", "docs/static/playground/");
     jake.cpR("libs/pxt-common/pxt-core.d.ts", "docs/static/playground/pxt-common/pxt-core.d.js");
     jake.cpR("libs/pxt-common/pxt-helpers.ts", "docs/static/playground/pxt-common/pxt-helpers.js");
-    jake.cpR("built/web/semantic.css", "docs/static/playground/");
-    jake.cpR("built/web/blockly.css", "docs/static/playground/");
+    jake.cpR("webapp/public/blockly/media", "docs/static/playground/blockly/media");
 })

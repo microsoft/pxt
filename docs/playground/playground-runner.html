@@ -5,8 +5,8 @@
 
     <link data-inline="yes-please" href="/static/playground/spinner.css" rel="stylesheet" />
 
-    <link rel="stylesheet" href="/static/playground/semantic.css" type="text/css">
-    <link rel="stylesheet" href="/static/playground/blockly.css" type="text/css">
+    <link rel="stylesheet" href="/doccdn/semantic.css" type="text/css">
+    <link rel="stylesheet" href="/doccdn/blockly.css" type="text/css">
 
     <style type="text/css">
         body {
@@ -31,6 +31,12 @@
             max-height: calc(100% - 1em);
             padding: 10px;
         }
+
+        path.blocklyFlyoutBackground {
+            fill: #5f6c79 !important;
+            rx: 0 !important;
+            ry: 0 !important;
+        }
     </style>
 </head>
 
@@ -47,15 +53,16 @@
 
     <div id="svg"></div>
 
-    <script src="/static/playground/pxtworker.js"></script>
-    <script src="/static/playground/pxtblockly.js"></script>
+    <script src="/doccdn/pxtworker.js"></script>
+    <script src="/doccdn/pxtsim.js"></script>
+    <script src="/doccdn/pxtblockly.js"></script>
 
     <script src="/static/playground/testHost.js"></script>
 
     <script type="text/javascript">
 
         pxt.webConfig = {};
-        pxt.webConfig.commitCdnUrl = '';
+        pxt.webConfig.commitCdnUrl = '../static/playground/';
 
         // Just needs to exist
         pxt.setAppTarget({
@@ -88,7 +95,6 @@
 
         var handleMessage = function (js, common, helpers) {
             if (js) {
-                console.log(js);
                 // Get opts
                 var dependency = undefined;
                 var pkg = new pxt.MainPackage(new TestHost("test-pkg", "// TODO", dependency ? [dependency] : [], true));
@@ -135,6 +141,8 @@
 
                         var blocksDiv = document.createElementNS('http://www.w3.org/1999/xhtml', 'xml');
                         blocksDiv.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml');
+                        var xmlList = [];
+
                         Object.keys(nsMap).forEach(k => {
                             var ns = k;
                             var blocks = nsMap[ns];
@@ -147,6 +155,7 @@
                                     let comp = pxt.blocks.compileInfo(fn);
                                     blockXml = pxt.blocks.createToolboxBlock(blockInfo, fn, comp);
                                     blocksDiv.appendChild(blockXml);
+                                    xmlList.push(blockXml);
                                 } catch (e) {
                                     console.log(e);
                                 }
@@ -160,11 +169,39 @@
                         loading.parentNode.removeChild(loading);
                         document.body.style.height = '100%';
 
-                        let svg = pxt.blocks.render(blocksXml,
-                            { snippetMode: true, layout: pxt.blocks.BlockLayout.Align });
+                        // let svg = pxt.blocks.render(blocksXml,
+                        //     { snippetMode: true, layout: pxt.blocks.BlockLayout.Align });
 
                         let svgDiv = document.getElementById('svg');
-                        svgDiv.appendChild(svg);
+                        //svgDiv.appendChild(svg);
+
+                        // Initialize blockly with these blocks. 
+                        var editor = Blockly.inject(svgDiv, 
+                            {
+                                scrollbars: true,
+                                media: pxt.webConfig.commitCdnUrl + "blockly/media/",
+                                sound: true,
+                                trashcan: false,
+                                collapse: false,
+                                comments: true,
+                                disable: false,
+                                readOnly: false,
+                                hasCategories: false,
+                                toolbox: '<xml id="blocklyToolboxDefinitionFlyout" style="display: none"></xml>',
+                                zoom: {
+                                    enabled: false,
+                                    controls: false,
+                                    wheel: true,
+                                    maxScale: 2.5,
+                                    minScale: .2,
+                                    scaleSpeed: 1.05,
+                                    startScale: pxt.BrowserUtils.isMobile() ? 0.7 : 0.8
+                                }
+                            }
+                        );
+
+                        editor.flyout_.show(xmlList);
+                        editor.flyout_.scrollToStart();
                     });
             }
         };
