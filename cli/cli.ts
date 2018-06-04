@@ -3601,8 +3601,9 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
     })
 }
 
-function prepBuildOptionsAsync(mode: BuildOption, quick = false) {
+function prepBuildOptionsAsync(mode: BuildOption, quick = false, ignoreTests = false) {
     ensurePkgDir();
+    mainPkg.ignoreTests = ignoreTests;
     return mainPkg.loadAsync()
         .then(() => {
             if (!quick) {
@@ -3646,6 +3647,7 @@ interface BuildCoreOptions {
 
     debug?: boolean;
     warnDiv?: boolean;
+    ignoreTests?: boolean;
 
     // docs
     locs?: boolean;
@@ -3671,7 +3673,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
     let compileResult: pxtc.CompileResult;
     ensurePkgDir();
     pxt.log(`building ${process.cwd()}`)
-    return prepBuildOptionsAsync(buildOpts.mode)
+    return prepBuildOptionsAsync(buildOpts.mode, false, buildOpts.ignoreTests)
         .then((opts) => {
             compileOptions = opts;
             if (buildOpts.warnDiv) {
@@ -4268,7 +4270,8 @@ export function buildAsync(parsed: commandParser.ParsedCommand) {
         mode = BuildOption.DebugSim;
     }
     const warnDiv = !!parsed.flags["warndiv"];
-    return buildCoreAsync({ mode, warnDiv })
+    const ignoreTests = !!parsed.flags["ignoreTests"];
+    return buildCoreAsync({ mode, warnDiv, ignoreTests })
         .then((compileOpts) => { });
 }
 
@@ -5034,7 +5037,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
     if (!packages) {
         pxt.log(`packages section not found in targetconfig.json`)
     }
-    let errors = 0;
+    let errors: string[] = [];
     let todo: string[];
     const repos: pxt.Map<{ fullname: string; tag: string }> = {};
     const pkgsroot = path.join("temp", "ghpkgs");
@@ -5060,13 +5063,14 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
         const pkgpgh = todo.pop();
         if (!pkgpgh) {
             pxt.log(`------------------------`)
-            pxt.log(`${errors} packages with errors`);
+            pxt.log(`${errors.length} packages with errors`);
+            errors.forEach(er => pxt.log(`  ${er}`));
             return Promise.resolve();
         }
 
         pxt.log(`  ${pkgpgh}`)
         // clone or sync package
-        const buildArgs = ["build"];
+        const buildArgs = ["build", "--ignoreTests"];
         if (warnDiv) buildArgs.push("--warndiv");
         if (cloud) buildArgs.push("--cloud");
         const pkgdir = path.join(pkgsroot, pkgpgh);
@@ -5074,7 +5078,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
             .then(() => pxtAsync(pkgdir, ["install"]))
             .then(() => pxtAsync(pkgdir, buildArgs))
             .catch(e => {
-                errors++;
+                errors.push(pkgpgh);
                 pxt.log(e);
                 return Promise.resolve();
             })
@@ -5162,7 +5166,8 @@ function initCommands() {
         flags: {
             cloud: { description: "Force build to happen in the cloud" },
             debug: { description: "Emit debug information with build" },
-            warndiv: { description: "Warns about division operators" }
+            warndiv: { description: "Warns about division operators" },
+            ignoreTests: { description: "Ignores tests in compilation", aliases: ["ignore-tests", "ignoretests", "it"] }
         }
     }, buildAsync);
 

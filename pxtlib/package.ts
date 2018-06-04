@@ -33,6 +33,7 @@ namespace pxt {
         public level = -1;
         public isLoaded = false;
         private resolvedVersion: string;
+        public ignoreTests = false;
 
         constructor(public id: string, public _verspec: string, public parent: MainPackage, addedBy: Package) {
             if (addedBy) {
@@ -519,7 +520,7 @@ namespace pxt {
         }
 
         getFiles() {
-            if (this.level == 0)
+            if (this.level == 0 && !this.ignoreTests)
                 return this.config.files.concat(this.config.testFiles || [])
             else
                 return this.config.files.slice(0);
