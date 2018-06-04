@@ -211,7 +211,7 @@ namespace pxsim {
                 const d = Math.pow(10, digits);
                 r = Math.round(x * d) / d;
                 digits++;
-            } while (r == 0);
+            } while (r == 0 && digits < 21);
             return r;
         }
         export function ceil(n: number) { return Math.ceil(n) }
