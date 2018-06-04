@@ -421,7 +421,8 @@ namespace pxt.runner {
                 if (!card) return;
                 const mC = /^\/(v\d+)/.exec(card.url);
                 const mP = /^\/(v\d+)/.exec(window.location.pathname);
-                if (card.url && !mC && mP) card.url = `/${mP[1]}/${card.url}`;
+                const inEditor = /#doc/i.test(window.location.pathname);
+                if (card.url && !mC && mP && !inEditor) card.url = `/${mP[1]}/${card.url}`;
                 ul.append(pxt.docs.codeCard.render(card, { hideHeader: true, shortName: true }));
             }
             stmts.forEach(stmt => {
@@ -555,7 +556,8 @@ namespace pxt.runner {
                 // patch card url with version if necessary
                 const mC = /^\/(v\d+)/.exec(card.url);
                 const mP = /^\/(v\d+)/.exec(window.location.pathname);
-                if (card.url && !mC && mP) card.url = `/${mP[1]}${card.url}`;
+                const inEditor = /#doc/i.test(window.location.pathname);
+                if (card.url && !mC && mP && !inEditor) card.url = `/${mP[1]}${card.url}`;
                 const cardEl = pxt.docs.codeCard.render(card, options);
                 cd.appendChild(cardEl)
                 // automitcally display package icon for approved packages
