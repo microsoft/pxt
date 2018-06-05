@@ -1913,6 +1913,11 @@ namespace pxt.blocks {
     }
 
     function initVariables() {
+        // We only give types to "special" variables like enum members and we don't
+        // want those showing up in the variable dropdown so filter the variables
+        // that show up to only ones that have an empty type
+        (Blockly.FieldVariable.prototype as any).getVariableTypes_ = () => [""];
+
         let varname = lf("{id:var}item");
         Blockly.Variables.flyoutCategory = function (workspace) {
             let xmlList: HTMLElement[] = [];
