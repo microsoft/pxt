@@ -4040,6 +4040,50 @@ interface SpriteInfo {
     frames?: string[];
 }
 
+function compressMonoImg(data: ArrayLike<number>, width: number, height: number) {
+    let stream = new Uint8Array(data.length + 3)
+
+    let pp = 0
+
+    for (let x = 0; x < width; ++x) {
+        let p = x
+        for (let y = 0; y < height; ++y) {
+            stream[pp++] = data[p] ? 1 : 0
+            p += width
+        }
+    }
+
+    let outp: number[] = []
+    let prev = -1
+
+    for (let i = 0; i < data.length;) {
+        let k = i
+        prev=stream[i]
+        while (k < data.length && stream[k] == prev)
+            k++
+        let la = k - i
+        if (la >= 7) {
+            let v = la - 7
+            if (v > 63) {
+                v = 63
+            }
+            la = v + 7
+            outp.push(0x8 | (prev ? 0x4 : 0x0) | (v >> 4))
+            outp.push(v & 0xf)
+            i += la
+            if (v != 63) i++
+        } else {
+            outp.push((stream[i] << 2) | (stream[i + 1] << 1) | stream[i + 2])
+            prev = stream[i + 2]
+            i += 3
+        }
+    }
+
+    console.log(outp.map(v => v.toString(16)).join(""))
+    console.log(outp.length * 4 / data.length)
+    console.log(outp.length / 2)
+}
+
 function compressImg(data: ArrayLike<number>, width: number, height: number) {
     U.assert(data.length == width * height)
     let outp: number[] = []
@@ -4077,10 +4121,10 @@ function compressImg(data: ArrayLike<number>, width: number, height: number) {
             }
             currnum++
         }
-        flush()
         console.log(s)
         s = ""
     }
+    flush()
 
     return new Uint8Array(outp)
 }
@@ -4093,6 +4137,7 @@ export function compressImageAsync(parsed: commandParser.ParsedCommand) {
             let arr = compressImg(img.data, img.width, img.height)
             console.log(new Buffer(arr).toString("hex"))
             console.log(arr.length)
+            compressMonoImg(img.data, img.width, img.height)
         })
 }
 
