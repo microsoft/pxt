@@ -1656,9 +1656,11 @@ namespace pxt.blocks {
                         nodes.push(newNode);
                         lastValue = value;
                     });
+                    const declarations = mkCommaSep(nodes, true);
+                    declarations.glueToBlock = GlueMode.NoSpace;
                     stmtsEnums.push(mkGroup([
                         mkText(`enum ${info.name}`),
-                        mkBlock([mkCommaSep(nodes, true)])
+                        mkBlock([declarations])
                     ]));
                 }
             });
