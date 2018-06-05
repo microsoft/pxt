@@ -11,6 +11,7 @@
     },
     "files": [
         "test.spec.ts",
-        "commentparsing.spec.ts"
+        "commentparsing.spec.ts",
+        "fieldUserEnum.spec.ts"
     ]
 }

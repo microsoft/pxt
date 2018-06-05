@@ -1,0 +1,20 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<variables>
+<variable type="PlainOldEnum">0D</variable>
+<variable type="PlainOldEnum">7E</variable>
+<variable type="PlainOldEnum">8F</variable>
+</variables>
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="variables_set">
+<field name="VAR">userDefinedTest2</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="enum_user_shim">
+<field name="MEMBER">D</field>
+</block>
+</value>
+</block>
+</statement>
+</block>
+</xml>

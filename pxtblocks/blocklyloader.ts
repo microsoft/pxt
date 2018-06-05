@@ -634,6 +634,13 @@ namespace pxt.blocks {
             const inputs = splitInputs(def);
             const imgConv = new ImageConverter()
 
+            if (fn.attributes.shim === "ENUM_GET") {
+                if (comp.parameters.length > 1 || comp.thisParameter) {
+                    console.warn(`Enum blocks may only have 1 parameter but ${fn.attributes.blockId} has ${comp.parameters.length}`);
+                    return;
+                }
+            }
+
             inputs.forEach(inputParts => {
                 const fields: NamedField[] = [];
                 let inputName: string;
@@ -646,6 +653,14 @@ namespace pxt.blocks {
                         if (f) {
                             fields.push({ field: f });
                         }
+                    }
+                    else if (fn.attributes.shim === "ENUM_GET") {
+                        U.assert(!!fn.attributes.enumName, "Trying to create an ENUM_GET block without a valid enum name")
+                        fields.push({
+                            name: "MEMBER",
+                            field: new pxtblockly.FieldUserEnum(info.enumsByName[fn.attributes.enumName])
+                        });
+                        return;
                     }
                     else {
                         // find argument
@@ -1898,6 +1913,11 @@ namespace pxt.blocks {
     }
 
     function initVariables() {
+        // We only give types to "special" variables like enum members and we don't
+        // want those showing up in the variable dropdown so filter the variables
+        // that show up to only ones that have an empty type
+        (Blockly.FieldVariable.prototype as any).getVariableTypes_ = () => [""];
+
         let varname = lf("{id:var}item");
         Blockly.Variables.flyoutCategory = function (workspace) {
             let xmlList: HTMLElement[] = [];

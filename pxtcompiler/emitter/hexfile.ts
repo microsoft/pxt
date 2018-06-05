@@ -296,7 +296,7 @@ namespace ts.pxtc {
 
         export function validateShim(funname: string, shimName: string, attrs: CommentAttrs,
             hasRet: boolean, argIsNumber: boolean[]) {
-            if (shimName == "TD_ID" || shimName == "TD_NOOP")
+            if (shimName == "TD_ID" || shimName == "TD_NOOP" || shimName == "ENUM_GET")
                 return
             if (U.lookup(asmLabels, shimName))
                 return
