@@ -526,7 +526,7 @@ class Chart {
         line.append(timestamp, value)
         if (Object.keys(this.lines).length == 1) {
             // update label with last value
-            const valueText = pxsim.Math_.roundWithPrecision(value, 3).toString();
+            const valueText = pxsim.Math_.roundWithPrecision(value, 2).toString();
             this.label.innerText = this.variable ? `${this.variable}: ${valueText}` : valueText;
         } else {
             this.label.innerText = this.variable || '';
