@@ -371,5 +371,31 @@ describe("blockly compiler", function() {
         it("should handle blocks with optional arguments", done => {
             blockTestAsync("expandable_basic").then(done, done);
         });
-    })
+    });
+
+    describe("compiling ENUM_GET blocks", () => {
+        it("should handle simple enum values", done => {
+            blockTestAsync("enum_define").then(done, done);
+        });
+
+        describe("with start value set", () => {
+            it("should handle conformant values", done => {
+                blockTestAsync("enum_define_start_value").then(done, done);
+            });
+
+            it("should compile values even if they are invalid", done => {
+                blockTestAsync("enum_define_start_value_bad_start").then(done, done);
+            });
+        });
+
+        describe("with bit mask set", () => {
+            it("should handle conformant values", done => {
+                blockTestAsync("enum_define_bit_mask").then(done, done);
+            });
+
+            it("should compile values even if they are invalid", done => {
+                blockTestAsync("enum_define_bit_mask_bad_values").then(done, done);
+            });
+        });
+    });
 });

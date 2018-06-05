@@ -1638,20 +1638,22 @@ namespace pxt.blocks {
                     const nodes: JsNode[] = [];
                     let lastValue = -1;
                     members.forEach(([name, value], index) => {
-                        if (value === lastValue + 1) {
-                            nodes.push(mkText(name));
-                        }
-                        else {
-                            let valueNode = H.mkNumberLiteral(value);
-                            if (info.isBitMask) {
-                                const shift = Math.log2(value);
-                                if (Math.floor(shift) === shift) {
-                                    valueNode = H.mkSimpleCall("<<", [H.mkNumberLiteral(1), H.mkNumberLiteral(shift)]);
-                                }
+                        let newNode: JsNode;
+                        if (info.isBitMask) {
+                            const shift = Math.log2(value);
+                            if (shift >= 0 && Math.floor(shift) === shift) {
+                                newNode = H.mkAssign(mkText(name), H.mkSimpleCall("<<", [H.mkNumberLiteral(1), H.mkNumberLiteral(shift)]));
                             }
-
-                            nodes.push(H.mkAssign(mkText(name), valueNode));
                         }
+                        if (!newNode) {
+                            if (value === lastValue + 1) {
+                                newNode = mkText(name);
+                            }
+                            else {
+                                newNode = H.mkAssign(mkText(name), H.mkNumberLiteral(value));
+                            }
+                        }
+                        nodes.push(newNode);
                         lastValue = value;
                     });
                     stmtsEnums.push(mkGroup([
