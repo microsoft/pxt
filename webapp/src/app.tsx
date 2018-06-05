@@ -610,6 +610,13 @@ export class ProjectView
             tutorialOptions: undefined
         })
         return pkg.loadPkgAsync(h.id)
+            .catch((e: any) => {
+                // for some reason, the package failed to load
+                // show error pop up and create a new project
+                pxt.reportException(e);
+                core.errorNotification(e.message || lf("Ooops, something wrong happened."))
+                this.newProject();
+            })
             .then(() => {
                 simulator.makeDirty();
                 compiler.newProject();

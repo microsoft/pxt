@@ -396,12 +396,9 @@ export function loadPkgAsync(id: string) {
     return theHost.downloadPackageAsync(mainPkg)
         .catch(core.handleNetworkError)
         .then(() => theHost.readFile(mainPkg, pxt.CONFIG_NAME))
-        .then(str => {
-            if (!str) return Promise.resolve()
-            return mainPkg.installAllAsync()
-                .catch(e => {
-                    core.errorNotification(lf("Cannot load package: {0}", e.message))
-                })
+        .then((str: string) => {
+            if (!str) throw new Error("invalid pxt.json file")
+            return mainPkg.installAllAsync(); // error handled by caller
         })
 }
 
