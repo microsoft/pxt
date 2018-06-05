@@ -146,7 +146,7 @@ export class Editor extends srceditor.Editor {
         const niceSource = this.sourceMap[source]
 
         // is this a CSV data entry
-        if (/^\s*(-?\d+(\.\d*)?)(\s*,\s*(-?\d+(\.\d*)?))+\s*,?\s*$/.test(data)) {
+        if (/^\s*(-?\d+(\.\d*)?(e[\+\-]\d+)?)(\s*,\s*(-?\d+(\.\d*)?(e[\+\-]\d+)?))+\s*,?\s*$/.test(data)) {
             data.split(/\s*,\s*/).map(s => parseFloat(s))
                 .filter(d => !isNaN(d))
                 .forEach((d, i) => {
@@ -159,7 +159,7 @@ export class Editor extends srceditor.Editor {
         }
         else {
             // is this a key-value pair, or just a number?
-            const m = /^\s*(([^:]+):)?\s*(-?\d+(\.\d*)?)/i.exec(data);
+            const m = /^\s*(([^:]+):)?\s*(-?\d+(\.\d*)?(e[\+\-]\d+)?)/i.exec(data);
             if (m) {
                 const variable = m[2] || '';
                 const nvalue = parseFloat(m[3]);
@@ -526,7 +526,7 @@ class Chart {
         line.append(timestamp, value)
         if (Object.keys(this.lines).length == 1) {
             // update label with last value
-            const valueText = Number(Math.round(Number(value + "e+2")) + "e-2").toString();
+            const valueText = pxsim.Math_.roundWithPrecision(value, 3).toString();
             this.label.innerText = this.variable ? `${this.variable}: ${valueText}` : valueText;
         } else {
             this.label.innerText = this.variable || '';

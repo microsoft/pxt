@@ -492,8 +492,10 @@ namespace pxt.blocks {
         const instance = fn.kind == pxtc.SymbolKind.Method || fn.kind == pxtc.SymbolKind.Property;
         const nsinfo = info.apis.byQName[ns];
         const color =
-            fn.attributes.color
-            || (nsinfo ? nsinfo.attributes.color : undefined)
+            // blockNamespace overrides color on block
+            (fn.attributes.blockNamespace && nsinfo && nsinfo.attributes.color)
+            || fn.attributes.color
+            || (nsinfo && nsinfo.attributes.color)
             || pxt.toolbox.getNamespaceColor(ns.toLowerCase())
             || 255;
 

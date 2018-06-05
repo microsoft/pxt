@@ -2149,7 +2149,10 @@ function initLogin() {
 }
 
 function initSerial() {
-    if (!pxt.appTarget.serial || !pxt.winrt.isWinRT() && (!Cloud.isLocalHost() || !Cloud.localToken))
+    const isHF2WinRTSerial = pxt.appTarget.serial && pxt.appTarget.serial.useHF2 && pxt.winrt.isWinRT();
+    const isValidLocalhostSerial = pxt.appTarget.serial && Cloud.isLocalHost() && !!Cloud.localToken;
+
+    if (!isHF2WinRTSerial && !isValidLocalhostSerial)
         return;
 
     if (hidbridge.shouldUse()) {
@@ -2539,6 +2542,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 .then(() => {
                     if (pxt.Util.isLocaleEnabled(useLang)) {
                         lang.setCookieLang(useLang);
+                        lang.setInitialLang(useLang);
                     } else {
                         pxt.tickEvent("unavailablelocale." + useLang + (force ? ".force" : ""));
                     }

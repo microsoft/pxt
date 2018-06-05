@@ -3292,7 +3292,7 @@ function testDirAsync(parsed: commandParser.ParsedCommand) {
                 .then(testAsync)
                 .then(() => {
                     if (pxt.appTarget.compile.hasHex)
-                    nodeutil.writeFileSync(hexPath, fs.readFileSync(`built/binary.${pxt.appTarget.compile.useUF2 ? "uf2" : "hex"}`))
+                        nodeutil.writeFileSync(hexPath, fs.readFileSync(`built/binary.${pxt.appTarget.compile.useUF2 ? "uf2" : "hex"}`))
                 })
         } else {
             let start = Date.now()
@@ -3601,8 +3601,9 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
     })
 }
 
-function prepBuildOptionsAsync(mode: BuildOption, quick = false) {
+function prepBuildOptionsAsync(mode: BuildOption, quick = false, ignoreTests = false) {
     ensurePkgDir();
+    mainPkg.ignoreTests = ignoreTests;
     return mainPkg.loadAsync()
         .then(() => {
             if (!quick) {
@@ -3646,6 +3647,7 @@ interface BuildCoreOptions {
 
     debug?: boolean;
     warnDiv?: boolean;
+    ignoreTests?: boolean;
 
     // docs
     locs?: boolean;
@@ -3671,7 +3673,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
     let compileResult: pxtc.CompileResult;
     ensurePkgDir();
     pxt.log(`building ${process.cwd()}`)
-    return prepBuildOptionsAsync(buildOpts.mode)
+    return prepBuildOptionsAsync(buildOpts.mode, false, buildOpts.ignoreTests)
         .then((opts) => {
             compileOptions = opts;
             if (buildOpts.warnDiv) {
@@ -4268,7 +4270,8 @@ export function buildAsync(parsed: commandParser.ParsedCommand) {
         mode = BuildOption.DebugSim;
     }
     const warnDiv = !!parsed.flags["warndiv"];
-    return buildCoreAsync({ mode, warnDiv })
+    const ignoreTests = !!parsed.flags["ignoreTests"];
+    return buildCoreAsync({ mode, warnDiv, ignoreTests })
         .then((compileOpts) => { });
 }
 
@@ -5027,13 +5030,14 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
         pxt.log(`targetconfig.json not found`);
         return Promise.resolve();
     }
+    const cloud = !!parsed.flags["cloud"];
     const warnDiv = !!parsed.flags["warndiv"];
     const targetConfig = nodeutil.readJson("targetconfig.json") as pxt.TargetConfig;
     const packages = targetConfig.packages;
     if (!packages) {
         pxt.log(`packages section not found in targetconfig.json`)
     }
-    let errors = 0;
+    let errors: string[] = [];
     let todo: string[];
     const repos: pxt.Map<{ fullname: string; tag: string }> = {};
     const pkgsroot = path.join("temp", "ghpkgs");
@@ -5046,7 +5050,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
         })
     }
 
-    function pxtAsync(dir: string, ...args: string[]) {
+    function pxtAsync(dir: string, args: string[]) {
         return nodeutil.spawnAsync({
             cmd: "node",
             args: [path.join(process.cwd(), "node_modules/pxt-core/pxt-cli/cli.js")].concat(args),
@@ -5059,18 +5063,22 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
         const pkgpgh = todo.pop();
         if (!pkgpgh) {
             pxt.log(`------------------------`)
-            pxt.log(`${errors} packages with errors`);
+            pxt.log(`${errors.length} packages with errors`);
+            errors.forEach(er => pxt.log(`  ${er}`));
             return Promise.resolve();
         }
 
         pxt.log(`  ${pkgpgh}`)
         // clone or sync package
+        const buildArgs = ["build", "--ignoreTests"];
+        if (warnDiv) buildArgs.push("--warndiv");
+        if (cloud) buildArgs.push("--cloud");
         const pkgdir = path.join(pkgsroot, pkgpgh);
         return gitAsync(".", "clone", "-q", "-b", repos[pkgpgh].tag, `https://github.com/${pkgpgh}`, pkgdir)
-            .then(() => pxtAsync(pkgdir, "install"))
-            .then(() => warnDiv ? pxtAsync(pkgdir, "build", "--warndiv") : pxtAsync(pkgdir, "build"))
+            .then(() => pxtAsync(pkgdir, ["install"]))
+            .then(() => pxtAsync(pkgdir, buildArgs))
             .catch(e => {
-                errors++;
+                errors.push(pkgpgh);
                 pxt.log(e);
                 return Promise.resolve();
             })
@@ -5083,18 +5091,21 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
         .then(() => pxt.github.searchAsync("", packages))
         .then(ghrepos => ghrepos.filter(ghrepo => ghrepo.status == pxt.github.GitRepoStatus.Approved)
             .map(ghrepo => ghrepo.fullName).concat(packages.approvedRepos || []))
-        .then(fullnames => Promise.all(fullnames.map(fullname => pxt.github.listRefsAsync(fullname)
-            .then(tags => {
-                const tag = tags.reverse()[0] || "master";
-                repos[fullname] = { fullname, tag };
-            }))
-        ).then(() => {
+        .then(fullnames => {
+            pxt.log(`found ${fullnames.length} packages`);
+            fullnames.forEach(fn => pxt.log(`  ${fn}`));
+            return Promise.all(fullnames.map(fullname => pxt.github.listRefsAsync(fullname)
+                .then(tags => {
+                    const tag = tags.reverse()[0] || "master";
+                    repos[fullname] = { fullname, tag };
+                }))
+            );
+        }).then(() => {
             todo = Object.keys(repos);
             pxt.log(`found ${todo.length} packages`);
             // 2. process each repo
             return nextAsync();
-        })
-        );
+        });
 }
 
 function initCommands() {
@@ -5155,7 +5166,8 @@ function initCommands() {
         flags: {
             cloud: { description: "Force build to happen in the cloud" },
             debug: { description: "Emit debug information with build" },
-            warndiv: { description: "Warns about division operators"}
+            warndiv: { description: "Warns about division operators" },
+            ignoreTests: { description: "Ignores tests in compilation", aliases: ["ignore-tests", "ignoretests", "it"] }
         }
     }, buildAsync);
 
@@ -5461,7 +5473,8 @@ function initCommands() {
         name: "testghpkgs",
         help: "Download and build approved github packages",
         flags: {
-            warndiv: { description: "Warns about division operators"}
+            warndiv: { description: "Warns about division operators" },
+            cloud: { description: "use cloud compiler" }
         }
     }, testGithubPackagesAsync);
 

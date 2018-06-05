@@ -129,7 +129,7 @@ namespace pxt.github {
 
     export function listRefsExtAsync(repopath: string, namespace = "tags"): Promise<RefsResult> {
         let head: string = null
-        let fetch = !useProxy ?
+        const fetch = !useProxy() ?
             U.httpGetJsonAsync("https://api.github.com/repos/" + repopath + "/git/refs/" + namespace + "/?per_page=100") :
             U.httpGetJsonAsync(`${pxt.Cloud.apiRoot}gh/${repopath}/refs`)
                 .then(r => {
@@ -366,7 +366,10 @@ namespace pxt.github {
         return U.httpGetJsonAsync("https://api.github.com/search/repositories?q=" + encodeURIComponent(query))
             .then((rs: SearchResults) =>
                 rs.items.map(item => mkRepo(item, config))
-                    .filter(r => r.status == GitRepoStatus.Approved || (config.allowUnapproved && r.status == GitRepoStatus.Unknown)))
+                    .filter(r => r.status == GitRepoStatus.Approved || (config.allowUnapproved && r.status == GitRepoStatus.Unknown))
+                    // don't return the target itself!
+                    .filter(r => !pxt.appTarget.appTheme.githubUrl || `https://github.com/${r.fullName}` != pxt.appTarget.appTheme.githubUrl.toLowerCase())
+            )
             .catch(err => []); // offline
     }
 
