@@ -595,7 +595,7 @@ export class ProjectView
                 disagreeLbl: lf("Ok")
             });
         }
-        return undefined;  
+        return undefined;
     }
 
     loadHeaderAsync(h: pxt.workspace.Header, filters?: pxt.editor.ProjectFilters): Promise<void> {
@@ -767,12 +767,14 @@ export class ProjectView
         }
 
         // intercept newer files early
-        const checkAsync = this.tryCheckTargetVersionAsync(data.meta.targetVersions && data.meta.targetVersions.target);
-        if (checkAsync) {
-            checkAsync.done(() => {
-                if(createNewIfFailed) this.newProject();
-            });
-            return;
+        if (pxt.cpp.matchTargetId(data, pxt.appTarget.id)) {
+            const checkAsync = this.tryCheckTargetVersionAsync(data.meta.targetVersions && data.meta.targetVersions.target);
+            if (checkAsync) {
+                checkAsync.done(() => {
+                    if (createNewIfFailed) this.newProject();
+                });
+                return;
+            }
         }
 
         const importer = this.hexFileImporters.filter(fi => fi.canImport(data))[0];
