@@ -207,11 +207,10 @@ namespace pxsim {
             if (digits <= 0) return Math.round(x);
             if (x == 0) return 0;
             let r = 0;
-            do {
-                const d = Math.pow(10, digits);
-                r = Math.round(x * d) / d;
-                digits++;
-            } while (r == 0 && digits < 21);
+            while (r == 0 && digits < 21) {
+                const d = Math.pow(10, digits++);
+                r = Math.round(x * d + Number.EPSILON) / d;
+            }
             return r;
         }
         export function ceil(n: number) { return Math.ceil(n) }
