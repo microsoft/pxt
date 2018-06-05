@@ -36,13 +36,19 @@
             name: "Dropdowns",
             id: "field-editors-dropdowns",
             path: "field-editors/dropdowns"
+        },
+        {
+            chapter: "Language",
+            name: "Create Enums from Blocks",
+            id: "language-create-enums",
+            path: "language/create-enums"
         }
     ];
-    
+
     if (typeof exports !== 'undefined') {
         exports.PLAY_SAMPLES = PLAY_SAMPLES
     } else {
         self.PLAY_SAMPLES = PLAY_SAMPLES;
     }
-    
+
     })();
