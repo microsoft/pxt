@@ -96,8 +96,6 @@ namespace ts.pxtc {
         isBitMask: boolean;
         firstValue?: number;
         initialMembers: string[];
-
-        promptMemberName: string;
         promptHint: string;
     }
 
@@ -532,8 +530,7 @@ namespace ts.pxtc {
                     firstValue: isNaN(firstValue) ? undefined : firstValue,
                     isBitMask: s.attributes.enumIsBitMask,
                     initialMembers: s.attributes.enumInitialMembers,
-                    promptHint: s.attributes.enumPromptHint,
-                    promptMemberName: s.attributes.enumMemberName
+                    promptHint: s.attributes.enumPromptHint
                 };
             }
 

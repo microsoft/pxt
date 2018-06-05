@@ -122,7 +122,7 @@ namespace pxtblockly {
         }
     }
 
-    function getNextValue(members: [string, number][], opts: pxtc.EnumInfo) {
+    export function getNextValue(members: [string, number][], opts: pxtc.EnumInfo) {
         const existing = members.map(([name, value]) => value);
 
         if (opts.isBitMask) {
