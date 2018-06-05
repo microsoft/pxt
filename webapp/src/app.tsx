@@ -708,15 +708,8 @@ export class ProjectView
         return this.loadHeaderAsync(this.state.header, this.state.editorState)
     }
 
-    loadHeaderAsync(h: pxt.workspace.Header, editorState?: pxt.editor.EditorState, inTutorial?: boolean): Promise<void> {
-        if (!h)
-            return Promise.resolve()
-
-        pxt.debug(`loading ${h.id} (pxt v${h.targetVersion})`);
-        this.stopSimulator(true);
-        this.clearSerial()
-
-        const htv = h.targetVersion || "0.0.0";
+    tryCheckTargetVersionAsync(targetVersion: string): Promise<void> {
+        const htv = targetVersion || "0.0.0";
         // a legacy script does not have a version -- or has a major version less
         // than the current version
         const legacyProject = pxt.semver.majorCmp(htv, pxt.appTarget.versions.target) < 0;
@@ -742,6 +735,20 @@ export class ProjectView
                 // TODO: find a better recovery for this.
                 .then(() => this.openHome());
         }
+        return undefined;
+    }
+
+    loadHeaderAsync(h: pxt.workspace.Header, editorState?: pxt.editor.EditorState, inTutorial?: boolean): Promise<void> {
+        if (!h)
+            return Promise.resolve()
+
+        const checkAsync = this.tryCheckTargetVersionAsync(h.targetVersion);
+        if (checkAsync)
+            return checkAsync.then(() => this.openHome());
+
+        pxt.debug(`loading ${h.id} (pxt v${h.targetVersion})`);
+        this.stopSimulator(true);
+        this.clearSerial()
 
         Util.jsonMergeFrom(editorState || {}, this.state.editorState || {});
         return pkg.loadPkgAsync(h.id)
@@ -960,6 +967,17 @@ export class ProjectView
             core.warningNotification(lf("Sorry, we could not recognize this file."))
             if (createNewIfFailed) this.openHome();
             return;
+        }
+
+        // intercept newer files early
+        if (this.hexFileImporters.some(fi => fi.id == "default" && fi.canImport(data))) {
+            const checkAsync = this.tryCheckTargetVersionAsync(data.meta.targetVersions && data.meta.targetVersions.target);
+            if (checkAsync) {
+                checkAsync.done(() => {
+                    if (createNewIfFailed) this.newProject();
+                });
+                return;
+            }
         }
 
         const importer = this.hexFileImporters.filter(fi => fi.canImport(data))[0];

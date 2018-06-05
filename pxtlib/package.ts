@@ -181,7 +181,7 @@ namespace pxt {
             if (this.config.targetVersions
                 && this.config.targetVersions.target
                 && semver.majorCmp(this.config.targetVersions.target, appTarget.versions.target) > 0)
-                U.userError(lf("Package {0} requires target version {1} (you are running {2})",
+                U.userError(lf("{0} requires target version {1} (you are running {2})",
                     this.config.name, this.config.targetVersions.target, appTarget.versions.target))
         }
 
