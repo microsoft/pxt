@@ -367,7 +367,7 @@ namespace ts.pxtc.decompiler {
             else if (topLevelNode.kind === SK.EnumDeclaration && !checkStatement(topLevelNode, env, false, true)) {
                 const enumName = (topLevelNode as EnumDeclaration).name.text;
                 env.declaredEnums[enumName] = true;
-                getEnumMembers(topLevelNode as EnumDeclaration).forEach(([name, value])=> {
+                getEnumMembers(topLevelNode as EnumDeclaration).forEach(([name, value]) => {
                     // We add the value to the front of the name because it needs to be maintained
                     // across compilation/decompilation just in case the code relies on the actual value.
                     // It's safe to do because enum members can't start with numbers.
