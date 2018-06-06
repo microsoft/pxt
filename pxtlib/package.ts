@@ -424,8 +424,9 @@ namespace pxt {
                 if (this.level == 0)
                     initPromise = initPromise.then(() => this.patchCorePackage());
                 initPromise = initPromise.then(() => {
+                    if (this.config.compileServiceVariant)
+                        pxt.setAppTargetVariant(this.config.compileServiceVariant)
                     if (this.config.files.indexOf("board.json") < 0) return
-                    pxt.setAppTargetVariant(this.config.compileServiceVariant)
                     const def = appTarget.simulator.boardDefinition = JSON.parse(this.readFile("board.json")) as pxsim.BoardDefinition;
                     def.id = this.config.name;
                     appTarget.appTheme.boardName = def.boardName || lf("board");
