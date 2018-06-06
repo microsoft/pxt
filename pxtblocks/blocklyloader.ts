@@ -83,7 +83,13 @@ namespace pxt.blocks {
         return b ? b.fn : undefined;
     }
 
-    function createShadowValue(name: string, type: string, v?: string, shadowType?: string): Element {
+    export function isValidShadowBlock(info: pxtc.BlocksInfo, shadowType: string) {
+        return !!shadowType &&
+            (info.blocksById[shadowType] ||
+                builtinBlocks[shadowType]);
+    }
+
+    function createShadowValue(info: pxtc.BlocksInfo, name: string, type: string, v?: string, shadowType?: string): Element {
         if (v && v.slice(0, 1) == "\"")
             v = JSON.parse(v);
         if (type == "number" && shadowType == "value") {
@@ -101,6 +107,10 @@ namespace pxt.blocks {
 
         const typeInfo = typeDefaults[type];
 
+        if (shadowType && !isValidShadowBlock(info, shadowType)) {
+            pxt.log(`unknown shadow block ${shadowType}, ignoring`);
+            shadowType = undefined;
+        }
         shadow.setAttribute("type", shadowType || typeInfo && typeInfo.block || type);
 
         if (typeInfo) {
@@ -135,7 +145,7 @@ namespace pxt.blocks {
         if ((fn.kind == pxtc.SymbolKind.Method || fn.kind == pxtc.SymbolKind.Property)
             && attrNames["this"]) {
             let attr = attrNames["this"];
-            block.appendChild(createShadowValue(attr.name, attr.type, attr.shadowValue || attr.name, attr.shadowType || "variables_get"));
+            block.appendChild(createShadowValue(info, attr.name, attr.type, attr.shadowValue || attr.name, attr.shadowType || "variables_get"));
         }
         if (fn.parameters) {
             fn.parameters.filter(pr => !!attrNames[pr.name].name &&
@@ -147,12 +157,12 @@ namespace pxt.blocks {
                     let shadowValue: Element;
                     let container: HTMLElement;
                     if (pr.options && pr.options['min'] && pr.options['max']) {
-                        shadowValue = createShadowValue(attr.name, attr.type, attr.shadowValue, 'math_number_minmax');
+                        shadowValue = createShadowValue(info, attr.name, attr.type, attr.shadowValue, 'math_number_minmax');
                         container = document.createElement('mutation');
                         container.setAttribute('min', pr.options['min'].value);
                         container.setAttribute('max', pr.options['max'].value);
                     } else {
-                        shadowValue = createShadowValue(attr.name, attr.type, attr.shadowValue, attr.shadowType);
+                        shadowValue = createShadowValue(info, attr.name, attr.type, attr.shadowValue, attr.shadowType);
                     }
                     if (pr.options && pr.options['fieldEditorOptions']) {
                         if (!container) container = document.createElement('mutation');
