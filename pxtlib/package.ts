@@ -759,6 +759,7 @@ namespace pxt {
                     let cfg = U.clone(this.config)
                     delete cfg.installedVersion
                     delete cfg.additionalFilePath
+                    delete cfg.additionalFilePaths
                     if (!cfg.targetVersions) cfg.targetVersions = pxt.appTarget.versions;
                     U.iterMap(cfg.dependencies, (k, v) => {
                         if (!v || /^file:/.test(v) || /^workspace:/.test(v)) {

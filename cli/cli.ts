@@ -1917,9 +1917,8 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
             const isPrj = /prj$/.test(dirname);
             const config = nodeutil.readPkgConfig(".")
             const isCore = !!config.core;
-            if (config.additionalFilePath) {
-                dirsToWatch.push(path.resolve(config.additionalFilePath));
-            }
+            for (let p of config.additionalFilePaths)
+                dirsToWatch.push(path.resolve(p));
 
             return pkg.filesToBePublishedAsync(true)
                 .then(res => {
@@ -2271,6 +2270,8 @@ class SnippetHost implements pxt.Host {
                 if (pxt.appTarget.bundledpkgs[module.id]) {
                     let f = readFile(pxt.CONFIG_NAME)
                     const modpkg = JSON.parse(f || "{}") as pxt.PackageConfig;
+                    // TODO this seems to be dead code, additionalFilePath is removed from bundledpkgs
+                    // why not just use bundledpkgs also for files?
                     if (modpkg.additionalFilePath) {
                         try {
                             const ad = path.join(modpkg.additionalFilePath.replace('../../', ''), filename);
@@ -2390,16 +2391,15 @@ class Host
             }
 
         try {
-            // pxt.debug(`reading ${path.resolve(resolved)}`)
+            pxt.debug(`reading ${resolved}`)
             return fs.readFileSync(resolved, "utf8")
         } catch (e) {
             if (!skipAdditionalFiles && module.config) {
-                let addPath = module.config.additionalFilePath
-                if (addPath) {
+                for (let addPath of module.config.additionalFilePaths || []) {
                     try {
+                        pxt.debug(`try read: ${path.join(dir, addPath, filename)}`)
                         return fs.readFileSync(path.join(dir, addPath, filename), "utf8")
                     } catch (e) {
-                        return null
                     }
                 }
             }
