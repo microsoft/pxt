@@ -1254,7 +1254,7 @@ namespace ts.pxtc {
             return res
         }
 
-        export function writeBytes(f: BlockFile, addr: number, bytes: ArrayLike<number>) {
+        export function writeBytes(f: BlockFile, addr: number, bytes: ArrayLike<number>, flags = 0) {
             let currBlock = f.currBlock
             let needAddr = addr >> 8
 
@@ -1282,9 +1282,11 @@ namespace ts.pxtc {
                 }
                 if (!currBlock) {
                     currBlock = new Uint8Array(512)
+                    if (f.filename)
+                        flags |= UF2_FLAG_FILE
                     setWord(currBlock, 0, UF2_MAGIC_START0)
                     setWord(currBlock, 4, UF2_MAGIC_START1)
-                    setWord(currBlock, 8, f.filename ? UF2_FLAG_FILE : UF2_FLAG_NONE)
+                    setWord(currBlock, 8, flags)
                     setWord(currBlock, 12, needAddr << 8)
                     setWord(currBlock, 16, 256)
                     setWord(currBlock, 20, f.blocks.length)

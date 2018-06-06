@@ -511,7 +511,14 @@ namespace ts.pxtc {
 
             if (bin.packedSource) {
                 if (uf2) {
-                    U.userError("TODO")
+                    addr = (uf2.currPtr + 0x1000) & ~0xff
+                    let buf = new Uint8Array(256)
+                    for (let ptr = 0; ptr < bin.packedSource.length; ptr += 256) {
+                        for (let i = 0; i < 256; ++i)
+                            buf[i] = bin.packedSource.charCodeAt(ptr + i)
+                        UF2.writeBytes(uf2, addr, buf, UF2.UF2_FLAG_NOFLASH)
+                        addr += 256
+                    }
                 } else {
                     upper = 0x20000000
                     addr = 0
