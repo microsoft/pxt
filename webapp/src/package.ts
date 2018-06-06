@@ -464,12 +464,9 @@ export function loadPkgAsync(id: string, targetVersion?: string) {
         .catch(core.handleNetworkError)
         .then(() => JSON.parse(theHost.readFile(mainPkg, pxt.CONFIG_NAME)) as pxt.PackageConfig)
         .then(config => {
-            if (!config) return Promise.resolve();
+            if (!config) throw new Error(lf("invalid pxt.json file"));
             return mainPkg.installAllAsync(targetVersion)
-                .then(() => mainEditorPkg().afterMainLoadAsync())
-                .catch(e => {
-                    core.errorNotification(lf("Cannot load package: {0}", e.message))
-                })
+                .then(() => mainEditorPkg().afterMainLoadAsync());
         })
 }
 
