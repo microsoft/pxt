@@ -36,6 +36,7 @@ namespace ts.pxtc.decompiler {
     interface DecompilerEnv {
         blocks: BlocksInfo;
         declaredFunctions: pxt.Map<boolean>;
+        declaredEnums: pxt.Map<boolean>;
         attrs: (c: pxtc.CallInfo) => pxtc.CommentAttrs;
     }
 
@@ -91,6 +92,14 @@ namespace ts.pxtc.decompiler {
      *      (?:\*?\*\/)?$                               - matches the end of the multiline comment (one or two asterisks and a slash) or the end of a line within the comment
      */
     const multiLineCommentRegex = /^\s*(?:(?:(?:\/\*\*?)|(?:\*))(?!\/))?\s*(.*?)(?:\*?\*\/)?$/
+
+    /**
+     * Despite the name, the only "variables" we emit are for enum members
+     */
+    interface BlocklyVariableDeclaration {
+        name: string;
+        type: string;
+    }
 
     interface BlocklyNode {
         kind: string;
@@ -338,11 +347,13 @@ namespace ts.pxtc.decompiler {
         const env: DecompilerEnv = {
             blocks: blocksInfo,
             declaredFunctions: {},
+            declaredEnums: {},
             attrs: attrs
         };
         const fileText = file.getFullText();
         let output = ""
 
+        const enumMembers: BlocklyVariableDeclaration[] = [];
         const varUsages: pxt.Map<ReferenceType> = {};
         const workspaceComments: WorkspaceComment[] = [];
         const autoDeclarations: [string, ts.Node][] = [];
@@ -352,6 +363,19 @@ namespace ts.pxtc.decompiler {
         ts.forEachChild(file, topLevelNode => {
             if (topLevelNode.kind === SK.FunctionDeclaration && !checkStatement(topLevelNode, env, false, true)) {
                 env.declaredFunctions[getVariableName((topLevelNode as ts.FunctionDeclaration).name)] = true;
+            }
+            else if (topLevelNode.kind === SK.EnumDeclaration && !checkStatement(topLevelNode, env, false, true)) {
+                const enumName = (topLevelNode as EnumDeclaration).name.text;
+                env.declaredEnums[enumName] = true;
+                getEnumMembers(topLevelNode as EnumDeclaration).forEach(([name, value]) => {
+                    // We add the value to the front of the name because it needs to be maintained
+                    // across compilation/decompilation just in case the code relies on the actual value.
+                    // It's safe to do because enum members can't start with numbers.
+                    enumMembers.push({
+                        name: value + name,
+                        type: enumName
+                    });
+                });
             }
         })
 
@@ -374,6 +398,14 @@ namespace ts.pxtc.decompiler {
             else {
                 throw e;
             }
+        }
+
+        if (enumMembers.length) {
+            write("<variables>")
+            enumMembers.forEach(e => {
+                write(`<variable type="${U.htmlEscape(e.type)}">${U.htmlEscape(e.name)}</variable>`)
+            });
+            write("</variables>")
         }
 
         if (n) {
@@ -841,6 +873,16 @@ ${output}</xml>`;
                 return undefined;
             }
 
+            if (n.expression.kind === SK.Identifier) {
+                const enumName = (n.expression as ts.Identifier).text;
+                if (env.declaredEnums[enumName]) {
+                    const enumInfo = blocksInfo.enumsByName[enumName];
+                    if (enumInfo && enumInfo.blockId) {
+                        return getFieldBlock(enumInfo.blockId, "MEMBER", n.name.text);
+                    }
+                }
+            }
+
             const attributes = attrs(callInfo);
 
             if (attributes.blockCombine)
@@ -969,6 +1011,9 @@ ${output}</xml>`;
                     case SK.DebuggerStatement:
                         stmt = getDebuggerStatementBlock(node);
                         break;
+                    case SK.EnumDeclaration:
+                        // If the enum declaration made it past the checker then it is emitted elsewhere
+                        return getNext();
                     default:
                         if (next) {
                             error(node, Util.lf("Unsupported statement in block: {0}", SK[node.kind]))
@@ -1848,6 +1893,8 @@ ${output}</xml>`;
                 return checkForOfStatement(node as ts.ForOfStatement);
             case SK.FunctionDeclaration:
                 return checkFunctionDeclaration(node as ts.FunctionDeclaration, topLevel);
+            case SK.EnumDeclaration:
+                return checkEnumDeclaration(node as ts.EnumDeclaration, topLevel);
             case SK.DebuggerStatement:
                 return undefined;
         }
@@ -2323,6 +2370,44 @@ ${output}</xml>`;
 
             return undefined;
         }
+
+        function checkEnumDeclaration(n: ts.EnumDeclaration, topLevel: boolean) {
+            if (!topLevel) return Util.lf("Enum declarations must be top level");
+
+            const name = n.name.text;
+            const info = env.blocks.enumsByName[name];
+            if (!info) return Util.lf("Enum declarations in user code must have a block")
+
+            let fail = false;
+
+            // Initializers can either be a numeric literal or of the form a << b
+            n.members.forEach(member => {
+                if (member.name.kind !== SK.Identifier) fail = true;
+                if (fail) return;
+                if (member.initializer) {
+                    if (member.initializer.kind === SK.NumericLiteral) {
+                        return;
+                    }
+                    else if (member.initializer.kind === SK.BinaryExpression) {
+                        const ex = member.initializer as BinaryExpression;
+                        if (ex.operatorToken.kind === SK.LessThanLessThanToken) {
+                            if (ex.left.kind === SK.NumericLiteral && ex.right.kind === SK.NumericLiteral) {
+                                if ((ex.left as NumericLiteral).text == "1") {
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                    fail = true;
+                }
+            });
+
+            if (fail) {
+                return Util.lf("Invalid initializer for enum member")
+            }
+
+            return undefined;
+        }
     }
 
     function isEmptyStringNode(node: Node) {
@@ -2453,6 +2538,13 @@ ${output}</xml>`;
                     return checkExpression(n.expression, env)
                 }
                 else if (callInfo.decl.kind === SK.EnumMember) {
+                    // Check to see if this an enum with a block
+                    if (n.expression.kind === SK.Identifier) {
+                        const enumName = (n.expression as ts.Identifier).text;
+                        if (env.declaredEnums[enumName]) return undefined;
+                    }
+
+                    // Otherwise make sure this is in a dropdown on the block
                     const [parent, child] = getParent(n);
                     let fail = true;
 
@@ -2623,6 +2715,43 @@ ${output}</xml>`;
                 });
             }
         }
+
+        return res;
+    }
+
+    // This assumes the enum already passed checkEnumDeclaration
+    function getEnumMembers(n: EnumDeclaration): [string, number][] {
+        const res: [string, number][] = [];
+
+        n.members.forEach(member => {
+            U.assert(member.name.kind === SK.Identifier);
+            const name = (member.name as ts.Identifier).text;
+            let value: number;
+            if (member.initializer) {
+                if (member.initializer.kind === SK.NumericLiteral) {
+                    value = parseInt((member.initializer as NumericLiteral).text);
+                }
+                else {
+                    const ex = member.initializer as BinaryExpression;
+
+                    U.assert(ex.left.kind === SK.NumericLiteral);
+                    U.assert((ex.left as NumericLiteral).text === "1");
+                    U.assert(ex.operatorToken.kind === SK.LessThanLessThanToken);
+                    U.assert(ex.right.kind === SK.NumericLiteral);
+
+                    const shift = parseInt((ex.right as ts.NumericLiteral).text);
+                    value = 1 << shift;
+                }
+            }
+            else if (res.length === 0) {
+                value = 0;
+            }
+            else {
+                value = res[res.length - 1][1] + 1
+            }
+
+            res.push([name, value]);
+        });
 
         return res;
     }

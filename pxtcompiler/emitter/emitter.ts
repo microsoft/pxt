@@ -2025,7 +2025,7 @@ ${lbl}: .short 0xffff
                 return emitLit(undefined)
             }
 
-            if (nm == "TD_ID") {
+            if (nm == "TD_ID" || nm === "ENUM_GET") {
                 assert(args.length == 1, "args.length == 1")
                 return emitExpr(args[0])
             }
