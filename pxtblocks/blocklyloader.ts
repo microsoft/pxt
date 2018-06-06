@@ -85,8 +85,8 @@ namespace pxt.blocks {
 
     export function isValidShadowBlock(info: pxtc.BlocksInfo, shadowType: string) {
         return !!shadowType &&
-            (info.blocksById[shadowType] || 
-            builtinBlocks[shadowType]); 
+            (info.blocksById[shadowType] ||
+                builtinBlocks[shadowType]);
     }
 
     function createShadowValue(info: pxtc.BlocksInfo, name: string, type: string, v?: string, shadowType?: string): Element {
@@ -108,7 +108,7 @@ namespace pxt.blocks {
         const typeInfo = typeDefaults[type];
 
         if (shadowType && !isValidShadowBlock(info, shadowType)) {
-                pxt.log(`unknown shadow block ${shadowType}, ignoring`);
+            pxt.log(`unknown shadow block ${shadowType}, ignoring`);
             shadowType = undefined;
         }
         shadow.setAttribute("type", shadowType || typeInfo && typeInfo.block || type);
