@@ -36,8 +36,8 @@ namespace control {
     //% blockId=wordPicker block="%word"
     //% blockHidden=true
     //% colorSecondary="#FFFFFF"
-    //% word.fieldEditor="numberdropdown" word.fieldOptions.decompileLiterals=true
-    //% word.fieldOptions.data='[["Hi", "Hi"], ["How are you?", "How are you?"]]'
+    //% word.fieldEditor="textdropdown" word.fieldOptions.decompileLiterals=true
+    //% word.fieldOptions.values='[["Hi"], ["How are you?"]]'
     export function __wordPicker(word: string): string {
         return word;
     }
