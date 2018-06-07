@@ -1,4 +1,3 @@
-//%
 enum Choice {
     Left,
     Right,
@@ -6,7 +5,6 @@ enum Choice {
     Down
 }
 
-//%
 enum Choice2 {
     //% block="left"
     Left,
