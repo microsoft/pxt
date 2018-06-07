@@ -86,11 +86,6 @@
     "less": "2.7.3",
     "semantic-ui-less": "2.2.14"
   },
-  "optionalDependencies": {
-    "keytar": "4.2.1",
-    "node-hid": "^0.5.2",
-    "serialport": "^6.0.5"
-  },
   "devDependencies": {
     "monaco-editor": "0.10.0",
     "pxt-monaco-typescript": "2.3.5",

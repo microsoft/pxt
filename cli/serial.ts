@@ -33,7 +33,7 @@ export function monitorSerial(onData: (info: SerialPortInfo, buffer: Buffer) => 
     try {
         SerialPort = require("serialport");
     } catch (er) {
-        console.warn('serial: failed to load, skipping...');
+        console.warn('serial-port package failed to load, skipping...');
         return;
     }
     const serialPorts: pxt.Map<SerialPortInfo> = {};

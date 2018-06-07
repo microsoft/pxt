@@ -8,7 +8,7 @@ function getHID(): any {
         try {
             HID = require("node-hid")
         } catch (e) {
-            pxt.log('node-hid failed to load, ignoring...')
+            pxt.log('node-hid package failed to load, skipping...')
             HID = null;
         }
     }
