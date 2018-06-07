@@ -74,6 +74,12 @@
             path: "field-editors/toggle"
         },
         {
+            chapter: "Field editors",
+            name: "Note",
+            id: "field-editors-note",
+            path: "field-editors/note"
+        },
+        {
             chapter: "Language",
             name: "Create Enums from Blocks",
             id: "language-create-enums",
