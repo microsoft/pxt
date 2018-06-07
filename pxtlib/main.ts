@@ -12,7 +12,11 @@ namespace pxt {
     let savedAppTarget: TargetBundle;
     export function setAppTarget(trg: TargetBundle) {
         appTarget = trg || <TargetBundle>{};
+        patchAppTarget();
+        savedAppTarget = U.clone(appTarget)
+    }
 
+    function patchAppTarget() {
         // patch-up the target
         let comp = appTarget.compile
         if (!comp)
@@ -48,14 +52,35 @@ namespace pxt {
             if (cs.yottaTarget && !cs.yottaBinary)
                 cs.yottaBinary = "pxt-microbit-app-combined.hex"
         }
-
-        // patch cdn
+        // patch logo locations
         const theme = appTarget.appTheme;
-        let targetImages = Object.keys(theme as any as Map<string>)
-            .filter(k => /(logo|hero)$/i.test(k) && /^@cdnUrl@/.test((theme as any)[k]))
-            .forEach(k => (theme as any)[k] = pxt.BrowserUtils.patchCdn((theme as any)[k]));
+        if (theme) {
+            Object.keys(theme as any as Map<string>)
+                .filter(k => /(logo|hero)$/i.test(k) && /^@cdnUrl@/.test((theme as any)[k]))
+                .forEach(k => (theme as any)[k] = pxt.BrowserUtils.patchCdn((theme as any)[k]));
+        }
 
-        savedAppTarget = U.clone(appTarget)
+        // patching simulator images
+        const sim = appTarget.simulator;
+        if (sim
+            && sim.boardDefinition
+            && sim.boardDefinition.visual) {
+            let boardDef = sim.boardDefinition.visual as pxsim.BoardImageDefinition;
+            if (boardDef.image) {
+                boardDef.image = pxt.BrowserUtils.patchCdn(boardDef.image)
+                if (boardDef.outlineImage) boardDef.outlineImage = pxt.BrowserUtils.patchCdn(boardDef.outlineImage)
+            }
+        }
+
+        // patch icons in bundled packages
+        Object.keys(appTarget.bundledpkgs).forEach(pkgid => {
+            const res = appTarget.bundledpkgs[pkgid];
+            // path config before storing
+            const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+            if (config.icon) config.icon = pxt.BrowserUtils.patchCdn(config.icon);
+            res[pxt.CONFIG_NAME] = JSON.stringify(config, null, 4);
+        })
+
     }
 
     export function setAppTargetVariant(variant: string) {
@@ -71,6 +96,7 @@ namespace pxt {
             }
             U.userError(lf("Variant '{0}' not defined in pxtarget.json", variant))
         }
+        patchAppTarget();
     }
 
     export interface PxtOptions {
