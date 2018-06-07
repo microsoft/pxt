@@ -488,4 +488,25 @@ export function resolveMd(root: string, pathname: string): string {
     return undefined;
 }
 
+export function lazyRequireAsync(name: string): Promise<any> {
+    /* tslint:disable:non-literal-require */
+    try {
+        return Promise.resolve(require(name));
+    } catch (e) {
+        pxt.log(`${name} package failed to load, installing...`)
+        return spawnAsync({
+            cmd: "npm",
+            args: ["install", name]
+        }).then(() => {
+            try {
+                return Promise.resolve(require(name));
+            } catch (e) {
+                pxt.log(`failed to load or install ${name}`);
+                return undefined;
+            }
+        })
+    }
+    /* tslint:enable:non-literal-require */
+}
+
 init();
