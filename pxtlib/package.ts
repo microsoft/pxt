@@ -401,6 +401,9 @@ namespace pxt {
 
             let initPromise = Promise.resolve()
 
+            if (this.level == 0)
+                pxt.setAppTargetVariant(null)
+
             this.isLoaded = true;
             const str = this.readFile(pxt.CONFIG_NAME);
             if (str == null) {

@@ -3154,8 +3154,11 @@ function simshimAsync() {
             "\n// Auto-generated. Do not edit. Really.\n"
         let cfgname = "libs/" + s + "/" + pxt.CONFIG_NAME
         let cfg = nodeutil.readPkgConfig("libs/" + s)
-        if (cfg.files.indexOf(filename) == -1)
+        if (cfg.files.indexOf(filename) == -1) {
+            if (pxt.appTarget.variants)
+                return Promise.resolve() // this is fine - there are native variants that generate shims
             U.userError(U.lf("please add \"{0}\" to {1}", filename, cfgname))
+        }
         let fn = "libs/" + s + "/" + filename
         if (fs.readFileSync(fn, "utf8") != cont) {
             pxt.debug(`updating ${fn}`)
