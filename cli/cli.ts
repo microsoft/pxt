@@ -1915,7 +1915,8 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
         .then(() => internalGenDocsAsync(false, true))
         .then(() => forEachBundledPkgAsync((pkg, dirname) => {
             pxt.log(`building ${dirname}`);
-            const isPrj = /prj$/.test(dirname) || /hw---/.test(dirname);
+            let isPrj = /prj$/.test(dirname);
+            const isHw = /hw---/.test(dirname);
             const config = nodeutil.readPkgConfig(".")
             const isCore = !!config.core;
             for (let p of config.additionalFilePaths)
@@ -1926,6 +1927,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                     if (!isPrj) {
                         cfg.bundledpkgs[path.basename(dirname)] = res
                     }
+                    if (isHw) isPrj = true
                 })
                 .then(() => testForBuildTargetAsync(isPrj || (!options.skipCore && isCore)))
                 .then((compileOpts) => {
