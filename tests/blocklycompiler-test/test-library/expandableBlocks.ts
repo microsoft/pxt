@@ -37,3 +37,9 @@ namespace exp {
         return res
     }
 }
+
+namespace testNamespace {
+    //% blockId=test_handler_arguments3 draggableParameters=1 blockAllowMultiple=1
+    //% block="Handler with draggable arguments"
+    export function callbackWithDraggableParams(cb: (c: number, d: number) => void) {}
+}

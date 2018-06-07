@@ -582,6 +582,10 @@ declare namespace Blockly {
         constructor(d: any);
     }
 
+    class FieldVariableGetter extends Field {
+        constructor(d: any);
+    }
+
     class FieldProcedure extends Field {
         constructor(d: any);
     }

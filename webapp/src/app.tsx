@@ -119,6 +119,7 @@ export class ProjectView
         // Only show the start screen if there are no initial projects requested
         // (e.g. from the URL hash or from WinRT activation arguments)
         const skipStartScreen = pxt.appTarget.appTheme.allowParentController
+            || pxt.shell.isControllerMode()
             || window.location.hash == "#editor";
         return !isSandbox && !skipStartScreen && !isProjectRelatedHash(hash);
     }
@@ -452,7 +453,10 @@ export class ProjectView
             },
             editor: this.state.header ? this.state.header.editor : ''
         })
-        if (pxt.appTarget.appTheme.allowParentController || pxt.appTarget.appTheme.allowPackageExtensions || pxt.appTarget.appTheme.allowSimulatorTelemetry)
+        if (pxt.appTarget.appTheme.allowParentController
+            || pxt.appTarget.appTheme.allowPackageExtensions
+            || pxt.appTarget.appTheme.allowSimulatorTelemetry
+            || pxt.shell.isControllerMode())
             pxt.editor.bindEditorMessages(this);
         this.forceUpdate(); // we now have editors prepared
     }
@@ -705,15 +709,8 @@ export class ProjectView
         return this.loadHeaderAsync(this.state.header, this.state.editorState)
     }
 
-    loadHeaderAsync(h: pxt.workspace.Header, editorState?: pxt.editor.EditorState, inTutorial?: boolean): Promise<void> {
-        if (!h)
-            return Promise.resolve()
-
-        pxt.debug(`loading ${h.id} (pxt v${h.targetVersion})`);
-        this.stopSimulator(true);
-        this.clearSerial()
-
-        const htv = h.targetVersion || "0.0.0";
+    tryCheckTargetVersionAsync(targetVersion: string): Promise<void> {
+        const htv = targetVersion || "0.0.0";
         // a legacy script does not have a version -- or has a major version less
         // than the current version
         const legacyProject = pxt.semver.majorCmp(htv, pxt.appTarget.versions.target) < 0;
@@ -739,6 +736,20 @@ export class ProjectView
                 // TODO: find a better recovery for this.
                 .then(() => this.openHome());
         }
+        return undefined;
+    }
+
+    loadHeaderAsync(h: pxt.workspace.Header, editorState?: pxt.editor.EditorState, inTutorial?: boolean): Promise<void> {
+        if (!h)
+            return Promise.resolve()
+
+        const checkAsync = this.tryCheckTargetVersionAsync(h.targetVersion);
+        if (checkAsync)
+            return checkAsync.then(() => this.openHome());
+
+        pxt.debug(`loading ${h.id} (pxt v${h.targetVersion})`);
+        this.stopSimulator(true);
+        this.clearSerial()
 
         Util.jsonMergeFrom(editorState || {}, this.state.editorState || {});
         return pkg.loadPkgAsync(h.id)
@@ -959,6 +970,17 @@ export class ProjectView
             return;
         }
 
+        // intercept newer files early
+        if (this.hexFileImporters.some(fi => fi.id == "default" && fi.canImport(data))) {
+            const checkAsync = this.tryCheckTargetVersionAsync(data.meta.targetVersions && data.meta.targetVersions.target);
+            if (checkAsync) {
+                checkAsync.done(() => {
+                    if (createNewIfFailed) this.newProject();
+                });
+                return;
+            }
+        }
+
         const importer = this.hexFileImporters.filter(fi => fi.canImport(data))[0];
         if (importer) {
             pxt.tickEvent("import." + importer.id);
@@ -1094,6 +1116,9 @@ export class ProjectView
     ///////////////////////////////////////////////////////////
 
     openHome() {
+        const hasHome = !pxt.shell.isControllerMode();
+        if (!hasHome) return;
+
         this.stopSimulator();
         if (this.editor) this.editor.unloadFileAsync();
         // clear the hash
@@ -1993,7 +2018,7 @@ export class ProjectView
         //  ${targetTheme.accentColor ? "inverted accent " : ''}
         const targetTheme = pxt.appTarget.appTheme;
         const simOpts = pxt.appTarget.simulator;
-        const sharingEnabled = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing;
+        const sharingEnabled = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && !pxt.shell.isControllerMode();
         const sandbox = pxt.shell.isSandboxMode();
         const isBlocks = !this.editor.isVisible || this.getPreferredEditor() == pxt.BLOCKS_PROJECT_NAME;
         const sideDocs = !(sandbox || targetTheme.hideSideDocs);
@@ -2143,7 +2168,10 @@ function initLogin() {
 }
 
 function initSerial() {
-    if (!pxt.appTarget.serial || !pxt.winrt.isWinRT() && (!Cloud.isLocalHost() || !Cloud.localToken))
+    const isHF2WinRTSerial = pxt.appTarget.serial && pxt.appTarget.serial.useHF2 && pxt.winrt.isWinRT();
+    const isValidLocalhostSerial = pxt.appTarget.serial && Cloud.isLocalHost() && !!Cloud.localToken;
+
+    if (!isHF2WinRTSerial && !isValidLocalhostSerial)
         return;
 
     if (hidbridge.shouldUse()) {
@@ -2506,8 +2534,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const ws = /ws=(\w+)/.exec(window.location.href)
     const isSandbox = pxt.shell.isSandboxMode() || pxt.shell.isReadOnly();
+    const isController = pxt.shell.isControllerMode();
     if (ws) workspace.setupWorkspace(ws[1]);
-    else if (pxt.appTarget.appTheme.allowParentController) workspace.setupWorkspace("iframe");
+    else if (pxt.appTarget.appTheme.allowParentController || isController) workspace.setupWorkspace("iframe");
     else if (isSandbox) workspace.setupWorkspace("mem");
     else if (pxt.winrt.isWinRT()) workspace.setupWorkspace("uwp");
     else if (Cloud.isLocalHost() || electron.isPxtElectron) workspace.setupWorkspace("fs");
@@ -2532,6 +2561,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 .then(() => {
                     if (pxt.Util.isLocaleEnabled(useLang)) {
                         lang.setCookieLang(useLang);
+                        lang.setInitialLang(useLang);
                     } else {
                         pxt.tickEvent("unavailablelocale." + useLang + (force ? ".force" : ""));
                     }
@@ -2649,17 +2679,26 @@ document.addEventListener("DOMContentLoaded", () => {
                 ipcRenderer.sendToHost("sendToApp", ev.data);
             else if (window.parent && window != window.parent)
                 window.parent.postMessage(ev.data, "*");
+            return;
         }
 
         if (m.type == "tutorial" || m.type == "popoutcomplete") {
             if (theEditor && theEditor.editor)
                 theEditor.handleMessage(m);
+            return;
         }
         if (m.type === "sidedocready" && Cloud.isLocalHost() && Cloud.localToken) {
             container.SideDocs.notify({
                 type: "localtoken",
                 localToken: Cloud.localToken
             } as pxsim.SimulatorDocMessage);
+            return;
+        }
+        if (m.type == "importfile") {
+            const msg = m as pxsim.ImportFileMessage;
+            if (theEditor)
+                theEditor.importFile(new File(msg.parts, msg.filename));
+            return;
         }
     }, false);
 })

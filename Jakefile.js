@@ -287,7 +287,8 @@ task('wapp', [
     'built/web/icons.css',
     'built/web/blockly.css',
     'built/web/semantic.css',
-    "built/web/semantic.js"
+    "built/web/semantic.js",
+    "docs/playground.html"
 ])
 
 file("built/web/pxtlib.js", [
@@ -535,3 +536,9 @@ ju.catFiles("built/web/semantic.js",
         "node_modules/semantic-ui-less/definitions/modules/transition.js",
         "node_modules/semantic-ui-less/definitions/behaviors"], ".js"),
     "")
+
+file('docs/playground.html', ['built/web/pxtworker.js', 'built/web/pxtblockly.js', 'built/web/semantic.css'], function () {
+    jake.cpR("libs/pxt-common/pxt-core.d.ts", "docs/static/playground/pxt-common/pxt-core.d.js");
+    jake.cpR("libs/pxt-common/pxt-helpers.ts", "docs/static/playground/pxt-common/pxt-helpers.js");
+    jake.cpR("webapp/public/blockly/media/", "docs/static/playground/blockly/");
+})

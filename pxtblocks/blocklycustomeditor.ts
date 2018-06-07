@@ -40,6 +40,8 @@ namespace pxt.blocks {
         registerFieldEditor('colornumber', pxtblockly.FieldColorNumber);
         registerFieldEditor('images', pxtblockly.FieldImages);
         registerFieldEditor('sprite', pxtblockly.FieldSpriteEditor);
+        registerFieldEditor('speed', pxtblockly.FieldSpeed);
+        registerFieldEditor('turnratio', pxtblockly.FieldTurnRatio);
     }
 
     export function registerFieldEditor(selector: string, field: Blockly.FieldCustomConstructor, validator?: any) {

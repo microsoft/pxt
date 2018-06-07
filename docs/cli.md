@@ -86,6 +86,7 @@ where ``EMBEDURL`` is the published project URL.
 
 Run ``pxt help`` for the list of all commands. The following list of links contains more info on specific commands.
 
+* [target](/cli/target), downloads the editor tools
 * [build](/cli/build), builds the current project
 * [deploy](/cli/deploy), builds and deploys the current project
 * [login](/cli/login), store a GitHub token

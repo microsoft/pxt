@@ -1,7 +1,7 @@
 {
   "name": "pxt",
-  "version": "0.4.0",
-  "description": "Programming Experience Toolkit - command line interface",
+  "version": "0.5.0",
+  "description": "MakeCode (PXT) - command line interface",
   "keywords": [
     "TypeScript",
     "JavaScript",

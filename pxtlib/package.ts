@@ -33,6 +33,7 @@ namespace pxt {
         public level = -1;
         public isLoaded = false;
         private resolvedVersion: string;
+        public ignoreTests = false;
 
         constructor(public id: string, public _verspec: string, public parent: MainPackage, addedBy: Package) {
             if (addedBy) {
@@ -179,8 +180,8 @@ namespace pxt {
                 U.userError("Invalid package name: " + this.config.name)
             if (this.config.targetVersions
                 && this.config.targetVersions.target
-                && semver.strcmp(this.config.targetVersions.target, appTarget.versions.target) > 0)
-                U.userError(lf("Package {0} requires target version {1} (you are running {2})",
+                && semver.majorCmp(this.config.targetVersions.target, appTarget.versions.target) > 0)
+                U.userError(lf("{0} requires target version {1} (you are running {2})",
                     this.config.name, this.config.targetVersions.target, appTarget.versions.target))
         }
 
@@ -384,6 +385,17 @@ namespace pxt {
             }
         }
 
+        dependencies(): pxt.Map<string> {
+            if (!this.config) return {};
+
+            const dependencies = Util.clone(this.config.dependencies || {});
+            // add test dependencies if nedeed
+            if (this.level == 0 && this.config.testDependencies) {
+                Util.jsonMergeFrom(dependencies, this.config.testDependencies);
+            }
+            return dependencies;
+        }
+
         loadAsync(isInstall = false, targetVersion?: string): Promise<void> {
             if (this.isLoaded) return Promise.resolve();
 
@@ -401,13 +413,12 @@ namespace pxt {
             if (isInstall)
                 initPromise = initPromise.then(() => this.downloadAsync())
 
-            initPromise = initPromise.then(() => {
-                if (this.level == 0) {
+            if (isInstall && this.level == 0)
+                initPromise = initPromise.then(() => {
                     pxt.debug(`upgrading files, target version ${this.targetVersion()}`)
                     this.getFiles().filter(fn => /\.ts$/.test(fn))
                         .forEach(file => this.upgradeFile(file, this.readFile(file)));
-                }
-            })
+                })
 
             if (appTarget.simulator && appTarget.simulator.dynamicBoardDefinition) {
                 if (this.level == 0)
@@ -438,8 +449,8 @@ namespace pxt {
                 })
             }
 
-            const loadDepsRecursive = (dependencies: Map<string>) => {
-                return U.mapStringMapAsync(dependencies, (id, ver) => {
+            const loadDepsRecursive = (deps: Map<string>) => {
+                return U.mapStringMapAsync(deps, (id, ver) => {
                     let mod = this.resolveDep(id)
                     ver = ver || "*"
                     if (mod) {
@@ -459,7 +470,7 @@ namespace pxt {
             }
 
             return initPromise
-                .then(() => loadDepsRecursive(this.config.dependencies))
+                .then(() => loadDepsRecursive(this.dependencies()))
                 .then(() => {
                     // get paletter config loading deps, so the more higher level packages take precedence
                     if (this.config.palette && appTarget.runtime)
@@ -509,7 +520,7 @@ namespace pxt {
         }
 
         getFiles() {
-            if (this.level == 0)
+            if (this.level == 0 && !this.ignoreTests)
                 return this.config.files.concat(this.config.testFiles || [])
             else
                 return this.config.files.slice(0);
@@ -599,13 +610,13 @@ namespace pxt {
             let ids: string[] = []
             let rec = (p: Package) => {
                 if (!p || U.lookup(visited, p.id)) return;
-                visited[p.id] = true
-                if (p.config && p.config.dependencies) {
-                    const deps = Object.keys(p.config.dependencies);
-                    deps.sort((a, b) => U.strcmp(a, b))
-                    deps.forEach(id => rec(this.resolveDep(id)))
-                    ids.push(p.id)
-                }
+                visited[p.id] = true;
+
+                const dependencies = p.dependencies();
+                const deps = Object.keys(dependencies);
+                deps.sort((a, b) => U.strcmp(a, b))
+                deps.forEach(id => rec(this.resolveDep(id)))
+                ids.push(p.id)
             }
             rec(this)
             return ids.map(id => this.resolveDep(id))
@@ -691,7 +702,7 @@ namespace pxt {
                 .then(() => this.config.binaryonly || appTarget.compile.shortPointers || !opts.target.isNative ? null : this.filesToBePublishedAsync(true))
                 .then(files => {
                     if (files) {
-                        files = U.mapMap(files, (f,c) => this.upgradeFile(f,c));
+                        files = U.mapMap(files, (f, c) => this.upgradeFile(f, c));
                         const headerString = JSON.stringify({
                             name: this.config.name,
                             comment: this.config.description,
@@ -748,6 +759,7 @@ namespace pxt {
                     let cfg = U.clone(this.config)
                     delete cfg.installedVersion
                     delete cfg.additionalFilePath
+                    if (!cfg.targetVersions) cfg.targetVersions = pxt.appTarget.versions;
                     U.iterMap(cfg.dependencies, (k, v) => {
                         if (!v || /^file:/.test(v) || /^workspace:/.test(v)) {
                             cfg.dependencies[k] = "*"

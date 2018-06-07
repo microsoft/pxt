@@ -328,6 +328,7 @@ namespace pxt.blocks {
                         if (pr.fieldOptions) {
                             if (pr.fieldOptions['step']) container.setAttribute('step', pr.fieldOptions['step']);
                             if (pr.fieldOptions['color']) container.setAttribute('color', pr.fieldOptions['color']);
+                            if (pr.fieldOptions['precision']) container.setAttribute('precision', pr.fieldOptions['precision']);
                         }
                     } else {
                         shadowValue = createShadowValue(info, pr);
@@ -340,12 +341,36 @@ namespace pxt.blocks {
                         shadowValue.firstChild.appendChild(container);
                     block.appendChild(shadowValue);
                 })
-            comp.handlerArgs.forEach(arg => {
-                const field = document.createElement("field");
-                field.setAttribute("name", "HANDLER_" + arg.name);
-                field.textContent = arg.name;
-                block.appendChild(field);
-            });
+            if (fn.attributes.draggableParameters) {
+                comp.handlerArgs.forEach(arg => {
+                    // <value name="HANDLER_DRAG_PARAM_arg">
+                    // <shadow type="variables_get_reporter">
+                    //     <field name="VAR">defaultName</field>
+                    // </shadow>
+                    // </value>
+                    const value = document.createElement("value");
+                    value.setAttribute("name", "HANDLER_DRAG_PARAM_" + arg.name);
+
+                    const shadow = document.createElement("shadow");
+                    shadow.setAttribute("type", "variables_get_reporter");
+
+                    const field = document.createElement("field");
+                    field.setAttribute("name", "VAR");
+                    field.textContent = Util.htmlEscape(arg.name);
+
+                    shadow.appendChild(field);
+                    value.appendChild(shadow);
+                    block.appendChild(value);
+                });
+            }
+            else {
+                comp.handlerArgs.forEach(arg => {
+                    const field = document.createElement("field");
+                    field.setAttribute("name", "HANDLER_" + arg.name);
+                    field.textContent = arg.name;
+                    block.appendChild(field);
+                });
+            }
         }
         return block;
     }
@@ -468,8 +493,10 @@ namespace pxt.blocks {
         const instance = fn.kind == pxtc.SymbolKind.Method || fn.kind == pxtc.SymbolKind.Property;
         const nsinfo = info.apis.byQName[ns];
         const color =
-            fn.attributes.color
-            || (nsinfo ? nsinfo.attributes.color : undefined)
+            // blockNamespace overrides color on block
+            (fn.attributes.blockNamespace && nsinfo && nsinfo.attributes.color)
+            || fn.attributes.color
+            || (nsinfo && nsinfo.attributes.color)
             || pxt.toolbox.getNamespaceColor(ns.toLowerCase())
             || 255;
 
@@ -504,13 +531,24 @@ namespace pxt.blocks {
             initExpandableBlock(block, fn.attributes._expandedDef, comp, shouldToggle, () => buildBlockFromDef(fn.attributes._expandedDef, true));
         }
         else if (comp.handlerArgs.length) {
+            /**
+             * We support three modes for handler parameters: variable dropdowns,
+             * expandable variable dropdowns with +/- buttons (used for chat commands),
+             * and as draggable variable blocks
+             */
             hasHandler = true;
             if (fn.attributes.optionalVariableArgs) {
                 initVariableArgsBlock(block, comp.handlerArgs);
             }
+            else if (fn.attributes.draggableParameters) {
+                comp.handlerArgs.filter(a => !a.inBlockDef).forEach(arg => {
+                    const i = block.appendValueInput("HANDLER_DRAG_PARAM_" + arg.name);
+                    i.setCheck("Variable");
+                });
+            }
             else {
                 let i = block.appendDummyInput();
-                comp.handlerArgs.forEach(arg => {
+                comp.handlerArgs.filter(a => !a.inBlockDef).forEach(arg => {
                     i.appendField(new Blockly.FieldVariable(arg.name), "HANDLER_" + arg.name);
                 });
             }
@@ -597,6 +635,13 @@ namespace pxt.blocks {
             const inputs = splitInputs(def);
             const imgConv = new ImageConverter()
 
+            if (fn.attributes.shim === "ENUM_GET") {
+                if (comp.parameters.length > 1 || comp.thisParameter) {
+                    console.warn(`Enum blocks may only have 1 parameter but ${fn.attributes.blockId} has ${comp.parameters.length}`);
+                    return;
+                }
+            }
+
             inputs.forEach(inputParts => {
                 const fields: NamedField[] = [];
                 let inputName: string;
@@ -610,14 +655,30 @@ namespace pxt.blocks {
                             fields.push({ field: f });
                         }
                     }
+                    else if (fn.attributes.shim === "ENUM_GET") {
+                        U.assert(!!fn.attributes.enumName, "Trying to create an ENUM_GET block without a valid enum name")
+                        fields.push({
+                            name: "MEMBER",
+                            field: new pxtblockly.FieldUserEnum(info.enumsByName[fn.attributes.enumName])
+                        });
+                        return;
+                    }
                     else {
                         // find argument
-                        let pr = firstParam ? comp.thisParameter : comp.definitionNameToParam[part.name];
+                        let pr = getParameterFromDef(part, comp, firstParam);
+
                         firstParam = false;
                         if (!pr) {
-                            console.error("block " + fn.attributes.blockId + ": unkown parameter " + part.name);
+                            console.error("block " + fn.attributes.blockId + ": unkown parameter " + part.name + (part.ref ? ` (${part.ref})` : ""));
                             return;
                         }
+
+                        if (isHandlerArg(pr)) {
+                            inputName = "HANDLER_DRAG_PARAM_" + pr.name;
+                            inputCheck = "Variable";
+                            return;
+                        }
+
                         let typeInfo = U.lookup(info.apis.byQName, pr.type)
 
                         hasParameter = true;
@@ -674,7 +735,7 @@ namespace pxt.blocks {
                             if (pr.defaultValue) {
                                 let shadowValueIndex = -1;
                                 dd.some((v, i) => {
-                                    if (v[1] === pr.defaultValue) {
+                                    if (v[1] === (pr as BlockParameter).defaultValue) {
                                         shadowValueIndex = i;
                                         return true;
                                     }
@@ -760,6 +821,28 @@ namespace pxt.blocks {
 
             imgConv.logTime()
         }
+    }
+
+    function getParameterFromDef(part: pxtc.BlockParameter, comp: BlockCompileInfo, isThis = false): HandlerArg | BlockParameter {
+        if (part.ref) {
+            const result = (part.name === "this") ? comp.thisParameter : comp.actualNameToParam[part.name];
+
+            if (!result) {
+                let ha: HandlerArg;
+                comp.handlerArgs.forEach(arg => {
+                    if (arg.name === part.name) ha = arg;
+                });
+                if (ha) return ha;
+            }
+            return result;
+        }
+        else {
+            return isThis ? comp.thisParameter : comp.definitionNameToParam[part.name];
+        }
+    }
+
+    function isHandlerArg(arg: HandlerArg | BlockParameter): arg is HandlerArg {
+        return !(arg as BlockParameter).definitionName;
     }
 
     export function hasArrowFunction(fn: pxtc.SymbolInfo): boolean {
@@ -1831,6 +1914,11 @@ namespace pxt.blocks {
     }
 
     function initVariables() {
+        // We only give types to "special" variables like enum members and we don't
+        // want those showing up in the variable dropdown so filter the variables
+        // that show up to only ones that have an empty type
+        (Blockly.FieldVariable.prototype as any).getVariableTypes_ = () => [""];
+
         let varname = lf("{id:var}item");
         Blockly.Variables.flyoutCategory = function (workspace) {
             let xmlList: HTMLElement[] = [];

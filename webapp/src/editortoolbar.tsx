@@ -98,6 +98,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         if (home) return <div />; // Don't render if we're in the home screen
 
         const sandbox = pxt.shell.isSandboxMode();
+        const isController = pxt.shell.isControllerMode();
         const readOnly = pxt.shell.isReadOnly();
         const tutorial = tutorialOptions ? tutorialOptions.tutorial : false;
         const collapsed = (hideEditorFloats || collapseEditorTools) && !tutorial;
@@ -119,7 +120,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const hasRedo = this.props.parent.editor.hasRedo();
 
         const showCollapsed = !tutorial && !sandbox;
-        const showProjectRename = !tutorial && !readOnly;
+        const showProjectRename = !tutorial && !readOnly && !isController;
         const showUndoRedo = !tutorial && !readOnly;
         const showZoomControls = !tutorial;
 
@@ -322,7 +323,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                 {showCollapsed ? <EditorToolbarButton icon={`${collapseEditorTools ? 'toggle ' + (isRtl ? 'left' : 'right') : 'toggle ' + (isRtl ? 'right' : 'left')}`} className={`large collapse-button ${collapsed ? 'collapsed' : ''}`} title={collapseTooltip} onButtonClick={this.toggleCollapse} view='computer' /> : undefined}
                                 {run ? <EditorToolbarButton role="menuitem" className={`large play-button ${running ? "stop" : "play"}`} key='runmenubtn' icon={running ? "stop" : "play"} title={runTooltip} onButtonClick={this.startStopSimulator} view='computer' /> : undefined}
                                 {restart ? <EditorToolbarButton key='restartbtn' className={`large restart-button`} icon="refresh" title={restartTooltip} onButtonClick={this.restartSimulator} view='computer' /> : undefined}
-                                {trace ? <EditorToolbarButton key='tracebtn' className={`large trace-button ${tracing ? 'orange' : ''}`} icon="xicon trace" title={traceTooltip} onButtonClick={this.toggleTrace} view='computer' /> : undefined}
+                                {trace ? <EditorToolbarButton key='tracebtn' className={`large trace-button ${tracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onButtonClick={this.toggleTrace} view='computer' /> : undefined}
                                 {debug ? <EditorToolbarButton key='debugbtn' className={`large debug-button ${debugging ? 'orange' : ''}`} icon="xicon bug" title={debugTooltip} onButtonClick={this.toggleDebugging} view='computer' /> : undefined}
                                 {compileBtn ? <EditorToolbarButton icon={downloadIcon} className={`primary large download-button ${downloadButtonClasses}`} title={compileTooltip} onButtonClick={this.compile} view='computer' /> : undefined}
                             </div>

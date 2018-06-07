@@ -5,7 +5,7 @@
 ## What is happening?
 Microsoft is delaying the retirement of the Touch Develop platform until June 22, 2019.  We made this decision primarily in response to customer feedback that our initial plan for retirement on May 23, 2018 conflicted with current school calendars and with curriculum planning for the upcoming academic year.
 
-We continue to be committed to replacing Touch Develop by Microsoft MakeCode, a holistic hands-on computing education platform that brings computer science to life through physical computing devices like the micro bit and immersive experiences like Minecraft.   
+We continue to be committed to replacing Touch Develop by [Microsoft MakeCode](https://www.makecode.com), a holistic hands-on computing education platform that brings computer science to life through physical computing devices like the micro bit and immersive experiences like Minecraft.   
 
 Microsoft will continue to support our education customers using current Touch Develop courseware to ensure a smooth transition. However, we are making some changes in order to comply with regulatory requirements and better protect users’ personal data. Here are the key Touch Develop changes and dates to remember:
 
@@ -47,7 +47,7 @@ When you are editing a script, you can navigate to the home page of each art res
 
 ## How can I use images that aren’t in the Touch Develop cloud?
 
-Unfortunately, you will only be able to refer to images you find in the Touch Develop cloud (via search, for example). 
+Unfortunately, you will only be able to refer to images you find in the Touch Develop cloud (via search, for example).  If your script has broken images, you will have to patch each broken image by searching for a new image in the Touch Develop editor (to replace the broken image with).  Alternatively, you can use a shape instead of an image (for a sprite, for example).
 
 ## Where do I go if I have questions?
 

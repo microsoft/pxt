@@ -31,12 +31,14 @@ namespace pxsim {
     }
 
     export interface SimulatorDocMessage extends SimulatorMessage {
+        type: "localtoken" | "docfailed";
         docType?: string;
         src?: string;
         localToken?: string;
     }
 
     export interface SimulatorFileLoadedMessage extends SimulatorMessage {
+        type: "fileloaded";
         name: string;
         locale: string;
         content?: string;
@@ -52,20 +54,24 @@ namespace pxsim {
     }
 
     export interface SimulatorDocsReadyMessage extends SimulatorMessage {
+        type: "popoutcomplete";
     }
 
     export interface SimulatorStateMessage extends SimulatorMessage {
+        type: "status";
         frameid?: string;
         runtimeid?: string;
         state: string;
     }
 
     export interface SimulatorEventBusMessage extends SimulatorMessage {
+        type: "event";
         id: number;
         eventid: number;
         value?: number;
     }
     export interface SimulatorSerialMessage extends SimulatorMessage {
+        type: "serial";
         id: string;
         data: string;
         sim?: boolean;
@@ -95,6 +101,11 @@ namespace pxsim {
         packet: Uint8Array; // base64 encoded
     }
 
+    export interface SimulatorI2CMessage extends SimulatorMessage {
+        type: "i2c";
+        data: Uint8Array;
+    }
+
     export interface SimulatorRadioPacketPayload {
         type: number;
         groupId: number;
@@ -117,6 +128,12 @@ namespace pxsim {
         type: "tutorial";
         tutorial: string;
         subtype: string;
+    }
+
+    export interface ImportFileMessage extends SimulatorMessage {
+        type: "importfile";
+        filename: string;
+        parts: (string | ArrayBuffer)[];
     }
 
     export interface TutorialStepInfo {

@@ -201,6 +201,18 @@ namespace pxsim {
         }
 
         export function round(n: number) { return Math.round(n) }
+        export function roundWithPrecision(x: number, digits: number): number {
+            digits = digits | 0;
+            // invalid digits input
+            if (digits <= 0) return Math.round(x);
+            if (x == 0) return 0;
+            let r = 0;
+            while (r == 0 && digits < 21) {
+                const d = Math.pow(10, digits++);
+                r = Math.round(x * d + Number.EPSILON) / d;
+            }
+            return r;
+        }
         export function ceil(n: number) { return Math.ceil(n) }
         export function floor(n: number) { return Math.floor(n) }
         export function sqrt(n: number) { return Math.sqrt(n) }
@@ -210,22 +222,26 @@ namespace pxsim {
             else
                 return Math.pow(x, y) | 0
         }
+        export function clz32(n: number) { return Math.clz32(n) }
         export function log(n: number) { return Math.log(n) }
+        export function log10(n: number) { return Math.log10(n) }
+        export function log2(n: number) { return Math.log2(n) }
         export function exp(n: number) { return Math.exp(n) }
         export function sin(n: number) { return Math.sin(n) }
+        export function sinh(n: number) { return Math.sinh(n) }
         export function cos(n: number) { return Math.cos(n) }
+        export function cosh(n: number) { return Math.cosh(n) }
         export function tan(n: number) { return Math.tan(n) }
+        export function tanh(n: number) { return Math.tanh(n) }
         export function asin(n: number) { return Math.asin(n) }
+        export function asinh(n: number) { return Math.asinh(n) }
         export function acos(n: number) { return Math.acos(n) }
+        export function acosh(n: number) { return Math.acosh(n) }
         export function atan(n: number) { return Math.atan(n) }
+        export function atanh(x: number) { return Math.atanh(x) }
         export function atan2(y: number, x: number) { return Math.atan2(y, x) }
-        export function trunc(x: number) {
-            return x > 0 ? Math.floor(x) : Math.ceil(x);
-        }
-
-        export function random(): number {
-            return Math.random();
-        }
+        export function trunc(x: number) { return x > 0 ? Math.floor(x) : Math.ceil(x); }
+        export function random(): number { return Math.random(); }
         export function randomRange(min: number, max: number): number {
             if (min == max) return min;
             if (min > max) {

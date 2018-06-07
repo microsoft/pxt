@@ -2,7 +2,7 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "DebugBuild",
+			"name": "DebugBuildTarget",
 			"type": "node",
 			"request": "launch",
 			"program": "${workspaceRoot}/built/pxt.js",
@@ -21,12 +21,31 @@
 			"outFiles": []
 		},
 		{
-			"name": "Launch",
+			"name": "DebugBuildPackage",
 			"type": "node",
 			"request": "launch",
 			"program": "${workspaceRoot}/built/pxt.js",
 			"stopOnEntry": false,
-			"args": ["pyconv", "adafruit_seesaw.py"],
+			"args": ["build"],
+			"cwd": "${workspaceRoot}/../pxt-adafruit/projects/pxt-seesaw",
+			"runtimeExecutable": null,
+			"runtimeArgs": [
+				"--nolazy"
+			],
+			"env": {
+				"NODE_ENV": "development"
+			},
+			"console": "integratedTerminal",
+			"sourceMaps": false,
+			"outFiles": []
+		},
+		{
+			"name": "PyConv",
+			"type": "node",
+			"request": "launch",
+			"program": "${workspaceRoot}/built/pxt.js",
+			"stopOnEntry": false,
+			"args": ["pyconv", "adafruit_seesaw"],
 			"cwd": "${workspaceRoot}/../pxt-adafruit/projects/Adafruit_CircuitPython_seesaw",
 			"runtimeExecutable": null,
 			"runtimeArgs": [

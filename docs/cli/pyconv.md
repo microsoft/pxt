@@ -19,7 +19,10 @@ If instead of directory you specify one or more `.py` files, they will be conver
 Additional Python modules will be searched for in the support directories. They are converted
 in background, but the results are not written.
 
-The command requires `python3` executable to be in the `PATH`.
+## Where is python?
+
+The command requires **Python 3** with ``py`` on Windows or ``python3`` executable to be in the `PATH`. Or you can specify the python path
+in the ``PYTHON3`` environment variable.
 
 ## Limitations
 

@@ -71,7 +71,8 @@ namespace pxt.Cloud {
         if (!Cloud.isOnline()) // offline
             return Promise.resolve(undefined);
 
-        const url = pxt.webConfig && pxt.webConfig.isStatic ? `targetconfig.json` : `config/${pxt.appTarget.id}/targetconfig`;
+        const targetVersion = pxt.appTarget.versions && pxt.appTarget.versions.target;
+        const url = pxt.webConfig && pxt.webConfig.isStatic ? `targetconfig.json` : `config/${pxt.appTarget.id}/targetconfig${targetVersion ? `/v${targetVersion}` : ''}`;
         if (Cloud.isLocalHost())
             return localRequestAsync(url).then(r => r ? r.json : undefined)
         else
@@ -86,6 +87,7 @@ namespace pxt.Cloud {
 
     export function downloadMarkdownAsync(docid: string, locale?: string, live?: boolean): Promise<string> {
         const packaged = pxt.webConfig && pxt.webConfig.isStatic;
+        const targetVersion = pxt.appTarget.versions && pxt.appTarget.versions.target || '?';
         let url: string;
 
         if (packaged) {
@@ -99,7 +101,7 @@ namespace pxt.Cloud {
                 url = `${url}.md`;
             }
         } else {
-            url = `md/${pxt.appTarget.id}/${docid.replace(/^\//, "")}?targetVersion=${encodeURIComponent(pxt.webConfig.targetVersion)}`;
+            url = `md/${pxt.appTarget.id}/${docid.replace(/^\//, "")}?targetVersion=${encodeURIComponent(targetVersion)}`;
         }
         if (!packaged && locale != "en") {
             url += `&lang=${encodeURIComponent(Util.userLanguage())}`

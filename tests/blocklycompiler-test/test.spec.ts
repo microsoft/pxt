@@ -34,6 +34,7 @@ pxt.setAppTarget({
 // Webworker needs this config to run
 pxt.webConfig = {
     relprefix: undefined,
+    verprefix: undefined,
     workerjs: WEB_PREFIX + "/blb/worker.js",
     monacoworkerjs: undefined,
     pxtVersion: undefined,
@@ -219,6 +220,10 @@ function blockTestAsync(name: string) {
             const compiledTs = res.source.trim().replace(/\s+/g, " ");
             const baselineTs = tsFile.trim().replace(/\s+/g, " ");
 
+            if (compiledTs !== baselineTs) {
+                console.log(compiledTs);
+            }
+
             chai.assert(compiledTs === baselineTs, "Compiled result did not match baseline");
         }, err => fail('Compiling blocks failed'));
 }
@@ -356,11 +361,41 @@ describe("blockly compiler", function() {
         it("should implicitly convert arguments marked as toString to a string", done => {
             blockTestAsync("to_string_arg").then(done, done);
         });
+
+        it("should convert handler parameters to draggable variables", done => {
+            blockTestAsync("draggable_parameters").then(done, done);
+        });
     });
 
     describe("compiling expandable blocks", () => {
         it("should handle blocks with optional arguments", done => {
             blockTestAsync("expandable_basic").then(done, done);
         });
-    })
+    });
+
+    describe("compiling ENUM_GET blocks", () => {
+        it("should handle simple enum values", done => {
+            blockTestAsync("enum_define").then(done, done);
+        });
+
+        describe("with start value set", () => {
+            it("should handle conformant values", done => {
+                blockTestAsync("enum_define_start_value").then(done, done);
+            });
+
+            it("should compile values even if they are invalid", done => {
+                blockTestAsync("enum_define_start_value_bad_start").then(done, done);
+            });
+        });
+
+        describe("with bit mask set", () => {
+            it("should handle conformant values", done => {
+                blockTestAsync("enum_define_bit_mask").then(done, done);
+            });
+
+            it("should compile values even if they are invalid", done => {
+                blockTestAsync("enum_define_bit_mask_bad_values").then(done, done);
+            });
+        });
+    });
 });

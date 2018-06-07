@@ -263,7 +263,8 @@ declare namespace pxt {
         defaultBlockGap?: number; // For targets to override block gap
         hideShareEmbed?: boolean; // don't show advanced embedding options in share dialog
         hideNewProjectButton?: boolean; // do not show the "new project" button in home page
-        fileNameExclusiveFilter?: string; // anything that does not match this regex is removed from the filename
+        fileNameExclusiveFilter?: string; // anything that does not match this regex is removed from the filename,
+        copyrightText?: string; // footer text for any copyright text to be included at the bottom of the home screen and about page
     }
 
     interface SocialOptions {
@@ -311,6 +312,7 @@ declare namespace ts.pxtc {
         useMkcd?: boolean;
         useELF?: boolean;
         saveAsPNG?: boolean;
+        noSourceInFlash?: boolean;
         useModulator?: boolean;
         webUSB?: boolean; // use WebUSB when supported
         hexMimeType?: string;
@@ -354,6 +356,7 @@ declare namespace ts.pxtc {
         justMyCode?: boolean;
         computeUsedSymbols?: boolean;
         name?: string;
+        warnDiv?: boolean; // warn when emitting division operator
 
         alwaysDecompileOnStart?: boolean; // decompiler only
 

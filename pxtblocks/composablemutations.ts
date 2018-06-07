@@ -188,7 +188,10 @@ namespace pxt.blocks {
             for (let i = 0; i < b.inputList.length; i++) {
                 const input = b.inputList[i];
                 if (Util.startsWith(input.name, optionalDummyInputPrefix)) {
-                    setInputVisible(input, optIndex < visibleOptions);
+                    // The behavior for dummy inputs (i.e. labels) is that whenever a parameter is revealed,
+                    // all earlier labels are made visible as well. If the parameter is the last one in the
+                    // block then all labels are made visible
+                    setInputVisible(input, optIndex < visibleOptions || visibleOptions === totalOptions);
                 }
                 else if (Util.startsWith(input.name, optionalInputWithFieldPrefix) || optionNames.indexOf(input.name) !== -1) {
                     const visible = optIndex < visibleOptions;

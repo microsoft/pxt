@@ -86,6 +86,17 @@ namespace ts.pxtc {
         apis: ApisInfo;
         blocks: SymbolInfo[];
         blocksById: pxt.Map<SymbolInfo>;
+        enumsByName: pxt.Map<EnumInfo>;
+    }
+
+    export interface EnumInfo {
+        name: string;
+        memberName: string;
+        blockId: string;
+        isBitMask: boolean;
+        firstValue?: number;
+        initialMembers: string[];
+        promptHint: string;
     }
 
     export interface CompletionEntry {
@@ -160,7 +171,7 @@ namespace ts.pxtc {
         groupIcons?: string[];
         labelLineWidth?: string;
         handlerStatement?: boolean; // indicates a block with a callback that can be used as a statement
-        blockHandlerKey?: string; // optional field for explicitly declaring the handler key to use to compare duplicate events 
+        blockHandlerKey?: string; // optional field for explicitly declaring the handler key to use to compare duplicate events
         afterOnStart?: boolean; // indicates an event that should be compiled after on start when converting to typescript
 
         // on interfaces
@@ -174,6 +185,19 @@ namespace ts.pxtc {
         mutatePropertyEnum?: string;
         inlineInputMode?: string; // can be inline, external, or auto
         expandableArgumentMode?: string; // can be disabled, enabled, or toggle
+        draggableParameters?: boolean;
+
+
+        /* start enum-only attributes (i.e. a block with shim=ENUM_GET) */
+
+        enumName?: string; // The name of the enum as it will appear in the code
+        enumMemberName?: string; // If the name of the enum was "Colors", this would be "color"
+        enumStartValue?: number; // The lowest value to emit when going from blocks to TS
+        enumIsBitMask?: boolean; // If true then values will be emitted in the form "1 << n"
+        enumPromptHint?: string; // The hint that will be displayed in the member creation prompt
+        enumInitialMembers?: string[]; // The initial enum values which will be given the lowest values available
+
+        /* end enum-only attributes */
 
         optionalVariableArgs?: boolean;
         toolboxVariableArgs?: string;
@@ -208,6 +232,7 @@ namespace ts.pxtc {
 
     export interface BlockParameter {
         kind: "param";
+        ref: boolean;
         name: string;
         shadowBlockId?: string;
     }
@@ -326,6 +351,7 @@ namespace ts.pxtc {
         Word = 1 << 7,
         Image = 1 << 8,
         TaggedText = 1 << 9,
+        ParamRef = 1 << 10,
 
         TripleUnderscore = SingleUnderscore | DoubleUnderscore,
         TripleAsterisk = SingleAsterisk | DoubleAsterisk,
@@ -388,6 +414,7 @@ namespace ts.pxtc {
         const combinedSet: pxt.Map<SymbolInfo> = {}
         const combinedGet: pxt.Map<SymbolInfo> = {}
         const combinedChange: pxt.Map<SymbolInfo> = {}
+        const enumsByName: pxt.Map<EnumInfo> = {};
 
         function addCombined(rtp: string, s: SymbolInfo) {
             const isGet = rtp == "get"
@@ -468,6 +495,45 @@ namespace ts.pxtc {
         }
 
         for (let s of pxtc.Util.values(info.byQName)) {
+            if (s.attributes.shim === "ENUM_GET" && s.attributes.enumName && s.attributes.blockId) {
+                let didFail = false;
+                if (enumsByName[s.attributes.enumName]) {
+                    console.warn(`Enum block ${s.attributes.blockId} trying to overwrite enum ${s.attributes.enumName}`);
+                    didFail = true;
+                }
+
+                if (!s.attributes.enumMemberName) {
+                    console.warn(`Enum block ${s.attributes.blockId} should specify enumMemberName`);
+                    didFail = true;
+                }
+
+                if (!s.attributes.enumPromptHint) {
+                    console.warn(`Enum block ${s.attributes.blockId} should specify enumPromptHint`);
+                    didFail = true;
+                }
+
+                if (!s.attributes.enumInitialMembers || !s.attributes.enumInitialMembers.length) {
+                    console.warn(`Enum block ${s.attributes.blockId} should specify enumInitialMembers`);
+                    didFail = true;
+                }
+
+                if (didFail) {
+                    continue;
+                }
+
+                const firstValue = parseInt(s.attributes.enumStartValue as any);
+
+                enumsByName[s.attributes.enumName] = {
+                    blockId: s.attributes.blockId,
+                    name: s.attributes.enumName,
+                    memberName: s.attributes.enumMemberName,
+                    firstValue: isNaN(firstValue) ? undefined : firstValue,
+                    isBitMask: s.attributes.enumIsBitMask,
+                    initialMembers: s.attributes.enumInitialMembers,
+                    promptHint: s.attributes.enumPromptHint
+                };
+            }
+
             if (s.attributes.blockCombine) {
                 if (!/@set/.test(s.name)) {
                     addCombined("get", s)
@@ -518,7 +584,8 @@ namespace ts.pxtc {
         return {
             apis: info,
             blocks,
-            blocksById: pxt.Util.toDictionary(blocks, b => b.attributes.blockId)
+            blocksById: pxt.Util.toDictionary(blocks, b => b.attributes.blockId),
+            enumsByName
         }
     }
 
@@ -591,7 +658,9 @@ namespace ts.pxtc {
         "blockHidden",
         "constantShim",
         "blockCombine",
-        "decompileIndirectFixedInstances"
+        "enumIsBitMask",
+        "decompileIndirectFixedInstances",
+        "draggableParameters"
     ];
 
     export function parseCommentString(cmt: string): CommentAttrs {
@@ -655,6 +724,10 @@ namespace ts.pxtc {
 
         if (res.trackArgs) {
             res.trackArgs = ((res.trackArgs as any) as string).split(/[ ,]+/).map(s => parseInt(s) || 0)
+        }
+
+        if (res.enumInitialMembers) {
+            res.enumInitialMembers = ((res.enumInitialMembers as any) as string).split(/[ ,]+/);
         }
 
         if (res.blockExternalInputs && !res.inlineInputMode) {
@@ -774,10 +847,11 @@ namespace ts.pxtc {
                     if (contentClass === undefined) return undefined; // error: not terminated
                     newToken = { kind: TokenKind.TaggedText, content: contentText, type: contentClass };
                     break;
+                case "$":
                 case "%":
                     const param = eatToken(c => /[a-zA-Z0-9_=]/.test(c), true).split("=");
                     if (param.length > 2) return undefined; // error: invalid parameter
-                    newToken = { kind: TokenKind.Parameter, content: param[0], type: param[1] };
+                    newToken = { kind: (char === "$") ? TokenKind.ParamRef : TokenKind.Parameter, content: param[0], type: param[1] };
                     break;
             }
 
@@ -844,6 +918,7 @@ namespace ts.pxtc {
                         break;
                     case TokenKind.Pipe:
                     case TokenKind.Parameter:
+                    case TokenKind.ParamRef:
                         if (open) {
                             return undefined; // error: style marks should be closed
                         }
@@ -861,7 +936,12 @@ namespace ts.pxtc {
 
             /* tslint:disable:possible-timing-attack  (not a security critical codepath) */
             if (token == TokenKind.Parameter) {
-                const param: BlockParameter = { kind: "param", name: tokens[i].content, shadowBlockId: tokens[i].type };
+                const param: BlockParameter = { kind: "param", name: tokens[i].content, shadowBlockId: tokens[i].type, ref: false };
+                parts.push(param);
+                parameters.push(param);
+            }
+            else if (token == TokenKind.ParamRef) {
+                const param: BlockParameter = { kind: "param", name: tokens[i].content, shadowBlockId: tokens[i].type, ref: true };
                 parts.push(param);
                 parameters.push(param);
             }

@@ -111,17 +111,18 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
 
     private updateDimensions() {
         if (this.extensionWrapper) {
-            // Resize current frame
+            // Resize current frame to fit full screen
+            const topOffsetHeight = 60; //px
             const extension = this.extensionWrapper.getAttribute('data-frame');
             if (extension) {
                 const frame = Extensions.getFrame(extension, false);
                 const extensionDialog = document.getElementsByClassName('extensiondialog')[0];
                 if (extensionDialog && frame) {
                     const bb = extensionDialog.getBoundingClientRect();
-                    frame.width = `${this.extensionWrapper.clientWidth}px`;
-                    frame.height = `${this.extensionWrapper.clientHeight}px`;
-                    frame.style.top = `${bb.top + this.extensionWrapper.offsetTop}px`;
-                    frame.style.left = `${bb.left + this.extensionWrapper.offsetLeft}px`;
+                    frame.width = `${window.innerWidth}px`;
+                    frame.height = `${window.innerHeight - topOffsetHeight}px`;
+                    frame.style.top = `${topOffsetHeight}px`;
+                    frame.style.left = `${0}px`;
                 }
             }
         }
@@ -293,7 +294,7 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
                 {consent ?
                     <div id="extensionWrapper" data-frame={extension} ref={this.handleExtensionWrapperRef}>
                         {permissionRequest ?
-                            <sui.Modal isOpen={true} className="extensionpermissiondialog basic" size="fullscreen" closeIcon={false} dimmer={true} dimmerClassName="permissiondimmer">
+                            <sui.Modal isOpen={true} className="extensionpermissiondialog basic" closeIcon={false} dimmer={true} dimmerClassName="permissiondimmer">
                                 <div className="permissiondialoginner">
                                     <div className="permissiondialogheader">
                                         {lf("Permission Request")}

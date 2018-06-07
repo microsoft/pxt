@@ -418,7 +418,7 @@ namespace pxtblockly {
         showEditor_(opt_quietInput?: boolean): void {
             if (!this.colour_) {
                 this.colour_ = ((this.sourceBlock_ as any).isShadow()) ?
-                    this.sourceBlock_.parentBlock_.getColour() : this.sourceBlock_.getColour();
+                    this.sourceBlock_.parentBlock_.getColour() : this.sourceBlock_.getColourTertiary();
                 this.colourBorder_ = ((this.sourceBlock_ as any).isShadow()) ?
                     this.sourceBlock_.parentBlock_.getColourTertiary() : this.sourceBlock_.getColourTertiary();
             }

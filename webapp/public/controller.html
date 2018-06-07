@@ -123,6 +123,21 @@
 
     window.addEventListener("message", receiveMessage, false);
 
+    function importHexFile() {
+        var f = document.getElementById("hexfile").files[0];
+        var reader = new FileReader();
+        reader.onload = (ev) => {
+            var editor = document.getElementById("iframe").contentWindow;
+            var s = reader.result;
+            editor.postMessage({
+                type: "importfile",
+                filename: f.name,
+                parts: [s]
+            }, "*")
+        }
+        reader.readAsText(f);
+    }
+
 </script>
 <body>
     <div id="buttons" class="ui buttons">
@@ -139,9 +154,12 @@
         <button class="ui button" onclick="sendMessage('redo')">redo</button>
         <button class="ui button" onclick="sendMessage('renderblocks')">renderblocks</button>
         <button class="ui button" onclick="sendMessage('closeflyout')">close flyout</button>
+        <br/>
+        <input id="hexfile" class="ui input" type="file" />
+        <buttom class="ui button" onclick="importHexFile()">import hex</button>
     </div>
     <pre id="logs" class="ui"></pre>
-    <iframe id="iframe" src="index.html?dbg=1&editorlayout=ide" />
+    <iframe id="iframe" src="index.html?dbg=1&controller=1" />
 </body>
 
 <script>

@@ -771,10 +771,14 @@ function resetCtx(m: py.Module) {
 }
 
 function scope(f: () => B.JsNode) {
-    let prevCtx = U.flatClone(ctx)
-    let r = f()
-    ctx = prevCtx
-    return r
+    const prevCtx = U.flatClone(ctx)
+    let r: B.JsNode;
+    try {
+        r = f()
+    } finally {
+        ctx = prevCtx
+    }
+    return r;
 }
 
 function todoExpr(name: string, e: B.JsNode) {
@@ -908,9 +912,17 @@ function typeAnnot(t: Type) {
     return B.mkText(": " + t2s(t))
 }
 
+function guardedScope(v: py.AST, f: () => B.JsNode) {
+    try {
+        return scope(f);
+    }
+    catch (e) {
+        return B.mkStmt(todoComment(`conversion failed for ${(v as any).name || v.kind}`, []));
+    }
+}
 
 const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
-    FunctionDef: (n: py.FunctionDef) => scope(() => {
+    FunctionDef: (n: py.FunctionDef) => guardedScope(n, () => {
         let isMethod = !!ctx.currClass && !ctx.currFun
         if (!isMethod)
             defvar(n.name, { fundef: n })
@@ -1016,7 +1028,7 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
         return B.mkStmt(B.mkGroup(nodes))
     }),
 
-    ClassDef: (n: py.ClassDef) => scope(() => {
+    ClassDef: (n: py.ClassDef) => guardedScope(n, () => {
         setupScope(n)
         defvar(n.name, { classdef: n })
         U.assert(!ctx.currClass)
@@ -1871,7 +1883,7 @@ function isEmpty(b: B.JsNode): boolean {
 
 // TODO look at scopes of let
 
-function toTS(mod: py.Module) {
+function toTS(mod: py.Module): B.JsNode[] {
     U.assert(mod.kind == "Module")
     resetCtx(mod)
     if (!mod.vars) mod.vars = {}
@@ -1912,12 +1924,13 @@ export function convertAsync(fns: string[]) {
     let primFiles =
         U.toDictionary(mainFiles.length ? mainFiles : nodeutil.allFiles(fns[0]),
             s => s.replace(/\\/g, "/"))
-    let files = U.concat(fns.map(f => nodeutil.allFiles(f))).map(f => f.replace(/\\/g, "/"))
-    let dirs: Map<number> = {}
+    let files = U.concat(fns.map(f => nodeutil.allFiles(f))).map(f => f.replace(/\\/g, "/"));
+    let dirs: Map<number> = {};
     for (let f of files) {
-        for (let suff of ["/docs/conf.py", "/conf.py", "/setup.py", "/README.md", "/README.rst"]) {
+        for (let suff of ["/docs/conf.py", "/conf.py", "/setup.py", "/README.md", "/README.rst", "/__init__.py"]) {
             if (U.endsWith(f, suff)) {
-                dirs[f.slice(0, f.length - suff.length)] = 1
+                const dirName = f.slice(0, f.length - suff.length);
+                dirs[dirName] = 1;
             }
         }
     }
@@ -1943,10 +1956,10 @@ export function convertAsync(fns: string[]) {
     }
 
     const pkgFilesKeys = Object.keys(pkgFiles);
-    pxt.debug(`files (${pkgFilesKeys.length}):\n   ${pkgFilesKeys.join('\n   ')}`);
+    pxt.log(`files (${pkgFilesKeys.length}):\n   ${pkgFilesKeys.join('\n   ')}`);
 
     return nodeutil.spawnWithPipeAsync({
-        cmd: /^win/i.test(process.platform) ? "py" : "python3",
+        cmd: process.env["PYTHON3"] || (/^win/i.test(process.platform) ? "py" : "python3"),
         args: [],
         input: convPy.replace("@files@", JSON.stringify(pkgFilesKeys)),
         silent: true
@@ -1954,7 +1967,7 @@ export function convertAsync(fns: string[]) {
         .then(buf => {
             pxt.debug(`analyzing python AST (${buf.length} bytes)`)
             let js = JSON.parse(buf.toString("utf8"))
-            fs.writeFileSync("pyast.json", JSON.stringify(js, null, 2), { encoding: "utf8" })
+            nodeutil.writeFileSync("pyast.json", JSON.stringify(js, null, 2), { encoding: "utf8" })
             const rec = (v: any): any => {
                 if (Array.isArray(v)) {
                     for (let i = 0; i < v.length; ++i)
@@ -1986,7 +1999,12 @@ export function convertAsync(fns: string[]) {
             for (let i = 0; i < 5; ++i) {
                 currIteration = i
                 U.iterMap(js, (fn: string, js: any) => {
-                    toTS(js)
+                    pxt.log(`converting ${fn}`);
+                    try {
+                        toTS(js)
+                    } catch (e) {
+                        console.log(e);
+                    }
                 })
             }
 

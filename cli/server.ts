@@ -310,11 +310,9 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
             });
     else if (cmd == "GET md" && pxt.appTarget.id + "/" == innerPath.slice(0, pxt.appTarget.id.length + 1)) {
         // innerpath start with targetid
-        const mdPath = innerPath.slice(pxt.appTarget.id.length + 1);
-        const m = /^(v\d+)\/(.*)/.exec(mdPath);
-        return Promise.resolve(readMd(m ? m[2] : mdPath))
+        return Promise.resolve(readMd(innerPath.slice(pxt.appTarget.id.length + 1)))
     }
-    else if (cmd == "GET config" && pxt.appTarget.id + "/targetconfig" == innerPath) {
+    else if (cmd == "GET config" && new RegExp(`${pxt.appTarget.id}\/targetconfig(\/v[0-9.]+)?$`).test(innerPath)) {
         // target config
         return readFileAsync("targetconfig.json").then(buf => JSON.parse(buf.toString("utf8")));
     }
