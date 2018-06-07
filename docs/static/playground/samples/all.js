@@ -9,6 +9,12 @@
         },
         {
             chapter: "Basic",
+            name: "Formatting",
+            id: "basic-formatting",
+            path: "basic/formatting"
+        },
+        {
+            chapter: "Basic",
             name: "Setting namespace color",
             id: "basic-ns-color",
             path: "basic/ns-color"
