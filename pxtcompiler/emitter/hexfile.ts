@@ -511,7 +511,8 @@ namespace ts.pxtc {
 
             if (bin.packedSource) {
                 if (uf2) {
-                    U.userError("TODO")
+                    pxt.log("packedSource not supported in UF2, skipping...")
+                    //U.userError("TODO")
                 } else {
                     upper = 0x20000000
                     addr = 0
