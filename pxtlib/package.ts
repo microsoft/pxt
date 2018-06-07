@@ -455,6 +455,8 @@ namespace pxt {
 
             const loadDepsRecursive = (deps: Map<string>) => {
                 return U.mapStringMapAsync(deps, (id, ver) => {
+                    if (id == "hw" && pxt.hwVariant)
+                        id = "hw---" + pxt.hwVariant
                     let mod = this.resolveDep(id)
                     ver = ver || "*"
                     if (mod) {

@@ -2531,6 +2531,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const hm = /^(https:\/\/[^/]+)/.exec(window.location.href)
     if (hm) Cloud.apiRoot = hm[1] + "/api/"
 
+    const hw = /[&?]hw=([\w-]+)/.exec(window.location.href)
+    if (hw)
+        pxt.setHwVariant(hw[1])
+
     const ws = /ws=(\w+)/.exec(window.location.href)
     const isSandbox = pxt.shell.isSandboxMode() || pxt.shell.isReadOnly();
     const isController = pxt.shell.isControllerMode();
