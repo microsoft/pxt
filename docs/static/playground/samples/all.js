@@ -33,6 +33,12 @@
         },
         {
             chapter: "Basic",
+            name: "Inline input",
+            id: "basic-inline",
+            path: "basic/inline"
+        },
+        {
+            chapter: "Basic",
             name: "Enumerations",
             id: "basic-enums",
             path: "basic/enums"
