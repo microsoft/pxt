@@ -21,6 +21,24 @@ namespace basic {
     }
 
     /**
+     * This is a statement block with a parameter default values
+     * @param steps to move; eg: 1, 2, 3, 4
+     */
+    //% block
+    export function moveDefault(steps: number) {
+
+    }
+
+    /**
+     * This is a statement block with a parameter min/max values
+     */
+    //% block
+    //% steps.min=0 steps.max=10
+    export function moveMinMax(steps: number) {
+
+    }
+
+    /**
      * This is a reporter block that returns a number
      */
     //% block
