@@ -1,6 +1,8 @@
 CACHE MANIFEST
 
 CACHE:
+/blb/index.html?editorlayout=ide&skipBrowserCheck=1
+/blb/index.html?editorlayout=ide
 /blb/semantic.js
 /blb/main.js
 /blb/pxtapp.js
