@@ -15,6 +15,12 @@
         },
         {
             chapter: "Basic",
+            name: "Default values",
+            id: "basic-default-values",
+            path: "basic/default-values"
+        },
+        {
+            chapter: "Basic",
             name: "Setting namespace color",
             id: "basic-ns-color",
             path: "basic/ns-color"
@@ -30,6 +36,12 @@
             name: "Enumerations",
             id: "basic-enums",
             path: "basic/enums"
+        },
+        {
+            chapter: "Field editors",
+            name: "Range",
+            id: "field-editors-range",
+            path: "field-editors/range"
         },
         {
             chapter: "Field editors",

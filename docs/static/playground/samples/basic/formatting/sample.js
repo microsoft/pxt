@@ -7,18 +7,18 @@
 //% color="#AA278D"
 namespace basic {
 
-    //% block="hello world"
-    export function helloWorld() {
+    //% block="fooooooo"
+    export function foo() {
 
     }
 
-    //% block="args x = $x, text = $text"
-    export function arguments(x: number, text: number) {
+    //% block="bar x = $x, text = $text"
+    export function bar(x: number, text: string) {
 
     }
 
-    //% block="args text = $text, x = $x"
-    export function argumentsShuffled(x: number, text: number) {
+    //% block="shuffled text = $text, x = $x"
+    export function shuffled(x: number, text: string) {
 
     }
 }
