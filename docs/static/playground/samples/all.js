@@ -9,6 +9,18 @@
         },
         {
             chapter: "Basic",
+            name: "Formatting",
+            id: "basic-formatting",
+            path: "basic/formatting"
+        },
+        {
+            chapter: "Basic",
+            name: "Default values",
+            id: "basic-default-values",
+            path: "basic/default-values"
+        },
+        {
+            chapter: "Basic",
             name: "Setting namespace color",
             id: "basic-ns-color",
             path: "basic/ns-color"
@@ -21,9 +33,21 @@
         },
         {
             chapter: "Basic",
+            name: "Inline input",
+            id: "basic-inline",
+            path: "basic/inline"
+        },
+        {
+            chapter: "Basic",
             name: "Enumerations",
             id: "basic-enums",
             path: "basic/enums"
+        },
+        {
+            chapter: "Field editors",
+            name: "Range",
+            id: "field-editors-range",
+            path: "field-editors/range"
         },
         {
             chapter: "Field editors",
@@ -36,6 +60,24 @@
             name: "Dropdowns",
             id: "field-editors-dropdowns",
             path: "field-editors/dropdowns"
+        },
+        {
+            chapter: "Field editors",
+            name: "Grid picker",
+            id: "field-editors-gridpicker",
+            path: "field-editors/gridpicker"
+        },
+        {
+            chapter: "Field editors",
+            name: "Toggle",
+            id: "field-editors-toggle",
+            path: "field-editors/toggle"
+        },
+        {
+            chapter: "Field editors",
+            name: "Note",
+            id: "field-editors-note",
+            path: "field-editors/note"
         },
         {
             chapter: "Language",

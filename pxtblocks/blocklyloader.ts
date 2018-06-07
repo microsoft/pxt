@@ -328,6 +328,7 @@ namespace pxt.blocks {
                         if (pr.fieldOptions) {
                             if (pr.fieldOptions['step']) container.setAttribute('step', pr.fieldOptions['step']);
                             if (pr.fieldOptions['color']) container.setAttribute('color', pr.fieldOptions['color']);
+                            if (pr.fieldOptions['precision']) container.setAttribute('precision', pr.fieldOptions['precision']);
                         }
                     } else {
                         shadowValue = createShadowValue(info, pr);

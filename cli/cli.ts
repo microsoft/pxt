@@ -2624,7 +2624,7 @@ script:
     - "npm install -g pxt"
     - "pxt target @TARGET@"
     - "pxt install"
-    - "pxt build"
+    - "pxt build --cloud"
 sudo: false
 cache:
     directories:
