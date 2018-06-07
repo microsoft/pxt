@@ -265,12 +265,12 @@ export function readJson(fn: string) {
 export function readPkgConfig(dir: string) {
     pxt.debug("readPkgConfig in " + dir)
     const fn = path.join(dir, pxt.CONFIG_NAME)
-    const js: pxt.PackageConfig = readJson(fn)    
+    const js: pxt.PackageConfig = readJson(fn)
 
     const ap = js.additionalFilePath
     if (ap) {
         const adddir = path.join(dir, ap)
-        pxt.debug("additional pxt.json: " + adddir) 
+        pxt.debug("additional pxt.json: " + adddir)
         const js2 = readPkgConfig(adddir)
         for (let k of Object.keys(js2)) {
             if (!js.hasOwnProperty(k)) {
@@ -482,7 +482,7 @@ export function resolveMd(root: string, pathname: string): string {
         dirs.push(d)
 
         let cfg = readPkgConfig(path.join(d, ".."))
-        for (let add in cfg.additionalFilePaths)
+        for (let add of cfg.additionalFilePaths)
             dirs.push(path.join(d, "..", add, "docs"))
     }
     for (let d of dirs) {
