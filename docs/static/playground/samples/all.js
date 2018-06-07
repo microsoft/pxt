@@ -56,6 +56,12 @@
             path: "field-editors/dropdowns"
         },
         {
+            chapter: "Field editors",
+            name: "Grid picker",
+            id: "field-editors-gridpicker",
+            path: "field-editors/gridpicker"
+        },
+        {
             chapter: "Language",
             name: "Create Enums from Blocks",
             id: "language-create-enums",
