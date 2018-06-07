@@ -651,16 +651,14 @@ namespace pxt {
                 for (const pkg of this.sortedDeps()) {
                     pkg.parseJRes(this._jres)
                 }
-                if (appTarget.runtime && appTarget.runtime.palette) {
-                    const palBuf = appTarget.runtime.palette
-                        .map(s => ("000000" + parseInt(s.replace(/#/, ""), 16).toString(16)).slice(-6))
-                        .join("")
-                    this._jres["__palette"] = {
-                        id: "__palette",
-                        data: palBuf,
-                        dataEncoding: "hex",
-                        mimeType: "application/x-palette"
-                    }
+                const palBuf = (appTarget.runtime && appTarget.runtime.palette ? appTarget.runtime.palette : ["#000000", "#ffffff"])
+                    .map(s => ("000000" + parseInt(s.replace(/#/, ""), 16).toString(16)).slice(-6))
+                    .join("")
+                this._jres["__palette"] = {
+                    id: "__palette",
+                    data: palBuf,
+                    dataEncoding: "hex",
+                    mimeType: "application/x-palette"
                 }
             }
             return this._jres
