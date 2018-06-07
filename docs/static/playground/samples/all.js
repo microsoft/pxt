@@ -62,6 +62,12 @@
             path: "field-editors/gridpicker"
         },
         {
+            chapter: "Field editors",
+            name: "Toggle",
+            id: "field-editors-toggle",
+            path: "field-editors/toggle"
+        },
+        {
             chapter: "Language",
             name: "Create Enums from Blocks",
             id: "language-create-enums",
