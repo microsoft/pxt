@@ -1119,8 +1119,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     protected showFlyoutHeadingLabel(ns: string, subns: string, icon: string, color: string) {
-        const categoryName = name ? name :
-            subns ? `${Util.capitalize(ns)} > ${Util.capitalize(subns)}` : Util.capitalize(ns);
+        const categoryName = subns ? `${Util.capitalize(ns)} > ${Util.capitalize(subns)}` : Util.capitalize(ns);
         const iconClass = `blocklyTreeIcon${icon ? ns.toLowerCase() : 'Default'}`.replace(/\s/g, '');
         let headingLabel = pxt.blocks.createFlyoutHeadingLabel(categoryName, color, icon, iconClass);
         this.flyoutXmlList.push(headingLabel);

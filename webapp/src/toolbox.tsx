@@ -5,8 +5,6 @@ import * as data from "./data"
 import * as editor from "./toolboxeditor"
 import * as sui from "./sui"
 import * as core from "./core"
-import * as snippets from "./monacoSnippets"
-import * as monaco from "./monaco"
 
 import Util = pxt.Util;
 
