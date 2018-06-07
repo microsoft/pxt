@@ -24,7 +24,6 @@ namespace sample {
     //% gesture.fieldEditor="gridpicker"
     //% gesture.fieldOptions.width=220
     //% gesture.fieldOptions.columns=3
-    //% weight=92 blockGap=12
     export function onGesture(gesture: Gesture) {
 
     }
