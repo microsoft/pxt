@@ -241,11 +241,14 @@
             }
         });
 
-        data.js.model.onDidChangeContent(function (e) {
-            if (!e.isFlush) {
-                runDebounce();
-            }
-        });
+        var autoRun = /autorun/.test(window.location.href);
+        if (autoRun) {
+            data.js.model.onDidChangeContent(function (e) {
+                if (!e.isFlush) {
+                    runDebounce();
+                }
+            });
+        }
 
         var currentToken = 0;
         function parseHash(firstTime) {
