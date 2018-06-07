@@ -10,6 +10,7 @@ namespace ts.pxtc.decompiler {
     const numberType = "math_number";
     const stringType = "text";
     const booleanType = "logic_boolean";
+    const variablesGet = "variables_get";
 
     const ops: pxt.Map<{ type: string; op?: string; leftName?: string; rightName?: string }> = {
         "+": { type: "math_arithmetic", op: "ADD" },
@@ -448,8 +449,12 @@ ${output}</xml>`;
                         case stringType:
                             write(`<shadow type="text"><field name="TEXT"></field></shadow>`)
                             break;
+                        case variablesGet:
+                            write(`<shadow type="${n.shadowType}"/>`);
+                            break;
                         default:
-                            write(`<shadow type="${n.shadowType}"/>`)
+                            if (blocksInfo.blocksById[n.shadowType])
+                                write(`<shadow type="${n.shadowType}"/>`)
                     }
                 }
                 emitOutputNode(n.value);
