@@ -5584,6 +5584,10 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
         pxt.debug = pxt.log;
     }
 
+    if (process.env["PXT_ASMDEBUG"]) {
+        ts.pxtc.assembler.debug = true
+    }
+
     commonfiles = readJson(__dirname + "/pxt-common.json")
 
     return initConfigAsync()
