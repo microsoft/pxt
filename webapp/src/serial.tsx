@@ -210,24 +210,29 @@ export class Editor extends srceditor.Editor {
                 continue
             }
             if (ch === "\n") {
-                let lastEntry = this.consoleRoot.lastChild
-                let newEntry = document.createElement("div")
-                if (lastEntry && lastEntry.lastChild.textContent == this.consoleBuffer) {
-                    if (lastEntry.childNodes.length == 2) {
-                        //Matches already-collapsed entry
-                        let count = parseInt(lastEntry.firstChild.textContent)
-                        lastEntry.firstChild.textContent = (count + 1).toString()
+                // remove trailing white space
+                this.consoleBuffer = this.consoleBuffer.replace(/\s+$/, '');
+                // if anything remaining...
+                if (this.consoleBuffer.length) {
+                    let lastEntry = this.consoleRoot.lastChild
+                    let newEntry = document.createElement("div")
+                    if (lastEntry && lastEntry.lastChild.textContent == this.consoleBuffer) {
+                        if (lastEntry.childNodes.length == 2) {
+                            //Matches already-collapsed entry
+                            let count = parseInt(lastEntry.firstChild.textContent)
+                            lastEntry.firstChild.textContent = (count + 1).toString()
+                        } else {
+                            //Make a new collapsed entry with count = 2
+                            let newLabel = document.createElement("a")
+                            newLabel.className = "ui horizontal label"
+                            newLabel.textContent = "2"
+                            lastEntry.insertBefore(newLabel, lastEntry.lastChild)
+                        }
                     } else {
-                        //Make a new collapsed entry with count = 2
-                        let newLabel = document.createElement("a")
-                        newLabel.className = "ui horizontal label"
-                        newLabel.textContent = "2"
-                        lastEntry.insertBefore(newLabel, lastEntry.lastChild)
+                        //Make a new non-collapsed entry
+                        newEntry.appendChild(document.createTextNode(this.consoleBuffer))
+                        this.consoleRoot.appendChild(newEntry)
                     }
-                } else {
-                    //Make a new non-collapsed entry
-                    newEntry.appendChild(document.createTextNode(this.consoleBuffer))
-                    this.consoleRoot.appendChild(newEntry)
                 }
             } else {
                 //Buffer is full
@@ -238,7 +243,7 @@ export class Editor extends srceditor.Editor {
             }
             this.consoleBuffer = ""
             this.consoleRoot.scrollTop = this.consoleRoot.scrollHeight
-            if (this.consoleRoot.childElementCount > this.maxConsoleEntries) {
+            while (this.consoleRoot.childElementCount > this.maxConsoleEntries) {
                 this.consoleRoot.removeChild(this.consoleRoot.firstChild)
             }
             if (this.consoleRoot && this.consoleRoot.childElementCount > 0) {
