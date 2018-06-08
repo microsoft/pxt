@@ -33,6 +33,12 @@
         },
         {
             chapter: "Basic",
+            name: "Ordering",
+            id: "basic-ordering",
+            path: "basic/ordering"
+        },
+        {
+            chapter: "Basic",
             name: "Types of Blocks",
             id: "basic-types",
             path: "basic/types"
@@ -102,6 +108,12 @@
             name: "Turn Ratio",
             id: "field-editors-turn-ratio",
             path: "field-editors/turnratio"
+        },
+        {
+            chapter: "Language",
+            name: "Functions",
+            id: "functions",
+            path: "language/functions"
         },
         {
             chapter: "Language",
