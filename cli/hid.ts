@@ -3,10 +3,9 @@ import U = pxt.U
 import * as nodeutil from './nodeutil';
 
 let HID: any = undefined;
-function requireHIDAsync(): Promise<any> {
+function requireHID(): any {
     if (HID) return Promise.resolve(HID);
-    return nodeutil.lazyRequireAsync("node-hid", true)
-        .then(hid => HID = hid);
+    return HID = nodeutil.lazyRequire("node-hid", true);
 }
 
 export interface HidDevice {
@@ -49,7 +48,8 @@ export function deviceInfo(h: HidDevice) {
     return `${h.product} (by ${h.manufacturer} at USB ${hex(h.vendorId)}:${hex(h.productId)})`
 }
 
-function getHF2Devices(hid: any): HidDevice[] {
+function getHF2Devices(): HidDevice[] {
+    const hid = requireHID();
     if (!hid) return [];
     let devices = hid.devices() as HidDevice[]
     for (let d of devices) {
@@ -62,18 +62,15 @@ function getHF2Devices(hid: any): HidDevice[] {
 }
 
 export function getHF2DevicesAsync(): Promise<HidDevice[]> {
-    return requireHIDAsync()
-        .then(hid => getHF2Devices(hid));
+    return Promise.resolve(getHF2Devices());
 }
 
 export function hf2ConnectAsync(path: string, raw = false) {
-    return requireHIDAsync()
-        .then(() => {
-            // in .then() to make sure we catch errors
-            let h = new HF2.Wrapper(new HidIO(path))
-            h.rawMode = raw
-            return h.reconnectAsync(true).then(() => h)
-        })
+    if (!requireHID()) return undefined;
+    // in .then() to make sure we catch errors
+    let h = new HF2.Wrapper(new HidIO(path))
+    h.rawMode = raw
+    return h.reconnectAsync(true).then(() => h)
 }
 
 export function mkPacketIOAsync() {
@@ -125,9 +122,9 @@ export class HidIO implements HF2.PacketIO {
     }
 
     private connect() {
-        U.assert(HID)
+        U.assert(requireHID())
         if (this.requestedPath == null) {
-            let devs = getHF2Devices(HID)
+            let devs = getHF2Devices()
             if (devs.length == 0)
                 throw new HIDError("no devices found")
             this.path = devs[0].path

@@ -10,8 +10,8 @@ import * as commandParser from './commandparser';
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
 
-function requireSerialPortAsync(): Promise<any> {
-    return nodeutil.lazyRequireAsync("serialport", true);
+function requireSerialPort(): any {
+    return nodeutil.lazyRequire("serialport", true);
 }
 
 export interface SerialPortInfo {
@@ -30,59 +30,58 @@ export function monitorSerial(onData: (info: SerialPortInfo, buffer: Buffer) => 
     if (pxt.appTarget.serial.useHF2) {
         return
     }
+    const serialPort = requireSerialPort();
+    if (!serialPort)
+        return;
 
-    console.log('serial: monitoring ports...')
+    pxt.log('serial: monitoring ports...')
 
-    requireSerialPortAsync().then(serialPort => {
-        if (!serialPort)
-            return;
-        const serialPorts: pxt.Map<SerialPortInfo> = {};
-        function close(info: SerialPortInfo) {
-            console.log('serial: closing ' + info.pnpId);
-            delete serialPorts[info.pnpId];
-        }
+    const serialPorts: pxt.Map<SerialPortInfo> = {};
+    function close(info: SerialPortInfo) {
+        console.log('serial: closing ' + info.pnpId);
+        delete serialPorts[info.pnpId];
+    }
 
-        function open(info: SerialPortInfo) {
-            console.log(`serial: connecting to ${info.comName} by ${info.manufacturer} (${info.pnpId})`);
-            serialPorts[info.pnpId] = info;
-            info.port = new serialPort(info.comName, {
-                baudRate: 115200,
-                autoOpen: false
-            }); // this is the openImmediately flag [default is true]
-            info.port.open(function (error: any) {
-                if (error) {
-                    console.log('failed to open: ' + error);
-                    close(info);
-                } else {
-                    console.log(`serial: connected to ${info.comName} by ${info.manufacturer} (${info.pnpId})`);
-                    info.opened = true;
-                    info.port.on('data', (buffer: Buffer) => onData(info, buffer));
-                    info.port.on('error', function () { close(info); });
-                    info.port.on('close', function () { close(info); });
-                }
-            });
-        }
+    function open(info: SerialPortInfo) {
+        console.log(`serial: connecting to ${info.comName} by ${info.manufacturer} (${info.pnpId})`);
+        serialPorts[info.pnpId] = info;
+        info.port = new serialPort(info.comName, {
+            baudRate: 115200,
+            autoOpen: false
+        }); // this is the openImmediately flag [default is true]
+        info.port.open(function (error: any) {
+            if (error) {
+                console.log('failed to open: ' + error);
+                close(info);
+            } else {
+                console.log(`serial: connected to ${info.comName} by ${info.manufacturer} (${info.pnpId})`);
+                info.opened = true;
+                info.port.on('data', (buffer: Buffer) => onData(info, buffer));
+                info.port.on('error', function () { close(info); });
+                info.port.on('close', function () { close(info); });
+            }
+        });
+    }
 
-        const vendorFilter = pxt.appTarget.serial.vendorId ? parseInt(pxt.appTarget.serial.vendorId, 16) : undefined;
-        const productFilter = pxt.appTarget.serial.productId ? parseInt(pxt.appTarget.serial.productId, 16) : undefined;
+    const vendorFilter = pxt.appTarget.serial.vendorId ? parseInt(pxt.appTarget.serial.vendorId, 16) : undefined;
+    const productFilter = pxt.appTarget.serial.productId ? parseInt(pxt.appTarget.serial.productId, 16) : undefined;
 
-        function filterPort(info: SerialPortInfo): boolean {
-            let retVal = true;
-            if (vendorFilter)
-                retVal = retVal && (vendorFilter == parseInt(info.vendorId, 16));
-            if (productFilter)
-                retVal = retVal && (productFilter == parseInt(info.productId, 16));
-            return retVal;
-        }
+    function filterPort(info: SerialPortInfo): boolean {
+        let retVal = true;
+        if (vendorFilter)
+            retVal = retVal && (vendorFilter == parseInt(info.vendorId, 16));
+        if (productFilter)
+            retVal = retVal && (productFilter == parseInt(info.productId, 16));
+        return retVal;
+    }
 
-        setInterval(() => {
-            serialPort.list(function (err: any, ports: SerialPortInfo[]) {
-                ports.filter(filterPort)
-                    .filter(info => !serialPorts[info.pnpId])
-                    .forEach((info) => open(info));
-            });
-        }, 5000);
-    });
+    setInterval(() => {
+        serialPort.list(function (err: any, ports: SerialPortInfo[]) {
+            ports.filter(filterPort)
+                .filter(info => !serialPorts[info.pnpId])
+                .forEach((info) => open(info));
+        });
+    }, 5000);
 }
 
 class Serial {
@@ -200,72 +199,72 @@ function sambaCmd(ch: string, addr: number, len?: number) {
     return r + "#"
 }
 export function flashSerialAsync(c: commandParser.ParsedCommand) {
-    return requireSerialPortAsync()
-        .then(serialPort => {
-            let listAsync: () => Promise<SerialPortInfo[]> = Promise.promisify(serialPort.list) as any
+    const serialPort = requireSerialPort();
+    if (!serialPort)
+        return Promise.resolve();
+    let listAsync: () => Promise<SerialPortInfo[]> = Promise.promisify(serialPort.list) as any
 
-            let f = fs.readFileSync(c.args[0])
-            let blocks = pxtc.UF2.parseFile(f as any)
-            let s: Serial
+    let f = fs.readFileSync(c.args[0])
+    let blocks = pxtc.UF2.parseFile(f as any)
+    let s: Serial
 
-            let writeMemAsync = (addr: number, buf: Buffer) =>
-                s.writeAsync(sambaCmd("S", addr, buf.length))
-                    .then(() => s.writeAsync(buf))
+    let writeMemAsync = (addr: number, buf: Buffer) =>
+        s.writeAsync(sambaCmd("S", addr, buf.length))
+            .then(() => s.writeAsync(buf))
 
-            let pingAsync = () =>
-                s.writeAsync(sambaCmd("R", 0, 4))
-                    .then(() => s.readBlockingAsync(4))
+    let pingAsync = () =>
+        s.writeAsync(sambaCmd("R", 0, 4))
+            .then(() => s.readBlockingAsync(4))
 
-            let currApplet: number[] = null
-            let goCmd = ""
+    let currApplet: number[] = null
+    let goCmd = ""
 
-            let saveAppletAsync = (appl: number[]) => {
-                if (currApplet == appl) return Promise.resolve()
-                currApplet = appl
-                let writeBuf = new Buffer(appl.length * 4 + 8)
-                for (let i = 0; i < appl.length; i++)
-                    pxt.HF2.write32(writeBuf, i * 4, appl[i])
-                let code = 0x20008000 - 512
-                pxt.HF2.write32(writeBuf, appl.length * 4, 0x20007ff0) // stack
-                pxt.HF2.write32(writeBuf, appl.length * 4 + 4, code + 1) // start addr (+1 for Thumb)
-                goCmd = sambaCmd("G", code + writeBuf.length - 8)
-                return writeMemAsync(code, writeBuf)
-            }
+    let saveAppletAsync = (appl: number[]) => {
+        if (currApplet == appl) return Promise.resolve()
+        currApplet = appl
+        let writeBuf = new Buffer(appl.length * 4 + 8)
+        for (let i = 0; i < appl.length; i++)
+            pxt.HF2.write32(writeBuf, i * 4, appl[i])
+        let code = 0x20008000 - 512
+        pxt.HF2.write32(writeBuf, appl.length * 4, 0x20007ff0) // stack
+        pxt.HF2.write32(writeBuf, appl.length * 4 + 4, code + 1) // start addr (+1 for Thumb)
+        goCmd = sambaCmd("G", code + writeBuf.length - 8)
+        return writeMemAsync(code, writeBuf)
+    }
 
-            let runAppletAsync = (appl: number[]) =>
-                saveAppletAsync(appl)
-                    .then(() => s.writeAsync(goCmd))
+    let runAppletAsync = (appl: number[]) =>
+        saveAppletAsync(appl)
+            .then(() => s.writeAsync(goCmd))
 
-            let writeBlockAsync = (b: pxtc.UF2.Block) => {
-                let hd = new Buffer(8)
-                pxt.HF2.write32(hd, 0, b.targetAddr)
-                pxt.HF2.write32(hd, 4, 1)
-                return writeMemAsync(0x20006000, Buffer.concat([hd, b.data as any]))
-                    .then(() => runAppletAsync(samd21.flash))
-                    .then(pingAsync)
-            }
+    let writeBlockAsync = (b: pxtc.UF2.Block) => {
+        let hd = new Buffer(8)
+        pxt.HF2.write32(hd, 0, b.targetAddr)
+        pxt.HF2.write32(hd, 4, 1)
+        return writeMemAsync(0x20006000, Buffer.concat([hd, b.data as any]))
+            .then(() => runAppletAsync(samd21.flash))
+            .then(pingAsync)
+    }
 
-            let readWordsAsync = (addr: number, len: number) => {
-                return s.writeAsync(sambaCmd("R", addr, len * 4))
-                    .then(() => s.readBlockingAsync(len * 4))
-            }
+    let readWordsAsync = (addr: number, len: number) => {
+        return s.writeAsync(sambaCmd("R", addr, len * 4))
+            .then(() => s.readBlockingAsync(len * 4))
+    }
 
-            return listAsync()
-                .then(ports => {
-                    let p = ports.filter(p => /Arduino|Adafruit/i.test(p.manufacturer))[0]
-                    s = new Serial(serialPort, p);
-                    return pxt.HF2.onlyChangedBlocksAsync(blocks, readWordsAsync)
-                        .then(lessBlocks => {
-                            console.log(`flash ${blocks.length} pages -> ${lessBlocks.length} pages`)
-                            return Promise.mapSeries(lessBlocks, writeBlockAsync)
-                                .then(() => {
-                                    console.log("all done; resetting...")
-                                    return runAppletAsync(samd21.reset)
-                                })
-                                .then(() => s.close())
+    return listAsync()
+        .then(ports => {
+            let p = ports.filter(p => /Arduino|Adafruit/i.test(p.manufacturer))[0]
+            s = new Serial(serialPort, p);
+            return pxt.HF2.onlyChangedBlocksAsync(blocks, readWordsAsync)
+                .then(lessBlocks => {
+                    console.log(`flash ${blocks.length} pages -> ${lessBlocks.length} pages`)
+                    return Promise.mapSeries(lessBlocks, writeBlockAsync)
+                        .then(() => {
+                            console.log("all done; resetting...")
+                            return runAppletAsync(samd21.reset)
                         })
+                        .then(() => s.close())
                 })
-        });
+        })
 }
 
 

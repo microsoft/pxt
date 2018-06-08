@@ -147,25 +147,24 @@ interface KeyTar {
     deletePassword(service: string, account: string): Promise<void>;
 }
 
-function requireKeyTarAsync(install = false): Promise<KeyTar> {
-    return nodeutil.lazyRequireAsync("keytar")
-        .then(k => k as KeyTar);
+function requireKeyTar(install = false): Promise<KeyTar> {
+    return Promise.resolve(nodeutil.lazyRequire("keytar") as KeyTar);
 }
 
 function passwordGetAsync(account: string): Promise<string> {
-    return requireKeyTarAsync()
+    return requireKeyTar()
         .then(keytar => keytar.getPassword("pxt/" + pxt.appTarget.id, account))
         .catch(e => undefined)
 }
 
 function passwordDeleteAsync(account: string): Promise<void> {
-    return requireKeyTarAsync()
+    return requireKeyTar()
         .then(keytar => keytar.deletePassword("pxt/" + pxt.appTarget.id, account))
         .catch(e => undefined);
 }
 
 function passwordUpdateAsync(account: string, password: string): Promise<void> {
-    return requireKeyTarAsync(true)
+    return requireKeyTar(true)
         .then(keytar => keytar.setPassword("pxt/" + pxt.appTarget.id, account, password))
         .catch(e => undefined);
 }

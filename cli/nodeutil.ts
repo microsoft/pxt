@@ -498,16 +498,16 @@ export function lazyDependencies(): pxt.Map<string> {
     return deps;
 }
 
-export function lazyRequireAsync(name: string, install = false): Promise<any> {
+export function lazyRequire(name: string, install = false): any {
     /* tslint:disable:non-literal-require */
     if (!lazyDependencies()[name])
         Util.userError(`lazy dependency ${name} not listed in package.json`);
     try {
-        return Promise.resolve(require(name));
+        return require(name);
     } catch (e) {
         if (install)
             pxt.log(`package "${name}" failed to load, run "pxt npm-install-native" to install native depencencies`)
-        return Promise.resolve(undefined);
+        return undefined;
     }
     /* tslint:enable:non-literal-require */
 }
