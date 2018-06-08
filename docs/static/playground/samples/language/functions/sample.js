@@ -4,12 +4,12 @@ namespace language {
      * This is a statement block
      */
     //% block
-    export function satement() {
+    export function statement() {
 
     }
 
     /**
-     * A function that returns a non-void argument generates a reporter block (diamond shape).
+     * A function that returns a non-void argument generates a reporter block (oval shape).
      */
     //% block
     export function expression(): number {

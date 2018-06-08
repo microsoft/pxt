@@ -1,5 +1,5 @@
 /**
- * Events are function that take a function handler as the last argument
+ * Events are functions that take a function (lambda) as the last argument
  */
 //% color="#AA278D"
 namespace language {
