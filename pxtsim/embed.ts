@@ -330,7 +330,7 @@ namespace pxsim {
         // Continuously send message just in case the editor isn't ready to handle it yet
         setInterval(() => {
             Runtime.postMessage({ type: "simulator", command: "reload" } as SimulatorCommandMessage)
-        }, 500)
+        }, 3000)
     }
 }
 
