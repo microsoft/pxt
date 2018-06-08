@@ -10,7 +10,7 @@ namespace language {
         /**
          * The first argument in the block signature is the "this" pointer.
          */
-        //% block="robot $robot say $message"
+        //% block="robot %robot say $%essage"
         public say(message: string) {
 
         }

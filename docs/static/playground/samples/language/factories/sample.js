@@ -9,7 +9,7 @@ namespace language {
     /**
      * Creates a robot and automtically set it to a variable
      */
-    //% block
+    //% block="create robot"
     //% blockSetVariable=robot
     export function createRobot(): Robot {
         return undefined;

@@ -6,7 +6,7 @@ namespace language {
     /**
      * A simple event taking an function handler
      */
-    //% block
+    //% block="on event"
     export function onEvent(handler: () => void) {
 
     }
@@ -14,7 +14,7 @@ namespace language {
     /**
      * Events can have arguments before the handler
      */
-    //% block
+    //% block="on event with $color"
     export function onEventWithArgs(color: number, handler: () => void) {
 
     }
@@ -23,7 +23,8 @@ namespace language {
      * Event handlers can have arguments too. You can refer to them using $NAME.
      */
     //% block="on rare $handlerArg1 event"
-    export function onEventWithHandlerArgs(handler: (handlerArg: text) => void) {
+    //% draggableParameters
+    export function onEventWithHandlerArgs(handler: (handlerArg: string) => void) {
 
     }
 
@@ -32,7 +33,8 @@ namespace language {
      * Make sure to use the $ notation.
      */
     //% block="on some event $handlerArg from $arg"
-    export function onEventWithHandlerArgs(arg: number, handler: (handlerArg: text) => void) {
+    //% draggableParameters
+    export function onEventWithHandlerArgsShuffle(arg: number, handler: (handlerArg: string) => void) {
 
     }
 
