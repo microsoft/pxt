@@ -8,7 +8,7 @@
 namespace basic {
 
     //% block
-    export function hellWorld() {
+    export function helloWorld() {
 
     }
 }
