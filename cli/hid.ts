@@ -5,7 +5,7 @@ import * as nodeutil from './nodeutil';
 let HID: any = undefined;
 function requireHIDAsync(): Promise<any> {
     if (HID) return Promise.resolve(HID);
-    return nodeutil.lazyRequireAsync("node-hid")
+    return nodeutil.lazyRequireAsync("node-hid", true)
         .then(hid => HID = hid);
 }
 

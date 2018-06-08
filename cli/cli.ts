@@ -147,7 +147,7 @@ interface KeyTar {
     deletePassword(service: string, account: string): Promise<void>;
 }
 
-function requireKeyTarAsync(): Promise<KeyTar> {
+function requireKeyTarAsync(install = false): Promise<KeyTar> {
     return nodeutil.lazyRequireAsync("keytar")
         .then(k => k as KeyTar);
 }
@@ -165,7 +165,7 @@ function passwordDeleteAsync(account: string): Promise<void> {
 }
 
 function passwordUpdateAsync(account: string, password: string): Promise<void> {
-    return requireKeyTarAsync()
+    return requireKeyTarAsync(true)
         .then(keytar => keytar.setPassword("pxt/" + pxt.appTarget.id, account, password))
         .catch(e => undefined);
 }
@@ -4014,6 +4014,19 @@ export function cleanGenAsync(parsed: commandParser.ParsedCommand) {
         .then(() => { });
 }
 
+export function npmInstallNativeAsync() {
+    pxt.log('installing npm native dependencies')
+    const deps = nodeutil.lazyDependencies();
+    const mods = Object.keys(deps).map(k => `${k}@${deps[k]}`);
+    function nextAsync() {
+        const mod = mods.pop();
+        if (!mod) return Promise.resolve();
+
+        return nodeutil.runNpmAsync("install", mod);
+    }
+    return nextAsync();
+}
+
 interface PNGImage {
     width: number;
     height: number;
@@ -5168,6 +5181,7 @@ function initCommands() {
 
     simpleCmd("clean", "removes built folders", cleanAsync);
     advancedCommand("cleangen", "remove generated files", cleanGenAsync);
+    simpleCmd("npm-install-native", "install native dependencies", npmInstallNativeAsync);
 
     p.defineCommand({
         name: "staticpkg",

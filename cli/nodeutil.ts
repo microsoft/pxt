@@ -488,33 +488,26 @@ export function resolveMd(root: string, pathname: string): string {
     return undefined;
 }
 
-export function lazyRequireAsync(name: string): Promise<any> {
+export function lazyDependencies(): pxt.Map<string> {
+    // find pxt-core package
+    const deps: pxt.Map<string> = {};
+    [path.join("node_modules", "pxt-core", "package.json"), "package.json"]
+        .filter(f => fs.existsSync(f))
+        .map(f => readJson(f))
+        .forEach(config => config && config.lazyDependencies && Util.jsonMergeFrom(deps, config.lazyDependencies))
+    return deps;
+}
+
+export function lazyRequireAsync(name: string, install = false): Promise<any> {
     /* tslint:disable:non-literal-require */
+    if (!lazyDependencies()[name])
+        Util.userError(`lazy dependency ${name} not listed in package.json`);
     try {
         return Promise.resolve(require(name));
     } catch (e) {
-        pxt.log(`${name} package failed to load, installing...`)
-        // find pxt-core package
-        const lazyDependencies: pxt.Map<string> = {};
-        [path.join("node_modules", "pxt_core", "package.json"), "package.json"]
-            .filter(f => fs.existsSync(f))
-            .map(f => readJson(f))
-            .forEach(config => config && config.lazyDependencies && Util.jsonMergeFrom(lazyDependencies, config.lazyDependencies))
-        const version = lazyDependencies[name];
-        if (!version)
-            Util.userError(`lazy dependency ${name} not listed in package.json`);
-
-        return spawnAsync({
-            cmd: "npm",
-            args: ["install", `${name}@${version}`]
-        }).then(() => {
-            try {
-                return Promise.resolve(require(name));
-            } catch (e) {
-                pxt.log(`failed to load or install ${name}`);
-                return undefined;
-            }
-        })
+        if (install)
+            pxt.log(`package "${name}" failed to load, run "pxt npm-install-native" to install native depencencies`)
+        return Promise.resolve(undefined);
     }
     /* tslint:enable:non-literal-require */
 }
