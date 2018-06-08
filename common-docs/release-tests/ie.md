@@ -1,5 +1,17 @@
 # Internet Explorer Release Tests
 
+## Things to look for...
+
+Look for these specific issues with Internet Explorer.
+
+* Discrepancies in CSS rendering - colors, alignement, font sizes
+* Block rendering
+
+## Known limitations
+
+* sounds are not supported
+* green screen is not supported
+
 ## Create and Download #createAndDownload
 
 Open @homeurl@ in **Internet Explorer**.
@@ -28,4 +40,5 @@ Open @homeurl@ in **Internet Explorer** in **InPrivate** mode.
 ## Additional Tests
 
 * [Tutorials](/release-tests/tutorials)
+* [Documentation](/release-tests/documentation)
 * [Sharing](/release-tests/sharing)
