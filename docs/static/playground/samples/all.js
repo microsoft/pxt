@@ -80,6 +80,12 @@
             path: "field-editors/note"
         },
         {
+            chapter: "Field editors",
+            name: "Protractor",
+            id: "field-editors-protractor",
+            path: "field-editors/protractor"
+        },
+        {
             chapter: "Language",
             name: "Create Enums from Blocks",
             id: "language-create-enums",
