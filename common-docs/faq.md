@@ -34,4 +34,4 @@ When you share a project it's saved to the public cloud for MakeCode. Anyone can
 * You can save the project and copy it to a class website or to an approved location on the class or school network.
 * You can copy code from and paste code into the JavaScript view of the editor. This let's you move code between MakeCode and other applications on your computer or device.
 
-Can't find your question? Pleae see our [support](/support) page.
+Can't find your question? Please see our [support](/support) page.
