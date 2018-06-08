@@ -1333,7 +1333,9 @@ export class ProjectView
                 if (saveOnly) {
                     return pxt.commands.saveOnlyAsync(resp);
                 }
-                return pxt.commands.deployCoreAsync(resp)
+                return pxt.commands.deployCoreAsync(resp, {
+                    reportDeviceNotFoundAsync: (docPath, compileResult) => this.showDeviceNotFoundDialogAsync(docPath, compileResult)
+                })
                     .catch(e => {
                         if (e.notifyUser) {
                             core.warningNotification(e.message);
@@ -1355,6 +1357,38 @@ export class ProjectView
                 if (simRestart) this.runSimulator();
             })
             .done();
+    }
+
+    showDeviceNotFoundDialogAsync(docPath: string, resp?: pxtc.CompileResult): Promise<void> {
+        pxt.tickEvent(`compile.devicenotfound`);
+        const ext = pxt.outputName().replace(/[^.]*/, "");
+        const fn = pkg.genFileName(ext);
+        return core.dialogAsync({
+            header: lf("Oops, we couldn't find your {0}", pxt.appTarget.appTheme.boardName),
+            body: lf("Please make sure your {0} is connected and try again.", pxt.appTarget.appTheme.boardName),
+            buttons: [
+                {
+                    label: lf("Troubleshoot"),
+                    className: "focused",
+                    icon: "help",
+                    url: docPath,
+                    onclick: () => {
+                        pxt.tickEvent(`compile.devicenotfound.troubleshoot`);
+                    }
+                },
+                resp ? {
+                    label: fn,
+                    icon: "download",
+                    className: "lightgrey",
+                    onclick: () => {
+                        pxt.tickEvent(`compile.devicenotfound.download`);
+                        return pxt.commands.saveOnlyAsync(resp);
+                    }
+                } : undefined
+            ],
+            hideCancel: true,
+            hasCloseIcon: true
+        });
     }
 
     overrideTypescriptFile(text: string) {

@@ -141,7 +141,7 @@ function nativeHostSaveCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     return Promise.resolve();
 }
 
-function hidDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
+function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.DeployOptions): Promise<void> {
     pxt.tickEvent(`hid.deploy`)
     // error message handled in browser download
     if (!resp.success)
@@ -151,6 +151,15 @@ function hidDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     let blocks = pxtc.UF2.parseFile(pxt.Util.stringToUint8Array(atob(f)))
     return hidbridge.initAsync()
         .then(dev => dev.reflashAsync(blocks))
+        .catch((e) => {
+            const troubleshootDoc = pxt.appTarget && pxt.appTarget.appTheme && pxt.appTarget.appTheme.appFlashingTroubleshoot;
+            if (e.type === "devicenotfound" && d.reportDeviceNotFoundAsync && !!troubleshootDoc) {
+                pxt.tickEvent("hid.flash.devicenotfound");
+                return d.reportDeviceNotFoundAsync(troubleshootDoc, resp);
+            } else {
+                return pxt.commands.saveOnlyAsync(resp);
+            }
+        });
 }
 
 let askPairingCount = 0;

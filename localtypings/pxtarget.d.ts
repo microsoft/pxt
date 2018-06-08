@@ -265,6 +265,7 @@ declare namespace pxt {
         hideNewProjectButton?: boolean; // do not show the "new project" button in home page
         fileNameExclusiveFilter?: string; // anything that does not match this regex is removed from the filename,
         copyrightText?: string; // footer text for any copyright text to be included at the bottom of the home screen and about page
+        appFlashingTroubleshoot?: string; // Path to the doc about troubleshooting UWP app flashing failures, e.g. /device/windows-app/troubleshoot
     }
 
     interface SocialOptions {
@@ -329,7 +330,7 @@ declare namespace ts.pxtc {
         flashEnd?: number;
         flashUsableEnd?: number;
         flashChecksumAddr?: number;
-        patches?: pxt.Map<UpgradePolicy[]>; // semver range -> upgrade policies        
+        patches?: pxt.Map<UpgradePolicy[]>; // semver range -> upgrade policies
         openocdScript?: string;
         onStartText?: boolean;
         stackAlign?: number; // 1 word (default), or 2
