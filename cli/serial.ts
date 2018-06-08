@@ -10,6 +10,10 @@ import * as commandParser from './commandparser';
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
 
+function requireSerialPort(): any {
+    return nodeutil.lazyRequire("serialport", true);
+}
+
 export interface SerialPortInfo {
     comName: string;
     pnpId: string;
@@ -26,16 +30,12 @@ export function monitorSerial(onData: (info: SerialPortInfo, buffer: Buffer) => 
     if (pxt.appTarget.serial.useHF2) {
         return
     }
-
-    console.log('serial: monitoring ports...')
-
-    let SerialPort: any;
-    try {
-        SerialPort = require("serialport");
-    } catch (er) {
-        console.warn('serial: failed to load, skipping...');
+    const serialPort = requireSerialPort();
+    if (!serialPort)
         return;
-    }
+
+    pxt.log('serial: monitoring ports...')
+
     const serialPorts: pxt.Map<SerialPortInfo> = {};
     function close(info: SerialPortInfo) {
         console.log('serial: closing ' + info.pnpId);
@@ -45,7 +45,7 @@ export function monitorSerial(onData: (info: SerialPortInfo, buffer: Buffer) => 
     function open(info: SerialPortInfo) {
         console.log(`serial: connecting to ${info.comName} by ${info.manufacturer} (${info.pnpId})`);
         serialPorts[info.pnpId] = info;
-        info.port = new SerialPort(info.comName, {
+        info.port = new serialPort(info.comName, {
             baudRate: 115200,
             autoOpen: false
         }); // this is the openImmediately flag [default is true]
@@ -76,7 +76,7 @@ export function monitorSerial(onData: (info: SerialPortInfo, buffer: Buffer) => 
     }
 
     setInterval(() => {
-        SerialPort.list(function (err: any, ports: SerialPortInfo[]) {
+        serialPort.list(function (err: any, ports: SerialPortInfo[]) {
             ports.filter(filterPort)
                 .filter(info => !serialPorts[info.pnpId])
                 .forEach((info) => open(info));
@@ -92,9 +92,8 @@ class Serial {
     lock = new U.PromiseQueue()
     openpromise: Promise<void>;
 
-    constructor(public info: SerialPortInfo) {
-        let SerialPort = require("serialport");
-        info.port = new SerialPort(info.comName, {
+    constructor(public serialPort: any, public info: SerialPortInfo) {
+        info.port = new serialPort(info.comName, {
             baudrate: 115200,
             autoOpen: false
         }); // this is the openImmediately flag [default is true]
@@ -200,8 +199,10 @@ function sambaCmd(ch: string, addr: number, len?: number) {
     return r + "#"
 }
 export function flashSerialAsync(c: commandParser.ParsedCommand) {
-    let SerialPort = require("serialport");
-    let listAsync: () => Promise<SerialPortInfo[]> = Promise.promisify(SerialPort.list) as any
+    const serialPort = requireSerialPort();
+    if (!serialPort)
+        return Promise.resolve();
+    let listAsync: () => Promise<SerialPortInfo[]> = Promise.promisify(serialPort.list) as any
 
     let f = fs.readFileSync(c.args[0])
     let blocks = pxtc.UF2.parseFile(f as any)
@@ -252,7 +253,7 @@ export function flashSerialAsync(c: commandParser.ParsedCommand) {
     return listAsync()
         .then(ports => {
             let p = ports.filter(p => /Arduino|Adafruit/i.test(p.manufacturer))[0]
-            s = new Serial(p)
+            s = new Serial(serialPort, p);
             return pxt.HF2.onlyChangedBlocksAsync(blocks, readWordsAsync)
                 .then(lessBlocks => {
                     console.log(`flash ${blocks.length} pages -> ${lessBlocks.length} pages`)

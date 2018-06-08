@@ -488,4 +488,28 @@ export function resolveMd(root: string, pathname: string): string {
     return undefined;
 }
 
+export function lazyDependencies(): pxt.Map<string> {
+    // find pxt-core package
+    const deps: pxt.Map<string> = {};
+    [path.join("node_modules", "pxt-core", "package.json"), "package.json"]
+        .filter(f => fs.existsSync(f))
+        .map(f => readJson(f))
+        .forEach(config => config && config.lazyDependencies && Util.jsonMergeFrom(deps, config.lazyDependencies))
+    return deps;
+}
+
+export function lazyRequire(name: string, install = false): any {
+    /* tslint:disable:non-literal-require */
+    if (!lazyDependencies()[name])
+        Util.userError(`lazy dependency ${name} not listed in package.json`);
+    try {
+        return require(name);
+    } catch (e) {
+        if (install)
+            pxt.log(`package "${name}" failed to load, run "pxt npm-install-native" to install native depencencies`)
+        return undefined;
+    }
+    /* tslint:enable:non-literal-require */
+}
+
 init();

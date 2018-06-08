@@ -8,6 +8,12 @@ Monitors serial output from certain boards (in particular SAMD21 ones)
 pxt hidserial
 ```
 
+## Installation
+
+This command relies on ``node-hid``, a native package for Node.JS. To install this package, run
+
+    pxt npm-install-native
+
 ## Description
 
 When using Codal runtime, PXT sends data from `serial.writeLine()` and friends

@@ -147,32 +147,26 @@ interface KeyTar {
     deletePassword(service: string, account: string): Promise<void>;
 }
 
+function requireKeyTar(install = false): Promise<KeyTar> {
+    return Promise.resolve(nodeutil.lazyRequire("keytar") as KeyTar);
+}
+
 function passwordGetAsync(account: string): Promise<string> {
-    try {
-        const keytar = require("keytar") as KeyTar;
-        return keytar.getPassword("pxt/" + pxt.appTarget.id, account)
-    } catch (e) {
-        return Promise.resolve(undefined);
-    }
+    return requireKeyTar()
+        .then(keytar => keytar.getPassword("pxt/" + pxt.appTarget.id, account))
+        .catch(e => undefined)
 }
 
 function passwordDeleteAsync(account: string): Promise<void> {
-    try {
-        const keytar = require("keytar") as KeyTar;
-        return keytar.deletePassword("pxt/" + pxt.appTarget.id, account);
-    } catch (e) {
-        return Promise.resolve(undefined);
-    }
+    return requireKeyTar()
+        .then(keytar => keytar.deletePassword("pxt/" + pxt.appTarget.id, account))
+        .catch(e => undefined);
 }
 
 function passwordUpdateAsync(account: string, password: string): Promise<void> {
-    try {
-        const keytar = require("keytar") as KeyTar;
-        return keytar.setPassword("pxt/" + pxt.appTarget.id, account, password);
-    } catch (e) {
-        console.error(e)
-        return Promise.resolve(undefined)
-    }
+    return requireKeyTar(true)
+        .then(keytar => keytar.setPassword("pxt/" + pxt.appTarget.id, account, password))
+        .catch(e => undefined);
 }
 
 const PXT_KEY = "pxt";
@@ -4019,6 +4013,19 @@ export function cleanGenAsync(parsed: commandParser.ParsedCommand) {
         .then(() => { });
 }
 
+export function npmInstallNativeAsync() {
+    pxt.log('installing npm native dependencies')
+    const deps = nodeutil.lazyDependencies();
+    const mods = Object.keys(deps).map(k => `${k}@${deps[k]}`);
+    function nextAsync() {
+        const mod = mods.pop();
+        if (!mod) return Promise.resolve();
+
+        return nodeutil.runNpmAsync("install", mod);
+    }
+    return nextAsync();
+}
+
 interface PNGImage {
     width: number;
     height: number;
@@ -5173,6 +5180,7 @@ function initCommands() {
 
     simpleCmd("clean", "removes built folders", cleanAsync);
     advancedCommand("cleangen", "remove generated files", cleanGenAsync);
+    simpleCmd("npm-install-native", "install native dependencies", npmInstallNativeAsync);
 
     p.defineCommand({
         name: "staticpkg",
