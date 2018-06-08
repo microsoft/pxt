@@ -11,7 +11,7 @@ import U = pxt.Util;
 import Cloud = pxt.Cloud;
 
 function requireSerialPortAsync(): Promise<any> {
-    return nodeutil.lazyRequireAsync("serialport@6.2.0");
+    return nodeutil.lazyRequireAsync("serialport");
 }
 
 export interface SerialPortInfo {

@@ -1,18 +1,12 @@
 import HF2 = pxt.HF2
 import U = pxt.U
-import * as commandParser from './commandparser';
+import * as nodeutil from './nodeutil';
 
 let HID: any = undefined;
-function getHID(): any {
-    if (HID === undefined) {
-        try {
-            HID = require("node-hid")
-        } catch (e) {
-            pxt.log('node-hid package failed to load, skipping...')
-            HID = null;
-        }
-    }
-    return HID;
+function requireHIDAsync(): Promise<any> {
+    if (HID) return Promise.resolve(HID);
+    return nodeutil.lazyRequireAsync("node-hid")
+        .then(hid => HID = hid);
 }
 
 export interface HidDevice {
@@ -25,10 +19,9 @@ export interface HidDevice {
     release: number; // 0x4201
 }
 
-export function listAsync() {
-    for (let h of getHF2Devices())
-        console.log(deviceInfo(h))
-    return Promise.resolve()
+function listAsync() {
+    return getHF2DevicesAsync()
+        .then(devices => devices.forEach(device => console.log(device)));
 }
 
 export function serialAsync() {
@@ -56,8 +49,7 @@ export function deviceInfo(h: HidDevice) {
     return `${h.product} (by ${h.manufacturer} at USB ${hex(h.vendorId)}:${hex(h.productId)})`
 }
 
-export function getHF2Devices() {
-    const hid = getHID();
+function getHF2Devices(hid: any): HidDevice[] {
     if (!hid) return [];
     let devices = hid.devices() as HidDevice[]
     for (let d of devices) {
@@ -69,8 +61,13 @@ export function getHF2Devices() {
         (d.release & 0xff00) == 0x4200)
 }
 
+export function getHF2DevicesAsync(): Promise<HidDevice[]> {
+    return requireHIDAsync()
+        .then(hid => getHF2Devices(hid));
+}
+
 export function hf2ConnectAsync(path: string, raw = false) {
-    return Promise.resolve()
+    return requireHIDAsync()
         .then(() => {
             // in .then() to make sure we catch errors
             let h = new HF2.Wrapper(new HidIO(path))
@@ -128,11 +125,9 @@ export class HidIO implements HF2.PacketIO {
     }
 
     private connect() {
-        const hid = getHID();
-        U.assert(hid)
-
+        U.assert(HID)
         if (this.requestedPath == null) {
-            let devs = getHF2Devices()
+            let devs = getHF2Devices(HID)
             if (devs.length == 0)
                 throw new HIDError("no devices found")
             this.path = devs[0].path

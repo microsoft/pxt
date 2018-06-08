@@ -147,32 +147,27 @@ interface KeyTar {
     deletePassword(service: string, account: string): Promise<void>;
 }
 
+function requireKeyTarAsync(): Promise<KeyTar> {
+    return nodeutil.lazyRequireAsync("keytar")
+        .then(k => k as KeyTar);
+}
+
 function passwordGetAsync(account: string): Promise<string> {
-    try {
-        const keytar = require("keytar") as KeyTar;
-        return keytar.getPassword("pxt/" + pxt.appTarget.id, account)
-    } catch (e) {
-        return Promise.resolve(undefined);
-    }
+    return requireKeyTarAsync()
+        .then(keytar => keytar.getPassword("pxt/" + pxt.appTarget.id, account))
+        .catch(e => undefined)
 }
 
 function passwordDeleteAsync(account: string): Promise<void> {
-    try {
-        const keytar = require("keytar") as KeyTar;
-        return keytar.deletePassword("pxt/" + pxt.appTarget.id, account);
-    } catch (e) {
-        return Promise.resolve(undefined);
-    }
+    return requireKeyTarAsync()
+        .then(keytar => keytar.deletePassword("pxt/" + pxt.appTarget.id, account))
+        .catch(e => undefined);
 }
 
 function passwordUpdateAsync(account: string, password: string): Promise<void> {
-    try {
-        const keytar = require("keytar") as KeyTar;
-        return keytar.setPassword("pxt/" + pxt.appTarget.id, account, password);
-    } catch (e) {
-        console.error(e)
-        return Promise.resolve(undefined)
-    }
+    return requireKeyTarAsync()
+        .then(keytar => keytar.setPassword("pxt/" + pxt.appTarget.id, account, password))
+        .catch(e => undefined);
 }
 
 const PXT_KEY = "pxt";

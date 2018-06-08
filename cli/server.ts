@@ -475,9 +475,9 @@ function initSocketServer(wsPort: number, hostname: string) {
                                         .then(res => ({ data: U.toHex(res) }))
                                 });
                             case "sendserial":
-                                return hio.sendSerialAsync(U.fromHex(msg.arg.data), msg.arg.isError)
+                                return hio.sendSerialAsync(U.fromHex(msg.arg.data), msg.arg.isError);
                             case "list":
-                                return { devices: hid.getHF2Devices() } as any
+                                return hid.getHF2DevicesAsync().then(devices => { return { devices } as any; });
                         }
                     })
                     .done(resp => {
