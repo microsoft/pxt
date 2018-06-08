@@ -67,7 +67,7 @@ export function getHF2DevicesAsync(): Promise<HidDevice[]> {
 }
 
 export function hf2ConnectAsync(path: string, raw = false) {
-    if (!requireHID()) return undefined;
+    if (!requireHID()) return Promise.resolve(undefined);
     // in .then() to make sure we catch errors
     let h = new HF2.Wrapper(new HidIO(path))
     h.rawMode = raw
