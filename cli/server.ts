@@ -477,7 +477,11 @@ function initSocketServer(wsPort: number, hostname: string) {
                             case "sendserial":
                                 return hio.sendSerialAsync(U.fromHex(msg.arg.data), msg.arg.isError);
                             case "list":
-                                return hid.getHF2DevicesAsync().then(devices => { return { devices } as any; });
+                                return hid.getHF2DevicesAsync()
+                                    .then(devices => { return { devices } as any; });
+                            default: // unknown message
+                                pxt.log(`unknown hid message ${msg.op}`)
+                                return null;
                         }
                     })
                     .done(resp => {

@@ -19,9 +19,9 @@ export interface HidDevice {
     release: number; // 0x4201
 }
 
-function listAsync() {
+export function listAsync() {
     return getHF2DevicesAsync()
-        .then(devices => devices.forEach(device => console.log(device)));
+        .then(devices => devices.forEach(device => pxt.log(device)));
 }
 
 export function serialAsync() {
