@@ -9,3 +9,4 @@ This page list the set of test passes required for a new release.
 ## Features #features
 
 * [Tutorials](/release-tests/tutorials)
+* [Sharing](/releases-tests/tutorials)

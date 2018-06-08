@@ -27,4 +27,5 @@ Open @homeurl@ in **Internet Explorer** in **InPrivate** mode.
 
 ## Additional Tests
 
-* [Test the tutorials](/release-tests/tutorials)
+* [Tutorials](/release-tests/tutorials)
+* [Sharing](/release-tests/sharing)
