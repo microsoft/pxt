@@ -379,6 +379,14 @@ namespace ts.pxtc.decompiler {
             }
         })
 
+        if (enumMembers.length) {
+            write("<variables>")
+            enumMembers.forEach(e => {
+                write(`<variable type="${U.htmlEscape(e.type)}">${U.htmlEscape(e.name)}</variable>`)
+            });
+            write("</variables>")
+        }
+
         let n: StatementNode;
         try {
             n = codeBlock(stmts, undefined, true, undefined, !options.snippetMode);
@@ -398,14 +406,6 @@ namespace ts.pxtc.decompiler {
             else {
                 throw e;
             }
-        }
-
-        if (enumMembers.length) {
-            write("<variables>")
-            enumMembers.forEach(e => {
-                write(`<variable type="${U.htmlEscape(e.type)}">${U.htmlEscape(e.name)}</variable>`)
-            });
-            write("</variables>")
         }
 
         if (n) {
