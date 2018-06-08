@@ -500,8 +500,6 @@ export function lazyDependencies(): pxt.Map<string> {
 
 export function lazyRequire(name: string, install = false): any {
     /* tslint:disable:non-literal-require */
-    if (!lazyDependencies()[name])
-        Util.userError(`lazy dependency ${name} not listed in package.json`);
     try {
         return require(name);
     } catch (e) {
