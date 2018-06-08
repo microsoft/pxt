@@ -34,10 +34,12 @@ declare namespace pxt.electron {
         onUpdateInstalled: (handler: () => void) => void;
         onUpdateStatus: (handler: (st: UpdateStatus) => void) => void;
         onCriticalUpdateFailed: (handler: () => void) => void;
+        onDriveDeployResult: (handler: (isSuccess: boolean) => void) => void;
 
         sendUpdateStatusCheck: () => void;
         sendQuit: () => void;
         sendOpenDevTools: () => void;
+        sendDriveDeploy: (compileResult: pxtc.CompileResult) => void;
         versions: VersionInfo;
     }
 }
