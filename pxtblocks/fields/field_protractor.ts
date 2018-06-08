@@ -10,7 +10,7 @@ namespace pxtblockly {
 
         private params: any;
 
-        private speedSVG: SVGElement;
+        private circleSVG: SVGElement;
         private circleBar: SVGCircleElement;
         private reporter: SVGTextElement;
 
@@ -24,33 +24,33 @@ namespace pxtblockly {
          * @extends {Blockly.FieldNumber}
          * @constructor
          */
-        constructor(value_: any, params: FieldSpeedOptions, opt_validator?: Function) {
+        constructor(value_: any, params: FieldProtractorOptions, opt_validator?: Function) {
             super(String(value_), '0', '180', null, '15', lf("Angle"), opt_validator);
             this.params = params;
         }
 
         createLabelDom_(labelText: string) {
             const labelContainer = document.createElement('div');
-            this.speedSVG = document.createElementNS("http://www.w3.org/2000/svg", "svg") as SVGGElement;
-            pxsim.svg.hydrate(this.speedSVG, {
+            this.circleSVG = document.createElementNS("http://www.w3.org/2000/svg", "svg") as SVGGElement;
+            pxsim.svg.hydrate(this.circleSVG, {
                 viewBox: "0 0 200 100",
                 width: "170"
             });
 
-            labelContainer.appendChild(this.speedSVG);
+            labelContainer.appendChild(this.circleSVG);
 
-            const outerCircle = pxsim.svg.child(this.speedSVG, "circle", {
+            const outerCircle = pxsim.svg.child(this.circleSVG, "circle", {
                 'stroke-dasharray': '565.48', 'stroke-dashoffset': '0',
                 'cx': 100, 'cy': 100, 'r': '90', 'style': `fill:transparent; transition: stroke-dashoffset 0.1s linear;`,
                 'stroke': '#a8aaa8', 'stroke-width': '1rem'
             }) as SVGCircleElement;
-            this.circleBar = pxsim.svg.child(this.speedSVG, "circle", {
+            this.circleBar = pxsim.svg.child(this.circleSVG, "circle", {
                 'stroke-dasharray': '565.48', 'stroke-dashoffset': '0',
                 'cx': 100, 'cy': 100, 'r': '90', 'style': `fill:transparent; transition: stroke-dashoffset 0.1s linear;`,
                 'stroke': '#f12a21', 'stroke-width': '1rem'
             }) as SVGCircleElement;
 
-            this.reporter = pxsim.svg.child(this.speedSVG, "text", {
+            this.reporter = pxsim.svg.child(this.circleSVG, "text", {
                 'x': 100, 'y': 80,
                 'text-anchor': 'middle', 'dominant-baseline': 'middle',
                 'style': 'font-size: 50px',

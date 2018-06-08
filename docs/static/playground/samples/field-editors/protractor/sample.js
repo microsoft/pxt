@@ -16,7 +16,7 @@ namespace turtle {
     //% shim=TD_ID
     //% angle.fieldEditor=protractor
     //% colorSecondary="#FFFFFF"
-    //% weight=0 blockHidden=1 speed.fieldOptions.decompileLiterals=1    
+    //% blockHidden=1 speed.fieldOptions.decompileLiterals=1    
     export function __protractor(angle: number) {
         return angle;
     }
