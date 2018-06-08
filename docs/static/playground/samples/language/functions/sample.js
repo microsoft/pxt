@@ -1,3 +1,4 @@
+//% color="#AA278D"
 namespace language {
     /**
      * This is a statement block

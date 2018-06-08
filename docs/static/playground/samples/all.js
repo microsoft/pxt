@@ -117,9 +117,27 @@
         },
         {
             chapter: "Language",
+            name: "Events",
+            id: "events",
+            path: "language/events"
+        },
+        {
+            chapter: "Language",
             name: "Create Enums from Blocks",
             id: "language-create-enums",
             path: "language/create-enums"
+        },
+        {
+            chapter: "Language",
+            name: "Classes",
+            id: "classes",
+            path: "language/classes"
+        },
+        {
+            chapter: "Language",
+            name: "Factories",
+            id: "factories",
+            path: "language/factories"
         }
     ];
 
