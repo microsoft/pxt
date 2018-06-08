@@ -24,6 +24,7 @@ export function listAsync() {
 }
 
 export function serialAsync() {
+    if (!requireHID()) return Promise.resolve();
     return initAsync()
         .then(d => {
             d.autoReconnect = true
