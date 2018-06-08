@@ -25,7 +25,7 @@ namespace pxtblockly {
          * @constructor
          */
         constructor(value_: any, params: FieldSpeedOptions, opt_validator?: Function) {
-            super(String(value_), '0', '180', null, '10', lf("Angle"), opt_validator);
+            super(String(value_), '0', '180', null, '15', lf("Angle"), opt_validator);
             this.params = params;
         }
 
