@@ -2,10 +2,9 @@
 
 ## [MakeCode @ISTE 2018](/blog/iste/iste-2018)
 
-June 6th, 2018 by [Jaqster](https://github.com/jaqster)
+June 11th, 2018 by [Jaqster](https://github.com/jaqster)
 
-The MakeCode team is heading out to the Windy City ([Chicago](https://www.choosechicago.com/)) at the end of June, and we couldn’t be more excited. 
-We’ve got some nice sessions lined up and would love to see you there...
+The MakeCode team is heading out to the Windy City ([Chicago](https://www.choosechicago.com/)) at the end of June, and we couldn’t be more excited. We’ve got some nice sessions lined up and would love to see you there...
 **[Continue reading this blog post](/blog/iste/iste-2018)**
 
 ## [MakeCode for LEGO MINDSTORMS](/blog/lego/05-15-2018)
