@@ -4,7 +4,7 @@ namespace turtle {
     /**
      * Turns by an angle between 0 and 180
      */
-    //% block="turn %angle=protractor"
+    //% block="turn %angle=protractorPicker"
     export function turn(angle: number) {
 
     }
@@ -12,11 +12,12 @@ namespace turtle {
     /**
      * A field editor that displays a protractor
      */
-    //% blockId=protractor block="%angle"
+    //% blockId=protractorPicker block="%angle"
     //% shim=TD_ID
     //% angle.fieldEditor=protractor
+    //% angle.fieldOptions.decompileLiterals=1    
     //% colorSecondary="#FFFFFF"
-    //% blockHidden=1 speed.fieldOptions.decompileLiterals=1    
+    //% blockHidden=1
     export function __protractor(angle: number) {
         return angle;
     }
