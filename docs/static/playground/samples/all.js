@@ -27,6 +27,12 @@
         },
         {
             chapter: "Basic",
+            name: "Groups",
+            id: "basic-groups",
+            path: "basic/groups"
+        },
+        {
+            chapter: "Basic",
             name: "Types of Blocks",
             id: "basic-types",
             path: "basic/types"
@@ -84,6 +90,18 @@
             name: "Protractor",
             id: "field-editors-protractor",
             path: "field-editors/protractor"
+        },
+        {
+            chapter: "Field editors",
+            name: "Speed",
+            id: "field-editors-speed",
+            path: "field-editors/speed"
+        },
+        {
+            chapter: "Field editors",
+            name: "Turn Ratio",
+            id: "field-editors-turn-ratio",
+            path: "field-editors/turnratio"
         },
         {
             chapter: "Language",
