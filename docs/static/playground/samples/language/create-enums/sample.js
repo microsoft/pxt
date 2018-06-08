@@ -1,5 +1,5 @@
 //% color="#AA278D"
-namespace basic {
+namespace language {
     /**
      * This function will be used to create the shadow block that will
      * hold the dropdown values for the enum. This function will never

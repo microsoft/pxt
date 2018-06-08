@@ -27,6 +27,18 @@
         },
         {
             chapter: "Basic",
+            name: "Groups",
+            id: "basic-groups",
+            path: "basic/groups"
+        },
+        {
+            chapter: "Basic",
+            name: "Ordering",
+            id: "basic-ordering",
+            path: "basic/ordering"
+        },
+        {
+            chapter: "Basic",
             name: "Types of Blocks",
             id: "basic-types",
             path: "basic/types"
@@ -86,10 +98,46 @@
             path: "field-editors/protractor"
         },
         {
+            chapter: "Field editors",
+            name: "Speed",
+            id: "field-editors-speed",
+            path: "field-editors/speed"
+        },
+        {
+            chapter: "Field editors",
+            name: "Turn Ratio",
+            id: "field-editors-turn-ratio",
+            path: "field-editors/turnratio"
+        },
+        {
+            chapter: "Language",
+            name: "Functions",
+            id: "functions",
+            path: "language/functions"
+        },
+        {
+            chapter: "Language",
+            name: "Events",
+            id: "events",
+            path: "language/events"
+        },
+        {
             chapter: "Language",
             name: "Create Enums from Blocks",
             id: "language-create-enums",
             path: "language/create-enums"
+        },
+        {
+            chapter: "Language",
+            name: "Classes",
+            id: "classes",
+            path: "language/classes"
+        },
+        {
+            chapter: "Language",
+            name: "Factories",
+            id: "factories",
+            path: "language/factories"
         }
     ];
 
