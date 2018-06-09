@@ -5180,7 +5180,7 @@ function initCommands() {
 
     simpleCmd("clean", "removes built folders", cleanAsync);
     advancedCommand("cleangen", "remove generated files", cleanGenAsync);
-    simpleCmd("npm-install-native", "install native dependencies", npmInstallNativeAsync);
+    simpleCmd("npminstallnative", "install native dependencies", npmInstallNativeAsync);
 
     p.defineCommand({
         name: "staticpkg",

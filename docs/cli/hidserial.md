@@ -12,7 +12,7 @@ pxt hidserial
 
 This command relies on ``node-hid``, a native package for Node.JS. To install this package, run
 
-    pxt npm-install-native
+    pxt npminstallnative
 
 ## Description
 

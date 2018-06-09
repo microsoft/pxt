@@ -504,7 +504,7 @@ export function lazyRequire(name: string, install = false): any {
         return require(name);
     } catch (e) {
         if (install)
-            pxt.log(`package "${name}" failed to load, run "pxt npm-install-native" to install native depencencies`)
+            pxt.log(`package "${name}" failed to load, run "pxt npminstallnative" to install native depencencies`)
         return undefined;
     }
     /* tslint:enable:non-literal-require */
