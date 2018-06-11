@@ -222,6 +222,7 @@ namespace pxt.editor {
         showExitAndSaveDialog(): void;
 
         showPackageDialog(): void;
+        showBoardDialog(): void;
     }
 
     export interface IHexFileImporter {
