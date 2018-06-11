@@ -5,6 +5,7 @@ declare namespace pxt.electron {
         latest: string;
         banned?: string[];
         timeStamp?: string; // In the format of (new Date()).toISOString()
+        isDriveDeployBanned?: boolean;
     }
 
     export const enum UpdateStatus {
@@ -28,6 +29,26 @@ declare namespace pxt.electron {
         isProd: number; // If the app is production, this will be set to 1
     }
 
+    // Have to duplicate this here because of typings issue when building
+    export interface CompileResult {
+        outfiles: pxt.Map<string>;
+        diagnostics: any[];
+        success: boolean;
+        times: pxt.Map<number>;
+        //ast?: Program; // Not needed, moved to pxtcompiler
+        breakpoints?: any[];
+        procDebugInfo?: any[];
+        blocksInfo?: any;
+        usedSymbols?: pxt.Map<any>; // q-names of symbols used
+        usedArguments?: pxt.Map<string[]>;
+        // client options
+        saveOnly?: boolean;
+        userContextWindow?: Window;
+        downloadFileBaseName?: string;
+        confirmAsync?: (confirmOptions: {}) => Promise<number>;
+        configData?: any[];
+    }
+
     // The object that gets injected into the window
     export interface PxtElectron {
         onTelemetry: (handler: (ev: TelemetryEvent) => void) => void;
@@ -39,7 +60,7 @@ declare namespace pxt.electron {
         sendUpdateStatusCheck: () => void;
         sendQuit: () => void;
         sendOpenDevTools: () => void;
-        sendDriveDeploy: (compileResult: pxtc.CompileResult) => void;
+        sendDriveDeploy: (compileResult: CompileResult) => void;
         versions: VersionInfo;
     }
 }
