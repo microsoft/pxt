@@ -447,6 +447,12 @@ namespace ts.pxtc {
             }
         }
 
+        if (res.block) {
+            // In PXT master we support basic escape sequences, this patches the block string
+            // to replicate that behavior
+            res.block = res.block.replace(/\\([^\s])/g, "$1")
+        }
+
         return res
     }
 
