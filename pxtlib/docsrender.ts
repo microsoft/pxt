@@ -456,6 +456,9 @@ namespace pxt.docs {
                 } else {
                     id = raw.toLowerCase().replace(/[^\w]+/g, '-')
                 }
+                // remove tutorial macros
+                if (text)
+                    text = text.replace(/@(fullscreen|unplugged)/g, '');
                 return `<h${level} id="${this.options.headerPrefix}${id}">${text}</h${level}>`
             } as any
             markedInstance.setOptions({
