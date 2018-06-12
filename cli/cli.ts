@@ -55,6 +55,7 @@ export interface UserConfig {
     noAutoBuild?: boolean;
     noAutoStart?: boolean;
     localBuild?: boolean;
+    noSerial?: boolean;
 }
 
 let reportDiagnostic = reportDiagnosticSimply;
@@ -1908,18 +1909,19 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
         .then(() => internalGenDocsAsync(false, true))
         .then(() => forEachBundledPkgAsync((pkg, dirname) => {
             pxt.log(`building ${dirname}`);
-            const isPrj = /prj$/.test(dirname);
+            let isPrj = /prj$/.test(dirname);
+            const isHw = /hw---/.test(dirname);
             const config = nodeutil.readPkgConfig(".")
             const isCore = !!config.core;
-            if (config.additionalFilePath) {
-                dirsToWatch.push(path.resolve(config.additionalFilePath));
-            }
+            for (let p of config.additionalFilePaths)
+                dirsToWatch.push(path.resolve(p));
 
             return pkg.filesToBePublishedAsync(true)
                 .then(res => {
                     if (!isPrj) {
                         cfg.bundledpkgs[path.basename(dirname)] = res
                     }
+                    if (isHw) isPrj = true
                 })
                 .then(() => testForBuildTargetAsync(isPrj || (!options.skipCore && isCore)))
                 .then((compileOpts) => {
@@ -2189,7 +2191,7 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
             wsPort: parsed.flags["wsport"] as number || 0,
             hostname: parsed.flags["hostname"] as string || "",
             browser: parsed.flags["browser"] as string,
-            serial: !parsed.flags["noSerial"]
+            serial: !parsed.flags["noSerial"] && !globalConfig.noSerial
         }))
 }
 
@@ -2265,6 +2267,8 @@ class SnippetHost implements pxt.Host {
                 if (pxt.appTarget.bundledpkgs[module.id]) {
                     let f = readFile(pxt.CONFIG_NAME)
                     const modpkg = JSON.parse(f || "{}") as pxt.PackageConfig;
+                    // TODO this seems to be dead code, additionalFilePath is removed from bundledpkgs
+                    // why not just use bundledpkgs also for files?
                     if (modpkg.additionalFilePath) {
                         try {
                             const ad = path.join(modpkg.additionalFilePath.replace('../../', ''), filename);
@@ -2384,16 +2388,15 @@ class Host
             }
 
         try {
-            // pxt.debug(`reading ${path.resolve(resolved)}`)
+            pxt.debug(`reading ${resolved}`)
             return fs.readFileSync(resolved, "utf8")
         } catch (e) {
             if (!skipAdditionalFiles && module.config) {
-                let addPath = module.config.additionalFilePath
-                if (addPath) {
+                for (let addPath of module.config.additionalFilePaths || []) {
                     try {
+                        pxt.debug(`try read: ${path.join(dir, addPath, filename)}`)
                         return fs.readFileSync(path.join(dir, addPath, filename), "utf8")
                     } catch (e) {
-                        return null
                     }
                 }
             }
@@ -3148,8 +3151,11 @@ function simshimAsync() {
             "\n// Auto-generated. Do not edit. Really.\n"
         let cfgname = "libs/" + s + "/" + pxt.CONFIG_NAME
         let cfg = nodeutil.readPkgConfig("libs/" + s)
-        if (cfg.files.indexOf(filename) == -1)
+        if (cfg.files.indexOf(filename) == -1) {
+            if (pxt.appTarget.variants)
+                return Promise.resolve() // this is fine - there are native variants that generate shims
             U.userError(U.lf("please add \"{0}\" to {1}", filename, cfgname))
+        }
         let fn = "libs/" + s + "/" + filename
         if (fs.readFileSync(fn, "utf8") != cont) {
             pxt.debug(`updating ${fn}`)
@@ -5587,6 +5593,10 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
     if (process.env["PXT_DEBUG"]) {
         pxt.options.debug = true;
         pxt.debug = pxt.log;
+    }
+
+    if (process.env["PXT_ASMDEBUG"]) {
+        ts.pxtc.assembler.debug = true
     }
 
     commonfiles = readJson(__dirname + "/pxt-common.json")

@@ -324,7 +324,13 @@ export class EditorPackage {
     pkgAndDeps(): EditorPackage[] {
         if (this.topPkg != this)
             return this.topPkg.pkgAndDeps();
-        let res = Util.values((this.ksPkg as pxt.MainPackage).deps).map(getEditorPkg)
+        let deps = (this.ksPkg as pxt.MainPackage).deps
+        let depkeys = Object.keys(deps)
+        let res: EditorPackage[] = []
+        for (let k of depkeys) {
+            if (/---/.test(k)) continue
+            res.push(getEditorPkg(deps[k]))
+        }
         if (this.assetsPkg)
             res.push(this.assetsPkg)
         res.push(this.outputPkg)

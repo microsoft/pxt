@@ -401,6 +401,9 @@ namespace pxt {
 
             let initPromise = Promise.resolve()
 
+            if (this.level == 0)
+                pxt.setAppTargetVariant(null)
+
             this.isLoaded = true;
             const str = this.readFile(pxt.CONFIG_NAME);
             if (str == null) {
@@ -424,8 +427,9 @@ namespace pxt {
                 if (this.level == 0)
                     initPromise = initPromise.then(() => this.patchCorePackage());
                 initPromise = initPromise.then(() => {
+                    if (this.config.compileServiceVariant)
+                        pxt.setAppTargetVariant(this.config.compileServiceVariant)
                     if (this.config.files.indexOf("board.json") < 0) return
-                    pxt.setAppTargetVariant(this.config.compileServiceVariant)
                     const def = appTarget.simulator.boardDefinition = JSON.parse(this.readFile("board.json")) as pxsim.BoardDefinition;
                     def.id = this.config.name;
                     appTarget.appTheme.boardName = def.boardName || lf("board");
@@ -451,6 +455,8 @@ namespace pxt {
 
             const loadDepsRecursive = (deps: Map<string>) => {
                 return U.mapStringMapAsync(deps, (id, ver) => {
+                    if (id == "hw" && pxt.hwVariant)
+                        id = "hw---" + pxt.hwVariant
                     let mod = this.resolveDep(id)
                     ver = ver || "*"
                     if (mod) {
@@ -647,16 +653,14 @@ namespace pxt {
                 for (const pkg of this.sortedDeps()) {
                     pkg.parseJRes(this._jres)
                 }
-                if (appTarget.runtime && appTarget.runtime.palette) {
-                    const palBuf = appTarget.runtime.palette
-                        .map(s => ("000000" + parseInt(s.replace(/#/, ""), 16).toString(16)).slice(-6))
-                        .join("")
-                    this._jres["__palette"] = {
-                        id: "__palette",
-                        data: palBuf,
-                        dataEncoding: "hex",
-                        mimeType: "application/x-palette"
-                    }
+                const palBuf = (appTarget.runtime && appTarget.runtime.palette ? appTarget.runtime.palette : ["#000000", "#ffffff"])
+                    .map(s => ("000000" + parseInt(s.replace(/#/, ""), 16).toString(16)).slice(-6))
+                    .join("")
+                this._jres["__palette"] = {
+                    id: "__palette",
+                    data: palBuf,
+                    dataEncoding: "hex",
+                    mimeType: "application/x-palette"
                 }
             }
             return this._jres
@@ -759,6 +763,7 @@ namespace pxt {
                     let cfg = U.clone(this.config)
                     delete cfg.installedVersion
                     delete cfg.additionalFilePath
+                    delete cfg.additionalFilePaths
                     if (!cfg.targetVersions) cfg.targetVersions = pxt.appTarget.versions;
                     U.iterMap(cfg.dependencies, (k, v) => {
                         if (!v || /^file:/.test(v) || /^workspace:/.test(v)) {

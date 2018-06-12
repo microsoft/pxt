@@ -83,6 +83,7 @@ namespace pxt {
 
     }
 
+    // this is set by compileServiceVariant in pxt.json
     export function setAppTargetVariant(variant: string) {
         appTargetVariant = variant
         appTarget = U.clone(savedAppTarget)
@@ -97,6 +98,17 @@ namespace pxt {
             U.userError(lf("Variant '{0}' not defined in pxtarget.json", variant))
         }
         patchAppTarget();
+    }
+
+    // This causes the `hw` package to be replaced with `hw---variant` upon package load
+    // the pxt.json of hw---variant would generally specify compileServiceVariant
+    // This is controlled by ?hw=variant or by configuration created by dragging `config.bin`
+    // into editor.
+    export function setHwVariant(variant: string) {
+        if (/^[\w\-]+$/.test(variant))
+            hwVariant = variant
+        else
+            hwVariant = null
     }
 
     export interface PxtOptions {
