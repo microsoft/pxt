@@ -1828,7 +1828,11 @@ export class ProjectView
     }
 
     showPackageDialog() {
-        this.scriptSearch.showAddPackages();
+        this.scriptSearch.showExtensions();
+    }
+
+    showBoardDialog() {
+        this.scriptSearch.showBoards();
     }
 
     showRenameProjectDialogAsync(): Promise<boolean> {

@@ -13,10 +13,16 @@ type ISettingsProps = pxt.editor.ISettingsProps;
 
 import Cloud = pxt.Cloud;
 
+export enum ScriptSearchMode {
+    Extensions,
+    Boards
+}
+
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 interface ScriptSearchState {
     searchFor?: string;
     visible?: boolean;
+    mode?: ScriptSearchMode;
 }
 
 export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
@@ -27,7 +33,8 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         super(props)
         this.state = {
             searchFor: '',
-            visible: false
+            visible: false,
+            mode: ScriptSearchMode.Extensions
         }
 
         this.hide = this.hide.bind(this);
@@ -42,12 +49,17 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         this.setState({ visible: false });
     }
 
-    showAddPackages() {
-        this.setState({ visible: true, searchFor: '' })
+    showExtensions() {
+        this.setState({ visible: true, searchFor: '', mode: ScriptSearchMode.Extensions })
+    }
+
+    showBoards() {
+        this.setState({ visible: true, searchFor: '', mode: ScriptSearchMode.Boards })
     }
 
     fetchUrlData(): Cloud.JsonScript[] {
-        if (!this.state.searchFor) return [];
+        if (!this.state.searchFor || this.state.mode != ScriptSearchMode.Extensions) return [];
+
         let scriptid = pxt.Cloud.parseScriptId(this.state.searchFor)
         if (scriptid) {
             let res = this.getData(`cloud-search:${scriptid}`)
@@ -63,6 +75,8 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
     }
 
     fetchGhData(): pxt.github.GitRepo[] {
+        if (this.state.mode != ScriptSearchMode.Extensions) return [];
+
         const cloud = pxt.appTarget.cloud || {};
         if (!cloud.packages) return [];
         const searchFor = cloud.githubPackages ? this.state.searchFor : undefined;
@@ -85,15 +99,18 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
     fetchBundled(): pxt.PackageConfig[] {
         const query = this.state.searchFor;
         const bundled = pxt.appTarget.bundledpkgs;
+        const showCore = this.state.mode == ScriptSearchMode.Boards;
         return Object.keys(bundled).filter(k => !/prj$/.test(k))
             .map(k => JSON.parse(bundled[k]["pxt.json"]) as pxt.PackageConfig)
             .filter(pk => !query || pk.name.toLowerCase().indexOf(query.toLowerCase()) > -1) // search filter
-            .filter(pk => !pkg.mainPkg.deps[pk.name]); // don't show package already referenced
+            .filter(pk => !pkg.mainPkg.deps[pk.name]) // don't show package already referenced
+            .filter(pk => showCore == !!pk.core); // show core in "boards" mode
     }
 
     shouldComponentUpdate(nextProps: ISettingsProps, nextState: ScriptSearchState, nextContext: any): boolean {
         return this.state.visible != nextState.visible
-            || this.state.searchFor != nextState.searchFor;
+            || this.state.searchFor != nextState.searchFor
+            || this.state.mode != nextState.mode;
     }
 
     componentDidUpdate() {
@@ -193,12 +210,14 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                         lf("Packages {0} and {1} are incompatible with {2}. Remove them and add {2}?", conflicts.slice(0, -1).map((c) => c.pkg0.id).join(", "), conflicts.slice(-1)[0].pkg0.id, config.name);
 
                     addDependencyPromise = addDependencyPromise
-                        .then(() => core.confirmAsync({
-                            header: lf("Some packages will be removed"),
-                            agreeLbl: lf("Remove package(s) and add {0}", config.name),
-                            agreeClass: "pink",
-                            body
-                        }))
+                        .then(() => this.state.mode == ScriptSearchMode.Boards
+                            ? Promise.resolve(1)
+                            : core.confirmAsync({
+                                header: lf("Some packages will be removed"),
+                                agreeLbl: lf("Remove package(s) and add {0}", config.name),
+                                agreeClass: "pink",
+                                body
+                            }))
                         .then((buttonPressed) => {
                             if (buttonPressed !== 0) {
                                 let p = pkg.mainEditorPkg();
@@ -226,6 +245,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
     renderCore() {
         if (!this.state.visible) return <div></div>;
 
+        const boards = this.state.mode == ScriptSearchMode.Boards;
         const bundles = this.fetchBundled();
         const ghdata = this.fetchGhData();
         const urldata = this.fetchUrlData();
@@ -246,25 +266,28 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             return false;
         }
 
-        const headerText = lf("Extensions");
+        const headerText = boards ? lf("Boards") : lf("Extensions");
+        const description = boards ? lf("Change development board") : lf("Add a package to the project");
+        const helpPath = boards ? "/boards" : "/packages";
         return (
             <sui.Modal isOpen={this.state.visible} dimmer={true}
                 className="searchdialog" size="fullscreen"
                 onClose={this.hide}
                 closeIcon={true} header={headerText}
-                helpUrl="/packages"
+                helpUrl={helpPath}
                 closeOnDimmerClick closeOnEscape
-                description={lf("Add a package to the project")}>
+                description={description}>
                 <div className="ui">
-                    <div className="ui search">
-                        <div className="ui fluid action input" role="search">
-                            <div aria-live="polite" className="accessible-hidden">{lf("{0} result matching '{1}'", bundles.length + ghdata.length + urldata.length, this.state.searchFor)}</div>
-                            <input autoFocus ref="searchInput" type="text" placeholder={lf("Search or enter project URL...")} onKeyUp={this.handleSearchKeyUpdate} />
-                            <button title={lf("Search")} className="ui right icon button" onClick={this.handleSearch}>
-                                <sui.Icon icon="search" />
-                            </button>
-                        </div>
-                    </div>
+                    {!boards ?
+                        <div className="ui search">
+                            <div className="ui fluid action input" role="search">
+                                <div aria-live="polite" className="accessible-hidden">{lf("{0} result matching '{1}'", bundles.length + ghdata.length + urldata.length, this.state.searchFor)}</div>
+                                <input autoFocus ref="searchInput" type="text" placeholder={lf("Search or enter project URL...")} onKeyUp={this.handleSearchKeyUpdate} />
+                                <button title={lf("Search")} className="ui right icon button" onClick={this.handleSearch}>
+                                    <sui.Icon icon="search" />
+                                </button>
+                            </div>
+                        </div> : undefined}
                     <div className="ui cards centered" role="listbox">
                         {urldata.map(scr =>
                             <ScriptSearchCodeCard
