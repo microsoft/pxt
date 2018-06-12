@@ -51,16 +51,16 @@ declare namespace pxt.electron {
 
     // The object that gets injected into the window
     export interface PxtElectron {
-        onTelemetry: (handler: (ev: TelemetryEvent) => void) => void;
-        onUpdateInstalled: (handler: () => void) => void;
-        onUpdateStatus: (handler: (st: UpdateStatus) => void) => void;
-        onCriticalUpdateFailed: (handler: () => void) => void;
-        onDriveDeployResult: (handler: (isSuccess: boolean) => void) => void;
+        onTelemetry: (handler: (ev: TelemetryEvent) => void) => void; // Registers a handler to invoke when the app shell requests a telemetry event to be sent to AI.
+        onUpdateInstalled: (handler: () => void) => void; // Registers a handler to invoke when the app shell notifies that an update was installed.
+        onUpdateStatus: (handler: (st: UpdateStatus) => void) => void; // Registers a handler to invoke when the app shell replies with the current update status.
+        onCriticalUpdateFailed: (handler: () => void) => void; // Registers a handler to invoke when the app shell notifies us that a critical update has failed.
+        onDriveDeployResult: (handler: (isSuccess: boolean) => void) => void; // Registers a handler to invoke when the app shell replies with the result of the last drive deploy attempt.
 
-        sendUpdateStatusCheck: () => void;
-        sendQuit: () => void;
-        sendOpenDevTools: () => void;
-        sendDriveDeploy: (compileResult: CompileResult) => void;
-        versions: VersionInfo;
+        sendUpdateStatusCheck: () => void; // Asks the app shell about the current update status. The answer will come as a separate, asynchronous message.
+        sendQuit: () => void; // Asks the app shell to quit.
+        sendOpenDevTools: () => void; // Asks the app shell to open dev tools.
+        sendDriveDeploy: (compileResult: CompileResult) => void; // Asks the app to deploy the program to the device via USB file copy.
+        versions: VersionInfo; // Various versions for telemetry base properties
     }
 }
