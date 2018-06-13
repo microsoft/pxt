@@ -210,6 +210,7 @@ svg {
     right: 0;
     left: 300px;
     bottom: 0;
+    overflow-y: auto;
     -webkit-box-flex: 1;
 
     -webkit-flex: 1 1 auto;
@@ -290,6 +291,7 @@ svg {
 
 .navigation.navigation-next {
     right: 0;
+    margin-right: 15px;
 }
 
 .navigation.navigation-prev {
@@ -417,6 +419,10 @@ print only stuff
     }
     .pusher .article {
         left: 0;
+        position: relative;
+    }
+    .pusher .article-inner {
+        position: relative;
     }
     .ui.segment, .ui.centered.card, .ui.content, iframe, .nobreak, pre, code, blockquote {
         page-break-inside: avoid;
