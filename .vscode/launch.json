@@ -2,12 +2,14 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "DebugBuildTarget",
+			"name": "HidList",
 			"type": "node",
 			"request": "launch",
 			"program": "${workspaceRoot}/built/pxt.js",
 			"stopOnEntry": false,
-			"args": ["buildtarget"],
+			"args": [
+				"hidlist"
+			],
 			"cwd": "${workspaceRoot}/../pxt-adafruit",
 			"runtimeExecutable": null,
 			"runtimeArgs": [
@@ -21,12 +23,35 @@
 			"outFiles": []
 		},
 		{
-			"name": "DebugBuildPackage",
+			"name": "BuildTarget",
 			"type": "node",
 			"request": "launch",
 			"program": "${workspaceRoot}/built/pxt.js",
 			"stopOnEntry": false,
-			"args": ["build"],
+			"args": [
+				"buildtarget"
+			],
+			"cwd": "${workspaceRoot}/../pxt-adafruit",
+			"runtimeExecutable": null,
+			"runtimeArgs": [
+				"--nolazy"
+			],
+			"env": {
+				"NODE_ENV": "development"
+			},
+			"console": "integratedTerminal",
+			"sourceMaps": false,
+			"outFiles": []
+		},
+		{
+			"name": "BuildPackage",
+			"type": "node",
+			"request": "launch",
+			"program": "${workspaceRoot}/built/pxt.js",
+			"stopOnEntry": false,
+			"args": [
+				"build"
+			],
 			"cwd": "${workspaceRoot}/../pxt-adafruit/projects/pxt-seesaw",
 			"runtimeExecutable": null,
 			"runtimeArgs": [
@@ -45,7 +70,10 @@
 			"request": "launch",
 			"program": "${workspaceRoot}/built/pxt.js",
 			"stopOnEntry": false,
-			"args": ["pyconv", "adafruit_seesaw"],
+			"args": [
+				"pyconv",
+				"adafruit_seesaw"
+			],
 			"cwd": "${workspaceRoot}/../pxt-adafruit/projects/Adafruit_CircuitPython_seesaw",
 			"runtimeExecutable": null,
 			"runtimeArgs": [
@@ -59,16 +87,21 @@
 			"outFiles": []
 		},
 		{
-			"name": "Run mocha",
+			"name": "Mocha",
 			"type": "node",
 			"request": "launch",
 			"program": "${workspaceRoot}/node_modules/mocha/bin/_mocha",
 			"stopOnEntry": false,
-			"args": ["built/tests/decompile-test/runner.js", "--no-timeouts"],
+			"args": [
+				"built/tests/decompile-test/runner.js",
+				"--no-timeouts"
+			],
 			"cwd": "${workspaceRoot}",
 			"runtimeExecutable": null,
-			"env": { "NODE_ENV": "testing"}
-			},
+			"env": {
+				"NODE_ENV": "testing"
+			}
+		},
 		{
 			"name": "Attach",
 			"type": "node",

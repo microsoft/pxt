@@ -29,6 +29,7 @@ export let pxtCoreDir: string = path.join(__dirname, "..");
 
 export function setTargetDir(dir: string) {
     targetDir = dir;
+    (<any>module).paths.push(path.join(targetDir, "node_modules"));
 }
 
 export function readResAsync(g: events.EventEmitter) {
@@ -510,6 +511,8 @@ export function lazyRequire(name: string, install = false): any {
     } catch (e) {
         if (install)
             pxt.log(`package "${name}" failed to load, run "pxt npminstallnative" to install native depencencies`)
+        pxt.debug(e);
+        pxt.debug((<any>require.resolve).paths(name));
         return undefined;
     }
     /* tslint:enable:non-literal-require */
