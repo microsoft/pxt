@@ -29,6 +29,7 @@ export let pxtCoreDir: string = path.join(__dirname, "..");
 
 export function setTargetDir(dir: string) {
     targetDir = dir;
+    (<any>module).paths.push(path.join(targetDir, "node_modules"));
 }
 
 export function readResAsync(g: events.EventEmitter) {
@@ -508,6 +509,10 @@ export function lazyRequire(name: string, install = false): any {
     try {
         return require(name);
     } catch (e) {
+        console.log(e);
+        console.log(`cwd: ${process.cwd()}`);
+        console.log(`paths: ${(<any>module).paths}`);
+        console.log((<any>require.resolve).paths(name));
         if (install)
             pxt.log(`package "${name}" failed to load, run "pxt npminstallnative" to install native depencencies`)
         return undefined;
