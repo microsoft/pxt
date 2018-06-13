@@ -2,53 +2,56 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:og="http://ogp.me/ns#" xmlns:fb="http://www.facebook.com/2008/fbml">
 
 <head>
-    <meta charset="UTF-8">
-    <title>@name@</title>
-    <meta name="Description" content="@description@" />
+	<meta charset="UTF-8">
+	<title>@name@</title>
+	<meta name="Description" content="@description@" />
 
-    <!-- @include meta.html -->
-    <!-- @include head.html -->
+	<!-- @include meta.html -->
+	<!-- @include head.html -->
 
 </head>
 
 <body id='root' class='root'>
 
-<div id="accessibleMenu" class="ui accessibleMenu borderless fixed menu" role="menubar">
-    @accMenu@
-</div>
+	<div id="accessibleMenu" class="ui accessibleMenu borderless fixed menu" role="menubar">
+		@accMenu@
+	</div>
 
 
-<!-- @include tocheader.html -->
+	<!-- @include tocheader.html -->
 
-<div id="docs" class="pusher">
+	<div id="docs" class="pusher">
 
-<div class="full height">
+		<!-- @include toc.html -->
 
-    <!-- @include toc.html -->
+		<div class="article" id="maincontent">
+			<div class="article-inner">
 
-    <div class="article" id="maincontent">
+				<!-- @include header.html -->
 
-        <!-- @include header.html -->
+				<div class="main ui container fluid mainbody">
+					@printBtn@ @body@
+					<div class="hideprint">@github@</div>
+				</div>
 
-        <div class="main ui container mainbody">
-            @printBtn@
-            @body@
-            <div class="hideprint">@github@</div>
-        </div>
+				<div class="showmobile hideprint">
+					@prev@ @next@
+				</div>
 
-        <div class="hideprint">
-            @prev@
-            @next@
-        </div>
-    </div>
-</div>
+				<!-- @include footer.html -->
+			</div>
 
-</div>
+			<div class="hidemobile hideprint">
+				@prev@ @next@
+			</div>
 
-<!-- @include footer.html -->
+		</div>
 
-<!-- @include macros.html -->
-<!-- @include tracking.html -->
+	</div>
+
+
+	<!-- @include macros.html -->
+	<!-- @include tracking.html -->
 
 </body>
 

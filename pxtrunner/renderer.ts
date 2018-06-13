@@ -303,7 +303,7 @@ namespace pxt.runner {
                     nsStyleBuffer += `
                         span.docs.${ns.toLowerCase()} {
                             background-color: ${color} !important;
-                            border-color: ${pxt.toolbox.fadeColor(color, 0.2, true)} !important;
+                            border-color: ${pxt.toolbox.fadeColor(color, 0.1, false)} !important;
                         }
                     `;
                 })
@@ -315,7 +315,7 @@ namespace pxt.runner {
                     nsStyleBuffer += `
                         span.docs.${ns.toLowerCase()} {
                             background-color: ${color} !important;
-                            border-color: ${pxt.toolbox.fadeColor(color, 0.2, true)} !important;
+                            border-color: ${pxt.toolbox.fadeColor(color, 0.1, false)} !important;
                         }
                     `;
                 })

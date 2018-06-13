@@ -90,8 +90,8 @@
     Scroll Bars
 --------------------*/
 
-@useCustomScrollbars: true;
-@customScrollbarWidth: 6px;
+@useCustomScrollbars: false;
+@customScrollbarWidth: 7px;
 
 @thumbBackground: rgba(0, 0, 0, 0.25);
 @thumbInvertedBackground: rgba(255, 255, 255, 0.25);
