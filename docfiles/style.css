@@ -356,6 +356,9 @@ svg {
     .pusher .article {
         left: 0;
     }
+    .navigation.navigation-next {
+        margin-right: 0;
+    }
     .ui.container.mainbody {
         margin-top: 5rem;
         margin-left: 0!important;
