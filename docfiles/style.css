@@ -61,6 +61,13 @@ div.listing A:hover
   content: "\25CE";
 }
 
+.prodname {
+    font-weight: normal;
+    font-size: 1.8em;
+    margin-left: 0.5em;
+    color: #ff7d00;
+}
+
 #root .editor-image {
     margin: 2em auto;
     display: block;
@@ -82,22 +89,13 @@ code {
     padding-bottom: 0.2em;
     margin: 0;
     font-size: 85%;
+    background-color: rgba(0,0,0,0.04);
     border-radius: 3px;
 }
 
-p code, li code {
-    background-color: rgba(0,0,0,0.04);    
-}
-
-p code:before, p code:after,
-li code:before, li code:after {
+code:before, code:after {
     letter-spacing: -0.2em;
-    padding: 0 !important;
     content: "\00a0";
-}
-
-code.hljs {
-    padding: 0 !important;
 }
 
 .ui[class*="5:3"].embed {
@@ -109,11 +107,10 @@ code {
         white-space: pre-wrap;
 }
 code.lang-config, code.lang-package { display: none;}
-code.lang-block::before,
 code.lang-blocks::before,
-code.lang-blocksxml::before,
 code.lang-sig::before,
 code.lang-block::before,
+code.lang-shuffle::before,
 code.lang-sim::before,
 code.lang-cards::before,
 code.lang-namespaces::before,
@@ -124,27 +121,28 @@ code.lang-codecard::before
     top:calc(50% - 0.5em);
     left:calc(50% - 5em);
 }
-code.lang-block,
 code.lang-blocks,
-code.lang-blocksxml,
 code.lang-sig,
 code.lang-block,
+code.lang-shuffle,
 code.lang-sim,
 code.lang-cards,
 code.lang-namespaces,
 code.lang-codecard
 {
-    background-color: rgba(0,0,0,0.04);
-    color:transparent;
+    color:transparent;   
+}
+
+code.lang-typescript {
+    background: none !important;
 }
 
 /* Limit width of text so that it's readable
  */
  
 .ui.text p,
-.ui.text li,
-.ui.container.mainbody {
-    max-width: 1100px !important;
+.ui.text li {
+    max-width: 45em;
 }
 
 /* wrap cards header */
@@ -198,38 +196,49 @@ svg {
     background: hsla(0,0%,100%,.9)!important;
 }
 
-#docs {
-    position: relative;
-    width: 100%;
-    height: 100%;
+/* Styling the table of contents much like the Semantic UI documentation site: http://semantic-ui.com/introduction/getting-started.html */
+.pusher > .full.height {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-flex-direction: row;
+      -ms-flex-direction: row;
+          flex-direction: row;
 }
 
-.pusher .article {
-    position: absolute;
-    top: 0;
-    right: 0;
-    left: 300px;
-    bottom: 0;
-    overflow-y: auto;
-    -webkit-box-flex: 1;
-
-    -webkit-flex: 1 1 auto;
-        -ms-flex: 1 1 auto;
-            flex: 1 1 auto;
-    min-width: 0px;
+.full.height > .toc {
+  position: relative;
+  z-index: 1;
+  width: 300px;
+  -webkit-box-flex: 0;
+  -webkit-flex: 0 0 auto;
+      -ms-flex: 0 0 auto;
+          flex: 0 0 auto;
 }
 
-.pusher .article-inner {
-    position: absolute;
-    top: 0;
-    right: 0;
-    left: 0;
-    bottom: 0;
-    overflow-y: auto;
+.full.height > .toc .ui.menu {
+  border-radius: 0;
+  border-width: 0 1px 0 0;
+  box-shadow: none;
+  margin: 0;
+  width: inherit;
+  overflow: hidden;
+  will-change: transform;
 }
 
 .ui.vertical.menu .menu .item {
     font-size: 1em;
+}
+
+.article {
+  -webkit-box-flex: 1;
+
+  -webkit-flex: 1 1 auto;
+      -ms-flex: 1 1 auto;
+          flex: 1 1 auto;
+  min-width: 0px;
+  margin-bottom: 2em;
 }
 
 #pagemenu {
@@ -263,7 +272,7 @@ svg {
 
 /* navigation */
 .navigation {
-    position: absolute;
+    position: fixed;
     top: 50px;
     bottom: 0;
     margin: 0;
@@ -282,100 +291,48 @@ svg {
     -o-transition: all 350ms ease;
     transition: all 350ms ease;
 }
-.navigation:hover {
-    text-decoration: none;
-}
 .navigation.icon {
     width: 100%;
 }
 
 .navigation.navigation-next {
     right: 0;
-    margin-right: 15px;
 }
 
 .navigation.navigation-prev {
-    left: 0;
+    left: 300px;
 }
 
 .ui.menu.tocmenu {
-    position: absolute;
-    top: 0;
-    bottom: 0;
     left: 0px;
-    height: 100%;
-    width: 300px;
-    overflow-y: auto;
-    overflow-x: hidden;
-    border-radius: 0;
+    top: -5px;
+    min-height: 1200px !important;
+    overflow: visible !important
 }
 
-.ui.menu.tocmenu .menuContainer {
-    margin-bottom: 45px;
-}
-
-.cc-banner {
-    display: none;
-}
-
-/* Search */
-.toc .item.search {
-    margin: -.92857143em -1.14285714em;
-}
-
-.toc .item.search input {
-    border-radius: 0;
-}
-
-.showmobile {
-    display: none;
-}
-
-@media only screen and (max-width: 1144px) {
-    .pusher > .toc {
+@media only screen and (max-width: 1272px) {
+    .full.height > .toc {
         width: 200px;
-        position: absolute;
-        top: 0;
-        left: -300px;
-        bottom: 0;
-        z-index: 1;
-        overflow-y: auto;
     }
     .navigation.navigation-prev {
         left: 200px;
     }
-    .pusher > .toc {
+}
+
+@media only screen and (max-width: 1144px) {
+    .full.height > .toc {
         display: none;
     }
-    .hidemobile {
-        display: none !important;
-    }
-    .showmobile {
-        display: block;
-    }
-    .pusher .article {
-        left: 0;
-    }
-    .ui.container.mainbody {
-        margin-top: 5rem;
-        margin-left: 0!important;
-        margin-right: 0!important;
-        padding-left: 1em;
-        padding-right: 1em;
-    }
     .navigation {
-        position: relative; /* IE doesn't support static */
-        position: static;
+       position: static;
         top: auto;
-        max-width: 48%;
+        max-width: 50%;
         width: 50%;
-        display: inline-block !important;
+        display: inline-block;
+        float: left;
     }
     .navigation.navigation-prev {
         left: 0px;
-    }
-    .ui.vertical.segment.footer {
-        margin-top: 4rem;
     }
 }
 
@@ -400,42 +357,8 @@ print only stuff
 }
 
 @media only print {
-    *,
-    *:before,
-    *:after,
-    *:first-letter,
-    p:first-line,
-    div:first-line,
-    blockquote:first-line,
-    li:first-line {
-        background: transparent !important;
-        color: #000 !important;
-        box-shadow: none !important;
-        text-shadow: none !important;
-        overflow: visible !important;
-    }
-    .injectionDiv {
-        overflow: hidden !important;
-    }
-    .pusher .article {
-        left: 0;
-        position: relative;
-    }
-    .pusher .article-inner {
-        position: relative;
-    }
-    .ui.segment, .ui.centered.card, .ui.content, iframe, .nobreak, pre, code, blockquote {
-        page-break-inside: avoid;
-    }
-    h1, h2, h3, h4, h5, h6, img {
-        page-break-inside: avoid;
-        page-break-after: avoid;
-    }
-    ul, ol, dl {
-        page-break-before: avoid !important;
-    }
     .showprint {
-        display: block !important;
+        display:block !important;
     }
     .hideprint,
     .ui.embed > .icon,
@@ -444,17 +367,11 @@ print only stuff
     }
     /* bigger fonts */
     body {
-        color: #000 !important; /* explicit colors */
-        background: #fff !important;        
+        color: #000; /* explicit colors */
+        background: #fff;
         font-size: 12pt;
         line-height: 1.3;
     }    
-    body.pushable {
-        background: #fff !important;        
-    }
-    .pusher {
-        background: transparent !important;
-    }
     /* page margins */
     @page {
         margin-top: 2cm;
@@ -475,18 +392,12 @@ print only stuff
         font-weight:normal;
     }
     /* page breaks */
-    img, h2, h3 {
+    ul, ol, img, h2, h3 {
         page-break-inside: avoid;
-    }
-    /* headers, footers */
-    /* messages */
-    .ui.message {
-        background: none !important;
-        color: black !important;
-        box-shadow: none !important;
     }
     /* images */
     .ui.image {
         max-width: 60%;
     }
+    /* headers, footers */ 
 }
