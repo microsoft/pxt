@@ -20,7 +20,10 @@ export interface HidDevice {
 
 export function listAsync() {
     return getHF2DevicesAsync()
-        .then(devices => devices.forEach(device => pxt.log(device)));
+        .then(devices => {
+            pxt.log(`found ${devices.length} HID devices`);
+            devices.forEach(device => pxt.log(device));
+        })
 }
 
 export function serialAsync() {
