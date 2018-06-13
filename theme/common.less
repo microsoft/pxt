@@ -346,22 +346,6 @@ div.simframe > iframe {
    display: none !important;
 }
 
-/* Scrollbars */
-/* OSX Lion+ hides scrollbars while not in use, this overrides that so it's obvious when a div can be scrolled */
-::-webkit-scrollbar {
-    -moz-appearance: none;
-    -webkit-appearance: none;
-    appearance: none;
-    width: @customScrollbarWidth;
-    height: @customScrollbarWidth;
-}
-::-webkit-scrollbar-thumb {
-    border-radius: 4px;
-    background-color: @thumbBackground;
-    box-shadow: 0 0 1px @thumbBackground;
-    -webkit-box-shadow: 0 0 1px @thumbBackground;
-}
-
 /* Button Colors */
 .ui.button.editortools-btn {
     &:extend(.ui.grey.button all);
