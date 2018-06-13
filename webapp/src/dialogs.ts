@@ -7,6 +7,7 @@ export function showAboutDialogAsync() {
     const compileService = pxt.appTarget.compileService;
     const description = pxt.appTarget.description || pxt.appTarget.title;
     const githubUrl = pxt.appTarget.appTheme.githubUrl;
+    const targetTheme = pxt.appTarget.appTheme;
     core.confirmAsync({
         header: lf("About"),
         hideCancel: true,
@@ -16,6 +17,7 @@ export function showAboutDialogAsync() {
 ${githubUrl ? `<p>${lf("{0} version:", pxt.Util.htmlEscape(pxt.appTarget.name))} <a href="${pxt.Util.htmlEscape(githubUrl)}/releases/tag/v${pxt.Util.htmlEscape(pxt.appTarget.versions.target)}" aria-label="${lf("{0} version : {1}", pxt.Util.htmlEscape(pxt.appTarget.name), pxt.Util.htmlEscape(pxt.appTarget.versions.target))}" target="_blank">${pxt.Util.htmlEscape(pxt.appTarget.versions.target)}</a></p>` : ``}
 <p>${lf("{0} version:", "Microsoft MakeCode")} <a href="https://github.com/Microsoft/pxt/releases/tag/v${pxt.Util.htmlEscape(pxt.appTarget.versions.pxt)}" aria-label="${lf("{0} version: {1}", "Microsoft MakeCode", pxt.Util.htmlEscape(pxt.appTarget.versions.pxt))}" target="_blank">${pxt.Util.htmlEscape(pxt.appTarget.versions.pxt)}</a></p>
 ${compileService && compileService.githubCorePackage && compileService.gittag ? `<p>${lf("{0} version:", "C++ runtime")} <a href="${pxt.Util.htmlEscape("https://github.com/" + compileService.githubCorePackage + '/releases/tag/' + compileService.gittag)}" aria-label="${lf("{0} version: {1}", "C++ runtime", pxt.Util.htmlEscape(compileService.gittag))}" target="_blank">${pxt.Util.htmlEscape(compileService.gittag)}</a></p>` : ""}
+${targetTheme.copyrightText ? `<p> ${targetTheme.copyrightText} </p>` : undefined}
 `
     }).done();
 }
