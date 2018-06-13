@@ -1,0 +1,127 @@
+/*******************************
+             Docs
+*******************************/
+
+/* Background and foreground */
+@docsBackgroundColor: white;
+@docsTextColor: #333;
+@docsLineHeight: 1.7;
+
+/* Text color */
+@docsHeadingColor: @docsTextColor;
+
+/* Link color */
+@docsLinkColor: #4183c4;
+
+/* Code segment */
+@docsSegementBackgroundColor: #f7f7f7;
+
+/* Card */
+@docsCardBackgroundColor: white;
+@docsCardColor: @docsTextColor;
+@docsCardHeaderColor: @docsTextColor;
+@docsCardContentColor: @docsTextColor;
+@docsCardImageBackgroundColor: rgba(0,0,0,.05);
+
+@docsCardBorderColor: #e9eef2;
+@docsCardHoverBorderColor: #1dacf4;
+
+#docs {
+    background-color: @docsBackgroundColor;
+    font-family: @docsPageFont !important;
+    color: @docsTextColor;
+    * {
+        -webkit-overflow-scrolling: touch;
+        -webkit-tap-highlight-color: transparent;
+        -webkit-text-size-adjust: none;
+        -webkit-touch-callout: none;
+        -webkit-font-smoothing: antialiased;
+    }
+    h1, h2, h3, h4, h5, h6 {
+        font-family: @docsHeaderFont !important;
+        color: @docsHeadingColor;
+    }
+    h1 {
+        margin-bottom: .85em;
+    }
+    /* Text color */
+    p, ul li {
+        color: @docsTextColor;
+        line-height: @docsLineHeight;
+    }
+    /* Link color */
+    a {
+        color: @docsLinkColor;
+    }
+    span.block {
+        display: inline-block;
+        vertical-align: middle;
+    }
+    span.docs, .text.blocklyText {
+        -webkit-font-smoothing: auto !important;
+    }
+    /* Code segments */
+    .mainbody .ui.segment, pre {
+        background: @docsSegementBackgroundColor !important;
+        border-radius: 0 !important;
+        border: 0 !important;
+        margin-bottom: 1.275em;
+        box-shadow: none;
+    }
+    .avatar .ui.message {
+        margin-left: 4em;
+        margin-bottom: 1em;
+    }
+    code.lang-typescript {
+        overflow-wrap: break-word;
+    }
+    /* Cards */
+    .ui.card {
+        padding: 0 !important;
+        background: @docsCardBackgroundColor;
+        color: @docsCardColor;
+        border-radius: 0.5rem !important;
+        border: 2px solid @docsCardBorderColor;
+        text-decoration: none; /* Remove underline applied by a link */
+        > .image {
+            background: @docsCardImageBackgroundColor;
+        }
+        .header {
+            color: @docsCardHeaderColor;
+        }
+        .content .ui.description {
+            color: @docsCardContentColor;
+        }
+    }
+    .ui.card:hover {
+        border: 2px solid @docsCardHoverBorderColor;
+    }
+
+    /* Breadcrumb */
+    .ui.breadcrumb .divider {
+        color: black;
+    }
+    /* TOC */
+    .toc a.header {
+        color: white;
+    }
+    .toc a.item {
+        color: rgba(255, 255, 255, 1);
+        padding: 10px 15px !important;
+    }
+    .toc a.item:hover {
+        text-decoration: @linkHoverUnderline;
+    }
+    .tocmenu .menu {
+        padding-left: 20px;
+        font-family: @docsPageFont;
+    }
+    /* Buttons */
+    .ui.primary.button p {
+        color: white;
+    }
+}
+
+.sideDocs #sidedocsbar a {
+    color: @docsLinkColor;
+}
