@@ -317,22 +317,6 @@ div.simframe > iframe {
    display: none;
 }
 
-/* Scrollbars */
-/* OSX Lion+ hides scrollbars while not in use, this overrides that so it's obvious when a div can be scrolled */
-::-webkit-scrollbar {
-    -moz-appearance: none;
-    -webkit-appearance: none;
-    appearance: none;
-    width: 10px;
-    height: 10px;
-}
-::-webkit-scrollbar-thumb {
-    border-radius: 4px;
-    background-color: #ccc;
-    box-shadow: 0 0 1px #ccc;
-    -webkit-box-shadow: 0 0 1px #ccc;
-}
-
 /* Button Colors */
 .ui.button.editortools-btn {
     &:extend(.ui.grey.button all);
@@ -345,23 +329,6 @@ div.simframe > iframe {
 .ui.item.icon > .icon-and-text.icon ~ .ui.text,
 .ui.button.icon > .icon-and-text.icon ~ .ui.text {
     margin-left: 0.5em !important;
-}
-
-/*******************************
-             Docs
-*******************************/
-
-#docs {
-    font-family: @docsPageFont !important;
-}
-
-#docs > h1,h2,h3,h4,h5,h6 {
-    font-family: @docsHeaderFont !important;
-}
-
-#docs span.block {
-    display:inline-block;
-    vertical-align: middle;
 }
 
 /*******************************
