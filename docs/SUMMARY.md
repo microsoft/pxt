@@ -46,6 +46,7 @@
     * [pyconv](/cli/pyconv)
     * [serial](/cli/serial)
     * [hidserial](/cli/hidserial)
+    * [hiddmesg](/cli/hiddmesg)
     * [login](/cli/login)
 * [Labs](/labs)
 * [UF2 File Format](https://github.com/microsoft/uf2)
