@@ -12,11 +12,13 @@ pxt hiddmesg
 
 This command relies on [node-hid](https://github.com/node-hid/node-hid), a native package for Node.JS. To install this package, run
 
-    pxt npminstallnative
+```
+pxt npminstallnative
+```
 
 ## Description
 
-The ``DMESG`` macro implements a circular buffer that allows to "printf-debug" your
+The ``DMESG`` macro implements a circular buffer that allows you to "printf-debug" your
 code at low cost.
 
 ```
