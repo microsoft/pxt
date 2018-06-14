@@ -1,4 +1,5 @@
 import Cloud = pxt.Cloud;
+import * as cmds from "./cmds";
 import * as core from "./core";
 import { ProjectView } from "./srceditor";
 
@@ -19,6 +20,22 @@ export function initElectron(projectView: ProjectView): void {
     });
     pxtElectron.onUpdateInstalled(() => {
         core.infoNotification(lf("An update will take effect after the app restarts"))
+    });
+    pxtElectron.onDriveDeployResult((isSuccess) => {
+        if (!deployingDeferred) {
+            pxt.tickEvent("electron.drivedeploy.unknowndeployoperation");
+            return;
+        }
+
+        if (isSuccess) {
+            pxt.tickEvent("electron.drivedeploy.success");
+            deployingDeferred.resolve();
+        } else {
+            pxt.tickEvent("electron.drivedeploy.failure");
+            const err = new Error("electron drive deploy failed");
+            pxt.reportException(err)
+            deployingDeferred.reject(err);
+        }
     });
 
     const criticalUpdateFailedPromise = new Promise((resolve) => {
@@ -92,6 +109,27 @@ export function initElectron(projectView: ProjectView): void {
     });
 
     pxtElectron.sendUpdateStatusCheck();
+}
+
+let deployingDeferred: Promise.Resolver<void> = null;
+export function driveDeployAsync(compileResult: pxtc.CompileResult): Promise<void> {
+    if (!isPxtElectron) {
+        return cmds.browserDownloadDeployCoreAsync(compileResult);
+    }
+
+    if (!deployingDeferred) {
+        deployingDeferred = Promise.defer<void>();
+        pxtElectron.sendDriveDeploy(compileResult);
+    }
+
+    return deployingDeferred.promise
+        .catch((e) => {
+            pxt.tickEvent("electron.drivedeploy.browserdownloadinstead");
+            return cmds.browserDownloadDeployCoreAsync(compileResult);
+        })
+        .finally(() => {
+            deployingDeferred = null;
+        });
 }
 
 export function openDevTools(): void {

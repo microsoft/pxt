@@ -1,5 +1,6 @@
 /// <reference path="../../built/pxtlib.d.ts"/>
 import * as core from "./core";
+import * as electron from "./electron";
 import * as pkg from "./package";
 import * as hidbridge from "./hidbridge";
 import Cloud = pxt.Cloud;
@@ -358,6 +359,9 @@ export function initCommandsAsync(): Promise<void> {
                 })
                 .catch(() => core.errorNotification(lf("saving file failed...")));
         };
+    } else if (electron.isPxtElectron) {
+        pxt.commands.deployCoreAsync = electron.driveDeployAsync;
+        pxt.commands.electronDeployAsync = electron.driveDeployAsync;
     } else if (hidbridge.shouldUse() && !pxt.appTarget.serial.noDeploy && !forceHexDownload) {
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
     } else if (Cloud.isLocalHost() && Cloud.localToken && !forceHexDownload) { // local node.js
