@@ -363,6 +363,44 @@ namespace pxt.docs {
         throwOnError?: boolean; // check for missing macros
     }
 
+    export function setupRenderer(renderer: marked.Renderer) {
+        renderer.image = function (href: string, title: string, text: string) {
+            let out = '<img class="ui centered image" src="' + href + '" alt="' + text + '"';
+            if (title) {
+                out += ' title="' + title + '"';
+            }
+            out += this.options.xhtml ? '/>' : '>';
+            return out;
+        }
+        renderer.listitem = function (text: string): string {
+            const m = /^\s*\[( |x)\]/i.exec(text);
+            if (m) return `<li class="${m[1] == ' ' ? 'unchecked' : 'checked'}">` + text.slice(m[0].length) + '</li>\n'
+            return '<li>' + text + '</li>\n';
+        }
+        const linkRenderer = renderer.link;
+        renderer.link = function (href: string, title: string, text: string) {
+            const relative = href.indexOf('/') == 0;
+            const target = !relative ? '_blank' : '';
+            if (relative && d.versionPath) href = `/${d.versionPath}${href}`;
+            const html = linkRenderer.call(renderer, href, title, text);
+            return html.replace(/^<a /, `<a ${target ? `target="${target}"` : ''} rel="nofollow noopener" `);
+        }
+        renderer.heading = function (text: string, level: number, raw: string) {
+            let m = /(.*)#([\w\-]+)\s*$/.exec(text)
+            let id = ""
+            if (m) {
+                text = m[1]
+                id = m[2]
+            } else {
+                id = raw.toLowerCase().replace(/[^\w]+/g, '-')
+            }
+            // remove tutorial macros
+            if (text)
+                text = text.replace(/@(fullscreen|unplugged)/g, '');
+            return `<h${level} id="${this.options.headerPrefix}${id}">${text}</h${level}>`
+        } as any
+    }
+
     export function renderMarkdown(opts: RenderOptions): string {
         let hasPubInfo = true
 
@@ -426,41 +464,7 @@ namespace pxt.docs {
         if (!markedInstance) {
             markedInstance = requireMarked();
             let renderer = new markedInstance.Renderer()
-            renderer.image = function (href: string, title: string, text: string) {
-                let out = '<img class="ui centered image" src="' + href + '" alt="' + text + '"';
-                if (title) {
-                    out += ' title="' + title + '"';
-                }
-                out += this.options.xhtml ? '/>' : '>';
-                return out;
-            }
-            renderer.listitem = function (text: string): string {
-                const m = /^\s*\[( |x)\]/i.exec(text);
-                if (m) return `<li class="${m[1] == ' ' ? 'unchecked' : 'checked'}">` + text.slice(m[0].length) + '</li>\n'
-                return '<li>' + text + '</li>\n';
-            }
-            const linkRenderer = renderer.link;
-            renderer.link = function (href: string, title: string, text: string) {
-                const relative = href.indexOf('/') == 0;
-                const target = !relative ? '_blank' : '';
-                if (relative && d.versionPath) href = `/${d.versionPath}${href}`;
-                const html = linkRenderer.call(renderer, href, title, text);
-                return html.replace(/^<a /, `<a ${target ? `target="${target}"` : ''} rel="nofollow noopener" `);
-            }
-            renderer.heading = function (text: string, level: number, raw: string) {
-                let m = /(.*)#([\w\-]+)\s*$/.exec(text)
-                let id = ""
-                if (m) {
-                    text = m[1]
-                    id = m[2]
-                } else {
-                    id = raw.toLowerCase().replace(/[^\w]+/g, '-')
-                }
-                // remove tutorial macros
-                if (text)
-                    text = text.replace(/@(fullscreen|unplugged)/g, '');
-                return `<h${level} id="${this.options.headerPrefix}${id}">${text}</h${level}>`
-            } as any
+            setupRenderer(renderer);
             markedInstance.setOptions({
                 renderer: renderer,
                 gfm: true,
