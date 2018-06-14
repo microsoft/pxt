@@ -1,6 +1,6 @@
 # Release Tests
 
-This page list the set of test passes required for a new release.
+This page lists the set of test passes required for a new release.
 
 ## Browsers #browsers
 
