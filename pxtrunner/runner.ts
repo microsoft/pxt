@@ -328,8 +328,7 @@ namespace pxt.runner {
                     const docsUrl = pxt.webConfig.docsUrl || '/--docs';
                     let verPrefix = mp[2] || '';
                     let url = mp[3] == "doc" ? `${mp[4]}` : `${docsUrl}?md=${mp[4]}`;
-                    let fullUrl = (url.indexOf('/') == 0) ? verPrefix + url : verPrefix + "/" + url;
-                    window.open(fullUrl, "_blank");
+                    window.open(BrowserUtils.urlJoin(verPrefix, url), "_blank");
                     // notify parent iframe that we have completed the popout
                     if (window.parent)
                         window.parent.postMessage(<pxsim.SimulatorDocsReadyMessage>{
