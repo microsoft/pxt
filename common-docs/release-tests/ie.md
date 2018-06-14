@@ -28,7 +28,7 @@ Open @homeurl@ in **Internet Explorer**.
 
 ## InPrivate #inprivate
 
-Open @homeurl@ with **Internet Explorer** in **InPrivate** mode.
+Open @homeurl@ in **Internet Explorer** in **InPrivate** mode.
 
 * [ ] Editor loads without issues
 * [ ] Cookie banner is visible
