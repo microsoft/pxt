@@ -11,7 +11,11 @@ pxt gdb [ARGUMENTS ...]
 
 ## Installation #installation
 
-Make sure that OpenOCD and GDB are available and in your path.
+The `pxt gdb` command will look for OpenOCD and GDB in Arduino IDE
+packages directory. You can get them by installing support for
+NRF52 boards in Arduino IDE.
+
+If you don't have Arduino IDE take a look at the last section of this document.
 
 ## Description #description
 
@@ -22,6 +26,9 @@ Then run
 
    pxt gdb
 
+**Note that you need to build locally for that to work.** Building with `--cloud` will
+not work.
+
 # GDB debugging 
 
 You can run GDB on PXT target boards that support OpenOCD. This can be either with an on-board
@@ -31,7 +38,8 @@ Currently, you will only be able to debug the C++ code, and not TypeScript code.
 
 ## Connecting IBDAP #ibdap
 
-IBDAP is a cheap programmer that happens to work.
+IBDAP is a cheap programmer that happens to work. Another one that we found to work,
+especially with STM chips, is STLink V2.
 
 If your board has a Cortex Debug connector (a 0.05in pitch, 10 pin connector, about 10mm long),
 you can connect directly. If there is no direction indicator, try both ways.
@@ -81,6 +89,36 @@ with `b` command and re-start the program using `r`. You can also look at the st
 
 Unfortunately, restarting only works if the target is not locked up handling a hard fault.
 If you find that to be the case, you can add a delay at the start of your program.
+
+## Running gdb manually
+
+If you don't have Arduino or just want to run everything manually instead of using
+`pxt gdb`, then you need to have `openocd` and `gdb` in your path, and then run
+something like the following:
+
+```
+arm-none-eabi-gdb --eval "target remote | openocd -f interface/stlink-v2.cfg -f target/stm32f4x.cfg -f debug.cfg" built/codal/build/STM32
+```
+
+The `stlink-v2` and `stm32f4x` parts will depend on the board you're using.
+`STM32` depends on your, target - just see what's inside `built/codal/build`.
+
+The `debug.cfg` (in package folder) should contain the following:
+
+```
+gdb_port pipe
+gdb_memory_map disable
+
+$_TARGETNAME configure -event gdb-attach {
+    echo "Halting target"
+    halt
+}
+
+$_TARGETNAME configure -event gdb-detach {
+    echo "Resetting target"
+    reset
+}
+```
 
 ## See Also
 
