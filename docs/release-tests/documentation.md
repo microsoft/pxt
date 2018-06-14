@@ -4,7 +4,7 @@
 
 * Open @homeurl@
 * Click **New Project**
-* [ ] Drag 2 blocks in editor
+* [ ] Drag 2 blocks into editor
 * [ ] Right click on the first block and select **Help** in context menu
 * [ ] Side docs page opens and help loads for block    
 * [ ] Right click on the second block and select **Help** in the context menu
