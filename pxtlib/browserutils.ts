@@ -497,6 +497,8 @@ namespace pxt.BrowserUtils {
      * Simple utility method to join urls.
      */
     export function urlJoin(urlPath1: string, urlPath2: string): string {
+        if (!urlPath1) return urlPath2;
+        if (!urlPath2) return urlPath1;
         const normalizedUrl1 =  (urlPath1.indexOf('/') == urlPath1.length - 1) ?
             urlPath1.substring(0, urlPath1.length - 1) : urlPath1;
         const normalizedUrl2 =  (urlPath2.indexOf('/') == 0) ?
