@@ -5141,7 +5141,7 @@ function initCommands() {
     simpleCmd("update", "update pxt-core reference and install updated version", updateAsync, undefined, true);
     simpleCmd("install", "install new packages, or all package", installAsync, "[package1] [package2] ...");
     simpleCmd("add", "add a feature (.asm, C++ etc) to package", addAsync, "<arguments>");
-    simpleCmd("serial", "listen and print serial commands to console", serialAsync);
+    simpleCmd("serial", "listen and print serial commands to console", serialAsync, undefined, true);
 
     p.defineCommand({
         name: "login",
@@ -5388,7 +5388,7 @@ function initCommands() {
     advancedCommand("crowdin", "upload, download, clean files to/from crowdin", pc => execCrowdinAsync.apply(undefined, pc.args), "<cmd> <path> [output]")
 
     advancedCommand("hidlist", "list HID devices", hid.listAsync)
-    advancedCommand("hidserial", "run HID serial forwarding", hid.serialAsync)
+    advancedCommand("hidserial", "run HID serial forwarding", hid.serialAsync, undefined, true);
     advancedCommand("hiddmesg", "fetch DMESG buffer over HID and print it", hid.dmesgAsync)
     advancedCommand("hexdump", "dump UF2 or BIN file", hexdumpAsync, "<filename>")
     advancedCommand("hex2uf2", "convert .hex file to UF2", hex2uf2Async, "<filename>")
@@ -5432,7 +5432,8 @@ function initCommands() {
         help: "attempt to start openocd and GDB",
         argString: "[GDB_ARGUMNETS...]",
         anyArgs: true,
-        advanced: true
+        advanced: true,
+        onlineHelp: true
     }, gdbAsync);
 
     p.defineCommand({
