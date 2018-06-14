@@ -96,6 +96,7 @@ Run ``pxt help`` for the list of all commands. The following list of links conta
 ## Debugging Commands
 
 * [gdb](/cli/gdb), attempt to start OpenOCD and GDB
+* [serial](/cli/serial), monitor UART ``serial.writeLine(...)`` from certain boards
 * [hidserial](/cli/hidserial), monitor ``console.log(...)`` from certain boards
 
 ## Advanced Commands

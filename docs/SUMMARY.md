@@ -44,6 +44,7 @@
     * [staticpkg](/cli/staticpkg)
     * [update](/cli/update)
     * [pyconv](/cli/pyconv)
+    * [serial](/cli/serial)
     * [hidserial](/cli/hidserial)
     * [login](/cli/login)
 * [Labs](/labs)
