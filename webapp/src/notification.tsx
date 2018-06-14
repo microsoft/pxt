@@ -124,8 +124,11 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
             && !pxt.shell.isSandboxMode();
 
         if (showWindowsStoreBanner) {
+            const delayTime = 300; // 5 minutes
+            const displayTime = 20; // 20 seconds
+            const sleepTime = 24 * 7 * 3600; // 1 week
             return (
-                <GenericBanner parent={this.props.parent} delayTime={10000} displayTime={45000} sleepTime={604800}>
+                <GenericBanner parent={this.props.parent} delayTime={delayTime} displayTime={displayTime} sleepTime={sleepTime}>
                     <sui.Link className="link" target="_blank" ariaLabel={lf("View app in the Windows store")} href={targetConfig.windowsStoreLink} onClick={this.handleBannerClick}>
                         <img className="bannerIcon" src={pxt.Util.pathJoin(pxt.webConfig.commitCdnUrl, `images/windowsstorebag.png`)} alt={lf("Windows store logo")}></img>
                     </sui.Link>
