@@ -124,8 +124,8 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
             && !pxt.shell.isSandboxMode();
 
         if (showWindowsStoreBanner) {
-            const delayTime = 300; // 5 minutes
-            const displayTime = 20; // 20 seconds
+            const delayTime = 300 * 1000; // 5 minutes
+            const displayTime = 20 * 1000; // 20 seconds
             const sleepTime = 24 * 7 * 3600; // 1 week
             return (
                 <GenericBanner parent={this.props.parent} delayTime={delayTime} displayTime={displayTime} sleepTime={sleepTime}>
