@@ -84,4 +84,7 @@ If you find that to be the case, you can add a delay at the start of your progra
 
 ## See Also
 
-[pxt](/cli) tool, [pxt build](/cli/build)
+[pxt](/cli) tool
+, [pxt hidserial](/cli/hidserial)
+, [pxt hiddmesg](/cli/hiddmesg)
+, [pxt serial](/cli/serial)
