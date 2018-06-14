@@ -22,4 +22,4 @@
 Open each menu entry in the documentation menu
 
 * [ ] Open an internet page
-* [ ] if the page is on makecode.com, all block snippets load properly
+* [ ] if the page is on [makecode.com](https://makecode.com), all block snippets load properly
