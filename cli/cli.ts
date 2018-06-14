@@ -5519,6 +5519,7 @@ function goToPkgDir() {
     let dir = goUp(process.cwd())
     if (!dir) {
         console.error(`Cannot find ${pxt.CONFIG_NAME} in any of the parent directories.`)
+        console.error(`Are you in a package directory?`)
         process.exit(1)
     } else {
         if (dir != process.cwd()) {
