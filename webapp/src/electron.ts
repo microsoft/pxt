@@ -36,7 +36,6 @@ export function initElectron(projectView: ProjectView): void {
             pxt.reportException(err)
             deployingDeferred.reject(err);
         }
-
     });
 
     const criticalUpdateFailedPromise = new Promise((resolve) => {
@@ -125,6 +124,7 @@ export function driveDeployAsync(compileResult: pxtc.CompileResult): Promise<voi
 
     return deployingDeferred.promise
         .catch((e) => {
+            pxt.tickEvent("electron.drivedeploy.browserdownloadinstead");
             return cmds.browserDownloadDeployCoreAsync(compileResult);
         })
         .finally(() => {
