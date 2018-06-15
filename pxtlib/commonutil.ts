@@ -47,7 +47,7 @@ namespace ts.pxtc.Util {
     let _localizeStrings: pxt.Map<string> = {};
     let _translationsCache: pxt.Map<pxt.Map<string>> = {};
     let _didSetlocalizations = false;
-    _didReportLocalizationsMissing = false;
+    let _didReportLocalizationsNotSet = false;
     export let localizeLive = false;
 
     export interface ITranslationDbEntry {
@@ -114,8 +114,8 @@ namespace ts.pxtc.Util {
     }
 
     export function _localize(s: string) {
-        if (!_didSetlocalizations && !_didReportLocalizationsMissing) {
-            _didReportLocalizationsMissing = true;
+        if (!_didSetlocalizations && !_didReportLocalizationsNotSet) {
+            _didReportLocalizationsNotSet = true;
             pxt.tickEvent("locale.localizationsnotset");
             pxt.reportError("localizations", "Attempted to translate a string before localizations were set");
         }
