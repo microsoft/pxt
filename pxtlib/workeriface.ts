@@ -90,6 +90,9 @@ namespace pxt.worker {
         ws.onclose = (ev) => {
             pxt.debug('socket closed')
         }
+        ws.onerror = (ev) => {
+            pxt.debug('socket errored')
+        }
         return iface
     }
 }
