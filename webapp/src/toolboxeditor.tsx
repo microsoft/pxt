@@ -198,19 +198,19 @@ export abstract class ToolboxEditor extends srceditor.Editor {
     abstract showFlyout(treeRow: toolbox.ToolboxCategory): void;
     moveFocusToFlyout() { }
 
-    protected abstract showFlyoutHeadingLabel(ns: string, subns: string, icon: string, color: string): void;
+    protected abstract showFlyoutHeadingLabel(ns: string, name: string, subns: string, icon: string, color: string): void;
     protected abstract showFlyoutGroupLabel(group: string, groupicon: string, labelLineWidth: string): void;
     protected abstract showFlyoutBlocks(ns: string, color: string, blocks: toolbox.BlockDefinition[]): void;
 
     abstractShowFlyout(treeRow: toolbox.ToolboxCategory): boolean {
-        const { nameid: ns, subns, icon, color, groups, groupIcons, labelLineWidth, blocks } = treeRow;
+        const { nameid: ns, name, subns, icon, color, groups, groupIcons, labelLineWidth, blocks } = treeRow;
 
         let fns = blocks;
         if (!fns || !fns.length) return false;
 
         if (!pxt.appTarget.appTheme.hideFlyoutHeadings) {
             // Add the Heading label
-            this.showFlyoutHeadingLabel(ns, subns, icon, color);
+            this.showFlyoutHeadingLabel(ns, name, subns, icon, color);
         }
 
         // Organize and rearrange methods into groups
