@@ -4315,10 +4315,19 @@ function internalGenDocsAsync(docs: boolean, locs: boolean, fileFilter?: string,
         return buildAsync();
 }
 
+export function consoleAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
+    pxt.log(`monitoring console.log`)
+    if (!serial.isInstalled() && !hid.isInstalled()) {
+        pxt.log(`console support not installed, did you run "pxt npminstallnative"?`)
+        return Promise.resolve();
+    }
+    return serialAsync().then(() => hid.serialAsync());
+}
+
 export function deployAsync(parsed?: commandParser.ParsedCommand) {
-    const serial = parsed && !!parsed.flags["serial"];
+    const serial = parsed && !!parsed.flags["console"];
     return buildCoreAsync({ mode: BuildOption.Deploy })
-        .then((compileOpts) => serial ? serialAsync(parsed) : Promise.resolve())
+        .then((compileOpts) => serial ? consoleAsync(parsed) : Promise.resolve())
 }
 
 export function runAsync() {
@@ -4336,8 +4345,10 @@ export function testAsync() {
         .then((compileOpts) => { });
 }
 
-export function serialAsync(parsed: commandParser.ParsedCommand): Promise<void> {
-    let buf: string = "";
+export function serialAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
+    if (!serial.isInstalled())
+        return Promise.resolve();
+    pxt.log(`start serial monitor`);
     serial.monitorSerial((info, buffer) => {
         process.stdout.write(buffer);
     })
@@ -5132,16 +5143,17 @@ function initCommands() {
         name: "deploy",
         help: "build and deploy current package",
         flags: {
-            "serial": { description: "start serial monitor after deployment" }
+            "console": { description: "start console monitor after deployment", aliases: ["serial"] }
         },
         onlineHelp: true
     }, deployAsync)
     simpleCmd("run", "build and run current package in the simulator", runAsync);
+    simpleCmd("console", "monitor console messages", consoleAsync, null, true);
     advancedCommand("runfloat", "build and run current package in the simulator, forcing floating point mode", runFloatAsync);
     simpleCmd("update", "update pxt-core reference and install updated version", updateAsync, undefined, true);
     simpleCmd("install", "install new packages, or all package", installAsync, "[package1] [package2] ...");
     simpleCmd("add", "add a feature (.asm, C++ etc) to package", addAsync, "<arguments>");
-    simpleCmd("serial", "listen and print serial commands to console", serialAsync, undefined, true);
+    advancedCommand("serial", "listen and print serial commands to console", serialAsync, undefined, true);
 
     p.defineCommand({
         name: "login",

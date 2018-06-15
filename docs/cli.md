@@ -89,6 +89,7 @@ Run ``pxt help`` for the list of all commands. The following list of links conta
 * [target](/cli/target), downloads the editor tools
 * [build](/cli/build), builds the current project
 * [deploy](/cli/deploy), builds and deploys the current project
+* [console](/cli/console), monitors ``console.log`` output
 * [bump](/cli/bump), increment the version number
 * [checkdocs](/cli/checkdocs), validates the documentation links and snippets
 * [staticpkg](/cli/staticpkg), compiles editor into flat file system

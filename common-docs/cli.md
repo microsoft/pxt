@@ -7,6 +7,6 @@ It is possible to use the tools from the **pxt command line interface (CLI)**. `
 * Run a local web server for the web editor.
 * Author packages using JavaScript and/or C++.
 
-Using the PXT CLI assumes that you have some experience with programming and will require installation of additinal tools on your machine.
+Using the PXT CLI assumes that you have some experience with programming and will require installation of additional tools on your machine.
 
 * **[LET'S GET STARTED](https://makecode.com/cli)**

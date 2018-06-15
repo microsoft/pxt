@@ -415,6 +415,9 @@ function initSocketServer(wsPort: number, hostname: string) {
 
     let hios: pxt.Map<Promise<pxt.HF2.Wrapper>> = {};
     function startHID(request: any, socket: any, body: any) {
+        // check that HID is installed
+        if (!hid.isInstalled())
+            return;
         let ws = new WebSocket(request, socket, body);
         ws.on('open', () => {
             ws.send(JSON.stringify({ id: "ready" }))
