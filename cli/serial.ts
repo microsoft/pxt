@@ -1,17 +1,15 @@
 import * as fs from 'fs';
-import * as path from 'path';
-import * as url from 'url';
-import * as querystring from 'querystring';
 import * as nodeutil from './nodeutil';
-import * as server from './server';
-import * as util from 'util';
 import * as commandParser from './commandparser';
 
 import U = pxt.Util;
-import Cloud = pxt.Cloud;
 
 function requireSerialPort(): any {
     return nodeutil.lazyRequire("serialport", true);
+}
+
+export function isInstalled(): boolean {
+    return !!requireSerialPort();
 }
 
 export interface SerialPortInfo {

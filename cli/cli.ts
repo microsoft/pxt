@@ -4316,6 +4316,7 @@ function internalGenDocsAsync(docs: boolean, locs: boolean, fileFilter?: string,
 }
 
 export function consoleAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
+    pxt.log(`monitoring console.log`)
     return Promise.all([
         serialAsync,
         hid.serialAsync])
@@ -4344,7 +4345,8 @@ export function testAsync() {
 }
 
 export function serialAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
-    let buf: string = "";
+    if (!serial.isInstalled())
+        return Promise.resolve();
     serial.monitorSerial((info, buffer) => {
         process.stdout.write(buffer);
     })
