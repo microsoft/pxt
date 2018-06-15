@@ -111,8 +111,13 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         // replace pre-template in markdown
         markdown = markdown.replace(/@([a-z]+)@/ig, (m, param) => pubinfo[param] || 'unknown macro')
 
+        // create a custom renderer
+        let renderer = new marked.Renderer()
+        pxt.docs.setupRenderer(renderer);
+
         // Set markdown options
         marked.setOptions({
+            renderer: renderer,
             sanitize: true
         })
 
