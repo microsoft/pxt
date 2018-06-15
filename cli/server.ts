@@ -635,6 +635,7 @@ export interface ServeOptions {
     hostname?: string;
     wsPort?: number;
     serial?: boolean;
+    hid?: boolean;
 }
 
 // can use http://localhost:3232/streams/nnngzlzxslfu for testing
@@ -940,7 +941,7 @@ export function serveAsync(options: ServeOptions) {
     return Promise.all([wsServerPromise, serverPromise])
         .then(() => {
             /* tslint:disable:no-http-string */
-            const start = `http://${serveOptions.hostname}:${serveOptions.port}/#local_token=${options.localToken}&wsport=${serveOptions.wsPort}`;
+            const start = `http://${serveOptions.hostname}:${serveOptions.port}/${serveOptions.hid ? "hid=1" : ""}#local_token=${options.localToken}&wsport=${serveOptions.wsPort}`;
             /* tslint:enable:no-http-string */
             console.log(`---------------------------------------------`);
             console.log(``);

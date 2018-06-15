@@ -2144,7 +2144,10 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
     let packaged = false
     let includeSourceMaps = false;
     let browser: string = parsed.flags["browser"] as string;
+    const hidFlag = !!parsed.flags["hid"];
 
+    if (hidFlag && hid.isInstalled(true))
+        U.userError("HID not properly installed");
     if (parsed.flags["cloud"]) {
         forceCloudBuild = true
     }
@@ -2191,7 +2194,8 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
             wsPort: parsed.flags["wsport"] as number || 0,
             hostname: parsed.flags["hostname"] as string || "",
             browser: parsed.flags["browser"] as string,
-            serial: !parsed.flags["noSerial"] && !globalConfig.noSerial
+            serial: !parsed.flags["noSerial"] && !globalConfig.noSerial,
+            hid: hidFlag
         }))
 }
 
@@ -5290,6 +5294,9 @@ function initCommands() {
                 aliases: ["w"],
                 type: "number",
                 argument: "wsport"
+            },
+            hid: {
+                description: "launch editor connected to HID"
             }
         }
     }, serveAsync);
