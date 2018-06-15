@@ -8,8 +8,8 @@ function requireHID(install?: boolean): any {
     return HID = nodeutil.lazyRequire("node-hid", install);
 }
 
-export function isInstalled(): boolean {
-    return !!requireHID(false);
+export function isInstalled(info?: boolean): boolean {
+    return !!requireHID(!!info);
 }
 
 export interface HidDevice {
@@ -23,6 +23,8 @@ export interface HidDevice {
 }
 
 export function listAsync() {
+    if (!requireHID(true))
+        return Promise.resolve();
     return getHF2DevicesAsync()
         .then(devices => {
             pxt.log(`found ${devices.length} HID devices`);
