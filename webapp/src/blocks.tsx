@@ -999,17 +999,21 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const namespaces = Object.keys(this.nsMap)
             .filter(ns => !snippets.isBuiltin(ns) && !!this.getNamespaceAttrs(ns));
 
+        function isRemoved(ns: string): boolean {
+            return snippets.getBuiltinCategory(ns).removed;
+        }
+
         let config = pxt.appTarget.runtime || {};
-        if (config.loopsBlocks && !snippets.loops.removed) namespaces.push(snippets.loops.nameid);
-        if (config.logicBlocks && !snippets.logic.removed) namespaces.push(snippets.logic.nameid);
-        if (config.variablesBlocks && !snippets.variables.removed) namespaces.push(snippets.variables.nameid);
-        if (config.mathBlocks && !snippets.maths.removed) namespaces.push(snippets.maths.nameid);
-        if (config.functionBlocks && !snippets.functions.removed) namespaces.push(snippets.functions.nameid);
-        if (config.listsBlocks && !snippets.arrays.removed) namespaces.push(snippets.arrays.nameid);
-        if (config.textBlocks && !snippets.text.removed) namespaces.push(snippets.text.nameid);
+        if (config.loopsBlocks && !isRemoved(snippets.CategoryNameID.Loops)) namespaces.push(snippets.CategoryNameID.Loops);
+        if (config.logicBlocks && !isRemoved(snippets.CategoryNameID.Logic)) namespaces.push(snippets.CategoryNameID.Logic);
+        if (config.variablesBlocks && !isRemoved(snippets.CategoryNameID.Variables)) namespaces.push(snippets.CategoryNameID.Variables);
+        if (config.mathBlocks && !isRemoved(snippets.CategoryNameID.Maths)) namespaces.push(snippets.CategoryNameID.Maths);
+        if (config.functionBlocks && !isRemoved(snippets.CategoryNameID.Functions)) namespaces.push(snippets.CategoryNameID.Functions);
+        if (config.listsBlocks && !isRemoved(snippets.CategoryNameID.Arrays)) namespaces.push(snippets.CategoryNameID.Arrays);
+        if (config.textBlocks && !isRemoved(snippets.CategoryNameID.Text)) namespaces.push(snippets.CategoryNameID.Text);
 
         if (pxt.appTarget.cloud && pxt.appTarget.cloud.packages) {
-            namespaces.push(snippets.extensions.nameid);
+            namespaces.push(snippets.CategoryNameID.Extensions);
         }
 
         return namespaces.concat(super.getNamespaces());
@@ -1215,7 +1219,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             // Find the block XML for this built in block.
             const builtin = snippets.allBuiltinBlocks()[block.attributes.blockId];
             if (builtin && builtin.blockXml && block.builtinField && block.builtinField.length == 2) {
-                // Likley a built in block with a mutatation, check the fields. 
+                // Likley a built in block with a mutatation, check the fields.
                 const field = block.builtinField[0];
                 const value = block.builtinField[1];
                 const regExp = new RegExp(`<field name="${field}">(.*)<\/field>`, 'i');
