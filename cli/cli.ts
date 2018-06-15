@@ -4317,10 +4317,11 @@ function internalGenDocsAsync(docs: boolean, locs: boolean, fileFilter?: string,
 
 export function consoleAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
     pxt.log(`monitoring console.log`)
-    return Promise.all([
-        serialAsync,
-        hid.serialAsync])
-        .then(() => { });
+    if (!serial.isInstalled() && !hid.isInstalled()) {
+        pxt.log(`console support not installed, did you run "pxt npminstallnative"?`)
+        return Promise.resolve();
+    }
+    return serialAsync().then(() => hid.serialAsync());
 }
 
 export function deployAsync(parsed?: commandParser.ParsedCommand) {
@@ -4347,6 +4348,7 @@ export function testAsync() {
 export function serialAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
     if (!serial.isInstalled())
         return Promise.resolve();
+    pxt.log(`start serial monitor`);
     serial.monitorSerial((info, buffer) => {
         process.stdout.write(buffer);
     })

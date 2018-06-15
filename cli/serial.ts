@@ -4,12 +4,12 @@ import * as commandParser from './commandparser';
 
 import U = pxt.Util;
 
-function requireSerialPort(): any {
-    return nodeutil.lazyRequire("serialport", true);
+function requireSerialPort(install?: boolean): any {
+    return nodeutil.lazyRequire("serialport", install);
 }
 
 export function isInstalled(): boolean {
-    return !!requireSerialPort();
+    return !!requireSerialPort(false);
 }
 
 export interface SerialPortInfo {
@@ -28,7 +28,7 @@ export function monitorSerial(onData: (info: SerialPortInfo, buffer: Buffer) => 
     if (pxt.appTarget.serial.useHF2) {
         return
     }
-    const serialPort = requireSerialPort();
+    const serialPort = requireSerialPort(true);
     if (!serialPort)
         return;
 
@@ -197,7 +197,7 @@ function sambaCmd(ch: string, addr: number, len?: number) {
     return r + "#"
 }
 export function flashSerialAsync(c: commandParser.ParsedCommand) {
-    const serialPort = requireSerialPort();
+    const serialPort = requireSerialPort(true);
     if (!serialPort)
         return Promise.resolve();
     let listAsync: () => Promise<SerialPortInfo[]> = Promise.promisify(serialPort.list) as any

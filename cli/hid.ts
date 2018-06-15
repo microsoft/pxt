@@ -4,12 +4,12 @@ import * as nodeutil from './nodeutil';
 
 let HID: any = undefined;
 function requireHID(install?: boolean): any {
-    if (HID) return Promise.resolve(HID);
+    if (HID) return HID;
     return HID = nodeutil.lazyRequire("node-hid", install);
 }
 
 export function isInstalled(): boolean {
-    return !!requireHID(true);
+    return !!requireHID(false);
 }
 
 export interface HidDevice {
@@ -31,7 +31,8 @@ export function listAsync() {
 }
 
 export function serialAsync() {
-    if (!requireHID(true)) return Promise.resolve();
+    if (!requireHID(true))
+        return Promise.resolve();
     return initAsync()
         .then(d => {
             d.autoReconnect = true
