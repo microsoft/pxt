@@ -113,7 +113,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
 
         // create a custom renderer
         let renderer = new marked.Renderer()
-        pxt.docs.setupRenderer(renderer);
+        pxt.docs.setupRenderer({},renderer);
 
         // Set markdown options
         marked.setOptions({

@@ -363,7 +363,7 @@ namespace pxt.docs {
         throwOnError?: boolean; // check for missing macros
     }
 
-    export function setupRenderer(renderer: marked.Renderer) {
+    export function setupRenderer(d: RenderData, renderer: marked.Renderer) {
         renderer.image = function (href: string, title: string, text: string) {
             let out = '<img class="ui centered image" src="' + href + '" alt="' + text + '"';
             if (title) {
@@ -464,7 +464,7 @@ namespace pxt.docs {
         if (!markedInstance) {
             markedInstance = requireMarked();
             let renderer = new markedInstance.Renderer()
-            setupRenderer(renderer);
+            setupRenderer(d, renderer);
             markedInstance.setOptions({
                 renderer: renderer,
                 gfm: true,
