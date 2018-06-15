@@ -783,7 +783,7 @@ function blockToJson(b: BlockDefinition): pxt.editor.ToolboxBlockDefinition {
 
 function categoryToJson(c: BuiltinCategoryDefinition): pxt.editor.ToolboxCategoryDefinition {
     return {
-        name: c.name(),
+        name: c.name,
         icon: c.attributes.icon,
         color: c.attributes.color,
         weight: c.attributes.weight,
