@@ -363,7 +363,7 @@ namespace pxt.docs {
         throwOnError?: boolean; // check for missing macros
     }
 
-    export function setupRenderer(d: RenderData, renderer: marked.Renderer) {
+    export function setupRenderer(renderer: marked.Renderer) {
         renderer.image = function (href: string, title: string, text: string) {
             let out = '<img class="ui centered image" src="' + href + '" alt="' + text + '"';
             if (title) {
@@ -376,14 +376,6 @@ namespace pxt.docs {
             const m = /^\s*\[( |x)\]/i.exec(text);
             if (m) return `<li class="${m[1] == ' ' ? 'unchecked' : 'checked'}">` + text.slice(m[0].length) + '</li>\n'
             return '<li>' + text + '</li>\n';
-        }
-        const linkRenderer = renderer.link;
-        renderer.link = function (href: string, title: string, text: string) {
-            const relative = href.indexOf('/') == 0;
-            const target = !relative ? '_blank' : '';
-            if (relative && d.versionPath) href = `/${d.versionPath}${href}`;
-            const html = linkRenderer.call(renderer, href, title, text);
-            return html.replace(/^<a /, `<a ${target ? `target="${target}"` : ''} rel="nofollow noopener" `);
         }
         renderer.heading = function (text: string, level: number, raw: string) {
             let m = /(.*)#([\w\-]+)\s*$/.exec(text)
@@ -464,7 +456,15 @@ namespace pxt.docs {
         if (!markedInstance) {
             markedInstance = requireMarked();
             let renderer = new markedInstance.Renderer()
-            setupRenderer(d, renderer);
+            setupRenderer(renderer);
+            const linkRenderer = renderer.link;
+            renderer.link = function (href: string, title: string, text: string) {
+                const relative = href.indexOf('/') == 0;
+                const target = !relative ? '_blank' : '';
+                if (relative && d.versionPath) href = `/${d.versionPath}${href}`;
+                const html = linkRenderer.call(renderer, href, title, text);
+                return html.replace(/^<a /, `<a ${target ? `target="${target}"` : ''} rel="nofollow noopener" `);
+            }
             markedInstance.setOptions({
                 renderer: renderer,
                 gfm: true,
