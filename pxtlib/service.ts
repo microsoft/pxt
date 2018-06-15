@@ -7,8 +7,8 @@ namespace ts.pxtc {
     export import U = pxtc.Util;
 
     export const ON_START_TYPE = "pxt-on-start";
-    export const ON_START_COMMENT = U.lf("on start");
-    export const HANDLER_COMMENT = U.lf("code goes here");
+    export const ON_START_COMMENT = "on start"; // TODO: Localize? (adding lf doesn't work because this is run before translations are downloaded)
+    export const HANDLER_COMMENT = "code goes here"; // TODO: Localize? (adding lf doesn't work because this is run before translations are downloaded)
     export const TS_STATEMENT_TYPE = "typescript_statement";
     export const TS_DEBUGGER_TYPE = "debugger_keyword";
     export const TS_OUTPUT_TYPE = "typescript_expression";
