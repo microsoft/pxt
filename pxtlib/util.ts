@@ -754,7 +754,7 @@ namespace ts.pxtc.Util {
     export function updateLocalizationAsync(targetId: string, simulator: boolean, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean, force?: boolean): Promise<void> {
         code = normalizeLanguageCode(code);
         if (code === userLanguage() || (!isLocaleEnabled(code) && !force)) {
-            setLocalizedStrings(undefined); // skip false check
+            setLocalizedStrings({}); // skip false check
             return Promise.resolve();
         }
 
