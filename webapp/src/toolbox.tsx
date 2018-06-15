@@ -49,7 +49,7 @@ export interface ButtonDefinition {
 }
 
 export interface BuiltinCategoryDefinition {
-    name: string;
+    name: () => string;
     nameid: string;
     blocks: (BlockDefinition | ButtonDefinition)[];
     groups?: string[];

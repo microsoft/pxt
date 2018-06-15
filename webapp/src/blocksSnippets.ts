@@ -3,7 +3,7 @@ import { BuiltinCategoryDefinition, BlockDefinition } from "./toolbox";
 import * as blocks from "./blocks";
 
 export const loops: BuiltinCategoryDefinition = {
-    name: lf("{id:category}Loops"),
+    name: function () { return lf("{id:category}Loops") },
     nameid: 'loops',
     blocks: [
         {
@@ -79,7 +79,7 @@ export const loops: BuiltinCategoryDefinition = {
 };
 
 export const logic: BuiltinCategoryDefinition = {
-    name: lf("{id:category}Logic"),
+    name: function () { return lf("{id:category}Logic") },
     nameid: 'logic',
     groups: [lf("Conditionals"), lf("Comparison"), lf("Boolean"), "other"],
     blocks: [
@@ -209,7 +209,7 @@ export const logic: BuiltinCategoryDefinition = {
 };
 
 export const variables: BuiltinCategoryDefinition = {
-    name: lf("{id:category}Variables"),
+    name: function () { return lf("{id:category}Variables") },
     nameid: 'variables',
     blocks: undefined,
     custom: true,
@@ -226,7 +226,7 @@ export const variables: BuiltinCategoryDefinition = {
 };
 
 export const maths: BuiltinCategoryDefinition = {
-    name: lf("{id:category}Math"),
+    name: function () { return lf("{id:category}Math") },
     nameid: 'math',
     blocks: [
         {
@@ -408,7 +408,7 @@ export const maths: BuiltinCategoryDefinition = {
 };
 
 export const functions: BuiltinCategoryDefinition = {
-    name: lf("{id:category}Functions"),
+    name: function () { return lf("{id:category}Functions") },
     nameid: 'functions',
     blocks: [],
     custom: true,
@@ -426,7 +426,7 @@ export const functions: BuiltinCategoryDefinition = {
 };
 
 export const arrays: BuiltinCategoryDefinition = {
-    name: lf("{id:category}Arrays"),
+    name: function () { return lf("{id:category}Arrays") },
     nameid: "arrays",
     blocks: [
         {
@@ -545,7 +545,7 @@ export const arrays: BuiltinCategoryDefinition = {
 }
 
 export const text: BuiltinCategoryDefinition = {
-    name: lf("{id:category}Text"),
+    name: function () { return lf("{id:category}Text") },
     nameid: 'text',
     blocks: [
         {
@@ -599,7 +599,7 @@ export const text: BuiltinCategoryDefinition = {
 }
 
 export const extensions: BuiltinCategoryDefinition = {
-    name: pxt.toolbox.addPackageTitle(),
+    name: pxt.toolbox.addPackageTitle,
     nameid: 'addpackage',
     blocks: [],
     custom: true,

@@ -871,7 +871,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     getBuiltinCategory(ns: string): toolbox.ToolboxCategory {
-        return snippets.getBuiltinCategory(ns);
+        const builtinCategory = (snippets.getBuiltinCategory(ns) as any);
+        builtinCategory.name = builtinCategory.name();
+        return builtinCategory;
     }
 
     isBuiltIn(ns: string): boolean {

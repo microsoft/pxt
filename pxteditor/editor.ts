@@ -293,7 +293,7 @@ namespace pxt.editor {
         /**
          * The display name for the category
          */
-        name?: string;
+        name?: () => string;
 
         /**
          * The icon of this category
