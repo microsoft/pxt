@@ -3,9 +3,13 @@ import U = pxt.U
 import * as nodeutil from './nodeutil';
 
 let HID: any = undefined;
-function requireHID(): any {
+function requireHID(install?: boolean): any {
     if (HID) return Promise.resolve(HID);
-    return HID = nodeutil.lazyRequire("node-hid", true);
+    return HID = nodeutil.lazyRequire("node-hid", install);
+}
+
+export function isInstalled(): boolean {
+    return !!requireHID(true);
 }
 
 export interface HidDevice {
@@ -27,7 +31,7 @@ export function listAsync() {
 }
 
 export function serialAsync() {
-    if (!requireHID()) return Promise.resolve();
+    if (!requireHID(true)) return Promise.resolve();
     return initAsync()
         .then(d => {
             d.autoReconnect = true
@@ -53,7 +57,7 @@ export function deviceInfo(h: HidDevice) {
 }
 
 function getHF2Devices(): HidDevice[] {
-    const hid = requireHID();
+    const hid = requireHID(false);
     if (!hid) return [];
     let devices = hid.devices() as HidDevice[]
     for (let d of devices) {
@@ -70,7 +74,7 @@ export function getHF2DevicesAsync(): Promise<HidDevice[]> {
 }
 
 export function hf2ConnectAsync(path: string, raw = false) {
-    if (!requireHID()) return Promise.resolve(undefined);
+    if (!requireHID(true)) return Promise.resolve(undefined);
     // in .then() to make sure we catch errors
     let h = new HF2.Wrapper(new HidIO(path))
     h.rawMode = raw
@@ -126,7 +130,7 @@ export class HidIO implements HF2.PacketIO {
     }
 
     private connect() {
-        U.assert(requireHID())
+        U.assert(requireHID(false))
         if (this.requestedPath == null) {
             let devs = getHF2Devices()
             if (devs.length == 0)

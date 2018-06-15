@@ -40,6 +40,7 @@
     * [build](/cli/build)
     * [bump](/cli/bump)
     * [deploy](/cli/deploy)
+    * [console](/cli/console)
     * [gdb](/cli/gdb)
     * [staticpkg](/cli/staticpkg)
     * [update](/cli/update)
