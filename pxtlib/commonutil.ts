@@ -116,13 +116,14 @@ namespace ts.pxtc.Util {
     }
 
     export function _localize(s: string) {
-        if (!_didSetlocalizations && !_didReportLocalizationsNotSet) {
+        // Needs to be test in localhost / CLI
+        /*if (!_didSetlocalizations && !_didReportLocalizationsNotSet) {
             _didReportLocalizationsNotSet = true;
             pxt.tickEvent("locale.localizationsnotset");
             // pxt.reportError can't be used here because of order of file imports
             // Just use console.error instead, and use an Error so stacktrace is reported
             console.error(new Error("Attempted to translate a string before localizations were set"));
-        }
+        }*/
         return _localizeStrings[s] || s;
     }
 
