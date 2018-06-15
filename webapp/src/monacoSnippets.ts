@@ -3,7 +3,7 @@ import { BuiltinCategoryDefinition, BlockDefinition } from "./toolbox";
 import * as monaco from "./monaco";
 
 export const loops: BuiltinCategoryDefinition = {
-    name: lf("{id:category}Loops"),
+    name: function () { return lf("{id:category}Loops") },
     nameid: 'loops',
     blocks: [
         {
@@ -36,7 +36,7 @@ export const loops: BuiltinCategoryDefinition = {
 };
 
 export const logic: BuiltinCategoryDefinition = {
-    name: lf("{id:category}Logic"),
+    name: function () { return lf("{id:category}Logic") },
     nameid: 'logic',
     blocks: [
         {
@@ -84,7 +84,7 @@ export const logic: BuiltinCategoryDefinition = {
 };
 
 export const variables: BuiltinCategoryDefinition = {
-    name: lf("{id:category}Variables"),
+    name: function () { return lf("{id:category}Variables") },
     nameid: 'variables',
     blocks: [
         {
@@ -127,7 +127,7 @@ export const variables: BuiltinCategoryDefinition = {
 };
 
 export const maths: BuiltinCategoryDefinition = {
-    name: lf("{id:category}Math"),
+    name: function () { return lf("{id:category}Math") },
     nameid: 'math',
     blocks: [
         {
@@ -243,7 +243,7 @@ export const maths: BuiltinCategoryDefinition = {
 };
 
 export const functions: BuiltinCategoryDefinition = {
-    name: lf("{id:category}Functions"),
+    name: function () { return lf("{id:category}Functions") },
     nameid: 'functions',
     blocks: [
         {
@@ -275,7 +275,7 @@ export const functions: BuiltinCategoryDefinition = {
 };
 
 export const arrays: BuiltinCategoryDefinition = {
-    name: lf("{id:category}Arrays"),
+    name: function () { return lf("{id:category}Arrays") },
     nameid: "arrays",
     custom: true,
     blocks: [
@@ -423,7 +423,7 @@ export const arrays: BuiltinCategoryDefinition = {
 }
 
 export const text: BuiltinCategoryDefinition = {
-    name: lf("{id:category}Text"),
+    name: function () { return lf("{id:category}Text") },
     nameid: 'text',
     custom: true,
     blocks: [
@@ -500,7 +500,7 @@ export const text: BuiltinCategoryDefinition = {
 }
 
 export const extensions: BuiltinCategoryDefinition = {
-    name: pxt.toolbox.addPackageTitle(),
+    name: pxt.toolbox.addPackageTitle,
     nameid: 'addpackage',
     blocks: [],
     custom: true,
@@ -702,7 +702,7 @@ function blockToJson(b: BlockDefinition): pxt.editor.ToolboxBlockDefinition {
 
 function categoryToJson(c: BuiltinCategoryDefinition): pxt.editor.ToolboxCategoryDefinition {
     return {
-        name: c.name,
+        name: c.name(),
         icon: c.attributes.icon,
         color: c.attributes.color,
         weight: c.attributes.weight,
