@@ -1,522 +1,523 @@
-import { BuiltinCategoryDefinition, BlockDefinition } from "./toolbox";
+import { BuiltinCategoryDefinition, BlockDefinition, CategoryNameID } from "./toolbox";
 
 import * as monaco from "./monaco";
 
-export const loops: BuiltinCategoryDefinition = {
-    name: lf("{id:category}Loops"),
-    nameid: 'loops',
-    blocks: [
-        {
-            name: "loops_while",
-            snippetName: "while",
-            snippet: `while(true) {\n\n}`,
-            attributes: {
-                blockId: 'device_while',
-                weight: 48,
-                jsDoc: lf("Repeat code while condition is true")
-            }
-        },
-        {
-            name: "loops_for",
-            snippetName: "for",
-            snippet: `for(let i = 0; i < 5; i++) {\n\n}`,
-            attributes: {
-                blockId: 'pxt_controls_for',
-                weight: 47,
-                jsDoc: lf("Repeat code a number of times in a loop")
-            }
-        }
-    ],
-    attributes: {
-        callingConvention: ts.pxtc.ir.CallingConvention.Plain,
-        icon: "loops",
-        weight: 50.09,
-        paramDefl: {}
-    }
-};
+let _cachedBuiltinCategories: pxt.Map<BuiltinCategoryDefinition> = null;
+function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
+    if (!_cachedBuiltinCategories) {
+        _cachedBuiltinCategories = {
+            loops: {
+                name: lf("{id:category}Loops"),
+                nameid: 'loops',
+                blocks: [
+                    {
+                        name: "loops_while",
+                        snippetName: "while",
+                        snippet: `while(true) {\n\n}`,
+                        attributes: {
+                            blockId: 'device_while',
+                            weight: 48,
+                            jsDoc: lf("Repeat code while condition is true")
+                        }
+                    },
+                    {
+                        name: "loops_for",
+                        snippetName: "for",
+                        snippet: `for(let i = 0; i < 5; i++) {\n\n}`,
+                        attributes: {
+                            blockId: 'pxt_controls_for',
+                            weight: 47,
+                            jsDoc: lf("Repeat code a number of times in a loop")
+                        }
+                    }
+                ],
+                attributes: {
+                    callingConvention: ts.pxtc.ir.CallingConvention.Plain,
+                    icon: "loops",
+                    weight: 50.09,
+                    paramDefl: {}
+                }
+            },
+            logic: {
+                name: lf("{id:category}Logic"),
+                nameid: 'logic',
+                blocks: [
+                    {
+                        name: "logic_if",
+                        snippetName: "if",
+                        snippet: `if (true) {\n\n}`,
+                        attributes: {
+                            blockId: 'controls_if',
+                            weight: 49,
+                            jsDoc: lf("Runs code if the condition is true")
+                        }
+                    },
+                    {
+                        name: "logic_if_else",
+                        snippetName: "if",
+                        snippet: `if (true) {\n\n} else {\n\n}`,
+                        attributes: {
+                            blockId: 'controls_if',
+                            weight: 48,
+                            jsDoc: lf("Runs code if the condition is true; else run other code")
+                        }
+                    },
+                    {
+                        name: "logic_switch",
 
-export const logic: BuiltinCategoryDefinition = {
-    name: lf("{id:category}Logic"),
-    nameid: 'logic',
-    blocks: [
-        {
-            name: "logic_if",
-            snippetName: "if",
-            snippet: `if (true) {\n\n}`,
-            attributes: {
-                blockId: 'controls_if',
-                weight: 49,
-                jsDoc: lf("Runs code if the condition is true")
+                        snippetName: "switch",
+                        snippet:
+                            `switch(item) {
+            case 0:
+                break;
+            case 1:
+                break;
+        }`,
+                        attributes: {
+                            jsDoc: lf("Runs different code based on a value")
+                        }
+                    }
+                ],
+                attributes: {
+                    callingConvention: ts.pxtc.ir.CallingConvention.Plain,
+                    weight: 50.08,
+                    icon: "logic",
+                    paramDefl: {}
+                }
+            },
+            variables: {
+                name: lf("{id:category}Variables"),
+                nameid: 'variables',
+                blocks: [
+                    {
+                        name: "var_let",
+                        snippetName: "let",
+                        snippet: `let item: number`,
+                        snippetOnly: true,
+                        attributes: {
+                            blockId: 'variables_set',
+                            jsDoc: lf("Declares a variable named 'item'")
+                        }
+                    },
+                    {
+                        name: "var_equals",
+                        snippetName: "equals",
+                        snippet: `item = 0`,
+                        snippetOnly: true,
+                        attributes: {
+                            blockId: 'variables_get',
+                            jsDoc: lf("Assigns a value to a variable")
+                        }
+                    },
+                    {
+                        name: "var_change",
+                        snippetName: "change",
+                        snippet: `item += 1`,
+                        snippetOnly: true,
+                        attributes: {
+                            blockId: 'variables_change',
+                            jsDoc: lf("Changes the value of item by 1")
+                        }
+                    },
+                ],
+                attributes: {
+                    callingConvention: ts.pxtc.ir.CallingConvention.Plain,
+                    weight: 50.07,
+                    icon: "variables",
+                    paramDefl: {}
+                }
+            },
+            maths: {
+                name: lf("{id:category}Math"),
+                nameid: 'math',
+                blocks: [
+                    {
+                        name: "Math.plus",
+                        snippetName: "plus",
+                        snippet: `1 + 1`,
+                        snippetOnly: true,
+                        attributes: {
+                            weight: 90,
+                            blockId: "math_arithmetic",
+                            jsDoc: lf("Adds two numbers together")
+                        },
+                        retType: "number"
+                    },
+                    {
+                        name: "Math.minus",
+                        snippetName: "minus",
+                        snippet: `1 - 1`,
+                        snippetOnly: true,
+                        attributes: {
+                            weight: 89,
+                            blockId: "math_arithmetic",
+                            jsDoc: lf("Subtracts the value of one number from another")
+                        },
+                        retType: "number"
+                    },
+                    {
+                        name: "Math.multiply",
+                        snippetName: "multiply",
+                        snippet: `1 * 1`,
+                        snippetOnly: true,
+                        attributes: {
+                            weight: 88,
+                            blockId: "math_arithmetic",
+                            jsDoc: lf("Multiplies two numbers together")
+                        },
+                        retType: "number"
+                    },
+                    {
+                        name: "Math.divide",
+                        snippetName: "divide",
+                        snippet: `1 / 1`,
+                        snippetOnly: true,
+                        attributes: {
+                            weight: 87,
+                            blockId: "math_arithmetic",
+                            jsDoc: lf("Returns the quotient of one number divided by another")
+                        },
+                        retType: "number"
+                    },
+                    {
+                        name: "Math.remainder",
+                        snippetName: "remainder",
+                        snippet: `1 % 2`,
+                        snippetOnly: true,
+                        attributes: {
+                            weight: 80,
+                            blockId: "math_modulo",
+                            jsDoc: lf("Returns the remainder of one number divided by another")
+                        },
+                        retType: "number"
+                    },
+                    {
+                        name: "Math.max",
+                        snippetName: "max",
+                        snippet: `Math.max(1, 2)`,
+                        attributes: {
+                            weight: 75,
+                            blockId: "math_op2",
+                            jsDoc: lf("Returns the largest of two numbers")
+                        },
+                        retType: "number"
+                    },
+                    {
+                        name: "Math.min",
+                        snippetName: "min",
+                        snippet: `Math.min(1, 2)`,
+                        attributes: {
+                            weight: 74,
+                            blockId: "math_op2",
+                            jsDoc: lf("Returns the smallest of two numbers")
+                        },
+                        retType: "number"
+                    },
+                    {
+                        name: "Math.abs",
+                        snippetName: "abs",
+                        snippet: `Math.abs(-1)`,
+                        attributes: {
+                            weight: 70,
+                            blockId: "math_op3",
+                            jsDoc: lf("Returns the absolute value of a number")
+                        },
+                        retType: "number"
+                    },
+                    {
+                        name: "Math.randomRange",
+                        snippetName: "randomRange",
+                        snippet: `Math.randomRange(0, 10)`,
+                        attributes: {
+                            weight: 65,
+                            jsDoc: lf("Returns a random number between min and max")
+                        },
+                        retType: "number"
+                    }
+                ],
+                attributes: {
+                    callingConvention: ts.pxtc.ir.CallingConvention.Plain,
+                    weight: 50.06,
+                    icon: "math",
+                    paramDefl: {}
+                }
+            },
+            functions: {
+                name: lf("{id:category}Functions"),
+                nameid: 'functions',
+                blocks: [
+                    {
+                        name: "functionDef",
+                        snippetName: "function doSomething",
+                        snippet: `function doSomething() {\n\n}`,
+                        attributes: {
+                            blockId: 'procedures_defnoreturn',
+                            jsDoc: lf("Define a function")
+                        }
+                    },
+                    {
+                        name: "functionCall",
+                        snippetName: "doSomething",
+                        snippet: `doSomething()`,
+                        attributes: {
+                            blockId: 'procedures_callnoreturn',
+                            jsDoc: lf("Call a function")
+                        }
+                    },
+                ],
+                attributes: {
+                    advanced: true,
+                    weight: 50.08,
+                    callingConvention: ts.pxtc.ir.CallingConvention.Plain,
+                    icon: "functions",
+                    paramDefl: {}
+                }
+            },
+            arrays: {
+                name: lf("{id:category}Arrays"),
+                nameid: "arrays",
+                custom: true,
+                blocks: [
+                    {
+                        name: "array_create",
+                        snippetName: "create",
+                        snippet: `let ${lf("{id:snippets}list")} = [1, 2, 3];`,
+                        snippetOnly: true,
+                        attributes: {
+                            weight: 100,
+                            blockId: "lists_create_with",
+                            jsDoc: lf("Creates a new Array")
+                        },
+                        retType: "array"
+                    },
+                    {
+                        name: "array_length",
+                        snippetName: "length",
+                        snippet: `${lf("{id:snippets}list")}.length`,
+                        snippetOnly: true,
+                        attributes: {
+                            weight: 99,
+                            blockId: "lists_length",
+                            jsDoc: lf("Returns the number of values in an Array")
+                        },
+                        retType: "number"
+                    },
+                    {
+                        name: "array_get",
+                        snippetName: "get",
+                        snippet: `${lf("{id:snippets}list")}[0]`,
+                        snippetOnly: true,
+                        attributes: {
+                            weight: 98,
+                            blockId: "lists_index_get",
+                            jsDoc: lf("Returns the value in the Array at the given index")
+                        }
+                    },
+                    {
+                        name: "array_set",
+                        snippetName: "set",
+                        snippet: `${lf("{id:snippets}list")}[0] = 1`,
+                        snippetOnly: true,
+                        attributes: {
+                            weight: 97,
+                            blockId: "lists_index_set",
+                            jsDoc: lf("Overwrites the value in an Array at the given index")
+                        }
+                    },
+                    {
+                        name: "array_push",
+                        snippetName: "push",
+                        snippet: `${lf("{id:snippets}list")}.push(1)`,
+                        attributes: {
+                            weight: 96,
+                            blockId: "array_push",
+                            jsDoc: lf("Adds a value to the end of an Array")
+                        }
+                    },
+                    {
+                        name: "arary_pop",
+                        snippetName: "pop",
+                        snippet: `${lf("{id:snippets}list")}.pop()`,
+                        attributes: {
+                            weight: 95,
+                            blockId: "array_pop",
+                            jsDoc: lf("Removes and returns the value at the end of an Array")
+                        },
+                        retType: "object"
+                    },
+                    {
+                        name: "array_insertAt",
+                        snippetName: "insertAt",
+                        snippet: `${lf("{id:snippets}list")}.insertAt(0, 0)`,
+                        attributes: {
+                            weight: 50,
+                            blockId: "array_insertAt",
+                            jsDoc: lf("Inserts a value into the Array at the given index"),
+                            advanced: true
+                        }
+                    },
+                    {
+                        name: "array_removeAt",
+                        snippetName: "removeAt",
+                        snippet: `${lf("{id:snippets}list")}.removeAt(0)`,
+                        attributes: {
+                            weight: 49,
+                            blockId: "array_removeat",
+                            jsDoc: lf("Removes a value from the Array at the given index and returns it"),
+                            advanced: true
+                        },
+                        retType: "object"
+                    },
+                    {
+                        name: "array_shift",
+                        snippetName: "shift",
+                        snippet: `${lf("{id:snippets}list")}.shift()`,
+                        attributes: {
+                            weight: 48,
+                            blockId: "array_shift",
+                            jsDoc: lf("Removes and returns the value at the front of an Array"),
+                            advanced: true
+                        }
+                    },
+                    {
+                        name: "array_unshift",
+                        snippetName: "unshift",
+                        snippet: `${lf("{id:snippets}list")}.unshift(0)`,
+                        attributes: {
+                            weight: 47,
+                            blockId: "array_unshift",
+                            jsDoc: lf("Inserts a value at the beginning of an Array"),
+                            advanced: true
+                        }
+                    },
+                    {
+                        name: "array_indexOf",
+                        snippetName: "indexOf",
+                        snippet: `["A", "B", "C"].indexOf("B")`,
+                        attributes: {
+                            weight: 46,
+                            jsDoc: lf("Returns the first index in the Array that contains the given value or -1 if it does not exist in the Array"),
+                            advanced: true
+                        },
+                        retType: "number"
+                    },
+                    {
+                        name: "array_reverse",
+                        snippetName: "reverse",
+                        snippet: `${lf("{id:snippets}list")}.reverse()`,
+                        attributes: {
+                            weight: 45,
+                            jsDoc: lf("Reverses the contents of an Array"),
+                            advanced: true
+                        }
+                    },
+                ],
+                attributes: {
+                    advanced: true,
+                    weight: 50.07,
+                    icon: "arrays",
+                    callingConvention: ts.pxtc.ir.CallingConvention.Plain,
+                    paramDefl: {}
+                }
+            },
+            text: {
+                name: lf("{id:category}Text"),
+                nameid: 'text',
+                custom: true,
+                blocks: [
+                    {
+                        name: "text_length",
+                        snippetName: "length",
+                        snippet: `"".length`,
+                        snippetOnly: true,
+                        attributes: {
+                            blockId: 'text_length',
+                            jsDoc: lf("Returns the number of characters in a string")
+                        },
+                        retType: "number"
+                    },
+                    {
+                        name: "text_concat",
+                        snippetName: "concat",
+                        snippet: `"" + 5`,
+                        snippetOnly: true,
+                        attributes: {
+                            blockId: 'text_join',
+                            jsDoc: lf("Combines a string with a number, boolean, string, or other object into one string")
+                        },
+                        retType: "string"
+                    },
+                    {
+                        name: "text_compare",
+                        snippetName: "compare",
+                        snippet: `"".compare("")`,
+                        attributes: {
+                            blockId: 'string_compare',
+                            jsDoc: lf("Compares one string against another alphabetically and returns a number")
+                        },
+                        retType: "number"
+                    },
+                    {
+                        name: "text_parseInt",
+                        snippetName: "parseInt",
+                        snippet: `parseInt("5")`,
+                        attributes: {
+                            blockId: 'string_parseint',
+                            jsDoc: lf("Converts a number written as text into a number")
+                        },
+                        retType: "number"
+                    },
+                    {
+                        name: "text_substr",
+                        snippetName: "substr",
+                        snippet: `"".substr(0, 0)`,
+                        attributes: {
+                            blockId: 'string_substr',
+                            jsDoc: lf("Returns the part of a string starting at a given index with the given length")
+                        },
+                        retType: "string"
+                    },
+                    {
+                        name: "text_charAt",
+                        snippetName: "charAt",
+                        snippet: `"".charAt(0)`,
+                        attributes: {
+                            blockId: 'string_get',
+                            jsDoc: lf("Returns the character at the given index")
+                        },
+                        retType: "string"
+                    },
+                ],
+                attributes: {
+                    advanced: true,
+                    weight: 50.06,
+                    icon: "text",
+                    callingConvention: ts.pxtc.ir.CallingConvention.Plain,
+                    paramDefl: {}
+                }
+            },
+            extensions: {
+                name: pxt.toolbox.addPackageTitle(),
+                nameid: 'addpackage',
+                blocks: [],
+                custom: true,
+                customClick: (theEditor: monaco.Editor) => {
+                    theEditor.closeFlyout();
+                    theEditor.showPackageDialog();
+                    return true;
+                },
+                attributes: {
+                    advanced: true,
+                    weight: -1,
+                    icon: "addpackage",
+                    callingConvention: ts.pxtc.ir.CallingConvention.Plain,
+                    paramDefl: {}
+                }
             }
-        },
-        {
-            name: "logic_if_else",
-            snippetName: "if",
-            snippet: `if (true) {\n\n} else {\n\n}`,
-            attributes: {
-                blockId: 'controls_if',
-                weight: 48,
-                jsDoc: lf("Runs code if the condition is true; else run other code")
-            }
-        },
-        {
-            name: "logic_switch",
-
-            snippetName: "switch",
-            snippet:
-                `switch(item) {
-    case 0:
-        break;
-    case 1:
-        break;
-}`,
-            attributes: {
-                jsDoc: lf("Runs different code based on a value")
-            }
-        }
-    ],
-    attributes: {
-        callingConvention: ts.pxtc.ir.CallingConvention.Plain,
-        weight: 50.08,
-        icon: "logic",
-        paramDefl: {}
+        };
     }
-};
-
-export const variables: BuiltinCategoryDefinition = {
-    name: lf("{id:category}Variables"),
-    nameid: 'variables',
-    blocks: [
-        {
-            name: "var_let",
-            snippetName: "let",
-            snippet: `let item: number`,
-            snippetOnly: true,
-            attributes: {
-                blockId: 'variables_set',
-                jsDoc: lf("Declares a variable named 'item'")
-            }
-        },
-        {
-            name: "var_equals",
-            snippetName: "equals",
-            snippet: `item = 0`,
-            snippetOnly: true,
-            attributes: {
-                blockId: 'variables_get',
-                jsDoc: lf("Assigns a value to a variable")
-            }
-        },
-        {
-            name: "var_change",
-            snippetName: "change",
-            snippet: `item += 1`,
-            snippetOnly: true,
-            attributes: {
-                blockId: 'variables_change',
-                jsDoc: lf("Changes the value of item by 1")
-            }
-        },
-    ],
-    attributes: {
-        callingConvention: ts.pxtc.ir.CallingConvention.Plain,
-        weight: 50.07,
-        icon: "variables",
-        paramDefl: {}
-    }
-};
-
-export const maths: BuiltinCategoryDefinition = {
-    name: lf("{id:category}Math"),
-    nameid: 'math',
-    blocks: [
-        {
-            name: "Math.plus",
-            snippetName: "plus",
-            snippet: `1 + 1`,
-            snippetOnly: true,
-            attributes: {
-                weight: 90,
-                blockId: "math_arithmetic",
-                jsDoc: lf("Adds two numbers together")
-            },
-            retType: "number"
-        },
-        {
-            name: "Math.minus",
-            snippetName: "minus",
-            snippet: `1 - 1`,
-            snippetOnly: true,
-            attributes: {
-                weight: 89,
-                blockId: "math_arithmetic",
-                jsDoc: lf("Subtracts the value of one number from another")
-            },
-            retType: "number"
-        },
-        {
-            name: "Math.multiply",
-            snippetName: "multiply",
-            snippet: `1 * 1`,
-            snippetOnly: true,
-            attributes: {
-                weight: 88,
-                blockId: "math_arithmetic",
-                jsDoc: lf("Multiplies two numbers together")
-            },
-            retType: "number"
-        },
-        {
-            name: "Math.divide",
-            snippetName: "divide",
-            snippet: `1 / 1`,
-            snippetOnly: true,
-            attributes: {
-                weight: 87,
-                blockId: "math_arithmetic",
-                jsDoc: lf("Returns the quotient of one number divided by another")
-            },
-            retType: "number"
-        },
-        {
-            name: "Math.remainder",
-            snippetName: "remainder",
-            snippet: `1 % 2`,
-            snippetOnly: true,
-            attributes: {
-                weight: 80,
-                blockId: "math_modulo",
-                jsDoc: lf("Returns the remainder of one number divided by another")
-            },
-            retType: "number"
-        },
-        {
-            name: "Math.max",
-            snippetName: "max",
-            snippet: `Math.max(1, 2)`,
-            attributes: {
-                weight: 75,
-                blockId: "math_op2",
-                jsDoc: lf("Returns the largest of two numbers")
-            },
-            retType: "number"
-        },
-        {
-            name: "Math.min",
-            snippetName: "min",
-            snippet: `Math.min(1, 2)`,
-            attributes: {
-                weight: 74,
-                blockId: "math_op2",
-                jsDoc: lf("Returns the smallest of two numbers")
-            },
-            retType: "number"
-        },
-        {
-            name: "Math.abs",
-            snippetName: "abs",
-            snippet: `Math.abs(-1)`,
-            attributes: {
-                weight: 70,
-                blockId: "math_op3",
-                jsDoc: lf("Returns the absolute value of a number")
-            },
-            retType: "number"
-        },
-        {
-            name: "Math.randomRange",
-            snippetName: "randomRange",
-            snippet: `Math.randomRange(0, 10)`,
-            attributes: {
-                weight: 65,
-                jsDoc: lf("Returns a random number between min and max")
-            },
-            retType: "number"
-        }
-    ],
-    attributes: {
-        callingConvention: ts.pxtc.ir.CallingConvention.Plain,
-        weight: 50.06,
-        icon: "math",
-        paramDefl: {}
-    }
-};
-
-export const functions: BuiltinCategoryDefinition = {
-    name: lf("{id:category}Functions"),
-    nameid: 'functions',
-    blocks: [
-        {
-            name: "functionDef",
-            snippetName: "function doSomething",
-            snippet: `function doSomething() {\n\n}`,
-            attributes: {
-                blockId: 'procedures_defnoreturn',
-                jsDoc: lf("Define a function")
-            }
-        },
-        {
-            name: "functionCall",
-            snippetName: "doSomething",
-            snippet: `doSomething()`,
-            attributes: {
-                blockId: 'procedures_callnoreturn',
-                jsDoc: lf("Call a function")
-            }
-        },
-    ],
-    attributes: {
-        advanced: true,
-        weight: 50.08,
-        callingConvention: ts.pxtc.ir.CallingConvention.Plain,
-        icon: "functions",
-        paramDefl: {}
-    }
-};
-
-export const arrays: BuiltinCategoryDefinition = {
-    name: lf("{id:category}Arrays"),
-    nameid: "arrays",
-    custom: true,
-    blocks: [
-        {
-            name: "array_create",
-            snippetName: "create",
-            snippet: `let ${lf("{id:snippets}list")} = [1, 2, 3];`,
-            snippetOnly: true,
-            attributes: {
-                weight: 100,
-                blockId: "lists_create_with",
-                jsDoc: lf("Creates a new Array")
-            },
-            retType: "array"
-        },
-        {
-            name: "array_length",
-            snippetName: "length",
-            snippet: `${lf("{id:snippets}list")}.length`,
-            snippetOnly: true,
-            attributes: {
-                weight: 99,
-                blockId: "lists_length",
-                jsDoc: lf("Returns the number of values in an Array")
-            },
-            retType: "number"
-        },
-        {
-            name: "array_get",
-            snippetName: "get",
-            snippet: `${lf("{id:snippets}list")}[0]`,
-            snippetOnly: true,
-            attributes: {
-                weight: 98,
-                blockId: "lists_index_get",
-                jsDoc: lf("Returns the value in the Array at the given index")
-            }
-        },
-        {
-            name: "array_set",
-            snippetName: "set",
-            snippet: `${lf("{id:snippets}list")}[0] = 1`,
-            snippetOnly: true,
-            attributes: {
-                weight: 97,
-                blockId: "lists_index_set",
-                jsDoc: lf("Overwrites the value in an Array at the given index")
-            }
-        },
-        {
-            name: "array_push",
-            snippetName: "push",
-            snippet: `${lf("{id:snippets}list")}.push(1)`,
-            attributes: {
-                weight: 96,
-                blockId: "array_push",
-                jsDoc: lf("Adds a value to the end of an Array")
-            }
-        },
-        {
-            name: "arary_pop",
-            snippetName: "pop",
-            snippet: `${lf("{id:snippets}list")}.pop()`,
-            attributes: {
-                weight: 95,
-                blockId: "array_pop",
-                jsDoc: lf("Removes and returns the value at the end of an Array")
-            },
-            retType: "object"
-        },
-        {
-            name: "array_insertAt",
-            snippetName: "insertAt",
-            snippet: `${lf("{id:snippets}list")}.insertAt(0, 0)`,
-            attributes: {
-                weight: 50,
-                blockId: "array_insertAt",
-                jsDoc: lf("Inserts a value into the Array at the given index"),
-                advanced: true
-            }
-        },
-        {
-            name: "array_removeAt",
-            snippetName: "removeAt",
-            snippet: `${lf("{id:snippets}list")}.removeAt(0)`,
-            attributes: {
-                weight: 49,
-                blockId: "array_removeat",
-                jsDoc: lf("Removes a value from the Array at the given index and returns it"),
-                advanced: true
-            },
-            retType: "object"
-        },
-        {
-            name: "array_shift",
-            snippetName: "shift",
-            snippet: `${lf("{id:snippets}list")}.shift()`,
-            attributes: {
-                weight: 48,
-                blockId: "array_shift",
-                jsDoc: lf("Removes and returns the value at the front of an Array"),
-                advanced: true
-            }
-        },
-        {
-            name: "array_unshift",
-            snippetName: "unshift",
-            snippet: `${lf("{id:snippets}list")}.unshift(0)`,
-            attributes: {
-                weight: 47,
-                blockId: "array_unshift",
-                jsDoc: lf("Inserts a value at the beginning of an Array"),
-                advanced: true
-            }
-        },
-        {
-            name: "array_indexOf",
-            snippetName: "indexOf",
-            snippet: `["A", "B", "C"].indexOf("B")`,
-            attributes: {
-                weight: 46,
-                jsDoc: lf("Returns the first index in the Array that contains the given value or -1 if it does not exist in the Array"),
-                advanced: true
-            },
-            retType: "number"
-        },
-        {
-            name: "array_reverse",
-            snippetName: "reverse",
-            snippet: `${lf("{id:snippets}list")}.reverse()`,
-            attributes: {
-                weight: 45,
-                jsDoc: lf("Reverses the contents of an Array"),
-                advanced: true
-            }
-        },
-    ],
-    attributes: {
-        advanced: true,
-        weight: 50.07,
-        icon: "arrays",
-        callingConvention: ts.pxtc.ir.CallingConvention.Plain,
-        paramDefl: {}
-    }
+    return _cachedBuiltinCategories;
 }
-
-export const text: BuiltinCategoryDefinition = {
-    name: lf("{id:category}Text"),
-    nameid: 'text',
-    custom: true,
-    blocks: [
-        {
-            name: "text_length",
-            snippetName: "length",
-            snippet: `"".length`,
-            snippetOnly: true,
-            attributes: {
-                blockId: 'text_length',
-                jsDoc: lf("Returns the number of characters in a string")
-            },
-            retType: "number"
-        },
-        {
-            name: "text_concat",
-            snippetName: "concat",
-            snippet: `"" + 5`,
-            snippetOnly: true,
-            attributes: {
-                blockId: 'text_join',
-                jsDoc: lf("Combines a string with a number, boolean, string, or other object into one string")
-            },
-            retType: "string"
-        },
-        {
-            name: "text_compare",
-            snippetName: "compare",
-            snippet: `"".compare("")`,
-            attributes: {
-                blockId: 'string_compare',
-                jsDoc: lf("Compares one string against another alphabetically and returns a number")
-            },
-            retType: "number"
-        },
-        {
-            name: "text_parseInt",
-            snippetName: "parseInt",
-            snippet: `parseInt("5")`,
-            attributes: {
-                blockId: 'string_parseint',
-                jsDoc: lf("Converts a number written as text into a number")
-            },
-            retType: "number"
-        },
-        {
-            name: "text_substr",
-            snippetName: "substr",
-            snippet: `"".substr(0, 0)`,
-            attributes: {
-                blockId: 'string_substr',
-                jsDoc: lf("Returns the part of a string starting at a given index with the given length")
-            },
-            retType: "string"
-        },
-        {
-            name: "text_charAt",
-            snippetName: "charAt",
-            snippet: `"".charAt(0)`,
-            attributes: {
-                blockId: 'string_get',
-                jsDoc: lf("Returns the character at the given index")
-            },
-            retType: "string"
-        },
-    ],
-    attributes: {
-        advanced: true,
-        weight: 50.06,
-        icon: "text",
-        callingConvention: ts.pxtc.ir.CallingConvention.Plain,
-        paramDefl: {}
-    }
-}
-
-export const extensions: BuiltinCategoryDefinition = {
-    name: pxt.toolbox.addPackageTitle(),
-    nameid: 'addpackage',
-    blocks: [],
-    custom: true,
-    customClick: (theEditor: monaco.Editor) => {
-        theEditor.closeFlyout();
-        theEditor.showPackageDialog();
-        return true;
-    },
-    attributes: {
-        advanced: true,
-        weight: -1,
-        icon: "addpackage",
-        callingConvention: ts.pxtc.ir.CallingConvention.Plain,
-        paramDefl: {}
-    }
-};
 
 let pauseUntil: BlockDefinition;
 
@@ -549,32 +550,11 @@ export function getPauseUntil() {
 }
 
 export function getBuiltinCategory(ns: string) {
-    switch (ns) {
-        case loops.nameid: return loops;
-        case logic.nameid: return logic;
-        case variables.nameid: return variables;
-        case maths.nameid: return maths;
-        case text.nameid: return text;
-        case arrays.nameid: return arrays;
-        case functions.nameid: return functions;
-        case extensions.nameid: return extensions;
-    }
-    return undefined;
+    return cachedBuiltinCategories()[ns];
 }
 
 export function isBuiltin(ns: string) {
-    switch (ns) {
-        case loops.nameid:
-        case logic.nameid:
-        case variables.nameid:
-        case maths.nameid:
-        case text.nameid:
-        case arrays.nameid:
-        case functions.nameid:
-        case extensions.nameid:
-            return true;
-    }
-    return false;
+    return !!cachedBuiltinCategories()[ns];
 }
 
 let builtinBlockCacheById: pxt.Map<[BlockDefinition, string]>;
@@ -583,7 +563,15 @@ function cacheBuiltInBlocks() {
     if (builtinBlockCacheById) return;
     builtinBlockCacheById = {};
     builtinBlockCacheByName = {};
-    [loops, logic, maths, text, arrays, variables, functions].forEach((builtin => {
+    [
+        getBuiltinCategory(CategoryNameID.Loops),
+        getBuiltinCategory(CategoryNameID.Logic),
+        getBuiltinCategory(CategoryNameID.Maths),
+        getBuiltinCategory(CategoryNameID.Text),
+        getBuiltinCategory(CategoryNameID.Arrays),
+        getBuiltinCategory(CategoryNameID.Variables),
+        getBuiltinCategory(CategoryNameID.Functions)
+    ].forEach((builtin => {
         builtin.blocks.forEach(block => {
             if (block.type) return; // Block type is assumed to be empty
             if (!(block as BlockDefinition).snippet) return;
@@ -712,23 +700,23 @@ function categoryToJson(c: BuiltinCategoryDefinition): pxt.editor.ToolboxCategor
 }
 
 export function overrideToolbox(def: pxt.editor.ToolboxDefinition) {
-    overrideCategory(loops.nameid, def.loops);
-    overrideCategory(logic.nameid, def.logic);
-    overrideCategory(variables.nameid, def.variables);
-    overrideCategory(maths.nameid, def.maths);
-    overrideCategory(text.nameid, def.text);
-    overrideCategory(arrays.nameid, def.arrays);
-    overrideCategory(functions.nameid, def.functions);
+    overrideCategory(CategoryNameID.Loops, def.loops);
+    overrideCategory(CategoryNameID.Logic, def.logic);
+    overrideCategory(CategoryNameID.Variables, def.variables);
+    overrideCategory(CategoryNameID.Maths, def.maths);
+    overrideCategory(CategoryNameID.Text, def.text);
+    overrideCategory(CategoryNameID.Arrays, def.arrays);
+    overrideCategory(CategoryNameID.Functions, def.functions);
 }
 
 export function getToolboxDefinition(): pxt.editor.ToolboxDefinition {
     return {
-        loops: categoryToJson(getBuiltinCategory(loops.nameid)),
-        logic: categoryToJson(getBuiltinCategory(logic.nameid)),
-        variables: categoryToJson(getBuiltinCategory(variables.nameid)),
-        maths: categoryToJson(getBuiltinCategory(maths.nameid)),
-        text: categoryToJson(getBuiltinCategory(text.nameid)),
-        arrays: categoryToJson(getBuiltinCategory(arrays.nameid)),
-        functions: categoryToJson(getBuiltinCategory(functions.nameid))
+        loops: categoryToJson(getBuiltinCategory(CategoryNameID.Loops)),
+        logic: categoryToJson(getBuiltinCategory(CategoryNameID.Logic)),
+        variables: categoryToJson(getBuiltinCategory(CategoryNameID.Variables)),
+        maths: categoryToJson(getBuiltinCategory(CategoryNameID.Maths)),
+        text: categoryToJson(getBuiltinCategory(CategoryNameID.Text)),
+        arrays: categoryToJson(getBuiltinCategory(CategoryNameID.Arrays)),
+        functions: categoryToJson(getBuiltinCategory(CategoryNameID.Functions))
     }
 }

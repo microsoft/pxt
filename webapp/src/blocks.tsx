@@ -1004,16 +1004,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
 
         let config = pxt.appTarget.runtime || {};
-        if (config.loopsBlocks && !isRemoved(snippets.CategoryNameID.Loops)) namespaces.push(snippets.CategoryNameID.Loops);
-        if (config.logicBlocks && !isRemoved(snippets.CategoryNameID.Logic)) namespaces.push(snippets.CategoryNameID.Logic);
-        if (config.variablesBlocks && !isRemoved(snippets.CategoryNameID.Variables)) namespaces.push(snippets.CategoryNameID.Variables);
-        if (config.mathBlocks && !isRemoved(snippets.CategoryNameID.Maths)) namespaces.push(snippets.CategoryNameID.Maths);
-        if (config.functionBlocks && !isRemoved(snippets.CategoryNameID.Functions)) namespaces.push(snippets.CategoryNameID.Functions);
-        if (config.listsBlocks && !isRemoved(snippets.CategoryNameID.Arrays)) namespaces.push(snippets.CategoryNameID.Arrays);
-        if (config.textBlocks && !isRemoved(snippets.CategoryNameID.Text)) namespaces.push(snippets.CategoryNameID.Text);
+        if (config.loopsBlocks && !isRemoved(toolbox.CategoryNameID.Loops)) namespaces.push(toolbox.CategoryNameID.Loops);
+        if (config.logicBlocks && !isRemoved(toolbox.CategoryNameID.Logic)) namespaces.push(toolbox.CategoryNameID.Logic);
+        if (config.variablesBlocks && !isRemoved(toolbox.CategoryNameID.Variables)) namespaces.push(toolbox.CategoryNameID.Variables);
+        if (config.mathBlocks && !isRemoved(toolbox.CategoryNameID.Maths)) namespaces.push(toolbox.CategoryNameID.Maths);
+        if (config.functionBlocks && !isRemoved(toolbox.CategoryNameID.Functions)) namespaces.push(toolbox.CategoryNameID.Functions);
+        if (config.listsBlocks && !isRemoved(toolbox.CategoryNameID.Arrays)) namespaces.push(toolbox.CategoryNameID.Arrays);
+        if (config.textBlocks && !isRemoved(toolbox.CategoryNameID.Text)) namespaces.push(toolbox.CategoryNameID.Text);
 
         if (pxt.appTarget.cloud && pxt.appTarget.cloud.packages) {
-            namespaces.push(snippets.CategoryNameID.Extensions);
+            namespaces.push(toolbox.CategoryNameID.Extensions);
         }
 
         return namespaces.concat(super.getNamespaces());
