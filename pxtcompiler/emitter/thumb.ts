@@ -63,7 +63,7 @@ namespace ts.pxtc.thumb {
             this.addEnc("$rl2", "{PC,R0-7,...}", v => (v & 0x8000) ? this.inrange(255, (v & ~0x8000), 0x100 | (v & 0xff)) : this.inrange(255, v, v))
 
 
-            this.addEnc("$la", "LABEL", v => this.inrange(255, v / 4, v >> 2)); // .isWordAligned = true;
+            this.addEnc("$la", "LABEL", v => this.inrange(255, v / 4, v >> 2)).isWordAligned = true;
             this.addEnc("$lb", "LABEL", v => this.inrangeSigned(127, v / 2, v >> 1))
             this.addEnc("$lb11", "LABEL", v => this.inrangeSigned(1023, v / 2, v >> 1))
 
