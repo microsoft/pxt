@@ -56,7 +56,7 @@ function init() {
 export function shouldUse() {
     const serial = pxt.appTarget.serial
     return serial && serial.useHF2 && (
-        (Cloud.isLocalHost() && !!Cloud.localToken && /[?&]hid=1/i.test(window.location.href))
+        (Cloud.isLocalHost() && !!Cloud.localToken)
         || pxt.winrt.isWinRT()
     );
 }

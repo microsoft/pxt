@@ -50,11 +50,6 @@ port to bind server, default 3232
 
 port to bind websocket server, default 3233
 
-### hid 
-
-launch editor connected to HID
-
-
 ## Description
 
 The local web server is meant for development purposes.
