@@ -54,11 +54,8 @@ function init() {
 }
 
 export function shouldUse() {
-    const serial = pxt.appTarget.serial
-    return serial && serial.useHF2 && (
-        (Cloud.isLocalHost() && !!Cloud.localToken)
-        || pxt.winrt.isWinRT()
-    );
+    let serial = pxt.appTarget.serial
+    return serial && serial.useHF2 && (Cloud.isLocalHost() && !!Cloud.localToken || pxt.winrt.isWinRT());
 }
 
 function mkBridgeAsync(): Promise<pxt.HF2.PacketIO> {
