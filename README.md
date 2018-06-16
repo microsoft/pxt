@@ -1,6 +1,6 @@
 # Microsoft MakeCode
 
-* [Try it live!](https://makecode.com)
+* [Try our the editors in your browser...](https://makecode.com)
 
 [![Build Status](https://travis-ci.org/Microsoft/pxt.svg?branch=master)](https://travis-ci.org/Microsoft/pxt) 
 [![Discord](https://img.shields.io/discord/448979533891371018.svg)](https://aka.ms/makecodecommunity)
