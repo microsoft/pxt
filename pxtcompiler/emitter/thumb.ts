@@ -186,7 +186,9 @@ namespace ts.pxtc.thumb {
             this.addInst("ldlit   $r5, $i32", 0x4800, 0xf800);
         }
 
-        public toFnPtr(v: number, baseOff: number) {
+        public toFnPtr(v: number, baseOff: number, lbl: string) {
+            if (target.runtimeIsARM && /::/.test(lbl))
+                return (v + baseOff) & ~1;
             return (v + baseOff) | 1;
         }
 
