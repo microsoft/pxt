@@ -949,7 +949,7 @@ export function serveAsync(options: ServeOptions) {
     return Promise.all([wsServerPromise, serverPromise])
         .then(() => {
             /* tslint:disable:no-http-string */
-            const start = `http://${serveOptions.hostname}#local_token=${options.localToken}&wsport=${serveOptions.wsPort}`;
+            const start = `http://${serveOptions.hostname}:${serveOptions.port}/#local_token=${options.localToken}&wsport=${serveOptions.wsPort}`;
             /* tslint:enable:no-http-string */
             console.log(`---------------------------------------------`);
             console.log(``);

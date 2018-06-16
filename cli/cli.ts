@@ -2191,7 +2191,7 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
             wsPort: parsed.flags["wsport"] as number || 0,
             hostname: parsed.flags["hostname"] as string || "",
             browser: parsed.flags["browser"] as string,
-            serial: !parsed.flags["noSerial"] && !globalConfig.noSerial,
+            serial: !parsed.flags["noSerial"] && !globalConfig.noSerial
         }))
 }
 
