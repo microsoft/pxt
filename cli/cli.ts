@@ -2146,7 +2146,7 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
     let browser: string = parsed.flags["browser"] as string;
     const hidFlag = !!parsed.flags["hid"];
 
-    if (hidFlag && hid.isInstalled(true))
+    if (hidFlag && !hid.isInstalled(true))
         U.userError("HID not properly installed");
     if (parsed.flags["cloud"]) {
         forceCloudBuild = true
