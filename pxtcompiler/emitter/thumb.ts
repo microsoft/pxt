@@ -208,7 +208,9 @@ namespace ts.pxtc.thumb {
 
         public emit32(v0: number, v: number, actual: string): pxtc.assembler.EmitResult {
             let isBLX = v % 2 ? true : false
-            if (isBLX) v++
+            if (isBLX) {
+                v = (v + 1) & ~3
+            }
             let off = v >> 1
             assert(off != null)
             // Range is +-4M (i.e., 2M instructions)
