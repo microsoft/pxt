@@ -415,11 +415,6 @@ function initSocketServer(wsPort: number, hostname: string) {
 
     let hios: pxt.Map<Promise<pxt.HF2.Wrapper>> = {};
     function startHID(request: http.IncomingMessage, socket: WebSocket, body: any) {
-        // check that HID is installed
-        if (!hid.isInstalled(true)) {
-            socket.close();
-            return;
-        }
         let ws = new WebSocket(request, socket, body);
         ws.on('open', () => {
             ws.send(JSON.stringify({ id: "ready" }))
@@ -428,6 +423,20 @@ function initSocketServer(wsPort: number, hostname: string) {
             try {
                 let msg = JSON.parse(event.data);
                 pxt.debug(`hid: msg ${msg.op}`) // , objToString(msg.arg))
+
+                // check that HID is installed
+                if (!hid.isInstalled(true)) {
+                    if (!ws) return;
+                    ws.send(JSON.stringify({
+                        result: {
+                            errorMessage: "node-hid not installed",
+                        },
+                        op: msg.op,
+                        id: msg.id
+                    }))
+                    return;
+                }
+
                 Promise.resolve()
                     .then(() => {
                         let hio = hios[msg.arg.path]
