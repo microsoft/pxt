@@ -1,4 +1,4 @@
-# PXT packages
+# MakeCode packages
 
 Packages are PXT's dynamic/static library mechanism for extending a target, such as the
 pxt-micro:bit:
@@ -13,6 +13,8 @@ so that the micro:bit can drive a NeoPixel strip:
 To see how this package is surfaced, visit https://makecode.microbit.org/ and select the "Extensions" option from the gear menu. You will see the package "neopixel" listed in the available options. If you click on it, a new block category named "Neopixel" will be added to the editor. 
 
 In this scenario, PXT dynamically loads the neopixel packages directly from GitHub, compiles it and incorporates it into the web app. Packages also can be bundled with a web app (the analog of static linking). For dynamically loaded packages, targets can provide a white list of approved packages (see [pxtarget.json](/targets/pxtarget#bundleddirs-string-)).
+
+* Got some questions? Join us on our [Community Discord](https://aka.ms/makecodecommunity)!
 
 ## Authoring packages
 
