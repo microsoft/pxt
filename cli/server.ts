@@ -588,20 +588,17 @@ function initSocketServer(wsPort: number, hostname: string) {
         try {
             if (WebSocket.isWebSocket(request)) {
                 console.log('ws connection at ' + request.url);
-                if (request.url == "/" + serveOptions.localToken + "/serial") {
+                console.log('ws connection at ' + request.url);
+                if (request.url == "/" + serveOptions.localToken + "/serial")
                     startSerial(request, socket, body);
-                    return;
-                }
-                else if (request.url == "/" + serveOptions.localToken + "/debug") {
+                else if (request.url == "/" + serveOptions.localToken + "/debug")
                     startDebug(request, socket, body);
-                    return;
-                }
-                else if (request.url == "/" + serveOptions.localToken + "/hid") {
+                else if (request.url == "/" + serveOptions.localToken + "/hid")
                     startHID(request, socket, body);
-                    return;
+                else {
+                    console.log('refused connection at ' + request.url);
+                    socket.close(403);
                 }
-                console.log('refused connection at ' + request.url);
-                socket.close(403);
             }
         } catch (e) {
             console.log('upgrade failed...')
