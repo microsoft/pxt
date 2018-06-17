@@ -588,7 +588,6 @@ function initSocketServer(wsPort: number, hostname: string) {
         try {
             if (WebSocket.isWebSocket(request)) {
                 console.log('ws connection at ' + request.url);
-                console.log('ws connection at ' + request.url);
                 if (request.url == "/" + serveOptions.localToken + "/serial")
                     startSerial(request, socket, body);
                 else if (request.url == "/" + serveOptions.localToken + "/debug")
