@@ -459,7 +459,8 @@ namespace ts.pxtc {
                     pxt.HF2.write16(resbuf, i * 2 + jmpStartAddr, hd[i])
                 applyPatches(null, resbuf)
                 if (uf2) {
-                    let bn = bin.res.downloadFileBaseName || "pxt"
+                    let bn = bin.options.name || "pxt"
+                    bn = bn.replace(/[^a-zA-Z0-9\-\.]+/g, "_")
                     uf2.filename = "Projects/" + bn + ".elf"
                     UF2.writeBytes(uf2, 0, resbuf);
                     return [UF2.serializeFile(uf2)];
