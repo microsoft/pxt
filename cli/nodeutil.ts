@@ -91,6 +91,18 @@ export function runNpmAsync(...args: string[]) {
     return runNpmAsyncWithCwd(".", ...args);
 }
 
+export interface NpmRegistry {
+    _id: string;
+    _name: string;
+    "dist-tags": pxt.Map<string>;
+    "versions": pxt.Map<any>;
+}
+
+export function npmRegistryAsync(pkg: string): Promise<NpmRegistry> {
+    // TODO: use token if available
+    return Util.httpGetJsonAsync(`https://registry.npmjs.org/${pkg}`);
+}
+
 export function runNpmAsyncWithCwd(cwd: string, ...args: string[]) {
     return spawnAsync({
         cmd: addCmd("npm"),

@@ -1,0 +1,63 @@
+
+/* Extensions */
+.ui.searchdialog.modal,
+.ui.searchdialog.modal > .content {
+    background: @extensionsBackground;
+}
+.ui.searchdialog.modal > .header {
+    background: @extensionsHeaderBackground;
+    padding: 1rem;
+    color: white;
+    border-radius: 0;
+    text-align: center;
+}
+.ui.searchdialog.modal .ui.search {
+    max-width: 50%;
+    margin: auto;
+}
+.ui.searchdialog.modal > .closeIcon .close {
+    color: white;
+}
+
+/*******************************
+        Modal Back Icon
+*******************************/
+
+.ui.modal .ui.button.labeled.icon.editorBack {
+    color: white !important;
+    position: absolute;
+    top: 0; 
+    left: 0;
+    height: 3.5rem;
+    outline: none !important;
+    border: none !important;
+    cursor: pointer;
+
+    &:focus, &:hover {
+        color: darken(white, 20%) !important;
+    }
+}
+
+.ui.modal > .header .helpIcon {
+    float: right;
+    color: white;
+}
+
+@HCextensionsHeaderBackground: black;
+@HCextensionsHeaderTextColor: white;
+
+.hc {
+    .ui.searchdialog.modal > .header {
+        background: @HCextensionsHeaderBackground !important;
+        color: @HCextensionsHeaderTextColor !important;
+    }
+
+    .ui.searchdialog.modal .ui.button.labeled.icon.editorBack {
+        background: transparent !important;
+
+        &:focus, &:hover {
+            border: 0 !important;
+            outline: 0 !important;
+        }
+    }
+}

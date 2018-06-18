@@ -24,7 +24,7 @@ type ISettingsProps = pxt.editor.ISettingsProps;
 
 function openTutorial(parent: pxt.editor.IProjectView, path: string) {
     pxt.tickEvent(`docs`, { path }, { interactiveConsent: true });
-    parent.setSideDoc(path);
+    parent.startTutorial(path);
 }
 
 function openDocs(parent: pxt.editor.IProjectView, path: string) {

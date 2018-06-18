@@ -191,4 +191,17 @@ namespace Math {
         if (a <= b) return a;
         return b;
     }
+
+    /**
+     * Rounds ``x`` to a number with the given number of ``digits``
+     * @param x the number to round
+     * @param digits the number of resulting digits
+     */
+    //%
+    export function roundWithPrecision(x: number, digits: number): number {
+        digits = digits | 0;
+        if (digits <= 0) return Math.round(x);
+        let d = Math.pow(10, digits);
+        return Math.round(x * d) / d;
+    }
 }

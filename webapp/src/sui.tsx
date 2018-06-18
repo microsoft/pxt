@@ -596,7 +596,7 @@ export interface IconProps extends UiProps {
 
 export const Icon: React.StatelessComponent<IconProps> = (props: IconProps) => {
     const { icon, className, onClick, onKeyDown, children, ...rest } = props;
-    return <i className={`icon ${icon} ${className}`}
+    return <i className={`icon ${icon} ${className ? className : ''}`}
         onClick={onClick}
         onKeyDown={onKeyDown || fireClickOnEnter}
         aria-hidden={true} role="presentation" {...rest}>
@@ -956,6 +956,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
             closeOnDimmerClick, closeOnDocumentClick, closeOnEscape,
             shouldCloseOnEsc, shouldCloseOnOverlayClick, shouldFocusAfterRender, ...rest } = this.props;
         const { marginTop, scrolling, mountClasses } = this.state;
+        const isFullscreen = size == 'fullscreen';
 
         const classes = cx([
             'ui',
@@ -994,7 +995,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
             {header ? <div id={this.id + 'title'} className={"header " + (headerClass || "")}>
                 {header}
                 {helpUrl ?
-                    <a className={`ui huge icon clear`} href={helpUrl} target="_docs" role="button" aria-label={lf("Help on {0} dialog", header)}>
+                    <a className={`ui huge icon clear helpIcon`} href={helpUrl} target="_docs" role="button" aria-label={lf("Help on {0} dialog", header)}>
                         <Icon icon="help" />
                     </a>
                     : undefined}
@@ -1021,10 +1022,14 @@ export class Modal extends React.Component<ModalProps, ModalState> {
                                 {...action} />
                     )}
                 </div> : undefined}
-            {closeIcon ? <div role="button" className="closeIcon" tabIndex={0}
+            {closeIcon && !isFullscreen ? <div role="button" className="closeIcon" tabIndex={0}
                 onClick={onClose}
                 onKeyDown={fireClickOnEnter}
             ><Icon icon="close remove circle" /> </div> : undefined}
+            {isFullscreen ?
+                <Button text={lf("Go back")} title={lf("Go back to the editor")} className="icon circular small editorBack left labeled" ariaLabel={lf("Go back")} onClick={onClose} onKeyDown={fireClickOnEnter}>
+                    <Icon icon="arrow left" />
+                </Button> : undefined}
         </ReactModal>
     }
 }

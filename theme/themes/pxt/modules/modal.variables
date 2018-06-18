@@ -7,3 +7,7 @@
 
 @closeColor: @black;
 @closeColorHover: darken(@closeColor, 25%);
+
+@fullScreenWidth: 100%;
+@fullScreenOffset: 0;
+@fullScreenMargin: 0;

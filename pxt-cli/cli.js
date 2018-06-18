@@ -56,11 +56,11 @@ function findPxtJs() {
     return goUp(process.cwd())
 }
 
-function target(n) {
+function target(n,t) {
     if (!fs.existsSync("node_modules"))
         fs.mkdirSync("node_modules")
-    console.log(`Installing pxt-${n} locally; don't worry about package.json warnings.`)
-    child_process.execSync(`npm install pxt-${n}`, {
+    console.log(`Installing pxt-${n} ${t || ""} locally; don't worry about package.json warnings.`)
+    child_process.execSync(`npm install pxt-${n} ${t ? `--tag ${t}` : ''}`, {
         stdio: "inherit"
     })
     fs.writeFileSync("node_modules/pxtcli.json", JSON.stringify({
@@ -68,6 +68,8 @@ function target(n) {
     }, null, 4))
     console.log(`Installed PXT/${n}. To start server run:`)
     console.log(`    pxt serve`)
+    console.log(`To build a package, run:`)
+    console.log(`    pxt build`)
 }
 
 function link(dir) {
@@ -124,7 +126,7 @@ function main() {
     var args = process.argv.slice(2)
 
     if (args[0] == "target") {
-        target(args[1])
+        target(args[1], args[2])
         process.exit(0)
     }
     else if (args[0] == "link") {

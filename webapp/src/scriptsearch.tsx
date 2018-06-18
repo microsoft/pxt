@@ -255,7 +255,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                 helpUrl="/packages"
                 closeOnDimmerClick closeOnEscape
                 description={lf("Add a package to the project")}>
-                <div className="ui vertical segment">
+                <div className="ui">
                     <div className="ui search">
                         <div className="ui fluid action input" role="search">
                             <div aria-live="polite" className="accessible-hidden">{lf("{0} result matching '{1}'", bundles.length + ghdata.length + urldata.length, this.state.searchFor)}</div>
@@ -265,7 +265,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                             </button>
                         </div>
                     </div>
-                    <div className="ui cards" role="listbox">
+                    <div className="ui cards centered" role="listbox">
                         {urldata.map(scr =>
                             <ScriptSearchCodeCard
                                 key={'url' + scr.id}
@@ -274,7 +274,6 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                 url={"/" + scr.id}
                                 scr={scr}
                                 onCardClick={this.addUrl}
-                                color="red"
                                 role="link"
                             />
                         )}
@@ -299,7 +298,6 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                 scr={scr}
                                 onCardClick={this.installGh}
                                 url={'github:' + scr.fullName}
-                                color="blue"
                                 imageUrl={pxt.github.repoIconUrl(scr)}
                                 label={/\bbeta\b/i.test(scr.description) ? lf("Beta") : undefined}
                                 role="link"
@@ -315,7 +313,6 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                 onCardClick={this.installGh}
                                 imageUrl={pxt.github.repoIconUrl(scr)}
                                 url={'github:' + scr.fullName}
-                                color="red"
                                 role="link"
                             />
                         )}
