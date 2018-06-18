@@ -3609,7 +3609,7 @@ function prepBuildOptionsAsync(mode: BuildOption, quick = false, ignoreTests = f
             if (!quick) {
                 build.buildDalConst(build.thisBuild, mainPkg);
                 copyCommonFiles();
-                
+
                 const cs = pxt.appTarget.compileService
                 if (cs && cs.buildEngine) {
                     build.setThisBuild(build.buildEngines[cs.buildEngine]);
