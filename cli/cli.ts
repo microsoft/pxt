@@ -29,11 +29,11 @@ import * as gitfs from './gitfs';
 
 const rimraf: (f: string, opts: any, cb: (err: any, res: any) => void) => void = require('rimraf');
 
-let forceCloudBuild = process.env["KS_FORCE_CLOUD"] === "yes"
+//let forceCloudBuild = process.env["KS_FORCE_CLOUD"] === "yes"
+let forceCloudBuild = true
 let forceLocalBuild = process.env["PXT_FORCE_LOCAL"] === "yes"
 
 function parseBuildInfo(parsed?: commandParser.ParsedCommand) {
-    if (!parsed) return;
     forceCloudBuild = !parsed || !parsed.flags["localbuild"];
 }
 
