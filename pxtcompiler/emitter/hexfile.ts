@@ -281,7 +281,7 @@ namespace ts.pxtc {
                     if (!value) {
                         U.oops("No value for " + inf.name + " / " + hexb)
                     }
-                    if (opts.nativeType == NATIVE_TYPE_THUMB && !(value & 1)) {
+                    if (!opts.runtimeIsARM && opts.nativeType == NATIVE_TYPE_THUMB && !(value & 1)) {
                         U.oops("Non-thumb addr for " + inf.name + " / " + hexb)
                     }
                     inf.value = value
@@ -459,6 +459,9 @@ namespace ts.pxtc {
                     pxt.HF2.write16(resbuf, i * 2 + jmpStartAddr, hd[i])
                 applyPatches(null, resbuf)
                 if (uf2) {
+                    let bn = bin.options.name || "pxt"
+                    bn = bn.replace(/[^a-zA-Z0-9\-\.]+/g, "_")
+                    uf2.filename = "Projects/" + bn + ".elf"
                     UF2.writeBytes(uf2, 0, resbuf);
                     return [UF2.serializeFile(uf2)];
                 }

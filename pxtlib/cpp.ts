@@ -894,7 +894,7 @@ namespace pxt.cpp {
                     let isHeader = !isCSharp && U.endsWith(fn, ".h")
                     if (isHeader || U.endsWith(fn, ext)) {
                         let fullName = pkg.config.name + "/" + fn
-                        if ((pkg.config.name == "base" || pkg.config.name == "core") && isHeader)
+                        if ((pkg.config.name == "base" || /^core($|---)/.test(pkg.config.name)) && isHeader)
                             fullName = fn
                         if (isHeader)
                             includesInc += `#include "${isYotta ? sourcePath.slice(1) : ""}${fullName}"\n`

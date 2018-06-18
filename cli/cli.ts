@@ -3615,6 +3615,13 @@ function prepBuildOptionsAsync(mode: BuildOption, quick = false, ignoreTests = f
             if (!quick) {
                 build.buildDalConst(build.thisBuild, mainPkg);
                 copyCommonFiles();
+
+                const cs = pxt.appTarget.compileService
+                if (cs && cs.buildEngine) {
+                    build.setThisBuild(build.buildEngines[cs.buildEngine]);
+                    if (!build.thisBuild)
+                        U.userError("cannot find build engine: " + cs.buildEngine)
+                }
             }
             // TODO pass down 'quick' to disable the C++ extension work
             let target = mainPkg.getTargetOptions()
