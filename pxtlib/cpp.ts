@@ -1298,11 +1298,13 @@ namespace pxt.hex {
                             .then(ret => new Promise<string>((resolve, reject) => {
                                 let tryGet = () => {
                                     let url = ret.hex.replace(/\.hex/, ".json")
-                                    pxt.log("polling at " + url)
+                                    pxt.log(`polling C++ build ${url}`)
                                     return Util.httpGetJsonAsync(url)
                                         .then(json => {
-                                            if (!json.success)
-                                                U.userError(JSON.stringify(json, null, 1))
+                                            pxt.log(`build log ${url.replace(/\.json$/, ".log")}`);
+                                            if (!json.success) {
+                                                U.userError(JSON.stringify(json, null, 1));
+                                            }
                                             else {
                                                 pxt.log("fetching " + hexurl + ".hex")
                                                 resolve(U.httpGetTextAsync(hexurl + ".hex"))
