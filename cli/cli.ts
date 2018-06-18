@@ -3113,6 +3113,7 @@ function testForBuildTargetAsync(useNative: boolean): Promise<pxtc.CompileOption
     return mainPkg.loadAsync()
         .then(() => {
             copyCommonFiles();
+            setBuildEngine();
             let target = mainPkg.getTargetOptions()
             if (target.hasHex)
                 target.isNative = true
@@ -3607,6 +3608,15 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
     })
 }
 
+function setBuildEngine() {
+    const cs = pxt.appTarget.compileService
+    if (cs && cs.buildEngine) {
+        build.setThisBuild(build.buildEngines[cs.buildEngine]);
+        if (!build.thisBuild)
+            U.userError("cannot find build engine: " + cs.buildEngine)
+    }
+}
+
 function prepBuildOptionsAsync(mode: BuildOption, quick = false, ignoreTests = false) {
     ensurePkgDir();
     mainPkg.ignoreTests = ignoreTests;
@@ -3615,13 +3625,7 @@ function prepBuildOptionsAsync(mode: BuildOption, quick = false, ignoreTests = f
             if (!quick) {
                 build.buildDalConst(build.thisBuild, mainPkg);
                 copyCommonFiles();
-
-                const cs = pxt.appTarget.compileService
-                if (cs && cs.buildEngine) {
-                    build.setThisBuild(build.buildEngines[cs.buildEngine]);
-                    if (!build.thisBuild)
-                        U.userError("cannot find build engine: " + cs.buildEngine)
-                }
+                setBuildEngine();
             }
             // TODO pass down 'quick' to disable the C++ extension work
             let target = mainPkg.getTargetOptions()
