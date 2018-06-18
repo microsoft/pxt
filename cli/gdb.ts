@@ -42,7 +42,7 @@ function getOpenOcdPath() {
     let gccPath = ""
     let gdbBin = ""
 
-    if(fs.existsSync("/usr/bin/openocd")){
+    if (fs.existsSync("/usr/bin/openocd")) {
         openocdPath = "/usr/"
         gccPath = "/usr/"
     }
@@ -50,22 +50,22 @@ function getOpenOcdPath() {
         for (let ardV = 15; ardV < 50; ++ardV) {
             for (let d of dirs) {
                 pkgDir = d + ardV + "/packages/arduino/"
-                if (fs.existsSync(pkgDir)) 
+                if (fs.existsSync(pkgDir))
                     break
                 pkgDir = ""
             }
 
-            if (pkgDir) 
+            if (pkgDir)
                 break
         }
 
-        if (!pkgDir) 
+        if (!pkgDir)
             fatal("cannot find Arduino packages directory")
 
         openocdPath = latest("openocd")
         gccPath = latest("arm-none-eabi-gcc")
     }
-    
+
     openocdBin = openocdPath + "bin/openocd"
 
     if (process.platform == "win32")
@@ -80,7 +80,6 @@ function getOpenOcdPath() {
         "-s", openocdPath + "share/openocd/scripts/",
         "-c", cmd]
 
-    
     gdbBin = gccPath + "bin/arm-none-eabi-gdb"
 
     if (process.platform == "win32")
