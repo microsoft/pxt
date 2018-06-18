@@ -4337,12 +4337,14 @@ export function consoleAsync(parsed?: commandParser.ParsedCommand): Promise<void
 }
 
 export function deployAsync(parsed?: commandParser.ParsedCommand) {
+    parseBuildInfo(parsed);
     const serial = parsed && !!parsed.flags["console"];
     return buildCoreAsync({ mode: BuildOption.Deploy })
         .then((compileOpts) => serial ? consoleAsync(parsed) : Promise.resolve())
 }
 
-export function runAsync() {
+export function runAsync(parsed?: commandParser.ParsedCommand) {
+    parseBuildInfo(parsed);
     return buildCoreAsync({ mode: BuildOption.Run })
         .then((compileOpts) => { });
 }
@@ -5155,7 +5157,11 @@ function initCommands() {
         name: "deploy",
         help: "build and deploy current package",
         flags: {
-            "console": { description: "start console monitor after deployment", aliases: ["serial"] }
+            "console": { description: "start console monitor after deployment", aliases: ["serial"] },
+            localbuild: {
+                description: "Build native image using local toolchains",
+                aliases: ["local", "l", "local-build"]
+            },
         },
         onlineHelp: true
     }, deployAsync)
