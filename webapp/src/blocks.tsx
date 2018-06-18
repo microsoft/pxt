@@ -438,6 +438,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     undo() {
         if (!this.editor) return;
         this.editor.undo();
+        Blockly.hideChaff();
         this.parent.forceUpdate();
     }
 
@@ -448,6 +449,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     redo() {
         if (!this.editor) return;
         this.editor.undo(true);
+        Blockly.hideChaff();
         this.parent.forceUpdate();
     }
 
