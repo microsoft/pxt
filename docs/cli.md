@@ -103,6 +103,7 @@ Run ``pxt help`` for the list of all commands. The following list of links conta
 
 ## Advanced Commands
 
+* [serve](/cli/serve), run local server
 * [pyconv](/cli/pyconv), convert MicroPython code into Static TypeScript.
 * [update](/cli/update), updates the ``pxt-core`` dependency and runs installation steps
 * [buildsprites](/cli/buildsprites), encode sprite images into a ``jres`` resource
