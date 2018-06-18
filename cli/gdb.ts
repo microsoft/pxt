@@ -15,7 +15,7 @@ function fatal(msg: string) {
 
 function getOpenOcdPath() {
     function latest(tool: string) {
-        let dir = pkgDir + "tools/" + tool + "/"
+        let dir = path.join(pkgDir , "tools/" , tool , "/")
         if (!fs.existsSync(dir)) fatal(dir + " doesn't exists; " + tool + " not installed in Arduino?")
 
         let subdirs = fs.readdirSync(dir)
@@ -24,7 +24,7 @@ function getOpenOcdPath() {
         subdirs.sort(pxt.semver.strcmp)
         subdirs.reverse()
 
-        let thePath = dir + subdirs[0] + "/"
+        let thePath = path.join(dir, subdirs[0] , "/")
         if (!fs.existsSync(thePath + "bin")) fatal("missing bindir in " + thePath)
 
         return thePath
@@ -49,7 +49,7 @@ function getOpenOcdPath() {
     else {
         for (let ardV = 15; ardV < 50; ++ardV) {
             for (let d of dirs) {
-                pkgDir = d + ardV + "/packages/arduino/"
+                pkgDir = path.join(d + ardV, "/packages/arduino/")
                 if (fs.existsSync(pkgDir))
                     break
                 pkgDir = ""
@@ -66,7 +66,7 @@ function getOpenOcdPath() {
         gccPath = latest("arm-none-eabi-gcc")
     }
 
-    openocdBin = openocdPath + "bin/openocd"
+    openocdBin = path.join(openocdPath, "bin/openocd")
 
     if (process.platform == "win32")
         openocdBin += ".exe"
@@ -77,10 +77,10 @@ function getOpenOcdPath() {
     let cmd = `log_output built/openocd.log; ${script}; init; halt;`
 
     let args = [openocdBin, "-d2",
-        "-s", openocdPath + "share/openocd/scripts/",
+        "-s", path.join(openocdPath + "share/openocd/scripts/"),
         "-c", cmd]
 
-    gdbBin = gccPath + "bin/arm-none-eabi-gdb"
+    gdbBin = path.join(gccPath, "bin/arm-none-eabi-gdb")
 
     if (process.platform == "win32")
         gdbBin += ".exe"
