@@ -25,6 +25,8 @@ namespace pxsim {
         private queues: Map<EventQueue<T>> = {};
         private notifyID: number;
         private notifyOneID: number;
+        private lastEventValue: string | number;
+        private lastEventTimestampUs: number;
 
         public nextNotifyEvent = 1024;
         public setNotify(notifyID: number, notifyOneID: number) {
@@ -55,6 +57,8 @@ namespace pxsim {
             // grab queue and handle
             let q = this.start(id, evid, false);
             if (q) {
+                this.lastEventValue = evid;
+                this.lastEventTimestampUs = U.perfNowUs();
                 q.push(value, notifyOne);
             }
         }
@@ -62,6 +66,14 @@ namespace pxsim {
         wait(id: number | string, evid: number | string, cb: (value?: any) => void) {
             let q = this.start(id, evid, true);
             q.addAwaiter(cb);
+        }
+
+        getLastEventValue() {
+            return this.lastEventValue;
+        }
+
+        getLastEventTime() {
+            return 0xffffffff & (this.lastEventTimestampUs - runtime.startTimeUs);
         }
     }
 
