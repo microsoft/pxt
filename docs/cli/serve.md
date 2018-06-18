@@ -10,6 +10,10 @@ pxt serve
 
 ## Options
 
+### localbuild
+
+Force build native images with local tooling
+
 ### browser <chrome|ie|firefox|safari> 
 
 Set the browser to launch on web server start

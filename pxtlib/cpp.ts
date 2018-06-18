@@ -1244,30 +1244,20 @@ int main() {
 }
 
 namespace pxt.hex {
-    let downloadCache: Map<Promise<any>> = {};
+    const downloadCache: Map<Promise<pxtc.HexInfo>> = {};
     let cdnUrlPromise: Promise<string>;
 
     export let showLoading: (msg: string) => void = (msg) => { };
     export let hideLoading: () => void = () => { };
 
-    function downloadHexInfoAsync(extInfo: pxtc.ExtensionInfo) {
-        let cachePromise = Promise.resolve();
-
-        if (!downloadCache.hasOwnProperty(extInfo.sha)) {
-            cachePromise = downloadHexInfoCoreAsync(extInfo)
-                .then((hexFile) => {
-                    downloadCache[extInfo.sha] = hexFile;
-                });
-        }
-
-        return cachePromise
-            .then(() => {
-                return downloadCache[extInfo.sha];
-            });
+    function downloadHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo> {
+        if (!downloadCache.hasOwnProperty(extInfo.sha))
+            downloadCache[extInfo.sha] = downloadHexInfoCoreAsync(extInfo);
+        return downloadCache[extInfo.sha];
     }
 
     function getCdnUrlAsync() {
-        if (cdnUrlPromise) return cdnUrlPromise
+        if (cdnUrlPromise) return cdnUrlPromise;
         else {
             let curr = getOnlineCdnUrl()
             if (curr) return (cdnUrlPromise = Promise.resolve(curr))
@@ -1277,7 +1267,7 @@ namespace pxt.hex {
         }
     }
 
-    function downloadHexInfoCoreAsync(extInfo: pxtc.ExtensionInfo) {
+    function downloadHexInfoCoreAsync(extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo> {
         let hexurl = ""
 
         showLoading(pxt.U.lf("Compiling (this may take a minute)..."));
@@ -1298,11 +1288,16 @@ namespace pxt.hex {
                             .then(ret => new Promise<string>((resolve, reject) => {
                                 let tryGet = () => {
                                     let url = ret.hex.replace(/\.hex/, ".json")
-                                    pxt.log("polling at " + url)
+                                    pxt.log(`polling C++ build ${url}`)
                                     return Util.httpGetJsonAsync(url)
                                         .then(json => {
-                                            if (!json.success)
-                                                U.userError(JSON.stringify(json, null, 1))
+                                            pxt.log(`build log ${url.replace(/\.json$/, ".log")}`);
+                                            if (!json.success) {
+                                                pxt.log(`build failed`);
+                                                if (json.mbedresponse && json.mbedresponse.result && json.mbedresponse.result.exception)
+                                                    pxt.log(json.mbedresponse.result.exception);
+                                                resolve(null);
+                                            }
                                             else {
                                                 pxt.log("fetching " + hexurl + ".hex")
                                                 resolve(U.httpGetTextAsync(hexurl + ".hex"))
@@ -1318,9 +1313,7 @@ namespace pxt.hex {
                     .then(text => {
                         hideLoading();
                         return {
-                            enums: [],
-                            functions: [],
-                            hex: text.split(/\r?\n/)
+                            hex: text && text.split(/\r?\n/)
                         };
                     })
             }).finally(() => {
@@ -1328,7 +1321,7 @@ namespace pxt.hex {
             })
     }
 
-    function downloadHexInfoLocalAsync(extInfo: pxtc.ExtensionInfo): Promise<any> {
+    function downloadHexInfoLocalAsync(extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo> {
         if (pxt.webConfig && pxt.webConfig.isStatic) {
             return Util.requestAsync({
                 url: `${pxt.webConfig.cdnUrl}hexcache/${extInfo.sha}.hex`
@@ -1352,20 +1345,19 @@ namespace pxt.hex {
         }
 
         if (!Cloud.localToken || !window || !Cloud.isLocalHost()) {
-            return Promise.resolve();
+            return Promise.resolve(undefined);
         }
 
         return apiAsync("compile/" + extInfo.sha)
             .then((json) => {
                 if (!json || json.notInOfflineCache || !json.hex) {
-                    return Promise.resolve();
+                    return Promise.resolve(undefined);
                 }
-
                 json.hex = json.hex.split(/\r?\n/);
                 return json;
             })
             .catch((e) => {
-                return Promise.resolve();
+                return Promise.resolve(undefined);
             });
     }
 
