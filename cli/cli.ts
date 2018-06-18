@@ -2052,8 +2052,8 @@ function buildFailed(msg: string, e: any) {
 }
 
 function buildAndWatchTargetAsync(includeSourceMaps = false) {
-    if (!fs.existsSync("sim/tsconfig.json")) {
-        console.log("No sim/tsconfig.json; assuming npm installed package")
+    if (!(fs.existsSync(path.join("sim", "tsconfig.json")) || nodeutil.existsDirSync("sim/public"))) {
+        console.log("No sim/tsconfig.json nor sim/public/; assuming npm installed package")
         return Promise.resolve()
     }
 
@@ -3143,8 +3143,8 @@ function testForBuildTargetAsync(useNative: boolean): Promise<pxtc.CompileOption
 
 function simshimAsync() {
     pxt.debug("looking for shim annotations in the simulator.")
-    if (!nodeutil.existsDirSync("sim")) {
-        pxt.debug("no sim folder, skipping.")
+    if (!fs.existsSync(path.join("sim", "tsconfig.json"))) {
+        pxt.debug("no sim/tsconfig.json; skipping")
         return Promise.resolve();
     }
     let prog = pxtc.plainTsc(path.resolve("sim"))
