@@ -32,6 +32,11 @@ const rimraf: (f: string, opts: any, cb: (err: any, res: any) => void) => void =
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] === "yes"
 let forceLocalBuild = process.env["PXT_FORCE_LOCAL"] === "yes"
 
+function parseBuildInfo(parsed?: commandParser.ParsedCommand) {
+    if (!parsed) return;
+    forceCloudBuild = !parsed || !parsed.flags["localbuild"];
+}
+
 const p = new commandParser.CommandParser();
 
 function initTargetCommands() {
@@ -743,7 +748,7 @@ function uploadTargetAsync(label: string) {
 }
 
 export function uploadTargetReleaseAsync(parsed?: commandParser.ParsedCommand) {
-    if (parsed.flags && parsed.flags["cloud"]) forceCloudBuild = true;
+    parseBuildInfo(parsed);
     const label = parsed.args[0];
     return internalBuildTargetAsync()
         .then(() => {
@@ -1394,9 +1399,7 @@ export interface BuildTargetOptions {
 }
 
 export function buildTargetAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
-    if (parsed && parsed.flags["cloud"]) {
-        forceCloudBuild = true
-    }
+    parseBuildInfo(parsed);
     const opts: BuildTargetOptions = {};
     if (parsed && parsed.flags["skipCore"])
         opts.skipCore = true;
@@ -2138,16 +2141,17 @@ function renderDocs(builtPackaged: string, localDir: string) {
 }
 
 export function serveAsync(parsed: commandParser.ParsedCommand) {
-    forceCloudBuild = false; // always use yotta
+    // always use a cloud build
+    // in most cases, the user machine is not properly setup to
+    // build a native binary and our CLI just looks broken
+    // use --localbuild to force localbuild
+    parseBuildInfo(parsed);
 
     let justServe = false
     let packaged = false
     let includeSourceMaps = false;
     let browser: string = parsed.flags["browser"] as string;
 
-    if (parsed.flags["cloud"]) {
-        forceCloudBuild = true
-    }
     if (parsed.flags["just"]) {
         justServe = true
     } else if (parsed.flags["pkg"]) {
@@ -4276,8 +4280,7 @@ export function buildJResAsync(parsed: commandParser.ParsedCommand) {
 }
 
 export function buildAsync(parsed: commandParser.ParsedCommand) {
-    forceCloudBuild = !!parsed.flags["cloud"];
-
+    parseBuildInfo(parsed);
     let mode = BuildOption.JustBuild;
     if (parsed.flags["debug"]) {
         mode = BuildOption.DebugSim;
@@ -5189,7 +5192,11 @@ function initCommands() {
         help: "builds current package",
         onlineHelp: true,
         flags: {
-            cloud: { description: "Force build to happen in the cloud" },
+            cloud: { description: "(deprecated) forces build to happen in the cloud" },
+            localbuild: {
+                description: "Build native image using local toolchains",
+                aliases: ["local", "l", "local-build"]
+            },
             debug: { description: "Emit debug information with build" },
             warndiv: { description: "Warns about division operators" },
             ignoreTests: { description: "Ignores tests in compilation", aliases: ["ignore-tests", "ignoretests", "it"] }
@@ -5271,7 +5278,11 @@ function initCommands() {
                 aliases: ["include-source-maps"]
             },
             pkg: { description: "serve packaged" },
-            cloud: { description: "forces build to happen in the cloud" },
+            cloud: { description: "(deprecated) forces build to happen in the cloud" },
+            localbuild: {
+                description: "Build native image using local toolchains",
+                aliases: ["local", "l", "local-build"]
+            },
             just: { description: "just serve without building" },
             hostname: {
                 description: "hostname to run serve, default localhost",
@@ -5335,7 +5346,11 @@ function initCommands() {
         advanced: true,
         help: "Builds the current target",
         flags: {
-            cloud: { description: "forces build to happen in the cloud" },
+            cloud: { description: "(deprecated) forces build to happen in the cloud" },
+            localbuild: {
+                description: "Build native image using local toolchains",
+                aliases: ["local", "l", "local-build"]
+            },
             skipCore: {
                 description: "skip native build of core packages",
                 aliases: ["skip-core", "skipcore", "sc"]
@@ -5349,7 +5364,11 @@ function initCommands() {
         argString: "<label>",
         advanced: true,
         flags: {
-            cloud: { description: "forces build to happen in the cloud" }
+            cloud: { description: "(deprecated) forces build to happen in the cloud" },
+            localbuild: {
+                description: "Build native image using local toolchains",
+                aliases: ["local", "l", "local-build"]
+            }
         }
     }, uploadTargetReleaseAsync);
     p.defineCommand({
