@@ -112,7 +112,12 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
             {card.time ? <div className="meta">
                 {card.time ? <span key="date" className="date">{pxt.Util.timeSince(card.time)}</span> : null}
             </div> : undefined}
-            {card.extracontent ? <div className="extra content"> {card.extracontent} </div> : undefined}
+            {card.extracontent || card.tags ? <div className="extra content">
+                {card.extracontent}
+                {card.tags ? card.tags.map(tag =>
+                    <span key={`tag${tag.label}`} className={`ui label ${tag.color}`}>{tag.label}</span>
+                ) : undefined}
+            </div> : undefined}
         </div>;
 
         if (!card.onClick && url) {

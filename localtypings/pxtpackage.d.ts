@@ -97,7 +97,8 @@ declare namespace pxt {
         ariaLabel?: string;
         label?: string;
         labelClass?: string;
-        tabIndex?: number
+        tags?: CodeCardTag[];
+        tabIndex?: number;
 
         color?: string; // one of semantic ui colors
         description?: string;
@@ -127,6 +128,11 @@ declare namespace pxt {
 
         target?: string;
         className?: string;
+    }
+
+    interface CodeCardTag {
+        label?: string;
+        color?: string;
     }
 
     interface JRes {

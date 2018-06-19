@@ -409,6 +409,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                                 youTubeId={scr.youTubeId}
                                 label={scr.label}
                                 labelClass={scr.labelClass}
+                                tags={scr.tags}
                                 scr={scr} index={index}
                                 onCardClick={this.handleCardClick}
                             />
@@ -485,7 +486,7 @@ class ProjectsCodeCard extends sui.StatelessUIElement<ProjectsCodeCardProps> {
 
     renderCore() {
         const { scr, onCardClick, onClick, ...rest } = this.props;
-        return <codecard.CodeCardView {...rest} onClick={this.handleClick} />
+        return <codecard.CodeCardView {...rest} onClick={this.handleClick}/>
     }
 }
 
