@@ -131,7 +131,7 @@ declare namespace pxt {
     }
 
     interface CodeCardTag {
-        label?: string;
+        label: string;
         color?: string;
     }
 
