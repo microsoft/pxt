@@ -4631,7 +4631,7 @@ function cherryPickAsync(parsed: commandParser.ParsedCommand) {
 
 function checkDocsAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
     return internalCheckDocsAsync(
-        !!parsed.flags["snippets"],
+        true,
         parsed.flags["re"] as string,
         !!parsed.flags["fix"]
     )
@@ -5405,7 +5405,7 @@ function initCommands() {
         onlineHelp: true,
         help: "check docs for broken links, typing errors, etc...",
         flags: {
-            snippets: { description: "compile snippets" },
+            snippets: { description: "(obsolete) compile snippets", deprecated: true },
             re: {
                 description: "regular expression that matches the snippets to test",
                 argument: "regex"
