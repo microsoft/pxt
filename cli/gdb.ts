@@ -77,7 +77,7 @@ function getOpenOcdPath() {
     let cmd = `log_output built/openocd.log; ${script}; init; halt;`
 
     let args = [openocdBin, "-d2",
-        "-s", path.join(openocdPath + "share/openocd/scripts/"),
+        "-s", path.join(openocdPath, "share/openocd/scripts/"),
         "-c", cmd]
 
     gdbBin = path.join(gccPath, "bin/arm-none-eabi-gdb")
