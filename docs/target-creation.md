@@ -3,7 +3,7 @@
 PXT can be customized to create your own **target**, with your own set of APIs and runtime, 
 supported by Block-based and JavaScript editing. Examples of targets are:
 
-* https://makecode.microbit.org (sources at https://github.com/microsoft/pxt-microbit)
+* https://makecode.adafruit.com (sources at https://github.com/microsoft/pxt-adafruit)
 * http://microsoft.github.io/pxt-sample/ (sources at https://github.com/microsoft/pxt-sample)
 
 We assume that the reader is familiar with Node.JS, NPM, JavaScript and/or C++. If you haven't done so yet, 
@@ -50,6 +50,10 @@ Graphical assets are located under ``/docs/static``.
 
 * **avatar.svg** image used in talking heads
 * **loader.svg** image used in loading overlay
+
+### Home screen
+
+See [targets/home-screen](/targets/home-screen).
 
 ### Updating the ``core`` package
 
