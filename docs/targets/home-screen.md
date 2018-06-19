@@ -62,3 +62,12 @@ The ``cardType`` specifies the kind of resources needed for the gallery item:
 * **example**: a markdown file that contains a single code ``blocks`` section. It loads the code in the editor.
 * **tutorial**: a markdown file that specifies a sequence of tutorial steps.
 * **side**: loads a markdown file in the document sidebar.
+
+## Testing
+
+Before pushing documentation changes, you can run the [checkdocs](/cli/checkdocs) command to validate
+that all snippets compile and the format of card is valid.
+
+```
+pxt checkdocs
+```
