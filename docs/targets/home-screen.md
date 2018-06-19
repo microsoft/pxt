@@ -51,6 +51,7 @@ as a JavaScript array of ``CodeCard`` instance.
   "cardType": "example"
 },
 ...
+]
 ```
 ````
 
