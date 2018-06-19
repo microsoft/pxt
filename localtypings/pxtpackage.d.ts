@@ -97,7 +97,7 @@ declare namespace pxt {
         ariaLabel?: string;
         label?: string;
         labelClass?: string;
-        tags?: CodeCardTag[];
+        tags?: CodeCardTag[]; // tags shown in home screen, eg: [{ "label": "Beginner", "color": "blue" }]
         tabIndex?: number;
 
         color?: string; // one of semantic ui colors
