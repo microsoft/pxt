@@ -20,16 +20,16 @@ export function showAboutDialogAsync() {
         jsx: <div>
             {githubUrl && versions ?
                 <p>
-                    {lf("{0} version:", pxt.Util.htmlEscape(pxt.appTarget.name))} &nbsp;
+                    {lf("{0} version:", pxt.appTarget.name)} &nbsp;
                     <a href={encodeURI(`${githubUrl}/releases/tag/v${versions.target}`)}
-                        title={`${lf("{0} version : {1}", pxt.Util.htmlEscape(pxt.appTarget.name), pxt.Util.htmlEscape(versions.target))}`}
-                        target="_blank" rel="noopener noreferrer">{pxt.Util.htmlEscape(pxt.appTarget.versions.target)}</a>
+                        title={`${lf("{0} version : {1}", pxt.appTarget.name, versions.target)}`}
+                        target="_blank" rel="noopener noreferrer">{pxt.appTarget.versions.target}</a>
                 </p> : undefined}
             {versions ?
                 <p>{lf("{0} version:", "Microsoft MakeCode")} &nbsp;
                     <a href={encodeURI(`https://github.com/Microsoft/pxt/releases/tag/v${versions.pxt}`)}
-                        title={`${lf("{0} version: {1}", "Microsoft MakeCode", pxt.Util.htmlEscape(versions.pxt))}`}
-                        target="_blank" rel="noopener noreferrer">{pxt.Util.htmlEscape(versions.pxt)}</a>
+                        title={`${lf("{0} version: {1}", "Microsoft MakeCode", versions.pxt)}`}
+                        target="_blank" rel="noopener noreferrer">{versions.pxt}</a>
                 </p> : undefined}
             <p><br /></p>
             <p>
