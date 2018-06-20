@@ -988,7 +988,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     getNamespaceAttrs(ns: string) {
         const builtin = snippets.getBuiltinCategory(ns);
         if (builtin) {
-            builtin.attributes.color = pxt.toolbox.getNamespaceColor(builtin.nameid.toLowerCase());
+            builtin.attributes.color = pxt.toolbox.getNamespaceColor(builtin.nameid);
             return builtin.attributes;
         }
         if (!this.blockInfo) return undefined;

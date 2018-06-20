@@ -880,7 +880,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     getNamespaceAttrs(ns: string) {
         const builtin = snippets.getBuiltinCategory(ns);
         if (builtin) {
-            builtin.attributes.color = pxt.toolbox.getNamespaceColor(builtin.nameid.toLowerCase());
+            builtin.attributes.color = pxt.toolbox.getNamespaceColor(builtin.nameid);
             return builtin.attributes;
         }
         if (!this.blockInfo) return undefined;
@@ -1005,7 +1005,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             const nsinfo = that.blockInfo.apis.byQName[ns];
             const color =
                 (nsinfo ? nsinfo.attributes.color : undefined)
-                || pxt.toolbox.getNamespaceColor(ns.toLowerCase())
+                || pxt.toolbox.getNamespaceColor(ns)
                 || `255`;
             return color;
         }
