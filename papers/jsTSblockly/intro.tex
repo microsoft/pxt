@@ -6,7 +6,7 @@
 
 Introducing programming to beginners used to be a process fraught with
 accidental complexity, due to the need to install tool chains and IDEs, 
-typically created with the experienced developer in mind. Today, 
+typically created with the professional developer in mind. Today, 
 the web has made available a plethora of programming environments;
 most any programming language can be experienced via the web. 
 Some popular examples include:
@@ -18,15 +18,14 @@ Some popular examples include:
 Not surprisingly, all the above approaches still use text editors for coding;
 this means that the possibility for introducing errors is still great, especially 
 for beginners who don't understand the language. Features such as step-by-step 
-tutorials, auto-fixing, and intellisense can
-improve the experience, but the starting point still is not the most welcoming. 
+tutorials and intellisense can improve the experience, but the starting point still 
+is not the most welcoming. 
 
 % going larger
 
 The ``Hour of Code'' experience,\footnote{\url{https://hourofcode.com/learn}} 
 has introduced over three hundred million students to coding,\footnote{https://code.org/about/2016} 
-with the express 
-purpose of demystifying and breaking stereotypes about coding.
+with the express  purpose of demystifying and breaking stereotypes about coding.
 In order to reach this many people, \url{code.org} used
 Google's Blockly~\cite{Blocky2015}~\footnote{\url{www.github.com/google/blockly}},
 a JavaScript framework inspired by MIT's Scratch programming 
@@ -48,45 +47,40 @@ the user selects from a simple palette of three blocks
 (shown under the ``Blocks'' heading) and drags these blocks into
 the workspace. In this very simple example, the
 program is simply a sequence of commands. In later steps, 
-concepts such as loops and XYZ are introduced.
+concepts such as loops and conditionals are introduced.
 
 In Blockly, colored blocks represent structured control-flow statements such as loops 
 and if-then-else conditionals, as well as program expressions, values and variables. 
 Blocks also represent function calls to domain-specific APIS, via Blockly's support 
-for \emph{custom 
-blocks}.  In the case of Figure~\ref{fig:hoc}, the domain-specific APIs are the commands
-for moving ``Steve''.
+for \emph{custom blocks}.\footnote{
+\url{https://developers.google.com/blockly/guides/create-custom-blocks/overview}}
+In the case of Figure~\ref{fig:hoc}, the domain-specific 
+APIs are the commands for moving ``Steve''.
 Blockly can be compiled to a variety of languages, the main target 
 being JavaScript, as Blockly itself is written in JavaScript 
 and hosted in a web browser.
 
+As the Blockly documentation states, 
+``Blockly is a complicated library targeted at experienced developers'',
+using both the JSON format and JavaScript APIs for creating custom blocks
+programmatically. 
 
-Two goals: 
-\begin{itemize}
-    \item education about coding; 
-    \item education about domains/APIs;
-\end{itemize}
-
-% https://www.khanacademy.org/computing/computer-programming/programming/drawing-basics/p/making-drawings-with-code
-% http://tryruby.org/levels/1/challenges/0
-
-[goal: bring simplicity of blocky to more domains, to leverage all the JavaSript]
+Our goal is to make it easier to bring the Blockly editing experience to more
+domains, leveraging the numerous JavaScript libraries available on the web, but
+without needing to become experienced with the Blockly framework.
 
 TypeScript (\url{www.typescriptlang.org}) is superset of the JavaScript language that is gradually typed, 
 meaning that types may optionally be added to JavaScript code to provide for a more productive programming 
 and debugging experience.  Many JavaScript frameworks provide TypeScript declaration files, as
 can be found at the Definitely Typed GitHub repo.~\footnote{\url{https://github.com/DefinitelyTyped/DefinitelyTyped}}.
-
-[need a running example]
-
-The contribution of this paper is to describe a mapping from TypeScript annotated 
+Our contribution is to describe a mapping from TypeScript annotated 
 JavaScript APIs to Blockly that greatly simplifies 
-the process of making existing JavaScript frameworks and libraries available via Blockly.
+the process of making JavaScript code available via Blockly.
 
 It is not our goal to map every TypeScript programming construct into Blockly.
 For example, a one-to-one mapping of the TypeScript abstract syntax tree (AST) 
 nodes to blocks would provide no abstraction, exposing the beginner to a visual 
-representation ofTypeScript in its full glory.
+representation of TypeScript in its full glory.
 
 Rather, it is support common programming paradigms with a simple mapping
 from TypeScript to blocks and back.  This mapping may, in fact, be many-to-one, 
@@ -159,3 +153,7 @@ corresponding to the blocks of $B$'s statement input and XYZ.
 %   \item arrays (lists);
 %   \item object destructuring
 % \end{itemize}
+
+
+% https://www.khanacademy.org/computing/computer-programming/programming/drawing-basics/p/making-drawings-with-code
+% http://tryruby.org/levels/1/challenges/0
