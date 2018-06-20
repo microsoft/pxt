@@ -115,7 +115,7 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
             {card.extracontent || card.tags ? <div className="extra content">
                 {card.extracontent}
                 {card.tags ? card.tags.map(tag =>
-                    <span key={`tag${tag.label}`} className={`ui label tiny ${tag.color}`}>{tag.label}</span>
+                    <span key={`tag${tag.label}`} className={`ui label tiny ${tag.color}`}>{pxt.Util.rlf(tag.label)}</span>
                 ) : undefined}
             </div> : undefined}
         </div>;
