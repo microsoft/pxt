@@ -1650,8 +1650,19 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
     walkDocs(theme.docMenu);
     if (nodeutil.fileExistsSync("targetconfig.json")) {
         const targetConfig = nodeutil.readJson("targetconfig.json") as pxt.TargetConfig;
-        if (targetConfig && targetConfig.galleries)
-            Object.keys(targetConfig.galleries).forEach(k => targetStrings[k] = k);
+        if (targetConfig && targetConfig.galleries) {
+            Object.keys(targetConfig.galleries).forEach(k => {
+                targetStrings[k] = k;
+                const docsRoot = nodeutil.targetDir;
+                const gallerymd = nodeutil.resolveMd(docsRoot, targetConfig.galleries[k]);
+                const gallery = pxt.gallery.parseGalleryMardown(gallerymd);
+                gallery.forEach(cards => cards.cards
+                    .filter(card => card.tags)
+                    .forEach(card => card.tags.forEach(tag => {
+                        targetStrings[tag.label] = tag.label;
+                    })))
+            });
+        }
     }
     let targetStringsSorted: pxt.Map<string> = {};
     Object.keys(targetStrings).sort().map(k => targetStringsSorted[k] = k);
