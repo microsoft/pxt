@@ -925,7 +925,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         pxt.blocks.injectBlocks(this.blockInfo).forEach(fn => {
             let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
-            ns = ns.toLowerCase();
 
             if (!res[ns]) {
                 res[ns] = [];
@@ -1044,8 +1043,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let cat = snippets.getBuiltinCategory(ns);
         let blocks: toolbox.BlockDefinition[] = cat.blocks || [];
         blocks.forEach(b => { b.noNamespace = true })
-        if (!cat.custom && this.nsMap[ns.toLowerCase()]) {
-            blocks = this.filterBlocks(subns, blocks.concat(this.nsMap[ns.toLowerCase()]));
+        if (!cat.custom && this.nsMap[ns]) {
+            blocks = this.filterBlocks(subns, blocks.concat(this.nsMap[ns]));
         }
         return blocks;
     }

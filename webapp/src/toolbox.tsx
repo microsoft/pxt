@@ -12,7 +12,7 @@ export const enum CategoryNameID {
     Loops = "loops",
     Logic = "logic",
     Variables = "variables",
-    Maths = "math",
+    Maths = "Math",
     Functions = "functions",
     Arrays = "arrays",
     Text = "text",

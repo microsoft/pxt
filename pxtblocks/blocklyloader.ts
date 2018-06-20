@@ -497,7 +497,7 @@ namespace pxt.blocks {
             (fn.attributes.blockNamespace && nsinfo && nsinfo.attributes.color)
             || fn.attributes.color
             || (nsinfo && nsinfo.attributes.color)
-            || pxt.toolbox.getNamespaceColor(ns.toLowerCase())
+            || pxt.toolbox.getNamespaceColor(ns)
             || 255;
 
         if (fn.attributes.help)
