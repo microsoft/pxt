@@ -823,7 +823,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         this.blockInfo.blocks.forEach(fn => {
             let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
-            ns = ns.toLowerCase();
 
             // Don't add the block if there exists a block with the same definition
             if (builtInBlocks[fn.qName]) return;
@@ -881,7 +880,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     getNamespaceAttrs(ns: string) {
         const builtin = snippets.getBuiltinCategory(ns);
         if (builtin) {
-            builtin.attributes.color = pxt.toolbox.getNamespaceColor(builtin.nameid);
+            builtin.attributes.color = pxt.toolbox.getNamespaceColor(builtin.nameid.toLowerCase());
             return builtin.attributes;
         }
         if (!this.blockInfo) return undefined;
@@ -950,7 +949,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let cat = snippets.getBuiltinCategory(ns);
         let blocks = cat.blocks || [];
         blocks.forEach(b => { b.noNamespace = true })
-        if (!cat.custom && this.nsMap[ns.toLowerCase()]) blocks = blocks.concat(this.nsMap[ns.toLowerCase()].filter(block => !(block.attributes.blockHidden || block.attributes.deprecated)));
+        if (!cat.custom && this.nsMap[ns]) blocks = blocks.concat(this.nsMap[ns].filter(block => !(block.attributes.blockHidden || block.attributes.deprecated)));
         return this.filterBlocks(subns, blocks);
     }
 
