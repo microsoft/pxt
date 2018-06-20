@@ -647,6 +647,8 @@ export class ProjectView
             const fullscreen = tutorialOptions.tutorialStepInfo[step].fullscreen;
             if (fullscreen) this.showTutorialHint();
             else this.showLightbox();
+            // Hide flyouts and popouts
+            this.editor.closeFlyout();
         }
     }
 
