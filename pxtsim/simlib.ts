@@ -158,6 +158,8 @@ namespace pxsim {
     }
 
     export namespace AudioContextManager {
+        export let minFrequency = 20;
+        export let maxFrequency = 20000;
         let _frequency = 0;
         let _context: any; // AudioContext
         let _vco: any; // OscillatorNode;
@@ -202,7 +204,7 @@ namespace pxsim {
         export function tone(frequency: number, gain: number) {
             if (_mute) return;
             if (frequency <= 0) return;
-            _frequency = frequency;
+            _frequency = Math.max(minFrequency, Math.min(maxFrequency, frequency));
 
             let ctx = context();
             if (!ctx) return;
