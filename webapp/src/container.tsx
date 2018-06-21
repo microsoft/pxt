@@ -439,7 +439,9 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
 
     setMarkdown(md: string) {
         const docsUrl = pxt.webConfig.docsUrl || '/--docs';
-        const mode = this.props.parent.isBlocksEditor() ? "blocks" : "js";
+        // always render blocks by default when sending custom markdown
+        // to side bar
+        const mode = "blocks" // this.props.parent.isBlocksEditor() ? "blocks" : "js";
         const url = `${docsUrl}#md:${encodeURIComponent(md)}:${mode}:${pxt.Util.localeInfo()}`;
         this.setUrl(url);
     }
