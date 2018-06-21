@@ -6,30 +6,66 @@
 % advanced=true causes this block to be placed under the parent category’s “More…” subcategory. Useful for hiding advanced or rarely-used blocks by default
 % Block syntax
 
+\section{TypeScript to Blockly}
 
-\section{Mapping: Values, Expressions, Functions}
+Types and namespaces are an integral part of the TypeScript language that
+\MC uses to define the mapping from TypeScript to Blockly. If you aren't
+familiar with TypeScript, please review the 
+\href{https://www.typescriptlang.org/docs/handbook/basic-types.html}{TypeScript Handbook}.
 
-\subsection{Primitive Values}
+\subsection{TypeScript Declaration File}
 
-% The following types are supported in function signatures that are meant to be exported:
+Internally, 
+\MC uses a TypeScript declaration file (*.d.ts) to define
+the mapping to custom blocks,
+using specialized comments that further parameterize the mapping
+defined by the declarations.  
+The declaration file, which contains no implementation (definitions),
+generally is automatically generated from a TypeScript implementation
+file or files (*.ts) by a preprocessing step of the \MC build. 
+The text below pertains to both kinds of files.  However, it is good to remember
+that it is solely the TypeScript declarations (not the particulars of how
+the declarations are implemented) that define the mapping to custom blocks. 
 
-% boolean
-% number (TypeScript)
-% string (TypeScript) 
+For a simple example of a declaration file, see
+\url{https://github.com/Microsoft/pxt-sample/blob/master/libs/core/sims.d.ts}.
 
-\subsection{API Function Calls}
 
-API represented by
+\subsection{Namespaces, Functions, and Primitive Values}
+
+The mapping of TypeScript to Blockly is straighforward for namespaces,
+functions and basic primitive values (such as boolean, number and string).
+The mapping utility recognizes the special comment `//\%' before a function
+definition $f$ to indicate that the function should be exported into the 
+set of user-facing TypeScript APIs (but without a corresponding custom block). The
+addition of the attribute `block` to the comment indicates that a custom
+block should be generated for the exported TypeScript function.  In this way, 
+\MC provides two APIs from a single function definition: one is the
+TypeScript function $f$ itself; the second is a custom block, which represents
+a potentially simplified call to $f$ (not using all the parameters provided by
+$f$, for example).
+
+In TypeScript, a set of related definitions may be grouped in a namespace.
+These namespaces map to Toolbox categories in Blockly;
+in particular, each top-level namespace is used to populate a category 
+in the toolbox. 
+
+As seen in the introduction, 
+the general representation of a custom block is through the declaration/definition
+of a TypeScript function $f$.  In particular, the custom block for $f$ usually
+corresponds to a call (invocation) of function $f$, where the block's inputs
+are transformed to parameters of function $f$.
+
+\subsection{Function Typing}
+
+The declared type of a function informs the kind of block that will be created:
 \begin{itemize}
-  \item namespaces to organize set of related functions, 
-       where namespaces map to Toolbox categories in Blockly;
-       In particular, each top-level namespace is used to populate a category 
-       in the toolbox. The name of the namespaces is capitalized for the toolbox. 
 
-  \item void return type for a function means a call to the function is allowable in
-      a statement context; non-void means expression context for call
+  \item a void return type for a function means the custom block will be a statement
+  block; otherwise, it will be an expression block;
   \item functions return a single value;
   \item parameters: optional parameters with default value; rest; 
+  \item handler: (top level block)
 \end{itemize}
 
 % Block syntax

@@ -16,15 +16,8 @@ their actual semantics given to blocks is entirely up to the Blockly developer.
 We use the TypeScript language (and its type system) to 
 give a more precise meaning to blocks. 
 
-\subsection{Block connections}
-
-Block connectors, inputs and output:
+Block connectors are categorized and constrained as follows:
 \begin{itemize}
-% A block with a previous connector cannot have an output connector, and vice versa. 
-% The term statement block refers to a block with no value output. 
-
-% nextStatement and previousStatement connections can be typed
-% but this feature is not utilized by standard blocks.
 
 \item \emph{previous and next connectors}, both optional, allow a block to be vertically sequenced - Blockly
   enforces that a block with a previous connector cannnot have an output connector; according
@@ -46,14 +39,3 @@ Block inputs come in three basic forms:
       and value blocks allow one to create expression trees;
   \item \emph{statement inputs}, allow one to create statement trees;
 \end{enumerate}
-
-\subsection{Blockly type checking}
-
-\subsection{Blockly conventions (JavaScript)}
-\begin{itemize}
-  \item no variable declarations (all variables global, except for);
-  \item dynamic typing;
-  \item expressions can't be put where statement expected 
-  - use an assignment to a dummy variable to make expression into statement);
-  \item loops and local scope
-\end{itemize}
