@@ -101,6 +101,11 @@ namespace pxsim {
         packet: Uint8Array; // base64 encoded
     }
 
+    export interface SimulatorBLUEPacketMessage extends SimulatorMessage {
+        type: "blepacket";
+        packet: Uint8Array;
+    }
+
     export interface SimulatorI2CMessage extends SimulatorMessage {
         type: "i2c";
         data: Uint8Array;
