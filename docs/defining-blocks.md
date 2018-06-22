@@ -2,6 +2,8 @@
 
 This section describes how to annotate your PXT APIs to expose them in the Block Editor.
 
+* [Try it live in the playground](https://makecode.com/playground)
+
 All the `//%` annotations are found in TypeScript library files.
 They can optionally be [auto-generated](/simshim) from C++ library files or from TypeScript
 simulator files.
