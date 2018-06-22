@@ -7,6 +7,8 @@ namespace pxtblockly {
     export interface GridStyleProps {
         cellWidth: number;
         cellHeight: number;
+        maxCellWidth: number;
+        maxCellHeight: number;
         columnMargin: number;
         outerMargin: number;
         rowMargin: number;
@@ -101,8 +103,8 @@ namespace pxtblockly {
             const targetWidth = width - (this.outerWidth() - totalCellWidth);
             const targetHeight = height - (this.outerHeight() - totalCellHeight);
 
-            const maxCellWidth = this.gridProps.cellWidth * (targetWidth / totalCellWidth);
-            const maxCellHeight = this.gridProps.cellHeight * (targetHeight / totalCellHeight);
+            const maxCellWidth = Math.min(this.gridProps.maxCellWidth, this.gridProps.cellWidth * (targetWidth / totalCellWidth));
+            const maxCellHeight = Math.min(this.gridProps.maxCellHeight, this.gridProps.cellHeight * (targetHeight / totalCellHeight));
 
             if (lockAspectRatio) {
                 const aspectRatio = this.gridProps.cellWidth / this.gridProps.cellHeight;
@@ -386,6 +388,8 @@ namespace pxtblockly {
             numCells: 16 * 16,
             cellWidth: 10,
             cellHeight: 10,
+            maxCellWidth: 32,
+            maxCellHeight: 32,
             outerMargin: 0,
             columnMargin: 0,
             rowMargin: 0,
