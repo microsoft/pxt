@@ -59,9 +59,70 @@ The ``name``, ``description``, ``url``, ``imageUrl`` are mandatory. They are use
 
 The ``cardType`` specifies the kind of resources needed for the gallery item:
 
-* **example**: a markdown file that contains a single code ``blocks`` section. It loads the code in the editor.
-* **tutorial**: a markdown file that specifies a sequence of tutorial steps.
-* **side**: loads a markdown file in the document sidebar.
+### example
+
+A markdown file that contains a single code ``blocks`` section. It loads the code in the editor.
+
+```
+{
+    "name": "Super Powers",
+    "imageUrl":"/static/mods/fast-forward.jpg",
+    "url": "/examples/super-powers",
+    "cardType": "example",
+    "description": "Make amazing stuff happen!"
+}
+```
+
+### tutorial
+
+A markdown file that specifies a sequence of tutorial steps.
+
+```
+{
+    "name": "Chicken Rain",
+    "imageUrl":"/static/mods/chickenrain.jpg",
+    "url": "/tutorials/chicken-rain",
+    "cardType": "tutorial",
+}
+```
+
+### side
+
+Loads a markdown file in the document sidebar.
+
+```
+{
+  "name": "Autonomous Parking",
+  "description": "Design cars that can park themselves safely without driver intervention.",
+  "url":"/coding/autonomous-parking",
+  "imageUrl": "/static/lessons/autonomous-parking.png",
+  "cardType": "side"
+}
+```
+
+### YouTube videos
+
+Use the ``youTubeId`` field to specify the YouTube video to display on the card. MakeCode will automatically display the video screenshot for it.
+
+```
+{
+    "name": "Tour of MakeCode",
+    "youTubeId": "USSnEhmKnpk"
+}
+```
+
+### Labels
+
+Use **label** and **labelClass** to control the content and appearance of the label.
+
+```
+{
+    "name": "Chicken Rain",
+    "label": "New? Start Here!",
+    "labelClass": "green ribbon huge",
+    ...
+}
+```
 
 ## Testing
 
