@@ -106,6 +106,8 @@ namespace pxtblockly {
             unselectedClass: "palette-unselected",
             cellWidth: 10,
             cellHeight: 10,
+            maxCellWidth: 32,
+            maxCellHeight: 32,
             columnMargin: 1,
             rowMargin: 1,
             outerMargin: 1,
@@ -118,6 +120,7 @@ namespace pxtblockly {
     function toGridProps(props: Partial<ColorPaletteProps>) {
         const res = mergeProps(defaultGridProps(), props);
         res.numCells = props.colors.length + (props.emptySwatchDisabled ? 0 : 1);
+        if (res.numCells <= 8) res.rowLength = 1;
         return res;
     }
 }
