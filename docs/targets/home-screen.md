@@ -57,9 +57,11 @@ as a JavaScript array of ``CodeCard`` instance.
 
 The ``name``, ``description``, ``url``, ``imageUrl`` are mandatory. They are used to display the card in the home screen. A page with a URL that starts with ``https://`` will automatically open in a new tab.
 
+### Card type
+
 The ``cardType`` specifies the kind of resources needed for the gallery item:
 
-### example
+#### example
 
 A markdown file that contains a single code ``blocks`` section. It loads the code in the editor.
 
@@ -73,7 +75,7 @@ A markdown file that contains a single code ``blocks`` section. It loads the cod
 }
 ```
 
-### tutorial
+#### tutorial
 
 A markdown file that specifies a sequence of tutorial steps.
 
@@ -86,7 +88,7 @@ A markdown file that specifies a sequence of tutorial steps.
 }
 ```
 
-### side
+#### side
 
 Loads a markdown file in the document sidebar.
 
@@ -130,5 +132,5 @@ Before pushing documentation changes, you can run the [checkdocs](/cli/checkdocs
 that all snippets compile and the format of card is valid.
 
 ```
-pxt checkdocs
+pxt checkdocs --snippets
 ```
