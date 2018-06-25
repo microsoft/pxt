@@ -132,5 +132,5 @@ Before pushing documentation changes, you can run the [checkdocs](/cli/checkdocs
 that all snippets compile and the format of card is valid.
 
 ```
-pxt checkdocs --snippets
+pxt checkdocs
 ```
