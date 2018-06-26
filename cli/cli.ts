@@ -29,8 +29,15 @@ import * as gitfs from './gitfs';
 
 const rimraf: (f: string, opts: any, cb: (err: any, res: any) => void) => void = require('rimraf');
 
-let forceCloudBuild = process.env["KS_FORCE_CLOUD"] === "yes"
+let forceCloudBuild = process.env["KS_FORCE_CLOUD"] !== "no";
 let forceLocalBuild = process.env["PXT_FORCE_LOCAL"] === "yes"
+
+function parseBuildInfo(parsed?: commandParser.ParsedCommand) {
+    if (parsed && parsed.flags["localbuild"]) {
+        forceCloudBuild = false;
+        forceLocalBuild = true;
+    }
+}
 
 const p = new commandParser.CommandParser();
 
@@ -743,7 +750,7 @@ function uploadTargetAsync(label: string) {
 }
 
 export function uploadTargetReleaseAsync(parsed?: commandParser.ParsedCommand) {
-    if (parsed.flags && parsed.flags["cloud"]) forceCloudBuild = true;
+    parseBuildInfo(parsed);
     const label = parsed.args[0];
     return internalBuildTargetAsync()
         .then(() => {
@@ -1394,9 +1401,7 @@ export interface BuildTargetOptions {
 }
 
 export function buildTargetAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
-    if (parsed && parsed.flags["cloud"]) {
-        forceCloudBuild = true
-    }
+    parseBuildInfo(parsed);
     const opts: BuildTargetOptions = {};
     if (parsed && parsed.flags["skipCore"])
         opts.skipCore = true;
@@ -1645,8 +1650,19 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
     walkDocs(theme.docMenu);
     if (nodeutil.fileExistsSync("targetconfig.json")) {
         const targetConfig = nodeutil.readJson("targetconfig.json") as pxt.TargetConfig;
-        if (targetConfig && targetConfig.galleries)
-            Object.keys(targetConfig.galleries).forEach(k => targetStrings[k] = k);
+        if (targetConfig && targetConfig.galleries) {
+            Object.keys(targetConfig.galleries).forEach(k => {
+                targetStrings[k] = k;
+                const docsRoot = nodeutil.targetDir;
+                const gallerymd = nodeutil.resolveMd(docsRoot, targetConfig.galleries[k]);
+                const gallery = pxt.gallery.parseGalleryMardown(gallerymd);
+                gallery.forEach(cards => cards.cards
+                    .filter(card => card.tags)
+                    .forEach(card => card.tags.forEach(tag => {
+                        targetStrings[tag.label] = tag.label;
+                    })))
+            });
+        }
     }
     let targetStringsSorted: pxt.Map<string> = {};
     Object.keys(targetStrings).sort().map(k => targetStringsSorted[k] = k);
@@ -2047,8 +2063,8 @@ function buildFailed(msg: string, e: any) {
 }
 
 function buildAndWatchTargetAsync(includeSourceMaps = false) {
-    if (!fs.existsSync("sim/tsconfig.json")) {
-        console.log("No sim/tsconfig.json; assuming npm installed package")
+    if (!(fs.existsSync(path.join("sim", "tsconfig.json")) || nodeutil.existsDirSync("sim/public"))) {
+        console.log("No sim/tsconfig.json nor sim/public/; assuming npm installed package")
         return Promise.resolve()
     }
 
@@ -2138,16 +2154,17 @@ function renderDocs(builtPackaged: string, localDir: string) {
 }
 
 export function serveAsync(parsed: commandParser.ParsedCommand) {
-    forceCloudBuild = false; // always use yotta
+    // always use a cloud build
+    // in most cases, the user machine is not properly setup to
+    // build a native binary and our CLI just looks broken
+    // use --localbuild to force localbuild
+    parseBuildInfo(parsed);
 
     let justServe = false
     let packaged = false
     let includeSourceMaps = false;
     let browser: string = parsed.flags["browser"] as string;
 
-    if (parsed.flags["cloud"]) {
-        forceCloudBuild = true
-    }
     if (parsed.flags["just"]) {
         justServe = true
     } else if (parsed.flags["pkg"]) {
@@ -3107,6 +3124,7 @@ function testForBuildTargetAsync(useNative: boolean): Promise<pxtc.CompileOption
     return mainPkg.loadAsync()
         .then(() => {
             copyCommonFiles();
+            setBuildEngine();
             let target = mainPkg.getTargetOptions()
             if (target.hasHex)
                 target.isNative = true
@@ -3137,8 +3155,8 @@ function testForBuildTargetAsync(useNative: boolean): Promise<pxtc.CompileOption
 
 function simshimAsync() {
     pxt.debug("looking for shim annotations in the simulator.")
-    if (!nodeutil.existsDirSync("sim")) {
-        pxt.debug("no sim folder, skipping.")
+    if (!fs.existsSync(path.join("sim", "tsconfig.json"))) {
+        pxt.debug("no sim/tsconfig.json; skipping")
         return Promise.resolve();
     }
     let prog = pxtc.plainTsc(path.resolve("sim"))
@@ -3601,6 +3619,15 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
     })
 }
 
+function setBuildEngine() {
+    const cs = pxt.appTarget.compileService
+    if (cs && cs.buildEngine) {
+        build.setThisBuild(build.buildEngines[cs.buildEngine]);
+        if (!build.thisBuild)
+            U.userError("cannot find build engine: " + cs.buildEngine)
+    }
+}
+
 function prepBuildOptionsAsync(mode: BuildOption, quick = false, ignoreTests = false) {
     ensurePkgDir();
     mainPkg.ignoreTests = ignoreTests;
@@ -3609,6 +3636,7 @@ function prepBuildOptionsAsync(mode: BuildOption, quick = false, ignoreTests = f
             if (!quick) {
                 build.buildDalConst(build.thisBuild, mainPkg);
                 copyCommonFiles();
+                setBuildEngine();
             }
             // TODO pass down 'quick' to disable the C++ extension work
             let target = mainPkg.getTargetOptions()
@@ -4276,8 +4304,7 @@ export function buildJResAsync(parsed: commandParser.ParsedCommand) {
 }
 
 export function buildAsync(parsed: commandParser.ParsedCommand) {
-    forceCloudBuild = !!parsed.flags["cloud"];
-
+    parseBuildInfo(parsed);
     let mode = BuildOption.JustBuild;
     if (parsed.flags["debug"]) {
         mode = BuildOption.DebugSim;
@@ -4315,13 +4342,24 @@ function internalGenDocsAsync(docs: boolean, locs: boolean, fileFilter?: string,
         return buildAsync();
 }
 
-export function deployAsync(parsed?: commandParser.ParsedCommand) {
-    const serial = parsed && !!parsed.flags["serial"];
-    return buildCoreAsync({ mode: BuildOption.Deploy })
-        .then((compileOpts) => serial ? serialAsync(parsed) : Promise.resolve())
+export function consoleAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
+    pxt.log(`monitoring console.log`)
+    if (!serial.isInstalled() && !hid.isInstalled()) {
+        pxt.log(`console support not installed, did you run "pxt npminstallnative"?`)
+        return Promise.resolve();
+    }
+    return serialAsync().then(() => hid.serialAsync());
 }
 
-export function runAsync() {
+export function deployAsync(parsed?: commandParser.ParsedCommand) {
+    parseBuildInfo(parsed);
+    const serial = parsed && !!parsed.flags["console"];
+    return buildCoreAsync({ mode: BuildOption.Deploy })
+        .then((compileOpts) => serial ? consoleAsync(parsed) : Promise.resolve())
+}
+
+export function runAsync(parsed?: commandParser.ParsedCommand) {
+    parseBuildInfo(parsed);
     return buildCoreAsync({ mode: BuildOption.Run })
         .then((compileOpts) => { });
 }
@@ -4336,8 +4374,10 @@ export function testAsync() {
         .then((compileOpts) => { });
 }
 
-export function serialAsync(parsed: commandParser.ParsedCommand): Promise<void> {
-    let buf: string = "";
+export function serialAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
+    if (!serial.isInstalled())
+        return Promise.resolve();
+    pxt.log(`start serial monitor`);
     serial.monitorSerial((info, buffer) => {
         process.stdout.write(buffer);
     })
@@ -4602,7 +4642,7 @@ function cherryPickAsync(parsed: commandParser.ParsedCommand) {
 
 function checkDocsAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
     return internalCheckDocsAsync(
-        !!parsed.flags["snippets"],
+        true,
         parsed.flags["re"] as string,
         !!parsed.flags["fix"]
     )
@@ -5132,16 +5172,21 @@ function initCommands() {
         name: "deploy",
         help: "build and deploy current package",
         flags: {
-            "serial": { description: "start serial monitor after deployment" }
+            "console": { description: "start console monitor after deployment", aliases: ["serial"] },
+            localbuild: {
+                description: "Build native image using local toolchains",
+                aliases: ["local", "l", "local-build"]
+            },
         },
         onlineHelp: true
     }, deployAsync)
     simpleCmd("run", "build and run current package in the simulator", runAsync);
+    simpleCmd("console", "monitor console messages", consoleAsync, null, true);
     advancedCommand("runfloat", "build and run current package in the simulator, forcing floating point mode", runFloatAsync);
     simpleCmd("update", "update pxt-core reference and install updated version", updateAsync, undefined, true);
     simpleCmd("install", "install new packages, or all package", installAsync, "[package1] [package2] ...");
     simpleCmd("add", "add a feature (.asm, C++ etc) to package", addAsync, "<arguments>");
-    simpleCmd("serial", "listen and print serial commands to console", serialAsync);
+    advancedCommand("serial", "listen and print serial commands to console", serialAsync, undefined, true);
 
     p.defineCommand({
         name: "login",
@@ -5177,7 +5222,11 @@ function initCommands() {
         help: "builds current package",
         onlineHelp: true,
         flags: {
-            cloud: { description: "Force build to happen in the cloud" },
+            cloud: { description: "(deprecated) forces build to happen in the cloud" },
+            localbuild: {
+                description: "Build native image using local toolchains",
+                aliases: ["local", "l", "local-build"]
+            },
             debug: { description: "Emit debug information with build" },
             warndiv: { description: "Warns about division operators" },
             ignoreTests: { description: "Ignores tests in compilation", aliases: ["ignore-tests", "ignoretests", "it"] }
@@ -5259,7 +5308,11 @@ function initCommands() {
                 aliases: ["include-source-maps"]
             },
             pkg: { description: "serve packaged" },
-            cloud: { description: "forces build to happen in the cloud" },
+            cloud: { description: "(deprecated) forces build to happen in the cloud" },
+            localbuild: {
+                description: "Build native image using local toolchains",
+                aliases: ["local", "l", "local-build"]
+            },
             just: { description: "just serve without building" },
             hostname: {
                 description: "hostname to run serve, default localhost",
@@ -5323,7 +5376,11 @@ function initCommands() {
         advanced: true,
         help: "Builds the current target",
         flags: {
-            cloud: { description: "forces build to happen in the cloud" },
+            cloud: { description: "(deprecated) forces build to happen in the cloud" },
+            localbuild: {
+                description: "Build native image using local toolchains",
+                aliases: ["local", "l", "local-build"]
+            },
             skipCore: {
                 description: "skip native build of core packages",
                 aliases: ["skip-core", "skipcore", "sc"]
@@ -5337,7 +5394,11 @@ function initCommands() {
         argString: "<label>",
         advanced: true,
         flags: {
-            cloud: { description: "forces build to happen in the cloud" }
+            cloud: { description: "(deprecated) forces build to happen in the cloud" },
+            localbuild: {
+                description: "Build native image using local toolchains",
+                aliases: ["local", "l", "local-build"]
+            }
         }
     }, uploadTargetReleaseAsync);
     p.defineCommand({
@@ -5355,7 +5416,7 @@ function initCommands() {
         onlineHelp: true,
         help: "check docs for broken links, typing errors, etc...",
         flags: {
-            snippets: { description: "compile snippets" },
+            snippets: { description: "(obsolete) compile snippets", deprecated: true },
             re: {
                 description: "regular expression that matches the snippets to test",
                 argument: "regex"
@@ -5388,8 +5449,8 @@ function initCommands() {
     advancedCommand("crowdin", "upload, download, clean files to/from crowdin", pc => execCrowdinAsync.apply(undefined, pc.args), "<cmd> <path> [output]")
 
     advancedCommand("hidlist", "list HID devices", hid.listAsync)
-    advancedCommand("hidserial", "run HID serial forwarding", hid.serialAsync)
-    advancedCommand("hiddmesg", "fetch DMESG buffer over HID and print it", hid.dmesgAsync)
+    advancedCommand("hidserial", "run HID serial forwarding", hid.serialAsync, undefined, true);
+    advancedCommand("hiddmesg", "fetch DMESG buffer over HID and print it", hid.dmesgAsync, undefined, true);
     advancedCommand("hexdump", "dump UF2 or BIN file", hexdumpAsync, "<filename>")
     advancedCommand("hex2uf2", "convert .hex file to UF2", hex2uf2Async, "<filename>")
     advancedCommand("flashserial", "flash over SAM-BA", serial.flashSerialAsync, "<filename>")
@@ -5432,7 +5493,8 @@ function initCommands() {
         help: "attempt to start openocd and GDB",
         argString: "[GDB_ARGUMNETS...]",
         anyArgs: true,
-        advanced: true
+        advanced: true,
+        onlineHelp: true
     }, gdbAsync);
 
     p.defineCommand({
@@ -5519,6 +5581,7 @@ function goToPkgDir() {
     let dir = goUp(process.cwd())
     if (!dir) {
         console.error(`Cannot find ${pxt.CONFIG_NAME} in any of the parent directories.`)
+        console.error(`Are you in a package directory?`)
         process.exit(1)
     } else {
         if (dir != process.cwd()) {

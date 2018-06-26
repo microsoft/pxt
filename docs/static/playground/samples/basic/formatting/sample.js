@@ -12,12 +12,12 @@ namespace basic {
 
     }
 
-    //% block="bar x = $x, text = $text"
+    //% block="bar x = $x text = $text"
     export function bar(x: number, text: string) {
 
     }
 
-    //% block="shuffled text = $text, x = $x"
+    //% block="shuffled text = $text x = $x"
     export function shuffled(x: number, text: string) {
 
     }

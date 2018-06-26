@@ -5,7 +5,7 @@
 Validates the documentation looking for broken links or broken code snippets.
 
 ```
-pxt checkdocs [--snippets] [--re foo]
+pxt checkdocs [--re foo]
 ```
 
 ## Description
@@ -18,10 +18,6 @@ This commands scans the documentation and perfoms various validation steps:
 This command is also automatically run from a cloud build and will fail the build if any issue arises.
 
 ## Flags
-
-### snippets (optional)
-
-Specify that code snippets should be compiled (and decompiled for blocks)
 
 ### re path (optional)
 

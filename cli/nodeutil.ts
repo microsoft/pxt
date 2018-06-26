@@ -506,15 +506,17 @@ export function lazyDependencies(): pxt.Map<string> {
 
 export function lazyRequire(name: string, install = false): any {
     /* tslint:disable:non-literal-require */
+    let r: any;
     try {
-        return require(name);
+        r = require(name);
     } catch (e) {
-        if (install)
-            pxt.log(`package "${name}" failed to load, run "pxt npminstallnative" to install native depencencies`)
         pxt.debug(e);
         pxt.debug((<any>require.resolve).paths(name));
-        return undefined;
+        r = undefined;
     }
+    if (!r && install)
+        pxt.log(`package "${name}" failed to load, run "pxt npminstallnative" to install native depencencies`)
+    return r;
     /* tslint:enable:non-literal-require */
 }
 

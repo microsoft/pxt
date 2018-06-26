@@ -2,13 +2,13 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "HidList",
+			"name": "console",
 			"type": "node",
 			"request": "launch",
 			"program": "${workspaceRoot}/built/pxt.js",
 			"stopOnEntry": false,
 			"args": [
-				"hidlist"
+				"console"
 			],
 			"cwd": "${workspaceRoot}/../pxt-adafruit",
 			"runtimeExecutable": null,

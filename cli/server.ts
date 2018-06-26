@@ -414,7 +414,7 @@ function initSocketServer(wsPort: number, hostname: string) {
     }
 
     let hios: pxt.Map<Promise<pxt.HF2.Wrapper>> = {};
-    function startHID(request: any, socket: any, body: any) {
+    function startHID(request: http.IncomingMessage, socket: WebSocket, body: any) {
         let ws = new WebSocket(request, socket, body);
         ws.on('open', () => {
             ws.send(JSON.stringify({ id: "ready" }))
@@ -423,6 +423,20 @@ function initSocketServer(wsPort: number, hostname: string) {
             try {
                 let msg = JSON.parse(event.data);
                 pxt.debug(`hid: msg ${msg.op}`) // , objToString(msg.arg))
+
+                // check that HID is installed
+                if (!hid.isInstalled(true)) {
+                    if (!ws) return;
+                    ws.send(JSON.stringify({
+                        result: {
+                            errorMessage: "node-hid not installed",
+                        },
+                        op: msg.op,
+                        id: msg.id
+                    }))
+                    return;
+                }
+
                 Promise.resolve()
                     .then(() => {
                         let hio = hios[msg.arg.path]
@@ -518,7 +532,7 @@ function initSocketServer(wsPort: number, hostname: string) {
         })
     }
 
-    function startDebug(request: any, socket: any, body: any) {
+    function startDebug(request: http.IncomingMessage, socket: WebSocket, body: any) {
         let ws = new WebSocket(request, socket, body);
         let dapjs: any
 
@@ -580,7 +594,10 @@ function initSocketServer(wsPort: number, hostname: string) {
                     startDebug(request, socket, body);
                 else if (request.url == "/" + serveOptions.localToken + "/hid")
                     startHID(request, socket, body);
-                else console.log('refused connection at ' + request.url);
+                else {
+                    console.log('refused connection at ' + request.url);
+                    socket.close(403);
+                }
             }
         } catch (e) {
             console.log('upgrade failed...')

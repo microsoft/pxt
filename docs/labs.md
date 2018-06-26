@@ -2,6 +2,7 @@
 
 A collection of experimental MakeCode Editors created by the community.
 
+* Got some questions? Join us on the [Community Discord](http://aka.ms/makecodecommunity)!
 
 ## ~hint
 
@@ -76,4 +77,4 @@ A small wrapper around the **Johnny-Five** library.
 
 * [Create your own editor](/target-creation)
 * [Contribute](https://github.com/Microsoft/pxt)
-* [Join the MakeCode Discord](https://discord.gg/r3bPt3E)
+* [Join the MakeCode Discord](http://aka.ms/makecodecommunity)

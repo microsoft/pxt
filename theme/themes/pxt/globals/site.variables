@@ -257,6 +257,7 @@
 @homeDetailViewBackground: darken(@homeScreenBackground, 10%);
 @homeDetailViewColor: @homeCardColor;
 @homeDetailCloseColor: white;
+@homeDetailCloseBackground: @grey;
 
 /*-------------------
    Tutorial

@@ -517,7 +517,8 @@ function msdDeployCoreAsync(res: ts.pxtc.CompileResult) {
     const firmware = pxt.outputName()
     const encoding = pxt.isOutputText() ? "utf8" : "base64";
 
-    if (pxt.appTarget.serial && pxt.appTarget.serial.useHF2 && !pxt.appTarget.serial.noDeploy) {
+    if (pxt.appTarget.serial && pxt.appTarget.serial.useHF2 && !pxt.appTarget.serial.noDeploy
+        && hid.isInstalled(true)) {
         let f = res.outfiles[pxtc.BINARY_UF2]
         let blocks = pxtc.UF2.parseFile(U.stringToUint8Array(atob(f)))
         return hid.initAsync()

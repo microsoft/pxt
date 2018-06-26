@@ -186,7 +186,9 @@ namespace ts.pxtc.thumb {
             this.addInst("ldlit   $r5, $i32", 0x4800, 0xf800);
         }
 
-        public toFnPtr(v: number, baseOff: number) {
+        public toFnPtr(v: number, baseOff: number, lbl: string) {
+            if (target.runtimeIsARM && /::/.test(lbl))
+                return (v + baseOff) & ~1;
             return (v + baseOff) | 1;
         }
 
@@ -199,14 +201,19 @@ namespace ts.pxtc.thumb {
         }
 
         public postProcessAbsAddress(f: assembler.File, v: number) {
-            v = v & 0xfffffffe
+            // Thumb addresses have last bit set, but we are ourselves always
+            // in Thumb state, so to go to ARM state, we signal that with that last bit
+            v ^= 1
             v -= f.baseOffset
             return v
         }
 
         public emit32(v0: number, v: number, actual: string): pxtc.assembler.EmitResult {
-            if (v % 2) return pxtc.assembler.emitErr("uneven BL?", actual);
-            let off = v / 2
+            let isBLX = v % 2 ? true : false
+            if (isBLX) {
+                v = (v + 1) & ~3
+            }
+            let off = v >> 1
             assert(off != null)
             // Range is +-4M (i.e., 2M instructions)
             if ((off | 0) != off ||
@@ -219,7 +226,7 @@ namespace ts.pxtc.thumb {
 
             return {
                 opcode: (off & 0xf0000000) ? (0xf400 | imm10) : (0xf000 | imm10),
-                opcode2: (0xf800 | imm11),
+                opcode2:  isBLX ? (0xe800 | imm11) : (0xf800 | imm11),
                 stack: 0,
                 numArgs: [v],
                 labelName: actual

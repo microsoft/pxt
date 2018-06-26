@@ -29,15 +29,15 @@ namespace pxt.gallery {
         let src = m[2];
 
         // extract text between first sample and title
-        let comment = md.substring(0, m.index)
-            .replace(/^(#+.*|\s*)$/igm, '')
-            .trim();
-        if (comment) {
-            src = `/**
-${comment.split('\n').map(line => '* ' + line).join('\n')}
-*/
-` + src;
-        }
+//        let comment = md.substring(0, m.index)
+//            .replace(/^(#+.*|\s*)$/igm, '')
+//            .trim();
+//        if (comment) {
+//            src = `/**
+//${comment.split('\n').map(line => '* ' + line).join('\n')}
+//*/
+//` + src;
+//        }
 
         return {
             name,

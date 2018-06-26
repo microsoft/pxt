@@ -647,6 +647,8 @@ export class ProjectView
             const fullscreen = tutorialOptions.tutorialStepInfo[step].fullscreen;
             if (fullscreen) this.showTutorialHint();
             else this.showLightbox();
+            // Hide flyouts and popouts
+            this.editor.closeFlyout();
         }
     }
 
@@ -1529,7 +1531,7 @@ export class ProjectView
             jsx:
                 /* tslint:disable:react-iframe-missing-sandbox */
                 <div className="ui container">
-                    <div id="printcontainer" style={{ 'position': 'relative', 'height': 0, 'padding-bottom': '40%', 'overflow': 'hidden' }}>
+                    <div id="printcontainer" style={{ 'position': 'relative', 'height': 0, 'paddingBottom': '40%', 'overflow': 'hidden' }}>
                         <iframe frameBorder="0"
                             sandbox="allow-popups allow-forms allow-scripts allow-same-origin allow-modals"
                             style={{ 'position': 'absolute', 'top': 0, 'left': 0, 'width': '100%', 'height': '100%' }}

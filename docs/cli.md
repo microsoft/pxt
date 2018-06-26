@@ -89,10 +89,22 @@ Run ``pxt help`` for the list of all commands. The following list of links conta
 * [target](/cli/target), downloads the editor tools
 * [build](/cli/build), builds the current project
 * [deploy](/cli/deploy), builds and deploys the current project
-* [login](/cli/login), store a GitHub token
+* [console](/cli/console), monitors ``console.log`` output
 * [bump](/cli/bump), increment the version number
-* [update](/cli/update), updates the ``pxt-core`` dependency and runs installation steps
 * [checkdocs](/cli/checkdocs), validates the documentation links and snippets
 * [staticpkg](/cli/staticpkg), compiles editor into flat file system
-* [buildsprites](/cli/buildsprites), encode sprite images into a jres resource
-* [hidserial](/cli/hidserial), monitor `serial.write(...)` from certain boards
+
+## Debugging Commands
+
+* [gdb](/cli/gdb), attempt to start OpenOCD and GDB
+* [serial](/cli/serial), monitor UART ``serial.writeLine(...)`` from certain boards
+* [hidserial](/cli/hidserial), monitor ``console.log(...)`` from certain boards
+* [hiddmesg](/cli/hiddmesg), fetch ``DMESG`` buffer over HID and print it
+
+## Advanced Commands
+
+* [serve](/cli/serve), run local server
+* [pyconv](/cli/pyconv), convert MicroPython code into Static TypeScript.
+* [update](/cli/update), updates the ``pxt-core`` dependency and runs installation steps
+* [buildsprites](/cli/buildsprites), encode sprite images into a ``jres`` resource
+* [login](/cli/login), store a GitHub token

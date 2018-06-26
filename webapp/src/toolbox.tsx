@@ -8,6 +8,17 @@ import * as core from "./core"
 
 import Util = pxt.Util;
 
+export const enum CategoryNameID {
+    Loops = "loops",
+    Logic = "logic",
+    Variables = "variables",
+    Maths = "Math",
+    Functions = "functions",
+    Arrays = "arrays",
+    Text = "text",
+    Extensions = "addpackage"
+}
+
 // this is a supertype of pxtc.SymbolInfo (see partitionBlocks)
 export interface BlockDefinition {
     name: string;
