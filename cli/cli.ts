@@ -4197,8 +4197,8 @@ function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
         if (sheet.width > 255 || sheet.height > 255)
             U.userError(`PNG image too big`)
 
-        if (!info.width) info.width = sheet.width
-        if (!info.height) info.height = sheet.height
+        if (!info.width || info.width > sheet.width) info.width = sheet.width
+        if (!info.height || info.height > sheet.height) info.height = sheet.height
 
         let nx = (sheet.width / info.width) | 0
         let ny = (sheet.height / info.height) | 0

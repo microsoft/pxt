@@ -246,7 +246,8 @@ namespace pxt {
                     if (pkgCfg) {
                         const yottaCfg = pkgCfg.yotta ? U.jsonFlatten(pkgCfg.yotta.config) : null;
                         this.parent.sortedDeps().forEach((depPkg) => {
-                            if (pkgCfg.core && depPkg.config.core) {
+                            if (pkgCfg.core && depPkg.config.core &&
+                                pkgCfg.name != depPkg.config.name) {
                                 const conflict = new cpp.PkgConflictError(lf("conflict between core packages {0} and {1}", pkgCfg.name, depPkg.id));
                                 conflict.pkg0 = depPkg;
                                 conflicts.push(conflict);
