@@ -118,11 +118,13 @@ namespace pxt.blocks {
         if (instance && hasBlockDef && defParameters.length) {
             const def = refMap[THIS_NAME] || defParameters[0];
             const defName = def.name;
+            const isVar = !def.shadowBlockId || def.shadowBlockId === "variables_get";
             res.thisParameter = {
                 actualName: THIS_NAME,
                 definitionName: defName,
                 shadowBlockId: def.shadowBlockId,
                 type: fn.namespace,
+                defaultValue: isVar ? def.varName : undefined,
 
                 // Normally we pass ths actual parameter name, but the "this" parameter doesn't have one
                 fieldEditor: fieldEditor(defName, THIS_NAME),
@@ -151,11 +153,12 @@ namespace pxt.blocks {
                     }
 
                     const defName = def ? def.name : (bInfo ? bInfo.params[defIndex++] : p.name);
+                    const isVar = (def && def.shadowBlockId) === "variables_get";
 
                     (res.parameters as BlockParameter[]).push({
                         actualName: p.name,
                         type: p.type,
-                        defaultValue: p.default,
+                        defaultValue: isVar ? (def.varName || p.default) :  p.default,
                         definitionName: defName,
                         shadowBlockId: def && def.shadowBlockId,
                         isOptional: defParameters ? defParameters.indexOf(def) >= optionalStart : false,

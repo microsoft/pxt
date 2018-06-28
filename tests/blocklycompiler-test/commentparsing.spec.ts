@@ -392,6 +392,11 @@ describe("comment attribute parser", () => {
                 parseDef("$hello|world", paramRef`hello`, brk(), `world`);
             });
 
+            it("should allow parameter names to be specified using parens", () => {
+                parseDef(`$hello=variables_get(someName)`, paramVar`hello=someName`);
+                parseDef(`$hello=variables_get(  `, paramRef`hello=variables_get`, `(  `);
+            });
+
             describe("errors", () => {
                 it("should not allow parameters with too many equals", () => {
                     parseDef("%no=good=")
@@ -440,6 +445,12 @@ function paramRef(parts: TemplateStringsArray): pxtc.BlockParameter {
     const res = param(parts);
     res.ref = true;
     return res;
+}
+
+function paramVar(parts: TemplateStringsArray): pxtc.BlockParameter {
+    const split = parts[0].split("=");
+
+    return { kind: "param", name: split[0], shadowBlockId: "variables_get", ref: true, varName: split[1] } as pxtc.BlockParameter;
 }
 
 function parseDef(def: string, ...expected: (string | pxtc.BlockPart)[]) {
