@@ -884,6 +884,7 @@ ${output}</xml>`;
             }
 
             const attributes = attrs(callInfo);
+            blockId = attributes.blockId || blockId;
 
             if (attributes.blockCombine)
                 return getPropertyGetBlock(n)
@@ -910,7 +911,7 @@ ${output}</xml>`;
                 value = attributes.enumval;
             }
 
-            let idfn = blockId ? blocksInfo.blocksById[blockId] : blocksInfo.apis.byQName[attributes.blockIdentity];
+            let idfn = attributes.blockIdentity ? blocksInfo.apis.byQName[attributes.blockIdentity] : blocksInfo.blocksById[blockId];
             let f = /%([a-zA-Z0-9_]+)/.exec(idfn.attributes.block);
             const r = mkExpr(U.htmlEscape(idfn.attributes.blockId));
             r.fields = [{

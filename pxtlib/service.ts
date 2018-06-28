@@ -235,6 +235,7 @@ namespace ts.pxtc {
         ref: boolean;
         name: string;
         shadowBlockId?: string;
+        varName?: string;
     }
 
     export interface BlockBreak {
@@ -364,6 +365,7 @@ namespace ts.pxtc {
         kind: TokenKind;
         content?: string;
         type?: string;
+        name?: string;
     }
 
     export function computeUsedParts(resp: CompileResult, ignoreBuiltin = false): string[] {
@@ -444,8 +446,9 @@ namespace ts.pxtc {
                         }
                     }
                 }
+                const varName = s.attributes.blockSetVariable || s.namespace.toLocaleLowerCase();
 
-                const paramName = `${s.namespace.toLowerCase()}=${paramNameShadow || ""}`
+                const paramName = `${varName}=${paramNameShadow || ""}`
                 const paramValue = `value=${paramValueShadow || ""}`;
 
                 ex = m[mkey] = {
@@ -851,7 +854,15 @@ namespace ts.pxtc {
                 case "%":
                     const param = eatToken(c => /[a-zA-Z0-9_=]/.test(c), true).split("=");
                     if (param.length > 2) return undefined; // error: invalid parameter
-                    newToken = { kind: (char === "$") ? TokenKind.ParamRef : TokenKind.Parameter, content: param[0], type: param[1] };
+
+                    let varName: string;
+                    if (def[strIndex + 1] === "(") {
+                        const oldIndex = strIndex;
+                        ++strIndex;
+                        varName = eatEnclosure(")");
+                        if (!varName) strIndex = oldIndex;
+                    }
+                    newToken = { kind: (char === "$") ? TokenKind.ParamRef : TokenKind.Parameter, content: param[0], type: param[1], name: varName };
                     break;
             }
 
@@ -937,11 +948,13 @@ namespace ts.pxtc {
             /* tslint:disable:possible-timing-attack  (not a security critical codepath) */
             if (token == TokenKind.Parameter) {
                 const param: BlockParameter = { kind: "param", name: tokens[i].content, shadowBlockId: tokens[i].type, ref: false };
+                if (tokens[i].name) param.varName = tokens[i].name;
                 parts.push(param);
                 parameters.push(param);
             }
             else if (token == TokenKind.ParamRef) {
                 const param: BlockParameter = { kind: "param", name: tokens[i].content, shadowBlockId: tokens[i].type, ref: true };
+                if (tokens[i].name) param.varName = tokens[i].name;
                 parts.push(param);
                 parameters.push(param);
             }
