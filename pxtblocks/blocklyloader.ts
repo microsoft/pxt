@@ -119,6 +119,7 @@ namespace pxt.blocks {
                             outP += outByteW
                         }
                     }
+                    while (inP & 3) inP++
                 }
             }
 

@@ -56,6 +56,12 @@
             path: "basic/enums"
         },
         {
+            chapter: "Basic",
+            name: "Setting Variable Names",
+            id: "basic-variable-names",
+            path: "basic/variable-names"
+        },
+        {
             chapter: "Field editors",
             name: "Range",
             id: "field-editors-range",

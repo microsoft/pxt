@@ -4160,7 +4160,7 @@ function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
         let mindelta = 0
         let idx = -1
         for (let i = alpha ? 1 : 0; i < palette.length; ++i) {
-            let delta = scale(palette[i][0] - buf[pix + 0]) + scale(palette[i][1] - buf[pix + 1]) + scale(palette[i][1] - buf[pix + 2])
+            let delta = scale(palette[i][0] - buf[pix + 0]) + scale(palette[i][1] - buf[pix + 1]) + scale(palette[i][2] - buf[pix + 2])
             if (idx < 0 || delta < mindelta) {
                 idx = i
                 mindelta = delta
@@ -4197,8 +4197,8 @@ function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
         if (sheet.width > 255 || sheet.height > 255)
             U.userError(`PNG image too big`)
 
-        if (!info.width) info.width = sheet.width
-        if (!info.height) info.height = sheet.height
+        if (!info.width || info.width > sheet.width) info.width = sheet.width
+        if (!info.height || info.height > sheet.height) info.height = sheet.height
 
         let nx = (sheet.width / info.width) | 0
         let ny = (sheet.height / info.height) | 0
@@ -4206,6 +4206,8 @@ function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
 
         for (let y = 0; y + info.height - 1 < sheet.height; y += info.height)
             for (let x = 0; x + info.width - 1 < sheet.width; x += info.width) {
+                if (info.frames && imgIdx >= info.frames.length) return;
+
                 let img = U.flatClone(sheet)
                 img.data = new Buffer(info.width * info.height * 4)
                 img.width = info.width
