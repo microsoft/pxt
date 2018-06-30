@@ -788,6 +788,8 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
                 v.card = {
                     name: v.description
                 }
+            let savedV = v
+            v.card.onClick = () => this.setHwVariant(savedV)
         }
 
         return (
@@ -806,7 +808,7 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
                                 description={cfg.card.description}
                                 learnMoreUrl={cfg.card.learnMoreUrl}
                                 buyUrl={cfg.card.buyUrl}
-                                onClick={() => this.setHwVariant(cfg)}
+                                onClick={cfg.card.onClick}
                             />
                         )}
                     </div>
