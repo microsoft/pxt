@@ -486,7 +486,7 @@ class ProjectsCodeCard extends sui.StatelessUIElement<ProjectsCodeCardProps> {
 
     renderCore() {
         const { scr, onCardClick, onClick, ...rest } = this.props;
-        return <codecard.CodeCardView {...rest} onClick={this.handleClick}/>
+        return <codecard.CodeCardView {...rest} onClick={this.handleClick} />
     }
 }
 
@@ -740,3 +740,85 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
         )
     }
 }
+
+
+export interface ChooseHwDialogState {
+    visible?: boolean;
+}
+
+export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialogState> {
+    constructor(props: ISettingsProps) {
+        super(props);
+        this.state = {
+            visible: false
+        }
+
+        this.close = this.close.bind(this);
+    }
+
+    hide() {
+        this.setState({ visible: false });
+    }
+
+    close() {
+        this.setState({ visible: false });
+    }
+
+    show() {
+        this.setState({ visible: true });
+    }
+
+    private setHwVariant(cfg: pxt.PackageConfig) {
+        pxt.tickEvent("projects.choosehwvariant", { hwid: cfg.name }, { interactiveConsent: true });
+        this.hide()
+
+        pxt.setHwVariant(cfg.name.replace(/.*---/, ""))
+        let editor = this.props.parent
+        editor.reloadHeaderAsync()
+            .then(() => editor.compile())
+            .done()
+    }
+
+    renderCore() {
+        const { visible } = this.state;
+
+        let variants = visible ? pxt.getHwVariants() : []
+        for (let v of variants) {
+            if (!v.card)
+                v.card = {
+                    name: v.description
+                }
+        }
+
+        return (
+            <sui.Modal isOpen={visible} className="importdialog" size="small"
+                onClose={this.close} dimmer={true}
+                closeIcon={true} header={lf("Choose your hardware")}
+                closeOnDimmerClick closeOnDocumentClick closeOnEscape
+            >
+                <div className="group">
+                    <div className="ui cards centered" role="listbox">
+                        {variants.map(cfg =>
+                            <codecard.CodeCardView
+                                key={cfg.name}
+                                name={cfg.card.name}
+                                ariaLabel={cfg.card.name}
+                                description={cfg.card.description}
+                                onClick={() => this.setHwVariant(cfg)}
+                            />
+                        )}
+                    </div>
+                </div>
+                <p>
+                    <br /><br />
+                    <a href={`https://makecode.com/buy-hardware`} target="_blank" rel="noopener noreferrer"
+                        aria-label={lf("Buy hardware")}>{lf("Buy hardware")}</a>
+                    <br />
+                    <a href={`https://makecode.com/adding-board`} target="_blank" rel="noopener noreferrer"
+                        aria-label={lf("Adding custom hardware")}>{lf("Adding custom hardware")}</a>
+                </p>
+            </sui.Modal>
+        )
+    }
+}
+
