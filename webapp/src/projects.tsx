@@ -813,7 +813,7 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
                 </div>
                 <p>
                     <br /><br />
-                    {lf("No hardware? Or want add some?")}
+                    {lf("No hardware? Or want to add some?")}
                     {" "}
                     <a className="small" href={`/hardware`} target="_blank" rel="noopener noreferrer"
                         aria-label={lf("Learn more about hardware")}>{lf("Learn more!")}</a>
