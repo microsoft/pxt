@@ -804,6 +804,8 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
                                 name={cfg.card.name}
                                 ariaLabel={cfg.card.name}
                                 description={cfg.card.description}
+                                learnMoreUrl={cfg.card.learnMoreUrl}
+                                buyUrl={cfg.card.buyUrl}
                                 onClick={() => this.setHwVariant(cfg)}
                             />
                         )}
@@ -811,11 +813,10 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
                 </div>
                 <p>
                     <br /><br />
-                    <a href={`https://makecode.com/buy-hardware`} target="_blank" rel="noopener noreferrer"
-                        aria-label={lf("Buy hardware")}>{lf("Buy hardware")}</a>
-                    <br />
-                    <a href={`https://makecode.com/adding-board`} target="_blank" rel="noopener noreferrer"
-                        aria-label={lf("Adding custom hardware")}>{lf("Adding custom hardware")}</a>
+                    {lf("No hardware? Or want add some?")}
+                    {" "}
+                    <a className="small" href={`/hardware`} target="_blank" rel="noopener noreferrer"
+                        aria-label={lf("Learn more about hardware")}>{lf("Learn more!")}</a>
                 </p>
             </sui.Modal>
         )
