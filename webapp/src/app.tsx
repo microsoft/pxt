@@ -78,6 +78,7 @@ export class ProjectView
     languagePicker: lang.LanguagePicker;
     importDialog: projects.ImportDialog;
     exitAndSaveDialog: projects.ExitAndSaveDialog;
+    chooseHwDialog: projects.ChooseHwDialog;
     prevEditorId: string;
     screenshotHandler: (img: string) => void;
 
@@ -1292,13 +1293,26 @@ export class ProjectView
             });
     }
 
+    checkForHwVariant() {
+        if (pxt.hwVariant)
+            return false // already set
+        let variants = pxt.getHwVariants()
+        if (variants.length == 0)
+            return false
+        this.showChooseHwDialog()
+        return true
+    }
+
     beforeCompile() { }
 
     compile(saveOnly = false) {
         pxt.tickEvent("compile");
         pxt.debug('compiling...');
 
-        if (pxt.appTarget.compile.saveAsPNG) {
+        if (this.checkForHwVariant())
+            return;
+
+        if (pxt.appTarget.compile.saveAsPNG && !pxt.hwVariant) {
             this.saveAndCompile();
             return;
         }
@@ -1837,6 +1851,10 @@ export class ProjectView
         this.scriptSearch.showBoards();
     }
 
+    showChooseHwDialog() {
+        this.chooseHwDialog.show()
+    }
+
     showRenameProjectDialogAsync(): Promise<boolean> {
         if (!this.state.header) return Promise.resolve(false);
 
@@ -2047,6 +2065,10 @@ export class ProjectView
         this.languagePicker = c;
     }
 
+    private handleChooseHwDialogRef = (c: projects.ChooseHwDialog) => {
+        this.chooseHwDialog = c;
+    }
+
     ///////////////////////////////////////////////////////////
     ////////////             RENDER               /////////////
     ///////////////////////////////////////////////////////////
@@ -2163,6 +2185,7 @@ export class ProjectView
                 {sandbox ? undefined : <extensions.Extensions parent={this} ref={this.handleExtensionRef} />}
                 {inHome ? <projects.ImportDialog parent={this} ref={this.handleImportDialogRef} /> : undefined}
                 {sandbox ? undefined : <projects.ExitAndSaveDialog parent={this} ref={this.handleExitAndSaveDialogRef} />}
+                {sandbox ? undefined : <projects.ChooseHwDialog parent={this} ref={this.handleChooseHwDialogRef} />}
                 {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={this.handleShareEditorRef} />}
                 {selectLanguage ? <lang.LanguagePicker parent={this} ref={this.handleLanguagePickerRef} /> : undefined}
                 {sandbox ? <container.SandboxFooter parent={this} /> : undefined}

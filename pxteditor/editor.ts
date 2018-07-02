@@ -220,6 +220,7 @@ namespace pxt.editor {
 
         showResetDialog(): void;
         showExitAndSaveDialog(): void;
+        showChooseHwDialog(): void;
 
         showPackageDialog(): void;
         showBoardDialog(): void;

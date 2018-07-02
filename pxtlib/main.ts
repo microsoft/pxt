@@ -111,6 +111,13 @@ namespace pxt {
             hwVariant = null
     }
 
+    export function getHwVariants(): PackageConfig[] {
+        if (!pxt.appTarget.variants)
+            return []
+        let hws = Object.keys(pxt.appTarget.bundledpkgs).filter(pkg => /^hw---/.test(pkg))
+        return hws.map(pkg => JSON.parse(pxt.appTarget.bundledpkgs[pkg][CONFIG_NAME]))
+    }
+
     export interface PxtOptions {
         debug?: boolean;
         light?: boolean; // low resource device

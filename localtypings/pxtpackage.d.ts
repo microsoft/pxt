@@ -110,8 +110,10 @@ declare namespace pxt {
         youTubeId?: string;
         time?: number;
         url?: string;
+        learnMoreUrl?: string;
+        buyUrl?: string;
         responsive?: boolean;
-        cardType?: "file" | "example" | "codeExample" | "tutorial" | "side" | "template" | "package";
+        cardType?: "file" | "example" | "codeExample" | "tutorial" | "side" | "template" | "package" | "hw";
 
         header?: string;
         any?: number;
