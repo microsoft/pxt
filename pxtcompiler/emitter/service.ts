@@ -170,6 +170,10 @@ namespace ts.pxtc {
                     }
             }
 
+            if (kind == SymbolKind.Enum || kind === SymbolKind.EnumMember) {
+                (extendsTypes || (extendsTypes = [])).push("Number");
+            }
+
             let r: SymbolInfo = {
                 kind,
                 namespace: m ? m[1] : "",
