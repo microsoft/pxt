@@ -455,27 +455,29 @@ namespace pxt.docs {
 
         if (!markedInstance) {
             markedInstance = requireMarked();
-            let renderer = new markedInstance.Renderer()
-            setupRenderer(renderer);
-            const linkRenderer = renderer.link;
-            renderer.link = function (href: string, title: string, text: string) {
-                const relative = href.indexOf('/') == 0;
-                const target = !relative ? '_blank' : '';
-                if (relative && d.versionPath) href = `/${d.versionPath}${href}`;
-                const html = linkRenderer.call(renderer, href, title, text);
-                return html.replace(/^<a /, `<a ${target ? `target="${target}"` : ''} rel="nofollow noopener" `);
-            }
-            markedInstance.setOptions({
-                renderer: renderer,
-                gfm: true,
-                tables: true,
-                breaks: false,
-                pedantic: false,
-                sanitize: true,
-                smartLists: true,
-                smartypants: true
-            })
+        }
+
+        // We have to re-create the renderer every time to avoid the link() function's closure capturing the opts
+        let renderer = new markedInstance.Renderer()
+        setupRenderer(renderer);
+        const linkRenderer = renderer.link;
+        renderer.link = function (href: string, title: string, text: string) {
+            const relative = href.indexOf('/') == 0;
+            const target = !relative ? '_blank' : '';
+            if (relative && d.versionPath) href = `/${d.versionPath}${href}`;
+            const html = linkRenderer.call(renderer, href, title, text);
+            return html.replace(/^<a /, `<a ${target ? `target="${target}"` : ''} rel="nofollow noopener" `);
         };
+        markedInstance.setOptions({
+            renderer: renderer,
+            gfm: true,
+            tables: true,
+            breaks: false,
+            pedantic: false,
+            sanitize: true,
+            smartLists: true,
+            smartypants: true
+        });
 
         let markdown = opts.markdown
 
