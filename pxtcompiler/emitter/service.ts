@@ -573,15 +573,15 @@ namespace ts.pxtc.service {
         isJsDocTagName: boolean;
     }
 
-    const blocksInfoOp = (apisInfoLocOverride?: pxtc.ApisInfo) => {
+    const blocksInfoOp = (apisInfoLocOverride?: pxtc.ApisInfo, bannedCategories?: string[]) => {
         if (apisInfoLocOverride) {
             if (!lastLocBlocksInfo) {
-                lastLocBlocksInfo = getBlocksInfo(apisInfoLocOverride);
+                lastLocBlocksInfo = getBlocksInfo(apisInfoLocOverride, bannedCategories);
             }
             return lastLocBlocksInfo;
         } else {
             if (!lastBlocksInfo) {
-                lastBlocksInfo = getBlocksInfo(lastApiInfo);
+                lastBlocksInfo = getBlocksInfo(lastApiInfo, bannedCategories);
             }
             return lastBlocksInfo;
         }
@@ -625,7 +625,8 @@ namespace ts.pxtc.service {
             return compile(v.options)
         },
         decompile: v => {
-            return decompile(v.options, v.fileName);
+            const bannedCategories = v.blocks ? v.blocks.bannedCategories : undefined;
+            return decompile(v.options, v.fileName, false, bannedCategories);
         },
         assemble: v => {
             return {
@@ -672,7 +673,8 @@ namespace ts.pxtc.service {
         apiSearch: v => {
             const SEARCH_RESULT_COUNT = 7;
             const search = v.search;
-            const blockInfo = blocksInfoOp(search.localizedApis); // cache
+            const bannedCategories = v.blocks ? v.blocks.bannedCategories : undefined;
+            const blockInfo = blocksInfoOp(search.localizedApis, bannedCategories); // cache
 
             if (search.localizedStrings) {
                 pxt.Util.setLocalizedStrings(search.localizedStrings);
