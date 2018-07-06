@@ -89,6 +89,7 @@ declare namespace pxt {
         assetExtensions?: string[];
         palette?: string[];
         screenSize?: Size;
+        bannedCategories?: string[]; // a list of categories to exclude blocks from
     }
 
     interface AppAnalytics {
