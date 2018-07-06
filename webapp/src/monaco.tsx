@@ -961,7 +961,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let monacoFlyout = this.createMonacoFlyout();
 
         if (ns == 'search') {
-            this.showSearchFlyout();
+            try {
+                this.showSearchFlyout();
+            }
+            catch (e) {
+                pxt.reportException(e);
+                pxsim.U.clear(monacoFlyout);
+                this.addNoSearchResultsLabel();
+            }
             return;
         }
 
@@ -1047,8 +1054,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.attachMonacoBlockAccessibility(monacoBlocks);
 
         if (monacoBlocks.length == 0) {
-            this.getMonacoLabel(lf("No search results..."), 'monacoFlyoutLabel');
+            this.addNoSearchResultsLabel();
         }
+    }
+
+    private addNoSearchResultsLabel() {
+        this.getMonacoLabel(lf("No search results..."), 'monacoFlyoutLabel');
     }
 
     private getMonacoFlyout() {
