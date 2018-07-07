@@ -307,6 +307,8 @@ export class EditorPackage {
 
     sortedFiles() {
         let lst = Util.values(this.files)
+        if (!pxt.options.debug)
+            lst = lst.filter(f => f.name != workspace.GIT_JSON)
         lst.sort((a, b) => a.weight() - b.weight() || Util.strcmp(a.name, b.name))
         return lst
     }
