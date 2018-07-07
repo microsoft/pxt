@@ -105,8 +105,7 @@ function readPkgAsync(logicalDirname: string, fileContents = false): Promise<FsP
     return readFileAsync(path.join(dirname, pxt.CONFIG_NAME))
         .then(buf => {
             let cfg: pxt.PackageConfig = JSON.parse(buf.toString("utf8"))
-            let files = [pxt.CONFIG_NAME].concat(cfg.files || []).concat(cfg.testFiles || [])
-            return Promise.map(files, fn =>
+            return Promise.map(pxt.allPkgFiles(cfg), fn =>
                 statOptAsync(path.join(dirname, fn))
                     .then<FsFile>(st => {
                         let r: FsFile = {

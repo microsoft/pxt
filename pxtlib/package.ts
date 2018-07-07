@@ -831,4 +831,8 @@ namespace pxt {
             return res;
         }
     }
+
+    export function allPkgFiles(cfg: PackageConfig) {
+        return [pxt.CONFIG_NAME].concat(cfg.files || []).concat(cfg.testFiles || [])
+    }
 }
