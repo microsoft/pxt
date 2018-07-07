@@ -8,6 +8,7 @@ import * as pkg from "./package";
 import * as core from "./core";
 import * as codecard from "./codecard";
 import * as electron from "./electron";
+import * as workspace from "./workspace";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -43,6 +44,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         this.addUrl = this.addUrl.bind(this);
         this.addBundle = this.addBundle.bind(this);
         this.installGh = this.installGh.bind(this);
+        this.addLocal = this.addLocal.bind(this);
     }
 
     hide() {
@@ -94,6 +96,11 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                 : null
         if (res) this.prevGhData = res
         return this.prevGhData || []
+    }
+
+    fetchLocal() {
+        return workspace.getHeaders()
+            .filter(h => !!h.githubId)
     }
 
     fetchBundled(): pxt.PackageConfig[] {
@@ -166,6 +173,16 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         this.hide();
         this.addDepIfNoConflict(scr, "*")
             .done();
+    }
+
+    addLocal(hd: pxt.workspace.Header) {
+        pxt.tickEvent("packages.local");
+        this.hide();
+        workspace.getTextAsync(hd.id)
+            .then(files => {
+                let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig
+                this.addDepIfNoConflict(cfg,  "workspace:" + hd.id)
+            })
     }
 
     installGh(scr: pxt.github.GitRepo) {
@@ -249,6 +266,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         const bundles = this.fetchBundled();
         const ghdata = this.fetchGhData();
         const urldata = this.fetchUrlData();
+        const local = this.fetchLocal()
 
         const coresFirst = (a: pxt.PackageConfig, b: pxt.PackageConfig) => {
             if (a.core != b.core)
@@ -297,6 +315,19 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                 url={"/" + scr.id}
                                 scr={scr}
                                 onCardClick={this.addUrl}
+                                role="link"
+                            />
+                        )}
+                        {local.map(scr =>
+                            <ScriptSearchCodeCard
+                                key={'local' + scr.id}
+                                name={scr.name}
+                                description={lf("Local copy of {0} hosted on github.com", scr.githubId)}
+                                url={"https://github.com/" + scr.githubId}
+                                imageUrl={scr.icon}
+                                scr={scr}
+                                onCardClick={this.addLocal}
+                                label={lf("Local")}
                                 role="link"
                             />
                         )}
