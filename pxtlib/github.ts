@@ -1,3 +1,10 @@
+/* TODO for github package authoring
+- make sure we can import an empty tree (commit 000...000) - add skeleton files then?
+- add a way of adding package from the UI
+- bumping - checkmark in the commit dialog?
+- find the sync icon
+*/
+
 namespace pxt.github {
     export interface GHRef {
         ref: string;

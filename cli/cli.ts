@@ -665,7 +665,7 @@ function bumpAsync(parsed?: commandParser.ParsedCommand) {
     const bumpPxt = parsed && parsed.flags["update"];
     const upload = parsed && parsed.flags["upload"];
     if (fs.existsSync(pxt.CONFIG_NAME)) {
-        if (upload) throw U.userError("upload only supported on packages");
+        if (upload) throw U.userError("upload only supported on targets");
 
         return Promise.resolve()
             .then(() => nodeutil.runGitAsync("pull"))

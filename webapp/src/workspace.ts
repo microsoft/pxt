@@ -222,6 +222,17 @@ export async function pullAsync(hd: Header) {
     return PullStatus.GotChanges
 }
 
+export async function prAsync(hd: Header, commitId: string, msg: string) {
+    let parsed = pxt.github.parseRepoId(hd.githubId)
+    // merge conflict - create a Pull Request
+    let url = await pxt.github.createPRAsync(parsed.fullName, parsed.tag, commitId, msg)
+    // force user back to master - we will instruct them to merge PR in github.com website
+    // and sync here to get the changes
+    let headCommit = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
+    await githubUpdateToAsync(hd, hd.githubId, headCommit, {})
+    return url
+}
+
 export async function commitAsync(hd: Header, msg: string) {
     let files = await getTextAsync(hd.id)
     let gitjsontext = files[GIT_JSON]
@@ -266,13 +277,7 @@ export async function commitAsync(hd: Header, msg: string) {
     let newCommit = await pxt.github.mergeAsync(parsed.fullName, parsed.tag, commitId)
 
     if (newCommit == null) {
-        // merge conflict - create a Pull Request
-        let url = await pxt.github.createPRAsync(parsed.fullName, parsed.tag, commitId, msg)
-        // force user back to master - we will instruct them to merge PR in github.com website
-        // and sync here to get the changes
-        let headCommit = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
-        await githubUpdateToAsync(hd, gitjson.repo, headCommit, {})
-        return url
+        return commitId
     } else {
         gitjson.commit = await pxt.github.getCommitAsync(parsed.fullName, newCommit)
         return ""
