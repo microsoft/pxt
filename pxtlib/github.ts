@@ -237,13 +237,27 @@ namespace pxt.github {
             .then((resp: SHAObject) => resp.sha)
     }
 
+
+    export async function fastForwardAsync(repopath: string, branch: string, commitid: string) {
+        let resp = await ghRequestAsync({
+            url: "https://api.github.com/repos/" + repopath + "/git/refs/heads/" + branch,
+            method: "PATCH",
+            allowHttpErrors: true,
+            data: {
+                sha: commitid,
+                force: false
+            }
+        })
+        return (resp.statusCode == 200)
+    }
+
     export async function createPRAsync(repopath: string, branch: string, commitid: string, msg: string) {
-        let branchName = "pr/" + commitid.slice(0, 8)
-        await ghPostAsync("git/refs", {
+        let branchName = "pr-" + commitid.slice(0, 8)
+        await ghPostAsync(repopath + "/git/refs", {
             ref: "refs/heads/" + branchName,
             sha: commitid
         })
-        let res = await ghPostAsync("pulls", {
+        let res = await ghPostAsync(repopath + "/pulls", {
             title: msg,
             body: lf("Automatically created from MakeCode."),
             head: branchName,

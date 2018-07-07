@@ -208,17 +208,18 @@ export enum PullStatus {
 
 export async function pullAsync(hd: Header) {
     let files = await getTextAsync(hd.id)
+    await recomputeHeaderFlagsAsync(hd, files)
     let gitjsontext = files[GIT_JSON]
     if (!gitjsontext)
         return PullStatus.NoSourceControl
+    if (!hd.githubCurrent)
+        return PullStatus.NeedsCommit
     let gitjson = JSON.parse(gitjsontext) as GitJson
     let parsed = pxt.github.parseRepoId(gitjson.repo)
     let sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
     if (sha == gitjson.commit.sha)
         return PullStatus.UpToDate
     let res = await githubUpdateToAsync(hd, gitjson.repo, sha, files)
-    if (res == null)
-        return PullStatus.NeedsCommit
     return PullStatus.GotChanges
 }
 
@@ -274,12 +275,15 @@ export async function commitAsync(hd: Header, msg: string) {
         tree: treeId
     }
     let commitId = await pxt.github.createObjectAsync(parsed.fullName, "commit", commit)
-    let newCommit = await pxt.github.mergeAsync(parsed.fullName, parsed.tag, commitId)
+    let ok = await pxt.github.fastForwardAsync(parsed.fullName, parsed.tag, commitId)
+    let newCommit = commitId
+    if (!ok)
+        newCommit = await pxt.github.mergeAsync(parsed.fullName, parsed.tag, commitId)
 
     if (newCommit == null) {
         return commitId
     } else {
-        gitjson.commit = await pxt.github.getCommitAsync(parsed.fullName, newCommit)
+        await githubUpdateToAsync(hd, gitjson.repo, newCommit, files)
         return ""
     }
 }
@@ -293,18 +297,6 @@ async function githubUpdateToAsync(hd: Header, repoid: string, commitid: string,
         gitjson = {
             repo: repoid,
             commit: null
-        }
-    } else {
-        for (let k of Object.keys(files)) {
-            if (k == GIT_JSON)
-                continue
-            let treeEnt = gitjson.commit.tree.tree.filter(e => e.path == k)[0]
-            if (!treeEnt || treeEnt.type != "blob")
-                return null
-            // U.userError(f("File '{0}' not added to commit.", k))
-            if (files[k] && treeEnt.sha != U.gitsha(U.toUTF8(files[k])))
-                return null
-            // U.userError(f("File '{0}' modified. Please commit before updating.", k))
         }
     }
 
