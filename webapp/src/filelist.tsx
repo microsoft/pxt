@@ -24,6 +24,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         this.toggleVisibility = this.toggleVisibility.bind(this);
         this.handleCustomBlocksClick = this.handleCustomBlocksClick.bind(this);
         this.handleButtonKeydown = this.handleButtonKeydown.bind(this);
+        this.handleSyncClick = this.handleSyncClick.bind(this);
         this.setFile = this.setFile.bind(this);
         this.removeFile = this.removeFile.bind(this);
         this.removePkg = this.removePkg.bind(this);
@@ -136,6 +137,11 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         this.props.parent.setState({ showFiles: !this.props.parent.state.showFiles });
     }
 
+    private handleSyncClick(e: React.MouseEvent<any>) {
+        this.props.parent.pushPullAsync();
+        e.stopPropagation();
+    }
+
     private handleCustomBlocksClick(e: React.MouseEvent<any>) {
         this.addCustomBlocksFile();
         e.stopPropagation();
@@ -196,12 +202,15 @@ namespace custom {
     renderCore() {
         const show = !!this.props.parent.state.showFiles;
         const targetTheme = pxt.appTarget.appTheme;
-        const plus = show && !pkg.mainEditorPkg().files[customFile]
-        const meta: pkg.PackageMeta = this.getData("open-pkg-meta:" + pkg.mainEditorPkg().getPkgId());
+        const mainPkg = pkg.mainEditorPkg()
+        const plus = show && !mainPkg.files[customFile]
+        const sync = show && pxt.github.token && /^github:/.test(mainPkg.header.pubId)
+        const meta: pkg.PackageMeta = this.getData("open-pkg-meta:" + mainPkg.getPkgId());
         return <div role="tree" className={`ui tiny vertical ${targetTheme.invertedMenu ? `inverted` : ''} menu filemenu landscape only hidefullscreen`}>
             <div role="treeitem" aria-selected={show} aria-expanded={show} aria-label={lf("File explorer toolbar")} key="projectheader" className="link item" onClick={this.toggleVisibility} tabIndex={0} onKeyDown={sui.fireClickOnEnter}>
                 {lf("Explorer")}
                 <sui.Icon icon={`chevron ${show ? "down" : "right"} icon`} />
+                {sync ? <sui.Button className="primary label" icon="send" title={lf("Sync with github")} onClick={this.handleSyncClick} onKeyDown={this.handleButtonKeydown} /> : undefined}
                 {plus ? <sui.Button className="primary label" icon="plus" title={lf("Add custom blocks?")} onClick={this.handleCustomBlocksClick} onKeyDown={this.handleButtonKeydown} /> : undefined}
                 {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
             </div>

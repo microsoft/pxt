@@ -1114,36 +1114,46 @@ export class ProjectView
     }
 
     async commitAsync() {
-        let repo = this.state.header.pubId
-        let msg = await dialogs.showCommitDialogAsync(repo)
-        let prURL = await workspace.commitAsync(this.state.header, msg)
-        if (prURL) {
-            await dialogs.showPRDialogAsync(repo, prURL)
-            await workspace.pullAsync(this.state.header)
+        try {
+            let repo = this.state.header.pubId
+            let msg = await dialogs.showCommitDialogAsync(repo)
+
+            let prURL = await workspace.commitAsync(this.state.header, msg)
+            if (prURL) {
+                await dialogs.showPRDialogAsync(repo, prURL)
+                await workspace.pullAsync(this.state.header)
+            }
+            await this.reloadHeaderAsync()
+        } finally {
+            core.hideLoading("loadingheader")
         }
-        await this.reloadHeaderAsync()
-        core.hideLoading("loadingheader")
     }
 
     async pushPullAsync() {
         core.showLoading("loadingheader", lf("syncing with github..."));
-        let status = await workspace.pullAsync(this.state.header)
-            .catch(core.handleNetworkError)
+        let needsHide = true
+        try {
+            let status = await workspace.pullAsync(this.state.header)
+                .catch(core.handleNetworkError)
 
-        switch (status) {
-            case workspace.PullStatus.NoSourceControl:
-            case workspace.PullStatus.UpToDate:
-                break
+            switch (status) {
+                case workspace.PullStatus.NoSourceControl:
+                case workspace.PullStatus.UpToDate:
+                    break
 
-            case workspace.PullStatus.NeedsCommit:
-                await this.commitAsync()
-                return
+                case workspace.PullStatus.NeedsCommit:
+                    needsHide = false
+                    await this.commitAsync()
+                    break
 
-            case workspace.PullStatus.GotChanges:
-                await this.reloadHeaderAsync()
-                break
+                case workspace.PullStatus.GotChanges:
+                    await this.reloadHeaderAsync()
+                    break
+            }
+        } finally {
+            if (needsHide)
+                core.hideLoading("loadingheader")
         }
-        core.hideLoading("loadingheader")
     }
 
     ///////////////////////////////////////////////////////////

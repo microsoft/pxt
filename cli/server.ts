@@ -99,41 +99,44 @@ function readAssetsAsync(logicalDirname: string): Promise<any> {
         }))
 }
 
-function readPkgAsync(logicalDirname: string, fileContents = false): Promise<FsPkg> {
+async function readPkgAsync(logicalDirname: string, fileContents = false): Promise<FsPkg> {
     let dirname = path.join(userProjectsDir, logicalDirname)
-    let r: FsPkg = undefined;
-    return readFileAsync(path.join(dirname, pxt.CONFIG_NAME))
-        .then(buf => {
-            let cfg: pxt.PackageConfig = JSON.parse(buf.toString("utf8"))
-            let files = pxt.allPkgFiles(cfg).concat([".git.json"])
-            return Promise.map(files, fn =>
-                statOptAsync(path.join(dirname, fn))
-                    .then<FsFile>(st => {
-                        let r: FsFile = {
-                            name: fn,
-                            mtime: st ? st.mtime.getTime() : null
-                        }
-                        if (st == null || (fn != ".git.json" && !fileContents))
-                            return r
-                        else
-                            return readFileAsync(path.join(dirname, fn))
-                                .then(buf => {
-                                    r.content = buf.toString("utf8")
-                                    return r
-                                })
-                    }))
-                .then(files => {
-                    r = {
-                        path: logicalDirname,
-                        config: cfg,
-                        files: files
-                    };
-                    return existsAsync(path.join(dirname, "icon.jpeg"));
-                }).then(icon => {
-                    r.icon = icon ? "/icon/" + logicalDirname : undefined;
-                    return r;
-                })
-        })
+    let buf = await readFileAsync(path.join(dirname, pxt.CONFIG_NAME))
+    let cfg: pxt.PackageConfig = JSON.parse(buf.toString("utf8"))
+    let r: FsPkg = {
+        path: logicalDirname,
+        config: cfg,
+        files: []
+    };
+    
+    for (let fn of pxt.allPkgFiles(cfg).concat([".git.json"])) {
+        let st = await statOptAsync(path.join(dirname, fn))
+        let ff: FsFile = {
+            name: fn,
+            mtime: st ? st.mtime.getTime() : null
+        }
+
+        let thisFileContents = st && fileContents
+
+        if (fn == ".git.json") {
+            // skip .git.json altogether if missing
+            if (!st) continue
+            thisFileContents = true
+        }
+
+        if (thisFileContents) {
+            let buf = await readFileAsync(path.join(dirname, fn))
+            ff.content = buf.toString("utf8")
+        }
+
+        r.files.push(ff)
+    }
+
+    if (await existsAsync(path.join(dirname, "icon.jpeg"))) {
+        r.icon = "/icon/" + logicalDirname
+    }
+
+    return r
 }
 
 function writeScreenshotAsync(logicalDirname: string, screenshotUri: string, iconUri: string) {

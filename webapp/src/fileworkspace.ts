@@ -93,7 +93,7 @@ function mergeFsPkg(pkg: pxt.FsPkg) {
     let gjson = pkg.files.filter(f => f.name == ".git.json")[0]
     if (gjson) {
         let gj = JSON.parse(gjson.content)
-        hd.pubId = gj.repo
+        e.header.pubId = "github:" + gj.repo
     }
 }
 
