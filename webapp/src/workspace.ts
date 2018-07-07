@@ -234,7 +234,18 @@ export async function prAsync(hd: Header, commitId: string, msg: string) {
     return url
 }
 
-export async function commitAsync(hd: Header, msg: string) {
+export async function bumpAsync(hd: Header) {
+    let files = await getTextAsync(hd.id)
+    let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig
+    let v = pxt.semver.parse(cfg.version)
+    v.patch++
+    cfg.version = pxt.semver.stringify(v)
+    files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4)
+    await saveAsync(hd, files)
+    return await commitAsync(hd, cfg.version, "v" + cfg.version)
+}
+
+export async function commitAsync(hd: Header, msg: string, tag = "") {
     let files = await getTextAsync(hd.id)
     let gitjsontext = files[GIT_JSON]
     if (!gitjsontext)
@@ -284,6 +295,8 @@ export async function commitAsync(hd: Header, msg: string) {
         return commitId
     } else {
         await githubUpdateToAsync(hd, gitjson.repo, newCommit, files)
+        if (tag)
+            await pxt.github.createTagAsync(parsed.fullName, tag, newCommit)
         return ""
     }
 }

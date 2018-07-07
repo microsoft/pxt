@@ -1117,17 +1117,23 @@ export class ProjectView
     async commitAsync() {
         try {
             let repo = this.state.header.githubId
-            let msg = await dialogs.showCommitDialogAsync(repo)
+            let info = await dialogs.showCommitDialogAsync(repo)
+            if (!info)
+                return
 
-            let commitId = await workspace.commitAsync(this.state.header, msg)
+            let commitId = await workspace.commitAsync(this.state.header, info.msg)
             if (commitId) {
                 // merge failure; do a PR
                 // we could ask the user, but it's unlikely they can do anything else to fix it
-                let prURL = await workspace.prAsync(this.state.header, commitId, msg)
+                let prURL = await workspace.prAsync(this.state.header, commitId, info.msg)
                 await dialogs.showPRDialogAsync(repo, prURL)
                 // when the dialog finishes, we pull again - it's possible the user
                 // has resolved the conflict in the meantime
                 await workspace.pullAsync(this.state.header)
+                // skip bump in this case - we don't know if it was merged
+            } else {
+                if (info.bump)
+                    await workspace.bumpAsync(this.state.header)
             }
             await this.reloadHeaderAsync()
         } finally {

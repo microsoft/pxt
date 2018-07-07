@@ -1,9 +1,44 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
+import * as sui from "./sui";
+import * as data from "./data";
 import * as core from "./core";
 
 import Cloud = pxt.Cloud;
+
+
+interface PlainCheckboxProps {
+    label: string;
+    onChange: (v: boolean) => void;
+}
+
+interface PlainCheckboxState {
+    isChecked: boolean;
+}
+
+class PlainCheckbox extends data.Component<PlainCheckboxProps, PlainCheckboxState> {
+    constructor(props: PlainCheckboxProps) {
+        super(props);
+        this.state = {
+            isChecked: false
+        }
+        this.setCheckedBit = this.setCheckedBit.bind(this);
+    }
+
+    setCheckedBit() {
+        let val = !this.state.isChecked
+        this.props.onChange(val)
+        this.setState({ isChecked: val })
+    }
+
+    renderCore() {
+        return <sui.Checkbox
+            inputLabel={this.props.label}
+            checked={this.state.isChecked}
+            onChange={this.setCheckedBit} />
+    }
+}
 
 export function showAboutDialogAsync() {
     const compileService = pxt.appTarget.compileService;
@@ -45,6 +80,10 @@ export function showAboutDialogAsync() {
 export function showCommitDialogAsync(repo: string) {
     let input: HTMLInputElement;
     const deflMsg = lf("Updates.")
+    let bump = false
+    const setBump = (v: boolean) => {
+        bump = !!v
+    }
     return core.confirmAsync({
         header: lf("Commit to {0}", repo),
         agreeLbl: lf("Commit"),
@@ -56,11 +95,19 @@ export function showCommitDialogAsync(repo: string) {
                 <label id="selectUrlToOpenLabel">{lf("Describe your changes.")}</label>
                 <input type="url" tabIndex={0} autoFocus aria-describedby="selectUrlToOpenLabel" placeholder={deflMsg} className="ui blue fluid"></input>
             </div>
+            <div className="ui field">
+                <PlainCheckbox
+                    label={lf("Publish to users (bump)")}
+                    onChange={setBump} />
+            </div>
         </div>,
     }).then(res => {
         if (res) {
             pxt.tickEvent("app.commit.ok");
-            return input.value || deflMsg
+            return {
+                msg: input.value || deflMsg,
+                bump
+            }
         }
         return undefined;
     })

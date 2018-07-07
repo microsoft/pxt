@@ -210,7 +210,7 @@ namespace custom {
             <div role="treeitem" aria-selected={show} aria-expanded={show} aria-label={lf("File explorer toolbar")} key="projectheader" className="link item" onClick={this.toggleVisibility} tabIndex={0} onKeyDown={sui.fireClickOnEnter}>
                 {lf("Explorer")}
                 <sui.Icon icon={`chevron ${show ? "down" : "right"} icon`} />
-                {sync ? <sui.Button className="primary label" icon="send" title={lf("Sync with github")} onClick={this.handleSyncClick} onKeyDown={this.handleButtonKeydown} /> : undefined}
+                {sync ? <sui.Button className="primary label" icon="cloud upload" title={lf("Sync with github")} onClick={this.handleSyncClick} onKeyDown={this.handleButtonKeydown} /> : undefined}
                 {plus ? <sui.Button className="primary label" icon="plus" title={lf("Add custom blocks?")} onClick={this.handleCustomBlocksClick} onKeyDown={this.handleButtonKeydown} /> : undefined}
                 {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
             </div>
