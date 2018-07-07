@@ -89,6 +89,12 @@ function mergeFsPkg(pkg: pxt.FsPkg) {
         eh.isDeleted = hd.isDeleted
         eh.icon = hd.icon
     }
+
+    let gjson = pkg.files.filter(f => f.name == ".git.json")[0]
+    if (gjson) {
+        let gj = JSON.parse(gjson.content)
+        hd.pubId = gj.repo
+    }
 }
 
 function initAsync(target: string, version: string) {

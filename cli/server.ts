@@ -105,14 +105,15 @@ function readPkgAsync(logicalDirname: string, fileContents = false): Promise<FsP
     return readFileAsync(path.join(dirname, pxt.CONFIG_NAME))
         .then(buf => {
             let cfg: pxt.PackageConfig = JSON.parse(buf.toString("utf8"))
-            return Promise.map(pxt.allPkgFiles(cfg), fn =>
+            let files = pxt.allPkgFiles(cfg).concat([".git.json"])
+            return Promise.map(files, fn =>
                 statOptAsync(path.join(dirname, fn))
                     .then<FsFile>(st => {
                         let r: FsFile = {
                             name: fn,
                             mtime: st ? st.mtime.getTime() : null
                         }
-                        if (st == null || !fileContents)
+                        if (st == null || (fn != ".git.json" && !fileContents))
                             return r
                         else
                             return readFileAsync(path.join(dirname, fn))

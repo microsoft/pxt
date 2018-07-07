@@ -1113,6 +1113,39 @@ export class ProjectView
             })
     }
 
+    async commitAsync() {
+        let repo = this.state.header.pubId
+        let msg = await dialogs.showCommitDialogAsync(repo)
+        let prURL = await workspace.commitAsync(this.state.header, msg)
+        if (prURL) {
+            await dialogs.showPRDialogAsync(repo, prURL)
+            await workspace.pullAsync(this.state.header)
+        }
+        await this.reloadHeaderAsync()
+        core.hideLoading("loadingheader")
+    }
+
+    async pushPullAsync() {
+        core.showLoading("loadingheader", lf("syncing with github..."));
+        let status = await workspace.pullAsync(this.state.header)
+            .catch(core.handleNetworkError)
+
+        switch (status) {
+            case workspace.PullStatus.NoSourceControl:
+            case workspace.PullStatus.UpToDate:
+                break
+
+            case workspace.PullStatus.NeedsCommit:
+                await this.commitAsync()
+                return
+
+            case workspace.PullStatus.GotChanges:
+                await this.reloadHeaderAsync()
+                break
+        }
+        core.hideLoading("loadingheader")
+    }
+
     ///////////////////////////////////////////////////////////
     ////////////             Home                 /////////////
     ///////////////////////////////////////////////////////////

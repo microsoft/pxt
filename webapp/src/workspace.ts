@@ -199,18 +199,27 @@ export interface GitJson {
 
 export const GIT_JSON = ".git.json"
 
+export enum PullStatus {
+    NoSourceControl,
+    UpToDate,
+    GotChanges,
+    NeedsCommit,
+}
+
 export async function pullAsync(hd: Header) {
     let files = await getTextAsync(hd.id)
     let gitjsontext = files[GIT_JSON]
     if (!gitjsontext)
-        return false
+        return PullStatus.NoSourceControl
     let gitjson = JSON.parse(gitjsontext) as GitJson
     let parsed = pxt.github.parseRepoId(gitjson.repo)
     let sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
     if (sha == gitjson.commit.sha)
-        return false
-    await githubUpdateToAsync(hd, gitjson.repo, sha, files)
-    return true
+        return PullStatus.UpToDate
+    let res = await githubUpdateToAsync(hd, gitjson.repo, sha, files)
+    if (res == null)
+        return PullStatus.NeedsCommit
+    return PullStatus.GotChanges
 }
 
 export async function commitAsync(hd: Header, msg: string) {
@@ -286,9 +295,11 @@ async function githubUpdateToAsync(hd: Header, repoid: string, commitid: string,
                 continue
             let treeEnt = gitjson.commit.tree.tree.filter(e => e.path == k)[0]
             if (!treeEnt || treeEnt.type != "blob")
-                U.userError(lf("File '{0}' not added to commit.", k))
+                return null
+                // U.userError(f("File '{0}' not added to commit.", k))
             if (files[k] && treeEnt.sha != U.gitsha(U.toUTF8(files[k])))
-                U.userError(lf("File '{0}' modified. Please commit before updating.", k))
+                return null
+                // U.userError(f("File '{0}' modified. Please commit before updating.", k))
         }
     }
 

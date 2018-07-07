@@ -42,6 +42,47 @@ export function showAboutDialogAsync() {
     }).done();
 }
 
+export function showCommitDialogAsync(repo: string) {
+    let input: HTMLInputElement;
+    const deflMsg = lf("Updates.")
+    return core.confirmAsync({
+        header: lf("Commit to {0}", repo),
+        agreeLbl: lf("Commit"),
+        onLoaded: (el) => {
+            input = el.querySelectorAll('input')[0] as HTMLInputElement;
+        },
+        jsx: <div className="ui form">
+            <div className="ui field">
+                <label id="selectUrlToOpenLabel">{lf("Describe your changes.")}</label>
+                <input type="url" tabIndex={0} autoFocus aria-describedby="selectUrlToOpenLabel" placeholder={deflMsg} className="ui blue fluid"></input>
+            </div>
+        </div>,
+    }).then(res => {
+        if (res) {
+            pxt.tickEvent("app.commit.ok");
+            return input.value || deflMsg
+        }
+        return undefined;
+    })
+}
+
+export function showPRDialogAsync(repo: string, prURL: string): Promise<void> {
+    return core.confirmAsync({
+        header: lf("Commit conflict in {0}", repo),
+        agreeLbl: lf("Resolve conflict"),
+        disagreeLbl: lf("I'm done!"),
+        body: lf("The latest online version of {0} contains edits conflicting with yours. We have created a pull request (PR) that you can use to resolve the conflicts. Once you're done, sync to get all merged changes. In the meantime we have taken you to the latest online version of {0}.", repo),
+    }).then(res => {
+        if (res) {
+            pxt.tickEvent("app.commit.pr");
+            window.open(prURL, "_blank")
+            // wait for the user to click "I'm done"
+            return showPRDialogAsync(repo, prURL)
+        }
+        return Promise.resolve()
+    })
+}
+
 export function showImportUrlDialogAsync() {
     let input: HTMLInputElement;
     const shareUrl = pxt.appTarget.appTheme.shareUrl || "https://makecode.com/";
