@@ -192,6 +192,153 @@ export function getPublishedScriptAsync(id: string) {
         );
 }
 
+export interface GitJson {
+    repo: string;
+    commit: pxt.github.Commit;
+}
+
+export const GIT_JSON = ".git.json"
+
+export async function pullAsync(hd: Header) {
+    let files = await getTextAsync(hd.id)
+    let gitjsontext = files[GIT_JSON]
+    if (!gitjsontext)
+        return false
+    let gitjson = JSON.parse(gitjsontext) as GitJson
+    let parsed = pxt.github.parseRepoId(gitjson.repo)
+    let sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
+    if (sha == gitjson.commit.sha)
+        return false
+    await githubUpdateToAsync(hd, gitjson.repo, sha, files)
+    return true
+}
+
+export async function commitAsync(hd: Header, msg: string) {
+    let files = await getTextAsync(hd.id)
+    let gitjsontext = files[GIT_JSON]
+    if (!gitjsontext)
+        U.userError(lf("Not a git package."))
+    let gitjson = JSON.parse(gitjsontext) as GitJson
+    let parsed = pxt.github.parseRepoId(gitjson.repo)
+    let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig
+    let treeUpdate: pxt.github.CreateTreeReq = {
+        base_tree: gitjson.commit.tree.sha,
+        tree: []
+    }
+    for (let path of pxt.allPkgFiles(cfg)) {
+        let gitsha = U.gitsha(files[path])
+        let ex = gitjson.commit.tree.tree.filter(e => e.path == path)[0]
+        if (!ex || ex.sha != gitsha) {
+            let res = await pxt.github.createObjectAsync(parsed.fullName, "blob", {
+                content: files[path],
+                encoding: "utf-8"
+            } as pxt.github.CreateBlobReq)
+            U.assert(res == gitsha)
+            treeUpdate.tree.push({
+                "path": path,
+                "mode": "100644",
+                "type": "blob",
+                "sha": gitsha,
+                "url": undefined
+            })
+        }
+    }
+
+    if (treeUpdate.tree.length == 0)
+        U.userError(lf("Nothing to commit!"))
+
+    let treeId = await pxt.github.createObjectAsync(parsed.fullName, "tree", treeUpdate)
+    let commit: pxt.github.CreateCommitReq = {
+        message: msg,
+        parents: [gitjson.commit.sha],
+        tree: treeId
+    }
+    let commitId = await pxt.github.createObjectAsync(parsed.fullName, "commit", commit)
+    let newCommit = await pxt.github.mergeAsync(parsed.fullName, parsed.tag, commitId)
+    
+    if (newCommit == null) {
+        // merge conflict - create a Pull Request
+        let url = await pxt.github.createPRAsync(parsed.fullName, parsed.tag, commitId, msg)
+        // force user back to master - we will instruct them to merge PR in github.com website
+        // and sync here to get the changes
+        let headCommit = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
+        await githubUpdateToAsync(hd, gitjson.repo, headCommit, {})
+        return url
+    } else {
+        gitjson.commit = await pxt.github.getCommitAsync(parsed.fullName, newCommit)
+        return ""
+    }
+}
+
+async function githubUpdateToAsync(hd: Header, repoid: string, commitid: string, files: ScriptText) {
+    let parsed = pxt.github.parseRepoId(repoid)
+    let commit = await pxt.github.getCommitAsync(parsed.fullName, commitid)
+    let gitjson: GitJson = JSON.parse(files[GIT_JSON] || "{}")
+
+    if (!gitjson.commit) {
+        gitjson = {
+            repo: repoid,
+            commit: null
+        }
+    } else {
+        for (let k of Object.keys(files)) {
+            if (k == GIT_JSON)
+                continue
+            let treeEnt = gitjson.commit.tree.tree.filter(e => e.path == k)[0]
+            if (!treeEnt || treeEnt.type != "blob")
+                U.userError(lf("File '{0}' not added to commit.", k))
+            if (files[k] && treeEnt.sha != U.gitsha(U.toUTF8(files[k])))
+                U.userError(lf("File '{0}' modified. Please commit before updating.", k))
+        }
+    }
+
+    let downloadAsync = async (path: string) => {
+        let treeEnt = commit.tree.tree.filter(e => e.path == path)[0]
+        if (!treeEnt) {
+            files[path] = ""
+            return
+        }
+        if (files[path] && U.gitsha(files[path]) == treeEnt.sha)
+            return
+        let text = await pxt.github.downloadTextAsync(parsed.fullName, commitid, path)
+        files[path] = text
+        if (U.gitsha(files[path]) != treeEnt.sha)
+            U.userError(lf("Corrupt SHA1 on download of '{0}'.", path))
+    }
+
+    await downloadAsync(pxt.CONFIG_NAME)
+    let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig
+    for (let fn of pxt.allPkgFiles(cfg).slice(1)) {
+        await downloadAsync(fn)
+    }
+
+    gitjson.commit = commit
+    files[".git.json"] = JSON.stringify(gitjson, null, 4)
+
+    if (!hd) {
+        hd = await installAsync({
+            name: cfg.name,
+            pubId: repoid,
+            pubCurrent: false,
+            meta: {},
+            editor: "tsprj",
+            target: pxt.appTarget.id,
+            targetVersion: pxt.appTarget.versions.target,
+        }, files)
+    } else {
+        hd.name = cfg.name
+        await saveAsync(hd, files)
+    }
+
+    return hd
+}
+
+export async function importGithubAsync(id: string) {
+    let parsed = pxt.github.parseRepoId(id)
+    let sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
+    return await githubUpdateToAsync(null, id, sha, {})
+}
+
 export function installByIdAsync(id: string) {
     return Cloud.privateGetAsync(id, /* forceLiveEndpoint */ true)
         .then((scr: Cloud.JsonScript) =>

@@ -71,7 +71,10 @@ export function showImportUrlDialogAsync() {
     }).then(res => {
         if (res) {
             pxt.tickEvent("app.open.url");
-            return pxt.Cloud.parseScriptId(input.value);
+            const url = input.value
+            if (/^(github:|https:\/\/github.com\/)/.test(url))
+                return pxt.github.noramlizeRepoId(url)
+            return pxt.Cloud.parseScriptId(url);
         }
         return undefined;
     })

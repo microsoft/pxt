@@ -1807,7 +1807,10 @@ export class ProjectView
             if (!id) {
                 core.errorNotification(lf("Sorry, the project url looks invalid."));
             } else {
-                loadHeaderBySharedId(id);
+                if (Util.startsWith(id, "github:"))
+                    importGithubProject(id);
+                else
+                    loadHeaderBySharedId(id);
             }
         });
     }
@@ -2463,6 +2466,15 @@ function isProjectRelatedHash(hash: { cmd: string; arg: string }): boolean {
     }
 }
 
+function importGithubProject(id: string) {
+    core.showLoading("loadingheader", lf("importing github project..."));
+    workspace.importGithubAsync(id)
+        .then(hd => theEditor.loadHeaderAsync(hd, null))
+        .catch(core.handleNetworkError)
+        .finally(() => core.hideLoading("loadingheader"));
+
+}
+
 function loadHeaderBySharedId(id: string) {
     const existing = workspace.getHeaders()
         .filter(h => h.pubCurrent && h.pubId == id)[0]
@@ -2597,6 +2609,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const hw = /[&?]hw=([\w-]+)/.exec(window.location.href)
     if (hw)
         pxt.setHwVariant(hw[1])
+
+    pxt.github.token = pxt.storage.getLocal("githubtoken");
 
     const ws = /ws=(\w+)/.exec(window.location.href)
     const isSandbox = pxt.shell.isSandboxMode() || pxt.shell.isReadOnly();
