@@ -197,8 +197,12 @@ function writePkgAsync(logicalDirname: string, data: FsPkg) {
                 }
             }, err => { }))
         // no conflict, proceed with writing
-        .then(() => Promise.map(data.files, f =>
-            writeFileAsync(path.join(dirname, f.name), f.content)))
+        .then(() => Promise.map(data.files, f => {
+            let d = f.name.replace(/\/[^\/]*$/, "")
+            if (d != f.name)
+                nodeutil.mkdirP(path.join(dirname, d))
+            return writeFileAsync(path.join(dirname, f.name), f.content)
+        }))
         .then(() => readPkgAsync(logicalDirname, false))
 }
 
