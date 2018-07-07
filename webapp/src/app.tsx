@@ -819,7 +819,8 @@ export class ProjectView
 
                 const preferredEditor = this.pickEditorFor(file);
                 const readme = main.lookupFile("this/README.md");
-                if (readme && readme.content && readme.content.trim())
+                // no auto-popup when editing packages locally
+                if (!h.githubId && readme && readme.content && readme.content.trim())
                     this.setSideMarkdown(readme.content);
                 else if (pkg.mainPkg && pkg.mainPkg.config && pkg.mainPkg.config.documentation)
                     this.setSideDoc(pkg.mainPkg.config.documentation, preferredEditor == this.blocksEditor);
@@ -1115,7 +1116,7 @@ export class ProjectView
 
     async commitAsync() {
         try {
-            let repo = this.state.header.pubId
+            let repo = this.state.header.githubId
             let msg = await dialogs.showCommitDialogAsync(repo)
 
             let prURL = await workspace.commitAsync(this.state.header, msg)
@@ -1850,7 +1851,7 @@ export class ProjectView
             if (!id) {
                 core.errorNotification(lf("Sorry, the project url looks invalid."));
             } else {
-                if (Util.startsWith(id, "github:"))
+                if (pxt.github.isGithubId(id))
                     importGithubProject(id);
                 else
                     loadHeaderBySharedId(id);

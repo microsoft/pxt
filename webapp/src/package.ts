@@ -389,6 +389,16 @@ class Host
         let proto = pkg.verProtocol()
         let epkg = getEditorPkg(pkg)
 
+        let fromWorkspaceAsync = (arg: string) =>
+            workspace.getTextAsync(arg)
+                .then(scr => {
+                    epkg.setFiles(scr)
+                    if (epkg.isTopLevel() && epkg.header)
+                        return workspace.recomputeHeaderFlagsAsync(epkg.header, scr)
+                    else
+                        return Promise.resolve()
+                })
+
         if (proto == "pub") {
             // make sure it sits in cache
             return workspace.getPublishedScriptAsync(pkg.verArgument())
@@ -397,13 +407,11 @@ class Host
             return workspace.getPublishedScriptAsync(pkg.version())
                 .then(files => epkg.setFiles(files))
         } else if (proto == "workspace") {
-            return workspace.getTextAsync(pkg.verArgument())
-                .then(scr => epkg.setFiles(scr))
+            return fromWorkspaceAsync(pkg.verArgument())
         } else if (proto == "file") {
             let arg = pkg.verArgument()
             if (arg[0] == ".") arg = resolvePath(pkg.parent.verArgument() + "/" + arg)
-            return workspace.getTextAsync(arg)
-                .then(scr => epkg.setFiles(scr));
+            return fromWorkspaceAsync(arg)
         } else if (proto == "embed") {
             epkg.setFiles(pxt.getEmbeddedScript(pkg.verArgument()))
             return Promise.resolve()

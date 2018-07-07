@@ -264,7 +264,7 @@ export async function commitAsync(hd: Header, msg: string) {
     }
     let commitId = await pxt.github.createObjectAsync(parsed.fullName, "commit", commit)
     let newCommit = await pxt.github.mergeAsync(parsed.fullName, parsed.tag, commitId)
-    
+
     if (newCommit == null) {
         // merge conflict - create a Pull Request
         let url = await pxt.github.createPRAsync(parsed.fullName, parsed.tag, commitId, msg)
@@ -296,10 +296,10 @@ async function githubUpdateToAsync(hd: Header, repoid: string, commitid: string,
             let treeEnt = gitjson.commit.tree.tree.filter(e => e.path == k)[0]
             if (!treeEnt || treeEnt.type != "blob")
                 return null
-                // U.userError(f("File '{0}' not added to commit.", k))
+            // U.userError(f("File '{0}' not added to commit.", k))
             if (files[k] && treeEnt.sha != U.gitsha(U.toUTF8(files[k])))
                 return null
-                // U.userError(f("File '{0}' modified. Please commit before updating.", k))
+            // U.userError(f("File '{0}' modified. Please commit before updating.", k))
         }
     }
 
@@ -329,7 +329,8 @@ async function githubUpdateToAsync(hd: Header, repoid: string, commitid: string,
     if (!hd) {
         hd = await installAsync({
             name: cfg.name,
-            pubId: repoid,
+            githubId: repoid,
+            pubId: "",
             pubCurrent: false,
             meta: {},
             editor: "tsprj",
@@ -344,10 +345,39 @@ async function githubUpdateToAsync(hd: Header, repoid: string, commitid: string,
     return hd
 }
 
+
+// to be called after loading header in a editor
+export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
+    h.githubCurrent = false
+
+    let gitjson: GitJson = JSON.parse(files[GIT_JSON] || "{}")
+
+    h.githubId = gitjson.repo
+
+    if (!h.githubId)
+        return
+
+    if (!gitjson.commit || !gitjson.commit.tree)
+        return
+
+    for (let k of Object.keys(files)) {
+        if (k == GIT_JSON)
+            continue
+        let treeEnt = gitjson.commit.tree.tree.filter(e => e.path == k)[0]
+        if (!treeEnt || treeEnt.type != "blob")
+            return
+        if (files[k] && treeEnt.sha != U.gitsha(U.toUTF8(files[k])))
+            return
+    }
+
+    h.githubCurrent = true
+}
+
 export async function importGithubAsync(id: string) {
     let parsed = pxt.github.parseRepoId(id)
     let sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
-    return await githubUpdateToAsync(null, id, sha, {})
+    let repoid = pxt.github.noramlizeRepoId(id).replace(/^github:/, "")
+    return await githubUpdateToAsync(null, repoid, sha, {})
 }
 
 export function installByIdAsync(id: string) {
