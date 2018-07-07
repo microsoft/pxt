@@ -76,8 +76,14 @@ namespace pxt.github {
 
     function ghRequestAsync(opts: U.HttpRequestOptions) {
         if (token) {
-            if (!opts.headers) opts.headers = {}
-            opts.headers['Authorization'] = `token ${token}`
+            if (opts.url.indexOf('?') > 0)
+                opts.url += "&"
+            else
+                opts.url += "?"
+            opts.url += "access_token=" + token
+            // Token in headers doesn't work with CORS, especially for githubusercontent.com
+            //if (!opts.headers) opts.headers = {}
+            //opts.headers['Authorization'] = `token ${token}`
         }
         return U.requestAsync(opts)
     }
@@ -186,14 +192,11 @@ namespace pxt.github {
 
     export function getCommitAsync(repopath: string, sha: string) {
         return ghGetJsonAsync("https://api.github.com/repos/" + repopath + "/git/commits/" + sha)
-            .then(resp => {
-                let commit = resp.json as Commit
-                return ghGetJsonAsync(commit.tree.url)
-                    .then(resp2 => {
-                        commit.tree = resp.json
-                        return commit
-                    })
-            })
+            .then((commit: Commit) => ghGetJsonAsync(commit.tree.url)
+                .then((tree: Tree) => {
+                    commit.tree = tree
+                    return commit
+                }))
     }
 
     // type=blob
