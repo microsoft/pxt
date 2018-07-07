@@ -198,10 +198,16 @@ cache:
         return files
     }
 
-    export function packageFilesFixup(files: Map<string>) {
+    export function packageFilesFixup(files: Map<string>, removeSubdirs = false) {
         const configMap = JSON.parse(files[pxt.CONFIG_NAME])
         configMap["target"] = pxt.appTarget.platformid || pxt.appTarget.id
         configMap["docs"] = pxt.appTarget.appTheme.homeUrl || "./";
+
+        if (removeSubdirs)
+            for (let k of Object.keys(files)) {
+                if (k.indexOf("/") >= 0)
+                    delete files[k]
+            }
 
         U.iterMap(files, (k, v) => {
             v = v.replace(/@([A-Z]+)@/g, (f, n) => configMap[n.toLowerCase()] || "")

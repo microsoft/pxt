@@ -245,7 +245,7 @@ export async function bumpAsync(hd: Header) {
     return await commitAsync(hd, cfg.version, "v" + cfg.version)
 }
 
-export async function commitAsync(hd: Header, msg: string, tag = "") {
+export async function commitAsync(hd: Header, msg: string, tag = "", filenames: string[] = null) {
     let files = await getTextAsync(hd.id)
     let gitjsontext = files[GIT_JSON]
     if (!gitjsontext)
@@ -257,7 +257,11 @@ export async function commitAsync(hd: Header, msg: string, tag = "") {
         base_tree: gitjson.commit.tree.sha,
         tree: []
     }
-    for (let path of pxt.allPkgFiles(cfg)) {
+    if (!filenames)
+        filenames = pxt.allPkgFiles(cfg)
+    for (let path of filenames) {
+        if (path == GIT_JSON)
+            continue
         let gitsha = U.gitsha(files[path])
         let ex = gitjson.commit.tree.tree.filter(e => e.path == path)[0]
         if (!ex || ex.sha != gitsha) {
@@ -392,13 +396,25 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string) {
     let parsed = pxt.github.parseRepoId(repoid)
     let name = parsed.fullName.replace(/.*\//, "")
     let files = pxt.packageFiles(name)
-    pxt.packageFilesFixup(files)
+    pxt.packageFilesFixup(files, true)
 
     let currFiles = await getTextAsync(hd.id)
     U.jsonMergeFrom(currFiles, files)
 
     await saveAsync(hd, currFiles)
-    await commitAsync(hd, "Auto-initialized.")
+    await commitAsync(hd, "Auto-initialized.", "", Object.keys(currFiles))
+
+    // remove files not in the package (only in git)
+    currFiles = await getTextAsync(hd.id)
+    let allfiles = pxt.allPkgFiles(JSON.parse(currFiles[pxt.CONFIG_NAME]))
+    for (let k of Object.keys(currFiles)) {
+        if (k == GIT_JSON)
+            continue
+        if (allfiles.indexOf(k) < 0)
+            delete currFiles[k]
+    }
+
+    await saveAsync(hd, currFiles)
 
     return hd
 }
