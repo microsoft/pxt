@@ -282,7 +282,7 @@ export async function commitAsync(hd: Header, msg: string, tag = "") {
     let treeId = await pxt.github.createObjectAsync(parsed.fullName, "tree", treeUpdate)
     let commit: pxt.github.CreateCommitReq = {
         message: msg,
-        parents: gitjson.commit.sha === "0" ? [] : [gitjson.commit.sha],
+        parents: [gitjson.commit.sha],
         tree: treeId
     }
     let commitId = await pxt.github.createObjectAsync(parsed.fullName, "commit", commit)
@@ -328,9 +328,14 @@ async function githubUpdateToAsync(hd: Header, repoid: string, commitid: string,
     }
 
     await downloadAsync(pxt.CONFIG_NAME)
-    let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig
+    let cfg = JSON.parse(files[pxt.CONFIG_NAME] || "{}") as pxt.PackageConfig
     for (let fn of pxt.allPkgFiles(cfg).slice(1)) {
         await downloadAsync(fn)
+    }
+
+    if (!cfg.name) {
+        cfg.name = "X"
+        files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4)
     }
 
     gitjson.commit = commit
@@ -383,31 +388,16 @@ export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
     h.githubCurrent = true
 }
 
-export async function initializeGithubRepoAsync(repoid: string) {
+export async function initializeGithubRepoAsync(hd: Header, repoid: string) {
     let parsed = pxt.github.parseRepoId(repoid)
     let name = parsed.fullName.replace(/.*\//, "")
     let files = pxt.packageFiles(name)
     pxt.packageFilesFixup(files)
 
-    files[GIT_JSON] = JSON.stringify({
-        repo: repoid,
-        commit: {
-            sha: "0",
-            tree: { tree: [] }
-        }
-    }, null, 4)
+    let currFiles = await getTextAsync(hd.id)
+    U.jsonMergeFrom(currFiles, files)
 
-    let hd = await installAsync({
-        name: name,
-        githubId: repoid,
-        pubId: "",
-        pubCurrent: false,
-        meta: {},
-        editor: "tsprj",
-        target: pxt.appTarget.id,
-        targetVersion: pxt.appTarget.versions.target,
-    }, files)
-
+    await saveAsync(hd, currFiles)
     await commitAsync(hd, "Auto-initialized.")
 
     return hd
@@ -420,9 +410,12 @@ export async function importGithubAsync(id: string) {
     try {
         sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
     } catch (e) {
-        if (e.statusCode == 409)
-            return initializeGithubRepoAsync(repoid)
-        if (e.statusCode == 404)
+        if (e.statusCode == 409) {
+            // this means repo is completely empty; put something in there
+            await pxt.github.putFileAsync(parsed.fullName, ".gitignore", "# Initial\n")
+            sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
+        }
+        else if (e.statusCode == 404)
             U.userError(lf("No such repository or branch."))
     }
     return await githubUpdateToAsync(null, repoid, sha, {})

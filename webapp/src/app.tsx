@@ -2521,13 +2521,30 @@ function isProjectRelatedHash(hash: { cmd: string; arg: string }): boolean {
     }
 }
 
-function importGithubProject(id: string) {
+async function importGithubProject(id: string) {
     core.showLoading("loadingheader", lf("importing github project..."));
-    workspace.importGithubAsync(id)
-        .then(hd => theEditor.loadHeaderAsync(hd, null))
-        .catch(core.handleNetworkError)
-        .finally(() => core.hideLoading("loadingheader"));
-
+    try {
+        let hd = await workspace.importGithubAsync(id)
+        let text = await workspace.getTextAsync(hd.id)
+        if ((text[pxt.CONFIG_NAME] || "{}").length < 20) {
+            let ok = await core.confirmAsync({
+                header: lf("Initialize MakeCode package?"),
+                body: lf("We didn't find a valid pxt.json file in the repository. Would you like to create it and supporting files?"),
+                agreeLbl: lf("Initialize!")
+            })
+            if (!ok) {
+                hd.isDeleted = true
+                await workspace.saveAsync(hd)
+                return
+            }
+            await workspace.initializeGithubRepoAsync(hd, id)
+        }
+        await theEditor.loadHeaderAsync(hd, null)
+    } catch (e) {
+        core.handleNetworkError(e)
+    } finally {
+        core.hideLoading("loadingheader")
+    }
 }
 
 function loadHeaderBySharedId(id: string) {

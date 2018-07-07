@@ -249,6 +249,21 @@ namespace pxt.github {
         return (resp.statusCode == 200)
     }
 
+    export async function putFileAsync(repopath: string, path: string, content: string) {
+        let resp = await ghRequestAsync({
+            url: "https://api.github.com/repos/" + repopath + "/contents/" + path,
+            method: "PUT",
+            allowHttpErrors: true,
+            data: {
+                message: lf("Initialize empty repo"),
+                content: btoa(U.toUTF8(content)),
+                branch: "master"
+            }
+        })
+        if (resp.statusCode != 201)
+            U.userError("PUT file failed")
+    }
+
     export async function createTagAsync(repopath: string, tag: string, commitid: string) {
         await ghPostAsync(repopath + "/git/refs", {
             ref: "refs/tags/" + tag,
