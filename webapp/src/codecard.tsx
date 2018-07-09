@@ -71,6 +71,8 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
         const cardType = card.cardType;
 
         const clickHandler = card.onClick ? (e: any) => {
+            if (e.target && e.target.tagName == "A")
+                return;
             pxt.analytics.enableCookies();
             card.onClick(e);
         } : undefined;
@@ -112,12 +114,23 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
             {card.time ? <div className="meta">
                 {card.time ? <span key="date" className="date">{pxt.Util.timeSince(card.time)}</span> : null}
             </div> : undefined}
-            {card.extracontent || card.tags ? <div className="extra content">
-                {card.extracontent}
-                {card.tags ? card.tags.map(tag =>
-                    <span key={`tag${tag.label}`} className={`ui label tiny ${tag.color}`}>{pxt.Util.rlf(tag.label)}</span>
-                ) : undefined}
-            </div> : undefined}
+            {card.extracontent || card.tags || card.learnMoreUrl || card.buyUrl ?
+                <div className="extra content">
+                    {card.extracontent}
+                    {card.tags ? card.tags.map(tag =>
+                        <span key={`tag${tag.label}`} className={`ui label tiny ${tag.color}`}>{pxt.Util.rlf(tag.label)}</span>
+                    ) : undefined}
+                    {card.buyUrl ?
+                        <a className="learnmore left floated" href={card.buyUrl}
+                            aria-label={lf("Buy")} target="_blank" rel="noopener noreferrer">
+                            {lf("Buy")}
+                        </a> : undefined}
+                    {card.learnMoreUrl ?
+                        <a className="learnmore right floated" href={card.learnMoreUrl}
+                            aria-label={lf("Learn more")} target="_blank" rel="noopener noreferrer">
+                            {lf("Learn more")}
+                        </a> : undefined}
+                </div> : undefined}
         </div>;
 
         if (!card.onClick && url) {

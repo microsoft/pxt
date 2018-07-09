@@ -161,7 +161,7 @@ export function decompileSnippetAsync(code: string, blockInfo?: ts.pxtc.BlocksIn
 }
 
 function decompileCoreAsync(opts: pxtc.CompileOptions, fileName: string): Promise<pxtc.CompileResult> {
-    return workerOpAsync("decompile", { options: opts, fileName: fileName })
+    return workerOpAsync("decompile", { options: opts, fileName: fileName, blocks: blocksOptions() })
 }
 
 export function workerOpAsync(op: string, arg: pxtc.service.OpArg) {
@@ -196,7 +196,7 @@ export function apiSearchAsync(searchFor: pxtc.service.SearchOptions) {
         .then(() => {
             searchFor.localizedApis = cachedApis;
             searchFor.localizedStrings = pxt.Util.getLocalizedStrings();
-            return workerOpAsync("apiSearch", { search: searchFor })
+            return workerOpAsync("apiSearch", { search: searchFor, blocks: blocksOptions() });
         });
 }
 
@@ -237,4 +237,11 @@ export function newProject() {
     cachedApis = null;
     cachedBlocks = null;
     workerOpAsync("reset", {}).done();
+}
+
+function blocksOptions(): pxtc.service.BlocksOptions {
+    if (pxt.appTarget && pxt.appTarget.runtime && pxt.appTarget.runtime.bannedCategories && pxt.appTarget.runtime.bannedCategories.length) {
+        return { bannedCategories: pxt.appTarget.runtime.bannedCategories };
+    }
+    return undefined;
 }
