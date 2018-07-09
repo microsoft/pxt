@@ -4100,7 +4100,23 @@ function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
     if (!nodeutil.existsDirSync(dir))
         U.userError(`directory '${dir}' does not exist`);
 
-    const metaInfo: SpriteGlobalMeta = nodeutil.readJson(path.join(dir, "meta.json"))
+    // create meta.json file if needed
+    const metaInfoPath = path.join(dir, "meta.json");
+    if (!fs.existsSync(metaInfoPath)) {
+        pxt.log(`${metaInfoPath} not found, creating new one`);
+        fs.writeFileSync(metaInfoPath, JSON.stringify({
+            "width": 16,
+            "height": 16,
+            "blockIdentity": "image.__imagePicker",
+            "creator": "image.ofBuffer",
+            "star": {
+                "namespace": `sprites.${dir.toLowerCase()}`,
+                "mimeType": "image/x-mkcd-f4"
+            }
+        }, null, 4));
+    }
+
+    const metaInfo: SpriteGlobalMeta = nodeutil.readJson(metaInfoPath)
     const jresources: pxt.Map<pxt.JRes> = {}
     const star = metaInfo.star
 
