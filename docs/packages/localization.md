@@ -58,7 +58,7 @@ You only need to do this if you are not the author of the package you are transl
 ### 4. Clone your fork to your computer
 - In the command prompt, navigate to a folder where you wish to download the package fork
 - Run `git clone https://github.com/[your username]/[the repo name]`
-  - For example `git clone https://github.com/myGithubAccount/pxt-motorbit`
+>    - For example `git clone https://github.com/myGithubAccount/pxt-motorbit`
 
 ## Translating
 
@@ -75,23 +75,25 @@ In that folder, you'll find various `.json` files. These files contain the strin
 
 ### 3. Create the translations
 - Under the `_locales/` folder, create a new folder and name it the ISO code for the language you want to translate to
-  - For example, `_locales/fr/` for French, `_locales/es/` for spanish, etc
+>    - For example, `_locales/fr/` for French, `_locales/es/` for spanish, etc
 - Copy all the `.json` files under `_locales/` and paste them into your new language folder
 - Open the `.json` files from under your language folder and edit the string values inside them
-  - The files are in the following format:
-  ```
-  {
-      "string id": "string value"
-  }
-  ```
-  - To translate the strings, change the string values (after the `:`)
-  - Be careful not to remove the special characters, such as `%`, `|`, etc. These characters are parsed by our editor to generate the blocks.
-  - For example, `"motorbit.turnleft|block": "turn left with speed %n"` would become `"motorbit.turnleft|block": "tourner à gauche avec vitesse %n"` in French.
+>    - The files are in the following format:
+
+```
+{
+    "string id": "string value"
+}
+```
+>    - To translate the strings, change the string values (after the `:`)
+>    - Be careful not to remove the special characters, such as `%`, `|`, etc. These characters are parsed by our editor to generate the blocks.
+>    - For example, `"motorbit.turnleft|block": "turn left with speed %n"` would become `"motorbit.turnleft|block": "tourner à gauche avec vitesse %n"` in French.
 
 ### 4. Add the translation files to the package configuration
 Once you're done editing the `.json` files, you must add them to the package configuration so that our editor recognizes them.
 - In the package root, open the file `pxt.json`
 - Find the `files: [...]` entry, it will look something like:
+
 ```
 "files": [
     "README.md",
@@ -99,17 +101,18 @@ Once you're done editing the `.json` files, you must add them to the package con
 ],
 ```
 - Add your files to the list by including their relative path from the root of the package
-  - For example, if you translated to JA and ZH:
-  ```
-  "files": [
-      "README.md",
-      "neopixel.ts"
-      "_locales/ja/neopixel-strings.json",
-      "_locales/ja/neopixel-jsdocs-strings.json",
-      "_locales/zh/neopixel-strings.json",
-      "_locales/zh/neopixel-jsdocs-strings.json"
-  ],
-  ```
+>    - For example, if you translated to JA and ZH:
+
+```
+"files": [
+    "README.md",
+    "neopixel.ts"
+    "_locales/ja/neopixel-strings.json",
+    "_locales/ja/neopixel-jsdocs-strings.json",
+    "_locales/zh/neopixel-strings.json",
+    "_locales/zh/neopixel-jsdocs-strings.json"
+],
+```
 
 ## Testing your translations
 Unfortunately, we do not currently have a seamless experience to test your translations locally.
@@ -121,7 +124,7 @@ There are a lot of steps to get this working, so follow closely.
 - Open the command line
 - Navigate to a folder where you will download the editor repo
 - Using Git, clone the editor repo to which your package applies
-  - For example for micro:bit: `git clone https://github.com/microsoft/pxt-microbit`
+>    - For example for micro:bit: `git clone https://github.com/microsoft/pxt-microbit`
 
 ### 2. Install the target
 - In the command prompt, navigate to the target repo you just cloned
@@ -129,71 +132,76 @@ There are a lot of steps to get this working, so follow closely.
 
 ### 3. Bundle your package with the target
 - Copy your entire package directory (your fork that you translated) to the `libs/` folder of the editor repo
-  - For example for micro:bit and pxt-neopixel package, you would copy your fork to `pxt-microbit/libs/pxt-neopixel`
-- Change the name of the copied folder to something else, so it doesn't conflict with the real package
-  - For example for the pxt-neopixel package, you could change the copied folder name to: `pxt-microbit/libs/pxt-neopixel2/` (notice the **2** in the name)
-- Open the editor's `pxtarget.json` file, located at the root of the editor repo
-  - For example for micro:bit, this file is at `pxt-microbit/pxtarget.json`
+>    - For example for micro:bit and pxt-neopixel package, you would copy your fork to `pxt-microbit/libs/pxt-neopixel`
+- Change the name of the copied folder so it matches the `name` setting in the package configuration file
+>    - The package configuration file is called `pxt.json` and is at the root of your forked package, for example `pxt-neopixel/pxt.json`
+>    - Inside that file, you will find the `name` setting, for example `"name": "neopixel"`. This is what you must rename the copied folder to.
+>    - So, in this example, I would rename `pxt-microbit/libs/pxt-neopixel` to `pxt-microbit/libs/neopixel`
+- Once that's done, open the editor's `pxtarget.json` file, located at the root of the editor repo
+>    - For example for micro:bit, this file is at `pxt-microbit/pxtarget.json`
 - In the file, search for `bundledirs` to find a configuration setting that looks like this:
-  ```
-    "bundleddirs": [
-        "libs/core",
-        "libs/radio",
-        "libs/devices",
-        "libs/bluetooth"
-    ],
-  ```
-  - If the setting isn't there, simply add an empty one at the top of the file, like so:
-  ```
-  {
+
+```
+"bundleddirs": [
+    "libs/core",
+    "libs/radio",
+    "libs/devices",
+    "libs/bluetooth"
+],
+```
+
+>    - If the setting isn't there, simply add an empty one at the top of the file, like so:
+
+```
+{
     "bundleddirs": [
 
     ],
     ...
-  }
-  ```
-- Add your package to the list of bundled dirs (**use the modified name**)
-  - For example for micro:bit and pxt-neopixel, using the name **pxt-neopixel2** that I used in the previous step:
-  ```
-    "bundleddirs": [
-        "libs/core",
-        "libs/radio",
-        "libs/devices",
-        "libs/bluetooth",
-        "libs/pxt-neopixel2"
-    ],
-  ```
+}
+```
+- Add the copied package to the list of bundled dirs (**use the modified name**)
+>    - For example for micro:bit and pxt-neopixel, using the name **neopixel**:
+
+```
+"bundleddirs": [
+    "libs/core",
+    "libs/radio",
+    "libs/devices",
+    "libs/bluetooth",
+    "libs/neopixel"
+],
+```
 - Still inside `pxtarget.json`, find the `appTheme` setting
 - Inside the `appTheme` setting, add a new entry called `"disableLiveTranslations": true`
-  - For example, the final result would be:
-  ```
-  "appTheme": {
+>    - For example, the final result would be:
+
+```
+"appTheme": {
     "disableLiveTranslations": true,
     ...
-  },
-  ```
-- Now, open the copied package's configuration file (`pxt.json`), for example `pxt-microbit/libs/pxt-neopixel2/pxt.json`
-- Change the name of your package to something else, for example:
-  ```
-  {
-    "name": "neopixel2",
-    ...
-  }
-  ```
-- Look for the `dependencies` setting, and locate the `core` dependency
-- Change the `core` dependency value from `"*"` to `"file:../core"`
-  - For example, this is the final result:
-  ```
-  "dependencies": [
+},
+```
+- Save and close the file
+- Now, open the copied package's configuration file (`pxt.json`). **Open the one from the copied package**, for example `pxt-microbit/libs/neopixel/pxt.json`
+- Look for the `dependencies` setting, and locate the entry that says `"core"`
+- Change the `"core"` value from `"*"` to `"file:../core"`
+>    - For example, this is what it should look like:
+
+```
+"dependencies": [
     "core": "file:../core",
     ...
-  ],
-  ```
-- In the command prompt, navigate to your copied package, for example `pxt-microbit/libs/pxt-neopixel2`
+],
+```
+- Still in that file, change the `"description"` setting to something else so you can easily recognize your forked package from the real package
+>    - For example for pxt-neopixel, you could change the description to `"description": "My translated neopixel package`
+- Save and close the file
+- Go back to the command prompt and navigate to your copied package, for example `pxt-microbit/libs/neopixel`
 - Run `pxt install`
 
 ### 4. Serve the target
-- In the command prompt, navigate to the target repo, for example `pxt-microbit/`
+- In the command prompt, navigate to the root of target repo, for example `pxt-microbit/`
 - Run `pxt serve --cloud`
 
 ### 5. Launch the local editor
@@ -202,31 +210,27 @@ There are a lot of steps to get this working, so follow closely.
 
 ![](/static/images/serve-url.png)
 
-  - You may need to scroll up a bit to find the URL from which the local editor is being served
+>    - You may need to scroll up a bit to find the URL from which the local editor is being served
 - Change the language in the editor to your translated language (**Menu > Language**)
-  - If the language does not appear in the language list, you'll need to change the language via the editor's URL instead. Add `?forcelang=[language code]` to the URL, before the `#` character
-  - For example, if French (fr) is not enabled for the target you're testing: `http://localhost:3232/?forcelang=fr#local_token=...`
+>    - If the language does not appear in the language list, you'll need to change the language via the editor's URL instead. Add `?forcelang=[language code]` to the URL, before the `#` part
+>    - For example, if French (fr) is not enabled for the target you're testing: `http://localhost:3232/?forcelang=fr#local_token=...`
 
 ### 6. Add your package to a project
-You cannot add your package in the traditional way (Advanced > Add Package).
-You will need to manually modify the configuration file of a project.
+- Create a new project in the local editor
+- Go to **Advanced > Extensions** (or **Advanced > Add package**, depending on the editor)
+- Find your package in the list and add it to your project
+>    - Make sure you add your own translated fork, and not the real package (look for your modified description to differentiate them)
+- Your package's category should now be available in the toolbox, and the blocks inside should reflect your translations!
 
-- Create a new project in the local editor. This will create a folder on your computer where the project is saved.
-- In the file explorer of your machine, find the folder for this new project you just created. It is found under the `projects/` folder inside the editor repo.
-  - For example, for micro:bit, your project will be at `pxt-microbit/projects/untitled`
-- Inside your project folder, you will find a `pxt.json` configuration file; open it
-- Find the `dependencies` section, and add your package to the list of dependencies
-  - For example, for `pxtneopixel2` that I used above, the final result would be:
-  ```
-    "dependencies": {
-        "core": "*",
-        "radio": "*",
-        "pxt-neopixel2": "*"
-    },
-  ```
-- Go back to the local editor in your browser, and refresh the page. You should now see a new category for your package, and the blocks inside it should reflect your translations.
-- If you need to change the translations, change then in your **original** package folder (your fork that you cloned), and when you're done, copy the `.json` file over to your copied package under `libs/`
-  - For example, after modifying my French pxt-neopixel fork translations, I would copy `pxt-neopixel/_locales/fr/neopixel-strings.json` and use it to overwrite `pxt-microbit/libs/pxt-neopixel2/_locales/fr/neopixel-strings.json`
+If you need to make changes to the translations:
+
+- Make the modifications in your **original** package folder (your fork that you cloned)
+>    - For example, go back to `pxt-neopixel/_locales/fr/neopixel-strings.json`
+- When you're done, copy the modified `.json` file(s) over to your package copy under the editor's `libs/` folder
+>    - For example, after modifying French pxt-neopixel translations, you would copy `pxt-neopixel/_locales/fr/neopixel-strings.json` and overwrite `pxt-microbit/libs/neopixel/_locales/fr/neopixel-strings.json` with it
+- Stop the local server by going to the command prompt where the local server is running and hitting **Ctrl + c** twice
+- Start the local server again by running `pxt serve --cloud` once more
+- Launch the local editor again (if it does not launch automatically) and go back to your project. You should see your updated translations
 
 ## Committing your translations to the package repo
 Once you are satisfied with your translations, you must merge them to the package repo.
@@ -237,13 +241,13 @@ If you do not have write access to the repo you are translating (i.e. you create
 ### 1. Push your changes to your fork
 - In the command prompt, navigate to your fork
 - Commit your work:
-  - Run `git add --all` to stage your modifications
-  - Run `git commit -m "A short message describing your changes, e.g. Added French translations"`
+>    - Run `git add --all` to stage your modifications
+>    - Run `git commit -m "A short message describing your changes, e.g. Added French translations"`
 - Push your work to your fork: `git push`
 
 ### 2. Create a pull request in the package repo
 - Go to the GitHub website and navigate to the package repo
-  - For example for pxt-neopixel: https://github.com/Microsoft/pxt-neopixel
+>    - For example for pxt-neopixel: https://github.com/Microsoft/pxt-neopixel
 - Click **Pull Requests** in the top bar
 
 ![](/static/images/gh-pull-request.png)
