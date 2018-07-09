@@ -200,7 +200,7 @@ There are a lot of steps to get this working, so follow closely.
 - When the build is finished, your browser should open automatically to a local version of the editor
 - If it does not automatically launch, just open your browser and navigate to the URL shown in the console output:
 
-  ![](/static/images/serve-url.png)
+![](/static/images/serve-url.png)
 
   - You may need to scroll up a bit to find the URL from which the local editor is being served
 - Change the language in the editor to your translated language (**Menu > Language**)
@@ -246,18 +246,26 @@ If you do not have write access to the repo you are translating (i.e. you create
   - For example for pxt-neopixel: https://github.com/Microsoft/pxt-neopixel
 - Click **Pull Requests** in the top bar
 
-  ![](/static/images/gh-pull-request.png)
+![](/static/images/gh-pull-request.png)
 
 - Click on **New pull request**
 
-  ![](/static/images/gh-new-pull-request.png)
+![](/static/images/gh-new-pull-request.png)
 
 - Click on **Compare across forks**
 
-  ![](/static/images/gh-compare-forks.png)
+![](/static/images/gh-compare-forks.png)
 
 - In the dropdown that appears, select your fork
 
-  ![](/static/images/gh-select-fork.png)
+![](/static/images/gh-select-fork.png)
 
--
+- Now GitHub will show you the difference between your fork and the package repo. **Make sure you recognize all the changes that are shown**. If there are changes in there that you did not make, it might mean your fork is in a bad state.
+- If the displayed changes look good, click **Create pull request**
+
+![](/static/images/gh-create-pr.png)
+
+- In the text box that appears, write a short description for your pull request
+- When ready, click **Create pull request** again
+
+That's it! Now you simply have to wait for the repo owner to merge your changes and update the package version.
