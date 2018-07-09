@@ -42,4 +42,4 @@ defines how most sensors and outputs are realized across most MakeCode Devices
 
 ## Open Source
 
-MakeCode is open source on github. Want to participate? [Fork our repo!](https://github.com/Microsoft/pxt)
+The MakeCode (PXT) framework is [open source](http://www.github.com/microsoft/pxt).
