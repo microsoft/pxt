@@ -810,7 +810,9 @@ namespace ts.pxtc.Util {
 
         _localizeLang = code;
         _localizeStrings = {};
-        localizeLive = true;
+        if (live) {
+            localizeLive = true;
+        }
         function mergeTranslations(tr: pxt.Map<string>) {
             if (!tr) return;
             Object.keys(tr)
