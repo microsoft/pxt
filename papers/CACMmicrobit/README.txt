@@ -1,20 +1,44 @@
 Plan for submitting a "contributed article" to CACM
 
-- Authors: Microsoft, Lancaster, Micro:bit Education Foundation (ARM)
+- Authors: Microsoft, Lancaster University, Micro:bit Education Foundation (ARM)
 
-Purpose
-- what is the micro:bit?
+%Purpose
+%- what is the micro:bit?
+
+The micro:bit is a tiny programmable and embeddable computer designed
+and developed by the BBC and a set of technology partners (including
+Microsoft and Lancaster University) in 2015 as part
+of the BBC´s BBC Make it Digital Campaign, with the purpose of providing
+UK middle schoolers ``an engaging hands-on learning experience that 
+allows any level of young coder from absolute beginner to advanced maker 
+to get involved and be part of something exciting.''~\cite{BBCRFP}
+
+% need a better quote
+
+Figure~\ref{micro:bit} shows a picture of the front and back of the
+micro:bit, which measures AxB centimeters. 
+
+%  - physical computing (beginner IoT, edge)
+%  - targeting middle school (UK year 7, US 5th grade; 11 years old)
+
+  - battery-powered
+  - inputs: temperature, accelerometer, buttons, light level
+  - outputs: 5x5 LED display
+  - networking via: USB, edge connector and BLE
+  - [PICTURE of front and back]
+
 - why is it interesting?
   - edge/physical/IoT computing
   - unique hardware design (differentiation from Arduino)
   - build off of Scratch/Blockly, but untethered (via in-browser compiler)
   - transition to JavaScript and Python
+
 - BBC rollout in UK
 - Global reach
    - BBC rollout mirrored in other countries
    - Communities
      - Sri Lanka user group: http://microbitslug.org/
-     - ... 
+     - UK libraries (loan program)
    - third party editors
 
 History
@@ -23,9 +47,6 @@ History
   - BBC Micro:bit (RFP in December 2014, project starts in 2015) 
     - BBC Learning: BBC Make it Digital Campaign (major focus in 2015)
     - vision of a simple "IoT" device with integrated sensors and outputs
-    - "create an engaging hands-on learning experience that allows any level
-      of young coder from absolute beginner to advanced maker to get involved
-      and be part of something exciting."
   - BBC micro:bit designed/implemented by set of partners (2015-2016)
     - UK focused (philanthropic effort with partners contributing time, people, cash)
     - deliver end-to-end experience
@@ -38,8 +59,7 @@ History
     - expand from UK to worldwide
 
 Design considerations (technical requirements, steal from LCTES paper)
-  - physical computing (beginner IoT, edge)
-  - targeting middle school (UK year 7, US 5th grade; 11 years old)
+
  
   - hardware clearly distinguished from Arduino
     - no wiring required to do interesting things (integrated sensors and outputs, etc.)
