@@ -1,0 +1,76 @@
+%!
+%%BoundingBox: 124.38 124.38 487.61 487.61
+% Cookbook Example Program from First Printing, Revised 7 Jan 1985
+% Program: Repeated Shapes     Number: 6
+%-----------------------------------------------------------------------------
+%
+					    % This program prints a rosette
+					    % design by defining a section of
+					    % that design and printing that
+					    % section repeatedly. This program
+					    % illustrates the ``for'' and
+					    % "arc" operators, and it shows
+					    % how coordinate transformations
+					    % can be nested so as to use the
+					    % most convenient coordinate
+					    % system for each part of a
+					    % design.
+/inch {72 mul} def
+		  
+/wedge                                      % Define an ``ice cream cone''
+  { newpath                                 % shape by means of the ``arc''
+      0 0 moveto                            % operator. This shape will have a
+      1 0 translate                         % 30 degree angle topped off with
+      15 rotate                             % a semicircle. Set the path's
+      0 15 sin translate                    % first point at the current
+      0 0 15 sin -90 90 arc                 % origin. Next, move the origin to
+    closepath                               % the center of the semicircle by
+  } def                                     % translating to the right 1 unit,
+					    % rotating counter-clockwise by 15
+					    % degrees, and translating ``up''
+					    % in the rotated system by the
+					    % radius of the semicircle. The
+					    % ``arc'' operator includes a
+					    % straight line to the initial
+					    % point of the arc and a curved
+					    % section to the end of the arc.
+					    % Note that the semicircle goes
+					    % from -90 degrees to 90 degrees
+					    % in the rotated coordinate
+					    % system.
+						     
+gsave
+  4.25 inch 4.25 inch translate             % Move into position for the
+					    % rosette.
+  1.75 inch 1.75 inch scale                 % Make the edges of the rosette 1
+					    % 3/4 inches long.
+  0.02 setlinewidth                         % Use a 7/200 inch thick line.
+  2 1 13                                    % Set up the ``for'' operator to
+					    % iterate 12 times, pushing 2 onto
+					    % the stack the first time, 3 the
+					    % next time, ... , and 13 the last
+					    % time.
+   {                                        % The last argument for ``for'' is
+					    % the sequence of operations to be
+					    % repeated. This sequence must be
+					    % enclosed by braces.
+     13 div setgray                         % Divide the loop index by 13 to
+					    % set a gray value.
+     gsave                                  % Enclose the ``wedge'' operation
+       wedge                                % in a ``gsave''-``grestore''
+					    % pair, as it will mess up the
+					    % coordinate system.
+       gsave                                % Save the wedge path for use
+					    % after the ``fill''.
+	 fill
+       grestore
+       0 setgray stroke                     % Draw a black border around the
+					    % wedge.
+     grestore                               % Get out of the coordinate system
+					    % left by wedge.
+     30 rotate                              % Set up for the next section.
+   } for                                    % Close the last argument and
+					    % execute the ``for'' operator.
+grestore
+showpage
+
