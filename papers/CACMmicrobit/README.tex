@@ -1,36 +1,37 @@
-Plan for submitting a "contributed article" to CACM
+% Plan for submitting a "contributed article" to CACM
 
-- Authors: Microsoft, Lancaster University, Micro:bit Education Foundation (ARM)
+% - Authors: Microsoft, Lancaster University, Micro:bit Education Foundation (ARM)
 
 %Purpose
 %- what is the micro:bit?
 % http://www.bbc.co.uk/programmes/articles/4hVG2Br1W1LKCmw8nSm9WnQ/the-bbc-micro-bit
 
 The micro:bit is a small programmable and embeddable computer designed, 
-developed and deployed by the BBC and 29 partners (including ARM, Microsoft, 
+developed and deployed by the BBC and partners (including ARM, Microsoft, 
 and Lancaster University) to approximately 800,000 UK middle school students
 in 2015-2016. Part of the BBC´s Make it Digital Campaign, the BBC described the
 micro:bit as its ``most ambitious education initiative in 30 years, 
 with an ambition to inspire digital creativity and 
-deve lop a new generation of tech pioneers.''~\cite{BBCwebsite}
+develop a new generation of tech pioneers.''~\cite{BBCwebsite}
 
 % reference the competition and show what's different (hardware)
+% https://barrettsprojects.wordpress.com/2012/09/15/tap-and-double-tap/ 
 
 Figure~\ref{micro:bit} shows a picture of the front and back of the
 micro:bit, which measures 4x5 centimeters. Like the Arduino Uno,
-the micro:bit is a single-board microcontroller that can be embedded
-in projects where it runs on battery power.
-In contrast to the Uno, which requires wiring of sensors and actuators
-to the board, the micro:bit board hosts a variety of
-sensors (temperature, accelerometer, compass, light level), a
-5x5 LED matrix, two user-defined buttons, as well as Bluetooth
-Low Energy (BLE) antenna, a USB pen drive interface, and an edge connector.
+the micro:bit is a single-board microcontroller that can be programmed
+via a host computer (usually a laptop or desktop)
+and then embedded in projects where it runs on battery power.
+In contrast to the Uno, which has no built-in sensors or display, the micro:bit 
+board hosts a variety of sensors (temperature, accelerometer, compass, light level), 
+a 5x5 LED matrix, two user-defined buttons, as well as Bluetooth
+Low Energy (BLE) communications.
 
 The design of the micro:bit hardware was driven by the
-first two objectives of the micro:bit project, which were to:
+first two objectives of the micro:bit project, which were:
 \begin{itemize}
-\item provide a simple creative experience for physical computing and embeddable/wearable projects, yet
-\item supply a device that is sufficiently capable to grow with the user’s experience; 
+\item to provide a simple creative experience for physical computing and embeddable/wearable projects, yet
+\item to supply a device that is sufficiently capable to grow with the user’s experience; 
 \end{itemize}
 
 On the hardware side, the micro:bit's built-in sensors and outputs allow many projects to 
@@ -41,12 +42,12 @@ its capabilities greatly. The micro:bit's BLE capabilities introduces networking
 picture, and enables streaming of data and command/control operations among the micro:bit, 
 smartphones, laptops, as well as other micro:bits.
 
-The design of the micro:bit software was also oriented towards a simple starting experience
-with room for progression. In particular, the coding objectives of the project were to:
-were:
+The design of the micro:bit firmware and coding tools were also oriented towards a 
+simple starting experience with room for progression. In particular, the coding 
+objectives of the project were:
 \begin{itemize}
-  \item give students an exciting, engaging introduction to coding;
-  \item stimulate curiosity about how computing technologies can be utilized 
+  \item to give students an exciting, engaging introduction to coding;
+  \item to stimulate curiosity about how computing technologies can be utilized 
   to solve problems that students identify. 
 \end{itemize}
 
@@ -54,14 +55,23 @@ were:
 %
 %- BBC micro:bit designed/implemented by set of partners (2015-2016)
 %- UK focused (philanthropic effort with partners contributing time, people, cash)
-%- deliver end-to-end experience
+
+What happened:
+\begin{itemize}
+\item implementation and rollout took longer than expected (surprise, with devices landing
+in classrooms in February of 2016, more than halfway through the 2015-2016 school year in UK);
+\item first full school year was 2016-2017, during which micro:bit Education Foundation got
+started; 
+\item now have two full school years complete with experience in more countries 
+\end{itemize}
+
+%- A lot of lessons learned from delivering end-to-end experience in UK and other countries
 %   - hardware (unique design)
 %   - firmware
 %   - web-based IDE
 %   - content
 %   - training
-%- Transition to non-profit foundation (end of 2016-)
-%- expand from UK to worldwide
+% In country partnerships
 
 % - why is it interesting?
 %   - edge/physical/IoT computing
