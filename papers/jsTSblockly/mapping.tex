@@ -60,12 +60,10 @@ are transformed to parameters of function $f$.
 
 The declared type of a function informs the kind of block that will be created:
 \begin{itemize}
-
-  \item a void return type for a function means the custom block will be a statement
-  block; otherwise, it will be an expression block;
-  \item functions return a single value;
-  \item parameters: optional parameters with default value; rest; 
-  \item handler: (top level block)
+  \item a void return type for a function means its custom block will be a statement block;
+  \item a non-void return type for a function means its custom block will be a value block;
+  \item non-function parameters: optional parameters with default value; rest; 
+  \item trailing function parameter: (top level block)
 \end{itemize}
 
 % Block syntax

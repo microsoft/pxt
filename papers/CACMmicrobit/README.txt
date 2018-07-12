@@ -4,19 +4,24 @@ Plan for submitting a "contributed article" to CACM
 
 %Purpose
 %- what is the micro:bit?
+% http://www.bbc.co.uk/programmes/articles/4hVG2Br1W1LKCmw8nSm9WnQ/the-bbc-micro-bit
 
-The micro:bit is a tiny programmable and embeddable computer designed
-and developed by the BBC and a set of technology partners (including
-Microsoft and Lancaster University) in 2015 as part
-of the BBC´s BBC Make it Digital Campaign, with the purpose of providing
-UK middle schoolers ``an engaging hands-on learning experience that 
-allows any level of young coder from absolute beginner to advanced maker 
-to get involved and be part of something exciting.''~\cite{BBCRFP}
-
-% need a better quote
+The micro:bit is a tiny programmable and embeddable computer designed, 
+developed and deployed to approximately 800,000 UK middle schoolers 
+by the BBC and 29 partners (including Microsoft and Lancaster University) 
+in 2015-2016. Part of the BBC´s BBC Make it Digital Campaign, the micro:bit
+was described as ``the BBC's most ambitious education initiative in 30 years, 
+with an ambition to inspire digital creativity and 
+deve lop a new generation of tech pioneers.''
 
 Figure~\ref{micro:bit} shows a picture of the front and back of the
-micro:bit, which measures AxB centimeters. 
+micro:bit, which measures 4x5 centimeters. Like the Arduino Uno,
+XYZ, the micro:bit is based on microcontroller technology used in
+low-power embedded systems, which can run on battery power.
+In contrast to the Uno, the micro:bit board hosts a variety of
+sensors (temperature, accelerometer, compass, light level), a
+5x5 LED matrix, two user-defined buttons, as well as Bluetooth
+Low Energy (BLE) capability and a USB pen drive interface. 
 
 %  - physical computing (beginner IoT, edge)
 %  - targeting middle school (UK year 7, US 5th grade; 11 years old)
