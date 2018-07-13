@@ -1,7 +1,47 @@
-\section{Physical Computing}
+\section{Physical Computing: from Wiring to the BBC micro:bit}
 \label{sec:domain}
 
-[In this section we show off the kind of projects made with the micro:bit]
+Physical computing: computing interacting with our physical environment (as opposed to just
+living on a screen, like a computer game); ``cyberphysical systems'', ``embedded (reactive) systems''.
+Physical computing lives in the spaces between computing and many other disciplines:
+art, industrial design, health, environmental monitoring, etc.
+
+% from thesis of Hernando Barragán:
+% - http://people.interactionivrea.org/h.barragan/thesis/thesis_low_res.pdf 
+% - Wiring: Prototyping Physical Interaction Design
+% - June 2004
+
+% http://wiring.org.co/
+
+% https://globenewswire.com/news-release/2017/05/19/988294/0/en/Arduino-Welcomes-Hernando-Barrag%C3%A1n-as-Arduino-Chief-Design-Architect.html
+
+To help explain the BBC micro:bit design, it's very instructive to understand
+Hernando Barragan's 2003 Master's thesis, ``Wiring: Prototyping Physical Interaction Design'',
+the inspiration for the Arduino system~\cite{Barragan}. His objective was to make it easier
+for non-technical creators, such as artists and designers, to leverage
+electronics in their their work by simplifying the hardware and programming
+experience. In particular, he said of existing work:
+``Current prototyping tools for electronics and programming are mostly targeted 
+to engineering, robotics and technical audiences.''  
+Of Wiring's design, he identified the following key concepts:
+\begin{itemize}
+\item a simple cross-platform integrated development environment (IDE) to create so-called ``sketches'';
+\item a simplified APIs to access the microcontroller's resources;
+\item leverage of open source compiler/linker toolchain, transparent to the end user;
+\item a bootloader to make it easy to upload a compiled sketch to the microcontroller;
+\end{itemize}
+Also make Wiring (hardware and software) open source.
+
+But, still some issues:
+\begin{itemize}
+    \item reliance on the C language and C compiler (needs to be installed)
+    \item very poor experience in IDE
+    \item USB bootloader requires device drivers on some systems
+\end{itemize}
+
+BBC micro:bit inherits the raw PCB nature of Arduino (everything is visible to the end user).
+
+First key idea of the BBC micro:bit: NO WIRING REQUIRED!
 
 
 

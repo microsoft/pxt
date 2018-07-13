@@ -23,3 +23,8 @@ paper.dvi
 paper.fls
 paper.fdb_latexmk
 paper.aux
+paper.pdf
+papers/CACMmicrobit/paper.synctex.gz
+papers/CACMmicrobit/paper.pdf
+papers/CACMmicrobit/paper.blg
+papers/CACMmicrobit/paper.bbl
