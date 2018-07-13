@@ -8,7 +8,9 @@ namespace pxtblockly {
     import lf = pxt.Util.lf;
 
     // Absolute editor height
-    const TOTAL_HEIGHT = 350;
+    const TOTAL_HEIGHT = 500;
+
+    const TOTAL_WIDTH = 500;
 
     // Editor padding on all sides
     const PADDING = 8;
@@ -16,7 +18,7 @@ namespace pxtblockly {
     const PADDING_BOTTOM = 3;
 
     // Height of toolbar (the buttons above the canvas)
-    const TOOLBAR_HEIGHT = 55;
+    const TOOLBAR_HEIGHT = 35;
 
     // Spacing between the toolbar and the canvas
     const TOOLBAR_CANVAS_MARGIN = 5;
@@ -27,12 +29,6 @@ namespace pxtblockly {
     // Spacing between the canvas and reporter bar
     const REPORTER_BAR_CANVAS_MARGIN = 5;
 
-    // Border width between palette swatches
-    const PALETTE_INNER_BORDER = 2;
-
-    // Border width around the outside of the palette
-    const PALETTE_OUTER_BORDER = 3;
-
     // Spacing between palette and paint surface
     const PALETTE_CANVAS_MARGIN = 0;
 
@@ -40,16 +36,17 @@ namespace pxtblockly {
     const CANVAS_HEIGHT = TOTAL_HEIGHT - TOOLBAR_HEIGHT - TOOLBAR_CANVAS_MARGIN
         - REPORTER_BAR_HEIGHT - REPORTER_BAR_CANVAS_MARGIN - PADDING * 2;
 
-    export class SpriteEditor implements ToolbarHost {
+    const SIDEBAR_WIDTH = 65;
+
+    export class SpriteEditor implements SideBarHost {
         private group: svg.Group;
         private root: svg.SVG;
 
-        private palette: ColorPalette;
         private paintSurface: CanvasGrid;
-        private toolbar: Toolbar;
         private repoterBar: svg.Group;
         private cursorInfo: svg.Text;
         private canvasDimensions: svg.Text;
+        private sidebar: SideBar;
 
         private state: Bitmap;
 
@@ -61,6 +58,9 @@ namespace pxtblockly {
         private toolWidth = 1;
         private color = 1;
 
+        private cursorCol = 0;
+        private cursorRow = 0;
+
         private undoStack: Bitmap[] = [];
         private redoStack: Bitmap[] = [];
 
@@ -68,7 +68,6 @@ namespace pxtblockly {
         private rows: number = 16;
         private colors: string[];
 
-        private width: number;
         private height: number;
 
         constructor(bitmap: Bitmap, protected lightMode = false) {
@@ -82,19 +81,6 @@ namespace pxtblockly {
             this.root = new svg.SVG();
             this.group = this.root.group();
             this.makeTransparencyFill();
-
-            this.palette = new ColorPalette({
-                rowLength: 2,
-                emptySwatchDisabled: false,
-                cellClass: "palette-swatch",
-                emptySwatchFill: 'url("#alpha-background")',
-                outerMargin: PALETTE_OUTER_BORDER,
-                columnMargin: PALETTE_INNER_BORDER,
-                rowMargin: PALETTE_INNER_BORDER,
-                backgroundFill: "black",
-                colors: this.colors
-            });
-            this.palette.setRootId("sprite-editor-palette");
 
             this.paintSurface = new CanvasGrid(this.colors, this.state.copy(), this.lightMode);
 
@@ -128,21 +114,8 @@ namespace pxtblockly {
                 this.cursorInfo.text("");
             });
 
-            this.group.appendChild(this.palette.getView());
-
-            this.toolbar = new Toolbar(this.group.group(), {
-                height: TOOLBAR_HEIGHT,
-                width: CANVAS_HEIGHT,
-                buttonMargin: 5,
-                optionsMargin: 3,
-                rowMargin: 5
-            }, this);
-
-            this.palette.setSelected(this.color);
-            this.palette.onColorSelected(color => {
-                this.setActiveColor(color);
-            });
-            this.setActiveColor(this.color);
+            this.sidebar = new SideBar(['url("#alpha-background")'].concat(this.colors), this, this.group);
+            this.sidebar.setColor(1);
 
             this.drawReporterBar();
             this.updateUndoRedo();
@@ -167,7 +140,9 @@ namespace pxtblockly {
                     this.edit.start(col, row);
                 }
                 this.edit.update(col, row);
-                this.paintEdit(this.edit);
+                this.cursorCol = col;
+                this.cursorRow = row;
+                this.paintEdit(this.edit, col, row);
             }
         }
 
@@ -183,23 +158,22 @@ namespace pxtblockly {
                 return;
             }
 
-            const paintAreaTop = TOOLBAR_HEIGHT + TOOLBAR_CANVAS_MARGIN + PADDING;
-
-            this.palette.setGridDimensions(CANVAS_HEIGHT);
-            this.palette.translate(PADDING, paintAreaTop);
-
-            const paintAreaLeft = PADDING + this.palette.outerWidth() + PALETTE_CANVAS_MARGIN;
             this.paintSurface.setGridDimensions(CANVAS_HEIGHT);
-            this.paintSurface.updateBounds(paintAreaTop, paintAreaLeft, CANVAS_HEIGHT, CANVAS_HEIGHT);
+            this.sidebar.setWidth(SIDEBAR_WIDTH);
 
+            // The width of the palette + editor
+            const editorWidth = SIDEBAR_WIDTH + PALETTE_CANVAS_MARGIN + CANVAS_HEIGHT;
+            const editorLeft = (TOTAL_WIDTH / 2) - (editorWidth / 2);
+            const paintAreaTop = TOOLBAR_HEIGHT + TOOLBAR_CANVAS_MARGIN + PADDING;
+            const paintAreaLeft = editorLeft + SIDEBAR_WIDTH + PALETTE_CANVAS_MARGIN;
+
+            // Subtract 4 to account for the differences between the SVG origin and canvas' origin
+            this.sidebar.translate(editorLeft, paintAreaTop - 4);
+            this.paintSurface.updateBounds(paintAreaTop, paintAreaLeft, CANVAS_HEIGHT, CANVAS_HEIGHT);
             this.repoterBar.translate(paintAreaLeft, paintAreaTop + CANVAS_HEIGHT + REPORTER_BAR_CANVAS_MARGIN);
             this.canvasDimensions.at(CANVAS_HEIGHT - this.canvasDimensions.el.getComputedTextLength(), 0);
 
-            this.width = paintAreaLeft + CANVAS_HEIGHT + PADDING;
             this.height = paintAreaTop + CANVAS_HEIGHT + PADDING_BOTTOM + REPORTER_BAR_CANVAS_MARGIN + REPORTER_BAR_HEIGHT;
-
-            this.toolbar.translate(PADDING, PADDING);
-            this.toolbar.setDimensions(this.width - PADDING * 2, TOOLBAR_HEIGHT);
         }
 
         rePaint() {
@@ -208,14 +182,12 @@ namespace pxtblockly {
 
         setActiveColor(color: number, setPalette = false) {
             if (setPalette) {
-                this.palette.setSelected(color);
             }
             else {
                 this.color = color;
 
                 // If the user is erasing, go back to pencil
                 if (this.activeTool === PaintTool.Erase) {
-                    this.toolbar.resetTool();
                     this.activeTool = PaintTool.Normal;
                 }
 
@@ -231,12 +203,6 @@ namespace pxtblockly {
         setToolWidth(width: number) {
             this.toolWidth = width;
             this.edit = this.newEdit(this.color);
-
-            // Cursor doesn't affect fill, so switch to pencil
-            if (this.activeTool === PaintTool.Fill) {
-                this.toolbar.resetTool();
-                this.activeTool = PaintTool.Normal;
-            }
         }
 
         undo() {
@@ -280,7 +246,7 @@ namespace pxtblockly {
         }
 
         setSizePresets(presets: [number, number][]) {
-            this.toolbar.setSizePresets(presets);
+            // this.toolbar.setSizePresets(presets);
         }
 
         canvasWidth() {
@@ -292,7 +258,7 @@ namespace pxtblockly {
         }
 
         outerWidth() {
-            return this.width;
+            return TOTAL_WIDTH;
         }
 
         outerHeight() {
@@ -321,8 +287,7 @@ namespace pxtblockly {
 
         private drawCursor(col: number, row: number) {
             if (this.edit) {
-                this.paintSurface.repaint();
-                this.edit.drawCursor(col, row, (c, r) => this.paintSurface.drawColor(c, r, this.edit.color));
+                this.paintSurface.drawCursor(this.edit, col, row);
             }
         }
 
@@ -330,9 +295,9 @@ namespace pxtblockly {
             this.cursorInfo.text(`${col},${row}`);
         }
 
-        private paintEdit(edit: Edit) {
+        private paintEdit(edit: Edit, col: number, row: number) {
             this.paintSurface.restore(this.state);
-            this.paintSurface.applyEdit(edit);
+            this.paintSurface.applyEdit(edit, col, row);
         }
 
         private commit() {
@@ -341,7 +306,7 @@ namespace pxtblockly {
                     this.cachedState = undefined;
                 }
                 this.pushState(true);
-                this.paintEdit(this.edit);
+                this.paintEdit(this.edit, this.cursorCol, this.cursorRow);
                 this.state.apply(this.paintSurface.image);
                 this.edit = this.newEdit(this.color);
                 this.redoStack = [];
@@ -365,8 +330,8 @@ namespace pxtblockly {
         }
 
         private updateUndoRedo() {
-            this.toolbar.setUndoState(this.undoStack.length > 0);
-            this.toolbar.setRedoState(this.redoStack.length > 0);
+            // this.toolbar.setUndoState(this.undoStack.length > 0);
+            // this.toolbar.setRedoState(this.redoStack.length > 0);
         }
 
         private paintCell(col: number, row: number, color: number) {

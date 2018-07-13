@@ -18,10 +18,13 @@ namespace pxtblockly {
 
         constructor(protected palette: string[], public image: Bitmap, protected lightMode = false) {
             this.paintLayer = document.createElement("canvas");
+            this.paintLayer.setAttribute("class", "sprite-editor-canvas");
 
             if (!this.lightMode) {
                 this.backgroundLayer = document.createElement("canvas");
+                this.backgroundLayer.setAttribute("class", "sprite-editor-canvas")
                 this.overlayLayer = document.createElement("canvas")
+                this.overlayLayer.setAttribute("class", "sprite-editor-canvas")
                 this.context = this.paintLayer.getContext("2d");
             }
             else {
@@ -37,9 +40,20 @@ namespace pxtblockly {
             this.redraw();
         }
 
-        applyEdit(edit: Edit) {
+        applyEdit(edit: Edit, cursorCol: number, cursorRow: number) {
             edit.doEdit(this.image);
+            this.drawCursor(edit, cursorCol, cursorRow);
+        }
+
+        drawCursor(edit: Edit, col: number, row: number) {
+            this.context.strokeStyle = "#898989";
             this.repaint();
+            edit.drawCursor(col, row, (c, r) => {
+                this.drawColor(c, r, edit.color);
+                const x = c * this.cellWidth;
+                const y = r * this.cellHeight;
+                this.context.strokeRect(x, y, this.cellWidth, this.cellHeight);
+            });
         }
 
         bitmap() {
@@ -55,7 +69,6 @@ namespace pxtblockly {
         }
 
         writeColor(col: number, row: number, color: number) {
-            const old = this.image.get(col, row);
             this.image.set(col, row, color);
             this.drawColor(col, row, color);
         }
@@ -87,8 +100,6 @@ namespace pxtblockly {
             this.overlayLayer.style.visibility = "visible";
             const w = this.overlayLayer.width;
             const h = this.overlayLayer.height;
-            const xOffset = this.cellWidth / 2;
-            const yOffset = this.cellHeight / 2;
             const context = this.overlayLayer.getContext("2d");
             const toastWidth = 100;
             const toastHeight = 40;
@@ -138,8 +149,8 @@ namespace pxtblockly {
         }
 
         setCellDimensions(width: number, height: number): void {
-            this.cellWidth = width;
-            this.cellHeight = height;
+            this.cellWidth = width | 0;
+            this.cellHeight = height | 0;
 
             const canvasWidth = this.cellWidth * this.image.width;
             const canvasHeight = this.cellHeight * this.image.height;
@@ -316,7 +327,7 @@ namespace pxtblockly {
         private layoutCanvas(canvas: HTMLCanvasElement, top: number, left: number, width: number, height: number) {
             canvas.style.position = "absolute";
             canvas.style.left = (left + dropdownPaddding + (width - canvas.width) / 2) + "px";
-            canvas.style.top = (top + dropdownPaddding + (height - canvas.height) / 2) + "px";
+            canvas.style.top = top + "px";
         }
     }
 

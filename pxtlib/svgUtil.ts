@@ -155,6 +155,10 @@ namespace pxt.svgUtil {
             return this.updateTransform();
         }
 
+        def() {
+            return new DefsElement(this.el);
+        }
+
         private updateTransform(): this {
             let transform = "";
             if (this.left != undefined) {
@@ -189,7 +193,7 @@ namespace pxt.svgUtil {
     }
 
     export class DefsElement extends BaseElement<SVGDefsElement> {
-        constructor(parent: SVGSVGElement) {
+        constructor(parent: SVGElement) {
             super("defs");
             parent.appendChild(this.el);
         }
@@ -198,6 +202,7 @@ namespace pxt.svgUtil {
         create(type: "pattern", id: string): Pattern;
         create(type: "radialGradient", id: string): RadialGradient;
         create(type: "linearGradient", id: string): LinearGradient;
+        create(type: "clipPath", id: string): ClipPath;
         create(type: string, id: string): BaseElement<any> {
             let el: BaseElement<SVGElement>;
             switch (type) {
@@ -205,6 +210,7 @@ namespace pxt.svgUtil {
                 case "pattern": el = new Pattern(); break;
                 case "radialGradient": el = new RadialGradient(); break;
                 case "linearGradient": el = new LinearGradient(); break;
+                case "clipPath": el = new ClipPath(); break;
                 default: el = new BaseElement(type);
             }
             el.id(id);
@@ -250,6 +256,10 @@ namespace pxt.svgUtil {
 
         strokeOpacity(opacity: number): this {
             return this.setAttribute("stroke-opacity", opacity);
+        }
+
+        clipPath(url: string): this {
+            return this.setAttribute("clip-path", url);
         }
 
         onDown(handler: PointerHandler): this {
@@ -518,6 +528,19 @@ namespace pxt.svgUtil {
 
         radius(r: number): this {
             return this.setAttribute("r", r);
+        }
+    }
+
+    export class ClipPath extends DrawContext<SVGClipPathElement> {
+        constructor() { super("clipPath") }
+
+        clipPathUnits(objectBoundingBox: boolean) {
+            if (objectBoundingBox) {
+                return this.setAttribute("clipPathUnits", "objectBoundingBox");
+            }
+            else {
+                return this.setAttribute("clipPathUnits", "userSpaceOnUse");
+            }
         }
     }
 
