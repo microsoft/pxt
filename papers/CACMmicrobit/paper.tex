@@ -1,0 +1,141 @@
+% Sample file for 'CACM - Research Highlights'-type articles
+% Created by: Gerry Murray, Elec. Pub. Info. Mgr., Pubs. Dept., ACM HQ, NY.
+% (murray@hq.acm.org)
+%
+% This is "research-highlights-sample.tex" (sample file) V1.1 Sept. 2008
+% This file should be compiled with V1.1 of "research4cacm.cls" Sept. 2008
+%
+% If you have already submitted an article to an ACM/SIGS Conference, and have had your
+% article published in one of the 'Proceedings', then you have probably used
+% the (ACM/SIGS) 'sig-alternate' class and .tex file.
+% Any such 'conference-prepared' source .tex file is 'compatible' with the class file
+% 'research4cacm' which you will use to prepare your article for inclusion in the magazine 'CACM'.
+%
+% Here are the steps to take in order to 'morph' your article from being
+% a 'conference' article to one more suitable for inclusion in 'Communications of the ACM'.
+%
+% 1. Change \documentclass{sig-alternate}  to \documentclass{research4cacm}
+%
+% 2. Comment out the conference information e.g.  %\conferenceinfo{WOODSTOCK}{'97 El Paso, Texas USA}
+%
+% 3. Make sure the copyright data is correct e.g. \crdata{0001-0782/08/0200}
+%
+% 4. Make sure the YEAR is correct e.g. \CopyrightYear{2008} with the current default being �2008�.
+%
+% 5. Comment out the Classification scheme, general terms and keywords.
+%
+% 6. If you have mentioned authors in the 'Additional Authors' section you should
+%    'move them back' into the byline (so that they appear with all the other authors).
+%    ALL authors, in Research Highlights articles, get equal billing.
+%
+% 7. Suitably edit the file (i.e. body text) so as to make it more appropriate for a wider audience.
+%
+% If, early on in the editorial process, the 'correct' copyright data becomes available
+% please change the copyright data to suit, otherwise leave the default '0001-0782/08/0X00'.
+% (The editorial staff will change it later on in the production cycle.)
+%
+% ================= IF YOU HAVE QUESTIONS =======================
+% Technical questions _only_ to
+% Gerald Murray (murray@hq.acm.org)
+% ===============================================================
+% ---------------------------------------------------------------------------------------------------------------
+%
+\documentclass{research4cacm}
+\begin{document}
+%
+% --- Author Metadata here ---
+% Conference information is NOT appropriate for CACM so comment it out.
+%\CopyrightYear{2008} % Allows default copyright year (2008) to be over-ridden - IF NEED BE.
+%\crdata{0001-0782/08/0X00}  % Allows default copyright data (0001-0782/08/0X00) to be over-ridden - IF NEED BE.
+% --- End of Author Metadata ---
+
+\title{The micro:bit journey
+% \titlenote{(This is a simple titlenote.)For use with research4cacm.cls. Supported by ACM.}
+%
+% Show use of \thanks - which can appear here (normal/default) or down by the author
+%\thanks{thank someone?}
+}
+\subtitle{[Extended Abstract]
+%\titlenote{A full version of this paper is available in...}
+}
+%
+% You need the command \numberofauthors to handle the 'placement
+% and alignment' of the authors beneath the title.
+%
+% For aesthetic reasons, we recommend 'three authors at a time'
+% i.e. three 'name/affiliation blocks' be placed beneath the title.
+%
+% NOTE: You are NOT restricted in how many 'rows' of
+% "name/affiliations" may appear. We just ask that you restrict
+% the number of 'columns' to three.
+%
+% Use the \alignauthor commands to handle the names
+% and affiliations.
+%
+\numberofauthors{3} %  in this sample file, there are a *total*
+% of SIX authors and all of them fit neatly on the first page.
+% As said, all authors get 'equal billing' and you should fit all of them on the opening page
+% in the 'byline'. The production/editorial-staff will 'separate' names from their affiliations, leaving
+% author names beneath the title (in the byline), and moving the affilations/contact information to an area
+% after the references at the back of the article.
+%
+\author{
+% You can go ahead and credit any number of authors here,
+% e.g. one 'row of three' or two rows (consisting of one row of three
+% and a second row of one, two or three).
+%
+% The command \alignauthor (no curly braces needed) should
+% precede each author name, affiliation/snail-mail address and
+% e-mail address. Additionally, tag each line of
+% affiliation/address with \affaddr, and tag the
+% e-mail address with \email.
+%
+% 1st. author
+\alignauthor
+Ben Trovato\titlenote{A note from Dr.~Trovato.}\\
+       \affaddr{Institute for Clarity in Documentation}\\
+       \affaddr{1932 Wallamaloo Lane}\\
+       \affaddr{Wallamaloo, New Zealand}\\
+       \email{trovato@corporation.com}
+% 2nd. author
+\alignauthor
+G.K.M. Tobin\titlenote{A note from G. Tobin.}\\
+       \affaddr{Institute for Clarity in Documentation}\\
+       \affaddr{P.O. Box 1212}\\
+       \affaddr{Dublin, Ohio 43017-6221}\\
+       \email{webmaster@marysville-ohio.com}
+% 3rd. author
+\alignauthor Lars Th{\o}rv{\"a}ld\titlenote{A note from Lars.}\\
+       \affaddr{The Th{\o}rv{\"a}ld Group}\\
+       \affaddr{1 Th{\o}rv{\"a}ld Circle}\\
+       \affaddr{Hekla, Iceland}\\
+       \email{larst@affiliation.org}
+}
+
+\maketitle
+\begin{abstract}
+
+The micro:bit rocks!
+
+\end{abstract}
+
+% The classification Scheme, General Terms and Keywords are not appropriate for CACM so comment them out.
+
+\input{intro}
+
+%ACKNOWLEDGMENTS are optional
+\section{Acknowledgments}
+
+% The following two commands are all you need in the
+% initial runs of your .tex file to
+% produce the bibliography for the citations in your paper.
+%\bibliographystyle{abbrv} % standard abbrv style
+%\bibliography{bibs4cacm}  % substitute the name of 'your' Bibliography here
+% You must have a proper ".bib" file
+% and remember to run:
+% latex bibtex latex latex (in that particular order) in order to resolve all the 'numerical values'
+% be they for figures, equation numbers, references, footnotes, etc. etc.
+%
+\balancecolumns
+% That's all folks! % GM Sept. 2008
+\end{document}

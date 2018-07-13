@@ -1,3 +1,4 @@
+\section{Introduction}
 % Plan for submitting a "contributed article" to CACM
 
 % - Authors: Microsoft, Lancaster University, Micro:bit Education Foundation (ARM)
@@ -22,27 +23,27 @@ micro:bit, which measures 4x5 centimeters. Like the Arduino Uno,
 the micro:bit is a single-board microcontroller that can be programmed
 via a host computer (usually a laptop or desktop)
 and then embedded in projects where it runs on battery power.
-In contrast to the Uno, which has no built-in sensors or display, the micro:bit 
+In contrast to the Uno, which has no built-in sensors, the micro:bit 
 board hosts a variety of sensors (temperature, accelerometer, compass, light level), 
 a 5x5 LED matrix, two user-defined buttons, as well as Bluetooth
 Low Energy (BLE) communications.
 
 The design of the micro:bit hardware was driven by the
-first two objectives of the micro:bit project, which were:
+first two objectives of the micro:bit project:
 \begin{itemize}
 \item to provide a simple creative experience for physical computing and embeddable/wearable projects, yet
 \item to supply a device that is sufficiently capable to grow with the user’s experience; 
 \end{itemize}
 
-On the hardware side, the micro:bit's built-in sensors and outputs allow many projects to 
-be completed with just the micro:bit. The holes on micro:bit's edge
+On the hardware side, the micro:bit's built-in sensors, buttons and LED display 
+allow many projects to be completed with just the micro:bit. The holes on micro:bit's edge
 connector allows additional external sensors and actuators to be connected via crocodile clips.
 As with Arduino, an ecosytem of micro:bit shields that the micro:bit can plug into expand
 its capabilities greatly. The micro:bit's BLE capabilities introduces networking to the
 picture, and enables streaming of data and command/control operations among the micro:bit, 
 smartphones, laptops, as well as other micro:bits.
 
-The design of the micro:bit firmware and coding tools were also oriented towards a 
+The design of the micro:bit firmware and coding tools also were oriented towards a 
 simple starting experience with room for progression. In particular, the coding 
 objectives of the project were:
 \begin{itemize}
@@ -58,7 +59,7 @@ objectives of the project were:
 
 What happened:
 \begin{itemize}
-\item implementation and rollout took longer than expected (surprise, with devices landing
+\item implementation and rollout took half a year longer than expected (surprise, with devices landing
 in classrooms in February of 2016, more than halfway through the 2015-2016 school year in UK);
 \item first full school year was 2016-2017, during which micro:bit Education Foundation got
 started; 
@@ -66,12 +67,18 @@ started;
 \end{itemize}
 
 %- A lot of lessons learned from delivering end-to-end experience in UK and other countries
-%   - hardware (unique design)
-%   - firmware
-%   - web-based IDE
+%   - hardware (unique design, as already mentioned)
+%   - firmware:  high-level C/C++ runtime and ARM's DAPlink
+%   - web-based IDE: no C/C++ compiler needed to compile user code
 %   - content
 %   - training
 % In country partnerships
+
+% success of micro:bit due to 
+% - Low-cost, simplicity
+% - Partnerships (hardware, software, content, training)
+% - Platform???
+% - 
 
 % - why is it interesting?
 %   - edge/physical/IoT computing
