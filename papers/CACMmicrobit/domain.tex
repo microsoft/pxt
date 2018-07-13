@@ -1,49 +1,27 @@
-\section{Physical Computing: from Wiring to the BBC micro:bit}
+\section{Context}
 \label{sec:domain}
 
+\subsection{Physical Computing}
 Physical computing: computing interacting with our physical environment (as opposed to just
 living on a screen, like a computer game); ``cyberphysical systems'', ``embedded (reactive) systems''.
 Physical computing lives in the spaces between computing and many other disciplines:
 art, industrial design, health, environmental monitoring, etc.
 
-% from thesis of Hernando Barragán:
-% - http://people.interactionivrea.org/h.barragan/thesis/thesis_low_res.pdf 
-% - Wiring: Prototyping Physical Interaction Design
-% - June 2004
+% Finally, it is worth noting that the benefits of physical computing aren’t limited to CS education. 
+% There are diverse connections to other STEM subjects, such as the simulation of behaviour in biology, 
+% the collection and analysis of measurements in physics and logical mathematical operations [7]. 
+% Physical computing also connects into the arts and humanities, with application to topics ranging 
+% from interactive art pieces to geography and dance [5], [7]. 
 
-% http://wiring.org.co/
-
-% https://globenewswire.com/news-release/2017/05/19/988294/0/en/Arduino-Welcomes-Hernando-Barrag%C3%A1n-as-Arduino-Chief-Design-Architect.html
-
-To help explain the BBC micro:bit design, it's very instructive to understand
-Hernando Barragan's 2003 Master's thesis, ``Wiring: Prototyping Physical Interaction Design'',
-the inspiration for the Arduino system~\cite{Barragan}. His objective was to make it easier
-for non-technical creators, such as artists and designers, to leverage
-electronics in their their work by simplifying the hardware and programming
-experience. In particular, he said of existing work:
-``Current prototyping tools for electronics and programming are mostly targeted 
-to engineering, robotics and technical audiences.''  
-Of Wiring's design, he identified the following key concepts:
+Physical computing benefits:
 \begin{itemize}
-\item a simple cross-platform integrated development environment (IDE) to create so-called ``sketches'';
-\item a simplified APIs to access the microcontroller's resources;
-\item leverage of open source compiler/linker toolchain, transparent to the end user;
-\item a bootloader to make it easy to upload a compiled sketch to the microcontroller;
+\item broad reach because of diverse applications of physical computing;
+\item increased motivation and connections because of tangible visible outcome (rather than virtual on screen);
+\item leverage fine arts, music, design, etc. in projects;
+\item learning by doing: many ways to achieve goal (no single correct solution)
+\item natural division of labor for more complex projects (design, hardware, software, ...)
+\item full system view of computing: hardware and software working together.
 \end{itemize}
-Also make Wiring (hardware and software) open source.
-
-But, still some issues:
-\begin{itemize}
-    \item reliance on the C language and C compiler (needs to be installed)
-    \item very poor experience in IDE
-    \item USB bootloader requires device drivers on some systems
-\end{itemize}
-
-BBC micro:bit inherits the raw PCB nature of Arduino (everything is visible to the end user).
-
-First key idea of the BBC micro:bit: NO WIRING REQUIRED!
-
-
 
 % from Steve and Sue's white paper:
 
@@ -90,8 +68,46 @@ First key idea of the BBC micro:bit: NO WIRING REQUIRED!
 % The physical nature of the work engages the whole student – both their mind and their body,
 % making the learning process a deep, immersive experience.
 
-% Finally, it is worth noting that the benefits of physical computing aren’t limited to CS education. 
-% There are diverse connections to other STEM subjects, such as the simulation of behaviour in biology, 
-% the collection and analysis of measurements in physics and logical mathematical operations [7]. 
-% Physical computing also connects into the arts and humanities, with application to topics ranging 
-% from interactive art pieces to geography and dance [5], [7]. 
+
+
+
+\subsection{Wiring, Arduino and the BBC micro:bit}
+
+% from thesis of Hernando Barragán:
+% - http://people.interactionivrea.org/h.barragan/thesis/thesis_low_res.pdf 
+% - Wiring: Prototyping Physical Interaction Design
+% - June 2004
+
+% http://wiring.org.co/
+
+% https://globenewswire.com/news-release/2017/05/19/988294/0/en/Arduino-Welcomes-Hernando-Barrag%C3%A1n-as-Arduino-Chief-Design-Architect.html
+
+To help explain the BBC micro:bit design, it's very instructive to understand
+Hernando Barragan's 2003 Master's thesis, ``Wiring: Prototyping Physical Interaction Design'',
+the inspiration for the Arduino system~\cite{Barragan}. His objective was to make it easier
+for non-technical creators, such as artists and designers, to leverage
+electronics in their their work by simplifying the hardware and programming
+experience. In particular, he said of existing work:
+``Current prototyping tools for electronics and programming are mostly targeted 
+to engineering, robotics and technical audiences.''  
+Of Wiring's design, he identified the following key concepts:
+\begin{itemize}
+\item a simple cross-platform integrated development environment (IDE) to create so-called ``sketches'';
+\item a simplified APIs to access the microcontroller's resources;
+\item leverage of open source compiler/linker toolchain, transparent to the end user;
+\item a bootloader to make it easy to upload a compiled sketch to the microcontroller;
+\end{itemize}
+Also make Wiring (hardware and software) open source.
+
+But, still some issues:
+\begin{itemize}
+    \item reliance on the C language and C compiler (needs to be installed)
+    \item very poor experience in IDE
+    \item USB bootloader requires device drivers on some systems
+\end{itemize}
+
+BBC micro:bit inherits the raw PCB nature of Arduino (everything is visible to the end user).
+
+First key idea of the BBC micro:bit: NO WIRING REQUIRED!
+
+
