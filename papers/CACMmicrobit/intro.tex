@@ -1,14 +1,12 @@
 \section{Introduction}
-% Plan for submitting a "contributed article" to CACM
-
-% - Authors: Microsoft, Lancaster University, Micro:bit Education Foundation (ARM)
+\label{sec:intrp}
 
 %Purpose
 %- what is the micro:bit?
 % http://www.bbc.co.uk/programmes/articles/4hVG2Br1W1LKCmw8nSm9WnQ/the-bbc-micro-bit
 
 The micro:bit is a small programmable and embeddable computer designed, 
-developed and deployed by the BBC and partners (including ARM, Microsoft, 
+developed and deployed by the BBC and partners (including Microsoft, 
 and Lancaster University) to approximately 800,000 UK middle school students
 in 2015-2016. Part of the BBC's Make it Digital Campaign, the BBC described the
 micro:bit as its ``most ambitious education initiative in 30 years, 
@@ -19,7 +17,7 @@ develop a new generation of tech pioneers.''~\cite{BBCwebsite}
 % https://barrettsprojects.wordpress.com/2012/09/15/tap-and-double-tap/ 
 
 
-Figure~\ref{fig:microbit} shows a picture of the front and back of the
+Figure~\ref{fig:microbit} shows (a) the front and (b) the back of the
 micro:bit, which measures 4x5 centimeters. Like the Arduino Uno,
 the micro:bit is a single-board microcontroller that can be programmed
 via a host computer (usually a laptop or desktop)
@@ -31,13 +29,12 @@ Low Energy (BLE) communications.
 
 The design of the micro:bit hardware was driven by the
 first two objectives of the micro:bit project:
-\begin{itemize}
-\item to provide a simple creative experience for physical computing and embeddable/wearable projects;
-\item to supply a device that can continue to provide learning opportunities as the user's expertise grows.
-\end{itemize}
+(1) to provide a simple creative experience for physical computing, wearable and Internet of Things (IoT) projects;
+(2) to supply a device that can continue to provide learning opportunities as the user's expertise grows.
 
 On the hardware side, the micro:bit's built-in sensors, buttons and LED display 
-allow many projects to be completed with just the micro:bit. The holes on micro:bit's edge
+allow many projects to be completed with no additional hardware or wiring. 
+The holes on micro:bit's edge
 connector allows additional external sensors and actuators to be connected via crocodile clips.
 As with Arduino, an ecosytem of micro:bit shields that the micro:bit can plug into expand
 its capabilities greatly. The micro:bit's BLE capabilities introduces networking to the
@@ -58,12 +55,17 @@ smartphones, laptops, as well as other micro:bits.
 
 The design of the micro:bit firmware and coding tools also were oriented towards a 
 simple starting experience with room for progression. In particular, the coding 
-objectives of the project were:
-\begin{itemize}
-  \item to give students an exciting, engaging introduction to coding;
-  \item to stimulate curiosity about how computing technologies can be utilized 
+objectives of the project were: (3)
+to give students an exciting, engaging introduction to coding;
+(4) to stimulate curiosity about how computing technologies can be utilized 
   to solve problems that students identify. 
-\end{itemize}
+
+[info about the coding solution: BBC identified using a web app and C/C++ compiler in the cloud
+to create a binary executable that would then be flashed onto micro:bit;
+final design put the entire toolchain in web app, without need to invoke C/C++ compiler to
+compile the user's program; ARM DAPlink solution makes micro:bit appear as USB pen drive
+on all operating systems; MicroPython provided second programming solution with entire toolchain
+on the micro:bit!!]
 
 % fast forwarding:
 %
@@ -77,7 +79,9 @@ in classrooms in February of 2016, more than halfway through the 2015-2016 schoo
 \item first full school year was 2016-2017, during which micro:bit Education Foundation got
 started; 
 \item now have two full school years complete with experience in more countries 
+\item lots of partners participating (ICSTE and CSTA 2018)!!
 \end{itemize}
+
 
 %- A lot of lessons learned from delivering end-to-end experience in UK and other countries
 %   - hardware (unique design, as already mentioned)
