@@ -10,7 +10,7 @@
 The micro:bit is a small programmable and embeddable computer designed, 
 developed and deployed by the BBC and partners (including ARM, Microsoft, 
 and Lancaster University) to approximately 800,000 UK middle school students
-in 2015-2016. Part of the BBC´s Make it Digital Campaign, the BBC described the
+in 2015-2016. Part of the BBC's Make it Digital Campaign, the BBC described the
 micro:bit as its ``most ambitious education initiative in 30 years, 
 with an ambition to inspire digital creativity and 
 develop a new generation of tech pioneers.''~\cite{BBCwebsite}
@@ -18,7 +18,8 @@ develop a new generation of tech pioneers.''~\cite{BBCwebsite}
 % reference the competition and show what's different (hardware)
 % https://barrettsprojects.wordpress.com/2012/09/15/tap-and-double-tap/ 
 
-Figure~\ref{micro:bit} shows a picture of the front and back of the
+
+Figure~\ref{fig:microbit} shows a picture of the front and back of the
 micro:bit, which measures 4x5 centimeters. Like the Arduino Uno,
 the micro:bit is a single-board microcontroller that can be programmed
 via a host computer (usually a laptop or desktop)
@@ -31,8 +32,8 @@ Low Energy (BLE) communications.
 The design of the micro:bit hardware was driven by the
 first two objectives of the micro:bit project:
 \begin{itemize}
-\item to provide a simple creative experience for physical computing and embeddable/wearable projects, yet
-\item to supply a device that is sufficiently capable to grow with the user’s experience; 
+\item to provide a simple creative experience for physical computing and embeddable/wearable projects;
+\item to supply a device that can continue to provide learning opportunities as the user's expertise grows.
 \end{itemize}
 
 On the hardware side, the micro:bit's built-in sensors, buttons and LED display 
@@ -42,6 +43,18 @@ As with Arduino, an ecosytem of micro:bit shields that the micro:bit can plug in
 its capabilities greatly. The micro:bit's BLE capabilities introduces networking to the
 picture, and enables streaming of data and command/control operations among the micro:bit, 
 smartphones, laptops, as well as other micro:bits.
+
+\begin{figure} 
+\begin{tabular}{cc}
+  \includegraphics[width=1.5in]{images/microbit-front.png} &
+  \includegraphics[width=1.5in]{images/microbit-back.png} \\
+  (a) & (b) 
+\end{tabular}
+\caption{\label{fig:microbit}The micro:bit: (a) front, with two buttons, 
+  5x5 LED display, and edge connector (bottom); (b) back, with processor, accelerometer, compass, Bluetooth, USB and battery ports.}
+\end{figure}
+
+% micro:bit is an embeddable, reactive, networked computing system
 
 The design of the micro:bit firmware and coding tools also were oriented towards a 
 simple starting experience with room for progression. In particular, the coding 
