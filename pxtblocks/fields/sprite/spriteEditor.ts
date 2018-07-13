@@ -1,4 +1,3 @@
-/// <reference path="./grid.ts" />
 /// <reference path="./bitmap.ts" />
 /// <reference path="./tools.ts" />
 /// <reference path="./toolbar.ts" />
