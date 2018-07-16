@@ -6,7 +6,8 @@ We have another guide, if you want to
 
 ## Step 1: Design blocks in the editor
 
-It is easiest to tinker and design your blocks from the editor itself. Use the [custom blocks feature](/defining-blocks) for this purpose.
+It is easiest to tinker and design your blocks from the editor itself. 
+Use the [custom blocks feature](/defining-blocks) for this purpose.
 
 ## Step 2: GitHub setup
 
@@ -21,7 +22,7 @@ on the list (might happen for organizational repositories), go back to the Impor
 select **Import URL** and paste the `https://github.com/...` link to your repository.
 
 If you want to create a new repository, select the first option in the list and specify
-repository name and optional description. It's recommended that for a package called
+repository name and optional description. It is recommended that for a package called
 `banana` the repository should be called `pxt-banana`.
 
 If you want to contribute to an existing repository you don't have write permissions
@@ -40,6 +41,8 @@ Edit `main.ts` as usual. It's good to commit changes to GitHub every now and the
 so you won't lose your work. This is done with the little cloud button
 on top of the file Explorer on the left, while it's expanded.
 
+There is no support for separate commit and push. Commit will always push.
+
 ### Merge conflicts
 
 If you're editing your package on different devices, or multiple people are editing
@@ -57,7 +60,8 @@ have a **Local** label next on it.
 
 As you're making changes, you can use two browser windows or tabs.
 You might need to use the browser reload button to refresh blocks in your
-test project.
+test project. You do not have to commit or bump to make the changes visible
+in your test project.
 
 ## Step 5: Publishing your package
 
