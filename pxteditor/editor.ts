@@ -218,6 +218,7 @@ namespace pxt.editor {
 
         showImportUrlDialog(): void;
         showImportFileDialog(): void;
+        showImportGithubDialog(): void;
 
         showResetDialog(): void;
         showExitAndSaveDialog(): void;

@@ -153,7 +153,7 @@ export function showImportUrlDialogAsync() {
             </div>
             <div className="ui field">
                 <label id="selectUrlToOpenLabel">{lf("Copy the URL of the project.")}</label>
-                <input type="url" tabIndex={0} autoFocus aria-describedby="selectUrlToOpenLabel" placeholder={`${shareUrl}...`} className="ui blue fluid"></input>
+                <input type="url" tabIndex={0} autoFocus aria-describedby="selectUrlToOpenLabel" placeholder={`${shareUrl} or https://github.com/...`} className="ui blue fluid"></input>
             </div>
         </div>,
     }).then(res => {
@@ -166,6 +166,114 @@ export function showImportUrlDialogAsync() {
         }
         return undefined;
     })
+}
+
+
+export function showCreateGithubRepoDialogAsync() {
+    let inputName: HTMLInputElement;
+    let inputDesc: HTMLInputElement;
+    return core.confirmAsync({
+        header: lf("Create Github repo"),
+        onLoaded: (el) => {
+            inputName = el.querySelectorAll('input')[0] as HTMLInputElement;
+            inputDesc = el.querySelectorAll('input')[1] as HTMLInputElement;
+        },
+        jsx: <div className="ui form">
+            <div className="ui field">
+                <label id="selectUrlToOpenLabel">{lf("Repo name.")}</label>
+                <input type="url" tabIndex={0} autoFocus aria-describedby="selectUrlToOpenLabel" placeholder={`pxt-my-gadget...`} className="ui fluid"></input>
+            </div>
+            <div className="ui field">
+                <label id="selectDescToOpenLabel">{lf("Repo description.")}</label>
+                <input type="url" tabIndex={0} autoFocus aria-describedby="selectDescToOpenLabel" placeholder={`MakeCode package for my gadget.`} className="ui fluid"></input>
+            </div>
+        </div>,
+    }).then(res => {
+        if (res) {
+            pxt.tickEvent("app.github.create");
+            const name = inputName.value.trim()
+            const desc = inputDesc.value.trim()
+
+            if (/^[\w\-]+$/.test(inputName.value)) {
+                core.showLoading("creategithub", lf("Creating Github repo..."))
+                return pxt.github.createRepoAsync(name, desc)
+                    .finally(() => core.hideLoading("creategithub"))
+                    .then(r => {
+                        return pxt.github.noramlizeRepoId("https://github.com/" + r.fullName)
+                    })
+            } else {
+                core.errorNotification(lf("Invalid repo name."))
+            }
+        }
+        return "";
+    })
+}
+
+export function showImportGithubDialogAsync() {
+    let res = ""
+    let createNew = () => {
+        res = "NEW"
+        core.hideDialog()
+    }
+    core.showLoading("githublist", lf("Getting repo list..."))
+    return pxt.github.listUserReposAsync()
+        .finally(() => core.hideLoading("githublist"))
+        .then(repos => {
+            let isPXT = (r: pxt.github.GitRepo) => /pxt|makecode/.test(r.name)
+            return repos.filter(isPXT).concat(repos.filter(r => !isPXT(r)))
+                .map(r => ({
+                    name: r.fullName,
+                    description: r.description,
+                    updatedAt: r.updatedAt,
+                    onClick: () => {
+                        res = pxt.github.noramlizeRepoId("https://github.com/" + r.fullName)
+                        core.hideDialog()
+                    },
+                }))
+        })
+        .then(repos => core.confirmAsync({
+            header: lf("Clone or create your own Github repo"),
+            hideAgree: true,
+            jsx: <div className="ui form">
+                <div className="ui relaxed divided list">
+
+                    <div key={"create new"} className="item">
+                        <i className="large plus circle middle aligned icon"></i>
+                        <div className="content">
+                            <a onClick={createNew} className="header"><b>{lf("Create new...")}</b></a>
+                            <div className="description">
+                                {lf("Create a new Github repo in your account.")}
+                            </div>
+                        </div>
+                    </div>
+
+                    {repos.map(r =>
+                        <div key={r.name} className="item">
+                            <i className="large github middle aligned icon"></i>
+                            <div className="content">
+                                <a onClick={r.onClick} className="header">{r.name}</a>
+                                <div className="description">
+                                    {pxt.Util.timeSince(r.updatedAt)}
+                                    {". "}
+                                    {r.description}
+                                </div>
+                            </div>
+                        </div>)}
+                </div>
+
+                <div className="ui icon green message">
+                    <i className="info circle icon"></i>
+                    <div className="content">
+                        <h3 className="header">
+                            {lf("Need some other repo?")}
+                        </h3>
+                        <p>
+                            {lf("Use the 'Import URL' option in the previous dialog to import somebody's else repo.")}
+                        </p>
+                    </div>
+                </div>
+            </div>,
+        })).then(() => res)
 }
 
 export function showImportFileDialogAsync() {

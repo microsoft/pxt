@@ -423,18 +423,25 @@ export async function importGithubAsync(id: string) {
     let parsed = pxt.github.parseRepoId(id)
     let sha = ""
     let repoid = pxt.github.noramlizeRepoId(id).replace(/^github:/, "")
+    let isEmpty = false
     try {
         sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
     } catch (e) {
         if (e.statusCode == 409) {
             // this means repo is completely empty; put something in there
             await pxt.github.putFileAsync(parsed.fullName, ".gitignore", "# Initial\n")
+            isEmpty = true
             sha = await pxt.github.getRefAsync(parsed.fullName, parsed.tag)
         }
         else if (e.statusCode == 404)
             U.userError(lf("No such repository or branch."))
     }
     return await githubUpdateToAsync(null, repoid, sha, {})
+        .then(hd => {
+            if (isEmpty)
+                return initializeGithubRepoAsync(hd, repoid)
+            return hd
+        })
 }
 
 export function installByIdAsync(id: string) {

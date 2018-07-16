@@ -578,6 +578,7 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
         this.close = this.close.bind(this);
         this.importHex = this.importHex.bind(this);
         this.importUrl = this.importUrl.bind(this);
+        this.cloneGithub = this.cloneGithub.bind(this);
     }
 
     hide() {
@@ -604,6 +605,12 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
         this.props.parent.showImportUrlDialog();
     }
 
+    private cloneGithub() {
+        pxt.tickEvent("projects.clonegithub", undefined, { interactiveConsent: true });
+        this.hide();
+        this.props.parent.showImportGithubDialog();
+    }
+
     renderCore() {
         const { visible } = this.state;
 
@@ -627,15 +634,28 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
                         /> : undefined}
                     {pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing ?
                         <codecard.CodeCardView
-                            ariaLabel={lf("Open a shared project URL")}
+                            ariaLabel={lf("Open a shared project URL or Github repo")}
                             role="button"
                             key={'importurl'}
                             icon="cloud download"
                             iconColor="secondary"
                             name={lf("Import URL...")}
-                            description={lf("Open a shared project URL")}
+                            description={lf("Open a shared project URL or Github repo")}
                             onClick={this.importUrl}
                         /> : undefined}
+
+                    {pxt.github.token ?
+                        <codecard.CodeCardView
+                            ariaLabel={lf("Clone or create your own Github repository")}
+                            role="button"
+                            key={'importgithub'}
+                            icon="cloud download"
+                            iconColor="secondary"
+                            name={lf("Your Github Repo...")}
+                            description={lf("Clone or create your own Github repository")}
+                            onClick={this.cloneGithub}
+                        /> : undefined}
+
                 </div>
             </sui.Modal>
         )

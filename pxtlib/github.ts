@@ -1,8 +1,3 @@
-/* TODO for github package authoring
-- make sure we can import an empty tree (commit 000...000) - add skeleton files then?
-- add a way of adding package from the UI
-*/
-
 namespace pxt.github {
     export interface GHRef {
         ref: string;
@@ -218,7 +213,7 @@ namespace pxt.github {
 
     function ghPostAsync(path: string, data: any) {
         return ghRequestAsync({
-            url: "https://api.github.com/repos/" + path,
+            url: /^https:/.test(path) ? path : "https://api.github.com/repos/" + path,
             method: "POST",
             allowHttpErrors: true,
             data: data
@@ -444,6 +439,20 @@ namespace pxt.github {
         description: string;
         defaultBranch: string;
         status?: GitRepoStatus;
+        updatedAt?: number;
+    }
+
+    export function listUserReposAsync() {
+        return ghGetJsonAsync("https://api.github.com/user/repos?per_page=200&sort=updated&affiliation=owner,collaborator")
+            .then((res: Repo[]) => res.map(r => mkRepo(r, null)))
+    }
+
+    export function createRepoAsync(name: string, description: string) {
+        return ghPostAsync("https://api.github.com/user/repos", {
+            name,
+            description,
+            private: false,
+        }).then(v => mkRepo(v, null))
     }
 
     export function repoIconUrl(repo: GitRepo): string {
@@ -464,7 +473,8 @@ namespace pxt.github {
             name: r.name,
             description: r.description,
             defaultBranch: r.default_branch,
-            tag: tag
+            tag: tag,
+            updatedAt: Math.round(new Date(r.updated_at).getTime() / 1000)
         }
         rr.status = repoStatus(rr, config);
         return rr;
@@ -593,6 +603,8 @@ namespace pxt.github {
     }
 
     export function isGithubId(id: string) {
+        if (!id)
+            return false
         return id.slice(0, 7) == "github:"
     }
 
