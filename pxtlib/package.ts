@@ -772,8 +772,11 @@ namespace pxt {
                             try {
                                 let d = this.resolveDep(k)
                                 let gitjson = JSON.parse(d.readFile(pxt.github.GIT_JSON) || "{}") as pxt.github.GitJson
-                                if (gitjson.repo)
-                                    v = pxt.github.noramlizeRepoId(gitjson.repo)
+                                if (gitjson.repo) {
+                                    let parsed = pxt.github.parseRepoId(gitjson.repo)
+                                    parsed.tag = "v" + d.config.version
+                                    v = pxt.github.stringifyRepo(parsed)
+                                }
                             } catch (e) { }
                             cfg.dependencies[k] = v
                         }
