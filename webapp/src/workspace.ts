@@ -294,14 +294,14 @@ export async function commitAsync(hd: Header, msg: string, tag = "", filenames: 
     if (newCommit == null) {
         return commitId
     } else {
-        await githubUpdateToAsync(hd, gitjson.repo, newCommit, files)
+        await githubUpdateToAsync(hd, gitjson.repo, newCommit, files, tag)
         if (tag)
             await pxt.github.createTagAsync(parsed.fullName, tag, newCommit)
         return ""
     }
 }
 
-async function githubUpdateToAsync(hd: Header, repoid: string, commitid: string, files: ScriptText) {
+async function githubUpdateToAsync(hd: Header, repoid: string, commitid: string, files: ScriptText, tag?: string) {
     let parsed = pxt.github.parseRepoId(repoid)
     let commit = await pxt.github.getCommitAsync(parsed.fullName, commitid)
     let gitjson: GitJson = JSON.parse(files[GIT_JSON] || "{}")
@@ -338,6 +338,7 @@ async function githubUpdateToAsync(hd: Header, repoid: string, commitid: string,
         files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4)
     }
 
+    commit.tag = tag
     gitjson.commit = commit
     files[GIT_JSON] = JSON.stringify(gitjson, null, 4)
 

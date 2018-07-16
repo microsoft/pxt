@@ -774,7 +774,7 @@ namespace pxt {
                                 let gitjson = JSON.parse(d.readFile(pxt.github.GIT_JSON) || "{}") as pxt.github.GitJson
                                 if (gitjson.repo) {
                                     let parsed = pxt.github.parseRepoId(gitjson.repo)
-                                    parsed.tag = "v" + d.config.version
+                                    parsed.tag = gitjson.commit.tag || gitjson.commit.sha
                                     v = pxt.github.stringifyRepo(parsed)
                                 }
                             } catch (e) { }

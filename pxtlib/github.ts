@@ -38,6 +38,7 @@ namespace pxt.github {
         message: string; // "added readme, because im a good github citizen",
         tree: Tree; // tree
         parents: SHAObject[]; // commit[]
+        tag?: string;
     }
 
     export let token: string = null;
