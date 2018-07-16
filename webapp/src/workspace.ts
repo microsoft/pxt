@@ -192,19 +192,15 @@ export function getPublishedScriptAsync(id: string) {
         );
 }
 
-export interface GitJson {
-    repo: string;
-    commit: pxt.github.Commit;
-}
-
-export const GIT_JSON = ".git.json"
-
 export enum PullStatus {
     NoSourceControl,
     UpToDate,
     GotChanges,
     NeedsCommit,
 }
+
+const GIT_JSON = pxt.github.GIT_JSON
+type GitJson = pxt.github.GitJson
 
 export async function pullAsync(hd: Header) {
     let files = await getTextAsync(hd.id)
@@ -338,7 +334,7 @@ async function githubUpdateToAsync(hd: Header, repoid: string, commitid: string,
     }
 
     if (!cfg.name) {
-        cfg.name = "X"
+        cfg.name = parsed.fullName.replace(/[^\w\-]/g, "")
         files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4)
     }
 

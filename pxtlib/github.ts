@@ -673,4 +673,11 @@ namespace pxt.github {
                 } return Promise.reject(resp.text);
             });
     }
+
+    export interface GitJson {
+        repo: string;
+        commit: pxt.github.Commit;
+    }
+    
+    export const GIT_JSON = ".git.json"
 }

@@ -90,7 +90,7 @@ function mergeFsPkg(pkg: pxt.FsPkg) {
         eh.icon = hd.icon
     }
 
-    let gjson = pkg.files.filter(f => f.name == ".git.json")[0]
+    let gjson = pkg.files.filter(f => f.name == pxt.github.GIT_JSON)[0]
     if (gjson) {
         let gj = JSON.parse(gjson.content)
         e.header.githubId = gj.repo

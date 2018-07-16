@@ -768,7 +768,14 @@ namespace pxt {
                     if (!cfg.targetVersions) cfg.targetVersions = pxt.appTarget.versions;
                     U.iterMap(cfg.dependencies, (k, v) => {
                         if (!v || /^file:/.test(v) || /^workspace:/.test(v)) {
-                            cfg.dependencies[k] = "*"
+                            v = "*"
+                            try {
+                                let d = this.resolveDep(k)
+                                let gitjson = JSON.parse(d.readFile(pxt.github.GIT_JSON) || "{}") as pxt.github.GitJson
+                                if (gitjson.repo)
+                                    v = pxt.github.noramlizeRepoId(gitjson.repo)
+                            } catch (e) { }
+                            cfg.dependencies[k] = v
                         }
                     })
                     files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4)
