@@ -24,14 +24,20 @@ If you want to create a new repository, select the first option in the list and 
 repository name and optional description. It's recommended that for a package called
 `banana` the repository should be called `pxt-banana`.
 
+If you want to contribute to an existing repository you don't have write permissions
+to, first fork it using GitHub web interface, and then use the Import URL to import
+your forked repo. After you made and committed your changes, create a pull request
+using GitHub web interface.
+
 If you're using an existing, non-empty repository that doesn't have a package in it, you
-will be asked if you want it initialized. This might overwrite files you already have there,
+will be asked if you want it initialized (if the repository is empty or just created, there will
+be no confirmation). This might overwrite files you already have there,
 so use with care.
 
 ## Step 3: Developing package
 
 Edit `main.ts` as usual. It's good to commit changes to GitHub every now and then
-so that you won't lose your work. This is done with the little cloud button
+so you won't lose your work. This is done with the little cloud button
 on top of the file Explorer on the left, while it's expanded.
 
 ### Merge conflicts
