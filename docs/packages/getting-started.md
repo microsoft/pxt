@@ -55,8 +55,9 @@ Create a "test" new project (using the usual big plus button on the home screen)
 Click on **Gear** -> **Extensions**. Select your package from the list. It should
 have a **Local** label next on it.
 
-As you're making changes, you can use two browser windows and reload the
-"test" project (using browser reload button).
+As you're making changes, you can use two browser windows or tabs.
+You might need to use the browser reload button to refresh blocks in your
+test project.
 
 ## Step 5: Publishing your package
 
