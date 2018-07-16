@@ -153,7 +153,7 @@ export function showImportUrlDialogAsync() {
             </div>
             <div className="ui field">
                 <label id="selectUrlToOpenLabel">{lf("Copy the URL of the project.")}</label>
-                <input type="url" tabIndex={0} autoFocus aria-describedby="selectUrlToOpenLabel" placeholder={`${shareUrl} or https://github.com/...`} className="ui blue fluid"></input>
+                <input type="url" tabIndex={0} autoFocus aria-describedby="selectUrlToOpenLabel" placeholder={lf("{0} or {1}...", shareUrl, "https://github.com/...")} className="ui blue fluid"></input>
             </div>
         </div>,
     }).then(res => {
@@ -185,7 +185,7 @@ export function showCreateGithubRepoDialogAsync() {
             </div>
             <div className="ui field">
                 <label id="selectDescToOpenLabel">{lf("Repo description.")}</label>
-                <input type="url" tabIndex={0} autoFocus aria-describedby="selectDescToOpenLabel" placeholder={`MakeCode package for my gadget.`} className="ui fluid"></input>
+                <input type="url" tabIndex={0} autoFocus aria-describedby="selectDescToOpenLabel" placeholder={lf("MakeCode package for my gadget...")} className="ui fluid"></input>
             </div>
         </div>,
     }).then(res => {

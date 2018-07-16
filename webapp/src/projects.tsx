@@ -649,7 +649,7 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
                             ariaLabel={lf("Clone or create your own Github repository")}
                             role="button"
                             key={'importgithub'}
-                            icon="cloud download"
+                            icon="github"
                             iconColor="secondary"
                             name={lf("Your Github Repo...")}
                             description={lf("Clone or create your own Github repository")}
