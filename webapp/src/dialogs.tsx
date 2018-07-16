@@ -173,7 +173,7 @@ export function showCreateGithubRepoDialogAsync() {
     let inputName: HTMLInputElement;
     let inputDesc: HTMLInputElement;
     return core.confirmAsync({
-        header: lf("Create Github repo"),
+        header: lf("Create GitHub repo"),
         onLoaded: (el) => {
             inputName = el.querySelectorAll('input')[0] as HTMLInputElement;
             inputDesc = el.querySelectorAll('input')[1] as HTMLInputElement;
@@ -195,7 +195,7 @@ export function showCreateGithubRepoDialogAsync() {
             const desc = inputDesc.value.trim()
 
             if (/^[\w\-]+$/.test(inputName.value)) {
-                core.showLoading("creategithub", lf("Creating Github repo..."))
+                core.showLoading("creategithub", lf("Creating GitHub repo..."))
                 return pxt.github.createRepoAsync(name, desc)
                     .finally(() => core.hideLoading("creategithub"))
                     .then(r => {
@@ -232,7 +232,7 @@ export function showImportGithubDialogAsync() {
                 }))
         })
         .then(repos => core.confirmAsync({
-            header: lf("Clone or create your own Github repo"),
+            header: lf("Clone or create your own GitHub repo"),
             hideAgree: true,
             /* tslint:disable:react-a11y-anchors */
             jsx: <div className="ui form">
@@ -242,11 +242,11 @@ export function showImportGithubDialogAsync() {
                         <i className="large plus circle middle aligned icon"></i>
                         <div className="content">
                             <a onClick={createNew} role="menuitem" className="header"
-                                title={lf("Create new Github repository")}>
+                                title={lf("Create new GitHub repository")}>
                                 <b>{lf("Create new...")}</b>
                             </a>
                             <div className="description">
-                                {lf("Create a new Github repo in your account.")}
+                                {lf("Create a new GitHub repo in your account.")}
                             </div>
                         </div>
                     </div>

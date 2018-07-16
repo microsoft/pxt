@@ -569,7 +569,7 @@ export interface ImportDialogState {
 }
 
 function githubLogin() {
-    core.showLoading("ghlogin", lf("Logging in to Github..."))
+    core.showLoading("ghlogin", lf("Logging you in to GitHub..."))
     const self = window.location.href.replace(/#.*/, "")
     const state = ts.pxtc.Util.guidGen();
     pxt.storage.setLocal("oauthState", state)
@@ -648,25 +648,25 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
                         /> : undefined}
                     {pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing ?
                         <codecard.CodeCardView
-                            ariaLabel={lf("Open a shared project URL or Github repo")}
+                            ariaLabel={lf("Open a shared project URL or GitHub repo")}
                             role="button"
                             key={'importurl'}
                             icon="cloud download"
                             iconColor="secondary"
                             name={lf("Import URL...")}
-                            description={lf("Open a shared project URL or Github repo")}
+                            description={lf("Open a shared project URL or GithHub repo")}
                             onClick={this.importUrl}
                         /> : undefined}
 
                     {pxt.github.token ?
                         <codecard.CodeCardView
-                            ariaLabel={lf("Clone or create your own Github repository")}
+                            ariaLabel={lf("Clone or create your own GitHub repository")}
                             role="button"
                             key={'importgithub'}
                             icon="github"
                             iconColor="secondary"
-                            name={lf("Your Github Repo...")}
-                            description={lf("Clone or create your own Github repository")}
+                            name={lf("Your GitHub Repo...")}
+                            description={lf("Clone or create your own GitHub repository")}
                             onClick={this.cloneGithub}
                         /> : undefined}
                 </div>
@@ -674,7 +674,7 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
                     <p>
                         <br /><br />
                         <a className="small" href="#github" role="button" onClick={githubLogin}
-                            aria-label={lf("Github login")}>{lf("Github login")}</a>
+                            aria-label={lf("GitHub login")}>{lf("GitHub login")}</a>
                     </p>}
             </sui.Modal>
         )
