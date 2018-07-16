@@ -627,6 +627,7 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
     renderCore() {
         const { visible } = this.state;
 
+        /* tslint:disable:react-a11y-anchors */
         return (
             <sui.Modal isOpen={visible} className="importdialog" size="small"
                 onClose={this.close} dimmer={true}
@@ -830,6 +831,7 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
             v.card.onClick = () => this.setHwVariant(savedV)
         }
 
+        /* tslint:disable:react-a11y-anchors */
         return (
             <sui.Modal isOpen={visible} className="importdialog" size="small"
                 onClose={this.close} dimmer={true}

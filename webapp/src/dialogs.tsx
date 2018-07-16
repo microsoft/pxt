@@ -234,6 +234,7 @@ export function showImportGithubDialogAsync() {
         .then(repos => core.confirmAsync({
             header: lf("Clone or create your own Github repo"),
             hideAgree: true,
+            /* tslint:disable:react-a11y-anchors */
             jsx: <div className="ui form">
                 <div className="ui relaxed divided list">
 
