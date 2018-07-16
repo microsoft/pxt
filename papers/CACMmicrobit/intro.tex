@@ -17,14 +17,15 @@ develop a new generation of tech pioneers.''~\cite{BBCwebsite}
 % https://barrettsprojects.wordpress.com/2012/09/15/tap-and-double-tap/ 
 
 Figure~\ref{fig:microbit} shows (a) the front and (b) the back of the
-micro:bit, which measures 4x5 centimeters. Like the Arduino Uno and its
+micro:bit, which measures 4cm x 5cm. Like the Arduino Uno 
+(which measures 5.33cm x 6.86cm) and its
 precursor Wiring, the micro:bit is a single-board microcontroller 
 that can be programmed via a host computer (usually a laptop or desktop)
 and then embedded in projects where it runs on battery power.
 In contrast to the Uno, which has no built-in sensors, the micro:bit 
-board hosts a variety of sensors (temperature, accelerometer, compass, light level), 
+board hosts a variety of sensors (temperature, accelerometer, magnetometer, light level), 
 a 5x5 LED matrix, two user-defined buttons, as well as Bluetooth
-Low Energy (BLE) communications.
+Low Energy (BLE) communications. A
 
 The design of the micro:bit hardware was driven by the
 first two objectives of the micro:bit project:
@@ -35,10 +36,11 @@ On the hardware side, the micro:bit's built-in sensors, buttons and LED display
 allow many projects to be completed with no additional hardware or wiring. 
 The holes on micro:bit's edge
 connector allows additional external sensors and actuators to be connected via crocodile clips.
-As with Arduino, an ecosytem of micro:bit shields that the micro:bit can plug into expand
-its capabilities greatly. The micro:bit's BLE capabilities introduces networking to the
+The micro:bit's BLE capabilities introduces networking to the
 picture, and enables streaming of data and command/control operations among the micro:bit, 
 smartphones, laptops, as well as other micro:bits.
+As with Arduino, an ecosytem of micro:bit shields (that accommodate the micro:bit's edge
+connector) expand its capabilities greatly. 
 
 \begin{figure} 
 \begin{tabular}{cc}
@@ -52,19 +54,23 @@ smartphones, laptops, as well as other micro:bits.
 
 % micro:bit is an embeddable, reactive, networked computing system
 
-The design of the micro:bit firmware and coding tools also were oriented towards a 
+The design of the micro:bit coding tools also was oriented towards a 
 simple starting experience with room for progression. In particular, the coding 
 objectives of the project were: (3)
 to give students an exciting, engaging introduction to coding;
 (4) to stimulate curiosity about how computing technologies can be utilized 
   to solve problems that students identify. 
 
-The BBC identified using a web app with Blockly to permit students to edit
-small scripts easily without the possibility of syntax errors. [SIMULATOR] 
-A C++ compiler
-web service would then be used to create a binary executable that would then
-be copied onto a micro:bit (conntected to the host computer by USB) via a 
-specialized loader application.
+Based on user trials with a micro:bit prototype at Years 5 and 7 (3rd and 5th grade
+in the US, respectively), the BBC focused on delivering a web app 
+based on the popular Blockly framework~\cite{XYZ} to permit Year 7 students to create scripts 
+via drag-and-drop operations in web browser.  Text-based coding also was identified as an important feature.
+The text of a user's program (whether derived from Blockly or produced directly by the user)
+would be submitted to a compiler service in the cloud that
+would return a final executable to be copied onto a micro:bit (conntected to the host 
+computer by USB) via a specialized loader application. As the micro:bit would be incorporated 
+into standalone projects, it was essential for the user's program to be installed in non-volatile 
+storage on the micro:bit where it could be run via battery battery power. 
 
 %final design put the entire toolchain in web app, without need to invoke C/C++ compiler to
 %compile the user's program; ARM DAPlink solution makes micro:bit appear as USB pen drive
@@ -78,8 +84,6 @@ specialized loader application.
 
 What happened:
 \begin{itemize}
-\item implementation and rollout took half a year longer than expected (surprise, with devices landing
-in classrooms in February of 2016, more than halfway through the 2015-2016 school year in UK);
 \item Four languages:  Blockly, JavaScript, Python, C/C++;
 \item open sourcing of platform;
 \item first full school year was 2016-2017, during which micro:bit Education Foundation got
