@@ -15,9 +15,8 @@ art, industrial design, health, environmental monitoring, etc.
 
 Physical computing benefits:
 \begin{itemize}
-\item broad reach because of diverse applications of physical computing;
+\item broad reach because of diverse applications of physical computing -- leverage fine arts, music, design, etc. in projects;
 \item increased motivation and connections because of tangible visible outcome (rather than virtual on screen);
-\item leverage fine arts, music, design, etc. in projects;
 \item learning by doing: many ways to achieve goal (no single correct solution)
 \item natural division of labor for more complex projects (design, hardware, software, ...)
 \item full system view of computing: hardware and software working together.
@@ -68,10 +67,7 @@ Physical computing benefits:
 % The physical nature of the work engages the whole student – both their mind and their body,
 % making the learning process a deep, immersive experience.
 
-
-
-
-\subsection{Wiring, Arduino and the BBC micro:bit}
+\subsection{Wiring and Arduino}
 
 % from thesis of Hernando Barragán:
 % - http://people.interactionivrea.org/h.barragan/thesis/thesis_low_res.pdf 
@@ -93,8 +89,8 @@ to engineering, robotics and technical audiences.''
 Of Wiring's design, he identified the following key concepts:
 \begin{itemize}
 \item a simple cross-platform integrated development environment (IDE) to create so-called ``sketches'';
-\item a simplified APIs to access the microcontroller's resources;
-\item leverage of open source compiler/linker toolchain, transparent to the end user;
+\item simplified application programming interfaces (APIs) to access a microcontroller's resources;
+\item leverage open source compiler/linker toolchain, transparent to the end user;
 \item a bootloader to make it easy to upload a compiled sketch to the microcontroller;
 \end{itemize}
 Also make Wiring (hardware and software) open source.
@@ -103,8 +99,10 @@ But, still some issues:
 \begin{itemize}
     \item reliance on the C language and C compiler (needs to be installed)
     \item very poor experience in IDE
-    \item USB bootloader requires device drivers on some systems
+    \item USB bootloader requires device drivers on some systems 
 \end{itemize}
+
+\subsection{The BBC micro:bit}
 
 BBC micro:bit inherits the raw PCB nature of Arduino (everything is visible to the end user).
 
