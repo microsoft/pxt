@@ -679,6 +679,6 @@ namespace pxt.github {
         repo: string;
         commit: pxt.github.Commit;
     }
-    
+
     export const GIT_JSON = ".git.json"
 }
