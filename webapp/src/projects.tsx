@@ -575,7 +575,7 @@ function githubLogin() {
     pxt.storage.setLocal("oauthState", state)
     const login = pxt.Cloud.getServiceUrl() +
         // "https://staging.pxt.io" +
-        "/oauth/login?state=" + state + 
+        "/oauth/login?state=" + state +
         "&response_type=token&client_id=gh-token&redirect_uri=" +
         encodeURIComponent(self)
     window.location.href = login
@@ -672,7 +672,7 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
                 {pxt.github.token ? undefined :
                     <p>
                         <br /><br />
-                        <a className="small" href="#" onClick={githubLogin}
+                        <a className="small" href="#github" role="button" onClick={githubLogin}
                             aria-label={lf("Github login")}>{lf("Github login")}</a>
                     </p>}
             </sui.Modal>

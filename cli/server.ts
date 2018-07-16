@@ -108,7 +108,7 @@ async function readPkgAsync(logicalDirname: string, fileContents = false): Promi
         config: cfg,
         files: []
     };
-    
+
     for (let fn of pxt.allPkgFiles(cfg).concat([".git.json"])) {
         let st = await statOptAsync(path.join(dirname, fn))
         let ff: FsFile = {
