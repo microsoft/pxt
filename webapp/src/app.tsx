@@ -2285,7 +2285,7 @@ function initLogin() {
         if (qs["access_token"]) {
             let ex = pxt.storage.getLocal("oauthState")
             if (ex && ex == qs["state"]) {
-                pxt.storage.setLocal("access_token", qs["access_token"])
+                pxt.storage.setLocal("githubtoken", qs["access_token"])
                 pxt.storage.removeLocal("oauthState")
             }
             location.hash = location.hash.replace(/(%23)?[\#\&\?]*access_token.*/, "")

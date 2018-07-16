@@ -568,6 +568,19 @@ export interface ImportDialogState {
     visible?: boolean;
 }
 
+function githubLogin() {
+    core.showLoading("ghlogin", lf("Logging in to Github..."))
+    const self = window.location.href.replace(/#.*/, "")
+    const state = ts.pxtc.Util.guidGen();
+    pxt.storage.setLocal("oauthState", state)
+    const login = pxt.Cloud.getServiceUrl() +
+        // "https://staging.pxt.io" +
+        "/oauth/login?state=" + state + 
+        "&response_type=token&client_id=gh-token&redirect_uri=" +
+        encodeURIComponent(self)
+    window.location.href = login
+}
+
 export class ImportDialog extends data.Component<ISettingsProps, ImportDialogState> {
     constructor(props: ISettingsProps) {
         super(props);
@@ -620,7 +633,7 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
                 closeIcon={true} header={lf("Import")}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
             >
-                <div className="ui two cards">
+                <div className={pxt.github.token ? "ui three cards" : "ui two cards"}>
                     {pxt.appTarget.compile ?
                         <codecard.CodeCardView
                             ariaLabel={lf("Open files from your computer")}
@@ -655,8 +668,13 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
                             description={lf("Clone or create your own Github repository")}
                             onClick={this.cloneGithub}
                         /> : undefined}
-
                 </div>
+                {pxt.github.token ? undefined :
+                    <p>
+                        <br /><br />
+                        <a className="small" href="#" onClick={githubLogin}
+                            aria-label={lf("Github login")}>{lf("Github login")}</a>
+                    </p>}
             </sui.Modal>
         )
     }
