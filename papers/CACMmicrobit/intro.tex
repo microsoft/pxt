@@ -18,8 +18,7 @@ develop a new generation of tech pioneers.''~\cite{BBCwebsite}
 
 Figure~\ref{fig:microbit} shows (a) the front and (b) the back of the
 micro:bit, which measures 4cm x 5cm. Like the Arduino Uno 
-(which measures 5.34cm x 6.86cm) and its
-precursor Wiring, the micro:bit is a single-board microcontroller 
+(which measures 5.34cm x 6.86cm), the micro:bit is a single-board microcontroller 
 that can be programmed via a host computer (usually a laptop or desktop)
 and then embedded in projects where it runs on battery power.
 In contrast to the Uno, which has no built-in sensors, the micro:bit 
@@ -64,22 +63,23 @@ to give students an exciting, engaging introduction to coding;
   to solve problems that students identify. 
 
   \begin{figure} 
-      \begin{tabular}[t]{cc}
+      \begin{tabular}{cc}
         \includegraphics[width=1.5in]{images/bbc.png} &
         \includegraphics[width=1.5in]{images/makecode.png} \\
         (a) & (b) 
       \end{tabular}
-    \caption{\label{fig:bbc}Web and compiler designs: (a) initial BBC design;
+    \caption{\label{fig:design}Web and compiler designs: (a) initial BBC design;
 (b) final design as implemented in MakeCode.}
-    \end{figure}
+  \end{figure}
 
 Based on user trials with a micro:bit prototype at Years 5 and 7 (3rd and 5th grade
 in the US, respectively), the BBC focused on delivering a web app 
-based on the popular Blockly framework~\cite{XYZ} to permit Year 7 students to create scripts 
-via drag-and-drop operations in a web browser.  Text-based coding also was identified as an important feature.
-The text of a user's program (whether derived from Blockly or produced directly by the user)
-would be submitted to a compiler service in the cloud that
-would return a final executable to be copied onto a micro:bit (connected to the host 
+based on the popular Blockly framework~\cite{XYZ} to permit Year 7 students to
+create scripts via drag-and-drop operations in a web browser.  
+Text-based coding also was identified as an important feature.
+As shown in Figure~\ref{fig:design}(a),
+the text of a user's program (whether derived from Blockly or produced directly by the user)
+is submitted to a compiler service that returns a final executable to be copied onto a micro:bit (connected to the host 
 computer by USB) via a specialized loader application. As the micro:bit would be incorporated 
 into standalone projects, it was essential for the user's program to be installed in non-volatile 
 storage on the micro:bit where it could be run via battery battery power. 
@@ -94,9 +94,13 @@ The solution delivered by the BBC's partners evolved to include:
 \item support for Blockly, JavaScript, Python, and C/C++;
 \item a web app with Blockly and JavaScript editors, micro:bit simulator, 
 and compiler to machine code, then linked against a pre-compiled C++ runtime 
-(see \url{http://makecode.microbit.org}), obviating the need for a compiler service for user code;
+(see \url{http://makecode.microbit.org}), 
+avoiding the need for a compile service for user code (as shown 
+in Figure~\ref{fig:design}(b));
 \item an on-device compiler and REPL for Python (via \url{https://micropython.org/}, 
-an implementation of Python for microcontrollers);
+an implementation of Python for microcontrollers) - in this case, the
+compile service for user code resides on the micro:bit itself (as in
+Figure~\ref{fig:design}(a));
 \item DAPlink firmware on micro:bit for USB pen drive (cross platform)
 \item open sourcing of platform;
 \end{itemize}
