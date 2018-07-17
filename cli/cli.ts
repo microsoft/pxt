@@ -1172,7 +1172,6 @@ function uploadCoreAsync(opts: UploadOptions) {
                             if (e.path[0] == "/") {
                                 e.path = opts.localDir + "docs" + e.path;
                             }
-                        trg.appTheme.logoUrl = opts.localDir
                         trg.appTheme.homeUrl = opts.localDir
                         // patch icons in bundled packages
                         Object.keys(trg.bundledpkgs).forEach(pkgid => {
