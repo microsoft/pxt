@@ -37,7 +37,7 @@ namespace pxtblockly {
 
     const SIDEBAR_WIDTH = 65;
 
-    export class SpriteEditor implements SideBarHost {
+    export class SpriteEditor implements SideBarHost, SpriteHeaderHost {
         private group: svg.Group;
         private root: svg.SVG;
 
@@ -117,7 +117,7 @@ namespace pxtblockly {
             this.sidebar = new SideBar(['url("#alpha-background")'].concat(this.colors), this, this.group);
             this.sidebar.setColor(1);
 
-            this.header = new SpriteHeader();
+            this.header = new SpriteHeader(this);
 
             this.drawReporterBar();
             this.updateUndoRedo();
@@ -275,6 +275,14 @@ namespace pxtblockly {
             return this.state;
         }
 
+        showGallery() {
+
+        }
+
+        hideGallery() {
+
+        }
+
         protected drawReporterBar() {
             this.repoterBar = this.group.group();
             this.canvasDimensions = this.repoterBar.draw("text")
@@ -336,8 +344,8 @@ namespace pxtblockly {
         }
 
         private updateUndoRedo() {
-            // this.toolbar.setUndoState(this.undoStack.length > 0);
-            // this.toolbar.setRedoState(this.redoStack.length > 0);
+            this.header.setUndoState(this.undoStack.length > 0);
+            this.header.setRedoState(this.redoStack.length > 0);
         }
 
         private paintCell(col: number, row: number, color: number) {

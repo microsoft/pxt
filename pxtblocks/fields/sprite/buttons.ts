@@ -199,13 +199,49 @@ namespace pxtblockly {
         protected root: svg.Group;
         protected props: ToggleProps;
 
+        protected isLeft: boolean;
+        protected changeHandler: (left: boolean) => void;
+
         constructor(parent: svg.SVG, props: Partial<ToggleProps>) {
             this.props = defaultColors(props);
             this.root = parent.group();
             this.buildDom();
+            this.isLeft = true;
         }
 
         protected buildDom() {
+            // Our css minifier mangles animation names so they need to be injected manually
+            this.root.style().content(`
+            .toggle-left {
+                transform: translateX(0px);
+                animation: mvleft 0.2s 0s ease;
+            }
+
+            .toggle-right {
+                transform: translateX(100px);
+                animation: mvright 0.2s 0s ease;
+            }
+
+            @keyframes mvright {
+                0% {
+                    transform: translateX(0px);
+                }
+                100% {
+                    transform: translateX(100px);
+                }
+            }
+
+            @keyframes mvleft {
+                0% {
+                    transform: translateX(100px);
+                }
+                100% {
+                    transform: translateX(0px);
+                }
+            }
+            `);
+
+
             // The outer border has an inner-stroke so we need to clip out the outer part
             // because SVG's don't support "inner borders"
             const clip = this.root.def().create("clipPath", "sprite-editor-toggle-border")
@@ -254,6 +290,30 @@ namespace pxtblockly {
                 .text(this.props.rightText)
                 .setAttribute("dominant-baseline", "middle")
                 .setAttribute("dy", 0);
+
+            this.root.onClick(() => {
+                if (this.isLeft) {
+                    this.switch.removeClass("toggle-left");
+                    this.switch.appendClass("toggle-right");
+                    this.leftText.fill(this.props.unselectedTextColor);
+                    this.rightText.fill(this.props.selectedTextColor);
+                }
+                else {
+                    this.switch.removeClass("toggle-right");
+                    this.switch.appendClass("toggle-left");
+                    this.leftText.fill(this.props.selectedTextColor);
+                    this.rightText.fill(this.props.unselectedTextColor);
+                }
+                this.isLeft = !this.isLeft;
+
+                if (this.changeHandler) {
+                    this.changeHandler(this.isLeft);
+                }
+            });
+        }
+
+        onStateChange(handler: (left: boolean) => void) {
+            this.changeHandler = handler;
         }
 
         layout() {

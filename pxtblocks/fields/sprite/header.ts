@@ -4,8 +4,8 @@ namespace pxtblockly {
     export interface SpriteHeaderHost {
         undo(): void;
         redo(): void;
-        showGrid(): void;
-        hideGrid(): void;
+        showGallery(): void;
+        hideGallery(): void;
     }
 
     const BUTTON_HEIGHT = 35;
@@ -17,18 +17,28 @@ namespace pxtblockly {
         undoButton: Button;
         redoButton: Button;
 
-        constructor() {
+        constructor(protected host: SpriteHeaderHost) {
             this.div = document.createElement("div");
             this.div.setAttribute("id", "sprite-editor-header");
 
             this.root = new svg.SVG(this.div).id("sprite-editor-header-controls");
             this.toggle = new Toggle(this.root, { leftText: "Editor", rightText: "Gallery", baseColor: "#4B7BEC" });
+            this.toggle.onStateChange(isLeft => {
+                if (isLeft) {
+                    this.host.showGallery();
+                }
+                else {
+                    this.host.hideGallery();
+                }
+            })
 
             this.undoButton = mkHeaderButton("\uf0e2", BUTTON_HEIGHT, 5);
             this.root.appendChild(this.undoButton.getView());
+            this.undoButton.onClick(() => this.host.undo());
 
             this.redoButton = mkHeaderButton("\uf01e", BUTTON_HEIGHT, 5);
             this.root.appendChild(this.redoButton.getView());
+            this.redoButton.onClick(() => this.host.redo());
         }
 
         getElement() {
@@ -42,6 +52,14 @@ namespace pxtblockly {
 
             this.undoButton.translate(8, (bounds.height / 2) - (BUTTON_HEIGHT / 2));
             this.redoButton.translate(13 + BUTTON_HEIGHT, (bounds.height / 2) - (BUTTON_HEIGHT / 2));
+        }
+
+        setUndoState(enabled: boolean) {
+            this.undoButton.setEnabled(enabled);
+        }
+
+        setRedoState(enabled: boolean) {
+            this.redoButton.setEnabled(enabled);
         }
     }
 

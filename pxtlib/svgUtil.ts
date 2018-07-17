@@ -112,6 +112,36 @@ namespace pxt.svgUtil {
         appendChild<T extends SVGElement>(child: BaseElement<T>): void {
             this.el.appendChild(child.el);
         }
+
+        onDown(handler: PointerHandler): this {
+            events.down(this.el, handler);
+            return this;
+        }
+
+        onUp(handler: PointerHandler): this {
+            events.up(this.el, handler);
+            return this;
+        }
+
+        onMove(handler: PointerHandler): this {
+            events.move(this.el, handler);
+            return this;
+        }
+
+        onEnter(handler: (isDown: boolean) => void): this {
+            events.enter(this.el, handler);
+            return this;
+        }
+
+        onLeave(handler: PointerHandler): this {
+            events.leave(this.el, handler);
+            return this;
+        }
+
+        onClick(handler: PointerHandler): this {
+            events.click(this.el, handler);
+            return this;
+        }
     }
 
     export class SVG extends DrawContext<SVGSVGElement> {
@@ -157,6 +187,10 @@ namespace pxt.svgUtil {
 
         def() {
             return new DefsElement(this.el);
+        }
+
+        style() {
+            return new StyleElement(this.el);
         }
 
         private updateTransform(): this {
@@ -219,6 +253,17 @@ namespace pxt.svgUtil {
         }
     }
 
+    export class StyleElement extends BaseElement<SVGStyleElement> {
+        constructor(parent: SVGElement) {
+            super("style");
+            parent.appendChild(this.el);
+        }
+
+        content(css: string) {
+            this.el.textContent = css;
+        }
+    }
+
     export class Drawable<T extends SVGElement> extends DrawContext<T> {
         at(x: number, y: number): this {
             this.setAttribute("x", x);
@@ -260,36 +305,6 @@ namespace pxt.svgUtil {
 
         clipPath(url: string): this {
             return this.setAttribute("clip-path", url);
-        }
-
-        onDown(handler: PointerHandler): this {
-            events.down(this.el, handler);
-            return this;
-        }
-
-        onUp(handler: PointerHandler): this {
-            events.up(this.el, handler);
-            return this;
-        }
-
-        onMove(handler: PointerHandler): this {
-            events.move(this.el, handler);
-            return this;
-        }
-
-        onEnter(handler: (isDown: boolean) => void): this {
-            events.enter(this.el, handler);
-            return this;
-        }
-
-        onLeave(handler: PointerHandler): this {
-            events.leave(this.el, handler);
-            return this;
-        }
-
-        onClick(handler: PointerHandler): this {
-            events.click(this.el, handler);
-            return this;
         }
     }
 

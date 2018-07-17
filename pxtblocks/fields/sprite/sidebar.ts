@@ -95,7 +95,7 @@ namespace pxtblockly {
             this.selectedSize = this.sizeButtons[size - 1];
 
             if (this.selectedSize) {
-                this.selectedTool.addClass("toolbar-button-selected");
+                this.selectedSize.addClass("toolbar-button-selected");
             }
         }
 
@@ -114,6 +114,8 @@ namespace pxtblockly {
             this.initCursorButton(1);
             this.initCursorButton(2).translate(INNER_BUTTON_MARGIN + CURSOR_BUTTON_WIDTH, 0);
             this.initCursorButton(3).translate(2 * (INNER_BUTTON_MARGIN + CURSOR_BUTTON_WIDTH), 0);
+
+            this.setCursorSize(1);
         }
 
         protected initTools() {
@@ -195,7 +197,7 @@ namespace pxtblockly {
         protected initCursorButton(size: number) {
             const btn = mkCursorSizeButton(size, CURSOR_BUTTON_WIDTH);
             btn.title(sizeAdjective(size));
-            btn.onClick(() => this.setCursorSize(size - 1));
+            btn.onClick(() => this.setCursorSize(size));
             this.sizeGroup.appendChild(btn.getView());
             this.sizeButtons.push(btn);
             return btn;
