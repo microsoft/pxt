@@ -193,7 +193,7 @@ cache:
                 newCfg[f] = configMap[f]
         }
 
-        files[pxt.CONFIG_NAME] = JSON.stringify(newCfg, null, 4) + "\n"
+        files[pxt.CONFIG_NAME] = JSON.stringify(newCfg, null, 4)
 
         return files
     }
