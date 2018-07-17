@@ -129,7 +129,9 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
         };
         _cachedBuiltinCategories[CategoryNameID.Maths] = {
             name: lf("{id:category}Math"),
-            nameid: 'math',
+            // Unlike the other categories, this namespace is actually capitalized in
+            // the source so the nameid must be capitalized also
+            nameid: 'Math',
             blocks: [
                 {
                     name: "Math.plus",

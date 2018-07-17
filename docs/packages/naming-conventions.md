@@ -8,7 +8,7 @@ As much as possible, please try to follow these conventions and consider excepti
 MakeCode follows the usual TypeScript naming conventions.
 
 * API and functions are typically in English. Only blocks are translated.
-* **namespaces**, **function**, **function parmeters**, **methods**, **fields** are camel cased. **Class**, **enums** and **enum members** are capitalized.
+* **namespaces**, **function**, **function parameters**, **methods**, **fields** are camel cased. **Class**, **enums** and **enum members** are capitalized.
 
 ```typescript
 namespace myNamespace {

@@ -71,6 +71,23 @@ in the package itself.
 For now, you can try adding a new API to one of the existing namespaces
 in`sim/api.ts` with annotations to make a new block. 
 
+### Adding a JavaScript library to your target
+
+There are many useful JavaScript libraries that you might want to use in your target, especially
+to make it easier to build the simulator (`sim/simulator.js`). The basic pattern to do this is:
+
+* add the JavaScript file(s) to the directory `sim/public/js`
+* include these files in `sim/public/simulator.html` using the `<script>` tag
+
+### Exposing a JavaScript library to TypeScript and Blockly
+
+If you want to make JavaScript functions (from an existing library) available to 
+the user of your target (via TypeScript and Blockly), there's more work to do. You
+will need to write TypeScript functions to wrap the existing JavaScript functions.
+Some JavaScript libraries may already have a TypeScript declaration file available,
+which can make the process simpler. 
+
+
 ### Updating the ``templates`` projects
 
 Templates are the default projects for your target. 

@@ -411,8 +411,8 @@ namespace ts.pxtc {
         return n ? Util.capitalize(n.split('.')[0]) : undefined;
     }
 
-    export function getBlocksInfo(info: ApisInfo): BlocksInfo {
-        const blocks: SymbolInfo[] = []
+    export function getBlocksInfo(info: ApisInfo, categoryFilters?: string[]): BlocksInfo {
+        let blocks: SymbolInfo[] = []
         const combinedSet: pxt.Map<SymbolInfo> = {}
         const combinedGet: pxt.Map<SymbolInfo> = {}
         const combinedChange: pxt.Map<SymbolInfo> = {}
@@ -584,11 +584,28 @@ namespace ts.pxtc {
             }
         }
 
+        if (pxt.appTarget && pxt.appTarget.runtime && Array.isArray(pxt.appTarget.runtime.bannedCategories)) {
+            filterCategories(pxt.appTarget.runtime.bannedCategories)
+        }
+
+        if (categoryFilters) {
+            filterCategories(categoryFilters);
+        }
+
         return {
             apis: info,
             blocks,
             blocksById: pxt.Util.toDictionary(blocks, b => b.attributes.blockId),
             enumsByName
+        }
+
+        function filterCategories(banned: string[]) {
+            if (banned.length) {
+                blocks = blocks.filter(b => {
+                    let ns = (b.attributes.blockNamespace || b.namespace).split('.')[0];
+                    return banned.indexOf(ns) === -1;
+                });
+            }
         }
     }
 
@@ -1353,6 +1370,7 @@ namespace ts.pxtc.service {
         options?: CompileOptions;
         search?: SearchOptions;
         format?: FormatOptions;
+        blocks?: BlocksOptions;
     }
 
     export interface SearchOptions {
@@ -1377,6 +1395,10 @@ namespace ts.pxtc.service {
         field?: [string, string];
         localizedCategory?: string;
         builtinBlock?: boolean;
+    }
+
+    export interface BlocksOptions {
+        bannedCategories?: string[];
     }
 }
 

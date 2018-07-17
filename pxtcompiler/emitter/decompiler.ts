@@ -955,6 +955,7 @@ ${output}</xml>`;
         function getStatementBlock(n: ts.Node, next?: ts.Node[], parent?: ts.Node, asExpression = false, topLevel = false): StatementNode {
             const node = n as ts.Node;
             let stmt: StatementNode;
+            let skipComments = false;
 
             const err = checkStatement(node, env, asExpression, topLevel);
             if (err) {
@@ -967,7 +968,11 @@ ${output}</xml>`;
                     case SK.ExpressionStatement:
                         return getStatementBlock((node as ts.ExpressionStatement).expression, next, parent || node, asExpression, topLevel);
                     case SK.VariableStatement:
-                        return codeBlock((node as ts.VariableStatement).declarationList.declarations, next, false, parent || node);
+                        stmt = codeBlock((node as ts.VariableStatement).declarationList.declarations, undefined, false, parent || node);
+                        if (!stmt) return getNext();
+                        // Comments are already gathered by the call to code block
+                        skipComments = true;
+                        break;
                     case SK.FunctionExpression:
                     case SK.ArrowFunction:
                         return getArrowFunctionStatement(node as ts.ArrowFunction, next);
@@ -1027,13 +1032,19 @@ ${output}</xml>`;
             }
 
             if (stmt) {
-                stmt.next = getNext();
-                if (stmt.next) {
-                    stmt.next.prev = stmt;
+                let end = stmt;
+                while (end.next) {
+                    end = end.next;
+                }
+                end.next = getNext();
+                if (end.next) {
+                    end.next.prev = end;
                 }
             }
 
-            getComments(parent || node);
+            if (!skipComments) {
+                getComments(parent || node);
+            }
 
             return stmt;
 
