@@ -1,16 +1,23 @@
 \section{Context: Physical Computing}
 \label{sec:domain}
 
-Physical computing: computing interacting with our physical environment (as opposed to just
-living on a screen, like a computer game); ``cyberphysical systems'', ``embedded (reactive) systems''.
+As discussed in the Introduction, the micro:bit is a device
+with similarities to the Arduino family of printed 
+circuit boards. Such devices as known by the term
+{\em physical computing}, as they are designed to be placed in and
+interact with our physical environment (as opposed to computer programs
+whose main manifestation is realized on a monitor, like games).  
 Physical computing lives in the spaces between computing and many other disciplines:
-art, industrial design, health, environmental monitoring, etc.
+art, industrial design, health, environmental monitoring; it has
+close ties to cyber-physical systems, embedded systems, and IoT. 
 
-% Finally, it is worth noting that the benefits of physical computing aren’t limited to CS education. 
-% There are diverse connections to other STEM subjects, such as the simulation of behaviour in biology, 
-% the collection and analysis of measurements in physics and logical mathematical operations [7]. 
-% Physical computing also connects into the arts and humanities, with application to topics ranging 
-% from interactive art pieces to geography and dance [5], [7]. 
+
+% from https://www.nsf.gov/news/special_reports/cyber-physical/
+% "Cyber-physical systems integrate sensing, computation, 
+% control and networking into physical objects and infrastructure, 
+% connecting them to the Internet and to each other."
+%
+% https://en.wikipedia.org/wiki/Embedded_system
 
 Physical computing benefits:
 \begin{itemize}
@@ -20,51 +27,6 @@ Physical computing benefits:
 \item natural division of labor for more complex projects (design, hardware, software, ...)
 \item full system view of computing: hardware and software working together.
 \end{itemize}
-
-% from Steve and Sue's white paper:
-
-% We summarize the benefits of physical computing in the classroom thus:
-%
-% Motivation:
-%
-% Increased motivation for students, including those from diverse backgrounds, 
-% because the learning experience and the outcome are visible not virtual. 
-% This is especially true when a programming task delivers a practical, meaningful device.~\cite{XYZ}
-%
-% Tangibility & Interactivity:	
-%
-% The tangible nature of physical devices helps students make natural connections. 
-% Iteratively debugging and refining tangible systems helps them better understand
-% programming concepts and the software development process.~\cite{XYZ}
-%
-% Creativity:
-%
-% Students naturally relate to the physical nature of the task, unleashing creativity 
-% in terms of what they build and thereby strengthening engagement with the task.~\cite{XYZ}
-%
-% Learning by doing:
-%
-% Physical computing projects promote trial-and-error because there are many ways to 
-% achieve most goals rather than a single correct solution. This supports learning by 
-% doing in an iterative fashion. 
-%
-% Collaboration:
-% 
-% Working with devices lends itself to group work – different roles include enclosure
-% design, hardware interfacing, algorithm design and user interaction. Groups of students
-% can readily cooperate (or compete!) because of the physical nature of challenges and tasks.
-%
-% Holistic View of Computing Education:
-%
-% Computer systems are comprised of hardware as well as software, and computer science is not
-% just about programming. It is important for students to learn about the physical hardware 
-% components of computer systems and how they work, especially given the emergence of the 
-% internet of things (IoT).
-%
-% Engages the Whole Learner:
-%
-% The physical nature of the work engages the whole student – both their mind and their body,
-% making the learning process a deep, immersive experience.
 
 \subsection{Wiring and Arduino}
 
@@ -77,7 +39,7 @@ Physical computing benefits:
 
 % https://globenewswire.com/news-release/2017/05/19/988294/0/en/Arduino-Welcomes-Hernando-Barrag%C3%A1n-as-Arduino-Chief-Design-Architect.html
 
-To help explain the BBC micro:bit design, it's very instructive to understand
+To help explain the BBC micro:bit, it's very instructive to understand
 Hernando Barragan's 2003 Master's thesis, ``Wiring: Prototyping Physical Interaction Design'',
 the inspiration for the Arduino system~\cite{Barragan}. His objective was to make it easier
 for non-technical creators, such as artists and designers, to leverage
@@ -92,7 +54,8 @@ Of Wiring's design, he identified the following key concepts:
 \item leverage open source compiler/linker toolchain, transparent to the end user;
 \item a bootloader to make it easy to upload a compiled sketch to the microcontroller;
 \end{itemize}
-Also make Wiring (hardware and software) open source.
+Also key to Wiring  was openness of both the hardware and software
+comprising the system.
 
 But, still some issues:
 \begin{itemize}
@@ -101,10 +64,30 @@ But, still some issues:
     \item USB bootloader requires device drivers on some systems 
 \end{itemize}
 
+% Uno: (which measures 5.34cm x 6.86cm),
+
+\begin{figure} 
+    \begin{tabular}{cc}
+      \includegraphics[width=1.5in]{images/bbc.png} & \includegraphics[width=1.5in]{images/makecode.png} \\
+        (a) & (b) 
+    \end{tabular}
+    \caption{\label{fig:design}Web and compiler designs: (a) initial BBC design; (b) final design, as implemented in MakeCode.}
+    \end{figure}
+
+    
 \subsection{The BBC micro:bit}
 
-BBC micro:bit inherits the raw PCB nature of Arduino (everything is visible to the end user).
+BBC micro:bit inherits the raw PCB nature of Arduino 
+(everything is visible to the end user).
 
 First key idea of the BBC micro:bit: NO WIRING REQUIRED!
+Second key idea: smaller.
+Third key idea: web app for programming and simulating.
 
+As shown in Figure~\ref{fig:design}(a), in the BBC design
+the text of a user's program (whether derived from Blockly or produced directly by the user)
+is submitted to a compile service that returns a final executable to be copied onto a micro:bit (connected to the host 
+computer by USB) via a specialized loader application.  
 
+avoiding the need for a compile service for user code (as shown 
+in Figure~\ref{fig:design}(b));

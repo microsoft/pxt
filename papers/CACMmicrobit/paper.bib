@@ -1,0 +1,607 @@
+% nothing here so far
+
+
+@article{ARMmbed,
+  author = {ARM},
+  title = {The Arm Mbed IoT Device Platform},
+  url = {https://www.mbed.com/},
+  year = {2017}
+}
+
+%
+@article{TSspec2016,
+  author = {Microsoft},
+  title = {TypeScript Language Specification},
+  url = {https://github.com/Microsoft/TypeScript/blob/master/doc/spec.md},
+  year = {2016}
+}
+
+@article{IntelHEX,
+  author = {Intel},
+  title = {Hexadecimal Object File Format Specification},
+  url = {https://web.archive.org/web/20160607224738/http://microsym.com/editor/assets/intelhex.pdf},
+  year = {1988}
+}
+% also: https://en.wikipedia.org/wiki/Intel_HEX
+
+
+@article{MicroPython,
+  author = {Damien George},
+  title = {{M}icro{P}ython},
+  url = {http://micropython.org/},
+  year = {2017}
+}
+
+@article{Monaco,
+  author = {Microsoft},
+  title = {Monaco: a browser based code editor},
+  url = {https://github.com/Microsoft/monaco-editor},
+  year = {2016}
+}
+
+(MicroPython: \url{)
+
+@inproceedings{BiermanAT14,
+  author    = {Gavin M. Bierman and
+               Mart{\'{\i}}n Abadi and
+               Mads Torgersen},
+  title     = {Understanding TypeScript},
+  booktitle = {{ECOOP} 2014 - Object-Oriented Programming - 28th European Conference,
+               Uppsala, Sweden, July 28 - August 1, 2014. Proceedings},
+  pages     = {257--281},
+  year      = {2014},
+  url       = {https://doi.org/10.1007/978-3-662-44202-9_11},
+}
+
+@inproceedings{SafeTypeScript15,
+  author    = {A. Rastogi and
+               N. Swamy and
+               C. Fournet and
+               G. M. Bierman and
+               P. Vekris},
+  title     = {Safe {\&} Efficient Gradual Typing for TypeScript},
+  booktitle = {Proceedings of the 42nd Annual {ACM} {SIGPLAN-SIGACT} Symposium on
+               Principles of Programming Languages},
+  pages     = {167--180},
+  year      = {2015},
+  url       = {http://doi.acm.org/10.1145/2676726.2676971}
+}
+
+% Current proposals for adding gradual typing to JavaScript, such as Closure, TypeScript and Dart, forgo soundness to deal with
+% issues of scale, code reuse, and popular programming patterns. We show how to address these issues in practice while retaining
+% soundness. We design and implement a new gradual type system, prototyped for expediency as a 'Safe' compilation mode for
+% TypeScript. Our compiler achieves soundness by enforcing stricter static checks and embedding residual runtime checks in compiled
+% code. It emits plain JavaScript that runs on stock virtual machines. Our main theorem is a simulation that ensures that the
+% checks introduced by Safe TypeScript (1) catch any dynamic type error, and (2) do not alter the semantics of type-safe TypeScript
+% code.
+%
+% Safe TypeScript is carefully designed to minimize the performance overhead of runtime checks. At its core, we rely on two new
+% ideas: differential subtyping, a new form of coercive subtyping that computes the minimum amount of runtime type information that
+% must be added to each object; and an erasure modality, which we use to safely and selectively erase type information. This allows
+% us to scale our design to full-fledged TypeScript, including arrays, maps, classes, inheritance, overloading, and generic types.
+%
+% We validate the usability and performance of Safe TypeScript empirically by type-checking and compiling around 120,000 lines of
+% existing TypeScript source code. Although runtime checks can be expensive, the end-to-end overhead is small for code bases that
+% already have type annotations. For instance, we bootstrap the Safe TypeScript compiler (90,000 lines including the base
+% TypeScript compiler): we measure a 15% runtime overhead for type safety, and also uncover programming errors as type safety
+% violations. We conclude that, at least during development and testing, subjecting JavaScript/TypeScript programs to safe gradual
+% typing adds significant value to source type annotations at a modest cost.
+
+@inproceedings{StrongScriptECOOP15,
+  author    = {G. Richards and
+               F. Z. Nardelli and
+               J. Vitek},
+  title     = {Concrete Types for TypeScript},
+  booktitle = {29th European Conference on Object-Oriented Programming, {ECOOP} 2015},
+  pages     = {76--100},
+  year      = {2015},
+  url       = {https://doi.org/10.4230/LIPIcs.ECOOP.2015.76},
+  doi       = {10.4230/LIPIcs.ECOOP.2015.76}
+}
+
+% Typescript extends JavaScript with optional type annotations that are, by design, unsound and, that the Typescript compiler
+% discards as it emits code. This design point preserves programming idioms developers are familiar with, and allows them to leave
+% their legacy code unchanged, while offering a measure of static error checking in parts of the program that have type
+% annotations.
+% We present an alternative design for TypeScript, one where it is possible to support
+% the same degree of dynamism, but where types can be strengthened to provide hard guarantees.
+% We report on an implementation, called StrongScript, that
+% improves runtime performance of typed programs
+% when run on a modified version of the V8 JavaScript engine.
+
+
+% other TypeScript reading:
+
+% Gavin Bierman, Martin Abadi, and Mads Torgersen. Understanding TypeScript. ECOOP, 2014.
+% Arjun Guha, Claudiu Saftoiu, and Shriram Krishnamurthi. The essence of JavaScript. In ECOOP, 2010
+% Jeremy Siek and Walid Taha. Gradual typing for objects. In ECOOP, 2007.
+
+
+@inproceedings{microbitICSE2016,
+  author    = {T. Ball and
+               J. Protzenko and
+               J. Bishop and
+               M. Moskal and
+               J. de Halleux and
+               M. Braun and
+               S. Hodges and
+               C. Riley},
+  title     = {Microsoft Touch Develop and the {BBC} micro: bit},
+  booktitle = {Proceedings of the 38th International Conference on Software Engineering},
+  pages     = {637--640},
+  year      = {2016},
+  url       = {http://doi.acm.org/10.1145/2889160.2889179}
+}
+
+
+% The designers of Scratch note that for users “who see programming
+% as a medium for expression, not a path toward a career,
+% Scratch is sufficient for their needs” [28].
+
+@article{ScratchCACM2009,
+  author    = {Mitchel Resnick and
+               John Maloney and
+               Andr{\'{e}}s Monroy{-}Hern{\'{a}}ndez and
+               Natalie Rusk and
+               Evelyn Eastmond and
+               Karen Brennan and
+               Amon Millner and
+               Eric Rosenbaum and
+               Jay S. Silver and
+               Brian Silverman and
+               Yasmin B. Kafai},
+  title     = {Scratch: programming for all},
+  journal   = {Commun. {ACM}},
+  volume    = {52},
+  number    = {11},
+  pages     = {60--67},
+  year      = {2009},
+  url       = {http://doi.acm.org/10.1145/1592761.1592779}
+}
+
+
+@article{BlocksBeyondCACM2017,
+  author    = {David Bau and
+               Jeff Gray and
+               Caitlin Kelleher and
+               Josh Sheldon and
+               Franklyn A. Turbak},
+  title     = {Learnable programming: blocks and beyond},
+  journal   = {Commun. {ACM}},
+  volume    = {60},
+  number    = {6},
+  pages     = {72--80},
+  year      = {2017},
+  url       = {http://doi.acm.org/10.1145/3015455}
+}
+
+@inproceedings{Blocky2015,
+ author = {Neil Fraser},
+ title = {Ten Things We've Learned from Blockly},
+ booktitle = {Proceedings of the 2015 IEEE Blocks and Beyond Workshop (Blocks and Beyond)},
+ series = {BLOCKS AND BEYOND '15},
+ year = {2015},
+ isbn = {978-1-4673-8367-7},
+ pages = {49--50},
+ numpages = {2},
+ url = {http://dx.doi.org/10.1109/BLOCKS.2015.7369000}
+}
+
+@article{buildingArduino2014,
+  author    = {Charles R. Severance},
+  title     = {Massimo Banzi: Building Arduino},
+  journal   = {{IEEE} Computer},
+  volume    = {47},
+  number    = {1},
+  pages     = {11--12},
+  year      = {2014},
+  url       = {https://doi.org/10.1109/MC.2014.19}
+}
+
+@article{Firmata,
+  author = {Arduino},
+  title = {Firmata Library},
+  url = {https://www.arduino.cc/en/Reference/Firmata},
+  year = {2017}
+}
+
+% java and embedded
+
+@article{DBLP:journals/micro/Montague97,
+  author    = {Bruce R. Montague},
+  title     = {{JN:} {OS} for an embedded Java network computer},
+  journal   = {{IEEE} Micro},
+  volume    = {17},
+  number    = {3},
+  pages     = {54--60},
+  year      = {1997},
+  url       = {https://doi.org/10.1109/40.591656},
+  doi       = {10.1109/40.591656},
+  timestamp = {Sat, 20 May 2017 00:26:03 +0200},
+  biburl    = {http://dblp.uni-trier.de/rec/bib/journals/micro/Montague97},
+  bibsource = {dblp computer science bibliography, http://dblp.org}
+}
+
+@article{ClausenTOPLAS,
+ author = {Clausen, Lars R{\ae}der and Schultz, Ulrik Pagh and Consel, Charles and Muller, Gilles},
+ title = {Java Bytecode Compression for Low-end Embedded Systems},
+ journal = {ACM Trans. Program. Lang. Syst.},
+ issue_date = {May 2000},
+ volume = {22},
+ number = {3},
+ month = may,
+ year = {2000},
+ issn = {0164-0925},
+ pages = {471--489},
+ numpages = {19},
+ url = {http://doi.acm.org/10.1145/353926.353933},
+ doi = {10.1145/353926.353933},
+ acmid = {353933},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {Java bytecode, code compression, embedded systems},
+}
+
+@inproceedings{Rayside:1999:CJB:781995.782004,
+ author = {Rayside, Derek and Mamas, Evan and Hons, Erik},
+ title = {Compact Java Binaries for Embedded Systems},
+ booktitle = {Proceedings of the 1999 Conference of the Centre for Advanced Studies on Collaborative Research},
+ series = {CASCON '99},
+ year = {1999},
+ location = {Mississauga, Ontario, Canada},
+ pages = {9--},
+ url = {http://dl.acm.org/citation.cfm?id=781995.782004},
+ acmid = {782004},
+ publisher = {IBM Press},
+}
+
+@inproceedings{Caska:2011:JDS:2043910.2043931,
+ author = {Caska, James and Schoeberl, Martin},
+ title = {Java Dust: How Small Can Embedded Java Be?},
+ booktitle = {Proceedings of the 9th International Workshop on Java Technologies for Real-Time and Embedded Systems},
+ series = {JTRES '11},
+ year = {2011},
+ isbn = {978-1-4503-0731-4},
+ location = {York, United Kingdom},
+ pages = {125--129},
+ numpages = {5},
+ url = {http://doi.acm.org/10.1145/2043910.2043931},
+ doi = {10.1145/2043910.2043931},
+ acmid = {2043931},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+}
+
+@inproceedings{Korsholm:2011:FME:2043910.2043930,
+ author = {Korsholm, Stephan},
+ title = {Flash Memory in Embedded Java Programs},
+ booktitle = {Proceedings of the 9th International Workshop on Java Technologies for Real-Time and Embedded Systems},
+ series = {JTRES '11},
+ year = {2011},
+ isbn = {978-1-4503-0731-4},
+ location = {York, United Kingdom},
+ pages = {116--124},
+ numpages = {9},
+ url = {http://doi.acm.org/10.1145/2043910.2043930},
+ doi = {10.1145/2043910.2043930},
+ acmid = {2043930},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {Flash memory, Java/C integration, RealTime, embedded systems},
+}
+
+@inproceedings{Badea:2007:SJB:1289881.1289920,
+ author = {Badea, Carmen and Nicolau, Alexandru and Veidenbaum, Alexander V.},
+ title = {A Simplified Java Bytecode Compilation System for Resource-constrained Embedded Processors},
+ booktitle = {Proceedings of the 2007 International Conference on Compilers, Architecture, and Synthesis for Embedded Systems},
+ series = {CASES '07},
+ year = {2007},
+ isbn = {978-1-59593-826-8},
+ location = {Salzburg, Austria},
+ pages = {218--228},
+ numpages = {11},
+ url = {http://doi.acm.org/10.1145/1289881.1289920},
+ doi = {10.1145/1289881.1289920},
+ acmid = {1289920},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {adaptive optimization, embedded systems, java virtual machine, profile-guided optimization, superoperators},
+}
+
+@article{Schultz:2003:CJL:780731.780739,
+ author = {Schultz, Ulrik Pagh and Burgaard, Kim and Christensen, Flemming Gram and Knudsen, J{\o}rgen Lindskov},
+ title = {Compiling Java for Low-end Embedded Systems},
+ journal = {SIGPLAN Not.},
+ issue_date = {July 2003},
+ volume = {38},
+ number = {7},
+ month = jun,
+ year = {2003},
+ issn = {0362-1340},
+ pages = {42--50},
+ numpages = {9},
+ url = {http://doi.acm.org/10.1145/780731.780739},
+ doi = {10.1145/780731.780739},
+ acmid = {780739},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {Java, compilers, embedded systems, interfaces},
+}
+
+
+@inproceedings{Beatty:2003:OJI:952532.952667,
+ author = {Beatty, Andrew and Casey, Kevin and Gregg, David and Nisbet, Andrew},
+ title = {An Optimized Java Interpreter for Connected Devices and Embedded Systems},
+ booktitle = {Proceedings of the 2003 ACM Symposium on Applied Computing},
+ series = {SAC '03},
+ year = {2003},
+ isbn = {1-58113-624-2},
+ location = {Melbourne, Florida},
+ pages = {692--697},
+ numpages = {6},
+ url = {http://doi.acm.org/10.1145/952532.952667},
+ doi = {10.1145/952532.952667},
+ acmid = {952667},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {Java, embedded system, interpreter},
+}
+
+@inproceedings{Aslam:2012:RJC:2248418.2248420,
+ author = {Aslam, Faisal and Baig, Ghufran and Qureshi, Mubashir Adnan and Uzmi, Zartash Afzal and Fennell, Luminous and Thiemann, Peter and Schindelhauer, Christian and Haussmann, Elmar},
+ title = {Rethinking Java Call Stack Design for Tiny Embedded Devices},
+ booktitle = {Proceedings of the 13th ACM SIGPLAN/SIGBED International Conference on Languages, Compilers, Tools and Theory for Embedded Systems},
+ series = {LCTES '12},
+ year = {2012},
+ isbn = {978-1-4503-1212-7},
+ location = {Beijing, China},
+ pages = {1--10},
+ numpages = {10},
+ url = {http://doi.acm.org/10.1145/2248418.2248420},
+ doi = {10.1145/2248418.2248420},
+ acmid = {2248420},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ keywords = {JVM, Java Virtual Machine, TakaTuka, call stack, memory management, wireless sensor networks},
+}
+
+@article{dougherty2012maker,
+  title={The maker movement},
+  author={Dougherty, Dale},
+  journal={innovations},
+  volume={7},
+  number={3},
+  pages={11--14},
+  year={2012},
+  publisher={MIT Press}
+}
+
+@inproceedings{ChandraOOPSLA2016,
+  author    = {Satish Chandra and
+               Colin S. Gordon and
+               Jean{-}Baptiste Jeannin and
+               Cole Schlesinger and
+               Manu Sridharan and
+               Frank Tip and
+               Young{-}Il Choi},
+  title     = {Type inference for static compilation of JavaScript},
+  booktitle = {OOPLSA 2016},
+  pages     = {410--429},
+  year      = {2016},
+  url       = {http://doi.acm.org/10.1145/2983990.2984017}
+}
+
+@book{espruinoBook,
+  author = {Gordon Williams},
+  title = {Making Things Smart: Easy Embedded JavaScript
+          Programming for Making Everyday Objects into Intelligent Machines},
+  publisher = {Maker Media},
+  year = {2017},
+  isbn = {978-1680451894}
+}
+
+@article{borriello2000embedded,
+  title={Embedded computation meets the world wide web},
+  author={Borriello, Gaetano and Want, Roy},
+  journal={Communications of the ACM},
+  volume={43},
+  number={5},
+  pages={59--66},
+  year={2000},
+  publisher={ACM}
+}
+
+@inproceedings{bruce2015make,
+  title={Make space for the Pi},
+  author={Bruce, Rebecca F and Brock, J Dean and Reiser, Susan L},
+  booktitle={SoutheastCon 2015},
+  pages={1--6},
+  year={2015},
+  organization={IEEE}
+}
+
+@article{maksimovic2014raspberry,
+  title={Raspberry Pi as Internet of things hardware: performances and constraints},
+  author={Maksimovi{\'c}, Mirjana and Vujovi{\'c}, Vladimir and Davidovi{\'c}, Nikola and Milo{\v{s}}evi{\'c}, Vladimir and Peri{\v{s}}i{\'c}, Branko},
+  journal={design issues},
+  volume={3},
+  pages={8},
+  year={2014}
+}
+
+@inproceedings{blikstein2013gears,
+  title={Gears of our childhood: constructionist toolkits, robotics, and physical computing, past and future},
+  author={Blikstein, Paulo},
+  booktitle={Proceedings of the 12th International Conference on Interaction Design and Children},
+  pages={173--182},
+  year={2013},
+  organization={ACM}
+}
+
+@article{levis2005tinyos,
+  title={TinyOS: An operating system for sensor networks},
+  author={Levis, Philip and Madden, Sam and Polastre, Joseph and Szewczyk, Robert and Whitehouse, Kamin and Woo, Alec and Gay, David and Hill, Jason and Welsh, Matt and Brewer, Eric and others},
+  journal={Ambient intelligence},
+  volume={35},
+  pages={115--148},
+  year={2005},
+  publisher={Springer}
+}
+
+@article{dunkels2012contiki,
+  title={Contiki: The open source OS for the Internet of things},
+  author={Dunkels, A and Quattlebaum, R and {\"O}sterlind, F and Oikonomou, G and Alvira, M and Tsiftes, N and Schmidt, O},
+  journal={Retrieved October},
+  volume={13},
+  pages={2015},
+  year={2012}
+}
+
+@inproceedings{baccelli2013riot,
+  title={RIOT OS: Towards an OS for the Internet of Things},
+  author={Baccelli, Emmanuel and Hahm, Oliver and Gunes, Mesut and Wahlisch, Matthias and Schmidt, Thomas C},
+  booktitle={Computer Communications Workshops (INFOCOM WKSHPS), 2013 IEEE Conference on},
+  pages={79--80},
+  year={2013},
+  organization={IEEE}
+}
+
+@misc{ApacheMy53:online,
+author = {},
+title = {Apache Mynewt},
+howpublished = {\url{https://mynewt.apache.org/}},
+month = {},
+year = {2015},
+note = {(Accessed on 11/16/2017)}
+}
+
+@misc{HomeZeph63:online,
+author = {},
+title = {Home - Zephyr Project},
+howpublished = {\url{https://www.zephyrproject.org/}},
+month = {},
+year = {2017},
+note = {(Accessed on 11/16/2017)}
+}
+
+@inproceedings{varma2004java,
+  title={Java-through-C compilation: An enabling technology for java in embedded systems},
+  author={Varma, Ankush and Bhattacharyya, Shuvra S},
+  booktitle={Design, Automation and Test in Europe Conference and Exhibition, 2004. Proceedings},
+  volume={3},
+  pages={161--166},
+  year={2004},
+  organization={IEEE}
+}
+
+@inproceedings{koshy2005vmstar,
+  title={VMSTAR: synthesizing scalable runtime environments for sensor networks},
+  author={Koshy, Joel and Pandey, Raju},
+  booktitle={Proceedings of the 3rd international conference on Embedded networked sensor systems},
+  pages={243--254},
+  year={2005},
+  organization={ACM}
+}
+
+@misc{Ardubloc28:online,
+author = {},
+title = {Ardublock | A Graphical Programming Language for Arduino},
+howpublished = {\url{http://blog.ardublock.com/}},
+month = {},
+year = {2012},
+note = {(Accessed on 02/22/2018)}
+}
+
+@inproceedings{st2009picobit,
+  title={PICOBIT: a compact scheme system for microcontrollers},
+  author={St-Amour, Vincent and Feeley, Marc},
+  booktitle={International Symposium on Implementation and Application of Functional Languages},
+  pages={1--17},
+  year={2009},
+  organization={Springer}
+}
+
+@inproceedings{vaugon2015programming,
+  title={Programming Microcontrollers in Ocaml: the OCaPIC Project},
+  author={Vaugon, Beno{\^\i}t and Wang, Philippe and Chailloux, Emmanuel},
+  booktitle={International Symposium on Practical Aspects of Declarative Languages},
+  pages={132--148},
+  year={2015},
+  organization={Springer}
+}
+
+@misc{AVRDUDEA15:online,
+author = {},
+title = {AVRDUDE - AVR Downloader/UploaDEr},
+howpublished = {\url{https://www.nongnu.org/avrdude/}},
+month = {},
+year = {2010},
+note = {(Accessed on 02/22/2018)}
+}
+
+@misc{GitHubAR5:online,
+author = {},
+title = {GitHub - ARMmbed/DAPLink},
+howpublished = {\url{https://github.com/ARMmbed/DAPLink}},
+month = {},
+year = {2013},
+note = {(Accessed on 02/22/2018)}
+}
+
+@article{maloney2010scratch,
+  title={The scratch programming language and environment},
+  author={Maloney, John and Resnick, Mitchel and Rusk, Natalie and Silverman, Brian and Eastmond, Evelyn},
+  journal={ACM Transactions on Computing Education (TOCE)},
+  volume={10},
+  number={4},
+  pages={16},
+  year={2010},
+  publisher={ACM}
+}
+
+@book{maloney2008programming,
+  title={Programming by choice: urban youth learning programming with scratch},
+  author={Maloney, John H and Peppler, Kylie and Kafai, Yasmin and Resnick, Mitchel and Rusk, Natalie},
+  volume={40},
+  number={1},
+  year={2008},
+  publisher={ACM}
+}
+
+@article{turbak2014events,
+  title={Events-first programming in APP inventor},
+  author={Turbak, Franklyn and Sherman, Mark and Martin, Fred and Wolber, David and Pokress, Shaileen Crawford},
+  journal={Journal of Computing Sciences in Colleges},
+  volume={29},
+  number={6},
+  pages={81--89},
+  year={2014},
+  publisher={Consortium for Computing Sciences in Colleges}
+}
+
+@misc{microbit79:online,
+author = {The micro:bit Educational Foundation},
+title = {micro:bit : Blast off: School launches BBC micro:bit into space!},
+howpublished = {\url{https://www.microbit.co.uk/rishworth-space}},
+month = {},
+year = {2016},
+note = {(Accessed on 05/13/2017)}
+}
+
+@misc{microbit73:online,
+author = {The micro:bit Educational Foundation},
+title = {micro:bit : Use the BBC micro:bit in the BLOODHOUND Rocket Car contest},
+howpublished = {\url{https://www.microbit.co.uk/bloodhound-rocket-car}},
+month = {},
+year = {2016},
+note = {(Accessed on 05/15/2017)}
+}
+
+@misc{microsoft:online,
+author = {Microsoft},
+title = {20160705\_microsoft\_bloodhound\_0409 - Microsoft News Centre UK},
+howpublished = {\url{https://news.microsoft.com/en-gb/2016/07/07/26785/20160705_microsoft_bloodhound_0409}},
+month = {},
+year = {2016},
+note = {(Accessed on 05/15/2017)}
+}
