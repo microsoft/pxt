@@ -13,8 +13,9 @@ Use the [custom blocks feature](/defining-blocks) for this purpose.
 
 You will need to get a [GitHub](https://github.com) account and create a GitHub repository. At this time, other repository hosting solutions (GitLab, Bitbucket, etc.) are not supported.
 
-On the home screen click on the **Import** button. If needed, login to GitHub using the link
-at the bottom of the dialog. Once logged in, the Import dialog should have an option to create
+From the main editor screen, go to the gear wheel and **About**. Click on **GitHub login**
+and follow prompts to generate a personal access token. Once logged in, the Import dialog 
+on the home screen should have an option to create
 a new GitHub repository or clone an existing one. Follow it.
 
 If you have already created the repository, select it from the list. If the repository isn't
