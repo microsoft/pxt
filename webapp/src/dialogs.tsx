@@ -40,12 +40,71 @@ class PlainCheckbox extends data.Component<PlainCheckboxProps, PlainCheckboxStat
     }
 }
 
+export function showGithubLoginAsync() {
+    let input: HTMLInputElement;
+    return core.confirmAsync({
+        header: lf("Log in to GitHub"),
+        onLoaded: (el) => {
+            input = el.querySelectorAll('input')[0] as HTMLInputElement;
+        },
+        jsx: <div className="ui form">
+            <p>{lf("To generate a GitHub token:")}</p>
+            <ol>
+                <li>
+                    {lf("Navigate to: ")}
+                    <a href="https://github.com/settings/tokens/new" target="_blank" rel="noopener">
+                        {lf("GitHub token generation page")}
+                    </a>
+                </li>
+                <li>
+                    {lf("Put something like 'MakeCode {0}' in description", pxt.appTarget.name)}
+                </li>
+                <li>
+                    {lf("Select either '{0}' or '{1}' scope, depending which repos you want to edit from here", "repo", "public_repo")}
+                </li>
+                <li>
+                    {lf("Click generate token, copy it, and paste it below.")}
+                </li>
+            </ol>
+            <div className="ui field">
+                <label id="selectUrlToOpenLabel">{lf("Paste GitHub token here.")}</label>
+                <input type="url" tabIndex={0} autoFocus aria-describedby="selectUrlToOpenLabel" placeholder="0123abcd..." className="ui blue fluid"></input>
+            </div>
+        </div>,
+    }).then(res => {
+        if (res) {
+            pxt.tickEvent("app.github.token");
+            const url = input.value.trim()
+            if (url.length != 40 || !/^[a-f0-9]+$/.test(url)) {
+                core.errorNotification(lf("Invalid token format"))
+            } else {
+                core.infoNotification(lf("Token stored"))
+                pxt.storage.setLocal("githubtoken", url)
+                pxt.github.token = url
+            }
+        }
+    })
+
+}
+
 export function showAboutDialogAsync() {
     const compileService = pxt.appTarget.compileService;
     const description = pxt.appTarget.description || pxt.appTarget.title;
     const githubUrl = pxt.appTarget.appTheme.githubUrl;
     const targetTheme = pxt.appTarget.appTheme;
     const versions: pxt.TargetVersions = pxt.appTarget.versions;
+
+    function githubLogin() {
+        core.hideDialog();
+        showGithubLoginAsync()
+    }
+
+    function githubLogout() {
+        core.hideDialog();
+        pxt.storage.removeLocal("githubtoken")
+        pxt.github.token = ""
+        core.infoNotification(lf("Logged out from GitHub"))
+    }
 
     core.confirmAsync({
         header: lf("About"),
@@ -66,6 +125,13 @@ export function showAboutDialogAsync() {
                         title={`${lf("{0} version: {1}", "Microsoft MakeCode", versions.pxt)}`}
                         target="_blank" rel="noopener noreferrer">{versions.pxt}</a>
                 </p> : undefined}
+            <p>
+                {pxt.github.token ?
+                    <a href="#github" role="button" onClick={githubLogout}>{lf("Logout from GitHub")}</a>
+                    :
+                    <a href="#github" role="button" onClick={githubLogin}>{lf("GitHub login")}</a>
+                }
+            </p>
             <p><br /></p>
             <p>
                 {targetTheme.termsOfUseUrl ? <a target="_blank" className="item" href={targetTheme.termsOfUseUrl} rel="noopener noreferrer">{lf("Terms of Use")}</a> : undefined}
