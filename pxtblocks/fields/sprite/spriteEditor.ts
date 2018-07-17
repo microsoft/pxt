@@ -17,7 +17,7 @@ namespace pxtblockly {
     const PADDING_BOTTOM = 3;
 
     // Height of toolbar (the buttons above the canvas)
-    const TOOLBAR_HEIGHT = 35;
+    const TOOLBAR_HEIGHT = 50;
 
     // Spacing between the toolbar and the canvas
     const TOOLBAR_CANVAS_MARGIN = 5;
@@ -46,6 +46,7 @@ namespace pxtblockly {
         private cursorInfo: svg.Text;
         private canvasDimensions: svg.Text;
         private sidebar: SideBar;
+        private header: SpriteHeader;
 
         private state: Bitmap;
 
@@ -116,6 +117,8 @@ namespace pxtblockly {
             this.sidebar = new SideBar(['url("#alpha-background")'].concat(this.colors), this, this.group);
             this.sidebar.setColor(1);
 
+            this.header = new SpriteHeader();
+
             this.drawReporterBar();
             this.updateUndoRedo();
 
@@ -146,10 +149,13 @@ namespace pxtblockly {
         }
 
         render(el: HTMLDivElement): void {
+            el.appendChild(this.header.getElement());
             this.paintSurface.render(el);
             el.appendChild(this.root.el);
             this.layout();
             this.root.attr({ "width": this.outerWidth() + "px", "height": this.outerHeight() + "px" });
+            this.root.el.style.position = "absolute";
+            this.root.el.style.top = "0px";
         }
 
         layout(): void {
@@ -166,11 +172,12 @@ namespace pxtblockly {
             const paintAreaTop = TOOLBAR_HEIGHT + TOOLBAR_CANVAS_MARGIN + PADDING;
             const paintAreaLeft = editorLeft + SIDEBAR_WIDTH + PALETTE_CANVAS_MARGIN;
 
-            // Subtract 4 to account for the differences between the SVG origin and canvas' origin
-            this.sidebar.translate(editorLeft, paintAreaTop - 4);
+            this.sidebar.translate(editorLeft, paintAreaTop);
             this.paintSurface.updateBounds(paintAreaTop, paintAreaLeft, CANVAS_HEIGHT, CANVAS_HEIGHT);
             this.repoterBar.translate(paintAreaLeft, paintAreaTop + CANVAS_HEIGHT + REPORTER_BAR_CANVAS_MARGIN);
             this.canvasDimensions.at(CANVAS_HEIGHT - this.canvasDimensions.el.getComputedTextLength(), 0);
+
+            this.header.layout();
 
             this.height = paintAreaTop + CANVAS_HEIGHT + PADDING_BOTTOM + REPORTER_BAR_CANVAS_MARGIN + REPORTER_BAR_HEIGHT;
         }

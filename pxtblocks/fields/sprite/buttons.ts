@@ -168,4 +168,126 @@ namespace pxtblockly {
                 .size(sideLength, sideLength);
         }
     }
+
+    const TOGGLE_WIDTH = 200;
+    const TOGGLE_HEIGHT = 40;
+    const CORNER_RADIUS = 4;
+    const BORDER_WIDTH = 2;
+
+    export interface ToggleProps {
+        baseColor: string;
+        borderColor: string;
+        backgroundColor: string;
+        switchColor: string;
+        unselectedTextColor: string;
+        selectedTextColor: string;
+
+        leftText: string;
+        leftIcon: string;
+
+        rightText: string;
+        rightIcon: string;
+    }
+
+    export class Toggle {
+        protected leftElement: svg.Group;
+        protected leftText: svg.Text;
+        protected rightElement: svg.Group;
+        protected rightText: svg.Text;
+
+        protected switch: svg.Rect;
+        protected root: svg.Group;
+        protected props: ToggleProps;
+
+        constructor(parent: svg.SVG, props: Partial<ToggleProps>) {
+            this.props = defaultColors(props);
+            this.root = parent.group();
+            this.buildDom();
+        }
+
+        protected buildDom() {
+            // The outer border has an inner-stroke so we need to clip out the outer part
+            // because SVG's don't support "inner borders"
+            const clip = this.root.def().create("clipPath", "sprite-editor-toggle-border")
+                .clipPathUnits(true);
+
+            clip.draw("rect")
+                .at(0, 0)
+                .corners(CORNER_RADIUS / TOGGLE_WIDTH, CORNER_RADIUS / TOGGLE_HEIGHT)
+                .size(1, 1);
+
+            // Draw the outer border
+            this.root.draw("rect")
+                .size(TOGGLE_WIDTH, TOGGLE_HEIGHT)
+                .fill(this.props.baseColor)
+                .stroke(this.props.borderColor, BORDER_WIDTH * 2)
+                .corners(CORNER_RADIUS, CORNER_RADIUS)
+                .clipPath("url(#sprite-editor-toggle-border)");
+
+
+            // Draw the background
+            this.root.draw("rect")
+                .at(BORDER_WIDTH, BORDER_WIDTH)
+                .size(TOGGLE_WIDTH - BORDER_WIDTH * 2, TOGGLE_HEIGHT - BORDER_WIDTH * 2)
+                .fill(this.props.backgroundColor)
+                .corners(CORNER_RADIUS, CORNER_RADIUS);
+
+            // Draw the switch
+            this.switch = this.root.draw("rect")
+                .at(BORDER_WIDTH, BORDER_WIDTH)
+                .size((TOGGLE_WIDTH - BORDER_WIDTH * 2) / 2, TOGGLE_HEIGHT - BORDER_WIDTH * 2)
+                .fill(this.props.switchColor)
+                .corners(CORNER_RADIUS, CORNER_RADIUS);
+
+            // Draw the left option
+            this.leftElement = this.root.group();
+            this.leftText = this.leftElement.draw("text")
+                .fill(this.props.selectedTextColor)
+                .text(this.props.leftText)
+                .setAttribute("dominant-baseline", "middle")
+                .setAttribute("dy", 0);
+
+            // Draw the right option
+            this.rightElement = this.root.group();
+            this.rightText = this.rightElement.draw("text")
+                .fill(this.props.unselectedTextColor)
+                .text(this.props.rightText)
+                .setAttribute("dominant-baseline", "middle")
+                .setAttribute("dy", 0);
+        }
+
+        layout() {
+            const centerOffset = (TOGGLE_WIDTH - BORDER_WIDTH * 2) / 4;
+
+            const lWidth = this.leftText.el.getComputedTextLength();
+            this.leftText.moveTo(centerOffset + BORDER_WIDTH - lWidth / 2, TOGGLE_HEIGHT / 2);
+
+            const rWidth = this.rightText.el.getComputedTextLength();
+            this.rightText.moveTo(TOGGLE_WIDTH - BORDER_WIDTH - centerOffset - rWidth / 2, TOGGLE_HEIGHT / 2)
+        }
+
+        translate(x: number, y: number) {
+            this.root.translate(x, y);
+        }
+
+        height() {
+            return TOGGLE_HEIGHT;
+        }
+
+        width() {
+            return TOGGLE_WIDTH;
+        }
+    }
+
+
+    function defaultColors(props: Partial<ToggleProps>): ToggleProps {
+        if (!props.baseColor) props.baseColor = "#e95153";
+        if (!props.backgroundColor) props.backgroundColor = "rgba(52,73,94,.2)";
+        if (!props.borderColor) props.borderColor = "rgba(52,73,94,.4)";
+        if (!props.selectedTextColor) props.selectedTextColor = props.baseColor;
+        if (!props.unselectedTextColor) props.unselectedTextColor = "hsla(0,0%,100%,.9)";
+        if (!props.switchColor) props.switchColor = "#ffffff";
+
+        return props as ToggleProps;
+    }
 }
