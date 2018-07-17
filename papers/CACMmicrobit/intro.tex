@@ -8,7 +8,7 @@
 The micro:bit is a small programmable and embeddable computer designed, 
 developed and deployed by the BBC and partners (including ARM, Microsoft
 and Lancaster University) to approximately 800,000 UK middle school students
-in 2015-2016. Part of the BBC's Make it Digital Campaign, the BBC described the
+in 2015-2016. Part of the BBC's Make It Digital Campaign, the BBC described the
 micro:bit as its ``most ambitious education initiative in 30 years, 
 with an ambition to inspire digital creativity and 
 develop a new generation of tech pioneers.''~\cite{BBCwebsite}
@@ -22,7 +22,8 @@ the micro:bit is a single-board microcontroller
 that can be programmed via a host computer (usually a laptop or desktop)
 and then embedded in projects where it runs on battery power.
 In contrast to the Uno, which has no built-in sensors, the micro:bit 
-board hosts a variety of sensors (temperature, accelerometer, magnetometer, light level), 
+board hosts a variety of sensors (temperature, accelerometer, magnetometer, 
+light level), 
 a 5x5 LED matrix, two user-defined buttons, as well as Bluetooth
 Low Energy (BLE) communications.\footnote{The micro:bit has a whopping
 16kB of RAM and 256kB of Flash memory, compared to the Uno's 2kB of 
@@ -40,8 +41,9 @@ connector allows additional external sensors and actuators to be connected via c
 The micro:bit's BLE capabilities introduces networking to the
 picture, and enables streaming of data and command/control operations among the micro:bit, 
 smartphones, laptops, as well as other micro:bits.
-As with Arduino, an ecosytem of micro:bit shields (that accommodate the micro:bit's edge
-connector) expand its capabilities greatly.\footnote{
+As with Arduino, an ecosytem of micro:bit shields
+(hardware peripherals) that accommodate the micro:bit's edge
+connector expands its capabilities greatly.\footnote{
 \url{http://microbit.org/assets/documents/AccessoryGuideSummer18.pdf}
 }
 
@@ -69,14 +71,14 @@ to give students an exciting, engaging introduction to coding;
     \caption{\label{fig:snapshot}MakeCode web app for the micro:bit}
 \end{figure*}
 
-Based on user trials with a micro:bit prototype at Years 5 and 7 (3rd and 5th grade
+Based on user trials with a micro:bit prototype with students in Years 5 and 7 (3rd and 5th grade
 in the US, respectively), the BBC focused on delivering a web app 
-based on the popular Blockly framework~\cite{Blocky2015} to permit Year 7 students to
+based on the popular Blockly framework~\cite{Blocky2015} to permit students to
 create scripts via drag-and-drop operations in a web browser, and see
 the execution of their scripts via a simulator.
-Text-based coding also was identified as an important feature.
-As the micro:bit would be incorporated 
-into standalone projects, it was essential for the user's program to be 
+Text-based coding via scripting languages also 
+was identified as an important feature. As the micro:bit would be incorporated 
+into standalone projects, it also was essential for the user's program to be 
 compiled and installed in non-volatile storage on the micro:bit where it 
 could be run via battery power.
 
@@ -94,9 +96,10 @@ University;
 \item a web app (\url{http://makecode.microbit.org})
 with Blockly and JavaScript editors, micro:bit simulator, 
 and a compiler to machine code, linked against a pre-compiled C++ runtime;
-\item an on-device compiler and read-eval-print loop (REPL) for Python 
-(via \url{https://micropython.org/}, an implementation of Python 
-for microcontrollers);
+\item a Python compiler and read-eval-print loop (REPL) that resides
+{\em on the micro:bit} (via \url{https://micropython.org/}), 
+supported by a simple web app (\url{http://python.microbit.org}) and 
+an installable application (\url{https://codewith.mu/});
 \item ARM's DAPlink firmware makes the micro:bit appear as USB pen drive 
 on most operating systems, enabling a simple file copy operation to 
 install a user's program on the micro:bit (no device drivers needed).
@@ -108,20 +111,24 @@ and \url{https://github.com/lancaster-university/microbit-dal},
 respectively.}
 
 Figure~\ref{fig:snapshot} shows a screen snapshot of the MakeCode web app
-for the micro:bit.
+for the micro:bit with five main sections: (A) menu bar with access to projects
+and examples, and switching between Blockly and JavaScript editors; (B)
+Blockly toolbox of micro:bit API categories; (C) Blockly programminng
+canvas with a simple reactive program; (D) micro:bit simulator for execution
+of the user's program in browser; (E) download button, which invokes the in-browser
+compiler to produce a binary executable. 
 
-What happened in terms of deployment and experience:
-\begin{itemize}
-\item first full school year was 2016-2017, during which micro:bit Education Foundation got
-started; 
-\item two full school years complete with experience in more countries
-\item approximately two million micro:bits in market;
-\item lots of partners participating (ICSTE and CSTA 2018)!!
-\end{itemize}
+The event-based program shown in section (C) displays a large heart when the
+A button is pressed, displays a small heart when button B is pressed,
+and clears the display when the user shakes the micro:bit (shake
+detection is implemented using the accelerometer; in the simulator, the
+shake event is fired using a virtual button). In addition to event-based
+APIs, direct access to the micro:bit's sensors via polling is possible.
+[takes a few minutes to code and deploy this simple program]
 
-% compared to Arduino
-% https://twitter.com/adamwwolf/status/1019070808038072320
-
+The BBC micro:bit project also called for partners to develop content
+and to ``train the trainers'' (educators) around the micro:bit computing
+system.
 
 %- A lot of lessons learned from delivering end-to-end experience in UK and other countries
 %   - hardware (unique design, as already mentioned)
@@ -130,6 +137,26 @@ started;
 %   - content
 %   - training
 % In country partnerships
+
+In the remainder of this paper, we focus on the primary promise
+of the BBC micro:bit, which was to deliver a simple physical computing
+experience for beginners and a progression path for users to follow
+as their expectations increase. [micro:bit education foundation founded
+in the fall of 2016]  We draw from two full years of 
+full deployment of the micro:bit in the UK, as well as deployments
+in Europe, the United States, and Asia.  There are approximately
+two million micro:bits now in the market and many hardware,
+content, and education partners participating. 
+
+
+
+Overview: Section~\ref{sec:physical} on physical computing;
+
+
+% compared to Arduino
+% https://twitter.com/adamwwolf/status/1019070808038072320
+
+
 
 % success of micro:bit due to 
 % - Low-cost, simplicity
@@ -149,98 +176,6 @@ started;
 %      - Sri Lanka user group: http://microbitslug.org/
 %      - UK libraries (loan program)
 %    - third party editors
-
-% Design considerations (technical requirements, steal from LCTES paper)
-
-%   - hardware clearly distinguished from Arduino
-%     - no wiring required to do interesting things (integrated sensors and outputs, etc.)
-%     - device appears as USB pen drive (drag-and-drop programming)
- 
-%   - As with Arduino, embedding device into projects is essential (from beginner to maker)
-%     - battery power
-%     - works disconnected from host
-%     - wearable, transportable
-%     - low cost
-%     - edge connector for easy connection to "shields"
-
-%   - support for scripting languages (JavaScript and Python; no C/C++ for beginners)
-%     - event-based programming model
-
-%   - web-based IDE
-%     - no apps or device drivers to install
-%     - school considerations (minimize IT admin involvement)
-
-%   - layered approach
-%     - simple for absolute beginners to get started
-%     - room for students to advance to more complex projects
-
-% - worldwide rollout
-%   - microbit.org, makecode.microbit.org
-
-% from http://cacm.acm.org/system/assets/0000/6052/CACM_Author-Guidelines.pdf 
-
-% 2.3.4 Contributed Articles
-% Contributed Articles cover the wide and abundant spectrum of the computing field—its open challenges, 
-% technical visions and perspectives, educational aspects, societal impact, significant applications and 
-% research results of high significance and broad interest. 
-
-% we have:
-% + technical vision
-% + educational aspect and societal impact
-% + signification application
-% - research results of high significance and broad interest: see LCTES 2018 article
-
-% Topics covered must reach out to a very broad technical audience.
-% Articles in Communications should be aimed at the broad computing and information technology community.
-
-% A Contributed Article should set the background and provide introductory references, 
-
-% define fundamental concepts, 
-
-% compare alternate approaches, 
-
-% Arduino
-% Scratch (tethered)
-% MicroPython
-
-% and explain the significance or application of a particular technology 
-
-% or result by means of well-reasoned text and pertinent graphical material. 
-
-% The use of sidebars to illustrate significant points is encouraged.
-
-% Full-length Contributed Articles should consist of up to 4,000 words, 
-% contain no more than 25 references, 3-4 tables, 3-4 figures, 
-% and be submitted to: http://cacm.acm.org/submissions.
-
-% Submissions to the Contributed Articles section should be accompanied by a cover letter indicating:
-% • Title and the central theme of the article; 
-% • Statement addressing why the material is important to the computing field and of value to the Communications reader;
-% • Names and email addresses of three or more recognized experts who would be considered appropriate to review the submission.
-
-
-% from the BBC RFP
-
-% Make it Digital is a BBC initiative to inspire a new generation to get creative with 
-% coding, programming and digital technology. With a major focus in 2015, Make it Digital 
-% will help all audiences see how Britain has helped shape the digital world, why digital 
-% skills matter and their growing importance to our future. For younger audiences, Make it 
-% Digital will help them discover the world of digital, see their creative potential in it 
-% and inspire them to take their first steps in computational thinking and digital skills. 
-
-% In September/October [2015], as part of the overall Make It Digital project, BBC Learning aims 
-% to give away one million small, programmable, wearable devices. The device can be used 
-% in classrooms and the home to create an engaging hands-­‐on learning experience that 
-% allows any level of coder from absolute beginner to advanced maker to get involved and 
-% be part of something exciting. Approximately 800,000 devices will go to every child in 
-% the UK at Year 7 (tbc) and a further 200,000 will be made available to distribute 
-% through competitions and other activities targeting other groups covering both children 
-% and adults. 
-
-% We anticipate that an online coding site will support the devices. The site will allow 
-% owners to create programmes to run on their own devices and/or share programmes and code 
-% with others. 
-
 
 
 

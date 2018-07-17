@@ -1,5 +1,33 @@
-% nothing here so far
+% 
 
+@article{NSF,
+  author = {NSF},
+  title = {Cyber-Physical Systems},
+  url = {https://www.nsf.gov/news/special_reports/cyber-physical/},
+  year = {2018}
+}
+
+@inproceedings{Devine2018,
+ author = {Devine, James and Finney, Joe and de Halleux, Peli and Moskal, Micha\l and Ball, Thomas and Hodges, Steve},
+ title = {MakeCode and CODAL: Intuitive and Efficient Embedded Systems Programming for Education},
+ booktitle = {Proceedings of the 19th ACM SIGPLAN/SIGBED International Conference on Languages, Compilers, and Tools for Embedded Systems},
+ series = {LCTES 2018},
+ year = {2018},
+ pages = {19--30},
+ url = {http://doi.acm.org/10.1145/3211332.3211335},
+ publisher = {ACM},
+} 
+
+@inproceedings{Sentance2017,
+ author = {Sentance, Sue and Waite, Jane and Hodges, Steve and MacLeod, Emily and Yeomans, Lucy},
+ title = {"Creating Cool Stuff": Pupils' Experience of the BBC Micro:Bit},
+ booktitle = {Proceedings of the 2017 ACM SIGCSE Technical Symposium on Computer Science Education},
+ series = {SIGCSE '17},
+ year = {2017},
+ pages = {531--536},
+ url = {http://doi.acm.org/10.1145/3017680.3017749},
+ doi = {10.1145/3017680.3017749},
+ publisher = {ACM},} 
 
 @article{ARMmbed,
   author = {ARM},
@@ -66,26 +94,6 @@
   year      = {2015},
   url       = {http://doi.acm.org/10.1145/2676726.2676971}
 }
-
-% Current proposals for adding gradual typing to JavaScript, such as Closure, TypeScript and Dart, forgo soundness to deal with
-% issues of scale, code reuse, and popular programming patterns. We show how to address these issues in practice while retaining
-% soundness. We design and implement a new gradual type system, prototyped for expediency as a 'Safe' compilation mode for
-% TypeScript. Our compiler achieves soundness by enforcing stricter static checks and embedding residual runtime checks in compiled
-% code. It emits plain JavaScript that runs on stock virtual machines. Our main theorem is a simulation that ensures that the
-% checks introduced by Safe TypeScript (1) catch any dynamic type error, and (2) do not alter the semantics of type-safe TypeScript
-% code.
-%
-% Safe TypeScript is carefully designed to minimize the performance overhead of runtime checks. At its core, we rely on two new
-% ideas: differential subtyping, a new form of coercive subtyping that computes the minimum amount of runtime type information that
-% must be added to each object; and an erasure modality, which we use to safely and selectively erase type information. This allows
-% us to scale our design to full-fledged TypeScript, including arrays, maps, classes, inheritance, overloading, and generic types.
-%
-% We validate the usability and performance of Safe TypeScript empirically by type-checking and compiling around 120,000 lines of
-% existing TypeScript source code. Although runtime checks can be expensive, the end-to-end overhead is small for code bases that
-% already have type annotations. For instance, we bootstrap the Safe TypeScript compiler (90,000 lines including the base
-% TypeScript compiler): we measure a 15% runtime overhead for type safety, and also uncover programming errors as type safety
-% violations. We conclude that, at least during development and testing, subjecting JavaScript/TypeScript programs to safe gradual
-% typing adds significant value to source type annotations at a modest cost.
 
 @inproceedings{StrongScriptECOOP15,
   author    = {G. Richards and
