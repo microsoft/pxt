@@ -52,7 +52,7 @@ export function showGithubLoginAsync() {
             <ol>
                 <li>
                     {lf("Navigate to: ")}
-                    <a href="https://github.com/settings/tokens/new" target="_blank" rel="noopener">
+                    <a href="https://github.com/settings/tokens/new" target="_blank" rel="noopener noreferrer">
                         {lf("GitHub token generation page")}
                     </a>
                 </li>
@@ -106,6 +106,7 @@ export function showAboutDialogAsync() {
         core.infoNotification(lf("Logged out from GitHub"))
     }
 
+    /* tslint:disable:react-a11y-anchors */
     core.confirmAsync({
         header: lf("About"),
         hideCancel: true,
