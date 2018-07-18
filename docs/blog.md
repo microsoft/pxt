@@ -1,5 +1,12 @@
 # Microsoft MakeCode Blog
 
+## [MakeCode for the micro:bit update coming soon!](/blog/microbit/v1-beta)
+
+July 23th, 2018 by [Jaqster](https://github.com/jaqster)
+
+The MakeCode team has been working to provide a summer update to its micro:bit editor You can preview the update at...
+**[Continue reading this blog post](/blog/microbit/v1-beta)**
+
 ## [MakeCode @ISTE 2018](/blog/iste/iste-2018)
 
 June 11th, 2018 by [Jaqster](https://github.com/jaqster)
