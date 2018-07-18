@@ -2284,9 +2284,12 @@ function initLogin() {
         let qs = core.parseQueryString((location.hash || "#").slice(1).replace(/%23access_token/, "access_token"))
         if (qs["access_token"]) {
             let ex = pxt.storage.getLocal("oauthState")
+            let tp = pxt.storage.getLocal("oauthType")
             if (ex && ex == qs["state"]) {
-                pxt.storage.setLocal("githubtoken", qs["access_token"])
                 pxt.storage.removeLocal("oauthState")
+                pxt.storage.removeLocal("oauthType")
+                if (tp == "github")
+                    pxt.storage.setLocal("githubtoken", qs["access_token"])
             }
             location.hash = location.hash.replace(/(%23)?[\#\&\?]*access_token.*/, "")
         }

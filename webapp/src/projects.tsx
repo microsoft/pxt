@@ -573,6 +573,7 @@ function githubLogin() {
     const self = window.location.href.replace(/#.*/, "")
     const state = ts.pxtc.Util.guidGen();
     pxt.storage.setLocal("oauthState", state)
+    pxt.storage.setLocal("oauthType", "github")
     const login = pxt.Cloud.getServiceUrl() +
         "/oauth/login?state=" + state +
         "&response_type=token&client_id=gh-token&redirect_uri=" +
