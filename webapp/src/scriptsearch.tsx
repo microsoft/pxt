@@ -9,6 +9,7 @@ import * as core from "./core";
 import * as codecard from "./codecard";
 import * as electron from "./electron";
 import * as workspace from "./workspace";
+import * as dialogs from "./dialogs";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -181,7 +182,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         workspace.getTextAsync(hd.id)
             .then(files => {
                 let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig
-                this.addDepIfNoConflict(cfg,  "workspace:" + hd.id)
+                this.addDepIfNoConflict(cfg, "workspace:" + hd.id)
             })
     }
 
@@ -378,6 +379,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                             </div>
                         </div>
                         : undefined}
+                    {dialogs.githubFooter(lf("Want to create your own extension?"), this.hide)}
                 </div>
             </sui.Modal>
         );

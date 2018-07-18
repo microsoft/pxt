@@ -48,7 +48,7 @@ export function showGithubLoginAsync() {
             input = el.querySelectorAll('input')[0] as HTMLInputElement;
         },
         jsx: <div className="ui form">
-            <p>{lf("To generate a GitHub token:")}</p>
+            <p>{lf("You will need a GitHub token:")}</p>
             <ol>
                 <li>
                     {lf("Navigate to: ")}
@@ -67,7 +67,7 @@ export function showGithubLoginAsync() {
                 </li>
             </ol>
             <div className="ui field">
-                <label id="selectUrlToOpenLabel">{lf("Paste GitHub token here.")}</label>
+                <label id="selectUrlToOpenLabel">{lf("Paste GitHub token here:")}</label>
                 <input type="url" tabIndex={0} autoFocus aria-describedby="selectUrlToOpenLabel" placeholder="0123abcd..." className="ui blue fluid"></input>
             </div>
         </div>,
@@ -84,7 +84,47 @@ export function showGithubLoginAsync() {
             }
         }
     })
+}
 
+export function githubFooter(msg: string, close: () => void) {
+    function githubLogin() {
+        close()
+        showGithubLoginAsync()
+    }
+
+    function githubLogout() {
+        close()
+        pxt.storage.removeLocal("githubtoken")
+        pxt.github.token = ""
+        core.infoNotification(lf("Logged out from GitHub"))
+    }
+
+    /* tslint:disable:react-a11y-anchors */
+    if (pxt.github.token) {
+        return (
+            <p>
+                <br />
+                <br />
+                <a href="#github" role="button" onClick={githubLogout}>
+                    {lf("Logout from GitHub")}
+                </a>
+                <br />
+                <br />
+            </p>)
+    } else {
+        return (
+            <p>
+                <br />
+                <br />
+                {msg}
+                {" "}
+                <a href="#github" role="button" onClick={githubLogin}>
+                    {lf("Login to GitHub")}
+                </a>
+                <br />
+                <br />
+            </p>)
+    }
 }
 
 export function showAboutDialogAsync() {
@@ -94,19 +134,6 @@ export function showAboutDialogAsync() {
     const targetTheme = pxt.appTarget.appTheme;
     const versions: pxt.TargetVersions = pxt.appTarget.versions;
 
-    function githubLogin() {
-        core.hideDialog();
-        showGithubLoginAsync()
-    }
-
-    function githubLogout() {
-        core.hideDialog();
-        pxt.storage.removeLocal("githubtoken")
-        pxt.github.token = ""
-        core.infoNotification(lf("Logged out from GitHub"))
-    }
-
-    /* tslint:disable:react-a11y-anchors */
     core.confirmAsync({
         header: lf("About"),
         hideCancel: true,
@@ -126,13 +153,6 @@ export function showAboutDialogAsync() {
                         title={`${lf("{0} version: {1}", "Microsoft MakeCode", versions.pxt)}`}
                         target="_blank" rel="noopener noreferrer">{versions.pxt}</a>
                 </p> : undefined}
-            <p>
-                {pxt.github.token ?
-                    <a href="#github" role="button" onClick={githubLogout}>{lf("Logout from GitHub")}</a>
-                    :
-                    <a href="#github" role="button" onClick={githubLogin}>{lf("GitHub login")}</a>
-                }
-            </p>
             <p><br /></p>
             <p>
                 {targetTheme.termsOfUseUrl ? <a target="_blank" className="item" href={targetTheme.termsOfUseUrl} rel="noopener noreferrer">{lf("Terms of Use")}</a> : undefined}
