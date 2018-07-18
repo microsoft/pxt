@@ -3,6 +3,7 @@ import * as core from "./core";
 import * as pkg from "./package";
 import * as data from "./data";
 import * as ws from "./workspace";
+import * as onedrive from "./onedrive";
 
 let headers = new db.Table("header")
 let texts = new db.Table("text")
@@ -16,6 +17,30 @@ import U = pxt.Util;
 import Cloud = pxt.Cloud;
 let lf = U.lf
 let allScripts: HeaderWithScript[] = [];
+
+
+export interface CloudFile {
+    id: string;
+    name: string; // hopefully user-readable
+    version: string;
+    content?: pxt.Map<string>;
+}
+
+export interface CloudProvider {
+    name: string;
+    loginCheck(): void;
+    login(): void;
+    loginCallback(queryString: pxt.Map<string>): void;
+    listAsync(): Promise<CloudFile[]>;
+    // apis below return CloudFile mostly for the version field
+    downloadAsync(id: string): Promise<CloudFile>;
+    // id can be null - creates a new file then
+    uploadAsync(id: string, files: pxt.Map<string>): Promise<CloudFile>;
+}
+
+export const cloudProviders: CloudProvider[] = [
+    onedrive.impl
+]
 
 interface HeaderWithScript {
     id: string;

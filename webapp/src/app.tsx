@@ -36,6 +36,7 @@ import * as make from "./make";
 import * as blocklyToolbox from "./blocksSnippets";
 import * as monacoToolbox from "./monacoSnippets";
 import * as greenscreen from "./greenscreen";
+import * as cloudworkspace from "./cloudworkspace";
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -2206,18 +2207,28 @@ function getEditor() {
 }
 
 function initLogin() {
+
     {
         let qs = core.parseQueryString((location.hash || "#").slice(1).replace(/%23access_token/, "access_token"))
         if (qs["access_token"]) {
             let ex = pxt.storage.getLocal("oauthState")
             if (ex && ex == qs["state"]) {
-                pxt.storage.setLocal("access_token", qs["access_token"])
+                for (let impl of cloudworkspace.cloudProviders) {
+                    if (impl.name == pxt.storage.getLocal("oauthType")) {
+                        impl.loginCallback(qs)
+                        break
+                    }
+                }
+                // pxt.storage.setLocal("access_token", qs["access_token"])
                 pxt.storage.removeLocal("oauthState")
             }
             location.hash = location.hash.replace(/(%23)?[\#\&\?]*access_token.*/, "")
         }
         Cloud.accessToken = pxt.storage.getLocal("access_token") || "";
     }
+
+    for (let impl of cloudworkspace.cloudProviders)
+        impl.loginCheck();
 
     {
         let qs = core.parseQueryString((location.hash || "#").slice(1).replace(/%local_token/, "local_token"))
