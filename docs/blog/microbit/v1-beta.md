@@ -1,5 +1,7 @@
 # MakeCode for the micro:bit update coming soon!
 
+**Posted on July 23, 2018 by [Jaqster](https://github.com/jaqster)**
+
 The MakeCode team has been working to provide a summer update to its micro:bit editor You can preview the update at https://makecode.microbit.org/beta.
 
 This update is in Beta now and only includes incremental changes and improvements that are designed to not to be disruptive or break any of your existing programs. So, when we release this new version, we will continue to support the previous version for those of you who aren’t ready to move over just yet 😊.
