@@ -143,6 +143,8 @@ function loginCheck() {
     if (!tok)
         return
 
+    cloudworkspace.setCloudProvider(impl)
+
     let exp = parseInt(pxt.storage.getLocal(ns + "tokenExp") || "0")
 
     if (exp < Date.now() / 1000) {

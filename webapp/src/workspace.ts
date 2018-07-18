@@ -228,6 +228,12 @@ export function loadedAsync() {
     return impl.loadedAsync();
 }
 
+export function loginCheck() {
+    checkSession();
+    if (impl.loginCheck)
+        impl.loginCheck();
+}
+
 export function saveAssetAsync(id: string, filename: string, data: Uint8Array): Promise<void> {
     if (impl.saveAssetAsync)
         return impl.saveAssetAsync(id, filename, data)

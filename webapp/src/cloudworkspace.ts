@@ -42,6 +42,11 @@ export const cloudProviders: CloudProvider[] = [
     onedrive.impl
 ]
 
+export function setCloudProvider(impl: CloudProvider) {
+    cloudProvider = impl
+}
+export let cloudProvider: CloudProvider;
+
 interface HeaderWithScript {
     id: string;
     header: Header;
@@ -239,7 +244,7 @@ function syncAsync(): Promise<pxt.editor.EditorSyncState> {
     let blobConatiner = ""
     let updated: pxt.Map<number> = {}
 
-    if (!Cloud.hasAccessToken())
+    if (!cloudProvider)
         return Promise.resolve(undefined)
 
     function uninstallAsync(h: Header) {
@@ -399,6 +404,27 @@ function resetAsync() {
 
 function loadedAsync(): Promise<void> {
     return Promise.resolve();
+}
+
+function loginCheck() {
+    let qs = core.parseQueryString((location.hash || "#").slice(1).replace(/%23access_token/, "access_token"))
+    if (qs["access_token"]) {
+        let ex = pxt.storage.getLocal("oauthState")
+        if (ex && ex == qs["state"]) {
+            for (let impl of cloudProviders) {
+                if (impl.name == pxt.storage.getLocal("oauthType")) {
+                    pxt.storage.removeLocal("oauthState")
+                    location.hash = location.hash.replace(/(%23)?[\#\&\?]*access_token.*/, "")
+                    impl.loginCallback(qs)
+                    break
+                }
+            }
+        }
+
+    }
+
+    for (let impl of cloudProviders)
+        impl.loginCheck();
 }
 
 export const provider: WorkspaceProvider = {

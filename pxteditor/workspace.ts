@@ -52,6 +52,7 @@ namespace pxt.workspace {
         syncAsync(): Promise<pxt.editor.EditorSyncState>;
         resetAsync(): Promise<void>;
         loadedAsync(): Promise<void>;
+        loginCheck?: () => void;
         // optional screenshot support
         saveScreenshotAsync?: (h: Header, screenshot: string, icon: string) => Promise<void>;
         // asset (large binary file) support
