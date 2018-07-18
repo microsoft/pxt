@@ -23,6 +23,7 @@ export interface CloudFile {
     id: string;
     name: string; // hopefully user-readable
     version: string;
+    updatedAt: number; // Unix time
     content?: pxt.Map<string>;
 }
 
@@ -36,11 +37,24 @@ export interface CloudProvider {
     downloadAsync(id: string): Promise<CloudFile>;
     // id can be null - creates a new file then
     uploadAsync(id: string, files: pxt.Map<string>): Promise<CloudFile>;
+    deleteAsync(id: string): Promise<void>;
 }
 
-export const cloudProviders: CloudProvider[] = [
-    onedrive.impl
-]
+let _cloudProviders: pxt.Map<CloudProvider>
+
+export function cloudProviders() {
+    if (!_cloudProviders) {
+        _cloudProviders = {}
+        for (let impl of [onedrive.impl]) {
+            _cloudProviders[impl.name] = impl
+        }
+    }
+
+    let cl = pxt.appTarget.cloud
+    if (!cl || !cl.cloudProviders)
+        return []
+    return cl.cloudProviders.map(n => _cloudProviders[n])
+}
 
 export function setCloudProvider(impl: CloudProvider) {
     cloudProvider = impl
@@ -175,67 +189,35 @@ function installAsync(h0: InstallHeader, text: ScriptText) {
         .then(() => h)
 }
 
-interface CloudHeader {
-    guid: string;
-    status: string;
-    recentUse: number;
-    scriptVersion: { time: number; baseSnapshot: string };
-}
-
-interface InstalledHeaders {
-    headers: CloudHeader[];
-    newNotifications: number;
-    notifications: boolean;
-    time: number;
-    random: string;
-    v: number;
-    blobcontainer: string;
-}
-
-function isProject(h: Header) {
-    return /prj$/.test(h.editor)
-}
-
 function saveToCloudAsync(h: Header) {
-    if (!Cloud.isLoggedIn()) return Promise.resolve();
-
+    if (!cloudProvider) return Promise.resolve();
     return syncOneUpAsync(h)
 }
 
-function syncOneUpAsync(h: Header) {
+function isLocalOnly(h: Header) {
+    return h.id[0] == "*"
+}
+
+async function syncOneUpAsync(h: Header) {
     let saveId = {}
     let e = lookup(h.id)
-    return getTextAsync(h.id)
-        .then(() => {
-            let scr = ""
-            let files = e.text
-            if (isProject(h))
-                scr = JSON.stringify(files)
-            else
-                scr = files[Object.keys(files)[0]] || ""
-            let body = {
-                guid: h.id,
-                name: h.name,
-                scriptId: h.pubId,
-                scriptVersion: { time: h.modificationTime, baseSnapshot: "*" },
-                meta: JSON.stringify(h.meta),
-                status: h.pubCurrent ? "published" : "unpublished",
-                recentUse: h.recentUse,
-                editor: h.editor,
-                script: scr,
-                target: pxt.appTarget.id
-            }
-            pxt.debug(`sync up ${h.id}; ${body.script.length} chars`)
-            h.saveId = saveId;
-            return Cloud.privatePostAsync("me/installed", { bodies: [body] })
-        })
-        .then(resp => {
-            let chd = resp.headers[0] as CloudHeader
-            h.blobId = chd.scriptVersion.baseSnapshot
-            if (h.saveId === saveId)
-                h.blobCurrent = true
-            return saveCoreAsync(h)
-        })
+    h.saveId = saveId;
+    await getTextAsync(h.id)
+
+    let firstTime = isLocalOnly(h)
+    // TODO check for conflict
+    let info = await cloudProvider.uploadAsync(firstTime ? null : h.id, e.text)
+    pxt.debug(`sync up ${h.id}`)
+
+    if (firstTime) {
+        h.id = info.id
+    } else {
+        U.assert(h.id == info.id)
+    }
+    h.blobId = info.version
+    if (h.saveId === saveId)
+        h.blobCurrent = true
+    await saveCoreAsync(h, firstTime ? e.text : null)
 }
 
 function syncAsync(): Promise<pxt.editor.EditorSyncState> {
@@ -260,43 +242,34 @@ function syncAsync(): Promise<pxt.editor.EditorSyncState> {
                 .then(() => texts.deleteAsync({ id: h.id, _rev: e.textRev })))
     }
 
-    function syncDownAsync(header0: Header, cloudHeader: CloudHeader) {
-        if (cloudHeader.status == "deleted") {
-            if (!header0)
-                return Promise.resolve()
-            else
-                return uninstallAsync(header0)
-        }
+    function syncDownAsync(header0: Header, cloudHeader: CloudFile) {
 
         let header = header0
         if (!header) {
             header = <any>{
-                id: cloudHeader.guid
+                id: cloudHeader.id
             }
         }
 
         numDown++
-        U.assert(header.id == cloudHeader.guid)
-        let blobId = cloudHeader.scriptVersion.baseSnapshot
+        U.assert(header.id == cloudHeader.id)
+        let blobId = cloudHeader.version
         pxt.debug(`sync down ${header.id} - ${blobId}`)
-        return U.httpGetJsonAsync(blobConatiner + blobId)
-            .catch(core.handleNetworkError)
+        return cloudProvider.downloadAsync(cloudHeader.id)
+            // .catch(core.handleNetworkError)
             .then(resp => {
-                U.assert(resp.guid == header.id)
+                U.assert(resp.id == header.id)
                 header.blobCurrent = true
-                header.blobId = blobId
-                header.modificationTime = cloudHeader.scriptVersion.time
-                header.editor = resp.editor
-                header.name = resp.name
-                let files: pxt.Map<string> = { "_default_": resp.script }
-                if (isProject(header))
-                    files = JSON.parse(resp.script)
-                header.recentUse = cloudHeader.recentUse
+                header.blobId = resp.version
+                header.modificationTime = resp.updatedAt
+                let files = resp.content
+                let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig
+                header.name = cfg.name
                 delete header.isDeleted
-                header.pubId = resp.scriptId
-                header.pubCurrent = (resp.status == "published")
+                header.pubId = ""
+                header.pubCurrent = false
                 header.saveId = null
-                header.target = resp.target
+                header.target = pxt.appTarget.id
                 if (!header0)
                     allScripts.push({
                         header: header,
@@ -333,19 +306,13 @@ function syncAsync(): Promise<pxt.editor.EditorSyncState> {
     }
 
     function syncDeleteAsync(h: Header) {
-        let body = {
-            guid: h.id,
-            status: "deleted",
-            scriptVersion: { time: U.nowSeconds(), baseSnapshot: "*" }
-        }
-        return Cloud.privatePostAsync("me/installed", { bodies: [body] })
+        return cloudProvider.deleteAsync(h.id)
             .then(() => uninstallAsync(h))
     }
 
-    return Cloud.privateGetAsync("me/installed?format=short")
-        .then((resp: InstalledHeaders) => {
-            blobConatiner = resp.blobcontainer
-            let cloudHeaders = U.toDictionary(resp.headers, h => h.guid)
+    return cloudProvider.listAsync()
+        .then(entries => {
+            let cloudHeaders = U.toDictionary(entries, h => h.id)
             let existingHeaders = U.toDictionary(allScripts, h => h.id)
             let waitFor = allScripts.map(e => {
                 let hd = e.header
@@ -355,15 +322,10 @@ function syncAsync(): Promise<pxt.editor.EditorSyncState> {
                     if (hd.isDeleted)
                         return syncDeleteAsync(hd)
 
-                    if (chd.scriptVersion.baseSnapshot == hd.blobId) {
+                    if (chd.version == hd.blobId) {
                         if (hd.blobCurrent) {
-                            if (hd.recentUse != chd.recentUse) {
-                                hd.recentUse = chd.recentUse
-                                return saveCoreAsync(hd)
-                            } else {
-                                // nothing to do
-                                return Promise.resolve()
-                            }
+                            // nothing to do
+                            return Promise.resolve()
                         } else {
                             return syncUpAsync(hd)
                         }
@@ -371,6 +333,7 @@ function syncAsync(): Promise<pxt.editor.EditorSyncState> {
                         if (hd.blobCurrent) {
                             return syncDownAsync(hd, chd)
                         } else {
+                            // TODO resolve conflict
                             return syncUpAsync(hd)
                         }
                     }
@@ -383,7 +346,7 @@ function syncAsync(): Promise<pxt.editor.EditorSyncState> {
                         return syncUpAsync(hd)
                 }
             })
-            waitFor = waitFor.concat(resp.headers.filter(h => !existingHeaders[h.guid]).map(h => syncDownAsync(null, h)))
+            waitFor = waitFor.concat(entries.filter(h => !existingHeaders[h.id]).map(h => syncDownAsync(null, h)))
             progress(0)
             return Promise.all(waitFor)
         })
@@ -407,11 +370,16 @@ function loadedAsync(): Promise<void> {
 }
 
 function loginCheck() {
+    let prov = cloudProviders()
+
+    if (!prov.length)
+        return
+
     let qs = core.parseQueryString((location.hash || "#").slice(1).replace(/%23access_token/, "access_token"))
     if (qs["access_token"]) {
         let ex = pxt.storage.getLocal("oauthState")
         if (ex && ex == qs["state"]) {
-            for (let impl of cloudProviders) {
+            for (let impl of prov) {
                 if (impl.name == pxt.storage.getLocal("oauthType")) {
                     pxt.storage.removeLocal("oauthState")
                     location.hash = location.hash.replace(/(%23)?[\#\&\?]*access_token.*/, "")
@@ -423,7 +391,7 @@ function loginCheck() {
 
     }
 
-    for (let impl of cloudProviders)
+    for (let impl of prov)
         impl.loginCheck();
 }
 

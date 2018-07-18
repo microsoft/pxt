@@ -126,6 +126,7 @@ declare namespace pxt {
         embedding?: boolean;
         githubPackages?: boolean; // allow searching github for packages
         noGithubProxy?: boolean;
+        cloudProviders?: string[];
     }
 
     interface AppSimulator {
