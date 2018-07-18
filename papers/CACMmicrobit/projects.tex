@@ -4,12 +4,27 @@
 In this section we present a sampling of projects that 
 illustrate the capabilities of the micro:bit. 
 
-\subsection{Wearables: Dance}
+\begin{figure} 
+    \begin{tabular}{cc}
+        \includegraphics[width=1.5in]{images/rock-paper-scissors.jpg}  &
+        \includegraphics[width=1.5in]{images/rpsBlocks.png} \\
+        (a) & (b) 
+      \end{tabular}
+    \caption{\label{fig:rps}Micro:bit watch for playing rock, paper, scissors game.}
+\end{figure}
 
-% https://makecode.microbit.org/projects/rock-paper-scissors
+\subsection{Wear and Sense}
 
-% - shake event
-% - display on of three images
+Figure~\ref{fig:rps} shows one of the most popular starting micro:bit projects:
+a micro:bit watch that plays the rock-paper-scissors game; the program reacts
+to a shake event by choosing a random number from the set \{0, 1, 2 \}
+and displaying a rock, paper or scissor shape on the LED display. The
+user can use this simple app to play the game by themselves or with
+a friend. The project consists of a making step and coding step,
+as shown at
+\begin{center}
+\url{https://makecode.microbit.org/projects/rock-paper-scissors}
+\end{center}
 
 % love meter
 % - on pin pressed
@@ -17,21 +32,40 @@ illustrate the capabilities of the micro:bit.
 
 % https://labs.redweb.com/project/controlling-music-with-movement/
 
-\subsection{Embed for STEM}
+\begin{figure} 
+    \includegraphics[width=3.3in]{images/rocketcar.png} 
+    \caption{\label{fig:rocketcar}Bloodhound Model Rocket Car with embedded micro:bit for
+    measuring acceleration.}
+\end{figure}
+
+\subsection{Measure}
+
+The micro:bit's built-in sensors and small size make it perfect for embedding
+in science and technology projects.  The Bloodhound Model Rocket Car is 
+part of the Bloodhound Project,~\footnote{\url{www.bloodhoundssc.com}} 
+whose goal is to set a new world land speed
+record and inspire students about STEM subjects. 
+Students design, build and race model rocket cars in competition, learning about
+physics, aerodynamics, and mechanical engineering. Microsoft worked with
+the Bloodhound Project to incorporate a micro:bit into the car's design,
+as shown in Figure~\ref{fig:rocketcar};
+the micro:bit captures the (X,Y,Z) accelerometer data of the rocket car
+during its race. After the race, students can upload the data from 
+the micro:bit and analyze the performance of their cars. 
 
 % Bloodhound rocket car:
 % - http://www.bloodhoundssc.com/news/launched-bbc-microbit-model-rocket-car-competition-%E2%80%9Crace-line%E2%80%9D
 %
-% The Micro:bit’s are used to capture the telemetry data X,Y,Z movement
-% and acceleration from the rocket car. Students simply fit a Micro:bit into the Rocket car, 
-% the Micro:bit is secured within a custom case, which protect the Micro:bit. In association 
-% with Kitronik we have developed set of IRDA timing gates, these have been built to time the 
-% cars over a fixed 1m distance allowing students to measure the speed of their cars accurately 
-% during race conditions.
+
+\subsection{Control}
+
+% light sensor and servo
+% https://makecode.microbit.org/projects/milk-carton-robot
+
 
 % https://makecode.microbit.org/projects/soil-moisture
 
-\subsection{Communicate over radio}
+\subsection{Network}
 
 % buttons, radio, display
 
@@ -43,8 +77,4 @@ illustrate the capabilities of the micro:bit.
 
 % - radio
 
-\subsection{Control actuator}
-
-% light sensor and servo
-% https://makecode.microbit.org/projects/milk-carton-robot
 
