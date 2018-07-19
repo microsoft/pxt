@@ -10,7 +10,7 @@ namespace pxtblockly {
 
     const TOOLBAR_WIDTH = 50;
     const INNER_BUTTON_MARGIN = 2;
-    const PALETTE_BORDER_WIDTH = 2;
+    const PALETTE_BORDER_WIDTH = 1;
     const BUTTON_GROUP_SPACING = 3;
     const SELECTED_BORDER_WIDTH = 2;
     const COLOR_PREVIEW_HEIGHT = 25;

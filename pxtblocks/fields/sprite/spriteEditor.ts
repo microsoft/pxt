@@ -47,6 +47,7 @@ namespace pxtblockly {
         private canvasDimensions: svg.Text;
         private sidebar: SideBar;
         private header: SpriteHeader;
+        private gallery: Gallery;
 
         private state: Bitmap;
 
@@ -70,7 +71,7 @@ namespace pxtblockly {
 
         private height: number;
 
-        constructor(bitmap: Bitmap, protected lightMode = false) {
+        constructor(bitmap: Bitmap, blocksInfo: pxtc.BlocksInfo, protected lightMode = false) {
             this.colors = pxt.appTarget.runtime.palette.slice(1);
 
             this.columns = bitmap.width;
@@ -118,6 +119,7 @@ namespace pxtblockly {
             this.sidebar.setColor(1);
 
             this.header = new SpriteHeader(this);
+            this.gallery = new Gallery(blocksInfo);
 
             this.drawReporterBar();
             this.updateUndoRedo();
@@ -150,6 +152,7 @@ namespace pxtblockly {
 
         render(el: HTMLDivElement): void {
             el.appendChild(this.header.getElement());
+            el.appendChild(this.gallery.getElement());
             this.paintSurface.render(el);
             el.appendChild(this.root.el);
             this.layout();
@@ -177,6 +180,7 @@ namespace pxtblockly {
             this.repoterBar.translate(paintAreaLeft, paintAreaTop + CANVAS_HEIGHT + REPORTER_BAR_CANVAS_MARGIN);
             this.canvasDimensions.at(CANVAS_HEIGHT - this.canvasDimensions.el.getComputedTextLength(), 0);
 
+            this.gallery.layout(0, TOOLBAR_HEIGHT, TOTAL_HEIGHT - TOOLBAR_HEIGHT);
             this.header.layout();
 
             this.height = paintAreaTop + CANVAS_HEIGHT + PADDING_BOTTOM + REPORTER_BAR_CANVAS_MARGIN + REPORTER_BAR_HEIGHT;
@@ -276,11 +280,11 @@ namespace pxtblockly {
         }
 
         showGallery() {
-
+            this.gallery.show();
         }
 
         hideGallery() {
-
+            this.gallery.hide();
         }
 
         protected drawReporterBar() {

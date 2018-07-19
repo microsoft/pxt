@@ -25,10 +25,10 @@ namespace pxtblockly {
             this.toggle = new Toggle(this.root, { leftText: "Editor", rightText: "Gallery", baseColor: "#4B7BEC" });
             this.toggle.onStateChange(isLeft => {
                 if (isLeft) {
-                    this.host.showGallery();
+                    this.host.hideGallery();
                 }
                 else {
-                    this.host.hideGallery();
+                    this.host.showGallery();
                 }
             })
 

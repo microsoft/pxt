@@ -3,6 +3,7 @@
 declare namespace Blockly {
 
     interface FieldCustomOptions {
+        blocksInfo: pxtc.BlocksInfo;
         colour?: string | number;
         label?: string;
         type?: string;

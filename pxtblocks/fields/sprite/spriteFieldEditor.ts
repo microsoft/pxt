@@ -38,6 +38,7 @@ namespace pxtblockly {
         public isFieldCustom_ = true;
 
         private params: ParsedSpriteEditorOptions;
+        private blocksInfo: pxtc.BlocksInfo;
         private editor: SpriteEditor;
         private state: Bitmap;
         private lightMode: boolean;
@@ -47,6 +48,7 @@ namespace pxtblockly {
 
             this.lightMode = params.lightMode;
             this.params = parseFieldOptions(params);
+            this.blocksInfo = params.blocksInfo;
 
             if (!this.state) {
                 this.state = new Bitmap(this.params.initWidth, this.params.initHeight);
@@ -92,7 +94,7 @@ namespace pxtblockly {
 
             let contentDiv = Blockly.DropDownDiv.getContentDiv() as HTMLDivElement;
 
-            this.editor = new SpriteEditor(this.state, this.lightMode);
+            this.editor = new SpriteEditor(this.state, this.blocksInfo, this.lightMode);
             this.editor.render(contentDiv);
             this.editor.rePaint();
 
