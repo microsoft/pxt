@@ -73,7 +73,7 @@ function mergeFsPkg(pkg: pxt.FsPkg) {
         id: pkg.path,
         recentUse: modTime,
         modificationTime: modTime,
-        blobId: null,
+        blobVersion: null,
         blobCurrent: false,
         isDeleted: false,
         icon: pkg.icon

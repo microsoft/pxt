@@ -1,5 +1,5 @@
 import * as core from "./core";
-import * as cloudworkspace from "./cloudworkspace";
+import * as cloudsync from "./cloudsync";
 
 const client_id = "bf0ee68a-56b5-4b23-bbdb-5daf01a8f6cd"
 const scopes = "files.readwrite.appfolder"
@@ -62,7 +62,7 @@ function listAsync() {
     return getJsonAsync(rootdir + "/children?select=@microsoft.graph.downloadUrl,lastModifiedDateTime,eTag,id,name")
         .then(lst => {
             let suff = fileSuffix()
-            let res: cloudworkspace.CloudFile[] = []
+            let res: cloudsync.FileInfo[] = []
             for (let r of (lst.value || []) as OneEntry[]) {
                 if (!U.endsWith(r.name.toLowerCase(), suff))
                     continue
@@ -77,7 +77,7 @@ function listAsync() {
         })
 }
 
-async function downloadAsync(id: string): Promise<cloudworkspace.CloudFile> {
+async function downloadAsync(id: string): Promise<cloudsync.FileInfo> {
     let cached = entryCache[id]
     let recent = false
     if (!cached || !cached["@microsoft.graph.downloadUrl"]) {
@@ -105,7 +105,7 @@ async function downloadAsync(id: string): Promise<cloudworkspace.CloudFile> {
 }
 
 
-async function uploadAsync(id: string, files: pxt.Map<string>): Promise<cloudworkspace.CloudFile> {
+async function uploadAsync(id: string, files: pxt.Map<string>): Promise<cloudsync.FileInfo> {
     let cached = entryCache[id || "???"]
     if (cached)
         delete cached["@microsoft.graph.downloadUrl"]
@@ -143,7 +143,7 @@ function loginCheck() {
     if (!tok)
         return
 
-    cloudworkspace.setCloudProvider(impl)
+    cloudsync.setProvider(impl)
 
     let exp = parseInt(pxt.storage.getLocal(ns + "tokenExp") || "0")
 
@@ -183,7 +183,7 @@ function loginCallback(qs: pxt.Map<string>) {
     pxt.storage.setLocal(ns + "tokenExp", time + "")
 }
 
-export const impl: cloudworkspace.CloudProvider = {
+export const impl: cloudsync.Provider = {
     name: ns,
     loginCheck,
     login,

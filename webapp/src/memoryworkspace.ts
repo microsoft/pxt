@@ -20,7 +20,7 @@ export function merge(prj: Project) {
             target: target,
             targetVersion: targetVersion,
             _rev: undefined,
-            blobId: undefined,
+            blobVersion: undefined,
             blobCurrent: undefined,
             isDeleted: false,
             name: lf("Untitled"),

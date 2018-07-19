@@ -20,8 +20,9 @@ namespace pxt.workspace {
         id: string; // guid
         recentUse: number; // seconds since epoch
         modificationTime: number; // seconds since epoch
-        blobId: string; // blob name for cloud version
-        blobCurrent: boolean;      // has the current version of the script been pushed to cloud
+        blobId: string;       // id of the cloud blob holding this script
+        blobVersion: string;  // version of the cloud blob
+        blobCurrent: boolean; // has the current version of the script been pushed to cloud
         isDeleted: boolean;
         saveId?: any;
         // icon uri
@@ -47,12 +48,15 @@ namespace pxt.workspace {
         getTextAsync(id: string): Promise<ScriptText>;
         initAsync(target: string, version: string): Promise<void>;
         saveAsync(h: Header, text?: ScriptText): Promise<void>;
-        installAsync(h0: InstallHeader, text: ScriptText): Promise<Header>;
+        // duplicate the current header with same ID and return it; re-generate ID of the current header
+        // this is for conflict resolution
+        duplicateAsync(h: Header): Promise<Header>;
+        // add new script (either installed locally or synced down from the cloud)
+        importAsync(h0: Header, text: ScriptText): Promise<void>;
         saveToCloudAsync(h: Header): Promise<void>;
         syncAsync(): Promise<pxt.editor.EditorSyncState>;
         resetAsync(): Promise<void>;
         loadedAsync(): Promise<void>;
-        loginCheck?: () => void;
         // optional screenshot support
         saveScreenshotAsync?: (h: Header, screenshot: string, icon: string) => Promise<void>;
         // asset (large binary file) support

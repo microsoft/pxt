@@ -7,6 +7,7 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as workspace from "./workspace";
+import * as cloudsync from "./cloudsync";
 import * as data from "./data";
 import * as pkg from "./package";
 import * as core from "./core";
@@ -2206,7 +2207,7 @@ function getEditor() {
 }
 
 function initLogin() {
-    workspace.loginCheck()
+    cloudsync.loginCheck()
     
     {
         let qs = core.parseQueryString((location.hash || "#").slice(1).replace(/%23access_token/, "access_token"))

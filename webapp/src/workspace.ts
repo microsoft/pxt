@@ -9,6 +9,7 @@ import * as cloudworkspace from "./cloudworkspace"
 import * as fileworkspace from "./fileworkspace"
 import * as memoryworkspace from "./memoryworkspace"
 import * as iframeworkspace from "./iframeworkspace"
+import * as cloudsync from "./cloudsync"
 
 type Header = pxt.workspace.Header;
 type ScriptText = pxt.workspace.ScriptText;
@@ -45,6 +46,8 @@ export function setupWorkspace(id: string) {
             impl = cloudworkspace.provider
             break;
     }
+
+    cloudsync.setup(impl)
 }
 
 export function getHeaders(withDeleted = false) {
@@ -146,7 +149,14 @@ export function saveAsync(h: Header, text?: ScriptText) {
 export function installAsync(h0: InstallHeader, text: ScriptText) {
     checkSession();
     U.assert(h0.target == pxt.appTarget.id);
-    return impl.installAsync(h0, text)
+
+    const h = <Header>h0
+    h.id = ts.pxtc.Util.guidGen();
+    h.recentUse = U.nowSeconds()
+    h.modificationTime = h.recentUse;
+
+    return impl.importAsync(h, text)
+        .then(() => h)
 }
 
 export function saveScreenshotAsync(h: Header, data: string, icon: string) {
@@ -211,27 +221,24 @@ export function installByIdAsync(id: string) {
 export function saveToCloudAsync(h: Header) {
     checkSession();
     return impl.saveToCloudAsync(h)
+        .then(() => cloudsync.saveToCloudAsync(h))
 }
 
 export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
     checkSession();
-    return impl.syncAsync();
+    return impl.syncAsync()
+        .then(cloudsync.syncAsync)
 }
 
 export function resetAsync() {
     checkSession();
     return impl.resetAsync()
+        .then(cloudsync.resetAsync)
 }
 
 export function loadedAsync() {
     checkSession();
     return impl.loadedAsync();
-}
-
-export function loginCheck() {
-    checkSession();
-    if (impl.loginCheck)
-        impl.loginCheck();
 }
 
 export function saveAssetAsync(id: string, filename: string, data: Uint8Array): Promise<void> {
@@ -276,4 +283,3 @@ data.mountVirtualApi("text", {
             })
     },
 })
-
