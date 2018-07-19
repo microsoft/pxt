@@ -50,7 +50,7 @@ namespace pxt.workspace {
         saveAsync(h: Header, text?: ScriptText): Promise<void>;
         // duplicate the current header with same ID and return it; re-generate ID of the current header
         // this is for conflict resolution
-        duplicateAsync(h: Header): Promise<Header>;
+        duplicateAsync(h: Header, text: ScriptText): Promise<Header>;
         // add new script (either installed locally or synced down from the cloud)
         importAsync(h0: Header, text: ScriptText): Promise<void>;
         saveToCloudAsync(h: Header): Promise<void>;

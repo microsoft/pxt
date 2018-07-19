@@ -129,12 +129,12 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
     async function resolveConflictAsync(header: Header, cloudHeader: FileInfo) {
         // rename current script
         let text = await wsimpl.getTextAsync(header.id)
-        let newHd = await wsimpl.duplicateAsync(header)        
+        let newHd = await wsimpl.duplicateAsync(header, text)
         header.blobId = null
         header.blobVersion = null
         header.blobCurrent = false
         header.name = "# " + header.name
-        // TODO update name in pxt.json
+        // TODO update name in pxt.json        
         await wsimpl.saveAsync(header, text)
         // get the cloud version
         await syncDownAsync(newHd, cloudHeader)

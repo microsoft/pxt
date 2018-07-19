@@ -170,12 +170,26 @@ function saveToCloudAsync(h: Header) {
     return Promise.resolve()
 }
 
+function duplicateAsync(h: Header, text: ScriptText): Promise<Header> {
+    let e = lookup(h.id)
+    U.assert(e.header === h)
+    let h2 = U.flatClone(h)
+    e.id = h.id = U.guidGen()
+    e.text = null
+    e.textRev = null
+    e.textNeedsSave = false
+    return saveCoreAsync(h, text)
+        .then(() => importAsync(h2, text))
+        .then(() => h2)
+}
+
 export const provider: WorkspaceProvider = {
     getHeaders,
     getHeader,
     getTextAsync,
     initAsync,
     saveAsync,
+    duplicateAsync,
     importAsync,
     saveToCloudAsync,
     syncAsync,
