@@ -163,7 +163,7 @@ function saveCoreAsync(h: Header, text?: ScriptText) {
                 pkg.isDeleted = true;
                 return apiAsync("pkg/" + h.id, pkg);
             } else {
-                return Promise.resolve()
+                return Promise.resolve();
             }
         }
         return apiAsync("pkg/" + h.id, pkg)
