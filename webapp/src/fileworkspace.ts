@@ -1,6 +1,7 @@
 import * as db from "./db";
 import * as core from "./core";
 import * as data from "./data";
+import * as electron from "./electron";
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
@@ -157,7 +158,14 @@ function saveCoreAsync(h: Header, text?: ScriptText) {
                 })
         }
         let savedText = U.flatClone(e.text)
-        if (pkg.files.length == 0) return Promise.resolve()
+        if (pkg.files.length == 0) {
+            if (electron.isPxtElectron && h.isDeleted) {
+                pkg.isDeleted = true;
+                return apiAsync("pkg/" + h.id, pkg);
+            } else {
+                return Promise.resolve();
+            }
+        }
         return apiAsync("pkg/" + h.id, pkg)
             .then((pkg: pxt.FsPkg) => {
                 e.fsText = savedText
@@ -223,9 +231,24 @@ function resetAsync() {
     return db.destroyAsync()
         .then(() => {
             allScripts = [];
+            let localToken: string;
+
+            if (electron.isPxtElectron) {
+                localToken = pxt.storage.getLocal("local_token");
+            }
+
             pxt.storage.clearLocal();
             data.clearCache();
-        })
+
+            if (electron.isPxtElectron) {
+                pxt.storage.setLocal("local_token", localToken);
+                pxt.Cloud.localToken = localToken;
+                return apiAsync("resetworkspace", {})
+                    .then(() => {});
+            }
+
+            return Promise.resolve();
+        });
 }
 
 function loadedAsync(): Promise<void> {
