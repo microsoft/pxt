@@ -229,7 +229,7 @@ function saveScreenshotAsync(h: Header, screenshot: string, icon: string) {
 
 function resetAsync() {
     return db.destroyAsync()
-        .then((): Promise<void> => {
+        .then(() => {
             allScripts = [];
             let localToken: string;
 
@@ -244,10 +244,10 @@ function resetAsync() {
                 pxt.storage.setLocal("local_token", localToken);
                 pxt.Cloud.localToken = localToken;
                 return apiAsync("resetworkspace", {})
-                    .then(() => void 0);
+                    .then(() => {});
             }
 
-            return Promise.resolve(void 0);
+            return Promise.resolve();
         });
 }
 
