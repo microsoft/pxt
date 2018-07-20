@@ -189,7 +189,8 @@ export function saveAsync(h: Header, text?: ScriptText): Promise<void> {
 
     return headerQ.enqueue<void>(h.id, () =>
         impl.setAsync(h, e.version, text ? e.text : null)
-            .then(() => {
+            .then(ver => {
+                e.version = ver
                 if (text || h.isDeleted) {
                     h.pubCurrent = false
                     h.blobCurrent = false
@@ -319,11 +320,23 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
 
     return impl.listAsync()
         .then(headers => {
-            allScripts = headers.map(h => ({
-                header: h,
-                text: null,
-                version: null,
-            }))
+            let existing = U.toDictionary(allScripts || [], h => h.header.id)
+            allScripts = []
+            for (let hd of headers) {
+                let ex = existing[hd.id]
+                if (ex) {
+                    U.jsonCopyFrom(ex.header, hd)
+                    //ex.text = null
+                    //ex.version = null
+                } else {
+                    ex = {
+                        header: hd,
+                        text: null,
+                        version: null,        
+                    }
+                }
+                allScripts.push(ex)
+            }
             data.invalidate("header:")
             data.invalidate("text:")
         })
@@ -344,7 +357,9 @@ export function resetAsync() {
 
 export function loadedAsync() {
     checkSession();
-    return syncAsync()
+    if (impl.loadedAsync)
+        return impl.loadedAsync()
+    return Promise.resolve()
 }
 
 export function saveAssetAsync(id: string, filename: string, data: Uint8Array): Promise<void> {

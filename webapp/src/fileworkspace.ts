@@ -45,6 +45,7 @@ function setAsync(h: Header, prevVersion: pxt.workspace.Version, text?: ScriptTe
         header: h,
         path: h.path,
     }
+    if (!prevVersion) prevVersion = {}
     for (let fn of Object.keys(text || {})) {
         if (text[fn] !== prevVersion[fn])
             pkg.files.push({

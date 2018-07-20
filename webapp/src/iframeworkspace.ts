@@ -4,12 +4,7 @@ type Header = pxt.workspace.Header;
 type ScriptText = pxt.workspace.ScriptText;
 type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
 
-let first = true
-
 function loadedAsync(): Promise<void> {
-    if (!first)
-        return Promise.resolve()
-    first = false
     return pxt.editor.postHostMessageAsync(<pxt.editor.EditorWorkspaceSyncRequest>{
         type: "pxthost",
         action: "workspaceloaded",
@@ -18,12 +13,11 @@ function loadedAsync(): Promise<void> {
 }
 
 function listAsync() {
-    return loadedAsync()
-        .then(() => pxt.editor.postHostMessageAsync(<pxt.editor.EditorWorkspaceSyncRequest>{
+    return pxt.editor.postHostMessageAsync(<pxt.editor.EditorWorkspaceSyncRequest>{
             type: "pxthost",
             action: "workspacesync",
             response: true
-        })).then((msg: pxt.editor.EditorWorkspaceSyncResponse) => {
+        }).then((msg: pxt.editor.EditorWorkspaceSyncResponse) => {
             (msg.projects || []).forEach(mem.merge);
 
             // controllerId is a unique identifier of the controller source
@@ -61,4 +55,5 @@ export const provider: WorkspaceProvider = {
     setAsync,
     listAsync,
     resetAsync,
+    loadedAsync,
 }

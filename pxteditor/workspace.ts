@@ -57,6 +57,7 @@ namespace pxt.workspace {
         setAsync(h: Header, prevVersion: Version, text?: ScriptText): Promise<Version>;
         deleteAsync?: (h: Header, prevVersion: Version) => Promise<void>;
         resetAsync(): Promise<void>;
+        loadedAsync?: () => Promise<void>;
 
         // optional screenshot support
         saveScreenshotAsync?: (h: Header, screenshot: string, icon: string) => Promise<void>;
