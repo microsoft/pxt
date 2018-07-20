@@ -291,25 +291,27 @@ namespace pxtblockly {
                 .setAttribute("dominant-baseline", "middle")
                 .setAttribute("dy", 0);
 
-            this.root.onClick(() => {
-                if (this.isLeft) {
-                    this.switch.removeClass("toggle-left");
-                    this.switch.appendClass("toggle-right");
-                    this.leftText.fill(this.props.unselectedTextColor);
-                    this.rightText.fill(this.props.selectedTextColor);
-                }
-                else {
-                    this.switch.removeClass("toggle-right");
-                    this.switch.appendClass("toggle-left");
-                    this.leftText.fill(this.props.selectedTextColor);
-                    this.rightText.fill(this.props.unselectedTextColor);
-                }
-                this.isLeft = !this.isLeft;
+            this.root.onClick(() => this.toggle());
+        }
 
-                if (this.changeHandler) {
-                    this.changeHandler(this.isLeft);
-                }
-            });
+        toggle(quiet = false) {
+            if (this.isLeft) {
+                this.switch.removeClass("toggle-left");
+                this.switch.appendClass("toggle-right");
+                this.leftText.fill(this.props.unselectedTextColor);
+                this.rightText.fill(this.props.selectedTextColor);
+            }
+            else {
+                this.switch.removeClass("toggle-right");
+                this.switch.appendClass("toggle-left");
+                this.leftText.fill(this.props.selectedTextColor);
+                this.rightText.fill(this.props.unselectedTextColor);
+            }
+            this.isLeft = !this.isLeft;
+
+            if (!quiet && this.changeHandler) {
+                this.changeHandler(this.isLeft);
+            }
         }
 
         onStateChange(handler: (left: boolean) => void) {

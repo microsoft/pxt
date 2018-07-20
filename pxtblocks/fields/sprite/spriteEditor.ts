@@ -241,18 +241,8 @@ namespace pxtblockly {
                 this.undoStack.push(this.cachedState)
                 this.redoStack = [];
             }
-            this.columns = width;
-            this.rows = height;
-
             this.state = resizeBitmap(this.cachedState, width, height);
-            this.paintSurface.restore(this.state, true);
-            this.canvasDimensions.text(`${this.columns}x${this.rows}`)
-            this.layout();
-
-            this.paintSurface.showOverlay();
-
-            // Canvas size changed and some edits rely on that (like paint)
-            this.edit = this.newEdit(this.color);
+            this.afterResize(true);
         }
 
         setSizePresets(presets: [number, number][]) {
@@ -280,11 +270,35 @@ namespace pxtblockly {
         }
 
         showGallery() {
-            this.gallery.show();
+            this.gallery.show((result: Bitmap, err?: string) => {
+                if (err) {
+                    console.error(err);
+                }
+                else if (result) {
+                    this.redoStack = [];
+                    this.pushState(true);
+                    this.restore(result);
+                    this.hideGallery();
+                    this.header.toggle.toggle(true);
+                }
+            });
         }
 
         hideGallery() {
             this.gallery.hide();
+        }
+
+        private afterResize(showOverlay: boolean) {
+            this.columns = this.state.width;
+            this.rows = this.state.height;
+            this.paintSurface.restore(this.state, true);
+            this.canvasDimensions.text(`${this.columns}x${this.rows}`)
+            this.layout();
+
+            if (showOverlay) this.paintSurface.showOverlay();
+
+            // Canvas size changed and some edits rely on that (like paint)
+            this.edit = this.newEdit(this.color);
         }
 
         protected drawReporterBar() {
@@ -343,8 +357,14 @@ namespace pxtblockly {
         }
 
         private restore(bitmap: Bitmap) {
-            this.state.apply(bitmap);
-            this.paintSurface.restore(bitmap, true);
+            if (bitmap.width !== this.state.width || bitmap.height !== this.state.height) {
+                this.state = bitmap;
+                this.afterResize(false);
+            }
+            else {
+                this.state.apply(bitmap);
+                this.paintSurface.restore(bitmap, true);
+            }
         }
 
         private updateUndoRedo() {

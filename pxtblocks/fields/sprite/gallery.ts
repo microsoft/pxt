@@ -17,6 +17,8 @@ namespace pxtblockly {
 
         protected visible = false;
 
+        protected pending: (res: Bitmap, err?: string) => void;
+
         constructor(info: pxtc.BlocksInfo) {
             this.info = info;
 
@@ -43,7 +45,12 @@ namespace pxtblockly {
             return this.containerDiv;
         }
 
-        show() {
+        show(cb: (res: Bitmap, err?: string) => void) {
+            if (this.pending) {
+                this.reject("Error: multiple calls");
+            }
+            this.pending = cb;
+
             this.containerDiv.style.display = "block";
             this.buildDom();
             this.visible = true;
@@ -51,6 +58,9 @@ namespace pxtblockly {
         }
 
         hide() {
+            if (this.pending) {
+                this.reject("cancelled");
+            }
             this.visible = false;
             this.contentDiv.setAttribute("class", "hidden-above");
         }
@@ -110,7 +120,7 @@ namespace pxtblockly {
             let button = document.createElement('button');
             button.setAttribute('id', ':' + i); // For aria-activedescendant
             button.setAttribute('role', 'menuitem');
-            button.setAttribute('class', 'blocklyDropDownButton');
+            button.setAttribute('class', 'blocklyDropDownButton sprite-editor-card');
             button.title = alt;
             button.style.width = width;
             button.style.height = width;
@@ -127,15 +137,15 @@ namespace pxtblockly {
             // because Android has a bad long press "helper" menu and green highlight
             // that we must prevent with ontouchstart preventDefault
             Blockly.bindEvent_(button, 'mousedown', button, function (e) {
-                this.setAttribute('class', 'blocklyDropDownButton blocklyDropDownButtonHover');
+                this.setAttribute('class', 'blocklyDropDownButton blocklyDropDownButtonHover sprite-editor-card');
                 e.preventDefault();
             });
             Blockly.bindEvent_(button, 'mouseover', button, function () {
-                this.setAttribute('class', 'blocklyDropDownButton blocklyDropDownButtonHover');
+                this.setAttribute('class', 'blocklyDropDownButton blocklyDropDownButtonHover sprite-editor-card');
                 parentDiv.setAttribute('aria-activedescendant', this.id);
             });
             Blockly.bindEvent_(button, 'mouseout', button, function () {
-                this.setAttribute('class', 'blocklyDropDownButton');
+                this.setAttribute('class', 'blocklyDropDownButton sprite-editor-card');
                 parentDiv.removeAttribute('aria-activedescendant');
             });
 
@@ -147,8 +157,67 @@ namespace pxtblockly {
             this.contentDiv.appendChild(button);
         }
 
-        protected handleSelection(value: string) {
+        protected resolve(bitmap: Bitmap) {
+            if (this.pending) {
+                const cb = this.pending;
+                this.pending = undefined;
+                cb(bitmap);
+            }
+        }
 
+        protected reject(reason: string) {
+            if (this.pending) {
+                const cb = this.pending;
+                this.pending = undefined;
+                cb(undefined, reason);
+            }
+        }
+
+        protected handleSelection(value: string) {
+            this.resolve(this.getBitmap(value));
+        }
+
+        protected getBitmap(qName: string) {
+            const sym = this.info.apis.byQName[qName];
+            const jresURL = sym.attributes.jresURL;
+            const data = atob(jresURL.slice(jresURL.indexOf(",") + 1))
+            const magic = data.charCodeAt(0);
+            const w = data.charCodeAt(1);
+            const h = data.charCodeAt(2);
+
+            const out = new Bitmap(w, h);
+
+            let index = 4
+            if (magic === 0xe1) {
+                // Monochrome
+                let mask = 0x01
+                let v = data.charCodeAt(index++)
+                for (let x = 0; x < w; ++x) {
+                    for (let y = 0; y < h; ++y) {
+                        out.set(x, y, (v & mask) ? 1 : 0);
+                        mask <<= 1
+                        if (mask == 0x100) {
+                            mask = 0x01
+                            v = data.charCodeAt(index++)
+                        }
+                    }
+                }
+            }
+            else {
+                // Color
+                for (let x = 0; x < w; x++) {
+                    for (let y = 0; y < h; y += 2) {
+                        let v = data.charCodeAt(index++)
+                        out.set(x, y, v & 0xf);
+                        if (y != h - 1) {
+                            out.set(x, y + 1, (v >> 4) & 0xf);
+                        }
+                    }
+                    while (index & 3) index++
+                }
+            }
+
+            return out;
         }
 
 
@@ -160,7 +229,7 @@ namespace pxtblockly {
                 return {
                     qName: sym.qName,
                     src: sym.attributes.iconURL,
-                    alt: "FIXME"
+                    alt: sym.qName
                 };
             });
         }
