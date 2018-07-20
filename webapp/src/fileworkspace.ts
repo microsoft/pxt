@@ -21,7 +21,7 @@ export function setApiAsync(f: (path: string, data?: any) => Promise<any>) {
 }
 
 function getAsync(h: Header) {
-    return apiAsync("pkg/" + h.id)
+    return apiAsync("pkg/" + h.path)
         .then((resp: pxt.FsPkg) => {
             let r: pxt.workspace.File = {
                 header: h,
@@ -30,7 +30,7 @@ function getAsync(h: Header) {
             }
             for (let f of resp.files) {
                 r.text[f.name] = f.content
-                h.modificationTime = Math.max(h.modificationTime, f.mtime)
+                h.modificationTime = Math.max(h.modificationTime, (f.mtime / 1000) | 0)
             }
             h.recentUse = Math.max(h.recentUse, h.modificationTime)
             r.version = U.flatClone(r.text)
@@ -72,16 +72,18 @@ async function listAsync(): Promise<Header[]> {
             time.sort((a, b) => b - a)
             let modTime = Math.round(time[0] / 1000) || U.nowSeconds()
             pkg.header = pxt.workspace.freshHeader(pkg.config.name, modTime)
+            pkg.header.path = pkg.path
             // generate new header and save it
             await setAsync(pkg.header, null)
+        } else {
+            pkg.header.path = pkg.path
         }
-        pkg.header.path = pkg.path
     }
     return h.pkgs.map(p => p.header)
 }
 
 function saveScreenshotAsync(h: Header, screenshot: string, icon: string) {
-    return apiAsync("screenshot/" + h.id, { screenshot, icon })
+    return apiAsync("screenshot/" + h.path, { screenshot, icon })
 }
 
 function resetAsync() {

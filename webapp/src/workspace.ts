@@ -11,6 +11,9 @@ import * as memoryworkspace from "./memoryworkspace"
 import * as iframeworkspace from "./iframeworkspace"
 import * as cloudsync from "./cloudsync"
 
+import U = pxt.Util;
+import Cloud = pxt.Cloud;
+
 type Header = pxt.workspace.Header;
 type ScriptText = pxt.workspace.ScriptText;
 type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
@@ -25,9 +28,6 @@ interface HeaderWithScript {
 let allScripts: HeaderWithScript[] = [];
 
 let headerQ = new U.PromiseQueue();
-
-import U = pxt.Util;
-import Cloud = pxt.Cloud;
 
 let impl: WorkspaceProvider;
 
