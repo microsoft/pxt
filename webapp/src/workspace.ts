@@ -55,6 +55,7 @@ export function setupWorkspace(id: string) {
             impl = pxt.winrt.workspace.getProvider(fileworkspace.provider);
             break;
         case "cloud":
+        case "browser":
         default:
             impl = cloudworkspace.provider
             break;

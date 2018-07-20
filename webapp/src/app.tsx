@@ -2653,14 +2653,12 @@ document.addEventListener("DOMContentLoaded", () => {
         })
         .then(() => pxt.BrowserUtils.initTheme())
         .then(() => cmds.initCommandsAsync())
-        .then(() => {
-            render();
-            return workspace.initAsync();
-        })
+        .then(() => workspace.initAsync())
         .then((state) => {
             if (state) {
                 theEditor.setState({ editorState: state });
             }
+            render();
             initSerial();
             initScreenshots();
             initHashchange();
