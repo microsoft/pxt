@@ -3,110 +3,54 @@ type Header = pxt.workspace.Header;
 type Project = pxt.workspace.Project;
 type ScriptText = pxt.workspace.ScriptText;
 type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
-type InstallHeader = pxt.workspace.InstallHeader;
 import U = pxt.Util;
 
 export let projects: pxt.Map<Project> = {};
-let target = "";
-let targetVersion = "";
 
 export function merge(prj: Project) {
     let h: Header = prj.header;
     if (!h) {
-        prj.header = h = {
-            id: ts.pxtc.Util.guidGen(),
-            recentUse: U.nowSeconds(),
-            modificationTime: U.nowSeconds(),
-            target: target,
-            targetVersion: targetVersion,
-            _rev: undefined,
-            blobId: undefined,
-            blobVersion: undefined,
-            blobCurrent: undefined,
-            isDeleted: false,
-            name: lf("Untitled"),
-            meta: {
-
-            },
-            editor: pxt.BLOCKS_PROJECT_NAME,
-            pubId: undefined,
-            pubCurrent: undefined
-        }
+        prj.header = h = pxt.workspace.freshHeader(lf("Untitled"), U.nowSeconds())
     }
     projects[prj.header.id] = prj;
 }
 
-function getHeaders(): Header[] {
-    return pxt.Util.values(projects).map(p => p.header);
+function listAsync() {
+    return Promise.resolve(U.values(projects).map(p => p.header))
 }
 
-function getHeader(id: string): Header {
-    let p = projects[id];
-    return p ? p.header : undefined;
-}
-
-function getTextAsync(id: string): Promise<ScriptText> {
-    let p = projects[id];
-    return Promise.resolve(p ? p.text : undefined);
-}
-
-function initAsync(trg: string, version: string): Promise<void> {
-    target = trg;
-    targetVersion = version;
-    return Promise.resolve();
-}
-
-function saveAsync(h: Header, text?: ScriptText): Promise<void> {
-    projects[h.id] = {
+function getAsync(h: Header): Promise<pxt.workspace.File> {
+    let p = projects[h.id];
+    return Promise.resolve({
         header: h,
-        text: text
-    }
-    return Promise.resolve();
+        text: p ? p.text : {},
+        version: null,
+    })
 }
 
-function importAsync(h: Header, text: ScriptText): Promise<void> {
-    return saveAsync(h, text)
+function setAsync(h: Header, prevVer: any, text?: ScriptText) {
+    if (text)
+        projects[h.id] = {
+            header: h,
+            text: text
+        }
+    return Promise.resolve()
 }
 
-function saveToCloudAsync(h: Header): Promise<void> {
-    return Promise.resolve();
-}
-
-function syncAsync(): Promise<pxt.editor.EditorSyncState> {
-    return Promise.resolve(undefined);
+function deleteAsync(h: Header, prevVer: any) {
+    delete projects[h.id]
+    return Promise.resolve()
 }
 
 function resetAsync(): Promise<void> {
     projects = {}
-    target = "";
     return Promise.resolve();
-}
-
-function loadedAsync(): Promise<void> {
-    return Promise.resolve();
-}
-
-function duplicateAsync(h: Header, text: ScriptText): Promise<Header> {
-    let e = projects[h.id]    
-    U.assert(e.header === h)
-    let h2 = U.flatClone(h)
-    e.header = h2
-    h.id = U.guidGen()
-    h.name += " #2"
-    return importAsync(h, text)
-        .then(() => h2)
 }
 
 export const provider: WorkspaceProvider = {
-    getHeaders,
-    getHeader,
-    getTextAsync,
-    initAsync,
-    saveAsync,
-    importAsync,
-    duplicateAsync,
-    saveToCloudAsync,
-    syncAsync,
+    getAsync,
+    setAsync,
+    deleteAsync,
+    listAsync,
     resetAsync,
-    loadedAsync
 }

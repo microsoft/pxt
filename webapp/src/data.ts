@@ -321,33 +321,4 @@ export class PureComponent<TProps, TState> extends React.PureComponent<TProps, T
     }
 }
 
-function inv(id: string) {
-    invalidate("header:*");
-    invalidate("header:" + id);
-    invalidate("text:" + id);
-}
-
-export function wrapWorkspace(ws: pxt.workspace.WorkspaceProvider): pxt.workspace.WorkspaceProvider {
-    return {
-        initAsync: ws.initAsync,
-        resetAsync: () => ws.resetAsync().then(() => {
-            clearCache()
-        }),
-        getHeaders: ws.getHeaders,
-        getHeader: ws.getHeader,
-        syncAsync: () => ws.syncAsync().then((state) => {
-            inv("")
-            return state;
-        }),
-        getTextAsync: ws.getTextAsync,
-        saveAsync: (h, t) => ws.saveAsync(h, t).then(() => inv(h.id)),
-        saveToCloudAsync: ws.saveToCloudAsync,
-        saveScreenshotAsync: ws.saveScreenshotAsync,
-        importAsync: (h, t) => ws.importAsync(h, t).then(() => inv(h.id)),
-        duplicateAsync: (h, t) => ws.duplicateAsync(h, t).then(r => (inv(h.id), r)),
-        loadedAsync: ws.loadedAsync
-    };
-}
-
-
 loadCache();

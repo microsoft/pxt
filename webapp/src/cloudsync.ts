@@ -51,7 +51,7 @@ export function providers() {
 
     let cl = pxt.appTarget.cloud
 
-    // TODO remove before merge
+    // TODO remove before merging the PR
     if (cl && !cl.cloudProviders) {
         cl.cloudProviders = {
             "onedrive": {
@@ -74,7 +74,7 @@ export function setProvider(impl: Provider) {
 async function syncOneUpAsync(h: Header) {
     let saveId = {}
     h.saveId = saveId;
-    let text = await wsimpl.getTextAsync(h.id)
+    let text = await ws.getTextAsync(h.id)
 
     text = U.flatClone(text)
     text[HEADER_JSON] = JSON.stringify(h, null, 4)
@@ -103,7 +103,7 @@ async function syncOneUpAsync(h: Header) {
     h.blobVersion = info.version
     if (h.saveId === saveId)
         h.blobCurrent = true
-    await wsimpl.saveAsync(h)
+    await ws.saveAsync(h)
 }
 
 export function resetAsync() {
@@ -123,19 +123,19 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
         pxt.debug(`uninstall local ${h.blobId}`)
         h.isDeleted = true
         h.blobVersion = "DELETED"
-        return wsimpl.saveAsync(h, {})
+        return ws.saveAsync(h)
     }
 
     async function resolveConflictAsync(header: Header, cloudHeader: FileInfo) {
         // rename current script
-        let text = await wsimpl.getTextAsync(header.id)
-        let newHd = await wsimpl.duplicateAsync(header, text)
+        let text = await ws.getTextAsync(header.id)
+        let newHd = await ws.duplicateAsync(header, text)
         header.blobId = null
         header.blobVersion = null
         header.blobCurrent = false
         header.name = "# " + header.name
         // TODO update name in pxt.json        
-        await wsimpl.saveAsync(header, text)
+        await ws.saveAsync(header, text)
         // get the cloud version
         await syncDownAsync(newHd, cloudHeader)
         // TODO kick the user out of editor, or otherwise force reload
@@ -173,9 +173,9 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
                 updated[header.blobId] = 1;
 
                 if (!header0)
-                    return wsimpl.importAsync(header, files)
+                    return ws.importAsync(header, files)
                 else
-                    return wsimpl.saveAsync(header, files)
+                    return ws.saveAsync(header, files)
             })
             .then(() => progress(--numDown))
     }
@@ -210,7 +210,7 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
 
     return provider.listAsync()
         .then(entries => {
-            let allScripts = wsimpl.getHeaders()
+            let allScripts = ws.getHeaders()
             let cloudHeaders = U.toDictionary(entries, e => e.id)
             let existingHeaders = U.toDictionary(allScripts, h => h.blobId)
             let waitFor = allScripts.map(hd => {
