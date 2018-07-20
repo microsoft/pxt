@@ -15,6 +15,7 @@ type InstallHeader = pxt.workspace.InstallHeader;
 
 interface HeaderWithScript {
     id: string;
+    path: string;
     header: Header;
     text: ScriptText;
     fsText: ScriptText;
@@ -23,7 +24,7 @@ interface HeaderWithScript {
 }
 
 function lookup(id: string) {
-    return allScripts.filter(x => x.id == id)[0]
+    return allScripts.filter(x => x.id == id || x.path == id)[0]
 }
 
 function getHeaders() {
@@ -177,8 +178,7 @@ function saveAsync(h: Header, text: ScriptText) {
     return saveCoreAsync(h, text)
 }
 
-function installAsync(h0: InstallHeader, text: ScriptText) {
-    const h = <Header>h0
+function importAsync(h: Header, text: ScriptText) {
     let path = h.name.replace(/[^a-zA-Z0-9]+/g, " ").trim().replace(/ /g, "-")
     if (lookup(path)) {
         let n = 2
@@ -187,9 +187,6 @@ function installAsync(h0: InstallHeader, text: ScriptText) {
         path += "-" + n
         h.name += " " + n
     }
-    h.id = path;
-    h.recentUse = U.nowSeconds()
-    h.modificationTime = h.recentUse;
     const e: HeaderWithScript = {
         id: h.id,
         header: h,
@@ -252,7 +249,7 @@ export const provider: WorkspaceProvider = {
     getTextAsync,
     initAsync,
     saveAsync,
-    installAsync,
+    importAsync,
     saveToCloudAsync,
     syncAsync,
     resetAsync,

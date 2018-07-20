@@ -99,7 +99,9 @@ function readAssetsAsync(logicalDirname: string): Promise<any> {
         }))
 }
 
-function readPkgAsync(logicalDirname: string, fileContents = false): Promise<FsPkg> {
+const HEADER_JSON = ".header.json"
+
+async function readPkgAsync(logicalDirname: string, fileContents = false): Promise<FsPkg> {
     let dirname = path.join(userProjectsDir, logicalDirname)
     let r: FsPkg = undefined;
     return readFileAsync(path.join(dirname, pxt.CONFIG_NAME))
@@ -126,13 +128,30 @@ function readPkgAsync(logicalDirname: string, fileContents = false): Promise<FsP
                     r = {
                         path: logicalDirname,
                         config: cfg,
+                        header: null,
                         files: files
                     };
                     return existsAsync(path.join(dirname, "icon.jpeg"));
-                }).then(icon => {
-                    r.icon = icon ? "/icon/" + logicalDirname : undefined;
-                    return r;
                 })
+                .then(icon => {
+                    r.icon = icon ? "/icon/" + logicalDirname : undefined;
+                    return readFileAsync(path.join(dirname, HEADER_JSON))
+                        .then(b => b, err => null)
+                })
+                .then(buf => {
+                    if (!buf || !buf.length) {
+                        // no .header.json - generate a new one
+                        r.header = {
+                            id: U.guidGen(),
+                            name: cfg.name,
+                        }
+                        return writeFileAsync(path.join(dirname, HEADER_JSON), JSON.stringify(r.header, null, 4))
+                    } else {
+                        r.header = JSON.parse(buf.toString("utf8"))
+                    }
+                })
+                .then(() => r)
+                
         })
 }
 
