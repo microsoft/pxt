@@ -32,8 +32,12 @@ function saveAsync(header: Header, text?: ScriptText): Promise<void> {
         })).then(() => { })
 }
 
-function installAsync(h0: InstallHeader, text: ScriptText): Promise<Header> {
-    return mem.provider.installAsync(h0, text);
+function importAsync(h0: Header, text: ScriptText): Promise<void> {
+    return mem.provider.importAsync(h0, text);
+}
+
+function duplicateAsync(h: Header, text: ScriptText): Promise<Header> {
+    return mem.provider.duplicateAsync(h, text);
 }
 
 function saveToCloudAsync(h: Header): Promise<void> {
@@ -81,7 +85,8 @@ export const provider: WorkspaceProvider = {
     getTextAsync,
     initAsync,
     saveAsync,
-    installAsync,
+    importAsync,
+    duplicateAsync,
     saveToCloudAsync,
     syncAsync,
     resetAsync,

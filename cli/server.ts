@@ -133,25 +133,19 @@ async function readPkgAsync(logicalDirname: string, fileContents = false): Promi
                     };
                     return existsAsync(path.join(dirname, "icon.jpeg"));
                 })
-                .then(icon => {
-                    r.icon = icon ? "/icon/" + logicalDirname : undefined;
+                .then(iconPresent => {
+                    r.icon = iconPresent ? "/icon/" + logicalDirname : undefined;
+
+                    // now try reading the header
                     return readFileAsync(path.join(dirname, HEADER_JSON))
                         .then(b => b, err => null)
                 })
                 .then(buf => {
-                    if (!buf || !buf.length) {
-                        // no .header.json - generate a new one
-                        r.header = {
-                            id: U.guidGen(),
-                            name: cfg.name,
-                        }
-                        return writeFileAsync(path.join(dirname, HEADER_JSON), JSON.stringify(r.header, null, 4))
-                    } else {
+                    if (buf && buf.length)
                         r.header = JSON.parse(buf.toString("utf8"))
-                    }
                 })
                 .then(() => r)
-                
+
         })
 }
 
@@ -215,6 +209,10 @@ function writePkgAsync(logicalDirname: string, data: FsPkg) {
         // no conflict, proceed with writing
         .then(() => Promise.map(data.files, f =>
             writeFileAsync(path.join(dirname, f.name), f.content)))
+        .then(() => {
+            if (data.header)
+                return writeFileAsync(path.join(dirname, HEADER_JSON), JSON.stringify(data.header, null, 4))
+        })
         .then(() => readPkgAsync(logicalDirname, false))
 }
 

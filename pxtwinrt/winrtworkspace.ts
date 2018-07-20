@@ -17,6 +17,7 @@ namespace pxt.winrt.workspace {
     let currentTargetVersion: string;
 
     interface HeaderWithScript {
+        path: string;
         id: string;
         header: Header;
         text: ScriptText;
@@ -44,44 +45,38 @@ namespace pxt.winrt.workspace {
         let e = lookup(pkg.path)
         if (!e) {
             e = {
-                id: pkg.path,
-                header: null,
+                path: pkg.path,
+                id: pkg.header ? pkg.header.id : null,
+                header: pkg.header,
                 text: null,
                 fsText: null
             }
             allScripts.push(e)
         }
 
-        let time = pkg.files.map(f => f.mtime)
-        time.sort((a, b) => b - a)
-        let modTime = Math.round(time[0] / 1000) || U.nowSeconds()
-        let hd: Header = {
-            target: currentTarget,
-            targetVersion: e.header ? e.header.targetVersion : currentTargetVersion,
-            name: pkg.config.name,
-            meta: {},
-            editor: pxt.JAVASCRIPT_PROJECT_NAME,
-            pubId: pkg.config.installedVersion,
-            pubCurrent: false,
-            _rev: null,
-            id: pkg.path,
-            recentUse: modTime,
-            modificationTime: modTime,
-            blobVersion: null,
-            blobCurrent: false,
-            isDeleted: false,
-            icon: pkg.icon
-        }
-
         if (!e.header) {
-            e.header = hd
-        } else {
-            let eh = e.header
-            eh.name = hd.name
-            eh.pubId = hd.pubId
-            eh.modificationTime = hd.modificationTime
-            eh.isDeleted = hd.isDeleted
-            eh.icon = hd.icon
+            let time = pkg.files.map(f => f.mtime)
+            time.sort((a, b) => b - a)
+            let modTime = Math.round(time[0] / 1000) || U.nowSeconds()
+
+            e.header = {
+                target: currentTarget,
+                targetVersion: e.header ? e.header.targetVersion : currentTargetVersion,
+                name: pkg.config.name,
+                meta: {},
+                editor: pxt.JAVASCRIPT_PROJECT_NAME,
+                pubId: pkg.config.installedVersion,
+                pubCurrent: false,
+                _rev: null,
+                id: pkg.path,
+                recentUse: modTime,
+                modificationTime: modTime,
+                blobId: null,
+                blobVersion: null,
+                blobCurrent: false,
+                isDeleted: false,
+                icon: pkg.icon
+            }
         }
     }
 
@@ -148,6 +143,7 @@ namespace pxt.winrt.workspace {
             U.assert(!!e.fsText)
             let pkg: pxt.FsPkg = {
                 files: [],
+                header: h,
                 config: null,
                 path: h.id,
             }
@@ -177,20 +173,22 @@ namespace pxt.winrt.workspace {
         return saveCoreAsync(h, text)
     }
 
-    function installAsync(h0: InstallHeader, text: ScriptText): Promise<Header> {
-        const h = <Header>h0
+    function computePath(h: Header) {
         let path = h.name.replace(/[^a-zA-Z0-9]+/g, " ").trim().replace(/ /g, "-")
         if (lookup(path)) {
             let n = 2
             while (lookup(path + "-" + n))
                 n++;
             path += "-" + n
-            h.name += " " + n
         }
-        h.id = path;
-        h.recentUse = U.nowSeconds()
-        h.modificationTime = h.recentUse;
+
+        return path
+    }
+
+    function importAsync(h: Header, text: ScriptText) {
+        let path = computePath(h)
         const e: HeaderWithScript = {
+            path: path,
             id: h.id,
             header: h,
             text: text,
@@ -198,7 +196,18 @@ namespace pxt.winrt.workspace {
         }
         allScripts.push(e)
         return saveCoreAsync(h, text)
-            .then(() => h)
+    }
+
+    function duplicateAsync(h: Header, text: ScriptText): Promise<Header> {
+        let e = lookup(h.id)
+        U.assert(e.header === h)
+        let h2 = U.flatClone(h)
+        e.header = h2
+
+        h.id = U.guidGen()
+        h.name += " #2"
+        return importAsync(h, text)
+            .then(() => h2)
     }
 
     function saveToCloudAsync(h: Header) {
@@ -245,6 +254,8 @@ namespace pxt.winrt.workspace {
         throw err
     }
 
+    const HEADER_JSON = ".header.json"
+
     function writePkgAsync(logicalDirname: string, data: FsPkg): Promise<FsPkg> {
         pxt.debug(`winrt: writing package at ${logicalDirname}`);
         return promisify(folder.createFolderAsync(logicalDirname, Windows.Storage.CreationCollisionOption.openIfExists))
@@ -269,6 +280,7 @@ namespace pxt.winrt.workspace {
                 }, err => { })))
             // no conflict, proceed with writing
             .then(() => Promise.map(data.files, f => writeFileAsync(logicalDirname, f.name, f.content)))
+            .then(() => writeFileAsync(logicalDirname, HEADER_JSON, JSON.stringify(data.header, null, 4)))
             .then(() => readPkgAsync(logicalDirname, false));
     }
 
@@ -295,12 +307,18 @@ namespace pxt.winrt.workspace {
                                     })
                         }))
                     .then(files => {
-                        const rs = <FsPkg>{
+                        const rs: FsPkg = {
                             path: logicalDirname,
+                            header: null,
                             config: cfg,
                             files: files
                         };
-                        return rs;
+                        return readFileAsync(pathjoin(logicalDirname, HEADER_JSON))
+                            .then(text => {
+                                if (text)
+                                    rs.header = JSON.parse(text)
+                            }, e => { })
+                            .then(() => rs)
                     })
             })
     }
@@ -310,7 +328,11 @@ namespace pxt.winrt.workspace {
             .then(fds => Promise.all(fds.map(fd => readPkgAsync(fd.name, false))))
             .then(hs => {
                 hs.forEach(mergeFsPkg);
-                return undefined;
+                return Promise.all(hs.filter(h => !h.header).map(h => {
+                    let e = lookup(h.path)
+                    return saveAsync(e.header)
+                }))
+                .then(() => )
             });
     }
 
@@ -333,7 +355,8 @@ namespace pxt.winrt.workspace {
         getTextAsync,
         initAsync,
         saveAsync,
-        installAsync,
+        importAsync,
+        duplicateAsync,
         saveToCloudAsync,
         syncAsync,
         resetAsync,

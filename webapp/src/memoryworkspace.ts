@@ -20,6 +20,7 @@ export function merge(prj: Project) {
             target: target,
             targetVersion: targetVersion,
             _rev: undefined,
+            blobId: undefined,
             blobVersion: undefined,
             blobCurrent: undefined,
             isDeleted: false,
@@ -63,13 +64,8 @@ function saveAsync(h: Header, text?: ScriptText): Promise<void> {
     return Promise.resolve();
 }
 
-function installAsync(h0: InstallHeader, text: ScriptText): Promise<Header> {
-    let h = <Header>h0
-    h.id = ts.pxtc.Util.guidGen();
-    h.recentUse = U.nowSeconds()
-    h.modificationTime = h.recentUse;
-
-    return saveAsync(h, text).then(() => h);
+function importAsync(h: Header, text: ScriptText): Promise<void> {
+    return saveAsync(h, text)
 }
 
 function saveToCloudAsync(h: Header): Promise<void> {
@@ -90,13 +86,25 @@ function loadedAsync(): Promise<void> {
     return Promise.resolve();
 }
 
+function duplicateAsync(h: Header, text: ScriptText): Promise<Header> {
+    let e = projects[h.id]    
+    U.assert(e.header === h)
+    let h2 = U.flatClone(h)
+    e.header = h2
+    h.id = U.guidGen()
+    h.name += " #2"
+    return importAsync(h, text)
+        .then(() => h2)
+}
+
 export const provider: WorkspaceProvider = {
     getHeaders,
     getHeader,
     getTextAsync,
     initAsync,
     saveAsync,
-    installAsync,
+    importAsync,
+    duplicateAsync,
     saveToCloudAsync,
     syncAsync,
     resetAsync,

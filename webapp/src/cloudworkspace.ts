@@ -174,12 +174,10 @@ function duplicateAsync(h: Header, text: ScriptText): Promise<Header> {
     let e = lookup(h.id)
     U.assert(e.header === h)
     let h2 = U.flatClone(h)
-    e.id = h.id = U.guidGen()
-    e.text = null
-    e.textRev = null
-    e.textNeedsSave = false
-    return saveCoreAsync(h, text)
-        .then(() => importAsync(h2, text))
+    e.header = h2
+    h.id = U.guidGen()
+    h.name += " #2"
+    return importAsync(h, text)
         .then(() => h2)
 }
 

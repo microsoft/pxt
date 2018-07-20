@@ -138,12 +138,20 @@ export function saveAsync(h: Header, text?: ScriptText) {
     if (text || h.isDeleted) {
         h.pubCurrent = false
         h.blobCurrent = false
+        h.saveId = null
         h.modificationTime = U.nowSeconds();
     }
     h.recentUse = U.nowSeconds();
     // update version on save    
     h.targetVersion = pxt.appTarget.versions.target;
     return impl.saveAsync(h, text)
+        .then(() => {
+            if (text || h.isDeleted) {
+                h.pubCurrent = false
+                h.blobCurrent = false
+                h.saveId = null
+            }
+        })
 }
 
 export function installAsync(h0: InstallHeader, text: ScriptText) {

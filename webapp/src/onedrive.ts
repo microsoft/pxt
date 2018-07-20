@@ -1,7 +1,6 @@
 import * as core from "./core";
 import * as cloudsync from "./cloudsync";
 
-const client_id = "bf0ee68a-56b5-4b23-bbdb-5daf01a8f6cd"
 const scopes = "files.readwrite.appfolder"
 const rootdir = "/drive/special/approot"
 const ns = "onedrive"
@@ -57,6 +56,10 @@ function fileSuffix() {
     return ".mkcd-" + pxt.appTarget.id
 
 }
+
+function parseTime(s: string) {
+    return Math.round(new Date(s).getTime() / 1000)
+}
 function listAsync() {
     // ,size,cTag
     return getJsonAsync(rootdir + "/children?select=@microsoft.graph.downloadUrl,lastModifiedDateTime,eTag,id,name")
@@ -71,6 +74,7 @@ function listAsync() {
                     id: r.id,
                     name: r.name,
                     version: r.eTag,
+                    updatedAt: parseTime(r["@microsoft.graph.downloadUrl"])
                 })
             }
             return res
@@ -92,6 +96,7 @@ async function downloadAsync(id: string): Promise<cloudsync.FileInfo> {
             id: id,
             version: cached.eTag,
             name: cached.name || "?",
+            updatedAt: parseTime(resp.headers["last-modified"] as string),
             content: JSON.parse(resp.text)
         }
     } catch (e) {
@@ -105,7 +110,7 @@ async function downloadAsync(id: string): Promise<cloudsync.FileInfo> {
 }
 
 
-async function uploadAsync(id: string, files: pxt.Map<string>): Promise<cloudsync.FileInfo> {
+async function uploadAsync(id: string, prevVersion: string, files: pxt.Map<string>): Promise<cloudsync.FileInfo> {
     let cached = entryCache[id || "???"]
     if (cached)
         delete cached["@microsoft.graph.downloadUrl"]
@@ -121,7 +126,12 @@ async function uploadAsync(id: string, files: pxt.Map<string>): Promise<cloudsyn
     let resp = await reqAsync({
         url: path + "/content",
         method: "PUT",
-        data: JSON.stringify(files, null, 1)
+        data: JSON.stringify(files, null, 1),
+        // TODO check if this works
+        headers: !prevVersion ? {} :
+            {
+                "if-match": prevVersion
+            }
     })
 
     if (resp.statusCode != 201)
@@ -133,8 +143,21 @@ async function uploadAsync(id: string, files: pxt.Map<string>): Promise<cloudsyn
     return {
         id: cached.id,
         version: cached.eTag,
+        updatedAt: U.nowSeconds(),
         name: cached.name,
     }
+}
+
+async function deleteAsync(id: string): Promise<void> {
+    let resp = await reqAsync({
+        url: "/drive/items/" + id,
+        method: "DELETE",
+    })
+
+    if (resp.statusCode != 204)
+        U.userError(lf("Can't delete {0} file", friendlyName))
+
+    delete entryCache[id]
 }
 
 function loginCheck() {
@@ -166,6 +189,8 @@ function login() {
     pxt.storage.setLocal("oauthState", state)
     pxt.storage.setLocal("oauthType", ns)
 
+    const client_id = (pxt.appTarget.cloud.cloudProviders["onedrive"] as any)["client_id"]
+
     const login = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize" +
         "?client_id=" + client_id +
         "&scope=" + encodeURIComponent(scopes) +
@@ -190,5 +215,6 @@ export const impl: cloudsync.Provider = {
     loginCallback,
     listAsync,
     downloadAsync,
+    deleteAsync,
     uploadAsync
 }

@@ -51,8 +51,9 @@ function mergeFsPkg(pkg: pxt.FsPkg) {
     let e = lookup(pkg.path)
     if (!e) {
         e = {
-            id: pkg.path,
-            header: null,
+            id: pkg.header ? pkg.header.id : "",
+            path: pkg.path,
+            header: pkg.header,
             text: null,
             fsText: null
         }
@@ -62,34 +63,29 @@ function mergeFsPkg(pkg: pxt.FsPkg) {
     let time = pkg.files.map(f => f.mtime)
     time.sort((a, b) => b - a)
     let modTime = Math.round(time[0] / 1000) || U.nowSeconds()
-    let hd: Header = {
-        target: currentTarget,
-        targetVersion: e.header ? e.header.targetVersion : currentTargetVersion,
-        name: pkg.config.name,
-        meta: {},
-        editor: pxt.JAVASCRIPT_PROJECT_NAME,
-        pubId: pkg.config.installedVersion,
-        pubCurrent: false,
-        _rev: null,
-        id: pkg.path,
-        recentUse: modTime,
-        modificationTime: modTime,
-        blobVersion: null,
-        blobCurrent: false,
-        isDeleted: false,
-        icon: pkg.icon
-    }
 
     if (!e.header) {
-        e.header = hd
-    } else {
-        let eh = e.header
-        eh.name = hd.name
-        eh.pubId = hd.pubId
-        eh.modificationTime = hd.modificationTime
-        eh.isDeleted = hd.isDeleted
-        eh.icon = hd.icon
+        e.header = {
+            target: currentTarget,
+            targetVersion: currentTargetVersion,
+            name: pkg.config.name,
+            meta: {},
+            editor: pxt.JAVASCRIPT_PROJECT_NAME,
+            pubId: pkg.config.installedVersion,
+            pubCurrent: false,
+            _rev: null,
+            id: U.guidGen(),
+            recentUse: modTime,
+            modificationTime: modTime,
+            blobId: null,
+            blobVersion: null,
+            blobCurrent: false,
+            isDeleted: false,
+            icon: pkg.icon
+        }
     }
+
+    e.id = e.header.id
 }
 
 function initAsync(target: string, version: string) {
@@ -146,6 +142,7 @@ function saveCoreAsync(h: Header, text?: ScriptText) {
         let pkg: pxt.FsPkg = {
             files: [],
             config: null,
+            header: h,
             path: h.id,
         }
         for (let fn of Object.keys(e.text)) {
@@ -178,16 +175,22 @@ function saveAsync(h: Header, text: ScriptText) {
     return saveCoreAsync(h, text)
 }
 
-function importAsync(h: Header, text: ScriptText) {
+function computePath(h: Header) {
     let path = h.name.replace(/[^a-zA-Z0-9]+/g, " ").trim().replace(/ /g, "-")
     if (lookup(path)) {
         let n = 2
         while (lookup(path + "-" + n))
             n++;
         path += "-" + n
-        h.name += " " + n
     }
+
+    return path
+}
+
+function importAsync(h: Header, text: ScriptText) {
+    let path = computePath(h)
     const e: HeaderWithScript = {
+        path: path,
         id: h.id,
         header: h,
         text: text,
@@ -195,7 +198,6 @@ function importAsync(h: Header, text: ScriptText) {
     }
     allScripts.push(e)
     return saveCoreAsync(h, text)
-        .then(() => h)
 }
 
 function saveToCloudAsync(h: Header) {
@@ -242,6 +244,18 @@ function listAssetsAsync(id: string): Promise<pxt.workspace.Asset[]> {
     return apiAsync("pkgasset/" + id).then(r => r.files)
 }
 
+function duplicateAsync(h: Header, text: ScriptText): Promise<Header> {
+    let e = lookup(h.id)
+    U.assert(e.header === h)
+    let h2 = U.flatClone(h)
+    e.header = h2
+
+    h.id = U.guidGen()
+    h.name += " #2"
+    return importAsync(h, text)
+        .then(() => h2)
+}
+
 
 export const provider: WorkspaceProvider = {
     getHeaders,
@@ -251,6 +265,7 @@ export const provider: WorkspaceProvider = {
     saveAsync,
     importAsync,
     saveToCloudAsync,
+    duplicateAsync,
     syncAsync,
     resetAsync,
     loadedAsync,
