@@ -1397,6 +1397,7 @@ export interface BuildTargetOptions {
     localDir?: boolean;
     packaged?: boolean;
     skipCore?: boolean;
+    quick?: boolean;
 }
 
 export function buildTargetAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
@@ -1889,6 +1890,10 @@ function updateTOC(cfg: pxt.TargetBundle) {
     }
 }
 
+function rebundleAsync() {
+    return buildTargetCoreAsync({ quick: true })
+}
+
 function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
     let cfg = readLocalPxTarget()
     updateDefaultProjects(cfg);
@@ -1921,7 +1926,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
     pxt.log(`building target.json in ${process.cwd()}...`)
 
     return buildWebStringsAsync()
-        .then(() => internalGenDocsAsync(false, true))
+        .then(() => options.quick ? null : internalGenDocsAsync(false, true))
         .then(() => forEachBundledPkgAsync((pkg, dirname) => {
             pxt.log(`building ${dirname}`);
             let isPrj = /prj$/.test(dirname);
@@ -1938,7 +1943,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                     }
                     if (isHw) isPrj = true
                 })
-                .then(() => testForBuildTargetAsync(isPrj || (!options.skipCore && isCore)))
+                .then(() => options.quick ? null : testForBuildTargetAsync(isPrj || (!options.skipCore && isCore)))
                 .then((compileOpts) => {
                     // For the projects, we need to save the base HEX file to the offline HEX cache
                     if (isPrj && pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
@@ -5519,6 +5524,12 @@ function initCommands() {
         help: "build dal.d.ts in current directory (might need to move)",
         advanced: true
     }, buildDalDTSAsync);
+
+    p.defineCommand({
+        name: "rebundle",
+        help: "update packages embedded in target.json (quick version of 'pxt bt')",
+        advanced: true
+    }, rebundleAsync);
 
     p.defineCommand({
         name: "pokerepo",
