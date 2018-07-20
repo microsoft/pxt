@@ -110,7 +110,7 @@ export function resetAsync() {
     return Promise.resolve()
 }
 
-export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
+export function syncAsync(): Promise<void> {
     let numUp = 0
     let numDown = 0
     let blobConatiner = ""
@@ -249,7 +249,6 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
         })
         .then(() => progressMsg(lf("Syncing done")))
         .then(() => pkg.notifySyncDone(updated))
-        .then(() => undefined)
         .catch(core.handleNetworkError)
 }
 

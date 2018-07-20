@@ -2654,11 +2654,8 @@ document.addEventListener("DOMContentLoaded", () => {
         .then(() => pxt.BrowserUtils.initTheme())
         .then(() => cmds.initCommandsAsync())
         .then(() => {
-            return workspace.initAsync();
-        })
-        .then(() => {
             render();
-            return workspace.syncAsync();
+            return workspace.initAsync();
         })
         .then((state) => {
             if (state) {

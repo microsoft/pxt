@@ -12,20 +12,26 @@ function loadedAsync(): Promise<void> {
     }).then(() => { })
 }
 
+let lastSyncState: pxt.editor.EditorSyncState
+
 function listAsync() {
     return pxt.editor.postHostMessageAsync(<pxt.editor.EditorWorkspaceSyncRequest>{
-            type: "pxthost",
-            action: "workspacesync",
-            response: true
-        }).then((msg: pxt.editor.EditorWorkspaceSyncResponse) => {
-            (msg.projects || []).forEach(mem.merge);
+        type: "pxthost",
+        action: "workspacesync",
+        response: true
+    }).then((msg: pxt.editor.EditorWorkspaceSyncResponse) => {
+        (msg.projects || []).forEach(mem.merge);
 
-            // controllerId is a unique identifier of the controller source
-            pxt.tickEvent("pxt.controller", { controllerId: msg.controllerId });
+        lastSyncState = msg.editor
 
-            return mem.provider.listAsync()
-        })
+        // controllerId is a unique identifier of the controller source
+        pxt.tickEvent("pxt.controller", { controllerId: msg.controllerId });
+
+        return mem.provider.listAsync()
+    })
 }
+
+function getSyncState() { return lastSyncState }
 
 function getAsync(h: Header): Promise<pxt.workspace.File> {
     return mem.provider.getAsync(h)
@@ -56,4 +62,5 @@ export const provider: WorkspaceProvider = {
     listAsync,
     resetAsync,
     loadedAsync,
+    getSyncState
 }

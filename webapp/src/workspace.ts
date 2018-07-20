@@ -96,7 +96,9 @@ export function initAsync() {
     pxt.storage.setLocal('pxt_workspace_session_id', sessionID);
     pxt.debug(`workspace session: ${sessionID}`);
 
-    return Promise.resolve()
+    allScripts = []
+
+    return syncAsync()
 }
 
 export function getTextAsync(id: string): Promise<ScriptText> {
@@ -341,6 +343,7 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
             data.invalidate("text:")
         })
         .then(cloudsync.syncAsync)
+        .then(() => impl.getSyncState ? impl.getSyncState() : null)
 }
 
 export function resetAsync() {

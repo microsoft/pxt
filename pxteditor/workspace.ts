@@ -58,6 +58,7 @@ namespace pxt.workspace {
         deleteAsync?: (h: Header, prevVersion: Version) => Promise<void>;
         resetAsync(): Promise<void>;
         loadedAsync?: () => Promise<void>;
+        getSyncState?: () => pxt.editor.EditorSyncState;
 
         // optional screenshot support
         saveScreenshotAsync?: (h: Header, screenshot: string, icon: string) => Promise<void>;
