@@ -115,16 +115,17 @@ async function uploadAsync(id: string, prevVersion: string, files: pxt.Map<strin
     if (cached)
         delete cached["@microsoft.graph.downloadUrl"]
 
-    let path = "/drive/items/" + id
+    let path = "/drive/items/" + id + "/content"
 
     if (!id) {
         let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig
         let xname = cfg.name.replace(/[~"#%&*:<>?/\\{|}]+/g, "_")
-        path = rootdir + ":/" + encodeURIComponent(xname + fileSuffix()) + ":"
+        path = rootdir + ":/" + encodeURIComponent(xname + fileSuffix()) + 
+          ":/content?@microsoft.graph.conflictBehavior=rename"
     }
 
     let resp = await reqAsync({
-        url: path + "/content",
+        url: path,
         method: "PUT",
         data: JSON.stringify(files, null, 1),
         // TODO check if this works

@@ -1,10 +1,10 @@
 // TODO detect login to a different account
 // TODO recentUse is bumped on sync down
-// TODO onedrive @microsoft.graph.conflictBehavior=rename
 // TODO token redirect address
 // TODO UI for login
 // TODO cloud save indication in the editor somewhere
 // TODO trigger sync on home screen?
+// TODO test conflict "resolution"
 
 import * as core from "./core";
 import * as pkg from "./package";
