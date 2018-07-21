@@ -201,10 +201,9 @@ function login() {
 }
 
 function loginCallback(qs: pxt.Map<string>) {
-    console.log("ONE", qs)
     pxt.storage.removeLocal(ns + "AutoLogin")
     pxt.storage.setLocal(ns + "token", qs["access_token"])
-    let time = Math.round(Date.now() / 1000 + (0.6 * parseInt(qs["expires_in"])))
+    let time = Math.round(Date.now() / 1000 + (0.75 * parseInt(qs["expires_in"])))
     pxt.storage.setLocal(ns + "tokenExp", time + "")
 }
 

@@ -1,4 +1,10 @@
 // TODO detect login to a different account
+// TODO recentUse is bumped on sync down
+// TODO onedrive @microsoft.graph.conflictBehavior=rename
+// TODO token redirect address
+// TODO UI for login
+// TODO cloud save indication in the editor somewhere
+// TODO trigger sync on home screen?
 
 import * as core from "./core";
 import * as pkg from "./package";
@@ -7,9 +13,7 @@ import * as ws from "./workspace";
 import * as onedrive from "./onedrive";
 
 type Header = pxt.workspace.Header;
-type ScriptText = pxt.workspace.ScriptText;
 type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
-type InstallHeader = pxt.workspace.InstallHeader;
 
 import U = pxt.Util;
 const lf = U.lf
@@ -287,4 +291,3 @@ export function saveToCloudAsync(h: Header) {
     if (!provider) return Promise.resolve();
     return syncOneUpAsync(h)
 }
-
