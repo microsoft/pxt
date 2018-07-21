@@ -107,7 +107,7 @@ async function syncOneUpAsync(h: Header) {
     h.blobVersion = info.version
     if (h.saveId === saveId)
         h.blobCurrent = true
-    await ws.saveAsync(h)
+    await ws.saveAsync(h, null, true)
 }
 
 export function resetAsync() {
@@ -127,7 +127,7 @@ export function syncAsync(): Promise<void> {
         pxt.debug(`uninstall local ${h.blobId}`)
         h.isDeleted = true
         h.blobVersion = "DELETED"
-        return ws.saveAsync(h)
+        return ws.saveAsync(h, null, true)
     }
 
     async function resolveConflictAsync(header: Header, cloudHeader: FileInfo) {
@@ -137,7 +137,6 @@ export function syncAsync(): Promise<void> {
         header.blobId = null
         header.blobVersion = null
         header.blobCurrent = false
-        header.name = "# " + header.name
         // TODO update name in pxt.json        
         await ws.saveAsync(header, text)
         // get the cloud version
@@ -178,9 +177,9 @@ export function syncAsync(): Promise<void> {
                 updated[header.blobId] = 1;
 
                 if (!header0)
-                    return ws.importAsync(header, files)
+                    return ws.importAsync(header, files, true)
                 else
-                    return ws.saveAsync(header, files)
+                    return ws.saveAsync(header, files, true)
             })
             .then(() => progress(--numDown))
     }

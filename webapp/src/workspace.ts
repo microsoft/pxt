@@ -158,7 +158,7 @@ export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptM
         })
 }
 
-export function saveAsync(h: Header, text?: ScriptText): Promise<void> {
+export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Promise<void> {
     checkSession();
     U.assert(h.target == pxt.appTarget.id);
 
@@ -168,6 +168,9 @@ export function saveAsync(h: Header, text?: ScriptText): Promise<void> {
     let e = lookup(h.id)
     U.assert(e.header === h)
 
+    if (!isCloud)
+        h.recentUse = U.nowSeconds()
+
     if (text || h.isDeleted) {
         if (text)
             e.text = text
@@ -175,6 +178,8 @@ export function saveAsync(h: Header, text?: ScriptText): Promise<void> {
         h.blobCurrent = false
         h.saveId = null
         h.modificationTime = U.nowSeconds();
+        // update version on save    
+        h.targetVersion = pxt.appTarget.versions.target;
     }
 
     // perma-delete
@@ -185,10 +190,6 @@ export function saveAsync(h: Header, text?: ScriptText): Promise<void> {
         return headerQ.enqueue(h.id, () =>
             impl.deleteAsync ? impl.deleteAsync(h, e.version) : impl.setAsync(h, e.version, {}))
     }
-
-    h.recentUse = U.nowSeconds();
-    // update version on save    
-    h.targetVersion = pxt.appTarget.versions.target;
 
     return headerQ.enqueue<void>(h.id, () =>
         impl.setAsync(h, e.version, text ? e.text : null)
@@ -218,7 +219,7 @@ function computePath(h: Header) {
     return path
 }
 
-export function importAsync(h: Header, text: ScriptText) {
+export function importAsync(h: Header, text: ScriptText, isCloud = false) {
     h.path = computePath(h)
     const e: HeaderWithScript = {
         header: h,
@@ -226,7 +227,7 @@ export function importAsync(h: Header, text: ScriptText) {
         version: null
     }
     allScripts.push(e)
-    return saveAsync(h, text)
+    return saveAsync(h, text, isCloud)
 }
 
 export function installAsync(h0: InstallHeader, text: ScriptText) {
@@ -336,7 +337,7 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
                     ex = {
                         header: hd,
                         text: null,
-                        version: null,        
+                        version: null,
                     }
                 }
                 allScripts.push(ex)
