@@ -122,5 +122,70 @@
 }
 
 .sprite-editor-card {
+    // This inlined SVG is the checkerboard that appears behind gallery images
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10px' height='10px'%3E%3Crect x='0' y='0' width='10px' height='10px' fill='white'%3E%3C/rect%3E%3Crect x='0' y='0' width='5px' height='5px' fill='%23dedede'%3E%3C/rect%3E%3Crect x='5' y='5' width='5px' height='5px' fill='%23dedede'%3E%3C/rect%3E%3C/svg%3E");
+}
+
+.sprite-editor-icon {
+    fill: white;
+    font-family: "Icons";
+    font-size: 19px;
+}
+
+.sprite-editor-button {
+    cursor: pointer;
+}
+
+.sprite-editor-button-bg {
+    fill: #525a5b;
+}
+
+.sprite-editor-button-fg {
+    fill: #7f8c8d;
+}
+
+.sprite-editor-button.disabled {
+    cursor: not-allowed;
+
+    .sprite-editor-button-bg {
+        fill-opacity: 0.8;
+    }
+
+    .sprite-editor-button-fg {
+        fill-opacity: 0.8;
+    }
+}
+
+.sprite-editor-button:active:not(.disabled) {
+    .sprite-editor-button-bg {
+        fill-opacity: 1 !important;
+        transition: fill-opacity 0.1s;
+    }
+
+    .sprite-editor-button-fg {
+        fill-opacity: 1 !important;
+        transition: fill-opacity 0.1s;
+    }
+}
+
+.sprite-editor-button:hover:not(.disabled) {
+    .sprite-editor-button-fg {
+        fill-opacity: 0.8;
+        transition: fill-opacity 0.1s;
+    }
+
+    .sprite-editor-button-bg {
+        fill-opacity: 0.8;
+        transition: fill-opacity 0.1s;
+    }
+}
+
+.sprite-editor-button.selected {
+    .sprite-editor-button-bg {
+        fill: #313636;
+    }
+
+    .sprite-editor-button-fg {
+        fill: #495353;
+    }
 }

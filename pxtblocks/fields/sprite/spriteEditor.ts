@@ -20,7 +20,7 @@ namespace pxtblockly {
     const TOOLBAR_HEIGHT = 50;
 
     // Spacing between the toolbar and the canvas
-    const TOOLBAR_CANVAS_MARGIN = 5;
+    const TOOLBAR_CANVAS_MARGIN = 10;
 
     // Height of the bar that displays editor size and info below the canvas
     const REPORTER_BAR_HEIGHT = 13;
@@ -29,7 +29,7 @@ namespace pxtblockly {
     const REPORTER_BAR_CANVAS_MARGIN = 5;
 
     // Spacing between palette and paint surface
-    const PALETTE_CANVAS_MARGIN = 0;
+    const PALETTE_CANVAS_MARGIN = 10;
 
     // Total allowed height of paint surface
     const CANVAS_HEIGHT = TOTAL_HEIGHT - TOOLBAR_HEIGHT - TOOLBAR_CANVAS_MARGIN
@@ -159,6 +159,7 @@ namespace pxtblockly {
             this.root.attr({ "width": this.outerWidth() + "px", "height": this.outerHeight() + "px" });
             this.root.el.style.position = "absolute";
             this.root.el.style.top = "0px";
+            this.root.el.style.left = "0px";
         }
 
         layout(): void {
@@ -167,12 +168,12 @@ namespace pxtblockly {
             }
 
             this.paintSurface.setGridDimensions(CANVAS_HEIGHT);
-            this.sidebar.setWidth(SIDEBAR_WIDTH);
+            // this.sidebar.setWidth(SIDEBAR_WIDTH);
 
             // The width of the palette + editor
             const editorWidth = SIDEBAR_WIDTH + PALETTE_CANVAS_MARGIN + CANVAS_HEIGHT;
-            const editorLeft = (TOTAL_WIDTH / 2) - (editorWidth / 2);
-            const paintAreaTop = TOOLBAR_HEIGHT + TOOLBAR_CANVAS_MARGIN + PADDING;
+            const editorLeft = Math.floor((TOTAL_WIDTH / 2) - (editorWidth / 2));
+            const paintAreaTop = TOOLBAR_HEIGHT + TOOLBAR_CANVAS_MARGIN;
             const paintAreaLeft = editorLeft + SIDEBAR_WIDTH + PALETTE_CANVAS_MARGIN;
 
             this.sidebar.translate(editorLeft, paintAreaTop);

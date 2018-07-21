@@ -326,8 +326,19 @@ namespace pxtblockly {
 
         private layoutCanvas(canvas: HTMLCanvasElement, top: number, left: number, width: number, height: number) {
             canvas.style.position = "absolute";
-            canvas.style.left = (left + dropdownPaddding + (width - canvas.width) / 2) + "px";
-            canvas.style.top = top + "px";
+
+            if (this.image.width === this.image.height) {
+                canvas.style.top = top + "px";
+                canvas.style.left = left + "px";
+            }
+            else if (this.image.width > this.image.height) {
+                canvas.style.top = (top + dropdownPaddding + (height - canvas.height) / 2) + "px";
+                canvas.style.left = left + "px";
+            }
+            else {
+                canvas.style.top = top + "px";
+                canvas.style.left = (left + dropdownPaddding + (width - canvas.width) / 2) + "px";
+            }
         }
     }
 

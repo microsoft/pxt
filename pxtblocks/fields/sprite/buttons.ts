@@ -341,6 +341,208 @@ namespace pxtblockly {
         }
     }
 
+    const BUTTON_BOTTOM_OFFSET = 3;
+    const BUTTON_BORDER_WIDTH = 1;
+    const BUTTON_CORNER_RADIUS = 2;
+
+    export abstract class BaseButton {
+        root: svg.Group;
+        clickHandler: () => void;
+
+        constructor(parent: svg.Group) {
+            this.root = parent.group().appendClass("sprite-editor-button");
+            this.root.onClick(() => this.clickHandler && this.clickHandler());
+        }
+
+
+        public addClass(className: string) {
+            this.root.appendClass(className);
+        }
+
+        public removeClass(className: string) {
+            this.root.removeClass(className);
+        }
+
+        public onClick(clickHandler: () => void) {
+            this.clickHandler = clickHandler;
+        }
+
+        public translate(x: number, y: number) {
+            this.root.translate(x, y);
+        }
+
+        public title(text: string) {
+            this.root.title(text);
+        }
+    }
+
+    export abstract class NewButton extends BaseButton {
+        background: svg.Rect;
+        foreground: svg.Rect;
+        content: svg.Group;
+        width = 31;
+
+        constructor(parent: svg.Group) {
+            super(parent);
+            this.root.style().content(`
+            .test-anim {
+                animation: dom-test 0.2s 0s ease;
+            }
+
+            @keyframes dom-test {
+                0% {
+                    transform: translateX(0px);
+                }
+                100% {
+                    transform: translateX(0px);
+                }
+            }
+            `);
+            this.buildDom();
+        }
+
+        protected abstract buildContent(g: svg.Group): void;
+        protected abstract layout(): void;
+
+        protected buildDom() {
+            this.background = this.root.draw("rect")
+                .size(this.width, this.width)
+                .corners(BUTTON_CORNER_RADIUS, BUTTON_CORNER_RADIUS)
+                .appendClass("sprite-editor-button-bg");
+
+            this.foreground = this.root.draw("rect")
+                .at(BUTTON_BORDER_WIDTH, BUTTON_BORDER_WIDTH)
+                .size(this.width - BUTTON_BORDER_WIDTH * 2, this.width - BUTTON_BOTTOM_OFFSET - BUTTON_BORDER_WIDTH)
+                .corners(BUTTON_CORNER_RADIUS, BUTTON_CORNER_RADIUS)
+                .appendClass("sprite-editor-button-fg");
+
+            this.content = this.root.group();
+            this.buildContent(this.content);
+
+            this.background.el.style.animation = "dom-test";
+            this.background.el.addEventListener("animationstart", () => {
+                this.layout();
+            });
+        }
+    }
+
+    export class NewFontButton extends NewButton {
+        iconEl: svg.Text;
+        constructor(parent: svg.Group, icon: string) {
+            super(parent);
+            this.iconEl.text(icon);
+        }
+
+        protected buildContent(g: svg.Group) {
+            this.iconEl = g.draw("text")
+                .appendClass("sprite-editor-icon")
+                .setAttribute("dominant-baseline", "middle")
+                .setAttribute("dy", 2.5);
+        }
+
+        protected layout() {
+            const width = this.iconEl.el.getComputedTextLength();
+            this.content.translate((this.width - width) / 2, (this.width - BUTTON_BOTTOM_OFFSET - BUTTON_BORDER_WIDTH) / 2)
+        }
+    }
+
+    enum ClipType {
+        Left,
+        Mid,
+        Right
+    }
+
+    function drawButtonPath(width: number, height: number, r: number, type: ClipType) {
+        const p = new svg.Path();
+
+        switch (type) {
+            case ClipType.Left:
+                p.d.moveTo(0, 0)
+                    .lineTo(width - r, 0)
+                    .arcTo(r, r, 0, false, true, width, r)
+                    .lineTo(width, height - r)
+                    .arcTo(r, r, 0, false, true, width - r, height)
+                    .lineTo(0, height)
+                    .lineTo(0, 0)
+                    .close();
+                break;
+            case ClipType.Right:
+                p.d.moveTo(r, 0)
+                    .lineTo(width, 0)
+                    .lineTo(width, height)
+                    .lineTo(r, height)
+                    .arcTo(r, r, 0, false, true, 0, height - r)
+                    .lineTo(0, r)
+                    .arcTo(r, r, 0, false, true, r, 0)
+                    .close();
+                break;
+            case ClipType.Mid:
+                p.d.moveTo(0, 0)
+                    .lineTo(width, 0)
+                    .lineTo(width, height)
+                    .lineTo(0, height)
+                    .lineTo(0, 0)
+                    .close();
+                break;
+        }
+
+        p.update();
+        return p;
+    }
+
+    const G_WIDTH = 65;
+    const G_OVERLAP = 1;
+    const G_END_WIDTH = Math.ceil(G_WIDTH / 3);
+    const G_MID_WIDTH = G_WIDTH - G_END_WIDTH * 2 - G_OVERLAP * 2;
+    const G_HEIGHT = G_END_WIDTH - G_OVERLAP;
+
+    export class CursorMultiButton {
+        root: svg.Group;
+        background: svg.Rect;
+
+        indexHandler: (index: number) => void;
+
+        constructor(parent: svg.Group, width: number) {
+            this.root = parent.group();
+
+            // Left button
+            this.mkButton(G_END_WIDTH, 2, 0, ClipType.Right);
+
+            // Right button
+            this.mkButton(G_END_WIDTH, 8, G_END_WIDTH + G_MID_WIDTH - 2, ClipType.Left);
+
+            // Middle button
+            this.mkButton(G_MID_WIDTH, 5, G_END_WIDTH - 1, ClipType.Mid);
+        }
+
+        private mkButton(width: number, size: number, left: number, clip: ClipType) {
+            const btnRoot = this.root.group().appendClass("sprite-editor-button");
+            const background = drawButtonPath(width, G_HEIGHT, BUTTON_CORNER_RADIUS, clip);
+            background.appendClass("sprite-editor-button-bg");
+            btnRoot.appendChild(background);
+
+            const foreground = drawButtonPath(width - BUTTON_BORDER_WIDTH * 2, G_HEIGHT - BUTTON_BOTTOM_OFFSET - BUTTON_BORDER_WIDTH, BUTTON_CORNER_RADIUS, clip)
+            foreground.appendClass("sprite-editor-button-fg")
+                .setAttribute("transform", `translate(${BUTTON_BORDER_WIDTH} ${BUTTON_BORDER_WIDTH})`);
+            btnRoot.appendChild(foreground);
+
+            btnRoot.draw("rect")
+                .fill("white")
+                .size(size, size)
+                .at((width - size) / 2, (G_HEIGHT - BUTTON_BOTTOM_OFFSET - size) / 2)
+
+            btnRoot.translate(left, 0);
+        }
+
+        protected handleClick(index: number) {
+            if (this.indexHandler) this.indexHandler(index);
+        }
+
+        onSelected(cb: (index: number) => void) {
+            this.indexHandler = cb;
+        }
+    }
+
 
     function defaultColors(props: Partial<ToggleProps>): ToggleProps {
         if (!props.baseColor) props.baseColor = "#e95153";
