@@ -18,7 +18,7 @@ let wsimpl: WorkspaceProvider
 let allProviders: pxt.Map<Provider>
 let provider: Provider
 
-export const HEADER_JSON = ".header.json"
+const HEADER_JSON = ".cloudheader.json"
 
 export interface FileInfo {
     id: string;
@@ -162,6 +162,7 @@ export function syncAsync(): Promise<void> {
                 header.modificationTime = resp.updatedAt
                 let files = resp.content
                 let hd = JSON.parse(files[HEADER_JSON] || "{}") as Header
+                delete files[HEADER_JSON]
                 // TODO copy anything else from the cloud?
                 header.name = hd.name || header.name || "???"
                 header.id = header.id || hd.id || U.guidGen()

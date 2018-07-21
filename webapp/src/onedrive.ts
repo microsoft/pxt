@@ -142,7 +142,7 @@ async function uploadAsync(id: string, prevVersion: string, files: pxt.Map<strin
 
     return {
         id: cached.id,
-        version: cached.eTag,
+        version: cached.cTag,
         updatedAt: U.nowSeconds(),
         name: cached.name,
     }

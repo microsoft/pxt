@@ -193,7 +193,8 @@ export function saveAsync(h: Header, text?: ScriptText): Promise<void> {
     return headerQ.enqueue<void>(h.id, () =>
         impl.setAsync(h, e.version, text ? e.text : null)
             .then(ver => {
-                e.version = ver
+                if (text)
+                    e.version = ver
                 if (text || h.isDeleted) {
                     h.pubCurrent = false
                     h.blobCurrent = false
