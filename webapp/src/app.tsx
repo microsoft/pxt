@@ -2359,7 +2359,8 @@ let myexports: any = {
     apiAsync: core.apiAsync,
     showIcons,
     assembleCurrent,
-    log
+    log,
+    cloudsync
 };
 (window as any).E = myexports;
 

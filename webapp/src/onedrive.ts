@@ -61,8 +61,8 @@ function parseTime(s: string) {
     return Math.round(new Date(s).getTime() / 1000)
 }
 function listAsync() {
-    // ,size,cTag
-    return getJsonAsync(rootdir + "/children?select=@microsoft.graph.downloadUrl,lastModifiedDateTime,eTag,id,name")
+    // ,size,cTag,eTag
+    return getJsonAsync(rootdir + "/children?select=@microsoft.graph.downloadUrl,lastModifiedDateTime,cTag,id,name")
         .then(lst => {
             let suff = fileSuffix()
             let res: cloudsync.FileInfo[] = []
@@ -73,7 +73,7 @@ function listAsync() {
                 res.push({
                     id: r.id,
                     name: r.name,
-                    version: r.eTag,
+                    version: r.cTag,
                     updatedAt: parseTime(r["@microsoft.graph.downloadUrl"])
                 })
             }
@@ -91,10 +91,10 @@ async function downloadAsync(id: string): Promise<cloudsync.FileInfo> {
     }
     try {
         let resp = await U.requestAsync({ url: cached["@microsoft.graph.downloadUrl"] })
-        cached.eTag = resp.headers["etag"] as string
         return {
             id: id,
-            version: cached.eTag,
+            // We assume the downloadUrl would be for a given cTag; eTags seem to change too often.
+            version: cached.cTag,
             name: cached.name || "?",
             updatedAt: parseTime(resp.headers["last-modified"] as string),
             content: JSON.parse(resp.text)
@@ -134,7 +134,7 @@ async function uploadAsync(id: string, prevVersion: string, files: pxt.Map<strin
             }
     })
 
-    if (resp.statusCode != 201)
+    if (resp.statusCode >= 300)
         U.userError(lf("Can't upload file to {0}", friendlyName))
 
     cached = resp.json
