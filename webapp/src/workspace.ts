@@ -174,12 +174,14 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
     if (text || h.isDeleted) {
         if (text)
             e.text = text
-        h.pubCurrent = false
-        h.blobCurrent = false
+        if (!isCloud) {
+            h.pubCurrent = false
+            h.blobCurrent = false
+            h.modificationTime = U.nowSeconds();
+            h.targetVersion = pxt.appTarget.versions.target;
+        }
         h.saveId = null
-        h.modificationTime = U.nowSeconds();
         // update version on save    
-        h.targetVersion = pxt.appTarget.versions.target;
     }
 
     // perma-delete

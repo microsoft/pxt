@@ -160,12 +160,12 @@ export function syncAsync(): Promise<void> {
             .catch(core.handleNetworkError)
             .then((resp: FileInfo) => {
                 U.assert(resp.id == header.blobId)
-                header.blobCurrent = true
-                header.blobVersion = resp.version
-                header.modificationTime = resp.updatedAt
                 let files = resp.content
                 let hd = JSON.parse(files[HEADER_JSON] || "{}") as Header
                 delete files[HEADER_JSON]
+   
+                header.blobCurrent = true
+                header.blobVersion = resp.version
                 // TODO copy anything else from the cloud?
                 header.name = hd.name || header.name || "???"
                 header.id = header.id || hd.id || U.guidGen()
@@ -174,6 +174,12 @@ export function syncAsync(): Promise<void> {
                 delete header.isDeleted
                 header.saveId = null
                 header.target = pxt.appTarget.id
+                header.recentUse = hd.recentUse
+                header.modificationTime = hd.modificationTime
+                if (!header.modificationTime)
+                    header.modificationTime = resp.updatedAt || U.nowSeconds()
+                if (!header.recentUse)
+                    header.recentUse = header.modificationTime
                 updated[header.blobId] = 1;
 
                 if (!header0)
