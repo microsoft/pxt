@@ -1166,13 +1166,15 @@ int main() {
         }
     }
 
+    export interface HexFileMeta {
+        cloudId: string;
+        targetVersions?: pxt.TargetVersions;
+        editor: string;
+        name: string;
+    }
+
     export interface HexFile {
-        meta?: {
-            cloudId: string;
-            targetVersions?: pxt.TargetVersions;
-            editor: string;
-            name: string;
-        };
+        meta?: HexFileMeta;
         source: string;
     }
 
