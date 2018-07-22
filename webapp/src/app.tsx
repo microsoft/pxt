@@ -824,6 +824,9 @@ export class ProjectView
                     this.setSideMarkdown(readme.content);
                 else if (pkg.mainPkg && pkg.mainPkg.config && pkg.mainPkg.config.documentation)
                     this.setSideDoc(pkg.mainPkg.config.documentation, preferredEditor == this.blocksEditor);
+                
+                // update recentUse on the header
+                return workspace.saveAsync(h)
             }).finally(() => {
                 // Editor is loaded
                 pxt.BrowserUtils.changeHash("#editor", true);
