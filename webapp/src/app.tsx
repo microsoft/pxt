@@ -973,9 +973,13 @@ export class ProjectView
     importHex(data: pxt.cpp.HexFile, createNewIfFailed: boolean = false) {
         const targetId = pxt.appTarget.id;
         if (!data || !data.meta) {
-            core.warningNotification(lf("Sorry, we could not recognize this file."))
-            if (createNewIfFailed) this.openHome();
-            return;
+            if (data && (data as any)[pxt.CONFIG_NAME]) {
+                data = cloudsync.reconstructMeta(data as any)
+            } else {
+                core.warningNotification(lf("Sorry, we could not recognize this file."))
+                if (createNewIfFailed) this.openHome();
+                return;
+            }
         }
 
         if (typeof data.source == "object") {

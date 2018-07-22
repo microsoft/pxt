@@ -45,6 +45,30 @@ export interface Provider {
     deleteAsync(id: string): Promise<void>;
 }
 
+export function reconstructMeta(files: pxt.Map<string>) {
+    let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig
+    let r: pxt.cpp.HexFile = {
+        meta: {
+            cloudId: pxt.CLOUD_ID + pxt.appTarget.id,
+            editor: pxt.BLOCKS_PROJECT_NAME,
+            name: cfg.name,
+        },
+        source: JSON.stringify(files)
+    }
+
+    let hd = JSON.parse(files[HEADER_JSON] || "{}") as pxt.workspace.Header
+    if (hd) {
+        if (hd.editor)
+            r.meta.editor = hd.editor
+        if (hd.target)
+            r.meta.cloudId = pxt.CLOUD_ID + hd.target
+        if (hd.targetVersion)
+            r.meta.targetVersions = { target: hd.targetVersion }
+    }
+
+    return r
+}
+
 export function providers() {
     if (!allProviders) {
         allProviders = {}
@@ -163,7 +187,7 @@ export function syncAsync(): Promise<void> {
                 let files = resp.content
                 let hd = JSON.parse(files[HEADER_JSON] || "{}") as Header
                 delete files[HEADER_JSON]
-   
+
                 header.blobCurrent = true
                 header.blobVersion = resp.version
                 // TODO copy anything else from the cloud?
