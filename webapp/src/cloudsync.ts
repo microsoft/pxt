@@ -10,15 +10,12 @@ import * as core from "./core";
 import * as pkg from "./package";
 import * as ws from "./workspace";
 
-import * as onedrive from "./onedrive";
-
 type Header = pxt.workspace.Header;
 type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
 
 import U = pxt.Util;
 const lf = U.lf
 
-let wsimpl: WorkspaceProvider
 let allProviders: pxt.Map<Provider>
 let provider: Provider
 
@@ -182,10 +179,13 @@ export function reconstructMeta(files: pxt.Map<string>) {
     return r
 }
 
+// these imports have to be after the ProviderBase class definition; otherwise we get crash on startup
+import * as onedrive from "./onedrive";
+
 export function providers() {
     if (!allProviders) {
         allProviders = {}
-        for (let impl of [onedrive.impl]) {
+        for (let impl of [new onedrive.Provider()]) {
             allProviders[impl.name] = impl
         }
     }
@@ -396,11 +396,14 @@ export function syncAsync(): Promise<void> {
         })
         .then(() => progressMsg(lf("Syncing done")))
         .then(() => pkg.notifySyncDone(updated))
-        .catch(core.handleNetworkError)
-}
-
-export function setup(wsimpl_: WorkspaceProvider) {
-    wsimpl = wsimpl_
+        .catch(e => {
+            if (e.isSyncError) {
+                core.warningNotification(e.message)
+                return
+            } else {
+                core.handleNetworkError(e)
+            }
+        })
 }
 
 export function loginCheck() {

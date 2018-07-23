@@ -60,8 +60,6 @@ export function setupWorkspace(id: string) {
             impl = cloudworkspace.provider
             break;
     }
-
-    cloudsync.setup(impl)
 }
 
 export function getHeaders(withDeleted = false) {
@@ -346,8 +344,8 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
             }
             data.invalidate("header:")
             data.invalidate("text:")
+            cloudsync.syncAsync().done() // sync in background
         })
-        .then(cloudsync.syncAsync)
         .then(() => impl.getSyncState ? impl.getSyncState() : null)
 }
 

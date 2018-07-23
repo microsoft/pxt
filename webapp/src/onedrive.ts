@@ -15,7 +15,7 @@ interface OneEntry {
     "cTag": string;
 }
 
-class OneDrive extends cloudsync.ProviderBase implements cloudsync.Provider {
+export class Provider extends cloudsync.ProviderBase implements cloudsync.Provider {
     private entryCache: pxt.Map<OneEntry> = {}
 
     constructor() {
@@ -130,5 +130,3 @@ class OneDrive extends cloudsync.ProviderBase implements cloudsync.Provider {
         delete this.entryCache[id]
     }
 }
-
-export const impl = new OneDrive()
