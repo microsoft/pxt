@@ -296,20 +296,15 @@ export function loginCheck() {
     if (!prov.length)
         return
 
-    let qs = core.parseQueryString((location.hash || "#").slice(1).replace(/%23access_token/, "access_token"))
+    let qs = core.parseQueryString(pxt.storage.getLocal("oauthHash") || "")
     if (qs["access_token"]) {
-        let ex = pxt.storage.getLocal("oauthState")
-        if (ex && ex == qs["state"]) {
-            for (let impl of prov) {
-                if (impl.name == pxt.storage.getLocal("oauthType")) {
-                    pxt.storage.removeLocal("oauthState")
-                    location.hash = location.hash.replace(/(%23)?[\#\&\?]*access_token.*/, "")
-                    impl.loginCallback(qs)
-                    break
-                }
+        for (let impl of prov) {
+            if (impl.name == pxt.storage.getLocal("oauthType")) {
+                pxt.storage.removeLocal("oauthHash");
+                impl.loginCallback(qs)
+                break
             }
         }
-
     }
 
     for (let impl of prov)

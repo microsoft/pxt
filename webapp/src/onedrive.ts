@@ -120,8 +120,8 @@ async function uploadAsync(id: string, prevVersion: string, files: pxt.Map<strin
     if (!id) {
         let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig
         let xname = cfg.name.replace(/[~"#%&*:<>?/\\{|}]+/g, "_")
-        path = rootdir + ":/" + encodeURIComponent(xname + fileSuffix()) + 
-          ":/content?@microsoft.graph.conflictBehavior=rename"
+        path = rootdir + ":/" + encodeURIComponent(xname + fileSuffix()) +
+            ":/content?@microsoft.graph.conflictBehavior=rename"
     }
 
     let resp = await reqAsync({
@@ -185,10 +185,11 @@ function loginCheck() {
 
 function login() {
     core.showLoading(ns + "login", lf("Logging you in to {0}...", friendlyName))
-    const self = window.location.href.replace(/#.*/, "")
     const state = ts.pxtc.Util.guidGen();
     pxt.storage.setLocal("oauthState", state)
     pxt.storage.setLocal("oauthType", ns)
+    pxt.storage.setLocal("oauthRedirect", window.location.href)
+    const redir = window.location.protocol + "//" + window.location.host + "/oauth-redirect"
 
     const client_id = (pxt.appTarget.cloud.cloudProviders["onedrive"] as any)["client_id"]
 
@@ -196,8 +197,8 @@ function login() {
         "?client_id=" + client_id +
         "&scope=" + encodeURIComponent(scopes) +
         "&response_type=token" +
-        "&state=" + state +
-        "&redirect_uri=" + encodeURIComponent(self)
+        "&state=" + encodeURIComponent(state) +
+        "&redirect_uri=" + encodeURIComponent(redir)
     window.location.href = login
 }
 
