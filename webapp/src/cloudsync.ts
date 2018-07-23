@@ -45,6 +45,119 @@ export interface Provider {
     deleteAsync(id: string): Promise<void>;
 }
 
+
+export interface OAuthParams {
+    client_id: string;
+    scope: string;
+    response_type: string;
+    state: string;
+    redirect_uri: string;
+}
+
+export class ProviderBase {
+    constructor(public name: string, public friendlyName: string, public urlRoot: string) {
+    }
+
+    syncError(msg: string) {
+        let e = new Error(msg);
+        (<any>e).isSyncError = true;
+        (<any>e).isUserError = true;
+        throw e
+    }
+
+    protected reqAsync(opts: U.HttpRequestOptions): Promise<U.HttpResponse> {
+        let tok = pxt.storage.getLocal(this.name + "token")
+
+        if (!tok) {
+            this.syncError(lf("Please log in to {0}", this.friendlyName))
+        }
+
+        if (!opts.headers) {
+            opts.headers = {}
+        }
+        opts.headers["Authorization"] = "bearer " + tok
+
+        if (!/^https:\/\//.test(opts.url)) {
+            opts.url = this.urlRoot + opts.url
+        }
+
+        opts.allowHttpErrors = true
+
+        return U.requestAsync(opts)
+        // TODO detect expired token here
+    }
+
+    protected getJsonAsync(path: string) {
+        return this.reqAsync({ url: path })
+            .then(resp => {
+                if (resp.statusCode < 300)
+                    return resp.json
+                throw this.syncError(lf("Invalid {0} response {1} at {2}",
+                    this.friendlyName, resp.statusCode, path))
+            })
+    }
+
+    fileSuffix() {
+        return ".mkcd-" + pxt.appTarget.id
+    }
+
+    parseTime(s: string) {
+        return Math.round(new Date(s).getTime() / 1000)
+    }
+
+    loginCheck() {
+        let tok = pxt.storage.getLocal(this.name + "token")
+
+        if (!tok)
+            return
+
+        setProvider(this as any)
+
+        let exp = parseInt(pxt.storage.getLocal(this.name + "tokenExp") || "0")
+
+        if (exp < Date.now() / 1000) {
+            // if we already attempted autologin (and failed), don't do it again
+            if (pxt.storage.getLocal(this.name + "AutoLogin")) {
+                core.infoNotification(lf("Please log in to {0}", this.friendlyName))
+                return
+            }
+
+            pxt.storage.setLocal(this.name + "AutoLogin", "yes")
+            this.login();
+        }
+    }
+
+    login() {
+        U.userError("Not impl")
+    }
+
+    protected loginInner() {
+        const ns = this.name
+        core.showLoading(ns + "login", lf("Logging you in to {0}...", this.friendlyName))
+        const state = ts.pxtc.Util.guidGen();
+        pxt.storage.setLocal("oauthState", state)
+        pxt.storage.setLocal("oauthType", ns)
+        pxt.storage.setLocal("oauthRedirect", window.location.href)
+        const redir = window.location.protocol + "//" + window.location.host + "/oauth-redirect"
+        const r: OAuthParams = {
+            client_id: (pxt.appTarget.cloud.cloudProviders[this.name] as any)["client_id"],
+            response_type: "token",
+            state: state,
+            redirect_uri: redir,
+            scope: ""
+        }
+        return r
+    }
+
+    loginCallback(qs: pxt.Map<string>) {
+        const ns = this.name
+        pxt.storage.removeLocal(ns + "AutoLogin")
+        pxt.storage.setLocal(ns + "token", qs["access_token"])
+        let time = Math.round(Date.now() / 1000 + (0.75 * parseInt(qs["expires_in"])))
+        pxt.storage.setLocal(ns + "tokenExp", time + "")
+    }
+}
+
 export function reconstructMeta(files: pxt.Map<string>) {
     let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig
     let r: pxt.cpp.HexFile = {
