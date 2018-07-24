@@ -9,7 +9,7 @@ import * as compiler from "./compiler";
 
 import * as codecard from "./codecard"
 import * as carousel from "./carousel";
-import { showAboutDialogAsync } from "./dialogs";
+import { showAboutDialogAsync, showCloudSignInDialog } from "./dialogs";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -35,6 +35,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         this.chgGallery = this.chgGallery.bind(this);
         this.chgCode = this.chgCode.bind(this);
         this.importProject = this.importProject.bind(this);
+        this.cloudSignIn = this.cloudSignIn.bind(this);
         this.setSelected = this.setSelected.bind(this);
     }
 
@@ -165,6 +166,11 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         this.props.parent.importProjectDialog();
     }
 
+    cloudSignIn() {
+        pxt.tickEvent("projects.signin", undefined, { interactiveConsent: true });
+        showCloudSignInDialog();
+    }
+
     renderCore() {
         const { selectedCategory, selectedIndex } = this.state;
 
@@ -199,6 +205,9 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                         <h2 className="ui header">{lf("My Projects")} </h2>
                     </div>
                     <div className="column right aligned">
+                        {pxt.appTarget.cloud && pxt.appTarget.cloud.cloudProviders ?
+                            <sui.Button key="signin" icon="user circle" className="mini import-dialog-btn" textClass="landscape only" text={lf("Sign in")} title={lf("Sign in to sync your projects")} onClick={this.cloudSignIn} />
+                            : undefined}
                         {pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing) ?
                             <sui.Button key="import" icon="upload" className="mini import-dialog-btn" textClass="landscape only" text={lf("Import")} title={lf("Import a project")} onClick={this.importProject} /> : undefined}
                     </div>

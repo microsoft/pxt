@@ -76,7 +76,7 @@ export class ProviderBase {
         if (!opts.headers) {
             opts.headers = {}
         }
-        opts.headers["Authorization"] = "bearer " + tok
+        opts.headers["Authorization"] = "Bearer " + tok
 
         if (!/^https:\/\//.test(opts.url)) {
             opts.url = this.urlRoot + opts.url

@@ -2,6 +2,7 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 
 import * as core from "./core";
+import * as cloudsync from "./cloudsync";
 
 import Cloud = pxt.Cloud;
 
@@ -165,4 +166,15 @@ export function showResetDialogAsync() {
         agreeIcon: "sign out",
         disagreeLbl: lf("Cancel")
     })
+}
+
+export function showCloudSignInDialog() {
+    const providers = cloudsync.providers();
+    if (providers.length == 0)
+        return;
+    if (providers.length == 1)
+        providers[0].login()
+    else
+        // TODO add dialog
+        providers[0].login()
 }
