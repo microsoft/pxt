@@ -1,4 +1,5 @@
 import * as core from "./core";
+import * as electron from "./electron";
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
@@ -38,12 +39,15 @@ function getAsync(h: Header) {
         })
 }
 
+const delText = {}
+
 function setAsync(h: Header, prevVersion: pxt.workspace.Version, text?: ScriptText): Promise<pxt.workspace.Version> {
     let pkg: pxt.FsPkg = {
         files: [],
         config: null,
         header: h,
         path: h.path,
+        isDeleted: text === delText
     }
     if (!prevVersion) prevVersion = {}
     for (let fn of Object.keys(text || {})) {
@@ -63,6 +67,10 @@ function setAsync(h: Header, prevVersion: pxt.workspace.Version, text?: ScriptTe
             //mergeFsPkg(pkg)
             return savedText
         })
+}
+
+function deleteAsync(h: Header, prevVer: any) {
+    return setAsync(h, prevVer, delText)
 }
 
 async function listAsync(): Promise<Header[]> {
@@ -88,7 +96,9 @@ function saveScreenshotAsync(h: Header, screenshot: string, icon: string) {
 }
 
 function resetAsync() {
-    // might want to delete files...
+    if (electron.isElectron)
+        return apiAsync("resetworkspace", {})
+            .then(() => { });
     return Promise.resolve()
 }
 
@@ -111,6 +121,7 @@ export const provider: WorkspaceProvider = {
     setAsync,
     listAsync,
     resetAsync,
+    deleteAsync,
     saveScreenshotAsync,
     saveAssetAsync,
     listAssetsAsync

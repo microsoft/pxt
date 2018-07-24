@@ -369,6 +369,9 @@ export function resetAsync() {
         .then(() => {
             pxt.storage.clearLocal();
             data.clearCache();
+            // keep local token (localhost and electron) on reset
+            if (Cloud.localToken)
+                pxt.storage.setLocal("local_token", Cloud.localToken);
         })
 }
 
