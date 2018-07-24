@@ -51,22 +51,26 @@ export interface OAuthParams {
     redirect_uri: string;
 }
 
+function mkSyncError(msg: string) {
+    const e: any = new Error(msg)
+    e.isUserError = true;
+    e.isSyncError = true;
+    return e
+}
+
 export class ProviderBase {
     constructor(public name: string, public friendlyName: string, public urlRoot: string) {
     }
 
     syncError(msg: string) {
-        let e = new Error(msg);
-        (<any>e).isSyncError = true;
-        (<any>e).isUserError = true;
-        throw e
+        throw mkSyncError(msg)
     }
 
     protected reqAsync(opts: U.HttpRequestOptions): Promise<U.HttpResponse> {
         let tok = pxt.storage.getLocal(this.name + "token")
 
         if (!tok) {
-            this.syncError(lf("Please log in to {0}", this.friendlyName))
+            throw this.pleaseLogin()
         }
 
         if (!opts.headers) {
@@ -102,30 +106,40 @@ export class ProviderBase {
         return Math.round(new Date(s).getTime() / 1000)
     }
 
+    pleaseLogin() {
+        let msg = lf("Please log in to {0}", this.friendlyName)
+
+        core.infoNotification(msg)
+
+        let e = mkSyncError(msg)
+        e.isLoginError = true;
+        return e;
+    }
+
     loginCheck() {
         let tok = pxt.storage.getLocal(this.name + "token")
 
         if (!tok)
             return
 
-        setProvider(this as any)
-
         let exp = parseInt(pxt.storage.getLocal(this.name + "tokenExp") || "0")
 
-        if (exp < Date.now() / 1000) {
+        if (exp && exp < U.nowSeconds()) {
             // if we already attempted autologin (and failed), don't do it again
             if (pxt.storage.getLocal(this.name + "AutoLogin")) {
-                core.infoNotification(lf("Please log in to {0}", this.friendlyName))
+                this.pleaseLogin()
                 return
             }
 
             pxt.storage.setLocal(this.name + "AutoLogin", "yes")
             this.login();
+        } else {
+            setProvider(this as any)
         }
     }
 
     login() {
-        U.userError("Not impl")
+        U.userError("Not implemented")
     }
 
     protected loginInner() {
@@ -398,7 +412,9 @@ export function syncAsync(): Promise<void> {
         .then(() => pkg.notifySyncDone(updated))
         .catch(e => {
             if (e.isSyncError) {
-                core.warningNotification(e.message)
+                // for login errors there was already a notification
+                if (!e.isLoginError)
+                    core.warningNotification(e.message)
                 return
             } else {
                 core.handleNetworkError(e)
