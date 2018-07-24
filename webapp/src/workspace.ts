@@ -10,6 +10,10 @@ import * as fileworkspace from "./fileworkspace"
 import * as memoryworkspace from "./memoryworkspace"
 import * as iframeworkspace from "./iframeworkspace"
 
+// Avoid importing entire crypto-js
+/* tslint:disable:no-submodule-imports */
+const sha1 = require("crypto-js/sha1");
+
 type Header = pxt.workspace.Header;
 type ScriptText = pxt.workspace.ScriptText;
 type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
@@ -21,6 +25,10 @@ import U = pxt.Util;
 import Cloud = pxt.Cloud;
 
 let impl: WorkspaceProvider;
+
+export function gitsha(data: string) {
+    return (sha1("blob " + U.toUTF8(data).length + "\u0000" + data) + "")
+}
 
 export function setupWorkspace(id: string) {
     U.assert(!impl, "workspace set twice");
@@ -258,19 +266,19 @@ export async function commitAsync(hd: Header, msg: string, tag = "", filenames: 
     for (let path of filenames) {
         if (path == GIT_JSON)
             continue
-        let gitsha = U.gitsha(files[path])
+        let sha = gitsha(files[path])
         let ex = gitjson.commit.tree.tree.filter(e => e.path == path)[0]
-        if (!ex || ex.sha != gitsha) {
+        if (!ex || ex.sha != sha) {
             let res = await pxt.github.createObjectAsync(parsed.fullName, "blob", {
                 content: files[path],
                 encoding: "utf-8"
             } as pxt.github.CreateBlobReq)
-            U.assert(res == gitsha)
+            U.assert(res == sha)
             treeUpdate.tree.push({
                 "path": path,
                 "mode": "100644",
                 "type": "blob",
-                "sha": gitsha,
+                "sha": sha,
                 "url": undefined
             })
         }
@@ -319,11 +327,11 @@ async function githubUpdateToAsync(hd: Header, repoid: string, commitid: string,
             files[path] = ""
             return
         }
-        if (files[path] && U.gitsha(files[path]) == treeEnt.sha)
+        if (files[path] && gitsha(files[path]) == treeEnt.sha)
             return
         let text = await pxt.github.downloadTextAsync(parsed.fullName, commitid, path)
         files[path] = text
-        if (U.gitsha(files[path]) != treeEnt.sha)
+        if (gitsha(files[path]) != treeEnt.sha)
             U.userError(lf("Corrupt SHA1 on download of '{0}'.", path))
     }
 
@@ -382,7 +390,7 @@ export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
         let treeEnt = gitjson.commit.tree.tree.filter(e => e.path == k)[0]
         if (!treeEnt || treeEnt.type != "blob")
             return
-        if (files[k] && treeEnt.sha != U.gitsha(U.toUTF8(files[k])))
+        if (files[k] && treeEnt.sha != gitsha(files[k]))
             return
     }
 
