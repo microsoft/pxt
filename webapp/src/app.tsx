@@ -1266,6 +1266,7 @@ export class ProjectView
 
     resetWorkspace() {
         this.reload = true;
+        window.location.hash = "#reload";
         return workspace.resetAsync()
             .done(
                 () => this.reloadEditor(),
