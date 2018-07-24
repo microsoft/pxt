@@ -24,9 +24,14 @@ export class Provider extends cloudsync.ProviderBase implements cloudsync.Provid
 
     login() {
         let p = this.loginInner()
-        p.scope = "files.readwrite.appfolder"
+        p.scope = "Files.ReadWrite.AppFolder User.Read"
         let url = core.stringifyQueryString("https://login.microsoftonline.com/common/oauth2/v2.0/authorize", p)
         window.location.href = url
+    }
+
+    getUserNameAsync() {
+        return this.getJsonAsync("/me")
+            .then(resp => resp.displayName as string || lf("{0} User", this.friendlyName))
     }
 
     listAsync() {

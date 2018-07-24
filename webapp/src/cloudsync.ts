@@ -9,6 +9,7 @@
 import * as core from "./core";
 import * as pkg from "./package";
 import * as ws from "./workspace";
+import * as data from "./data";
 
 type Header = pxt.workspace.Header;
 type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
@@ -18,6 +19,7 @@ const lf = U.lf
 
 let allProviders: pxt.Map<Provider>
 let provider: Provider
+let status = ""
 
 const HEADER_JSON = ".cloudheader.json"
 
@@ -34,6 +36,7 @@ export interface Provider {
     loginCheck(): void;
     login(): void;
     loginCallback(queryString: pxt.Map<string>): void;
+    getUserNameAsync(): Promise<string>;
     listAsync(): Promise<FileInfo[]>;
     // apis below return CloudFile mostly for the version field
     downloadAsync(id: string): Promise<FileInfo>;
@@ -265,6 +268,17 @@ export function resetAsync() {
     return Promise.resolve()
 }
 
+function updateNameAsync() {
+    let name = pxt.storage.getLocal("cloudName");
+    if (name || !provider)
+        return Promise.resolve()
+    return provider.getUserNameAsync()
+        .then(name => {
+            pxt.storage.setLocal("cloudName", name)
+            data.invalidate("sync:username")
+        })
+}
+
 export function syncAsync(): Promise<void> {
     let numUp = 0
     let numDown = 0
@@ -369,7 +383,10 @@ export function syncAsync(): Promise<void> {
             .then(() => uninstallAsync(h))
     }
 
-    return provider.listAsync()
+    setStatus("syncing");
+
+    return updateNameAsync()
+        .then(() => provider.listAsync())
         .then(entries => {
             let allScripts = ws.getHeaders()
             let cloudHeaders = U.toDictionary(entries, e => e.id)
@@ -408,7 +425,10 @@ export function syncAsync(): Promise<void> {
             progress(0)
             return Promise.all(waitFor)
         })
-        .then(() => progressMsg(lf("Syncing done")))
+        .then(() => {
+            setStatus("")
+            progressMsg(lf("Syncing done"))
+        })
         .then(() => pkg.notifySyncDone(updated))
         .catch(e => {
             if (e.isSyncError) {
@@ -447,3 +467,29 @@ export function saveToCloudAsync(h: Header) {
     if (!provider) return Promise.resolve();
     return syncOneUpAsync(h)
 }
+
+function setStatus(s: string) {
+    if (s != status) {
+        status = s
+        data.invalidate("sync:status")
+    }
+}
+
+/*
+    sync:username
+    sync:loggedin
+    sync:status
+*/
+data.mountVirtualApi("sync", {
+    getSync: p => {
+        switch (data.stripProtocol(p)) {
+            case "username":
+                return pxt.storage.getLocal("cloudName")
+            case "loggedin":
+                return provider != null
+            case "status":
+                return status
+        }
+        return null
+    },
+})

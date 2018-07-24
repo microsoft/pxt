@@ -196,6 +196,13 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             'ui segment bottom attached tab active tabsegment'
         ]);
 
+        let signIn = ""
+        let signInIcon = ""
+        if (pxt.appTarget.cloud && pxt.appTarget.cloud.cloudProviders) {
+            signInIcon = this.getData("sync:status") == "syncing" ? "cloud download" : "user circle"
+            signIn = this.getData("sync:username") || lf("Sign in")
+        }
+
         return <div ref="homeContainer" className={tabClasses}>
             {showHeroBanner ?
                 <div className="ui segment getting-started-segment" style={{ backgroundImage: `url(${encodeURI(targetTheme.homeScreenHero)})` }} /> : undefined}
@@ -205,11 +212,11 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                         <h2 className="ui header">{lf("My Projects")} </h2>
                     </div>
                     <div className="column right aligned">
-                        {pxt.appTarget.cloud && pxt.appTarget.cloud.cloudProviders ?
-                            <sui.Button key="signin" icon="user circle" className="mini import-dialog-btn" textClass="landscape only" text={lf("Sign in")} title={lf("Sign in to sync your projects")} onClick={this.cloudSignIn} />
-                            : undefined}
                         {pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing) ?
                             <sui.Button key="import" icon="upload" className="mini import-dialog-btn" textClass="landscape only" text={lf("Import")} title={lf("Import a project")} onClick={this.importProject} /> : undefined}
+                        {signIn ?
+                            <sui.Button key="signin" icon={signInIcon} className="mini import-dialog-btn" textClass="landscape only" text={signIn} title={lf("Sign in to sync your projects")} onClick={this.cloudSignIn} />
+                            : undefined}
                     </div>
                 </div>
                 <div className="content">
