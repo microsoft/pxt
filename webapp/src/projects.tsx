@@ -198,7 +198,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
 
         let signIn = ""
         let signInIcon = ""
-        if (pxt.appTarget.cloud && pxt.appTarget.cloud.cloudProviders) {
+        if (this.getData("sync:hascloud")) {
             signInIcon = this.getData("sync:status") == "syncing" ? "cloud download" : "user circle"
             signIn = this.getData("sync:username") || lf("Sign in")
         }

@@ -91,10 +91,6 @@ export class Provider extends cloudsync.ProviderBase implements cloudsync.Provid
                 "&fields=id,name,version,modifiedTime",
             method: "PATCH",
             data: JSON.stringify(files, null, 1),
-            //headers: !prevVersion ? {} :
-            //    {
-            //        "if-match": prevVersion
-            //    }
         })
 
         if (resp.statusCode >= 300)

@@ -1,5 +1,4 @@
 // TODO cloud save indication in the editor somewhere
-// TODO trigger sync on home screen?
 // TODO test conflict "resolution"
 
 import * as core from "./core";
@@ -531,6 +530,8 @@ data.mountVirtualApi("sync", {
                 return provider != null
             case "status":
                 return status
+            case "hascloud":
+                return providers().length > 0
         }
         return null
     },
