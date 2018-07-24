@@ -1,7 +1,3 @@
-// TODO detect login to a different account
-// TODO recentUse is bumped on sync down
-// TODO token redirect address
-// TODO UI for login
 // TODO cloud save indication in the editor somewhere
 // TODO trigger sync on home screen?
 // TODO test conflict "resolution"
@@ -10,6 +6,7 @@ import * as core from "./core";
 import * as pkg from "./package";
 import * as ws from "./workspace";
 import * as data from "./data";
+import * as dialogs from "./dialogs";
 
 type Header = pxt.workspace.Header;
 type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
@@ -31,12 +28,17 @@ export interface FileInfo {
     content?: pxt.Map<string>;
 }
 
+export interface UserInfo {
+    id: string;
+    name: string;
+}
+
 export interface Provider {
     name: string;
     loginCheck(): void;
     login(): void;
     loginCallback(queryString: pxt.Map<string>): void;
-    getUserNameAsync(): Promise<string>;
+    getUserInfoAsync(): Promise<UserInfo>;
     listAsync(): Promise<FileInfo[]>;
     // apis below return CloudFile mostly for the version field
     downloadAsync(id: string): Promise<FileInfo>;
@@ -167,8 +169,15 @@ export class ProviderBase {
         const ns = this.name
         pxt.storage.removeLocal(ns + "AutoLogin")
         pxt.storage.setLocal(ns + "token", qs["access_token"])
-        let time = Math.round(Date.now() / 1000 + (0.75 * parseInt(qs["expires_in"])))
-        pxt.storage.setLocal(ns + "tokenExp", time + "")
+        let expIn = parseInt(qs["expires_in"])
+        if (expIn) {
+            let time = Math.round(Date.now() / 1000 + (0.75 * expIn))
+            pxt.storage.setLocal(ns + "tokenExp", time + "")
+        } else {
+            pxt.storage.removeLocal(ns + "tokenExp")
+        }
+        // re-compute
+        pxt.storage.removeLocal("cloudName")
     }
 }
 
@@ -272,10 +281,38 @@ function updateNameAsync() {
     let name = pxt.storage.getLocal("cloudName");
     if (name || !provider)
         return Promise.resolve()
-    return provider.getUserNameAsync()
-        .then(name => {
-            pxt.storage.setLocal("cloudName", name)
+    return provider.getUserInfoAsync()
+        .then(info => {
+            let id = provider.name + ":" + info.id
+            let currId = pxt.storage.getLocal("cloudId")
+            if (currId && currId != id) {
+                core.confirmAsync({
+                    header: lf("Sign in mismatch"),
+                    body: lf("You have previously signed in with a different account. You can sign out now, which will locally clear all projects, or you can try to sign in again."),
+                    agreeClass: "red",
+                    agreeIcon: "sign out",
+                    agreeLbl: lf("Sign out"),
+                    disagreeLbl: lf("Sign in again"),
+                    disagreeIcon: "user circle"
+                }).then(res => {
+                    if (res) {
+                        ws.resetAsync()
+                            .then(() => {
+                                location.hash = "#reload"
+                                location.reload()
+                            })
+                    } else {
+                        dialogs.showCloudSignInDialog()
+                    }
+                })
+                // never return
+                return new Promise<void>(() => { })
+            } else {
+                pxt.storage.setLocal("cloudId", id)
+            }
+            pxt.storage.setLocal("cloudName", info.name)
             data.invalidate("sync:username")
+            return null
         })
 }
 

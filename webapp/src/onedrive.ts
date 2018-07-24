@@ -29,9 +29,12 @@ export class Provider extends cloudsync.ProviderBase implements cloudsync.Provid
         window.location.href = url
     }
 
-    getUserNameAsync() {
+    getUserInfoAsync() {
         return this.getJsonAsync("/me")
-            .then(resp => resp.displayName as string || lf("{0} User", this.friendlyName))
+            .then(resp => ({
+                name: resp.displayName as string || lf("{0} User", this.friendlyName),
+                id: resp.id
+            }))
     }
 
     listAsync() {
