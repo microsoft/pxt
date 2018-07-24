@@ -157,7 +157,7 @@ export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptM
 }
 
 function fixupVersionAsync(e: HeaderWithScript) {
-    if (e.version)
+    if (e.version !== undefined)
         return Promise.resolve()
     return impl.getAsync(e.header)
         .then(resp => {
@@ -347,8 +347,8 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
                 } else {
                     ex = {
                         header: hd,
-                        text: null,
-                        version: null,
+                        text: undefined,
+                        version: undefined,
                     }
                 }
                 allScripts.push(ex)
