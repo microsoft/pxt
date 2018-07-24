@@ -446,95 +446,148 @@ namespace pxtblockly {
         }
     }
 
-    enum ClipType {
-        Left,
-        Mid,
-        Right
+    function drawLeftButton(width: number, height: number, lip: number, border: number, r: number) {
+        const root = new svg.Group().appendClass("sprite-editor-button");
+        const bg = root.draw("path")
+            .appendClass("sprite-editor-button-bg");
+        bg.d.moveTo(r, 0)
+            .lineBy(width - r, 0)
+            .lineBy(0, height)
+            .lineBy(-(width - r), 0)
+            .arcBy(r, r, 0, false, true, -r, -r)
+            .lineBy(0, -(height - (r << 1)))
+            .arcBy(r, r, 0, false, true, r, -r)
+            .close();
+        bg.update();
+
+        const fg = root.draw("path")
+            .appendClass("sprite-editor-button-fg");
+        fg.d.moveTo(border + r, border)
+            .lineBy(width - border - r, 0)
+            .lineBy(0, height - lip - border)
+            .lineBy(-(width - border - r), 0)
+            .arcBy(r, r, 0, false, true, -r, -r)
+            .lineBy(0, -(height - lip - border - (r << 1)))
+            .arcBy(r, r, 0, false, true, r, -r)
+            .close();
+        fg.update();
+
+        const content = root.group().id("sprite-editor-button-content");
+        content.translate(border + (width - border) >> 1, (height - lip - border) >> 1);
+
+        return root;
     }
 
-    function drawButtonPath(width: number, height: number, r: number, type: ClipType) {
-        const p = new svg.Path();
+    function drawMidButton(width: number, height: number, lip: number, border: number) {
+        const root = new svg.Group().appendClass("sprite-editor-button");
+        const bg = root.draw("rect")
+            .appendClass("sprite-editor-button-bg")
+            .size(width, height)
 
-        switch (type) {
-            case ClipType.Left:
-                p.d.moveTo(0, 0)
-                    .lineTo(width - r, 0)
-                    .arcTo(r, r, 0, false, true, width, r)
-                    .lineTo(width, height - r)
-                    .arcTo(r, r, 0, false, true, width - r, height)
-                    .lineTo(0, height)
-                    .lineTo(0, 0)
-                    .close();
-                break;
-            case ClipType.Right:
-                p.d.moveTo(r, 0)
-                    .lineTo(width, 0)
-                    .lineTo(width, height)
-                    .lineTo(r, height)
-                    .arcTo(r, r, 0, false, true, 0, height - r)
-                    .lineTo(0, r)
-                    .arcTo(r, r, 0, false, true, r, 0)
-                    .close();
-                break;
-            case ClipType.Mid:
-                p.d.moveTo(0, 0)
-                    .lineTo(width, 0)
-                    .lineTo(width, height)
-                    .lineTo(0, height)
-                    .lineTo(0, 0)
-                    .close();
-                break;
+        const fg = root.draw("rect")
+            .appendClass("sprite-editor-button-fg")
+            .size(width - border, height - lip - border)
+            .at(border, border);
+
+        const content = root.group().id("sprite-editor-button-content");
+        content.translate((width - border) >> 1, (height - lip - border) >> 1);
+
+        return root;
+    }
+
+    function drawRightButton(width: number, height: number, lip: number, border: number, r: number) {
+        const root = new svg.Group().appendClass("sprite-editor-button");
+        const bg = root.draw("path")
+            .appendClass("sprite-editor-button-bg");
+        bg.d.moveTo(0, 0)
+            .lineBy(width - r, 0)
+            .arcBy(r, r, 0, false, true, r, r)
+            .lineBy(0, height - (r << 1))
+            .arcBy(r, r, 0, false, true, -r, r)
+            .lineBy(-(width - r), 0)
+            .lineBy(0, -height)
+            .close();
+        bg.update();
+
+        const fg = root.draw("path")
+            .appendClass("sprite-editor-button-fg");
+        fg.d.moveTo(border, border)
+            .lineBy(width - border - r, 0)
+            .arcBy(r, r, 0, false, true, r, r)
+            .lineBy(0, height - border - lip - (r << 1))
+            .arcBy(r, r, 0, false, true, -r, r)
+            .lineBy(-(width - border - r), 0)
+            .lineBy(0, -(height - border - lip))
+            .close();
+        fg.update();
+
+        const content = root.group().id("sprite-editor-button-content");
+        content.translate(border + (width - (border << 1)) >> 1, (height - lip - border) >> 1);
+
+        return root;
+    }
+
+
+    function buttonGroup(width: number, height: number, lip: number, border: number, r: number, segments: number) {
+        const available = width - (segments + 1) * border;
+        const segmentWidth = Math.floor(available / segments);
+
+        const result: svg.Group[] = [];
+        for (let i = 0; i < segments; i++) {
+            if (i === 0) {
+                result.push(drawLeftButton(segmentWidth + border, height, lip, border, r));
+            }
+            else if (i === segments - 1) {
+                const b = drawRightButton(segmentWidth + (border << 1), height, lip, border, r);
+                b.translate((border + segmentWidth) * i, 0);
+                result.push(b);
+            }
+            else {
+                const b = drawMidButton(segmentWidth + border, height, lip, border);
+                b.translate((border + segmentWidth) * i, 0);
+                result.push(b);
+            }
         }
 
-        p.update();
-        return p;
+        return result;
     }
-
-    const G_WIDTH = 65;
-    const G_OVERLAP = 1;
-    const G_END_WIDTH = Math.ceil(G_WIDTH / 3);
-    const G_MID_WIDTH = G_WIDTH - G_END_WIDTH * 2 - G_OVERLAP * 2;
-    const G_HEIGHT = G_END_WIDTH - G_OVERLAP;
 
     export class CursorMultiButton {
         root: svg.Group;
-        background: svg.Rect;
+        buttons: svg.Group[];
+        selected: number;
 
         indexHandler: (index: number) => void;
 
         constructor(parent: svg.Group, width: number) {
             this.root = parent.group();
+            const widths = [4, 7, 10]
 
-            // Left button
-            this.mkButton(G_END_WIDTH, 2, 0, ClipType.Right);
-
-            // Right button
-            this.mkButton(G_END_WIDTH, 8, G_END_WIDTH + G_MID_WIDTH - 2, ClipType.Left);
-
-            // Middle button
-            this.mkButton(G_MID_WIDTH, 5, G_END_WIDTH - 1, ClipType.Mid);
-        }
-
-        private mkButton(width: number, size: number, left: number, clip: ClipType) {
-            const btnRoot = this.root.group().appendClass("sprite-editor-button");
-            const background = drawButtonPath(width, G_HEIGHT, BUTTON_CORNER_RADIUS, clip);
-            background.appendClass("sprite-editor-button-bg");
-            btnRoot.appendChild(background);
-
-            const foreground = drawButtonPath(width - BUTTON_BORDER_WIDTH * 2, G_HEIGHT - BUTTON_BOTTOM_OFFSET - BUTTON_BORDER_WIDTH, BUTTON_CORNER_RADIUS, clip)
-            foreground.appendClass("sprite-editor-button-fg")
-                .setAttribute("transform", `translate(${BUTTON_BORDER_WIDTH} ${BUTTON_BORDER_WIDTH})`);
-            btnRoot.appendChild(foreground);
-
-            btnRoot.draw("rect")
-                .fill("white")
-                .size(size, size)
-                .at((width - size) / 2, (G_HEIGHT - BUTTON_BOTTOM_OFFSET - size) / 2)
-
-            btnRoot.translate(left, 0);
+            this.buttons = buttonGroup(65, 21, 3, 1, CORNER_RADIUS, 3);
+            this.buttons.forEach((button, index) => {
+                const width = widths[index];
+                const content = getChildById(button.el, "sprite-editor-button-content");
+                const r = new svg.Rect().size(width, width).at(1 + Math.ceil(-width / 2), 1 + Math.ceil(-width / 2)).fill("white");
+                content.appendChild(r.el);
+                this.root.appendChild(button);
+                button.onClick(() => this.handleClick(index));
+                button.title(sizeAdjective(index));
+            });
         }
 
         protected handleClick(index: number) {
+            if (index === this.selected) return;
+
+            if (this.selected != undefined) {
+                this.buttons[this.selected].removeClass("selected");
+            }
+
+            this.selected = index;
+
+            if (this.selected != undefined) {
+                this.buttons[this.selected].appendClass("selected");
+            }
+
             if (this.indexHandler) this.indexHandler(index);
         }
 
@@ -553,5 +606,27 @@ namespace pxtblockly {
         if (!props.switchColor) props.switchColor = "#ffffff";
 
         return props as ToggleProps;
+    }
+
+    function getChildById(parent: SVGElement, id: string) {
+        if (parent && parent.children) {
+            for (let i = 0; i < parent.children.length; i++) {
+                const child = parent.children.item(i);
+                if (child.id === id) {
+                    return child as SVGElement;
+                }
+            }
+        }
+        return undefined;
+    }
+
+    function sizeAdjective(cursorIndex: number) {
+        switch (cursorIndex) {
+            case 0: return lf("Small Cursor");
+            case 1: return lf("Medium Cursor");
+            case 2: return lf("Large Cursor");
+        }
+
+        return undefined;
     }
 }

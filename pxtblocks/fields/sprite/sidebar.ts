@@ -13,7 +13,7 @@ namespace pxtblockly {
     const PALETTE_BORDER_WIDTH = 1;
     const BUTTON_GROUP_SPACING = 3;
     const SELECTED_BORDER_WIDTH = 2;
-    const COLOR_PREVIEW_HEIGHT = 25;
+    const COLOR_PREVIEW_HEIGHT = 30;
     const COLOR_MARGIN = 7;
 
     const CURSOR_BUTTON_WIDTH = ((TOOLBAR_WIDTH  - INNER_BUTTON_MARGIN * 2) / 3);
@@ -27,7 +27,6 @@ namespace pxtblockly {
         host: SideBarHost;
         palette: string[];
 
-        protected sizeButtons: Button[];
         protected colorSwatches: svg.Rect[];
         protected pencilTool: NewFontButton;
         protected eraseTool: NewFontButton;
@@ -39,7 +38,6 @@ namespace pxtblockly {
         protected paletteGroup: svg.Group;
 
         protected selectedTool: NewFontButton;
-        protected selectedSize: Button;
         protected selectedSwatch: svg.Rect;
         protected colorPreview: svg.Rect;
 
@@ -87,16 +85,6 @@ namespace pxtblockly {
 
         public setCursorSize(size: number) {
             this.host.setToolWidth(size);
-
-            if (this.selectedSize) {
-                this.selectedSize.removeClass("toolbar-button-selected");
-            }
-
-            this.selectedSize = this.sizeButtons[size - 1];
-
-            if (this.selectedSize) {
-                this.selectedSize.addClass("toolbar-button-selected");
-            }
         }
 
         public setWidth(width: number) {
@@ -109,15 +97,10 @@ namespace pxtblockly {
 
         protected initSizes() {
             this.sizeGroup = this.root.group().id("sprite-editor-cursor-buttons");
-            this.sizeButtons = [];
-
-            // this.initCursorButton(1);
-            // this.initCursorButton(2).translate(INNER_BUTTON_MARGIN + CURSOR_BUTTON_WIDTH, 0);
-            // this.initCursorButton(3).translate(2 * (INNER_BUTTON_MARGIN + CURSOR_BUTTON_WIDTH), 0);
-
-            // this.setCursorSize(1);
-
-            new CursorMultiButton(this.sizeGroup, TOOLBAR_WIDTH);
+            const buttonGroup = new CursorMultiButton(this.sizeGroup, TOOLBAR_WIDTH);
+            buttonGroup.onSelected(index => {
+                this.setCursorSize(1 + (index * 2));
+            })
         }
 
         protected initTools() {
@@ -196,15 +179,6 @@ namespace pxtblockly {
             return btn;
         }
 
-        protected initCursorButton(size: number) {
-            const btn = mkCursorSizeButton(size, CURSOR_BUTTON_WIDTH);
-            btn.title(sizeAdjective(size));
-            btn.onClick(() => this.setCursorSize(size));
-            this.sizeGroup.appendChild(btn.getView());
-            this.sizeButtons.push(btn);
-            return btn;
-        }
-
         protected getButtonForTool(tool: PaintTool) {
             switch (tool) {
                 case PaintTool.Normal: return this.pencilTool;
@@ -214,33 +188,6 @@ namespace pxtblockly {
                 default: return undefined;
             }
         }
-    }
-
-    function mkCursorSizeButton(size: number, sideLength: number) {
-        return new CursorSizeButton({
-            width: sideLength,
-            height: sideLength,
-            padding: 2,
-            cornerRadius: 2,
-            rootClass: "toolbar-button",
-            backgroundClass: "toolbar-button-background",
-            cursorFill: "black",
-            cursorSideLength: size
-        });
-    }
-
-    function mkToolbarButton(icon: string, sideLength: number, padding: number) {
-        return new FontIconButton({
-            width: sideLength,
-            height: sideLength,
-            cornerRadius: 2,
-            padding: padding,
-            iconFont: "Icons",
-            iconString: icon,
-            rootClass: "toolbar-button",
-            backgroundClass: "toolbar-button-background",
-            iconClass: "toolbar-button-icon"
-        });
     }
 
     function sizeAdjective(cursorIndex: number) {

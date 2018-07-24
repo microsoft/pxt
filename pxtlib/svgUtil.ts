@@ -584,7 +584,7 @@ namespace pxt.svgUtil {
         }
     }
 
-    export type OperatorSymbol = "m" | "M" | "l" | "L" | "c" | "C" | "q" | "Q" | "T" | "t" | "S" | "s" | "z" | "Z" | "A";
+    export type OperatorSymbol = "m" | "M" | "l" | "L" | "c" | "C" | "q" | "Q" | "T" | "t" | "S" | "s" | "z" | "Z" | "A" | "a";
     export interface PathOp {
         op: OperatorSymbol;
         args: number[];
@@ -646,6 +646,10 @@ namespace pxt.svgUtil {
 
         arcTo(rx: number, ry: number, xRotate: number, large: boolean, sweepClockwise: boolean, x: number, y: number): this {
             return this.op("A", rx, ry, xRotate, large ? 1 : 0, sweepClockwise ? 1 : 0, x, y);
+        }
+
+        arcBy(rx: number, ry: number, xRotate: number, large: boolean, sweepClockwise: boolean, x: number, y: number): this {
+            return this.op("a", rx, ry, xRotate, large ? 1 : 0, sweepClockwise ? 1 : 0, x, y);
         }
 
         close(): this {
