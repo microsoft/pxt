@@ -75,7 +75,7 @@ export class Provider extends cloudsync.ProviderBase implements cloudsync.Provid
                 method: "POST",
                 data: {
                     // the user will never see this title anyways
-                    "title": pxtc.U.guidGen(),
+                    "name": pxtc.U.guidGen(),
                     "mimeType": "application/json",
                     "parents": ["appDataFolder"]
                 }
@@ -87,7 +87,8 @@ export class Provider extends cloudsync.ProviderBase implements cloudsync.Provid
         }
 
         let resp = await this.reqAsync({
-            url: "/upload/drive/v3/files/" + id + "?uploadType=media",
+            url: "/upload/drive/v3/files/" + id + "?uploadType=media" +
+                "&fields=id,name,version,modifiedTime",
             method: "PATCH",
             data: JSON.stringify(files, null, 1),
             //headers: !prevVersion ? {} :
