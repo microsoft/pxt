@@ -1,5 +1,4 @@
 // TODO cloud save indication in the editor somewhere
-// TODO test conflict "resolution"
 
 import * as core from "./core";
 import * as pkg from "./package";

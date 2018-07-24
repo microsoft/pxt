@@ -1,5 +1,3 @@
-// TODO rename to browserworkspace
-
 import * as db from "./db";
 
 let headers = new db.Table("header")

@@ -5,7 +5,7 @@
 import * as db from "./db";
 import * as core from "./core";
 import * as data from "./data";
-import * as cloudworkspace from "./cloudworkspace"
+import * as cloudworkspace from "./browserworkspace"
 import * as fileworkspace from "./fileworkspace"
 import * as memoryworkspace from "./memoryworkspace"
 import * as iframeworkspace from "./iframeworkspace"
