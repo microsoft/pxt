@@ -174,7 +174,18 @@ export function showCloudSignInDialog() {
         return;
     if (providers.length == 1)
         providers[0].login()
-    else
-        // TODO add dialog
-        providers[0].login()
+    else {
+        core.dialogAsync({
+            header: lf("Sign in"),
+            body: lf("Please choose your cloud storage provider."),
+            buttons: 
+                providers.map(p => ({
+                    label: p.friendlyName,
+                    icon: "user circle",
+                    onclick: () => {
+                        p.login()
+                    }
+                }))
+        })
+    }
 }

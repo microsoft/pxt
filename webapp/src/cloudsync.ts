@@ -35,6 +35,7 @@ export interface UserInfo {
 
 export interface Provider {
     name: string;
+    friendlyName: string;
     loginCheck(): void;
     login(): void;
     loginCallback(queryString: pxt.Map<string>): void;
@@ -207,11 +208,12 @@ export function reconstructMeta(files: pxt.Map<string>) {
 
 // these imports have to be after the ProviderBase class definition; otherwise we get crash on startup
 import * as onedrive from "./onedrive";
+import * as googledrive from "./googledrive";
 
 export function providers() {
     if (!allProviders) {
         allProviders = {}
-        for (let impl of [new onedrive.Provider()]) {
+        for (let impl of [new onedrive.Provider(), new googledrive.Provider()]) {
             allProviders[impl.name] = impl
         }
     }
@@ -223,6 +225,9 @@ export function providers() {
         cl.cloudProviders = {
             "onedrive": {
                 "client_id": "bf0ee68a-56b5-4b23-bbdb-5daf01a8f6cd"
+            },
+            "googledrive": {
+                "client_id": "400186460808-dlmqh7rsdqb0ckg154cjt5uj58s4bip1.apps.googleusercontent.com"
             }
         }
     }

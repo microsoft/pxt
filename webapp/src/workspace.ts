@@ -156,6 +156,15 @@ export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptM
         })
 }
 
+function fixupVersionAsync(e: HeaderWithScript) {
+    if (e.version)
+        return Promise.resolve()
+    return impl.getAsync(e.header)
+        .then(resp => {
+            e.version = resp.version;
+        })
+}
+
 export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Promise<void> {
     checkSession();
     U.assert(h.target == pxt.appTarget.id);
@@ -188,23 +197,25 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
         U.assert(idx >= 0)
         allScripts.splice(idx, 1)
         return headerQ.enqueue(h.id, () =>
-            impl.deleteAsync ? impl.deleteAsync(h, e.version) : impl.setAsync(h, e.version, {}))
+            fixupVersionAsync(e).then(() =>
+                impl.deleteAsync ? impl.deleteAsync(h, e.version) : impl.setAsync(h, e.version, {})))
     }
 
     return headerQ.enqueue<void>(h.id, () =>
-        impl.setAsync(h, e.version, text ? e.text : null)
-            .then(ver => {
-                if (text)
-                    e.version = ver
-                if (text || h.isDeleted) {
-                    h.pubCurrent = false
-                    h.blobCurrent = false
-                    h.saveId = null
-                    data.invalidate("text:" + h.id)
-                }
-                data.invalidate("header:" + h.id)
-                data.invalidate("header:*")
-            }))
+        fixupVersionAsync(e).then(() =>
+            impl.setAsync(h, e.version, text ? e.text : null)
+                .then(ver => {
+                    if (text)
+                        e.version = ver
+                    if (text || h.isDeleted) {
+                        h.pubCurrent = false
+                        h.blobCurrent = false
+                        h.saveId = null
+                        data.invalidate("text:" + h.id)
+                    }
+                    data.invalidate("header:" + h.id)
+                    data.invalidate("header:*")
+                })))
 }
 
 function computePath(h: Header) {
