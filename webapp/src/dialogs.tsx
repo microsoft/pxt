@@ -178,9 +178,11 @@ export function showCloudSignInDialog() {
         core.dialogAsync({
             header: lf("Sign in"),
             body: lf("Please choose your cloud storage provider."),
+            hideCancel: true,
             buttons:
                 providers.map(p => ({
                     label: p.friendlyName,
+                    className: "positive small",
                     icon: "user circle",
                     onclick: () => {
                         p.login()
