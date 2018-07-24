@@ -320,7 +320,7 @@ export function stringifyQueryString(url: string, qs: any) {
         } else {
             url += "?"
         }
-        url += encodeURIComponent(k) + "=" + encodeURIComponent(qs[k])    
+        url += encodeURIComponent(k) + "=" + encodeURIComponent(qs[k])
     }
     return url
 }
