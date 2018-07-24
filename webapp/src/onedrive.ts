@@ -105,7 +105,6 @@ export class Provider extends cloudsync.ProviderBase implements cloudsync.Provid
             url: path,
             method: "PUT",
             data: JSON.stringify(files, null, 1),
-            // TODO check if this works
             headers: !prevVersion ? {} :
                 {
                     "if-match": prevVersion

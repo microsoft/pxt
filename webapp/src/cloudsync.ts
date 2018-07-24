@@ -218,18 +218,6 @@ export function providers() {
 
     let cl = pxt.appTarget.cloud
 
-    // TODO remove before merging the PR
-    if (cl && !cl.cloudProviders) {
-        cl.cloudProviders = {
-            "onedrive": {
-                "client_id": "bf0ee68a-56b5-4b23-bbdb-5daf01a8f6cd"
-            },
-            "googledrive": {
-                "client_id": "400186460808-dlmqh7rsdqb0ckg154cjt5uj58s4bip1.apps.googleusercontent.com"
-            }
-        }
-    }
-
     if (!cl || !cl.cloudProviders)
         return []
 
