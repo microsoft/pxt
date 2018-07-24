@@ -343,11 +343,10 @@ export function syncAsync(): Promise<void> {
         header.blobId = null
         header.blobVersion = null
         header.blobCurrent = false
-        // TODO update name in pxt.json        
         await ws.saveAsync(header, text)
         // get the cloud version
         await syncDownAsync(newHd, cloudHeader)
-        // TODO kick the user out of editor, or otherwise force reload
+        // TODO move the user out of editor, or otherwise force reload
     }
 
     function syncDownAsync(header0: Header, cloudHeader: FileInfo) {
