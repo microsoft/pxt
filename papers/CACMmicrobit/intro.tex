@@ -8,7 +8,10 @@
 The micro:bit is a small programmable and embeddable computer designed, 
 developed and deployed by the BBC and partners (including ARM, Microsoft
 and Lancaster University) to approximately 800,000 UK middle school students
-in 2015-2016. Part of the BBC's Make It Digital Campaign, the BBC described the
+in 2015-2016. The BBC micro:bit follows in the tradition of the BBC Micro personal
+computer from the 1980s; it also supports the UK's mandate to 
+teach computer science concepts at all grade levels.~\cite{SimonPJ}
+Part of the BBC's Make It Digital Campaign, the BBC described the
 micro:bit as its ``most ambitious education initiative in 30 years, 
 with an ambition to inspire digital creativity and 
 develop a new generation of tech pioneers.''~\cite{BBCwebsite}
@@ -71,8 +74,7 @@ to give students an exciting, engaging introduction to coding;
     \caption{\label{fig:snapshot}MakeCode web app for the micro:bit}
 \end{figure*}
 
-Based on user trials with a micro:bit prototype with students in Years 5 and 7 (3rd and 5th grade
-in the US, respectively), the BBC focused on delivering a web app 
+Based on in-school trials with a micro:bit prototype, the BBC focused on delivering a web app 
 based on the popular Blockly framework~\cite{Blocky2015} to permit students to
 create scripts via drag-and-drop operations in a web browser, and see
 the execution of their scripts via a simulator.
@@ -95,7 +97,8 @@ design to include:
 University;
 \item a web app (\url{http://makecode.microbit.org})
 with Blockly and JavaScript editors, micro:bit simulator, 
-and a compiler to machine code, linked against a pre-compiled C++ runtime;
+and a compiler to machine code (linked against a pre-compiled 
+C++ runtime image, so no C++ compiler is needed for user code);
 \item a Python compiler and read-eval-print loop (REPL) that resides
 {\em on the micro:bit} (via \url{https://micropython.org/}), 
 supported by a simple web app (\url{http://python.microbit.org}) and 
@@ -116,7 +119,7 @@ and examples, and switching between Blockly and JavaScript editors; (B)
 Blockly toolbox of micro:bit API categories; (C) Blockly programminng
 canvas with a simple reactive program; (D) micro:bit simulator for execution
 of the user's program in browser; (E) download button, which invokes the in-browser
-compiler to produce a binary executable. 
+compiler/linker to produce a binary executable. 
 
 The event-based program shown in section (C) displays a large heart when the
 A button is pressed, displays a small heart when button B is pressed,
@@ -128,7 +131,10 @@ APIs, direct access to the micro:bit's sensors via polling is possible.
 
 The BBC micro:bit project also called for partners to develop content
 and to ``train the trainers'' (educators) around the micro:bit computing
-system.
+system.  This built on efforts by the non-profit Computing At Schools
+(\url{www.cas.org}) organization to train UK educators to teach computer
+science. 
+
 
 %- A lot of lessons learned from delivering end-to-end experience in UK and other countries
 %   - hardware (unique design, as already mentioned)
@@ -138,25 +144,41 @@ system.
 %   - training
 % In country partnerships
 
+% main points
+% - mass participation
+% - country readiness (or perhaps willingness)
+
+Together, we learned many lessons from being a core part of the team that
+delivered the BBC micro:bit in the UK and then expanded to reach 
+more educators and students around the world, via the Micro:bit Educational
+Foundation (\url{www.microbit.org}; started in September 2016) and its 
+founding partners' efforts.
 In the remainder of this paper, we focus on the primary promise
 of the BBC micro:bit, which was to deliver a simple physical computing
-experience for beginners and a progression path for users to follow
-as their expectations increase. [micro:bit education foundation founded
-in the fall of 2016]  We draw from two full years of 
+experience, en masse, for beginners and a progression path for users to follow
+as they gain knowledge and confidence.  We draw from two full years of 
 full deployment of the micro:bit in the UK, as well as deployments
-in Europe, the United States, and Asia.  There are approximately
+in Europe, the Americas, and Asia.  There are approximately
 two million micro:bits now in the market and many hardware,
 content, and education partners participating. 
 
-
-
-Overview: Section~\ref{sec:physical} on physical computing;
+We take a bottom-up approach, starting with a review of
+physical computing (Section~\ref{sec:physical}), which anchors 
+and defines the micro:bit experience. Section~\ref{sec:projects}
+presents a broad set of micro:bit-based projects, ranging
+from wearable games to environment science, that demonstrate
+the micro:bit's capabilities.  Section~\ref{sec:mef} reviews
+the history of the BBC and computing, the rollout of the
+micro:bit in the UK and the establishment of the Micro:bit
+Educational Foundation.  Section~\ref{sec:country}
+describes the rollout of the micro:bit to other countries
+in Europe, the Americas and Asia. Section~\ref{sec:conclude}
+concludes with final thoughts about what has made the micro:bit
+successful to date and what comes next. 
 
 
 % compared to Arduino
 % https://twitter.com/adamwwolf/status/1019070808038072320
-
-
 
 % success of micro:bit due to 
 % - Low-cost, simplicity
