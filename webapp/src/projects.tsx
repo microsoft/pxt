@@ -584,6 +584,19 @@ export interface ImportDialogState {
     visible?: boolean;
 }
 
+function githubLogin() {
+    core.showLoading("ghlogin", lf("Logging you in to GitHub..."))
+    const self = window.location.href.replace(/#.*/, "")
+    const state = ts.pxtc.Util.guidGen();
+    pxt.storage.setLocal("oauthState", state)
+    pxt.storage.setLocal("oauthType", "github")
+    const login = pxt.Cloud.getServiceUrl() +
+        "/oauth/login?state=" + state +
+        "&response_type=token&client_id=gh-token&redirect_uri=" +
+        encodeURIComponent(self)
+    window.location.href = login
+}
+
 export class ImportDialog extends data.Component<ISettingsProps, ImportDialogState> {
     constructor(props: ISettingsProps) {
         super(props);
@@ -594,6 +607,7 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
         this.close = this.close.bind(this);
         this.importHex = this.importHex.bind(this);
         this.importUrl = this.importUrl.bind(this);
+        this.cloneGithub = this.cloneGithub.bind(this);
     }
 
     hide() {
@@ -620,16 +634,23 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
         this.props.parent.showImportUrlDialog();
     }
 
+    private cloneGithub() {
+        pxt.tickEvent("projects.clonegithub", undefined, { interactiveConsent: true });
+        this.hide();
+        this.props.parent.showImportGithubDialog();
+    }
+
     renderCore() {
         const { visible } = this.state;
 
+        /* tslint:disable:react-a11y-anchors */
         return (
             <sui.Modal isOpen={visible} className="importdialog" size="small"
                 onClose={this.close} dimmer={true}
                 closeIcon={true} header={lf("Import")}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
             >
-                <div className="ui two cards">
+                <div className={pxt.github.token ? "ui three cards" : "ui two cards"}>
                     {pxt.appTarget.compile ?
                         <codecard.CodeCardView
                             ariaLabel={lf("Open files from your computer")}
@@ -643,16 +664,34 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
                         /> : undefined}
                     {pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing ?
                         <codecard.CodeCardView
-                            ariaLabel={lf("Open a shared project URL")}
+                            ariaLabel={lf("Open a shared project URL or GitHub repo")}
                             role="button"
                             key={'importurl'}
                             icon="cloud download"
                             iconColor="secondary"
                             name={lf("Import URL...")}
-                            description={lf("Open a shared project URL")}
+                            description={lf("Open a shared project URL or GithHub repo")}
                             onClick={this.importUrl}
                         /> : undefined}
+
+                    {pxt.github.token ?
+                        <codecard.CodeCardView
+                            ariaLabel={lf("Clone or create your own GitHub repository")}
+                            role="button"
+                            key={'importgithub'}
+                            icon="github"
+                            iconColor="secondary"
+                            name={lf("Your GitHub Repo...")}
+                            description={lf("Clone or create your own GitHub repository")}
+                            onClick={this.cloneGithub}
+                        /> : undefined}
                 </div>
+                {pxt.github.token || true ? undefined :
+                    <p>
+                        <br /><br />
+                        <a className="small" href="#github" role="button" onClick={githubLogin}
+                            aria-label={lf("GitHub login")}>{lf("GitHub login")}</a>
+                    </p>}
             </sui.Modal>
         )
     }
@@ -808,6 +847,7 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
             v.card.onClick = () => this.setHwVariant(savedV)
         }
 
+        /* tslint:disable:react-a11y-anchors */
         return (
             <sui.Modal isOpen={visible} className="importdialog" size="small"
                 onClose={this.close} dimmer={true}

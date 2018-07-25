@@ -820,7 +820,8 @@ export class ProjectView
 
                 const preferredEditor = this.pickEditorFor(file);
                 const readme = main.lookupFile("this/README.md");
-                if (readme && readme.content && readme.content.trim())
+                // no auto-popup when editing packages locally
+                if (!h.githubId && readme && readme.content && readme.content.trim())
                     this.setSideMarkdown(readme.content);
                 else if (pkg.mainPkg && pkg.mainPkg.config && pkg.mainPkg.config.documentation)
                     this.setSideDoc(pkg.mainPkg.config.documentation, preferredEditor == this.blocksEditor);
@@ -1125,6 +1126,60 @@ export class ProjectView
                 const fn = pkg.genFileName(".mkcd");
                 pxt.BrowserUtils.browserDownloadUInt8Array(buf, fn, 'application/octet-stream');
             })
+    }
+
+    async commitAsync() {
+        try {
+            let repo = this.state.header.githubId
+            let info = await dialogs.showCommitDialogAsync(repo)
+            if (!info)
+                return
+
+            let commitId = await workspace.commitAsync(this.state.header, info.msg)
+            if (commitId) {
+                // merge failure; do a PR
+                // we could ask the user, but it's unlikely they can do anything else to fix it
+                let prURL = await workspace.prAsync(this.state.header, commitId, info.msg)
+                await dialogs.showPRDialogAsync(repo, prURL)
+                // when the dialog finishes, we pull again - it's possible the user
+                // has resolved the conflict in the meantime
+                await workspace.pullAsync(this.state.header)
+                // skip bump in this case - we don't know if it was merged
+            } else {
+                if (info.bump)
+                    await workspace.bumpAsync(this.state.header)
+            }
+            await this.reloadHeaderAsync()
+        } finally {
+            core.hideLoading("loadingheader")
+        }
+    }
+
+    async pushPullAsync() {
+        core.showLoading("loadingheader", lf("syncing with github..."));
+        let needsHide = true
+        try {
+            let status = await workspace.pullAsync(this.state.header)
+                .catch(core.handleNetworkError)
+
+            switch (status) {
+                case workspace.PullStatus.NoSourceControl:
+                case workspace.PullStatus.UpToDate:
+                    break
+
+                case workspace.PullStatus.NeedsCommit:
+                    needsHide = false
+                    await this.commitAsync()
+                    break
+
+                case workspace.PullStatus.GotChanges:
+                    await this.reloadHeaderAsync()
+                    break
+            }
+        } finally {
+            if (needsHide)
+                core.hideLoading("loadingheader")
+        }
     }
 
     ///////////////////////////////////////////////////////////
@@ -1823,7 +1878,26 @@ export class ProjectView
             if (!id) {
                 core.errorNotification(lf("Sorry, the project url looks invalid."));
             } else {
-                loadHeaderBySharedId(id);
+                if (pxt.github.isGithubId(id))
+                    importGithubProject(id);
+                else
+                    loadHeaderBySharedId(id);
+            }
+        });
+    }
+
+    showImportGithubDialog() {
+        dialogs.showImportGithubDialogAsync().done(url => {
+            if (url === "NEW") {
+                dialogs.showCreateGithubRepoDialogAsync()
+                    .then(url => {
+                        if (url)
+                            importGithubProject(url)
+                    })
+            } else if (!pxt.github.isGithubId(url)) {
+                core.errorNotification(lf("Sorry, the project url looks invalid."));
+            } else {
+                importGithubProject(url);
             }
         });
     }
@@ -2228,9 +2302,12 @@ function initLogin() {
         let qs = core.parseQueryString((location.hash || "#").slice(1).replace(/%23access_token/, "access_token"))
         if (qs["access_token"]) {
             let ex = pxt.storage.getLocal("oauthState")
+            let tp = pxt.storage.getLocal("oauthType")
             if (ex && ex == qs["state"]) {
-                pxt.storage.setLocal("access_token", qs["access_token"])
                 pxt.storage.removeLocal("oauthState")
+                pxt.storage.removeLocal("oauthType")
+                if (tp == "github")
+                    pxt.storage.setLocal("githubtoken", qs["access_token"])
             }
             location.hash = location.hash.replace(/(%23)?[\#\&\?]*access_token.*/, "")
         }
@@ -2482,6 +2559,32 @@ function isProjectRelatedHash(hash: { cmd: string; arg: string }): boolean {
     }
 }
 
+async function importGithubProject(id: string) {
+    core.showLoading("loadingheader", lf("importing github project..."));
+    try {
+        let hd = await workspace.importGithubAsync(id)
+        let text = await workspace.getTextAsync(hd.id)
+        if ((text[pxt.CONFIG_NAME] || "{}").length < 20) {
+            let ok = await core.confirmAsync({
+                header: lf("Initialize MakeCode package?"),
+                body: lf("We didn't find a valid pxt.json file in the repository. Would you like to create it and supporting files?"),
+                agreeLbl: lf("Initialize!")
+            })
+            if (!ok) {
+                hd.isDeleted = true
+                await workspace.saveAsync(hd)
+                return
+            }
+            await workspace.initializeGithubRepoAsync(hd, id)
+        }
+        await theEditor.loadHeaderAsync(hd, null)
+    } catch (e) {
+        core.handleNetworkError(e)
+    } finally {
+        core.hideLoading("loadingheader")
+    }
+}
+
 function loadHeaderBySharedId(id: string) {
     const existing = workspace.getHeaders()
         .filter(h => h.pubCurrent && h.pubId == id)[0]
@@ -2616,6 +2719,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const hw = /[&?]hw=([\w-]+)/.exec(window.location.href)
     if (hw)
         pxt.setHwVariant(hw[1])
+
+    pxt.github.token = pxt.storage.getLocal("githubtoken");
 
     const ws = /ws=(\w+)/.exec(window.location.href)
     const isSandbox = pxt.shell.isSandboxMode() || pxt.shell.isReadOnly();

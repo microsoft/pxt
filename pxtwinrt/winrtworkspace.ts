@@ -115,8 +115,7 @@ namespace pxt.winrt.workspace {
         return readFileAsync(pathjoin(logicalDirname, pxt.CONFIG_NAME))
             .then(text => {
                 const cfg: pxt.PackageConfig = JSON.parse(text)
-                const files = [pxt.CONFIG_NAME].concat(cfg.files || []).concat(cfg.testFiles || [])
-                return Promise.map(files, fn =>
+                return Promise.map(pxt.allPkgFiles(cfg), fn =>
                     statOptAsync(pathjoin(logicalDirname, fn))
                         .then(st => {
                             const rf: FsFile = {

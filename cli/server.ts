@@ -103,50 +103,50 @@ const HEADER_JSON = ".header.json"
 
 async function readPkgAsync(logicalDirname: string, fileContents = false): Promise<FsPkg> {
     let dirname = path.join(userProjectsDir, logicalDirname)
-    let r: FsPkg = undefined;
-    return readFileAsync(path.join(dirname, pxt.CONFIG_NAME))
-        .then(buf => {
-            let cfg: pxt.PackageConfig = JSON.parse(buf.toString("utf8"))
-            let files = [pxt.CONFIG_NAME].concat(cfg.files || []).concat(cfg.testFiles || [])
-            return Promise.map(files, fn =>
-                statOptAsync(path.join(dirname, fn))
-                    .then<FsFile>(st => {
-                        let r: FsFile = {
-                            name: fn,
-                            mtime: st ? st.mtime.getTime() : null
-                        }
-                        if (st == null || !fileContents)
-                            return r
-                        else
-                            return readFileAsync(path.join(dirname, fn))
-                                .then(buf => {
-                                    r.content = buf.toString("utf8")
-                                    return r
-                                })
-                    }))
-                .then(files => {
-                    r = {
-                        path: logicalDirname,
-                        config: cfg,
-                        header: null,
-                        files: files
-                    };
-                    return existsAsync(path.join(dirname, "icon.jpeg"));
-                })
-                .then(iconPresent => {
-                    r.icon = iconPresent ? "/icon/" + logicalDirname : undefined;
+    let buf = await readFileAsync(path.join(dirname, pxt.CONFIG_NAME))
+    let cfg: pxt.PackageConfig = JSON.parse(buf.toString("utf8"))
+    let r: FsPkg = {
+        path: logicalDirname,
+        config: cfg,
+        header: null,
+        files: []
+    };
 
-                    // now try reading the header
-                    return readFileAsync(path.join(dirname, HEADER_JSON))
-                        .then(b => b, err => null)
-                })
-                .then(buf => {
-                    if (buf && buf.length)
-                        r.header = JSON.parse(buf.toString("utf8"))
-                })
-                .then(() => r)
+    for (let fn of pxt.allPkgFiles(cfg).concat([pxt.github.GIT_JSON])) {
+        let st = await statOptAsync(path.join(dirname, fn))
+        let ff: FsFile = {
+            name: fn,
+            mtime: st ? st.mtime.getTime() : null
+        }
 
-        })
+        let thisFileContents = st && fileContents
+
+        if (fn == pxt.github.GIT_JSON) {
+            // skip .git.json altogether if missing
+            if (!st) continue
+            thisFileContents = true
+        }
+
+        if (thisFileContents) {
+            let buf = await readFileAsync(path.join(dirname, fn))
+            ff.content = buf.toString("utf8")
+        }
+
+        r.files.push(ff)
+    }
+
+    if (await existsAsync(path.join(dirname, "icon.jpeg"))) {
+        r.icon = "/icon/" + logicalDirname
+    }
+
+       // now try reading the header
+       buf = await readFileAsync(path.join(dirname, HEADER_JSON))
+        .then(b => b, err => null)
+        
+   if (buf && buf.length)
+       r.header = JSON.parse(buf.toString("utf8"))
+
+    return r
 }
 
 function writeScreenshotAsync(logicalDirname: string, screenshotUri: string, iconUri: string) {
@@ -207,8 +207,12 @@ function writePkgAsync(logicalDirname: string, data: FsPkg) {
                 }
             }, err => { }))
         // no conflict, proceed with writing
-        .then(() => Promise.map(data.files, f =>
-            writeFileAsync(path.join(dirname, f.name), f.content)))
+        .then(() => Promise.map(data.files, f => {
+            let d = f.name.replace(/\/[^\/]*$/, "")
+            if (d != f.name)
+                nodeutil.mkdirP(path.join(dirname, d))
+            return writeFileAsync(path.join(dirname, f.name), f.content)
+        }))
         .then(() => {
             if (data.header)
                 return writeFileAsync(path.join(dirname, HEADER_JSON), JSON.stringify(data.header, null, 4))
@@ -374,13 +378,13 @@ export function expandHtml(html: string) {
 export function expandDocTemplateCore(template: string) {
     template = template
         .replace(/<!--\s*@include\s+(\S+)\s*-->/g,
-            (full, fn) => {
-                return `
+        (full, fn) => {
+            return `
 <!-- include ${fn} -->
 ${expandDocFileTemplate(fn)}
 <!-- end include ${fn} -->
 `
-            })
+        })
     return template
 }
 
