@@ -139,12 +139,12 @@ async function readPkgAsync(logicalDirname: string, fileContents = false): Promi
         r.icon = "/icon/" + logicalDirname
     }
 
-       // now try reading the header
-       buf = await readFileAsync(path.join(dirname, HEADER_JSON))
+    // now try reading the header
+    buf = await readFileAsync(path.join(dirname, HEADER_JSON))
         .then(b => b, err => null)
-        
-   if (buf && buf.length)
-       r.header = JSON.parse(buf.toString("utf8"))
+
+    if (buf && buf.length)
+        r.header = JSON.parse(buf.toString("utf8"))
 
     return r
 }
