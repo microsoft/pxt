@@ -99,6 +99,9 @@ export function githubFooter(msg: string, close: () => void) {
         core.infoNotification(lf("Logged out from GitHub"))
     }
 
+    if (!pxt.appTarget.cloud || !pxt.appTarget.cloud.githubPackages)
+        return <div/>
+
     /* tslint:disable:react-a11y-anchors */
     if (pxt.github.token) {
         return (
