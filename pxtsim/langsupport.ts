@@ -618,6 +618,14 @@ namespace pxsim {
         export let lookupPin: any;
     }
 
+    // these can only be used from assembly - silence warnings
+    export let __aeabi_dadd: any;
+    export let __aeabi_dcmplt: any;
+    export let __aeabi_dcmpgt: any;
+    export let __aeabi_dsub: any;
+    export let __aeabi_ddiv: any;
+    export let __aeabi_dmul: any;
+
     export namespace thread {
         export let panic = pxtrt.panic;
 

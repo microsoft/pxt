@@ -135,6 +135,7 @@ namespace pxt.editor {
         importProjectDialog(): void;
         removeProject(): void;
         editText(): void;
+        pushPullAsync(): Promise<void>;
 
         getPreferredEditor(): string;
         saveAndCompile(): void;
@@ -217,6 +218,7 @@ namespace pxt.editor {
 
         showImportUrlDialog(): void;
         showImportFileDialog(): void;
+        showImportGithubDialog(): void;
 
         showResetDialog(): void;
         showExitAndSaveDialog(): void;

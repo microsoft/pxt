@@ -90,6 +90,12 @@ function mergeFsPkg(pkg: pxt.FsPkg) {
         eh.isDeleted = hd.isDeleted
         eh.icon = hd.icon
     }
+
+    let gjson = pkg.files.filter(f => f.name == pxt.github.GIT_JSON)[0]
+    if (gjson) {
+        let gj = JSON.parse(gjson.content)
+        e.header.githubId = gj.repo
+    }
 }
 
 function initAsync(target: string, version: string) {
