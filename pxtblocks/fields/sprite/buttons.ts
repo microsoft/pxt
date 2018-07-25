@@ -1,178 +1,20 @@
 namespace pxtblockly {
     import svg = pxt.svgUtil;
 
-    export interface ButtonProps {
-        width: number;
-        height: number;
-        cornerRadius: number;
-        backgroundClass?: string;
-        rootClass?: string;
-
-        padding: number;
-    }
-
-    export class Button {
-        protected root: svg.Group;
-        protected background: svg.Rect;
-        protected enabled = true;
-
-        protected clickHandler: () => void;
-
-        constructor (protected props: ButtonProps) {
-            this.buildDom();
-        }
-
-        public onClick(clickHandler: () => void) {
-            this.clickHandler = clickHandler;
-        }
-
-        public translate(x: number, y: number) {
-            this.root.translate(x, y);
-        }
-
-        public getView() {
-            return this.root;
-        }
-
-        public addClass(className: string) {
-            this.root.appendClass(className);
-        }
-
-        public removeClass(className: string) {
-            this.root.removeClass(className);
-        }
-
-        public title(text: string) {
-            this.root.title(text);
-        }
-
-        public setDimensions(width: number, height: number) {
-            this.props.width = width;
-            this.props.height = height;
-            this.layout();
-        }
-
-        public setEnabled(enabled: boolean) {
-            if (enabled != this.enabled) {
-                this.enabled = enabled;
-
-                if (this.enabled) {
-                    this.root.removeClass("disabled");
-                }
-                else {
-                    this.root.appendClass("disabled");
-                }
-            }
-        }
-
-        public setVisible(visible: boolean) {
-            this.root.setVisible(visible);
-        }
-
-        protected buildDom() {
-            this.root = new svg.Group();
-
-            this.background = this.root.draw("rect")
-                .corner(this.props.cornerRadius);
-
-            if (this.props.rootClass) {
-                this.root.setClass(this.props.rootClass);
-            }
-            if (this.props.backgroundClass) {
-                this.background.setClass(this.props.backgroundClass);
-            }
-
-            this.drawContent();
-
-            this.root.el.addEventListener("click", () => {
-                this.handleClick();
-            });
-
-            this.layout();
-        }
-
-        // To be overridden by subclass
-        protected drawContent() {  }
-
-        // To be overridden by subclass
-        protected layoutContent(contentWidth: number, contentHeight: number, top: number, left: number) {  }
-
-        protected handleClick() {
-            if (this.clickHandler && this.enabled) {
-                this.clickHandler();
-            }
-        }
-
-        protected layout() {
-            this.background.size(this.props.width, this.props.height);
-            const contentWidth = this.props.width - this.props.padding * 2;
-            const contentHeight = this.props.height - this.props.padding * 2;
-            this.layoutContent(contentWidth, contentHeight, this.props.padding, this.props.padding);
-        }
-    }
-
-    export interface FontIconButtonProps extends ButtonProps {
-        iconString: string;
-        iconFont: string;
-        iconClass?: string;
-    }
-
-    export class FontIconButton extends Button {
-        protected icon: svg.Text;
-
-        constructor (protected props: FontIconButtonProps) {
-            super(props);
-        }
-
-        protected drawContent() {
-            this.icon = this.root.draw("text")
-                .fontFamily(this.props.iconFont)
-                .text(this.props.iconString)
-                .anchor("middle")
-
-            if (this.props.iconClass) {
-                this.icon.setClass(this.props.iconClass);
-            }
-        }
-
-        protected layoutContent(contentWidth: number, contentHeight: number, top: number, left: number) {
-            this.icon.at(left + contentWidth / 2, top)
-                .offset(0, 0.8, svg.LengthUnit.em)
-                .fontSize(contentHeight, svg.LengthUnit.px);
-        }
-    }
-
-    export interface CursorButtonProps extends ButtonProps {
-        cursorSideLength: number;
-        cursorFill: string;
-    }
-
-    export class CursorSizeButton extends Button {
-        protected cursor: svg.Rect;
-
-        constructor (protected props: CursorButtonProps) {
-            super(props);
-        }
-
-        protected drawContent() {
-            this.cursor = this.root.draw("rect")
-                .fill(this.props.cursorFill)
-        }
-
-        protected layoutContent(contentWidth: number, contentHeight: number, top: number, left: number) {
-
-            const unit = Math.min(contentWidth, contentHeight) / 3;
-
-            const sideLength = this.props.cursorSideLength * unit;
-            this.cursor.at(left + contentWidth / 2 - sideLength / 2, top + contentHeight / 2 - sideLength / 2)
-                .size(sideLength, sideLength);
-        }
+    interface ButtonGroup {
+        root: svg.Group;
+        cx: number;
+        cy: number;
     }
 
     const TOGGLE_WIDTH = 200;
     const TOGGLE_HEIGHT = 40;
-    const CORNER_RADIUS = 4;
-    const BORDER_WIDTH = 2;
+    const TOGGLE_BORDER_WIDTH = 2;
+    const TOGGLE_CORNER_RADIUS = 4;
+
+    const BUTTON_CORNER_RADIUS = 2;
+    const BUTTON_BORDER_WIDTH = 1;
+    const BUTTON_BOTTOM_BORDER_WIDTH = 2;
 
     export interface ToggleProps {
         baseColor: string;
@@ -249,31 +91,31 @@ namespace pxtblockly {
 
             clip.draw("rect")
                 .at(0, 0)
-                .corners(CORNER_RADIUS / TOGGLE_WIDTH, CORNER_RADIUS / TOGGLE_HEIGHT)
+                .corners(TOGGLE_CORNER_RADIUS / TOGGLE_WIDTH, TOGGLE_CORNER_RADIUS / TOGGLE_HEIGHT)
                 .size(1, 1);
 
             // Draw the outer border
             this.root.draw("rect")
                 .size(TOGGLE_WIDTH, TOGGLE_HEIGHT)
                 .fill(this.props.baseColor)
-                .stroke(this.props.borderColor, BORDER_WIDTH * 2)
-                .corners(CORNER_RADIUS, CORNER_RADIUS)
+                .stroke(this.props.borderColor, TOGGLE_BORDER_WIDTH * 2)
+                .corners(TOGGLE_CORNER_RADIUS, TOGGLE_CORNER_RADIUS)
                 .clipPath("url(#sprite-editor-toggle-border)");
 
 
             // Draw the background
             this.root.draw("rect")
-                .at(BORDER_WIDTH, BORDER_WIDTH)
-                .size(TOGGLE_WIDTH - BORDER_WIDTH * 2, TOGGLE_HEIGHT - BORDER_WIDTH * 2)
+                .at(TOGGLE_BORDER_WIDTH, TOGGLE_BORDER_WIDTH)
+                .size(TOGGLE_WIDTH - TOGGLE_BORDER_WIDTH * 2, TOGGLE_HEIGHT - TOGGLE_BORDER_WIDTH * 2)
                 .fill(this.props.backgroundColor)
-                .corners(CORNER_RADIUS, CORNER_RADIUS);
+                .corners(TOGGLE_CORNER_RADIUS, TOGGLE_CORNER_RADIUS);
 
             // Draw the switch
             this.switch = this.root.draw("rect")
-                .at(BORDER_WIDTH, BORDER_WIDTH)
-                .size((TOGGLE_WIDTH - BORDER_WIDTH * 2) / 2, TOGGLE_HEIGHT - BORDER_WIDTH * 2)
+                .at(TOGGLE_BORDER_WIDTH, TOGGLE_BORDER_WIDTH)
+                .size((TOGGLE_WIDTH - TOGGLE_BORDER_WIDTH * 2) / 2, TOGGLE_HEIGHT - TOGGLE_BORDER_WIDTH * 2)
                 .fill(this.props.switchColor)
-                .corners(CORNER_RADIUS, CORNER_RADIUS);
+                .corners(TOGGLE_CORNER_RADIUS, TOGGLE_CORNER_RADIUS);
 
             // Draw the left option
             this.leftElement = this.root.group();
@@ -319,13 +161,13 @@ namespace pxtblockly {
         }
 
         layout() {
-            const centerOffset = (TOGGLE_WIDTH - BORDER_WIDTH * 2) / 4;
+            const centerOffset = (TOGGLE_WIDTH - TOGGLE_BORDER_WIDTH * 2) / 4;
 
             const lWidth = this.leftText.el.getComputedTextLength();
-            this.leftText.moveTo(centerOffset + BORDER_WIDTH - lWidth / 2, TOGGLE_HEIGHT / 2);
+            this.leftText.moveTo(centerOffset + TOGGLE_BORDER_WIDTH - lWidth / 2, TOGGLE_HEIGHT / 2);
 
             const rWidth = this.rightText.el.getComputedTextLength();
-            this.rightText.moveTo(TOGGLE_WIDTH - BORDER_WIDTH - centerOffset - rWidth / 2, TOGGLE_HEIGHT / 2)
+            this.rightText.moveTo(TOGGLE_WIDTH - TOGGLE_BORDER_WIDTH - centerOffset - rWidth / 2, TOGGLE_HEIGHT / 2)
         }
 
         translate(x: number, y: number) {
@@ -341,19 +183,30 @@ namespace pxtblockly {
         }
     }
 
-    const BUTTON_BOTTOM_OFFSET = 3;
-    const BUTTON_BORDER_WIDTH = 1;
-    const BUTTON_CORNER_RADIUS = 2;
-
-    export abstract class BaseButton {
+    export class Button {
+        cx: number;
+        cy: number;
         root: svg.Group;
         clickHandler: () => void;
 
-        constructor(parent: svg.Group) {
-            this.root = parent.group().appendClass("sprite-editor-button");
+        constructor(root: svg.Group, cx: number, cy: number) {
+            this.root = root;
+            this.cx = cx;
+            this.cy = cy;
             this.root.onClick(() => this.clickHandler && this.clickHandler());
+            this.root.appendClass("sprite-editor-button");
+            this.root.el.addEventListener("animationstart", () => {
+                this.layout();
+            });
+
+            // This animation does nothing, but the above event will fire once the
+            // node has definitely been added to the DOM
+            this.root.el.style.animation = "dom-test";
         }
 
+        public getElement() {
+            return this.root;
+        }
 
         public addClass(className: string) {
             this.root.appendClass(className);
@@ -374,79 +227,71 @@ namespace pxtblockly {
         public title(text: string) {
             this.root.title(text);
         }
-    }
 
-    export abstract class NewButton extends BaseButton {
-        background: svg.Rect;
-        foreground: svg.Rect;
-        content: svg.Group;
-        width = 31;
-
-        constructor(parent: svg.Group) {
-            super(parent);
-            this.root.style().content(`
-            .test-anim {
-                animation: dom-test 0.2s 0s ease;
-            }
-
-            @keyframes dom-test {
-                0% {
-                    transform: translateX(0px);
-                }
-                100% {
-                    transform: translateX(0px);
-                }
-            }
-            `);
-            this.buildDom();
+        public setDisabled(disabled: boolean) {
+            this.editClass("disabled", disabled);
         }
 
-        protected abstract buildContent(g: svg.Group): void;
-        protected abstract layout(): void;
+        public setSelected(selected: boolean) {
+            this.editClass("selected", selected);
+        }
 
-        protected buildDom() {
-            this.background = this.root.draw("rect")
-                .size(this.width, this.width)
-                .corners(BUTTON_CORNER_RADIUS, BUTTON_CORNER_RADIUS)
-                .appendClass("sprite-editor-button-bg");
+        protected layout() { /* subclass */ }
 
-            this.foreground = this.root.draw("rect")
-                .at(BUTTON_BORDER_WIDTH, BUTTON_BORDER_WIDTH)
-                .size(this.width - BUTTON_BORDER_WIDTH * 2, this.width - BUTTON_BOTTOM_OFFSET - BUTTON_BORDER_WIDTH)
-                .corners(BUTTON_CORNER_RADIUS, BUTTON_CORNER_RADIUS)
-                .appendClass("sprite-editor-button-fg");
-
-            this.content = this.root.group();
-            this.buildContent(this.content);
-
-            this.background.el.style.animation = "dom-test";
-            this.background.el.addEventListener("animationstart", () => {
-                this.layout();
-            });
+        protected editClass(className: string, add: boolean) {
+            if (add) {
+                this.root.appendClass(className);
+            }
+            else {
+                this.root.removeClass(className);
+            }
         }
     }
 
-    export class NewFontButton extends NewButton {
-        iconEl: svg.Text;
-        constructor(parent: svg.Group, icon: string) {
-            super(parent);
-            this.iconEl.text(icon);
-        }
+    export class FontButton extends Button {
+        protected iconEl: svg.Text;
 
-        protected buildContent(g: svg.Group) {
-            this.iconEl = g.draw("text")
+        constructor(root: svg.Group, cx: number, cy: number, icon: string) {
+            super(root, cx, cy);
+            this.iconEl = this.root.draw("text")
+                .text(icon)
                 .appendClass("sprite-editor-icon")
                 .setAttribute("dominant-baseline", "middle")
                 .setAttribute("dy", 2.5);
         }
 
-        protected layout() {
+        layout() {
             const width = this.iconEl.el.getComputedTextLength();
-            this.content.translate((this.width - width) / 2, (this.width - BUTTON_BOTTOM_OFFSET - BUTTON_BORDER_WIDTH) / 2)
+            this.iconEl.moveTo(this.cx - width / 2, this.cy);
         }
     }
 
-    function drawLeftButton(width: number, height: number, lip: number, border: number, r: number) {
+    export class CursorButton extends Button {
+        constructor(root: svg.Group, cx: number, cy: number, width: number) {
+            super(root, cx, cy);
+
+            this.root.draw("rect")
+                .fill("white")
+                .size(width, width)
+                .at(Math.floor(this.cx - width / 2), Math.floor(this.cy - width / 2))
+        }
+    }
+
+    export function mkIconButton(icon: string, width: number) {
+        const g = drawSingleButton(width, width + BUTTON_BOTTOM_BORDER_WIDTH - BUTTON_BORDER_WIDTH);
+        return new FontButton(g.root, g.cx, g.cy, icon);
+    }
+
+    /**
+     * Draws a button suitable for the left end of a button group.
+     *
+     * @param width The total width of the result (including border)
+     * @param height The total height of the resul (including border and lip)
+     * @param lip  The width of the bottom border
+     * @param border The width of the outer border (except bottom)
+     * @param r The corner radius
+     */
+    function drawLeftButton(width: number, height: number, lip: number, border: number, r: number): ButtonGroup {
         const root = new svg.Group().appendClass("sprite-editor-button");
         const bg = root.draw("path")
             .appendClass("sprite-editor-button-bg");
@@ -472,13 +317,121 @@ namespace pxtblockly {
             .close();
         fg.update();
 
-        const content = root.group().id("sprite-editor-button-content");
-        content.translate(border + (width - border) >> 1, (height - lip - border) >> 1);
-
-        return root;
+        return {
+            root,
+            cx: border + (width - border) / 2,
+            cy: border + (height - lip) / 2
+        };
     }
 
-    function drawMidButton(width: number, height: number, lip: number, border: number) {
+    export class CursorMultiButton {
+        root: svg.Group;
+        selected: number;
+        buttons: Button[];
+
+        indexHandler: (index: number) => void;
+
+        constructor(parent: svg.Group, width: number) {
+            this.root = parent.group();
+            const widths = [4, 7, 10]
+
+            this.buttons = buttonGroup(65, 21, 3).map((b, i) => new CursorButton(b.root, b.cx, b.cy, widths[i]));
+            this.buttons.forEach((button, index) => {
+                button.onClick(() => this.handleClick(index));
+                button.title(sizeAdjective(index));
+                this.root.appendChild(button.getElement());
+            });
+        }
+
+        protected handleClick(index: number) {
+            if (index === this.selected) return;
+
+            if (this.selected != undefined) {
+                this.buttons[this.selected].setSelected(false);
+            }
+
+            this.selected = index;
+
+            if (this.selected != undefined) {
+                this.buttons[this.selected].setSelected(true);
+            }
+
+            if (this.indexHandler) this.indexHandler(index);
+        }
+
+        onSelected(cb: (index: number) => void) {
+            this.indexHandler = cb;
+        }
+    }
+
+    export interface UndoRedoHost {
+        undo(): void;
+        redo(): void;
+    }
+
+    export class UndoRedoGroup {
+        root: svg.Group;
+        undo: FontButton;
+        redo: FontButton;
+
+        host: UndoRedoHost;
+
+        constructor(parent: svg.Group, host: UndoRedoHost, width: number) {
+            this.root = parent.group();
+            this.host = host;
+            const [undo, redo] = buttonGroup(width, width >> 1, 2);
+
+            this.undo = new FontButton(undo.root, undo.cx, undo.cy, "\uf0e2");
+            this.undo.onClick(() => this.host.undo());
+            this.root.appendChild(this.undo.getElement());
+
+
+            this.redo = new FontButton(redo.root, redo.cx, redo.cy, "\uf01e");
+            this.redo.onClick(() => this.host.redo());
+            this.root.appendChild(this.redo.getElement());
+        }
+
+        translate(x: number, y: number) {
+            this.root.translate(x, y);
+        }
+
+        updateState(undo: boolean, redo: boolean) {
+            this.undo.setDisabled(undo);
+            this.redo.setDisabled(redo);
+        }
+    }
+
+
+    function defaultColors(props: Partial<ToggleProps>): ToggleProps {
+        if (!props.baseColor) props.baseColor = "#e95153";
+        if (!props.backgroundColor) props.backgroundColor = "rgba(52,73,94,.2)";
+        if (!props.borderColor) props.borderColor = "rgba(52,73,94,.4)";
+        if (!props.selectedTextColor) props.selectedTextColor = props.baseColor;
+        if (!props.unselectedTextColor) props.unselectedTextColor = "hsla(0,0%,100%,.9)";
+        if (!props.switchColor) props.switchColor = "#ffffff";
+
+        return props as ToggleProps;
+    }
+
+    function sizeAdjective(cursorIndex: number) {
+        switch (cursorIndex) {
+            case 0: return lf("Small Cursor");
+            case 1: return lf("Medium Cursor");
+            case 2: return lf("Large Cursor");
+        }
+
+        return undefined;
+    }
+
+        /**
+     * Draws a button suitable for the interior of a button group.
+     *
+     * @param width The total width of the result (including border)
+     * @param height The total height of the resul (including border and lip)
+     * @param lip  The width of the bottom border
+     * @param border The width of the outer border (except bottom)
+     */
+    function drawMidButton(width: number, height: number, lip: number, border: number): ButtonGroup {
         const root = new svg.Group().appendClass("sprite-editor-button");
         const bg = root.draw("rect")
             .appendClass("sprite-editor-button-bg")
@@ -489,13 +442,23 @@ namespace pxtblockly {
             .size(width - border, height - lip - border)
             .at(border, border);
 
-        const content = root.group().id("sprite-editor-button-content");
-        content.translate((width - border) >> 1, (height - lip - border) >> 1);
-
-        return root;
+        return {
+            root,
+            cx: border + (width - border) / 2,
+            cy: border + (height - lip) / 2
+        };
     }
 
-    function drawRightButton(width: number, height: number, lip: number, border: number, r: number) {
+    /**
+     * Draws a button suitable for the right end of a button group.
+     *
+     * @param width The total width of the result (including border)
+     * @param height The total height of the resul (including border and lip)
+     * @param lip  The width of the bottom border
+     * @param border The width of the outer border (except bottom)
+     * @param r The corner radius
+     */
+    function drawRightButton(width: number, height: number, lip: number, border: number, r: number): ButtonGroup {
         const root = new svg.Group().appendClass("sprite-editor-button");
         const bg = root.draw("path")
             .appendClass("sprite-editor-button-bg");
@@ -524,109 +487,63 @@ namespace pxtblockly {
         const content = root.group().id("sprite-editor-button-content");
         content.translate(border + (width - (border << 1)) >> 1, (height - lip - border) >> 1);
 
-        return root;
+        return {
+            root,
+            cx: width / 2,
+            cy: border + (height - lip) / 2
+        };
     }
 
+    /**
+     * Draws a standalone button.
+     *
+     * @param width The total width of the result (including border)
+     * @param height The total height of the resul (including border and lip)
+     * @param lip  The width of the bottom border
+     * @param border The width of the outer border (except bottom)
+     * @param r The corner radius
+     */
+    function drawSingleButton(width: number, height: number, lip = BUTTON_BOTTOM_BORDER_WIDTH, border = BUTTON_BORDER_WIDTH, r = BUTTON_CORNER_RADIUS): ButtonGroup {
+        const root = new svg.Group().appendClass("sprite-editor-button");
+        root.draw("rect")
+            .size(width, height)
+            .corners(r, r)
+            .appendClass("sprite-editor-button-bg");
 
-    function buttonGroup(width: number, height: number, lip: number, border: number, r: number, segments: number) {
+        root.draw("rect")
+            .at(border, border)
+            .size(width - (border << 1), height - lip - border)
+            .corners(r, r)
+            .appendClass("sprite-editor-button-fg");
+
+        return {
+            root,
+            cx: width / 2,
+            cy: border + (height - lip) / 2
+        };
+    }
+
+    function buttonGroup(width: number, height: number, segments: number, lip = BUTTON_BOTTOM_BORDER_WIDTH, border = BUTTON_BORDER_WIDTH, r = BUTTON_CORNER_RADIUS): ButtonGroup[] {
         const available = width - (segments + 1) * border;
         const segmentWidth = Math.floor(available / segments);
 
-        const result: svg.Group[] = [];
+        const result: ButtonGroup[] = [];
         for (let i = 0; i < segments; i++) {
             if (i === 0) {
                 result.push(drawLeftButton(segmentWidth + border, height, lip, border, r));
             }
             else if (i === segments - 1) {
                 const b = drawRightButton(segmentWidth + (border << 1), height, lip, border, r);
-                b.translate((border + segmentWidth) * i, 0);
+                b.root.translate((border + segmentWidth) * i, 0);
                 result.push(b);
             }
             else {
                 const b = drawMidButton(segmentWidth + border, height, lip, border);
-                b.translate((border + segmentWidth) * i, 0);
+                b.root.translate((border + segmentWidth) * i, 0);
                 result.push(b);
             }
         }
 
         return result;
-    }
-
-    export class CursorMultiButton {
-        root: svg.Group;
-        buttons: svg.Group[];
-        selected: number;
-
-        indexHandler: (index: number) => void;
-
-        constructor(parent: svg.Group, width: number) {
-            this.root = parent.group();
-            const widths = [4, 7, 10]
-
-            this.buttons = buttonGroup(65, 21, 3, 1, CORNER_RADIUS, 3);
-            this.buttons.forEach((button, index) => {
-                const width = widths[index];
-                const content = getChildById(button.el, "sprite-editor-button-content");
-                const r = new svg.Rect().size(width, width).at(1 + Math.ceil(-width / 2), 1 + Math.ceil(-width / 2)).fill("white");
-                content.appendChild(r.el);
-                this.root.appendChild(button);
-                button.onClick(() => this.handleClick(index));
-                button.title(sizeAdjective(index));
-            });
-        }
-
-        protected handleClick(index: number) {
-            if (index === this.selected) return;
-
-            if (this.selected != undefined) {
-                this.buttons[this.selected].removeClass("selected");
-            }
-
-            this.selected = index;
-
-            if (this.selected != undefined) {
-                this.buttons[this.selected].appendClass("selected");
-            }
-
-            if (this.indexHandler) this.indexHandler(index);
-        }
-
-        onSelected(cb: (index: number) => void) {
-            this.indexHandler = cb;
-        }
-    }
-
-
-    function defaultColors(props: Partial<ToggleProps>): ToggleProps {
-        if (!props.baseColor) props.baseColor = "#e95153";
-        if (!props.backgroundColor) props.backgroundColor = "rgba(52,73,94,.2)";
-        if (!props.borderColor) props.borderColor = "rgba(52,73,94,.4)";
-        if (!props.selectedTextColor) props.selectedTextColor = props.baseColor;
-        if (!props.unselectedTextColor) props.unselectedTextColor = "hsla(0,0%,100%,.9)";
-        if (!props.switchColor) props.switchColor = "#ffffff";
-
-        return props as ToggleProps;
-    }
-
-    function getChildById(parent: SVGElement, id: string) {
-        if (parent && parent.children) {
-            for (let i = 0; i < parent.children.length; i++) {
-                const child = parent.children.item(i);
-                if (child.id === id) {
-                    return child as SVGElement;
-                }
-            }
-        }
-        return undefined;
-    }
-
-    function sizeAdjective(cursorIndex: number) {
-        switch (cursorIndex) {
-            case 0: return lf("Small Cursor");
-            case 1: return lf("Medium Cursor");
-            case 2: return lf("Large Cursor");
-        }
-
-        return undefined;
     }
 }

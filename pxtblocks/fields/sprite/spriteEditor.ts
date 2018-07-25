@@ -81,7 +81,7 @@ namespace pxtblockly {
 
             this.root = new svg.SVG();
             this.group = this.root.group();
-            this.makeTransparencyFill();
+            this.createDefs();
 
             this.paintSurface = new CanvasGrid(this.colors, this.state.copy(), this.lightMode);
 
@@ -395,7 +395,7 @@ namespace pxtblockly {
             // }
         }
 
-        private makeTransparencyFill() {
+        private createDefs() {
             this.root.define(defs => {
                 const p = defs.create("pattern", "alpha-background")
                     .size(10, 10)
@@ -414,6 +414,21 @@ namespace pxtblockly {
                     .size(5, 5)
                     .fill("#dedede");
             })
+
+            // This is used for detecting when text nodes are in the dom.
+            // getComputedTextLength() requires the node to be in the dom so
+            // by listening when this animation begins we can tell if the
+            // node is rendered or not
+            this.group.style().content(`
+            @keyframes dom-test {
+                0% {
+                    transform: translateX(0px);
+                }
+                100% {
+                    transform: translateX(0px);
+                }
+            }
+            `);
         }
     }
 }

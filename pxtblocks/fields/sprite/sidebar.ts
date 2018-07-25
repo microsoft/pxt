@@ -9,17 +9,16 @@ namespace pxtblockly {
     }
 
     const TOOLBAR_WIDTH = 65;
-    const INNER_BUTTON_MARGIN = 2;
+    const INNER_BUTTON_MARGIN = 3;
     const PALETTE_BORDER_WIDTH = 1;
     const BUTTON_GROUP_SPACING = 3;
     const SELECTED_BORDER_WIDTH = 2;
     const COLOR_PREVIEW_HEIGHT = 30;
     const COLOR_MARGIN = 7;
 
-    const CURSOR_BUTTON_WIDTH = ((TOOLBAR_WIDTH  - INNER_BUTTON_MARGIN * 2) / 3);
     const TOOL_BUTTON_WIDTH = (TOOLBAR_WIDTH - INNER_BUTTON_MARGIN) / 2;
     const PALLETTE_SWATCH_WIDTH = (TOOLBAR_WIDTH - PALETTE_BORDER_WIDTH * 3) / 2;
-    const TOOL_BUTTON_TOP = CURSOR_BUTTON_WIDTH + BUTTON_GROUP_SPACING;
+    const TOOL_BUTTON_TOP = TOOLBAR_WIDTH / 3 + BUTTON_GROUP_SPACING;
     const PALETTE_TOP = TOOL_BUTTON_TOP + TOOL_BUTTON_WIDTH * 2 + INNER_BUTTON_MARGIN + COLOR_MARGIN;
 
     export class SideBar {
@@ -28,16 +27,16 @@ namespace pxtblockly {
         palette: string[];
 
         protected colorSwatches: svg.Rect[];
-        protected pencilTool: NewFontButton;
-        protected eraseTool: NewFontButton;
-        protected rectangleTool: NewFontButton;
-        protected fillTool: NewFontButton;
+        protected pencilTool: Button;
+        protected eraseTool: Button;
+        protected rectangleTool: Button;
+        protected fillTool: Button;
 
         protected sizeGroup: svg.Group;
         protected buttonGroup: svg.Group;
         protected paletteGroup: svg.Group;
 
-        protected selectedTool: NewFontButton;
+        protected selectedTool: Button;
         protected selectedSwatch: svg.Rect;
         protected colorPreview: svg.Rect;
 
@@ -172,10 +171,10 @@ namespace pxtblockly {
         }
 
         protected initButton(title: string, icon: string, tool: PaintTool) {
-            const btn = new NewFontButton(this.buttonGroup, icon);
+            const btn = mkIconButton(icon, TOOL_BUTTON_WIDTH);
             btn.title(title);
             btn.onClick(() => this.setTool(tool));
-            // this.buttonGroup.appendChild(btn.getView());
+            this.buttonGroup.appendChild(btn.getElement());
             return btn;
         }
 
@@ -188,15 +187,5 @@ namespace pxtblockly {
                 default: return undefined;
             }
         }
-    }
-
-    function sizeAdjective(cursorIndex: number) {
-        switch (cursorIndex) {
-            case 0: return lf("Small Cursor");
-            case 1: return lf("Medium Cursor");
-            case 2: return lf("Large Cursor");
-        }
-
-        return undefined;
     }
 }
