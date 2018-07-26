@@ -1,44 +1,14 @@
-import * as db from "./db";
 import * as core from "./core";
-import * as data from "./data";
 import * as electron from "./electron";
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
-let allScripts: HeaderWithScript[] = [];
-let currentTarget: string;
-let currentTargetVersion: string;
 
 type Header = pxt.workspace.Header;
 type ScriptText = pxt.workspace.ScriptText;
 type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
-type InstallHeader = pxt.workspace.InstallHeader;
 
-interface HeaderWithScript {
-    id: string;
-    header: Header;
-    text: ScriptText;
-    fsText: ScriptText;
-    mtime?: number;
-    textNeedsSave?: boolean;
-}
-
-function lookup(id: string) {
-    return allScripts.filter(x => x.id == id)[0]
-}
-
-function getHeaders() {
-    return allScripts.map(e => e.header)
-}
-
-function getHeader(id: string) {
-    let e = lookup(id)
-    if (e && !e.header.isDeleted)
-        return e.header
-    return null
-}
-
-function apiAsync(path: string, data?: any) {
+let apiAsync = (path: string, data?: any) => {
     return U.requestAsync({
         url: "/api/" + path,
         headers: { "Authorization": Cloud.localToken },
@@ -47,218 +17,89 @@ function apiAsync(path: string, data?: any) {
     }).then(r => r.json).catch(core.handleNetworkError);
 }
 
-function mergeFsPkg(pkg: pxt.FsPkg) {
-    let e = lookup(pkg.path)
-    if (!e) {
-        e = {
-            id: pkg.path,
-            header: null,
-            text: null,
-            fsText: null
-        }
-        allScripts.push(e)
-    }
-
-    let time = pkg.files.map(f => f.mtime)
-    time.sort((a, b) => b - a)
-    let modTime = Math.round(time[0] / 1000) || U.nowSeconds()
-    let hd: Header = {
-        target: currentTarget,
-        targetVersion: e.header ? e.header.targetVersion : currentTargetVersion,
-        name: pkg.config.name,
-        meta: {},
-        editor: pxt.JAVASCRIPT_PROJECT_NAME,
-        pubId: pkg.config.installedVersion,
-        pubCurrent: false,
-        _rev: null,
-        id: pkg.path,
-        recentUse: modTime,
-        modificationTime: modTime,
-        blobId: null,
-        blobCurrent: false,
-        isDeleted: false,
-        icon: pkg.icon
-    }
-
-    if (!e.header) {
-        e.header = hd
-    } else {
-        let eh = e.header
-        eh.name = hd.name
-        eh.pubId = hd.pubId
-        eh.modificationTime = hd.modificationTime
-        eh.isDeleted = hd.isDeleted
-        eh.icon = hd.icon
-    }
-
-    let gjson = pkg.files.filter(f => f.name == pxt.github.GIT_JSON)[0]
-    if (gjson) {
-        let gj = JSON.parse(gjson.content)
-        e.header.githubId = gj.repo
-    }
+export function setApiAsync(f: (path: string, data?: any) => Promise<any>) {
+    apiAsync = f
 }
 
-function initAsync(target: string, version: string) {
-    allScripts = [];
-    currentTarget = target;
-    currentTargetVersion = version;
-    return syncAsync().then(() => { });
-}
-
-function fetchTextAsync(e: HeaderWithScript): Promise<ScriptText> {
-    return apiAsync("pkg/" + e.id)
+function getAsync(h: Header) {
+    return apiAsync("pkg/" + h.path)
         .then((resp: pxt.FsPkg) => {
-            if (!e.text) {
-                // otherwise we were beaten to it
-                e.text = {};
-                e.mtime = 0
-                for (let f of resp.files) {
-                    e.text[f.name] = f.content
-                    e.mtime = Math.max(e.mtime, f.mtime)
-                }
-                e.fsText = U.flatClone(e.text)
+            let r: pxt.workspace.File = {
+                header: h,
+                text: {},
+                version: null
             }
-            return e.text
+            for (let f of resp.files) {
+                r.text[f.name] = f.content
+                h.modificationTime = Math.max(h.modificationTime, (f.mtime / 1000) | 0)
+            }
+            h.recentUse = Math.max(h.recentUse, h.modificationTime)
+            r.version = U.flatClone(r.text)
+            return r
         })
 }
 
-let headerQ = new U.PromiseQueue();
+const delText = {}
 
-function getTextAsync(id: string): Promise<ScriptText> {
-    let e = lookup(id)
-    if (!e)
-        return Promise.resolve(null as ScriptText)
-    if (e.text)
-        return Promise.resolve(e.text)
-    return headerQ.enqueue(id, () => fetchTextAsync(e))
-}
-
-function saveCoreAsync(h: Header, text?: ScriptText) {
-    if (h.temporary) return Promise.resolve();
-
-    let e = lookup(h.id)
-
-    U.assert(e.header === h)
-
-    if (!text)
-        return Promise.resolve()
-
-    h.saveId = null
-    e.textNeedsSave = true
-    e.text = text
-
-    return headerQ.enqueue<void>(h.id, () => {
-        U.assert(!!e.fsText)
-        let pkg: pxt.FsPkg = {
-            files: [],
-            config: null,
-            path: h.id,
-        }
-        for (let fn of Object.keys(e.text)) {
-            if (e.text[fn] !== e.fsText[fn])
-                pkg.files.push({
-                    name: fn,
-                    mtime: null,
-                    content: e.text[fn],
-                    prevContent: e.fsText[fn]
-                })
-        }
-        let savedText = U.flatClone(e.text)
-        if (pkg.files.length == 0) {
-            if (electron.isPxtElectron && h.isDeleted) {
-                pkg.isDeleted = true;
-                return apiAsync("pkg/" + h.id, pkg);
-            } else {
-                return Promise.resolve();
-            }
-        }
-        return apiAsync("pkg/" + h.id, pkg)
-            .then((pkg: pxt.FsPkg) => {
-                e.fsText = savedText
-                mergeFsPkg(pkg)
-                data.invalidate("header:" + h.id)
-                data.invalidate("header:*")
-                if (text) {
-                    data.invalidate("text:" + h.id)
-                    h.saveId = null
-                }
-            })
-            .catch(e => core.errorNotification(lf("Save failed!")))
-    })
-}
-
-function saveAsync(h: Header, text: ScriptText) {
-    return saveCoreAsync(h, text)
-}
-
-function installAsync(h0: InstallHeader, text: ScriptText) {
-    const h = <Header>h0
-    let path = h.name.replace(/[^a-zA-Z0-9]+/g, " ").trim().replace(/ /g, "-")
-    if (lookup(path)) {
-        let n = 2
-        while (lookup(path + "-" + n))
-            n++;
-        path += "-" + n
-        h.name += " " + n
-    }
-    h.id = path;
-    h.recentUse = U.nowSeconds()
-    h.modificationTime = h.recentUse;
-    const e: HeaderWithScript = {
-        id: h.id,
+function setAsync(h: Header, prevVersion: pxt.workspace.Version, text?: ScriptText): Promise<pxt.workspace.Version> {
+    let pkg: pxt.FsPkg = {
+        files: [],
+        config: null,
         header: h,
-        text: text,
-        fsText: {}
+        path: h.path,
+        isDeleted: text === delText
     }
-    allScripts.push(e)
-    return saveCoreAsync(h, text)
-        .then(() => h)
+    if (!prevVersion) prevVersion = {}
+    for (let fn of Object.keys(text || {})) {
+        if (text[fn] !== prevVersion[fn])
+            pkg.files.push({
+                name: fn,
+                mtime: null,
+                content: text[fn],
+                prevContent: prevVersion[fn]
+            })
+    }
+
+    let savedText = U.flatClone(text || {})
+
+    return apiAsync("pkg/" + h.path, pkg)
+        .then((pkg: pxt.FsPkg) => {
+            //mergeFsPkg(pkg)
+            return savedText
+        })
 }
 
-function saveToCloudAsync(h: Header) {
-    return Promise.resolve()
+function deleteAsync(h: Header, prevVer: any) {
+    return setAsync(h, prevVer, delText)
 }
 
-function syncAsync(): Promise<pxt.editor.EditorSyncState> {
-    return apiAsync("list").then((h: pxt.FsPkgs) => {
-        h.pkgs.forEach(mergeFsPkg)
-        data.invalidate("header:")
-        data.invalidate("text:")
-
-        return undefined;
-    })
+async function listAsync(): Promise<Header[]> {
+    let h: pxt.FsPkgs = await apiAsync("list")
+    for (let pkg of h.pkgs) {
+        if (!pkg.header) {
+            let time = pkg.files.map(f => f.mtime)
+            time.sort((a, b) => b - a)
+            let modTime = Math.round(time[0] / 1000) || U.nowSeconds()
+            pkg.header = pxt.workspace.freshHeader(pkg.config.name, modTime)
+            pkg.header.path = pkg.path
+            // generate new header and save it
+            await setAsync(pkg.header, null)
+        } else {
+            pkg.header.path = pkg.path
+        }
+    }
+    return h.pkgs.map(p => p.header)
 }
 
 function saveScreenshotAsync(h: Header, screenshot: string, icon: string) {
-    return apiAsync("screenshot/" + h.id, { screenshot, icon })
+    return apiAsync("screenshot/" + h.path, { screenshot, icon })
 }
 
 function resetAsync() {
-    return db.destroyAsync()
-        .then(() => {
-            allScripts = [];
-            let localToken: string;
-
-            if (electron.isPxtElectron) {
-                localToken = pxt.storage.getLocal("local_token");
-            }
-
-            pxt.storage.clearLocal();
-            data.clearCache();
-
-            if (electron.isPxtElectron) {
-                pxt.storage.setLocal("local_token", localToken);
-                pxt.Cloud.localToken = localToken;
-                return apiAsync("resetworkspace", {})
-                    .then(() => {});
-            }
-
-            return Promise.resolve();
-        });
-}
-
-function loadedAsync(): Promise<void> {
-    return Promise.resolve();
+    if (electron.isElectron)
+        return apiAsync("resetworkspace", {})
+            .then(() => { });
+    return Promise.resolve()
 }
 
 function saveAssetAsync(id: string, filename: string, data: Uint8Array): Promise<void> {
@@ -276,16 +117,11 @@ function listAssetsAsync(id: string): Promise<pxt.workspace.Asset[]> {
 
 
 export const provider: WorkspaceProvider = {
-    getHeaders,
-    getHeader,
-    getTextAsync,
-    initAsync,
-    saveAsync,
-    installAsync,
-    saveToCloudAsync,
-    syncAsync,
+    getAsync,
+    setAsync,
+    listAsync,
     resetAsync,
-    loadedAsync,
+    deleteAsync,
     saveScreenshotAsync,
     saveAssetAsync,
     listAssetsAsync

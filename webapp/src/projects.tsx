@@ -9,7 +9,7 @@ import * as compiler from "./compiler";
 
 import * as codecard from "./codecard"
 import * as carousel from "./carousel";
-import { showAboutDialogAsync } from "./dialogs";
+import { showAboutDialogAsync, showCloudSignInDialog } from "./dialogs";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -35,6 +35,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         this.chgGallery = this.chgGallery.bind(this);
         this.chgCode = this.chgCode.bind(this);
         this.importProject = this.importProject.bind(this);
+        this.cloudSignIn = this.cloudSignIn.bind(this);
         this.setSelected = this.setSelected.bind(this);
     }
 
@@ -165,6 +166,11 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         this.props.parent.importProjectDialog();
     }
 
+    cloudSignIn() {
+        pxt.tickEvent("projects.signin", undefined, { interactiveConsent: true });
+        showCloudSignInDialog();
+    }
+
     renderCore() {
         const { selectedCategory, selectedIndex } = this.state;
 
@@ -190,6 +196,13 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             'ui segment bottom attached tab active tabsegment'
         ]);
 
+        let signIn = ""
+        let signInIcon = ""
+        if (this.getData("sync:hascloud")) {
+            signInIcon = this.getData("sync:status") == "syncing" ? "cloud download" : "user circle"
+            signIn = this.getData("sync:username") || lf("Sign in")
+        }
+
         return <div ref="homeContainer" className={tabClasses}>
             {showHeroBanner ?
                 <div className="ui segment getting-started-segment" style={{ backgroundImage: `url(${encodeURI(targetTheme.homeScreenHero)})` }} /> : undefined}
@@ -201,6 +214,9 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                     <div className="column right aligned">
                         {pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing) ?
                             <sui.Button key="import" icon="upload" className="mini import-dialog-btn" textClass="landscape only" text={lf("Import")} title={lf("Import a project")} onClick={this.importProject} /> : undefined}
+                        {signIn ?
+                            <sui.Button key="signin" icon={signInIcon} className="mini import-dialog-btn" textClass="landscape only" text={signIn} title={lf("Sign in to sync your projects")} onClick={this.cloudSignIn} />
+                            : undefined}
                     </div>
                 </div>
                 <div className="content">

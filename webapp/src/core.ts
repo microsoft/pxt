@@ -313,6 +313,18 @@ export function parseQueryString(qs: string) {
     return r
 }
 
+export function stringifyQueryString(url: string, qs: any) {
+    for (let k of Object.keys(qs)) {
+        if (url.indexOf("?") >= 0) {
+            url += "&"
+        } else {
+            url += "?"
+        }
+        url += encodeURIComponent(k) + "=" + encodeURIComponent(qs[k])
+    }
+    return url
+}
+
 export function handleNetworkError(e: any, ignoredCodes?: number[]) {
     let statusCode = parseInt(e.statusCode);
 

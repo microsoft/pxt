@@ -20,10 +20,12 @@ namespace pxt.workspace {
     export interface Header extends InstallHeader {
         _rev: string;
         id: string; // guid
+        path?: string; // for workspaces that require it
         recentUse: number; // seconds since epoch
         modificationTime: number; // seconds since epoch
-        blobId: string; // blob name for cloud version
-        blobCurrent: boolean;      // has the current version of the script been pushed to cloud
+        blobId: string;       // id of the cloud blob holding this script
+        blobVersion: string;  // version of the cloud blob
+        blobCurrent: boolean; // has the current version of the script been pushed to cloud
         isDeleted: boolean;
         saveId?: any;
         // icon uri
@@ -43,21 +45,49 @@ namespace pxt.workspace {
         url: string;
     }
 
+    export type Version = any;
+
+    export interface File {
+        header: Header;
+        text: ScriptText;
+        version: Version;
+    }
+
     export interface WorkspaceProvider {
-        getHeaders(): Header[];
-        getHeader(id: string): Header;
-        getTextAsync(id: string): Promise<ScriptText>;
-        initAsync(target: string, version: string): Promise<void>;
-        saveAsync(h: Header, text?: ScriptText): Promise<void>;
-        installAsync(h0: InstallHeader, text: ScriptText): Promise<Header>;
-        saveToCloudAsync(h: Header): Promise<void>;
-        syncAsync(): Promise<pxt.editor.EditorSyncState>;
+        listAsync(): Promise<Header[]>; // called from workspace.syncAsync (including upon startup)        
+        getAsync(h: Header): Promise<File>;
+        setAsync(h: Header, prevVersion: Version, text?: ScriptText): Promise<Version>;
+        deleteAsync?: (h: Header, prevVersion: Version) => Promise<void>;
         resetAsync(): Promise<void>;
-        loadedAsync(): Promise<void>;
+        loadedAsync?: () => Promise<void>;
+        getSyncState?: () => pxt.editor.EditorSyncState;
+
         // optional screenshot support
         saveScreenshotAsync?: (h: Header, screenshot: string, icon: string) => Promise<void>;
-        // asset (large binary file) support
+
+        // optional asset (large binary file) support
         saveAssetAsync?: (id: string, filename: string, data: Uint8Array) => Promise<void>;
         listAssetsAsync?: (id: string) => Promise<Asset[]>;
+    }
+
+    export function freshHeader(name: string, modTime: number) {
+        let header: Header = {
+            target: pxt.appTarget.id,
+            targetVersion: pxt.appTarget.versions.target,
+            name: name,
+            meta: {},
+            editor: pxt.JAVASCRIPT_PROJECT_NAME,
+            pubId: "",
+            pubCurrent: false,
+            _rev: null,
+            id: U.guidGen(),
+            recentUse: modTime,
+            modificationTime: modTime,
+            blobId: null,
+            blobVersion: null,
+            blobCurrent: false,
+            isDeleted: false,
+        }
+        return header
     }
 }

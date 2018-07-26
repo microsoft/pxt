@@ -99,6 +99,8 @@ function readAssetsAsync(logicalDirname: string): Promise<any> {
         }))
 }
 
+const HEADER_JSON = ".header.json"
+
 async function readPkgAsync(logicalDirname: string, fileContents = false): Promise<FsPkg> {
     let dirname = path.join(userProjectsDir, logicalDirname)
     let buf = await readFileAsync(path.join(dirname, pxt.CONFIG_NAME))
@@ -106,6 +108,7 @@ async function readPkgAsync(logicalDirname: string, fileContents = false): Promi
     let r: FsPkg = {
         path: logicalDirname,
         config: cfg,
+        header: null,
         files: []
     };
 
@@ -135,6 +138,13 @@ async function readPkgAsync(logicalDirname: string, fileContents = false): Promi
     if (await existsAsync(path.join(dirname, "icon.jpeg"))) {
         r.icon = "/icon/" + logicalDirname
     }
+
+    // now try reading the header
+    buf = await readFileAsync(path.join(dirname, HEADER_JSON))
+        .then(b => b, err => null)
+
+    if (buf && buf.length)
+        r.header = JSON.parse(buf.toString("utf8"))
 
     return r
 }
@@ -203,6 +213,10 @@ function writePkgAsync(logicalDirname: string, data: FsPkg) {
                 nodeutil.mkdirP(path.join(dirname, d))
             return writeFileAsync(path.join(dirname, f.name), f.content)
         }))
+        .then(() => {
+            if (data.header)
+                return writeFileAsync(path.join(dirname, HEADER_JSON), JSON.stringify(data.header, null, 4))
+        })
         .then(() => readPkgAsync(logicalDirname, false))
 }
 
@@ -364,13 +378,13 @@ export function expandHtml(html: string) {
 export function expandDocTemplateCore(template: string) {
     template = template
         .replace(/<!--\s*@include\s+(\S+)\s*-->/g,
-            (full, fn) => {
-                return `
+        (full, fn) => {
+            return `
 <!-- include ${fn} -->
 ${expandDocFileTemplate(fn)}
 <!-- end include ${fn} -->
 `
-            })
+        })
     return template
 }
 

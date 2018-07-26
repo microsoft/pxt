@@ -254,6 +254,7 @@ namespace pxt {
     export interface FsPkg {
         path: string; // eg "foo/bar"
         config: pxt.PackageConfig; // pxt.json
+        header: any;
         files: FsFile[]; // this includes pxt.json
         icon?: string;
         isDeleted?: boolean; // whether this project has been deleted by the user

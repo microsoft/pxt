@@ -7,6 +7,7 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as workspace from "./workspace";
+import * as cloudsync from "./cloudsync";
 import * as data from "./data";
 import * as pkg from "./package";
 import * as core from "./core";
@@ -824,6 +825,9 @@ export class ProjectView
                     this.setSideMarkdown(readme.content);
                 else if (pkg.mainPkg && pkg.mainPkg.config && pkg.mainPkg.config.documentation)
                     this.setSideDoc(pkg.mainPkg.config.documentation, preferredEditor == this.blocksEditor);
+
+                // update recentUse on the header
+                return workspace.saveAsync(h)
             }).finally(() => {
                 // Editor is loaded
                 pxt.BrowserUtils.changeHash("#editor", true);
@@ -887,7 +891,7 @@ export class ProjectView
     }
 
     isProjectFile(filename: string): boolean {
-        return /\.(pxt|mkcd)$/i.test(filename)
+        return /\.(pxt|mkcd|mkcd-\w+)$/i.test(filename)
     }
 
     isPNGFile(filename: string): boolean {
@@ -904,7 +908,9 @@ export class ProjectView
     }
 
     importProjectCoreAsync(buf: Uint8Array) {
-        return pxt.lzmaDecompressAsync(buf)
+        return (buf[0] == '{'.charCodeAt(0) ?
+            Promise.resolve(pxt.U.uint8ArrayToString(buf)) :
+            pxt.lzmaDecompressAsync(buf))
             .then(contents => {
                 let data = JSON.parse(contents) as pxt.cpp.HexFile;
                 this.importHex(data);
@@ -968,9 +974,17 @@ export class ProjectView
     importHex(data: pxt.cpp.HexFile, createNewIfFailed: boolean = false) {
         const targetId = pxt.appTarget.id;
         if (!data || !data.meta) {
-            core.warningNotification(lf("Sorry, we could not recognize this file."))
-            if (createNewIfFailed) this.openHome();
-            return;
+            if (data && (data as any)[pxt.CONFIG_NAME]) {
+                data = cloudsync.reconstructMeta(data as any)
+            } else {
+                core.warningNotification(lf("Sorry, we could not recognize this file."))
+                if (createNewIfFailed) this.openHome();
+                return;
+            }
+        }
+
+        if (typeof data.source == "object") {
+            (data as any).source = JSON.stringify(data.source)
         }
 
         // intercept newer files early
@@ -1183,6 +1197,7 @@ export class ProjectView
         this.setState({ home: true, tracing: undefined, fullscreen: undefined, tutorialOptions: undefined, editorState: undefined });
         this.allEditors.forEach(e => e.setVisible(false));
         this.homeLoaded();
+        workspace.syncAsync().done();
     }
 
     private homeLoaded() {
@@ -1306,6 +1321,7 @@ export class ProjectView
 
     resetWorkspace() {
         this.reload = true;
+        window.location.hash = "#reload";
         return workspace.resetAsync()
             .done(
                 () => this.reloadEditor(),
@@ -2280,6 +2296,8 @@ function getEditor() {
 }
 
 function initLogin() {
+    cloudsync.loginCheck()
+
     {
         let qs = core.parseQueryString((location.hash || "#").slice(1).replace(/%23access_token/, "access_token"))
         if (qs["access_token"]) {
@@ -2433,7 +2451,8 @@ let myexports: any = {
     apiAsync: core.apiAsync,
     showIcons,
     assembleCurrent,
-    log
+    log,
+    cloudsync
 };
 (window as any).E = myexports;
 
@@ -2755,17 +2774,12 @@ document.addEventListener("DOMContentLoaded", () => {
         })
         .then(() => pxt.BrowserUtils.initTheme())
         .then(() => cmds.initCommandsAsync())
-        .then(() => {
-            return workspace.initAsync();
-        })
-        .then(() => {
-            render();
-            return workspace.syncAsync();
-        })
+        .then(() => workspace.initAsync())
         .then((state) => {
             if (state) {
                 theEditor.setState({ editorState: state });
             }
+            render();
             initSerial();
             initScreenshots();
             initHashchange();

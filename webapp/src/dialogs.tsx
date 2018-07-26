@@ -4,6 +4,7 @@ import * as ReactDOM from "react-dom";
 import * as sui from "./sui";
 import * as data from "./data";
 import * as core from "./core";
+import * as cloudsync from "./cloudsync";
 
 import Cloud = pxt.Cloud;
 
@@ -458,4 +459,28 @@ export function showResetDialogAsync() {
         agreeIcon: "sign out",
         disagreeLbl: lf("Cancel")
     })
+}
+
+export function showCloudSignInDialog() {
+    const providers = cloudsync.providers();
+    if (providers.length == 0)
+        return;
+    if (providers.length == 1)
+        providers[0].login()
+    else {
+        core.dialogAsync({
+            header: lf("Sign in"),
+            body: lf("Please choose your cloud storage provider."),
+            hideCancel: true,
+            buttons:
+                providers.map(p => ({
+                    label: p.friendlyName,
+                    className: "positive small",
+                    icon: "user circle",
+                    onclick: () => {
+                        p.login()
+                    }
+                }))
+        })
+    }
 }

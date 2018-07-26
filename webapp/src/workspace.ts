@@ -5,10 +5,14 @@
 import * as db from "./db";
 import * as core from "./core";
 import * as data from "./data";
-import * as cloudworkspace from "./cloudworkspace"
+import * as cloudworkspace from "./browserworkspace"
 import * as fileworkspace from "./fileworkspace"
 import * as memoryworkspace from "./memoryworkspace"
 import * as iframeworkspace from "./iframeworkspace"
+import * as cloudsync from "./cloudsync"
+
+import U = pxt.Util;
+import Cloud = pxt.Cloud;
 
 // Avoid importing entire crypto-js
 /* tslint:disable:no-submodule-imports */
@@ -19,12 +23,21 @@ type ScriptText = pxt.workspace.ScriptText;
 type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
 type InstallHeader = pxt.workspace.InstallHeader;
 
-let scripts = new db.Table("script")
+interface HeaderWithScript {
+    header: Header;
+    text: ScriptText;
+    version: pxt.workspace.Version;
+}
 
-import U = pxt.Util;
-import Cloud = pxt.Cloud;
+let allScripts: HeaderWithScript[] = [];
+
+let headerQ = new U.PromiseQueue();
 
 let impl: WorkspaceProvider;
+
+function lookup(id: string) {
+    return allScripts.filter(x => x.header.id == id || x.header.path == id)[0]
+}
 
 export function gitsha(data: string) {
     return (sha1("blob " + U.toUTF8(data).length + "\u0000" + data) + "")
@@ -46,9 +59,11 @@ export function setupWorkspace(id: string) {
             impl = iframeworkspace.provider;
             break;
         case "uwp":
-            impl = data.wrapWorkspace(pxt.winrt.workspace.provider);
+            fileworkspace.setApiAsync(pxt.winrt.workspace.fileApiAsync);
+            impl = pxt.winrt.workspace.getProvider(fileworkspace.provider);
             break;
         case "cloud":
+        case "browser":
         default:
             impl = cloudworkspace.provider
             break;
@@ -57,20 +72,16 @@ export function setupWorkspace(id: string) {
 
 export function getHeaders(withDeleted = false) {
     checkSession();
-
-    let r = impl.getHeaders()
-    if (!withDeleted)
-        r = r.filter(r => !r.isDeleted)
+    let r = allScripts.map(e => e.header).filter(h => withDeleted || !h.isDeleted)
     r.sort((a, b) => b.recentUse - a.recentUse)
     return r
 }
 
 export function getHeader(id: string) {
     checkSession();
-
-    let hd = impl.getHeader(id)
-    if (hd && !hd.isDeleted)
-        return hd
+    let e = lookup(id)
+    if (e && !e.header.isDeleted)
+        return e.header
     return null
 }
 
@@ -92,12 +103,28 @@ export function initAsync() {
     pxt.storage.setLocal('pxt_workspace_session_id', sessionID);
     pxt.debug(`workspace session: ${sessionID}`);
 
-    return impl.initAsync(pxt.appTarget.id, pxt.appTarget.versions.target)
+    allScripts = []
+
+    return syncAsync()
 }
 
 export function getTextAsync(id: string): Promise<ScriptText> {
     checkSession();
-    return impl.getTextAsync(id);
+
+    let e = lookup(id)
+    if (!e)
+        return Promise.resolve(null as ScriptText)
+    if (e.text)
+        return Promise.resolve(e.text)
+    return headerQ.enqueue(id, () => impl.getAsync(e.header)
+        .then(resp => {
+            if (!e.text) {
+                // otherwise we were beaten to it
+                e.text = fixupFileNames(resp.text);
+            }
+            e.version = resp.version;
+            return e.text
+        }))
 }
 
 export interface ScriptMeta {
@@ -137,24 +164,123 @@ export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptM
         })
 }
 
-export function saveAsync(h: Header, text?: ScriptText) {
+function fixupVersionAsync(e: HeaderWithScript) {
+    if (e.version !== undefined)
+        return Promise.resolve()
+    return impl.getAsync(e.header)
+        .then(resp => {
+            e.version = resp.version;
+        })
+}
+
+export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Promise<void> {
     checkSession();
     U.assert(h.target == pxt.appTarget.id);
+
+    if (h.temporary)
+        return Promise.resolve()
+
+    let e = lookup(h.id)
+    U.assert(e.header === h)
+
+    if (!isCloud)
+        h.recentUse = U.nowSeconds()
+
     if (text || h.isDeleted) {
-        h.pubCurrent = false
-        h.blobCurrent = false
-        h.modificationTime = U.nowSeconds();
+        if (text)
+            e.text = text
+        if (!isCloud) {
+            h.pubCurrent = false
+            h.blobCurrent = false
+            h.modificationTime = U.nowSeconds();
+            h.targetVersion = pxt.appTarget.versions.target;
+        }
+        h.saveId = null
+        // update version on save    
     }
-    h.recentUse = U.nowSeconds();
-    // update version on save    
-    h.targetVersion = pxt.appTarget.versions.target;
-    return impl.saveAsync(h, text)
+
+    // perma-delete
+    if (h.isDeleted && h.blobVersion == "DELETED") {
+        let idx = allScripts.indexOf(e)
+        U.assert(idx >= 0)
+        allScripts.splice(idx, 1)
+        return headerQ.enqueue(h.id, () =>
+            fixupVersionAsync(e).then(() =>
+                impl.deleteAsync ? impl.deleteAsync(h, e.version) : impl.setAsync(h, e.version, {})))
+    }
+
+    return headerQ.enqueue<void>(h.id, () =>
+        fixupVersionAsync(e).then(() =>
+            impl.setAsync(h, e.version, text ? e.text : null)
+                .then(ver => {
+                    if (text)
+                        e.version = ver
+                    if (text || h.isDeleted) {
+                        h.pubCurrent = false
+                        h.blobCurrent = false
+                        h.saveId = null
+                        data.invalidate("text:" + h.id)
+                    }
+                    data.invalidate("header:" + h.id)
+                    data.invalidate("header:*")
+                })))
+}
+
+function computePath(h: Header) {
+    let path = h.name.replace(/[^a-zA-Z0-9]+/g, " ").trim().replace(/ /g, "-")
+    if (lookup(path)) {
+        let n = 2
+        while (lookup(path + "-" + n))
+            n++;
+        path += "-" + n
+    }
+
+    return path
+}
+
+export function importAsync(h: Header, text: ScriptText, isCloud = false) {
+    h.path = computePath(h)
+    const e: HeaderWithScript = {
+        header: h,
+        text: text,
+        version: null
+    }
+    allScripts.push(e)
+    return saveAsync(h, text, isCloud)
 }
 
 export function installAsync(h0: InstallHeader, text: ScriptText) {
     checkSession();
     U.assert(h0.target == pxt.appTarget.id);
-    return impl.installAsync(h0, text)
+
+    const h = <Header>h0
+    h.id = ts.pxtc.Util.guidGen();
+    h.recentUse = U.nowSeconds()
+    h.modificationTime = h.recentUse;
+
+    return importAsync(h, text)
+        .then(() => h)
+}
+
+export function duplicateAsync(h: Header, text: ScriptText): Promise<Header> {
+    let e = lookup(h.id)
+    U.assert(e.header === h)
+    let h2 = U.flatClone(h)
+    e.header = h2
+
+    h.id = U.guidGen()
+    let names = U.toDictionary(allScripts, e => e.header.name)
+    let n = 2
+    while (names.hasOwnProperty(h.name + " #" + n))
+        n++
+    h.name += " #" + n
+    let cfg = JSON.parse(text[pxt.CONFIG_NAME]) as pxt.PackageConfig
+    cfg.name = h.name
+    text[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4)
+    delete h._rev
+    delete (h as any)._id
+    return importAsync(h, text)
+        .then(() => h2)
 }
 
 export function saveScreenshotAsync(h: Header, data: string, icon: string) {
@@ -176,7 +302,8 @@ export function fixupFileNames(txt: ScriptText) {
 }
 
 
-let scriptDlQ = new U.PromiseQueue();
+const scriptDlQ = new U.PromiseQueue();
+const scripts = new db.Table("script"); // cache for published scripts
 //let scriptCache:any = {}
 export function getPublishedScriptAsync(id: string) {
     checkSession();
@@ -467,22 +594,58 @@ export function installByIdAsync(id: string) {
 
 export function saveToCloudAsync(h: Header) {
     checkSession();
-    return impl.saveToCloudAsync(h)
+    return cloudsync.saveToCloudAsync(h)
 }
 
 export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
     checkSession();
-    return impl.syncAsync();
+
+    return impl.listAsync()
+        .then(headers => {
+            let existing = U.toDictionary(allScripts || [], h => h.header.id)
+            allScripts = []
+            for (let hd of headers) {
+                let ex = existing[hd.id]
+                if (ex) {
+                    U.jsonCopyFrom(ex.header, hd)
+                    //ex.text = null
+                    //ex.version = null
+                } else {
+                    ex = {
+                        header: hd,
+                        text: undefined,
+                        version: undefined,
+                    }
+                }
+                allScripts.push(ex)
+            }
+            data.invalidate("header:")
+            data.invalidate("text:")
+            cloudsync.syncAsync().done() // sync in background
+        })
+        .then(() => impl.getSyncState ? impl.getSyncState() : null)
 }
 
 export function resetAsync() {
     checkSession();
+    allScripts = []
     return impl.resetAsync()
+        .then(cloudsync.resetAsync)
+        .then(db.destroyAsync)
+        .then(() => {
+            pxt.storage.clearLocal();
+            data.clearCache();
+            // keep local token (localhost and electron) on reset
+            if (Cloud.localToken)
+                pxt.storage.setLocal("local_token", Cloud.localToken);
+        })
 }
 
 export function loadedAsync() {
     checkSession();
-    return impl.loadedAsync();
+    if (impl.loadedAsync)
+        return impl.loadedAsync()
+    return Promise.resolve()
 }
 
 export function saveAssetAsync(id: string, filename: string, data: Uint8Array): Promise<void> {
@@ -527,4 +690,3 @@ data.mountVirtualApi("text", {
             })
     },
 })
-

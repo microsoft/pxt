@@ -4337,6 +4337,9 @@ function extractBufferAsync(buf: Buffer, outDir: string): Promise<string[]> {
                 console.log("Couldn't extract.")
                 return undefined;
             }
+            if (json.meta && json.source) {
+                json = typeof json.source == "string" ? JSON.parse(json.source) : json.source
+            }
             if (Array.isArray(json.scripts)) {
                 console.log("Legacy TD workspace.")
                 json.projects = json.scripts.map((scr: any) => ({
