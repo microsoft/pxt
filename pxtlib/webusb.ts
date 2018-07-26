@@ -15,6 +15,12 @@ namespace pxt.usb {
         NXP = 0x0d28, // aka Freescale, KL26 etc
     }
 
+    const controlTransferGetReport = 0x01;
+    const controlTransferSetReport = 0x09;
+    const controlTransferOutReport = 0x200;
+    const controlTransferInReport = 0x100;
+
+
     export interface USBDeviceFilter {
         vendorId?: number;
         productId?: number;
@@ -114,6 +120,7 @@ namespace pxt.usb {
 
     class HID implements HF2.PacketIO {
         ready = false;
+        iface: USBInterface;
         altIface: USBAlternateInterface;
         epIn: USBEndpoint;
         epOut: USBEndpoint;
@@ -162,6 +169,23 @@ namespace pxt.usb {
 
         sendPacketAsync(pkt: Uint8Array) {
             Util.assert(pkt.length <= 64)
+            if (!this.epOut) {
+                if (pkt.length < 64) {
+                    let p2 = new Uint8Array(64)
+                    p2.set(pkt)
+                    pkt = p2
+                }
+                return this.dev.controlTransferOut({
+                    requestType: "class",
+                    recipient: "interface",
+                    request: controlTransferSetReport,
+                    value: controlTransferOutReport,
+                    index: this.iface.interfaceNumber
+                }, pkt).then(res => {
+                    if (res.status != "ok")
+                        this.error("USB CTRL OUT transfer failed")
+                })
+            }
             return this.dev.transferOut(this.epOut.endpointNumber, pkt)
                 .then(res => {
                     if (res.status != "ok")
@@ -187,15 +211,26 @@ namespace pxt.usb {
         }
 
         private recvPacketAsync(): Promise<Uint8Array> {
+            let final = (res: USBInTransferResult) => {
+                if (res.status != "ok")
+                    this.error("USB IN transfer failed")
+                let arr = new Uint8Array(res.data.buffer)
+                if (arr.length == 0)
+                    return this.recvPacketAsync()
+                return arr
+            }
+
+            if (!this.epIn)
+                return this.dev.controlTransferIn({
+                    requestType: "class",
+                    recipient: "interface",
+                    request: controlTransferGetReport,
+                    value: controlTransferInReport,
+                    index: this.iface.interfaceNumber
+                }, 64).then(final)
+
             return this.dev.transferIn(this.epIn.endpointNumber, 64)
-                .then(res => {
-                    if (res.status != "ok")
-                        this.error("USB IN transfer failed")
-                    let arr = new Uint8Array(res.data.buffer)
-                    if (arr.length == 0)
-                        return this.recvPacketAsync()
-                    return arr
-                })
+                .then(final)
         }
 
         initAsync() {
@@ -214,6 +249,8 @@ namespace pxt.usb {
                             if (f.classCode == null || a0.interfaceClass === f.classCode) {
                                 if (f.subclassCode == null || a0.interfaceSubclass === f.subclassCode) {
                                     if (f.protocolCode == null || a0.interfaceProtocol === f.protocolCode) {
+                                        if (a0.endpoints.length == 0)
+                                            return true
                                         if (a0.endpoints.length == 2 &&
                                             a0.endpoints.every(e => e.packetSize == 64))
                                             return true
@@ -224,16 +261,19 @@ namespace pxt.usb {
                         return false
                     }
                     this.log("got " + dev.configurations[0].interfaces.length + " interfaces")
-                    let hid = dev.configurations[0].interfaces.filter(matchesFilters)[0]
-                    if (!hid)
+                    let iface = dev.configurations[0].interfaces.filter(matchesFilters)[0]
+                    if (!iface)
                         this.error("cannot find supported USB interface")
-                    this.altIface = hid.alternates[0]
-                    this.epIn = this.altIface.endpoints.filter(e => e.direction == "in")[0]
-                    this.epOut = this.altIface.endpoints.filter(e => e.direction == "out")[0]
-                    Util.assert(this.epIn.packetSize == 64);
-                    Util.assert(this.epOut.packetSize == 64);
+                    this.altIface = iface.alternates[0]
+                    this.iface = iface
+                    if (this.altIface.endpoints.length) {
+                        this.epIn = this.altIface.endpoints.filter(e => e.direction == "in")[0]
+                        this.epOut = this.altIface.endpoints.filter(e => e.direction == "out")[0]
+                        Util.assert(this.epIn.packetSize == 64);
+                        Util.assert(this.epOut.packetSize == 64);
+                    }
                     this.log("claim interface")
-                    return dev.claimInterface(hid.interfaceNumber)
+                    return dev.claimInterface(iface.interfaceNumber)
                 })
                 .then(() => {
                     this.log("device ready")
