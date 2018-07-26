@@ -43,11 +43,11 @@ function migratePrefixesAsync(): Promise<void> {
             const copyProject = (h: pxt.workspace.Header): Promise<string> => {
                 return previousTexts.getAsync(h.id)
                     .then((resp) => {
-                        // Delete database metadata of the previous script so they get re-generated for the copy
+                        // Ignore metadata of the previous script so they get re-generated for the new copy
                         delete (<any>h)._id;
                         delete (<any>h)._rev;
                         return setAsync(h, undefined, resp.files, /* skipInit */ true);
-                    }); // undefined _rev because it's a new document
+                    });
             };
 
             return previousHeaders.getAllAsync()
@@ -72,7 +72,7 @@ function getAsync(h: Header): Promise<pxt.workspace.File> {
         }));
 }
 
-function setAsync(h: Header, prevVer: any, text?: ScriptText, skipInit?: boolean) {
+function setAsync(h: Header, prevVer: any, text?: ScriptText) {
     let retrev = ""
     return (!text ? Promise.resolve() :
         texts.setAsync({
