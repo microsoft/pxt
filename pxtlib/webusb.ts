@@ -138,8 +138,8 @@ namespace pxt.usb {
 
         log(msg: string) {
             msg = "WebUSB: " + msg
-            //pxt.log(msg)
-            pxt.debug(msg)
+            pxt.log(msg)
+            //pxt.debug(msg)
         }
 
         disconnectAsync() {
@@ -170,11 +170,6 @@ namespace pxt.usb {
         sendPacketAsync(pkt: Uint8Array) {
             Util.assert(pkt.length <= 64)
             if (!this.epOut) {
-                if (pkt.length < 64) {
-                    let p2 = new Uint8Array(64)
-                    p2.set(pkt)
-                    pkt = p2
-                }
                 return this.dev.controlTransferOut({
                     requestType: "class",
                     recipient: "interface",
