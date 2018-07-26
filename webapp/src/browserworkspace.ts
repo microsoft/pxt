@@ -46,7 +46,7 @@ function migratePrefixesAsync(): Promise<void> {
                         // Ignore metadata of the previous script so they get re-generated for the new copy
                         delete (<any>h)._id;
                         delete (<any>h)._rev;
-                        return setAsync(h, undefined, resp.files, /* skipInit */ true);
+                        return setAsync(h, undefined, resp.files);
                     });
             };
 
