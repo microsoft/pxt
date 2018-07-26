@@ -9,21 +9,17 @@ namespace pxtblockly {
     import svg = pxt.svgUtil;
     import lf = pxt.Util.lf;
 
-    // Absolute editor height
     const TOTAL_HEIGHT = 500;
 
-    const TOTAL_WIDTH = 500;
+    const PADDING = 10;
 
-    // Editor padding on all sides
-    const PADDING = 8;
-
-    const PADDING_BOTTOM = 3;
+    const DROP_DOWN_PADDING = 4;
 
     // Height of toolbar (the buttons above the canvas)
-    const TOOLBAR_HEIGHT = 50;
+    const HEADER_HEIGHT = 50;
 
     // Spacing between the toolbar and the canvas
-    const TOOLBAR_CANVAS_MARGIN = 10;
+    const HEADER_CANVAS_MARGIN = 10;
 
     // Height of the bar that displays editor size and info below the canvas
     const REPORTER_BAR_HEIGHT = 31;
@@ -32,13 +28,16 @@ namespace pxtblockly {
     const REPORTER_BAR_CANVAS_MARGIN = 5;
 
     // Spacing between palette and paint surface
-    const PALETTE_CANVAS_MARGIN = 10;
-
-    // Total allowed height of paint surface
-    const CANVAS_HEIGHT = TOTAL_HEIGHT - TOOLBAR_HEIGHT - TOOLBAR_CANVAS_MARGIN
-        - REPORTER_BAR_HEIGHT - REPORTER_BAR_CANVAS_MARGIN - PADDING * 2;
+    const SIDEBAR_CANVAS_MARGIN = 10;
 
     const SIDEBAR_WIDTH = 65;
+
+    // Total allowed height of paint surface
+    const CANVAS_HEIGHT = TOTAL_HEIGHT - HEADER_HEIGHT - HEADER_CANVAS_MARGIN
+        - REPORTER_BAR_HEIGHT - REPORTER_BAR_CANVAS_MARGIN - PADDING + DROP_DOWN_PADDING * 2;
+
+    const WIDTH = PADDING + SIDEBAR_WIDTH + SIDEBAR_CANVAS_MARGIN + CANVAS_HEIGHT + PADDING - DROP_DOWN_PADDING * 2;
+
 
     export class SpriteEditor implements SideBarHost, SpriteHeaderHost {
         private group: svg.Group;
@@ -69,8 +68,6 @@ namespace pxtblockly {
         private columns: number = 16;
         private rows: number = 16;
         private colors: string[];
-
-        private height: number;
 
         constructor(bitmap: Bitmap, blocksInfo: pxtc.BlocksInfo, protected lightMode = false) {
             this.colors = pxt.appTarget.runtime.palette.slice(1);
@@ -171,19 +168,15 @@ namespace pxtblockly {
             this.paintSurface.setGridDimensions(CANVAS_HEIGHT);
 
             // The width of the palette + editor
-            const editorWidth = SIDEBAR_WIDTH + PALETTE_CANVAS_MARGIN + CANVAS_HEIGHT;
-            const editorLeft = Math.floor((TOTAL_WIDTH / 2) - (editorWidth / 2));
-            const paintAreaTop = TOOLBAR_HEIGHT + TOOLBAR_CANVAS_MARGIN;
-            const paintAreaLeft = editorLeft + SIDEBAR_WIDTH + PALETTE_CANVAS_MARGIN;
+            const paintAreaTop = HEADER_HEIGHT + HEADER_CANVAS_MARGIN;
+            const paintAreaLeft = PADDING + SIDEBAR_WIDTH + SIDEBAR_CANVAS_MARGIN;
 
-            this.sidebar.translate(editorLeft, paintAreaTop);
+            this.sidebar.translate(PADDING, paintAreaTop);
             this.paintSurface.updateBounds(paintAreaTop, paintAreaLeft, CANVAS_HEIGHT, CANVAS_HEIGHT);
             this.bottomBar.layout(paintAreaTop + CANVAS_HEIGHT + REPORTER_BAR_CANVAS_MARGIN, paintAreaLeft, CANVAS_HEIGHT);
 
-            this.gallery.layout(0, TOOLBAR_HEIGHT, TOTAL_HEIGHT - TOOLBAR_HEIGHT);
+            this.gallery.layout(0, HEADER_HEIGHT, TOTAL_HEIGHT - HEADER_HEIGHT);
             this.header.layout();
-
-            this.height = paintAreaTop + CANVAS_HEIGHT + PADDING_BOTTOM + REPORTER_BAR_CANVAS_MARGIN + REPORTER_BAR_HEIGHT;
         }
 
         rePaint() {
@@ -258,11 +251,11 @@ namespace pxtblockly {
         }
 
         outerWidth() {
-            return TOTAL_WIDTH;
+            return WIDTH;
         }
 
         outerHeight() {
-            return this.height;
+            return TOTAL_HEIGHT;
         }
 
         bitmap() {
