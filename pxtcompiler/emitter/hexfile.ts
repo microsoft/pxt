@@ -523,7 +523,7 @@ namespace ts.pxtc {
                         addr += 256
                     }
                 } else {
-                    upper = 0x20000000
+                    upper = 0x2000
                     addr = 0
                     myhex.push(hexBytes([0x02, 0x00, 0x00, 0x04, upper >> 8, upper & 0xff]))
                     for (let i = 0; i < bin.packedSource.length; i += 16) {
