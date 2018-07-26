@@ -1,6 +1,9 @@
 /// <reference path="./bitmap.ts" />
 /// <reference path="./tools.ts" />
-/// <reference path="./toolbar.ts" />
+/// <reference path="./reporterBar.ts" />
+/// <reference path="./sidebar.ts" />
+/// <reference path="./gallery.ts" />
+/// <reference path="./header.ts" />
 
 namespace pxtblockly {
     import svg = pxt.svgUtil;
@@ -23,7 +26,7 @@ namespace pxtblockly {
     const TOOLBAR_CANVAS_MARGIN = 10;
 
     // Height of the bar that displays editor size and info below the canvas
-    const REPORTER_BAR_HEIGHT = 13;
+    const REPORTER_BAR_HEIGHT = 31;
 
     // Spacing between the canvas and reporter bar
     const REPORTER_BAR_CANVAS_MARGIN = 5;
@@ -42,11 +45,9 @@ namespace pxtblockly {
         private root: svg.SVG;
 
         private paintSurface: CanvasGrid;
-        private repoterBar: svg.Group;
-        private cursorInfo: svg.Text;
-        private canvasDimensions: svg.Text;
         private sidebar: SideBar;
         private header: SpriteHeader;
+        private bottomBar: ReporterBar;
         private gallery: Gallery;
 
         private state: Bitmap;
@@ -88,7 +89,7 @@ namespace pxtblockly {
             this.paintSurface.drag((col, row) => {
                 this.debug("gesture (" + PaintTool[this.activeTool] + ")");
                 this.setCell(col, row, this.color, false);
-                this.setCursorInfo(col, row);
+                this.bottomBar.updateCursor(col, row);
             });
 
             this.paintSurface.up((col, row) => {
@@ -102,7 +103,7 @@ namespace pxtblockly {
 
             this.paintSurface.move((col, row) => {
                 this.drawCursor(col, row);
-                this.setCursorInfo(col, row);
+                this.bottomBar.updateCursor(col, row);
             });
 
             this.paintSurface.leave(() => {
@@ -112,7 +113,7 @@ namespace pxtblockly {
                 if (this.edit.isStarted) {
                     this.commit();
                 }
-                this.cursorInfo.text("");
+                this.bottomBar.hideCursor();
             });
 
             this.sidebar = new SideBar(['url("#alpha-background")'].concat(this.colors), this, this.group);
@@ -120,8 +121,8 @@ namespace pxtblockly {
 
             this.header = new SpriteHeader(this);
             this.gallery = new Gallery(blocksInfo);
+            this.bottomBar = new ReporterBar(this.group, this, REPORTER_BAR_HEIGHT);
 
-            this.drawReporterBar();
             this.updateUndoRedo();
 
             document.addEventListener("keydown", ev => {
@@ -168,7 +169,6 @@ namespace pxtblockly {
             }
 
             this.paintSurface.setGridDimensions(CANVAS_HEIGHT);
-            // this.sidebar.setWidth(SIDEBAR_WIDTH);
 
             // The width of the palette + editor
             const editorWidth = SIDEBAR_WIDTH + PALETTE_CANVAS_MARGIN + CANVAS_HEIGHT;
@@ -178,8 +178,7 @@ namespace pxtblockly {
 
             this.sidebar.translate(editorLeft, paintAreaTop);
             this.paintSurface.updateBounds(paintAreaTop, paintAreaLeft, CANVAS_HEIGHT, CANVAS_HEIGHT);
-            this.repoterBar.translate(paintAreaLeft, paintAreaTop + CANVAS_HEIGHT + REPORTER_BAR_CANVAS_MARGIN);
-            this.canvasDimensions.at(CANVAS_HEIGHT - this.canvasDimensions.el.getComputedTextLength(), 0);
+            this.bottomBar.layout(paintAreaTop + CANVAS_HEIGHT + REPORTER_BAR_CANVAS_MARGIN, paintAreaLeft, CANVAS_HEIGHT);
 
             this.gallery.layout(0, TOOLBAR_HEIGHT, TOTAL_HEIGHT - TOOLBAR_HEIGHT);
             this.header.layout();
@@ -247,7 +246,7 @@ namespace pxtblockly {
         }
 
         setSizePresets(presets: [number, number][]) {
-            // this.toolbar.setSizePresets(presets);
+            this.bottomBar.setSizePresets(presets, this.columns, this.rows);
         }
 
         canvasWidth() {
@@ -293,7 +292,7 @@ namespace pxtblockly {
             this.columns = this.state.width;
             this.rows = this.state.height;
             this.paintSurface.restore(this.state, true);
-            this.canvasDimensions.text(`${this.columns}x${this.rows}`)
+            this.bottomBar.updateDimensions(this.columns, this.rows);
             this.layout();
 
             if (showOverlay) this.paintSurface.showOverlay();
@@ -302,30 +301,10 @@ namespace pxtblockly {
             this.edit = this.newEdit(this.color);
         }
 
-        protected drawReporterBar() {
-            this.repoterBar = this.group.group();
-            this.canvasDimensions = this.repoterBar.draw("text")
-                .fontSize(REPORTER_BAR_HEIGHT, svg.LengthUnit.px)
-                .fontFamily("monospace")
-                .fill("white")
-                .offset(0, 0.8, svg.LengthUnit.em)
-                .text(`${this.columns}x${this.rows}`);
-
-            this.cursorInfo = this.repoterBar.draw("text")
-                .fontSize(REPORTER_BAR_HEIGHT, svg.LengthUnit.px)
-                .fontFamily("monospace")
-                .offset(0, 0.8, svg.LengthUnit.em)
-                .fill("white");
-        }
-
         private drawCursor(col: number, row: number) {
             if (this.edit) {
                 this.paintSurface.drawCursor(this.edit, col, row);
             }
-        }
-
-        private setCursorInfo(col: number, row: number) {
-            this.cursorInfo.text(`${col},${row}`);
         }
 
         private paintEdit(edit: Edit, col: number, row: number) {
@@ -369,8 +348,7 @@ namespace pxtblockly {
         }
 
         private updateUndoRedo() {
-            this.header.setUndoState(this.undoStack.length > 0);
-            this.header.setRedoState(this.redoStack.length > 0);
+            this.bottomBar.updateUndoRedo(this.undoStack.length === 0, this.redoStack.length === 0)
         }
 
         private paintCell(col: number, row: number, color: number) {

@@ -1,3 +1,4 @@
+/// <reference path="./buttons.ts" />
 namespace pxtblockly {
     import svg = pxt.svgUtil;
     import lf = pxt.Util.lf;

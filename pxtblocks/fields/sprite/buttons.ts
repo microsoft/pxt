@@ -187,6 +187,7 @@ namespace pxtblockly {
         cx: number;
         cy: number;
         root: svg.Group;
+        inDom = false;
         clickHandler: () => void;
 
         constructor(root: svg.Group, cx: number, cy: number) {
@@ -196,6 +197,7 @@ namespace pxtblockly {
             this.root.onClick(() => this.clickHandler && this.clickHandler());
             this.root.appendClass("sprite-editor-button");
             this.root.el.addEventListener("animationstart", () => {
+                this.inDom = true;
                 this.layout();
             });
 
@@ -248,21 +250,27 @@ namespace pxtblockly {
         }
     }
 
-    export class FontButton extends Button {
-        protected iconEl: svg.Text;
+    export class TextButton extends Button {
+        protected textEl: svg.Text;
 
-        constructor(root: svg.Group, cx: number, cy: number, icon: string) {
+        constructor(root: svg.Group, cx: number, cy: number, text: string, className: string) {
             super(root, cx, cy);
-            this.iconEl = this.root.draw("text")
-                .text(icon)
-                .appendClass("sprite-editor-icon")
+
+            this.textEl = this.root.draw("text")
+                .text(text)
+                .appendClass(className)
                 .setAttribute("dominant-baseline", "middle")
                 .setAttribute("dy", 2.5);
         }
 
+        setText(text: string) {
+            this.textEl.text(text);
+            if (this.inDom) this.layout();
+        }
+
         layout() {
-            const width = this.iconEl.el.getComputedTextLength();
-            this.iconEl.moveTo(this.cx - width / 2, this.cy);
+            const width = this.textEl.el.getComputedTextLength();
+            this.textEl.moveTo(this.cx - width / 2, this.cy);
         }
     }
 
@@ -277,9 +285,14 @@ namespace pxtblockly {
         }
     }
 
-    export function mkIconButton(icon: string, width: number) {
-        const g = drawSingleButton(width, width + BUTTON_BOTTOM_BORDER_WIDTH - BUTTON_BORDER_WIDTH);
-        return new FontButton(g.root, g.cx, g.cy, icon);
+    export function mkIconButton(icon: string, width: number, height = width + BUTTON_BOTTOM_BORDER_WIDTH - BUTTON_BORDER_WIDTH) {
+        const g = drawSingleButton(width, height);
+        return new TextButton(g.root, g.cx, g.cy, icon, "sprite-editor-icon");
+    }
+
+    export function mkTextButton(text: string, width: number, height: number) {
+        const g = drawSingleButton(width, height);
+        return new TextButton(g.root, g.cx, g.cy, text, "sprite-editor-text");
     }
 
     /**
@@ -371,22 +384,22 @@ namespace pxtblockly {
 
     export class UndoRedoGroup {
         root: svg.Group;
-        undo: FontButton;
-        redo: FontButton;
+        undo: TextButton;
+        redo: TextButton;
 
         host: UndoRedoHost;
 
-        constructor(parent: svg.Group, host: UndoRedoHost, width: number) {
+        constructor(parent: svg.Group, host: UndoRedoHost, width: number, height: number) {
             this.root = parent.group();
             this.host = host;
-            const [undo, redo] = buttonGroup(width, width >> 1, 2);
+            const [undo, redo] = buttonGroup(width, height, 2);
 
-            this.undo = new FontButton(undo.root, undo.cx, undo.cy, "\uf0e2");
+            this.undo = new TextButton(undo.root, undo.cx, undo.cy, "\uf0e2", "sprite-editor-icon");
             this.undo.onClick(() => this.host.undo());
             this.root.appendChild(this.undo.getElement());
 
 
-            this.redo = new FontButton(redo.root, redo.cx, redo.cy, "\uf01e");
+            this.redo = new TextButton(redo.root, redo.cx, redo.cy, "\uf01e", "sprite-editor-icon");
             this.redo.onClick(() => this.host.redo());
             this.root.appendChild(this.redo.getElement());
         }
