@@ -106,6 +106,9 @@
 @fileLogoUrl: "../docs/static/filelogo.svg";
 @fileLogo: data-uri(@fileLogoUrl);
 
+@githubFileLogoUrl: "../docs/static/githubfilelogo.svg";
+@githubFileLogo: data-uri(@githubFileLogoUrl);
+
 @loaderImageUrl: "../docs/static/loader.svg";
 @loaderImage: data-uri(@loaderImageUrl);
 

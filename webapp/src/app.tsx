@@ -775,7 +775,7 @@ export class ProjectView
                 }
                 this.setState({
                     home: false,
-                    showFiles: false,
+                    showFiles: h.githubId ? true : false,
                     editorState: editorState,
                     tutorialOptions: inTutorial ? this.state.tutorialOptions : undefined,
                     header: h,
