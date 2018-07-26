@@ -1324,8 +1324,19 @@ ${output}</xml>`;
             const setter = env.blocks.blocks.find(b => b.qName == qName)
             const r = right ? mkStmt(setter.attributes.blockId) : mkExpr(setter.attributes.blockId)
             const pp = setter.attributes._def.parameters;
+
+            let fieldValue = info.qName;
+            if (setter.combinedProperties) {
+                // getters/setters have annotations at the end of their names so look them up
+                setter.combinedProperties.forEach(pName => {
+                    if (pName.indexOf(info.qName) === 0 && pName.charAt(info.qName.length) === "@") {
+                        fieldValue = pName;
+                    }
+                })
+            }
+
             r.inputs = [getValue(pp[0].name, left.expression)];
-            r.fields = [getField(pp[1].name, info.qName)];
+            r.fields = [getField(pp[1].name, fieldValue)];
             if (right)
                 r.inputs.push(getValue(pp[2].name, right));
             return r;
