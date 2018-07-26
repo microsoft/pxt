@@ -81,7 +81,32 @@ export class Table {
     setAsync(obj: any): Promise<string> {
         if (obj.id && !obj._id)
             obj._id = this.name + "--" + obj.id
-        return getDbAsync().then(db => db.put(obj)).then((resp: any) => resp.rev)
+        // return getDbAsync().then(db => db.put(obj)).then((resp: any) => resp.rev)
+        //     .catch((e) => pxt.reportException(e));
+        let db: any;
+        return getDbAsync()
+            .then((d) => {
+                db = d;
+                return this.getAllAsync();
+            })
+            .then((a) => {
+            //     return db.get(obj._id);
+            // })
+            // .then((o) => {
+            //     return db.remove(o);
+            // })
+            // .then(() => {
+            //     return this.getAllAsync();
+            // })
+            // .then(() => {
+                return db.put(obj);
+            })
+            .then((resp) => {
+                return resp.rev;
+            })
+            .catch((e) => {
+                console.log(e);
+            });
     }
 }
 
