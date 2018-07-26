@@ -151,7 +151,36 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         e.stopPropagation();
     }
 
+    private addTypeScriptFile() {
+        core.promptAsync({
+            header: lf("Add new file?"),
+            body: lf("Please provide a name for your new file. The .ts extension will be added automatically. Don't use spaces or special characters."),
+            defaultValue: ""
+        }).then(str => {
+            str = str || ""
+            str = str.trim()
+            str = str.replace(/\.[tj]s$/, "")
+            str = str.trim()
+            if (!str)
+                return Promise.resolve()
+            if (!/^[\w\-]+$/.test(str)) {
+                core.warningNotification(lf("Invalid file name"))
+                return Promise.resolve()
+            }
+            str += ".ts"
+            if (pkg.mainEditorPkg().sortedFiles().some(f => f.name == str)) {
+                core.warningNotification(lf("File already exists"))
+                return Promise.resolve()
+            }
+            return this.props.parent.updateFileAsync(str, "// Add your code here\n", true)
+        }).done()
+    }
+
     private addCustomBlocksFile() {
+        if (this.props.parent.state.header.githubId) {
+            this.addTypeScriptFile()
+            return
+        }
         core.confirmAsync({
             header: lf("Add custom blocks?"),
             body: lf("A new JavaScript file, custom.ts, will be added to your project. You can define custom functions and blocks in that file.")
