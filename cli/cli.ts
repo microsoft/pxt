@@ -665,7 +665,7 @@ function bumpAsync(parsed?: commandParser.ParsedCommand) {
     const bumpPxt = parsed && parsed.flags["update"];
     const upload = parsed && parsed.flags["upload"];
     if (fs.existsSync(pxt.CONFIG_NAME)) {
-        if (upload) throw U.userError("upload only supported on packages");
+        if (upload) throw U.userError("upload only supported on targets");
 
         return Promise.resolve()
             .then(() => nodeutil.runGitAsync("pull"))
@@ -1172,7 +1172,6 @@ function uploadCoreAsync(opts: UploadOptions) {
                             if (e.path[0] == "/") {
                                 e.path = opts.localDir + "docs" + e.path;
                             }
-                        trg.appTheme.logoUrl = opts.localDir
                         trg.appTheme.homeUrl = opts.localDir
                         // patch icons in bundled packages
                         Object.keys(trg.bundledpkgs).forEach(pkgid => {
@@ -1398,6 +1397,7 @@ export interface BuildTargetOptions {
     localDir?: boolean;
     packaged?: boolean;
     skipCore?: boolean;
+    quick?: boolean;
 }
 
 export function buildTargetAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
@@ -1890,6 +1890,10 @@ function updateTOC(cfg: pxt.TargetBundle) {
     }
 }
 
+function rebundleAsync() {
+    return buildTargetCoreAsync({ quick: true })
+}
+
 function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
     let cfg = readLocalPxTarget()
     updateDefaultProjects(cfg);
@@ -1922,7 +1926,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
     pxt.log(`building target.json in ${process.cwd()}...`)
 
     return buildWebStringsAsync()
-        .then(() => internalGenDocsAsync(false, true))
+        .then(() => options.quick ? null : internalGenDocsAsync(false, true))
         .then(() => forEachBundledPkgAsync((pkg, dirname) => {
             pxt.log(`building ${dirname}`);
             let isPrj = /prj$/.test(dirname);
@@ -1939,7 +1943,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                     }
                     if (isHw) isPrj = true
                 })
-                .then(() => testForBuildTargetAsync(isPrj || (!options.skipCore && isCore)))
+                .then(() => options.quick ? null : testForBuildTargetAsync(isPrj || (!options.skipCore && isCore)))
                 .then((compileOpts) => {
                     // For the projects, we need to save the base HEX file to the offline HEX cache
                     if (isPrj && pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
@@ -2535,144 +2539,10 @@ export function installAsync(parsed?: commandParser.ParsedCommand) {
             .then(() => {
                 let tscfg = "tsconfig.json"
                 if (!fs.existsSync(tscfg) && !fs.existsSync("../" + tscfg)) {
-                    nodeutil.writeFileSync(tscfg, defaultFiles[tscfg])
+                    nodeutil.writeFileSync(tscfg, pxt.defaultFiles[tscfg])
                 }
             })
     }
-}
-
-const defaultFiles: Map<string> = {
-    "tsconfig.json":
-        `{
-    "compilerOptions": {
-        "target": "es5",
-        "noImplicitAny": true,
-        "outDir": "built",
-        "rootDir": "."
-    },
-    "exclude": ["pxt_modules/**/*test.ts"]
-}
-`,
-
-    "test.ts": `// tests go here; this will not be compiled when this package is used as a library
-`,
-
-    "Makefile": `all: deploy
-
-build:
-\tpxt build
-
-deploy:
-\tpxt deploy
-
-test:
-\tpxt test
-`,
-
-    "README.md": `# @NAME@
-
-@DESCRIPTION@
-
-## TODO
-
-- [ ] Add a reference for your blocks here
-- [ ] Add "icon.png" image (300x200) in the root folder
-- [ ] Add "- beta" to the GitHub project description if you are still iterating it.
-- [ ] Turn on your automated build on https://travis-ci.org
-- [ ] Use "pxt bump" to create a tagged release on GitHub
-- [ ] Get your package reviewed and approved @DOCS@packages/approval
-
-Read more at @DOCS@packages/build-your-own
-
-## License
-
-@LICENSE@
-
-## Supported targets
-
-* for PXT/@TARGET@
-(The metadata above is needed for package search.)
-
-`,
-
-    ".gitignore":
-        `built
-node_modules
-yotta_modules
-yotta_targets
-pxt_modules
-*.db
-*.tgz
-`,
-    ".vscode/settings.json":
-        `{
-    "editor.formatOnType": true,
-    "files.autoSave": "afterDelay",
-    "files.watcherExclude": {
-        "**/.git/objects/**": true,
-        "**/built/**": true,
-        "**/node_modules/**": true,
-        "**/yotta_modules/**": true,
-        "**/yotta_targets": true,
-        "**/pxt_modules/**": true
-    },
-    "files.associations": {
-        "*.blocks": "html",
-        "*.jres": "json"
-    },
-    "search.exclude": {
-        "**/built": true,
-        "**/node_modules": true,
-        "**/yotta_modules": true,
-        "**/yotta_targets": true,
-        "**/pxt_modules": true
-    }
-}`,
-    ".travis.yml": `language: node_js
-node_js:
-    - "8.9.4"
-script:
-    - "npm install -g pxt"
-    - "pxt target @TARGET@"
-    - "pxt install"
-    - "pxt build --cloud"
-sudo: false
-cache:
-    directories:
-    - npm_modules
-    - pxt_modules`,
-    ".vscode/tasks.json":
-        `
-// A task runner that calls the MakeCode (PXT) compiler
-{
-    "version": "2.0.0",
-    "tasks": [{
-        "label": "pxt deploy",
-        "type": "shell",
-        "command": "pxt deploy",
-        "group": "build",
-        "problemMatcher": [ "$tsc" ]
-    }, {
-        "label": "pxt build",
-        "type": "shell",
-        "command": "pxt build",
-        "group": "test",
-        "problemMatcher": [ "$tsc" ]
-    }, {
-        "label": "pxt clean",
-        "type": "shell",
-        "command": "pxt clean",
-        "group": "test",
-        "problemMatcher": [ "$tsc" ]
-    }, {
-        "label": "pxt serial",
-        "type": "shell",
-        "command": "pxt serial",
-        "group": "test",
-        "problemMatcher": [ "$tsc" ]
-    }]
-}
-`
 }
 
 function addFile(name: string, cont: string) {
@@ -2764,28 +2634,9 @@ export function initAsync(parsed: commandParser.ParsedCommand) {
     if (fs.existsSync(pxt.CONFIG_NAME))
         U.userError(`${pxt.CONFIG_NAME} already present`)
 
-    let prj = pxt.appTarget.tsprj || pxt.appTarget.blocksprj;
-    let config = U.clone(prj.config);
-    // remove blocks file
-    Object.keys(prj.files)
-        .filter(f => /\.blocks$/.test(f))
-        .forEach(f => delete prj.files[f]);
-    config.files = config.files.filter(f => !/\.blocks$/.test(f));
+    const files = pxt.packageFiles(path.basename(path.resolve(".")).replace(/^pxt-/, ""))
 
-    config.name = path.basename(path.resolve(".")).replace(/^pxt-/, "")
-    // by default, projects are not public
-    config.public = false;
-
-    let configMap: Map<string> = config as any
-
-    if (!config.license) {
-        config.license = "MIT"
-    }
-    if (!config.version) {
-        config.version = "0.0.0"
-    }
-
-
+    let configMap: Map<string> = JSON.parse(files[pxt.CONFIG_NAME])
     let initPromise = Promise.resolve();
     if (!parsed.flags["useDefaults"]) {
         initPromise = Promise.mapSeries(["name", "description", "license"], f =>
@@ -2797,51 +2648,11 @@ export function initAsync(parsed: commandParser.ParsedCommand) {
 
     return initPromise
         .then(() => {
-            const files: Map<string> = {};
-            for (const f in defaultFiles)
-                files[f] = defaultFiles[f];
-            for (const f in prj.files)
-                if (f != "README.md") // this one we need to keep
-                    files[f] = prj.files[f];
+            files[pxt.CONFIG_NAME] = JSON.stringify(configMap, null, 4) + "\n"
 
-            const pkgFiles = Object.keys(files).filter(s =>
-                /\.(md|ts|asm|cpp|h)$/.test(s))
-
-            const fieldsOrder = [
-                "name",
-                "version",
-                "description",
-                "license",
-                "dependencies",
-                "files",
-                "testFiles",
-                "testDependencies",
-                "public",
-                "targetVersions"
-            ]
-
-            config.files = pkgFiles.filter(s => !/test/.test(s));
-            config.testFiles = pkgFiles.filter(s => /test/.test(s));
-
-            // make it look nice
-            const newCfg: any = {}
-            for (const f of fieldsOrder) {
-                if (configMap.hasOwnProperty(f))
-                    newCfg[f] = configMap[f]
-            }
-            for (const f of Object.keys(configMap)) {
-                if (!newCfg.hasOwnProperty(f))
-                    newCfg[f] = configMap[f]
-            }
-
-            files[pxt.CONFIG_NAME] = JSON.stringify(newCfg, null, 4) + "\n"
-
-            configMap = U.clone(configMap)
-            configMap["target"] = pxt.appTarget.platformid || pxt.appTarget.id
-            configMap["docs"] = pxt.appTarget.appTheme.homeUrl || "./";
+            pxt.packageFilesFixup(files)
 
             U.iterMap(files, (k, v) => {
-                v = v.replace(/@([A-Z]+)@/g, (f, n) => configMap[n.toLowerCase()] || "")
                 nodeutil.mkdirP(path.dirname(k))
                 nodeutil.writeFileSync(k, v)
             })
@@ -4526,6 +4337,9 @@ function extractBufferAsync(buf: Buffer, outDir: string): Promise<string[]> {
                 console.log("Couldn't extract.")
                 return undefined;
             }
+            if (json.meta && json.source) {
+                json = typeof json.source == "string" ? JSON.parse(json.source) : json.source
+            }
             if (Array.isArray(json.scripts)) {
                 console.log("Legacy TD workspace.")
                 json.projects = json.scripts.map((scr: any) => ({
@@ -4614,12 +4428,12 @@ function writeProjects(prjs: SavedProject[], outDir: string): string[] {
             "target": pxt.appTarget.platformid || pxt.appTarget.id,
             "docs": pxt.appTarget.appTheme.homeUrl || "./"
         }
-        for (let fn in defaultFiles) {
+        for (let fn in pxt.defaultFiles) {
             if (prj.files[fn]) continue;
             const fullname = path.join(fdir, fn)
             nodeutil.mkdirP(path.dirname(fullname));
 
-            const src = defaultFiles[fn].replace(/@([A-Z]+)@/g, (f, n) => configMap[n.toLowerCase()] || "")
+            const src = pxt.defaultFiles[fn].replace(/@([A-Z]+)@/g, (f, n) => configMap[n.toLowerCase()] || "")
 
             nodeutil.writeFileSync(fullname, src)
         }
@@ -5520,6 +5334,12 @@ function initCommands() {
         help: "build dal.d.ts in current directory (might need to move)",
         advanced: true
     }, buildDalDTSAsync);
+
+    p.defineCommand({
+        name: "rebundle",
+        help: "update packages embedded in target.json (quick version of 'pxt bt')",
+        advanced: true
+    }, rebundleAsync);
 
     p.defineCommand({
         name: "pokerepo",

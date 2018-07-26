@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+
+<body id='root' style='font-size:16px; font-family:sans-serif;'>
+    <p id="msg">
+    </p>
+    <script>
+        var id = "@targetid@";
+
+        function getLocal(n) {
+            return localStorage[id + "/" + n]
+        }
+
+        function setLocal(n, v) {
+            localStorage[id + "/" + n] = v
+        }
+
+        function delLocal(n) {
+            delete localStorage[id + "/" + n]
+        }
+
+        function parseQueryString(qs) {
+            var r = {}
+            qs.replace(/\+/g, " ").replace(/([^&=]+)=?([^&]*)/g, (f, k, v) => {
+                r[decodeURIComponent(k)] = decodeURIComponent(v)
+                return ""
+            })
+            return r
+        }
+
+        function err(h) {
+            document.getElementById("msg").textContent = "Error: " + h;
+            setTimeout(function() {
+                location.href = "/";
+            }, 3000)
+            throw new Error(h)
+        }
+
+        function store() {
+            var str = (location.hash || "#").slice(1);
+            // .replace(/%23access_token/, "access_token")
+            var qs = parseQueryString(str);
+            if (qs["access_token"]) {
+                let ex = getLocal("oauthState");
+                if (!ex) err("OAuth not started");
+                if (ex != qs["state"]) err("OAuth state mismatch");
+                delLocal("oauthState");
+                setLocal("oauthHash", str);
+                location.hash = "#";
+                location.href = getLocal("oauthRedirect");
+            } else {
+                err("access_token not in #")
+            }
+        }
+
+        setTimeout(store, 100)
+    </script>
+</body>
+
+</html>

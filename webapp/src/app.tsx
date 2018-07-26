@@ -7,6 +7,7 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as workspace from "./workspace";
+import * as cloudsync from "./cloudsync";
 import * as data from "./data";
 import * as pkg from "./package";
 import * as core from "./core";
@@ -774,7 +775,7 @@ export class ProjectView
                 }
                 this.setState({
                     home: false,
-                    showFiles: false,
+                    showFiles: h.githubId ? true : false,
                     editorState: editorState,
                     tutorialOptions: inTutorial ? this.state.tutorialOptions : undefined,
                     header: h,
@@ -819,10 +820,14 @@ export class ProjectView
 
                 const preferredEditor = this.pickEditorFor(file);
                 const readme = main.lookupFile("this/README.md");
-                if (readme && readme.content && readme.content.trim())
+                // no auto-popup when editing packages locally
+                if (!h.githubId && readme && readme.content && readme.content.trim())
                     this.setSideMarkdown(readme.content);
                 else if (pkg.mainPkg && pkg.mainPkg.config && pkg.mainPkg.config.documentation)
                     this.setSideDoc(pkg.mainPkg.config.documentation, preferredEditor == this.blocksEditor);
+
+                // update recentUse on the header
+                return workspace.saveAsync(h)
             }).finally(() => {
                 // Editor is loaded
                 pxt.BrowserUtils.changeHash("#editor", true);
@@ -886,7 +891,7 @@ export class ProjectView
     }
 
     isProjectFile(filename: string): boolean {
-        return /\.(pxt|mkcd)$/i.test(filename)
+        return /\.(pxt|mkcd|mkcd-\w+)$/i.test(filename)
     }
 
     isPNGFile(filename: string): boolean {
@@ -903,7 +908,9 @@ export class ProjectView
     }
 
     importProjectCoreAsync(buf: Uint8Array) {
-        return pxt.lzmaDecompressAsync(buf)
+        return (buf[0] == '{'.charCodeAt(0) ?
+            Promise.resolve(pxt.U.uint8ArrayToString(buf)) :
+            pxt.lzmaDecompressAsync(buf))
             .then(contents => {
                 let data = JSON.parse(contents) as pxt.cpp.HexFile;
                 this.importHex(data);
@@ -967,9 +974,17 @@ export class ProjectView
     importHex(data: pxt.cpp.HexFile, createNewIfFailed: boolean = false) {
         const targetId = pxt.appTarget.id;
         if (!data || !data.meta) {
-            core.warningNotification(lf("Sorry, we could not recognize this file."))
-            if (createNewIfFailed) this.openHome();
-            return;
+            if (data && (data as any)[pxt.CONFIG_NAME]) {
+                data = cloudsync.reconstructMeta(data as any)
+            } else {
+                core.warningNotification(lf("Sorry, we could not recognize this file."))
+                if (createNewIfFailed) this.openHome();
+                return;
+            }
+        }
+
+        if (typeof data.source == "object") {
+            (data as any).source = JSON.stringify(data.source)
         }
 
         // intercept newer files early
@@ -1113,6 +1128,60 @@ export class ProjectView
             })
     }
 
+    async commitAsync() {
+        try {
+            let repo = this.state.header.githubId
+            let info = await dialogs.showCommitDialogAsync(repo)
+            if (!info)
+                return
+
+            let commitId = await workspace.commitAsync(this.state.header, info.msg)
+            if (commitId) {
+                // merge failure; do a PR
+                // we could ask the user, but it's unlikely they can do anything else to fix it
+                let prURL = await workspace.prAsync(this.state.header, commitId, info.msg)
+                await dialogs.showPRDialogAsync(repo, prURL)
+                // when the dialog finishes, we pull again - it's possible the user
+                // has resolved the conflict in the meantime
+                await workspace.pullAsync(this.state.header)
+                // skip bump in this case - we don't know if it was merged
+            } else {
+                if (info.bump)
+                    await workspace.bumpAsync(this.state.header)
+            }
+            await this.reloadHeaderAsync()
+        } finally {
+            core.hideLoading("loadingheader")
+        }
+    }
+
+    async pushPullAsync() {
+        core.showLoading("loadingheader", lf("syncing with github..."));
+        let needsHide = true
+        try {
+            let status = await workspace.pullAsync(this.state.header)
+                .catch(core.handleNetworkError)
+
+            switch (status) {
+                case workspace.PullStatus.NoSourceControl:
+                case workspace.PullStatus.UpToDate:
+                    break
+
+                case workspace.PullStatus.NeedsCommit:
+                    needsHide = false
+                    await this.commitAsync()
+                    break
+
+                case workspace.PullStatus.GotChanges:
+                    await this.reloadHeaderAsync()
+                    break
+            }
+        } finally {
+            if (needsHide)
+                core.hideLoading("loadingheader")
+        }
+    }
+
     ///////////////////////////////////////////////////////////
     ////////////             Home                 /////////////
     ///////////////////////////////////////////////////////////
@@ -1128,6 +1197,7 @@ export class ProjectView
         this.setState({ home: true, tracing: undefined, fullscreen: undefined, tutorialOptions: undefined, editorState: undefined });
         this.allEditors.forEach(e => e.setVisible(false));
         this.homeLoaded();
+        workspace.syncAsync().done();
     }
 
     private homeLoaded() {
@@ -1251,6 +1321,7 @@ export class ProjectView
 
     resetWorkspace() {
         this.reload = true;
+        window.location.hash = "#reload";
         return workspace.resetAsync()
             .done(
                 () => this.reloadEditor(),
@@ -1807,7 +1878,26 @@ export class ProjectView
             if (!id) {
                 core.errorNotification(lf("Sorry, the project url looks invalid."));
             } else {
-                loadHeaderBySharedId(id);
+                if (pxt.github.isGithubId(id))
+                    importGithubProject(id);
+                else
+                    loadHeaderBySharedId(id);
+            }
+        });
+    }
+
+    showImportGithubDialog() {
+        dialogs.showImportGithubDialogAsync().done(url => {
+            if (url === "NEW") {
+                dialogs.showCreateGithubRepoDialogAsync()
+                    .then(url => {
+                        if (url)
+                            importGithubProject(url)
+                    })
+            } else if (!pxt.github.isGithubId(url)) {
+                core.errorNotification(lf("Sorry, the project url looks invalid."));
+            } else {
+                importGithubProject(url);
             }
         });
     }
@@ -2206,13 +2296,18 @@ function getEditor() {
 }
 
 function initLogin() {
+    cloudsync.loginCheck()
+
     {
         let qs = core.parseQueryString((location.hash || "#").slice(1).replace(/%23access_token/, "access_token"))
         if (qs["access_token"]) {
             let ex = pxt.storage.getLocal("oauthState")
+            let tp = pxt.storage.getLocal("oauthType")
             if (ex && ex == qs["state"]) {
-                pxt.storage.setLocal("access_token", qs["access_token"])
                 pxt.storage.removeLocal("oauthState")
+                pxt.storage.removeLocal("oauthType")
+                if (tp == "github")
+                    pxt.storage.setLocal("githubtoken", qs["access_token"])
             }
             location.hash = location.hash.replace(/(%23)?[\#\&\?]*access_token.*/, "")
         }
@@ -2356,7 +2451,8 @@ let myexports: any = {
     apiAsync: core.apiAsync,
     showIcons,
     assembleCurrent,
-    log
+    log,
+    cloudsync
 };
 (window as any).E = myexports;
 
@@ -2460,6 +2556,32 @@ function isProjectRelatedHash(hash: { cmd: string; arg: string }): boolean {
             return true;
         default:
             return false;
+    }
+}
+
+async function importGithubProject(id: string) {
+    core.showLoading("loadingheader", lf("importing github project..."));
+    try {
+        let hd = await workspace.importGithubAsync(id)
+        let text = await workspace.getTextAsync(hd.id)
+        if ((text[pxt.CONFIG_NAME] || "{}").length < 20) {
+            let ok = await core.confirmAsync({
+                header: lf("Initialize MakeCode package?"),
+                body: lf("We didn't find a valid pxt.json file in the repository. Would you like to create it and supporting files?"),
+                agreeLbl: lf("Initialize!")
+            })
+            if (!ok) {
+                hd.isDeleted = true
+                await workspace.saveAsync(hd)
+                return
+            }
+            await workspace.initializeGithubRepoAsync(hd, id)
+        }
+        await theEditor.loadHeaderAsync(hd, null)
+    } catch (e) {
+        core.handleNetworkError(e)
+    } finally {
+        core.hideLoading("loadingheader")
     }
 }
 
@@ -2598,6 +2720,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (hw)
         pxt.setHwVariant(hw[1])
 
+    pxt.github.token = pxt.storage.getLocal("githubtoken");
+
     const ws = /ws=(\w+)/.exec(window.location.href)
     const isSandbox = pxt.shell.isSandboxMode() || pxt.shell.isReadOnly();
     const isController = pxt.shell.isControllerMode();
@@ -2650,17 +2774,12 @@ document.addEventListener("DOMContentLoaded", () => {
         })
         .then(() => pxt.BrowserUtils.initTheme())
         .then(() => cmds.initCommandsAsync())
-        .then(() => {
-            return workspace.initAsync();
-        })
-        .then(() => {
-            render();
-            return workspace.syncAsync();
-        })
+        .then(() => workspace.initAsync())
         .then((state) => {
             if (state) {
                 theEditor.setState({ editorState: state });
             }
+            render();
             initSerial();
             initScreenshots();
             initHashchange();

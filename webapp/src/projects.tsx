@@ -9,7 +9,7 @@ import * as compiler from "./compiler";
 
 import * as codecard from "./codecard"
 import * as carousel from "./carousel";
-import { showAboutDialogAsync } from "./dialogs";
+import { showAboutDialogAsync, showCloudSignInDialog } from "./dialogs";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -35,6 +35,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         this.chgGallery = this.chgGallery.bind(this);
         this.chgCode = this.chgCode.bind(this);
         this.importProject = this.importProject.bind(this);
+        this.cloudSignIn = this.cloudSignIn.bind(this);
         this.setSelected = this.setSelected.bind(this);
     }
 
@@ -165,6 +166,11 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         this.props.parent.importProjectDialog();
     }
 
+    cloudSignIn() {
+        pxt.tickEvent("projects.signin", undefined, { interactiveConsent: true });
+        showCloudSignInDialog();
+    }
+
     renderCore() {
         const { selectedCategory, selectedIndex } = this.state;
 
@@ -190,6 +196,13 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             'ui segment bottom attached tab active tabsegment'
         ]);
 
+        let signIn = ""
+        let signInIcon = ""
+        if (this.getData("sync:hascloud")) {
+            signInIcon = this.getData("sync:status") == "syncing" ? "cloud download" : "user circle"
+            signIn = this.getData("sync:username") || lf("Sign in")
+        }
+
         return <div ref="homeContainer" className={tabClasses}>
             {showHeroBanner ?
                 <div className="ui segment getting-started-segment" style={{ backgroundImage: `url(${encodeURI(targetTheme.homeScreenHero)})` }} /> : undefined}
@@ -201,6 +214,9 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                     <div className="column right aligned">
                         {pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing) ?
                             <sui.Button key="import" icon="upload" className="mini import-dialog-btn" textClass="landscape only" text={lf("Import")} title={lf("Import a project")} onClick={this.importProject} /> : undefined}
+                        {signIn ?
+                            <sui.Button key="signin" icon={signInIcon} className="mini import-dialog-btn" textClass="landscape only" text={signIn} title={lf("Sign in to sync your projects")} onClick={this.cloudSignIn} />
+                            : undefined}
                     </div>
                 </div>
                 <div className="content">
@@ -453,7 +469,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                         key={'local' + scr.id + scr.recentUse}
                         // ref={(view) => { if (index === 1) this.latestProject = view }}
                         cardType="file"
-                        className="file"
+                        className={scr.githubId ? "file github" : "file"}
                         name={scr.name}
                         time={scr.recentUse}
                         url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}
@@ -568,6 +584,19 @@ export interface ImportDialogState {
     visible?: boolean;
 }
 
+function githubLogin() {
+    core.showLoading("ghlogin", lf("Logging you in to GitHub..."))
+    const self = window.location.href.replace(/#.*/, "")
+    const state = ts.pxtc.Util.guidGen();
+    pxt.storage.setLocal("oauthState", state)
+    pxt.storage.setLocal("oauthType", "github")
+    const login = pxt.Cloud.getServiceUrl() +
+        "/oauth/login?state=" + state +
+        "&response_type=token&client_id=gh-token&redirect_uri=" +
+        encodeURIComponent(self)
+    window.location.href = login
+}
+
 export class ImportDialog extends data.Component<ISettingsProps, ImportDialogState> {
     constructor(props: ISettingsProps) {
         super(props);
@@ -578,6 +607,7 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
         this.close = this.close.bind(this);
         this.importHex = this.importHex.bind(this);
         this.importUrl = this.importUrl.bind(this);
+        this.cloneGithub = this.cloneGithub.bind(this);
     }
 
     hide() {
@@ -604,16 +634,23 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
         this.props.parent.showImportUrlDialog();
     }
 
+    private cloneGithub() {
+        pxt.tickEvent("projects.clonegithub", undefined, { interactiveConsent: true });
+        this.hide();
+        this.props.parent.showImportGithubDialog();
+    }
+
     renderCore() {
         const { visible } = this.state;
 
+        /* tslint:disable:react-a11y-anchors */
         return (
             <sui.Modal isOpen={visible} className="importdialog" size="small"
                 onClose={this.close} dimmer={true}
                 closeIcon={true} header={lf("Import")}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
             >
-                <div className="ui two cards">
+                <div className={pxt.github.token ? "ui three cards" : "ui two cards"}>
                     {pxt.appTarget.compile ?
                         <codecard.CodeCardView
                             ariaLabel={lf("Open files from your computer")}
@@ -627,16 +664,34 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
                         /> : undefined}
                     {pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing ?
                         <codecard.CodeCardView
-                            ariaLabel={lf("Open a shared project URL")}
+                            ariaLabel={lf("Open a shared project URL or GitHub repo")}
                             role="button"
                             key={'importurl'}
                             icon="cloud download"
                             iconColor="secondary"
                             name={lf("Import URL...")}
-                            description={lf("Open a shared project URL")}
+                            description={lf("Open a shared project URL or GithHub repo")}
                             onClick={this.importUrl}
                         /> : undefined}
+
+                    {pxt.github.token ?
+                        <codecard.CodeCardView
+                            ariaLabel={lf("Clone or create your own GitHub repository")}
+                            role="button"
+                            key={'importgithub'}
+                            icon="github"
+                            iconColor="secondary"
+                            name={lf("Your GitHub Repo...")}
+                            description={lf("Clone or create your own GitHub repository")}
+                            onClick={this.cloneGithub}
+                        /> : undefined}
                 </div>
+                {pxt.github.token || true ? undefined :
+                    <p>
+                        <br /><br />
+                        <a className="small" href="#github" role="button" onClick={githubLogin}
+                            aria-label={lf("GitHub login")}>{lf("GitHub login")}</a>
+                    </p>}
             </sui.Modal>
         )
     }
@@ -792,6 +847,7 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
             v.card.onClick = () => this.setHwVariant(savedV)
         }
 
+        /* tslint:disable:react-a11y-anchors */
         return (
             <sui.Modal isOpen={visible} className="importdialog" size="small"
                 onClose={this.close} dimmer={true}

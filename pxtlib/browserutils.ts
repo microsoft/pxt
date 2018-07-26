@@ -435,8 +435,12 @@ namespace pxt.BrowserUtils {
     }
 
     export function patchCdn(url: string): string {
-        if (!url || !pxt.getOnlineCdnUrl()) return url;
-        return url.replace("@cdnUrl@", pxt.getOnlineCdnUrl());
+        if (!url) return url;
+        const online = pxt.getOnlineCdnUrl();
+        if (online)
+            return url.replace("@cdnUrl@", online);
+        else
+            return url.replace(/@cdnUrl@\/(blob|commit)\/[a-f0-9]{40}\//, ".");
     }
 
     export function initTheme() {
@@ -499,9 +503,9 @@ namespace pxt.BrowserUtils {
     export function urlJoin(urlPath1: string, urlPath2: string): string {
         if (!urlPath1) return urlPath2;
         if (!urlPath2) return urlPath1;
-        const normalizedUrl1 =  (urlPath1.indexOf('/') == urlPath1.length - 1) ?
+        const normalizedUrl1 = (urlPath1.indexOf('/') == urlPath1.length - 1) ?
             urlPath1.substring(0, urlPath1.length - 1) : urlPath1;
-        const normalizedUrl2 =  (urlPath2.indexOf('/') == 0) ?
+        const normalizedUrl2 = (urlPath2.indexOf('/') == 0) ?
             urlPath2.substring(1) : urlPath2;
         return normalizedUrl1 + "/" + normalizedUrl2;
     }

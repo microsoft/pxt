@@ -36,6 +36,12 @@
     }
 }
 
+.ui.card.github {
+    .fileimage {
+        background-image: @githubFileLogo;
+    }
+}
+
 /*-------------------
         Link
 --------------------*/

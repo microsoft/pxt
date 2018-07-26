@@ -1,0 +1,77 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="variables_set">
+<field name="VAR">bcTest</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="bc_create_test">
+</block>
+</value>
+<next>
+<block type="bc.Test_blockCombine_set">
+<field name="property">bc.Test.x</field>
+<value name="bc">
+<block type="variables_get">
+<field name="VAR">bcTest</field>
+</block>
+</value>
+<value name="value">
+<shadow type="math_number">
+<field name="NUM">12</field>
+</shadow>
+</value>
+<next>
+<block type="bc.Test_blockCombine_set">
+<field name="property">bc.Test.z&#64;set</field>
+<value name="bc">
+<block type="variables_get">
+<field name="VAR">bcTest</field>
+</block>
+</value>
+<value name="value">
+<shadow type="math_number">
+<field name="NUM">13</field>
+</shadow>
+</value>
+<next>
+<block type="variables_set">
+<field name="VAR">bcTestX</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="bc.Test_blockCombine_get">
+<field name="property">bc.Test.x</field>
+<value name="bc">
+<block type="variables_get">
+<field name="VAR">bcTest</field>
+</block>
+</value>
+</block>
+</value>
+<next>
+<block type="variables_set">
+<field name="VAR">bcTestZ</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="bc.Test_blockCombine_get">
+<field name="property">bc.Test.z</field>
+<value name="bc">
+<block type="variables_get">
+<field name="VAR">bcTest</field>
+</block>
+</value>
+</block>
+</value>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+<comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;blockCombine.ts&#34; &#47;&#62;</comment>
+</block>
+</statement>
+</block>
+</xml>
