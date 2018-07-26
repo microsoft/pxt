@@ -147,10 +147,6 @@ cache:
         // by default, projects are not public
         config.public = false;
 
-
-        if (!config.license) {
-            config.license = "MIT"
-        }
         if (!config.version) {
             config.version = "0.0.0"
         }
