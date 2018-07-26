@@ -440,7 +440,7 @@ namespace pxt.BrowserUtils {
         if (online)
             return url.replace("@cdnUrl@", online);
         else
-            return url.replace(/@cdnUrl@\/(blob|commit)\/[a-f0-9]{40}\//, ".");
+            return url.replace(/@cdnUrl@\/(blob|commit)\/[a-f0-9]{40}\//, "./");
     }
 
     export function initTheme() {
