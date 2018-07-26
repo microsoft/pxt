@@ -78,7 +78,7 @@ export function showGithubLoginAsync() {
             if (url.length != 40 || !/^[a-f0-9]+$/.test(url)) {
                 core.errorNotification(lf("Invalid token format"))
             } else {
-                core.infoNotification(lf("Token stored"))
+                core.infoNotification(lf("Token stored. Check out Import on home screen now!"))
                 pxt.storage.setLocal("githubtoken", url)
                 pxt.github.token = url
             }
