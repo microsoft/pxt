@@ -260,7 +260,7 @@ namespace pxtblockly {
                 .text(text)
                 .appendClass(className)
                 .setAttribute("dominant-baseline", "middle")
-                .setAttribute("dy", 2.5);
+                .setAttribute("dy", 2);
         }
 
         setText(text: string) {
@@ -288,6 +288,11 @@ namespace pxtblockly {
     export function mkIconButton(icon: string, width: number, height = width + BUTTON_BOTTOM_BORDER_WIDTH - BUTTON_BORDER_WIDTH) {
         const g = drawSingleButton(width, height);
         return new TextButton(g.root, g.cx, g.cy, icon, "sprite-editor-icon");
+    }
+
+    export function mkXIconButton(icon: string, width: number, height = width + BUTTON_BOTTOM_BORDER_WIDTH - BUTTON_BORDER_WIDTH) {
+        const g = drawSingleButton(width, height);
+        return new TextButton(g.root, g.cx, g.cy, icon, "sprite-editor-xicon");
     }
 
     export function mkTextButton(text: string, width: number, height: number) {
@@ -394,12 +399,12 @@ namespace pxtblockly {
             this.host = host;
             const [undo, redo] = buttonGroup(width, height, 2);
 
-            this.undo = new TextButton(undo.root, undo.cx, undo.cy, "\uf0e2", "sprite-editor-icon");
+            this.undo = new TextButton(undo.root, undo.cx, undo.cy, "\uf118", "sprite-editor-xicon");
             this.undo.onClick(() => this.host.undo());
             this.root.appendChild(this.undo.getElement());
 
 
-            this.redo = new TextButton(redo.root, redo.cx, redo.cy, "\uf01e", "sprite-editor-icon");
+            this.redo = new TextButton(redo.root, redo.cx, redo.cy, "\uf111", "sprite-editor-xicon");
             this.redo.onClick(() => this.host.redo());
             this.root.appendChild(this.redo.getElement());
         }

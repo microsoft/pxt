@@ -113,7 +113,7 @@ namespace pxtblockly {
             this.eraseTool = this.initButton(lf("Erase"), "\uf12d", PaintTool.Erase);
             this.eraseTool.translate(1 + TOOL_BUTTON_WIDTH + INNER_BUTTON_MARGIN, 0);
 
-            this.fillTool = this.initButton(lf("Fill"), "\uf0d0", PaintTool.Fill);
+            this.fillTool = this.initButton(lf("Fill"), "\uf102", PaintTool.Fill, true);
             this.fillTool.translate(0, TOOL_BUTTON_WIDTH + INNER_BUTTON_MARGIN);
 
             this.rectangleTool = this.initButton(lf("Rectangle"), "\uf096", PaintTool.Rectangle);
@@ -171,8 +171,8 @@ namespace pxtblockly {
             this.setColor(0);
         }
 
-        protected initButton(title: string, icon: string, tool: PaintTool) {
-            const btn = mkIconButton(icon, TOOL_BUTTON_WIDTH);
+        protected initButton(title: string, icon: string, tool: PaintTool, xicon = false) {
+            const btn = xicon ? mkXIconButton(icon, TOOL_BUTTON_WIDTH) : mkIconButton(icon, TOOL_BUTTON_WIDTH);
             btn.title(title);
             btn.onClick(() => this.setTool(tool));
             this.buttonGroup.appendChild(btn.getElement());

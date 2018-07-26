@@ -264,7 +264,7 @@ namespace pxtblockly {
 
         showGallery() {
             this.gallery.show((result: Bitmap, err?: string) => {
-                if (err) {
+                if (err && err !== "cancelled") {
                     console.error(err);
                 }
                 else if (result) {
