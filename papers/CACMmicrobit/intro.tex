@@ -1,40 +1,62 @@
 \section{Introduction}
 \label{sec:intrp}
 
+In the early 1980's, the British Broadcasting Corporation (BBC)
+introduced a whole generation of UK educators and students to computing
+through the {\em BBC Computer Literacy Project}, which featured the BBC Micro, 
+a 6502-based microcomputer designed and produced by Acorn Computers Ltd. (referred
+to at times as the ``British Apple'').  The project was very sucessful:
+more than 80\% of UK classrooms had a BBC Micro and many of today's 
+computing professionals from the UK first encountered computing through
+the BBC Micro.
 
-% Make it Digital is a BBC initiative to inspire a new generation to get creative with 
-% coding, programming and digital technology. With a major focus in 2015, Make it Digital 
-% will help all audiences see how Britain has helped shape the digital world, why digital 
-% skills matter and their growing importance to our future. For younger audiences, Make it 
-% Digital will help them discover the world of digital, see their creative potential in it 
-% and inspire them to take their first steps in computational thinking and digital skills. 
+Fast forward to the 21st century, and the BBC sought to again inspire a new
+generation get creative with coding, programming and digital technology
+through its 2015 {\em Make It Digital} initiative, as well as to support the UK's mandate to 
+teach computer science concepts at all grade levels.~\cite{PeytonJones2013ICFP}
 
-{\bf Motivation: start with history of BBC Micro and fast forward to digital skills
-gap and UK CS EDU}
+As part of this effort, the BBC introduced the micro:bit,
+a small programmable and embeddable computer designed, 
+developed and deployed by the BBC and partners (including ARM, Microsoft
+and Lancaster University) to approximately 800,000 UK middle school students
+in 2015-2016. Harkening back to its work with the BBC Micro,
+the BBC described the micro:bit as its ``most ambitious education initiative in 30 years, 
+with an ambition to inspire digital creativity and 
+develop a new generation of tech pioneers.''~\cite{BBCwebsite}
 
-% Jacqueline: From a localized experimental project in the UK, 
-% the micro:bit has become wildly successful globally because
-% magic formula of right hardware, right software, constructionist 
-% approach to computing education…?”
+From a localized experiment in the UK, the micro:bit has become
+wildly successful globally because of a magic formula of the right hardware, 
+right software, embracing a constructionist approach to computing education.
 
+In this paper, we describe the key decisions and lessons from
+delivering the BBC micro:bit in the UK and then expandeing to reach 
+more educators and students around the world, via the Micro:bit Educational
+Foundation (\url{www.microbit.org}; started in September 2016). 
+We draw from two full years of 
+full deployment of the micro:bit in the UK, as well as deployments
+in Europe, the Americas, and Asia.  There are approximately
+two million micro:bits now in the market and many hardware,
+content, and education partners participating. 
 
 %Purpose
 %- what is the micro:bit?
 % http://www.bbc.co.uk/programmes/articles/4hVG2Br1W1LKCmw8nSm9WnQ/the-bbc-micro-bit
 
-The micro:bit is a small programmable and embeddable computer designed, 
-developed and deployed by the BBC and partners (including ARM, Microsoft
-and Lancaster University) to approximately 800,000 UK middle school students
-in 2015-2016. The BBC micro:bit follows in the tradition of the BBC Micro personal
-computer from the 1980s; it also supports the UK's mandate to 
-teach computer science concepts at all grade levels.~\cite{PeytonJones2013ICFP}
-Part of the BBC's Make It Digital Campaign, the BBC described the
-micro:bit as its ``most ambitious education initiative in 30 years, 
-with an ambition to inspire digital creativity and 
-develop a new generation of tech pioneers.''~\cite{BBCwebsite}
 
 % reference the competition and show what's different (hardware)
 % https://barrettsprojects.wordpress.com/2012/09/15/tap-and-double-tap/ 
+
+\begin{figure} 
+  \begin{tabular}{cc}
+    \includegraphics[width=1.5in]{images/microbit-front.png} &
+    \includegraphics[width=1.5in]{images/microbit-back.png} \\
+    (a) & (b) 
+  \end{tabular}
+  \caption{\label{fig:microbit}The micro:bit: (a) front, with two buttons, 
+    5x5 LED display, and edge connector (bottom); (b) back, with processor, accelerometer, compass, Bluetooth, USB and battery ports.}
+  \end{figure}
+  
+\subsection{Hardware}
 
 Figure~\ref{fig:microbit} shows (a) the front and (b) the back of the
 micro:bit, which measures 4cm x 5cm. Like the Arduino Uno, 
@@ -48,6 +70,11 @@ a 5x5 LED matrix, two user-defined buttons, as well as Bluetooth
 Low Energy (BLE) communications.\footnote{The micro:bit has a whopping
 16kB of RAM and 256kB of Flash memory, compared to the Uno's 2kB of 
 RAM and 32kB of Flash}.
+
+\begin{figure*}[t] 
+  \includegraphics[width=6in]{images/webApp.png}
+  \caption{\label{fig:snapshot}MakeCode web app for the micro:bit}
+\end{figure*}
 
 The design of the micro:bit hardware was driven by the
 first two objectives of the BBC micro:bit project:
@@ -67,17 +94,10 @@ connector expands its capabilities greatly.\footnote{
 \url{http://microbit.org/assets/documents/AccessoryGuideSummer18.pdf}
 }
 
-\begin{figure} 
-\begin{tabular}{cc}
-  \includegraphics[width=1.5in]{images/microbit-front.png} &
-  \includegraphics[width=1.5in]{images/microbit-back.png} \\
-  (a) & (b) 
-\end{tabular}
-\caption{\label{fig:microbit}The micro:bit: (a) front, with two buttons, 
-  5x5 LED display, and edge connector (bottom); (b) back, with processor, accelerometer, compass, Bluetooth, USB and battery ports.}
-\end{figure}
-
 % micro:bit is an embeddable, reactive, networked computing system
+
+
+\subsection{Software}
 
 The design of the micro:bit coding tools also was oriented towards a 
 simple starting experience with room for progression. In particular, the coding 
@@ -85,11 +105,6 @@ objectives of the project were: (B3)
 to give students an exciting, engaging introduction to coding;
 (B4) to stimulate curiosity about how computing technologies can be utilized 
   to solve problems that students identify. 
-
-  \begin{figure*}[t] 
-    \includegraphics[width=6in]{images/webApp.png}
-    \caption{\label{fig:snapshot}MakeCode web app for the micro:bit}
-\end{figure*}
 
 Based on in-school trials with a micro:bit prototype, the BBC focused on delivering a web app 
 based on the popular Blockly framework~\cite{Blocky2015} to permit students to
@@ -148,6 +163,8 @@ shake event is fired using a virtual button). In addition to event-based
 APIs, direct access to the micro:bit's sensors via polling is possible.
 [takes a few minutes to code and deploy this simple program]
 
+\subsection{Content and training}
+
 The BBC micro:bit project also called for partners to develop content
 and to ``train the trainers'' (educators) around the micro:bit computing
 system.  This built on efforts by the non-profit Computing At Schools
@@ -167,18 +184,9 @@ science.
 % - mass participation
 % - country readiness (or perhaps willingness)
 
-Together, we learned many lessons from being a core part of the team that
-delivered the BBC micro:bit in the UK and then expanded to reach 
-more educators and students around the world, via the Micro:bit Educational
-Foundation (\url{www.microbit.org}; started in September 2016) and its 
-founding partners' efforts.
-In the remainder of this paper, we focus on the primary promise
-of the BBC micro:bit project, which was to deliver a simple physical computing
-experience, en masse, to an entire grade level.  We draw from two full years of 
-full deployment of the micro:bit in the UK, as well as deployments
-in Europe, the Americas, and Asia.  There are approximately
-two million micro:bits now in the market and many hardware,
-content, and education partners participating. 
+
+
+\subsection{Overview}
 
 We take a bottom-up approach, starting with a review of
 physical computing (Section~\ref{sec:physical}), which anchors 
