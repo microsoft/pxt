@@ -1,17 +1,16 @@
-/// <reference path="../../typings/globals/react/index.d.ts" />
-/// <reference path="../../typings/globals/react-dom/index.d.ts" />
 /// <reference path="../../built/pxtlib.d.ts" />
+/// <reference path="../../localtypings/mscc.d.ts" />
 
 import * as React from "react";
 import * as data from "./data";
 import * as sui from "./sui";
-import * as core from "./core";
 
 import Cloud = pxt.Cloud;
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
 export interface GenericBannerProps extends ISettingsProps {
+    id: string;
     delayTime?: number; //milliseconds - delay before banner is shown
     displayTime?: number; //milliseconds - duration of banner display
     sleepTime?: number; //seconds - time to hide banner after it is dismissed
@@ -31,6 +30,8 @@ export class GenericBanner extends data.Component<GenericBannerProps, {}> {
         this.delayTime = this.props.delayTime || 0;
         this.doneSleeping = this.sleepDone();
         this.bannerType = this.props.bannerType || "default";
+
+        this.handleClick = this.handleClick.bind(this);
     }
 
     componentDidMount() {
@@ -48,80 +49,121 @@ export class GenericBanner extends data.Component<GenericBannerProps, {}> {
             return true;
         }
         const lastBannerClosedTime = parseInt(pxt.storage.getLocal("lastBannerClosedTime") || "0");
-        const now = Util.nowSeconds();
+        const now = pxt.Util.nowSeconds();
         return (now - lastBannerClosedTime) > this.props.sleepTime;
     }
 
     show() {
-        pxt.tickEvent("notificationBanner.show");
+        pxt.tickEvent(`notificationBanner.${this.props.id}.show`);
         if (this.props.displayTime) {
             this.timer = setTimeout(() => this.hide("automatic"), this.delayTime + this.props.displayTime);
         }
         this.props.parent.setBanner(true);
-        this.renderCore();
+        this.render();
     }
 
     hide(mode: string) {
-        pxt.tickEvent("notificationBanner." + mode + "Close");
-        pxt.storage.setLocal("lastBannerClosedTime", Util.nowSeconds().toString());
+        pxt.tickEvent(`notificationBanner.${this.props.id}.` + mode + "Close");
+        pxt.storage.setLocal("lastBannerClosedTime", pxt.Util.nowSeconds().toString());
         this.props.parent.setBanner(false);
-        this.renderCore();
+        this.render();
+    }
+
+    handleClick() {
+        this.hide("manual");
+        clearTimeout(this.timer);
     }
 
     renderCore() {
         return (
-            (this.props.parent.state.bannerVisible  && this.doneSleeping) ?
-            <div id="notificationBanner" className={`ui attached ${this.bannerType} message`}>
-                <div className="bannerLeft">
-                    <div className="content">
-                        {this.props.children}
+            (this.props.parent.state.bannerVisible && this.doneSleeping) ?
+                <div id="notificationBanner" className={`ui attached ${this.bannerType} message`}>
+                    <div className="bannerLeft">
+                        <div className="content">   
+                            {this.props.children}
+                        </div>
                     </div>
-                </div>
-                <div className="bannerRight">
-                    <sui.Icon icon="close" tabIndex={0} onClick={() => {this.hide("manual"); clearTimeout(this.timer)}}/>
-                </div>
-            </div> :
-            <div></div>
+                    <div className="bannerRight">
+                        <sui.Icon icon="close" tabIndex={0} onClick={this.handleClick} />
+                    </div>
+                </div> :
+                <div></div>
         );
     }
 }
 
 export class NotificationBanner extends data.Component<ISettingsProps, {}> {
-    renderCore() {
-        // don't show any banner when cookie is up.
-        if (pxt.analytics.isCookieBannerVisible())
-            return <div></div>;
 
-        const targetTheme = pxt.appTarget.appTheme;
+    constructor(props: ISettingsProps) {
+        super(props);
+        this.state = {
+        }
+
+        this.handleBannerClick = this.handleBannerClick.bind(this);
+    }
+
+    handleBannerClick() {
+        pxt.tickEvent("banner.linkClicked", undefined, { interactiveConsent: true });
+    }
+
+    renderCore() {
+        if (pxt.analytics.isCookieBannerVisible()) {
+            // don't show any banner while cookie banner is up
+            return <div></div>;
+        }
+
+        const delayTime =  300 * 1000; // 5 minutes
+        const displayTime = 30 * 1000; // 30 seconds
+        const sleepTime = 24 * 2 * 3600; // 2 days
+
+        const targetConfig = this.getData("target-config:") as pxt.TargetConfig;
         const isApp = pxt.winrt.isWinRT();
+        const targetTheme = pxt.appTarget.appTheme;                
+
+        if ( Cloud.isOnline() && !isApp && !pxt.shell.isSandboxMode()) {
+
+            const showNewEditorLinkBanner = targetConfig && targetConfig.newEditorLink;
+            if (showNewEditorLinkBanner) {
+                return (
+                    <GenericBanner id="beta" parent={this.props.parent} delayTime={delayTime} displayTime={displayTime} sleepTime={sleepTime}>
+                        <sui.Link class="link" target="_blank" ariaLabel={lf("Open beta url")} href={targetConfig.newEditorLink} onClick={this.handleBannerClick}>
+                            <img className="bannerIcon" src={pxt.Util.pathJoin(pxt.webConfig.commitCdnUrl, `images/logo.svg`)} alt={lf("MakeCode logo")}></img>
+                            
+                        </sui.Link>
+                        <sui.Link class="link" target="_blank" ariaLabel={lf("Open beta url")} href={targetConfig.newEditorLink} onClick={this.handleBannerClick}>
+                            {lf("Try the beta!")}
+                        </sui.Link> 
+                    </GenericBanner>
+                );
+            }
+
+            const isWindows10 = pxt.BrowserUtils.isWindows10();
+            const showWindowsStoreBanner = targetConfig && targetConfig.windowsStoreLink && isWindows10;
+            if (showWindowsStoreBanner) {
+                return (
+                    <GenericBanner id="uwp" parent={this.props.parent} delayTime={delayTime} displayTime={displayTime} sleepTime={sleepTime}>
+                        <sui.Link class="link" target="_blank" ariaLabel={lf("View app in the Windows store")} href={targetConfig.windowsStoreLink} onClick={this.handleBannerClick}>
+                            <img className="bannerIcon" src={pxt.Util.pathJoin(pxt.webConfig.commitCdnUrl, `images/windowsstorebag.png`)} alt={lf("Windows store logo")}></img>
+                        </sui.Link>
+                        <sui.Link class="link" target="_blank" ariaLabel={lf("View app in the Windows store")} href={targetConfig.windowsStoreLink} onClick={this.handleBannerClick}>
+                            {lf("Want a faster download? Get the app!")}
+                        </sui.Link>
+                    </GenericBanner>
+                );
+            }
+        }
+
         const isLocalServe = location.hostname === "localhost";
         const isExperimentalUrlPath = location.pathname !== "/"
             && (targetTheme.appPathNames || []).indexOf(location.pathname) === -1;
+
         const showExperimentalBanner = !isLocalServe && isApp && isExperimentalUrlPath;
-        const isWindows10 = pxt.BrowserUtils.isWindows10();
-        const targetConfig = this.getData("target-config:") as pxt.TargetConfig;
-        const showWindowsStoreBanner = isWindows10 && Cloud.isOnline() && targetConfig && targetConfig.windowsStoreLink && !isApp
-            && !pxt.shell.isSandboxMode();
-
-        if (showWindowsStoreBanner) {
-            return (
-                <GenericBanner parent={this.props.parent} delayTime={10000} displayTime={45000} sleepTime={604800}>
-                    <sui.Link class="link" target="_blank" ariaLabel={lf("View app in the Windows store")} href={targetConfig.windowsStoreLink} onClick={() => pxt.tickEvent("banner.linkClicked")}>
-                        <img className="bannerIcon" src={Util.pathJoin(pxt.webConfig.commitCdnUrl, `images/windowsstorebag.png`)}></img>
-                    </sui.Link>
-                    <sui.Link class="link" target="_blank" ariaLabel={lf("View app in the Windows store")} href={targetConfig.windowsStoreLink} onClick={() => pxt.tickEvent("banner.linkClicked")}>
-                        {lf("Want a faster download? Get the app!")}
-                    </sui.Link>
-                </GenericBanner>
-            );
-        }
-
         if (showExperimentalBanner) {
             const liveUrl = pxt.appTarget.appTheme.homeUrl + location.search + location.hash;
             return (
-                <GenericBanner parent={this.props.parent} bannerType={"negative"}>
+                <GenericBanner id="experimental" parent={this.props.parent} bannerType={"negative"} >
                     <sui.Icon icon="warning circle" />
-                    <div className="header">{lf("You are viewing an experimental version of the editor") }</div>
+                    <div className="header">{lf("You are viewing an experimental version of the editor")}</div>
                     <sui.Link class="link" ariaLabel={lf("Go back to live editor")} href={liveUrl}>{lf("Take me back")}</sui.Link>
                 </GenericBanner>
             );

@@ -32,10 +32,6 @@ html, body {
     position: relative;
 }
 
-#mainmenu {
-    position: relative !important;
-}
-
 #filelist,
 #maineditor,
 #sidedocs {
@@ -406,6 +402,7 @@ div.simframe > iframe {
     z-index: 1000;
     width: 100%;
     margin: 0;
+    border-radius: 0 !important;
 }
 
 .notificationBannerVisible #filelist,
@@ -440,6 +437,7 @@ div.simframe > iframe {
             }
             img {
                 height: @bannerHeight;
+                padding: 3px;
             }
             a.link {
                 font-weight: bold;
