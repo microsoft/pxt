@@ -129,7 +129,6 @@ namespace pxt.usb {
         onEvent = (v: Uint8Array) => { };
 
         constructor(public dev: USBDevice) {
-            this.readLoop()
         }
 
         error(msg: string) {
@@ -179,12 +178,23 @@ namespace pxt.usb {
                 }, pkt).then(res => {
                     if (res.status != "ok")
                         this.error("USB CTRL OUT transfer failed")
+                    else
+                        this.recvOne()
                 })
             }
             return this.dev.transferOut(this.epOut.endpointNumber, pkt)
                 .then(res => {
                     if (res.status != "ok")
                         this.error("USB OUT transfer failed")
+                })
+        }
+
+        private recvOne() {
+            this.recvPacketAsync()
+                .then(buf => {
+                    this.onData(buf)
+                }, err => {
+                    this.onError(err)
                 })
         }
 
@@ -273,6 +283,8 @@ namespace pxt.usb {
                 .then(() => {
                     this.log("device ready")
                     this.ready = true
+                    if (this.epIn)
+                        this.readLoop()
                 })
         }
     }
