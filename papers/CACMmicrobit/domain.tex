@@ -1,30 +1,37 @@
 \section{Physical Computing}
 \label{sec:physical}
 
+% define physical computing
+
 As discussed in the Introduction, the micro:bit is a device
 with similarities to the Arduino family of printed 
 circuit boards. Such {\em physical computing} devices
 are designed to be placed in and interact with our physical environment. 
 Physical computing lives in the spaces between computing and many other disciplines:
 art, industrial design, health, environmental monitoring; it has
-close ties to cyber-physical systems, embedded systems, and IoT. The National
-Science Foundation
-defines cyber-physical systems as those that ``integrate sensing, computation, 
-control and networking into physical objects and infrastructure, 
-connecting them to the Internet and to each other.''\cite{NSF}
+close ties to cyber-physical systems~\footnote{
+    The National Science Foundation
+    defines cyber-physical systems as those that ``integrate sensing, computation, 
+    control and networking into physical objects and infrastructure, 
+    connecting them to the Internet and to each other.''\cite{NSF}}, embedded systems, and the IoT. 
 
+% relate it to other buzzwords and place it as a "starter" device
 
-% from 
-% "Cyber-physical systems "
-%
-% https://en.wikipedia.org/wiki/Embedded_system
+The micro:bit can be seen as a starter device
+for physical computing, embedded systems and cyber-physical systems, as it has
+sensing, computation, control and networking capabilities built in.  The
+micro:bit is not properly an IoT device, having no built-in way to connect
+over IP, but it can be connected to other devices with IP connectivity, as
+shown in Section~\ref{sec:projects}.
 
-{\bf TODO: this derived from Steve/Sue white paper - need to check carefully}.
-The benefits of using physical computing to introduce beginners to computing systems include:
+%Physical computing's intellectual heritage derives from constructivist, XYZ, ABC. 
+
+Hodges and Sentance~\cite{IEEEComputer} identify 
+the following benefits of using physical computing to introduce beginners to computing systems:
 \begin{itemize}
 \item {\em broad reach} because of diverse applications of physical computing -- leverage fine arts, music, design, etc. in projects;
-\item {\em increased motivation} because of tangible visible outcome (rather than virtual on screen);
-\item {\em learning by doing} as there are many ways to achieve goal (no single correct solution)
+\item {\em increased motivation} because of tangible visible outcome (rather than virtual on screen)~\cite{Papert};
+\item {\em learning by doing} as there are many ways to achieve goal (no single correct solution)~\cite{BenAri}
 \item {\em natural division of labor} for more complex projects (design, hardware, software, ...)
 \item {\em full system view of computing}: hardware and software working together.
 \end{itemize}
@@ -40,7 +47,7 @@ The benefits of using physical computing to introduce beginners to computing sys
 
 % https://globenewswire.com/news-release/2017/05/19/988294/0/en/Arduino-Welcomes-Hernando-Barrag%C3%A1n-as-Arduino-Chief-Design-Architect.html
 
-To help explain the BBC micro:bit, it's very instructive to understand
+To help place the BBC micro:bit in context, it's very instructive to understand
 Hernando Barragan's 2003 Master's thesis, ``Wiring: Prototyping Physical Interaction Design'',
 the inspiration for the Arduino system~\cite{Barragan}. His objective was to make it easier
 for non-technical creators, such as artists and designers, to leverage
@@ -55,7 +62,7 @@ Of Wiring's design, he identified the following key concepts:
 \item leverage open source compiler/linker toolchain, transparent to the end user;
 \item a bootloader to make it easy to upload a compiled sketch to the microcontroller;
 \end{itemize}
-Also key to Wiring  was openness of both the hardware and software
+Also key to Wiring was openness of both the hardware and software
 comprising the system.
 
 But, still some issues:
@@ -67,13 +74,13 @@ But, still some issues:
 
 % Uno: (which measures 5.34cm x 6.86cm),
 
-\begin{figure} 
-    \begin{tabular}{cc}
-      \includegraphics[width=1.5in]{images/bbc.png} & \includegraphics[width=1.5in]{images/makecode.png} \\
-        (a) & (b) 
-    \end{tabular}
-    \caption{\label{fig:design}Web and compiler designs: (a) initial BBC design; (b) final design, as implemented in MakeCode.}
-    \end{figure}
+% \begin{figure} 
+%     \begin{tabular}{cc}
+%       \includegraphics[width=1.5in]{images/bbc.png} & \includegraphics[width=1.5in]{images/makecode.png} \\
+%         (a) & (b) 
+%     \end{tabular}
+%     \caption{\label{fig:design}Web and compiler designs: (a) initial BBC design; (b) final design, as implemented in MakeCode.}
+%     \end{figure}
 
     
 \subsection{The BBC micro:bit}
@@ -95,11 +102,7 @@ in Figure~\ref{fig:design}(b));
 that edge connector is a (male) plug - micro:bit plugs into to peripherals, not the
 other way around.
 \end{itemize}
-From this perspective, the micro:bit can be seen as a starter device
-for physical computing, embedded systems and cyber-physical systems, as it has
-sensing, computation, control and networking capabilities built in.  The
-micro:bit is not properly an IoT device, having no built-in way to connect
-over IP, but it can be connected to other devices with IP connectivity. 
+
 
 % Design considerations (technical requirements, steal from LCTES paper)
 
