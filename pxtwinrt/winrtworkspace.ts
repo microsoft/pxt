@@ -148,9 +148,12 @@ namespace pxt.winrt.workspace {
             })
     }
 
-    function listPkgsAsync(): Promise<FsPkg[]> {
+    function listPkgsAsync(): Promise<FsPkgs> {
         return promisify(folder.getFoldersAsync())
-            .then(fds => Promise.all(fds.map(fd => readPkgAsync(fd.name, false))))
+            .then((fds) => Promise.map(fds, (fd) => readPkgAsync(fd.name, false)))
+            .then((fsPkgs) => {
+                return Promise.resolve({ pkgs: fsPkgs });
+            });
     }
 
     function resetAsync(): Promise<void> {

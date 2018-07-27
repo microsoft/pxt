@@ -357,7 +357,7 @@ export function initCommandsAsync(): Promise<void> {
                         core.infoNotification(lf("file saved!"));
                     }
                 })
-                .catch(() => core.errorNotification(lf("saving file failed...")));
+                .catch((e) => core.errorNotification(lf("saving file failed...")));
         };
     } else if (electron.isPxtElectron) {
         pxt.commands.deployCoreAsync = electron.driveDeployAsync;

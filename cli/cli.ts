@@ -1485,6 +1485,17 @@ function buildFolderAsync(p: string, optional?: boolean, outputName?: string): P
         args: ["../node_modules/typescript/bin/tsc"],
         cwd: p
     })
+        .then(() => {
+            if (tsConfig.prepend) {
+                let files: string[] = tsConfig.prepend
+                files.push(tsConfig.compilerOptions.out)
+                let s = ""
+                for (let f of files) {
+                    s += fs.readFileSync(path.resolve(p, f), "utf8") + "\n"
+                }
+                fs.writeFileSync(path.resolve(p, tsConfig.compilerOptions.out), s)
+            }
+        })
 }
 
 function copyCommonSim() {
