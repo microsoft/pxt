@@ -8,6 +8,7 @@ declare namespace pxt {
         packages?: PackagesConfig;
         notifications?: Map<Notification>; // domain specific notifications to show users on load
         windowsStoreLink?: string;
+        newEditorLink?: string;
     }
 
     interface Notification {
