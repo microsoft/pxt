@@ -127,8 +127,10 @@ export abstract class ToolboxEditor extends srceditor.Editor {
                 const blocks = that.getBlocksForCategory(ns, subns).filter(block => that.shouldShowBlock(block.attributes.blockId, ns));
                 if (!blocks.length) return undefined;
 
+                const name = pxt.Util.rlf(`{id:subcategory}${subns}`);
                 return {
                     nameid: ns,
+                    name,
                     subns: subns,
                     color: md.color,
                     icon: md.icon,
