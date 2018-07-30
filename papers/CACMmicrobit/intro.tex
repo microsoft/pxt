@@ -32,17 +32,7 @@ the Micro:bit Educational Foundation (\url{www.microbit.org}),
 a non-profit organization
 established in September 2016, with the support of its founding partners~\footnote{ARM,
 Amazon, BBC, British Council, IET, Lancaster University, Microsoft,
-Nominet, and Samsung.}.
-The Foundation's Mission Statement is to:
-\begin{itemize}
-\item  enable and inspire all children to participate in the digital world,
-with particular focus on girls and those from disadvantaged groups.
-\item make micro:bit the easiest and most effective learning tool for digital skills and creativity.
-\item work in collaboration with educators to create and curate exceptional
-curriculum materials, training programmes and resources.
-\item build and support communities of educators and partners
-to remove the barriers to learning digital skills
-\end{itemize}
+Nominet, and Samsung.}(Section~\ref{sec:mef}).
 
 In this paper, we describe the key decisions and lessons from
 delivering the BBC micro:bit in the UK and then expanding to reach
@@ -76,55 +66,56 @@ content, and education partners participating.
     \caption{\label{fig:snapshot}MakeCode web app for the micro:bit (\url{http://makecode.microbit.org}).}
   \end{figure*}
 
-\subsection{Hardware}
+\section{The BBC micro:bit}
+
+\subsection{The project}
+
+Talk about the motivations, make people care, provide concrete deliverables
+
+\begin{itemize}
+    \item (B1) to provide a simple creative experience for physical computing, wearable and Internet of Things (IoT) projects;
+    \item (B2) to supply a device that can continue to provide learning opportunities as the user's expertise grows.
+    \item (B3) to give students an exciting, engaging introduction to coding;
+    \item (B4) to stimulate curiosity about how computing technologies can be utilized to solve problems that students identify.
+\end{itemize}
+
+For some reason this text is needed to prevent a compilation error.
+
+\subsection{The hardware}
 
 Figure~\ref{fig:microbit} shows (a) the front and (b) the back of the
-micro:bit, which measures 4cm x 5cm. Like the Arduino Uno~\cite{Arduino},
-the micro:bit is a single-board microcontroller
-that can be programmed via a host computer (usually a laptop or desktop)
-and then embedded in projects where it runs on battery power.
-In contrast to the Uno, which has no built-in sensors, the micro:bit
-board hosts a variety of sensors (temperature, accelerometer, magnetometer,
-light level),
-a 5x5 LED matrix, two user-defined buttons, as well as Bluetooth
+micro:bit, which measures 4cm x 5cm. The aesthetic of the micro:bit is designed to be engaging from the off, with streaks of hair (upper left) and a friendly face (upper middle).
+The micro:bit board hosts a variety of sensors (temperature, accelerometer, magnetometer,
+light level), a 5x5 LED matrix, two user-defined buttons, as well as Bluetooth
 Low Energy (BLE) communications.\footnote{The micro:bit has a whopping
 16kB of RAM and 256kB of Flash memory, compared to the Uno's 2kB of
-RAM and 32kB of Flash}.
+RAM and 32kB of Flash}. More importantly, the device embraces these sensors in its design bringing them to the fore, so to expose its users to the future: a world of embedded, Internet enabled devices.
 
-The design of the micro:bit hardware was driven by the
-first two objectives of the BBC micro:bit project:
-(B1) to provide a simple creative experience for physical computing, wearable and Internet of Things (IoT) projects;
-(B2) to supply a device that can continue to provide learning opportunities as the user's expertise grows.
-
-On the hardware side, the micro:bit's built-in sensors, buttons and LED display
-allow many projects to be completed with no additional hardware or wiring.
-The holes on micro:bit's edge
-connector allows additional external sensors and actuators to be connected via crocodile clips.
+In contrast to the Uno which has no built-in sensors, the micro:bit
+allows many projects to be completed with no additional hardware or wiring.
+The holes on micro:bit's edge connector allows additional external sensors and actuators to be connected via crocodile clips or banana plugs.
 The micro:bit's BLE capabilities introduces networking to the
 picture, and enables streaming of data and command/control operations among the micro:bit,
 smartphones, laptops, as well as other micro:bits.
-As with Arduino, an ecosytem of micro:bit shields
+As with Arduino, an ecosystem of micro:bit shields
 (hardware peripherals) that accommodate the micro:bit's edge
-connector expands its capabilities greatly (\url{http://microbit.org/resellers/}).
+connector expands its capabilities (\url{http://microbit.org/resellers/}).
 
-\subsection{Software}
+%% floating sentence, should be optimised some how -- is there a bit that talks about programming?
+The micro:bit can be programmed over USB via a host computer (usually a laptop or desktop)
+and then embedded in projects where it runs on battery power.
+
+The unique combination of features supplied by the micro:bit enables a creative, extensive experience for physical computing (B1, B2).
+
+\subsection{The software}
 
 The design of the micro:bit coding tools also was oriented towards a
-simple starting experience with room for progression. In particular, the coding
-objectives of the project were: (B3)
-to give students an exciting, engaging introduction to coding;
-(B4) to stimulate curiosity about how computing technologies can be utilized
-  to solve problems that students identify.
-
-Based on in-school trials with a micro:bit prototype, the BBC focused on delivering a web app
+simple starting experience with room for progression (B3, B4). Based on in-school trials with a micro:bit prototype, the BBC focused on delivering a web app
 based on the popular Blockly framework~\cite{Blocky2015} to permit students to
 create scripts via drag-and-drop operations in a web browser, and see
-the execution of their scripts via a simulator.
-Text-based coding via scripting languages also
+the execution of their scripts via a simulator; text-based coding via scripting languages also
 was identified as an important feature. As the micro:bit would be incorporated
-into standalone projects, it also was essential for the user's program to be
-compiled and installed in non-volatile storage on the micro:bit where it
-could be run via battery power.
+into standalone projects, it also was essential for the user's program to be stored on the device for future untethered execution via battery power.
 
 %final design put the entire toolchain in web app, without need to invoke C/C++ compiler to
 %compile the user's program; ARM DAPlink solution makes micro:bit appear as USB pen drive
@@ -203,17 +194,18 @@ the micro:bit (\url{http://python.microbit.org}).
 % - mass participation
 % - country readiness (or perhaps willingness)
 
-\subsection{Overview}
+% :@ no overviews xx James
+% \subsection{Overview}
 
-Section~\ref{sec:physical} reviews physical computing, which anchors
-and defines the micro:bit experience. Section~\ref{sec:projects}
-presents a broad set of micro:bit-based projects, ranging
-from wearable games to environment science, that demonstrate
-the micro:bit's capabilities.  Section~\ref{sec:country}
-describes the rollout of the micro:bit in the UK and other countries
-in Europe, the Americas and Asia. Section~\ref{sec:conclude}
-concludes with final thoughts about what has made the micro:bit
-successful to date and what comes next.
+% Section~\ref{sec:physical} reviews physical computing, which anchors
+% and defines the micro:bit experience. Section~\ref{sec:projects}
+% presents a broad set of micro:bit-based projects, ranging
+% from wearable games to environment science, that demonstrate
+% the micro:bit's capabilities.  Section~\ref{sec:country}
+% describes the rollout of the micro:bit in the UK and other countries
+% in Europe, the Americas and Asia. Section~\ref{sec:conclude}
+% concludes with final thoughts about what has made the micro:bit
+% successful to date and what comes next.
 
 
 % compared to Arduino
