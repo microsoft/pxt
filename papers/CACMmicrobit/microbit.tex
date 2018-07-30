@@ -4,6 +4,7 @@
   \end{figure*}
 
 \section{The BBC micro:bit}
+\label{sec:microbit}
 
 % Talk about the motivations, make people care, provide concrete deliverables
 
@@ -12,33 +13,16 @@ stemmed from the BBC's previous history with computing education and the BBC Mic
 project, the desire to address the growing digital divide in the UK~\cite{XYZ}, 
 as well as the UK government's mandate to each computer science at the K-12 grade levels. 
 
+{\bf [Why did the BBC choose physical computing? Really need Howard Baker's input on this]}
+
+{\bf [BBC prototype by Michael Sparks and user trials] }
+
 The goals for the BBC micro:bit project were:
 \begin{itemize}
     \item[B1] to provide a simple creative experience for physical computing, wearable and Internet of Things (IoT) projects;
     \item[B2] to supply a device that can continue to provide learning opportunities as the user's expertise grows.
     \item[B3] to give students an exciting, engaging introduction to coding;
     \item[B4] to stimulate curiosity about how computing technologies can be utilized to solve problems that students identify.
-\end{itemize}
-
-{\bf [BBC prototype by Michael Sparks and user trials] }
-
-In December 2014, the BBC issued an Request for Participation
-for ``Delivery of a hands-on learning experience for the Make it Digital season'',
-which was the micro:bit project.
-Twenty-nine partners were invited to contribute hardware, software, services,
-teaching materials, packing/distribution, logistics, events and funding.
-Work on the project commenced in February 2015, with delivery of
-a web site/app in September 2015 (which was critical
-for training teachers) and delivery of the micro:bits in the second
-half of the 2015-2016 school year.
-
-\subsection{Why physical computing?}
-
-Really need Howard Baker's input on this.
-
-\begin{itemize}
-    \item broad reach
-    \item topical
 \end{itemize}
 
 \subsection{The hardware}
@@ -97,6 +81,27 @@ canvas with a simple reactive program; (D) micro:bit simulator for execution
 of the user's program in browser; (E) download button, which invokes the in-browser
 compiler/linker to produce a binary executable.
 
+The Python solution for the micro:bit is based on MicroPython (\url{http://micropython.org})
+an implementation of Python 3.0 for microcontrollers. It includes
+a full Python compiler and runtime that runs on the micro:bit and
+supports a read-eval-print loop (REPL) to execute commands sent via
+a terminal, as well as to import and run scripts from the Python web app for
+the micro:bit (\url{http://python.microbit.org}).
+
+
+\subsection{Content and training}
+
+% The BBC micro:bit project also called for partners to develop content
+% and to ``train the trainers'' (educators) around the micro:bit computing
+% system.  This built on efforts by the non-profit Computing At Schools
+% (\url{www.cas.org}) organization to train UK educators to teach computer
+% science.
+
+
+\subsection{End-to-end experience}
+
+[coding]
+
 % The event-based program shown in section (C) displays a large heart when the
 % A button is pressed, displays a small heart when button B is pressed,
 % and clears the display when the user shakes the micro:bit (shake
@@ -104,12 +109,10 @@ compiler/linker to produce a binary executable.
 % shake event is fired using a virtual button). In addition to event-based
 % APIs, direct access to the micro:bit's sensors via polling is possible.
 
-The Python solution for the micro:bit is based on MicroPython (\url{http://micropython.org})
-an implementation of Python 3.0 for microcontrollers. It includes
-a full Python compiler and runtime that runs on the micro:bit and
-supports a read-eval-print loop (REPL) to execute commands sent via
-a terminal, as well as to import and run scripts from the Python web app for
-the micro:bit (\url{http://python.microbit.org}).
+[simulation]
+
+[flashing]
+
 
 % \begin{itemize}
 % \item
@@ -132,15 +135,6 @@ the micro:bit (\url{http://python.microbit.org}).
 % \url{https://github.com/micropython/micropython},
 % and \url{https://github.com/lancaster-university/microbit-dal},
 % respectively.}
-
-
-% \subsection{Content and training}
-
-% The BBC micro:bit project also called for partners to develop content
-% and to ``train the trainers'' (educators) around the micro:bit computing
-% system.  This built on efforts by the non-profit Computing At Schools
-% (\url{www.cas.org}) organization to train UK educators to teach computer
-% science.
 
 %- A lot of lessons learned from delivering end-to-end experience in UK and other countries
 %   - hardware (unique design, as already mentioned)
@@ -190,6 +184,18 @@ the micro:bit (\url{http://python.microbit.org}).
 %      - UK libraries (loan program)
 %    - third party editors
 
+
+\subsection{Project history}
+
+In December 2014, the BBC issued an Request for Participation
+for ``Delivery of a hands-on learning experience for the Make it Digital season'',
+which was the micro:bit project.
+Twenty-nine partners were invited to contribute hardware, software, services,
+teaching materials, packing/distribution, logistics, events and funding.
+Work on the project commenced in February 2015, with delivery of
+a web site/app in September 2015 (which was critical
+for training teachers) and delivery of the micro:bits in the second
+half of the 2015-2016 school year.
 
 
 
