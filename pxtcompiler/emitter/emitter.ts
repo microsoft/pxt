@@ -549,7 +549,8 @@ namespace ts.pxtc {
     function checkType(t: Type): Type {
         let ok = TypeFlags.String | TypeFlags.Number | TypeFlags.Boolean |
             TypeFlags.StringLiteral | TypeFlags.NumberLiteral | TypeFlags.BooleanLiteral |
-            TypeFlags.Void | TypeFlags.Enum | TypeFlags.EnumLiteral | TypeFlags.Null | TypeFlags.Undefined
+            TypeFlags.Void | TypeFlags.Enum | TypeFlags.EnumLiteral | TypeFlags.Null | TypeFlags.Undefined |
+            TypeFlags.Never
         if ((t.flags & ok) == 0) {
             if (isArrayType(t)) return t;
             if (isClassType(t)) return t;
@@ -3206,6 +3207,11 @@ ${lbl}: .short 0xffff
                     return r
                 let f = fmt.charAt(i + 1)
                 let isNumber = isNumberLike(a)
+
+                if (!f && name.indexOf("::") < 0) {
+                    // for assembly functions, make up the format string - pass numbers as ints and everything else as is
+                    f = isNumber ? "I" : "_"
+                }
                 if (!f) {
                     throw U.userError("not enough args for " + name)
                 } else if (f == "_" || f == "T" || f == "N") {
