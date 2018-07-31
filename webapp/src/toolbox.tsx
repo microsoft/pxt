@@ -407,7 +407,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                     {nonAdvancedCategories.map((treeRow) => (
                         <CategoryItem key={treeRow.nameid} toolbox={this} index={index++} selected={selectedItem == treeRow.nameid} childrenVisible={expandedItem == treeRow.nameid} treeRow={treeRow} onCategoryClick={this.setSelection}>
                             {treeRow.subcategories ? treeRow.subcategories.map((subTreeRow) => (
-                                <CategoryItem key={subTreeRow.nameid} index={index++} toolbox={this} selected={selectedItem == (subTreeRow.nameid + subTreeRow.subns)} treeRow={subTreeRow} onCategoryClick={this.setSelection} />
+                                <CategoryItem key={subTreeRow.nameid + subTreeRow.subns} index={index++} toolbox={this} selected={selectedItem == (subTreeRow.nameid + subTreeRow.subns)} treeRow={subTreeRow} onCategoryClick={this.setSelection} />
                             )) : undefined}
                         </CategoryItem>
                     ))}

@@ -285,6 +285,8 @@ namespace ts.pxtc {
                 locStrings[`${si.qName}|block`] = si.attributes.block;
             if (si.attributes.group)
                 locStrings[`{id:group}${si.attributes.group}`] = si.attributes.group;
+            if (si.attributes.subcategory)
+                locStrings[`{id:subcategory}${si.attributes.subcategory}`] = si.attributes.subcategory;
             if (si.parameters)
                 si.parameters.filter(pi => !!pi.description).forEach(pi => {
                     jsdocStrings[`${si.qName}|param|${pi.name}`] = pi.description;
