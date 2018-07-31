@@ -35,6 +35,18 @@ Follow the instructions and paste the token in the dialog.
 This needs to be done separately for every editor you use, though in all of them you can
 use the same token.
 
+Once you have logged in, go back to the home screen. Now, the dialog that comes up after
+you press the **Import** button will have an additional option to list your GitHub repositories
+or create a new one.
+Additionally, the **Import URL** option will now support `https://github.com/...` URLs,
+which can be useful if you cannot find your repository in the list (especially for organizational
+repos), or are just finding it faster to copy/paste the URL.
+
+If you import a completely empty repo, or create a new one, MakeCode will automatically initialize
+it with `pxt.json` and other supporting files.
+If you import a non-empty repo without `pxt.json` file, you will be asked if you want it initialized.
+Note that this might overwrite your files.
+
 
 ## Limitations
 
