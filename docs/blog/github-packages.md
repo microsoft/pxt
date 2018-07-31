@@ -2,26 +2,27 @@
 
 **Posted on August 1, 2018 by [mmoskal](https://github.com/mmoskal)**
 
-MakeCode has always been a platform with an easy block entry, even for middle-schoolers, but quite
+MakeCode has always been a platform with an easy entry, even for middle-schoolers, but quite
 high ceiling, allowing more advanced users to create complicated programs in [TypeScript](https://www.typescriptlang.org/).
 Our [subset of TypeScript](https://makecode.com/language) supports most of regular TypeScript,
 but can be efficiently compiled to run on very constrained devices like the micro:bit (your phone has
-literally a million times more available memory than a micro:bit).
-In fact, most of runtime libraries in our various editors is implemented in that Static TypeScript.
+literally _a million times_ more available memory than a micro:bit!).
+In fact, most of runtime libraries in our various editors are implemented in that Static TypeScript.
 All the blocks are also defined there.
+
 We also pack a [full-featured Monaco text editor](https://makecode.com/js/editor) in our web app.
 Finally, since the very beginning, we allowed our editor to be extended by 
 [user-provided packages](https://makecode.com/packages/getting-started) hosted on GitHub.
 These packages can even introduce [their own user interface](https://makecode.com/packages/extensions) in the editor.
 Packages [need to be approved](https://makecode.com/packages/approval) to surface in search but, unless they are banned,
-can be loaded by providing an exact URL.
+can be loaded without approval by providing an exact URL.
 
 Until today, package authoring required usage of command line tools (`npm` and `git`, followed by required npm packages), 
 which could be quite a road block for aspiring package writers.
 Starting today, as the feature rolls out to various editors, you will be able to create packages and publish them to GitHub
 directly from the web app, without ever touching command line or installing anything.
 
-## Getting started
+## Let's do it!
 
 First, get a [GitHub account](https://github.com/join) if you don't have one yet.
 GitHub is the largest host of source code in the world, with 30 million users.
@@ -32,20 +33,24 @@ At the bottom, there should be a link to log in to GitHub. If there is no link i
 your editor, try using it's `/beta` version.
 A dialog will appear asking you to generate a GitHub token.
 Follow the instructions and paste the token in the dialog.
-This needs to be done separately for every editor you use, though in all of them you can
-use the same token.
+The pasting needs to be done separately for every editor you use (eg., micro:bit, Circuit Playground, etc.),
+though you can use the same token in all of them.
 
 Once you have logged in, go back to the home screen. Now, the dialog that comes up after
 you press the **Import** button will have an additional option to list your GitHub repositories
 or create a new one.
 Additionally, the **Import URL** option will now support `https://github.com/...` URLs,
-which can be useful if you cannot find your repository in the list (especially for organizational
-repos), or are just finding it faster to copy/paste the URL.
+which can be useful if you cannot find your repository in the list (especially organizational
+repos), or are just finding it faster to copy/paste the URL then to search the list.
+
+![Repo list dialog](/static/blog/github-packages/repo-list.png)
 
 If you import a completely empty repo, or create a fresh one, MakeCode will automatically initialize
 it with `pxt.json` and other supporting files.
 If you import a non-empty repo without `pxt.json` file, you will be asked if you want it initialized.
 Note that this might overwrite your files.
+
+![Repo create dialog](/static/blog/github-packages/repo-create.png)
 
 Currently, there is no way to push an existing project into GitHub. As a workaround, create a new project
 and copy/paste the contents of the `main.ts` file.
@@ -59,10 +64,10 @@ The button will check if there are any pending changes to check in, if so will c
 then it will pull the latest changes from GitHub, merge or fast-forward the commit
 if needed, and push the results to GitHub.
 
+![Repo sync button](/static/blog/github-packages/repo-sync.png)
+
 If there are changes, you will be asked for a commit message. Try to write something meaningful, like
 `Fixed temperature reading in sub-freezing conditions` or `Added mysensor.readTemperature() function`.
-You can read history of these changes by following the version number link on the **Project Settings**
-page.
 
 When describing changes you are also given an option to bump the version number. This is a signal
 that the version you're pushing is stable and the users should upgrade to it. When your package
@@ -70,17 +75,23 @@ is first referenced, the latest bumped version is used. Similarly, if there is a
 version there is a little upgrade button next to the package. Commits without bump will generally
 not be accessible to most users, so they are mostly for you to keep track of things.
 
+![Repo commit dialog](/static/blog/github-packages/repo-commit.png)
+
 We do not really distinguish between, commit, push, and pull - it all happens at once in the sync operation.
+
+You can read history of changes by following the version number link on the **Project Settings** page.
+
+![Repo view link in project settings](/static/blog/github-packages/repo-view.png)
 
 There is also another button next to the GitHub sync - you can use it to add new files to the project.
 This is mostly to help keep the project organized. For our TypeScript compiler it doesn't matter if you
 use a single big file or a bunch of small ones.
 
+
 ### Conflicts
 
-It may happen that several people edit the same package at once
-causing edit conflicts.
-It is also possible for the same person to edit the package using several
+It might happen that several people edit the same package at once causing edit conflicts.
+It is very similar if same person edits the package using several
 computers, browsers, or web sites, but in the description below for simplicity we'll concentrate on the case
 of several people.
 
@@ -100,15 +111,16 @@ happen will let you go to GitHub web site and resolve the conflicts.
 Before you resolve conflicts and merge the PR, the `master` branch
 will not have your changes (it will have changes from the other person, who
 managed to commit first). After creating the PR, MakeCode moves your local
-version to the `master` branch (without your changes).
-After you resolve, sync again to get your changes as well.
-MakeCode will also try to sync automatically when you close the PR dialog.
+version to the `master` branch (without your changes), but don't despair they are not lost!
+Just resolve the conflict in GitHub and sync to get all changes back.
+MakeCode will also sync automatically when you close the PR dialog
+(presumably, after you resolved the conflict in another tab).
 
 ## Testing your package
 
 To test blocks in your package, create a new project (regular, not on GitHub), and go
 to the **Extensions** dialog. It will list all your GitHub projects as available
-for import. Import it, and see how the blocks look like.
+for addition. Select your package, and see how the blocks look like.
 
 You can have one browser tab open with that test project, and another one with the package.
 When you switch between them, they reload automatically.
