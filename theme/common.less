@@ -32,6 +32,10 @@ html, body {
     position: relative;
 }
 
+#mainmenu {
+    position: relative !important;
+}
+
 #filelist,
 #maineditor,
 #sidedocs {
@@ -405,7 +409,6 @@ div.simframe > iframe {
     border-radius: 0 !important;
 }
 
-.notificationBannerVisible #filelist,
 .notificationBannerVisible #maineditor,
 .notificationBannerVisible #sidedocs,
 .notificationBannerVisible  #getting-started-btn {
@@ -413,6 +416,7 @@ div.simframe > iframe {
 }
 
 .notificationBannerVisible #mainmenu {
+    position: absolute !important;
     top: @bannerHeight;
     margin: 0;
 }
@@ -725,6 +729,10 @@ Avatar
 
 /* >= Small Monitor (Small Monitor + Large Monitor + Wide Monitor) */
 @media only screen and (min-width: @computerBreakpoint) {
+    .notificationBannerVisible #filelist {
+        top: calc(@mainMenuHeight + @bannerHeight);
+    }
+
     .collapsedEditorTools #filelist {
         display: none;
     }
