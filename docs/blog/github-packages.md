@@ -42,11 +42,87 @@ Additionally, the **Import URL** option will now support `https://github.com/...
 which can be useful if you cannot find your repository in the list (especially for organizational
 repos), or are just finding it faster to copy/paste the URL.
 
-If you import a completely empty repo, or create a new one, MakeCode will automatically initialize
+If you import a completely empty repo, or create a fresh one, MakeCode will automatically initialize
 it with `pxt.json` and other supporting files.
 If you import a non-empty repo without `pxt.json` file, you will be asked if you want it initialized.
 Note that this might overwrite your files.
 
+Currently, there is no way to push an existing project into GitHub. As a workaround, create a new project
+and copy/paste the contents of the `main.ts` file.
+
+## Commit and push
+
+Once you have your repo set up, edit files as usual. Whenever you get to a stable state, or just every now and
+then to keep history and insure against losing your work, push the changes to GitHub.
+This is done with a little GitHub sync button on top of the **Explorer**.
+The button will check if there are any pending changes to check in, if so will create a commit,
+then it will pull the latest changes from GitHub, merge or fast-forward the commit
+if needed, and push the results to GitHub.
+
+If there are changes, you will be asked for a commit message. Try to write something meaningful, like
+`Fixed temperature reading in sub-freezing conditions` or `Added mysensor.readTemperature() function`.
+You can read history of these changes by following the version number link on the **Project Settings**
+page.
+
+When describing changes you are also given an option to bump the version number. This is a signal
+that the version you're pushing is stable and the users should upgrade to it. When your package
+is first referenced, the latest bumped version is used. Similarly, if there is a newer bumped
+version there is a little upgrade button next to the package. Commits without bump will generally
+not be accessible to most users, so they are mostly for you to keep track of things.
+
+We do not really distinguish between, commit, push, and pull - it all happens at once in the sync operation.
+
+There is also another button next to the GitHub sync - you can use it to add new files to the project.
+This is mostly to help keep the project organized. For our TypeScript compiler it doesn't matter if you
+use a single big file or a bunch of small ones.
+
+### Conflicts
+
+It may happen that several people edit the same package at once
+causing edit conflicts.
+It is also possible for the same person to edit the package using several
+computers, browsers, or web sites, but in the description below for simplicity we'll concentrate on the case
+of several people.
+
+Typically, two people would sync a GitHub package at the same version,
+and then they both edit it. The first person pushes the changes successfully.
+When MakeCode will try to push the changes from the second person,
+it will notice that these are changes against a non-current version.
+It will create a commit based on the previous version and try to use the 
+standard git merge (run server-side by GitHub).
+This usually succeeds if the two people edited different files, or at least
+different parts of the file - you end up with both sets of changes logically combined.
+There is no user interaction required in that case.
+
+If the automatic merge fails, MakeCode will create a new branch, push the commit
+there, and then create a pull request (PR) on GitHub. The dialog that appears after this
+happen will let you go to GitHub web site and resolve the conflicts.
+Before you resolve conflicts and merge the PR, the `master` branch
+will not have your changes (it will have changes from the other person, who
+managed to commit first). After creating the PR, MakeCode moves your local
+version to the `master` branch (without your changes).
+After you resolve, sync again to get your changes as well.
+MakeCode will also try to sync automatically when you close the PR dialog.
+
+## Testing your package
+
+To test blocks in your package, create a new project (regular, not on GitHub), and go
+to the **Extensions** dialog. It will list all your GitHub projects as available
+for import. Import it, and see how the blocks look like.
+
+You can have one browser tab open with that test project, and another one with the package.
+When you switch between them, they reload automatically.
+
+You can test TypeScript APIs in the package itself. The `test.ts` file is only compiled
+when the package is compiled directly, not when it's added to a different project.
+You can put TypeScript test code in there.
+
+## Non-packages
+
+The GitHub feature is not limited to packages. You can also use it to store any other MakeCode projects.
+You can even use it to collaborate on a project with multiple people.
+
+Currently, any GitHub project will show up in your Extensions dialog though.
 
 ## Limitations
 
@@ -54,7 +130,15 @@ The web app will not let you create packages with C++. This you still need to do
 all required compilers or Docker (depending on target). The good news is that in our experience very few packages
 contain C++ (mostly because TypeScript is easier to write, test, and in most cases sufficient).
 The main reason we've seen so far for C++ packages was lack of floating point support on the micro:bit,
-which has [now been fixed with the v1 release](https://makecode.com/blog/microbit/v1-beta).
+which [has now been fixed with the v1 release](https://makecode.com/blog/microbit/v1-beta).
+
+## Random notes
+
+You can use non-`master` branch by going to **Import URL** and saying something like `https://github.com/jrandomhacker/pxt-mypkg#mybranch`.
+This wasn't tested very extensively.
+
+MakeCode will generally only download files listed in `pxt.json`. Files in GitHub but not in `pxt.json` will be
+ignored and left alone.
 
 ## Roll-out
 
