@@ -5,7 +5,6 @@
 
 \section{The BBC micro:bit}
 \label{sec:microbit}
-
 % Talk about the motivations, make people care, provide concrete deliverables
 
 The goals for the BBC micro:bit project were:
@@ -17,7 +16,7 @@ The goals for the BBC micro:bit project were:
 \end{itemize}
 
 {\bf [TODO: elaborate on the context:  to deliver device and engage
-with around 3/4 million students and their teachers - very broad breadth engagement]} 
+with around 3/4 million students and their teachers - very broad breadth engagement]}
 
 {\bf [say what's coming - show off the hardware, software and an example; then
 talk about the history]}
@@ -43,11 +42,11 @@ As with Arduino, an ecosystem of micro:bit shields
 connector expands its capabilities (\url{http://microbit.org/resellers/}).
 
 The micro:bit appears as a USB pen drive when plugged into a host computer;
-a compiled program can be transferred to the micro:bit by a simple file copy 
-operation (flashed). The micro:bit then can be embedded in projects 
+a compiled program can be transferred to the micro:bit by a simple file copy
+operation (flashed). The micro:bit then can be embedded in projects
 where it runs on battery power.
 
-The unique combination of features supplied by the micro:bit enables a creative, 
+The unique combination of features supplied by the micro:bit enables a creative,
 extensive experience for physical computing (B1, B2).
 
 \subsection{The software}
@@ -93,7 +92,7 @@ the micro:bit (\url{http://python.microbit.org}).
 Great hardware and software do not a full solution make. Therefore,
 the BBC micro:bit project also called for partners to develop content,
 to ``train the trainers'' (educators) around the micro:bit computing
-system, and provide hands-on events outside of the school setting to 
+system, and provide hands-on events outside of the school setting to
 generate interest in the micro:bit.
 
 {\bf [TODO: more about what was developed by the partners ]}
@@ -105,14 +104,14 @@ in Figure~\ref{fig:snapshot}(C). The event-based program shown there
 in the Blockly editor displays a large heart when the
 A button is pressed, displays a small heart when button B is pressed,
 and clears the display when the user shakes the micro:bit (shake
-detection is implemented using the accelerometer). The interactive 
-micro:bit simulator 
+detection is implemented using the accelerometer). The interactive
+micro:bit simulator
 (Figure~\ref{fig:snapshot}(D)) allows the user to test that
 the program works as expected. In the simulator, the
 shake event is fired using a virtual button (white circle labelled
 ``SHAKE'').
 
-To generate a binary executable for the micro:bit, the user 
+To generate a binary executable for the micro:bit, the user
 simply presses the ``Download'' button (Figure~\ref{fig:snapshot}(E)),
 which invokes an in-browser compiler tool chain that translates
 the Blockly program to JavaScript and then to machine code, linking
@@ -179,14 +178,24 @@ platforms, including ChromeBooks! ]}
 
 \subsection{Project history and open sourcing}
 
+
+Previous papers with micro:bit history:
+
+\begin{itemize}
+    \item \cite{rogers2017bbc} - A brief history of micro:bit, unclear to me if we should include or duplicate.
+    \item \cite{ball2016microsoft} - Old editors, Touch Develop, could muddy the waters if we include in this paper
+    \item \cite{sentance2017creating} - Sue Sentance paper on kids creating stuff with micro:bit
+    \item \cite{knowles2018children} - Lancaster paper on what children want to create using the micro:bit -- inspirational?
+\end{itemize}
+
 As mentioned in the Introduction, the motivation for the BBC micro:bit project
 stemmed from the BBC's previous history with computing education and the BBC Micro
-project, the desire to address the growing digital divide in the UK~\cite{XYZ}, 
-as well as the UK government's mandate to teach computer science at the K-12 grade levels. 
+project, the desire to address the growing digital divide in the UK~\cite{XYZ},
+as well as the UK government's mandate to teach computer science at the K-12 grade levels.
 
 {\bf [Why did the BBC choose physical computing? Really need Howard Baker's input on this]}
 
-{\bf [2014 BBC reference implementation: \url{https://github.com/bbcmicrobit/prototype} 
+{\bf [2014 BBC reference implementation: \url{https://github.com/bbcmicrobit/prototype}
 by Michael Sparks ]}
 
 {\bf [user trials with the prototype - how did BBC determine Year 7 was the right year?] }
@@ -204,7 +213,7 @@ half of the 2015-2016 school year.
 The BBC micro:bit project partners agreed to open source all assets, both
 hardware and software. The main entry points are:
 \begin{itemize}
-\item \url{https://github.com/bbcmicrobit} for MicroPython, hardware, and prototype; 
+\item \url{https://github.com/bbcmicrobit} for MicroPython, hardware, and prototype;
 \item \url{https://github.com/microsoft/pxt} for MakeCode;
 \item \url{https://github.com/lancaster-university/microbit-dal} for the micro:bit
 C++ runtime.
@@ -216,5 +225,15 @@ C++ runtime.
 {\bf [ give some detail about how it went and reference studies of Sue Sentance and
 UCL...]}
 
+% maybe not, unsure... EE1 == educational expert one (i.e. clare riley). We would need to add two sentences on methodology.
+Teacher education and training plays an important role in the uptake of technology in the classroom~\cite{buabeng2012factors}. As part of the micro:bit project, EE1 directed the curriculum-oriented resource curation and the coordination of training sessions. These were run with CAS~\cite{crick2011computing} `master' teachers and operators of extra curricular clubs like UKYouth, Code Club, and CoderDojo. Recipients of the training would be responsible for continuing dissemination at schools and clubs in their vicinity creating a ``cascade effect of teacher training which was really powerful''.
+
+EE1 described the main challenge of this aspect to the micro:bit project was ``trying to get everybody capable to do it and enthusiastic'', she described it as hard work because the teachers who lack a strong background in computing were ``a bit nervous about all of this, and they are alarmed at the prospect of having to teach computing''. She engaged with a wider group of organisations (UKYouth, Code Clubs, CoderDojos) that are passionate about technology and computing who have the experience and the background, and through training both, one could provide support for the other, offering breadth and support---not only for the young people, but for the teachers as well.
+
+Training consisted of a familiarisation session with the device and code editors, guiding teachers through lesson plans and discussing how the lesson plan met the criteria of the UK curriculum; they were encouraged to play, tweet and blog for the remaining time. EE1 noted that the response from her audience to the training sessions was incredible, with a general response of ``100\% wow, let's get going''. She related a story describing the experience of one teacher who before commencing training believed that this was ``another rubbish project from people who'd spent too much money the wrong way'', but after engaging with the micro:bit loved it. She pointedly explained that she expected this reaction, as the people who attended the sessions weren't techno-phobes, while a much harder challenge was to reach those who were.
+
+From using the CAS network of teachers, EE1 learned that less confident teachers were not comfortable with the single-lesson plan approach of teaching the curriculum. She explained that they ``wanted a 6 or 8 week block of stuff, which said `this is the scheme of work which will deliver these outcomes from the national curriculum''', rather than the individual lessons---they wanted more scaffolding.
+
+Overall, from our interviews, we saw that the cascading of teacher training, combined with the engagement of enthusiastic technologists, alongside structured curriculum-aligned resources are clear contributors to the uptake of the micro:bit.
 
 
