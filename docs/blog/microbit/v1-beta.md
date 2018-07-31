@@ -55,7 +55,7 @@ If you want to bypass the home page, you can get to the editor directly at https
 
 ## Moving programs around
 
-As a heads-up for everyone, the programs that you create in the new beta editor will NOT work in the current editor. However, the first time you visit the new editor, your existing projects from the previous editor will be automatically copied to the new editor so you can continue working on them. If you go back to the previous editor after this migration, you will still find your old projects there, but if you modify them in the old editor, they will NOT be automatically copied again to the new editor. In other words, the automatic migration is a one-time process that happens the first time you visit the new editor, after which your old projects and new projects are independent from one another.
+As a heads-up for everyone, the programs that you create in the new beta editor will NOT work in the current editor. However, the first time you visit the new editor, your existing projects from the previous editor are automatically copied to the new editor so you can continue working on them. If you go back to the previous editor after this migration, you will still find your old projects there, but if you modify them in the old editor, they're NOT automatically copied again to the new editor. In other words, the automatic migration is a one-time process that happens the first time you visit the new editor, after which your old projects and new projects are independent from one another.
 
 ![Code projects in "My Stuff"](/static/blog/microbit/v1-beta/my-stuff.png)
 
