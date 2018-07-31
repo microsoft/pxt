@@ -2,7 +2,7 @@
 
 This guide describes a simple setup that requires nothing, but a web browser.
 We have another guide, if you want to
-[use command line tools](/packages/gettings-started/vscode).
+[use command line tools](/packages/getting-started/vscode).
 
 ## Step 1: Design blocks in the editor
 
