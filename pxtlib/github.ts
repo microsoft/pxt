@@ -162,7 +162,7 @@ namespace pxt.github {
                             current.files[pxt.CONFIG_NAME] = pkg
                             const cfg: pxt.PackageConfig = JSON.parse(pkg)
                             return Promise.map(pxt.allPkgFiles(cfg).slice(1),
-                                fn => downloadTextAsync(repopath, sha, pxt.CONFIG_NAME)
+                                fn => downloadTextAsync(repopath, sha, fn)
                                     .then(text => {
                                         current.files[fn] = text
                                     }))
