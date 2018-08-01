@@ -2,9 +2,9 @@
 
 **Posted on August 1, 2018 by [mmoskal](https://github.com/mmoskal)**
 
-MakeCode is a platform with an easy level of entry, even for middle-schoolers, but with quite a high limit on creativity and complexity available to advanced users for writing programs in [TypeScript](https://www.typescriptlang.org/). Our [subset of TypeScript](https://makecode.com/language) supports most of the regular language features of TypeScript, but can be efficiently compiled to run on extremely resource constrained devices like the micro:bit (your phone literally has a _million times_ more available memory than a micro:bit!). In fact, most of the runtime libraries in our editors are implemented in Static TypeScript including all of the defined blocks.
+MakeCode is a platform with an easy level of entry, even for middle-schoolers, but with quite a high limit on creativity and complexity available to advanced users for writing programs in [TypeScript](https://www.typescriptlang.org/). Our [subset of TypeScript](https://makecode.com/language) supports most of the regular language features of TypeScript, but can be efficiently compiled to run on extremely resource constrained devices like the micro:bit (your phone literally has a _million times_ more available memory than a micro:bit!). In fact, most of the runtime libraries in our editors are implemented in Static TypeScript including all of the defined blocks. We also pack a [full-featured Monaco text editor](https://makecode.com/js/editor) into our web app.
 
-We also pack a [full-featured Monaco text editor](https://makecode.com/js/editor) into our web app. From the very beginning, we allowed extensions to our editor with [user-provided packages](https://makecode.com/packages/getting-started) hosted on GitHub. These packages can even introduce [their own user interface](https://makecode.com/packages/extensions) in the editor. Packages first need [approval](https://makecode.com/packages/approval) to surface in search but, unless they are banned, can be loaded without approval by providing an exact URL.
+From the very beginning, we allowed extensions to our editor with [user-provided packages](https://makecode.com/packages/getting-started) hosted on GitHub. These packages can even introduce [their own user interface](https://makecode.com/packages/extensions) in the editor. Packages first need [approval](https://makecode.com/packages/approval) to surface in search but, unless they are banned, can be loaded without approval by providing an exact URL.
 
 Until now, package authoring required usage of command line tools (`npm` and `git`, along with the required npm packages), which could present quite a barrier to aspiring package writers. Starting today, as the feature rolls out to various editors, you will be able to create packages and publish them to GitHub directly from the web app, without ever touching command line or installing anything.
 
@@ -65,7 +65,9 @@ To test blocks in your package, create a new project (in the MakeCode editor of 
 
 You can have one browser tab open with that test project, and another one with the package. When you switch between them, they reload automatically.
 
-You can test TypeScript APIs in the package itself. The `test.ts` file is only compiled when the package is compiled directly, not when it's added to a different project. You can put TypeScript test code in there.
+You can test TypeScript APIs in the package itself. The `test.ts` file is not used
+when you add the package to a different project, but only when you run the package directly.
+You can put TypeScript test code in there.
 
 ## Non-packages
 
