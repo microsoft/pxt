@@ -130,8 +130,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
 
     chgCode(scr: pxt.CodeCard, loadBlocks: boolean, prj?: pxt.ProjectTemplate) {
         core.showLoading("changingcode", lf("loading..."));
-        const name = scr.name.toLowerCase().replace(/\W/, '');
-        pxt.gallery.loadExampleAsync(name, scr.url)
+        pxt.gallery.loadExampleAsync(scr.name.toLowerCase(), scr.url)
             .done((opts: pxt.editor.ProjectCreationOptions) => {
                 if (opts) {
                     if (prj) opts.prj = prj;
