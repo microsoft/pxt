@@ -15,10 +15,11 @@ The goals for the BBC micro:bit project were:
     \item[B4] to stimulate curiosity about how computing technologies can be utilized to solve problems that students identify.
 \end{itemize}
 
-It's important to reiterate the context: delivering a micro:bit to every one of 
+It's important to reiterate the context of the project: 
+delivering a micro:bit to every one of 
 approximately 3/4 million Year 7 (5th grade) students and teachers in the UK, as
-well as 1/4 million micro:bit outside of the school setting. This was a very
-broad breadth engagement touching every community in the UK.
+well as 1/4 million micro:bit outside of the school setting; this was a very
+broad breadth engagement touching every county in the UK.
 
 In the remainder of this section, we describe the hardware and software
 of the micro:bit, the project history, and the experience deploying
@@ -92,16 +93,6 @@ supports a read-eval-print loop (REPL) to execute commands sent via
 a terminal, as well as to import and run scripts from the Python web app for
 the micro:bit (\url{http://python.microbit.org}).
 
-\subsection{Content, training and events}
-
-Great hardware and software do not a full solution make. Therefore,
-the BBC micro:bit project also called for partners to develop content,
-to ``train the trainers'' (educators) around the micro:bit computing
-system, and provide hands-on events outside of the school setting to
-generate interest in the micro:bit.
-
-{\bf [TODO: more about what was developed by the partners ]}
-
 \subsection{End-to-end experience}
 
 We run through a simple coding example for the micro:bit, as shown
@@ -122,67 +113,41 @@ which invokes an in-browser compiler tool chain that translates
 the Blockly program to JavaScript and then to machine code, linking
 the user's compiled code against a pre-compiled
 C++ runtime. This means that no C++ compiler is required for
-compiling the user's program.
+compiling the user's program into an executable binary.
 
-{\bf [what about copying file and the fact that this works across many
-platforms, including ChromeBooks! ]}
-% \item ARM's DAPlink firmware makes the micro:bit appear as USB pen drive
-% on most operating systems, enabling a simple file copy operation to
-% install a user's program on the micro:bit (no device drivers needed).
+As discussed previously, a simple file copy operation installs the
+executable binary on the micro:bit, which appears as a USB pen drive
+when plugged into the host computer. This ``lowest-common denominator''
+method of installation works on all modern operating systems without
+the need to install a device driver. 
 
+\subsection{UK rollout}
 
-% \begin{itemize}
-% \item
-% \item an efficient C++ runtime for the micro:bit created by Lancaster
-% University;
-% \item a web app
-% with Blockly and JavaScript editors, micro:bit simulator,
-% and a compiler to machine code (linked against a pre-compiled
-% C++ runtime image, so no C++ compiler is needed for user code);
-% \item a Python compiler and read-eval-print loop (REPL) that resides
-% {\em on the micro:bit} (via \url{https://micropython.org/}),
-% supported by a simple web app (\url{http://python.microbit.org}) and
-% an installable application (\url{https://codewith.mu/});
+Great hardware and software do not a full solution make; 
+teacher education and training plays an important role in 
+the uptake of technology in the classroom. 
+Therefore,
+the BBC micro:bit project also called for partners to develop content,
+to ``train the trainers'' (educators) around the micro:bit computing
+system, and provide hands-on events outside of the school setting to
+generate interest in the micro:bit.
 
-% \end{itemize}
+{\bf [say something about the interviews we did]}
 
-%- A lot of lessons learned from delivering end-to-end experience in UK and other countries
-%   - hardware (unique design, as already mentioned)
-%   - firmware:  high-level C/C++ runtime and ARM's DAPlink
-%   - web-based IDE: no C/C++ compiler needed to compile user code
-%   - content
-%   - training
-% In country partnerships
+As part of the micro:bit project, Clare Riley of Microsoft (Public Sector) directed the curriculum-oriented resource curation and the coordination of training sessions with partners. These were run with CAS~\cite{crick2011computing} ``master'' teachers and operators of extra curricular clubs like UKYouth, Code Club, and CoderDojo. Recipients of the training would be responsible for continuing dissemination at schools and clubs in their vicinity.
 
-% main points
-% - mass participation
-% - country readiness (or perhaps willingness)
+% creating a ``cascade effect of teacher training which was really powerful''.
 
-% compared to Arduino
-% https://twitter.com/adamwwolf/status/1019070808038072320
+According to Clare,
+a main challenge of this aspect to the micro:bit project was ``trying to get everybody capable to do it and enthusiastic''; in particular, educators who lack a strong background in computing were ``a bit nervous about all of this, and they are alarmed at the prospect of having to teach computing''. She engaged with a wider group of organisations (UKYouth, Code Clubs, CoderDojo) who have the experience and the background; through training both audiences, each could provide support to the other, offering breadth and support---not only for students, but for the educators as well.
 
-% success of micro:bit due to
-% - Low-cost, simplicity
-% - Partnerships (hardware, software, content, training)
-% - Open Source of software (CODAL, MakeCode, ...)
-% - Hardware Reference design
+Training consisted of an introductory session with the device and code editors, guiding educators through lesson plans and discussing how the lesson plan met the criteria of the UK curriculum; they were encouraged to play, tweet and blog for the remaining time. Clare noted that the response from her audience to the training sessions was incredible, with a general response of ``100\% wow, let's get going''. She related a story describing the experience of one educator who before commencing training believed that this was ``another rubbish project from people who'd spent too much money the wrong way'', but after engaging with the micro:bit loved it. 
 
-% - why is it interesting?
-%   - edge/physical/IoT computing
-%   - build off of Scratch/Blockly, but untethered (via in-browser compiler)
-%   - transition to JavaScript and Python
+From leveraging the CAS network of teachers, Clare learned that less confident teachers were not comfortable with the single-lesson plan approach of teaching the curriculum. She explained that they ``wanted a 6 or 8 week block of stuff, which said `this is the scheme of work which will deliver these outcomes from the national curriculum''', rather than the individual lessons---they wanted more scaffolding.
 
-% - BBC rollout in UK
-% - Global reach
-%    - BBC rollout mirrored in other countries
-%    - Communities
-%      - Sri Lanka user group: http://microbitslug.org/
-%      - UK libraries (loan program)
-%    - third party editors
-
+Overall, from our interviews, we saw that the cascading of teacher training, combined with the engagement of enthusiastic technologists, alongside structured curriculum-aligned resources were clear contributors to the uptake of the micro:bit in the UK.
 
 \subsection{Project history and open sourcing}
-
 
 Previous papers with micro:bit history:
 
@@ -224,22 +189,4 @@ MakeCode superceded the TouchDevelop for micro:bit web app~\cite{ball2016microso
 \item \url{https://github.com/lancaster-university/microbit-dal} for the micro:bit
 C++ runtime.
 \end{itemize}
-
-
-\subsection{UK rollout}
-
-{\bf [ give some detail about how it went and reference studies of Sue Sentance and
-UCL...]}
-
-% maybe not, unsure... EE1 == educational expert one (i.e. clare riley). We would need to add two sentences on methodology.
-Teacher education and training plays an important role in the uptake of technology in the classroom. As part of the micro:bit project, EE1 directed the curriculum-oriented resource curation and the coordination of training sessions. These were run with CAS~\cite{crick2011computing} `master' teachers and operators of extra curricular clubs like UKYouth, Code Club, and CoderDojo. Recipients of the training would be responsible for continuing dissemination at schools and clubs in their vicinity creating a ``cascade effect of teacher training which was really powerful''.
-
-EE1 described the main challenge of this aspect to the micro:bit project was ``trying to get everybody capable to do it and enthusiastic'', she described it as hard work because the teachers who lack a strong background in computing were ``a bit nervous about all of this, and they are alarmed at the prospect of having to teach computing''. She engaged with a wider group of organisations (UKYouth, Code Clubs, CoderDojos) that are passionate about technology and computing who have the experience and the background, and through training both, one could provide support for the other, offering breadth and support---not only for the young people, but for the teachers as well.
-
-Training consisted of a familiarisation session with the device and code editors, guiding teachers through lesson plans and discussing how the lesson plan met the criteria of the UK curriculum; they were encouraged to play, tweet and blog for the remaining time. EE1 noted that the response from her audience to the training sessions was incredible, with a general response of ``100\% wow, let's get going''. She related a story describing the experience of one teacher who before commencing training believed that this was ``another rubbish project from people who'd spent too much money the wrong way'', but after engaging with the micro:bit loved it. She pointedly explained that she expected this reaction, as the people who attended the sessions weren't techno-phobes, while a much harder challenge was to reach those who were.
-
-From using the CAS network of teachers, EE1 learned that less confident teachers were not comfortable with the single-lesson plan approach of teaching the curriculum. She explained that they ``wanted a 6 or 8 week block of stuff, which said `this is the scheme of work which will deliver these outcomes from the national curriculum''', rather than the individual lessons---they wanted more scaffolding.
-
-Overall, from our interviews, we saw that the cascading of teacher training, combined with the engagement of enthusiastic technologists, alongside structured curriculum-aligned resources are clear contributors to the uptake of the micro:bit.
-
 
