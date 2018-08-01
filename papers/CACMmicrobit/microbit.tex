@@ -7,9 +7,6 @@
 \label{sec:microbit}
 % Talk about the motivations, make people care, provide concrete deliverables
 
-{\bf [TODO: make sure to note the novel contributions of the projects, for those
-readers with research hats on...]}
-
 The goals for the BBC micro:bit project were:
 \begin{itemize}
     \item[B1] to provide a simple creative experience for physical computing, wearable and Internet of Things (IoT) projects;
@@ -18,16 +15,19 @@ The goals for the BBC micro:bit project were:
     \item[B4] to stimulate curiosity about how computing technologies can be utilized to solve problems that students identify.
 \end{itemize}
 
-{\bf [TODO: elaborate on the context:  to deliver device and engage
-with around 3/4 million students and their teachers - very broad breadth engagement]}
+It's important to reiterate the context: delivering a micro:bit to every one of 
+approximately 3/4 million Year 7 (5th grade) students and teachers in the UK, as
+well as 1/4 million micro:bit outside of the school setting. This was a very
+broad breadth engagement touching every community in the UK.
 
-{\bf [say what's coming - show off the hardware, software and an example; then
-talk about the history]}
+In the remainder of this section, we describe the hardware and software
+of the micro:bit, the project history, and the experience deploying
+the micro:bit in the UK.
 
 \subsection{The hardware}
 
 Figure~\ref{fig:microbit} shows (a) the front and (b) the back of the
-micro:bit, which measures 4cm x 5cm. The aesthetic of the micro:bit is designed to be engaging from the off, with streaks of hair (upper left) and a friendly face (upper middle).
+micro:bit, which measures 4cm x 5cm. The aesthetic of the micro:bit is designed to be engaging from the start, with streaks of hair (upper left) and a friendly face (upper middle).
 The micro:bit board hosts a variety of sensors (temperature, accelerometer, magnetometer,
 light level), a 5x5 LED matrix, two user-defined buttons, as well as Bluetooth
 Low Energy (BLE) communications.\footnote{The micro:bit has a whopping
@@ -36,7 +36,8 @@ RAM and 32kB of Flash}. More importantly, the device embraces these sensors in i
 
 In contrast to the Uno which has no built-in sensors, the micro:bit
 allows many projects to be completed with no additional hardware or wiring.
-The holes on micro:bit's edge connector allows additional external sensors and actuators to be connected via crocodile clips or banana plugs.
+The holes on micro:bit's edge connector allows additional external sensors 
+and actuators to be connected via crocodile clips or banana plugs.
 The micro:bit's BLE capabilities introduces networking to the
 picture, and enables streaming of data and command/control operations among the micro:bit,
 smartphones, laptops, as well as other micro:bits.
@@ -50,7 +51,9 @@ operation (flashed). The micro:bit then can be embedded in projects
 where it runs on battery power.
 
 The unique combination of features supplied by the micro:bit enables a creative,
-extensive experience for physical computing (B1, B2).
+extensive experience for physical computing (B1, B2). 
+{\bf [TODO: make sure to note the novel contributions of the project, for those
+readers with research hats on...]}
 
 \subsection{The software}
 
@@ -88,7 +91,6 @@ a full Python compiler and runtime that runs on the micro:bit and
 supports a read-eval-print loop (REPL) to execute commands sent via
 a terminal, as well as to import and run scripts from the Python web app for
 the micro:bit (\url{http://python.microbit.org}).
-
 
 \subsection{Content, training and events}
 
