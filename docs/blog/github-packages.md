@@ -2,7 +2,7 @@
 
 **Posted on August 1, 2018 by [mmoskal](https://github.com/mmoskal)**
 
-MakeCode is a platform with an easy level of entry, even for middle-schoolers, but with quite a high limit on creativity and complexity available to advanced users for writing programs in [TypeScript](https://www.typescriptlang.org/). Our [subset of TypeScript](https://makecode.com/language) supports most of the regular language features of TypeScript, but can be efficiently compiled to run on extremely resource constrained devices like the micro:bit (your phone literally has a _million times_ more available memory than a micro:bit!). In fact, most of the runtime libraries in our editors are implemented in Static TypeScript including all of the defined blocks. We also pack a [full-featured Monaco text editor](https://makecode.com/js/editor) into our web app.
+MakeCode is a platform with an easy level of entry, even for middle-schoolers, but allowing nearly unlimited creativity and complexity available to advanced users for writing programs in [TypeScript](https://www.typescriptlang.org/). Our [subset of TypeScript](https://makecode.com/language) supports most of the regular language features of TypeScript, but can be efficiently compiled to run on extremely resource constrained devices like the micro:bit (your phone literally has a _million times_ more available memory than a micro:bit!). In fact, most of the runtime libraries in our editors are implemented in Static TypeScript including all of the defined blocks. We also pack a [full-featured Monaco text editor](https://makecode.com/js/editor) into our web app.
 
 From the very beginning, we allowed extensions to our editor with [user-provided packages](https://makecode.com/packages/getting-started) hosted on GitHub. These packages can even introduce [their own user interface](https://makecode.com/packages/extensions) in the editor. Packages first need [approval](https://makecode.com/packages/approval) to surface in search but, unless they are banned, can be loaded without approval by providing an exact URL.
 
@@ -10,9 +10,9 @@ Until now, package authoring required usage of command line tools (`npm` and `gi
 
 ## Let's do it!
 
-First, you need a [GitHub account](https://github.com/join) if you don't have one yet. GitHub is the largest host of source code in the world, with 30 million users.
+First, you need a [GitHub account](https://github.com/join) if you don't have one yet. GitHub is the largest host of source code in the world, with over 30 million users.
 
-Once you have your account, you'll need to tie the MakeCode web app to your account. To do that, open any project, go to the **Gear Wheel** menu on top, and select **Extensions**. At the bottom, there should be a link to log in to GitHub. If there's no link in your editor, try using it's `/beta` version. A dialog will appear asking you to generate a GitHub token. Follow the instructions and paste the token into the dialog. You'll need to paste in a token again for each editor you use (eg., micro:bit, Circuit Playground, etc.), though you can use the same token for all of them.
+Once you have your account, you'll need to tie the MakeCode web app to your account. To do that, open any project, go to the **Gear Wheel** menu on top, and select **Extensions**. At the bottom, there should be a link to log in to GitHub. If there's no link in your editor, try using its `/beta` version. A dialog will appear asking you to generate a GitHub token. Follow the instructions and paste the token into the dialog. You'll need to paste in a token again for each editor you use (micro:bit, Circuit Playground, etc.), though you can use the same token for all of them.
 
 Once you've logged in, go back to the home screen. Now, the dialog that comes up after you press the **Import** button will have an additional option to list your GitHub repositories or create a new one.
 Additionally, the **Import URL** option will now support `https://github.com/...` URLs, which is useful if you can't find your repository in the list (especially organizational repos), or as way to search the list faster using a copy/paste of the URL.
@@ -36,7 +36,7 @@ then to keep history and insure against losing your work, push the changes to Gi
 If there are changes, you will be asked for a commit message. Try to write something meaningful, like
 `Fixed temperature reading in sub-freezing conditions` or `Added mysensor.readTemperature() function`.
 
-When describing changes, you are also given an option to bump the version number. This is a signal that the version you're pushing is stable and the users should upgrade to it. When your package is first referenced, the latest bumped version is used. Similarly, if there is a newer bumped version there is a little upgrade button next to the package. Commits without bump are generally not accessible to most users, so they are mostly for you to keep track of things.
+When describing changes, you are also given an option to bump the version number. This is a signal that the version you're pushing is stable and the users should upgrade to it. When your package is first referenced, the latest bumped version is used. Similarly, if there is a newer bumped version, a little upgrade button will appear next to the package. Commits without bump are generally not accessible to most users, so they are mostly for you to keep track of things.
 
 ![Repo commit dialog](/static/blog/github-packages/repo-commit.png)
 
@@ -61,13 +61,13 @@ If the automatic merge fails, MakeCode will create a new branch, push the commit
 
 ## Testing your package
 
-To test blocks in your package, create a new project (in the MakeCode editor of course, not on GitHub), and go to the **Extensions** dialog. It will list all your GitHub projects as available for addition. Select your package and see what the blocks look like.
+To test blocks in your package, press the **New Project** button on the home screen and go to the **Extensions** dialog. It will list all your GitHub projects as available for addition. Select your package and see what the blocks look like.
 
 You can have one browser tab open with that test project, and another one with the package. When you switch between them, they reload automatically.
 
-You can test TypeScript APIs in the package itself. The `test.ts` file is not used
-when you add the package to a different project, but only when you run the package directly.
-You can put TypeScript test code in there.
+For testing TypeScript APIs you don't need a separate project, and instead can
+use the `test.ts` file in the package itself. It is only used when you run the package
+directly, not when you add it to a project. You can put TypeScript test code in there.
 
 ## Non-packages
 
