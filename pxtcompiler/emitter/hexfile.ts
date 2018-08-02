@@ -317,7 +317,7 @@ namespace ts.pxtc {
                     if (!spec)
                         U.userError("excessive parameters passed to " + nm)
                     if (target.taggedInts) {
-                        let needNum = spec == "I" || spec == "N" || spec == "F"
+                        let needNum = spec == "I" || spec == "N" || spec == "F" || spec == "B"
                         if (spec == "T") {
                             // OK, both number and non-number allowed
                         } else if (needNum && !argIsNumber[i])
