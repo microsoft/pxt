@@ -6,7 +6,7 @@ Return a pseudo-random value within a range of numbers.
 Math.randomRange(0, 10)
 ```
 
-Returns a pseudo-random number in the range ``[min, max];`` that is, from ``0`` (inclusive) up to including ``1`` (inclusive), which you can then scale to your desired range. 
+Returns a pseudo-random number in the range ``[min, max];`` that is, from ``0`` (inclusive) up to including ``1`` (inclusive), which you can then scale to your desired range.
 
 ## Parameters
 
@@ -15,7 +15,7 @@ Returns a pseudo-random number in the range ``[min, max];`` that is, from ``0`` 
 
 ## Returns
 
-* a pseudo-random [number](types/number) between ``max`` (inclusive) and ``max`` (inclusive).
+* a pseudo-random [number](types/number) between ``min`` (inclusive) and ``max`` (inclusive).
 
 ## Example
 
