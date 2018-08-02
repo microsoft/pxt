@@ -4403,6 +4403,6 @@ ${lbl}: .short 0xffff
     }
 
     function isNumberLikeType(type: Type) {
-        return !!(type.flags & (TypeFlags.NumberLike | TypeFlags.EnumLike))
+        return !!(type.flags & (TypeFlags.NumberLike | TypeFlags.EnumLike | TypeFlags.BooleanLike))
     }
 }
