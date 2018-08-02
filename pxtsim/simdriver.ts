@@ -329,10 +329,6 @@ namespace pxsim {
                 case 'debugger': this.handleDebuggerMessage(msg as DebuggerMessage); break;
                 case 'toplevelcodefinished': if (this.options.onTopLevelCodeEnd) this.options.onTopLevelCodeEnd(); break;
                 default:
-                    if (msg.type == 'radiopacket') {
-                        // assign rssi noisy?
-                        (msg as pxsim.SimulatorRadioPacketMessage).rssi = 10;
-                    }
                     this.postMessage(msg, source);
                     break;
             }
