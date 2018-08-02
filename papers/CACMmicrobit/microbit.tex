@@ -28,23 +28,27 @@ the micro:bit in the UK.
 \subsection{The hardware}
 
 Figure~\ref{fig:microbit} shows (a) the front and (b) the back of the
-micro:bit, which measures 4cm x 5cm. The aesthetic of the micro:bit is designed to be engaging from the start, with streaks of hair (upper left) and a friendly face (upper middle).
+micro:bit, which measures 4cm x 5cm. Like the Arduino Uno,~\cite{ArduinoUno}
+the micro:bit is a printed circuit board that makes all its components visible.  
+The micro:bit is designed to be engaging from the start, 
+with streaks of hair (upper left) and a friendly face (upper middle).
 The micro:bit board hosts a variety of sensors (temperature, accelerometer, magnetometer,
 light level), a 5x5 LED matrix, two user-defined buttons, as well as Bluetooth
 Low Energy (BLE) communications.\footnote{The micro:bit has a whopping
 16kB of RAM and 256kB of Flash memory, compared to the Uno's 2kB of
-RAM and 32kB of Flash}. More importantly, the device embraces these sensors in its design bringing them to the fore, so to expose its users to the future: a world of embedded, Internet enabled devices.
+RAM and 32kB of Flash}. 
+%More importantly, the device embraces these sensors in its design bringing them to the fore, so to expose its users to the future: a world of embedded, Internet enabled devices.
 
-In contrast to the Uno which has no built-in sensors, the micro:bit
+In contrast to the Uno, which has no built-in sensors, the micro:bit
 allows many projects to be completed with no additional hardware or wiring.
-The holes on micro:bit's edge connector allows additional external sensors 
-and actuators to be connected via crocodile clips or banana plugs.
 The micro:bit's BLE capabilities introduces networking to the
 picture, and enables streaming of data and command/control operations among the micro:bit,
 smartphones, laptops, as well as other micro:bits.
 As with Arduino, an ecosystem of micro:bit shields
 (hardware peripherals) that accommodate the micro:bit's edge
 connector expands its capabilities (\url{http://microbit.org/resellers/}).
+Additionally, the holes in micro:bit's edge connector allows additional external sensors 
+and actuators to be connected via crocodile clips or banana plugs.
 
 The micro:bit appears as a USB pen drive when plugged into a host computer;
 a compiled program can be transferred to the micro:bit by a simple file copy
@@ -53,8 +57,8 @@ where it runs on battery power.
 
 The unique combination of features supplied by the micro:bit enables a creative,
 extensive experience for physical computing (B1, B2). 
-{\bf [TODO: make sure to note the novel contributions of the project, for those
-readers with research hats on...]}
+%{\bf [TODO: make sure to note the novel contributions of the project, for those
+%readers with research hats on...]}
 
 \subsection{The software}
 
@@ -112,40 +116,39 @@ simply presses the ``Download'' button (Figure~\ref{fig:snapshot}(E)),
 which invokes an in-browser compiler tool chain that translates
 the Blockly program to JavaScript and then to machine code, linking
 the user's compiled code against a pre-compiled
-C++ runtime. This means that no C++ compiler is required for
-compiling the user's program into an executable binary.
+C++ runtime.~\cite{Devine2018} 
+This means that no C++ compiler is required for
+compiling the user's program into an executable binary
+(The same is true of the MicroPython solution for the micro:bit).
 
 As discussed previously, a simple file copy operation installs the
 executable binary on the micro:bit, which appears as a USB pen drive
 when plugged into the host computer. This ``lowest-common denominator''
-method of installation works on all modern operating systems without
-the need to install a device driver. 
+programming method works on all modern operating systems 
+(Android, Linux, MacOS, ChromeOS, Windows), as they support 
+USB pen drives without the need to install device drivers. 
 
-\subsection{UK rollout}
+\subsection{UK rollout: content and training}
 
-Great hardware and software do not a full solution make; 
-teacher education and training plays an important role in 
-the uptake of technology in the classroom. 
+Great hardware and software do not a full solution make. 
 Therefore,
 the BBC micro:bit project also called for partners to develop content,
 to ``train the trainers'' (educators) around the micro:bit computing
 system, and provide hands-on events outside of the school setting to
 generate interest in the micro:bit.
 
-{\bf [say something about the interviews we did]}
-
-As part of the micro:bit project, Clare Riley of Microsoft (Public Sector) directed the curriculum-oriented resource curation and the coordination of training sessions with partners. These were run with CAS~\cite{crick2011computing} ``master'' teachers and operators of extra curricular clubs like UKYouth, Code Club, and CoderDojo. Recipients of the training would be responsible for continuing dissemination at schools and clubs in their vicinity.
+As part of the micro:bit project, Clare Riley of Microsoft (Education Relations) directed the curriculum-oriented resource curation and the coordination of training sessions with partners. These were run with Computing At Schools (CAS: a UK non-profit for training educators in CS~\cite{crick2011computing}) ``master'' teachers and operators of extra curricular clubs like UKYouth, Code Club, and CoderDojo. Recipients of the training would be responsible for continuing dissemination at schools and clubs in their vicinity.
 
 % creating a ``cascade effect of teacher training which was really powerful''.
 
-According to Clare,
-a main challenge of this aspect to the micro:bit project was ``trying to get everybody capable to do it and enthusiastic''; in particular, educators who lack a strong background in computing were ``a bit nervous about all of this, and they are alarmed at the prospect of having to teach computing''. She engaged with a wider group of organisations (UKYouth, Code Clubs, CoderDojo) who have the experience and the background; through training both audiences, each could provide support to the other, offering breadth and support---not only for students, but for the educators as well.
+% According to Clare,
+% a main challenge of this aspect to the micro:bit project was ``trying to get everybody capable to do it and enthusiastic''; in particular, educators who lack a strong background in computing were ``a bit nervous about all of this, and they are alarmed at the prospect of having to teach computing''. She engaged with a wider group of organisations (UKYouth, Code Clubs, CoderDojo) who had CS background and experience; through training both audiences, each could provide support to the other, offering breadth and support---not only for students, but for the educators as well.
 
-Training consisted of an introductory session with the device and code editors, guiding educators through lesson plans and discussing how the lesson plan met the criteria of the UK curriculum; they were encouraged to play, tweet and blog for the remaining time. Clare noted that the response from her audience to the training sessions was incredible, with a general response of ``100\% wow, let's get going''. She related a story describing the experience of one educator who before commencing training believed that this was ``another rubbish project from people who'd spent too much money the wrong way'', but after engaging with the micro:bit loved it. 
+Training consisted of an introductory session with the device and code editors, guiding educators through lesson plans and discussing how the lesson plan met the criteria of the UK curriculum; they were encouraged to play, tweet and blog for the remaining time. Clare noted that the response from her audience to the training sessions was very positive, with a general response of ``100\% wow, let's get going''. She related a story describing the experience of one educator who before commencing training believed that this was ``another rubbish project from people who'd spent too much money the wrong way'', but after engaging with the micro:bit loved it. 
 
 From leveraging the CAS network of teachers, Clare learned that less confident teachers were not comfortable with the single-lesson plan approach of teaching the curriculum. She explained that they ``wanted a 6 or 8 week block of stuff, which said `this is the scheme of work which will deliver these outcomes from the national curriculum''', rather than the individual lessons---they wanted more scaffolding.
 
-Overall, from our interviews, we saw that the cascading of teacher training, combined with the engagement of enthusiastic technologists, alongside structured curriculum-aligned resources were clear contributors to the uptake of the micro:bit in the UK.
+Overall, teacher training, combined with the engagement of enthusiastic technologists, alongside structured curriculum-aligned resources were clear contributors to the uptake of the micro:bit in the UK.
 
 \subsection{Project history and open sourcing}
 
@@ -174,8 +177,9 @@ which was the micro:bit project.
 The reference implementation and
 its design rationale also was made available to the partners to inform
 their response.
-Twenty-nine partners were invited to contribute hardware, software, services,
+In the end, 29 partners were invited to contribute hardware, software, services,
 teaching materials, packing/distribution, logistics, events and funding.
+
 Work on the project commenced in February 2015, with delivery of
 a web site/app in September 2015 (which was critical
 for training teachers) and delivery of the micro:bits in the second
@@ -184,11 +188,10 @@ half of the 2015-2016 school year.
 The BBC micro:bit project partners agreed to open source all assets, both
 hardware and software. The main entry points are:
 \begin{itemize}
-\item \url{https://github.com/bbcmicrobit} for MicroPython, hardware, and prototype;
-\item \url{https://github.com/microsoft/pxt} for Microsoft MakeCode;~\footnote{
-MakeCode superceded the TouchDevelop for micro:bit web app~\cite{ball2016microsoft}, also developed by Microsoft.    
-}
-\item \url{https://github.com/lancaster-university/microbit-dal} for the micro:bit
+\item \url{https://github.com/bbcmicrobit} for MicroPython, micro:bit hardware design, and micro:bit prototype;
+\item \url{https://github.com/microsoft/pxt-microbit} for MakeCode;~\footnote{
+MakeCode superceded the TouchDevelop for micro:bit web app~\cite{ball2016microsoft}, also developed by Microsoft.}
+\item {\tt \href{https://github.com/lancaster-university/microbit-dal}{microbit-dal}}             for the micro:bit
 C++ runtime.
 \end{itemize}
 
