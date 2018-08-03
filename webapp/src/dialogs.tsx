@@ -360,10 +360,10 @@ export function showImportGithubDialogAsync() {
                     <i className="info circle icon"></i>
                     <div className="content">
                         <h3 className="header">
-                            {lf("Need some other repo?")}
+                            {lf("Not finding what you're looking for?")}
                         </h3>
                         <p>
-                            {lf("Use the 'Import URL' option in the previous dialog to import somebody's else repo.")}
+                            {lf("Use the 'Import URL' option in the previous dialog to import repo by exact URL.")}
                         </p>
                     </div>
                 </div>

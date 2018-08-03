@@ -1,5 +1,12 @@
 # Microsoft MakeCode Blog
 
+## [GitHub package authoring](/blog/github-packages)
+
+August 1st, 2018 by [mmoskal](https://github.com/mmoskal)
+
+You can now create and edit MakeCode packages hosted on GitHub directly from the browser!
+**[Continue reading this blog post](/blog/github-packages)**
+
 ## [MakeCode for the micro:bit update coming soon!](/blog/microbit/v1-beta)
 
 July 23th, 2018 by [Jaqster](https://github.com/jaqster)
