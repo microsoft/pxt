@@ -358,10 +358,6 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         return false;
     }
 
-    handleRootElementRef = (c: HTMLDivElement) => {
-        this.rootElement = c;
-    }
-
     renderCore() {
         const { editorname, parent } = this.props;
         const { showAdvanced, visible, loading, selectedItem, expandedItem, hasSearch, showSearchBox, hasError } = this.state;
@@ -398,7 +394,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         ])
 
         let index = 0;
-        return <div ref={this.handleRootElementRef} className={classes} id={`${editorname}EditorToolbox`}>
+        return <div ref={c => this.rootElement = c} className={classes} id={`${editorname}EditorToolbox`}>
             <ToolboxStyle categories={this.items} />
             {showSearchBox ? <ToolboxSearch ref="searchbox" parent={parent} toolbox={this} editorname={editorname} /> : undefined}
             <div className="blocklyTreeRoot">
