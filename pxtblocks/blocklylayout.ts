@@ -377,7 +377,7 @@ namespace pxt.blocks.layout {
             }
 
             insertx += group.width + outerGroupMargin;
-            rowBottom = Math.max(rowBottom, group.height + outerGroupMargin);
+            rowBottom = Math.max(rowBottom, inserty + group.height + outerGroupMargin);
 
             if (insertx > maxx) {
                 insertx = marginx;
