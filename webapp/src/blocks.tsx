@@ -505,10 +505,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return blocksArea ? blocksArea.getElementsByClassName('blocklyToolboxDiv')[0] as HTMLDivElement : undefined;
     }
 
+    handleToolboxRef = (c: toolbox.Toolbox) => {
+        this.toolbox = c;
+    }
+
     renderToolbox(immediate?: boolean) {
         if (pxt.shell.isReadOnly()) return;
         const blocklyToolboxDiv = this.getBlocklyToolboxDiv();
-        const blocklyToolbox = <toolbox.Toolbox ref={c => this.toolbox = c} editorname="blocks" parent={this} />;
+        const blocklyToolbox = <toolbox.Toolbox ref={this.handleToolboxRef} editorname="blocks" parent={this} />;
 
         Util.assert(!!blocklyToolboxDiv);
         ReactDOM.render(blocklyToolbox, blocklyToolboxDiv);
