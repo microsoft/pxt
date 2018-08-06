@@ -1948,17 +1948,17 @@ export class ProjectView
     showRenameProjectDialogAsync(): Promise<boolean> {
         if (!this.state.header) return Promise.resolve(false);
 
-        const opts: core.ConfirmOptions = {
+        const opts: core.PromptOptions = {
             header: lf("Rename your project"),
             agreeLbl: lf("Save"),
             agreeClass: "green",
-            input: lf("Enter your project name here")
+            defaultValue: lf("Enter your project name here")
         };
-        return core.confirmAsync(opts).then(res => {
-            if (!res || !opts.inputValue) return Promise.resolve(false); // cancelled
+        return core.promptAsync(opts).then(res => {
+            if (!res) return Promise.resolve(false); // cancelled
 
             return new Promise<void>((resolve, reject) => {
-                this.setState({ projectName: opts.inputValue }, () => resolve());
+                this.setState({ projectName: res }, () => resolve());
             }).then(() => this.saveProjectNameAsync())
                 .then(() => true);
         });

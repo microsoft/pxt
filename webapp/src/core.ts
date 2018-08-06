@@ -153,8 +153,6 @@ export interface DialogOptions {
     body?: string;
     jsx?: JSX.Element;
     htmlBody?: string;
-    input?: string;
-    inputValue?: string; // set if input is enabled
     copyable?: string;
     size?: string; // defaults to "small"
     onLoaded?: (_: HTMLElement) => void;
