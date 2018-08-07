@@ -57,8 +57,8 @@ namespace pxtblockly {
             contentDiv.setAttribute('role', 'menu');
             contentDiv.setAttribute('aria-haspopup', 'true');
             const options = this.getOptions();
+            let maxButtonHeight: number = 0;
             for (let i = 0; i < options.length; i++) {
-                const option = options[i];
                 let content = (options[i] as any)[0]; // Human-readable text or image.
                 const value = (options[i] as any)[1]; // Language-neutral value.
                 // Icons with the type property placeholder take up space but don't have any functionality
@@ -76,12 +76,17 @@ namespace pxtblockly {
                 button.setAttribute('role', 'menuitem');
                 button.setAttribute('class', 'blocklyDropDownButton');
                 button.title = content.alt;
+                let buttonSize = content.height;
                 if (this.columns_) {
-                    button.style.width = ((this.width_ / this.columns_) - 8) + 'px';
-                    button.style.height = ((this.width_ / this.columns_) - 8) + 'px';
+                    buttonSize = ((this.width_ / this.columns_) - 8);
+                    button.style.width = buttonSize + 'px';
+                    button.style.height = buttonSize + 'px';
                 } else {
                     button.style.width = content.width + 'px';
                     button.style.height = content.height + 'px';
+                }
+                if (buttonSize > maxButtonHeight) {
+                    maxButtonHeight = buttonSize;
                 }
                 let backgroundColor = this.backgroundColour_;
                 if (value == this.getValue()) {
@@ -120,6 +125,10 @@ namespace pxtblockly {
             }
             contentDiv.style.width = this.width_ + 'px';
             dropdownDiv.appendChild(contentDiv);
+            if (this.maxRows_) {
+                // Limit the number of rows shown, but add a partial next row to indicate scrolling
+                dropdownDiv.style.maxHeight = (this.maxRows_ + 0.4) * (maxButtonHeight + 8) + 'px';
+            }
 
             Blockly.DropDownDiv.setColour(this.backgroundColour_, this.borderColour_);
 
@@ -128,7 +137,7 @@ namespace pxtblockly {
             let secondaryYOffset = (
                 -(Blockly.BlockSvg.MIN_BLOCK_Y * scale) - (Blockly.BlockSvg.FIELD_Y_OFFSET * scale)
             );
-            let renderedPrimary = Blockly.DropDownDiv.showPositionedByBlock(
+            Blockly.DropDownDiv.showPositionedByBlock(
                 this, this.sourceBlock_, this.onHide_.bind(this), secondaryYOffset);
 
             if (this.sourceBlock_.isShadow()) {
