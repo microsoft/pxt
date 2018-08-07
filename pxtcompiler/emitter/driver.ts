@@ -201,15 +201,9 @@ namespace ts.pxtc {
         }
 
         if (opts.ast || opts.forceEmit || res.diagnostics.length == 0) {
-            if (opts.target.jsMode) {
-                const emitRes = program.emit()
-                res.diagnostics = res.diagnostics.concat(patchUpDiagnostics(emitRes.diagnostics))
-            } else {
-                const binOutput = compileBinary(program, host, opts, res, entryPoint);
-                res.diagnostics = res.diagnostics.concat(patchUpDiagnostics(binOutput.diagnostics))
-            }
-
+            const binOutput = compileBinary(program, host, opts, res, entryPoint);
             res.times["compilebinary"] = U.now() - emitStart
+            res.diagnostics = res.diagnostics.concat(patchUpDiagnostics(binOutput.diagnostics))
         }
 
         if (res.diagnostics.length == 0)

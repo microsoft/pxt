@@ -960,6 +960,9 @@ namespace ts.pxtc {
         lastNodeId = 0
         currNodeWave++
 
+        if (opts.target.jsMode)
+            return program.emit()
+
         if (opts.target.isNative) {
             if (!opts.hexinfo) {
                 // we may have not been able to compile or download the hex file
