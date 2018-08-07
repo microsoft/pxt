@@ -972,7 +972,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             return;
         }
 
-        if (this.abstractShowFlyout(treeRow)) {
+        if (this.abstractShowFlyout(treeRow) || (treeRow.subcategories && treeRow.subcategories.length > 0)) {
             // Hide editor floats
             this.parent.setState({ hideEditorFloats: true });
         } else {
