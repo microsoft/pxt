@@ -23,6 +23,11 @@ namespace ts.pxtc {
         options.noImplicitAny = true;
         options.noImplicitReturns = true;
         options.allowUnreachableCode = true;
+
+        if (opts.target.jsMode == "node") {
+            options.target = ts.ScriptTarget.ES2016;
+            options.module = ModuleKind.CommonJS;
+        }
         return options
     }
 
@@ -111,6 +116,7 @@ namespace ts.pxtc {
 
         let host: CompilerHost = {
             getSourceFile: (fn, v, err) => {
+                console.log("GET SRC: " + fn)
                 fn = normalizePath(fn)
                 let text = ""
                 if (fileText.hasOwnProperty(fn)) {
@@ -131,6 +137,7 @@ namespace ts.pxtc {
             getCanonicalFileName: fn => fn,
             getDefaultLibFileName: () => "no-default-lib.d.ts",
             writeFile: (fileName, data, writeByteOrderMark, onError) => {
+                console.log("WRITE: " + fileName)
                 res.outfiles[fileName] = data
             },
             getCurrentDirectory: () => ".",
@@ -194,9 +201,15 @@ namespace ts.pxtc {
         }
 
         if (opts.ast || opts.forceEmit || res.diagnostics.length == 0) {
-            const binOutput = compileBinary(program, host, opts, res, entryPoint);
+            if (opts.target.jsMode) {
+                const emitRes = program.emit()
+                res.diagnostics = res.diagnostics.concat(patchUpDiagnostics(emitRes.diagnostics))
+            } else {
+                const binOutput = compileBinary(program, host, opts, res, entryPoint);
+                res.diagnostics = res.diagnostics.concat(patchUpDiagnostics(binOutput.diagnostics))
+            }
+
             res.times["compilebinary"] = U.now() - emitStart
-            res.diagnostics = res.diagnostics.concat(patchUpDiagnostics(binOutput.diagnostics))
         }
 
         if (res.diagnostics.length == 0)

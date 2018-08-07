@@ -312,6 +312,7 @@ declare namespace ts.pxtc {
         isNative: boolean; // false -> JavaScript for simulator
         nativeType?: string; // currently only "thumb"
         runtimeIsARM?: boolean; // when nativeType is "thumb" but runtime is compiled in ARM mode
+        jsMode?: string; // null=emitter.ts, or "node"
         hasHex: boolean;
         useUF2?: boolean;
         useMkcd?: boolean;
