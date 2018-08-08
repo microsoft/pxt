@@ -313,6 +313,21 @@ export class Editor extends srceditor.Editor {
     downloadCSV() {
         const sep = lf("{id:csvseparator}\t");
         let csv: string[] = [];
+
+        const hasData = this.charts.length && this.charts.some((chart) => {
+            return Object.keys(chart.datas).length > 0;
+        });
+
+        if (!hasData) {
+            core.confirmAsync({
+                header: lf("No data to export"),
+                hideAgree: true,
+                disagreeLbl: lf("Ok"),
+                body: lf("You must generate some serial data before you can export it.")
+            });
+            return;
+        }
+
         this.charts.forEach(chart => {
             const lines: { name: string; line: number[][]; }[] = [];
             Object.keys(chart.datas).forEach(k => lines.push({ name: k, line: chart.datas[k] }));
