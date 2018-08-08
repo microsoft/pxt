@@ -27,6 +27,13 @@ namespace ts.pxtc {
         if (opts.target.jsMode == "node") {
             options.target = ts.ScriptTarget.ES2016;
             options.module = ModuleKind.CommonJS;
+            options.paths = {
+                "*": [
+                    "*",
+                    "pxt_modules/*"
+                ]
+            };
+            options.baseUrl = "."
         }
         return options
     }
@@ -131,6 +138,7 @@ namespace ts.pxtc {
                 return createSourceFile(fn, text, v, setParentNodes)
             },
             fileExists: fn => {
+                console.log("file ex: " + fn)
                 fn = normalizePath(fn)
                 return fileText.hasOwnProperty(fn)
             },
@@ -147,7 +155,9 @@ namespace ts.pxtc {
                 fn = normalizePath(fn)
                 return fileText[fn] || "";
             },
-            directoryExists: dn => true,
+            directoryExists: dn => {
+                return true
+            },
             getDirectories: () => []
         }
 
