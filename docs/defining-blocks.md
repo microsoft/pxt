@@ -38,18 +38,16 @@ To have a category appear under the "Advanced" section of the Block Editor toolb
 
 ### Category groups
 
-You can make your category more organized by grouping similar or related blocks together inside **groups**.
-When using the groups feature, blocks of the same group will appear together in the toolbox flyout, and the group's label will be displayed above them.
+You can make your block category more organized by grouping similar or related blocks together inside [**groups**](/playground#basic-groups). When using the groups feature, blocks of the same group will appear together in the toolbox flyout and the group's label will be displayed above them.
 This makes it easier for the user to go through your available blocks.
 
-To define your groups, add the `groups` attribute to your namespace. The `groups` attribute is an array of group names.
-You can individually assign blocks to these groups when defining each block.
+To define your groups, add the `groups` attribute to your namespace. The `groups` attribute is an array of group names. You can individually assign blocks to these groups when defining each block.
 
 > **Note**: The order in which you define your groups is the order in which the groups will appear in the toolbox flyout
 
-> **Note**: Blocks that are not put into groups are placed in a default `others` group, which does not show a label. The `others` group can be used to decide where the ungrouped blocks will appear with respect to your other groups.
+> **Note**: Blocks that are not assigned to a named group are placed in the default `others` group, which does not show a label. The `others` group can be used to decide where in the order of groups the ungrouped blocks will appear. This is based on where you place `others` in the `groups` array.
 
-> **Note**: When assigning blocks to groups, names are case sensitive, so make sure the group names you put on your blocks are identical to the ones in your group definitions
+> **Note**: When assigning blocks to groups, names are case sensitive, so make sure the group names you put on your blocks are identical to the ones in your group definitions.
 
 ```typescript-ignore
 /**
@@ -109,7 +107,7 @@ a mapping between the block field names and the function names.
 
 ## Supported types
 
-The following types are supported in function signatures that are meant to be exported:
+The following [types](/playground#basic-types) are supported in function signatures that are meant to be exported:
 
 * ``number`` (TypeScript) or ``int`` (C++)
 * ``string`` (TypeScript) or ``StringData*`` (C++)
@@ -200,7 +198,7 @@ The other attributes related to object destructuring mutators include:
 
 ## Enums
 
-Enum are supported and will automatically be represented by a dropdown in blocks.
+[Enum](/playground#basic-enums) is supported and will automatically be represented by a dropdown in blocks.
 
 ```typescript-ignore
 enum Button {
@@ -292,6 +290,7 @@ It is possible to expose instance methods and object factories, either directly
 or with a bit of flattening (which is recommended, as flat, C-style APIs map best to blocks).
 
 ### Direct
+
 ```typescript-ignore
 //%
 class Message {
@@ -446,7 +445,7 @@ class Foo {
 
 ## Ordering
 
-All blocks have a default **weight** of 50 that is used to sort them in the UI with the highest weight showing up first. To tweak the ordering,
+All blocks have a default **weight** of 50 that is used to sort them in the UI with the highest weight showing up first. To tweak the [ordering](/playground#basic-ordering),
 simply annotate the function with the ``weight`` macro:
 
 ```
@@ -460,19 +459,18 @@ flag to disable showing it in auto-completion.
 
 ## Grouping
 
-To put blocks inside the groups you have previously defined (see the **Category** section at the top of this page), use the `group` attribute.
+To put blocks into a previously defined group (see the [Category](/defining-blocks#category) section at the top of this page), use the `group` attribute.
 The name of the group must match exactly one of the groups you've defined on your namespace.
 
-> **Note**: When using the groups feature, block weights are only compared to blocks of the same group.
+> **Note**: When using the groups feature, block `weight` is only compared with weights other blocks in the same group.
 
 ```
 //% group="LED Matrix"
 ...
 ```
 
-If you don't want to show labels, you can manually group blocks together using the **blockGap** macro. It lets you specify the distance between the current block and the next in the toolbox.
-Combined with the weight parameter, it allows you to visually group blocks together, essentially replicating the groups feature without the labels.
-The default ``blockGap`` value is ``8``.
+If you don't want to show labels, you can manually group blocks together using the **blockGap** macro. It lets you specify the distance between the current block and the next one in the toolbox.
+Combined with the `weight` parameter, it allows you to visually group blocks together, essentially replicating the groups feature but without the labels. The default ``blockGap`` value is ``8``.
 
 ```
 //% blockGap=14
