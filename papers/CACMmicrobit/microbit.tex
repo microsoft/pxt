@@ -7,6 +7,14 @@
 \label{sec:microbit}
 % Talk about the motivations, make people care, provide concrete deliverables
 
+As mentioned in the Introduction, the motivation for the BBC micro:bit project
+stemmed from the BBC's previous history with computing education via the BBC Micro, 
+the desire to address the growing digital divide in the UK~\cite{XYZ},
+as well as the UK government's mandate to teach computer science at the K-12 grade levels.
+
+{\bf [Why did the BBC choose physical computing and an Arduino-like device such as
+as the micro:bit? Need Howard Baker's input on this]}
+
 The goals for the BBC micro:bit project were:
 \begin{itemize}
     \item[B1] to provide a simple creative experience for physical computing, wearable and Internet of Things (IoT) projects;
@@ -23,9 +31,12 @@ broad breadth engagement touching every county in the UK.
 
 In the remainder of this section, we describe the hardware and software
 of the micro:bit, the project history, and the experience deploying
-the micro:bit in the UK. {\bf callout (perhaps a sidebar) design decisions and
-lessons learned: we inherited quite a bit (web app, blockly) but differed
-(no C++ compiler needed for user code; ARM DAPlink avoids install for programmer)}
+the micro:bit in the UK. 
+
+{\bf [callout (perhaps a sidebar) design decisions and
+lessons learned: we inherited quite a bit (web app, blockly) from the reference
+design but differed
+(no C++ compiler needed for user code; ARM DAPlink avoids install for programmer)]}
 
 \subsection{The hardware}
 
@@ -132,7 +143,8 @@ USB pen drives without the need to install device drivers.
 
 \subsection{UK rollout: content and training}
 
-{\bf what other stories, data could we bring here }
+{\bf [What other stories, data could we bring here? right now, just focused mainly
+on teacher training] }
 
 Great hardware and software do not a full solution make. 
 Therefore,
@@ -164,13 +176,6 @@ Overall, teacher training, combined with the engagement of enthusiastic technolo
 %     \item \cite{knowles2018children} - Lancaster paper on what children want to create using the micro:bit -- inspirational?
 % \end{itemize}
 
-As mentioned in the Introduction, the motivation for the BBC micro:bit project
-stemmed from the BBC's previous history with computing education via the BBC Micro, 
-the desire to address the growing digital divide in the UK~\cite{XYZ},
-as well as the UK government's mandate to teach computer science at the K-12 grade levels.
-
-{\bf [Why did the BBC choose physical computing? Need Howard Baker's input on this]}
-
 In 2013-2014 ({\bf CHECK THIS}), the BBC created a prototype of the micro:bit, 
 documented via a reference implementation. School trials with this prototype 
 informed the BBC's decision to target Year 7. 
@@ -192,9 +197,9 @@ half of the 2015-2016 school year.
 The BBC micro:bit project partners agreed to open source all assets, both
 hardware and software. The main entry points are:
 \begin{itemize}
-\item \url{https://github.com/bbcmicrobit} for MicroPython, micro:bit hardware design, and micro:bit prototype;
-\item \url{https://github.com/microsoft/pxt-microbit} for MakeCode;~\footnote{
-MakeCode superceded the TouchDevelop for micro:bit web app~\cite{ball2016microsoft}, also developed by Microsoft.}
+\item {\tt \href{https://github.com/bbcmicrobit}{bbcmicrobit}} for MicroPython, micro:bit hardware design, and micro:bit prototype;
+\item {\tt \href{https://github.com/microsoft/pxt-microbit}{pxt-microbit}} for MakeCode for the micro:bit;~\footnote{
+MakeCode superceded the Touch Develop for micro:bit web app,\cite{ball2016microsoft} also developed by Microsoft.}
 \item {\tt \href{https://github.com/lancaster-university/microbit-dal}{microbit-dal}}             for the micro:bit
 C++ runtime.
 \end{itemize}
