@@ -462,7 +462,7 @@ flag to disable showing it in auto-completion.
 To put blocks into a previously defined group (see the [Category](/defining-blocks#category) section at the top of this page), use the `group` attribute.
 The name of the group must match exactly one of the groups you've defined on your namespace.
 
-> **Note**: When using the groups feature, block `weight` is only compared with weights other blocks in the same group.
+> **Note**: When using the groups feature, block `weight` is only compared with weights of other blocks in the same group.
 
 ```
 //% group="LED Matrix"
