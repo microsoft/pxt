@@ -184,6 +184,7 @@ namespace pxt.blocks.layout {
                 xsg.documentElement.insertBefore(cssLink, xsg.documentElement.firstElementChild);
 
                 return expandImagesAsync(xsg)
+                    .then(() => convertIconsToPngAsync(xsg))
                     .then(() => {
                         return <BlockSvg>{
                             width: width,
@@ -227,6 +228,31 @@ namespace pxt.blocks.layout {
                             pxt.debug(`svg render: failed to load ${href}`)
                         }))
                     .then(href => { image.setAttributeNS(XLINK_NAMESPACE, "href", href); })
+            });
+        return Promise.all(p).then(() => { })
+    }
+
+    let imageIconCache: pxt.Map<string>;
+    function convertIconsToPngAsync(xsg: Document): Promise<void> {
+        if (!imageIconCache) imageIconCache = {};
+
+        if (!(BrowserUtils.isIE() || BrowserUtils.isEdge())) return Promise.resolve();
+
+        const images = xsg.getElementsByTagName("image") as NodeListOf<Element>;
+        const p = pxt.Util.toArray(images)
+            .filter(image => /^data:image\/svg\+xml/.test(image.getAttributeNS(XLINK_NAMESPACE, "href")))
+            .map((image: HTMLImageElement) => {
+                const svgUri = image.getAttributeNS(XLINK_NAMESPACE, "href");
+                const width = parseInt(image.getAttribute("width").replace(/[^0-9]/g, ""));
+                const height = parseInt(image.getAttribute("height").replace(/[^0-9]/g, ""));
+                let pngUri = imageIconCache[svgUri];
+
+                return (pngUri ? Promise.resolve(pngUri)
+                    : toPngAsyncInternal(width, height, 4, svgUri))
+                    .then(href => {
+                        imageIconCache[svgUri] = href;
+                        image.setAttributeNS(XLINK_NAMESPACE, "href", href);
+                    })
             });
         return Promise.all(p).then(() => { })
     }
