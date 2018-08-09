@@ -6,7 +6,7 @@ namespace pxt.blocks {
     // The JS Math functions supported in the blocks. The order of this array
     // determines the order of the dropdown in the math_js_op block
     export const MATH_FUNCTIONS = {
-        unary: ["sqrt", "sin", "cos", "tan", "ceil", "floor"],
+        unary: ["sqrt", "sin", "cos", "tan", "round", "ceil", "floor", "trunc"],
         binary: ["atan2"]
     };
 
@@ -107,7 +107,7 @@ namespace pxt.blocks {
 
         const refMap: Map<pxtc.BlockParameter> = {};
 
-        const definitionsWithoutRefs = defParameters ? defParameters.filter(p =>  {
+        const definitionsWithoutRefs = defParameters ? defParameters.filter(p => {
             if (p.ref) {
                 refMap[p.name] = p;
                 return false;
@@ -158,7 +158,7 @@ namespace pxt.blocks {
                     (res.parameters as BlockParameter[]).push({
                         actualName: p.name,
                         type: p.type,
-                        defaultValue: isVar ? (def.varName || p.default) :  p.default,
+                        defaultValue: isVar ? (def.varName || p.default) : p.default,
                         definitionName: defName,
                         shadowBlockId: def && def.shadowBlockId,
                         isOptional: defParameters ? defParameters.indexOf(def) >= optionalStart : false,
@@ -383,27 +383,31 @@ namespace pxt.blocks {
             'math_js_op': {
                 name: Util.lf("math function"),
                 tooltip: {
+                    "sqrt": Util.lf("Returns the square root of the argument"),
                     "sin": Util.lf("Returns the sine of the argument"),
                     "cos": Util.lf("Returns the cosine of the argument"),
                     "tan": Util.lf("Returns the tangent of the argument"),
-                    "sqrt": Util.lf("Returns the square root of the argument"),
+                    "atan2": Util.lf("Returns the arctangent of the quotient of the two arguments"),
+                    "round": Util.lf("Returns the highest integer value lesser than or equal to the argument"),
                     "ceil": Util.lf("Returns the lowest integer value greater than or equal to the argument"),
                     "floor": Util.lf("Returns the highest integer value lesser than or equal to the argument"),
-                    "atan2": Util.lf("Returns the arctangent of the quotient of the two arguments"),
+                    "trunc": Util.lf("Returns the highest integer value lesser than or equal to the argument"),
                 },
                 url: '/blocks/math',
                 operators: {
-                    'OP': ["sqrt", "sin", "cos", "tan", "ceil", "floor", "atan2"]
+                    'OP': ["sqrt", "sin", "cos", "tan", "atan2", "round", "ceil", "floor", "trunc"]
                 },
                 category: 'math',
                 block: {
+                    "sqrt": Util.lf("{id:op}square root"),
                     "sin": Util.lf("{id:op}sin"),
                     "cos": Util.lf("{id:op}cos"),
                     "tan": Util.lf("{id:op}tan"),
-                    "sqrt": Util.lf("{id:op}square root"),
+                    "atan2": Util.lf("{id:op}atan2"),
+                    "round": Util.lf("{id:op}round"),
                     "ceil": Util.lf("{id:op}ceiling"),
                     "floor": Util.lf("{id:op}floor"),
-                    "atan2": Util.lf("{id:op}atan2"),
+                    "trunc": Util.lf("{id:op}truncate"),
                 }
             },
             'variables_change': {
