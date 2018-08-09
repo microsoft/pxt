@@ -1348,19 +1348,26 @@ export class ProjectView
 
         return (this.state.projectName !== lf("Untitled")
             ? Promise.resolve(true) : this.showRenameProjectDialogAsync())
-            .then(() => this.saveProjectNameAsync())
-            .then(() => this.saveFileAsync())
-            .then(() => {
-                if (!pxt.appTarget.compile.hasHex || pxt.appTarget.compile.useMkcd || pxt.appTarget.compile.saveAsPNG) {
-                    this.saveProjectToFileAsync()
-                        .finally(() => {
-                            this.setState({ isSaving: false });
-                        })
-                        .done();
+            .then((success) => {
+                if (!success) {
+                    // User cancelled
+                    this.setState({ isSaving: false });
+                    return Promise.resolve();
                 }
-                else {
-                    this.compile(true);
-                }
+                return this.saveProjectNameAsync()
+                    .then(() => this.saveFileAsync())
+                    .then(() => {
+                        if (!pxt.appTarget.compile.hasHex || pxt.appTarget.compile.useMkcd || pxt.appTarget.compile.saveAsPNG) {
+                            this.saveProjectToFileAsync()
+                                .finally(() => {
+                                    this.setState({ isSaving: false });
+                                })
+                                .done();
+                        }
+                        else {
+                            this.compile(true);
+                        }
+                    });
             });
     }
 
@@ -1955,7 +1962,7 @@ export class ProjectView
             defaultValue: lf("Enter your project name here")
         };
         return core.promptAsync(opts).then(res => {
-            if (!res) return Promise.resolve(false); // cancelled
+            if (res === null) return Promise.resolve(false); // null means cancelled, empty string means ok (but no value entered)
 
             return new Promise<void>((resolve, reject) => {
                 this.setState({ projectName: res }, () => resolve());
