@@ -9,6 +9,7 @@ import * as os from 'os';
 import * as util from 'util';
 import * as hid from './hid';
 import * as serial from './serial';
+import * as net from 'net';
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
@@ -378,13 +379,13 @@ export function expandHtml(html: string) {
 export function expandDocTemplateCore(template: string) {
     template = template
         .replace(/<!--\s*@include\s+(\S+)\s*-->/g,
-        (full, fn) => {
-            return `
+            (full, fn) => {
+                return `
 <!-- include ${fn} -->
 ${expandDocFileTemplate(fn)}
 <!-- end include ${fn} -->
 `
-        })
+            })
     return template
 }
 
@@ -553,6 +554,82 @@ function initSocketServer(wsPort: number, hostname: string) {
         })
     }
 
+    let openSockets: pxt.Map<net.Socket> = {};
+    function startTCP(request: http.IncomingMessage, socket: WebSocket, body: any) {
+        let ws = new WebSocket(request, socket, body);
+        ws.on('open', () => {
+            ws.send(JSON.stringify({ id: "ready" }))
+        })
+        ws.on('message', function (event: any) {
+            try {
+                let msg = JSON.parse(event.data);
+                pxt.debug(`tcp: msg ${msg.op}`) // , objToString(msg.arg))
+
+                Promise.resolve()
+                    .then(() => {
+                        let sock = openSockets[msg.arg.socket]
+                        switch (msg.op) {
+                            case "close":
+                                sock.end();
+                                return {}
+                            case "open":
+                                return new Promise((resolve, reject) => {
+                                    const newSock = new net.Socket()
+                                    const id = pxt.U.guidGen()
+                                    newSock.connect(msg.arg.port, msg.arg.host, () => {
+                                        openSockets[id] = newSock
+                                        resolve({ socket: id })
+                                    })
+                                    newSock.on('data', d => {
+                                        ws.send(JSON.stringify({ op: "data", socket: id, data: d.toString("hex") }))
+                                    })
+                                    newSock.on('close', () => {
+                                        ws.send(JSON.stringify({ op: "close", socket: id }))
+                                    })
+                                })
+
+                            case "send":
+                                sock.write(new Buffer(msg.arg.data, msg.arg.encoding || "utf8"))
+                                return {}
+                            default: // unknown message
+                                pxt.log(`unknown tcp message ${msg.op}`)
+                                return null;
+                        }
+                    })
+                    .done(resp => {
+                        if (!ws) return;
+                        pxt.debug(`hid: resp ${objToString(resp)}`)
+                        ws.send(JSON.stringify({
+                            op: msg.op,
+                            id: msg.id,
+                            result: resp
+                        }))
+                    }, error => {
+                        pxt.log(`hid: error  ${error.message}`)
+                        if (!ws) return;
+                        ws.send(JSON.stringify({
+                            result: {
+                                errorMessage: error.message || "Error",
+                                errorStackTrace: error.stack,
+                            },
+                            op: msg.op,
+                            id: msg.id
+                        }))
+                    })
+            } catch (e) {
+                console.log("ws tcp error", e.stack)
+            }
+        });
+        ws.on('close', function (event: any) {
+            console.log('ws tcp connection closed')
+            ws = null;
+        });
+        ws.on('error', function () {
+            console.log('ws tcp connection closed')
+            ws = null;
+        })
+    }
+
     function startDebug(request: http.IncomingMessage, socket: WebSocket, body: any) {
         let ws = new WebSocket(request, socket, body);
         let dapjs: any
@@ -615,6 +692,8 @@ function initSocketServer(wsPort: number, hostname: string) {
                     startDebug(request, socket, body);
                 else if (request.url == "/" + serveOptions.localToken + "/hid")
                     startHID(request, socket, body);
+                else if (request.url == "/" + serveOptions.localToken + "/tcp")
+                    startTCP(request, socket, body);
                 else {
                     console.log('refused connection at ' + request.url);
                     socket.close(403);
