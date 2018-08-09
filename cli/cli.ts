@@ -49,6 +49,9 @@ function initTargetCommands() {
         if (cli.deployCoreAsync) {
             pxt.commands.deployCoreAsync = cli.deployCoreAsync
         }
+        if (cli.addCommands) {
+            cli.addCommands(p)
+        }
     }
 }
 
