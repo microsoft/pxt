@@ -189,7 +189,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
     installGh(scr: pxt.github.GitRepo) {
         pxt.tickEvent("packages.github", { name: scr.fullName });
         this.hide();
-        core.showLoading("downloadingpackage", lf("downloading package..."));
+        core.showLoading("downloadingpackage", lf("downloading extension..."));
         pxt.packagesConfigAsync()
             .then(config => pxt.github.latestVersionAsync(scr.fullName, config))
             .then(tag => pxt.github.pkgConfigAsync(scr.fullName, tag)
@@ -212,27 +212,27 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                 if (inUse.length) {
                     addDependencyPromise = addDependencyPromise
                         .then(() => core.confirmAsync({
-                            header: lf("Cannot add {0} package", config.name),
+                            header: lf("Cannot add {0} extension", config.name),
                             hideCancel: true,
                             agreeLbl: lf("Ok"),
-                            body: lf("Remove all the blocks from the {0} package and try again.", inUse[0].pkg0.id)
+                            body: lf("Remove all the blocks from the {0} extension and try again.", inUse[0].pkg0.id)
                         }))
                         .then(() => {
                             return false;
                         });
                 } else if (conflicts.length) {
                     const body = conflicts.length === 1 ?
-                        // Single conflict: "Package a is..."
-                        lf("Package {0} is incompatible with {1}. Remove {0} and add {1}?", conflicts[0].pkg0.id, config.name) :
-                        // 2 conflicts: "Packages A and B are..."; 3+ conflicts: "Packages A, B, C and D are..."
-                        lf("Packages {0} and {1} are incompatible with {2}. Remove them and add {2}?", conflicts.slice(0, -1).map((c) => c.pkg0.id).join(", "), conflicts.slice(-1)[0].pkg0.id, config.name);
+                        // Single conflict: "Extension A is..."
+                        lf("Extension {0} is incompatible with {1}. Remove {0} and add {1}?", conflicts[0].pkg0.id, config.name) :
+                        // 2 conflicts: "Extensions A and B are..."; 3+ conflicts: "Extensions A, B, C and D are..."
+                        lf("Extensions {0} and {1} are incompatible with {2}. Remove them and add {2}?", conflicts.slice(0, -1).map((c) => c.pkg0.id).join(", "), conflicts.slice(-1)[0].pkg0.id, config.name);
 
                     addDependencyPromise = addDependencyPromise
                         .then(() => this.state.mode == ScriptSearchMode.Boards
                             ? Promise.resolve(1)
                             : core.confirmAsync({
-                                header: lf("Some packages will be removed"),
-                                agreeLbl: lf("Remove package(s) and add {0}", config.name),
+                                header: lf("Some extensions will be removed"),
+                                agreeLbl: lf("Remove extension(s) and add {0}", config.name),
                                 agreeClass: "pink",
                                 body
                             }))
@@ -286,7 +286,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         }
 
         const headerText = boards ? lf("Boards") : lf("Extensions");
-        const description = boards ? lf("Change development board") : lf("Add a package to the project");
+        const description = boards ? lf("Change development board") : lf("Add an extension to the project");
         const helpPath = boards ? "/boards" : "/packages";
         return (
             <sui.Modal isOpen={this.state.visible} dimmer={true}
@@ -362,7 +362,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                             <ScriptSearchCodeCard
                                 name={scr.name.replace(/^pxt-/, "")}
                                 description={(scr.description || "")}
-                                extracontent={lf("User provided package, not endorsed by Microsoft.")}
+                                extracontent={lf("User-provided extension, not endorsed by Microsoft.")}
                                 key={'ghd' + scr.fullName}
                                 scr={scr}
                                 onCardClick={this.installGh}
@@ -375,7 +375,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                     {isEmpty() ?
                         <div className="ui items">
                             <div className="ui item">
-                                {lf("We couldn't find any packages matching '{0}'", this.state.searchFor)}
+                                {lf("We couldn't find any extensions matching '{0}'", this.state.searchFor)}
                             </div>
                         </div>
                         : undefined}
