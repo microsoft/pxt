@@ -557,6 +557,7 @@ function initSocketServer(wsPort: number, hostname: string) {
     let openSockets: pxt.Map<net.Socket> = {};
     function startTCP(request: http.IncomingMessage, socket: WebSocket, body: any) {
         let ws = new WebSocket(request, socket, body);
+        let netSockets: net.Socket[] = []
         ws.on('open', () => {
             ws.send(JSON.stringify({ id: "ready" }))
         })
@@ -571,20 +572,24 @@ function initSocketServer(wsPort: number, hostname: string) {
                         switch (msg.op) {
                             case "close":
                                 sock.end();
+                                let idx = netSockets.indexOf(sock)
+                                if (idx >= 0)
+                                    netSockets.splice(idx, 1)
                                 return {}
                             case "open":
                                 return new Promise((resolve, reject) => {
                                     const newSock = new net.Socket()
+                                    netSockets.push(newSock)
                                     const id = pxt.U.guidGen()
                                     newSock.connect(msg.arg.port, msg.arg.host, () => {
                                         openSockets[id] = newSock
                                         resolve({ socket: id })
                                     })
                                     newSock.on('data', d => {
-                                        ws.send(JSON.stringify({ op: "data", socket: id, data: d.toString("hex") }))
+                                        ws.send(JSON.stringify({ op: "data", result: { socket: id, data: d.toString("base64"), encoding: "base64" } }))
                                     })
                                     newSock.on('close', () => {
-                                        ws.send(JSON.stringify({ op: "close", socket: id }))
+                                        ws.send(JSON.stringify({ op: "close", result: { socket: id } }))
                                     })
                                 })
 
@@ -620,14 +625,14 @@ function initSocketServer(wsPort: number, hostname: string) {
                 console.log("ws tcp error", e.stack)
             }
         });
-        ws.on('close', function (event: any) {
+        function closeAll() {
             console.log('ws tcp connection closed')
             ws = null;
-        });
-        ws.on('error', function () {
-            console.log('ws tcp connection closed')
-            ws = null;
-        })
+            for (let s of netSockets)
+                s.end()
+        }
+        ws.on('close', closeAll);
+        ws.on('error', closeAll);
     }
 
     function startDebug(request: http.IncomingMessage, socket: WebSocket, body: any) {
