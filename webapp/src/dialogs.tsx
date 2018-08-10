@@ -172,8 +172,6 @@ function renderCompileLink(cs: pxt.TargetCompileService) {
     let name: string;
 
     if (typeof cs.codalTarget === "object" && typeof cs.codalTarget.url === "string") {
-        // There is also a branch in this object but looks like it is sometimes a branch and sometimes a tag
-        // so can't really generate a good URL
         url = cs.codalTarget.branch ? pxt.BrowserUtils.joinURLs(cs.codalTarget.url, "releases/tag", cs.codalTarget.branch) : cs.codalTarget.url;
         version = cs.codalTarget.branch || "master";
         name = cs.codalTarget.name || cs.serviceId;
