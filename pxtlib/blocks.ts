@@ -7,7 +7,7 @@ namespace pxt.blocks {
     // determines the order of the dropdown in the math_js_op block
     export const MATH_FUNCTIONS = {
         unary: ["sqrt", "sin", "cos", "tan", "round", "ceil", "floor", "trunc"],
-        binary: ["atan2"]
+        binary: ["atan2", "idiv", "imul"]
     };
 
     export interface BlockParameter {
@@ -392,10 +392,12 @@ namespace pxt.blocks {
                     "ceil": Util.lf("Returns the lowest integer value greater than or equal to the argument"),
                     "floor": Util.lf("Returns the highest integer value lesser than or equal to the argument"),
                     "trunc": Util.lf("Returns the highest integer value lesser than or equal to the argument"),
+                    "idiv": Util.lf("Returns the integer portion of the division operation on the two arguments"),
+                    "imul": Util.lf("Returns the integer portion of the multiplication operation on the two arguments")
                 },
                 url: '/blocks/math',
                 operators: {
-                    'OP': ["sqrt", "sin", "cos", "tan", "atan2", "round", "ceil", "floor", "trunc"]
+                    'OP': ["sqrt", "sin", "cos", "tan", "atan2", "round", "ceil", "floor", "trunc", "idiv", "imul"]
                 },
                 category: 'math',
                 block: {
@@ -408,6 +410,8 @@ namespace pxt.blocks {
                     "ceil": Util.lf("{id:op}ceiling"),
                     "floor": Util.lf("{id:op}floor"),
                     "trunc": Util.lf("{id:op}truncate"),
+                    "idiv": Util.lf("{id:op}integer ÷"),
+                    "imul": Util.lf("{id:op}integer ×"),
                 }
             },
             'variables_change': {
