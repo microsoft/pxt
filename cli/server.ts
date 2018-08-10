@@ -581,6 +581,10 @@ function initSocketServer(wsPort: number, hostname: string) {
                                     const newSock = new net.Socket()
                                     netSockets.push(newSock)
                                     const id = pxt.U.guidGen()
+                                    newSock.on('error', err => {
+                                        if (ws)
+                                            ws.send(JSON.stringify({ op: "error", result: { socket: id, error: err.message } }))
+                                    })
                                     newSock.connect(msg.arg.port, msg.arg.host, () => {
                                         openSockets[id] = newSock
                                         resolve({ socket: id })
