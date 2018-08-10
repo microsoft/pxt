@@ -10,7 +10,7 @@ namespace pxt {
         private onResponse: (s: string) => void;
         private onEvent = (s: string) => { }
 
-        constructor(public io: pxt.HF2.PacketIO) {
+        constructor(public io: pxt.TCPIO) {
             this.io.onData = b => this.onData(b)
         }
 
@@ -112,7 +112,16 @@ namespace pxt {
         initAsync() {
             return this.sendCmdAsync("qSupported")
                 .then(res => {
+                    let caps = res.split(/;/)
+                    console.log("GDB-server caps: ", caps)
+                    // return this.sendCmdAsync("?") // reason for stop
                 })
+                // .then(res => this.sendCmdAsync("Hc-1")) // select all threads
+                // .then(res => this.sendCmdAsync("Hg-1")) // select all threads
+                .then(res => {
+                    return this.sendCmdAsync("c", false) // continue; don't expect response
+                })
+                .then(() => {})
         }
     }
 }

@@ -25,11 +25,7 @@ function onOOB(v: OOB) {
 
 export function tryInit() {
     if (Cloud.isLocalHost() && Cloud.localToken) {
-        pxt.mkTCPSocketAsync = (h, p) => {
-            const s = new TCPSocket(h, p)
-            return s.initAsync()
-                .then(() => s)
-        }
+        pxt.mkTCPSocket = (h, p) => new TCPSocket(h, p)
     }
 }
 
@@ -73,23 +69,26 @@ class TCPSocket implements pxt.TCPIO {
             return Promise.resolve()
         return iface.opAsync("close", {
             socket: this.sockId
+        }).then(() => {
+            this.sockId = null
         })
     }
 
     sendPacketAsync(pkt: Uint8Array): Promise<void> {
-        return this.initAsync()
-            .then(() => iface.opAsync("send", {
-                socket: this.sockId,
-                data: U.toHex(pkt),
-                encoding: "hex"
-            }))
+        if (!this.sockId)
+            U.userError("Not connected")
+        return iface.opAsync("send", {
+            socket: this.sockId,
+            data: U.toHex(pkt),
+            encoding: "hex"
+        })
     }
 
     sendSerialAsync(buf: Uint8Array, useStdErr: boolean): Promise<void> {
         return Promise.reject(new Error("No serial on socket"))
     }
 
-    initAsync(): Promise<void> {
+    connectAsync(): Promise<void> {
         init()
         if (this.sockId)
             return Promise.resolve()

@@ -586,10 +586,12 @@ function initSocketServer(wsPort: number, hostname: string) {
                                         resolve({ socket: id })
                                     })
                                     newSock.on('data', d => {
-                                        ws.send(JSON.stringify({ op: "data", result: { socket: id, data: d.toString("base64"), encoding: "base64" } }))
+                                        if (ws)
+                                            ws.send(JSON.stringify({ op: "data", result: { socket: id, data: d.toString("base64"), encoding: "base64" } }))
                                     })
                                     newSock.on('close', () => {
-                                        ws.send(JSON.stringify({ op: "close", result: { socket: id } }))
+                                        if (ws)
+                                            ws.send(JSON.stringify({ op: "close", result: { socket: id } }))
                                     })
                                 })
 
@@ -628,8 +630,11 @@ function initSocketServer(wsPort: number, hostname: string) {
         function closeAll() {
             console.log('ws tcp connection closed')
             ws = null;
-            for (let s of netSockets)
-                s.end()
+            for (let s of netSockets) {
+                try {
+                    s.end()
+                } catch (e) { }
+            }
         }
         ws.on('close', closeAll);
         ws.on('error', closeAll);

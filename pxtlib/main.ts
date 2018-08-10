@@ -11,14 +11,15 @@ namespace pxt {
 
 
     export interface TCPIO {
-        sendPacketAsync(pkt: Uint8Array): Promise<void>;
         onData: (v: Uint8Array) => void;
         onError: (e: Error) => void;
+        connectAsync(): Promise<void>;
+        sendPacketAsync(pkt: Uint8Array): Promise<void>;
         error(msg: string): any;
         disconnectAsync(): Promise<void>;
     }
 
-    export let mkTCPSocketAsync: (host: string, port: number) => Promise<TCPIO>;
+    export let mkTCPSocket: (host: string, port: number) => TCPIO;
 
     let savedAppTarget: TargetBundle;
     export function setAppTarget(trg: TargetBundle) {

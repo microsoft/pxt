@@ -37,6 +37,7 @@ import * as make from "./make";
 import * as blocklyToolbox from "./blocksSnippets";
 import * as monacoToolbox from "./monacoSnippets";
 import * as greenscreen from "./greenscreen";
+import * as socketbridge from "./socketbridge";
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -2796,6 +2797,7 @@ document.addEventListener("DOMContentLoaded", () => {
             initSerial();
             initScreenshots();
             initHashchange();
+            socketbridge.tryInit();
             return initExtensionsAsync();
         })
         .then(() => {
