@@ -34,11 +34,11 @@ namespace pxt.vs {
         mainPkg.sortedDeps().forEach(pkg => {
             pkg.getFiles().forEach(f => {
                 let fp = pkg.id + "/" + f;
-                let proto = "pkg:" + fp;
+                let fpname = "node_modules/" + fp;
                 if (/\.(ts)$/.test(f) && fp != currFile) {
-                    if (!(monaco.languages.typescript.typescriptDefaults as any).getExtraLibs()[fp]) {
+                    if (!(monaco.languages.typescript.typescriptDefaults as any).getExtraLibs()[fpname]) {
                         let content = pkg.readFile(f) || " ";
-                        libs[fp] = monaco.languages.typescript.typescriptDefaults.addExtraLib(content, fp);
+                        libs[fp] = monaco.languages.typescript.typescriptDefaults.addExtraLib(content, fpname);
                     }
                     modelMap[fp] = "1";
                 }
