@@ -137,6 +137,7 @@ export function showAboutDialogAsync() {
     const githubUrl = pxt.appTarget.appTheme.githubUrl;
     const targetTheme = pxt.appTarget.appTheme;
     const versions: pxt.TargetVersions = pxt.appTarget.versions;
+    const showCompile = compileService && compileService.githubCorePackage && compileService.gittag && compileService.serviceId;
 
     core.confirmAsync({
         header: lf("About"),
@@ -145,18 +146,14 @@ export function showAboutDialogAsync() {
         agreeClass: "positive",
         jsx: <div>
             {githubUrl && versions ?
-                <p>
-                    {lf("{0} version:", pxt.appTarget.name)} &nbsp;
-                    <a href={encodeURI(`${githubUrl}/releases/tag/v${versions.target}`)}
-                        title={`${lf("{0} version : {1}", pxt.appTarget.name, versions.target)}`}
-                        target="_blank" rel="noopener noreferrer">{pxt.appTarget.versions.target}</a>
-                </p> : undefined}
+                renderVersionLink(pxt.appTarget.name, versions.target, `${githubUrl}/releases/tag/v${versions.target}`)
+                : undefined}
             {versions ?
-                <p>{lf("{0} version:", "Microsoft MakeCode")} &nbsp;
-                    <a href={encodeURI(`https://github.com/Microsoft/pxt/releases/tag/v${versions.pxt}`)}
-                        title={`${lf("{0} version: {1}", "Microsoft MakeCode", versions.pxt)}`}
-                        target="_blank" rel="noopener noreferrer">{versions.pxt}</a>
-                </p> : undefined}
+                renderVersionLink("Microsoft MakeCode", versions.pxt, `https://github.com/Microsoft/pxt/releases/tag/v${versions.pxt}`)
+                : undefined}
+            {showCompile ?
+                renderCompileLink(compileService)
+                : undefined}
             <p><br /></p>
             <p>
                 {targetTheme.termsOfUseUrl ? <a target="_blank" className="item" href={targetTheme.termsOfUseUrl} rel="noopener noreferrer">{lf("Terms of Use")}</a> : undefined}
@@ -167,6 +164,36 @@ export function showAboutDialogAsync() {
 
     }).done();
 }
+
+
+function renderCompileLink(cs: pxt.TargetCompileService) {
+    let url: string;
+    let version: string;
+    let name: string;
+
+    if (typeof cs.codalTarget === "object" && typeof cs.codalTarget.url === "string") {
+        url = cs.codalTarget.branch ? pxt.BrowserUtils.joinURLs(cs.codalTarget.url, "releases/tag", cs.codalTarget.branch) : cs.codalTarget.url;
+        version = cs.codalTarget.branch || "master";
+        name = cs.codalTarget.name || cs.serviceId;
+    }
+    else {
+        url = `https://github.com/${cs.githubCorePackage}/releases/tag/${cs.gittag}`;
+        version = cs.gittag;
+        name = cs.serviceId;
+    }
+
+    return renderVersionLink(lf("{0} runtime", name), version, url);
+}
+
+function renderVersionLink(name: string, version: string, url: string) {
+    return <p>{lf("{0} version:", name)} &nbsp;
+            <a href={encodeURI(url)}
+                title={`${lf("{0} version: {1}", name, version)}`}
+                target="_blank" rel="noopener noreferrer">{version}</a>
+        </p>;
+}
+
+
 
 export function showCommitDialogAsync(repo: string) {
     let input: HTMLInputElement;

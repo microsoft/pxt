@@ -509,4 +509,17 @@ namespace pxt.BrowserUtils {
             urlPath2.substring(1) : urlPath2;
         return normalizedUrl1 + "/" + normalizedUrl2;
     }
+
+    /**
+     * Simple utility method to join multiple urls.
+     */
+    export function joinURLs(...parts: string[]): string {
+        let result: string;
+        if (parts) {
+            for (let i = 0; i < parts.length; i++) {
+                result = urlJoin(result, parts[i]);
+            }
+        }
+        return result;
+    }
 }
