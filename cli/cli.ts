@@ -49,6 +49,9 @@ function initTargetCommands() {
         if (cli.deployCoreAsync) {
             pxt.commands.deployCoreAsync = cli.deployCoreAsync
         }
+        if (cli.addCommands) {
+            cli.addCommands(p)
+        }
     }
 }
 
@@ -3479,6 +3482,12 @@ function prepBuildOptionsAsync(mode: BuildOption, quick = false, ignoreTests = f
                 opts.testMode = true
             if (mode == BuildOption.GenDocs)
                 opts.ast = true
+
+            if (pxt.appTarget.compile.postProcessSymbols && (mode == BuildOption.Deploy || mode == BuildOption.JustBuild)) {
+                opts.computeUsedSymbols = true
+                opts.ast = true
+            }
+
             return opts;
         })
 }
@@ -3561,6 +3570,13 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
             }
 
             pxt.log(`package built; written to ${pxt.outputName()}`);
+
+            if (res.usedSymbols && compileOptions.computeUsedSymbols) {
+                const apiInfo = pxtc.getApiInfo(compileOptions, res.ast)
+                for (let k of Object.keys(res.usedSymbols)) {
+                    res.usedSymbols[k] = apiInfo.byQName[k] || null
+                }
+            }
 
             switch (buildOpts.mode) {
                 case BuildOption.GenDocs:

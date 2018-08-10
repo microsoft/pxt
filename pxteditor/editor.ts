@@ -267,7 +267,8 @@ namespace pxt.editor {
         hexFileImporters?: IHexFileImporter[];
         resourceImporters?: IResourceImporter[];
         beforeCompile?: () => void;
-        deployCoreAsync?: (resp: pxtc.CompileResult) => Promise<void>;
+        patchCompileResultAsync?: (r: pxtc.CompileResult) => Promise<void>;
+        deployCoreAsync?: (r: pxtc.CompileResult) => Promise<void>;
         saveOnlyAsync?: (r: ts.pxtc.CompileResult) => Promise<void>;
         saveProjectAsync?: (project: pxt.cpp.HexFile) => Promise<void>;
         showUploadInstructionsAsync?: (fn: string, url: string, confirmAsync: (options: any) => Promise<number>) => Promise<void>;

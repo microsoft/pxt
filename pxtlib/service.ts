@@ -295,6 +295,7 @@ namespace ts.pxtc {
         saveOnly?: boolean;
         userContextWindow?: Window;
         downloadFileBaseName?: string;
+        headerId?: string;
         confirmAsync?: (confirmOptions: {}) => Promise<number>;
         configData?: ConfigEntry[];
     }

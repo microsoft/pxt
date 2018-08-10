@@ -37,6 +37,7 @@ import * as make from "./make";
 import * as blocklyToolbox from "./blocksSnippets";
 import * as monacoToolbox from "./monacoSnippets";
 import * as greenscreen from "./greenscreen";
+import * as socketbridge from "./socketbridge";
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -1412,18 +1413,27 @@ export class ProjectView
         if (simRestart) this.stopSimulator();
         let state = this.editor.snapshotState()
         compiler.compileAsync({ native: true, forceEmit: true, preferredEditor: this.getPreferredEditor() })
-            .then(resp => {
+            .then<pxtc.CompileResult>(resp => {
                 this.editor.setDiagnostics(this.editorFile, state)
                 let fn = pxt.outputName()
                 if (!resp.outfiles[fn]) {
                     pxt.tickEvent("compile.noemit")
                     core.warningNotification(lf("Compilation failed, please check your code for errors."));
-                    return Promise.resolve()
+                    return Promise.resolve(null)
                 }
                 resp.saveOnly = saveOnly
                 resp.userContextWindow = userContextWindow;
                 resp.downloadFileBaseName = pkg.genFileName("");
                 resp.confirmAsync = core.confirmAsync;
+                let h = this.state.header
+                if (h)
+                    resp.headerId = h.id
+                if (pxt.commands.patchCompileResultAsync)
+                    return pxt.commands.patchCompileResultAsync(resp).then(() => resp)
+                else
+                    return resp
+            }).then(resp => {
+                if (!resp) return Promise.resolve();
                 if (saveOnly) {
                     return pxt.commands.saveOnlyAsync(resp);
                 }
@@ -2649,6 +2659,10 @@ function initExtensionsAsync(): Promise<void> {
                 pxt.debug(`\tadded custom upload instructions async`);
                 pxt.commands.showUploadInstructionsAsync = res.showUploadInstructionsAsync;
             }
+            if (res.patchCompileResultAsync) {
+                pxt.debug(`\tadded build patch`);
+                pxt.commands.patchCompileResultAsync = res.patchCompileResultAsync;
+            }
             if (res.beforeCompile) {
                 theEditor.beforeCompile = res.beforeCompile;
             }
@@ -2790,6 +2804,7 @@ document.addEventListener("DOMContentLoaded", () => {
             initSerial();
             initScreenshots();
             initHashchange();
+            socketbridge.tryInit();
             return initExtensionsAsync();
         })
         .then(() => {

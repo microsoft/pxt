@@ -9,6 +9,18 @@ namespace pxt {
     export import U = pxtc.Util;
     export import Util = pxtc.Util;
 
+
+    export interface TCPIO {
+        onData: (v: Uint8Array) => void;
+        onError: (e: Error) => void;
+        connectAsync(): Promise<void>;
+        sendPacketAsync(pkt: Uint8Array): Promise<void>;
+        error(msg: string): any;
+        disconnectAsync(): Promise<void>;
+    }
+
+    export let mkTCPSocket: (host: string, port: number) => TCPIO;
+
     let savedAppTarget: TargetBundle;
     export function setAppTarget(trg: TargetBundle) {
         appTarget = trg || <TargetBundle>{};
