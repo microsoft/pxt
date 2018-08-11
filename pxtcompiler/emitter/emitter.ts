@@ -960,8 +960,26 @@ namespace ts.pxtc {
         lastNodeId = 0
         currNodeWave++
 
-        if (opts.target.jsMode)
-            return program.emit()
+        if (opts.target.jsMode) {
+            let r = program.emit()
+            if (opts.target.jsMode == "node") {
+                for (let fn of Object.keys(res.outfiles)) {
+                    let fn2 = fn.replace("pxt_modules/", "node_modules/")
+                    if (fn != fn2) {
+                        res.outfiles[fn2] = res.outfiles[fn]
+                        delete res.outfiles[fn]
+                    }
+                }
+                if (res.outfiles["node_modules/core/mainstub.js"] && !res.outfiles["index.js"])
+                    res.outfiles["index.js"] = `
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const m = require("core/mainstub");
+for (let p in m) exports[p] = m[p];
+`
+            }
+            return r
+        }
 
         if (opts.target.isNative) {
             if (!opts.hexinfo) {

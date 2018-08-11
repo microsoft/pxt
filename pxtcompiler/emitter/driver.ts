@@ -138,7 +138,6 @@ namespace ts.pxtc {
                 return createSourceFile(fn, text, v, setParentNodes)
             },
             fileExists: fn => {
-                console.log("file ex: " + fn)
                 fn = normalizePath(fn)
                 return fileText.hasOwnProperty(fn)
             },
