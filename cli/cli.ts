@@ -135,6 +135,8 @@ function initConfigAsync(): Promise<void> {
                 });
     }
 
+    (global as any).globalConfig = globalConfig;
+
     p.then(() => {
         if (atok) {
             let mm = /^(https?:.*)\?access_token=([\w\.]+)/.exec(atok)
