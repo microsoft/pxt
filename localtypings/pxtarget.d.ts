@@ -318,6 +318,7 @@ declare namespace ts.pxtc {
         useMkcd?: boolean;
         useELF?: boolean;
         saveAsPNG?: boolean;
+        downloadButton?: boolean;
         noSourceInFlash?: boolean;
         useModulator?: boolean;
         webUSB?: boolean; // use WebUSB when supported

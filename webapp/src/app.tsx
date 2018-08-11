@@ -1404,11 +1404,11 @@ export class ProjectView
         this.editor.beforeCompile();
         if (simRestart) this.stopSimulator();
         let state = this.editor.snapshotState()
-        compiler.compileAsync({ native: true, forceEmit: true, preferredEditor: this.getPreferredEditor() })
+        compiler.compileAsync({ native: pxt.appTarget.compile.hasHex, forceEmit: true, preferredEditor: this.getPreferredEditor() })
             .then(resp => {
                 this.editor.setDiagnostics(this.editorFile, state)
                 let fn = pxt.outputName()
-                if (!resp.outfiles[fn]) {
+                if (!resp.outfiles[fn] && !pxt.appTarget.compile.jsMode) {
                     pxt.tickEvent("compile.noemit")
                     core.warningNotification(lf("Compilation failed, please check your code for errors."));
                     return Promise.resolve()

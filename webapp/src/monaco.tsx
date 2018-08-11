@@ -314,7 +314,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 run: () => Promise.resolve(this.parent.runSimulator())
             });
 
-            if (pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
+            if (pxt.appTarget.compile && (pxt.appTarget.compile.hasHex || pxt.appTarget.compile.downloadButton)) {
                 this.editor.addAction({
                     id: "compileHex",
                     label: lf("Download"),
