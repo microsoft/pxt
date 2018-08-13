@@ -7,7 +7,8 @@ namespace pxt.blocks {
     // determines the order of the dropdown in the math_js_op block
     export const MATH_FUNCTIONS = {
         unary: ["sqrt", "sin", "cos", "tan", "round", "ceil", "floor", "trunc"],
-        binary: ["atan2", "idiv", "imul"]
+        binary: ["atan2"],
+        infix: ["idiv", "imul"]
     };
 
     export interface BlockParameter {

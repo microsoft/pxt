@@ -1388,7 +1388,13 @@ ${output}</xml>`;
                     const r = mkExpr("math_js_op");
                     r.inputs = info.args.map((arg, index) => mkValue("ARG" + index, getOutputBlock(arg), "math_number"))
                     r.fields = [getField("OP", op)];
-                    r.mutation = { "op-type": info.args.length == 2 ? "binary" : "unary" };
+
+                    let opType: string;
+                    if (isUnaryMathFunction(op)) opType = "unary";
+                    else if (isInfixMathFunction(op)) opType = "infix";
+                    else opType = "binary";
+
+                    r.mutation = { "op-type": opType };
                     return r;
                 }
             }
@@ -2827,6 +2833,15 @@ ${output}</xml>`;
     }
 
     function isSupportedMathFunction(op: string) {
-        return pxt.blocks.MATH_FUNCTIONS.unary.indexOf(op) !== -1 || pxt.blocks.MATH_FUNCTIONS.binary.indexOf(op) !== -1;
+        return isUnaryMathFunction(op) || isInfixMathFunction(op) ||
+            pxt.blocks.MATH_FUNCTIONS.binary.indexOf(op) !== -1;
+    }
+
+    function isUnaryMathFunction(op: string) {
+        return pxt.blocks.MATH_FUNCTIONS.unary.indexOf(op) !== -1
+    }
+
+    function isInfixMathFunction(op: string) {
+        return pxt.blocks.MATH_FUNCTIONS.infix.indexOf(op) !== -1;
     }
 }
