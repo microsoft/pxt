@@ -193,6 +193,7 @@ namespace ts.pxtc {
         saveOnly?: boolean;
         userContextWindow?: Window;
         downloadFileBaseName?: string;
+        confirmAsync?: (confirmOptions: {}) => Promise<number>;
     }
 
     export interface Breakpoint extends LocationInfo {

@@ -1089,6 +1089,7 @@ export class ProjectView
                 resp.saveOnly = saveOnly
                 resp.userContextWindow = userContextWindow;
                 resp.downloadFileBaseName = pkg.genFileName("");
+                resp.confirmAsync = core.confirmAsync;
                 if (saveOnly) {
                     return pxt.commands.saveOnlyAsync(resp);
                 }
