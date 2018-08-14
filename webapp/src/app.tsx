@@ -455,11 +455,6 @@ export class ProjectView
             },
             editor: this.state.header ? this.state.header.editor : ''
         })
-        if (pxt.appTarget.appTheme.allowParentController
-            || pxt.appTarget.appTheme.allowPackageExtensions
-            || pxt.appTarget.appTheme.allowSimulatorTelemetry
-            || pxt.shell.isControllerMode())
-            pxt.editor.bindEditorMessages(this);
         this.forceUpdate(); // we now have editors prepared
     }
 
@@ -2795,12 +2790,20 @@ document.addEventListener("DOMContentLoaded", () => {
         })
         .then(() => pxt.BrowserUtils.initTheme())
         .then(() => cmds.initCommandsAsync())
-        .then(() => workspace.initAsync())
+        .then(() => {
+            // editor messages need to be enabled early, in case workspace provider is IFrame
+            if (pxt.appTarget.appTheme.allowParentController
+                || pxt.appTarget.appTheme.allowPackageExtensions
+                || pxt.appTarget.appTheme.allowSimulatorTelemetry
+                || pxt.shell.isControllerMode())
+                pxt.editor.bindEditorMessages(this);
+    
+            return workspace.initAsync()
+        })
         .then((state) => {
-            if (state) {
+            render(); // this sets theEditor            
+            if (state)
                 theEditor.setState({ editorState: state });
-            }
-            render();
             initSerial();
             initScreenshots();
             initHashchange();
