@@ -175,7 +175,7 @@ namespace pxt.cpp {
 
         const isCSharp = compile.nativeType == pxtc.NATIVE_TYPE_CS
         const isPlatformio = !!compileService.platformioIni;
-        const isCodal = compileService.buildEngine == "codal"
+        const isCodal = compileService.buildEngine == "codal" || compileService.buildEngine == "dockercodal"
         const isDockerMake = compileService.buildEngine == "dockermake"
         const isYotta = !isCSharp && !isPlatformio && !isCodal && !isDockerMake
         if (isPlatformio)

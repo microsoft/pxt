@@ -76,6 +76,18 @@ export const buildEngines: Map<BuildEngine> = {
         appPath: "pxtapp"
     },
 
+    dockercodal: {
+        updateEngineAsync: updateCodalBuildAsync,
+        buildAsync: () => runDockerAsync(["python", "build.py"]),
+        setPlatformAsync: noopAsync,
+        patchHexInfo: patchCodalHexInfo,
+        prepBuildDirAsync: prepCodalBuildDirAsync,
+        buildPath: "built/dockercodal",
+        moduleConfig: "codal.json",
+        deployAsync: msdDeployCoreAsync,
+        appPath: "pxtapp"
+    },
+
     dockermake: {
         updateEngineAsync: () => runBuildCmdAsync(nodeutil.addCmd("npm"), "install"),
         buildAsync: () => runDockerAsync(["make"]),
@@ -105,6 +117,8 @@ export const buildEngines: Map<BuildEngine> = {
 export let thisBuild = buildEngines['yotta']
 
 export function setThisBuild(b: BuildEngine) {
+    if (b === buildEngines["codal"] && pxt.appTarget.compileService.dockerImage)
+        b = buildEngines["dockercodal"];
     thisBuild = b;
 }
 
