@@ -52,6 +52,19 @@ export const buildEngines: Map<BuildEngine> = {
         appPath: "source"
     },
 
+    dockeryotta: {
+        updateEngineAsync: () => runDockerAsync(["yotta", "update"]),
+        buildAsync: () => runDockerAsync(["yotta", "build"]),
+        setPlatformAsync: () =>
+            runDockerAsync(["yotta", "target", pxt.appTarget.compileService.yottaTarget]),
+        patchHexInfo: patchYottaHexInfo,
+        prepBuildDirAsync: noopAsync,
+        buildPath: "built/dockeryt",
+        moduleConfig: "module.json",
+        deployAsync: msdDeployCoreAsync,
+        appPath: "source"
+    },
+
     platformio: {
         updateEngineAsync: noopAsync,
         buildAsync: () => runPlatformioAsync(["run"]),
@@ -117,13 +130,17 @@ export const buildEngines: Map<BuildEngine> = {
 export let thisBuild = buildEngines['yotta']
 
 export function setThisBuild(b: BuildEngine) {
-    if (b === buildEngines["codal"] && pxt.appTarget.compileService.dockerImage)
-        b = buildEngines["dockercodal"];
+    if (pxt.appTarget.compileService.dockerImage) {
+        if (b === buildEngines["codal"])
+            b = buildEngines["dockercodal"];
+        if (b === buildEngines["yotta"])
+            b = buildEngines["dockeryotta"];
+    }
     thisBuild = b;
 }
 
 function patchYottaHexInfo(extInfo: pxtc.ExtensionInfo) {
-    let buildEngine = buildEngines['yotta']
+    let buildEngine = thisBuild
     let hexPath = buildEngine.buildPath + "/build/" + pxt.appTarget.compileService.yottaTarget
         + "/source/" + pxt.appTarget.compileService.yottaBinary;
 
