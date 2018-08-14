@@ -2797,7 +2797,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 || pxt.appTarget.appTheme.allowSimulatorTelemetry
                 || pxt.shell.isControllerMode())
                 pxt.editor.bindEditorMessages(this);
-    
+
             return workspace.initAsync()
         })
         .then((state) => {
