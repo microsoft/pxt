@@ -3520,6 +3520,12 @@ function gdbAsync(c: commandParser.ParsedCommand) {
         .then(() => gdb.startAsync(c.args))
 }
 
+function dumplogAsync(c: commandParser.ParsedCommand) {
+    ensurePkgDir()
+    return mainPkg.loadAsync()
+        .then(() => gdb.dumplogAsync())
+}
+
 function buildDalDTSAsync() {
     ensurePkgDir()
     return mainPkg.loadAsync()
@@ -5354,6 +5360,13 @@ function initCommands() {
         advanced: true,
         onlineHelp: true
     }, gdbAsync);
+
+    p.defineCommand({
+        name: "dumplog",
+        help: "attempt to dump log using openocd",
+        argString: "",
+        advanced: true,
+    }, dumplogAsync);
 
     p.defineCommand({
         name: "builddaldts",
