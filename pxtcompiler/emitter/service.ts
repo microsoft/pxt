@@ -874,22 +874,7 @@ namespace ts.pxtc.service {
                 case SK.BooleanKeyword: return "false";
                 case SK.ArrayType: return "[]";
                 case SK.TypeReference:
-                    if (checker) {
-                        const type = checker.getTypeAtLocation(param);
-                        if (type) {
-                            if (type.flags & ts.TypeFlags.Enum) {
-                                if (type.symbol) {
-                                    const decl = type.symbol.valueDeclaration as ts.EnumDeclaration;
-                                    if (decl.members.length && decl.members[0].name.kind === SK.Identifier) {
-                                        return `${type.symbol.name}.${(decl.members[0].name as ts.Identifier).text}`;
-                                    }
-                                }
-                                return `0`;
-                            } else if (type.flags & (ts.TypeFlags.Number | ts.TypeFlags.NumberLiteral)) {
-                                return `0`;
-                            }
-                        }
-                    }
+                    // handled below
                     break;
                 case SK.FunctionType:
                     const tn = typeNode as ts.FunctionTypeNode;
@@ -902,12 +887,20 @@ namespace ts.pxtc.service {
 
             const type = checker ? checker.getTypeAtLocation(param) : undefined;
             if (type) {
-                if (isObjectType(type) && type.objectFlags & ts.ObjectFlags.Anonymous) {
-                    const sigs = checker.getSignaturesOfType(type, ts.SignatureKind.Call);
-                    if (sigs.length) {
-                        return getFunctionString(sigs[0]);
+                if (isObjectType(type)) {
+                    if (type.objectFlags & ts.ObjectFlags.Anonymous) {
+                        const sigs = checker.getSignaturesOfType(type, ts.SignatureKind.Call);
+                        if (sigs.length) {
+                            return getFunctionString(sigs[0]);
+                        }
+                        return `function () {}`;
                     }
-                    return `function () {}`;
+                }
+                if (type.flags & ts.TypeFlags.EnumLike) {
+                    return getDefaultEnumValue(type, checker);
+                }
+                if (type.flags & ts.TypeFlags.NumberLike) {
+                    return "0";
                 }
             }
             return "null";
@@ -938,5 +931,28 @@ namespace ts.pxtc.service {
 
             return `function ${functionArgument} {\n    ${returnValue}\n}`
         }
+    }
+
+    function getDefaultEnumValue(t: Type, checker: TypeChecker) {
+        // Note: AFAIK this is NOT guranteed to get the same default as you get in
+        // blocks. That being said, it should get the first declared value. Only way
+        // to guarantee an API has the same default in blocks and in TS is to actually
+        // set a default on the parameter in its comment attributes
+        if (t.symbol && t.symbol.declarations && t.symbol.declarations.length) {
+            for (let i = 0; i < t.symbol.declarations.length; i++) {
+                const decl = t.symbol.declarations[i];
+                if (decl.kind === SK.EnumDeclaration) {
+                    const enumDeclaration = decl as EnumDeclaration;
+                    for (let j = 0; j < enumDeclaration.members.length; j++) {
+                        const member = enumDeclaration.members[i];
+                        if (member.name.kind === SK.Identifier) {
+                            return checker.getFullyQualifiedName(checker.getSymbolAtLocation(member.name));
+                        }
+                    }
+                }
+            }
+        }
+
+        return "0";
     }
 }

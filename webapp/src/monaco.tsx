@@ -1231,12 +1231,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     // first try to get fixed instances whose retType matches nsInfo.name
                     // e.g., DigitalPin
                     let exactInstances = fixedInstances.filter(value =>
-                        value.retType == nsInfo.name)
+                        value.retType == nsInfo.qName)
                         .sort((v1, v2) => v1.name.localeCompare(v2.name));
                     // second choice: use fixed instances whose retType extends type of nsInfo.name
                     // e.g., nsInfo.name == AnalogPin and instance retType == PwmPin
                     let extendedInstances = fixedInstances.filter(value =>
-                        getExtendsTypesFor(nsInfo.name).indexOf(value.retType) !== -1)
+                        getExtendsTypesFor(nsInfo.qName).indexOf(value.retType) !== -1)
                         .sort((v1, v2) => v1.name.localeCompare(v2.name));
                     if (exactInstances.length) {
                         snippetPrefix = `${exactInstances[0].name}`
@@ -1248,7 +1248,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 }
                 else if (element.kind == pxtc.SymbolKind.Method || element.kind == pxtc.SymbolKind.Property) {
                     const params = pxt.blocks.compileInfo(element);
-                    snippetPrefix = params.thisParameter.definitionName;
+                    snippetPrefix = params.thisParameter.defaultValue || params.thisParameter.definitionName;
                     isInstance = true;
                 }
                 else if (nsInfo.kind === pxtc.SymbolKind.Class) {
