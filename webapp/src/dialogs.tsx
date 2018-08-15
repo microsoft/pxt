@@ -101,7 +101,7 @@ export function githubFooter(msg: string, close: () => void) {
     }
 
     if (!pxt.appTarget.cloud || !pxt.appTarget.cloud.githubPackages)
-        return <div/>
+        return <div />
 
     /* tslint:disable:react-a11y-anchors */
     if (pxt.github.token) {
@@ -188,9 +188,9 @@ function renderCompileLink(cs: pxt.TargetCompileService) {
 function renderVersionLink(name: string, version: string, url: string) {
     return <p>{lf("{0} version:", name)} &nbsp;
             <a href={encodeURI(url)}
-                title={`${lf("{0} version: {1}", name, version)}`}
-                target="_blank" rel="noopener noreferrer">{version}</a>
-        </p>;
+            title={`${lf("{0} version: {1}", name, version)}`}
+            target="_blank" rel="noopener noreferrer">{version}</a>
+    </p>;
 }
 
 
@@ -277,12 +277,23 @@ export function showImportUrlDialogAsync() {
     }).then(res => {
         if (res) {
             pxt.tickEvent("app.open.url");
-            const url = input.value
-            if (/^(github:|https:\/\/github.com\/)/.test(url))
-                return pxt.github.noramlizeRepoId(url)
-            return pxt.Cloud.parseScriptId(url);
+            const url = input.value;
+            let projectId: string;
+            if (/^(github:|https:\/\/github.com\/)/.test(url)) {
+                projectId = pxt.github.noramlizeRepoId(url)
+            } else {
+                projectId = pxt.Cloud.parseScriptId(url);
+            }
+
+            if (!projectId) {
+                return Promise.reject(new Error(lf("Sorry, the project url looks invalid.")));
+            }
+
+            return Promise.resolve(projectId);
         }
-        return undefined;
+
+        // Cancelled
+        return Promise.resolve(undefined);
     })
 }
 

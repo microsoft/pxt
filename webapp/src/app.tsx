@@ -1886,16 +1886,18 @@ export class ProjectView
     }
 
     showImportUrlDialog() {
-        dialogs.showImportUrlDialogAsync().done(id => {
-            if (!id) {
+        dialogs.showImportUrlDialogAsync()
+            .then((id) => {
+                if (id) {
+                    if (pxt.github.isGithubId(id))
+                        importGithubProject(id);
+                    else
+                        loadHeaderBySharedId(id);
+                }
+            }, (e) => {
                 core.errorNotification(lf("Sorry, the project url looks invalid."));
-            } else {
-                if (pxt.github.isGithubId(id))
-                    importGithubProject(id);
-                else
-                    loadHeaderBySharedId(id);
-            }
-        });
+            })
+            .done();
     }
 
     showImportGithubDialog() {
@@ -2801,7 +2803,7 @@ document.addEventListener("DOMContentLoaded", () => {
             return workspace.initAsync()
         })
         .then((state) => {
-            render(); // this sets theEditor            
+            render(); // this sets theEditor
             if (state)
                 theEditor.setState({ editorState: state });
             initSerial();
