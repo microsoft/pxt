@@ -6,10 +6,13 @@ namespace pxt.blocks {
     // The JS Math functions supported in the blocks. The order of this array
     // determines the order of the dropdown in the math_js_op block
     export const MATH_FUNCTIONS = {
-        unary: ["sqrt", "sin", "cos", "tan", "round", "ceil", "floor", "trunc"],
+        unary: ["sqrt", "sin", "cos", "tan"],
         binary: ["atan2"],
         infix: ["idiv", "imul"]
     };
+
+    // Like MATH_FUNCTIONS, but used only for rounding operations
+    export const ROUNDING_FUNCTIONS = ["round", "ceil", "floor", "trunc"];
 
     export interface BlockParameter {
         // Declared parameter name as it appears in the code. This is the name used
@@ -389,16 +392,12 @@ namespace pxt.blocks {
                     "cos": Util.lf("Returns the cosine of the argument"),
                     "tan": Util.lf("Returns the tangent of the argument"),
                     "atan2": Util.lf("Returns the arctangent of the quotient of the two arguments"),
-                    "round": Util.lf("Returns the highest integer value lesser than or equal to the argument"),
-                    "ceil": Util.lf("Returns the lowest integer value greater than or equal to the argument"),
-                    "floor": Util.lf("Returns the highest integer value lesser than or equal to the argument"),
-                    "trunc": Util.lf("Returns the highest integer value lesser than or equal to the argument"),
                     "idiv": Util.lf("Returns the integer portion of the division operation on the two arguments"),
                     "imul": Util.lf("Returns the integer portion of the multiplication operation on the two arguments")
                 },
                 url: '/blocks/math',
                 operators: {
-                    'OP': ["sqrt", "sin", "cos", "tan", "atan2", "round", "ceil", "floor", "trunc", "idiv", "imul"]
+                    'OP': ["sqrt", "sin", "cos", "tan", "atan2", "idiv", "imul"]
                 },
                 category: 'math',
                 block: {
@@ -407,12 +406,28 @@ namespace pxt.blocks {
                     "cos": Util.lf("{id:op}cos"),
                     "tan": Util.lf("{id:op}tan"),
                     "atan2": Util.lf("{id:op}atan2"),
+                    "idiv": Util.lf("{id:op}integer ÷"),
+                    "imul": Util.lf("{id:op}integer ×"),
+                }
+            },
+            "math_js_round": {
+                name: Util.lf("rounding functions"),
+                tooltip: {
+                    "round": Util.lf("Round the argument half up"),
+                    "ceil": Util.lf("Round the argument up"),
+                    "floor": Util.lf("Round the argument down"),
+                    "trunc": Util.lf("Round the argument towards zero"),
+                },
+                url: '/blocks/math',
+                operators: {
+                    "OP": ["round", "ceil", "floor", "trunc"]
+                },
+                category: 'math',
+                block: {
                     "round": Util.lf("{id:op}round"),
                     "ceil": Util.lf("{id:op}ceiling"),
                     "floor": Util.lf("{id:op}floor"),
                     "trunc": Util.lf("{id:op}truncate"),
-                    "idiv": Util.lf("{id:op}integer ÷"),
-                    "imul": Util.lf("{id:op}integer ×"),
                 }
             },
             'variables_change': {

@@ -5,9 +5,8 @@
 <field name="VAR">math_op_1</field>
 <value name="VALUE">
 <shadow type="math_number"><field name="NUM">0</field></shadow>
-<block type="math_js_op">
-<mutation op-type="unary" />
-<field name="OP">sqrt</field>
+<block type="math_js_round">
+<field name="OP">round</field>
 <value name="ARG0">
 <shadow type="math_number">
 <field name="NUM">1</field>
@@ -20,9 +19,8 @@
 <field name="VAR">math_op_2</field>
 <value name="VALUE">
 <shadow type="math_number"><field name="NUM">0</field></shadow>
-<block type="math_js_op">
-<mutation op-type="unary" />
-<field name="OP">sin</field>
+<block type="math_js_round">
+<field name="OP">floor</field>
 <value name="ARG0">
 <shadow type="math_number">
 <field name="NUM">2</field>
@@ -35,9 +33,8 @@
 <field name="VAR">math_op_3</field>
 <value name="VALUE">
 <shadow type="math_number"><field name="NUM">0</field></shadow>
-<block type="math_js_op">
-<mutation op-type="unary" />
-<field name="OP">cos</field>
+<block type="math_js_round">
+<field name="OP">ceil</field>
 <value name="ARG0">
 <shadow type="math_number">
 <field name="NUM">3</field>
@@ -50,9 +47,8 @@
 <field name="VAR">math_op_4</field>
 <value name="VALUE">
 <shadow type="math_number"><field name="NUM">0</field></shadow>
-<block type="math_js_op">
-<mutation op-type="unary" />
-<field name="OP">tan</field>
+<block type="math_js_round">
+<field name="OP">trunc</field>
 <value name="ARG0">
 <shadow type="math_number">
 <field name="NUM">4</field>
@@ -60,28 +56,6 @@
 </value>
 </block>
 </value>
-<next>
-<block type="variables_set">
-<field name="VAR">math_op_5</field>
-<value name="VALUE">
-<shadow type="math_number"><field name="NUM">0</field></shadow>
-<block type="math_js_op">
-<mutation op-type="binary" />
-<field name="OP">atan2</field>
-<value name="ARG0">
-<shadow type="math_number">
-<field name="NUM">5</field>
-</shadow>
-</value>
-<value name="ARG1">
-<shadow type="math_number">
-<field name="NUM">6</field>
-</shadow>
-</value>
-</block>
-</value>
-</block>
-</next>
 </block>
 </next>
 </block>
