@@ -359,7 +359,9 @@ namespace ts.pxtc {
         TripleAsterisk = SingleAsterisk | DoubleAsterisk,
         StyleMarks = TripleAsterisk | TripleUnderscore,
         Bold = DoubleUnderscore | DoubleAsterisk,
-        Italics = SingleUnderscore | SingleAsterisk
+        Italics = SingleUnderscore | SingleAsterisk,
+
+        Unstylable = Parameter | Pipe | ParamRef
     }
 
     interface Token {
@@ -838,20 +840,24 @@ namespace ts.pxtc {
         let strIndex = 0;
         for (; strIndex < def.length; strIndex++) {
             const char = def[strIndex];
+            const restoreIndex = strIndex;
             let newToken: Token;
             switch (char) {
                 case "*":
                 case "_":
-                    const tk = eatToken(c => c == char).length;
+                    const tk = eatToken(c => c == char);
                     const offset = char === "_" ? 2 : 0;
-                    if (tk === 1) newToken = { kind: TokenKind.SingleAsterisk << offset }
-                    else if (tk === 2) newToken = { kind: TokenKind.DoubleAsterisk << offset };
-                    else if (tk === 3) newToken = { kind: TokenKind.TripleAsterisk << offset };
-                    else return undefined;
+                    if (tk.length === 1) newToken = { kind: TokenKind.SingleAsterisk << offset, content: tk }
+                    else if (tk.length === 2) newToken = { kind: TokenKind.DoubleAsterisk << offset, content: tk };
+                    else if (tk.length === 3) newToken = { kind: TokenKind.TripleAsterisk << offset, content: tk };
+                    else strIndex = restoreIndex; // error: no more than three style marks
                     break;
                 case "`":
                     const image = eatEnclosure("`");
-                    if (image === undefined) return undefined; // error: not terminated
+                    if (image === undefined) {
+                        strIndex = restoreIndex; // error: not terminated
+                        break;
+                    }
                     newToken = { kind: TokenKind.Image, content: image };
                     break;
                 case "|":
@@ -862,16 +868,22 @@ namespace ts.pxtc {
                     break;
                 case "[":
                     const contentText = eatEnclosure("]");
-                    if (contentText === undefined) return undefined; // error: not terminated
-                    if (def[strIndex++ + 1] !== "(") return undefined; // error: must be followed by class
-                    const contentClass = eatEnclosure(")");
-                    if (contentClass === undefined) return undefined; // error: not terminated
-                    newToken = { kind: TokenKind.TaggedText, content: contentText, type: contentClass };
+                    if (contentText !== undefined && def[strIndex++ + 1] === "(") {
+                        const contentClass = eatEnclosure(")");
+                        if (contentClass !== undefined) {
+                            newToken = { kind: TokenKind.TaggedText, content: contentText, type: contentClass };
+                            break;
+                        }
+                    }
+                    strIndex = restoreIndex; // error: format should be [text](class)
                     break;
                 case "$":
                 case "%":
                     const param = eatToken(c => /[a-zA-Z0-9_=]/.test(c), true).split("=");
-                    if (param.length > 2) return undefined; // error: invalid parameter
+                    if (param.length > 2) {
+                        strIndex = restoreIndex; // error: too many equals signs
+                        break;
+                    }
 
                     let varName: string;
                     if (def[strIndex + 1] === "(") {
@@ -904,9 +916,13 @@ namespace ts.pxtc {
         const parts: BlockPart[] = [];
         const parameters: BlockParameter[] = [];
 
-        const stack: TokenKind[] = [];
+        let stack: TokenKind[] = [];
         let open = 0;
         let currentLabel = ""
+        let styleMarks: [string, number][] = [];
+        let mismatchedStyles = false;
+
+
 
         for (let i = 0; i < tokens.length; i++) {
             const token = tokens[i].kind;
@@ -918,25 +934,28 @@ namespace ts.pxtc {
             if (open & TokenKind.Italics) styles.push("italics");
 
             if (token & TokenKind.StyleMarks) {
+                styleMarks.push([tokens[i].content, currentLabel.length]);
                 wordEnd = true;
-                if (token & open) {
-                    if (top & token) {
-                        stack.pop();
-                        open ^= token;
+                if (!mismatchedStyles) {
+                    if (token & open) {
+                        if (top & token) {
+                            stack.pop();
+                            open ^= token;
 
-                        // Handle triple tokens
-                        const remainder = (top & open) | (token & open);
-                        if (remainder) {
-                            stack.push(remainder);
+                            // Handle triple tokens
+                            const remainder = (top & open) | (token & open);
+                            if (remainder) {
+                                stack.push(remainder);
+                            }
+                        }
+                        else {
+                            mismatchedStyles = true;
                         }
                     }
                     else {
-                        return undefined; // error: mismatched!
+                        open |= token;
+                        stack.push(token);
                     }
-                }
-                else {
-                    open |= token;
-                    stack.push(token);
                 }
             }
             else {
@@ -949,7 +968,7 @@ namespace ts.pxtc {
                     case TokenKind.Parameter:
                     case TokenKind.ParamRef:
                         if (open) {
-                            return undefined; // error: style marks should be closed
+                            mismatchedStyles = true;
                         }
                     case TokenKind.Image: // deliberate fallthrough
                     case TokenKind.TaggedText:
@@ -958,12 +977,28 @@ namespace ts.pxtc {
                 }
             }
 
-            if (wordEnd && currentLabel) {
-                parts.push({ kind: "label", text: currentLabel, style: styles } as BlockLabel);
-                currentLabel = "";
+            const unresolvedStyles = mismatchedStyles || (open && ((i === tokens.length - 1) || (tokens[i + 1].kind & TokenKind.Unstylable)));
+
+            if (wordEnd && (currentLabel || unresolvedStyles)) {
+                if (styleMarks.length) {
+                    if (unresolvedStyles) {
+                        putBackStyles();
+                        mismatchedStyles = false;
+                        stack = [];
+                        styles = [];
+                        open = 0;
+                    }
+
+                    styleMarks = [];
+                }
+
+                if (currentLabel) {
+                    parts.push({ kind: "label", text: currentLabel, style: styles } as BlockLabel);
+                    currentLabel = "";
+                }
             }
 
-            /* tslint:disable:possible-timing-attack  (not a security critical codepath) */
+            /* tslint:disable:possible-timing-attack  (tslint thinks all variables named token are passwords...) */
             if (token == TokenKind.Parameter) {
                 const param: BlockParameter = { kind: "param", name: tokens[i].content, shadowBlockId: tokens[i].type, ref: false };
                 if (tokens[i].name) param.varName = tokens[i].name;
@@ -988,7 +1023,9 @@ namespace ts.pxtc {
             /* tslint:enable:possible-timing-attack */
         }
 
-        if (open) return undefined; // error: style marks should terminate
+        if (mismatchedStyles || open) {
+            putBackStyles();
+        }
 
         if (currentLabel) {
             parts.push({ kind: "label", text: currentLabel, style: [] } as BlockLabel);
@@ -1012,6 +1049,16 @@ namespace ts.pxtc {
             if (def[strIndex + 1] !== endMark) return undefined;
             ++strIndex;
             return content;
+        }
+
+        function putBackStyles() {
+            // Put the styles back into the current label
+            let offset = 0;
+            for (let [mark, index] of styleMarks) {
+                index += offset;
+                offset += mark.length;
+                currentLabel = currentLabel.substr(0, index) + mark + currentLabel.substr(index);
+            }
         }
     }
 
