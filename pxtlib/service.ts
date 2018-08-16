@@ -361,7 +361,8 @@ namespace ts.pxtc {
         Bold = DoubleUnderscore | DoubleAsterisk,
         Italics = SingleUnderscore | SingleAsterisk,
 
-        Unstylable = Parameter | Pipe | ParamRef
+        Unstylable = Parameter | Pipe | ParamRef,
+        Text = Word | Escape
     }
 
     interface Token {
@@ -369,6 +370,12 @@ namespace ts.pxtc {
         content?: string;
         type?: string;
         name?: string;
+    }
+
+    interface Label {
+        content: string;
+        styles: number;
+        endingToken?: string;
     }
 
     export function computeUsedParts(resp: CompileResult, ignoreBuiltin = false): string[] {
@@ -919,83 +926,41 @@ namespace ts.pxtc {
         let stack: TokenKind[] = [];
         let open = 0;
         let currentLabel = ""
-        let styleMarks: [string, number][] = [];
-        let mismatchedStyles = false;
 
-
+        let labelStack: (Label | BlockPart)[] = [];
 
         for (let i = 0; i < tokens.length; i++) {
             const token = tokens[i].kind;
             const top = stack[stack.length - 1];
-
-            let wordEnd = false;
-            let styles: string[] = [];
-            if (open & TokenKind.Bold) styles.push("bold");
-            if (open & TokenKind.Italics) styles.push("italics");
-
             if (token & TokenKind.StyleMarks) {
-                styleMarks.push([tokens[i].content, currentLabel.length]);
-                wordEnd = true;
-                if (!mismatchedStyles) {
-                    if (token & open) {
-                        if (top & token) {
-                            stack.pop();
-                            open ^= token;
+                pushCurrentLabel(tokens[i].content);
 
-                            // Handle triple tokens
-                            const remainder = (top & open) | (token & open);
-                            if (remainder) {
-                                stack.push(remainder);
-                            }
-                        }
-                        else {
-                            mismatchedStyles = true;
+                if (token & open) {
+                    if (top & token) {
+                        stack.pop();
+                        open ^= token;
+
+                        // Handle triple tokens
+                        const remainder = (top & open) | (token & open);
+                        if (remainder) {
+                            stack.push(remainder);
                         }
                     }
                     else {
-                        open |= token;
-                        stack.push(token);
+                        // We encountered a mismatched mark, so clear previous styles
+                        collapseLabels();
                     }
                 }
-            }
-            else {
-                switch (token) {
-                    case TokenKind.Escape:
-                    case TokenKind.Word:
-                        currentLabel += tokens[i].content;
-                        break;
-                    case TokenKind.Pipe:
-                    case TokenKind.Parameter:
-                    case TokenKind.ParamRef:
-                        if (open) {
-                            mismatchedStyles = true;
-                        }
-                    case TokenKind.Image: // deliberate fallthrough
-                    case TokenKind.TaggedText:
-                        wordEnd = true;
-                        break;
+                else {
+                    open |= token;
+                    stack.push(token);
                 }
             }
-
-            const unresolvedStyles = mismatchedStyles || (open && ((i === tokens.length - 1) || (tokens[i + 1].kind & TokenKind.Unstylable)));
-
-            if (wordEnd && (currentLabel || unresolvedStyles)) {
-                if (styleMarks.length) {
-                    if (unresolvedStyles) {
-                        putBackStyles();
-                        mismatchedStyles = false;
-                        stack = [];
-                        styles = [];
-                        open = 0;
-                    }
-
-                    styleMarks = [];
-                }
-
-                if (currentLabel) {
-                    parts.push({ kind: "label", text: currentLabel, style: styles } as BlockLabel);
-                    currentLabel = "";
-                }
+            else if (token & TokenKind.Text) {
+                currentLabel += tokens[i].content;
+            }
+            else if (token & TokenKind.Unstylable) {
+                pushLabels();
             }
 
             /* tslint:disable:possible-timing-attack  (tslint thinks all variables named token are passwords...) */
@@ -1012,10 +977,12 @@ namespace ts.pxtc {
                 parameters.push(param);
             }
             else if (token == TokenKind.Image) {
-                parts.push({ kind: "image", uri: tokens[i].content } as BlockImage);
+                pushCurrentLabel();
+                labelStack.push({ kind: "image", uri: tokens[i].content } as BlockImage);
             }
             else if (token == TokenKind.TaggedText) {
-                parts.push({ kind: "label", text: tokens[i].content, cssClass: tokens[i].type } as BlockLabel)
+                pushCurrentLabel();
+                labelStack.push({ kind: "label", text: tokens[i].content, cssClass: tokens[i].type } as BlockLabel)
             }
             else if (token == TokenKind.Pipe) {
                 parts.push({ kind: "break" });
@@ -1023,13 +990,7 @@ namespace ts.pxtc {
             /* tslint:enable:possible-timing-attack */
         }
 
-        if (mismatchedStyles || open) {
-            putBackStyles();
-        }
-
-        if (currentLabel) {
-            parts.push({ kind: "label", text: currentLabel, style: [] } as BlockLabel);
-        }
+        pushLabels();
 
         return { parts, parameters };
 
@@ -1051,15 +1012,78 @@ namespace ts.pxtc {
             return content;
         }
 
-        function putBackStyles() {
-            // Put the styles back into the current label
-            let offset = 0;
-            for (let [mark, index] of styleMarks) {
-                index += offset;
-                offset += mark.length;
-                currentLabel = currentLabel.substr(0, index) + mark + currentLabel.substr(index);
+        function collapseLabels() {
+            let combined = "";
+            let newStack: (Label | BlockPart)[] = [];
+            for (const item of labelStack) {
+                if (isBlockPart(item)) {
+                    newStack.push({
+                        content: combined,
+                        styles: 0
+                    });
+                    newStack.push(item);
+                    combined = "";
+                }
+                else {
+                    combined += item.content;
+                    if (item.endingToken) {
+                        combined += item.endingToken;
+                    }
+                }
+            }
+
+            labelStack = newStack;
+
+            if (combined) {
+                labelStack.push({
+                    content: combined,
+                    styles: 0
+                });
+            }
+
+            // Clear the style state as well
+            stack = [];
+            open = 0;
+        }
+
+        function pushLabels() {
+            pushCurrentLabel();
+
+            if (open) {
+                collapseLabels();
+            }
+
+            while (labelStack.length) {
+                const label = labelStack.shift();
+
+                if (isBlockPart(label)) {
+                    parts.push(label);
+                }
+                else {
+                    if (!label.content) continue;
+
+                    const styles: string[] = [];
+
+                    if (label.styles & TokenKind.Bold) styles.push("bold");
+                    if (label.styles & TokenKind.Italics) styles.push("italics");
+
+                    parts.push({ kind: "label", text: label.content, style: styles } as BlockLabel);
+                }
             }
         }
+
+        function pushCurrentLabel(endingToken?: string) {
+            labelStack.push({
+                content: currentLabel,
+                styles: open,
+                endingToken
+            });
+            currentLabel = "";
+        }
+    }
+
+    function isBlockPart(p: Label | BlockPart): p is BlockPart {
+        return !!((p as BlockPart).kind);
     }
 
     // TODO should be internal
