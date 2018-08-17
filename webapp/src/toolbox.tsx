@@ -236,7 +236,8 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
     componentDidUpdate(prevProps: ToolboxProps, prevState: ToolboxState) {
         if (prevState.visible != this.state.visible
             || prevState.loading != this.state.loading
-            || prevState.showAdvanced != this.state.showAdvanced) {
+            || prevState.showAdvanced != this.state.showAdvanced
+            || this.state.expandedItem != prevState.expandedItem) {
             this.props.parent.resize();
         }
         if (this.state.hasSearch && this.state.searchBlocks != prevState.searchBlocks) {
