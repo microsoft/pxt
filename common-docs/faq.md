@@ -10,6 +10,7 @@ These domains need to be unblocked to allow the web editor to load:
 * https://makecode.com
 * https://trg-@targetid@.userpxt.io
 * https://pxt.azureedge.net
+* https://github.com (this is needed to search extensions)
 
 ## Where are my projects saved?
 
