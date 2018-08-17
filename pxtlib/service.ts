@@ -359,7 +359,10 @@ namespace ts.pxtc {
         TripleAsterisk = SingleAsterisk | DoubleAsterisk,
         StyleMarks = TripleAsterisk | TripleUnderscore,
         Bold = DoubleUnderscore | DoubleAsterisk,
-        Italics = SingleUnderscore | SingleAsterisk
+        Italics = SingleUnderscore | SingleAsterisk,
+
+        Unstylable = Parameter | Pipe | ParamRef,
+        Text = Word | Escape
     }
 
     interface Token {
@@ -367,6 +370,12 @@ namespace ts.pxtc {
         content?: string;
         type?: string;
         name?: string;
+    }
+
+    interface Label {
+        content: string;
+        styles: number;
+        endingToken?: string;
     }
 
     export function computeUsedParts(resp: CompileResult, ignoreBuiltin = false): string[] {
@@ -838,20 +847,24 @@ namespace ts.pxtc {
         let strIndex = 0;
         for (; strIndex < def.length; strIndex++) {
             const char = def[strIndex];
+            const restoreIndex = strIndex;
             let newToken: Token;
             switch (char) {
                 case "*":
                 case "_":
-                    const tk = eatToken(c => c == char).length;
+                    const tk = eatToken(c => c == char);
                     const offset = char === "_" ? 2 : 0;
-                    if (tk === 1) newToken = { kind: TokenKind.SingleAsterisk << offset }
-                    else if (tk === 2) newToken = { kind: TokenKind.DoubleAsterisk << offset };
-                    else if (tk === 3) newToken = { kind: TokenKind.TripleAsterisk << offset };
-                    else return undefined;
+                    if (tk.length === 1) newToken = { kind: TokenKind.SingleAsterisk << offset, content: tk }
+                    else if (tk.length === 2) newToken = { kind: TokenKind.DoubleAsterisk << offset, content: tk };
+                    else if (tk.length === 3) newToken = { kind: TokenKind.TripleAsterisk << offset, content: tk };
+                    else strIndex = restoreIndex; // error: no more than three style marks
                     break;
                 case "`":
                     const image = eatEnclosure("`");
-                    if (image === undefined) return undefined; // error: not terminated
+                    if (image === undefined) {
+                        strIndex = restoreIndex; // error: not terminated
+                        break;
+                    }
                     newToken = { kind: TokenKind.Image, content: image };
                     break;
                 case "|":
@@ -862,16 +875,22 @@ namespace ts.pxtc {
                     break;
                 case "[":
                     const contentText = eatEnclosure("]");
-                    if (contentText === undefined) return undefined; // error: not terminated
-                    if (def[strIndex++ + 1] !== "(") return undefined; // error: must be followed by class
-                    const contentClass = eatEnclosure(")");
-                    if (contentClass === undefined) return undefined; // error: not terminated
-                    newToken = { kind: TokenKind.TaggedText, content: contentText, type: contentClass };
+                    if (contentText !== undefined && def[strIndex++ + 1] === "(") {
+                        const contentClass = eatEnclosure(")");
+                        if (contentClass !== undefined) {
+                            newToken = { kind: TokenKind.TaggedText, content: contentText, type: contentClass };
+                            break;
+                        }
+                    }
+                    strIndex = restoreIndex; // error: format should be [text](class)
                     break;
                 case "$":
                 case "%":
                     const param = eatToken(c => /[a-zA-Z0-9_=]/.test(c), true).split("=");
-                    if (param.length > 2) return undefined; // error: invalid parameter
+                    if (param.length > 2) {
+                        strIndex = restoreIndex; // error: too many equals signs
+                        break;
+                    }
 
                     let varName: string;
                     if (def[strIndex + 1] === "(") {
@@ -904,21 +923,18 @@ namespace ts.pxtc {
         const parts: BlockPart[] = [];
         const parameters: BlockParameter[] = [];
 
-        const stack: TokenKind[] = [];
+        let stack: TokenKind[] = [];
         let open = 0;
         let currentLabel = ""
+
+        let labelStack: (Label | BlockPart)[] = [];
 
         for (let i = 0; i < tokens.length; i++) {
             const token = tokens[i].kind;
             const top = stack[stack.length - 1];
-
-            let wordEnd = false;
-            let styles: string[] = [];
-            if (open & TokenKind.Bold) styles.push("bold");
-            if (open & TokenKind.Italics) styles.push("italics");
-
             if (token & TokenKind.StyleMarks) {
-                wordEnd = true;
+                pushCurrentLabel(tokens[i].content);
+
                 if (token & open) {
                     if (top & token) {
                         stack.pop();
@@ -931,7 +947,8 @@ namespace ts.pxtc {
                         }
                     }
                     else {
-                        return undefined; // error: mismatched!
+                        // We encountered a mismatched mark, so clear previous styles
+                        collapseLabels();
                     }
                 }
                 else {
@@ -939,31 +956,14 @@ namespace ts.pxtc {
                     stack.push(token);
                 }
             }
-            else {
-                switch (token) {
-                    case TokenKind.Escape:
-                    case TokenKind.Word:
-                        currentLabel += tokens[i].content;
-                        break;
-                    case TokenKind.Pipe:
-                    case TokenKind.Parameter:
-                    case TokenKind.ParamRef:
-                        if (open) {
-                            return undefined; // error: style marks should be closed
-                        }
-                    case TokenKind.Image: // deliberate fallthrough
-                    case TokenKind.TaggedText:
-                        wordEnd = true;
-                        break;
-                }
+            else if (token & TokenKind.Text) {
+                currentLabel += tokens[i].content;
+            }
+            else if (token & TokenKind.Unstylable) {
+                pushLabels();
             }
 
-            if (wordEnd && currentLabel) {
-                parts.push({ kind: "label", text: currentLabel, style: styles } as BlockLabel);
-                currentLabel = "";
-            }
-
-            /* tslint:disable:possible-timing-attack  (not a security critical codepath) */
+            /* tslint:disable:possible-timing-attack  (tslint thinks all variables named token are passwords...) */
             if (token == TokenKind.Parameter) {
                 const param: BlockParameter = { kind: "param", name: tokens[i].content, shadowBlockId: tokens[i].type, ref: false };
                 if (tokens[i].name) param.varName = tokens[i].name;
@@ -977,10 +977,12 @@ namespace ts.pxtc {
                 parameters.push(param);
             }
             else if (token == TokenKind.Image) {
-                parts.push({ kind: "image", uri: tokens[i].content } as BlockImage);
+                pushCurrentLabel();
+                labelStack.push({ kind: "image", uri: tokens[i].content } as BlockImage);
             }
             else if (token == TokenKind.TaggedText) {
-                parts.push({ kind: "label", text: tokens[i].content, cssClass: tokens[i].type } as BlockLabel)
+                pushCurrentLabel();
+                labelStack.push({ kind: "label", text: tokens[i].content, cssClass: tokens[i].type } as BlockLabel)
             }
             else if (token == TokenKind.Pipe) {
                 parts.push({ kind: "break" });
@@ -988,11 +990,7 @@ namespace ts.pxtc {
             /* tslint:enable:possible-timing-attack */
         }
 
-        if (open) return undefined; // error: style marks should terminate
-
-        if (currentLabel) {
-            parts.push({ kind: "label", text: currentLabel, style: [] } as BlockLabel);
-        }
+        pushLabels();
 
         return { parts, parameters };
 
@@ -1013,6 +1011,79 @@ namespace ts.pxtc {
             ++strIndex;
             return content;
         }
+
+        function collapseLabels() {
+            let combined = "";
+            let newStack: (Label | BlockPart)[] = [];
+            for (const item of labelStack) {
+                if (isBlockPart(item)) {
+                    newStack.push({
+                        content: combined,
+                        styles: 0
+                    });
+                    newStack.push(item);
+                    combined = "";
+                }
+                else {
+                    combined += item.content;
+                    if (item.endingToken) {
+                        combined += item.endingToken;
+                    }
+                }
+            }
+
+            labelStack = newStack;
+
+            if (combined) {
+                labelStack.push({
+                    content: combined,
+                    styles: 0
+                });
+            }
+
+            // Clear the style state as well
+            stack = [];
+            open = 0;
+        }
+
+        function pushLabels() {
+            pushCurrentLabel();
+
+            if (open) {
+                collapseLabels();
+            }
+
+            while (labelStack.length) {
+                const label = labelStack.shift();
+
+                if (isBlockPart(label)) {
+                    parts.push(label);
+                }
+                else {
+                    if (!label.content) continue;
+
+                    const styles: string[] = [];
+
+                    if (label.styles & TokenKind.Bold) styles.push("bold");
+                    if (label.styles & TokenKind.Italics) styles.push("italics");
+
+                    parts.push({ kind: "label", text: label.content, style: styles } as BlockLabel);
+                }
+            }
+        }
+
+        function pushCurrentLabel(endingToken?: string) {
+            labelStack.push({
+                content: currentLabel,
+                styles: open,
+                endingToken
+            });
+            currentLabel = "";
+        }
+    }
+
+    function isBlockPart(p: Label | BlockPart): p is BlockPart {
+        return !!((p as BlockPart).kind);
     }
 
     // TODO should be internal
