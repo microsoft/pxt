@@ -4,7 +4,7 @@
 
 ## Which web sites do I need to unblock for @homeurl@? #unblock
 
-These domains need to be unblocked to allow the web editor to load:
+These domains need to be unblocked to allow the web editor to function correctly:
 
 * @homeurl@
 * https://makecode.com
