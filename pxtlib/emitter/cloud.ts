@@ -174,8 +174,6 @@ namespace pxt.Cloud {
     // Interfaces used by the cloud
     //
 
-    // TODO: remove unused interfaces
-    // TODO: remove unused fields
     export interface JsonIdObject {
         kind: string;
         id: string; // id
