@@ -10,7 +10,12 @@ These domains need to be unblocked to allow the web editor to function correctly
 * https://makecode.com
 * https://trg-@targetid@.userpxt.io
 * https://pxt.azureedge.net
-* https://api.github.com (this is needed to search extensions)
+* https://api.github.com
+
+The following domains are needed to enable some additional features for extension developers. In most cases, you don't need to unblock these domains:
+
+* https://github.com
+* https://raw.githubusercontent.com/
 
 ## Where are my projects saved?
 
