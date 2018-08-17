@@ -2170,7 +2170,7 @@ ${lbl}: .short 0xffff
                     let d = getDecl(e)
                     if (d && (d.kind == SK.EnumMember || d.kind == SK.VariableDeclaration))
                         return getFullName(checker, d.symbol)
-                    else if (e.kind == SK.StringLiteral)
+                    else if (e && e.kind == SK.StringLiteral)
                         return (e as StringLiteral).text
                     else return "*"
                 }).join(",")
