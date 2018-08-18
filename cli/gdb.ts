@@ -155,9 +155,10 @@ export function startAsync(gdbArgs: string[]) {
     let toolPaths = getOpenOcdPath()
     let oargs = toolPaths.args
 
+    // use / not \ for paths on Windows; otherwise gdb has issue starting openocd
     fs.writeFileSync("built/openocd.gdb",
         `
-target remote | ${oargs.map(s => `"${s}"`).join(" ")}
+target remote | ${oargs.map(s => `"${s.replace(/\\/g, "/")}"`).join(" ")}
 define rst
   set {int}(0x20008000-4) = 0xf02669ef
   monitor reset halt
