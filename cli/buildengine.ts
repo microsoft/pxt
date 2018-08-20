@@ -130,7 +130,7 @@ export const buildEngines: Map<BuildEngine> = {
 export let thisBuild = buildEngines['yotta']
 
 export function setThisBuild(b: BuildEngine) {
-    if (pxt.appTarget.compileService.dockerImage) {
+    if (pxt.appTarget.compileService.dockerImage && !process.env["PXT_NODOCKER"]) {
         if (b === buildEngines["codal"])
             b = buildEngines["dockercodal"];
         if (b === buildEngines["yotta"])
