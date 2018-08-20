@@ -132,7 +132,7 @@ function nativeHostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
 
 function nativeHostSaveCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     pxt.debug(`native save`)
-    core.infoNotification(lf("Flashing device..."));
+    core.infoNotification(lf("Saving file..."));
     const out = resp.outfiles[pxt.outputName()]
     const nativePostMessage = nativeHostPostMessageFunction();
     nativePostMessage(<pxt.editor.NativeHostMessage>{
