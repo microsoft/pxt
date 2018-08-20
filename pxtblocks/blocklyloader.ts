@@ -1959,6 +1959,7 @@ namespace pxt.blocks {
         installBuiltinHelpInfo(mathModuloId);
 
         initMathOpBlock();
+        initMathRoundBlock();
     }
 
     function initVariables() {

@@ -1385,16 +1385,23 @@ ${output}</xml>`;
             else if (pxt.Util.startsWith(info.qName, "Math.")) {
                 const op = info.qName.substring(5);
                 if (isSupportedMathFunction(op)) {
-                    const r = mkExpr("math_js_op");
+                    let r: ExpressionNode;
+
+                    if (isRoundingFunction(op)) {
+                        r = mkExpr("math_js_round");
+                    } else {
+                        r = mkExpr("math_js_op");
+                        let opType: string;
+                        if (isUnaryMathFunction(op)) opType = "unary";
+                        else if (isInfixMathFunction(op)) opType = "infix";
+                        else opType = "binary";
+
+                        r.mutation = { "op-type": opType };
+                    }
+
                     r.inputs = info.args.map((arg, index) => mkValue("ARG" + index, getOutputBlock(arg), "math_number"))
                     r.fields = [getField("OP", op)];
 
-                    let opType: string;
-                    if (isUnaryMathFunction(op)) opType = "unary";
-                    else if (isInfixMathFunction(op)) opType = "infix";
-                    else opType = "binary";
-
-                    r.mutation = { "op-type": opType };
                     return r;
                 }
             }
@@ -2833,7 +2840,7 @@ ${output}</xml>`;
     }
 
     function isSupportedMathFunction(op: string) {
-        return isUnaryMathFunction(op) || isInfixMathFunction(op) ||
+        return isUnaryMathFunction(op) || isInfixMathFunction(op) || isRoundingFunction(op) ||
             pxt.blocks.MATH_FUNCTIONS.binary.indexOf(op) !== -1;
     }
 
@@ -2843,5 +2850,9 @@ ${output}</xml>`;
 
     function isInfixMathFunction(op: string) {
         return pxt.blocks.MATH_FUNCTIONS.infix.indexOf(op) !== -1;
+    }
+
+    function isRoundingFunction(op: string) {
+        return pxt.blocks.ROUNDING_FUNCTIONS.indexOf(op) !== -1;
     }
 }

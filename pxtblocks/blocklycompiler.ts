@@ -781,6 +781,7 @@ namespace pxt.blocks {
             case "lists_index_set":
                 expr = compileListSet(e, b, comments); break;
             case "math_js_op":
+            case "math_js_round":
                 expr = compileMathJsOp(e, b, comments); break;
             case pxtc.TS_OUTPUT_TYPE:
                 expr = extractTsExpression(e, b, comments); break;
