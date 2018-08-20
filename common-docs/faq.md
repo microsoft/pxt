@@ -4,12 +4,18 @@
 
 ## Which web sites do I need to unblock for @homeurl@? #unblock
 
-These domains need to be unblocked to allow the web editor to load:
+Access to certain domains is necessary to allow the web editor to reach all the resources it needs to fully function. These are the domains to unblock:
 
 * @homeurl@
 * https://makecode.com
 * https://trg-@targetid@.userpxt.io
 * https://pxt.azureedge.net
+* https://api.github.com
+
+To enable some additional features for extension developers, the following domains are also needed. In most cases, you won't need to unblock these domains:
+
+* https://github.com
+* https://raw.githubusercontent.com/
 
 ## Where are my projects saved?
 
