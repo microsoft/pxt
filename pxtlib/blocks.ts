@@ -413,10 +413,10 @@ namespace pxt.blocks {
             "math_js_round": {
                 name: Util.lf("rounding functions"),
                 tooltip: {
-                    "round": Util.lf("Round the argument half up"),
-                    "ceil": Util.lf("Round the argument up"),
-                    "floor": Util.lf("Round the argument down"),
-                    "trunc": Util.lf("Round the argument towards zero"),
+                    "round": Util.lf("Increases the argument to the next higher whole number if its fractional part is more than one half"),
+                    "ceil": Util.lf("Increases the argument to the next higher whole number"),
+                    "floor": Util.lf("Decreases the argument to the next lower whole number"),
+                    "trunc": Util.lf("Removes the fractional part of the argument")
                 },
                 url: '/blocks/math',
                 operators: {
