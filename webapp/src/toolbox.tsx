@@ -844,7 +844,7 @@ export class ToolboxStyle extends data.Component<ToolboxStyleProps, {}> {
         // and assosiate them with a specific category
         return <style>
             {categories.filter(c => !!c.color).map(category =>
-                `span.docs.inlineblock.${category.nameid} {
+                `span.docs.inlineblock.${category.nameid.toLowerCase()} {
                     background-color: ${category.color};
                     border-color: ${pxt.toolbox.fadeColor(category.color, 0.1, false)};
                 }`
