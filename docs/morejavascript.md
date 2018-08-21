@@ -135,6 +135,8 @@ Drop `SharedRef` and `SharedDef`, and instead have an explicit stack:
 * `EK.StackRef(Expr)`
 * `SK.PopAndDecr(howMany)`
 
+Or else: have `SharedRef` implicitly include `incr()`. Everything else should work out.
+
 ## Exceptions
 
 This requires adding thread-local data to codal. It seems quite easy - just
