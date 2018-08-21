@@ -426,7 +426,7 @@ namespace pxt.runner {
                         case "print":
                             const data = window.localStorage["printjob"];
                             delete window.localStorage["printjob"];
-                            return renderProjectFilesAsync(content, JSON.parse(data))
+                            return renderProjectFilesAsync(content, JSON.parse(data), undefined, undefined, true)
                                 .then(() => pxsim.print(1000));
                         case "project":
                             return renderProjectFilesAsync(content, JSON.parse(src))
@@ -495,20 +495,22 @@ namespace pxt.runner {
             .then(files => renderProjectFilesAsync(content, files, projectid, template));
     }
 
-    export function renderProjectFilesAsync(content: HTMLElement, files: Map<string>, projectid: string = null, template = "blocks"): Promise<void> {
+    export function renderProjectFilesAsync(content: HTMLElement, files: Map<string>, projectid: string = null, template = "blocks", escapeLinks = false): Promise<void> {
         const cfg = (JSON.parse(files[pxt.CONFIG_NAME]) || {}) as PackageConfig;
 
         let md = `# ${cfg.name} ${cfg.version ? cfg.version : ''}
 
 `;
-        if (projectid)
-            md += `* ${pxt.appTarget.appTheme.shareUrl || "https://makecode.com/"}${projectid}
 
-`;
-        else
-            md += `* ${pxt.appTarget.appTheme.homeUrl}
+        let linkString = projectid ? (pxt.appTarget.appTheme.shareUrl || "https://makecode.com/" + projectid) : pxt.appTarget.appTheme.homeUrl;
+        if (escapeLinks) {
+            // If printing the link will show up twice if it's an actual link
+            linkString = "`" + linkString + "`";
+        }
+        md += `* ${linkString}
 
-`;
+        `;
+
         const readme = "README.md";
         if (files[readme])
             md += files[readme].replace(/^#+/, "$0#") + '\n'; // bump all headers down 1
