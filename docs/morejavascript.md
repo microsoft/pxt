@@ -98,6 +98,7 @@ foo(local, 12, something(), somethingelse())
   call _clean_3
   push r0
 
+// can inline _check_exn and _decr here, as there will be just a few of these
 _clean_3:
   mov r4, lr
   call _check_exn
@@ -131,8 +132,8 @@ It's quite likely this stack-like translation will save some flash space compare
 
 Drop `SharedRef` and `SharedDef`, and instead have an explicit stack:
 * `SK.Push(Expr)`
-* `EK.Stack(idx)`; maybe just `idx=0`?
-* `SK.PopAndDecr`
+* `EK.StackRef(Expr)`
+* `SK.PopAndDecr(howMany)`
 
 ## Exceptions
 
@@ -145,7 +146,7 @@ With thread-local data, have a thread-local exception context structure.
 The context has a stack of exception handlers and a pointer to currently
 thrown exception if any.
 
-We may use special tagged value, similar to `null` or `undefined`, that
+We may use a special tagged value, similar to `null` or `undefined`, that
 indicates exception return. Let's call it `exn`.
 
 ### Try block
