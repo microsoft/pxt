@@ -362,8 +362,12 @@ namespace pxt.github {
             return Promise.all(repos.map(id => repoAsync(id.path, config)))
                 .then(rs => rs.filter(r => r.status != GitRepoStatus.Banned)); // allow deep links to github repos
 
-        query += ` in:name,description,readme "for PXT/${appTarget.platformid || appTarget.id}"`
-        return U.httpGetJsonAsync("https://api.github.com/search/repositories?q=" + encodeURIComponent(query))
+        let fetch = () => useProxy()
+            ? U.httpGetJsonAsync(`${pxt.Cloud.apiRoot}ghsearch/${appTarget.id}/${appTarget.platformid || appTarget.id}?q=`
+                + encodeURIComponent(query))
+            : U.httpGetJsonAsync("https://api.github.com/search/repositories?q="
+                + encodeURIComponent(query + ` in:name,description,readme "for PXT/${appTarget.platformid || appTarget.id}"`))
+        return fetch()
             .then((rs: SearchResults) =>
                 rs.items.map(item => mkRepo(item, config))
                     .filter(r => r.status == GitRepoStatus.Approved || (config.allowUnapproved && r.status == GitRepoStatus.Unknown)))
