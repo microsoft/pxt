@@ -138,15 +138,17 @@ namespace pxt.Cloud {
         const rx = `^((https:\/\/)?(?:${domains.join('|')})\/)?(api\/oembed\?url=.*%2F([^&]*)&.*?|([a-z0-9\-_]+))$`;
         const m = new RegExp(rx, 'i').exec(uri.trim());
         const scriptid = m && (!m[1] || domains.indexOf(Util.escapeForRegex(m[1].replace(/https:\/\//, '').replace(/\/$/, '')).toLowerCase()) >= 0) && (m[3] || m[4]) ? (m[3] ? m[3] : m[4]) : null
-        return scriptid;
+
+        if (scriptid[0] == "_" && scriptid.length == 13)
+            return scriptid;
+        if (scriptid.length == 23 && /^[0-9\-]+$/.test(scriptid))
+            return scriptid;
+        return undefined;
     }
 
     //
     // Interfaces used by the cloud
     //
-
-    // TODO: remove unused interfaces
-    // TODO: remove unused fields
 
     export interface JsonProgress {
         kind: string;
@@ -365,7 +367,7 @@ namespace pxt.Cloud {
         artid: string; // where is it pointing to
         releaseid: string;
         redirect: string; // full URL or /something/on/the/same/host
-        description: string; // set to script title from the client        
+        description: string; // set to script title from the client
         htmlartid: string;
 
         scriptname: string;
