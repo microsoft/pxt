@@ -1650,8 +1650,11 @@ export class ProjectView
 
     runSimulator(opts: compiler.CompileOptions = {}) {
         const editorId = this.editor ? this.editor.getId().replace(/Editor$/, '') : "unknown";
-        if (opts.background) pxt.tickActivity("autorun", "autorun." + editorId);
-        else pxt.tickEvent(opts.debug ? "debug" : "run", { editor: editorId });
+        if (opts.background) {
+            pxt.tickActivity("autorun", "autorun." + editorId);
+            if (localStorage.getItem("noAutoRun"))
+                return Promise.resolve()
+        } else pxt.tickEvent(opts.debug ? "debug" : "run", { editor: editorId });
 
         if (!opts.background)
             this.editor.beforeCompile();
