@@ -169,6 +169,7 @@ namespace pxt.editor {
         toggleSimulatorFullscreen(): void;
         proxySimulatorMessage(content: string): void;
         toggleTrace(intervalSpeed?: number): void;
+        setTrace(enabled: boolean, intervalSpeed?: number): void;
         toggleMute(): void;
         openInstructions(): void;
         closeFlyout(): void;
