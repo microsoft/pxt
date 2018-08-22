@@ -141,6 +141,9 @@ namespace pxtblockly {
             pxsim.pointerEvents.down.forEach(evid => this.sourceBlock_.getSvgRoot().removeEventListener(evid, this.dontHandleMouseEvent_));
             this.sourceBlock_.getSvgRoot().removeEventListener(pxsim.pointerEvents.move, this.dontHandleMouseEvent_);
             document.removeEventListener(pxsim.pointerEvents.up, this.clearLedDragHandler);
+            document.removeEventListener(pxsim.pointerEvents.leave, this.clearLedDragHandler);
+
+            (Blockly as any).Touch.clearTouchIdentifier();
 
             ev.stopPropagation();
             ev.preventDefault();
@@ -170,6 +173,7 @@ namespace pxtblockly {
                 this.sourceBlock_.getSvgRoot().addEventListener(pxsim.pointerEvents.move, this.dontHandleMouseEvent_);
 
                 document.addEventListener(pxsim.pointerEvents.up, this.clearLedDragHandler);
+                document.addEventListener(pxsim.pointerEvents.leave, this.clearLedDragHandler);
 
                 ev.stopPropagation();
                 ev.preventDefault();
