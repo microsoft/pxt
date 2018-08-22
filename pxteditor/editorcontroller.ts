@@ -50,6 +50,7 @@ namespace pxt.editor {
         | "setscale"
 
         | "toggletrace" // EditorMessageToggleTraceRequest
+        | "settracestate" // EditorMessageSetTraceStateRequest
 
         | "workspacesync" // EditorWorspaceSyncRequest
         | "workspacereset"
@@ -182,6 +183,13 @@ namespace pxt.editor {
         intervalSpeed?: number;
     }
 
+    export interface EditorMessageSetTraceStateRequest extends EditorMessageRequest {
+        action: "settracestate";
+        enabled: boolean;
+        // interval speed for the execution trace
+        intervalSpeed?: number;
+    }
+
     export interface PackageExtensionData {
         ts: string;
         json?: any;
@@ -310,6 +318,10 @@ namespace pxt.editor {
                             const togglemsg = data as EditorMessageToggleTraceRequest;
                             p = p.then(() => projectView.toggleTrace(togglemsg.intervalSpeed));
                             break;
+                        }
+                        case "settracestate": {
+                            const trcmsg = data as EditorMessageSetTraceStateRequest;
+                            p = p.then(() => projectView.setTrace(trcmsg.enabled, trcmsg.intervalSpeed));
                         }
                     }
                 }

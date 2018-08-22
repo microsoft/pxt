@@ -1370,6 +1370,15 @@ export class ProjectView
         this.restartSimulator();
     }
 
+    setTrace(enabled: boolean, intervalSpeed?: number) {
+        if (this.state.tracing !== enabled) {
+            this.toggleTrace(intervalSpeed);
+        } else if (this.state.tracing) {
+            simulator.setTraceInterval(intervalSpeed != undefined ? intervalSpeed : simulator.SLOW_TRACE_INTERVAL);
+            this.restartSimulator();
+        }
+    }
+
     startSimulator(debug?: boolean) {
         pxt.tickEvent('simulator.start')
         this.saveFileAsync()
