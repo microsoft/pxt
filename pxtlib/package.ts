@@ -645,7 +645,7 @@ namespace pxt {
                     // translations to the editor translations.
                     const strings = U.getLocalizedStrings();
                     Object.keys(loc).forEach((l) => {
-                        if (l.startsWith("{id:subcategory}") || l.startsWith("{id:group}")) {
+                        if (U.startsWith(l, "{id:subcategory}") || U.startsWith(l, "{id:group}")) {
                             if (!strings[l]) {
                                 strings[l] = loc[l];
                             }
