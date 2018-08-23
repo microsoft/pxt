@@ -314,7 +314,7 @@ export function showCreateGithubRepoDialogAsync() {
             </div>
             <div className="ui field">
                 <label id="selectDescToOpenLabel">{lf("Repo description.")}</label>
-                <input type="url" tabIndex={0} autoFocus aria-describedby="selectDescToOpenLabel" placeholder={lf("MakeCode package for my gadget...")} className="ui fluid"></input>
+                <input type="url" tabIndex={0} autoFocus aria-describedby="selectDescToOpenLabel" placeholder={lf("MakeCode extension for my gadget...")} className="ui fluid"></input>
             </div>
         </div>,
     }).then(res => {
