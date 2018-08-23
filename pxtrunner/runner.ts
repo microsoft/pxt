@@ -212,7 +212,7 @@ namespace pxt.runner {
                         }
                     }
                 }).catch(e => {
-                    showError(lf("Cannot load package: {0}", e.message))
+                    showError(lf("Cannot load extension: {0}", e.message))
                 })
             });
     }

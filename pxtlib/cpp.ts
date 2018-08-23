@@ -843,7 +843,7 @@ namespace pxt.cpp {
                     } else if (currSettings[settingName] === settingValue) {
                         // OK
                     } else if (!pkg.parent.config.yotta || !pkg.parent.config.yotta.ignoreConflicts) {
-                        let err = new PkgConflictError(lf("conflict on yotta setting {0} between packages {1} and {2}",
+                        let err = new PkgConflictError(lf("conflict on yotta setting {0} between extensions {1} and {2}",
                             settingName, pkg.id, prev.id))
                         err.pkg0 = prev
                         err.pkg1 = pkg
@@ -900,7 +900,7 @@ namespace pxt.cpp {
                             includesInc += `#include "${isYotta ? sourcePath.slice(1) : ""}${fullName}"\n`
                         let src = pkg.readFile(fn)
                         if (src == null)
-                            U.userError(lf("C++ file {0} is missing in package {1}.", fn, pkg.config.name))
+                            U.userError(lf("C++ file {0} is missing in extension {1}.", fn, pkg.config.name))
                         fileName = fullName
                         if (isCSharp) {
                             pxt.debug("Parse C#: " + fullName)
@@ -924,7 +924,7 @@ namespace pxt.cpp {
                     }
                 }
                 if (thisErrors) {
-                    allErrors += lf("Package {0}:\n", pkg.id) + thisErrors
+                    allErrors += lf("Extension {0}:\n", pkg.id) + thisErrors
                 }
             }
         }

@@ -157,7 +157,7 @@ namespace pxt {
                         .then(() => {
                             const confStr = this.readFile(pxt.CONFIG_NAME)
                             if (!confStr)
-                                U.userError(`package ${this.id} is missing ${pxt.CONFIG_NAME}`)
+                                U.userError(`extension ${this.id} is missing ${pxt.CONFIG_NAME}`)
                             this.parseConfig(confStr);
                             if (this.level != 0)
                                 this.config.installedVersion = this.version()
@@ -177,7 +177,7 @@ namespace pxt {
                 U.userError("Missing files in config of: " + this.id)
             if (typeof this.config.name != "string" || !this.config.name ||
                 (this.config.public && !/^[a-z][a-z0-9\-_]+$/i.test(this.config.name)))
-                U.userError("Invalid package name: " + this.config.name)
+                U.userError("Invalid extension name: " + this.config.name)
             if (this.config.targetVersions
                 && this.config.targetVersions.target
                 && semver.majorCmp(this.config.targetVersions.target, appTarget.versions.target) > 0)
@@ -248,7 +248,7 @@ namespace pxt {
                         this.parent.sortedDeps().forEach((depPkg) => {
                             if (pkgCfg.core && depPkg.config.core &&
                                 pkgCfg.name != depPkg.config.name) {
-                                const conflict = new cpp.PkgConflictError(lf("conflict between core packages {0} and {1}", pkgCfg.name, depPkg.id));
+                                const conflict = new cpp.PkgConflictError(lf("conflict between core extensions {0} and {1}", pkgCfg.name, depPkg.id));
                                 conflict.pkg0 = depPkg;
                                 conflicts.push(conflict);
                                 return;
@@ -263,7 +263,7 @@ namespace pxt {
                                         const depSetting = depYottaCfg[settingName];
                                         const isJustDefaults = pkgCfg.yotta.configIsJustDefaults || depConfig.yotta.configIsJustDefaults;
                                         if (depYottaCfg.hasOwnProperty(settingName) && depSetting !== yottaCfg[settingName] && !isJustDefaults && (!depPkg.parent.config.yotta || !depPkg.parent.config.yotta.ignoreConflicts)) {
-                                            const conflict = new cpp.PkgConflictError(lf("conflict on yotta setting {0} between packages {1} and {2}", settingName, pkgCfg.name, depPkg.id));
+                                            const conflict = new cpp.PkgConflictError(lf("conflict on yotta setting {0} between extensions {1} and {2}", settingName, pkgCfg.name, depPkg.id));
                                             conflict.pkg0 = depPkg;
                                             conflict.settingName = settingName;
                                             conflicts.push(conflict);
@@ -273,7 +273,7 @@ namespace pxt {
                                 }
                             }
                             if (!foundYottaConflict && pkgCfg.name === depPkg.id && depPkg._verspec != version && !/^file:/.test(depPkg._verspec) && !/^file:/.test(version)) {
-                                const conflict = new cpp.PkgConflictError(lf("version mismatch for package {0} (installed: {1}, installing: {2})", depPkg, depPkg._verspec, version));
+                                const conflict = new cpp.PkgConflictError(lf("version mismatch for extension {0} (installed: {1}, installing: {2})", depPkg, depPkg._verspec, version));
                                 conflict.pkg0 = depPkg;
                                 conflict.isVersionConflict = true;
                                 conflicts.push(conflict);
@@ -305,8 +305,8 @@ namespace pxt {
                     conflicts.forEach((c) => {
                         additionalConflicts.push.apply(additionalConflicts, allAncestors(c.pkg0).map((anc) => {
                             const confl = new cpp.PkgConflictError(c.isVersionConflict ?
-                                lf("a dependency of {0} has a version mismatch with package {1} (installed: {1}, installing: {2})", anc.id, pkgCfg.name, c.pkg0._verspec, version) :
-                                lf("conflict on yotta setting {0} between packages {1} and {2}", c.settingName, pkgCfg.name, c.pkg0.id));
+                                lf("a dependency of {0} has a version mismatch with extension {1} (installed: {1}, installing: {2})", anc.id, pkgCfg.name, c.pkg0._verspec, version) :
+                                lf("conflict on yotta setting {0} between extensions {1} and {2}", c.settingName, pkgCfg.name, c.pkg0.id));
                             confl.pkg0 = anc;
                             return confl;
                         }));
