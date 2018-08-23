@@ -75,6 +75,9 @@
         } else if (action == 'toggletrace') {
             msg.intervalSpeed = 1000;
         }
+        else if (action == 'settracestate') {
+            msg.enabled = true;
+        }
         if (msg.response)
             pendingMsgs[msg.id] = msg;
         editor.postMessage(msg, "*")
@@ -134,7 +137,8 @@
         <button class="ui button" onclick="sendMessage('newproject')">newproject</button>
         <button class="ui button" onclick="sendMessage('importproject')">importproject</button>
         <button class="ui button" onclick="toggleFilters()">filter</button>
-        <button class="ui button" onclick="sendMessage('toggletrace')">trace</button>
+        <button class="ui button" onclick="sendMessage('toggletrace')">toggle trace</button>
+        <button class="ui button" onclick="sendMessage('settracestate')">trace on</button>
         <button class="ui button" onclick="sendMessage('undo')">undo</button>
         <button class="ui button" onclick="sendMessage('redo')">redo</button>
         <button class="ui button" onclick="sendMessage('renderblocks')">renderblocks</button>
