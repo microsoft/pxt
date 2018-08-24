@@ -15,7 +15,7 @@ html {
     overflow: hidden;
     font-size:16px;
 }
-  
+
 body {
     height: 100%;
     padding: 0;
@@ -535,6 +535,28 @@ Field editors
 .social-icons a.twitter {
     color: white;
     background-color: #00aced;
+}
+
+/*******************************
+    Extension Error Dialog
+*******************************/
+
+.package-diagnostics {
+    -webkit-transition: opacity 0.2s, height 0.2s 0.2s; /* Safari */
+    -moz-transition: opacity 0.2s, height 0.2s 0.2s; /* Mozilla */
+    -webkit-transition-timing-function: linear; /* Mozilla */
+    -o-transition: opacity 0.2s, height 0.2s 0.2s; /* Opera */
+    transition: opacity 0.2s, height 0.2s 0.2s;
+    transition-timing-function: linear;
+    height: 0px;
+    opacity: 0;
+    visibility: hidden;
+}
+
+.package-diagnostics.expanded-list {
+    height: unset;
+    visibility: visible;
+    opacity: 1;
 }
 
 /*******************************

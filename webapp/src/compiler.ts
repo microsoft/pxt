@@ -239,6 +239,21 @@ export function newProject() {
     workerOpAsync("reset", {}).done();
 }
 
+export function getPackagesWithErrors(): pkg.EditorPackage[] {
+    const badPackages: pxt.Map<pkg.EditorPackage> = {};
+
+    const topPkg = pkg.mainEditorPkg();
+    if (topPkg) {
+        topPkg.forEachFile(file => {
+            if (file.diagnostics && file.diagnostics.length && file.epkg && !file.epkg.isTopLevel() &&
+                    file.diagnostics.some(d => d.category === ts.pxtc.DiagnosticCategory.Error)) {
+                badPackages[file.epkg.getPkgId()] = file.epkg;
+            }
+        });
+    }
+    return pxt.Util.values(badPackages);
+}
+
 function blocksOptions(): pxtc.service.BlocksOptions {
     if (pxt.appTarget && pxt.appTarget.runtime && pxt.appTarget.runtime.bannedCategories && pxt.appTarget.runtime.bannedCategories.length) {
         return { bannedCategories: pxt.appTarget.runtime.bannedCategories };

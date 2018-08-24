@@ -362,6 +362,20 @@ export class ProjectView
         this.typecheck()
     }
 
+    private showPackageErrorsOnNextTypecheck() {
+        this.setState({ suppressPackageWarning: false });
+    }
+
+    private maybeShowPackageErrors(force = false) {
+        if (!this.state.suppressPackageWarning || force) {
+            const badPackages = compiler.getPackagesWithErrors();
+            if (badPackages.length) {
+                this.setState({ suppressPackageWarning: true });
+                dialogs.showPackageErrorDialogAsync(badPackages);
+            }
+        }
+    }
+
     private autoRunBlocksSimulator = pxtc.Util.debounce(
         () => {
             if (Util.now() - this.lastChangeTime < 1000) return;
@@ -408,6 +422,8 @@ export class ProjectView
                             else this.autoRunSimulator();
                         }
                     }
+
+                    this.maybeShowPackageErrors();
                 });
         }, 1000, false);
 
@@ -1260,6 +1276,7 @@ export class ProjectView
     newProject(options: ProjectCreationOptions = {}) {
         pxt.tickEvent("app.newproject");
         core.showLoading("newproject", lf("creating new project..."));
+        this.showPackageErrorsOnNextTypecheck();
         this.createProjectAsync(options)
             .then(() => Promise.delay(500))
             .done(() => core.hideLoading("newproject"));
@@ -1406,6 +1423,10 @@ export class ProjectView
         if (this.checkForHwVariant())
             return;
 
+        if (!saveOnly) {
+            this.showPackageErrorsOnNextTypecheck();
+        }
+
         if (pxt.appTarget.compile.saveAsPNG && !pxt.hwVariant) {
             this.saveAndCompile();
             return;
@@ -1526,6 +1547,7 @@ export class ProjectView
         if (this.state.running) {
             this.stopSimulator()
         } else {
+            this.maybeShowPackageErrors(true);
             this.startSimulator();
         }
     }
