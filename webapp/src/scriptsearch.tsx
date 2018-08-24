@@ -28,9 +28,6 @@ interface ScriptSearchState {
 }
 
 export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
-    private prevGhData: pxt.github.GitRepo[] = [];
-    private prevUrlData: Cloud.JsonScript[] = [];
-
     constructor(props: ISettingsProps) {
         super(props)
         this.state = {
@@ -60,43 +57,57 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         this.setState({ visible: true, searchFor: '', mode: ScriptSearchMode.Boards })
     }
 
-    fetchUrlData(): Cloud.JsonScript[] {
-        if (!this.state.searchFor || this.state.mode != ScriptSearchMode.Extensions) return [];
+    fetchUrlData(): data.DataFetchResult<Cloud.JsonScript[]> {
+        const emptyResult: data.DataFetchResult<Cloud.JsonScript[]> = {
+            data: [],
+            status: data.FetchStatus.Complete
+        };
+        if (!this.state.searchFor || this.state.mode != ScriptSearchMode.Extensions) return emptyResult;
 
         let scriptid = pxt.Cloud.parseScriptId(this.state.searchFor)
-        if (scriptid) {
-            let res = this.getData(`cloud-search:${scriptid}`)
-            if (res) {
-                if (res.statusCode !== 404)
-                    this.prevUrlData = [res];
-                else this.prevUrlData = [];
-            }
-        } else {
-            this.prevUrlData = [];
+
+        if (!scriptid) {
+            return emptyResult;
         }
-        return this.prevUrlData;
+
+        const res = this.getDataWithStatus<any>(`cloud-search:${scriptid}`);
+
+        if (res.data && res.data.statusCode === 404)
+            res.data = []; // No shared project with that URL exists
+
+        return res;
     }
 
-    fetchGhData(): pxt.github.GitRepo[] {
-        if (this.state.mode != ScriptSearchMode.Extensions) return [];
+    fetchGhData(): data.DataFetchResult<pxt.github.GitRepo[]> {
+        const emptyResult: data.DataFetchResult<pxt.github.GitRepo[]> = {
+            data: [],
+            status: data.FetchStatus.Complete
+        };
+
+        if (this.state.mode != ScriptSearchMode.Extensions) return emptyResult;
 
         const cloud = pxt.appTarget.cloud || {};
-        if (!cloud.packages) return [];
-        const searchFor = cloud.githubPackages ? this.state.searchFor : undefined;
-        let preferredPackages: string[] = undefined;
+        if (!cloud.packages) return emptyResult;
+
+        let searchFor = cloud.githubPackages ? this.state.searchFor : undefined;
         if (!searchFor) {
-            const packageConfig = this.getData("target-config:") as pxt.TargetConfig;
-            preferredPackages = packageConfig && packageConfig.packages
-                ? packageConfig.packages.preferredRepos
-                : undefined;
+            const trgConfigFetch = this.getDataWithStatus("target-config:");
+            const trgConfig = trgConfigFetch.data as pxt.TargetConfig;
+
+            if (trgConfigFetch.status === data.FetchStatus.Complete && trgConfig && trgConfig.packages && trgConfig.packages.preferredRepos) {
+                searchFor = trgConfig.packages.preferredRepos.join("|");
+            }
         }
 
-        const res: pxt.github.GitRepo[] =
-            searchFor || preferredPackages
-                ? this.getData(`gh-search:${searchFor || preferredPackages.join('|')}`)
-                : null
-        if (res) this.prevGhData = res
-        return this.prevGhData || []
+        if (!searchFor) return emptyResult; // No search result and no preferred packages = no results for GH packages
+
+        const res = this.getData(`gh-search:${searchFor}`);
+
+        if (!res.data || res.data.statusCode === 404) {
+            res.data = [];
+        }
+
+        return res;
     }
 
     fetchLocal() {
@@ -268,6 +279,10 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         const ghdata = this.fetchGhData();
         const urldata = this.fetchUrlData();
         const local = this.fetchLocal()
+
+        const isSearchingGh = ghdata.status === data.FetchStatus.Pending || ghdata.status === data.FetchStatus.Error;
+        const isSearchingUrl = urldata.status === data.FetchStatus.Pending || urldata.status === data.FetchStatus.Error;
+        const isSearching = isSearchingGh || isSearchingUrl;
 
         const coresFirst = (a: pxt.PackageConfig, b: pxt.PackageConfig) => {
             if (a.core != b.core)
