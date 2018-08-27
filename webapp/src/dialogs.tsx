@@ -4,6 +4,7 @@ import * as ReactDOM from "react-dom";
 import * as sui from "./sui";
 import * as data from "./data";
 import * as core from "./core";
+import * as coretsx from "./coretsx";
 import * as cloudsync from "./cloudsync";
 
 import Cloud = pxt.Cloud;
@@ -194,7 +195,7 @@ function renderVersionLink(name: string, version: string, url: string) {
     </p>;
 }
 
-export function showPackageErrorDialogAsync(badPackages: EditorPackage[]) {
+export function showPackageErrorDialogAsync(badPackages: EditorPackage[], removePackage: (id: string) => Promise<void>) {
     core.confirmAsync({
         header: lf("Extension Errors"),
         hideCancel: true,
@@ -204,7 +205,7 @@ export function showPackageErrorDialogAsync(badPackages: EditorPackage[]) {
                 <p>{pxt.Util.lf("The following extensions are preventing the project from compiling:")}</p>
                 <div className="ui relaxed divided list">
                 {
-                    badPackages.map(epkg => <PackageErrorListItem package={epkg} key={epkg.getPkgId()}></PackageErrorListItem>)
+                    badPackages.map(epkg => <PackageErrorListItem package={epkg} key={epkg.getPkgId()} removePackage={curryRemove(epkg.getPkgId())}></PackageErrorListItem>)
                 }
             </div>
             <div className="ui message">
@@ -212,20 +213,37 @@ export function showPackageErrorDialogAsync(badPackages: EditorPackage[]) {
             </div>
         </div>
     }).done();
+
+    function curryRemove(id: string) {
+        return () => {
+            coretsx.hideDialog();
+            return removePackage(id)
+        }
+    }
 }
 
 interface PackageErrorListItemProps {
     package: EditorPackage;
+    removePackage: () => Promise<void>
 }
 
 interface PackageErrorListItemState {
     expanded: boolean;
+    pendingRemoval: boolean;
 }
 
 class PackageErrorListItem extends React.Component<PackageErrorListItemProps, PackageErrorListItemState> {
 
     toggle() {
         this.setState({ expanded: !(this.state && this.state.expanded) });
+    }
+
+    pendingRemoval() {
+        this.setState({ pendingRemoval: true });
+    }
+
+    clearPending() {
+        this.setState({ pendingRemoval: false });
     }
 
     render() {
@@ -254,10 +272,19 @@ class PackageErrorListItem extends React.Component<PackageErrorListItemProps, Pa
 
         const errors = collectErrors(epkg);
         const isExpanded = this.state && this.state.expanded;
+        const isPending = this.state && this.state.pendingRemoval;
 
         return <div className="item" key={pxt.Util.htmlEscape(epkg.getPkgId())}>
             <div className="right floated content">
-                <div className="ui button">{pxt.Util.lf("Remove")}</div>
+            { isPending ?
+                <div>
+                    <button className="ui button negative" onClick={this.props.removePackage}>{pxt.Util.lf("Remove")}</button>
+                    <button className="ui button" onClick={this.clearPending.bind(this)}>{pxt.Util.lf("Cancel")}</button>
+                </div> :
+                <button className="ui icon button" onClick={this.pendingRemoval.bind(this)}>
+                    <i className="trash icon"></i>
+                </button>
+            }
             </div>
             { icon }
             <div className="content">

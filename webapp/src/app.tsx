@@ -371,9 +371,14 @@ export class ProjectView
             const badPackages = compiler.getPackagesWithErrors();
             if (badPackages.length) {
                 this.setState({ suppressPackageWarning: true });
-                dialogs.showPackageErrorDialogAsync(badPackages);
+                dialogs.showPackageErrorDialogAsync(badPackages, id => {
+                    return pkg.mainEditorPkg().removeDepAsync(id)
+                    .then(() => this.reloadHeaderAsync())
+                });
+                return true;
             }
         }
+        return false;
     }
 
     private autoRunBlocksSimulator = pxtc.Util.debounce(
@@ -1423,10 +1428,6 @@ export class ProjectView
         if (this.checkForHwVariant())
             return;
 
-        if (!saveOnly) {
-            this.showPackageErrorsOnNextTypecheck();
-        }
-
         if (pxt.appTarget.compile.saveAsPNG && !pxt.hwVariant) {
             this.saveAndCompile();
             return;
@@ -1472,6 +1473,16 @@ export class ProjectView
                 if (!resp) return Promise.resolve();
                 if (saveOnly) {
                     return pxt.commands.saveOnlyAsync(resp);
+                }
+                if (!resp.success) {
+                    if (!this.maybeShowPackageErrors(true)) {
+                        core.confirmAsync({
+                            header: lf("Compilation failed"),
+                            body: lf("Ooops, looks like there are errors in your program."),
+                            hideAgree: true,
+                            disagreeLbl: lf("Close")
+                        });
+                    }
                 }
                 return pxt.commands.deployCoreAsync(resp, {
                     reportDeviceNotFoundAsync: (docPath, compileResult) => this.showDeviceNotFoundDialogAsync(docPath, compileResult)
