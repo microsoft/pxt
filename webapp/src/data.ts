@@ -208,7 +208,7 @@ function lookup(path: string) {
     return cachedData[path]
 }
 
-function getCached<T>(component: AnyComponent, path: string): DataFetchResult<T> {
+function getCached(component: AnyComponent, path: string): DataFetchResult<any> {
     subscribe(component, path)
     let r = lookup(path)
     if (r.api.isSync)
@@ -217,7 +217,7 @@ function getCached<T>(component: AnyComponent, path: string): DataFetchResult<T>
             status: FetchStatus.Complete
         }
 
-    let fetchRes: DataFetchResult<T> = {
+    let fetchRes: DataFetchResult<any> = {
         data: r.data,
         status: FetchStatus.Complete
     };
@@ -299,17 +299,17 @@ export class Component<TProps, TState> extends React.Component<TProps, TState> {
     }
 
     getData(path: string) {
-        const fetchResult = this.getDataWithStatus<any>(path);
+        const fetchResult = this.getDataWithStatus(path);
         return fetchResult.data;
     }
 
     /**
      * Like getData, but the data is wrapped in a result object that indicates the status of the fetch operation
      */
-    getDataWithStatus<T>(path: string): DataFetchResult<T> {
+    getDataWithStatus(path: string): DataFetchResult<any> {
         if (!this.renderCoreOk)
             Util.oops("Override renderCore() not render()")
-        return getCached<T>(this, path)
+        return getCached(this, path)
     }
 
     componentWillUnmount(): void {
