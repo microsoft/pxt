@@ -297,6 +297,29 @@ function webUsbDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
         .catch(e => askWebUSBPairAsync(resp));
 }
 
+function winrtDeployCoreAsync(r: pxtc.CompileResult, d: pxt.commands.DeployOptions): Promise<void> {
+    return hidDeployCoreAsync(r, d)
+        .timeout(20000)
+        .catch((e) => {
+            return hidbridge.disconnectWrapperAsync()
+                .catch((e) => {
+                    // Best effort disconnect; at this point we don't even know the state of the device
+                    pxt.reportException(e);
+                })
+                .then(() => {
+                    return core.confirmAsync({
+                        header: lf("Something went wrong..."),
+                        body: lf("Flashing your {0} took too long. Please disconnect your {0} from your computer and try reconnecting it.", pxt.appTarget.appTheme.boardName || lf("device")),
+                        disagreeLbl: lf("Ok"),
+                        hideAgree: true
+                    });
+                })
+                .then(() => {
+                    return pxt.commands.saveOnlyAsync(r);
+                });
+        });
+}
+
 function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     pxt.debug('local deployment...');
     core.infoNotification(lf("Uploading .hex file..."));
@@ -339,7 +362,7 @@ export function initCommandsAsync(): Promise<void> {
         if (pxt.appTarget.serial && pxt.appTarget.serial.useHF2) {
             pxt.winrt.initWinrtHid(() => hidbridge.initAsync(true).then(() => { }), () => hidbridge.disconnectWrapperAsync());
             pxt.HF2.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
-            pxt.commands.deployCoreAsync = hidDeployCoreAsync;
+            pxt.commands.deployCoreAsync = winrtDeployCoreAsync;
         } else {
             // If we're not using HF2, then the target is using their own deploy logic in extension.ts, so don't use
             // the wrapper callbacks
