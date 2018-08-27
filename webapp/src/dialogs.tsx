@@ -234,15 +234,15 @@ interface PackageErrorListItemState {
 
 class PackageErrorListItem extends React.Component<PackageErrorListItemProps, PackageErrorListItemState> {
 
-    toggle() {
+    toggle = () => {
         this.setState({ expanded: !(this.state && this.state.expanded) });
     }
 
-    pendingRemoval() {
+    pendingRemoval = () => {
         this.setState({ pendingRemoval: true });
     }
 
-    clearPending() {
+    clearPending = () => {
         this.setState({ pendingRemoval: false });
     }
 
@@ -279,9 +279,9 @@ class PackageErrorListItem extends React.Component<PackageErrorListItemProps, Pa
             { isPending ?
                 <div>
                     <button className="ui button negative" onClick={this.props.removePackage}>{pxt.Util.lf("Remove")}</button>
-                    <button className="ui button" onClick={this.clearPending.bind(this)}>{pxt.Util.lf("Cancel")}</button>
+                    <button className="ui button" onClick={this.clearPending}>{pxt.Util.lf("Cancel")}</button>
                 </div> :
-                <button className="ui icon button" onClick={this.pendingRemoval.bind(this)}>
+                <button className="ui icon button" onClick={this.pendingRemoval}>
                     <i className="trash icon"></i>
                 </button>
             }
@@ -289,7 +289,7 @@ class PackageErrorListItem extends React.Component<PackageErrorListItemProps, Pa
             { icon }
             <div className="content">
                 <a className="header" href={url} >{`${displayName} (${displayVersion})`}</a>
-                <div className="description" onClick={this.toggle.bind(this)}>
+                <div className="description" onClick={this.toggle} role="button">
                     {errors.length > 1 ? lf("Found {0} errors", errors.length) : lf("Found {0} error", errors.length) }
                     <i className={`small middle aligned icon caret ${isExpanded ? "down" : "right"}`}></i>
                 </div>
