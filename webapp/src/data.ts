@@ -17,7 +17,12 @@ interface CacheEntry {
     api: VirtualApi;
 }
 
-export enum FetchStatus { Pending, Complete, Error, Offline };
+export enum FetchStatus {
+    Pending,
+    Complete,
+    Error,
+    Offline
+};
 
 export interface DataFetchResult<T> {
     data?: T;
