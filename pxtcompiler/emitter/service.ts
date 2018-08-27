@@ -265,13 +265,12 @@ namespace ts.pxtc {
 
         const locStrings: pxt.Map<string> = {};
         const jsdocStrings: pxt.Map<string> = {};
-        const nameToFilename = (n: string) => n.replace(/([A-Z])/g, function (m) { return '-' + m.toLowerCase(); });
         const writeLoc = (si: SymbolInfo) => {
             if (!options.locs || !si.qName) {
                 return;
             }
-            if (si.attributes.deprecated || /^__/.test(si.name))
-                return; // skip deprecated or function starting with __
+            if (/^__/.test(si.name))
+                return; // skip functions starting with __
             pxt.debug(`loc: ${si.qName}`)
             // must match blockly loader
             if (si.kind != SymbolKind.EnumMember) {
