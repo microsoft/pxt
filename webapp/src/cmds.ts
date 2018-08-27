@@ -299,7 +299,7 @@ function webUsbDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
 
 function winrtDeployCoreAsync(r: pxtc.CompileResult, d: pxt.commands.DeployOptions): Promise<void> {
     return hidDeployCoreAsync(r, d)
-        .timeout(18000)
+        .timeout(20000)
         .catch((e) => {
             return hidbridge.disconnectWrapperAsync()
                 .catch((e) => {
