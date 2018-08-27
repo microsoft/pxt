@@ -279,10 +279,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         const ghdata = this.fetchGhData();
         const urldata = this.fetchUrlData();
         const local = this.fetchLocal()
-
-        const isSearchingGh = ghdata.status === data.FetchStatus.Pending || ghdata.status === data.FetchStatus.Error;
-        const isSearchingUrl = urldata.status === data.FetchStatus.Pending || urldata.status === data.FetchStatus.Error;
-        const isSearching = this.state.searchFor && (isSearchingGh || isSearchingUrl);
+        const isSearching = this.state.searchFor && (ghdata.status === data.FetchStatus.Pending || urldata.status === data.FetchStatus.Pending);
 
         const coresFirst = (a: pxt.PackageConfig, b: pxt.PackageConfig) => {
             if (a.core != b.core)
