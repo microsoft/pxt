@@ -166,7 +166,6 @@ namespace ts.pxtc {
         whenUsed?: boolean;
         jres?: string;
         useLoc?: string; // The qName of another API whose localization will be used if this API is not translated and if both block definitions are identical
-        untranslatedBlock?: string; // The block definition before it was translated
         // On namepspace
         subcategories?: string[];
         groups?: string[];
@@ -208,6 +207,7 @@ namespace ts.pxtc {
         _source?: string;
         _def?: ParsedBlockDef;
         _expandedDef?: ParsedBlockDef;
+        _untranslatedBlock?: string; // The block definition before it was translated
         jsDoc?: string;
         paramHelp?: pxt.Map<string>;
         // foo.defl=12 -> paramDefl: { foo: "12" }
@@ -641,7 +641,7 @@ namespace ts.pxtc {
 
                     if (otherFn) {
                         const otherTranslation = loc[`${otherFn.qName}|block`];
-                        const isSameBlockDef = fn.attributes.block === (otherFn.attributes.untranslatedBlock || otherFn.attributes.block);
+                        const isSameBlockDef = fn.attributes.block === (otherFn.attributes._untranslatedBlock || otherFn.attributes.block);
 
                         if (isSameBlockDef && !!otherTranslation) {
                             locBlock = otherTranslation;
@@ -661,7 +661,7 @@ namespace ts.pxtc {
                     const ps = pxt.blocks.compileInfo(fn);
                     const oldBlock = fn.attributes.block;
                     fn.attributes.block = pxt.blocks.normalizeBlock(locBlock);
-                    fn.attributes.untranslatedBlock = oldBlock;
+                    fn.attributes._untranslatedBlock = oldBlock;
                     if (oldBlock != fn.attributes.block) {
                         const locps = pxt.blocks.compileInfo(fn);
                         if (JSON.stringify(ps) != JSON.stringify(locps)) {
