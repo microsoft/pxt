@@ -261,17 +261,6 @@ namespace ts.pxtc {
         return getEnclosingMethod(node.parent)
     }
 
-    function isInAnyWayGeneric(node: FunctionLikeDeclaration) {
-        return isGenericFunction(node) || hasGenericParent(node)
-    }
-
-    function hasGenericParent(node: Node): boolean {
-        let par = getEnclosingFunction(node)
-        if (par)
-            return isGenericFunction(par) || hasGenericParent(par)
-        return false
-    }
-
     function getEnclosingFunction(node0: Node) {
         let node = node0
         while (true) {
@@ -335,7 +324,6 @@ namespace ts.pxtc {
         vtable?: ir.Procedure[];
         itable?: ir.Procedure[];
         itableInfo?: string[];
-        bindings: TypeBinding[];
         ctor?: ir.Procedure;
     }
 
@@ -350,12 +338,6 @@ namespace ts.pxtc {
     let lastSecondaryError: string
     let lastSecondaryErrorCode = 0
     let inCatchErrors = 0
-
-    export interface TypeBinding {
-        tp: Type;
-        isRef: boolean;
-    }
-    let typeBindings: TypeBinding[] = []
 
     export function getComments(node: Node) {
         if (node.kind == SK.VariableDeclaration)
@@ -476,21 +458,6 @@ namespace ts.pxtc {
         return null
     }
 
-    function lookupTypeParameter(t: Type) {
-        if (!(t.flags & TypeFlags.TypeParameter)) return null
-        for (let i = typeBindings.length - 1; i >= 0; --i)
-            if (typeBindings[i].tp == t) return typeBindings[i]
-        return null
-    }
-
-    function isBuiltinType(t: Type) {
-        let ok = TypeFlags.String | TypeFlags.StringLiteral |
-            TypeFlags.Number | TypeFlags.NumberLiteral |
-            TypeFlags.Boolean | TypeFlags.BooleanLiteral |
-            TypeFlags.Enum | TypeFlags.EnumLiteral
-        return t.flags & ok
-    }
-
     function isGenericType(t: Type) {
         const g = genericRoot(t);
         return !!(g && g.typeParameters && g.typeParameters.length);
@@ -500,13 +467,13 @@ namespace ts.pxtc {
         let ok = TypeFlags.String | TypeFlags.Number | TypeFlags.Boolean |
             TypeFlags.StringLiteral | TypeFlags.NumberLiteral | TypeFlags.BooleanLiteral |
             TypeFlags.Void | TypeFlags.Enum | TypeFlags.EnumLiteral | TypeFlags.Null | TypeFlags.Undefined |
-            TypeFlags.Never
+            TypeFlags.Never | TypeFlags.TypeParameter
         if ((t.flags & ok) == 0) {
             if (isArrayType(t)) return t;
             if (isClassType(t)) return t;
             if (isInterfaceType(t)) return t;
             if (isFunctionType(t)) return t;
-            if (lookupTypeParameter(t)) return t;
+            if (t.flags & TypeFlags.TypeParameter) return t;
             if (isUnionOfLiterals(t)) return t;
 
             let g = genericRoot(t)
@@ -751,8 +718,6 @@ namespace ts.pxtc {
                 let subElemType = arrayElementType(subType)
                 return checkSubtype(subElemType, superElemType)
             }
-        } else if (lookupTypeParameter(superType)) {
-            // TODO
         }
         return insertSubtype(key, [true, ""])
     }
@@ -793,45 +758,9 @@ namespace ts.pxtc {
         return text;
     }
 
-    function getTypeBindings(t: Type) {
-        let g = genericRoot(t)
-        if (!g || !g.typeParameters) return []
-        return getTypeBindingsCore(g.typeParameters, (t as TypeReference).typeArguments)
-    }
-
-    function getTypeBindingsCore(typeParameters: TypeParameter[], args: Type[]): TypeBinding[] {
-        U.assert(typeParameters.length == args.length, "typeParameters.length == args.length")
-        return typeParameters.map((tp, i) => ({ tp: tp, isRef: true }))
-    }
-
-    function getEnclosingTypeBindings(func: Declaration) {
-        let bindings: TypeBinding[] = []
-        addEnclosingTypeBindings(bindings, func)
-        return bindings
-    }
-
-    function addEnclosingTypeBindings(bindings: TypeBinding[], func: Declaration) {
-        if (!func) return
-        for (let outer = getEnclosingFunction(func); outer; outer = getEnclosingFunction(outer)) {
-            for (let tp of getTypeParameters(outer)) {
-                let res = checker.getTypeAtLocation(tp)
-                let binding = typeBindings.filter(b => b.tp == res)[0]
-                if (!binding) {
-                    U.oops("cannot find binding for: " + checker.typeToString(res))
-                }
-                bindings.push(binding)
-            }
-        }
-    }
-
-    function refMask(types: TypeBinding[]) {
-        if (!types || !types.length) return ""
-        return "_" + types.map(t => t.isRef ? "R" : "P").join("")
-    }
-
-    export function getFunctionLabel(node: FunctionLikeDeclaration, bindings: TypeBinding[]) {
+    export function getFunctionLabel(node: FunctionLikeDeclaration) {
         let text = getDeclName(node)
-        return text.replace(/[^\w]+/g, "_") + "__P" + getNodeId(node) + refMask(bindings)
+        return text.replace(/[^\w]+/g, "_") + "__P" + getNodeId(node)
     }
 
     export interface FieldAccessInfo {
@@ -854,8 +783,6 @@ namespace ts.pxtc {
         decl: EmittableAsCall;
         location?: ir.Cell;
         thisParameter?: ParameterDeclaration; // a bit bogus
-        usages?: TypeBinding[][];
-        prePassUsagesEmitted?: number;
         virtualParent?: FunctionAddInfo;
         virtualInstances?: FunctionAddInfo[];
         virtualIndex?: number;
@@ -1155,12 +1082,10 @@ namespace ts.pxtc {
 
         function scope(f: () => void) {
             let prevProc = proc;
-            let prevBindings = typeBindings.slice()
             try {
                 f();
             } finally {
                 proc = prevProc;
-                typeBindings = prevBindings
             }
         }
 
@@ -1170,7 +1095,7 @@ namespace ts.pxtc {
             for (let inf of bin.usedClassInfos) {
                 for (let m of inf.methods) {
                     if (getName(m) == name)
-                        markFunctionUsed(m, inf.bindings)
+                        markFunctionUsed(m)
                 }
             }
             v = ifaceMembers[name] = nextIfaceMemberId++
@@ -1266,14 +1191,12 @@ namespace ts.pxtc {
             let tbl = inf.baseClassInfo ? getVTable(inf.baseClassInfo).slice(0) : []
 
             scope(() => {
-                U.pushRange(typeBindings, inf.bindings)
-
                 for (let m of inf.methods) {
                     let minf = getFunctionInfo(m)
                     if (minf.virtualParent) {
                         let key = classFunctionKey(m)
                         let done = false
-                        let proc = lookupProc(m, inf.bindings)
+                        let proc = lookupProc(m)
                         U.assert(!!proc)
                         for (let i = 0; i < tbl.length; ++i) {
                             if (classFunctionKey(tbl[i].action) == key) {
@@ -1300,11 +1223,11 @@ namespace ts.pxtc {
                 }
 
                 let emitSynthetic = (fn: MethodDeclaration, fill: (p: ir.Procedure) => void) => {
-                    let proc = lookupProc(fn, inf.bindings)
+                    let proc = lookupProc(fn)
                     if (!proc) {
                         scope(() => {
-                            emitFuncCore(fn, inf.bindings)
-                            proc = lookupProc(fn, inf.bindings)
+                            emitFuncCore(fn)
+                            proc = lookupProc(fn)
                             proc.body = []
                             fill(proc)
                         })
@@ -1353,7 +1276,7 @@ namespace ts.pxtc {
                         if (isIfaceMemberUsed(n)) {
                             let id = getIfaceMemberId(n)
                             if (!inf.itable[id]) {
-                                storeIface(n, lookupProc(m, curr.bindings))
+                                storeIface(n, lookupProc(m))
                             }
                         }
                     }
@@ -1417,16 +1340,10 @@ namespace ts.pxtc {
             }
         }
 
-        function getClassInfo(t: Type, decl: ClassDeclaration = null, bindings: TypeBinding[] = null) {
+        function getClassInfo(t: Type, decl: ClassDeclaration = null) {
             if (!decl)
                 decl = <ClassDeclaration>t.symbol.valueDeclaration
-            if (!bindings)
-                bindings = t
-                    ? getTypeBindings(t)
-                    : decl.typeParameters
-                        ? decl.typeParameters.map(p => ({ isRef: true, tp: checker.getTypeAtLocation(p), arg: checker.getTypeAtLocation(p) }))
-                        : []
-            let id = "C" + getNodeId(decl) + refMask(bindings)
+            let id = "C" + getNodeId(decl)
             let info: ClassInfo = classInfos[id]
             if (!info) {
                 let reffields: PropertyDeclaration[] = []
@@ -1437,7 +1354,6 @@ namespace ts.pxtc {
                     decl: decl,
                     baseClassInfo: null,
                     methods: [],
-                    bindings: bindings
                 }
                 if (info.attrs.autoCreate)
                     autoCreateFunctions[info.attrs.autoCreate] = true
@@ -1445,7 +1361,6 @@ namespace ts.pxtc {
                 // only do it after storing our in case we run into cycles (which should be errors)
                 info.baseClassInfo = getBaseClassInfo(decl)
                 scope(() => {
-                    U.pushRange(typeBindings, bindings)
                     for (let mem of decl.members) {
                         if (mem.kind == SK.PropertyDeclaration) {
                             let pdecl = <PropertyDeclaration>mem
@@ -1828,25 +1743,9 @@ ${lbl}: .short 0xffff
             return !isOnDemandDecl(decl) || usedDecls.hasOwnProperty(nodeKey(decl))
         }
 
-        function markFunctionUsed(decl: EmittableAsCall, bindings: TypeBinding[]) {
+        function markFunctionUsed(decl: EmittableAsCall) {
             getFunctionInfo(decl).isUsed = true
-            if (!bindings || !bindings.length) markUsed(decl)
-            else {
-                let info = getFunctionInfo(decl)
-                if (!info.usages) {
-                    usedDecls[nodeKey(decl)] = decl
-                    info.usages = []
-                    info.prePassUsagesEmitted = 0
-
-                    if (opts.computeUsedSymbols && decl && decl.symbol)
-                        res.usedSymbols[getFullName(checker, decl.symbol)] = null
-                }
-                let mask = refMask(bindings)
-                if (!info.usages.some(u => refMask(u) == mask)) {
-                    info.usages.push(bindings)
-                    usedWorkList.push(decl)
-                }
-            }
+            markUsed(decl)
         }
 
         function markUsed(decl: Declaration) {
@@ -2078,10 +1977,6 @@ ${lbl}: .short 0xffff
             if (callInfo.args.length == 0 && U.lookup(autoCreateFunctions, callInfo.qName))
                 callInfo.isAutoCreate = true
 
-            let bindings = getCallBindings(sig)
-            let isSelfGeneric = bindings.length > 0
-            addEnclosingTypeBindings(bindings, decl)
-
             if (res.usedArguments && attrs.trackArgs) {
                 let targs = recv ? [recv].concat(args) : args
                 let tracked = attrs.trackArgs.map(n => targs[n]).map(e => {
@@ -2102,11 +1997,10 @@ ${lbl}: .short 0xffff
             }
 
             function emitPlain() {
-                return mkProcCall(decl, args.map((x) => emitExpr(x)), bindings)
+                return mkProcCall(decl, args.map((x) => emitExpr(x)))
             }
 
             scope(() => {
-                U.pushRange(typeBindings, bindings)
                 addDefaultParametersAndTypeCheck(sig, args, attrs);
             })
 
@@ -2121,7 +2015,7 @@ ${lbl}: .short 0xffff
                         return emitShim(decl, node, args);
                     }
 
-                    markFunctionUsed(decl, bindings)
+                    markFunctionUsed(decl)
                     return emitPlain();
                 }
             }
@@ -2143,7 +2037,6 @@ ${lbl}: .short 0xffff
                     }
                     args.unshift(recv)
                     callInfo.args.unshift(recv)
-                    bindings = getTypeBindings(typeOf(recv)).concat(bindings)
                 } else
                     unhandled(node, lf("strange method call"), 9241)
                 let info = getFunctionInfo(decl)
@@ -2155,11 +2048,11 @@ ${lbl}: .short 0xffff
                     info.isUsed = true
                     for (let vinst of info.virtualInstances || []) {
                         if (vinst.parentClassInfo.isUsed)
-                            markFunctionUsed(vinst.decl, bindings)
+                            markFunctionUsed(vinst.decl)
                     }
                     // we need to mark the parent as used, otherwise vtable layout faile, see #3740
                     if (info.decl.kind == SK.MethodDeclaration)
-                        markFunctionUsed(info.decl, bindings)
+                        markFunctionUsed(info.decl)
                 }
                 if (info.virtualParent && !isSuper) {
                     U.assert(!bin.finalPass || info.virtualIndex != null, "!bin.finalPass || info.virtualIndex != null")
@@ -2190,12 +2083,7 @@ ${lbl}: .short 0xffff
                     decl = <FunctionDeclaration>helperStmt;
                     let sig = checker.getSignatureFromDeclaration(decl)
                     let tp = sig.getTypeParameters() || []
-                    if (tp.length != bindings.length)
-                        U.oops("helpers type parameter mismatch") // can it happen?
-                    bindings.forEach((b, i) => {
-                        b.tp = tp[i]
-                    })
-                    markFunctionUsed(decl, bindings)
+                    markFunctionUsed(decl)
                     return emitPlain();
                 } else if (decl.kind == SK.MethodSignature) {
                     let name = getName(decl)
@@ -2225,13 +2113,10 @@ ${lbl}: .short 0xffff
                         callInfo.args.shift()
                     }
                 } else {
-                    markFunctionUsed(decl, bindings)
+                    markFunctionUsed(decl)
                     return emitPlain();
                 }
             }
-
-            if (isSelfGeneric)
-                U.oops("invalid generic call")
 
             if (decl && decl.kind == SK.ModuleDeclaration) {
                 if (getName(decl) == "String")
@@ -2264,13 +2149,13 @@ ${lbl}: .short 0xffff
             return ir.op(EK.ProcCall, args, data)
         }
 
-        function lookupProc(decl: ts.Declaration, bindings: TypeBinding[]) {
-            let id: ir.ProcQuery = { action: decl as ts.FunctionLikeDeclaration, bindings }
+        function lookupProc(decl: ts.Declaration) {
+            let id: ir.ProcQuery = { action: decl as ts.FunctionLikeDeclaration }
             return bin.procs.filter(p => p.matches(id))[0]
         }
 
-        function mkProcCall(decl: ts.Declaration, args: ir.Expr[], bindings: TypeBinding[]) {
-            let proc = lookupProc(decl, bindings)
+        function mkProcCall(decl: ts.Declaration, args: ir.Expr[]) {
+            let proc = lookupProc(decl)
             assert(!!proc || !bin.finalPass, "!!proc || !bin.finalPass")
             return mkProcCallCore(proc, null, args)
         }
@@ -2308,19 +2193,6 @@ ${lbl}: .short 0xffff
             return U.lookup(ifaceMembers, name) != null
         }
 
-        function getCallBindings(sig: Signature) {
-            let bindings: TypeBinding[] = []
-            if (sig) {
-                // NOTE: we are playing with TypeScript internals here
-                let trg: Signature = (sig as any).target
-                let typeParams = sig.typeParameters || (trg ? trg.typeParameters : null) || []
-                // NOTE: mapper also a TypeScript internal
-                let args = typeParams.map(x => (sig as any).mapper(x))
-                bindings = getTypeBindingsCore(typeParams, args)
-            }
-            return bindings
-        }
-
         function markClassUsed(info: ClassInfo) {
             if (info.isUsed) return
             info.isUsed = true
@@ -2329,12 +2201,12 @@ ${lbl}: .short 0xffff
             for (let m of info.methods) {
                 let minf = getFunctionInfo(m)
                 if (isIfaceMemberUsed(getName(m)) || (minf.virtualParent && minf.virtualParent.isUsed))
-                    markFunctionUsed(m, info.bindings)
+                    markFunctionUsed(m)
             }
 
             let ctor = getCtor(info.decl)
             if (ctor) {
-                markFunctionUsed(ctor, info.bindings)
+                markFunctionUsed(ctor)
             }
         }
 
@@ -2369,8 +2241,6 @@ ${lbl}: .short 0xffff
 
                     let sig = checker.getResolvedSignature(node)
                     // TODO: can we have overloeads?
-                    let bindings = getCallBindings(sig)
-                    // NOTE: type checking with bindings
                     addDefaultParametersAndTypeCheck(checker.getResolvedSignature(node), args, ctorAttrs)
                     let compiled = args.map((x) => emitExpr(x))
                     if (ctorAttrs.shim) {
@@ -2381,7 +2251,7 @@ ${lbl}: .short 0xffff
                         return ir.rtcall(ctorAttrs.shim, compiled)
                     }
                     compiled.unshift(ir.op(EK.Incr, [obj]))
-                    proc.emitExpr(mkProcCall(ctor, compiled, bindings))
+                    proc.emitExpr(mkProcCall(ctor, compiled))
                     return obj
                 } else {
                     if (node.arguments && node.arguments.length)
@@ -2543,11 +2413,11 @@ ${lbl}: .short 0xffff
         }
 
         function emitFunLitCore(node: FunctionLikeDeclaration, raw = false) {
-            let lbl = getFunctionLabel(node, getEnclosingTypeBindings(node))
+            let lbl = getFunctionLabel(node)
             return ir.ptrlit(lbl + "_Lit", lbl, !raw)
         }
 
-        function emitFuncCore(node: FunctionLikeDeclaration, bindings: TypeBinding[]) {
+        function emitFuncCore(node: FunctionLikeDeclaration) {
             let info = getFunctionInfo(node)
             let lit: ir.Expr = null
 
@@ -2593,7 +2463,7 @@ ${lbl}: .short 0xffff
 
             assert(!!lit == isExpression, "!!lit == isExpression")
 
-            let id: ir.ProcQuery = { action: node, bindings }
+            let id: ir.ProcQuery = { action: node }
             let existing = bin.procs.filter(p => p.matches(id))[0]
 
             if (existing) {
@@ -2605,7 +2475,6 @@ ${lbl}: .short 0xffff
                 proc.isRoot = !!(node as any).isRootFunction
                 proc.action = node;
                 proc.info = info;
-                proc.bindings = bindings;
                 bin.addProc(proc);
             }
 
@@ -2614,8 +2483,7 @@ ${lbl}: .short 0xffff
             if (node.parent.kind == SK.ClassDeclaration) {
                 let parClass = node.parent as ClassDeclaration
                 let numTP = parClass.typeParameters ? parClass.typeParameters.length : 0
-                assert(bindings.length >= numTP, "bindings.length >= numTP")
-                let classInfo = getClassInfo(null, parClass, bindings.slice(0, numTP))
+                let classInfo = getClassInfo(null, parClass)
                 if (proc.classInfo)
                     assert(proc.classInfo == classInfo, "proc.classInfo == classInfo")
                 else
@@ -2627,8 +2495,6 @@ ${lbl}: .short 0xffff
                         classInfo.ctor = proc
                 }
             }
-
-            U.pushRange(typeBindings, bindings)
 
             const destructuredParameters: ParameterDeclaration[] = []
 
@@ -2724,36 +2590,9 @@ ${lbl}: .short 0xffff
             let info = getFunctionInfo(node)
             let lit: ir.Expr = null
 
-            if (isGenericFunction(node)) {
-                if (!info.usages) {
-                    assert(opts.testMode && !usedDecls[nodeKey(node)] && !bin.finalPass, "opts.testMode && !usedDecls[nodeKey(node)] && !bin.finalPass")
-                    // test mode - make fake binding
-                    let bindings = Util.toArray(getTypeParameters(node)).map(t => ({
-                        arg: checker.getTypeAtLocation(t),
-                        tp: checker.getTypeAtLocation(t),
-                        isRef: true
-                    }))
-                    addEnclosingTypeBindings(bindings, node)
-                    U.assert(bindings.length > 0, "bindings.length > 0")
-                    info.usages = [bindings]
-                }
-                U.assert(info.usages.length > 0, "no generic usages recorded")
-                let todo = info.usages
-                if (!bin.finalPass) {
-                    todo = info.usages.slice(info.prePassUsagesEmitted)
-                    info.prePassUsagesEmitted = info.usages.length
-                }
-                for (let bindings of todo) {
-                    scope(() => {
-                        let nolit = emitFuncCore(node, bindings)
-                        U.assert(nolit == null, "nolit == null")
-                    })
-                }
-            } else {
-                scope(() => {
-                    lit = emitFuncCore(node, getEnclosingTypeBindings(node))
-                })
-            }
+            scope(() => {
+                lit = emitFuncCore(node)
+            })
 
             return lit
         }

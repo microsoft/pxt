@@ -403,7 +403,6 @@ namespace ts.pxtc.ir {
 
     export interface ProcQuery {
         action: ts.FunctionLikeDeclaration;
-        bindings: TypeBinding[];
     }
 
     function noRefCount(e: ir.Expr): boolean {
@@ -438,7 +437,6 @@ namespace ts.pxtc.ir {
         args: Cell[] = [];
         parent: Procedure;
         debugInfo: ProcDebugInfo;
-        bindings: TypeBinding[];
         fillDebugInfo: (th: assembler.File) => void;
         classInfo: ClassInfo;
 
@@ -455,18 +453,11 @@ namespace ts.pxtc.ir {
         }
 
         label() {
-            return getFunctionLabel(this.action, this.bindings)
+            return getFunctionLabel(this.action)
         }
 
         matches(id: ProcQuery) {
-            if (this.action == id.action) {
-                U.assert(this.bindings.length == id.bindings.length, "this.bindings.length == id.bindings.length")
-                for (let i = 0; i < this.bindings.length; ++i)
-                    if (this.bindings[i].isRef != id.bindings[i].isRef)
-                        return false
-                return true
-            }
-            return false
+            return (this.action == id.action)
         }
 
         toString(): string {
