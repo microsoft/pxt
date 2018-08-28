@@ -163,7 +163,7 @@ If TS throws, the `pxt::runAction()` will return `exn`.
 Still need to figure out calls from TS to first class TS functions (optimization), as
 it currently also goes through `pxt::runAction()`.
 
-Need to make sure what lambda wrapped pushes on the stack, and that it is ref-safe.
+Need to make sure what lambda wrapper pushes on the stack, and that it is ref-safe.
 Return addresses on Thumb are, since they are always odd.
 
 ### Throw
