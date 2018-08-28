@@ -45,6 +45,7 @@ namespace ts.pxtc {
     function vtableToJs(info: ClassInfo) {
         let s = `var ${info.id}_VT = {\n` +
             `  name: ${JSON.stringify(getName(info.decl))},\n` +
+            `  numFields: ${info.allfields.length},\n` +
             `  methods: [\n`
         for (let m of info.vtable) {
             s += `    ${m.label()},\n`
