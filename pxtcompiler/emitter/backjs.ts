@@ -118,7 +118,8 @@ switch (step) {
         if (proc.args.length) {
             write(`if (s.lambdaArgs) {`)
             proc.args.forEach((l, i) => {
-                write(`  ${locref(l)} = ${refCounting && l.isRef() ? "pxtrt.incr" : ""}(s.lambdaArgs[${i}]);`)
+                // TODO incr needed?
+                write(`  ${locref(l)} = ${refCounting ? "pxtrt.incr" : ""}(s.lambdaArgs[${i}]);`)
             })
             write(`  s.lambdaArgs = null;`)
             write(`}`)

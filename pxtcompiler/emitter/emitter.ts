@@ -191,7 +191,6 @@ namespace ts.pxtc {
     }
 
     export function setCellProps(l: ir.Cell) {
-        l._isRef = true
         l._isLocal = isLocalVar(l.def) || isParameter(l.def)
         l._isGlobal = isGlobalVar(l.def)
         if (!isSyntheticThis(l.def)) {
@@ -1457,6 +1456,7 @@ ${lbl}: .short 0xffff
                 case SK.NumericLiteral:
                 case SK.TrueKeyword:
                 case SK.FalseKeyword:
+                case SK.UndefinedKeyword:
                     return false;
                 case SK.Identifier:
                     return !isConstLiteral(getDecl(init))
@@ -1559,10 +1559,7 @@ ${lbl}: .short 0xffff
             // TODO use getMask() to avoid incr() on string literals
             let concat = (a: ir.Expr, b: Expression | TemplateLiteralFragment) =>
                 isEmptyStringLiteral(b) ? a :
-                    ir.rtcallMask("String_::concat", 3, ir.CallingConvention.Plain, [
-                        a,
-                        emitAsString(b)
-                    ])
+                    rtcallMaskDirect("String_::concat", [a, emitAsString(b)])
             // TODO could optimize for the case where node.head is empty
             let expr = emitAsString(node.head)
             for (let span of node.templateSpans) {
@@ -1585,8 +1582,7 @@ ${lbl}: .short 0xffff
             let coll = ir.shared(ir.rtcall("Array_::mk", []))
             for (let elt of node.elements) {
                 let e = ir.shared(emitExpr(elt))
-                proc.emitExpr(ir.rtcall("Array_::push", [coll, e]))
-                proc.emitExpr(ir.op(EK.Decr, [e]))
+                proc.emitExpr(ir.rtcallMask("Array_::push", 3, ir.CallingConvention.Plain, [coll, e]))
             }
             return coll
         }
@@ -1597,9 +1593,6 @@ ${lbl}: .short 0xffff
                     userError(9264, "Shorthand properties not supported.")
                     return;
                 }
-                let refSuff = ""
-                if (isRefCountedExpr(p.initializer))
-                    refSuff = "Ref"
                 const keyName = p.name.getText();
                 const args = [
                     ir.op(EK.Incr, [expr]),
@@ -1608,7 +1601,7 @@ ${lbl}: .short 0xffff
                 ];
                 if (!opts.target.isNative)
                     args.push(emitStringLiteral(keyName));
-                proc.emitExpr(ir.rtcall("pxtrt::mapSet" + refSuff, args))
+                proc.emitExpr(ir.rtcall("pxtrt::mapSetRef", args))
             })
             return expr
         }
@@ -2131,7 +2124,7 @@ ${lbl}: .short 0xffff
 
             let suff = args.length + ""
 
-            // here's where we will recurse to generate toe evaluate funcExpr
+            // here's where we will recurse to generate funcExpr
             args.unshift(funcExpr)
             callInfo.args.unshift(funcExpr)
 
@@ -2446,8 +2439,7 @@ ${lbl}: .short 0xffff
                     if (!loc)
                         userError(9223, lf("cannot find captured value: {0}", checker.symbolToString(l.symbol)))
                     let v = loc.loadCore()
-                    if (loc.isRef() || loc.isByRefLocal())
-                        v = ir.op(EK.Incr, [v])
+                    v = ir.op(EK.Incr, [v])
                     proc.emitExpr(ir.rtcall("pxtrt::stclo", [lit, ir.numlit(i), v]))
                 })
                 if (node.kind == SK.FunctionDeclaration) {
@@ -2511,8 +2503,8 @@ ${lbl}: .short 0xffff
                 //console.log(l.toString(), l.info)
                 if (l.isByRefLocal()) {
                     // TODO add C++ support function to do this
-                    let tmp = ir.shared(ir.rtcall("pxtrt::mkloc" + l.refSuffix(), []))
-                    proc.emitExpr(ir.rtcall("pxtrt::stloc" + l.refSuffix(), [tmp, l.loadCore()]))
+                    let tmp = ir.shared(ir.rtcall("pxtrt::mklocRef", []))
+                    proc.emitExpr(ir.rtcall("pxtrt::stlocRef", [tmp, l.loadCore()]))
                     proc.emitExpr(l.storeDirect(tmp))
                 }
             })
@@ -2627,7 +2619,7 @@ ${lbl}: .short 0xffff
                         let v = valueToInt(inner)
                         if (v != null)
                             return emitLit(~v)
-                        return ir.rtcallMask(mapIntOpName("numops::bnot"), 1, ir.CallingConvention.Plain, [inner]);
+                        return rtcallMaskDirect(mapIntOpName("numops::bnot"), [inner]);
                     }
                     default:
                         break
@@ -2785,9 +2777,7 @@ ${lbl}: .short 0xffff
         }
 
         function emitIntOp(op: string, left: ir.Expr, right: ir.Expr) {
-            op = mapIntOpName(op)
-            return ir.rtcallMask(op, 3,
-                ir.CallingConvention.Plain, [left, right])
+            return rtcallMaskDirect(mapIntOpName(op), [left, right])
         }
 
         function emitAsInt(e: Expression) {
@@ -2896,6 +2886,10 @@ ${lbl}: .short 0xffff
             if (e.kind == SK.NumericLiteral)
                 return true
             return isNumberLikeType(typeOf(e))
+        }
+
+        function rtcallMaskDirect(name: string, args: ir.Expr[]) {
+            return ir.rtcallMask(name, (1 << args.length) - 1, ir.CallingConvention.Plain, args)
         }
 
         function rtcallMask(name: string, args: Expression[], attrs: CommentAttrs, append: Expression[] = null) {
@@ -3127,7 +3121,7 @@ ${lbl}: .short 0xffff
             if (node.operatorToken.kind == SK.PlusToken) {
                 if (isStringType(lt) || isStringType(rt)) {
                     // TODO use getMask() to limit incr/decr
-                    return ir.rtcallMask("String_::concat", 3, ir.CallingConvention.Plain, [
+                    return rtcallMaskDirect("String_::concat", [
                         emitAsString(node.left),
                         emitAsString(node.right)])
                 }
@@ -3136,7 +3130,7 @@ ${lbl}: .short 0xffff
             if (node.operatorToken.kind == SK.PlusEqualsToken && isStringType(lt)) {
                 let cleanup = prepForAssignment(node.left)
                 // TODO use getMask() to limit incr/decr
-                let post = ir.shared(ir.rtcallMask("String_::concat", 3, ir.CallingConvention.Plain, [
+                let post = ir.shared(rtcallMaskDirect("String_::concat", [
                     emitExpr(node.left),
                     emitAsString(node.right)]))
                 emitStore(node.left, irToNode(post))
@@ -3188,7 +3182,7 @@ ${lbl}: .short 0xffff
             let tp = typeOf(e)
 
             if ((tp.flags & (TypeFlags.NumberLike | TypeFlags.Boolean | TypeFlags.BooleanLiteral)))
-                return ir.rtcallMask("numops::toString", 1, ir.CallingConvention.Plain, [r])
+                return rtcallMaskDirect("numops::toString", [r])
             else if (isStringType(tp))
                 return r // OK
             else {
@@ -3425,11 +3419,11 @@ ${lbl}: .short 0xffff
 
             // Store the expression (it could be a string literal, for example) for the collection being iterated over
             // Note that it's alaways a ref-counted type
-            let collectionVar = proc.mkLocalUnnamed(true); // a
+            let collectionVar = proc.mkLocalUnnamed(); // a
             proc.emitExpr(collectionVar.storeByRef(emitExpr(node.expression)))
 
             // Declaration of iterating variable
-            let intVarIter = proc.mkLocalUnnamed(true); // i
+            let intVarIter = proc.mkLocalUnnamed(); // i
             proc.emitExpr(intVarIter.storeByRef(emitLit(0)))
             proc.stackEmpty();
 
@@ -3602,7 +3596,7 @@ ${lbl}: .short 0xffff
                 lookupCell(node) : proc.mkLocal(node, getVarInfo(node))
             if (loc.isByRefLocal()) {
                 proc.emitClrIfRef(loc) // we might be in a loop
-                proc.emitExpr(loc.storeDirect(ir.rtcall("pxtrt::mkloc" + loc.refSuffix(), [])))
+                proc.emitExpr(loc.storeDirect(ir.rtcall("pxtrt::mklocRef", [])))
             }
 
             if (node.kind === SK.BindingElement) {

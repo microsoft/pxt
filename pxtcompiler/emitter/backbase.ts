@@ -703,15 +703,6 @@ ${baseLabel}:
             })
 
             let asm = this.t.helper_prologue()
-
-            this.proc.args.forEach((p, i) => {
-                if (p.isRef()) {
-                    let [reg, off, idx] = this.cellref(p)
-                    asm += this.t.load_reg_src_off("r0", reg, off, idx) + "\n"
-                    asm += this.t.call_lbl("pxt::incr") + "\n"
-                }
-            })
-
             asm += this.t.helper_epilogue()
 
             this.emitHelper(asm) // using shared helper saves about 3% of binary size

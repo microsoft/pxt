@@ -250,7 +250,6 @@ namespace ts.pxtc.ir {
     export class Cell {
         isarg = false;
         iscap = false;
-        _isRef = false;
         _isLocal = false;
         _isGlobal = false;
         _debugType = "?";
@@ -278,7 +277,6 @@ namespace ts.pxtc.ir {
             let n = ""
             if (this.def) n += this.getName() || "?"
             if (this.isarg) n = "ARG " + n
-            if (this.isRef()) n = "REF " + n
             //if (this.isByRefLocal()) n = "BYREF " + n
             return "[" + n + "]"
         }
@@ -289,12 +287,6 @@ namespace ts.pxtc.ir {
             return this.getName().replace(/[^\w]/g, "_") + "___" + getNodeId(this.def)
         }
 
-        refSuffix() {
-            if (this.isRef()) return "Ref"
-            else return ""
-        }
-
-        isRef() { return this._isRef }
         isLocal() { return this._isLocal }
         isGlobal() { return this._isGlobal }
 
@@ -312,7 +304,7 @@ namespace ts.pxtc.ir {
             }
 
             if (this.isByRefLocal())
-                return rtcall("pxtrt::ldloc" + this.refSuffix(), [r])
+                return rtcall("pxtrt::ldlocRef", [r])
 
             if (this.refCountingHandledHere())
                 return op(EK.Incr, [r])
@@ -321,7 +313,7 @@ namespace ts.pxtc.ir {
         }
 
         refCountingHandledHere() {
-            return this.isRef() && !this.isByRefLocal()
+            return !this.isByRefLocal()
         }
 
         isByRefLocal() {
@@ -334,7 +326,7 @@ namespace ts.pxtc.ir {
 
         storeByRef(src: Expr) {
             if (this.isByRefLocal()) {
-                return rtcall("pxtrt::stloc" + this.refSuffix(), [this.loadCore(), src])
+                return rtcall("pxtrt::stlocRef", [this.loadCore(), src])
             } else {
                 if (target.isNative && this.bitSize != BitSize.None) {
                     src = shared(src)
@@ -499,9 +491,8 @@ namespace ts.pxtc.ir {
             return l
         }
 
-        mkLocalUnnamed(isRef = false) {
+        mkLocalUnnamed() {
             let uc = new UnnamedCell(this.locals.length, this);
-            uc._isRef = isRef
             this.locals.push(uc)
             return uc
         }
@@ -518,15 +509,12 @@ namespace ts.pxtc.ir {
 
         emitClrIfRef(p: Cell) {
             assert(!p.isGlobal() && !p.iscap, "!p.isGlobal() && !p.iscap")
-            if (p.isRef() || p.isByRefLocal()) {
-                this.emitExpr(op(EK.Decr, [p.loadCore()]))
-            }
+            this.emitExpr(op(EK.Decr, [p.loadCore()]))
         }
 
         emitClrs(finlbl: ir.Stmt, retval: ir.Expr) {
             if (this.isRoot) return;
             this.locals.forEach(p => this.emitClrIfRef(p))
-            this.args.forEach(p => this.emitClrIfRef(p))
         }
 
         emitJmpZ(trg: string | Stmt, expr: Expr) {
@@ -665,6 +653,8 @@ namespace ts.pxtc.ir {
             }
 
             let allBrkp: Breakpoint[] = []
+
+            console.log(this.toString())
 
             for (let s of this.body) {
                 if (s.stmtKind == ir.SK.Breakpoint) {
