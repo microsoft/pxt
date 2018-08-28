@@ -155,12 +155,6 @@ namespace ts.pxtc {
 
             patchSegmentHex(hex)
 
-            if (opts.nativeType == NATIVE_TYPE_CS) {
-                for (let inf of funs)
-                    funcInfo[inf.name] = inf;
-                return
-            }
-
             if (hex.length <= 2) {
                 elfInfo = pxt.elf.parse(U.fromHex(hex[0]))
                 bytecodeStartIdx = -1
@@ -303,8 +297,6 @@ namespace ts.pxtc {
             let nm = `${funname}(...) (shim=${shimName})`
             let inf = lookupFunc(shimName)
             if (inf) {
-                if (target.nativeType == NATIVE_TYPE_CS)
-                    return
                 if (!hasRet) {
                     if (inf.argsFmt[0] != "V")
                         U.userError("expecting procedure for " + nm);
@@ -316,7 +308,7 @@ namespace ts.pxtc {
                     let spec = inf.argsFmt[i + 1]
                     if (!spec)
                         U.userError("excessive parameters passed to " + nm)
-                    if (target.taggedInts) {
+                    if (target.isNative) {
                         let needNum = spec == "I" || spec == "N" || spec == "F" || spec == "B"
                         if (spec == "T") {
                             // OK, both number and non-number allowed
@@ -575,13 +567,13 @@ ${lbl}: .short 0xffff, ${pxt.REF_TAG_NUMBER}
         let s = `
         .balign ${1 << opts.target.vtableShift}
 ${info.id}_VT:
-        .short ${info.refmask.length * 4 + 4}  ; size in bytes
+        .short ${info.allfields.length * 4 + 4}  ; size in bytes
         .byte ${info.vtable.length + 2}, 0  ; num. methods
 `;
 
         let ptrSz = target.shortPointers ? ".short" : ".word"
         let addPtr = (n: string) => {
-            if (n != "0" && (!isStackMachine() || n.indexOf("::") >= 0)) n += "@fn"
+            if (n != "0") n += "@fn"
             s += `        ${ptrSz} ${n}\n`
         }
 
@@ -594,7 +586,8 @@ ${info.id}_VT:
             addPtr(m.label())
         }
 
-        let refmask = info.refmask.map(v => v ? "1" : "0")
+        // TODO remove refmask once the runtime is patched
+        let refmask = info.allfields.map(v => "1")
         while (refmask.length < 2 || refmask.length % 2 != 0)
             refmask.push("0")
 
@@ -631,10 +624,7 @@ ${hex.hexPrelude()}
     .word 0 ; reserved
 `
         let snippets: AssemblerSnippets = null;
-        if (opts.target.nativeType == NATIVE_TYPE_AVR)
-            snippets = new AVRSnippets()
-        else
-            snippets = new ThumbSnippets()
+        snippets = new ThumbSnippets()
         bin.procs.forEach(p => {
             let p2a = new ProctoAssembler(snippets, bin, p)
             asmsource += "\n" + p2a.getAssembly() + "\n"
@@ -687,12 +677,7 @@ ${hex.hexPrelude()}
     function mkProcessorFile(target: CompileTarget) {
         let b: assembler.File
 
-        if (target.nativeType == NATIVE_TYPE_AVR)
-            b = new assembler.File(new avr.AVRProcessor())
-        else if (target.nativeType == NATIVE_TYPE_AVRVM)
-            b = new assembler.VMFile(new vm.VmProcessor(target))
-        else
-            b = new assembler.File(new thumb.ThumbProcessor())
+        b = new assembler.File(new thumb.ThumbProcessor())
 
         b.ei.testAssembler(); // just in case
 

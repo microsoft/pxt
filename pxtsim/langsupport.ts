@@ -10,7 +10,6 @@ namespace pxsim {
         }
     }
 
-    export let floatingPoint = false;
     export let refCounting = true;
     export let title = "";
     let cfgKey: Map<number> = {}
@@ -54,10 +53,6 @@ namespace pxsim {
 
     export function getConfigData(): ConfigData {
         return { cfg, cfgKey }
-    }
-
-    export function enableFloatingPoint() {
-        floatingPoint = true
     }
 
     export function setTitle(t: string) {
@@ -272,7 +267,6 @@ namespace pxsim {
 
 
     function num(v: any) {
-        if (!floatingPoint && v === undefined) return 0;
         return v;
     }
 
@@ -594,7 +588,7 @@ namespace pxsim {
             r.vtable = vtable
             let len = vtable.refmask.length
             for (let i = 0; i < len; ++i)
-                r.fields.push(floatingPoint ? undefined : 0)
+                r.fields.push(undefined)
             return r
         }
 

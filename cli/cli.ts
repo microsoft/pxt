@@ -2935,10 +2935,6 @@ function testAssemblers(): Promise<void> {
     let thumb = new pxtc.thumb.ThumbProcessor();
     thumb.testAssembler();
     console.log("- done testing Thumb");
-    console.log("- testing AVR")
-    let avr = new pxtc.avr.AVRProcessor();
-    avr.testAssembler();
-    console.log("- done testing AVR");
     return Promise.resolve();
 }
 
@@ -4225,11 +4221,6 @@ export function runAsync(parsed?: commandParser.ParsedCommand) {
         .then((compileOpts) => { });
 }
 
-function runFloatAsync() {
-    pxt.appTarget.compile.floatingPoint = true
-    return runAsync()
-}
-
 export function testAsync() {
     return buildCoreAsync({ mode: BuildOption.Test })
         .then((compileOpts) => { });
@@ -5046,7 +5037,6 @@ function initCommands() {
     }, deployAsync)
     simpleCmd("run", "build and run current package in the simulator", runAsync);
     simpleCmd("console", "monitor console messages", consoleAsync, null, true);
-    advancedCommand("runfloat", "build and run current package in the simulator, forcing floating point mode", runFloatAsync);
     simpleCmd("update", "update pxt-core reference and install updated version", updateAsync, undefined, true);
     simpleCmd("install", "install new packages, or all package", installAsync, "[package1] [package2] ...");
     simpleCmd("add", "add a feature (.asm, C++ etc) to package", addAsync, "<arguments>");
@@ -5515,8 +5505,6 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
     if (trg.compileService) {
         compileId = trg.compileService.buildEngine || "yotta"
     }
-    if (trg.compile.nativeType == pxtc.NATIVE_TYPE_CS)
-        compileId = "cs"
 
     const versions = pxt.appTarget.versions || ({ target: "", pxt: "" } as pxt.TargetVersions);
     pxt.log(`Using target ${trg.id} with build engine ${compileId}`)

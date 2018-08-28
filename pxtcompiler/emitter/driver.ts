@@ -2,7 +2,6 @@
 /// <reference path="../../localtypings/pxtarget.d.ts"/>
 
 // Enforce order:
-/// <reference path="avr.ts"/>
 /// <reference path="thumb.ts"/>
 /// <reference path="ir.ts"/>
 /// <reference path="emitter.ts"/>
@@ -94,12 +93,6 @@ namespace ts.pxtc {
             success: false,
             times: {},
         }
-
-        if (opts.target.taggedInts)
-            opts.target.floatingPoint = true
-
-        if (!opts.target.isNative)
-            opts.target.taggedInts = false
 
         let fileText: { [index: string]: string } = {};
         for (let fileName in opts.fileSystem) {

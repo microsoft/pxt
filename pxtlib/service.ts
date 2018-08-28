@@ -14,7 +14,6 @@ namespace ts.pxtc {
     export const TS_OUTPUT_TYPE = "typescript_expression";
     export const PAUSE_UNTIL_TYPE = "pxt_pause_until";
     export const BINARY_JS = "binary.js";
-    export const BINARY_CS = "binary.cs";
     export const BINARY_ASM = "binary.asm";
     export const BINARY_HEX = "binary.hex";
     export const BINARY_UF2 = "binary.uf2";

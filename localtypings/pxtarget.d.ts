@@ -323,9 +323,6 @@ declare namespace ts.pxtc {
         hexMimeType?: string;
         driveName?: string;
         jsRefCounting?: boolean;
-        floatingPoint?: boolean;
-        taggedInts?: boolean; // implies floatingPoint and needsUnboxing
-        needsUnboxing?: boolean;
         boxDebug?: boolean;
         deployDrives?: string; // partial name of drives where the .hex file should be copied
         deployFileMarker?: string;

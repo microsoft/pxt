@@ -106,15 +106,7 @@ namespace ts.pxtc {
     }
 
     function noRefCounting() {
-        return target.nativeType == NATIVE_TYPE_CS || (!target.jsRefCounting && !target.isNative)
-    }
-
-    export function isStackMachine() {
-        return target.isNative && target.nativeType == NATIVE_TYPE_AVRVM
-    }
-
-    export function isAVR() {
-        return target.isNative && (target.nativeType == NATIVE_TYPE_AVRVM || target.nativeType == NATIVE_TYPE_AVR)
+        return !target.jsRefCounting && !target.isNative
     }
 
     export function isThumb() {
@@ -126,38 +118,6 @@ namespace ts.pxtc {
         return (type as any).isThisType;
     }
 
-    function isRefType(t: Type) {
-        checkType(t);
-        if (noRefCounting())
-            return false
-        if (t.flags & TypeFlags.Null)
-            return false
-        if (t.flags & TypeFlags.Undefined)
-            return false
-        if (t.flags & TypeFlags.TypeParameter) {
-            if (isThisType(t as TypeParameter)) {
-                return true;
-            }
-            let b = lookupTypeParameter(t)
-            if (b) return b.isRef
-            U.oops("unbound type parameter: " + checker.typeToString(t))
-        }
-        if (t.flags & (TypeFlags.NumberLike | TypeFlags.Boolean | TypeFlags.NumberLiteral | TypeFlags.BooleanLiteral | TypeFlags.Enum | TypeFlags.EnumLike))
-            return target.taggedInts ? true : false
-
-        let sym = t.getSymbol()
-        if (sym) {
-            let decl: Declaration = sym.valueDeclaration || sym.declarations[0]
-            if (decl) {
-                let attrs = parseComments(decl)
-                if (attrs.noRefCounting)
-                    return false
-            }
-        }
-
-        return true
-    }
-
     function isSyntheticThis(def: Declaration) {
         if ((<any>def).isThisParameter)
             return true;
@@ -165,34 +125,26 @@ namespace ts.pxtc {
             return false;
     }
 
-    function isRefDecl(def: Declaration) {
-        if (isSyntheticThis(def))
-            return true;
-        //let tp = checker.getDeclaredTypeOfSymbol(def.symbol)
-        let tp = typeOf(def)
-        return isRefType(tp)
-    }
-
     // everything in numops:: operates on and returns tagged ints
     // everything else (except as indicated with CommentAttrs), operates and returns regular ints
 
     function fromInt(e: ir.Expr): ir.Expr {
-        if (!target.taggedInts) return e
+        if (!target.isNative) return e
         return ir.rtcall("pxt::fromInt", [e])
     }
 
     function fromBool(e: ir.Expr): ir.Expr {
-        if (!target.taggedInts) return e
+        if (!target.isNative) return e
         return ir.rtcall("pxt::fromBool", [e])
     }
 
     function fromFloat(e: ir.Expr): ir.Expr {
-        if (!target.taggedInts) return e
+        if (!target.isNative) return e
         return ir.rtcall("pxt::fromFloat", [e])
     }
 
     function fromDouble(e: ir.Expr): ir.Expr {
-        if (!target.taggedInts) return e
+        if (!target.isNative) return e
         return ir.rtcall("pxt::fromDouble", [e])
     }
 
@@ -239,7 +191,7 @@ namespace ts.pxtc {
     }
 
     export function setCellProps(l: ir.Cell) {
-        l._isRef = isRefDecl(l.def)
+        l._isRef = true
         l._isLocal = isLocalVar(l.def) || isParameter(l.def)
         l._isGlobal = isGlobalVar(l.def)
         if (!isSyntheticThis(l.def)) {
@@ -376,10 +328,8 @@ namespace ts.pxtc {
         id: string;
         baseClassInfo: ClassInfo;
         decl: ClassDeclaration;
-        numRefFields: number;
         allfields: FieldWithAddInfo[];
         methods: FunctionLikeDeclaration[];
-        refmask: boolean[];
         attrs: CommentAttrs;
         isUsed?: boolean;
         vtable?: ir.Procedure[];
@@ -851,7 +801,7 @@ namespace ts.pxtc {
 
     function getTypeBindingsCore(typeParameters: TypeParameter[], args: Type[]): TypeBinding[] {
         U.assert(typeParameters.length == args.length, "typeParameters.length == args.length")
-        return typeParameters.map((tp, i) => ({ tp: tp, isRef: isRefType(args[i]) }))
+        return typeParameters.map((tp, i) => ({ tp: tp, isRef: true }))
     }
 
     function getEnclosingTypeBindings(func: Declaration) {
@@ -979,8 +929,6 @@ namespace ts.pxtc {
 
             hex.setupFor(opts.target, opts.extinfo || emptyExtInfo(), opts.hexinfo);
             hex.setupInlineAssembly(opts);
-        } else {
-            opts.target.taggedInts = false
         }
 
         let bin = new Binary()
@@ -1241,12 +1189,7 @@ namespace ts.pxtc {
                     bin.writeFile("yotta.json", JSON.stringify(opts.extinfo.yotta, null, 2));
                 if (opts.extinfo.platformio)
                     bin.writeFile("platformio.json", JSON.stringify(opts.extinfo.platformio, null, 2));
-                if (opts.target.nativeType == NATIVE_TYPE_CS)
-                    csEmit(bin, opts)
-                else if (opts.target.nativeType == NATIVE_TYPE_AVRVM)
-                    vmEmit(bin, opts)
-                else
-                    processorEmit(bin, opts, res)
+                processorEmit(bin, opts, res)
             } else {
                 jsEmit(bin)
             }
@@ -1487,14 +1430,11 @@ namespace ts.pxtc {
             let info: ClassInfo = classInfos[id]
             if (!info) {
                 let reffields: PropertyDeclaration[] = []
-                let primitivefields: PropertyDeclaration[] = []
                 info = {
                     id: id,
-                    numRefFields: 0,
                     allfields: [],
                     attrs: parseComments(decl),
                     decl: decl,
-                    refmask: null,
                     baseClassInfo: null,
                     methods: [],
                     bindings: bindings
@@ -1509,9 +1449,7 @@ namespace ts.pxtc {
                     for (let mem of decl.members) {
                         if (mem.kind == SK.PropertyDeclaration) {
                             let pdecl = <PropertyDeclaration>mem
-                            if (isRefType(typeOf(pdecl)))
-                                reffields.push(pdecl)
-                            else primitivefields.push(pdecl)
+                            reffields.push(pdecl)
                             info.allfields.push(pdecl)
                         } else if (isClassFunction(mem) && mem.kind != SK.Constructor) {
                             let minf = getFunctionInfo(mem as any)
@@ -1521,13 +1459,10 @@ namespace ts.pxtc {
                     }
                     if (info.baseClassInfo) {
                         info.allfields = info.baseClassInfo.allfields.concat(info.allfields)
-                        info.numRefFields = -1
                         computeVtableInfo(info)
                     } else {
-                        info.allfields = reffields.concat(primitivefields)
-                        info.numRefFields = reffields.length
+                        info.allfields = reffields.slice(0)
                     }
-                    info.refmask = info.allfields.map(f => isRefType(typeOf(f)))
                 })
 
             }
@@ -1696,14 +1631,6 @@ ${lbl}: .short 0xffff
                     return ir.ptrlit((<any>node).imageLiteral, (<any>node).jsLit)
                 } else {
                     const parsed = parseFloat(node.text)
-                    if (!opts.target.floatingPoint) {
-                        if (Math.floor(parsed) !== parsed) {
-                            userError(9257, lf("Decimal numbers are not supported"))
-                        }
-                        else if (parsed << 0 !== parsed) {
-                            userError(9258, lf("Number is either too big or too small"))
-                        }
-                    }
                     return emitLit(parsed)
                 }
             } else if (isStringLiteral(node)) {
@@ -1740,19 +1667,11 @@ ${lbl}: .short 0xffff
         function emitArrayBindingPattern(node: BindingPattern) { }
         function emitArrayLiteral(node: ArrayLiteralExpression) {
             let eltT = arrayElementType(typeOf(node))
-            let isRef = isRefType(eltT)
-            let flag = 0
-            if (isStringType(eltT))
-                flag = 3;
-            else if (isRef)
-                flag = 1;
-            let coll = ir.shared(ir.rtcall("Array_::mk", opts.target.floatingPoint ? [] : [ir.numlit(flag)]))
+            let coll = ir.shared(ir.rtcall("Array_::mk", []))
             for (let elt of node.elements) {
                 let e = ir.shared(emitExpr(elt))
                 proc.emitExpr(ir.rtcall("Array_::push", [coll, e]))
-                if (isRef) {
-                    proc.emitExpr(ir.op(EK.Decr, [e]))
-                }
+                proc.emitExpr(ir.op(EK.Decr, [e]))
             }
             return coll
         }
@@ -1964,9 +1883,9 @@ ${lbl}: .short 0xffff
             if (e.kind == SK.NullKeyword || e.kind == SK.NumericLiteral)
                 return !!(e as any).isRefOverride
             // no point doing the incr/decr for these - they are statically allocated anyways (unless on AVR)
-            if (!isAVR() && isStringLiteral(e))
+            if (isStringLiteral(e))
                 return false
-            return isRefType(typeOf(e))
+            return true
         }
         function getMask(args: Expression[]) {
             assert(args.length <= 8, "args.length <= 8")
@@ -1983,13 +1902,12 @@ ${lbl}: .short 0xffff
             let hasRet = !(typeOf(node).flags & TypeFlags.Void)
             let nm = attrs.shim
 
-            if (opts.target.needsUnboxing)
-                switch (nm) {
-                    case "Number_::toString":
-                    case "Boolean_::toString":
-                        nm = "numops::toString"
-                        break;
-                }
+            switch (nm) {
+                case "Number_::toString":
+                case "Boolean_::toString":
+                    nm = "numops::toString"
+                    break;
+            }
 
             if (nm.indexOf('(') >= 0) {
                 let parse = /(.*)\((.*)\)$/.exec(nm)
@@ -2291,16 +2209,11 @@ ${lbl}: .short 0xffff
                         if (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
                             let pid = res.data as ir.ProcId
                             pid.mapIdx = pid.ifaceIndex
-                            let refSuff = ""
                             if (args.length == 2) {
-                                if (isRefCountedExpr(args[1]))
-                                    refSuff = "Ref"
                                 pid.ifaceIndex = getIfaceMemberId("set/" + name)
-                                pid.mapMethod = "pxtrt::mapSet" + refSuff
+                                pid.mapMethod = "pxtrt::mapSetRef"
                             } else {
-                                if (isRefType(typeOf(node)))
-                                    refSuff = "Ref"
-                                pid.mapMethod = "pxtrt::mapGet" + refSuff
+                                pid.mapMethod = "pxtrt::mapGetRef"
                             }
                         }
                         return res
@@ -2328,7 +2241,7 @@ ${lbl}: .short 0xffff
             }
 
             // otherwise we assume a lambda
-            if (args.length > (isStackMachine() ? 2 : 3))
+            if (args.length > 3)
                 userError(9217, lf("lambda functions with more than 3 arguments not supported"))
 
             let suff = args.length + ""
@@ -2631,18 +2544,7 @@ ${lbl}: .short 0xffff
 
         function emitFunLitCore(node: FunctionLikeDeclaration, raw = false) {
             let lbl = getFunctionLabel(node, getEnclosingTypeBindings(node))
-            let jsInfo = lbl
-            if (target.nativeType == NATIVE_TYPE_CS) {
-                jsInfo = "(FnPtr)" + jsInfo
-                if (!raw)
-                    jsInfo = "PXT.pxt.mkAction(0, 0, " + jsInfo + ")"
-            }
-            let r = ir.ptrlit(lbl + "_Lit", jsInfo, isAVR() ? false : !raw)
-
-            if (!raw && isAVR())
-                r = ir.shared(ir.rtcall("pxt::mkAction", [ir.numlit(0), ir.numlit(0), r]))
-
-            return r
+            return ir.ptrlit(lbl + "_Lit", lbl, !raw)
         }
 
         function emitFuncCore(node: FunctionLikeDeclaration, bindings: TypeBinding[]) {
@@ -2651,15 +2553,7 @@ ${lbl}: .short 0xffff
 
             let isExpression = node.kind == SK.ArrowFunction || node.kind == SK.FunctionExpression
 
-            let isRef = (d: Declaration) => {
-                if (isRefDecl(d)) return true
-                let info = getVarInfo(d)
-                return (info.captured && info.written)
-            }
-
-            let refs = info.capturedVars.filter(v => isRef(v))
-            let prim = info.capturedVars.filter(v => !isRef(v))
-            let caps = refs.concat(prim)
+            let caps = info.capturedVars.slice(0)
             let locals = caps.map((v, i) => {
                 let l = new ir.Cell(i, v, getVarInfo(v))
                 l.iscap = true
@@ -2676,7 +2570,7 @@ ${lbl}: .short 0xffff
             // if no captured variables, then we can get away with a plain pointer to code
             if (caps.length > 0) {
                 assert(getEnclosingFunction(node) != null, "getEnclosingFunction(node) != null)")
-                lit = ir.shared(ir.rtcall("pxt::mkAction", [ir.numlit(refs.length), ir.numlit(caps.length), emitFunLitCore(node, true)]))
+                lit = ir.shared(ir.rtcall("pxt::mkAction", [ir.numlit(caps.length), ir.numlit(caps.length), emitFunLitCore(node, true)]))
                 caps.forEach((l, i) => {
                     let loc = proc.localIndex(l)
                     if (!loc)
@@ -2780,7 +2674,7 @@ ${lbl}: .short 0xffff
             } else {
                 proc.emitClrs(lbl, null);
             }
-            if (hasRet || isStackMachine())
+            if (hasRet)
                 proc.emitLbl(lbl)
 
             // once we have emitted code for this function,
@@ -2944,12 +2838,10 @@ ${lbl}: .short 0xffff
             let oneExpr = one ? emitExpr(one) : emitLit(1)
             let prev = ir.shared(emitExpr(trg))
             let result = ir.shared(emitIntOp(meth, prev, oneExpr))
-            emitStore(trg, irToNode(result, opts.target.taggedInts))
+            emitStore(trg, irToNode(result, true))
             cleanup()
             let r = isPost ? prev : result
-            if (opts.target.taggedInts)
-                return ir.op(EK.Incr, [r])
-            return r
+            return ir.op(EK.Incr, [r])
         }
 
         function emitPostfixUnaryExpression(node: PostfixUnaryExpression): ir.Expr {
@@ -2973,7 +2865,7 @@ ${lbl}: .short 0xffff
             return {
                 idx: info.allfields.indexOf(fld),
                 name: getName(fld),
-                isRef: isRefType(t),
+                isRef: true,
                 shimName: attrs.shim
             }
         }
@@ -3039,30 +2931,7 @@ ${lbl}: .short 0xffff
         }
 
         function mapIntOpName(n: string) {
-            if (!opts.target.floatingPoint) {
-                // legacy
-                if (U.startsWith(n, "numops::")) {
-                    let b = n.slice(8)
-                    if (U.lookup(thumbArithmeticInstr, b))
-                        return "thumb::" + b
-                    else if (b == "lt_bool")
-                        return "Number_::lt"
-                    else
-                        return "Number_::" + b.replace(/eqq/, "eq")
-                }
-                switch (n) {
-                    case "pxt::eq_bool":
-                    case "pxt::eqq_bool":
-                    case "langsupp::ptreq":
-                    case "langsupp::ptreqq":
-                        return "Number_::eq";
-                    case "langsupp::ptrneq":
-                    case "langsupp::ptrneqq":
-                        return "Number_::neq";
-                }
-            }
-
-            if (opts.target.taggedInts && isThumb()) {
+            if (opts.target.isNative && isThumb()) {
                 switch (n) {
                     case "numops::adds":
                     case "numops::subs":
@@ -3078,7 +2947,7 @@ ${lbl}: .short 0xffff
 
         function emitIntOp(op: string, left: ir.Expr, right: ir.Expr) {
             op = mapIntOpName(op)
-            return ir.rtcallMask(op, opts.target.taggedInts ? 3 : 0,
+            return ir.rtcallMask(op, 3,
                 ir.CallingConvention.Plain, [left, right])
         }
 
@@ -3130,7 +2999,7 @@ ${lbl}: .short 0xffff
         function valueToInt(e: ir.Expr): number {
             if (e.exprKind == ir.EK.NumberLiteral) {
                 let v = e.data
-                if (opts.target.taggedInts) {
+                if (opts.target.isNative) {
                     if (v == taggedNull || v == taggedUndefined || v == taggedFalse)
                         return 0
                     if (v == taggedTrue)
@@ -3146,7 +3015,7 @@ ${lbl}: .short 0xffff
         }
 
         function emitLit(v: number | boolean) {
-            if (opts.target.taggedInts) {
+            if (opts.target.isNative) {
                 if (v === null) return ir.numlit(taggedNull)
                 else if (v === undefined) return ir.numlit(taggedUndefined)
                 else if (v === false) return ir.numlit(taggedFalse)
@@ -3162,10 +3031,6 @@ ${lbl}: .short 0xffff
                     throw U.oops("bad literal: " + v)
                 }
             } else {
-                if (!opts.target.floatingPoint) {
-                    if (v === false || v === null || v === undefined) v = 0
-                    if (v === true) v = 1
-                }
                 return ir.numlit(v)
             }
         }
@@ -3175,7 +3040,7 @@ ${lbl}: .short 0xffff
                 let vo: ir.Expr = (e as any).valueOverride
                 if (vo !== undefined) {
                     if (vo.exprKind == EK.NumberLiteral) {
-                        if (opts.target.taggedInts)
+                        if (opts.target.isNative)
                             return !!((vo.data as number) & 1)
                         return true
                     } else if (vo.exprKind == EK.RuntimeCall && vo.data == "pxt::ptrOfLiteral") {
@@ -3205,7 +3070,7 @@ ${lbl}: .short 0xffff
 
             let args2 = args.map((a, i) => {
                 let r = emitExpr(a)
-                if (!opts.target.taggedInts)
+                if (!opts.target.isNative)
                     return r
                 let f = fmt.charAt(i + 1)
                 let isNumber = isNumberLike(a)
@@ -3243,7 +3108,7 @@ ${lbl}: .short 0xffff
                 }
             })
             let r = ir.rtcallMask(name, mask, attrs.callingConvention, args2)
-            if (opts.target.taggedInts) {
+            if (opts.target.isNative) {
                 if (fmt.charAt(0) == "I")
                     r = fromInt(r)
                 else if (fmt.charAt(0) == "B")
@@ -3269,50 +3134,23 @@ ${lbl}: .short 0xffff
             let isString = isStringType(typeOf(node.left));
             let lbl = proc.mkLabel("lazy")
 
-            if (opts.target.floatingPoint) {
-                left = ir.shared(left)
-                let cond = ir.rtcall("numops::toBool", [left])
-                let lblSkip = proc.mkLabel("lazySkip")
-                let mode: ir.JmpMode =
-                    node.operatorToken.kind == SK.BarBarToken ? ir.JmpMode.IfZero :
-                        node.operatorToken.kind == SK.AmpersandAmpersandToken ? ir.JmpMode.IfNotZero :
-                            U.oops() as any
+            left = ir.shared(left)
+            let cond = ir.rtcall("numops::toBool", [left])
+            let lblSkip = proc.mkLabel("lazySkip")
+            let mode: ir.JmpMode =
+                node.operatorToken.kind == SK.BarBarToken ? ir.JmpMode.IfZero :
+                    node.operatorToken.kind == SK.AmpersandAmpersandToken ? ir.JmpMode.IfNotZero :
+                        U.oops() as any
 
-                proc.emitJmp(lblSkip, cond, mode)
-                proc.emitJmp(lbl, left, ir.JmpMode.Always, left)
-                proc.emitLbl(lblSkip)
-                if (isRefCountedExpr(node.left))
-                    proc.emitExpr(ir.op(EK.Decr, [left]))
-                else
-                    // make sure we have reference and the stack is cleared
-                    proc.emitExpr(ir.rtcall("langsupp::ignore", [left]))
+            proc.emitJmp(lblSkip, cond, mode)
+            proc.emitJmp(lbl, left, ir.JmpMode.Always, left)
+            proc.emitLbl(lblSkip)
+            if (isRefCountedExpr(node.left))
+                proc.emitExpr(ir.op(EK.Decr, [left]))
+            else
+                // make sure we have reference and the stack is cleared
+                proc.emitExpr(ir.rtcall("langsupp::ignore", [left]))
 
-            } else {
-                if (node.operatorToken.kind == SK.BarBarToken) {
-                    if (isString)
-                        left = ir.rtcall("pxtrt::emptyToNull", [left])
-                    proc.emitJmp(lbl, left, ir.JmpMode.IfNotZero)
-                } else if (node.operatorToken.kind == SK.AmpersandAmpersandToken) {
-                    left = ir.shared(left)
-                    if (isString) {
-                        let slbl = proc.mkLabel("lazyStr")
-                        proc.emitJmp(slbl, ir.rtcall("pxtrt::emptyToNull", [left]), ir.JmpMode.IfNotZero)
-                        proc.emitJmp(lbl, left, ir.JmpMode.Always, left)
-                        proc.emitLbl(slbl)
-                        if (isRefCountedExpr(node.left))
-                            proc.emitExpr(ir.op(EK.Decr, [left]))
-                        else
-                            // make sure we have reference and the stack is cleared
-                            proc.emitExpr(ir.rtcall("langsupp::ignore", [left]))
-                    } else {
-                        if (isRefCountedExpr(node.left))
-                            proc.emitExpr(ir.op(EK.Decr, [left]))
-                        proc.emitJmpZ(lbl, left)
-                    }
-                } else {
-                    oops()
-                }
-            }
 
             proc.emitJmp(lbl, emitExpr(node.right), ir.JmpMode.Always)
             proc.emitLbl(lbl)
@@ -3474,8 +3312,7 @@ ${lbl}: .short 0xffff
                     case SK.EqualsEqualsEqualsToken:
                     case SK.ExclamationEqualsEqualsToken:
                     case SK.ExclamationEqualsToken:
-                        if (opts.target.needsUnboxing)
-                            break; // let the generic case handle this
+                        break; // let the generic case handle this
                     case SK.LessThanEqualsToken:
                     case SK.LessThanToken:
                     case SK.GreaterThanEqualsToken:
@@ -3511,12 +3348,8 @@ ${lbl}: .short 0xffff
                 return r;
             let tp = typeOf(e)
 
-            if (target.floatingPoint && (tp.flags & (TypeFlags.NumberLike | TypeFlags.Boolean | TypeFlags.BooleanLiteral)))
+            if ((tp.flags & (TypeFlags.NumberLike | TypeFlags.Boolean | TypeFlags.BooleanLiteral)))
                 return ir.rtcallMask("numops::toString", 1, ir.CallingConvention.Plain, [r])
-            else if (tp.flags & TypeFlags.NumberLike)
-                return ir.rtcall("Number_::toString", [r])
-            else if (isBooleanType(tp))
-                return ir.rtcall("Boolean_::toString", [r])
             else if (isStringType(tp))
                 return r // OK
             else {
@@ -3601,7 +3434,7 @@ ${lbl}: .short 0xffff
             emitExprAsStmt(node.expression)
         }
         function emitCondition(expr: Expression, inner: ir.Expr = null) {
-            if (!inner && opts.target.taggedInts && isThumb() && expr.kind == SK.BinaryExpression) {
+            if (!inner && isThumb() && expr.kind == SK.BinaryExpression) {
                 let be = expr as BinaryExpression
                 let lt = typeOf(be.left)
                 let rt = typeOf(be.right)
@@ -3615,17 +3448,7 @@ ${lbl}: .short 0xffff
             if (!inner)
                 inner = emitExpr(expr)
             // in all cases decr is internal, so no mask
-            if (opts.target.floatingPoint) {
-                return ir.rtcall("numops::toBoolDecr", [inner])
-            } else {
-                if (isStringType(typeOf(expr))) {
-                    return ir.rtcall("pxtrt::stringToBool", [inner])
-                } else if (isRefCountedExpr(expr)) {
-                    return ir.rtcall("pxtrt::ptrToBool", [inner])
-                } else {
-                    return inner
-                }
-            }
+            return ir.rtcall("numops::toBoolDecr", [inner])
         }
         function emitIfStatement(node: IfStatement) {
             emitBrk(node)
@@ -3688,9 +3511,7 @@ ${lbl}: .short 0xffff
             let v = emitExpr(node);
             let a = typeOf(node)
             if (!(a.flags & TypeFlags.Void)) {
-                if (isRefType(a)) {
-                    v = ir.op(EK.Decr, [v])
-                }
+                v = ir.op(EK.Decr, [v])
             }
             return v
         }
@@ -3769,7 +3590,7 @@ ${lbl}: .short 0xffff
             proc.emitExpr(collectionVar.storeByRef(emitExpr(node.expression)))
 
             // Declaration of iterating variable
-            let intVarIter = proc.mkLocalUnnamed(opts.target.taggedInts ? true : false); // i
+            let intVarIter = proc.mkLocalUnnamed(true); // i
             proc.emitExpr(intVarIter.storeByRef(emitLit(0)))
             proc.stackEmpty();
 
@@ -3787,9 +3608,7 @@ ${lbl}: .short 0xffff
 
             // TODO this should be changed to use standard indexer lookup and int handling
             let toInt = (e: ir.Expr) => {
-                if (opts.target.needsUnboxing)
-                    return ir.rtcall("pxt::toInt", [e])
-                else return e
+                return ir.rtcall("pxt::toInt", [e])
             }
 
             // c = a[i]
@@ -3878,36 +3697,12 @@ ${lbl}: .short 0xffff
                     let cc = cl as CaseClause
                     let cmpExpr = emitExpr(cc.expression)
                     let mask = isRefCountedExpr(cc.expression) ? 1 : 0
-                    if (opts.target.needsUnboxing) {
-                        // we assume the value we're switching over will stay alive
-                        // so, the mask only applies to the case expression if needed
-                        let cmpCall = ir.rtcallMask(mapIntOpName("pxt::switch_eq"),
-                            mask, ir.CallingConvention.Plain, [cmpExpr, expr])
-                        quickCmpMode = false
-                        proc.emitJmp(lbl, cmpCall, ir.JmpMode.IfNotZero, plainExpr)
-                    } else if (isStringType(switchType)) {
-                        let cmpCall = ir.rtcallMask("String_::compare" + decrSuff,
-                            mask, ir.CallingConvention.Plain, [cmpExpr, expr])
-                        proc.emitJmp(lbl, cmpCall, ir.JmpMode.IfZero, plainExpr)
-                    } else if (isRefCountedExpr(cc.expression) || decrSuff) {
-                        let cmpCall = ir.rtcallMask(mapIntOpName("langsupp::ptreq") + decrSuff, 3,
-                            ir.CallingConvention.Plain, [cmpExpr, expr])
-                        quickCmpMode = false
-                        proc.emitJmp(lbl, cmpCall, ir.JmpMode.IfNotZero, plainExpr)
-                    } else {
-                        // TODO re-enable this opt for small non-zero number literals
-                        if (!isStackMachine() && !opts.target.needsUnboxing && cmpExpr.exprKind == EK.NumberLiteral) {
-                            if (!quickCmpMode) {
-                                emitInJmpValue(expr)
-                                quickCmpMode = true
-                            }
-                            proc.emitJmp(lbl, cmpExpr, ir.JmpMode.IfJmpValEq, plainExpr)
-                        } else {
-                            let cmpCall = emitIntOp("pxt::eq_bool", cmpExpr, expr)
-                            quickCmpMode = false
-                            proc.emitJmp(lbl, cmpCall, ir.JmpMode.IfNotZero, plainExpr)
-                        }
-                    }
+                    // we assume the value we're switching over will stay alive
+                    // so, the mask only applies to the case expression if needed
+                    let cmpCall = ir.rtcallMask(mapIntOpName("pxt::switch_eq"),
+                        mask, ir.CallingConvention.Plain, [cmpExpr, expr])
+                    quickCmpMode = false
+                    proc.emitJmp(lbl, cmpCall, ir.JmpMode.IfNotZero, plainExpr)
                 } else if (cl.kind == SK.DefaultClause) {
                     // Save default label for emit at the end of the
                     // tests section. Default label doesn't have to come at the
@@ -3920,9 +3715,7 @@ ${lbl}: .short 0xffff
                 return lbl
             })
 
-            if (opts.target.taggedInts || decrSuff) {
-                proc.emitExpr(ir.op(EK.Decr, [expr]))
-            }
+            proc.emitExpr(ir.op(EK.Decr, [expr]))
 
             if (defaultLabel)
                 proc.emitJmp(defaultLabel, plainExpr)

@@ -667,17 +667,13 @@ ${baseLabel}:
             this.write("")
             this.write(".section code");
 
-            if (isAVR()) {
-                this.write(this.proc.label() + "_Lit:");
-            } else {
-                if (isMain)
-                    this.write(this.t.unconditional_branch(".themain"))
-                this.write(".balign 4");
-                this.write(this.proc.label() + "_Lit:");
-                this.write(`.short 0xffff, ${pxt.REF_TAG_ACTION}   ; action literal`);
-                if (isMain)
-                    this.write(".themain:")
-            }
+            if (isMain)
+                this.write(this.t.unconditional_branch(".themain"))
+            this.write(".balign 4");
+            this.write(this.proc.label() + "_Lit:");
+            this.write(`.short 0xffff, ${pxt.REF_TAG_ACTION}   ; action literal`);
+            if (isMain)
+                this.write(".themain:")
 
             this.write("@stackmark litfunc");
 

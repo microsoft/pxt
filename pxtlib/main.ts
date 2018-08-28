@@ -293,8 +293,6 @@ namespace pxt {
 
     export function outputName(trg: CompileTarget = null) {
         if (!trg) trg = appTarget.compile
-        if (trg.nativeType == ts.pxtc.NATIVE_TYPE_CS)
-            return ts.pxtc.BINARY_CS
         if (trg.useUF2)
             return ts.pxtc.BINARY_UF2
         else if (trg.useELF)
@@ -304,6 +302,6 @@ namespace pxt {
     }
 
     export function isOutputText(trg: CompileTarget = null) {
-        return outputName(trg) == ts.pxtc.BINARY_HEX || outputName(trg) == ts.pxtc.BINARY_CS
+        return outputName(trg) == ts.pxtc.BINARY_HEX
     }
 }
