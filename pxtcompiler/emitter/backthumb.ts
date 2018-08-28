@@ -117,7 +117,7 @@ ${lbl}:`
             return name + " " + r0 + ", " + r1;
         }
         call_lbl(lbl: string) {
-            if (target.taggedInts && !target.boxDebug) {
+            if (!target.boxDebug) {
                 let o = U.lookup(inlineArithmetic, lbl)
                 if (o) lbl = o
             }
@@ -188,7 +188,7 @@ ${lbl}:`
         arithmetic() {
             let r = ""
 
-            if (!target.taggedInts || target.boxDebug) {
+            if (target.boxDebug) {
                 return r
             }
 

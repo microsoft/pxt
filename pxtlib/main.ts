@@ -33,24 +33,11 @@ namespace pxt {
         let comp = appTarget.compile
         if (!comp)
             comp = appTarget.compile = { isNative: false, hasHex: false }
-        if (comp.hasHex && comp.jsRefCounting === undefined)
-            comp.jsRefCounting = true
-        if (!comp.hasHex && comp.floatingPoint === undefined)
-            comp.floatingPoint = true
-        if (comp.hasHex && !comp.nativeType)
-            comp.nativeType = pxtc.NATIVE_TYPE_THUMB
-        if (comp.nativeType == pxtc.NATIVE_TYPE_AVR || comp.nativeType == pxtc.NATIVE_TYPE_AVRVM) {
-            comp.shortPointers = true
-            comp.flashCodeAlign = 0x10
-        }
-        if (comp.nativeType == pxtc.NATIVE_TYPE_CS) {
-            comp.floatingPoint = true
-            comp.needsUnboxing = true
-            comp.jsRefCounting = false
-        }
-        if (comp.taggedInts) {
-            comp.floatingPoint = true
-            comp.needsUnboxing = true
+        if (comp.hasHex) {
+            if (comp.jsRefCounting === undefined)
+                comp.jsRefCounting = true
+            if (!comp.nativeType)
+                comp.nativeType = pxtc.NATIVE_TYPE_THUMB
         }
         if (!comp.vtableShift)
             comp.vtableShift = 2

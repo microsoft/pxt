@@ -217,10 +217,7 @@ namespace pxsim {
         export function floor(n: number) { return Math.floor(n) }
         export function sqrt(n: number) { return Math.sqrt(n) }
         export function pow(x: number, y: number) {
-            if (pxsim.floatingPoint)
-                return Math.pow(x, y)
-            else
-                return Math.pow(x, y) | 0
+            return Math.pow(x, y)
         }
         export function clz32(n: number) { return Math.clz32(n) }
         export function log(n: number) { return Math.log(n) }
