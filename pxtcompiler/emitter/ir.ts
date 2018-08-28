@@ -1,5 +1,5 @@
 // TODO handle mask in rtcall emit
-// TODO add incr() on shared ref
+// TODO do mask stuff in proccall
 // TODO optimize f(incr(shared)); decr(shared)
 
 namespace ts.pxtc.ir {
@@ -40,6 +40,7 @@ namespace ts.pxtc.ir {
         public jsInfo: string;
         public totalUses: number; // how many references this expression has; only for the only child of Shared
         public currUses: number;
+        public irCurrUses: number;
         public callingConvention = CallingConvention.Plain;
         public mask: number;
 
@@ -546,6 +547,8 @@ namespace ts.pxtc.ir {
                         e.args[i] = f(e.args[i])
             }
 
+            // after this, totalUses holds the negation of the actual usage count
+            // also the first SharedRef is replaced with SharedDef
             let refdef = (e: Expr): Expr => {
                 switch (e.exprKind) {
                     case EK.SharedDef: throw U.oops();
@@ -599,9 +602,11 @@ namespace ts.pxtc.ir {
                         //console.log(arg)
                         U.assert(arg.totalUses < 0, "arg.totalUses < 0")
                         U.assert(arg.currUses === 0, "arg.currUses === 0")
+                        // if there is just one usage, strip the SharedDef
                         if (arg.totalUses == -1)
                             return cntuses(arg)
                         else
+                            // now, we start counting for real
                             arg.totalUses = 1;
                         break;
                     case EK.SharedRef:
@@ -611,6 +616,25 @@ namespace ts.pxtc.ir {
                 }
                 iterargs(e, cntuses)
                 return e
+            }
+
+            let sharedincr = (e: Expr): Expr => {
+                switch (e.exprKind) {
+                    case EK.SharedDef:
+                        iterargs(e, sharedincr)
+                    case EK.SharedRef:
+                        let arg = e.args[0]
+                        U.assert(arg.totalUses > 0, "arg.totalUses > 0")
+                        if (arg.totalUses == 1)
+                            return sharedincr(arg)
+                        arg.irCurrUses++
+                        if (arg.irCurrUses == arg.totalUses)
+                            return e; // final one, no incr
+                        return op(EK.Incr, [e])
+                    default:
+                        iterargs(e, sharedincr)
+                        return e
+                }
             }
 
             this.body = this.body.filter(s => {
@@ -657,6 +681,10 @@ namespace ts.pxtc.ir {
             console.log(this.toString())
 
             for (let s of this.body) {
+                if (s.expr) {
+                    s.expr = opt(sharedincr(s.expr))
+                }
+
                 if (s.stmtKind == ir.SK.Breakpoint) {
                     allBrkp[s.breakpointInfo.id] = s.breakpointInfo
                 }
