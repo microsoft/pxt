@@ -28,9 +28,6 @@ interface ScriptSearchState {
 }
 
 export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
-    private prevGhData: pxt.github.GitRepo[] = [];
-    private prevUrlData: Cloud.JsonScript[] = [];
-
     constructor(props: ISettingsProps) {
         super(props)
         this.state = {
@@ -60,43 +57,57 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         this.setState({ visible: true, searchFor: '', mode: ScriptSearchMode.Boards })
     }
 
-    fetchUrlData(): Cloud.JsonScript[] {
-        if (!this.state.searchFor || this.state.mode != ScriptSearchMode.Extensions) return [];
+    fetchUrlData(): data.DataFetchResult<Cloud.JsonScript[]> {
+        const emptyResult: data.DataFetchResult<Cloud.JsonScript[]> = {
+            data: [],
+            status: data.FetchStatus.Complete
+        };
+        if (!this.state.searchFor || this.state.mode != ScriptSearchMode.Extensions) return emptyResult;
 
         let scriptid = pxt.Cloud.parseScriptId(this.state.searchFor)
-        if (scriptid) {
-            let res = this.getData(`cloud-search:${scriptid}`)
-            if (res) {
-                if (res.statusCode !== 404)
-                    this.prevUrlData = [res];
-                else this.prevUrlData = [];
-            }
-        } else {
-            this.prevUrlData = [];
+
+        if (!scriptid) {
+            return emptyResult;
         }
-        return this.prevUrlData;
+
+        const res = this.getDataWithStatus(`cloud-search:${scriptid}`);
+
+        if (res.data && res.data.statusCode === 404)
+            res.data = []; // No shared project with that URL exists
+
+        return res;
     }
 
-    fetchGhData(): pxt.github.GitRepo[] {
-        if (this.state.mode != ScriptSearchMode.Extensions) return [];
+    fetchGhData(): data.DataFetchResult<pxt.github.GitRepo[]> {
+        const emptyResult: data.DataFetchResult<pxt.github.GitRepo[]> = {
+            data: [],
+            status: data.FetchStatus.Complete
+        };
+
+        if (this.state.mode != ScriptSearchMode.Extensions) return emptyResult;
 
         const cloud = pxt.appTarget.cloud || {};
-        if (!cloud.packages) return [];
-        const searchFor = cloud.githubPackages ? this.state.searchFor : undefined;
-        let preferredPackages: string[] = undefined;
+        if (!cloud.packages) return emptyResult;
+
+        let searchFor = cloud.githubPackages ? this.state.searchFor : undefined;
         if (!searchFor) {
-            const packageConfig = this.getData("target-config:") as pxt.TargetConfig;
-            preferredPackages = packageConfig && packageConfig.packages
-                ? packageConfig.packages.preferredRepos
-                : undefined;
+            const trgConfigFetch = this.getDataWithStatus("target-config:");
+            const trgConfig = trgConfigFetch.data as pxt.TargetConfig;
+
+            if (trgConfigFetch.status === data.FetchStatus.Complete && trgConfig && trgConfig.packages && trgConfig.packages.preferredRepos) {
+                searchFor = trgConfig.packages.preferredRepos.join("|");
+            }
         }
 
-        const res: pxt.github.GitRepo[] =
-            searchFor || preferredPackages
-                ? this.getData(`gh-search:${searchFor || preferredPackages.join('|')}`)
-                : null
-        if (res) this.prevGhData = res
-        return this.prevGhData || []
+        if (!searchFor) return emptyResult; // No search result and no preferred packages = no results for GH packages
+
+        const res = this.getDataWithStatus(`gh-search:${searchFor}`);
+
+        if (!res.data || (res.data as any).statusCode === 404) {
+            res.data = [];
+        }
+
+        return res;
     }
 
     fetchLocal() {
@@ -268,6 +279,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         const ghdata = this.fetchGhData();
         const urldata = this.fetchUrlData();
         const local = this.fetchLocal()
+        const isSearching = this.state.searchFor && (ghdata.status === data.FetchStatus.Pending || urldata.status === data.FetchStatus.Pending);
 
         const coresFirst = (a: pxt.PackageConfig, b: pxt.PackageConfig) => {
             if (a.core != b.core)
@@ -277,12 +289,10 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
 
         bundles.sort(coresFirst)
         const isEmpty = () => {
-            if (this.state.searchFor) {
-                if (bundles.length || ghdata.length || urldata.length)
-                    return false;
-                return true;
+            if (!this.state.searchFor || isSearching) {
+                return false;
             }
-            return false;
+            return bundles.length + ghdata.data.length + urldata.data.length === 0;
         }
 
         const headerText = boards ? lf("Boards") : lf("Extensions");
@@ -300,78 +310,82 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                     {!boards ?
                         <div className="ui search">
                             <div className="ui fluid action input" role="search">
-                                <div aria-live="polite" className="accessible-hidden">{lf("{0} result matching '{1}'", bundles.length + ghdata.length + urldata.length, this.state.searchFor)}</div>
-                                <input autoFocus ref="searchInput" type="text" placeholder={lf("Search or enter project URL...")} onKeyUp={this.handleSearchKeyUpdate} />
-                                <button title={lf("Search")} className="ui right icon button" onClick={this.handleSearch}>
+                                <div aria-live="polite" className="accessible-hidden">{lf("{0} result matching '{1}'", bundles.length + ghdata.data.length + urldata.data.length, this.state.searchFor)}</div>
+                                <input autoFocus ref="searchInput" type="text" placeholder={lf("Search or enter project URL...")} onKeyUp={this.handleSearchKeyUpdate} disabled={isSearching} />
+                                <button title={lf("Search")} disabled={isSearching} className="ui right icon button" onClick={this.handleSearch}>
                                     <sui.Icon icon="search" />
                                 </button>
                             </div>
                         </div> : undefined}
-                    <div className="ui cards centered" role="listbox">
-                        {urldata.map(scr =>
-                            <ScriptSearchCodeCard
-                                key={'url' + scr.id}
-                                name={scr.name}
-                                description={scr.description}
-                                url={"/" + scr.id}
-                                scr={scr}
-                                onCardClick={this.addUrl}
-                                role="link"
-                            />
-                        )}
-                        {local.map(scr =>
-                            <ScriptSearchCodeCard
-                                key={'local' + scr.id}
-                                name={scr.name}
-                                description={lf("Local copy of {0} hosted on github.com", scr.githubId)}
-                                url={"https://github.com/" + scr.githubId}
-                                imageUrl={scr.icon}
-                                scr={scr}
-                                onCardClick={this.addLocal}
-                                label={lf("Local")}
-                                role="link"
-                            />
-                        )}
-                        {bundles.map(scr =>
-                            <ScriptSearchCodeCard
-                                key={'bundled' + scr.name}
-                                name={scr.name}
-                                description={scr.description}
-                                url={"/" + scr.installedVersion}
-                                imageUrl={scr.icon}
-                                scr={scr}
-                                onCardClick={this.addBundle}
-                                label={/\bbeta\b/i.test(scr.description) ? lf("Beta") : undefined}
-                                role="link"
-                            />
-                        )}
-                        {ghdata.filter(repo => repo.status == pxt.github.GitRepoStatus.Approved).map(scr =>
-                            <ScriptSearchCodeCard
-                                name={scr.name.replace(/^pxt-/, "")}
-                                description={scr.description}
-                                key={'gha' + scr.fullName}
-                                scr={scr}
-                                onCardClick={this.installGh}
-                                url={'github:' + scr.fullName}
-                                imageUrl={pxt.github.repoIconUrl(scr)}
-                                label={/\bbeta\b/i.test(scr.description) ? lf("Beta") : undefined}
-                                role="link"
-                            />
-                        )}
-                        {ghdata.filter(repo => repo.status != pxt.github.GitRepoStatus.Approved).map(scr =>
-                            <ScriptSearchCodeCard
-                                name={scr.name.replace(/^pxt-/, "")}
-                                description={(scr.description || "")}
-                                extracontent={lf("User-provided extension, not endorsed by Microsoft.")}
-                                key={'ghd' + scr.fullName}
-                                scr={scr}
-                                onCardClick={this.installGh}
-                                imageUrl={pxt.github.repoIconUrl(scr)}
-                                url={'github:' + scr.fullName}
-                                role="link"
-                            />
-                        )}
-                    </div>
+                    {isSearching ?
+                        <div className="ui medium active centered inline loader"></div>
+                        :
+                        <div className="ui cards centered" role="listbox">
+                            {urldata.data.map(scr =>
+                                <ScriptSearchCodeCard
+                                    key={'url' + scr.id}
+                                    name={scr.name}
+                                    description={scr.description}
+                                    url={"/" + scr.id}
+                                    scr={scr}
+                                    onCardClick={this.addUrl}
+                                    role="link"
+                                />
+                            )}
+                            {local.map(scr =>
+                                <ScriptSearchCodeCard
+                                    key={'local' + scr.id}
+                                    name={scr.name}
+                                    description={lf("Local copy of {0} hosted on github.com", scr.githubId)}
+                                    url={"https://github.com/" + scr.githubId}
+                                    imageUrl={scr.icon}
+                                    scr={scr}
+                                    onCardClick={this.addLocal}
+                                    label={lf("Local")}
+                                    role="link"
+                                />
+                            )}
+                            {bundles.map(scr =>
+                                <ScriptSearchCodeCard
+                                    key={'bundled' + scr.name}
+                                    name={scr.name}
+                                    description={scr.description}
+                                    url={"/" + scr.installedVersion}
+                                    imageUrl={scr.icon}
+                                    scr={scr}
+                                    onCardClick={this.addBundle}
+                                    label={/\bbeta\b/i.test(scr.description) ? lf("Beta") : undefined}
+                                    role="link"
+                                />
+                            )}
+                            {ghdata.data.filter(repo => repo.status == pxt.github.GitRepoStatus.Approved).map(scr =>
+                                <ScriptSearchCodeCard
+                                    name={scr.name.replace(/^pxt-/, "")}
+                                    description={scr.description}
+                                    key={'gha' + scr.fullName}
+                                    scr={scr}
+                                    onCardClick={this.installGh}
+                                    url={'github:' + scr.fullName}
+                                    imageUrl={pxt.github.repoIconUrl(scr)}
+                                    label={/\bbeta\b/i.test(scr.description) ? lf("Beta") : undefined}
+                                    role="link"
+                                />
+                            )}
+                            {ghdata.data.filter(repo => repo.status != pxt.github.GitRepoStatus.Approved).map(scr =>
+                                <ScriptSearchCodeCard
+                                    name={scr.name.replace(/^pxt-/, "")}
+                                    description={(scr.description || "")}
+                                    extracontent={lf("User-provided extension, not endorsed by Microsoft.")}
+                                    key={'ghd' + scr.fullName}
+                                    scr={scr}
+                                    onCardClick={this.installGh}
+                                    imageUrl={pxt.github.repoIconUrl(scr)}
+                                    url={'github:' + scr.fullName}
+                                    role="link"
+                                />
+                            )}
+                        </div>
+                    }
                     {isEmpty() ?
                         <div className="ui items">
                             <div className="ui item">

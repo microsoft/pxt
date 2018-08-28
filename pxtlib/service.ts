@@ -161,6 +161,7 @@ namespace ts.pxtc {
         group?: string;
         whenUsed?: boolean;
         jres?: string;
+        useLoc?: string; // The qName of another API whose localization will be used if this API is not translated and if both block definitions are identical
         // On namepspace
         subcategories?: string[];
         groups?: string[];
@@ -202,6 +203,7 @@ namespace ts.pxtc {
         _source?: string;
         _def?: ParsedBlockDef;
         _expandedDef?: ParsedBlockDef;
+        _untranslatedBlock?: string; // The block definition before it was translated
         jsDoc?: string;
         paramHelp?: pxt.Map<string>;
         // foo.defl=12 -> paramDefl: { foo: "12" }
@@ -494,7 +496,7 @@ namespace ts.pxtc {
                 }
                 ex.attributes.block =
                     isGet ? `%${paramName} %property` :
-                    isSet ? `set %${paramName} %property to %${paramValue}` :
+                        isSet ? `set %${paramName} %property to %${paramValue}` :
                             `change %${paramName} %property by %${paramValue}`
                 updateBlockDef(ex.attributes)
                 blocks.push(ex)
@@ -628,7 +630,21 @@ namespace ts.pxtc {
                         fn.parameters.forEach(pi => pi.description = loc[`${fn.qName}|param|${pi.name}`] || pi.description);
                 }
                 const nsDoc = loc['{id:category}' + Util.capitalize(fn.qName)];
-                const locBlock = loc[`${fn.qName}|block`];
+                let locBlock = loc[`${fn.qName}|block`];
+
+                if (!locBlock && fn.attributes.useLoc) {
+                    const otherFn = apis.byQName[fn.attributes.useLoc];
+
+                    if (otherFn) {
+                        const otherTranslation = loc[`${otherFn.qName}|block`];
+                        const isSameBlockDef = fn.attributes.block === (otherFn.attributes._untranslatedBlock || otherFn.attributes.block);
+
+                        if (isSameBlockDef && !!otherTranslation) {
+                            locBlock = otherTranslation;
+                        }
+                    }
+                }
+
                 if (nsDoc) {
                     // Check for "friendly namespace"
                     if (fn.attributes.block) {
@@ -641,6 +657,7 @@ namespace ts.pxtc {
                     const ps = pxt.blocks.compileInfo(fn);
                     const oldBlock = fn.attributes.block;
                     fn.attributes.block = pxt.blocks.normalizeBlock(locBlock);
+                    fn.attributes._untranslatedBlock = oldBlock;
                     if (oldBlock != fn.attributes.block) {
                         const locps = pxt.blocks.compileInfo(fn);
                         if (JSON.stringify(ps) != JSON.stringify(locps)) {

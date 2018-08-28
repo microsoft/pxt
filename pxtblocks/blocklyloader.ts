@@ -1553,6 +1553,9 @@ namespace pxt.blocks {
                 that._selectedItem.addSelect();
             }
         };
+
+        // Get rid of bumping behavior
+        (Blockly as any).Constants.Logic.LOGIC_COMPARE_ONCHANGE_MIXIN.onchange = function () {}
     }
 
     function initOnStart() {

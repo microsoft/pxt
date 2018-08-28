@@ -61,6 +61,26 @@ import Util = pxt.Util;
 pxsim.util.injectPolyphils();
 
 let theEditor: ProjectView;
+let pendingEditorRequests: ((p: ProjectView) => void)[];
+
+function getEditorAsync() {
+    if (theEditor) return Promise.resolve(theEditor);
+    if (!pendingEditorRequests) pendingEditorRequests = [];
+    return new Promise<ProjectView>(resolve => {
+        pendingEditorRequests.push(resolve);
+    });
+}
+
+function setEditor(editor: ProjectView) {
+    theEditor = editor;
+    if (pendingEditorRequests) {
+        while (pendingEditorRequests.length) {
+            const resolve = pendingEditorRequests.shift();
+            resolve(editor);
+        }
+        pendingEditorRequests = undefined;
+    }
+}
 
 export class ProjectView
     extends data.Component<IAppProps, IAppState>
@@ -806,8 +826,8 @@ export class ProjectView
                                     remove(confl.pkg1), // show later first in dialog
                                     remove(confl.pkg0)
                                 ],
-                                header: lf("Packages cannot be used together"),
-                                body: lf("Packages '{0}' and '{1}' cannot be used together, because they use incompatible settings ({2}).",
+                                header: lf("Extensions cannot be used together"),
+                                body: lf("Extensions '{0}' and '{1}' cannot be used together, because they use incompatible settings ({2}).",
                                     confl.pkg1.id, confl.pkg0.id, confl.settingName)
                             })
                         }
@@ -1527,6 +1547,16 @@ export class ProjectView
         this.restartSimulator();
     }
 
+    setTrace(enabled: boolean, intervalSpeed?: number) {
+        if (this.state.tracing !== enabled) {
+            this.toggleTrace(intervalSpeed);
+        }
+        else if (this.state.tracing) {
+            simulator.setTraceInterval(intervalSpeed != undefined ? intervalSpeed : simulator.SLOW_TRACE_INTERVAL);
+            this.restartSimulator();
+        }
+    }
+
     startSimulator(debug?: boolean) {
         pxt.tickEvent('simulator.start')
         this.saveFileAsync()
@@ -2181,7 +2211,7 @@ export class ProjectView
     ///////////////////////////////////////////////////////////
 
     renderCore() {
-        theEditor = this;
+        setEditor(this);
 
         //  ${targetTheme.accentColor ? "inverted accent " : ''}
         const targetTheme = pxt.appTarget.appTheme;
@@ -2583,7 +2613,7 @@ async function importGithubProject(id: string) {
         let text = await workspace.getTextAsync(hd.id)
         if ((text[pxt.CONFIG_NAME] || "{}").length < 20) {
             let ok = await core.confirmAsync({
-                header: lf("Initialize MakeCode package?"),
+                header: lf("Initialize MakeCode extension?"),
                 body: lf("We didn't find a valid pxt.json file in the repository. Would you like to create it and supporting files?"),
                 agreeLbl: lf("Initialize!")
             })
@@ -2747,7 +2777,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const isSandbox = pxt.shell.isSandboxMode() || pxt.shell.isReadOnly();
     const isController = pxt.shell.isControllerMode();
     if (ws) workspace.setupWorkspace(ws[1]);
-    else if (pxt.appTarget.appTheme.allowParentController || isController) workspace.setupWorkspace("iframe");
+    else if ((pxt.appTarget.appTheme.allowParentController || isController) && pxt.BrowserUtils.isIFrame()) workspace.setupWorkspace("iframe");
     else if (isSandbox) workspace.setupWorkspace("mem");
     else if (pxt.winrt.isWinRT()) workspace.setupWorkspace("uwp");
     else if (Cloud.isLocalHost() || electron.isPxtElectron) workspace.setupWorkspace("fs");
@@ -2801,7 +2831,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 || pxt.appTarget.appTheme.allowPackageExtensions
                 || pxt.appTarget.appTheme.allowSimulatorTelemetry
                 || pxt.shell.isControllerMode())
-                pxt.editor.bindEditorMessages(this);
+                pxt.editor.bindEditorMessages(getEditorAsync);
 
             return workspace.initAsync()
         })

@@ -12,4 +12,4 @@ Math.random()
 
 ## See Also
 
-[``||pick random||``](/reference/math/random-range)
+[``||math:pick random||``](/reference/math/random-range)
