@@ -1581,8 +1581,7 @@ ${lbl}: .short 0xffff
             let eltT = arrayElementType(typeOf(node))
             let coll = ir.shared(ir.rtcall("Array_::mk", []))
             for (let elt of node.elements) {
-                let e = ir.shared(emitExpr(elt))
-                proc.emitExpr(ir.rtcallMask("Array_::push", 3, ir.CallingConvention.Plain, [coll, e]))
+                proc.emitExpr(rtcallMaskDirect("Array_::push", [coll, emitExpr(elt)]))
             }
             return coll
         }
@@ -1595,12 +1594,13 @@ ${lbl}: .short 0xffff
                 }
                 const keyName = p.name.getText();
                 const args = [
-                    ir.op(EK.Incr, [expr]),
+                    expr,
                     ir.numlit(getIfaceMemberId(keyName)),
                     emitExpr(p.initializer)
                 ];
                 if (!opts.target.isNative)
                     args.push(emitStringLiteral(keyName));
+                // internal decr
                 proc.emitExpr(ir.rtcall("pxtrt::mapSetRef", args))
             })
             return expr
@@ -2243,7 +2243,7 @@ ${lbl}: .short 0xffff
                         // we drop 'obj' variable
                         return ir.rtcall(ctorAttrs.shim, compiled)
                     }
-                    compiled.unshift(ir.op(EK.Incr, [obj]))
+                    compiled.unshift(obj)
                     proc.emitExpr(mkProcCall(ctor, compiled))
                     return obj
                 } else {
@@ -2440,7 +2440,7 @@ ${lbl}: .short 0xffff
                         userError(9223, lf("cannot find captured value: {0}", checker.symbolToString(l.symbol)))
                     let v = loc.loadCore()
                     v = ir.op(EK.Incr, [v])
-                    proc.emitExpr(ir.rtcall("pxtrt::stclo", [lit, ir.numlit(i), v]))
+                    proc.emitExpr(ir.rtcall("pxtrt::stclo", [lit, ir.numlit(i), v], 1))
                 })
                 if (node.kind == SK.FunctionDeclaration) {
                     info.location = proc.mkLocal(node, getVarInfo(node))
@@ -2504,7 +2504,7 @@ ${lbl}: .short 0xffff
                 if (l.isByRefLocal()) {
                     // TODO add C++ support function to do this
                     let tmp = ir.shared(ir.rtcall("pxtrt::mklocRef", []))
-                    proc.emitExpr(ir.rtcall("pxtrt::stlocRef", [tmp, l.loadCore()]))
+                    proc.emitExpr(ir.rtcall("pxtrt::stlocRef", [tmp, l.loadCore()], 1))
                     proc.emitExpr(l.storeDirect(tmp))
                 }
             })
@@ -2525,8 +2525,7 @@ ${lbl}: .short 0xffff
             let lbl = proc.mkLabel("final")
             let hasRet = funcHasReturn(proc.action)
             if (hasRet) {
-                let v = ir.shared(ir.op(EK.JmpValue, []))
-                proc.emitExpr(v) // make sure we save it
+                let v = captureJmpValue()
                 proc.emitClrs(lbl, v);
                 proc.emitJmp(lbl, v, ir.JmpMode.Always)
             } else {
@@ -2545,6 +2544,13 @@ ${lbl}: .short 0xffff
             }
 
             return lit
+        }
+
+        function captureJmpValue() {
+            let v = ir.shared(ir.op(EK.JmpValue, []))
+            // make sure we save it, but also don't leak ref-count
+            proc.emitExpr(ir.op(EK.Decr, [v]))
+            return v
         }
 
         function hasShimDummy(node: Declaration) {
@@ -2671,8 +2677,7 @@ ${lbl}: .short 0xffff
             let result = ir.shared(emitIntOp(meth, prev, oneExpr))
             emitStore(trg, irToNode(result, true))
             cleanup()
-            let r = isPost ? prev : result
-            return ir.op(EK.Incr, [r])
+            return isPost ? prev : result
         }
 
         function emitPostfixUnaryExpression(node: PostfixUnaryExpression): ir.Expr {
@@ -2962,12 +2967,27 @@ ${lbl}: .short 0xffff
             proc.emitLbl(lbl)
         }
 
+        /*
+            do whatever
+            result in r0
+            push r0
+            call toBool
+            if COND jmp next
+            pop r0
+            jmp end
+            next:
+            pop r0
+            decr
+            do whatever else
+            end:            
+        */
+
         function emitLazyBinaryExpression(node: BinaryExpression) {
             let left = emitExpr(node.left)
             let isString = isStringType(typeOf(node.left));
             let lbl = proc.mkLabel("lazy")
 
-            left = ir.shared(left)
+            left = ir.sharedNoIncr(left)
             let cond = ir.rtcall("numops::toBool", [left])
             let lblSkip = proc.mkLabel("lazySkip")
             let mode: ir.JmpMode =
@@ -2978,18 +2998,11 @@ ${lbl}: .short 0xffff
             proc.emitJmp(lblSkip, cond, mode)
             proc.emitJmp(lbl, left, ir.JmpMode.Always, left)
             proc.emitLbl(lblSkip)
-            if (isRefCountedExpr(node.left))
-                proc.emitExpr(ir.op(EK.Decr, [left]))
-            else
-                // make sure we have reference and the stack is cleared
-                proc.emitExpr(ir.rtcall("langsupp::ignore", [left]))
-
+            proc.emitExpr(ir.op(EK.Decr, [left]))
 
             proc.emitJmp(lbl, emitExpr(node.right), ir.JmpMode.Always)
             proc.emitLbl(lbl)
-            let r = ir.shared(ir.op(EK.JmpValue, []))
-            proc.emitExpr(r)
-            return r
+            return captureJmpValue()
         }
 
         function stripEquals(k: SyntaxKind) {
@@ -3135,7 +3148,7 @@ ${lbl}: .short 0xffff
                     emitAsString(node.right)]))
                 emitStore(node.left, irToNode(post))
                 cleanup();
-                return ir.op(EK.Incr, [post])
+                return post
             }
 
 
@@ -3214,9 +3227,7 @@ ${lbl}: .short 0xffff
             proc.emitJmp(fin, emitExpr(node.whenFalse), ir.JmpMode.Always)
             proc.emitLbl(fin)
 
-            let v = ir.shared(ir.op(EK.JmpValue, []));
-            proc.emitExpr(v); // make sure we save it
-            return v;
+            return captureJmpValue()
         }
 
         function emitSpreadElementExpression(node: SpreadElement) { }
@@ -3510,19 +3521,10 @@ ${lbl}: .short 0xffff
         function emitSwitchStatement(node: SwitchStatement) {
             emitBrk(node)
 
-            let switchType = typeOf(node.expression)
-            let isNumber = !!(switchType.flags & TypeFlags.NumberLike)
-
             let l = getLabels(node)
             let defaultLabel: ir.Stmt
-            let quickCmpMode = isNumber
 
-            let expr = ir.shared(emitExpr(node.expression))
-            let decrSuff = isRefCountedExpr(node.expression) ? "Decr" : ""
-            let plainExpr = expr
-            if (isNumber) {
-                emitInJmpValue(expr)
-            }
+            let expr = ir.sharedNoIncr(emitExpr(node.expression))
 
             let lbls = node.caseBlock.clauses.map(cl => {
                 let lbl = proc.mkLabel("switch")
@@ -3532,10 +3534,10 @@ ${lbl}: .short 0xffff
                     let mask = isRefCountedExpr(cc.expression) ? 1 : 0
                     // we assume the value we're switching over will stay alive
                     // so, the mask only applies to the case expression if needed
+                    // switch_eq() will decr(expr) if result is true
                     let cmpCall = ir.rtcallMask(mapIntOpName("pxt::switch_eq"),
                         mask, ir.CallingConvention.Plain, [cmpExpr, expr])
-                    quickCmpMode = false
-                    proc.emitJmp(lbl, cmpCall, ir.JmpMode.IfNotZero, plainExpr)
+                    proc.emitJmp(lbl, cmpCall, ir.JmpMode.IfNotZero, expr)
                 } else if (cl.kind == SK.DefaultClause) {
                     // Save default label for emit at the end of the
                     // tests section. Default label doesn't have to come at the
@@ -3548,12 +3550,14 @@ ${lbl}: .short 0xffff
                 return lbl
             })
 
+            // this is default case only - none of the switch_eq() succeded,
+            // so there is an outstanding reference to expr
             proc.emitExpr(ir.op(EK.Decr, [expr]))
 
             if (defaultLabel)
-                proc.emitJmp(defaultLabel, plainExpr)
+                proc.emitJmp(defaultLabel, expr)
             else
-                proc.emitJmp(l.brk, plainExpr);
+                proc.emitJmp(l.brk, expr);
 
             node.caseBlock.clauses.forEach((cl, i) => {
                 proc.emitLbl(lbls[i])
@@ -3711,8 +3715,6 @@ ${lbl}: .short 0xffff
         function emitExpr(node0: Node, useCache: boolean = true): ir.Expr {
             let node = node0 as NodeWithCache
             if (useCache && node.cachedIR) {
-                if (isRefCountedExpr(node0 as Expression))
-                    return ir.op(EK.Incr, [node.cachedIR])
                 return node.cachedIR
             }
             let res = catchErrors(node, emitExprInner) || emitLit(undefined)

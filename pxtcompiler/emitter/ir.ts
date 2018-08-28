@@ -1,3 +1,7 @@
+// TODO handle mask in rtcall emit
+// TODO add incr() on shared ref
+// TODO optimize f(incr(shared)); decr(shared)
+
 namespace ts.pxtc.ir {
     let U = pxtc.Util;
     let assert = U.assert;
@@ -37,6 +41,7 @@ namespace ts.pxtc.ir {
         public totalUses: number; // how many references this expression has; only for the only child of Shared
         public currUses: number;
         public callingConvention = CallingConvention.Plain;
+        public mask: number;
 
         constructor(
             public exprKind: EK,
@@ -143,6 +148,7 @@ namespace ts.pxtc.ir {
         public breakpointInfo: Breakpoint;
         public stmtNo: number;
         public findIdx: number;
+        // after this jump, the expression will no longer be used and can be cleared from the stack
         public terminateExpr: Expr;
 
         constructor(
@@ -329,18 +335,12 @@ namespace ts.pxtc.ir {
                 return rtcall("pxtrt::stlocRef", [this.loadCore(), src])
             } else {
                 if (target.isNative && this.bitSize != BitSize.None) {
-                    src = shared(src)
                     let cnv = this.bitSize == BitSize.UInt32 ? "pxt::toUInt" : "pxt::toInt"
-                    let iv = shared(rtcall(cnv, [src]))
-                    return op(EK.Sequence, [
-                        iv,
-                        op(EK.Decr, [src]),
-                        this.storeDirect(iv)
-                    ])
+                    return this.storeDirect(rtcall(cnv, [src], 1))
                 }
 
                 if (this.refCountingHandledHere()) {
-                    let tmp = shared(src)
+                    let tmp = sharedNoIncr(src)
                     return op(EK.Sequence, [
                         tmp,
                         op(EK.Decr, [this.loadCore()]),
@@ -697,6 +697,12 @@ namespace ts.pxtc.ir {
         return op(EK.NumberLiteral, null, v)
     }
 
+    export function sharedNoIncr(expr: Expr) {
+        let r = shared(expr)
+        r.data = "noincr"
+        return r
+    }
+
     export function shared(expr: Expr) {
         switch (expr.exprKind) {
             case EK.NumberLiteral:
@@ -715,33 +721,20 @@ namespace ts.pxtc.ir {
         return r
     }
 
-    export function rtcall(name: string, args: Expr[]) {
-        return op(EK.RuntimeCall, args, name)
+    export function rtcall(name: string, args: Expr[], mask = 0) {
+        let r = op(EK.RuntimeCall, args, name)
+        r.mask = mask
+        return r
     }
 
     export function rtcallMask(name: string, mask: number, callingConv: CallingConvention, args: Expr[]) {
-        let decrs: ir.Expr[] = []
         if (U.startsWith(name, "@nomask@")) {
             name = name.slice(8)
             mask = 0
         }
 
-        args = args.map((a, i) => {
-            if (mask & (1 << i)) {
-                a = shared(a)
-                decrs.push(op(EK.Decr, [a]))
-                return a;
-            } else return a;
-        })
-        let r = op(EK.RuntimeCall, args, name)
+        let r = rtcall(name, args, mask)
         r.callingConvention = callingConv
-
-        if (decrs.length > 0) {
-            r = shared(r)
-            decrs.unshift(r)
-            decrs.push(r)
-            r = op(EK.Sequence, decrs)
-        }
 
         return r
     }

@@ -304,6 +304,7 @@ ${baseLabel}:
                 numEntries++
             }
             assert(numEntries > 0)
+            assert(numEntries == 1)
             this.write(`@dummystack ${numEntries}`)
             this.write(this.t.pop_locals(numEntries))
 
@@ -481,12 +482,6 @@ ${baseLabel}:
                 this.exprStack.unshift(arg)
                 this.write(this.t.push_local("r0") + "; tmpstore @" + this.exprStack.length)
             }
-        }
-
-        private emitSharedTerminate(e: ir.Expr) {
-            this.emitExpr(e)
-            let arg = e.data as ir.Expr
-            // ??? missing ???
         }
 
         private emitRtCall(topExpr: ir.Expr) {
