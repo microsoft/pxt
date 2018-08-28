@@ -60,38 +60,38 @@ class BlocklyCompilerTestHost implements pxt.Host {
     static createTestHostAsync() {
         if (!BlocklyCompilerTestHost.cachedFiles["pxt-core.d.ts"]) {
             return ts.pxtc.Util.httpGetTextAsync(WEB_PREFIX + "/common/pxt-core.d.ts")
-            .then(res => {
-                BlocklyCompilerTestHost.cachedFiles["pxt-core.d.ts"] = res;
-                return ts.pxtc.Util.httpGetTextAsync(WEB_PREFIX + "/common/pxt-helpers.ts")
-            })
-            .then(res => {
-                BlocklyCompilerTestHost.cachedFiles["pxt-helpers.ts"] = res;
-                return pxt.Util.httpGetTextAsync(WEB_PREFIX + '/test-library/pxt.json')
-            })
-            .then(res => {
-                BlocklyCompilerTestHost.cachedFiles[`test-library/pxt.json`] = res;
-                let json: pxt.PackageConfig;
+                .then(res => {
+                    BlocklyCompilerTestHost.cachedFiles["pxt-core.d.ts"] = res;
+                    return ts.pxtc.Util.httpGetTextAsync(WEB_PREFIX + "/common/pxt-helpers.ts")
+                })
+                .then(res => {
+                    BlocklyCompilerTestHost.cachedFiles["pxt-helpers.ts"] = res;
+                    return pxt.Util.httpGetTextAsync(WEB_PREFIX + '/test-library/pxt.json')
+                })
+                .then(res => {
+                    BlocklyCompilerTestHost.cachedFiles[`test-library/pxt.json`] = res;
+                    let json: pxt.PackageConfig;
 
-                try {
-                    json = JSON.parse(res);
-                }
-                catch (e) { }
+                    try {
+                        json = JSON.parse(res);
+                    }
+                    catch (e) { }
 
-                if (json && json.files && json.files.length) {
-                    return Promise.all(json.files.map(f => {
-                        return pxt.Util.httpGetTextAsync(WEB_PREFIX + '/test-library/' + f)
-                            .then(txt => {
-                                BlocklyCompilerTestHost.cachedFiles[`test-library/${f}`] = txt;
-                            });
-                    }))
-                    .then(() => {});
-                }
+                    if (json && json.files && json.files.length) {
+                        return Promise.all(json.files.map(f => {
+                            return pxt.Util.httpGetTextAsync(WEB_PREFIX + '/test-library/' + f)
+                                .then(txt => {
+                                    BlocklyCompilerTestHost.cachedFiles[`test-library/${f}`] = txt;
+                                });
+                        }))
+                            .then(() => { });
+                    }
 
-                return Promise.resolve()
-            })
-            .then(() => {
-                return new BlocklyCompilerTestHost();
-            })
+                    return Promise.resolve()
+                })
+                .then(() => {
+                    return new BlocklyCompilerTestHost();
+                })
         }
 
         return Promise.resolve(new BlocklyCompilerTestHost())
@@ -198,7 +198,7 @@ function blockTestAsync(name: string) {
     let blocksFile: string;
     let tsFile: string;
     return pxt.Util.httpGetTextAsync(WEB_PREFIX + '/tests/' + name + '.blocks')
-        .then(res =>  {
+        .then(res => {
             blocksFile = res;
             return pxt.Util.httpGetTextAsync(WEB_PREFIX + '/baselines/' + name + '.ts')
         }, err => fail(`Unable to get ${name}.blocks: ` + JSON.stringify(err)))
@@ -228,8 +228,8 @@ function blockTestAsync(name: string) {
         }, err => fail('Compiling blocks failed'));
 }
 
-describe("blockly compiler", function() {
-    this.timeout(3000);
+describe("blockly compiler", function () {
+    this.timeout(5000);
 
     describe("compiling lists", () => {
         it("should handle unambiguously typed list generics", (done: () => void) => {
