@@ -28,7 +28,6 @@ namespace ts.pxtc {
 
     // snippets for ARM Thumb assembly
     export class ThumbSnippets extends AssemblerSnippets {
-        hasCommonalize() { return !!target.commonalize }
         stackAligned() {
             return target.stackAlign && target.stackAlign > 1
         }

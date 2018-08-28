@@ -586,7 +586,7 @@ ${info.id}_VT:
             addPtr(m.label())
         }
 
-        // TODO remove refmask once the runtime is patched
+        // TODO remove refmask once the runtimes are patched
         let refmask = info.allfields.map(v => "1")
         while (refmask.length < 2 || refmask.length % 2 != 0)
             refmask.push("0")

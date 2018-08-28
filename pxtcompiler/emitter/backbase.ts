@@ -48,7 +48,6 @@ namespace ts.pxtc {
     // - for calls to user functions, all arguments passed on stack
 
     export abstract class AssemblerSnippets {
-        hasCommonalize(): boolean { return false }
         nop() { return "TBD(nop)" }
         reg_gets_imm(reg: string, imm: number) { return "TBD(reg_gets_imm)" }
         // Registers are stored on the stack in numerical order 
@@ -680,7 +679,7 @@ ${baseLabel}:
             let parms = this.proc.args.map(a => a.def)
             this.write(this.t.proc_setup(0, true))
 
-            let pushR7 = this.t.hasCommonalize() || !!target.stackAlign
+            let pushR7 = !!target.stackAlign
 
             if (pushR7)
                 this.write(this.t.push_fixed(["r5", "r6", "r7"]))
