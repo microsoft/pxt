@@ -43,6 +43,13 @@ export function gitsha(data: string) {
     return (sha1("blob " + U.toUTF8(data).length + "\u0000" + data) + "")
 }
 
+export function copyProjectToLegacyEditor(header: Header, majorVersion: number): Promise<Header> {
+    if (impl != cloudworkspace.provider) {
+        return Promise.reject("Copy operation only works in browser workspace");
+    }
+    return cloudworkspace.copyProjectToLegacyEditor(header, majorVersion);
+}
+
 export function setupWorkspace(id: string) {
     U.assert(!impl, "workspace set twice");
     pxt.debug(`workspace: ${id}`);
@@ -193,10 +200,10 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
             h.pubCurrent = false
             h.blobCurrent = false
             h.modificationTime = U.nowSeconds();
-            h.targetVersion = pxt.appTarget.versions.target;
+            h.targetVersion = h.targetVersion || pxt.appTarget.versions.target;
         }
         h.saveId = null
-        // update version on save    
+        // update version on save
     }
 
     // perma-delete

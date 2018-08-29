@@ -171,26 +171,54 @@ export class ProjectView
     }
 
     saveSettings() {
-        let sett = this.settings
-
         if (this.reload) {
             return;
         }
 
         let f = this.editorFile
         if (f && f.epkg.getTopHeader() && this.editor.hasHistory()) {
-            let n: FileHistoryEntry = {
-                id: f.epkg.getTopHeader().id,
-                name: f.getName(),
-                pos: this.editor.getViewState()
-            }
-            sett.fileHistory = sett.fileHistory.filter(e => e.id != n.id || e.name != n.name)
-            while (sett.fileHistory.length > 100)
-                sett.fileHistory.pop()
-            sett.fileHistory.unshift(n)
+            this.pushFileHistory(f.epkg.getTopHeader().id, f.getName(), this.editor.getViewState());
         }
 
         pxt.storage.setLocal("editorSettings", JSON.stringify(this.settings))
+    }
+
+    private pushFileHistory(id: string, name: string, pos: any) {
+        const sett = this.settings
+        let n: FileHistoryEntry = {
+            id: id,
+            name: name,
+            pos: pos
+        }
+        sett.fileHistory = sett.fileHistory.filter(e => e.id != n.id || e.name != n.name)
+        while (sett.fileHistory.length > 100)
+            sett.fileHistory.pop()
+        sett.fileHistory.unshift(n)
+    }
+
+    openProjectInLegacyEditor(majorVersion: number) {
+        if (!this.editorFile || !this.editorFile.epkg || !this.editorFile.epkg.getTopHeader()) return Promise.resolve();
+        const header = this.editorFile.epkg.getTopHeader();
+        return workspace.copyProjectToLegacyEditor(header, majorVersion)
+            .then(newHeader => {
+                // Push an entry to the history so that the project loads when we change the URL. The editor
+                // will ignore non-existent entries so this shouldn't affect any versions except the one
+                // we choose
+                this.pushFileHistory(newHeader.id, this.editorFile.getName(), this.editor.getViewState());
+                pxt.storage.setLocal("editorSettings", JSON.stringify(this.settings))
+
+                const appTheme = pxt.appTarget.appTheme;
+                if (appTheme && appTheme.editorVersionPaths && appTheme.editorVersionPaths[majorVersion]) {
+                    const newPath = appTheme.editorVersionPaths[majorVersion];
+                    window.location.href = pxt.Util.pathJoin(pxt.appTarget.name, newPath + "#editor");
+                }
+                else {
+                    window.location.href = pxt.Util.pathJoin(pxt.appTarget.name, "v" + header.targetVersion + "#editor");
+                }
+            })
+            .catch(e => {
+                core.warningNotification(lf("Importing to older editor version only supported in web browsers"));
+            });
     }
 
     componentDidUpdate() {
@@ -371,10 +399,22 @@ export class ProjectView
             const badPackages = compiler.getPackagesWithErrors();
             if (badPackages.length) {
                 this.setState({ suppressPackageWarning: true });
+
+                const h = this.state.header;
+                const currentVersion = pxt.semver.parse(pxt.appTarget.versions.target);
+                const headerVersion = pxt.semver.parse(h.targetVersion);
+
+                let openHandler: () => void;
+                if (currentVersion.major !== headerVersion.major) {
+                    openHandler = () => {
+                        this.openProjectInLegacyEditor(headerVersion.major);
+                    };
+                }
+
                 dialogs.showPackageErrorDialogAsync(badPackages, id => {
                     return pkg.mainEditorPkg().removeDepAsync(id)
                     .then(() => this.reloadHeaderAsync())
-                });
+                }, openHandler);
                 return true;
             }
         }

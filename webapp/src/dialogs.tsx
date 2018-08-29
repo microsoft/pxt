@@ -195,7 +195,7 @@ function renderVersionLink(name: string, version: string, url: string) {
     </p>;
 }
 
-export function showPackageErrorDialogAsync(badPackages: EditorPackage[], removePackage: (id: string) => Promise<void>) {
+export function showPackageErrorDialogAsync(badPackages: EditorPackage[], removePackage: (id: string) => Promise<void>, openLegacyEditor?: () => void) {
     core.confirmAsync({
         header: lf("Extension Errors"),
         hideCancel: true,
@@ -208,9 +208,7 @@ export function showPackageErrorDialogAsync(badPackages: EditorPackage[], remove
                     badPackages.map(epkg => <PackageErrorListItem package={epkg} key={epkg.getPkgId()} removePackage={curryRemove(epkg.getPkgId())}></PackageErrorListItem>)
                 }
             </div>
-            <div className="ui message">
-                <p>{pxt.Util.lf("If this project was made in an older version of the editor, it may not be compatible with the latest version.")} <a>{pxt.Util.lf("Learn More")}</a></p>
-            </div>
+            { openLegacyEditor ? renderEditorVersionMessage(openLegacyEditor) : undefined }
         </div>
     }).done();
 
@@ -220,6 +218,12 @@ export function showPackageErrorDialogAsync(badPackages: EditorPackage[], remove
             return removePackage(id)
         }
     }
+}
+
+export function renderEditorVersionMessage(onClick: () => void) {
+    return <div className="ui message">
+        <p>{pxt.Util.lf("This project was made in an older version of the editor and may not be compatible with the latest version. To open the project in the old editor,")} <a onClick={onClick}>{pxt.Util.lf("Click here")}.</a></p>
+    </div>
 }
 
 interface PackageErrorListItemProps {
