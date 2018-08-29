@@ -487,10 +487,13 @@ ${baseLabel}:
 
         private clearArgs(popDecr: boolean[]) {
             if (popDecr.length) {
-                let asm = this.t.pop_clean(popDecr)
-                this.emitHelper(asm)
-                this.write(`@dummystack ${-popDecr.length}`)
-
+                if (popDecr.every(v => !v)) {
+                    this.write(this.t.pop_locals(popDecr.length))
+                } else {
+                    let asm = this.t.pop_clean(popDecr)
+                    this.emitHelper(asm)
+                    this.write(`@dummystack ${-popDecr.length}`)
+                }
                 for (let _ of popDecr) {
                     let v = this.exprStack.shift()
                     U.assert(v.currUses == 0 && v.totalUses == 1)
