@@ -40,6 +40,9 @@ namespace ts.pxtc {
             else return "pop {pc}"
         }
         nop() { return "nop" }
+        mov(trg: string, dst: string) {
+            return `movs ${trg}, ${dst}`
+        }
         reg_gets_imm(reg: string, imm: number) {
             return `movs ${reg}, #${imm}`
         }
@@ -157,13 +160,10 @@ ${lbl}:`
             return `
     @stackmark args
     ${this.pushLR()}
-    mov r5, r0
 `;
         }
         helper_epilogue() {
             return `
-    bl pxtrt::getGlobalsPtr
-    mov r6, r0
     ${this.popPC()}
     @stackempty args
 `
@@ -186,26 +186,26 @@ ${lbl}:`
 
         pop_clean(pops: boolean[]) {
             let r = `
-    @scope _pxt_popclean
-    mov r3, r0
+    mov r7, r0
     @dummystack ${pops.length}
 `
             pops.forEach((p, i) => {
                 // TODO optimize sequences of pops without decr into sub on sp
-                r += `    pop {r0}\n`
+                if (!p) r += `    add sp, #4\n`
                 if (p) r += `
+    pop {r0}
     lsls r1, r0, #30
     bne .tag${i}
     cmp r0, #0
     beq .tag${i}
-    push {lr, r3}
+    ${this.pushLR()}
     bl pxt::decr
-    pop {pc, r3}
+    ${this.popPC()}
 .tag${i}:
 `
             })
             r += `
-    mov r0, r3
+    mov r0, r7
     bx lr
 `
             return r

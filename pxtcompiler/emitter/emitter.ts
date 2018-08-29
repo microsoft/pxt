@@ -2905,6 +2905,7 @@ ${lbl}: .short 0xffff
             if (append) args = args.concat(append)
 
             let mask = getMask(args)
+            let convInfos: ir.ConvInfo[] = []
 
             let args2 = args.map((a, i) => {
                 let r = emitExpr(a)
@@ -2927,25 +2928,33 @@ ${lbl}: .short 0xffff
                     if (r.exprKind == EK.NumberLiteral && typeof r.data == "number") {
                         return ir.numlit(r.data >> 1)
                     }
-                    mask &= ~(1 << i)
-                    return ir.rtcallMask("pxt::toInt", getMask([a]),
-                        ir.CallingConvention.Plain, [r])
+                    // mask &= ~(1 << i)
+                    convInfos.push({
+                        argIdx: i,
+                        method: "pxt::toInt"
+                    })
+
+                    return r
                 } else if (f == "B") {
                     mask &= ~(1 << i)
                     return emitCondition(a, r)
                 } else if (f == "F" || f == "D") {
                     if (f == "D")
                         U.oops("double arguments not yet supported") // take two words
+                    // TODO disable F on devices with FPU and hard ABI; or maybe altogether
+                    // or else, think about using the VFP registers
                     if (!isNumber)
                         U.userError("argsFmt=...F/D... but argument not a number in " + name)
-                    mask &= ~(1 << i)
-                    return ir.rtcallMask(f == "D" ? "pxt::toDouble" : "pxt::toFloat", getMask([a]),
-                        ir.CallingConvention.Plain, [r])
+                    // mask &= ~(1 << i)
+                    convInfos.push({ argIdx: i, method: f == "D" ? "pxt::toDouble" : "pxt::toFloat" })
+                    return r
                 } else {
                     throw U.oops("invalid format specifier: " + f)
                 }
             })
             let r = ir.rtcallMask(name, mask, attrs.callingConvention, args2)
+            if (!r.mask) r.mask = { refMask: 0 }
+            r.mask.conversions = convInfos
             if (opts.target.isNative) {
                 if (fmt.charAt(0) == "I")
                     r = fromInt(r)
@@ -3708,6 +3717,7 @@ ${lbl}: .short 0xffff
                 // if (!e.ksEmitterUserError)
                 let code = e.ksErrorCode || 9200
                 error(node, code, e.message)
+                pxt.debug(e.stack)
                 return null
             }
         }

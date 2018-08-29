@@ -125,7 +125,7 @@ ${lbl}: .short 0xffff, ${pxt.REF_TAG_BUFFER}, ${data.length >> 1}, 0x0000
 
     export class ProctoAssembler {
 
-        private t: AssemblerSnippets;
+        private t: ThumbSnippets; // for better "Go To Definition"
         private bin: Binary;
         private resText = ""
         private exprStack: ir.Expr[] = []
@@ -134,7 +134,7 @@ ${lbl}: .short 0xffff, ${pxt.REF_TAG_BUFFER}, ${data.length >> 1}, 0x0000
         private baseStackSize = 0; // real stack size is this + exprStack.length
 
         constructor(t: AssemblerSnippets, bin: Binary, proc: ir.Procedure) {
-            this.t = t;
+            this.t = t as any; // TODO change back
             this.bin = bin;
             this.proc = proc;
             this.work();
@@ -491,7 +491,7 @@ ${baseLabel}:
                     this.write(this.t.pop_locals(popDecr.length))
                 } else {
                     let asm = this.t.pop_clean(popDecr)
-                    this.emitHelper(asm)
+                    this.emitHelper(asm, "clr" + popDecr.length)
                     this.write(`@dummystack ${-popDecr.length}`)
                 }
                 for (let _ of popDecr) {
@@ -504,23 +504,72 @@ ${baseLabel}:
         }
 
         private emitRtCall(topExpr: ir.Expr) {
-            let popDecr: boolean[] = []
+            let maskInfo = topExpr.mask || { refMask: 0 }
+            let convs = maskInfo.conversions || []
+            let allArgs = topExpr.args.map((a, i) => ({
+                idx: i,
+                expr: a,
+                isSimple: a.isLiteral(),
+                isRef: (maskInfo.refMask & (1 << i)) != 0,
+                conv: convs.find(c => c.argIdx == i)
+            }))
 
-            topExpr.args.forEach((a, i) => {
-                U.assert(i <= 3)
-                if (a.isLiteral())
-                    return
-                this.pushArg(a)
-                popDecr.push((topExpr.mask & (1 << i)) != 0)
-            })
+            U.assert(allArgs.length <= 4)
+            U.assert(allArgs.filter(a => a.isSimple && a.conv).length == 0)
 
-            topExpr.args.forEach((a, i) => {
-                U.assert(i <= 3)
-                if (a.isLiteral())
-                    this.emitExprInto(a, "r" + i)
-                else
-                    this.loadFromExprStack("r" + i, a)
-            })
+            let complexArgs = allArgs.filter(a => !a.isSimple)
+            let popDecr = complexArgs.map(a => a.isRef)
+            let c0 = complexArgs[0]
+
+            if (complexArgs.length == 1 && !c0.conv && !c0.isRef) {                
+                this.emitExpr(c0.expr)
+                if (c0.idx != 0)
+                    this.write(this.t.mov("r" + c0.idx, "r0"))
+                popDecr = []
+            } else {
+                this.alignExprStack(complexArgs.length)
+
+                for (let a of complexArgs)
+                    this.pushArg(a.expr)
+
+                let convArgs = complexArgs.filter(a => !!a.conv)
+                if (convArgs.length) {
+                    let conv = ""
+                    let off = 0
+                    let prevWrite = this.write
+                    this.write = s => conv += asmline(s)
+                    conv += this.t.helper_prologue()
+                    if (this.t.stackAligned())
+                        off += 2
+                    else
+                        off += 1
+                    for (let a of convArgs) {
+                        this.write(this.loadFromExprStack("r0", a.expr, off))
+                        this.alignedCall(a.conv.method, "", off)
+                        this.write(this.t.push_fixed(["r0"]))
+                        off++
+                    }
+                    for (let a of U.reversed(convArgs)) {
+                        off--
+                        this.write(this.t.pop_fixed(["r" + a.idx]))
+                    }
+                    for (let a of complexArgs) {
+                        if (!a.conv)
+                            conv += this.loadFromExprStack("r" + a.idx, a.expr)
+                    }
+                    conv += this.t.helper_epilogue()
+                    this.write = prevWrite
+                    this.emitHelper(conv, "conv")
+                } else {
+                    // not really worth a helper; some of this will be peep-holed away
+                    for (let a of complexArgs)
+                        this.write(this.loadFromExprStack("r" + a.idx, a.expr))
+                }
+            }
+
+            for (let a of allArgs)
+                if (a.isSimple)
+                    this.emitExprInto(a.expr, "r" + a.idx)
 
 
             let name: string = topExpr.data
@@ -532,16 +581,16 @@ ${baseLabel}:
             this.clearArgs(popDecr)
         }
 
-        private alignedCall(name: string, cmt = "") {
-            let unalign = this.alignStack()
+        private alignedCall(name: string, cmt = "", off = 0) {
+            let unalign = this.alignStack(off)
             this.write(this.t.call_lbl(name) + cmt)
             this.write(unalign)
         }
 
-        private emitHelper(asm: string) {
+        private emitHelper(asm: string, baseName = "hlp") {
             if (!this.bin.codeHelpers[asm]) {
                 let len = Object.keys(this.bin.codeHelpers).length
-                this.bin.codeHelpers[asm] = "_hlp_" + len
+                this.bin.codeHelpers[asm] = `_${baseName}_${len}`
             }
             this.write(this.t.call_lbl(this.bin.codeHelpers[asm]))
         }
@@ -559,23 +608,30 @@ ${baseLabel}:
             this.exprStack.unshift(a)
         }
 
-        private loadFromExprStack(r: string, a: ir.Expr) {
+        private loadFromExprStack(r: string, a: ir.Expr, off = 0) {
             let idx = this.exprStack.indexOf(a)
             assert(idx >= 0)
-            this.write(this.t.load_reg_src_off(r, "sp", idx.toString(), true) + ` ; load estack`)
+            return this.t.load_reg_src_off(r, "sp", (idx + off).toString(), true) + ` ; load estack\n`
+        }
+
+        private pushDummy() {
+            let dummy = ir.numlit(0)
+            dummy.totalUses = 1
+            dummy.currUses = 1
+            this.exprStack.unshift(dummy)
+        }
+
+        private alignExprStack(numargs: number) {
+            let interAlign = this.stackAlignmentNeeded(numargs)
+            if (interAlign) {
+                this.write(this.t.push_locals(interAlign))
+                for (let i = 0; i < interAlign; ++i)
+                    this.pushDummy()
+            }
         }
 
         private emitProcCall(topExpr: ir.Expr) {
-            let interAlign = this.stackAlignmentNeeded(topExpr.args.length)
-            if (interAlign) {
-                this.write(this.t.push_locals(interAlign))
-                for (let i = 0; i < interAlign; ++i) {
-                    let dummy = ir.numlit(0)
-                    dummy.totalUses = 1
-                    dummy.currUses = 1
-                    this.exprStack.unshift(dummy)
-                }
-            }
+            this.alignExprStack(topExpr.args.length)
 
             for (let a of topExpr.args)
                 this.pushArg(a)
@@ -596,7 +652,7 @@ ${baseLabel}:
                     this.write(this.t.emit_int(procid.mapIdx, "r1"))
                     if (isSet)
                         this.write(this.t.emit_int(procid.ifaceIndex, "r2"))
-                    this.emitHelper(this.t.vcall(procid.mapMethod, isSet, this.bin.options.target.vtableShift))
+                    this.emitHelper(this.t.vcall(procid.mapMethod, isSet, this.bin.options.target.vtableShift), "vcall")
                     this.write(lbl + ":")
                 } else {
                     this.write(this.t.prologue_vtable(topExpr.args.length - 1, this.bin.options.target.vtableShift))

@@ -1,7 +1,6 @@
 // TODO optimize f(incr(shared)); decr(shared)
 // TODO remove decr() on variable init
 // TODO figure out why undefined initializer generates code
-// TODO commonalize conversion code
 
 namespace ts.pxtc.ir {
     let U = pxtc.Util;
@@ -37,13 +36,23 @@ namespace ts.pxtc.ir {
         }
     }
 
+    export interface ConvInfo {
+        argIdx: number;
+        method: string;
+    }
+
+    export interface MaskInfo {
+        refMask: number;
+        conversions?: ConvInfo[];
+    }
+
     export class Expr extends Node {
         public jsInfo: string;
         public totalUses: number; // how many references this expression has; only for the only child of Shared
         public currUses: number;
         public irCurrUses: number;
         public callingConvention = CallingConvention.Plain;
-        public mask: number;
+        public mask: MaskInfo;
 
         constructor(
             public exprKind: EK,
@@ -62,6 +71,7 @@ namespace ts.pxtc.ir {
                 copy.currUses = e.currUses
             }
             copy.callingConvention = e.callingConvention
+            copy.mask = e.mask
             return copy
         }
 
@@ -567,6 +577,7 @@ namespace ts.pxtc.ir {
                         if (!arg.totalUses) {
                             arg.totalUses = -1
                             arg.currUses = 0
+                            arg.irCurrUses = 0
                             let e2 = Expr.clone(e)
                             e2.exprKind = EK.SharedDef
                             e2.args[0] = refdef(e2.args[0])
@@ -688,8 +699,6 @@ namespace ts.pxtc.ir {
 
             let allBrkp: Breakpoint[] = []
 
-            console.log(this.toString())
-
             for (let s of this.body) {
                 if (s.expr) {
                     s.expr = opt(sharedincr(s.expr))
@@ -699,6 +708,8 @@ namespace ts.pxtc.ir {
                     allBrkp[s.breakpointInfo.id] = s.breakpointInfo
                 }
             }
+
+            console.log(this.toString())
 
             let debugSucc = false
             if (debugSucc) {
@@ -763,7 +774,8 @@ namespace ts.pxtc.ir {
 
     export function rtcall(name: string, args: Expr[], mask = 0) {
         let r = op(EK.RuntimeCall, args, name)
-        r.mask = mask
+        if (mask)
+            r.mask = { refMask: mask }
         return r
     }
 

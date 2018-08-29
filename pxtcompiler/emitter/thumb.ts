@@ -226,7 +226,7 @@ namespace ts.pxtc.thumb {
 
             return {
                 opcode: (off & 0xf0000000) ? (0xf400 | imm10) : (0xf000 | imm10),
-                opcode2:  isBLX ? (0xe800 | imm11) : (0xf800 | imm11),
+                opcode2: isBLX ? (0xe800 | imm11) : (0xf800 | imm11),
                 stack: 0,
                 numArgs: [v],
                 labelName: actual
@@ -392,6 +392,10 @@ namespace ts.pxtc.thumb {
                 singleReg(ln) == singleReg(lnNext)) {
                 // RULE: pop {rX}; push {rX} -> ldr rX, [sp, #0]
                 ln.update("ldr r" + singleReg(ln) + ", [sp, #0]")
+                lnNext.update("")
+             } else if (lnop == "push" && lnNext.getOpExt() == "ldr $r5, [sp, $i1]" &&
+                singleReg(ln) == lnNext.numArgs[0] && lnNext.numArgs[1] == 0) {
+                // RULE: push {rX}; ldr rX, [sp, #0] -> push {rX}
                 lnNext.update("")
             } else if (lnNext2 && lnop == "push" && singleReg(ln) >= 0 && preservesReg(lnNext, singleReg(ln)) &&
                 lnNext2.getOp() == "pop" && singleReg(ln) == singleReg(lnNext2)) {
