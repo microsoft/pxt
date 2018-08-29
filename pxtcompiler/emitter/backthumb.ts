@@ -184,6 +184,33 @@ ${lbl}:`
 `
         }
 
+        pop_clean(pops: boolean[]) {
+            let r = `
+    @scope _pxt_popclean
+    mov r3, r0
+    @dummystack ${pops.length}
+`
+            pops.forEach((p, i) => {
+                // TODO optimize sequences of pops without decr into sub on sp
+                r += `    pop {r0}\n`
+                if (p) r += `
+    lsls r1, r0, #30
+    bne .tag${i}
+    cmp r0, #0
+    beq .tag${i}
+    push {lr, r3}
+    bl pxt::decr
+    pop {pc, r3}
+.tag${i}:
+`
+            })
+            r += `
+    mov r0, r3
+    bx lr
+`
+            return r
+        }
+
         arithmetic() {
             let r = ""
 

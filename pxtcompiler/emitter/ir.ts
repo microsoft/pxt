@@ -1,6 +1,7 @@
-// TODO handle mask in rtcall emit
-// TODO do mask stuff in proccall
 // TODO optimize f(incr(shared)); decr(shared)
+// TODO remove decr() on variable init
+// TODO figure out why undefined initializer generates code
+// TODO commonalize conversion code
 
 namespace ts.pxtc.ir {
     let U = pxtc.Util;
@@ -68,6 +69,15 @@ namespace ts.pxtc.ir {
 
         isPure() {
             return this.isStateless() || this.exprKind == EK.CellRef;
+        }
+
+        isLiteral() {
+            switch (this.exprKind) {
+                case EK.NumberLiteral:
+                case EK.PointerLiteral:
+                    return true;
+                default: return false;
+            }
         }
 
         isStateless() {
@@ -628,7 +638,7 @@ namespace ts.pxtc.ir {
                         if (arg.totalUses == 1)
                             return sharedincr(arg)
                         arg.irCurrUses++
-                        if (arg.irCurrUses == arg.totalUses)
+                        if (e.data === "noincr" || arg.irCurrUses == arg.totalUses)
                             return e; // final one, no incr
                         return op(EK.Incr, [e])
                     default:
@@ -727,6 +737,8 @@ namespace ts.pxtc.ir {
 
     export function sharedNoIncr(expr: Expr) {
         let r = shared(expr)
+        if (r === expr)
+            return expr
         r.data = "noincr"
         return r
     }
@@ -800,6 +812,4 @@ namespace ts.pxtc.ir {
 
         return { precomp, flattened }
     }
-
-
 }
