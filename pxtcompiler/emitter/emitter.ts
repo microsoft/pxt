@@ -1587,7 +1587,7 @@ ${lbl}: .short 0xffff
             return coll
         }
         function emitObjectLiteral(node: ObjectLiteralExpression) {
-            let expr = ir.sharedNoIncr(ir.rtcall("pxtrt::mkMap", []))
+            let expr = ir.shared(ir.rtcall("pxtrt::mkMap", []))
             node.properties.forEach((p: PropertyAssignment | ShorthandPropertyAssignment) => {
                 if (p.kind == SK.ShorthandPropertyAssignment) {
                     userError(9264, "Shorthand properties not supported.")
@@ -1601,8 +1601,8 @@ ${lbl}: .short 0xffff
                 ];
                 if (!opts.target.isNative)
                     args.push(emitStringLiteral(keyName));
-                // internal decr
-                proc.emitExpr(ir.rtcall("pxtrt::mapSetRef", args, isRefCountedExpr(p.initializer) ? 4 : 0))
+                // internal decr on all args
+                proc.emitExpr(ir.rtcall("pxtrt::mapSetRef", args))
             })
             return expr
         }

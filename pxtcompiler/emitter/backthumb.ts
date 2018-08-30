@@ -147,6 +147,9 @@ ${lbl}:`
     bx r0
 .objlit:
     ${isSet ? "ldr r2, [sp, #4]" : ""}
+    movs r3, #0 ; clear args on stack, so the outside decr() doesn't touch them
+    str r3, [sp, #0]
+    ${isSet ? "str r3, [sp, #4]" : ""}
     ${this.pushLR()}
     bl ${mapMethod}
     ${this.popPC()}
