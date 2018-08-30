@@ -43,6 +43,9 @@ namespace ts.pxtc {
         mov(trg: string, dst: string) {
             return `movs ${trg}, ${dst}`
         }
+        helper_ret() {
+            return `bx lr`
+        }
         reg_gets_imm(reg: string, imm: number) {
             return `movs ${reg}, #${imm}`
         }
@@ -132,7 +135,7 @@ ${lbl}:`
         // NOTE: Map from RefRecord
         vcall(mapMethod: string, isSet: boolean, vtableShift: number) {
             return `
-    ldr r0, [sp, #${isSet ? 4 : 0}] ; ld-this
+    ldr r0, [sp, #0] ; ld-this
     ldrh r3, [r0, #2] ; ld-vtable
     lsls r3, r3, #${vtableShift}
     ldr r3, [r3, #4] ; iface table
@@ -143,7 +146,7 @@ ${lbl}:`
     ldr r0, [r3, r1] ; ld-method
     bx r0
 .objlit:
-    ${isSet ? "ldr r2, [sp, #0]" : ""}
+    ${isSet ? "ldr r2, [sp, #4]" : ""}
     ${this.pushLR()}
     bl ${mapMethod}
     ${this.popPC()}
@@ -184,31 +187,18 @@ ${lbl}:`
 `
         }
 
-        pop_clean(pops: boolean[]) {
-            let r = `
-    mov r7, r0
-    @dummystack ${pops.length}
-`
-            pops.forEach((p, i) => {
-                // TODO optimize sequences of pops without decr into sub on sp
-                if (!p) r += `    add sp, #4\n`
-                if (p) r += `
-    pop {r0}
+        inline_decr(idx: number) {
+            // TODO optimize sequences of pops without decr into sub on sp
+            return `
     lsls r1, r0, #30
-    bne .tag${i}
+    bne .tag${idx}
     cmp r0, #0
-    beq .tag${i}
+    beq .tag${idx}
     ${this.pushLR()}
     bl pxt::decr
     ${this.popPC()}
-.tag${i}:
+.tag${idx}:
 `
-            })
-            r += `
-    mov r0, r7
-    bx lr
-`
-            return r
         }
 
         arithmetic() {

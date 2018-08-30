@@ -2225,9 +2225,9 @@ ${lbl}: .short 0xffff
 
                 let lbl = info.id + "_VT"
                 let obj = ir.rtcall("pxt::mkClassInstance", [ir.ptrlit(lbl, lbl)])
-                obj = ir.shared(obj)
 
                 if (ctor) {
+                    obj = sharedDef(obj)
                     markUsed(ctor)
                     let args = node.arguments.slice(0)
                     let ctorAttrs = parseComments(ctor)
@@ -2545,12 +2545,16 @@ ${lbl}: .short 0xffff
 
             return lit
         }
-
-        function captureJmpValue() {
-            let v = ir.shared(ir.op(EK.JmpValue, []))
+        
+        function sharedDef(e:ir.Expr) {
+            let v = ir.shared(e)
             // make sure we save it, but also don't leak ref-count
             proc.emitExpr(ir.op(EK.Decr, [v]))
             return v
+        }
+
+        function captureJmpValue() {
+            return sharedDef(ir.op(EK.JmpValue, []))
         }
 
         function hasShimDummy(node: Declaration) {
@@ -3364,7 +3368,11 @@ ${lbl}: .short 0xffff
             let v = emitExpr(node);
             let a = typeOf(node)
             if (!(a.flags & TypeFlags.Void)) {
-                v = ir.op(EK.Decr, [v])
+                if (v.exprKind == EK.SharedRef && v.data != "noincr") {
+                    // skip decr - SharedRef would have introduced an implicit INCR
+                } else {
+                    v = ir.op(EK.Decr, [v])
+                }
             }
             return v
         }
