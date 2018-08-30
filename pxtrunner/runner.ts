@@ -413,13 +413,24 @@ namespace pxt.runner {
             })
     }
 
-    export function startDocsServer(loading: HTMLElement, content: HTMLElement) {
+    export function startDocsServer(loading: HTMLElement, content: HTMLElement, backButton?: HTMLElement) {
         pxt.tickEvent("docrenderer.ready");
+
+        const history: string[] = [];
+
+        if (backButton) {
+            backButton.addEventListener("click", () => {
+                goBack();
+            });
+            pxsim.U.addClass(backButton, "disabled");
+        }
 
         function render(doctype: string, src: string) {
             pxt.debug(`rendering ${doctype}`);
+            if (backButton) $(backButton).hide()
             $(content).hide()
             $(loading).show()
+
             Promise.delay(100) // allow UI to update
                 .then(() => {
                     switch (doctype) {
@@ -460,14 +471,42 @@ namespace pxt.runner {
                         }, "*");
                 }).finally(() => {
                     $(loading).hide()
+                    if (backButton) $(backButton).show()
                     $(content).show()
                 })
                 .done(() => { });
         }
 
+        function pushHistory() {
+            if (!backButton) return;
+
+            history.push(window.location.hash);
+            if (history.length > 10) {
+                history.shift();
+            }
+
+            if (history.length > 1) {
+                pxsim.U.removeClass(backButton, "disabled");
+            }
+        }
+
+        function goBack() {
+            if (!backButton) return;
+            if (history.length > 1) {
+                // Top is current page
+                history.pop();
+                window.location.hash = history.pop();
+            }
+
+            if (history.length <= 1) {
+                pxsim.U.addClass(backButton, "disabled");
+            }
+        }
+
         function renderHash() {
             let m = /^#(doc|md|tutorial|book|project|projectid|print):([^&?:]+)(:([^&?:]+):([^&?:]+))?/i.exec(window.location.hash);
             if (m) {
+                pushHistory();
                 // navigation occured
                 const p = m[4] ? setEditorContextAsync(
                     /^blocks$/.test(m[4]) ? LanguageMode.Blocks : LanguageMode.TypeScript,
