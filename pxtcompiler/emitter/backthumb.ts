@@ -286,11 +286,19 @@ _numops_fromInt:
 `
 
             for (let op of ["incr", "decr"]) {
+                r += ".section code\n"
+                for (let off = 56; off >= 0; off -= 4) {
+                    r += `
+_pxt_${op}_${off}:
+    ldr r0, [sp, #${off}]
+    ${off == 0 ? '; ' : ''}b _pxt_${op}
+`
+                }
                 r += `
 _pxt_${op}:
-    @scope _pxt_${op}
     lsls r3, r0, #30
     beq .t0
+.skip:
     bx lr
 .t0:
     cmp r0, #0
@@ -298,8 +306,29 @@ _pxt_${op}:
     ${this.pushLR()}
     bl pxt::${op}
     ${this.popPC()}
-.skip:
+`
+                for (let off = 56; off >= 0; off -= 4) {
+                    r += `
+_pxt_${op}_pushR0_${off}:
+    ldr r0, [sp, #${off}]
+    ${off == 0 ? '; ' : ''}b _pxt_${op}_pushR0
+`
+                }
+
+                r += `
+_pxt_${op}_pushR0:
+    push {r0}
+    @dummystack -1
+    lsls r3, r0, #30
+    beq .t2
+.skip2:
     bx lr
+.t2:
+    cmp r0, #0
+    beq .skip2
+    push {lr}
+    bl pxt::${op}
+    pop {pc}
 `
             }
 
