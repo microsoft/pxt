@@ -576,7 +576,24 @@ ${baseLabel}:
             U.assert(allArgs.length <= 4)
             U.assert(allArgs.filter(a => a.isSimple && a.conv).length == 0)
 
+            let seenUpdate = false
+            for (let a of U.reversed(allArgs)) {
+                if (a.expr.isPure()) {
+                    if (!a.isSimple && !a.isRef)
+                        if (!seenUpdate || a.expr.isStateless())
+                            a.isSimple = true
+                } else {
+                    seenUpdate = true
+                }
+            }
+
             let complexArgs = allArgs.filter(a => !a.isSimple)
+
+            if (complexArgs.every(c => c.expr.isPure() && !c.isRef)) {
+                for (let c of complexArgs) c.isSimple = true
+                complexArgs = []
+            }
+
             let c0 = complexArgs[0]
             let clearStack = true
 
