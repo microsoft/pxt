@@ -708,9 +708,21 @@ ${baseLabel}:
         }
 
         private emitProcCall(topExpr: ir.Expr) {
-            let complexArgs = topExpr.args.filter(a => !a.isLiteral())
+            let complexArgs: ir.Expr[] = []
             let theOne: ir.Expr = null
             let theOneReg = ""
+
+            let seenUpdate = false
+            for (let c of U.reversed(topExpr.args)) {
+                if (c.isPure()) {
+                    if (!seenUpdate || c.isStateless())
+                        continue
+                } else {
+                    seenUpdate = true
+                }
+                complexArgs.push(c)
+            }
+            complexArgs.reverse()
 
             if (complexArgs.length <= 1) {
                 // in case there is at most one complex argument, we don't need to re-push anything
