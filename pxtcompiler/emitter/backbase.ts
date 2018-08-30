@@ -634,8 +634,8 @@ ${baseLabel}:
                 this.alignedCall(name)
 
             if (clearStack) {
-                this.clearArgs(complexArgs.filter(a => a.isRef).map(a => a.expr),
-                    complexArgs.filter(a => !a.isRef).map(a => a.expr))
+                this.clearArgs(complexArgs.filter(a => !a.isRef).map(a => a.expr),
+                    complexArgs.filter(a => a.isRef).map(a => a.expr))
             }
         }
 

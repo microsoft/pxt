@@ -1579,14 +1579,15 @@ ${lbl}: .short 0xffff
         function emitArrayBindingPattern(node: BindingPattern) { }
         function emitArrayLiteral(node: ArrayLiteralExpression) {
             let eltT = arrayElementType(typeOf(node))
-            let coll = ir.shared(ir.rtcall("Array_::mk", []))
+            let coll = ir.sharedNoIncr(ir.rtcall("Array_::mk", []))
             for (let elt of node.elements) {
-                proc.emitExpr(rtcallMaskDirect("Array_::push", [coll, emitExpr(elt)]))
+                let mask = isRefCountedExpr(elt) ? 2 : 0
+                proc.emitExpr(ir.rtcall("Array_::push", [coll, emitExpr(elt)], mask))
             }
             return coll
         }
         function emitObjectLiteral(node: ObjectLiteralExpression) {
-            let expr = ir.shared(ir.rtcall("pxtrt::mkMap", []))
+            let expr = ir.sharedNoIncr(ir.rtcall("pxtrt::mkMap", []))
             node.properties.forEach((p: PropertyAssignment | ShorthandPropertyAssignment) => {
                 if (p.kind == SK.ShorthandPropertyAssignment) {
                     userError(9264, "Shorthand properties not supported.")
@@ -1601,7 +1602,7 @@ ${lbl}: .short 0xffff
                 if (!opts.target.isNative)
                     args.push(emitStringLiteral(keyName));
                 // internal decr
-                proc.emitExpr(ir.rtcall("pxtrt::mapSetRef", args))
+                proc.emitExpr(ir.rtcall("pxtrt::mapSetRef", args, isRefCountedExpr(p.initializer) ? 4 : 0))
             })
             return expr
         }
@@ -2433,14 +2434,13 @@ ${lbl}: .short 0xffff
             // if no captured variables, then we can get away with a plain pointer to code
             if (caps.length > 0) {
                 assert(getEnclosingFunction(node) != null, "getEnclosingFunction(node) != null)")
-                lit = ir.shared(ir.rtcall("pxt::mkAction", [ir.numlit(caps.length), ir.numlit(caps.length), emitFunLitCore(node, true)]))
+                lit = ir.sharedNoIncr(ir.rtcall("pxt::mkAction", [ir.numlit(caps.length), ir.numlit(caps.length), emitFunLitCore(node, true)]))
                 caps.forEach((l, i) => {
                     let loc = proc.localIndex(l)
                     if (!loc)
                         userError(9223, lf("cannot find captured value: {0}", checker.symbolToString(l.symbol)))
                     let v = loc.loadCore()
-                    v = ir.op(EK.Incr, [v])
-                    proc.emitExpr(ir.rtcall("pxtrt::stclo", [lit, ir.numlit(i), v], 1))
+                    proc.emitExpr(ir.rtcall("pxtrt::stclo", [lit, ir.numlit(i), v]))
                 })
                 if (node.kind == SK.FunctionDeclaration) {
                     info.location = proc.mkLocal(node, getVarInfo(node))
@@ -2545,8 +2545,8 @@ ${lbl}: .short 0xffff
 
             return lit
         }
-        
-        function sharedDef(e:ir.Expr) {
+
+        function sharedDef(e: ir.Expr) {
             let v = ir.shared(e)
             // make sure we save it, but also don't leak ref-count
             proc.emitExpr(ir.op(EK.Decr, [v]))
