@@ -317,10 +317,9 @@ ${baseLabel}:
                 numEntries++
             }
             assert(numEntries > 0)
-            assert(numEntries == 1)
+            // assert(numEntries == 1)
             this.write(`@dummystack ${numEntries}`)
             this.write(this.t.pop_locals(numEntries))
-
         }
 
         private emitJmp(jmp: ir.Stmt) {
