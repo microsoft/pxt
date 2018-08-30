@@ -1246,7 +1246,7 @@ namespace ts.pxtc {
                         let idx = fieldIndexCore(inf, fld, typeOf(fld))
                         emitSynthetic(fld.irGetter, (proc) => {
                             // we skip final decr, but the ldfld call will do its own decr
-                            let access = ir.op(EK.FieldAccess, [proc.args[0].loadCore()], idx)
+                            let access = ir.op(EK.FieldAccess, [proc.args[0].load()], idx)
                             emitInJmpValue(access)
                         })
                     }
@@ -1264,8 +1264,8 @@ namespace ts.pxtc {
                         let idx = fieldIndexCore(inf, fld, typeOf(fld))
                         emitSynthetic(fld.irSetter, (proc) => {
                             // decrs work out
-                            let access = ir.op(EK.FieldAccess, [proc.args[0].loadCore()], idx)
-                            proc.emitExpr(ir.op(EK.Store, [access, proc.args[1].loadCore()]))
+                            let access = ir.op(EK.FieldAccess, [proc.args[0].load()], idx)
+                            proc.emitExpr(ir.op(EK.Store, [access, proc.args[1].load()]))
                         })
                     }
                 }
@@ -2440,6 +2440,7 @@ ${lbl}: .short 0xffff
                     if (!loc)
                         userError(9223, lf("cannot find captured value: {0}", checker.symbolToString(l.symbol)))
                     let v = loc.loadCore()
+                    v = ir.op(EK.Incr, [v])
                     proc.emitExpr(ir.rtcall("pxtrt::stclo", [lit, ir.numlit(i), v]))
                 })
                 if (node.kind == SK.FunctionDeclaration) {
