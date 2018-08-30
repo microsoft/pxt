@@ -387,7 +387,7 @@ export async function commitAsync(hd: Header, msg: string, tag = "", filenames: 
     let files = await getTextAsync(hd.id)
     let gitjsontext = files[GIT_JSON]
     if (!gitjsontext)
-        U.userError(lf("Not a git package."))
+        U.userError(lf("Not a git extension."))
     let gitjson = JSON.parse(gitjsontext) as GitJson
     let parsed = pxt.github.parseRepoId(gitjson.repo)
     let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig

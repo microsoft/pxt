@@ -447,9 +447,7 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
     }
 
     private setUrl(url: string) {
-        let el = document.getElementById("sidedocsframe") as HTMLIFrameElement;
-        if (el) el.src = url;
-        else this.props.parent.setState({ sideDocsLoadUrl: url, sideDocsCollapsed: false });
+        this.props.parent.setState({ sideDocsLoadUrl: url, sideDocsCollapsed: false });
     }
 
     collapse() {

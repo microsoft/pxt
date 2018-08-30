@@ -48,8 +48,8 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
 
     private removePkg(p: pkg.EditorPackage) {
         core.confirmAsync({
-            header: lf("Remove {0} package", p.getPkgId()),
-            body: lf("You are about to remove a package from your project. Are you sure?"),
+            header: lf("Remove {0} extension", p.getPkgId()),
+            body: lf("You are about to remove an extension from your project. Are you sure?"),
             agreeClass: "red",
             agreeIcon: "trash",
             agreeLbl: lf("Remove it"),
@@ -347,9 +347,9 @@ class PackgeTreeItem extends sui.StatelessUIElement<PackageTreeItemProps> {
             aria-label={lf("{0}, {1}", p.getPkgId(), isActive ? lf("expanded") : lf("collapsed"))}
             onClick={this.handleClick} tabIndex={0} onKeyDown={sui.fireClickOnEnter} {...rest}>
             <sui.Icon icon={`chevron ${isActive ? "down" : "right"} icon`} />
-            {hasRefresh ? <sui.Button className="primary label" icon="refresh" title={lf("Refresh package {0}", p.getPkgId())}
+            {hasRefresh ? <sui.Button className="primary label" icon="refresh" title={lf("Refresh extension {0}", p.getPkgId())}
                 onClick={this.handleRefresh} onKeyDown={this.handleButtonKeydown} /> : ''}
-            {hasDelete ? <sui.Button className="primary label" icon="trash" title={lf("Delete package {0}", p.getPkgId())}
+            {hasDelete ? <sui.Button className="primary label" icon="trash" title={lf("Delete extension {0}", p.getPkgId())}
                 onClick={this.handleRemove} onKeyDown={this.handleButtonKeydown} /> : ''}
 
             {this.props.children}

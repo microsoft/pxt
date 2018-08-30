@@ -94,6 +94,7 @@ body {
 /* Editor tools */
 @editorToolsHeight: 10rem;
 @editorToolsCollapsedHeight: 4.7rem;
+@editorToolsCollapsedMobileHeight: 3.4rem;
 #editortools {
     position: fixed;
     top: auto;
@@ -931,14 +932,19 @@ p.ui.font.small {
 /* Mobile */
 @media only screen and (max-width: @largestMobileScreen) {
     .hideEditorFloats #editortools {
-        height: @editorToolsCollapsedHeight;
+        height: @editorToolsCollapsedMobileHeight;
     }
     .hideEditorFloats #blocksArea, .hideEditorFloats #monacoEditor {
-        bottom: @editorToolsCollapsedHeight;
+        bottom: @editorToolsCollapsedMobileHeight;
     }
 
     .ui.modal.projectsdialog h2.editorname {
         font-size: 1.2rem;
+    }
+
+    .hideEditorFloats #editortools .column.mobile.only {
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
     }
 }
 
