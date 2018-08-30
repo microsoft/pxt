@@ -44,7 +44,7 @@ export function gitsha(data: string) {
 }
 
 export function copyProjectToLegacyEditor(header: Header, majorVersion: number): Promise<Header> {
-    if (impl != cloudworkspace.provider) {
+    if (!isBrowserWorkspace()) {
         return Promise.reject("Copy operation only works in browser workspace");
     }
     return cloudworkspace.copyProjectToLegacyEditor(header, majorVersion);
@@ -666,6 +666,10 @@ export function listAssetsAsync(id: string): Promise<pxt.workspace.Asset[]> {
     if (impl.listAssetsAsync)
         return impl.listAssetsAsync(id)
     return Promise.resolve([])
+}
+
+export function isBrowserWorkspace() {
+    return impl === cloudworkspace.provider;
 }
 
 

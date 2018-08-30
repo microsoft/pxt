@@ -195,12 +195,28 @@ function renderVersionLink(name: string, version: string, url: string) {
     </p>;
 }
 
-export function showPackageErrorDialogAsync(badPackages: EditorPackage[], removePackage: (id: string) => Promise<void>, openLegacyEditor?: () => void) {
-    core.confirmAsync({
+export function showPackageErrorDialogAsync(badPackages: EditorPackage[], mainPkg: EditorPackage, openLegacyEditor?: () => void): Promise<boolean> {
+    let pendingOperation: Promise<void>;
+    return core.dialogAsync({
         header: lf("Extension Errors"),
         hideCancel: true,
-        agreeLbl: lf("Ok"),
-        agreeClass: "positive",
+        buttons: [
+            {
+                label: lf("Update all"),
+                className: "button",
+                icon: "refresh",
+                onclick: () => {
+                    pendingOperation = Promise.all(badPackages.map(e => mainPkg.updateDepAsync(e.getPkgId())))
+                        .then(coretsx.hideDialog);
+                }
+            },
+            {
+                label: lf("Ok"),
+                className: "button",
+                icon: "checkmark",
+                onclick: coretsx.hideDialog
+            }
+        ],
         jsx: <div>
                 <p>{pxt.Util.lf("The following extensions are preventing the project from compiling:")}</p>
                 <div className="ui relaxed divided list">
@@ -210,25 +226,29 @@ export function showPackageErrorDialogAsync(badPackages: EditorPackage[], remove
             </div>
             { openLegacyEditor ? renderEditorVersionMessage(openLegacyEditor) : undefined }
         </div>
-    }).done();
+    }).then(() => {
+        if (pendingOperation) {
+            return pendingOperation.then(() => true);
+        }
+        return Promise.resolve(false);
+    });
 
     function curryRemove(id: string) {
         return () => {
-            coretsx.hideDialog();
-            return removePackage(id)
+            pendingOperation = mainPkg.removeDepAsync(id).then(coretsx.hideDialog);
         }
     }
 }
 
 export function renderEditorVersionMessage(onClick: () => void) {
     return <div className="ui message">
-        <p>{pxt.Util.lf("This project was made in an older version of the editor and may not be compatible with the latest version. To open the project in the old editor,")} <a onClick={onClick}>{pxt.Util.lf("Click here")}.</a></p>
+        <p>{pxt.Util.lf("This project was made in an older version of the editor and may not be compatible with the latest version.")} <a role="button" onClick={onClick}>{pxt.Util.lf("Open the project in the old editor")}.</a></p>
     </div>
 }
 
 interface PackageErrorListItemProps {
     package: EditorPackage;
-    removePackage: () => Promise<void>
+    removePackage: () => void;
 }
 
 interface PackageErrorListItemState {
@@ -282,10 +302,10 @@ class PackageErrorListItem extends React.Component<PackageErrorListItemProps, Pa
             <div className="right floated content">
             { isPending ?
                 <div>
-                    <button className="ui button negative" onClick={this.props.removePackage}>{pxt.Util.lf("Remove")}</button>
-                    <button className="ui button" onClick={this.clearPending}>{pxt.Util.lf("Cancel")}</button>
+                    <button className="ui button negative" role="button" onClick={this.props.removePackage}>{pxt.Util.lf("Remove")}</button>
+                    <button className="ui button" role="button" onClick={this.clearPending}>{pxt.Util.lf("Cancel")}</button>
                 </div> :
-                <button className="ui icon button" onClick={this.pendingRemoval}>
+                <button className="ui icon button" role="button" aria-label={lf("Remove dependency")} onClick={this.pendingRemoval}>
                     <i className="trash icon"></i>
                 </button>
             }
@@ -293,7 +313,7 @@ class PackageErrorListItem extends React.Component<PackageErrorListItemProps, Pa
             { icon }
             <div className="content">
                 <a className="header" href={url} >{`${displayName} (${displayVersion})`}</a>
-                <div className="description" onClick={this.toggle} role="button">
+                <div className="description" onClick={this.toggle} role="button" aria-pressed={!!isExpanded} aria-label={isExpanded ? lf("Hide error list") : lf("Show error list")}>
                     {errors.length > 1 ? lf("Found {0} errors", errors.length) : lf("Found {0} error", errors.length) }
                     <i className={`small middle aligned icon caret ${isExpanded ? "down" : "right"}`}></i>
                 </div>

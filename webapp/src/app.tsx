@@ -405,16 +405,18 @@ export class ProjectView
                 const headerVersion = pxt.semver.parse(h.targetVersion);
 
                 let openHandler: () => void;
-                if (currentVersion.major !== headerVersion.major) {
+                if (workspace.isBrowserWorkspace() && currentVersion.major !== headerVersion.major) {
                     openHandler = () => {
                         this.openProjectInLegacyEditor(headerVersion.major);
                     };
                 }
 
-                dialogs.showPackageErrorDialogAsync(badPackages, id => {
-                    return pkg.mainEditorPkg().removeDepAsync(id)
-                    .then(() => this.reloadHeaderAsync())
-                }, openHandler);
+                dialogs.showPackageErrorDialogAsync(badPackages, pkg.mainEditorPkg(), openHandler)
+                    .then(didChange => {
+                        if (didChange) {
+                            this.reloadHeaderAsync();
+                        }
+                    });
                 return true;
             }
         }
