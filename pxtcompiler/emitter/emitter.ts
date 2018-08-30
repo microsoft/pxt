@@ -2980,21 +2980,6 @@ ${lbl}: .short 0xffff
             proc.emitLbl(lbl)
         }
 
-        /*
-            do whatever
-            result in r0
-            push r0
-            call toBool
-            if COND jmp next
-            pop r0
-            jmp end
-            next:
-            pop r0
-            decr
-            do whatever else
-            end:            
-        */
-
         function emitLazyBinaryExpression(node: BinaryExpression) {
             let left = emitExpr(node.left)
             let isString = isStringType(typeOf(node.left));
@@ -3011,7 +2996,8 @@ ${lbl}: .short 0xffff
             proc.emitJmp(lblSkip, cond, mode)
             proc.emitJmp(lbl, left, ir.JmpMode.Always, left)
             proc.emitLbl(lblSkip)
-            proc.emitExpr(ir.op(EK.Decr, [left]))
+            proc.emitExpr(rtcallMaskDirect("langsupp::ignore", [left]))
+            // proc.emitExpr(ir.op(EK.Decr, [left])) - this gets optimized away
 
             proc.emitJmp(lbl, emitExpr(node.right), ir.JmpMode.Always)
             proc.emitLbl(lbl)

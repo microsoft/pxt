@@ -102,11 +102,13 @@ namespace ts.pxtc.ir {
 
         sharingInfo(): string {
             let arg0: ir.Expr = this
+            let id = this.getId()
             if (this.exprKind == EK.SharedRef || this.exprKind == EK.SharedDef) {
                 arg0 = this.args[0]
                 if (!arg0) arg0 = { currUses: "", totalUses: "" } as any
+                else id = arg0.getId()
             }
-            return `${arg0.currUses}/${arg0.totalUses}`
+            return `${arg0.currUses}/${arg0.totalUses} #${id}`
         }
 
         toString(): string {
@@ -164,6 +166,7 @@ namespace ts.pxtc.ir {
         public lblName: string;
         public lbl: Stmt;
         public lblNumUses: number;
+        public lblStackSize: number;
         public jmpMode: JmpMode;
         public lblId: number;
         public breakpointInfo: Breakpoint;
@@ -709,7 +712,8 @@ namespace ts.pxtc.ir {
                 }
             }
 
-            console.log(this.toString())
+            if (pxt.options.debug)
+                pxt.debug(this.toString())
 
             let debugSucc = false
             if (debugSucc) {
@@ -746,21 +750,27 @@ namespace ts.pxtc.ir {
         return op(EK.NumberLiteral, null, v)
     }
 
-    export function sharedNoIncr(expr: Expr) {
-        let r = shared(expr)
-        if (r === expr)
-            return expr
-        r.data = "noincr"
+    function sharedCore(expr: Expr, data: string) {
+        switch (expr.exprKind) {
+            case EK.SharedRef:
+                expr = expr.args[0]
+                break
+            //case EK.PointerLiteral:
+            case EK.NumberLiteral:
+                return expr
+        }
+
+        let r = op(EK.SharedRef, [expr])
+        r.data = data
         return r
     }
 
+    export function sharedNoIncr(expr: Expr) {
+        return sharedCore(expr, "noincr")
+    }
+
     export function shared(expr: Expr) {
-        switch (expr.exprKind) {
-            case EK.NumberLiteral:
-            case EK.SharedRef:
-                return expr;
-        }
-        return op(EK.SharedRef, [expr])
+        return sharedCore(expr, null)
     }
 
     export function ptrlit(lbl: string, jsInfo: string, full = false): Expr {

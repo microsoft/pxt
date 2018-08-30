@@ -274,6 +274,7 @@ ${baseLabel}:
                         break;
                     case ir.SK.Label:
                         this.write(s.lblName + ":")
+                        this.validateJmpStack(s)
                         break;
                     case ir.SK.Breakpoint:
                         if (this.bin.options.breakpoints) {
@@ -304,30 +305,58 @@ ${baseLabel}:
             return l
         }
 
+        private dumpStack() {
+            let r = "["
+            for (let s of this.exprStack) {
+                r += s.sharingInfo() + ": " + s.toString() + "; "
+            }
+            r += "]"
+            return r
+        }
+
         private terminate(expr: ir.Expr) {
             assert(expr.exprKind == ir.EK.SharedRef)
             let arg = expr.args[0]
-            if (arg.currUses == arg.totalUses)
-                return
-            let numEntries = 0
+            // console.log("TERM", arg.sharingInfo(), arg.toString(), this.dumpStack())
+            U.assert(arg.currUses != arg.totalUses)
+            // we should have the terminated expression on top
+            U.assert(this.exprStack[0] === arg, "term at top")
+            // we pretend it's popped and simulate what clearStack would do
+            let numEntries = 1
             while (numEntries < this.exprStack.length) {
                 let ee = this.exprStack[numEntries]
-                if (ee != arg && ee.currUses != ee.totalUses)
+                if (ee.currUses != ee.totalUses)
                     break
                 numEntries++
             }
-            assert(numEntries > 0)
-            // assert(numEntries == 1)
+            // in this branch we just remove all that stuff off the stack
             this.write(`@dummystack ${numEntries}`)
             this.write(this.t.pop_locals(numEntries))
+
+            return numEntries
+        }
+
+        private validateJmpStack(lbl: ir.Stmt, off = 0) {
+            // console.log("Validate:", off, lbl.lblName, this.dumpStack())
+            let currSize = this.exprStack.length - off
+            if (lbl.lblStackSize == null) {
+                lbl.lblStackSize = currSize
+            } else {
+                if (lbl.lblStackSize != currSize) {
+                    console.log(lbl.lblStackSize, currSize)
+                    console.log(this.dumpStack())
+                    U.oops("stack misaligned at: " + lbl.lblName)
+                }
+            }
         }
 
         private emitJmp(jmp: ir.Stmt) {
+            let termOff = 0
             if (jmp.jmpMode == ir.JmpMode.Always) {
                 if (jmp.expr)
                     this.emitExpr(jmp.expr)
                 if (jmp.terminateExpr)
-                    this.terminate(jmp.terminateExpr)
+                    termOff = this.terminate(jmp.terminateExpr)
                 this.write(this.t.unconditional_branch(jmp.lblName) + " ; with expression")
             } else {
                 let lbl = this.mkLbl("jmpz")
@@ -355,11 +384,13 @@ ${baseLabel}:
                 }
 
                 if (jmp.terminateExpr)
-                    this.terminate(jmp.terminateExpr)
+                    termOff = this.terminate(jmp.terminateExpr)
 
                 this.write(this.t.unconditional_branch(jmp.lblName))
                 this.write(lbl + ":")
             }
+
+            this.validateJmpStack(jmp.lbl, termOff)
         }
 
         private clearStack(fast = false) {
@@ -628,7 +659,7 @@ ${baseLabel}:
                         }
                         for (let a of complexArgs) {
                             if (!a.conv)
-                                this.write(this.loadFromExprStack("r" + a.idx, a.expr))
+                                this.write(this.loadFromExprStack("r" + a.idx, a.expr, off))
                         }
                     })
                     this.emitHelper(this.t.helper_prologue() + conv + this.t.helper_epilogue(), "conv")
