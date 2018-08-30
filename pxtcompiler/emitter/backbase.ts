@@ -817,6 +817,8 @@ ${baseLabel}:
                 callLabel: lbl,
             })
 
+            // note that we have to treat all arguments as refs,
+            // because the procedure might have overriden them and we need to unref them
             this.clearArgs([], topExpr.args)
         }
 
