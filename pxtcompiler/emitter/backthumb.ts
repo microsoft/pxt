@@ -41,10 +41,10 @@ namespace ts.pxtc {
         }
         nop() { return "nop" }
         mov(trg: string, dst: string) {
-            return `movs ${trg}, ${dst}`
+            return `mov ${trg}, ${dst}`
         }
         helper_ret() {
-            return `bx lr`
+            return `bx r4`
         }
         reg_gets_imm(reg: string, imm: number) {
             return `movs ${reg}, #${imm}`
@@ -187,16 +187,27 @@ ${lbl}:`
 `
         }
 
-        inline_decr(idx: number) {
+        lambda_init() {
+            return `
+    mov r5, r0
+    mov r4, lr
+    bl pxtrt::getGlobalsPtr
+    mov r6, r0
+    bx r4
+`
+        }
+
+        inline_decr(idx: number, stackSize: number) {
+            if (!this.stackAligned()) stackSize = 0
             // TODO optimize sequences of pops without decr into sub on sp
             return `
     lsls r1, r0, #30
     bne .tag${idx}
     cmp r0, #0
     beq .tag${idx}
-    ${this.pushLR()}
+    ${stackSize & 1 ? "push {r0} ; align" : ""}
     bl pxt::decr
-    ${this.popPC()}
+    ${stackSize & 1 ? "pop {r0} ; unalign" : ""}
 .tag${idx}:
 `
         }
@@ -209,8 +220,7 @@ ${lbl}:`
             }
 
             for (let op of ["adds", "subs", "ands", "orrs", "eors"]) {
-                r +=
-                    `
+                r += `
 _numops_${op}:
     @scope _numops_${op}
     lsls r2, r0, #31

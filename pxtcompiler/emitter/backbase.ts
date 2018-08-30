@@ -531,6 +531,7 @@ ${baseLabel}:
             const s0 = this.exprStack.length
             const decr = this.redirectOutput(() => {
                 this.write(this.t.mov("r7", "r0"))
+                this.write(this.t.mov("r4", "lr"))
                 let k = 0
                 while (refs.length > 0) {
                     this.clearStack(true)
@@ -540,7 +541,7 @@ ${baseLabel}:
                         this.exprStack.shift()
                         refs.splice(idx, 1)
                         this.write(this.t.pop_fixed(["r0"]))
-                        this.write(this.t.inline_decr(k++))
+                        this.write(this.t.inline_decr(k++, this.stackSize()))
                     } else {
                         break
                     }
@@ -549,7 +550,7 @@ ${baseLabel}:
                     let r = refs.shift()
                     r.currUses = 1
                     this.write(this.loadFromExprStack("r0", r))
-                    this.write(this.t.inline_decr(k++))
+                    this.write(this.t.inline_decr(k++, this.stackSize()))
                 }
                 this.clearStack()
                 this.write(this.t.mov("r0", "r7"))
@@ -847,33 +848,39 @@ ${baseLabel}:
             this.write("@stackmark litfunc");
 
             let parms = this.proc.args.map(a => a.def)
-            this.write(this.t.proc_setup(0, true))
-
-            this.write(this.t.push_fixed(["r5", "r6", "r7"]))
-
-            this.baseStackSize = 4 // above
-
             let numpop = parms.length
 
-            let alignment = this.stackAlignmentNeeded(parms.length)
-            if (alignment) {
-                this.write(this.t.push_locals(alignment))
-                numpop += alignment
-            }
+            this.write(this.t.proc_setup(0, true))
 
-            parms.forEach((_, i) => {
-                if (i >= 3)
-                    U.userError(U.lf("only up to three parameters supported in lambdas"))
-                this.write(this.t.push_local(`r${i + 1}`))
+            const setup = this.redirectOutput(() => {
+                this.write(this.t.push_fixed(["r4", "r5", "r6", "r7"]))
+                this.baseStackSize = 1 + 4
+
+                let alignment = this.stackAlignmentNeeded(parms.length)
+                if (alignment) {
+                    this.write(this.t.push_locals(alignment))
+                    numpop += alignment
+                }
+
+                parms.forEach((_, i) => {
+                    if (i >= 3)
+                        U.userError(U.lf("only up to three parameters supported in lambdas"))
+                    this.write(this.t.push_local(`r${parms.length - i}`))
+                })
+
+                this.write(this.t.lambda_init())
             })
 
+            let stackEntries = numpop + 4
+
+            this.write(`@dummystack ${stackEntries}`)
+            this.emitHelper(`${setup}\n@dummystack ${-stackEntries}`, "lambda_setup")
             this.write(this.t.call_lbl(this.proc.label()))
 
             if (numpop)
                 this.write(this.t.pop_locals(numpop))
-            this.write(this.t.pop_fixed(["r6", "r5", "r7"]))
+            this.write(this.t.pop_fixed(["r4", "r5", "r6", "r7", "pc"]))
 
-            this.write(this.t.proc_return())
             this.write("@stackempty litfunc");
         }
 
