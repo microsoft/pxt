@@ -202,13 +202,20 @@ namespace pxsim {
     }
 
     export type EventValueToActionArgs<T> = (value: T) => any[];
+ 
+    /*
+        TODO: need logic for ANY
+        if((l->id == evt.source || l->id == DEVICE_ID_ANY) && 
+           (l->value == evt.value || l->value == DEVICE_EVT_ANY))
+        
+    */
 
     export class EventQueue<T> {
         max: number = 5;
         events: T[] = [];
         private awaiters: ((v?: any) => void)[] = [];
         private lock: boolean;
-        private _handler: RefAction;
+        private _handlers: RefAction[] = [];
 
         constructor(public runtime: Runtime, private valueToArgs?: EventValueToActionArgs<T>) { }
 
@@ -223,7 +230,7 @@ namespace pxsim {
                     aws.forEach(aw => aw());
                 }
             }
-            if (!this.handler || this.events.length > this.max) return;
+            if (this.handlers == [] || this.events.length > this.max) return;
 
             this.events.push(e)
 
@@ -235,7 +242,8 @@ namespace pxsim {
         private poke() {
             this.lock = true;
             const value = this.events.shift();
-            this.runtime.runFiberAsync(this.handler, ...(this.valueToArgs ? this.valueToArgs(value) : [value]))
+            this.handlers.forEach(handler => {
+                this.runtime.runFiberAsync(handler, ...(this.valueToArgs ? this.valueToArgs(value) : [value]))
                 .done(() => {
                     // we're done processing the current event, if there is still something left to do, do it
                     if (this.events.length > 0) {
@@ -245,21 +253,23 @@ namespace pxsim {
                         this.lock = false;
                     }
                 })
+            });
         }
 
-        get handler() {
-            return this._handler;
+        get handlers() {
+            return this._handlers;
         }
 
-        set handler(a: RefAction) {
-            if (this._handler) {
-                pxtcore.decr(this._handler);
-            }
+        addHandler(a: RefAction) {
+            this._handlers.push(a);
+            pxtcore.incr(a)
+        }
 
-            this._handler = a;
-
-            if (this._handler) {
-                pxtcore.incr(this._handler);
+        removeHandler(a: RefAction) {
+            let index = this._handlers.findIndex(action => a == action)
+            if (index != -1) {
+                this._handlers.splice(index,1)
+                pxtcore.decr(a)
             }
         }
 

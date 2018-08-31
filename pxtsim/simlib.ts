@@ -45,7 +45,12 @@ namespace pxsim {
 
         listen(id: number | string, evid: number | string, handler: RefAction) {
             let q = this.start(id, evid, true);
-            q.handler = handler;
+            q.addHandler(handler);
+        }
+
+        remove(id: number | string, evid: number | string, handler: RefAction) {
+            let q = this.start(id, evid, true);
+            q.removeHandler(handler);
         }
 
         queue(id: number | string, evid: number | string, value: T = null) {
