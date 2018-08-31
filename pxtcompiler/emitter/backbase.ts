@@ -776,20 +776,52 @@ ${baseLabel}:
             }
 
             this.alignExprStack(topExpr.args.length)
+            // available registers
+            let regList = ["r1", "r2", "r3", "r4", "r7"]
+            let regExprs: ir.Expr[] = []
 
-            if (complexArgs.length)
-                this.write(this.t.reg_gets_imm("r7", 0))
+            if (complexArgs.length) {
+                let maxDepth = -1
+                for (let c of complexArgs) {
+                    maxDepth = Math.max(this.exprStack.indexOf(c), maxDepth)
+                }
+                maxDepth++
+                // we have 6 registers to play with
+                if (maxDepth <= regList.length) {
+                    regList = regList.slice(0, maxDepth)
+                    this.write(this.t.pop_fixed(regList))
+                    regExprs = this.exprStack.splice(0, maxDepth)
+
+                    // now push anything that isn't an argument
+                    let pushList: string[] = []
+                    for (let i = maxDepth - 1; i >= 0; --i) {
+                        if (complexArgs.indexOf(regExprs[i]) < 0) {
+                            pushList.push(regList[i])
+                            this.exprStack.unshift(regExprs[i])
+                        }
+                    }
+                    if (pushList.length)
+                        this.write(this.t.push_fixed(pushList))
+                } else {
+                    regList = null
+                    this.write(this.t.reg_gets_imm("r7", 0))
+                }
+            }
 
             for (let a of U.reversed(topExpr.args)) {
                 if (complexArgs.indexOf(a) >= 0) {
-                    this.write(this.loadFromExprStack("r0", a))
-                    this.write(this.t.push_local("r0") + " ; re-push")
-                    this.write(this.loadFromExprStack("r7", a, 1, true))
-                    let idx = this.exprStack.indexOf(a)
-                    let theNull = ir.numlit(0)
-                    theNull.currUses = 1
-                    theNull.totalUses = 1
-                    this.exprStack[idx] = theNull
+                    if (regList) {
+                        this.write(this.t.push_fixed([regList[regExprs.indexOf(a)]]))
+                    } else {
+                        this.write(this.loadFromExprStack("r0", a))
+                        this.write(this.t.push_local("r0") + " ; re-push")
+                        this.write(this.loadFromExprStack("r7", a, 1, true))
+                        let idx = this.exprStack.indexOf(a)
+                        let theNull = ir.numlit(0)
+                        theNull.currUses = 1
+                        theNull.totalUses = 1
+                        this.exprStack[idx] = theNull
+                    }
                     this.exprStack.unshift(a)
                 } else if (a === theOne) {
                     this.write(this.t.push_local(theOneReg) + " ; the one arg")
