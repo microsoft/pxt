@@ -1,1 +1,1 @@
-web npm install -g pxt
+web npm run bulid
