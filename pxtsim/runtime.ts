@@ -265,11 +265,18 @@ namespace pxsim {
             pxtcore.incr(a)
         }
 
+        setHandler(a: RefAction) {
+            this._handlers.forEach(old => pxtcore.decr(old))
+            this._handlers = [a];
+            pxtcore.incr(a)
+        }
+
         removeHandler(a: RefAction) {
             let index = this._handlers.findIndex(action => a == action)
-            if (index != -1) {
+            while (index != -1) {
                 this._handlers.splice(index,1)
                 pxtcore.decr(a)
+                index = this._handlers.findIndex(action => a == action)
             }
         }
 

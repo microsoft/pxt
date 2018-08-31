@@ -27,8 +27,14 @@ namespace pxsim {
         private notifyOneID: number;
         private lastEventValue: string | number;
         private lastEventTimestampUs: number;
+        private backgroundHandlerFlag: boolean = false;
 
         public nextNotifyEvent = 1024;
+        
+        public setBackroundHandlerFlag() {
+            this.backgroundHandlerFlag = true;
+        }
+
         public setNotify(notifyID: number, notifyOneID: number) {
             this.notifyID = notifyID;
             this.notifyOneID = notifyOneID;
@@ -37,7 +43,7 @@ namespace pxsim {
         constructor(private runtime: Runtime, private valueToArgs?: EventValueToActionArgs<T>) { }
 
         private start(id: number | string, evid: number | string, create: boolean) {
-            let k = id + ":" + evid;
+            let k = (this.backgroundHandlerFlag ? "back:" : "") + id + ":" + evid;
             let queue = this.queues[k];
             if (!queue) queue = this.queues[k] = new EventQueue<T>(this.runtime, this.valueToArgs);
             return queue;
@@ -45,11 +51,18 @@ namespace pxsim {
 
         listen(id: number | string, evid: number | string, handler: RefAction) {
             let q = this.start(id, evid, true);
-            q.addHandler(handler);
+            if (this.backgroundHandlerFlag)
+                q.addHandler(handler);
+            else    
+                q.setHandler(handler);
+            this.backgroundHandlerFlag = false;
         }
 
+        // only for background handlers
         remove(id: number | string, evid: number | string, handler: RefAction) {
+            this.backgroundHandlerFlag = true;
             let q = this.start(id, evid, true);
+            this.backgroundHandlerFlag = false;
             q.removeHandler(handler);
         }
 
@@ -61,6 +74,7 @@ namespace pxsim {
 
             // grab queue and handle
             let q = this.start(id, evid, false);
+            this.backgroundHandlerFlag = false;
             if (q) {
                 this.lastEventValue = evid;
                 this.lastEventTimestampUs = U.perfNowUs();
@@ -70,6 +84,7 @@ namespace pxsim {
 
         wait(id: number | string, evid: number | string, cb: (value?: any) => void) {
             let q = this.start(id, evid, true);
+            this.backgroundHandlerFlag = false;
             q.addAwaiter(cb);
         }
 
