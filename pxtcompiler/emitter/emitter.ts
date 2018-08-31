@@ -3514,14 +3514,21 @@ ${lbl}: .short 0xffff
                 return r;
             let tp = typeOf(e)
 
+            return emitAsStringCore(e, tp, r);
+        }
+
+        function emitAsStringCore(e: Expression | TemplateLiteralFragment, tp: Type, emitted: ir.Expr): ir.Expr {
             if (target.floatingPoint && (tp.flags & (TypeFlags.NumberLike | TypeFlags.Boolean | TypeFlags.BooleanLiteral)))
-                return ir.rtcallMask("numops::toString", 1, ir.CallingConvention.Plain, [r])
+                return ir.rtcallMask("numops::toString", 1, ir.CallingConvention.Plain, [emitted])
             else if (tp.flags & TypeFlags.NumberLike)
-                return ir.rtcall("Number_::toString", [r])
+                return ir.rtcall("Number_::toString", [emitted])
             else if (isBooleanType(tp))
-                return ir.rtcall("Boolean_::toString", [r])
+                return ir.rtcall("Boolean_::toString", [emitted])
             else if (isStringType(tp))
-                return r // OK
+                return emitted // OK
+            else if (isUnionOfLiterals(tp) && tp.types && tp.types.length) {
+                return emitAsStringCore(e, tp.types[0], emitted);
+            }
             else {
                 let decl = tp.symbol ? tp.symbol.valueDeclaration : null
                 if (decl && (decl.kind == SK.ClassDeclaration || decl.kind == SK.InterfaceDeclaration)) {
