@@ -1541,15 +1541,16 @@ namespace ts.pxtc {
             let w = 0;
             let h = 0;
             let lit = "";
+            let c = 0;
             s += "\n"
             for (let i = 0; i < s.length; ++i) {
                 switch (s[i]) {
                     case ".":
                     case "_":
-                    case "0": lit += "0,"; x++; break;
+                    case "0": lit += "0,"; x++; c++; break;
                     case "#":
                     case "*":
-                    case "1": lit += "1,"; x++; break;
+                    case "1": lit += "255,"; x++; c++; break;
                     case "\t":
                     case "\r":
                     case " ": break;
@@ -1569,8 +1570,10 @@ namespace ts.pxtc {
             }
 
             let lbl = "_img" + bin.lblNo++
-            if (lit.length % 4 != 0)
-                lit += "42" // pad
+
+            // Pad with a 0 if we have an odd number of pixels
+            if (c % 2 != 0)
+                lit += "0"
 
             bin.otherLiterals.push(`
 .balign 4
@@ -3511,14 +3514,21 @@ ${lbl}: .short 0xffff
                 return r;
             let tp = typeOf(e)
 
+            return emitAsStringCore(e, tp, r);
+        }
+
+        function emitAsStringCore(e: Expression | TemplateLiteralFragment, tp: Type, emitted: ir.Expr): ir.Expr {
             if (target.floatingPoint && (tp.flags & (TypeFlags.NumberLike | TypeFlags.Boolean | TypeFlags.BooleanLiteral)))
-                return ir.rtcallMask("numops::toString", 1, ir.CallingConvention.Plain, [r])
+                return ir.rtcallMask("numops::toString", 1, ir.CallingConvention.Plain, [emitted])
             else if (tp.flags & TypeFlags.NumberLike)
-                return ir.rtcall("Number_::toString", [r])
+                return ir.rtcall("Number_::toString", [emitted])
             else if (isBooleanType(tp))
-                return ir.rtcall("Boolean_::toString", [r])
+                return ir.rtcall("Boolean_::toString", [emitted])
             else if (isStringType(tp))
-                return r // OK
+                return emitted // OK
+            else if (isUnionOfLiterals(tp) && tp.types && tp.types.length) {
+                return emitAsStringCore(e, tp.types[0], emitted);
+            }
             else {
                 let decl = tp.symbol ? tp.symbol.valueDeclaration : null
                 if (decl && (decl.kind == SK.ClassDeclaration || decl.kind == SK.InterfaceDeclaration)) {

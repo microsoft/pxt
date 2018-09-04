@@ -9,22 +9,22 @@
             margin-bottom: 3rem !important;
             margin-top: 0.5rem !important;
         }
-        
+
         svg {
             max-width: 100%;
         }
-        
+
         .blocklyText {
             font-family:'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace !important;
         }
-        
+
         .blocklyCheckbox,
         .blocklyLed {
             fill: #ff3030 !important;
             text-shadow: 0px 0px 6px #f00;
             font-size: 17pt !important;
         }
-        
+
         .ui.card .blocklyPreview {
             position: absolute;
             top: 50%;
@@ -33,7 +33,7 @@
             width: calc(100% - 1em);
             max-height: calc(100% - 1em);
         }
-        
+
         code {
             white-space: pre-wrap;
         }
@@ -52,7 +52,7 @@
             top: calc(50% - 0.5em);
             left: calc(50% - 5em);
         }
-        
+
         code.lang-block,
         code.lang-blocks,
         code.lang-blocksxml,
@@ -72,14 +72,18 @@
     <style type="text/css">
         @import "/blb/highlight.js/styles/vs.css";
     </style>
+    <div id="sidedocs-back-button" class="ui" style="display: none">
+        <i class="ui icon left arrow"></i>
+        <span id="back-label"></span>
+    </div>
+    <div class="ui divider"></div>
     <div id='loading' class="ui active inverted dimmer">
         <div class="ui loader"></div>
     </div>
     <div id="content" class="ui container mainbody">
-        <i class="spinner loading icon"></i>
     </div>
 
-    <script>   
+    <script>
         // This line gets patched up by the cloud
         var pxtConfig = null;
     </script>
@@ -88,14 +92,16 @@
     <script type="text/javascript" src="/blb/jquery.js"></script>
     <script type="text/javascript" src="/embed.js"></script>
     <script type="text/javascript">
-        (function () {    
+        (function () {
+        var backButton = document.getElementById('sidedocs-back-button');
         var loading = document.getElementById('loading');
-        var content = document.getElementById('content');        
+        var content = document.getElementById('content');
         ksRunnerReady(function() {
             pxt.BrowserUtils.initTheme();
             pxt.docs.requireMarked = function() { return marked; }
-            var projectid = /projectid=([^&?]+)/i.exec(window.location.href); 
-            var project = /project=([^&?]+)/i.exec(window.location.href); 
+            document.getElementById('back-label').textContent = pxt.Util.lf("Go back")
+            var projectid = /projectid=([^&?]+)/i.exec(window.location.href);
+            var project = /project=([^&?]+)/i.exec(window.location.href);
             var code = /code=([^&?]+)/i.exec(window.location.href);
             var md = /md=([^&?]+)/i.exec(window.location.href);
             var markdown = code ? "```blocks\n" + decodeURIComponent(code[1]) + "```" : md ? decodeURIComponent(md[1]) : undefined;
@@ -107,7 +113,7 @@
                     $(loading).hide();
                     $(content).show();
                 });
-            } else if (projectid) {                
+            } else if (projectid) {
                 pxt.runner.renderProjectAsync(content, projectid[1]).done(function() {
                     $(loading).hide();
                     $(content).show();
@@ -123,7 +129,7 @@
             else if (embed)
                 pxt.runner.startRenderServer();
             else
-                pxt.runner.startDocsServer(loading, content);
+                pxt.runner.startDocsServer(loading, content, backButton);
         });
         })();
     </script>
