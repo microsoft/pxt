@@ -469,6 +469,7 @@ namespace pxt.cpp {
                     case "int8_t":
                     case "sbyte":
                     case "int":
+                    case "ramint_t":
                         return "I";
 
                     case "void": return "V";
@@ -480,6 +481,9 @@ namespace pxt.cpp {
 
                     case "ImageLiteral_":
                         return "T"
+
+                    case "String":
+                        return "S"
 
                     default:
                         if (U.lookup(knownEnums, tp))

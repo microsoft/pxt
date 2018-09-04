@@ -39,6 +39,7 @@ namespace ts.pxtc.ir {
     export interface ConvInfo {
         argIdx: number;
         method: string;
+        returnsRef?: boolean;
     }
 
     export interface MaskInfo {
@@ -53,6 +54,7 @@ namespace ts.pxtc.ir {
         public irCurrUses: number;
         public callingConvention = CallingConvention.Plain;
         public mask: MaskInfo;
+        public isStringLiteral: boolean;
 
         constructor(
             public exprKind: EK,

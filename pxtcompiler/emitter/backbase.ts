@@ -605,7 +605,6 @@ ${baseLabel}:
             }))
 
             U.assert(allArgs.length <= 4)
-            U.assert(allArgs.filter(a => a.isSimple && a.conv).length == 0)
 
             let seenUpdate = false
             for (let a of U.reversed(allArgs)) {
@@ -616,6 +615,11 @@ ${baseLabel}:
                 } else {
                     seenUpdate = true
                 }
+            }
+
+            for (let a of allArgs) {
+                // we might want conversion from literal numbers to strings for example
+                if (a.conv) a.isSimple = false
             }
 
             let complexArgs = allArgs.filter(a => !a.isSimple)
@@ -650,6 +654,11 @@ ${baseLabel}:
                         for (let a of convArgs) {
                             this.write(this.loadFromExprStack("r0", a.expr, off))
                             this.alignedCall(a.conv.method, "", off)
+                            if (a.conv.returnsRef)
+                                // replace the entry on the stack with the return value,
+                                // as the original was already decr'ed, but the result
+                                // has yet to be
+                                this.write(this.loadFromExprStack("r0", a.expr, off, true))
                             this.write(this.t.push_fixed(["r0"]))
                             off++
                         }
@@ -852,7 +861,7 @@ ${baseLabel}:
                 } else {
                     this.write(this.t.prologue_vtable(0, this.bin.options.target.vtableShift))
 
-                    let effIdx = procid.virtualIndex + 4
+                    let effIdx = procid.virtualIndex + numSpecialMethods + 2
                     if (procid.ifaceIndex != null) {
                         this.write(this.t.load_reg_src_off("r0", "r0", "#4") + " ; iface table")
                         effIdx = procid.ifaceIndex

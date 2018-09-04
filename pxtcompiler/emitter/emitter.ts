@@ -324,6 +324,7 @@ namespace ts.pxtc {
         itable?: ir.Procedure[];
         itableInfo?: string[];
         ctor?: ir.Procedure;
+        toStringMethod?: ir.Procedure;
     }
 
     export interface BinaryExpressionInfo {
@@ -503,6 +504,8 @@ namespace ts.pxtc {
         }
         if (!r)
             return r
+        if (isStringLiteral(node))
+            return r // skip checkType() - type is any for literal fragments
         return checkType(r)
     }
 
@@ -757,9 +760,13 @@ namespace ts.pxtc {
         return text;
     }
 
-    export function getFunctionLabel(node: FunctionLikeDeclaration) {
+    function safeName(node: Declaration) {
         let text = getDeclName(node)
-        return text.replace(/[^\w]+/g, "_") + "__P" + getNodeId(node)
+        return text.replace(/[^\w]+/g, "_")
+    }
+
+    export function getFunctionLabel(node: FunctionLikeDeclaration) {
+        return safeName(node) + "__P" + getNodeId(node)
     }
 
     export interface FieldAccessInfo {
@@ -1183,6 +1190,12 @@ namespace ts.pxtc {
             return null
         }
 
+        function isToString(m: FunctionLikeDeclaration) {
+            return m.kind == SK.MethodDeclaration &&
+                (m as MethodDeclaration).parameters.length == 0 &&
+                getName(m) == "toString"
+        }
+
         function getVTable(inf: ClassInfo) {
             assert(inf.isUsed, "inf.isUsed")
             if (inf.vtable)
@@ -1192,6 +1205,9 @@ namespace ts.pxtc {
             scope(() => {
                 for (let m of inf.methods) {
                     let minf = getFunctionInfo(m)
+                    if (isToString(m)) {
+                        inf.toStringMethod = lookupProc(m)
+                    }
                     if (minf.virtualParent) {
                         let key = classFunctionKey(m)
                         let done = false
@@ -1342,7 +1358,7 @@ namespace ts.pxtc {
         function getClassInfo(t: Type, decl: ClassDeclaration = null) {
             if (!decl)
                 decl = <ClassDeclaration>t.symbol.valueDeclaration
-            let id = "C" + getNodeId(decl)
+            let id = safeName(decl) + "__C" + getNodeId(decl)
             let info: ClassInfo = classInfos[id]
             if (!info) {
                 let reffields: PropertyDeclaration[] = []
@@ -1532,13 +1548,15 @@ ${lbl}: .short 0xffff
         }
         function emitSuper(node: Node) { }
         function emitStringLiteral(str: string) {
+            let r: ir.Expr
             if (str == "") {
-                return ir.rtcall("String_::mkEmpty", [])
+                r = ir.rtcall("String_::mkEmpty", [])
             } else {
                 let lbl = bin.emitString(str)
-                let res = ir.ptrlit(lbl + "meta", JSON.stringify(str), true)
-                return res
+                r = ir.ptrlit(lbl + "meta", JSON.stringify(str), true)
             }
+            r.isStringLiteral = true
+            return r
         }
         function emitLiteral(node: LiteralExpression) {
             if (node.kind == SK.NumericLiteral) {
@@ -1556,15 +1574,23 @@ ${lbl}: .short 0xffff
         }
 
         function emitTemplateExpression(node: TemplateExpression) {
-            // TODO use getMask() to avoid incr() on string literals
-            let concat = (a: ir.Expr, b: Expression | TemplateLiteralFragment) =>
-                isEmptyStringLiteral(b) ? a :
-                    rtcallMaskDirect("String_::concat", [a, emitAsString(b)])
-            // TODO could optimize for the case where node.head is empty
-            let expr = emitAsString(node.head)
+            let numconcat = 0
+            let concat = (a: ir.Expr, b: Expression | TemplateLiteralFragment) => {
+                if (isEmptyStringLiteral(b))
+                    return a
+                numconcat++
+                return rtcallMask("String_::concat", [irToNode(a, true), b as Expression], null)
+            }
+            let expr = emitExpr(node.head)
             for (let span of node.templateSpans) {
                 expr = concat(expr, span.expression)
                 expr = concat(expr, span.literal)
+            }
+            if (numconcat == 0) {
+                // make sure `${foo}` == foo.toString(), not just foo
+                return rtcallMask("String_::concat", [
+                    irToNode(expr, true),
+                    irToNode(ir.rtcall("String_::mkEmpty", []), false)], null)
             }
             return expr
         }
@@ -2194,7 +2220,9 @@ ${lbl}: .short 0xffff
             bin.usedClassInfos.push(info)
             for (let m of info.methods) {
                 let minf = getFunctionInfo(m)
-                if (isIfaceMemberUsed(getName(m)) || (minf.virtualParent && minf.virtualParent.isUsed))
+                if (isToString(m) ||
+                    isIfaceMemberUsed(getName(m)) ||
+                    (minf.virtualParent && minf.virtualParent.isUsed))
                     markFunctionUsed(m)
             }
 
@@ -2943,6 +2971,17 @@ ${lbl}: .short 0xffff
                 } else if (f == "B") {
                     mask &= ~(1 << i)
                     return emitCondition(a, r)
+                } else if (f == "S") {
+                    if (!r.isStringLiteral) {
+                        convInfos.push({
+                            argIdx: i,
+                            method: "numops::stringConv",
+                            returnsRef: true
+                        })
+                        // set the mask - the result of conversion is a ref
+                        mask |= (1 << i)
+                    }
+                    return r
                 } else if (f == "F" || f == "D") {
                     if (f == "D")
                         U.oops("double arguments not yet supported") // take two words
@@ -2957,7 +2996,8 @@ ${lbl}: .short 0xffff
                     throw U.oops("invalid format specifier: " + f)
                 }
             })
-            let r = ir.rtcallMask(name, mask, attrs.callingConvention, args2)
+            let r = ir.rtcallMask(name, mask,
+                attrs ? attrs.callingConvention : ir.CallingConvention.Plain, args2)
             if (!r.mask) r.mask = { refMask: 0 }
             r.mask.conversions = convInfos
             if (opts.target.isNative) {
@@ -3133,19 +3173,13 @@ ${lbl}: .short 0xffff
 
             if (node.operatorToken.kind == SK.PlusToken) {
                 if (isStringType(lt) || isStringType(rt)) {
-                    // TODO use getMask() to limit incr/decr
-                    return rtcallMaskDirect("String_::concat", [
-                        emitAsString(node.left),
-                        emitAsString(node.right)])
+                    return rtcallMask("String_::concat", [node.left, node.right], null)
                 }
             }
 
             if (node.operatorToken.kind == SK.PlusEqualsToken && isStringType(lt)) {
                 let cleanup = prepForAssignment(node.left)
-                // TODO use getMask() to limit incr/decr
-                let post = ir.shared(rtcallMaskDirect("String_::concat", [
-                    emitExpr(node.left),
-                    emitAsString(node.right)]))
+                let post = ir.shared(rtcallMask("String_::concat", [node.left, node.right], null))
                 emitStore(node.left, irToNode(post))
                 cleanup();
                 return post
@@ -3184,37 +3218,6 @@ ${lbl}: .short 0xffff
                     return shim("langsupp::ptrneq");
                 default:
                     throw unhandled(node.operatorToken, lf("unknown generic operator"), 9252)
-            }
-        }
-
-        function emitAsString(e: Expression | TemplateLiteralFragment): ir.Expr {
-            let r = emitExpr(e)
-            // TS returns 'any' as type of template elements
-            if (isStringLiteral(e))
-                return r;
-            let tp = typeOf(e)
-
-            if ((tp.flags & (TypeFlags.NumberLike | TypeFlags.Boolean | TypeFlags.BooleanLiteral)))
-                return rtcallMaskDirect("numops::toString", [r])
-            else if (isStringType(tp))
-                return r // OK
-            else {
-                let decl = tp.symbol ? tp.symbol.valueDeclaration : null
-                if (decl && (decl.kind == SK.ClassDeclaration || decl.kind == SK.InterfaceDeclaration)) {
-                    let classDecl = decl as ClassDeclaration
-                    let toString = classDecl.members.filter(m =>
-                        (m.kind == SK.MethodDeclaration || m.kind == SK.MethodSignature) &&
-                        (m as MethodDeclaration).parameters.length == 0 &&
-                        getName(m) == "toString")[0] as MethodDeclaration
-                    if (toString) {
-                        let ee = e as Expression
-                        return emitCallCore(ee, ee, [], null, toString, ee)
-                    } else {
-                        throw userError(9254, lf("type {0} lacks toString() method", getName(decl)))
-                        //return emitStringLiteral("[" + getName(decl) + "]")
-                    }
-                }
-                throw userError(9225, lf("don't know how to convert to string"))
             }
         }
 

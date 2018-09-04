@@ -563,12 +563,13 @@ ${lbl}: .short 0xffff, ${pxt.REF_TAG_NUMBER}
         }
     }
 
+    export const numSpecialMethods = 3;
     export function vtableToAsm(info: ClassInfo, opts: CompileOptions) {
         let s = `
         .balign ${1 << opts.target.vtableShift}
 ${info.id}_VT:
         .short ${info.allfields.length * 4 + 4}  ; size in bytes
-        .byte ${info.vtable.length + 2}, 0  ; num. methods
+        .byte ${info.vtable.length + numSpecialMethods}, 0  ; num. methods
 `;
 
         let ptrSz = target.shortPointers ? ".short" : ".word"
@@ -581,6 +582,10 @@ ${info.id}_VT:
 
         addPtr("pxt::RefRecord_destroy")
         addPtr("pxt::RefRecord_print")
+        if (info.toStringMethod)
+            s += `        ${ptrSz} ${info.toStringMethod.label()}_Lit\n`
+        else
+            addPtr("0")
 
         for (let m of info.vtable) {
             addPtr(m.label())
