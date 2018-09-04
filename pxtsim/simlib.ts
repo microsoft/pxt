@@ -30,7 +30,7 @@ namespace pxsim {
         private backgroundHandlerFlag: boolean = false;
 
         public nextNotifyEvent = 1024;
-        
+
         public setBackroundHandlerFlag() {
             this.backgroundHandlerFlag = true;
         }
@@ -53,17 +53,18 @@ namespace pxsim {
             let q = this.start(id, evid, true);
             if (this.backgroundHandlerFlag)
                 q.addHandler(handler);
-            else    
+            else
                 q.setHandler(handler);
             this.backgroundHandlerFlag = false;
         }
 
         // only for background handlers
-        remove(id: number | string, evid: number | string, handler: RefAction) {
-            this.backgroundHandlerFlag = true;
-            let q = this.start(id, evid, true);
+        remove(handler: RefAction) {
             this.backgroundHandlerFlag = false;
-            q.removeHandler(handler);
+            (<any>this.queues).forEach((k: string, i: number, q: EventQueue<T>) => {
+                if (k.startsWith("back") && q.handlers.findIndex(h => h == handler) != -1)
+                     q.removeHandler(handler);
+            });
         }
 
         queue(id: number | string, evid: number | string, value: T = null) {
