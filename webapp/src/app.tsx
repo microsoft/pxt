@@ -171,26 +171,54 @@ export class ProjectView
     }
 
     saveSettings() {
-        let sett = this.settings
-
         if (this.reload) {
             return;
         }
 
         let f = this.editorFile
         if (f && f.epkg.getTopHeader() && this.editor.hasHistory()) {
-            let n: FileHistoryEntry = {
-                id: f.epkg.getTopHeader().id,
-                name: f.getName(),
-                pos: this.editor.getViewState()
-            }
-            sett.fileHistory = sett.fileHistory.filter(e => e.id != n.id || e.name != n.name)
-            while (sett.fileHistory.length > 100)
-                sett.fileHistory.pop()
-            sett.fileHistory.unshift(n)
+            this.pushFileHistory(f.epkg.getTopHeader().id, f.getName(), this.editor.getViewState());
         }
 
         pxt.storage.setLocal("editorSettings", JSON.stringify(this.settings))
+    }
+
+    private pushFileHistory(id: string, name: string, pos: any) {
+        const sett = this.settings
+        let n: FileHistoryEntry = {
+            id: id,
+            name: name,
+            pos: pos
+        }
+        sett.fileHistory = sett.fileHistory.filter(e => e.id != n.id || e.name != n.name)
+        while (sett.fileHistory.length > 100)
+            sett.fileHistory.pop()
+        sett.fileHistory.unshift(n)
+    }
+
+    openProjectInLegacyEditor(majorVersion: number) {
+        if (!this.editorFile || !this.editorFile.epkg || !this.editorFile.epkg.getTopHeader()) return Promise.resolve();
+        const header = this.editorFile.epkg.getTopHeader();
+        return workspace.copyProjectToLegacyEditor(header, majorVersion)
+            .then(newHeader => {
+                // Push an entry to the history so that the project loads when we change the URL. The editor
+                // will ignore non-existent entries so this shouldn't affect any versions except the one
+                // we choose
+                this.pushFileHistory(newHeader.id, this.editorFile.getName(), this.editor.getViewState());
+                pxt.storage.setLocal("editorSettings", JSON.stringify(this.settings))
+
+                const appTheme = pxt.appTarget.appTheme;
+                if (appTheme && appTheme.editorVersionPaths && appTheme.editorVersionPaths[majorVersion]) {
+                    const newPath = appTheme.editorVersionPaths[majorVersion];
+                    window.location.href = pxt.Util.pathJoin(pxt.appTarget.name, newPath + "#editor");
+                }
+                else {
+                    window.location.href = pxt.Util.pathJoin(pxt.appTarget.name, "v" + header.targetVersion + "#editor");
+                }
+            })
+            .catch(e => {
+                core.warningNotification(lf("Importing to older editor version only supported in web browsers"));
+            });
     }
 
     componentDidUpdate() {
@@ -362,6 +390,39 @@ export class ProjectView
         this.typecheck()
     }
 
+    private showPackageErrorsOnNextTypecheck() {
+        this.setState({ suppressPackageWarning: false });
+    }
+
+    private maybeShowPackageErrors(force = false) {
+        if (!this.state.suppressPackageWarning || force) {
+            const badPackages = compiler.getPackagesWithErrors();
+            if (badPackages.length) {
+                this.setState({ suppressPackageWarning: true });
+
+                const h = this.state.header;
+                const currentVersion = pxt.semver.parse(pxt.appTarget.versions.target);
+                const headerVersion = pxt.semver.parse(h.targetVersion);
+
+                let openHandler: () => void;
+                if (workspace.isBrowserWorkspace() && currentVersion.major !== headerVersion.major) {
+                    openHandler = () => {
+                        this.openProjectInLegacyEditor(headerVersion.major);
+                    };
+                }
+
+                dialogs.showPackageErrorDialogAsync(badPackages, pkg.mainEditorPkg(), openHandler)
+                    .then(didChange => {
+                        if (didChange) {
+                            this.reloadHeaderAsync();
+                        }
+                    });
+                return true;
+            }
+        }
+        return false;
+    }
+
     private autoRunBlocksSimulator = pxtc.Util.debounce(
         () => {
             if (Util.now() - this.lastChangeTime < 1000) return;
@@ -408,6 +469,8 @@ export class ProjectView
                             else this.autoRunSimulator();
                         }
                     }
+
+                    this.maybeShowPackageErrors();
                 });
         }, 1000, false);
 
@@ -1260,6 +1323,7 @@ export class ProjectView
     newProject(options: ProjectCreationOptions = {}) {
         pxt.tickEvent("app.newproject");
         core.showLoading("newproject", lf("creating new project..."));
+        this.showPackageErrorsOnNextTypecheck();
         this.createProjectAsync(options)
             .then(() => Promise.delay(500))
             .done(() => core.hideLoading("newproject"));
@@ -1452,6 +1516,16 @@ export class ProjectView
                 if (saveOnly) {
                     return pxt.commands.saveOnlyAsync(resp);
                 }
+                if (!resp.success) {
+                    if (!this.maybeShowPackageErrors(true)) {
+                        core.confirmAsync({
+                            header: lf("Compilation failed"),
+                            body: lf("Ooops, looks like there are errors in your program."),
+                            hideAgree: true,
+                            disagreeLbl: lf("Close")
+                        });
+                    }
+                }
                 return pxt.commands.deployCoreAsync(resp, {
                     reportDeviceNotFoundAsync: (docPath, compileResult) => this.showDeviceNotFoundDialogAsync(docPath, compileResult)
                 })
@@ -1526,6 +1600,7 @@ export class ProjectView
         if (this.state.running) {
             this.stopSimulator()
         } else {
+            this.maybeShowPackageErrors(true);
             this.startSimulator();
         }
     }

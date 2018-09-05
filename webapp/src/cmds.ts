@@ -46,12 +46,7 @@ export function browserDownloadDeployCoreAsync(resp: pxtc.CompileResult): Promis
     }
 
     if (!resp.success) {
-        return core.confirmAsync({
-            header: lf("Compilation failed"),
-            body: lf("Ooops, looks like there are errors in your program."),
-            hideAgree: true,
-            disagreeLbl: lf("Close")
-        }).then(() => { });
+        return Promise.resolve();
     }
 
     if (resp.saveOnly && userContext) return pxt.commands.showUploadInstructionsAsync(fn, url, core.confirmAsync); // save does the same as download as far iOS is concerned

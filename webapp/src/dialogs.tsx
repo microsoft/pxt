@@ -4,9 +4,11 @@ import * as ReactDOM from "react-dom";
 import * as sui from "./sui";
 import * as data from "./data";
 import * as core from "./core";
+import * as coretsx from "./coretsx";
 import * as cloudsync from "./cloudsync";
 
 import Cloud = pxt.Cloud;
+import { EditorPackage } from "./package";
 
 
 interface PlainCheckboxProps {
@@ -193,7 +195,154 @@ function renderVersionLink(name: string, version: string, url: string) {
     </p>;
 }
 
+export function showPackageErrorDialogAsync(badPackages: EditorPackage[], mainPkg: EditorPackage, openLegacyEditor?: () => void): Promise<boolean> {
+    let pendingOperation: Promise<void>;
+    return core.dialogAsync({
+        header: lf("Extension Errors"),
+        hideCancel: true,
+        buttons: [
+            {
+                label: lf("Update all"),
+                className: "button",
+                icon: "refresh",
+                onclick: () => {
+                    pendingOperation = Promise.all(badPackages.map(e => mainPkg.updateDepAsync(e.getPkgId())))
+                        .then(coretsx.hideDialog);
+                }
+            },
+            {
+                label: lf("Ok"),
+                className: "button",
+                icon: "checkmark",
+                onclick: coretsx.hideDialog
+            }
+        ],
+        jsx: <div>
+                <p>{pxt.Util.lf("The following extensions are preventing the project from compiling:")}</p>
+                <div className="ui relaxed divided list">
+                {
+                    badPackages.map(epkg => <PackageErrorListItem package={epkg} key={epkg.getPkgId()} removePackage={curryRemove(epkg.getPkgId())}></PackageErrorListItem>)
+                }
+            </div>
+            { openLegacyEditor ? renderEditorVersionMessage(openLegacyEditor) : undefined }
+        </div>
+    }).then(() => {
+        if (pendingOperation) {
+            return pendingOperation.then(() => true);
+        }
+        return Promise.resolve(false);
+    });
 
+    function curryRemove(id: string) {
+        return () => {
+            pendingOperation = mainPkg.removeDepAsync(id).then(coretsx.hideDialog);
+        }
+    }
+}
+
+export function renderEditorVersionMessage(onClick: () => void) {
+    return <div className="ui message">
+        <p>{pxt.Util.lf("This project was made in an older version of the editor and may not be compatible with the latest version.")} <a role="button" onClick={onClick}>{pxt.Util.lf("Open the project in the old editor")}.</a></p>
+    </div>
+}
+
+interface PackageErrorListItemProps {
+    package: EditorPackage;
+    removePackage: () => void;
+}
+
+interface PackageErrorListItemState {
+    expanded: boolean;
+    pendingRemoval: boolean;
+}
+
+class PackageErrorListItem extends React.Component<PackageErrorListItemProps, PackageErrorListItemState> {
+
+    toggle = () => {
+        this.setState({ expanded: !(this.state && this.state.expanded) });
+    }
+
+    pendingRemoval = () => {
+        this.setState({ pendingRemoval: true });
+    }
+
+    clearPending = () => {
+        this.setState({ pendingRemoval: false });
+    }
+
+    render() {
+        const epkg = this.props.package;
+        const kspkg = epkg.getKsPkg();
+        const protocol = kspkg.verProtocol();
+
+        let displayName = epkg.getPkgId();
+        let displayVersion = kspkg.version();
+        let url: string;
+        let icon: JSX.Element;
+
+        switch (protocol) {
+            case "github":
+                displayVersion = kspkg.verArgument();
+                const parsed = pxt.github.parseRepoId(displayVersion);
+                url = pxt.Util.pathJoin("https://github.com", parsed.fullName);
+                icon = <i className="large github middle aligned icon"></i>;
+                break;
+            case "pub":
+                url = pxt.Util.pathJoin(pxt.appTarget.appTheme.shareUrl || "https://makecode.com/", kspkg.verArgument());
+                displayVersion = lf("shared script {0}", kspkg.verArgument());
+                icon = <i className="large share alternate middle aligned icon"></i>;
+                break;
+        }
+
+        const errors = collectErrors(epkg);
+        const isExpanded = this.state && this.state.expanded;
+        const isPending = this.state && this.state.pendingRemoval;
+
+        return <div className="item" key={pxt.Util.htmlEscape(epkg.getPkgId())}>
+            <div className="right floated content">
+            { isPending ?
+                <div>
+                    <button className="ui button negative" role="button" onClick={this.props.removePackage}>{pxt.Util.lf("Remove")}</button>
+                    <button className="ui button" role="button" onClick={this.clearPending}>{pxt.Util.lf("Cancel")}</button>
+                </div> :
+                <button className="ui icon button" role="button" aria-label={lf("Remove dependency")} onClick={this.pendingRemoval}>
+                    <i className="trash icon"></i>
+                </button>
+            }
+            </div>
+            { icon }
+            <div className="content">
+                <a className="header" href={url} >{`${displayName} (${displayVersion})`}</a>
+                <div className="description" onClick={this.toggle} role="button" aria-pressed={!!isExpanded} aria-label={isExpanded ? lf("Hide error list") : lf("Show error list")}>
+                    {errors.length > 1 ? lf("Found {0} errors", errors.length) : lf("Found {0} error", errors.length) }
+                    <i className={`small middle aligned icon caret ${isExpanded ? "down" : "right"}`}></i>
+                </div>
+                <div className={`list package-diagnostics ${isExpanded ? "expanded-list" : ""}`}>
+                    {
+                        errors.map((d, index) => <div className="extra" key={index}>
+                            {`${formatErrorPath(d.fileName)} (line ${d.line + 1}) TS${d.code}: ${ts.pxtc.flattenDiagnosticMessageText(d.messageText, "\n")}`}
+                        </div>)
+                    }
+                </div>
+            </div>
+        </div>
+    }
+}
+
+function collectErrors(epkg: EditorPackage) {
+    const result: pxtc.KsDiagnostic[] = [];
+    pxt.Util.values(epkg.files).forEach(f => f.diagnostics && f.diagnostics.forEach(d => d.category === ts.pxtc.DiagnosticCategory.Error && result.push(d)));
+    return result;
+}
+
+function formatErrorPath(fileName: string) {
+    const parts = fileName.split(/[\\\/]/);
+    if (parts.length > 2) {
+        // The first two parts are pxt_modules and the name of the package
+        return parts.splice(2).join("/");
+    }
+    return fileName;
+}
 
 export function showCommitDialogAsync(repo: string) {
     let input: HTMLInputElement;

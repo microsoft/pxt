@@ -15,6 +15,7 @@ namespace pxt.workspace {
         pubCurrent: boolean; // is this exactly pubId, or just based on it
         githubId?: string;
         githubCurrent?: boolean;
+        originalTargetVersion?: string; // the version of the target the project was created in (present if imported into newer version)
     }
 
     export interface Header extends InstallHeader {
@@ -54,7 +55,7 @@ namespace pxt.workspace {
     }
 
     export interface WorkspaceProvider {
-        listAsync(): Promise<Header[]>; // called from workspace.syncAsync (including upon startup)        
+        listAsync(): Promise<Header[]>; // called from workspace.syncAsync (including upon startup)
         getAsync(h: Header): Promise<File>;
         setAsync(h: Header, prevVersion: Version, text?: ScriptText): Promise<Version>;
         deleteAsync?: (h: Header, prevVersion: Version) => Promise<void>;
