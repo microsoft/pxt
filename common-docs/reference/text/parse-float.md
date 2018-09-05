@@ -15,6 +15,6 @@ parseFloat("0.5");
 Take the first digits of PI from the sentence and turn it into a number.
 
 ```blocks
-let pi = "pi is 3.14...";
-let freezing = parseFloat(pi.substr(6, 3));
+let text = "pi is 3.14...";
+let pi = parseFloat(text.substr(6, 3));
 ```
