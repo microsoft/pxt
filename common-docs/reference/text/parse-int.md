@@ -1,6 +1,6 @@
 # parse Int
 
-Turn text that has just number characters into a real number value. The number is an integer.
+Turn text that has just number characters into an integer number value.
 
 ```sig
 parseInt("0");
@@ -21,6 +21,6 @@ attempt at converting to a number. So, try not to mix number characters with let
 Take the temperature text from the sentence and turn it into a number.
 
 ```blocks
-let frozenWater = "The freezing temprature of water is 32 degrees Fahrenheit.";
-let freezing = parseInt(frozenWater.substr(36, 2));
+let frozenWater = "The freezing temperature of water is 32 degrees Fahrenheit.";
+let freezing = parseInt(frozenWater.substr(37, 2));
 ```

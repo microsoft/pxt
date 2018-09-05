@@ -335,8 +335,12 @@ namespace pxsim {
             return initString(String.fromCharCode(code));
         }
 
-        export function toNumber(s: string) {
+        export function toInt(s: string) {
             return parseInt(s);
+        }
+
+        export function toNumber(s: string) {
+            return parseFloat(s);
         }
 
         // TODO check edge-conditions

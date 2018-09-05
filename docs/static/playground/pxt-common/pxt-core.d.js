@@ -241,14 +241,14 @@ declare interface String {
 }
 
 /**
-  * Convert a string to an integer.
+  * Convert a string to a number.
   * @param s A string to convert into a number. eg: 123
   */
 //% shim=String_::toNumber
-//% help=text/parse-int
-//% blockId="string_parseint" block="parse to integer %text" blockNamespace="text"
+//% help=text/parse-float
+//% blockId="string_parsefloat" block="parse to number %text" blockNamespace="text"
 //% text.defl="123"
-declare function parseInt(text: string): number;
+declare function parseFloat(text: string): number;
 
 interface Object { }
 interface Function { }
