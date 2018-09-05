@@ -360,7 +360,7 @@ namespace ts.pxtc.decompiler {
 
         const getCommentRef = (() => { let currentCommentId = 0; return () => `${currentCommentId++}` })();
 
-        ts.forEachChild(file, topLevelNode => {
+        const checkTopNode = (topLevelNode: Node) => {
             if (topLevelNode.kind === SK.FunctionDeclaration && !checkStatement(topLevelNode, env, false, true)) {
                 env.declaredFunctions[getVariableName((topLevelNode as ts.FunctionDeclaration).name)] = true;
             }
@@ -377,7 +377,12 @@ namespace ts.pxtc.decompiler {
                     });
                 });
             }
-        })
+            else if (topLevelNode.kind === SK.Block) {
+                ts.forEachChild(topLevelNode, checkTopNode);
+            }
+        };
+
+        ts.forEachChild(file, checkTopNode);
 
         if (enumMembers.length) {
             write("<variables>")
@@ -445,7 +450,10 @@ ${output}</xml>`;
             if (blockInfo) {
                 return blockInfo.attributes;
             }
-            return undefined;
+            return {
+                paramDefl: {},
+                callingConvention: ir.CallingConvention.Plain
+            };
         }
 
         function countBlock() {
