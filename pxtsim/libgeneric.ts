@@ -335,10 +335,6 @@ namespace pxsim {
             return initString(String.fromCharCode(code));
         }
 
-        export function toInt(s: string) {
-            return parseInt(s);
-        }
-
         export function toNumber(s: string) {
             return parseFloat(s);
         }
