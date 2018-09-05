@@ -12,7 +12,7 @@ parseFloat("0.5");
 
 ## Example #exsection
 
-Take the temperature text from the sentence and turn it into a number.
+Take the first digits of PI from the sentence and turn it into a number.
 
 ```blocks
 let pi = "pi is 3.14...";
