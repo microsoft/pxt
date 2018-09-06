@@ -31,7 +31,7 @@ namespace pxsim {
 
         public nextNotifyEvent = 1024;
 
-        public setBackroundHandlerFlag() {
+        public setBackgroundHandlerFlag() {
             this.backgroundHandlerFlag = true;
         }
 
@@ -61,9 +61,9 @@ namespace pxsim {
         // only for background handlers
         remove(handler: RefAction) {
             this.backgroundHandlerFlag = false;
-            (<any>this.queues).forEach((k: string, i: number, q: EventQueue<T>) => {
-                if (k.startsWith("back") && q.handlers.findIndex(h => h == handler) != -1)
-                     q.removeHandler(handler);
+            Object.keys(this.queues).forEach((k: string) => {
+                if (k.startsWith("back") && this.queues[k].handlers.findIndex(h => h == handler) != -1)
+                    this.queues[k].removeHandler(handler);
             });
         }
 
@@ -72,13 +72,20 @@ namespace pxsim {
             const notifyOne = this.notifyID && this.notifyOneID && id == this.notifyOneID;
             if (notifyOne)
                 id = this.notifyID;
-
-            // grab queue and handle
+            // first, background
+            this.backgroundHandlerFlag = true;
             let q = this.start(id, evid, false);
             this.backgroundHandlerFlag = false;
             if (q) {
                 this.lastEventValue = evid;
                 this.lastEventTimestampUs = U.perfNowUs();
+                q.push(value, notifyOne);
+            }
+            // grab foreground queue and handle
+            q = this.start(id, evid, false);
+            if (q) {
+                this.lastEventValue = evid;
+                this.lastEventTimestampUs = U.perfNowUs()
                 q.push(value, notifyOne);
             }
         }
