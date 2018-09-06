@@ -4947,7 +4947,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
         pxt.log(`targetconfig.json not found`);
         return Promise.resolve();
     }
-    const cloud = !!parsed.flags["cloud"];
+    const localBuild = !!parsed.flags["cloud"];
     const warnDiv = !!parsed.flags["warndiv"];
     const targetConfig = nodeutil.readJson("targetconfig.json") as pxt.TargetConfig;
     const packages = targetConfig.packages;
@@ -4989,7 +4989,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
         // clone or sync package
         const buildArgs = ["build", "--ignoreTests"];
         if (warnDiv) buildArgs.push("--warndiv");
-        if (cloud) buildArgs.push("--cloud");
+        if (localBuild) buildArgs.push("--localbuild");
         const pkgdir = path.join(pkgsroot, pkgpgh);
         return gitAsync(".", "clone", "-q", "-b", repos[pkgpgh].tag, `https://github.com/${pkgpgh}`, pkgdir)
             .then(() => pxtAsync(pkgdir, ["install"]))
@@ -5003,13 +5003,17 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
     }
 
     // 1. collect packages
-    return rimrafAsync(pkgsroot, {})
-        .then(() => nodeutil.mkdirP(pkgsroot))
+    return passwordGetAsync(GITHUB_KEY)
+        .then(ghtoken => {
+            pxt.github.token = ghtoken;
+            pxt.log(`github token available: ${!!pxt.github.token}`)
+            return rimrafAsync(pkgsroot, {});
+        }).then(() => nodeutil.mkdirP(pkgsroot))
         .then(() => pxt.github.searchAsync("", packages))
         .then(ghrepos => ghrepos.filter(ghrepo => ghrepo.status == pxt.github.GitRepoStatus.Approved)
             .map(ghrepo => ghrepo.fullName).concat(packages.approvedRepos || []))
         .then(fullnames => {
-            pxt.log(`found ${fullnames.length} packages`);
+            pxt.log(`found ${fullnames.length} approved packages`);
             fullnames.forEach(fn => pxt.log(`  ${fn}`));
             return Promise.all(fullnames.map(fullname => pxt.github.listRefsAsync(fullname)
                 .then(tags => {
@@ -5019,7 +5023,8 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
             );
         }).then(() => {
             todo = Object.keys(repos);
-            pxt.log(`found ${todo.length} packages`);
+            pxt.log(`found ${todo.length} approved package with releases`);
+            todo.forEach(fn => pxt.log(`  ${fn}#${repos[fn]}`));
             // 2. process each repo
             return nextAsync();
         });
@@ -5427,7 +5432,7 @@ function initCommands() {
         help: "Download and build approved github packages",
         flags: {
             warndiv: { description: "Warns about division operators" },
-            cloud: { description: "use cloud compiler" }
+            localBuild: { description: "use local C++ compiler", aliases: ["localbuild", "lb"] }
         }
     }, testGithubPackagesAsync);
 
