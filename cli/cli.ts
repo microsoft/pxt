@@ -5025,9 +5025,9 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
                     nodeutil.allFiles(pkgdir, 1)
                         .filter(f => /\.ts$/i.test(f))
                         .forEach(f => fs.readFileSync(f, { encoding: "utf8" })
-                            .replace(/[^\/]\/[^\/*]/g, m => { filesWithDiv[f] = true; return '' }));
+                            .replace(/[^\/*]\/[^\/*]/g, m => { filesWithDiv[f.replace(pkgdir, '').replace(/^[\/\\]/, '')] = true; return '' }));
                     const fsw = Object.keys(filesWithDiv);
-                    if (fsw) {
+                    if (fsw.length) {
                         errors.push(`${pkgpgh} div found in ${fsw.join(', ')}`);
                         pxt.log(errors[errors.length - 1])
                     }
