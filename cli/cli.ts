@@ -4962,6 +4962,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
     }
     const localBuild = !!parsed.flags["cloud"];
     const warnDiv = !!parsed.flags["warndiv"];
+    const clean = !!parsed.flags["clean"];
     const targetConfig = nodeutil.readJson("targetconfig.json") as pxt.TargetConfig;
     const packages = targetConfig.packages;
     if (!packages) {
@@ -5004,7 +5005,12 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
         if (warnDiv) buildArgs.push("--warndiv");
         if (localBuild) buildArgs.push("--localbuild");
         const pkgdir = path.join(pkgsroot, pkgpgh);
-        return gitAsync(".", "clone", "-q", "-b", repos[pkgpgh].tag, `https://github.com/${pkgpgh}`, pkgdir)
+        return (
+            !nodeutil.existsDirSync(pkgdir)
+                ? gitAsync(".", "clone", "-q", "-b", repos[pkgpgh].tag, `https://github.com/${pkgpgh}`, pkgdir)
+                : gitAsync(pkgdir, "checkout", "-f", repos[pkgpgh].tag)
+        )
+            .then(() => pxtAsync(pkgdir, ["clean"]))
             .then(() => pxtAsync(pkgdir, ["install"]))
             .then(() => pxtAsync(pkgdir, buildArgs))
             .catch(e => {
@@ -5017,7 +5023,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
 
     // 1. collect packages
     return loadGithubTokenAsync()
-        .then(() => rimrafAsync(pkgsroot, {}))
+        .then(() => clean ? rimrafAsync(pkgsroot, {}) : Promise.resolve())
         .then(() => nodeutil.mkdirP(pkgsroot))
         .then(() => pxt.github.searchAsync("", packages))
         .then(ghrepos => ghrepos.filter(ghrepo => ghrepo.status == pxt.github.GitRepoStatus.Approved)
@@ -5449,7 +5455,8 @@ function initCommands() {
         help: "Download and build approved github packages",
         flags: {
             warndiv: { description: "Warns about division operators" },
-            localBuild: { description: "use local C++ compiler", aliases: ["localbuild", "lb"] }
+            localBuild: { description: "use local C++ compiler", aliases: ["localbuild", "lb"] },
+            clean: { description: "delete all previous repos" }
         }
     }, testGithubPackagesAsync);
 
