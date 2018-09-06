@@ -397,19 +397,19 @@ namespace pxsim {
 
         export function indexOf(s: string, searchValue: string, start?: number) {
             pxtrt.nullCheck(s);
-            pxtrt.nullCheck(searchValue);
+            if (searchValue == null) return -1;
             return s.indexOf(searchValue, start);
         }
 
         export function lastIndexOf(s: string, searchValue: string, start?: number) {
             pxtrt.nullCheck(s);
-            pxtrt.nullCheck(searchValue);
+            if (searchValue == null) return -1;
             return s.lastIndexOf(searchValue, start);
         }
 
         export function includes(s: string, searchValue: string, start?: number) {
             pxtrt.nullCheck(s);
-            pxtrt.nullCheck(searchValue);
+            if (searchValue == null) return false;
             return s.includes(searchValue, start);
         }
     }
