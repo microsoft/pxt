@@ -220,12 +220,12 @@ let loadGithubTokenAsyncPromise: Promise<void> = undefined;
 export function loadGithubTokenAsync(): Promise<void> {
     if (!loadGithubTokenAsyncPromise)
         loadGithubTokenAsyncPromise = pxt.github.token ? Promise.resolve() : passwordGetAsync(GITHUB_KEY)
-        .then(ghtoken => {
-            if (ghtoken) {
-                pxt.github.token = ghtoken;
-                pxt.debug(`github token loaded`);
-            }
-        });
+            .then(ghtoken => {
+                if (ghtoken) {
+                    pxt.github.token = ghtoken;
+                    pxt.debug(`github token loaded`);
+                }
+            });
     return loadGithubTokenAsyncPromise;
 }
 
@@ -4958,7 +4958,8 @@ function extractLocStringsAsync(output: string, dirs: string[]): Promise<void> {
 }
 
 function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<void> {
-    pxt.log(`testing github packages`);
+    pxt.log(`-- testing github packages-- `);
+    pxt.log(`make sure to store your github token (using pxt login github TOKEN) to avoid throttling`)
     if (!fs.existsSync("targetconfig.json")) {
         pxt.log(`targetconfig.json not found`);
         return Promise.resolve();
@@ -4996,13 +4997,14 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
     function nextAsync(): Promise<void> {
         const pkgpgh = todo.pop();
         if (!pkgpgh) {
+            pxt.log('')
             pxt.log(`------------------------`)
             pxt.log(`${errors.length} packages with errors`);
             errors.forEach(er => pxt.log(`  ${er}`));
             return Promise.resolve();
         }
-
-        pxt.log(`  ${pkgpgh}`)
+        pxt.log('')
+        pxt.log(`  testing ${pkgpgh}`)
         // clone or sync package
         const buildArgs = ["build", "--ignoreTests"];
         if (warnDiv) buildArgs.push("--warndiv");
@@ -5016,8 +5018,23 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
             .then(() => pxtAsync(pkgdir, ["clean"]))
             .then(() => pxtAsync(pkgdir, ["install"]))
             .then(() => pxtAsync(pkgdir, buildArgs))
+            .then(() => {
+                if (warnDiv) {
+                    // perform a regex search over the repo for / operator
+                    const filesWithDiv: pxt.Map<boolean> = {};
+                    nodeutil.allFiles(pkgdir, 1)
+                        .filter(f => /\.ts$/i.test(f))
+                        .forEach(f => fs.readFileSync(f, { encoding: "utf8" })
+                            .replace(/[^\/]\/[^\/*]/g, m => { filesWithDiv[f] = true; return '' }));
+                    const fsw = Object.keys(filesWithDiv);
+                    if (fsw) {
+                        errors.push(`${pkgpgh} div found in ${fsw.join(', ')}`);
+                        pxt.log(errors[errors.length - 1])
+                    }
+                }
+            })
             .catch(e => {
-                errors.push(pkgpgh);
+                errors.push(`${pkgpgh} ${e}`);
                 pxt.log(e);
                 return Promise.resolve();
             })
@@ -5039,8 +5056,8 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
             return Promise.all(fullnames.map(fullname => pxt.github.listRefsAsync(fullname)
                 .then(tags => {
                     const tag = tags.reverse()[0] || "master";
-                    if (tag != "master" && !/^v\d+\.\d+.\d+$/.test(tag)) {
-                        errors.push(`invalid tag format for ${fullname}#${tag || "master"}`);
+                    if (tag != "master" && !/^v\d+(\.\d+(.\d+)?)?$/.test(tag)) {
+                        errors.push(`${fullname}: invalid tag #${tag || "master"}`);
                         pxt.log(errors[errors.length - 1]);
                     }
                     else
