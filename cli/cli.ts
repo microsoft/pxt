@@ -4999,7 +4999,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
                 pxt.log(e);
                 return Promise.resolve();
             })
-            .then(() => nextAsync());
+            .then(() => nextAsync())
     }
 
     // 1. collect packages
