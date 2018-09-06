@@ -216,14 +216,17 @@ export function logoutAsync() {
         .then(() => pxt.log('access tokens removed'));
 }
 
+let loadGithubTokenAsyncPromise: Promise<void> = undefined;
 export function loadGithubTokenAsync(): Promise<void> {
-    return pxt.github.token ? Promise.resolve() : passwordGetAsync(GITHUB_KEY)
+    if (!loadGithubTokenAsyncPromise)
+        loadGithubTokenAsyncPromise = pxt.github.token ? Promise.resolve() : passwordGetAsync(GITHUB_KEY)
         .then(ghtoken => {
             if (ghtoken) {
                 pxt.github.token = ghtoken;
                 pxt.debug(`github token loaded`);
             }
         });
+    return loadGithubTokenAsyncPromise;
 }
 
 function searchAsync(...query: string[]) {
