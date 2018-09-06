@@ -5023,12 +5023,19 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
         .then(ghrepos => ghrepos.filter(ghrepo => ghrepo.status == pxt.github.GitRepoStatus.Approved)
             .map(ghrepo => ghrepo.fullName).concat(packages.approvedRepos || []))
         .then(fullnames => {
+            // remove dups
+            fullnames = U.unique(fullnames, f => f.toLowerCase());
             pxt.log(`found ${fullnames.length} approved packages`);
             fullnames.forEach(fn => pxt.log(`  ${fn}`));
             return Promise.all(fullnames.map(fullname => pxt.github.listRefsAsync(fullname)
                 .then(tags => {
                     const tag = tags.reverse()[0] || "master";
-                    repos[fullname] = { fullname, tag };
+                    if (tag != "master" && !/^v\d+\.\d+.\d+$/.test(tag)) {
+                        errors.push(`invalid tag format for ${fullname}#${tag || "master"}`);
+                        pxt.log(errors[errors.length - 1]);
+                    }
+                    else
+                        repos[fullname] = { fullname, tag };
                 }))
             );
         }).then(() => {
