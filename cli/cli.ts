@@ -5013,7 +5013,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
         return (
             !nodeutil.existsDirSync(pkgdir)
                 ? gitAsync(".", "clone", "-q", "-b", repos[pkgpgh].tag, `https://github.com/${pkgpgh}`, pkgdir)
-                : gitAsync(pkgdir, "checkout", "-f", repos[pkgpgh].tag)
+                : gitAsync(pkgdir, "fetch").then(() => gitAsync(pkgdir, "checkout", "-f", repos[pkgpgh].tag))
         )
             .then(() => pxtAsync(pkgdir, ["clean"]))
             .then(() => pxtAsync(pkgdir, ["install"]))
