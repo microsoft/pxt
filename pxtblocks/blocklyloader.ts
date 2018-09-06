@@ -1153,7 +1153,7 @@ namespace pxt.blocks {
                     option.callback = Blockly.ContextMenu.callbackFactory(this, xmlBlock);
                     options.push(option);
 
-                    var renameOption: any = {enabled: true};
+                    const renameOption: any = {enabled: true};
                     renameOption.text = (Blockly as any).Msg.RENAME_VARIABLE;
                     renameOption.callback = () => {
                       (Blockly as any).Variables.renameVariable(this.workspace, variable.getVariable());
