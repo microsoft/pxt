@@ -4977,6 +4977,15 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
     const repos: pxt.Map<{ fullname: string; tag: string }> = {};
     const pkgsroot = path.join("temp", "ghpkgs");
 
+    function detectDivision(code: string): boolean {
+        // remove /* comments
+        code = code.replace(/\/\*(.|\s)*?\*\//gi, '');
+        // remove // ... comments
+        code = code.replace(/\/\/.*?$/gim, '');
+        // search for comments
+        return /[^\/*]=?\/[^\/*]/.test(code);
+    }
+
     function gitAsync(dir: string, ...args: string[]) {
         return nodeutil.spawnAsync({
             cmd: "git",
@@ -5000,7 +5009,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
             pxt.log('')
             pxt.log(`------------------------`)
             pxt.log(`${errors.length} packages with errors`);
-            errors.forEach(er => pxt.log(`  ${er}`));
+            errors.forEach(er => pxt.log(`- [ ]  ${er}`));
             return Promise.resolve();
         }
         pxt.log('')
@@ -5024,8 +5033,9 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
                     const filesWithDiv: pxt.Map<boolean> = {};
                     nodeutil.allFiles(pkgdir, 1)
                         .filter(f => /\.ts$/i.test(f))
-                        .forEach(f => fs.readFileSync(f, { encoding: "utf8" })
-                            .replace(/[^\/*]=?\/[^\/*]/g, m => { filesWithDiv[f.replace(pkgdir, '').replace(/^[\/\\]/, '')] = true; return '' }));
+                        .forEach(f => detectDivision(fs.readFileSync(f, { encoding: "utf8" }))
+                            ? (filesWithDiv[f.replace(pkgdir, '').replace(/^[\/\\]/, '')] = true)
+                            : false);
                     const fsw = Object.keys(filesWithDiv);
                     if (fsw.length) {
                         errors.push(`${pkgpgh} div found in ${fsw.join(', ')}`);
