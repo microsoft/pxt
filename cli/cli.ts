@@ -216,8 +216,19 @@ export function logoutAsync() {
         .then(() => pxt.log('access tokens removed'));
 }
 
+export function loadGithubTokenAsync(): Promise<void> {
+    return pxt.github.token ? Promise.resolve() : passwordGetAsync(GITHUB_KEY)
+        .then(ghtoken => {
+            if (ghtoken) {
+                pxt.github.token = ghtoken;
+                pxt.debug(`github token loaded`);
+            }
+        });
+}
+
 function searchAsync(...query: string[]) {
-    return pxt.packagesConfigAsync()
+    return loadGithubTokenAsync()
+        .then(() => pxt.packagesConfigAsync())
         .then(config => pxt.github.searchAsync(query.join(" "), config))
         .then(res => {
             for (let r of res) {
@@ -240,7 +251,8 @@ function pkginfoAsync(repopath: string) {
             pxt.log(`shareable url: ${pxt.appTarget.appTheme.embedUrl}#pub:gh/${parsed.fullName}${tag ? "#" + tag : ""}`)
     }
 
-    return pxt.packagesConfigAsync()
+    return loadGithubTokenAsync()
+        .then(() => pxt.packagesConfigAsync())
         .then(config => {
             const status = pxt.github.repoStatus(parsed, config);
             pxt.log(`github org: ${parsed.owner}`);
@@ -2533,7 +2545,8 @@ export function installAsync(parsed?: commandParser.ParsedCommand) {
     const packageName = parsed && parsed.args.length ? parsed.args[0] : undefined;
     if (packageName) {
         let parsed = pxt.github.parseRepoId(packageName)
-        return pxt.packagesConfigAsync()
+        return loadGithubTokenAsync()
+            .then(() => pxt.packagesConfigAsync())
             .then(config => (parsed.tag ? Promise.resolve(parsed.tag) : pxt.github.latestVersionAsync(parsed.fullName, config))
                 .then(tag => { parsed.tag = tag })
                 .then(() => pxt.github.pkgConfigAsync(parsed.fullName, parsed.tag))
@@ -5003,12 +5016,9 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
     }
 
     // 1. collect packages
-    return passwordGetAsync(GITHUB_KEY)
-        .then(ghtoken => {
-            pxt.github.token = ghtoken;
-            pxt.log(`github token available: ${!!pxt.github.token}`)
-            return rimrafAsync(pkgsroot, {});
-        }).then(() => nodeutil.mkdirP(pkgsroot))
+    return loadGithubTokenAsync()
+        .then(() => rimrafAsync(pkgsroot, {}))
+        .then(() => nodeutil.mkdirP(pkgsroot))
         .then(() => pxt.github.searchAsync("", packages))
         .then(ghrepos => ghrepos.filter(ghrepo => ghrepo.status == pxt.github.GitRepoStatus.Approved)
             .map(ghrepo => ghrepo.fullName).concat(packages.approvedRepos || []))
@@ -5024,7 +5034,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
         }).then(() => {
             todo = Object.keys(repos);
             pxt.log(`found ${todo.length} approved package with releases`);
-            todo.forEach(fn => pxt.log(`  ${fn}#${repos[fn]}`));
+            todo.forEach(fn => pxt.log(`  ${fn}#${repos[fn].tag}`));
             // 2. process each repo
             return nextAsync();
         });
