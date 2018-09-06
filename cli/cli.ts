@@ -216,8 +216,22 @@ export function logoutAsync() {
         .then(() => pxt.log('access tokens removed'));
 }
 
+let loadGithubTokenAsyncPromise: Promise<void> = undefined;
+export function loadGithubTokenAsync(): Promise<void> {
+    if (!loadGithubTokenAsyncPromise)
+        loadGithubTokenAsyncPromise = pxt.github.token ? Promise.resolve() : passwordGetAsync(GITHUB_KEY)
+            .then(ghtoken => {
+                if (ghtoken) {
+                    pxt.github.token = ghtoken;
+                    pxt.debug(`github token loaded`);
+                }
+            });
+    return loadGithubTokenAsyncPromise;
+}
+
 function searchAsync(...query: string[]) {
-    return pxt.packagesConfigAsync()
+    return loadGithubTokenAsync()
+        .then(() => pxt.packagesConfigAsync())
         .then(config => pxt.github.searchAsync(query.join(" "), config))
         .then(res => {
             for (let r of res) {
@@ -240,7 +254,8 @@ function pkginfoAsync(repopath: string) {
             pxt.log(`shareable url: ${pxt.appTarget.appTheme.embedUrl}#pub:gh/${parsed.fullName}${tag ? "#" + tag : ""}`)
     }
 
-    return pxt.packagesConfigAsync()
+    return loadGithubTokenAsync()
+        .then(() => pxt.packagesConfigAsync())
         .then(config => {
             const status = pxt.github.repoStatus(parsed, config);
             pxt.log(`github org: ${parsed.owner}`);
@@ -2533,7 +2548,8 @@ export function installAsync(parsed?: commandParser.ParsedCommand) {
     const packageName = parsed && parsed.args.length ? parsed.args[0] : undefined;
     if (packageName) {
         let parsed = pxt.github.parseRepoId(packageName)
-        return pxt.packagesConfigAsync()
+        return loadGithubTokenAsync()
+            .then(() => pxt.packagesConfigAsync())
             .then(config => (parsed.tag ? Promise.resolve(parsed.tag) : pxt.github.latestVersionAsync(parsed.fullName, config))
                 .then(tag => { parsed.tag = tag })
                 .then(() => pxt.github.pkgConfigAsync(parsed.fullName, parsed.tag))
@@ -4942,13 +4958,15 @@ function extractLocStringsAsync(output: string, dirs: string[]): Promise<void> {
 }
 
 function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<void> {
-    pxt.log(`testing github packages`);
+    pxt.log(`-- testing github packages-- `);
+    pxt.log(`make sure to store your github token (using pxt login github TOKEN) to avoid throttling`)
     if (!fs.existsSync("targetconfig.json")) {
         pxt.log(`targetconfig.json not found`);
         return Promise.resolve();
     }
-    const cloud = !!parsed.flags["cloud"];
+    const localBuild = !!parsed.flags["cloud"];
     const warnDiv = !!parsed.flags["warndiv"];
+    const clean = !!parsed.flags["clean"];
     const targetConfig = nodeutil.readJson("targetconfig.json") as pxt.TargetConfig;
     const packages = targetConfig.packages;
     if (!packages) {
@@ -4958,6 +4976,15 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
     let todo: string[];
     const repos: pxt.Map<{ fullname: string; tag: string }> = {};
     const pkgsroot = path.join("temp", "ghpkgs");
+
+    function detectDivision(code: string): boolean {
+        // remove /* comments
+        code = code.replace(/\/\*(.|\s)*?\*\//gi, '');
+        // remove // ... comments
+        code = code.replace(/\/\/.*?$/gim, '');
+        // search for comments
+        return /[^\/*]=?\/[^\/*]/.test(code);
+    }
 
     function gitAsync(dir: string, ...args: string[]) {
         return nodeutil.spawnAsync({
@@ -4979,23 +5006,45 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
     function nextAsync(): Promise<void> {
         const pkgpgh = todo.pop();
         if (!pkgpgh) {
+            pxt.log('')
             pxt.log(`------------------------`)
             pxt.log(`${errors.length} packages with errors`);
-            errors.forEach(er => pxt.log(`  ${er}`));
+            errors.forEach(er => pxt.log(`- [ ]  ${er}`));
             return Promise.resolve();
         }
-
-        pxt.log(`  ${pkgpgh}`)
+        pxt.log('')
+        pxt.log(`  testing ${pkgpgh}`)
         // clone or sync package
         const buildArgs = ["build", "--ignoreTests"];
         if (warnDiv) buildArgs.push("--warndiv");
-        if (cloud) buildArgs.push("--cloud");
+        if (localBuild) buildArgs.push("--localbuild");
         const pkgdir = path.join(pkgsroot, pkgpgh);
-        return gitAsync(".", "clone", "-q", "-b", repos[pkgpgh].tag, `https://github.com/${pkgpgh}`, pkgdir)
+        return (
+            !nodeutil.existsDirSync(pkgdir)
+                ? gitAsync(".", "clone", "-q", "-b", repos[pkgpgh].tag, `https://github.com/${pkgpgh}`, pkgdir)
+                : gitAsync(pkgdir, "fetch").then(() => gitAsync(pkgdir, "checkout", "-f", repos[pkgpgh].tag))
+        )
+            .then(() => pxtAsync(pkgdir, ["clean"]))
             .then(() => pxtAsync(pkgdir, ["install"]))
             .then(() => pxtAsync(pkgdir, buildArgs))
+            .then(() => {
+                if (warnDiv) {
+                    // perform a regex search over the repo for / operator
+                    const filesWithDiv: pxt.Map<boolean> = {};
+                    nodeutil.allFiles(pkgdir, 1)
+                        .filter(f => /\.ts$/i.test(f))
+                        .forEach(f => detectDivision(fs.readFileSync(f, { encoding: "utf8" }))
+                            ? (filesWithDiv[f.replace(pkgdir, '').replace(/^[\/\\]/, '')] = true)
+                            : false);
+                    const fsw = Object.keys(filesWithDiv);
+                    if (fsw.length) {
+                        errors.push(`${pkgpgh} div found in ${fsw.join(', ')}`);
+                        pxt.log(errors[errors.length - 1])
+                    }
+                }
+            })
             .catch(e => {
-                errors.push(pkgpgh);
+                errors.push(`${pkgpgh} ${e}`);
                 pxt.log(e);
                 return Promise.resolve();
             })
@@ -5003,23 +5052,32 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
     }
 
     // 1. collect packages
-    return rimrafAsync(pkgsroot, {})
+    return loadGithubTokenAsync()
+        .then(() => clean ? rimrafAsync(pkgsroot, {}) : Promise.resolve())
         .then(() => nodeutil.mkdirP(pkgsroot))
         .then(() => pxt.github.searchAsync("", packages))
         .then(ghrepos => ghrepos.filter(ghrepo => ghrepo.status == pxt.github.GitRepoStatus.Approved)
             .map(ghrepo => ghrepo.fullName).concat(packages.approvedRepos || []))
         .then(fullnames => {
-            pxt.log(`found ${fullnames.length} packages`);
+            // remove dups
+            fullnames = U.unique(fullnames, f => f.toLowerCase());
+            pxt.log(`found ${fullnames.length} approved packages`);
             fullnames.forEach(fn => pxt.log(`  ${fn}`));
             return Promise.all(fullnames.map(fullname => pxt.github.listRefsAsync(fullname)
                 .then(tags => {
                     const tag = tags.reverse()[0] || "master";
-                    repos[fullname] = { fullname, tag };
+                    if (tag != "master" && !/^v\d+(\.\d+(.\d+)?)?$/.test(tag)) {
+                        errors.push(`${fullname}: invalid tag #${tag || "master"}`);
+                        pxt.log(errors[errors.length - 1]);
+                    }
+                    else
+                        repos[fullname] = { fullname, tag };
                 }))
             );
         }).then(() => {
             todo = Object.keys(repos);
-            pxt.log(`found ${todo.length} packages`);
+            pxt.log(`found ${todo.length} approved package with releases`);
+            todo.forEach(fn => pxt.log(`  ${fn}#${repos[fn].tag}`));
             // 2. process each repo
             return nextAsync();
         });
@@ -5427,7 +5485,8 @@ function initCommands() {
         help: "Download and build approved github packages",
         flags: {
             warndiv: { description: "Warns about division operators" },
-            cloud: { description: "use cloud compiler" }
+            localBuild: { description: "use local C++ compiler", aliases: ["localbuild", "lb"] },
+            clean: { description: "delete all previous repos" }
         }
     }, testGithubPackagesAsync);
 
