@@ -541,11 +541,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private hideFlyout() {
         // Hide the flyout
         let flyout = document.getElementById('monacoFlyoutWidget');
-        pxsim.U.clear(flyout);
-        flyout.style.display = 'none';
+        if (flyout) {
+            pxsim.U.clear(flyout);
+            flyout.style.display = 'none';
+        }
 
         // Hide the current toolbox category
-        this.toolbox.clearSelection();
+        if (this.toolbox)
+            this.toolbox.clearSelection();
 
         // Clear editor floats
         this.parent.setState({ hideEditorFloats: false });
@@ -558,11 +561,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         //this.editor.getLayoutInfo().glyphMarginLeft = 200;
         this.editor.layout();
 
-        this.toolbox.setState({
-            loading: false,
-            categories: this.getAllCategories(),
-            showSearchBox: this.shouldShowSearch()
-        })
+        if (this.toolbox)
+            this.toolbox.setState({
+                loading: false,
+                categories: this.getAllCategories(),
+                showSearchBox: this.shouldShowSearch()
+            })
     }
 
     getId() {
@@ -627,11 +631,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (model) this.editor.setModel(model);
 
                 this.defineEditorTheme(hc);
-                const shouldShowToolbox = (mode == "typescript" && pxt.appTarget.appTheme.monacoToolbox && !readOnly);
+                const shouldShowToolbox = (
+                    mode == "typescript"
+                    && pxt.appTarget.appTheme.monacoToolbox
+                    && !readOnly
+                    && file.name == "main.ts");
                 if (shouldShowToolbox) {
                     this.beginLoadToolbox(file, hc);
                 } else {
-                    this.toolbox.hide();
+                    if (this.toolbox)
+                        this.toolbox.hide();
                 }
 
                 // Set the current file
@@ -693,7 +702,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     unloadFileAsync(): Promise<void> {
-        this.toolbox.clearSearch();
+        if (this.toolbox)
+            this.toolbox.clearSearch();
         if (this.currFile && this.currFile.getName() == "this/" + pxt.CONFIG_NAME) {
             // Reload the header if a change was made to the config file: pxt.json
             return this.parent.reloadHeaderAsync();
@@ -702,7 +712,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private beginLoadToolbox(file: pkg.File, hc?: boolean) {
-        this.toolbox.showLoading();
+        if (this.toolbox)
+            this.toolbox.showLoading();
         compiler.getBlocksAsync().then(bi => {
             this.blockInfo = bi
             this.nsMap = this.partitionBlocks();
