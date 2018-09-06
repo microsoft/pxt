@@ -336,7 +336,7 @@ namespace pxsim {
         }
 
         export function toNumber(s: string) {
-            return parseInt(s);
+            return parseFloat(s);
         }
 
         // TODO check edge-conditions
