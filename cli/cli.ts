@@ -3853,7 +3853,7 @@ function stringifyTranslations(strings: pxt.Map<string>): string {
 }
 
 export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
-    const route = parsed.flags["route"] as string || "./";
+    const route = parsed.flags["route"] as string || ".";
     const ghpages = parsed.flags["githubpages"];
     const builtPackaged = parsed.flags["output"] as string || "built/packaged";
     const minify = !!parsed.flags["minify"];
@@ -3872,7 +3872,7 @@ export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
 
 function internalStaticPkgAsync(builtPackaged: string, label: string, minify: boolean, noAppCache?: boolean) {
     const pref = path.resolve(builtPackaged);
-    const localDir = typeof label !== "string" || label.length === 0 ? "./" :  U.startsWith(label, ".") || U.startsWith(label, "/") ? label : `/${label}/`;
+    const localDir = typeof label !== "string" || label.length === 0 ? "./" : `${U.startsWith(label, ".") || U.startsWith(label, "/") ? "" : "/"}${label}${U.endsWith(label, "/") ? "" : "/"}`;
     return uploadCoreAsync({
         label: label || "main",
         pkgversion: "0.0.0",
