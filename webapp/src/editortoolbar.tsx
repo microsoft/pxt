@@ -106,7 +106,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         if (!isEditor) return <div />;
 
         const targetTheme = pxt.appTarget.appTheme;
-        const showSave = !readOnly && !isController && !!targetTheme.saveInMenu;
+        const showSave = !readOnly && !isController && !targetTheme.saveInMenu;
         const compile = pxt.appTarget.compile;
         const compileBtn = compile.hasHex || compile.saveAsPNG;
         const simOpts = pxt.appTarget.simulator;
@@ -275,7 +275,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                 {showProjectRename ?
                                     <div className="row" style={compileBtn ? { paddingTop: 0 } : {}}>
                                         <div className="column">
-                                            <div className="ui item large right labeled fluid input projectname-input projectname-tablet" title={lf("Pick a name for your project")}>
+                                            <div className={`ui item large right ${showSave ? "labeled" : ""} fluid input projectname-input projectname-tablet`} title={lf("Pick a name for your project")}>
                                                 <label htmlFor="fileNameInput1" id="fileNameInputLabel1" className="accessible-hidden">{lf("Type a name for your project")}</label>
                                                 <EditorToolbarSaveInput id="fileNameInput1"
                                                     type="text"
@@ -338,7 +338,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                     </div>
                     {showProjectRename ?
                         <div className="column left aligned">
-                            <div className={`ui right labeled input projectname-input projectname-computer`} title={lf("Pick a name for your project")}>
+                            <div className={`ui right ${showSave ? "labeled" : ""} input projectname-input projectname-computer`} title={lf("Pick a name for your project")}>
                                 <label htmlFor="fileNameInput2" id="fileNameInputLabel2" className="accessible-hidden">{lf("Type a name for your project")}</label>
                                 <EditorToolbarSaveInput id="fileNameInput2" view='computer'
                                     type="text"
