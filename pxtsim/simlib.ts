@@ -62,7 +62,7 @@ namespace pxsim {
         remove(handler: RefAction) {
             this.backgroundHandlerFlag = false;
             Object.keys(this.queues).forEach((k: string) => {
-                if (k.startsWith("back") && this.queues[k].handlers.findIndex(h => h == handler) != -1)
+                if (k.startsWith("back"))
                     this.queues[k].removeHandler(handler);
             });
         }
