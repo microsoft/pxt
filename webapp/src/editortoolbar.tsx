@@ -106,6 +106,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         if (!isEditor) return <div />;
 
         const targetTheme = pxt.appTarget.appTheme;
+        const showSave = !readOnly && !isController && !!targetTheme.saveInMenu;
         const compile = pxt.appTarget.compile;
         const compileBtn = compile.hasHex || compile.saveAsPNG;
         const simOpts = pxt.appTarget.simulator;
@@ -163,7 +164,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                         <div className="right aligned column">
                             {!readOnly ?
                                 <div className="ui icon small buttons">
-                                    <EditorToolbarButton icon='save' className={`editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onButtonClick={this.saveFile} view='mobile' />
+                                    {showSave ? <EditorToolbarButton icon='save' className={`editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onButtonClick={this.saveFile} view='mobile' /> : undefined}
                                     {showUndoRedo ? <EditorToolbarButton icon='xicon undo' className={`editortools-btn undo-editortools-btn} ${!hasUndo ? 'disabled' : ''}`} ariaLabel={lf("{0}, {1}", lf("Undo"), !hasUndo ? lf("Disabled") : "")} title={lf("Undo")} onButtonClick={this.undo} view='mobile' /> : undefined}
                                 </div> : undefined}
                         </div>
@@ -233,8 +234,8 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                 </div>
                             </div>}
                         <div className="column four wide">
-                            {readOnly ? undefined :
-                                <EditorToolbarButton icon='save' className={`small editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onButtonClick={this.saveFile} view='tablet' />}
+                            {showSave ? <EditorToolbarButton icon='save' className={`small editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onButtonClick={this.saveFile} view='tablet' />
+                                : undefined}
                         </div>
                         <div className="column six wide right aligned">
                             {showUndoRedo ?
@@ -282,7 +283,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                                     placeholder={lf("Pick a name...")}
                                                     value={projectName || ''}
                                                     onChangeValue={this.saveProjectName} view='tablet' />
-                                                <EditorToolbarButton icon='save' className={`large right attached editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onButtonClick={this.saveFile} view='tablet' />
+                                                {showSave ? <EditorToolbarButton icon='save' className={`large right attached editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onButtonClick={this.saveFile} view='tablet' /> : undefined}
                                             </div>
                                         </div>
                                     </div> : undefined}
@@ -345,7 +346,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                     placeholder={lf("Pick a name...")}
                                     value={projectName || ''}
                                     onChangeValue={this.saveProjectName} />
-                                <EditorToolbarButton icon='save' className={`small right attached editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onButtonClick={this.saveFile} view='computer' />
+                                {showSave ? <EditorToolbarButton icon='save' className={`small right attached editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onButtonClick={this.saveFile} view='computer' /> : undefined}
                             </div>
                         </div> : undefined}
                     <div className="column right aligned">
