@@ -814,7 +814,7 @@ export class ToolboxSearch extends data.Component<ToolboxSearchProps, ToolboxSea
         const { searchAccessibilityLabel } = this.state;
         return <div id="blocklySearchArea">
             <div id="blocklySearchInput" className="ui fluid icon input" role="search">
-                <input ref="searchInput" type="text" placeholder="Search..." autoComplete="off"
+                <input ref="searchInput" type="text" placeholder={lf("Search...")} autoComplete="off"
                     onFocus={this.searchImmediate} onKeyDown={this.handleKeyDown} onChange={this.handleChange}
                     id="blocklySearchInputField" className="blocklySearchInputField" />
                 <i className="search icon" role="presentation" aria-hidden="true"></i>
