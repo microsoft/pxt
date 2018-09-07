@@ -3872,7 +3872,7 @@ export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
 
 function internalStaticPkgAsync(builtPackaged: string, label: string, minify: boolean, noAppCache?: boolean) {
     const pref = path.resolve(builtPackaged);
-    const localDir = label == "./" ? "./" : label ? "/" + label + "/" : "/"
+    const localDir = !label ? "./" : `${U.startsWith(label, ".") || U.startsWith(label, "/") ? "" : "/"}${label}${U.endsWith(label, "/") ? "" : "/"}`;
     return uploadCoreAsync({
         label: label || "main",
         pkgversion: "0.0.0",
