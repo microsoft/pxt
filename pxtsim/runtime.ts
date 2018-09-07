@@ -202,7 +202,7 @@ namespace pxsim {
     }
 
     export type EventValueToActionArgs<T> = (value: T) => any[];
- 
+
     export class EventQueue<T> {
         max: number = 5;
         events: T[] = [];
