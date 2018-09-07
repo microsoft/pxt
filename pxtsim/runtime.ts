@@ -203,13 +203,6 @@ namespace pxsim {
 
     export type EventValueToActionArgs<T> = (value: T) => any[];
  
-    /*
-        TODO: need logic for ANY
-        if((l->id == evt.source || l->id == DEVICE_ID_ANY) && 
-           (l->value == evt.value || l->value == DEVICE_EVT_ANY))
-        
-    */
-
     export class EventQueue<T> {
         max: number = 5;
         events: T[] = [];
