@@ -642,7 +642,7 @@ namespace pxt.blocks {
             block.setInputsInline(!fn.parameters || (fn.parameters.length < 4 && !fn.attributes.imageLiteral));
         }
 
-        const body = fn.parameters ? fn.parameters.filter(pr => pr.type == "() => void")[0] : undefined;
+        const body = fn.parameters ? fn.parameters.filter(pr => pr.type == "() => void" || pr.type == "Action")[0] : undefined;
         if (body || hasHandler) {
             block.appendStatementInput("HANDLER")
                 .setCheck("null");
@@ -899,7 +899,7 @@ namespace pxt.blocks {
 
     export function hasArrowFunction(fn: pxtc.SymbolInfo): boolean {
         const r = fn.parameters
-            ? fn.parameters.filter(pr => /^\([^\)]*\)\s*=>/.test(pr.type))[0]
+            ? fn.parameters.filter(pr => pr.type === "Action" || /^\([^\)]*\)\s*=>/.test(pr.type))[0]
             : undefined;
         return !!r;
     }
@@ -1143,7 +1143,8 @@ namespace pxt.blocks {
             customContextMenu: function (options: any[]) {
                 if (!this.isCollapsed()) {
                     let option: any = { enabled: true };
-                    let name = this.getInputTargetBlock('VAR').getField('VAR').getText();
+                    let variable = this.getInputTargetBlock('VAR').getField('VAR');
+                    let name = variable.getText();
                     option.text = lf("Create 'get {0}'", name);
                     let xmlField = goog.dom.createDom('field', null, name);
                     xmlField.setAttribute('name', 'VAR');
@@ -1151,6 +1152,13 @@ namespace pxt.blocks {
                     xmlBlock.setAttribute('type', 'variables_get');
                     option.callback = Blockly.ContextMenu.callbackFactory(this, xmlBlock);
                     options.push(option);
+
+                    const renameOption: any = {enabled: true};
+                    renameOption.text = (Blockly as any).Msg.RENAME_VARIABLE;
+                    renameOption.callback = () => {
+                      (Blockly as any).Variables.renameVariable(this.workspace, variable.getVariable());
+                    }
+                    options.push(renameOption);
                 }
             }
         };

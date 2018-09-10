@@ -42,4 +42,4 @@ for (let code of secret) {
 
 ## See also
 
-[parse int](/reference/text/parse-int)
+[parse float](/reference/text/parse-float)

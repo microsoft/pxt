@@ -1,6 +1,6 @@
 # Custom blocks
 
-This page provides a short introduction to defining your own blocks in PXT. 
+This page provides a short introduction to defining your own blocks in MakeCode. 
 
 ## Custom blocks? I can't find it in the editor!
 
