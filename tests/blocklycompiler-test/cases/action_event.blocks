@@ -1,0 +1,10 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+    <variables></variables>
+    <block type="event_with_action" x="72" y="83">
+      <value name="someNumber">
+        <shadow type="math_number">
+          <field name="NUM">0</field>
+        </shadow>
+      </value>
+    </block>
+  </xml>

@@ -105,6 +105,8 @@
         }
 
         function initAppCache() {
+            if (!window.applicationCache)
+                return;
             if (window.applicationCache.status === window.applicationCache.UPDATEREADY)
                     window.location.reload();
             window.applicationCache.addEventListener('updateready', function () {
