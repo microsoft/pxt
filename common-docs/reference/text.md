@@ -9,7 +9,6 @@ Functions to combine, split, and search text strings.
 parseFloat("");
 parseInt("");
 "".indexOf("");
-"".lastIndexOf("");
 "".includes("");
 ```
 
@@ -18,5 +17,5 @@ parseInt("");
 [char at](/reference/text/char-at), [compare](/reference/text/compare),
 [substr](/reference/text/substr), [parse int](/reference/text/parse-int), 
 [parse float](/reference/text/parse-float),
-[index of](/reference/text/index-of),[last index of](/reference/text/last-index-of),
+[index of](/reference/text/index-of),
 [includes](/reference/text/includes)
