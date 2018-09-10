@@ -144,6 +144,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.showPackageDialog = this.showPackageDialog.bind(this);
         this.showBoardDialog = this.showBoardDialog.bind(this);
         this.removeProject = this.removeProject.bind(this);
+        this.saveProject = this.saveProject.bind(this);
         this.showReportAbuse = this.showReportAbuse.bind(this);
         this.showLanguagePicker = this.showLanguagePicker.bind(this);
         this.toggleHighContrast = this.toggleHighContrast.bind(this);
@@ -167,6 +168,11 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
     showBoardDialog() {
         pxt.tickEvent("menu.changeboard", undefined, { interactiveConsent: true });
         this.props.parent.showBoardDialog();
+    }
+
+    saveProject() {
+        pxt.tickEvent("menu.saveproject", undefined, { interactiveConsent: true });
+        this.props.parent.saveAndCompile();
     }
 
     removeProject() {
@@ -236,13 +242,16 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         const packages = pxt.appTarget.cloud && !!pxt.appTarget.cloud.packages;
         const boards = pxt.appTarget.simulator && !!pxt.appTarget.simulator.dynamicBoardDefinition;
         const reportAbuse = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;
+        const readOnly = pxt.shell.isReadOnly();
         const isController = pxt.shell.isControllerMode();
+        const showSave = !readOnly && !isController && !!targetTheme.saveInMenu;
 
         return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem">
             <sui.Item role="menuitem" icon="options" text={lf("Project Settings")} onClick={this.openSettings} tabIndex={-1} />
             {packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Extensions")} onClick={this.showPackageDialog} tabIndex={-1} /> : undefined}
             {boards ? <sui.Item role="menuitem" icon="microchip" text={lf("Change Board")} onClick={this.showBoardDialog} tabIndex={-1} /> : undefined}
             <sui.Item role="menuitem" icon="print" text={lf("Print...")} onClick={this.print} tabIndex={-1} />
+            {showSave ? <sui.Item role="menuitem" icon="save" text={lf("Save Project")} onClick={this.saveProject} tabIndex={-1} /> : undefined}
             {!isController ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project")} onClick={this.removeProject} tabIndex={-1} /> : undefined}
             {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={this.showReportAbuse} tabIndex={-1} /> : undefined}
             <div className="ui divider"></div>

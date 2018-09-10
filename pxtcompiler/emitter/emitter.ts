@@ -3413,8 +3413,8 @@ ${lbl}: .short 0xffff
             let lt = typeOf(node.left)
             let rt = typeOf(node.right)
 
-            if (node.operatorToken.kind == SK.PlusToken) {
-                if (isStringType(lt) || isStringType(rt)) {
+            if (node.operatorToken.kind == SK.PlusToken || node.operatorToken.kind == SK.PlusEqualsToken) {
+                if (isStringType(lt) || (isStringType(rt) && node.operatorToken.kind == SK.PlusToken)) {
                     (node as any).exprInfo = { leftType: checker.typeToString(lt), rightType: checker.typeToString(rt) } as BinaryExpressionInfo;
                 }
             }
