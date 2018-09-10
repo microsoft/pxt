@@ -30,8 +30,8 @@ namespace pxsim {
         private backgroundHandlerFlag: boolean = false;
 
         public nextNotifyEvent = 1024;
-        
-        public setBackroundHandlerFlag() {
+
+        public setBackgroundHandlerFlag() {
             this.backgroundHandlerFlag = true;
         }
 
@@ -53,17 +53,18 @@ namespace pxsim {
             let q = this.start(id, evid, true);
             if (this.backgroundHandlerFlag)
                 q.addHandler(handler);
-            else    
+            else
                 q.setHandler(handler);
             this.backgroundHandlerFlag = false;
         }
 
         // only for background handlers
-        remove(id: number | string, evid: number | string, handler: RefAction) {
-            this.backgroundHandlerFlag = true;
-            let q = this.start(id, evid, true);
+        remove(handler: RefAction) {
             this.backgroundHandlerFlag = false;
-            q.removeHandler(handler);
+            Object.keys(this.queues).forEach((k: string) => {
+                if (k.startsWith("back"))
+                    this.queues[k].removeHandler(handler);
+            });
         }
 
         queue(id: number | string, evid: number | string, value: T = null) {
@@ -71,13 +72,20 @@ namespace pxsim {
             const notifyOne = this.notifyID && this.notifyOneID && id == this.notifyOneID;
             if (notifyOne)
                 id = this.notifyID;
-
-            // grab queue and handle
+            // first, background
+            this.backgroundHandlerFlag = true;
             let q = this.start(id, evid, false);
             this.backgroundHandlerFlag = false;
             if (q) {
                 this.lastEventValue = evid;
                 this.lastEventTimestampUs = U.perfNowUs();
+                q.push(value, notifyOne);
+            }
+            // grab foreground queue and handle
+            q = this.start(id, evid, false);
+            if (q) {
+                this.lastEventValue = evid;
+                this.lastEventTimestampUs = U.perfNowUs()
                 q.push(value, notifyOne);
             }
         }
