@@ -248,17 +248,6 @@ declare interface String {
     indexOf(searchValue: string, start?: number): number;
 
     /**
-     * Returns the position of the last occurrence of a specified value in a string.
-     * @param searchValue the text to find
-     * @param start optional start index for the search
-     */
-    //% shim=String_::lastIndexOf
-    //% help=text/last-index-of
-    //% blockId="string_lastindexof" blockNamespace="text"
-    lastIndexOf(searchValue: string, start?: number): number;
-
-
-    /**
      * Determines whether a string contains the characters of a specified string.
      * @param searchValue the text to find
      * @param start optional start index for the search
