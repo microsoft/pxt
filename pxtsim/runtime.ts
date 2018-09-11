@@ -223,30 +223,34 @@ namespace pxsim {
                     aws.forEach(aw => aw());
                 }
             }
-            if (this.handlers == [] || this.events.length > this.max) return;
+            if (this.handlers == [] || this.events.length > this.max) 
+                return Promise.resolve()
 
             this.events.push(e)
 
             // if this is the first event pushed - start processing
             if (this.events.length == 1 && !this.lock)
-                this.poke();
+                return this.poke();
+            else
+                return Promise.resolve()
         }
 
-        private poke() {
+        private poke() : Promise<void> {
             this.lock = true;
-            const value = this.events.shift();
-            Promise.each(this.handlers, (handler) => {
-                return this.runtime.runFiberAsync(handler, ...(this.valueToArgs ? this.valueToArgs(value) : [value]))
+            let ret = Promise.each(this.events, (value) => {
+                return Promise.each(this.handlers, (handler) => {
+                    return this.runtime.runFiberAsync(handler, ...(this.valueToArgs ? this.valueToArgs(value) : [value]))
+                })
             }).then(() => {
-                // we're done processing the current event,
-                // if there is still something left to do, do it
                 if (this.events.length > 0) {
-                    this.poke();
-                }
-                else {
-                    this.lock = false;
+                    return this.poke()
+                } else {
+                    this.lock = false
+                    return Promise.resolve()
                 }
             })
+            this.events = []
+            return ret
         }
 
         get handlers() {

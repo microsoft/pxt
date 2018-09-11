@@ -71,19 +71,20 @@ namespace pxsim {
             const notifyOne = this.notifyID && this.notifyOneID && id == this.notifyOneID;
             if (notifyOne)
                 id = this.notifyID;
-            // first, background
-            let q = this.start(id, evid, false, true);
-            if (q) {
+            let qBackground = this.start(id, evid, false, true);
+            let qForeground = this.start(id, evid, false, false);
+            if (qBackground || qForeground) {
                 this.lastEventValue = evid;
                 this.lastEventTimestampUs = U.perfNowUs();
-                q.push(value, notifyOne);
-            }
-            // grab foreground queue and handle
-            q = this.start(id, evid, false, false);
-            if (q) {
-                this.lastEventValue = evid;
-                this.lastEventTimestampUs = U.perfNowUs()
-                q.push(value, notifyOne);
+                let promise : Promise<void> = null;
+                if (qBackground)
+                    promise = qBackground.push(value, notifyOne);
+                if (qForeground) {
+                    if (promise) {
+                        promise.then(() => { qForeground.push(value, notifyOne) }) 
+                    } else
+                        qForeground.push(value, notifyOne)
+                }
             }
         }
 
