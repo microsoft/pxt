@@ -341,7 +341,7 @@ function upgradeFromTSAsync(): Promise<UpgradeResult> {
     pxt.Util.values(project.files).filter(isTsFile).forEach(file => {
         const patched = pxt.patching.patchJavaScript(targetVersion, file.content);
         if (patched != file.content) {
-            patchedFiles[file.getName()] = patched;
+            patchedFiles[file.name] = patched;
         }
     });
 
