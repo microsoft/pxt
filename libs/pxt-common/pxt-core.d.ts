@@ -237,6 +237,26 @@ declare interface String {
     // block="%this=text| is empty"
     isEmpty(): boolean;
 
+    /**
+     * Returns the position of the first occurrence of a specified value in a string.
+     * @param searchValue the text to find
+     * @param start optional start index for the search
+     */
+    //% shim=String_::indexOf
+    //% help=text/index-of
+    //% blockId="string_indexof" blockNamespace="text"
+    indexOf(searchValue: string, start?: number): number;
+
+    /**
+     * Determines whether a string contains the characters of a specified string.
+     * @param searchValue the text to find
+     * @param start optional start index for the search
+     */
+    //% shim=String_::includes
+    //% help=text/includes
+    //% blockId="string_includes" blockNamespace="text"
+    includes(searchValue: string, start?: number): boolean;
+
     [index: number]: string;
 }
 
