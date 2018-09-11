@@ -653,7 +653,11 @@ namespace ts.pxtc.service {
                     success: true,
                     times: {}
                 }
-                const binOutput = compileBinary(service.getProgram(), null, host.opts, res, "main.ts");
+                const program = service.getProgram();
+                const sources = program.getSourceFiles();
+                // entry point is main.ts or the last file which should be the test file if any
+                const entryPoint = (sources.length == 0 || sources.filter(f => f.fileName == "main.ts")) ? "main.ts" : sources[sources.length - 1].fileName;
+                const binOutput = compileBinary(program, null, host.opts, res, entryPoint);
                 allD = binOutput.diagnostics
             }
 
