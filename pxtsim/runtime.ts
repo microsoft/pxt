@@ -276,12 +276,11 @@ namespace pxsim {
         }
 
         removeHandler(a: RefAction) {
-            let index = this._handlers.findIndex(action => a == action)
+            let index = this._handlers.indexOf(a)
             while (index != -1) {
                 this._handlers.splice(index,1)
                 pxtcore.decr(a)
-                index = this._handlers.findIndex(action => a == action)
-            }
+                index = this._handlers.indexOf(a)            }
         }
 
         addAwaiter(awaiter: (v?: any) => void) {

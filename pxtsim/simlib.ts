@@ -42,27 +42,26 @@ namespace pxsim {
 
         constructor(private runtime: Runtime, private valueToArgs?: EventValueToActionArgs<T>) { }
 
-        private start(id: number | string, evid: number | string, create: boolean) {
-            let k = (this.backgroundHandlerFlag ? "back:" : "") + id + ":" + evid;
+        private start(id: number | string, evid: number | string, create: boolean, background: boolean) {
+            let k = (background ? "back:" : "") + id + ":" + evid;
             let queue = this.queues[k];
             if (!queue) queue = this.queues[k] = new EventQueue<T>(this.runtime, this.valueToArgs);
             return queue;
         }
 
         listen(id: number | string, evid: number | string, handler: RefAction) {
-            let q = this.start(id, evid, true);
+            let q = this.start(id, evid, true, this.backgroundHandlerFlag);
             if (this.backgroundHandlerFlag)
                 q.addHandler(handler);
             else
                 q.setHandler(handler);
             this.backgroundHandlerFlag = false;
         }
-
+        
         // only for background handlers
         remove(handler: RefAction) {
-            this.backgroundHandlerFlag = false;
             Object.keys(this.queues).forEach((k: string) => {
-                if (k.startsWith("back"))
+                if (k.startsWith("back:"))
                     this.queues[k].removeHandler(handler);
             });
         }
@@ -73,16 +72,14 @@ namespace pxsim {
             if (notifyOne)
                 id = this.notifyID;
             // first, background
-            this.backgroundHandlerFlag = true;
-            let q = this.start(id, evid, false);
-            this.backgroundHandlerFlag = false;
+            let q = this.start(id, evid, false, true);
             if (q) {
                 this.lastEventValue = evid;
                 this.lastEventTimestampUs = U.perfNowUs();
                 q.push(value, notifyOne);
             }
             // grab foreground queue and handle
-            q = this.start(id, evid, false);
+            q = this.start(id, evid, false, false);
             if (q) {
                 this.lastEventValue = evid;
                 this.lastEventTimestampUs = U.perfNowUs()
@@ -90,9 +87,9 @@ namespace pxsim {
             }
         }
 
+        // only for foreground handlers
         wait(id: number | string, evid: number | string, cb: (value?: any) => void) {
-            let q = this.start(id, evid, true);
-            this.backgroundHandlerFlag = false;
+            let q = this.start(id, evid, true, false);
             q.addAwaiter(cb);
         }
 
