@@ -232,21 +232,32 @@ namespace pxsim {
                 this.poke();
         }
 
+        // should do the event handlers in order
+        private pokeHelper(value: T, handlers: RefAction[]) {
+            let handler = handlers.shift();
+            this.runtime.runFiberAsync(handler, ...(this.valueToArgs ? this.valueToArgs(value) : [value]))
+                .done(() => {
+                    // this is the last to run
+                    if (handlers.length == 0) {
+                        // we're done processing the current event,
+                        // if there is still something left to do, do it
+                        if (this.events.length > 0) {
+                            this.poke();
+                        }
+                        else {
+                            this.lock = false;
+                        }
+                    } else {
+                        this.pokeHelper(value, handlers)
+                    }
+                })
+        }
+
         private poke() {
             this.lock = true;
             const value = this.events.shift();
-            this.handlers.forEach(handler => {
-                this.runtime.runFiberAsync(handler, ...(this.valueToArgs ? this.valueToArgs(value) : [value]))
-                .done(() => {
-                    // we're done processing the current event, if there is still something left to do, do it
-                    if (this.events.length > 0) {
-                        this.poke();
-                    }
-                    else {
-                        this.lock = false;
-                    }
-                })
-            });
+            let handlersCopy = this.handlers.map(f => f)
+            this.pokeHelper(value, handlersCopy)
         }
 
         get handlers() {
