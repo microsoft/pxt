@@ -1,6 +1,5 @@
 import * as pkg from "./package";
 import * as core from "./core";
-import * as workspace from "./workspace";
 
 import U = pxt.Util;
 
