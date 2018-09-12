@@ -134,7 +134,7 @@ ${lbl}: .short 0xffff, ${pxt.REF_TAG_BUFFER}, ${data.length >> 1}, 0x0000
         private baseStackSize = 0; // real stack size is this + exprStack.length
 
         constructor(t: AssemblerSnippets, bin: Binary, proc: ir.Procedure) {
-            this.t = t as any; // TODO change back
+            this.t = t as any; // TODO in future, figure out if we follow the "Snippets" architecture
             this.bin = bin;
             this.proc = proc;
             this.work();

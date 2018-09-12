@@ -34,11 +34,11 @@ namespace pxt {
         if (!comp)
             comp = appTarget.compile = { isNative: false, hasHex: false }
         if (comp.hasHex) {
-            if (comp.jsRefCounting === undefined)
-                comp.jsRefCounting = true
             if (!comp.nativeType)
                 comp.nativeType = pxtc.NATIVE_TYPE_THUMB
         }
+        // JS ref counting currently not supported
+        comp.jsRefCounting = false
         if (!comp.vtableShift)
             comp.vtableShift = 2
         if (!comp.useUF2 && !comp.useELF && comp.noSourceInFlash == undefined)

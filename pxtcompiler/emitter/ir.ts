@@ -1,4 +1,3 @@
-// TODO optimize f(incr(shared)); decr(shared)
 // TODO remove decr() on variable init
 // TODO figure out why undefined initializer generates code
 
