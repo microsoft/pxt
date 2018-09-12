@@ -645,15 +645,19 @@ namespace ts.pxtc.ir {
             }
 
             let sharedincr = (e: Expr): Expr => {
+                //console.log("OUTSH", e.toString())
                 switch (e.exprKind) {
                     case EK.SharedDef:
                         iterargs(e, sharedincr)
                     case EK.SharedRef:
                         let arg = e.args[0]
                         U.assert(arg.totalUses > 0, "arg.totalUses > 0")
-                        if (arg.totalUses == 1)
-                            return sharedincr(arg)
+                        if (arg.totalUses == 1) {
+                            U.assert(e.exprKind == EK.SharedDef)
+                            return arg
+                        }
                         arg.irCurrUses++
+                        //console.log("SH", arg.toString(), arg.irCurrUses, arg.sharingInfo())
                         if (e.data === "noincr" || arg.irCurrUses == arg.totalUses)
                             return e; // final one, no incr
                         return op(EK.Incr, [e])
