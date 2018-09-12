@@ -2819,7 +2819,18 @@ ${lbl}: .short 0xffff
         }
 
         function emitAsInt(e: Expression) {
-            let expr = emitExpr(e)
+            let prev = target.boxDebug
+            let expr: ir.Expr = null
+            if (prev) {
+                try {
+                    target.boxDebug = false
+                    expr = emitExpr(e)
+                } finally {
+                    target.boxDebug = prev
+                }
+            } else {
+                expr = emitExpr(e)
+            }
             let v = valueToInt(expr)
             if (v === undefined)
                 throw userError(9267, lf("a constant number-like expression is required here"))

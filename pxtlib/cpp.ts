@@ -829,7 +829,6 @@ namespace pxt.cpp {
 
         if (compile.boxDebug) {
             pxtConfig += "#define PXT_BOX_DEBUG 1\n"
-            pxtConfig += "#define PXT_MEMLEAK_DEBUG 1\n"
         }
 
         if (compile.vtableShift)

@@ -122,10 +122,8 @@ ${lbl}:`
             return name + " " + r0 + ", " + r1;
         }
         call_lbl(lbl: string) {
-            if (!target.boxDebug) {
-                let o = U.lookup(inlineArithmetic, lbl)
-                if (o) lbl = o
-            }
+            let o = U.lookup(inlineArithmetic, lbl)
+            if (o) lbl = o
             return "bl " + lbl;
         }
         call_reg(reg: string) {
@@ -217,10 +215,6 @@ ${lbl}:`
 
         arithmetic() {
             let r = ""
-
-            if (target.boxDebug) {
-                return r
-            }
 
             for (let op of ["adds", "subs", "ands", "orrs", "eors"]) {
                 r += `
