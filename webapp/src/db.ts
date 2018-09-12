@@ -1,5 +1,6 @@
 declare var require: any;
 import * as Promise from "bluebird";
+import * as Electron from "./electron";
 (window as any).Promise = Promise;
 
 const PouchDB = require("pouchdb");
@@ -32,7 +33,18 @@ export function getDbAsync(): Promise<any> {
     if (pxt.shell.isSandboxMode() || pxt.shell.isReadOnly())
         return memoryDb();
 
-    let temp = new PouchDB("pxt-" + pxt.storage.storageId(), { revs_limit: 2 })
+    const opts: any = {
+        revs_limit: 2
+    };
+
+    if (true || Electron.isIpcRenderer && pxt.BrowserUtils.isSafari()) { // TEMP The "true ||"" is for testing
+        /* tslint:disable:no-submodule-imports TODO(tslint) */
+        require("pouchdb-adapter-fruitdown");
+        /* tslint:enable:no-submodule-imports */
+        opts.adapter = "fruitdown"; // Adapter compatible with WKWebview for iOS embedded webviews
+    }
+
+    let temp = new PouchDB("pxt-" + pxt.storage.storageId(), opts);
     return temp.get('pouchdbsupportabletest')
         .catch(function (error: any) {
             if (error && error.error && error.name == 'indexed_db_went_bad') {
@@ -42,6 +54,7 @@ export function getDbAsync(): Promise<any> {
                 return Promise.resolve(_db);
             }
         })
+        .finally(() => {console.log(_db.adapter)});
 }
 
 export function destroyAsync(): Promise<void> {

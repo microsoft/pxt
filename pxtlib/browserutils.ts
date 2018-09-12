@@ -81,7 +81,7 @@ namespace pxt.BrowserUtils {
     export function isSafari(): boolean {
         //Could also check isMac but I don't want to risk excluding iOS
         //Checking for iPhone, iPod or iPad as well as Safari in order to detect home screen browsers on iOS
-        return !isChrome() && !isEdge() && !!navigator && /(Safari|iPod|iPhone|iPad)/i.test(navigator.userAgent);
+        return !isChrome() && !isEdge() && !!navigator && /(Macintosh|Safari|iPod|iPhone|iPad)/i.test(navigator.userAgent);
     }
 
     //Safari and WebKit lie about being Firefox
