@@ -209,6 +209,15 @@ namespace testNamespace {
     }
 }
 
+//% color=#0078D7 weight=100
+namespace actions {
+    //% blockId="event_with_action"
+    //% block="event with action $someNumber"
+    export function eventWithAnAction(someNumber: number, arg: Action) {
+
+    }
+}
+
 //% color=#A80000 weight=30
 namespace namespaceWithCustomColor {
     //% blockId=custom_color_block

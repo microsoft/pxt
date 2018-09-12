@@ -1406,15 +1406,16 @@ namespace ts.pxtc {
             let w = 0;
             let h = 0;
             let lit = "";
+            let c = 0;
             s += "\n"
             for (let i = 0; i < s.length; ++i) {
                 switch (s[i]) {
                     case ".":
                     case "_":
-                    case "0": lit += "0,"; x++; break;
+                    case "0": lit += "0,"; x++; c++; break;
                     case "#":
                     case "*":
-                    case "1": lit += "1,"; x++; break;
+                    case "1": lit += "255,"; x++; c++; break;
                     case "\t":
                     case "\r":
                     case " ": break;
@@ -1434,8 +1435,10 @@ namespace ts.pxtc {
             }
 
             let lbl = "_img" + bin.lblNo++
-            if (lit.length % 4 != 0)
-                lit += "42" // pad
+
+            // Pad with a 0 if we have an odd number of pixels
+            if (c % 2 != 0)
+                lit += "0"
 
             bin.otherLiterals.push(`
 .balign 4
@@ -3145,8 +3148,8 @@ ${lbl}: .short 0xffff
             let lt = typeOf(node.left)
             let rt = typeOf(node.right)
 
-            if (node.operatorToken.kind == SK.PlusToken) {
-                if (isStringType(lt) || isStringType(rt)) {
+            if (node.operatorToken.kind == SK.PlusToken || node.operatorToken.kind == SK.PlusEqualsToken) {
+                if (isStringType(lt) || (isStringType(rt) && node.operatorToken.kind == SK.PlusToken)) {
                     (node as any).exprInfo = { leftType: checker.typeToString(lt), rightType: checker.typeToString(rt) } as BinaryExpressionInfo;
                 }
             }

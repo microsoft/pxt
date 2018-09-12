@@ -193,7 +193,7 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
             h.pubCurrent = false
             h.blobCurrent = false
             h.modificationTime = U.nowSeconds();
-            h.targetVersion = pxt.appTarget.versions.target;
+            h.targetVersion = h.targetVersion || pxt.appTarget.versions.target;
         }
         h.saveId = null
         // update version on save

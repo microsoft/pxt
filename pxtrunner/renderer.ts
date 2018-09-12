@@ -414,7 +414,7 @@ namespace pxt.runner {
             const cjs = r.compileJS;
             if (!cjs) return;
             const file = r.compileJS.ast.getSourceFile("main.ts");
-            const stmts = file.statements.slice(0).reverse();
+            const stmts = file.statements.slice(0);
             const ul = $('<div />').addClass('ui cards');
             ul.attr("role", "listbox");
             const addItem = (card: pxt.CodeCard) => {
