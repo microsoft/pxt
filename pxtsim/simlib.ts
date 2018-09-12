@@ -75,16 +75,12 @@ namespace pxsim {
             if (qBackground || qForeground) {
                 this.lastEventValue = evid;
                 this.lastEventTimestampUs = U.perfNowUs();
-                let promise: Promise<void> = null;
+                let promise: Promise<void> = Promise.resolve();
                 if (qBackground)
                     promise = qBackground.push(value, notifyOne);
                 // do the foreground handler after the background handlers
-                if (qForeground) {
-                    if (promise) {
-                        promise.then(() => { qForeground.push(value, notifyOne) })
-                    } else
-                        qForeground.push(value, notifyOne)
-                }
+                if (qForeground)
+                    promise.then(() => { qForeground.push(value, notifyOne) })
             }
         }
 

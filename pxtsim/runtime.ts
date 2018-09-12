@@ -223,7 +223,7 @@ namespace pxsim {
                     aws.forEach(aw => aw());
                 }
             }
-            if (this.handlers == [] || this.events.length > this.max)
+            if (this.handlers.length == 0 || this.events.length > this.max)
                 return Promise.resolve()
 
             this.events.push(e)
