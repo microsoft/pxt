@@ -212,7 +212,7 @@ namespace pxsim {
 
         constructor(public runtime: Runtime, private valueToArgs?: EventValueToActionArgs<T>) { }
 
-        public push(e: T, notifyOne: boolean) {
+        public push(e: T, notifyOne: boolean): Promise<void> {
             if (this.awaiters.length > 0) {
                 if (notifyOne) {
                     const aw = this.awaiters.shift();
@@ -223,7 +223,7 @@ namespace pxsim {
                     aws.forEach(aw => aw());
                 }
             }
-            if (this.handlers == [] || this.events.length > this.max) 
+            if (this.handlers == [] || this.events.length > this.max)
                 return Promise.resolve()
 
             this.events.push(e)
@@ -235,13 +235,15 @@ namespace pxsim {
                 return Promise.resolve()
         }
 
-        private poke() : Promise<void> {
+        private poke(): Promise<void> {
             this.lock = true;
             let ret = Promise.each(this.events, (value) => {
                 return Promise.each(this.handlers, (handler) => {
                     return this.runtime.runFiberAsync(handler, ...(this.valueToArgs ? this.valueToArgs(value) : [value]))
                 })
             }).then(() => {
+                // if some events arrived while processing above
+                // then keep processing
                 if (this.events.length > 0) {
                     return this.poke()
                 } else {
@@ -249,6 +251,8 @@ namespace pxsim {
                     return Promise.resolve()
                 }
             })
+            // all events will be processed by above code, so 
+            // start afresh
             this.events = []
             return ret
         }

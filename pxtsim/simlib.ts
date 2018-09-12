@@ -57,9 +57,8 @@ namespace pxsim {
                 q.setHandler(handler);
             this.backgroundHandlerFlag = false;
         }
-        
-        // only for background handlers
-        remove(handler: RefAction) {
+    
+        removeBackgroundHandler(handler: RefAction) {
             Object.keys(this.queues).forEach((k: string) => {
                 if (k.startsWith("back:"))
                     this.queues[k].removeHandler(handler);
@@ -79,9 +78,10 @@ namespace pxsim {
                 let promise : Promise<void> = null;
                 if (qBackground)
                     promise = qBackground.push(value, notifyOne);
+                // do the foreground handler after the background handlers
                 if (qForeground) {
                     if (promise) {
-                        promise.then(() => { qForeground.push(value, notifyOne) }) 
+                        promise.then(() => { qForeground.push(value, notifyOne) })
                     } else
                         qForeground.push(value, notifyOne)
                 }
