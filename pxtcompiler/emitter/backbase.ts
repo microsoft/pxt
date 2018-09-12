@@ -594,6 +594,8 @@ ${baseLabel}:
         }
 
         private emitRtCall(topExpr: ir.Expr) {
+            let name: string = topExpr.data
+            
             let maskInfo = topExpr.mask || { refMask: 0 }
             let convs = maskInfo.conversions || []
             let allArgs = topExpr.args.map((a, i) => ({
@@ -624,7 +626,7 @@ ${baseLabel}:
 
             let complexArgs = allArgs.filter(a => !a.isSimple)
 
-            if (complexArgs.every(c => c.expr.isPure() && !c.isRef)) {
+            if (complexArgs.every(c => c.expr.isPure() && !c.isRef && !c.conv)) {
                 for (let c of complexArgs) c.isSimple = true
                 complexArgs = []
             }
@@ -683,9 +685,6 @@ ${baseLabel}:
                 if (a.isSimple)
                     this.emitExprInto(a.expr, "r" + a.idx)
 
-
-            let name: string = topExpr.data
-            //console.log("RT",name,topExpr.isAsync)
 
             if (name != "langsupp::ignore")
                 this.alignedCall(name)

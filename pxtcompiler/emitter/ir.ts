@@ -366,9 +366,9 @@ namespace ts.pxtc.ir {
                 }
 
                 if (this.refCountingHandledHere()) {
-                    let tmp = sharedNoIncr(src)
+                    let tmp = shared(src)
                     return op(EK.Sequence, [
-                        tmp,
+                        op(EK.Decr, [tmp]),
                         op(EK.Decr, [this.loadCore()]),
                         this.storeDirect(tmp)
                     ])
@@ -614,7 +614,16 @@ namespace ts.pxtc.ir {
                             return e.args[0].args[0]
                         break;
                     case EK.Sequence:
-                        e.args = e.args.filter((a, i) => i == e.args.length - 1 || !a.isPure())
+                        e.args = e.args.filter((a, i) => {
+                            if (i != e.args.length - 1 && a.isPure()) {
+                                // in the second opt() phase, we already have computed the total usage counts
+                                // if we drop some expressions, these need to be updated
+                                if (a.exprKind == EK.SharedRef && a.args[0].totalUses > 0)
+                                    a.args[0].totalUses--
+                                return false
+                            }
+                            return true
+                        })
                         break;
                 }
 
@@ -657,7 +666,7 @@ namespace ts.pxtc.ir {
                             return arg
                         }
                         arg.irCurrUses++
-                        //console.log("SH", arg.toString(), arg.irCurrUses, arg.sharingInfo())
+                        //console.log("SH", e.data, arg.toString(), arg.irCurrUses, arg.sharingInfo())
                         if (e.data === "noincr" || arg.irCurrUses == arg.totalUses)
                             return e; // final one, no incr
                         return op(EK.Incr, [e])
