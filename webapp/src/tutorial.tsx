@@ -8,7 +8,6 @@ import * as sounds from "./sounds";
 import * as core from "./core";
 import * as md from "./marked";
 import * as compiler from "./compiler";
-import { mainPkg } from "./package";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
