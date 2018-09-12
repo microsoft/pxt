@@ -595,7 +595,7 @@ ${baseLabel}:
 
         private emitRtCall(topExpr: ir.Expr) {
             let name: string = topExpr.data
-            
+
             let maskInfo = topExpr.mask || { refMask: 0 }
             let convs = maskInfo.conversions || []
             let allArgs = topExpr.args.map((a, i) => ({
