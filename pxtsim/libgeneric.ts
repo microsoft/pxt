@@ -394,6 +394,24 @@ namespace pxsim {
             pxtrt.nullCheck(s)
             return inRange(s, i) ? s.charCodeAt(i) : 0;
         }
+
+        export function indexOf(s: string, searchValue: string, start?: number) {
+            pxtrt.nullCheck(s);
+            if (searchValue == null) return -1;
+            return s.indexOf(searchValue, start);
+        }
+
+        export function lastIndexOf(s: string, searchValue: string, start?: number) {
+            pxtrt.nullCheck(s);
+            if (searchValue == null) return -1;
+            return s.lastIndexOf(searchValue, start);
+        }
+
+        export function includes(s: string, searchValue: string, start?: number) {
+            pxtrt.nullCheck(s);
+            if (searchValue == null) return false;
+            return s.includes(searchValue, start);
+        }
     }
 
     export namespace Boolean_ {
