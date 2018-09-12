@@ -1,5 +1,7 @@
 namespace pxt.commands {
     export interface DeployOptions {
+        reportError?: (e: string) => void;
+        showNotification?: (msg: string) => void;
         reportDeviceNotFoundAsync?: (docPath: string, resp?: ts.pxtc.CompileResult) => Promise<void>;
     }
 
