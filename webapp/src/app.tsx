@@ -1349,12 +1349,22 @@ export class ProjectView
     }
 
     pair() {
-        pxt.usb.pairAsync()
-            .then(() => {
-                core.infoNotification(lf("Device paired! Try downloading now."))
-            }, (err: Error) => {
-                core.errorNotification(lf("Failed to pair the device: {0}", err.message))
-            })
+        if (!pxt.commands.webUsbPairDialogAsync) {
+            return;
+        }
+
+        pxt.commands.webUsbPairDialogAsync(core.confirmAsync)
+            .then((res) => {
+                if (res) {
+                    return pxt.usb.pairAsync()
+                        .then(() => {
+                            core.infoNotification(lf("Device paired! Try downloading now."))
+                        }, (err: Error) => {
+                            core.errorNotification(lf("Failed to pair the device: {0}", err.message))
+                        });
+                }
+                return Promise.resolve();
+            });
     }
 
     ///////////////////////////////////////////////////////////
@@ -2713,6 +2723,9 @@ function initExtensionsAsync(): Promise<void> {
             }
             if (res.blocklyPatch) {
                 pxt.blocks.extensionBlocklyPatch = res.blocklyPatch;
+            }
+            if (res.webUsbPairDialogAsync) {
+                pxt.commands.webUsbPairDialogAsync = res.webUsbPairDialogAsync;
             }
         });
 }
