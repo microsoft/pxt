@@ -208,11 +208,11 @@ namespace pxsim {
         events: T[] = [];
         private awaiters: ((v?: any) => void)[] = [];
         private lock: boolean;
-        private _handler: RefAction;
+        private _handlers: RefAction[] = [];
 
         constructor(public runtime: Runtime, private valueToArgs?: EventValueToActionArgs<T>) { }
 
-        public push(e: T, notifyOne: boolean) {
+        public push(e: T, notifyOne: boolean): Promise<void> {
             if (this.awaiters.length > 0) {
                 if (notifyOne) {
                     const aw = this.awaiters.shift();
@@ -223,44 +223,61 @@ namespace pxsim {
                     aws.forEach(aw => aw());
                 }
             }
-            if (!this.handler || this.events.length > this.max) return;
+            if (this.handlers.length == 0 || this.events.length > this.max)
+                return Promise.resolve()
 
             this.events.push(e)
 
             // if this is the first event pushed - start processing
             if (this.events.length == 1 && !this.lock)
-                this.poke();
+                return this.poke();
+            else
+                return Promise.resolve()
         }
 
-        private poke() {
+        private poke(): Promise<void> {
             this.lock = true;
-            const value = this.events.shift();
-            this.runtime.runFiberAsync(this.handler, ...(this.valueToArgs ? this.valueToArgs(value) : [value]))
-                .done(() => {
-                    // we're done processing the current event, if there is still something left to do, do it
-                    if (this.events.length > 0) {
-                        this.poke();
-                    }
-                    else {
-                        this.lock = false;
-                    }
+            let ret = Promise.each(this.events, (value) => {
+                return Promise.each(this.handlers, (handler) => {
+                    return this.runtime.runFiberAsync(handler, ...(this.valueToArgs ? this.valueToArgs(value) : [value]))
                 })
+            }).then(() => {
+                // if some events arrived while processing above
+                // then keep processing
+                if (this.events.length > 0) {
+                    return this.poke()
+                } else {
+                    this.lock = false
+                    return Promise.resolve()
+                }
+            })
+            // all events will be processed by above code, so 
+            // start afresh
+            this.events = []
+            return ret
         }
 
-        get handler() {
-            return this._handler;
+        get handlers() {
+            return this._handlers;
         }
 
-        set handler(a: RefAction) {
-            if (this._handler) {
-                pxtcore.decr(this._handler);
-            }
+        addHandler(a: RefAction) {
+            this._handlers.push(a);
+            pxtcore.incr(a)
+        }
 
-            this._handler = a;
+        setHandler(a: RefAction) {
+            this._handlers.forEach(old => pxtcore.decr(old))
+            this._handlers = [a];
+            pxtcore.incr(a)
+        }
 
-            if (this._handler) {
-                pxtcore.incr(this._handler);
-            }
+        removeHandler(a: RefAction) {
+            let index = this._handlers.indexOf(a)
+            while (index != -1) {
+                this._handlers.splice(index,1)
+                pxtcore.decr(a)
+                index = this._handlers.indexOf(a)            }
         }
 
         addAwaiter(awaiter: (v?: any) => void) {

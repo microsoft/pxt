@@ -95,8 +95,10 @@ namespace pxt {
         }
 
         saveConfig() {
-            const cfg = JSON.stringify(this.config, null, 4) || "\n"
-            this.host().writeFile(this, pxt.CONFIG_NAME, cfg)
+            const cfg = U.clone(this.config)
+            delete cfg.additionalFilePaths
+            const text = JSON.stringify(cfg, null, 4)
+            this.host().writeFile(this, pxt.CONFIG_NAME, text)
         }
 
         parseJRes(allres: Map<JRes> = {}) {
