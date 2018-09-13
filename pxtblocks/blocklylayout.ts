@@ -109,6 +109,7 @@ namespace pxt.blocks.layout {
             });
     }
 
+    const MAX_SCREENSHOT_SIZE = 1e6; // max 1Mb
     function toPngAsyncInternal(width: number, height: number, pixelDensity: number, data: string): Promise<string> {
         return new Promise<string>((resolve, reject) => {
             const cvs = document.createElement("canvas") as HTMLCanvasElement;
@@ -119,7 +120,15 @@ namespace pxt.blocks.layout {
             cvs.height = height * pixelDensity;
             img.onload = function () {
                 ctx.drawImage(img, 0, 0, width, height, 0, 0, cvs.width, cvs.height);
-                const canvasdata = cvs.toDataURL("image/png");
+                let canvasdata = cvs.toDataURL("image/png");
+                // if the generated image is too big, shrink image
+                while (canvasdata.length > MAX_SCREENSHOT_SIZE) {
+                    cvs.width = (cvs.width / 2) >> 0;
+                    cvs.height = (cvs.height / 2) >> 0;
+                    pxt.log(`screenshot size ${canvasdata.length}b, shrinking to ${cvs.width}x${cvs.height}`)
+                    ctx.drawImage(img, 0, 0, width, height, 0, 0, cvs.width, cvs.height);
+                    canvasdata = cvs.toDataURL("image/png");
+                }
                 resolve(canvasdata);
             };
             img.onerror = ev => {
@@ -151,7 +160,7 @@ namespace pxt.blocks.layout {
 
     export function serializeSvgString(xmlString: string): string {
         return xmlString
-            .replace(new RegExp('&nbsp;','g'), '&#160;'); // Replace &nbsp; with &#160; as a workaround for having nbsp missing from SVG xml
+            .replace(new RegExp('&nbsp;', 'g'), '&#160;'); // Replace &nbsp; with &#160; as a workaround for having nbsp missing from SVG xml
     }
 
     export interface BlockSvg {
