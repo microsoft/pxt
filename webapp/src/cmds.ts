@@ -346,10 +346,10 @@ export function initCommandsAsync(): Promise<void> {
     pxt.commands.showUploadInstructionsAsync = showUploadInstructionsAsync;
     const forceHexDownload = /forceHexDownload/i.test(window.location.href);
 
-    if (pxt.usb.isAvailable() && (pxt.appTarget.compile.webUSB || /webusb=1/i.test(window.location.href))) {
-        pxt.log(`enabled webusb`)
-        pxt.usb.setEnabled(true)
-        pxt.HF2.mkPacketIOAsync = pxt.usb.mkPacketIOAsync
+    if (pxt.usb.isAvailable() && pxt.appTarget.compile.webUSB) {
+        pxt.log(`enabled webusb`);
+        pxt.usb.setEnabled(true);
+        pxt.HF2.mkPacketIOAsync = pxt.usb.mkPacketIOAsync;
     }
 
     if (isNativeHost()) {
