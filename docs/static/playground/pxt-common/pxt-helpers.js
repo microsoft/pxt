@@ -1,5 +1,18 @@
 type Action = () => void;
 
+
+/**
+  * Convert a string to an integer.
+  * @param s A string to convert into an integral number. eg: 123
+  */
+//% help=text/parse-int
+//% blockId="string_parseint" block="parse to integer %text" blockNamespace="text"
+//% text.defl="123"
+//% blockHidden=1
+function parseInt(text: string): number {
+    return parseFloat(text) >> 0;
+}
+
 namespace helpers {
     export function arraySplice<T>(arr: T[], start: number, len: number) {
         if (start < 0) {

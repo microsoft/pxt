@@ -95,8 +95,10 @@ namespace pxt {
         }
 
         saveConfig() {
-            const cfg = JSON.stringify(this.config, null, 4) || "\n"
-            this.host().writeFile(this, pxt.CONFIG_NAME, cfg)
+            const cfg = U.clone(this.config)
+            delete cfg.additionalFilePaths
+            const text = JSON.stringify(cfg, null, 4)
+            this.host().writeFile(this, pxt.CONFIG_NAME, text)
         }
 
         parseJRes(allres: Map<JRes> = {}) {
@@ -327,16 +329,6 @@ namespace pxt {
                 });
         }
 
-        protected upgradeFile(fn: string, cont: string) {
-            const updatedCont = pxt.patching.patchJavaScript(this.targetVersion(), cont);
-            if (updatedCont != cont) {
-                // save file (force write)
-                pxt.debug(`patching javascript in ${fn} (size=${cont.length})...`)
-                this.host().writeFile(this, fn, updatedCont, true)
-            }
-            return updatedCont;
-        }
-
         private parseConfig(cfgSrc: string, targetVersion?: string) {
             const cfg = <PackageConfig>JSON.parse(cfgSrc);
             this.config = cfg;
@@ -416,13 +408,6 @@ namespace pxt {
 
             if (isInstall)
                 initPromise = initPromise.then(() => this.downloadAsync())
-
-            if (isInstall && this.level == 0)
-                initPromise = initPromise.then(() => {
-                    pxt.debug(`upgrading files, target version ${this.targetVersion()}`)
-                    this.getFiles().filter(fn => /\.ts$/.test(fn))
-                        .forEach(file => this.upgradeFile(file, this.readFile(file)));
-                })
 
             if (appTarget.simulator && appTarget.simulator.dynamicBoardDefinition) {
                 if (this.level == 0)
@@ -722,7 +707,6 @@ namespace pxt {
                 .then(() => this.config.binaryonly || appTarget.compile.shortPointers || !opts.target.isNative ? null : this.filesToBePublishedAsync(true))
                 .then(files => {
                     if (files) {
-                        files = U.mapMap(files, (f, c) => this.upgradeFile(f, c));
                         const headerString = JSON.stringify({
                             name: this.config.name,
                             comment: this.config.description,

@@ -2,6 +2,7 @@
     "name": "test-compile",
     "description": "Project that defines a variety of blocks to be used in blockly compiler test cases",
     "files": [
+        "actionEvent.ts",
         "enums.ts",
         "expandableBlocks.ts",
         "toStringArgs.ts"

@@ -19,17 +19,17 @@ export function getUsedBlocksAsync(tutorialId: string, tutorialmd: string): Prom
     const code = pxt.tutorial.bundleTutorialCode(tutorialmd);
     return Promise.resolve()
         .then(() => {
-            const usedBlocks: pxt.Map<number> = {};
-
             if (code == '') return Promise.resolve({});
+
+            const usedBlocks: pxt.Map<number> = {};
             return compiler.getBlocksAsync()
                 .then(blocksInfo => compiler.decompileSnippetAsync(code, blocksInfo))
                 .then(blocksXml => {
                     if (blocksXml) {
-                        let headless = pxt.blocks.loadWorkspaceXml(blocksXml);
-                        let allblocks = headless.getAllBlocks();
+                        const headless = pxt.blocks.loadWorkspaceXml(blocksXml);
+                        const allblocks = headless.getAllBlocks();
                         for (let bi = 0; bi < allblocks.length; ++bi) {
-                            let blk = allblocks[bi];
+                            const blk = allblocks[bi];
                             usedBlocks[blk.type] = 1;
                         }
                         return usedBlocks;

@@ -398,4 +398,10 @@ describe("blockly compiler", function () {
             });
         });
     });
+
+    describe("compiling events blocks", () => {
+        it("should handle APIs where the handler's type uses the Action alias", done => {
+            blockTestAsync("action_event").then(done, done);
+        });
+    })
 });
