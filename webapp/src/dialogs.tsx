@@ -6,9 +6,9 @@ import * as data from "./data";
 import * as core from "./core";
 import * as coretsx from "./coretsx";
 import * as cloudsync from "./cloudsync";
+import * as pkg from "./package";
 
 import Cloud = pxt.Cloud;
-import { EditorPackage } from "./package";
 
 
 interface PlainCheckboxProps {
@@ -195,48 +195,148 @@ function renderVersionLink(name: string, version: string, url: string) {
     </p>;
 }
 
-export function showPackageErrorDialogAsync(badPackages: EditorPackage[], mainPkg: EditorPackage, openLegacyEditor?: () => void): Promise<boolean> {
-    let pendingOperation: Promise<void>;
+export function showPackageErrorDialogAsync(badPackages: pkg.EditorPackage[], updatePackages: (packages: pkg.EditorPackage[], progress: (completed: number, total: number) => void) => Promise<boolean>, openLegacyEditor?: () => void): Promise<boolean> {
     return core.dialogAsync({
         header: lf("Extension Errors"),
         hideCancel: true,
-        buttons: [
-            {
-                label: lf("Update all"),
-                className: "button",
-                icon: "refresh",
-                onclick: () => {
-                    pendingOperation = Promise.all(badPackages.map(e => mainPkg.updateDepAsync(e.getPkgId())))
-                        .then(coretsx.hideDialog);
-                }
-            },
-            {
-                label: lf("Ok"),
-                className: "button",
-                icon: "checkmark",
-                onclick: coretsx.hideDialog
-            }
-        ],
         jsx: <div>
-                <p>{pxt.Util.lf("The following extensions are preventing the project from compiling:")}</p>
-                <div className="ui relaxed divided list">
-                {
-                    badPackages.map(epkg => <PackageErrorListItem package={epkg} key={epkg.getPkgId()} removePackage={curryRemove(epkg.getPkgId())}></PackageErrorListItem>)
-                }
-            </div>
-            { openLegacyEditor ? renderEditorVersionMessage(openLegacyEditor) : undefined }
+                <ExtensionErrorWizard openLegacyEditor={openLegacyEditor} affectedPackages={badPackages} updatePackages={updatePackages} />
         </div>
-    }).then(() => {
-        if (pendingOperation) {
-            return pendingOperation.then(() => true);
-        }
-        return Promise.resolve(false);
-    });
+    }).then(() => true);
+}
 
-    function curryRemove(id: string) {
-        return () => {
-            pendingOperation = mainPkg.removeDepAsync(id).then(coretsx.hideDialog);
+interface ExtensionErrorWizardProps {
+    affectedPackages: pkg.EditorPackage[];
+    updatePackages: (packages: pkg.EditorPackage[], progress: (completed: number, total: number) => void) => Promise<boolean>;
+    openLegacyEditor?: () => void;
+}
+
+interface ExtensionErrorWizardState {
+    updating: boolean;
+    showProgressBar: boolean;
+    packagesUpdated: number;
+    updateComplete: boolean;
+    updateError?: any;
+}
+
+class ExtensionErrorWizard extends React.Component<ExtensionErrorWizardProps, ExtensionErrorWizardState> {
+    constructor(props: ExtensionErrorWizardProps) {
+        super(props);
+        this.state = {
+            updating: false,
+            showProgressBar: false,
+            updateComplete: false,
+            packagesUpdated: 0
+        };
+        this.startUpdate = this.startUpdate.bind(this);
+    }
+
+    startUpdate() {
+        if (this.state.updating) return;
+
+        this.setState({
+            updating: true
+        }, () => {
+            setTimeout(() => {
+                if (this.state.updating) {
+                    this.setState({
+                        showProgressBar: true
+                    });
+                }
+            }, 2000)
+        });
+
+        const pkgs = this.props.affectedPackages;
+
+        this.props.updatePackages(pkgs, completed => {
+            this.setState({ packagesUpdated: completed });
+        })
+        .then(success => {
+            if (!success) {
+                this.setState({ updateError: lf("Update failed") });
+            }
+            else {
+                this.setState({
+                    updating: false,
+                    updateComplete: true
+                }, () => {
+                    setTimeout(() => {
+                        coretsx.hideDialog();
+                    }, 750);
+                });
+            }
+        })
+    }
+
+    render() {
+        const { openLegacyEditor, affectedPackages } = this.props;
+        const { updating, updateComplete, packagesUpdated, updateError } = this.state;
+
+        if (updateError) {
+            return <div>
+                    <p>{pxt.Util.lf("Looks like updating didn't fix the issue")}</p>
+                    <div className="ui relaxed list">
+                        <div className="item wizard-action" onClick={coretsx.hideDialog}>
+                            <i className="medium arrow right middle aligned icon"></i>
+                            <div className="content">
+                                {lf("Open project anyway")}
+                            </div>
+                        </div>
+                    { openLegacyEditor ?
+                        <div className="item wizard-action" onClick={openLegacyEditor}>
+                            <i className="medium arrow right middle aligned icon"></i>
+                            <div className="content">
+                                {lf("Go to the old editor")}
+                            </div>
+                        </div> : undefined
+                    }
+                    </div>
+            </div>;
         }
+        else if (updating) {
+            const progressString = packagesUpdated === affectedPackages.length ? lf("Finishing up") :
+                lf("Updating package {0} of {1}", packagesUpdated + 1, affectedPackages.length);
+
+            return <div>
+                    <div className="ui text loader">
+                        { progressString }
+                    </div>
+                </div>
+        }
+        else if (updateComplete) {
+            return <div>
+                <h2 className="ui center aligned icon header">
+                    <i className="green check circle outline icon"></i>
+                    {lf("Update complete")}
+                </h2>
+            </div>
+        }
+
+        return <div>
+                <p>{pxt.Util.lf("Looks like there are some errors in the extensions added to this project that.")}</p>
+                <div className="ui relaxed list">
+                    <div className="item wizard-action" onClick={this.startUpdate}>
+                        <i className="medium arrow right middle aligned icon"></i>
+                        <div className="content">
+                            {lf("Try to fix")}
+                        </div>
+                    </div>
+                    <div className="item wizard-action" onClick={coretsx.hideDialog}>
+                        <i className="medium arrow right middle aligned icon"></i>
+                        <div className="content">
+                            {lf("Open project anyway")}
+                        </div>
+                    </div>
+                    { openLegacyEditor ?
+                        <div className="item wizard-action" onClick={openLegacyEditor}>
+                            <i className="medium arrow right middle aligned icon"></i>
+                            <div className="content">
+                                {lf("Go to the old editor")}
+                            </div>
+                        </div> : undefined
+                    }
+                </div>
+        </div>
     }
 }
 
@@ -247,7 +347,7 @@ export function renderEditorVersionMessage(onClick: () => void) {
 }
 
 interface PackageErrorListItemProps {
-    package: EditorPackage;
+    package: pkg.EditorPackage;
     removePackage: () => void;
 }
 
@@ -329,7 +429,7 @@ class PackageErrorListItem extends React.Component<PackageErrorListItemProps, Pa
     }
 }
 
-function collectErrors(epkg: EditorPackage) {
+function collectErrors(epkg: pkg.EditorPackage) {
     const result: pxtc.KsDiagnostic[] = [];
     pxt.Util.values(epkg.files).forEach(f => f.diagnostics && f.diagnostics.forEach(d => d.category === ts.pxtc.DiagnosticCategory.Error && result.push(d)));
     return result;

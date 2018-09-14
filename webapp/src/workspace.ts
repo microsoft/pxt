@@ -79,9 +79,40 @@ export function setupWorkspace(id: string) {
 
 export function getHeaders(withDeleted = false) {
     checkSession();
-    let r = allScripts.map(e => e.header).filter(h => withDeleted || !h.isDeleted)
+    let r = allScripts.map(e => e.header).filter(h => (withDeleted || !h.isDeleted) && !h._isBackup)
     r.sort((a, b) => b.recentUse - a.recentUse)
     return r
+}
+
+export function restoreFromBackupAsync(h: Header) {
+    checkSession();
+    if (!h._backupRef || h.isDeleted) return Promise.resolve();
+    return getTextAsync(h._backupRef)
+        .then(files => {
+            h._backupRef = undefined;
+            return saveAsync(h, files);
+        })
+        .then(() => {
+            const backup = getHeader(h._backupRef);
+            backup.isDeleted = true;
+            return saveAsync(backup);
+        });
+}
+
+export function cleanupBackupsAsync() {
+    checkSession();
+    const allHeaders = allScripts.map(e => e.header);
+
+    const refMap: pxt.Map<boolean> = {};
+
+    // Figure out which scripts have backups
+    allHeaders.filter(h => h._backupRef).forEach(h => refMap[h._backupRef] = true);
+
+    // Delete the backups that don't have any scripts referencing them
+    return Promise.all(allHeaders.filter(h => (h._isBackup && !refMap[h.id])).map(h => {
+        h.isDeleted = true;
+        return saveAsync(h);
+    }));
 }
 
 export function getHeader(id: string) {
@@ -113,6 +144,7 @@ export function initAsync() {
     allScripts = []
 
     return syncAsync()
+        .then(state => cleanupBackupsAsync().then(() => state));
 }
 
 export function getTextAsync(id: string): Promise<ScriptText> {

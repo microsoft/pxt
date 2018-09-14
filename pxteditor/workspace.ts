@@ -15,7 +15,6 @@ namespace pxt.workspace {
         pubCurrent: boolean; // is this exactly pubId, or just based on it
         githubId?: string;
         githubCurrent?: boolean;
-        originalTargetVersion?: string; // the version of the target the project was created in (present if imported into newer version)
     }
 
     export interface Header extends InstallHeader {
@@ -31,6 +30,8 @@ namespace pxt.workspace {
         saveId?: any;
         // icon uri
         icon?: string;
+        _backupRef?: string; // guid of backed-up project (present if an update was interrupted)
+        _isBackup?: boolean; // True if this is a backed-up project (for a pending update)
     }
 
     export type ScriptText = pxt.Map<string>;

@@ -1,5 +1,6 @@
 import * as pkg from "./package";
 import * as core from "./core";
+import * as workspace from "./workspace";
 
 import U = pxt.Util;
 
@@ -407,6 +408,41 @@ function patchProjectFilesAsync(project: pkg.EditorPackage, patchedFiles: pxt.Ma
 function isTsFile(file: pkg.File) {
     return pxt.Util.endsWith(file.getName(), ".ts");
 }
+
+export function updatePackagesAsync(packages: pkg.EditorPackage[], progressHandler?: (completed: number, total: number) => void): Promise<boolean> {
+    const epkg = pkg.mainEditorPkg();
+    let backup: pxt.workspace.Header;
+    let completed = 0;
+
+    return workspace.getTextAsync(epkg.header.id)
+        .then(files => workspace.duplicateAsync(epkg.header, files))
+        .then(newHeader => {
+            backup = newHeader;
+            return Promise.each(packages, p => {
+                return epkg.updateDepAsync(p.getPkgId())
+                    .then(() => {
+                        ++completed;
+                        if (progressHandler) {
+                            progressHandler(completed, packages.length);
+                        }
+                    })
+            })
+        })
+        .then(() => checkPatchAsync())
+        .then(() => true)
+        .catch(() => {
+            // Something went wrong or we broke the project, so restore the backup
+            return workspace.getTextAsync(backup.id)
+                .then(files => workspace.saveAsync(epkg.header, files))
+                .then(() => false);
+        })
+        .finally(() => {
+            // Clean up after
+            backup.isDeleted = true;
+            return workspace.saveAsync(backup);
+        });
+}
+
 
 export function newProject() {
     firstTypecheck = null;

@@ -411,10 +411,10 @@ export class ProjectView
                     };
                 }
 
-                dialogs.showPackageErrorDialogAsync(badPackages, pkg.mainEditorPkg(), openHandler)
+                dialogs.showPackageErrorDialogAsync(badPackages, compiler.updatePackagesAsync, openHandler)
                     .then(didChange => {
                         if (didChange) {
-                            this.reloadHeaderAsync();
+                            // this.reloadHeaderAsync();
                         }
                     });
                 return true;
