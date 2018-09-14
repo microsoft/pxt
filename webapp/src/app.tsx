@@ -1353,18 +1353,20 @@ export class ProjectView
     }
 
     pair() {
-        const prePairAsync = pxt.commands.webUsbPairDialogAsync(core.confirmAsync) || Promise.resolve(1);
+        const prePairAsync = pxt.commands.webUsbPairDialogAsync
+            ? pxt.commands.webUsbPairDialogAsync(core.confirmAsync)
+            : Promise.resolve(1);
         return prePairAsync.then((res) => {
-                if (res) {
-                    return pxt.usb.pairAsync()
-                        .then(() => {
-                            core.infoNotification(lf("Device paired! Try downloading now."))
-                        }, (err: Error) => {
-                            core.errorNotification(lf("Failed to pair the device: {0}", err.message))
-                        });
-                }
-                return Promise.resolve();
-            });
+            if (res) {
+                return pxt.usb.pairAsync()
+                    .then(() => {
+                        core.infoNotification(lf("Device paired! Try downloading now."))
+                    }, (err: Error) => {
+                        core.errorNotification(lf("Failed to pair the device: {0}", err.message))
+                    });
+            }
+            return Promise.resolve();
+        });
     }
 
     ///////////////////////////////////////////////////////////
