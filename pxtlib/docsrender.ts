@@ -60,12 +60,16 @@ namespace pxt.docs {
     //TODO: Add equivalent support for youtu.be links
     const links: CmdLink[] = [
         {
+            rx: /^(www\.youtube\.com\/watch\?v=|youtu\.be\/)([\w\-]+(\#t=([0-9]+m[0-9]+s|[0-9]+m|[0-9]+s))?)/i,
+            cmd: "### @youtube $2"
+        },
+        {
             rx: /^vimeo\.com\/(\d+)/i,
             cmd: "### @vimeo $1"
         },
         {
-            rx: /^(www\.youtube\.com\/watch\?v=|youtu\.be\/)([\w\-]+(\#t=([0-9]+m[0-9]+s|[0-9]+m|[0-9]+s))?)/i,
-            cmd: "### @youtube $2"
+            rx: /^video\.twentythree\.net\/([\w\-]+)/i,
+            cmd: "### @twentythree $2"
         }
     ]
 
@@ -489,7 +493,7 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
 \`\`\`
 `;
 
-        //Uses the CmdLink definitions to replace links to YouTube and Vimeo (limited at the moment)
+        //Uses the CmdLink definitions to replace links to YouTube, Vimeo, TwentyThree (limited at the moment)
         markdown = markdown.replace(/^\s*https?:\/\/(\S+)\s*$/mg, (f, lnk) => {
             for (let ent of links) {
                 let m = ent.rx.exec(lnk)
