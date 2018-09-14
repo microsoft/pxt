@@ -96,6 +96,10 @@ export function restoreFromBackupAsync(h: Header) {
             const backup = getHeader(h._backupRef);
             backup.isDeleted = true;
             return saveAsync(backup);
+        })
+        .catch(() => {
+            h._backupRef = undefined;
+            return saveAsync(h);
         });
 }
 

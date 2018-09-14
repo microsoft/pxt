@@ -248,9 +248,9 @@ class ExtensionErrorWizard extends React.Component<ExtensionErrorWizardProps, Ex
 
         const pkgs = this.props.affectedPackages;
 
-        this.props.updatePackages(pkgs, completed => {
+        Promise.delay(10000).then(() => this.props.updatePackages(pkgs, completed => {
             this.setState({ packagesUpdated: completed });
-        })
+        }))
         .then(success => {
             if (!success) {
                 this.setState({ updateError: lf("Update failed") });
@@ -294,11 +294,11 @@ class ExtensionErrorWizard extends React.Component<ExtensionErrorWizardProps, Ex
             </div>;
         }
         else if (updating) {
-            const progressString = packagesUpdated === affectedPackages.length ? lf("Finishing up") :
-                lf("Updating package {0} of {1}", packagesUpdated + 1, affectedPackages.length);
+            const progressString = packagesUpdated === affectedPackages.length ? lf("Finishing up...") :
+                lf("Updating package {0} of {1}...", packagesUpdated + 1, affectedPackages.length);
 
             return <div>
-                    <div className="ui text loader">
+                    <div className="ui centered inline text loader">
                         { progressString }
                     </div>
                 </div>
@@ -337,6 +337,31 @@ class ExtensionErrorWizard extends React.Component<ExtensionErrorWizardProps, Ex
                     }
                 </div>
         </div>
+    }
+}
+
+interface ProgressBarProps {
+    ratio: number
+    width: number;
+    height: number;
+    label?: string;
+    cornerRadius?: number;
+}
+
+class ProgressBar extends React.Component<ProgressBarProps, {}> {
+    render() {
+        let { ratio, width, height, label, cornerRadius } = this.props;
+        const unfilled = Math.max(width, 0);
+        const filled = Math.max(Math.min(width * ratio, width), 0);
+        cornerRadius = (cornerRadius == null ? 3 : Math.max(cornerRadius, 0));
+
+        return <div>
+                <svg>
+                    <rect className="progress-bar-bg" width={unfilled} height={height} rx={cornerRadius} ry={cornerRadius}/>
+                    <rect className="progress-bar-content" width={filled} height={height} rx={cornerRadius} ry={cornerRadius}/>
+                </svg>
+                { label ? <div>{label}</div> : undefined }
+            </div>
     }
 }
 

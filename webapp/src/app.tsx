@@ -834,7 +834,9 @@ export class ProjectView
         this.clearSerial()
 
         Util.jsonMergeFrom(editorState || {}, this.state.editorState || {});
-        return pkg.loadPkgAsync(h.id)
+
+        return (h._backupRef ? workspace.restoreFromBackupAsync(h) : Promise.resolve())
+            .then(() => pkg.loadPkgAsync(h.id))
             .then(() => {
                 simulator.makeDirty();
                 compiler.newProject();

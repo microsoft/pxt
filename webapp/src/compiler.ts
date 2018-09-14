@@ -418,7 +418,11 @@ export function updatePackagesAsync(packages: pkg.EditorPackage[], progressHandl
         .then(files => workspace.duplicateAsync(epkg.header, files))
         .then(newHeader => {
             backup = newHeader;
-            return Promise.each(packages, p => {
+            epkg.header._backupRef = backup.id;
+            return workspace.saveAsync(backup);
+        })
+        .then(() => workspace.saveAsync(epkg.header))
+        .then(() => Promise.each(packages, p => {
                 return epkg.updateDepAsync(p.getPkgId())
                     .then(() => {
                         ++completed;
@@ -426,9 +430,13 @@ export function updatePackagesAsync(packages: pkg.EditorPackage[], progressHandl
                             progressHandler(completed, packages.length);
                         }
                     })
-            })
+                })
+        )
+        .then(() => pkg.loadPkgAsync(epkg.header.id))
+        .then(() => {
+            newProject();
+            return checkPatchAsync();
         })
-        .then(() => checkPatchAsync())
         .then(() => true)
         .catch(() => {
             // Something went wrong or we broke the project, so restore the backup
