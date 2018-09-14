@@ -262,8 +262,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
                 // we always need a way to clear local storage, regardless if signed in or not
             }
             {!isController ? <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} tabIndex={-1} /> : undefined}
-            {!pxt.usb.isEnabled ? undefined :
-                <sui.Item role="menuitem" icon='usb' text={lf("Pair device")} onClick={this.pair} tabIndex={-1} />}
+            {pxt.usb.isEnabled ? <sui.Item role="menuitem" icon='usb' text={lf("Pair device")} onClick={this.pair} tabIndex={-1} /> : undefined}
             <div className="ui mobile only divider"></div>
             {renderDocItems(this.props.parent, "mobile only")}
             <div className="ui divider"></div>

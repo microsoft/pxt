@@ -1353,12 +1353,20 @@ export class ProjectView
     }
 
     pair() {
-        pxt.usb.pairAsync()
-            .then(() => {
-                core.infoNotification(lf("Device paired! Try downloading now."))
-            }, (err: Error) => {
-                core.errorNotification(lf("Failed to pair the device: {0}", err.message))
-            })
+        const prePairAsync = pxt.commands.webUsbPairDialogAsync
+            ? pxt.commands.webUsbPairDialogAsync(core.confirmAsync)
+            : Promise.resolve(1);
+        return prePairAsync.then((res) => {
+            if (res) {
+                return pxt.usb.pairAsync()
+                    .then(() => {
+                        core.infoNotification(lf("Device paired! Try downloading now."))
+                    }, (err: Error) => {
+                        core.errorNotification(lf("Failed to pair the device: {0}", err.message))
+                    });
+            }
+            return Promise.resolve();
+        });
     }
 
     ///////////////////////////////////////////////////////////
@@ -1460,7 +1468,9 @@ export class ProjectView
                     return pxt.commands.saveOnlyAsync(resp);
                 }
                 return pxt.commands.deployCoreAsync(resp, {
-                    reportDeviceNotFoundAsync: (docPath, compileResult) => this.showDeviceNotFoundDialogAsync(docPath, compileResult)
+                    reportDeviceNotFoundAsync: (docPath, compileResult) => this.showDeviceNotFoundDialogAsync(docPath, compileResult),
+                    reportError: (e) => core.errorNotification(e),
+                    showNotification: (msg) => core.infoNotification(msg)
                 })
                     .catch(e => {
                         if (e.notifyUser) {
@@ -2715,6 +2725,9 @@ function initExtensionsAsync(): Promise<void> {
             }
             if (res.blocklyPatch) {
                 pxt.blocks.extensionBlocklyPatch = res.blocklyPatch;
+            }
+            if (res.webUsbPairDialogAsync) {
+                pxt.commands.webUsbPairDialogAsync = res.webUsbPairDialogAsync;
             }
         });
 }
