@@ -54,9 +54,15 @@ Also note that `v0` and `v1` here refer to an old version of the editor and the 
     * In v1, import the file from the home screen (or drag it into the editor)
     * The project should be unchanged and open in the editor in which it was created
 
-6. Test the downgrade scenario
+6. Test importing a v1 project in v0
     * Create a project in v1
     * Download the project file
     * In v0, import the file from the home screen (or drag it into the editor)
     * You should be notified that the project is too new and cannot be opened
     * Repeat for shared script
+
+7. Test downgraded local project (only applies if v1 and v0 share a database prefix)
+    * Create a project in v1
+    * Navigate to v0
+    * Open the project from the home screen projects list
+    * You should be notified that the project is too new and cannot be opened
