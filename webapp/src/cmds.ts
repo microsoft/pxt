@@ -382,7 +382,7 @@ export function initCommandsAsync(): Promise<void> {
                 })
                 .catch((e) => core.errorNotification(lf("saving file failed...")));
         };
-    } else if (electron.isPxtElectron) {
+    } else if (electron.isPxtElectron()) {
         pxt.commands.deployCoreAsync = electron.driveDeployAsync;
         pxt.commands.electronDeployAsync = electron.driveDeployAsync;
     } else if (hidbridge.shouldUse() && !pxt.appTarget.serial.noDeploy && !forceHexDownload) {
