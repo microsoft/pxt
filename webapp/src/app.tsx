@@ -1353,12 +1353,8 @@ export class ProjectView
     }
 
     pair() {
-        if (!pxt.commands.webUsbPairDialogAsync) {
-            return;
-        }
-
-        pxt.commands.webUsbPairDialogAsync(core.confirmAsync)
-            .then((res) => {
+        const prePairAsync = pxt.commands.webUsbPairDialogAsync(core.confirmAsync) || Promise.resolve(1);
+        return prePairAsync.then((res) => {
                 if (res) {
                     return pxt.usb.pairAsync()
                         .then(() => {
