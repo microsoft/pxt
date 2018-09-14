@@ -148,6 +148,10 @@ export class ProjectView
     }
 
     updateVisibility() {
+        if (electron.isElectron || pxt.winrt.isWinRT()) {
+            // Don't suspend when inside apps
+            return;
+        }
         let active = document.visibilityState == 'visible';
         pxt.debug(`page visibility: ${active}`)
         this.setState({ active: active })
