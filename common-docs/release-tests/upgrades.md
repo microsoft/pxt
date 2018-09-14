@@ -3,7 +3,7 @@
 We perform two types of upgrades when importing projects: JavaScript and Blockly.
 Our upgrade strategy is as follows:
 
-1. If the project was created in the current editor (same major/minor versions), we do nothing
+1. If the project was created in the current target (same major/minor versions), we do nothing
 2. Otherwise, check what editor this project was saved in (either Monaco or Blockly)
 3. If Blockly, try to update the blocks of the project
 4. If Monaco (or if Blockly update fails), try to upgrade the Javascript in the project
@@ -12,6 +12,7 @@ Our upgrade strategy is as follows:
 
 "Upgrade failing" refers to the project failing to compile.
 Therefore, if a project is saved with errors than it will probably fail to upgrade as well.
+We do not "downgrade" scripts; the old target should refuse to open any scripts created in newer versions.
 
 For each of the following scenarios, complete the steps in both blocks and JavaScript.
 To see a list of JavaScript upgrades, you can check the `pxtarget.json` for the target.
@@ -52,3 +53,10 @@ Also note that `v0` and `v1` here refer to an old version of the editor and the 
     * Download the project file
     * In v1, import the file from the home screen (or drag it into the editor)
     * The project should be unchanged and open in the editor in which it was created
+
+6. Test the downgrade scenario
+    * Create a project in v1
+    * Download the project file
+    * In v0, import the file from the home screen (or drag it into the editor)
+    * You should be notified that the project is too new and cannot be opened
+    * Repeat for shared script
