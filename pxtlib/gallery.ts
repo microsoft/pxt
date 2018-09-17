@@ -11,12 +11,7 @@ namespace pxt.gallery {
         dependencies: pxt.Map<string>;
     }
 
-    export function parseExampleMarkdown(name: string, md: string): GalleryProject {
-        if (!md) return undefined;
-
-        const m = /```(blocks?|typescript)\s+((.|\s)+?)\s*```/i.exec(md);
-        if (!m) return undefined;
-
+    export function parsePackagesFromMarkdown(md: string): pxt.Map<string> {
         const pm = /```package\s+((.|\s)+?)\s*```/i.exec(md);
         let dependencies: pxt.Map<string> = undefined;
         if (pm) {
@@ -25,19 +20,28 @@ namespace pxt.gallery {
                 .map(l => l.split('='))
                 .forEach(kv => dependencies[kv[0]] = kv[1] || "*");
         }
+        return dependencies;
+    }
 
+    export function parseExampleMarkdown(name: string, md: string): GalleryProject {
+        if (!md) return undefined;
+
+        const m = /```(blocks?|typescript)\s+((.|\s)+?)\s*```/i.exec(md);
+        if (!m) return undefined;
+
+        const dependencies = parsePackagesFromMarkdown(md);
         let src = m[2];
 
         // extract text between first sample and title
-        let comment = md.substring(0, m.index)
-            .replace(/^(#+.*|\s*)$/igm, '')
-            .trim();
-        if (comment) {
-            src = `/**
-${comment.split('\n').map(line => '* ' + line).join('\n')}
-*/
-` + src;
-        }
+//        let comment = md.substring(0, m.index)
+//            .replace(/^(#+.*|\s*)$/igm, '')
+//            .trim();
+//        if (comment) {
+//            src = `/**
+//${comment.split('\n').map(line => '* ' + line).join('\n')}
+//*/
+//` + src;
+//        }
 
         return {
             name,

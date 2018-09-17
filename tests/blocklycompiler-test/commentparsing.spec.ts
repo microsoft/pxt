@@ -277,25 +277,24 @@ describe("comment attribute parser", () => {
             });
 
             describe("errors", () => {
+                it("should not allow orphaned style tags", () => {
+                    parseDef("hello_world %arg", `hello_world `, param`arg`);
+                });
+
                 it("should not allow mismatched style tags", () => {
-                    parseDef("*hello_");
-                    parseDef("***hello_");
-                    parseDef("_hello***")
+                    parseDef("*hello_", `*hello_`);
+                    parseDef("***hello_", `***hello_`);
+                    parseDef("_hello***", `_hello***`)
                 });
 
                 it("should not allow style tags around pipes", () => {
-                    parseDef("*hello|world*");
-                    parseDef("***hello|world***");
+                    parseDef("*hello|world*", `*hello`, brk(), `world*`);
+                    parseDef("***hello|world***", `***hello`, brk(), `world***`);
                 });
 
                 it("should not allow style tags around parameters", () => {
-                    parseDef("*hello %the world*");
-                    parseDef("hello *%the* world");
-                });
-
-                it("should not allow style tags around pipes", () => {
-                    parseDef("*hello|world*");
-                    parseDef("***hello|world***");
+                    parseDef("*hello %the world*", `*hello `, param`the`, ` world*`);
+                    parseDef("hello *%the* world", `hello *`, param`the`, `* world`);
                 });
             })
         });
@@ -316,7 +315,7 @@ describe("comment attribute parser", () => {
 
             describe("errors", () => {
                 it("should not allow unterminated image markup", () => {
-                    parseDef("`I forgot to close it");
+                    parseDef("`I forgot to close it", "`I forgot to close it");
                 });
             });
         });
@@ -336,15 +335,15 @@ describe("comment attribute parser", () => {
 
             describe("errors", () => {
                 it("should not allow unclosed brackets", () => {
-                    parseDef("[some text(custom)")
+                    parseDef("[some text(custom)", `[some text(custom)`)
                 });
 
                 it("should not allow unclosed parens", () => {
-                    parseDef("[some text](custom")
+                    parseDef("[some text](custom", `[some text](custom`)
                 });
 
                 it("should not allow brackets that are not followed by parens", () => {
-                    parseDef("[some text] (custom)")
+                    parseDef("[some text] (custom)", `[some text] (custom)`)
                 });
             });
         });
@@ -392,10 +391,15 @@ describe("comment attribute parser", () => {
                 parseDef("$hello|world", paramRef`hello`, brk(), `world`);
             });
 
+            it("should allow parameter names to be specified using parens", () => {
+                parseDef(`$hello=variables_get(someName)`, paramVar`hello=someName`);
+                parseDef(`$hello=variables_get(  `, paramRef`hello=variables_get`, `(  `);
+            });
+
             describe("errors", () => {
                 it("should not allow parameters with too many equals", () => {
-                    parseDef("%no=good=")
-                    parseDef("%still=no=good")
+                    parseDef("%no=good=", `%no=good=`)
+                    parseDef("%still=no=good", `%still=no=good`)
                 });
             })
         });
@@ -440,6 +444,12 @@ function paramRef(parts: TemplateStringsArray): pxtc.BlockParameter {
     const res = param(parts);
     res.ref = true;
     return res;
+}
+
+function paramVar(parts: TemplateStringsArray): pxtc.BlockParameter {
+    const split = parts[0].split("=");
+
+    return { kind: "param", name: split[0], shadowBlockId: "variables_get", ref: true, varName: split[1] } as pxtc.BlockParameter;
 }
 
 function parseDef(def: string, ...expected: (string | pxtc.BlockPart)[]) {

@@ -58,8 +58,7 @@ namespace pxt.blocks {
 
         let newnodes: Element[] = [];
 
-        const blocks: Map<pxtc.SymbolInfo> = {};
-        info.blocks.forEach(b => blocks[b.attributes.blockId] = b);
+        const blocks: Map<pxtc.SymbolInfo> = info.blocksById;
 
         // walk top level blocks
         let node = dom.firstElementChild;

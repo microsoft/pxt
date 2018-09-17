@@ -58,6 +58,7 @@ namespace pxt.editor {
         bannerVisible?: boolean;
 
         highContrast?: boolean;
+        print?: boolean;
         greenScreen?: boolean;
 
         home?: boolean;
@@ -135,6 +136,7 @@ namespace pxt.editor {
         importProjectDialog(): void;
         removeProject(): void;
         editText(): void;
+        pushPullAsync(): Promise<void>;
 
         getPreferredEditor(): string;
         saveAndCompile(): void;
@@ -168,6 +170,7 @@ namespace pxt.editor {
         toggleSimulatorFullscreen(): void;
         proxySimulatorMessage(content: string): void;
         toggleTrace(intervalSpeed?: number): void;
+        setTrace(enabled: boolean, intervalSpeed?: number): void;
         toggleMute(): void;
         openInstructions(): void;
         closeFlyout(): void;
@@ -217,11 +220,14 @@ namespace pxt.editor {
 
         showImportUrlDialog(): void;
         showImportFileDialog(): void;
+        showImportGithubDialog(): void;
 
         showResetDialog(): void;
         showExitAndSaveDialog(): void;
+        showChooseHwDialog(): void;
 
         showPackageDialog(): void;
+        showBoardDialog(): void;
     }
 
     export interface IHexFileImporter {
@@ -263,12 +269,14 @@ namespace pxt.editor {
         hexFileImporters?: IHexFileImporter[];
         resourceImporters?: IResourceImporter[];
         beforeCompile?: () => void;
-        deployCoreAsync?: (resp: pxtc.CompileResult) => Promise<void>;
+        patchCompileResultAsync?: (r: pxtc.CompileResult) => Promise<void>;
+        deployCoreAsync?: (r: pxtc.CompileResult) => Promise<void>;
         saveOnlyAsync?: (r: ts.pxtc.CompileResult) => Promise<void>;
         saveProjectAsync?: (project: pxt.cpp.HexFile) => Promise<void>;
         showUploadInstructionsAsync?: (fn: string, url: string, confirmAsync: (options: any) => Promise<number>) => Promise<void>;
         toolboxOptions?: IToolboxOptions;
         blocklyPatch?: (pkgTargetVersion: string, dom: Element) => void;
+        webUsbPairDialogAsync?: (confirmAsync: (options: any) => Promise<number>) => Promise<number>;
     }
 
     export interface FieldExtensionOptions {

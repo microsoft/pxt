@@ -153,8 +153,6 @@ export interface DialogOptions {
     body?: string;
     jsx?: JSX.Element;
     htmlBody?: string;
-    input?: string;
-    inputValue?: string; // set if input is enabled
     copyable?: string;
     size?: string; // defaults to "small"
     onLoaded?: (_: HTMLElement) => void;
@@ -232,6 +230,7 @@ export function promptAsync(options: PromptOptions): Promise<string> {
     if (!options.buttons) options.buttons = []
 
     let result = "";
+    let cancelled: boolean = false;
 
     if (!options.hideAgree) {
         options.buttons.push({
@@ -243,6 +242,19 @@ export function promptAsync(options: PromptOptions): Promise<string> {
                 result = dialogInput.value;
             }
         })
+    }
+
+    if (!options.hideCancel) {
+        // Replace the default cancel button with our own
+        options.buttons.push({
+            label: options.disagreeLbl || lf("Cancel"),
+            className: (options.disagreeClass || "cancel"),
+            icon: options.disagreeIcon || "cancel",
+            onclick: () => {
+                cancelled = true;
+            }
+        });
+        options.hideCancel = true;
     }
 
     options.onLoaded = (ref: HTMLElement) => {
@@ -261,7 +273,7 @@ export function promptAsync(options: PromptOptions): Promise<string> {
     };
 
     return dialogAsync(options)
-        .then(() => result)
+        .then(() => cancelled ? null : result);
 }
 
 ///////////////////////////////////////////////////////////
@@ -311,6 +323,18 @@ export function parseQueryString(qs: string) {
         return ""
     })
     return r
+}
+
+export function stringifyQueryString(url: string, qs: any) {
+    for (let k of Object.keys(qs)) {
+        if (url.indexOf("?") >= 0) {
+            url += "&"
+        } else {
+            url += "?"
+        }
+        url += encodeURIComponent(k) + "=" + encodeURIComponent(qs[k])
+    }
+    return url
 }
 
 export function handleNetworkError(e: any, ignoredCodes?: number[]) {

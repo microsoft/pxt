@@ -2,6 +2,7 @@ import * as core from "./core";
 
 export function init(updated: () => void) {
     const appCache = window.applicationCache;
+    if (!appCache) return;
 
     function scheduleUpdate() {
         console.log(`app cache update ready (${appCache.status})`)

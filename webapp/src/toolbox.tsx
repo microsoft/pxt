@@ -5,10 +5,19 @@ import * as data from "./data"
 import * as editor from "./toolboxeditor"
 import * as sui from "./sui"
 import * as core from "./core"
-import * as snippets from "./monacoSnippets"
-import * as monaco from "./monaco"
 
 import Util = pxt.Util;
+
+export const enum CategoryNameID {
+    Loops = "loops",
+    Logic = "logic",
+    Variables = "variables",
+    Maths = "Math",
+    Functions = "functions",
+    Arrays = "arrays",
+    Text = "text",
+    Extensions = "addpackage"
+}
 
 // this is a supertype of pxtc.SymbolInfo (see partitionBlocks)
 export interface BlockDefinition {
@@ -227,7 +236,8 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
     componentDidUpdate(prevProps: ToolboxProps, prevState: ToolboxState) {
         if (prevState.visible != this.state.visible
             || prevState.loading != this.state.loading
-            || prevState.showAdvanced != this.state.showAdvanced) {
+            || prevState.showAdvanced != this.state.showAdvanced
+            || this.state.expandedItem != prevState.expandedItem) {
             this.props.parent.resize();
         }
         if (this.state.hasSearch && this.state.searchBlocks != prevState.searchBlocks) {
@@ -398,7 +408,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                     {nonAdvancedCategories.map((treeRow) => (
                         <CategoryItem key={treeRow.nameid} toolbox={this} index={index++} selected={selectedItem == treeRow.nameid} childrenVisible={expandedItem == treeRow.nameid} treeRow={treeRow} onCategoryClick={this.setSelection}>
                             {treeRow.subcategories ? treeRow.subcategories.map((subTreeRow) => (
-                                <CategoryItem key={subTreeRow.nameid} index={index++} toolbox={this} selected={selectedItem == (subTreeRow.nameid + subTreeRow.subns)} treeRow={subTreeRow} onCategoryClick={this.setSelection} />
+                                <CategoryItem key={subTreeRow.nameid + subTreeRow.subns} index={index++} toolbox={this} selected={selectedItem == (subTreeRow.nameid + subTreeRow.subns)} treeRow={subTreeRow} onCategoryClick={this.setSelection} />
                             )) : undefined}
                         </CategoryItem>
                     ))}
@@ -804,7 +814,7 @@ export class ToolboxSearch extends data.Component<ToolboxSearchProps, ToolboxSea
         const { searchAccessibilityLabel } = this.state;
         return <div id="blocklySearchArea">
             <div id="blocklySearchInput" className="ui fluid icon input" role="search">
-                <input ref="searchInput" type="text" placeholder="Search..." autoComplete="off"
+                <input ref="searchInput" type="text" placeholder={lf("Search...")} autoComplete="off"
                     onFocus={this.searchImmediate} onKeyDown={this.handleKeyDown} onChange={this.handleChange}
                     id="blocklySearchInputField" className="blocklySearchInputField" />
                 <i className="search icon" role="presentation" aria-hidden="true"></i>
@@ -834,7 +844,7 @@ export class ToolboxStyle extends data.Component<ToolboxStyleProps, {}> {
         // and assosiate them with a specific category
         return <style>
             {categories.filter(c => !!c.color).map(category =>
-                `span.docs.inlineblock.${category.nameid} {
+                `span.docs.inlineblock.${category.nameid.toLowerCase()} {
                     background-color: ${category.color};
                     border-color: ${pxt.toolbox.fadeColor(category.color, 0.1, false)};
                 }`

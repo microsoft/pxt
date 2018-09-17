@@ -549,7 +549,8 @@ namespace ts.pxtc {
     function checkType(t: Type): Type {
         let ok = TypeFlags.String | TypeFlags.Number | TypeFlags.Boolean |
             TypeFlags.StringLiteral | TypeFlags.NumberLiteral | TypeFlags.BooleanLiteral |
-            TypeFlags.Void | TypeFlags.Enum | TypeFlags.EnumLiteral | TypeFlags.Null | TypeFlags.Undefined
+            TypeFlags.Void | TypeFlags.Enum | TypeFlags.EnumLiteral | TypeFlags.Null | TypeFlags.Undefined |
+            TypeFlags.Never
         if ((t.flags & ok) == 0) {
             if (isArrayType(t)) return t;
             if (isClassType(t)) return t;
@@ -1540,15 +1541,16 @@ namespace ts.pxtc {
             let w = 0;
             let h = 0;
             let lit = "";
+            let c = 0;
             s += "\n"
             for (let i = 0; i < s.length; ++i) {
                 switch (s[i]) {
                     case ".":
                     case "_":
-                    case "0": lit += "0,"; x++; break;
+                    case "0": lit += "0,"; x++; c++; break;
                     case "#":
                     case "*":
-                    case "1": lit += "1,"; x++; break;
+                    case "1": lit += "255,"; x++; c++; break;
                     case "\t":
                     case "\r":
                     case " ": break;
@@ -1568,8 +1570,10 @@ namespace ts.pxtc {
             }
 
             let lbl = "_img" + bin.lblNo++
-            if (lit.length % 4 != 0)
-                lit += "42" // pad
+
+            // Pad with a 0 if we have an odd number of pixels
+            if (c % 2 != 0)
+                lit += "0"
 
             bin.otherLiterals.push(`
 .balign 4
@@ -2169,6 +2173,8 @@ ${lbl}: .short 0xffff
                     let d = getDecl(e)
                     if (d && (d.kind == SK.EnumMember || d.kind == SK.VariableDeclaration))
                         return getFullName(checker, d.symbol)
+                    else if (e && e.kind == SK.StringLiteral)
+                        return (e as StringLiteral).text
                     else return "*"
                 }).join(",")
                 let fn = getFullName(checker, decl.symbol)
@@ -3206,6 +3212,11 @@ ${lbl}: .short 0xffff
                     return r
                 let f = fmt.charAt(i + 1)
                 let isNumber = isNumberLike(a)
+
+                if (!f && name.indexOf("::") < 0) {
+                    // for assembly functions, make up the format string - pass numbers as ints and everything else as is
+                    f = isNumber ? "I" : "_"
+                }
                 if (!f) {
                     throw U.userError("not enough args for " + name)
                 } else if (f == "_" || f == "T" || f == "N") {
@@ -3402,8 +3413,8 @@ ${lbl}: .short 0xffff
             let lt = typeOf(node.left)
             let rt = typeOf(node.right)
 
-            if (node.operatorToken.kind == SK.PlusToken) {
-                if (isStringType(lt) || isStringType(rt)) {
+            if (node.operatorToken.kind == SK.PlusToken || node.operatorToken.kind == SK.PlusEqualsToken) {
+                if (isStringType(lt) || (isStringType(rt) && node.operatorToken.kind == SK.PlusToken)) {
                     (node as any).exprInfo = { leftType: checker.typeToString(lt), rightType: checker.typeToString(rt) } as BinaryExpressionInfo;
                 }
             }
@@ -3503,14 +3514,21 @@ ${lbl}: .short 0xffff
                 return r;
             let tp = typeOf(e)
 
+            return emitAsStringCore(e, tp, r);
+        }
+
+        function emitAsStringCore(e: Expression | TemplateLiteralFragment, tp: Type, emitted: ir.Expr): ir.Expr {
             if (target.floatingPoint && (tp.flags & (TypeFlags.NumberLike | TypeFlags.Boolean | TypeFlags.BooleanLiteral)))
-                return ir.rtcallMask("numops::toString", 1, ir.CallingConvention.Plain, [r])
+                return ir.rtcallMask("numops::toString", 1, ir.CallingConvention.Plain, [emitted])
             else if (tp.flags & TypeFlags.NumberLike)
-                return ir.rtcall("Number_::toString", [r])
+                return ir.rtcall("Number_::toString", [emitted])
             else if (isBooleanType(tp))
-                return ir.rtcall("Boolean_::toString", [r])
+                return ir.rtcall("Boolean_::toString", [emitted])
             else if (isStringType(tp))
-                return r // OK
+                return emitted // OK
+            else if (isUnionOfLiterals(tp) && tp.types && tp.types.length) {
+                return emitAsStringCore(e, tp.types[0], emitted);
+            }
             else {
                 let decl = tp.symbol ? tp.symbol.valueDeclaration : null
                 if (decl && (decl.kind == SK.ClassDeclaration || decl.kind == SK.InterfaceDeclaration)) {
@@ -4397,6 +4415,6 @@ ${lbl}: .short 0xffff
     }
 
     function isNumberLikeType(type: Type) {
-        return !!(type.flags & (TypeFlags.NumberLike | TypeFlags.EnumLike))
+        return !!(type.flags & (TypeFlags.NumberLike | TypeFlags.EnumLike | TypeFlags.BooleanLike))
     }
 }

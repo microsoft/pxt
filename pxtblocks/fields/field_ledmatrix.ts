@@ -36,6 +36,7 @@ namespace pxtblockly {
         private xAxisLabel: LabelMode = LabelMode.None;
 
         private cellState: boolean[][] = [];
+        private cells: SVGRectElement[][] = [];
         private elt: SVGSVGElement;
 
         private isMouseDown_: boolean;
@@ -82,13 +83,13 @@ namespace pxtblockly {
             // Initialize the matrix that holds the state
             for (let i = 0; i < this.matrixWidth; i++) {
                 this.cellState.push([])
+                this.cells.push([]);
                 for (let j = 0; j < this.matrixHeight; j++) {
                     this.cellState[i].push(false);
                 }
             }
 
             this.restoreStateFromString();
-            this.updateValue()
 
             // Create the cells of the matrix that is displayed
             for (let i = 0; i < this.matrixWidth; i++) {
@@ -96,6 +97,8 @@ namespace pxtblockly {
                     this.createCell(i, j);
                 }
             }
+
+            this.updateValue();
 
             if (this.xAxisLabel !== LabelMode.None) {
                 const y = this.matrixHeight * (FieldMatrix.CELL_WIDTH + FieldMatrix.CELL_VERTICAL_MARGIN) + FieldMatrix.CELL_VERTICAL_MARGIN * 2 + FieldMatrix.BOTTOM_MARGIN
@@ -138,6 +141,9 @@ namespace pxtblockly {
             pxsim.pointerEvents.down.forEach(evid => this.sourceBlock_.getSvgRoot().removeEventListener(evid, this.dontHandleMouseEvent_));
             this.sourceBlock_.getSvgRoot().removeEventListener(pxsim.pointerEvents.move, this.dontHandleMouseEvent_);
             document.removeEventListener(pxsim.pointerEvents.up, this.clearLedDragHandler);
+            document.removeEventListener(pxsim.pointerEvents.leave, this.clearLedDragHandler);
+
+            (Blockly as any).Touch.clearTouchIdentifier();
 
             ev.stopPropagation();
             ev.preventDefault();
@@ -149,11 +155,10 @@ namespace pxtblockly {
 
             const cellG = pxsim.svg.child(this.elt, "g", { transform: `translate(${tx} ${ty})` }) as SVGGElement;
             const cellRect = pxsim.svg.child(cellG, "rect", { 'class': `blocklyLed${this.cellState[x][y] ? 'On' : 'Off'}`, 'cursor': 'pointer', width: FieldMatrix.CELL_WIDTH, height: FieldMatrix.CELL_WIDTH, fill: this.getColor(x, y), rx: FieldMatrix.CELL_CORNER_RADIUS }) as SVGRectElement;
+            this.cells[x][y] = cellRect;
 
             const toggleRect = () => {
                 this.cellState[x][y] = this.currentDragState_;
-                cellRect.setAttribute("fill", this.getColor(x, y));
-                cellRect.setAttribute('class', `blocklyLed${this.cellState[x][y] ? 'On' : 'Off'}`);
                 this.updateValue();
             }
 
@@ -168,6 +173,7 @@ namespace pxtblockly {
                 this.sourceBlock_.getSvgRoot().addEventListener(pxsim.pointerEvents.move, this.dontHandleMouseEvent_);
 
                 document.addEventListener(pxsim.pointerEvents.up, this.clearLedDragHandler);
+                document.addEventListener(pxsim.pointerEvents.leave, this.clearLedDragHandler);
 
                 ev.stopPropagation();
                 ev.preventDefault();
@@ -183,6 +189,25 @@ namespace pxtblockly {
 
         private getColor(x: number, y: number) {
             return this.cellState[x][y] ? this.onColor : this.offColor;
+        }
+
+        private updateCell(x: number, y: number) {
+            const cellRect = this.cells[x][y];
+            cellRect.setAttribute("fill", this.getColor(x, y));
+            cellRect.setAttribute('class', `blocklyLed${this.cellState[x][y] ? 'On' : 'Off'}`);
+        }
+
+        setValue(newValue: string | number, restoreState = true) {
+            super.setValue(newValue);
+            if (this.elt) {
+                if (restoreState) this.restoreStateFromString();
+
+                for (let x = 0; x < this.matrixWidth; x++) {
+                    for (let y = 0; y < this.matrixHeight; y++) {
+                        this.updateCell(x, y);
+                    }
+                }
+            }
         }
 
         render_() {
@@ -243,7 +268,7 @@ namespace pxtblockly {
             }
 
             // Blockly stores the state of the field as a string
-            this.setValue(res);
+            this.setValue(res, false);
         }
 
         private getYAxisWidth() {

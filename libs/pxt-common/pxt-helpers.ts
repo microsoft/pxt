@@ -1,5 +1,18 @@
 type Action = () => void;
 
+
+/**
+  * Convert a string to an integer.
+  * @param s A string to convert into an integral number. eg: 123
+  */
+//% help=text/parse-int
+//% blockId="string_parseint" block="parse to integer %text" blockNamespace="text"
+//% text.defl="123"
+//% blockHidden=1
+function parseInt(text: string): number {
+    return parseFloat(text) >> 0;
+}
+
 namespace helpers {
     export function arraySplice<T>(arr: T[], start: number, len: number) {
         if (start < 0) {
@@ -210,5 +223,156 @@ namespace Math {
             digits++;
         } while (r == 0 && digits < 21);
         return r;
+    }
+}
+
+
+//% blockHidden=1
+namespace __internal {
+    /**
+     * A shim to render a boolean as a down/up toggle
+     */
+    //% shim=TD_ID blockHidden=1
+    //% blockId=toggleDownUp block="%down"
+    //% down.fieldEditor=toggledownup
+    //% down.fieldOptions.decompileLiterals=true
+    export function __downUp(down: boolean): boolean {
+        return down;
+    }
+
+    /**
+     * A shim to render a boolean as a up/down toggle
+     */
+    //% shim=TD_ID blockHidden=1
+    //% blockId=toggleUpDown block="%up"
+    //% up.fieldEditor=toggleupdown
+    //% up.fieldOptions.decompileLiterals=true
+    export function __upDown(up: boolean): boolean {
+        return up;
+    }
+
+    /**
+     * A shim to render a boolean as a high/low toggle
+     */
+    //% shim=TD_ID blockHidden=1
+    //% blockId=toggleHighLow block="%high"
+    //% high.fieldEditor=togglehighlow
+    //% high.fieldOptions.decompileLiterals=true
+    export function __highLow(high: boolean): boolean {
+        return high;
+    }
+
+    /**
+     * A shim to render a boolean as a on/off toggle
+     */
+    //% shim=TD_ID blockHidden=1
+    //% blockId=toggleOnOff block="%on"
+    //% on.fieldEditor=toggleonoff
+    //% on.fieldOptions.decompileLiterals=true
+    export function __onOff(on: boolean): boolean {
+        return on;
+    }
+
+    /**
+     * A shim to render a boolean as a yes/no toggle
+     */
+    //% shim=TD_ID blockHidden=1
+    //% blockId=toggleYesNo block="%yes"
+    //% yes.fieldEditor=toggleyesno
+    //% yes.fieldOptions.decompileLiterals=true
+    export function __yesNo(yes: boolean): boolean {
+        return yes;
+    }
+
+    /**
+     * Get the color wheel field editor
+     * @param color color, eg: #ff0000
+     */
+    //% blockId=colorNumberPicker block="%value"
+    //% blockHidden=true
+    //% shim=TD_ID colorSecondary="#FFFFFF"
+    //% value.fieldEditor="colornumber" value.fieldOptions.decompileLiterals=true
+    //% value.defl='#ff0000'
+    //% value.fieldOptions.colours='["#ff0000","#ff8000","#ffff00","#ff9da5","#00ff00","#b09eff","#00ffff","#007fff","#65471f","#0000ff","#7f00ff","#ff0080","#ff00ff","#ffffff","#999999","#000000"]'
+    //% value.fieldOptions.columns=4 value.fieldOptions.className='rgbColorPicker'
+    export function __colorNumberPicker(value: number) {
+        return value;
+    }
+
+    /**
+     * Get the color wheel field editor
+     * @param value value between 0 to 255 to get a color value, eg: 10
+     */
+    //% blockId=colorWheelPicker block="%value"
+    //% blockHidden=true
+    //% shim=TD_ID colorSecondary="#FFFFFF"
+    //% value.fieldEditor="colorwheel" value.fieldOptions.decompileLiterals=true
+    //% value.fieldOptions.sliderWidth='200'
+    //% value.fieldOptions.min=0 value.fieldOptions.max=255
+    export function __colorWheelPicker(value: number) {
+        return value;
+    }
+
+    /**
+    * Get the color wheel field editor using HSV values
+    * @param value value between 0 to 255 to get a color value, eg: 10
+    */
+    //% blockId=colorWheelHsvPicker block="%value"
+    //% blockHidden=true
+    //% shim=TD_ID colorSecondary="#FFFFFF"
+    //% value.fieldEditor="colorwheel" value.fieldOptions.decompileLiterals=true
+    //% value.fieldOptions.sliderWidth='200'
+    //% value.fieldOptions.min=0 value.fieldOptions.max=255
+    //% value.fieldOptions.channel=hsvfast
+    export function __colorWheelHsvPicker(value: number) {
+        return value;
+    }
+
+    /**
+     * A speed picker
+     * @param speed the speed, eg: 50
+     */
+    //% blockId=speedPicker block="%speed" shim=TD_ID
+    //% speed.fieldEditor="speed" colorSecondary="#FFFFFF"
+    //% weight=0 blockHidden=1 speed.fieldOptions.decompileLiterals=1
+    export function __speedPicker(speed: number): number {
+        return speed;
+    }
+
+    /**
+     * A turn ratio picker
+     * @param turnratio the turn ratio, eg: 0
+     */
+    //% blockId=turnRatioPicker block="%turnratio" shim=TD_ID
+    //% turnratio.fieldEditor="turnratio" colorSecondary="#FFFFFF"
+    //% weight=0 blockHidden=1 turnRatio.fieldOptions.decompileLiterals=1
+    export function __turnRatioPicker(turnratio: number): number {
+        return turnratio;
+    }
+
+    /**
+     * A field editor that displays a protractor
+     */
+    //% blockId=protractorPicker block="%angle"
+    //% shim=TD_ID
+    //% angle.fieldEditor=protractor
+    //% angle.fieldOptions.decompileLiterals=1    
+    //% colorSecondary="#FFFFFF"
+    //% blockHidden=1
+    export function __protractor(angle: number) {
+        return angle;
+    }
+
+    /**
+      * Get the time field editor
+      * @param ms time duration in milliseconds, eg: 500, 1000
+      */
+    //% blockId=timePicker block="%ms"
+    //% blockHidden=true shim=TD_ID
+    //% colorSecondary="#FFFFFF"
+    //% ms.fieldEditor="numberdropdown" ms.fieldOptions.decompileLiterals=true
+    //% ms.fieldOptions.data='[["100 ms", 100], ["200 ms", 200], ["500 ms", 500], ["1 second", 1000], ["2 seconds", 2000]]'
+    export function __timePicker(ms: number): number {
+        return ms;
     }
 }

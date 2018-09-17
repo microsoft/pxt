@@ -161,8 +161,8 @@ namespace pxt.runner {
         let $el = $("." + cls).first();
         if (!$el[0]) return Promise.resolve();
 
-        if (!options.emPixels) options.emPixels = 14;
-        if (!options.layout) options.layout = pxt.blocks.BlockLayout.Flow;
+        if (!options.emPixels) options.emPixels = 18;
+        if (!options.layout) options.layout = pxt.blocks.BlockLayout.Align;
 
         return pxt.runner.decompileToBlocksAsync($el.text(), options)
             .then((r) => {
@@ -260,7 +260,7 @@ namespace pxt.runner {
             let $el = $("." + cls).first();
             if (!$el[0]) return Promise.resolve();
 
-            if (!options.emPixels) options.emPixels = 14;
+            if (!options.emPixels) options.emPixels = 18;
             return pxt.runner.compileBlocksAsync($el.text(), options)
                 .then((r) => {
                     try {
@@ -303,7 +303,7 @@ namespace pxt.runner {
                     nsStyleBuffer += `
                         span.docs.${ns.toLowerCase()} {
                             background-color: ${color} !important;
-                            border-color: ${pxt.toolbox.fadeColor(color, 0.2, true)} !important;
+                            border-color: ${pxt.toolbox.fadeColor(color, 0.1, false)} !important;
                         }
                     `;
                 })
@@ -315,7 +315,7 @@ namespace pxt.runner {
                     nsStyleBuffer += `
                         span.docs.${ns.toLowerCase()} {
                             background-color: ${color} !important;
-                            border-color: ${pxt.toolbox.fadeColor(color, 0.2, true)} !important;
+                            border-color: ${pxt.toolbox.fadeColor(color, 0.1, false)} !important;
                         }
                     `;
                 })
@@ -414,7 +414,7 @@ namespace pxt.runner {
             const cjs = r.compileJS;
             if (!cjs) return;
             const file = r.compileJS.ast.getSourceFile("main.ts");
-            const stmts = file.statements.slice(0).reverse();
+            const stmts = file.statements.slice(0);
             const ul = $('<div />').addClass('ui cards');
             ul.attr("role", "listbox");
             const addItem = (card: pxt.CodeCard) => {

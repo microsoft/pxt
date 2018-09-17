@@ -101,6 +101,11 @@ namespace pxsim {
         packet: Uint8Array; // base64 encoded
     }
 
+    export interface SimulatorBLEPacketMessage extends SimulatorMessage {
+        type: "blepacket";
+        packet: Uint8Array;
+    }
+
     export interface SimulatorI2CMessage extends SimulatorMessage {
         type: "i2c";
         data: Uint8Array;
@@ -316,7 +321,7 @@ namespace pxsim {
     }
 
     function initAppcache() {
-        if (typeof window !== 'undefined') {
+        if (typeof window !== 'undefined' && window.applicationCache) {
             if (window.applicationCache.status === window.applicationCache.UPDATEREADY)
                 reload();
             window.applicationCache.addEventListener("updateready", () => {
@@ -330,7 +335,7 @@ namespace pxsim {
         // Continuously send message just in case the editor isn't ready to handle it yet
         setInterval(() => {
             Runtime.postMessage({ type: "simulator", command: "reload" } as SimulatorCommandMessage)
-        }, 500)
+        }, 3000)
     }
 }
 

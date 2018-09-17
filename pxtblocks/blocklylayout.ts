@@ -59,7 +59,10 @@ namespace pxt.blocks.layout {
             y += emPixels; //buffer
         })
         let blocks = ws.getTopBlocks(true);
-        blocks.forEach(block => {
+        blocks.forEach((block, bi) => {
+            // TODO: REMOVE THIS WHEN FIXED IN PXT-BLOCKLY
+            if (block.getStartHat())
+                y += emPixels; // hat height
             block.moveBy(0, y)
             y += block.getHeightWidth().height
             y += emPixels; //buffer
@@ -109,6 +112,7 @@ namespace pxt.blocks.layout {
             });
     }
 
+    const MAX_SCREENSHOT_SIZE = 1e6; // max 1Mb
     function toPngAsyncInternal(width: number, height: number, pixelDensity: number, data: string): Promise<string> {
         return new Promise<string>((resolve, reject) => {
             const cvs = document.createElement("canvas") as HTMLCanvasElement;
@@ -119,7 +123,15 @@ namespace pxt.blocks.layout {
             cvs.height = height * pixelDensity;
             img.onload = function () {
                 ctx.drawImage(img, 0, 0, width, height, 0, 0, cvs.width, cvs.height);
-                const canvasdata = cvs.toDataURL("image/png");
+                let canvasdata = cvs.toDataURL("image/png");
+                // if the generated image is too big, shrink image
+                while (canvasdata.length > MAX_SCREENSHOT_SIZE) {
+                    cvs.width = (cvs.width / 2) >> 0;
+                    cvs.height = (cvs.height / 2) >> 0;
+                    pxt.log(`screenshot size ${canvasdata.length}b, shrinking to ${cvs.width}x${cvs.height}`)
+                    ctx.drawImage(img, 0, 0, width, height, 0, 0, cvs.width, cvs.height);
+                    canvasdata = cvs.toDataURL("image/png");
+                }
                 resolve(canvasdata);
             };
             img.onerror = ev => {
@@ -151,7 +163,7 @@ namespace pxt.blocks.layout {
 
     export function serializeSvgString(xmlString: string): string {
         return xmlString
-            .replace(new RegExp('&nbsp;','g'), '&#160;'); // Replace &nbsp; with &#160; as a workaround for having nbsp missing from SVG xml
+            .replace(new RegExp('&nbsp;', 'g'), '&#160;'); // Replace &nbsp; with &#160; as a workaround for having nbsp missing from SVG xml
     }
 
     export interface BlockSvg {
@@ -184,6 +196,7 @@ namespace pxt.blocks.layout {
                 xsg.documentElement.insertBefore(cssLink, xsg.documentElement.firstElementChild);
 
                 return expandImagesAsync(xsg)
+                    .then(() => convertIconsToPngAsync(xsg))
                     .then(() => {
                         return <BlockSvg>{
                             width: width,
@@ -227,6 +240,31 @@ namespace pxt.blocks.layout {
                             pxt.debug(`svg render: failed to load ${href}`)
                         }))
                     .then(href => { image.setAttributeNS(XLINK_NAMESPACE, "href", href); })
+            });
+        return Promise.all(p).then(() => { })
+    }
+
+    let imageIconCache: pxt.Map<string>;
+    function convertIconsToPngAsync(xsg: Document): Promise<void> {
+        if (!imageIconCache) imageIconCache = {};
+
+        if (!(BrowserUtils.isIE() || BrowserUtils.isEdge())) return Promise.resolve();
+
+        const images = xsg.getElementsByTagName("image") as NodeListOf<Element>;
+        const p = pxt.Util.toArray(images)
+            .filter(image => /^data:image\/svg\+xml/.test(image.getAttributeNS(XLINK_NAMESPACE, "href")))
+            .map((image: HTMLImageElement) => {
+                const svgUri = image.getAttributeNS(XLINK_NAMESPACE, "href");
+                const width = parseInt(image.getAttribute("width").replace(/[^0-9]/g, ""));
+                const height = parseInt(image.getAttribute("height").replace(/[^0-9]/g, ""));
+                let pngUri = imageIconCache[svgUri];
+
+                return (pngUri ? Promise.resolve(pngUri)
+                    : toPngAsyncInternal(width, height, 4, svgUri))
+                    .then(href => {
+                        imageIconCache[svgUri] = href;
+                        image.setAttributeNS(XLINK_NAMESPACE, "href", href);
+                    })
             });
         return Promise.all(p).then(() => { })
     }
@@ -377,7 +415,7 @@ namespace pxt.blocks.layout {
             }
 
             insertx += group.width + outerGroupMargin;
-            rowBottom = Math.max(rowBottom, group.height + outerGroupMargin);
+            rowBottom = Math.max(rowBottom, inserty + group.height + outerGroupMargin);
 
             if (insertx > maxx) {
                 insertx = marginx;

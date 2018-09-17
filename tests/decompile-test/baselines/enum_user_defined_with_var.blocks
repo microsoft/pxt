@@ -1,0 +1,20 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<variables>
+<variable type="PlainOldEnum">0A</variable>
+<variable type="PlainOldEnum">1B</variable>
+<variable type="PlainOldEnum">2C</variable>
+</variables>
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="variables_set">
+<field name="VAR">varEnumTest</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="enum_user_shim">
+<field name="MEMBER">A</field>
+</block>
+</value>
+</block>
+</statement>
+</block>
+</xml>

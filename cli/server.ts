@@ -9,6 +9,7 @@ import * as os from 'os';
 import * as util from 'util';
 import * as hid from './hid';
 import * as serial from './serial';
+import * as net from 'net';
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
@@ -99,41 +100,54 @@ function readAssetsAsync(logicalDirname: string): Promise<any> {
         }))
 }
 
-function readPkgAsync(logicalDirname: string, fileContents = false): Promise<FsPkg> {
+const HEADER_JSON = ".header.json"
+
+async function readPkgAsync(logicalDirname: string, fileContents = false): Promise<FsPkg> {
     let dirname = path.join(userProjectsDir, logicalDirname)
-    let r: FsPkg = undefined;
-    return readFileAsync(path.join(dirname, pxt.CONFIG_NAME))
-        .then(buf => {
-            let cfg: pxt.PackageConfig = JSON.parse(buf.toString("utf8"))
-            let files = [pxt.CONFIG_NAME].concat(cfg.files || []).concat(cfg.testFiles || [])
-            return Promise.map(files, fn =>
-                statOptAsync(path.join(dirname, fn))
-                    .then<FsFile>(st => {
-                        let r: FsFile = {
-                            name: fn,
-                            mtime: st ? st.mtime.getTime() : null
-                        }
-                        if (st == null || !fileContents)
-                            return r
-                        else
-                            return readFileAsync(path.join(dirname, fn))
-                                .then(buf => {
-                                    r.content = buf.toString("utf8")
-                                    return r
-                                })
-                    }))
-                .then(files => {
-                    r = {
-                        path: logicalDirname,
-                        config: cfg,
-                        files: files
-                    };
-                    return existsAsync(path.join(dirname, "icon.jpeg"));
-                }).then(icon => {
-                    r.icon = icon ? "/icon/" + logicalDirname : undefined;
-                    return r;
-                })
-        })
+    let buf = await readFileAsync(path.join(dirname, pxt.CONFIG_NAME))
+    let cfg: pxt.PackageConfig = JSON.parse(buf.toString("utf8"))
+    let r: FsPkg = {
+        path: logicalDirname,
+        config: cfg,
+        header: null,
+        files: []
+    };
+
+    for (let fn of pxt.allPkgFiles(cfg).concat([pxt.github.GIT_JSON])) {
+        let st = await statOptAsync(path.join(dirname, fn))
+        let ff: FsFile = {
+            name: fn,
+            mtime: st ? st.mtime.getTime() : null
+        }
+
+        let thisFileContents = st && fileContents
+
+        if (fn == pxt.github.GIT_JSON) {
+            // skip .git.json altogether if missing
+            if (!st) continue
+            thisFileContents = true
+        }
+
+        if (thisFileContents) {
+            let buf = await readFileAsync(path.join(dirname, fn))
+            ff.content = buf.toString("utf8")
+        }
+
+        r.files.push(ff)
+    }
+
+    if (await existsAsync(path.join(dirname, "icon.jpeg"))) {
+        r.icon = "/icon/" + logicalDirname
+    }
+
+    // now try reading the header
+    buf = await readFileAsync(path.join(dirname, HEADER_JSON))
+        .then(b => b, err => null)
+
+    if (buf && buf.length)
+        r.header = JSON.parse(buf.toString("utf8"))
+
+    return r
 }
 
 function writeScreenshotAsync(logicalDirname: string, screenshotUri: string, iconUri: string) {
@@ -194,8 +208,16 @@ function writePkgAsync(logicalDirname: string, data: FsPkg) {
                 }
             }, err => { }))
         // no conflict, proceed with writing
-        .then(() => Promise.map(data.files, f =>
-            writeFileAsync(path.join(dirname, f.name), f.content)))
+        .then(() => Promise.map(data.files, f => {
+            let d = f.name.replace(/\/[^\/]*$/, "")
+            if (d != f.name)
+                nodeutil.mkdirP(path.join(dirname, d))
+            return writeFileAsync(path.join(dirname, f.name), f.content)
+        }))
+        .then(() => {
+            if (data.header)
+                return writeFileAsync(path.join(dirname, HEADER_JSON), JSON.stringify(data.header, null, 4))
+        })
         .then(() => readPkgAsync(logicalDirname, false))
 }
 
@@ -414,7 +436,7 @@ function initSocketServer(wsPort: number, hostname: string) {
     }
 
     let hios: pxt.Map<Promise<pxt.HF2.Wrapper>> = {};
-    function startHID(request: any, socket: any, body: any) {
+    function startHID(request: http.IncomingMessage, socket: WebSocket, body: any) {
         let ws = new WebSocket(request, socket, body);
         ws.on('open', () => {
             ws.send(JSON.stringify({ id: "ready" }))
@@ -423,6 +445,20 @@ function initSocketServer(wsPort: number, hostname: string) {
             try {
                 let msg = JSON.parse(event.data);
                 pxt.debug(`hid: msg ${msg.op}`) // , objToString(msg.arg))
+
+                // check that HID is installed
+                if (!hid.isInstalled(true)) {
+                    if (!ws) return;
+                    ws.send(JSON.stringify({
+                        result: {
+                            errorMessage: "node-hid not installed",
+                        },
+                        op: msg.op,
+                        id: msg.id
+                    }))
+                    return;
+                }
+
                 Promise.resolve()
                     .then(() => {
                         let hio = hios[msg.arg.path]
@@ -475,9 +511,13 @@ function initSocketServer(wsPort: number, hostname: string) {
                                         .then(res => ({ data: U.toHex(res) }))
                                 });
                             case "sendserial":
-                                return hio.sendSerialAsync(U.fromHex(msg.arg.data), msg.arg.isError)
+                                return hio.sendSerialAsync(U.fromHex(msg.arg.data), msg.arg.isError);
                             case "list":
-                                return { devices: hid.getHF2Devices() } as any
+                                return hid.getHF2DevicesAsync()
+                                    .then(devices => { return { devices } as any; });
+                            default: // unknown message
+                                pxt.log(`unknown hid message ${msg.op}`)
+                                return null;
                         }
                     })
                     .done(resp => {
@@ -514,7 +554,97 @@ function initSocketServer(wsPort: number, hostname: string) {
         })
     }
 
-    function startDebug(request: any, socket: any, body: any) {
+    let openSockets: pxt.Map<net.Socket> = {};
+    function startTCP(request: http.IncomingMessage, socket: WebSocket, body: any) {
+        let ws = new WebSocket(request, socket, body);
+        let netSockets: net.Socket[] = []
+        ws.on('open', () => {
+            ws.send(JSON.stringify({ id: "ready" }))
+        })
+        ws.on('message', function (event: any) {
+            try {
+                let msg = JSON.parse(event.data);
+                pxt.debug(`tcp: msg ${msg.op}`) // , objToString(msg.arg))
+
+                Promise.resolve()
+                    .then(() => {
+                        let sock = openSockets[msg.arg.socket]
+                        switch (msg.op) {
+                            case "close":
+                                sock.end();
+                                let idx = netSockets.indexOf(sock)
+                                if (idx >= 0)
+                                    netSockets.splice(idx, 1)
+                                return {}
+                            case "open":
+                                return new Promise((resolve, reject) => {
+                                    const newSock = new net.Socket()
+                                    netSockets.push(newSock)
+                                    const id = pxt.U.guidGen()
+                                    newSock.on('error', err => {
+                                        if (ws)
+                                            ws.send(JSON.stringify({ op: "error", result: { socket: id, error: err.message } }))
+                                    })
+                                    newSock.connect(msg.arg.port, msg.arg.host, () => {
+                                        openSockets[id] = newSock
+                                        resolve({ socket: id })
+                                    })
+                                    newSock.on('data', d => {
+                                        if (ws)
+                                            ws.send(JSON.stringify({ op: "data", result: { socket: id, data: d.toString("base64"), encoding: "base64" } }))
+                                    })
+                                    newSock.on('close', () => {
+                                        if (ws)
+                                            ws.send(JSON.stringify({ op: "close", result: { socket: id } }))
+                                    })
+                                })
+
+                            case "send":
+                                sock.write(new Buffer(msg.arg.data, msg.arg.encoding || "utf8"))
+                                return {}
+                            default: // unknown message
+                                pxt.log(`unknown tcp message ${msg.op}`)
+                                return null;
+                        }
+                    })
+                    .done(resp => {
+                        if (!ws) return;
+                        pxt.debug(`hid: resp ${objToString(resp)}`)
+                        ws.send(JSON.stringify({
+                            op: msg.op,
+                            id: msg.id,
+                            result: resp
+                        }))
+                    }, error => {
+                        pxt.log(`hid: error  ${error.message}`)
+                        if (!ws) return;
+                        ws.send(JSON.stringify({
+                            result: {
+                                errorMessage: error.message || "Error",
+                                errorStackTrace: error.stack,
+                            },
+                            op: msg.op,
+                            id: msg.id
+                        }))
+                    })
+            } catch (e) {
+                console.log("ws tcp error", e.stack)
+            }
+        });
+        function closeAll() {
+            console.log('ws tcp connection closed')
+            ws = null;
+            for (let s of netSockets) {
+                try {
+                    s.end()
+                } catch (e) { }
+            }
+        }
+        ws.on('close', closeAll);
+        ws.on('error', closeAll);
+    }
+
+    function startDebug(request: http.IncomingMessage, socket: WebSocket, body: any) {
         let ws = new WebSocket(request, socket, body);
         let dapjs: any
 
@@ -576,7 +706,12 @@ function initSocketServer(wsPort: number, hostname: string) {
                     startDebug(request, socket, body);
                 else if (request.url == "/" + serveOptions.localToken + "/hid")
                     startHID(request, socket, body);
-                else console.log('refused connection at ' + request.url);
+                else if (request.url == "/" + serveOptions.localToken + "/tcp")
+                    startTCP(request, socket, body);
+                else {
+                    console.log('refused connection at ' + request.url);
+                    socket.close(403);
+                }
             }
         } catch (e) {
             console.log('upgrade failed...')

@@ -83,7 +83,7 @@ task('clean', function () {
                 console.log("cannot unlink:", f, e.message)
             }
         })
-        jake.rmRf(d)    
+        jake.rmRf(d)
     })
 })
 
@@ -495,6 +495,13 @@ file('built/web/icons.css', expand(["svgicons"]), { async: true }, function () {
         templateOptions: {
             classPrefix: name + ".",
             baseClass: name
+        },
+        // The following icons have fixed code points because they are referenced in the code
+        codepoints: {
+            function: 0xf109,
+            bucket: 0xf102,
+            undo: 0xf118,
+            redo: 0xf111
         },
         writeFiles: false,
     }, function (error, res) {

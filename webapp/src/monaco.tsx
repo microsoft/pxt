@@ -541,11 +541,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private hideFlyout() {
         // Hide the flyout
         let flyout = document.getElementById('monacoFlyoutWidget');
-        pxsim.U.clear(flyout);
-        flyout.style.display = 'none';
+        if (flyout) {
+            pxsim.U.clear(flyout);
+            flyout.style.display = 'none';
+        }
 
         // Hide the current toolbox category
-        this.toolbox.clearSelection();
+        if (this.toolbox)
+            this.toolbox.clearSelection();
 
         // Clear editor floats
         this.parent.setState({ hideEditorFloats: false });
@@ -558,11 +561,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         //this.editor.getLayoutInfo().glyphMarginLeft = 200;
         this.editor.layout();
 
-        this.toolbox.setState({
-            loading: false,
-            categories: this.getAllCategories(),
-            showSearchBox: this.shouldShowSearch()
-        })
+        if (this.toolbox)
+            this.toolbox.setState({
+                loading: false,
+                categories: this.getAllCategories(),
+                showSearchBox: this.shouldShowSearch()
+            })
     }
 
     getId() {
@@ -627,11 +631,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (model) this.editor.setModel(model);
 
                 this.defineEditorTheme(hc);
-                const shouldShowToolbox = (mode == "typescript" && pxt.appTarget.appTheme.monacoToolbox && !readOnly);
+                const shouldShowToolbox = (
+                    mode == "typescript"
+                    && pxt.appTarget.appTheme.monacoToolbox
+                    && !readOnly
+                    && file.name == "main.ts");
                 if (shouldShowToolbox) {
                     this.beginLoadToolbox(file, hc);
                 } else {
-                    this.toolbox.hide();
+                    if (this.toolbox)
+                        this.toolbox.hide();
                 }
 
                 // Set the current file
@@ -693,7 +702,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     unloadFileAsync(): Promise<void> {
-        this.toolbox.clearSearch();
+        if (this.toolbox)
+            this.toolbox.clearSearch();
         if (this.currFile && this.currFile.getName() == "this/" + pxt.CONFIG_NAME) {
             // Reload the header if a change was made to the config file: pxt.json
             return this.parent.reloadHeaderAsync();
@@ -702,7 +712,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private beginLoadToolbox(file: pkg.File, hc?: boolean) {
-        this.toolbox.showLoading();
+        if (this.toolbox)
+            this.toolbox.showLoading();
         compiler.getBlocksAsync().then(bi => {
             this.blockInfo = bi
             this.nsMap = this.partitionBlocks();
@@ -823,7 +834,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         this.blockInfo.blocks.forEach(fn => {
             let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
-            ns = ns.toLowerCase();
 
             // Don't add the block if there exists a block with the same definition
             if (builtInBlocks[fn.qName]) return;
@@ -893,17 +903,21 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const namespaces = Object.keys(this.nsMap)
             .filter(ns => !snippets.isBuiltin(ns) && !!this.getNamespaceAttrs(ns));
 
+        function isRemoved(ns: string): boolean {
+            return snippets.getBuiltinCategory(ns).removed;
+        }
+
         let config = pxt.appTarget.runtime || {};
-        if (config.loopsBlocks && !snippets.loops.removed) namespaces.push(snippets.loops.nameid);
-        if (config.logicBlocks && !snippets.logic.removed) namespaces.push(snippets.logic.nameid);
-        if (config.variablesBlocks && !snippets.variables.removed) namespaces.push(snippets.variables.nameid);
-        if (config.mathBlocks && !snippets.maths.removed) namespaces.push(snippets.maths.nameid);
-        if (config.functionBlocks && !snippets.functions.removed) namespaces.push(snippets.functions.nameid);
-        if (config.listsBlocks && !snippets.arrays.removed) namespaces.push(snippets.arrays.nameid);
-        if (config.textBlocks && !snippets.text.removed) namespaces.push(snippets.text.nameid);
+        if (config.loopsBlocks && !isRemoved(toolbox.CategoryNameID.Loops)) namespaces.push(toolbox.CategoryNameID.Loops);
+        if (config.logicBlocks && !isRemoved(toolbox.CategoryNameID.Logic)) namespaces.push(toolbox.CategoryNameID.Logic);
+        if (config.variablesBlocks && !isRemoved(toolbox.CategoryNameID.Variables)) namespaces.push(toolbox.CategoryNameID.Variables);
+        if (config.mathBlocks && !isRemoved(toolbox.CategoryNameID.Maths)) namespaces.push(toolbox.CategoryNameID.Maths);
+        if (config.functionBlocks && !isRemoved(toolbox.CategoryNameID.Functions)) namespaces.push(toolbox.CategoryNameID.Functions);
+        if (config.listsBlocks && !isRemoved(toolbox.CategoryNameID.Arrays)) namespaces.push(toolbox.CategoryNameID.Arrays);
+        if (config.textBlocks && !isRemoved(toolbox.CategoryNameID.Text)) namespaces.push(toolbox.CategoryNameID.Text);
 
         if (pxt.appTarget.cloud && pxt.appTarget.cloud.packages) {
-            namespaces.push(snippets.extensions.nameid);
+            namespaces.push(toolbox.CategoryNameID.Extensions);
         }
 
         return namespaces.concat(super.getNamespaces());
@@ -946,7 +960,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let cat = snippets.getBuiltinCategory(ns);
         let blocks = cat.blocks || [];
         blocks.forEach(b => { b.noNamespace = true })
-        if (!cat.custom && this.nsMap[ns.toLowerCase()]) blocks = blocks.concat(this.nsMap[ns.toLowerCase()].filter(block => !(block.attributes.blockHidden || block.attributes.deprecated)));
+        if (!cat.custom && this.nsMap[ns]) blocks = blocks.concat(this.nsMap[ns].filter(block => !(block.attributes.blockHidden || block.attributes.deprecated)));
         return this.filterBlocks(subns, blocks);
     }
 
@@ -958,11 +972,18 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let monacoFlyout = this.createMonacoFlyout();
 
         if (ns == 'search') {
-            this.showSearchFlyout();
+            try {
+                this.showSearchFlyout();
+            }
+            catch (e) {
+                pxt.reportException(e);
+                pxsim.U.clear(monacoFlyout);
+                this.addNoSearchResultsLabel();
+            }
             return;
         }
 
-        if (this.abstractShowFlyout(treeRow)) {
+        if (this.abstractShowFlyout(treeRow) || (treeRow.subcategories && treeRow.subcategories.length > 0)) {
             // Hide editor floats
             this.parent.setState({ hideEditorFloats: true });
         } else {
@@ -970,9 +991,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
-    protected showFlyoutHeadingLabel(ns: string, subns: string, icon: string, color: string) {
-        const categoryName = name ? name :
-            `${subns ? `${Util.capitalize(ns)} > ${Util.capitalize(subns)}` : Util.capitalize(ns)}`;
+    protected showFlyoutHeadingLabel(ns: string, name: string, subns: string, icon: string, color: string) {
+        const categoryName = name || Util.capitalize(subns || ns);
         const iconClass = `blocklyTreeIcon${icon ? (ns || icon).toLowerCase() : 'Default'}`.replace(/\s/g, '');
 
         this.getMonacoLabel(categoryName,
@@ -1002,7 +1022,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             const nsinfo = that.blockInfo.apis.byQName[ns];
             const color =
                 (nsinfo ? nsinfo.attributes.color : undefined)
-                || pxt.toolbox.getNamespaceColor(ns.toLowerCase())
+                || pxt.toolbox.getNamespaceColor(ns)
                 || `255`;
             return color;
         }
@@ -1044,8 +1064,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.attachMonacoBlockAccessibility(monacoBlocks);
 
         if (monacoBlocks.length == 0) {
-            this.getMonacoLabel(lf("No search results..."), 'monacoFlyoutLabel');
+            this.addNoSearchResultsLabel();
         }
+    }
+
+    private addNoSearchResultsLabel() {
+        this.getMonacoLabel(lf("No search results..."), 'monacoFlyoutLabel');
     }
 
     private getMonacoFlyout() {
@@ -1218,12 +1242,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     // first try to get fixed instances whose retType matches nsInfo.name
                     // e.g., DigitalPin
                     let exactInstances = fixedInstances.filter(value =>
-                        value.retType == nsInfo.name)
+                        value.retType == nsInfo.qName)
                         .sort((v1, v2) => v1.name.localeCompare(v2.name));
                     // second choice: use fixed instances whose retType extends type of nsInfo.name
                     // e.g., nsInfo.name == AnalogPin and instance retType == PwmPin
                     let extendedInstances = fixedInstances.filter(value =>
-                        getExtendsTypesFor(nsInfo.name).indexOf(value.retType) !== -1)
+                        getExtendsTypesFor(nsInfo.qName).indexOf(value.retType) !== -1)
                         .sort((v1, v2) => v1.name.localeCompare(v2.name));
                     if (exactInstances.length) {
                         snippetPrefix = `${exactInstances[0].name}`
@@ -1235,7 +1259,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 }
                 else if (element.kind == pxtc.SymbolKind.Method || element.kind == pxtc.SymbolKind.Property) {
                     const params = pxt.blocks.compileInfo(element);
-                    snippetPrefix = params.thisParameter.definitionName;
+                    snippetPrefix = params.thisParameter.defaultValue || params.thisParameter.definitionName;
                     isInstance = true;
                 }
                 else if (nsInfo.kind === pxtc.SymbolKind.Class) {

@@ -95,8 +95,10 @@ namespace pxt {
         }
 
         saveConfig() {
-            const cfg = JSON.stringify(this.config, null, 4) || "\n"
-            this.host().writeFile(this, pxt.CONFIG_NAME, cfg)
+            const cfg = U.clone(this.config)
+            delete cfg.additionalFilePaths
+            const text = JSON.stringify(cfg, null, 4)
+            this.host().writeFile(this, pxt.CONFIG_NAME, text)
         }
 
         parseJRes(allres: Map<JRes> = {}) {
@@ -157,7 +159,7 @@ namespace pxt {
                         .then(() => {
                             const confStr = this.readFile(pxt.CONFIG_NAME)
                             if (!confStr)
-                                U.userError(`package ${this.id} is missing ${pxt.CONFIG_NAME}`)
+                                U.userError(`extension ${this.id} is missing ${pxt.CONFIG_NAME}`)
                             this.parseConfig(confStr);
                             if (this.level != 0)
                                 this.config.installedVersion = this.version()
@@ -177,7 +179,7 @@ namespace pxt {
                 U.userError("Missing files in config of: " + this.id)
             if (typeof this.config.name != "string" || !this.config.name ||
                 (this.config.public && !/^[a-z][a-z0-9\-_]+$/i.test(this.config.name)))
-                U.userError("Invalid package name: " + this.config.name)
+                U.userError("Invalid extension name: " + this.config.name)
             if (this.config.targetVersions
                 && this.config.targetVersions.target
                 && semver.majorCmp(this.config.targetVersions.target, appTarget.versions.target) > 0)
@@ -246,8 +248,9 @@ namespace pxt {
                     if (pkgCfg) {
                         const yottaCfg = pkgCfg.yotta ? U.jsonFlatten(pkgCfg.yotta.config) : null;
                         this.parent.sortedDeps().forEach((depPkg) => {
-                            if (pkgCfg.core && depPkg.config.core) {
-                                const conflict = new cpp.PkgConflictError(lf("conflict between core packages {0} and {1}", pkgCfg.name, depPkg.id));
+                            if (pkgCfg.core && depPkg.config.core &&
+                                pkgCfg.name != depPkg.config.name) {
+                                const conflict = new cpp.PkgConflictError(lf("conflict between core extensions {0} and {1}", pkgCfg.name, depPkg.id));
                                 conflict.pkg0 = depPkg;
                                 conflicts.push(conflict);
                                 return;
@@ -262,7 +265,7 @@ namespace pxt {
                                         const depSetting = depYottaCfg[settingName];
                                         const isJustDefaults = pkgCfg.yotta.configIsJustDefaults || depConfig.yotta.configIsJustDefaults;
                                         if (depYottaCfg.hasOwnProperty(settingName) && depSetting !== yottaCfg[settingName] && !isJustDefaults && (!depPkg.parent.config.yotta || !depPkg.parent.config.yotta.ignoreConflicts)) {
-                                            const conflict = new cpp.PkgConflictError(lf("conflict on yotta setting {0} between packages {1} and {2}", settingName, pkgCfg.name, depPkg.id));
+                                            const conflict = new cpp.PkgConflictError(lf("conflict on yotta setting {0} between extensions {1} and {2}", settingName, pkgCfg.name, depPkg.id));
                                             conflict.pkg0 = depPkg;
                                             conflict.settingName = settingName;
                                             conflicts.push(conflict);
@@ -272,7 +275,7 @@ namespace pxt {
                                 }
                             }
                             if (!foundYottaConflict && pkgCfg.name === depPkg.id && depPkg._verspec != version && !/^file:/.test(depPkg._verspec) && !/^file:/.test(version)) {
-                                const conflict = new cpp.PkgConflictError(lf("version mismatch for package {0} (installed: {1}, installing: {2})", depPkg, depPkg._verspec, version));
+                                const conflict = new cpp.PkgConflictError(lf("version mismatch for extension {0} (installed: {1}, installing: {2})", depPkg, depPkg._verspec, version));
                                 conflict.pkg0 = depPkg;
                                 conflict.isVersionConflict = true;
                                 conflicts.push(conflict);
@@ -304,8 +307,8 @@ namespace pxt {
                     conflicts.forEach((c) => {
                         additionalConflicts.push.apply(additionalConflicts, allAncestors(c.pkg0).map((anc) => {
                             const confl = new cpp.PkgConflictError(c.isVersionConflict ?
-                                lf("a dependency of {0} has a version mismatch with package {1} (installed: {1}, installing: {2})", anc.id, pkgCfg.name, c.pkg0._verspec, version) :
-                                lf("conflict on yotta setting {0} between packages {1} and {2}", c.settingName, pkgCfg.name, c.pkg0.id));
+                                lf("a dependency of {0} has a version mismatch with extension {1} (installed: {1}, installing: {2})", anc.id, pkgCfg.name, c.pkg0._verspec, version) :
+                                lf("conflict on yotta setting {0} between extensions {1} and {2}", c.settingName, pkgCfg.name, c.pkg0.id));
                             confl.pkg0 = anc;
                             return confl;
                         }));
@@ -324,16 +327,6 @@ namespace pxt {
 
                     return conflicts;
                 });
-        }
-
-        protected upgradeFile(fn: string, cont: string) {
-            const updatedCont = pxt.patching.patchJavaScript(this.targetVersion(), cont);
-            if (updatedCont != cont) {
-                // save file (force write)
-                pxt.debug(`patching javascript in ${fn} (size=${cont.length})...`)
-                this.host().writeFile(this, fn, updatedCont, true)
-            }
-            return updatedCont;
         }
 
         private parseConfig(cfgSrc: string, targetVersion?: string) {
@@ -401,6 +394,9 @@ namespace pxt {
 
             let initPromise = Promise.resolve()
 
+            if (this.level == 0)
+                pxt.setAppTargetVariant(null)
+
             this.isLoaded = true;
             const str = this.readFile(pxt.CONFIG_NAME);
             if (str == null) {
@@ -413,19 +409,13 @@ namespace pxt {
             if (isInstall)
                 initPromise = initPromise.then(() => this.downloadAsync())
 
-            if (isInstall && this.level == 0)
-                initPromise = initPromise.then(() => {
-                    pxt.debug(`upgrading files, target version ${this.targetVersion()}`)
-                    this.getFiles().filter(fn => /\.ts$/.test(fn))
-                        .forEach(file => this.upgradeFile(file, this.readFile(file)));
-                })
-
             if (appTarget.simulator && appTarget.simulator.dynamicBoardDefinition) {
                 if (this.level == 0)
                     initPromise = initPromise.then(() => this.patchCorePackage());
                 initPromise = initPromise.then(() => {
+                    if (this.config.compileServiceVariant)
+                        pxt.setAppTargetVariant(this.config.compileServiceVariant)
                     if (this.config.files.indexOf("board.json") < 0) return
-                    pxt.setAppTargetVariant(this.config.compileServiceVariant)
                     const def = appTarget.simulator.boardDefinition = JSON.parse(this.readFile("board.json")) as pxsim.BoardDefinition;
                     def.id = this.config.name;
                     appTarget.appTheme.boardName = def.boardName || lf("board");
@@ -451,6 +441,8 @@ namespace pxt {
 
             const loadDepsRecursive = (deps: Map<string>) => {
                 return U.mapStringMapAsync(deps, (id, ver) => {
+                    if (id == "hw" && pxt.hwVariant)
+                        id = "hw---" + pxt.hwVariant
                     let mod = this.resolveDep(id)
                     ver = ver || "*"
                     if (mod) {
@@ -632,7 +624,22 @@ namespace pxt {
                                 if (!loc[k]) loc[k] = depLoc[k];
                             })
                     })))
-                .then(() => loc);
+                .then(() => {
+                    // Subcategories and groups are translated in their respective package, but are not really APIs so
+                    // there's no way for the translation to be saved with a block. To work around this, we copy the
+                    // translations to the editor translations.
+                    const strings = U.getLocalizedStrings();
+                    Object.keys(loc).forEach((l) => {
+                        if (U.startsWith(l, "{id:subcategory}") || U.startsWith(l, "{id:group}")) {
+                            if (!strings[l]) {
+                                strings[l] = loc[l];
+                            }
+                        }
+                    });
+                    U.setLocalizedStrings(strings);
+
+                    return Promise.resolve(loc);
+                });
         }
 
         getTargetOptions(): CompileTarget {
@@ -647,16 +654,14 @@ namespace pxt {
                 for (const pkg of this.sortedDeps()) {
                     pkg.parseJRes(this._jres)
                 }
-                if (appTarget.runtime && appTarget.runtime.palette) {
-                    const palBuf = appTarget.runtime.palette
-                        .map(s => ("000000" + parseInt(s.replace(/#/, ""), 16).toString(16)).slice(-6))
-                        .join("")
-                    this._jres["__palette"] = {
-                        id: "__palette",
-                        data: palBuf,
-                        dataEncoding: "hex",
-                        mimeType: "application/x-palette"
-                    }
+                const palBuf = (appTarget.runtime && appTarget.runtime.palette ? appTarget.runtime.palette : ["#000000", "#ffffff"])
+                    .map(s => ("000000" + parseInt(s.replace(/#/, ""), 16).toString(16)).slice(-6))
+                    .join("")
+                this._jres["__palette"] = {
+                    id: "__palette",
+                    data: palBuf,
+                    dataEncoding: "hex",
+                    mimeType: "application/x-palette"
                 }
             }
             return this._jres
@@ -702,7 +707,6 @@ namespace pxt {
                 .then(() => this.config.binaryonly || appTarget.compile.shortPointers || !opts.target.isNative ? null : this.filesToBePublishedAsync(true))
                 .then(files => {
                     if (files) {
-                        files = U.mapMap(files, (f, c) => this.upgradeFile(f, c));
                         const headerString = JSON.stringify({
                             name: this.config.name,
                             comment: this.config.description,
@@ -759,10 +763,21 @@ namespace pxt {
                     let cfg = U.clone(this.config)
                     delete cfg.installedVersion
                     delete cfg.additionalFilePath
+                    delete cfg.additionalFilePaths
                     if (!cfg.targetVersions) cfg.targetVersions = pxt.appTarget.versions;
                     U.iterMap(cfg.dependencies, (k, v) => {
                         if (!v || /^file:/.test(v) || /^workspace:/.test(v)) {
-                            cfg.dependencies[k] = "*"
+                            v = "*"
+                            try {
+                                let d = this.resolveDep(k)
+                                let gitjson = JSON.parse(d.readFile(pxt.github.GIT_JSON) || "{}") as pxt.github.GitJson
+                                if (gitjson.repo) {
+                                    let parsed = pxt.github.parseRepoId(gitjson.repo)
+                                    parsed.tag = gitjson.commit.tag || gitjson.commit.sha
+                                    v = pxt.github.stringifyRepo(parsed)
+                                }
+                            } catch (e) { }
+                            cfg.dependencies[k] = v
                         }
                     })
                     files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4)
@@ -824,5 +839,9 @@ namespace pxt {
             })
             return res;
         }
+    }
+
+    export function allPkgFiles(cfg: PackageConfig) {
+        return [pxt.CONFIG_NAME].concat(cfg.files || []).concat(cfg.testFiles || [])
     }
 }

@@ -4,16 +4,24 @@
 
 ## Which web sites do I need to unblock for @homeurl@? #unblock
 
-These domains need to be unblocked to allow the web editor to load:
+Access to certain domains is necessary to allow the web editor to reach all the resources it needs to fully function. These are the domains to unblock:
 
 * @homeurl@
 * https://makecode.com
 * https://trg-@targetid@.userpxt.io
 * https://pxt.azureedge.net
+* https://api.github.com
+
+To enable some additional features for extension developers, the following domains are also needed. In most cases, you won't need to unblock these domains:
+
+* https://github.com
+* https://raw.githubusercontent.com/
 
 ## Where are my projects saved?
 
-Projects are kept in the browser's local indexed data store. You can save your project with a name. If you don't name your project, it's kept as an "Untitled" project. Read more about [saving](/save) projects.
+Projects are kept in the browser's local indexed data store. You can save your project with a name. If you don't name your project, it's kept as an "Untitled" project. You can also save your project to a file or in the cloud.
+
+Read more about [saving](/save) projects.
 
 ## Can I use MakeCode when I'm not connected to the internet? #work-offline
 
@@ -27,11 +35,13 @@ When you clear browsing data, all of the saved projects and files that support M
 
 When you share a project it's saved to the public cloud for MakeCode. Anyone can see your project if they have it's shared URL.
 
-## What are some addtional ways I can share projects with teachers and friends? #share-options
+## What are some additional ways I can share projects with teachers and friends? #share-options
 
 * Use the share button to publish your project to the MakeCode cloud. You can send the share URL that's created to anyone.
 * The share URL can be pasted into a OneNote page or inserted as an embedded link on a website. In some cases, the link will be automatically expand into a read-only editor view of your project.
 * You can save the project and copy it to a class website or to an approved location on the class or school network.
 * You can copy code from and paste code into the JavaScript view of the editor. This let's you move code between MakeCode and other applications on your computer or device.
 
-Can't find your question? Pleae see our [support](/support) page.
+## I don't see my question here. What's next?
+
+Can't find your question? Please see our [support](/support) page.

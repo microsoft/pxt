@@ -3,6 +3,7 @@
 @import 'themes/default/globals/site.variables';
 @import 'themes/pxt/globals/site.variables';
 @import 'fieldeditors';
+@import 'spriteeditor.less';
 
 /*******************************
         Blockly SVG
@@ -148,19 +149,15 @@ path.blocklyFlyoutBackground {
 
 div.blocklyWidgetDiv {
     position: fixed;
-}
-
-/* Lower Z index for BlocklyWidgetDiv and grid picker tooltips */
-
-.blocklyWidgetDiv {
+    /* Lower Z index for BlocklyWidgetDiv and grid picker tooltips */
     z-index: @blocklyWidgetDivZIndex;
 }
 
-.blocklyDropDownDiv {
+div.blocklyDropDownDiv {
     z-index: @blocklyDropdownDivZIndex;
 }
 
-.blocklyTooltipDiv {
+div.blocklyTooltipDiv {
     border: none !important;
     box-shadow: none !important;
     background-color: transparent !important;

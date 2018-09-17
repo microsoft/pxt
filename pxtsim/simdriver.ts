@@ -126,7 +126,7 @@ namespace pxsim {
             }
             // dispatch to all iframe besides self
             let frames = this.container.getElementsByTagName("iframe");
-            if (source && (msg.type === 'eventbus' || msg.type == 'radiopacket' || msg.type == 'irpacket')) {
+            if (source && (msg.type === 'eventbus' || msg.type == 'radiopacket' || msg.type == 'irpacket' || msg.type == 'blepacket')) {
                 if (frames.length < 2) {
                     this.container.appendChild(this.createFrame());
                     frames = this.container.getElementsByTagName("iframe");
@@ -152,7 +152,6 @@ namespace pxsim {
             frame.allowFullscreen = true;
             frame.setAttribute('allow', 'autoplay');
             frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
-            (frame.sandbox as any).value = "allow-scripts allow-same-origin"
             let simUrl = this.options.simUrl || ((window as any).pxtConfig || {}).simUrl || "/sim/simulator.html"
             frame.className = 'no-select'
             if (this.runOptions.aspectRatio)
@@ -329,10 +328,6 @@ namespace pxsim {
                 case 'debugger': this.handleDebuggerMessage(msg as DebuggerMessage); break;
                 case 'toplevelcodefinished': if (this.options.onTopLevelCodeEnd) this.options.onTopLevelCodeEnd(); break;
                 default:
-                    if (msg.type == 'radiopacket') {
-                        // assign rssi noisy?
-                        (msg as pxsim.SimulatorRadioPacketMessage).rssi = 10;
-                    }
                     this.postMessage(msg, source);
                     break;
             }

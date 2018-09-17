@@ -89,6 +89,7 @@ declare namespace pxt {
         assetExtensions?: string[];
         palette?: string[];
         screenSize?: Size;
+        bannedCategories?: string[]; // a list of categories to exclude blocks from
     }
 
     interface AppAnalytics {
@@ -125,6 +126,7 @@ declare namespace pxt {
         embedding?: boolean;
         githubPackages?: boolean; // allow searching github for packages
         noGithubProxy?: boolean;
+        cloudProviders?: pxt.Map<{}>;
     }
 
     interface AppSimulator {
@@ -249,6 +251,7 @@ declare namespace pxt {
         extendEditor?: boolean; // whether a target specific editor.js is loaded
         extendFieldEditors?: boolean; // wether a target specific fieldeditors.js is loaded
         highContrast?: boolean; // simulator has a high contrast mode
+        print?: boolean; //Print blocks and text feature
         greenScreen?: boolean; // display webcam stream in background
         selectLanguage?: boolean; // add language picker to settings menu
         availableLocales?: string[]; // the list of enabled language codes
@@ -263,8 +266,11 @@ declare namespace pxt {
         defaultBlockGap?: number; // For targets to override block gap
         hideShareEmbed?: boolean; // don't show advanced embedding options in share dialog
         hideNewProjectButton?: boolean; // do not show the "new project" button in home page
+        saveInMenu?: boolean; // move save icon under gearwheel menu
         fileNameExclusiveFilter?: string; // anything that does not match this regex is removed from the filename,
         copyrightText?: string; // footer text for any copyright text to be included at the bottom of the home screen and about page
+        appFlashingTroubleshoot?: string; // Path to the doc about troubleshooting UWP app flashing failures, e.g. /device/windows-app/troubleshoot
+        browserDbPrefixes?: { [majorVersion: number]: string }; // Prefix used when storing projects in the DB to allow side-by-side projects of different major versions
     }
 
     interface SocialOptions {
@@ -307,6 +313,7 @@ declare namespace ts.pxtc {
     interface CompileTarget {
         isNative: boolean; // false -> JavaScript for simulator
         nativeType?: string; // currently only "thumb"
+        runtimeIsARM?: boolean; // when nativeType is "thumb" but runtime is compiled in ARM mode
         hasHex: boolean;
         useUF2?: boolean;
         useMkcd?: boolean;
@@ -329,7 +336,7 @@ declare namespace ts.pxtc {
         flashEnd?: number;
         flashUsableEnd?: number;
         flashChecksumAddr?: number;
-        patches?: pxt.Map<UpgradePolicy[]>; // semver range -> upgrade policies        
+        patches?: pxt.Map<UpgradePolicy[]>; // semver range -> upgrade policies
         openocdScript?: string;
         onStartText?: boolean;
         stackAlign?: number; // 1 word (default), or 2
@@ -338,6 +345,7 @@ declare namespace ts.pxtc {
         vmOpCodes?: pxt.Map<number>;
         commonalize?: boolean;
         vtableShift?: number; // defaults to 2, i.e., (1<<2) == 4 byte alignment of vtables, and thus 256k max program size; increase for chips with more flash!
+        postProcessSymbols?: boolean;
     }
 
     interface CompileOptions {

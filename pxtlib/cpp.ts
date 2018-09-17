@@ -175,7 +175,7 @@ namespace pxt.cpp {
 
         const isCSharp = compile.nativeType == pxtc.NATIVE_TYPE_CS
         const isPlatformio = !!compileService.platformioIni;
-        const isCodal = compileService.buildEngine == "codal"
+        const isCodal = compileService.buildEngine == "codal" || compileService.buildEngine == "dockercodal"
         const isDockerMake = compileService.buildEngine == "dockermake"
         const isYotta = !isCSharp && !isPlatformio && !isCodal && !isDockerMake
         if (isPlatformio)
@@ -843,7 +843,7 @@ namespace pxt.cpp {
                     } else if (currSettings[settingName] === settingValue) {
                         // OK
                     } else if (!pkg.parent.config.yotta || !pkg.parent.config.yotta.ignoreConflicts) {
-                        let err = new PkgConflictError(lf("conflict on yotta setting {0} between packages {1} and {2}",
+                        let err = new PkgConflictError(lf("conflict on yotta setting {0} between extensions {1} and {2}",
                             settingName, pkg.id, prev.id))
                         err.pkg0 = prev
                         err.pkg1 = pkg
@@ -894,13 +894,13 @@ namespace pxt.cpp {
                     let isHeader = !isCSharp && U.endsWith(fn, ".h")
                     if (isHeader || U.endsWith(fn, ext)) {
                         let fullName = pkg.config.name + "/" + fn
-                        if ((pkg.config.name == "base" || pkg.config.name == "core") && isHeader)
+                        if ((pkg.config.name == "base" || /^core($|---)/.test(pkg.config.name)) && isHeader)
                             fullName = fn
                         if (isHeader)
                             includesInc += `#include "${isYotta ? sourcePath.slice(1) : ""}${fullName}"\n`
                         let src = pkg.readFile(fn)
                         if (src == null)
-                            U.userError(lf("C++ file {0} is missing in package {1}.", fn, pkg.config.name))
+                            U.userError(lf("C++ file {0} is missing in extension {1}.", fn, pkg.config.name))
                         fileName = fullName
                         if (isCSharp) {
                             pxt.debug("Parse C#: " + fullName)
@@ -924,7 +924,7 @@ namespace pxt.cpp {
                     }
                 }
                 if (thisErrors) {
-                    allErrors += lf("Package {0}:\n", pkg.id) + thisErrors
+                    allErrors += lf("Extension {0}:\n", pkg.id) + thisErrors
                 }
             }
         }
@@ -1166,13 +1166,15 @@ int main() {
         }
     }
 
+    export interface HexFileMeta {
+        cloudId: string;
+        targetVersions?: pxt.TargetVersions;
+        editor: string;
+        name: string;
+    }
+
     export interface HexFile {
-        meta?: {
-            cloudId: string;
-            targetVersions?: pxt.TargetVersions;
-            editor: string;
-            name: string;
-        };
+        meta?: HexFileMeta;
         source: string;
     }
 
@@ -1244,30 +1246,20 @@ int main() {
 }
 
 namespace pxt.hex {
-    let downloadCache: Map<Promise<any>> = {};
+    const downloadCache: Map<Promise<pxtc.HexInfo>> = {};
     let cdnUrlPromise: Promise<string>;
 
     export let showLoading: (msg: string) => void = (msg) => { };
     export let hideLoading: () => void = () => { };
 
-    function downloadHexInfoAsync(extInfo: pxtc.ExtensionInfo) {
-        let cachePromise = Promise.resolve();
-
-        if (!downloadCache.hasOwnProperty(extInfo.sha)) {
-            cachePromise = downloadHexInfoCoreAsync(extInfo)
-                .then((hexFile) => {
-                    downloadCache[extInfo.sha] = hexFile;
-                });
-        }
-
-        return cachePromise
-            .then(() => {
-                return downloadCache[extInfo.sha];
-            });
+    function downloadHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo> {
+        if (!downloadCache.hasOwnProperty(extInfo.sha))
+            downloadCache[extInfo.sha] = downloadHexInfoCoreAsync(extInfo);
+        return downloadCache[extInfo.sha];
     }
 
     function getCdnUrlAsync() {
-        if (cdnUrlPromise) return cdnUrlPromise
+        if (cdnUrlPromise) return cdnUrlPromise;
         else {
             let curr = getOnlineCdnUrl()
             if (curr) return (cdnUrlPromise = Promise.resolve(curr))
@@ -1277,7 +1269,7 @@ namespace pxt.hex {
         }
     }
 
-    function downloadHexInfoCoreAsync(extInfo: pxtc.ExtensionInfo) {
+    function downloadHexInfoCoreAsync(extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo> {
         let hexurl = ""
 
         showLoading(pxt.U.lf("Compiling (this may take a minute)..."));
@@ -1298,11 +1290,16 @@ namespace pxt.hex {
                             .then(ret => new Promise<string>((resolve, reject) => {
                                 let tryGet = () => {
                                     let url = ret.hex.replace(/\.hex/, ".json")
-                                    pxt.log("polling at " + url)
+                                    pxt.log(`polling C++ build ${url}`)
                                     return Util.httpGetJsonAsync(url)
                                         .then(json => {
-                                            if (!json.success)
-                                                U.userError(JSON.stringify(json, null, 1))
+                                            pxt.log(`build log ${url.replace(/\.json$/, ".log")}`);
+                                            if (!json.success) {
+                                                pxt.log(`build failed`);
+                                                if (json.mbedresponse && json.mbedresponse.result && json.mbedresponse.result.exception)
+                                                    pxt.log(json.mbedresponse.result.exception);
+                                                resolve(null);
+                                            }
                                             else {
                                                 pxt.log("fetching " + hexurl + ".hex")
                                                 resolve(U.httpGetTextAsync(hexurl + ".hex"))
@@ -1318,9 +1315,7 @@ namespace pxt.hex {
                     .then(text => {
                         hideLoading();
                         return {
-                            enums: [],
-                            functions: [],
-                            hex: text.split(/\r?\n/)
+                            hex: text && text.split(/\r?\n/)
                         };
                     })
             }).finally(() => {
@@ -1328,7 +1323,7 @@ namespace pxt.hex {
             })
     }
 
-    function downloadHexInfoLocalAsync(extInfo: pxtc.ExtensionInfo): Promise<any> {
+    function downloadHexInfoLocalAsync(extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo> {
         if (pxt.webConfig && pxt.webConfig.isStatic) {
             return Util.requestAsync({
                 url: `${pxt.webConfig.cdnUrl}hexcache/${extInfo.sha}.hex`
@@ -1352,20 +1347,19 @@ namespace pxt.hex {
         }
 
         if (!Cloud.localToken || !window || !Cloud.isLocalHost()) {
-            return Promise.resolve();
+            return Promise.resolve(undefined);
         }
 
         return apiAsync("compile/" + extInfo.sha)
             .then((json) => {
                 if (!json || json.notInOfflineCache || !json.hex) {
-                    return Promise.resolve();
+                    return Promise.resolve(undefined);
                 }
-
                 json.hex = json.hex.split(/\r?\n/);
                 return json;
             })
             .catch((e) => {
-                return Promise.resolve();
+                return Promise.resolve(undefined);
             });
     }
 

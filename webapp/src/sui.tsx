@@ -901,6 +901,10 @@ export class Modal extends React.Component<ModalProps, ModalState> {
         return ref;
     }
 
+    componentWillUnmount() {
+        cancelAnimationFrame(this.animationRequestId);
+    }
+
     setPositionAndClassNames = () => {
         const { dimmer } = this.props
         let classes;

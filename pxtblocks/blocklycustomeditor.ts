@@ -42,6 +42,7 @@ namespace pxt.blocks {
         registerFieldEditor('sprite', pxtblockly.FieldSpriteEditor);
         registerFieldEditor('speed', pxtblockly.FieldSpeed);
         registerFieldEditor('turnratio', pxtblockly.FieldTurnRatio);
+        registerFieldEditor('protractor', pxtblockly.FieldProtractor);
     }
 
     export function registerFieldEditor(selector: string, field: Blockly.FieldCustomConstructor, validator?: any) {

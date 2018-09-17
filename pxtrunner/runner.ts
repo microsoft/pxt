@@ -212,7 +212,7 @@ namespace pxt.runner {
                         }
                     }
                 }).catch(e => {
-                    showError(lf("Cannot load package: {0}", e.message))
+                    showError(lf("Cannot load extension: {0}", e.message))
                 })
             });
     }
@@ -328,7 +328,7 @@ namespace pxt.runner {
                     const docsUrl = pxt.webConfig.docsUrl || '/--docs';
                     let verPrefix = mp[2] || '';
                     let url = mp[3] == "doc" ? `${mp[4]}` : `${docsUrl}?md=${mp[4]}`;
-                    window.open(verPrefix + url, "_blank");
+                    window.open(BrowserUtils.urlJoin(verPrefix, url), "_blank");
                     // notify parent iframe that we have completed the popout
                     if (window.parent)
                         window.parent.postMessage(<pxsim.SimulatorDocsReadyMessage>{
@@ -413,20 +413,31 @@ namespace pxt.runner {
             })
     }
 
-    export function startDocsServer(loading: HTMLElement, content: HTMLElement) {
+    export function startDocsServer(loading: HTMLElement, content: HTMLElement, backButton?: HTMLElement) {
         pxt.tickEvent("docrenderer.ready");
+
+        const history: string[] = [];
+
+        if (backButton) {
+            backButton.addEventListener("click", () => {
+                goBack();
+            });
+            pxsim.U.addClass(backButton, "disabled");
+        }
 
         function render(doctype: string, src: string) {
             pxt.debug(`rendering ${doctype}`);
+            if (backButton) $(backButton).hide()
             $(content).hide()
             $(loading).show()
+
             Promise.delay(100) // allow UI to update
                 .then(() => {
                     switch (doctype) {
                         case "print":
                             const data = window.localStorage["printjob"];
                             delete window.localStorage["printjob"];
-                            return renderProjectFilesAsync(content, JSON.parse(data))
+                            return renderProjectFilesAsync(content, JSON.parse(data), undefined, undefined, true)
                                 .then(() => pxsim.print(1000));
                         case "project":
                             return renderProjectFilesAsync(content, JSON.parse(src))
@@ -460,14 +471,42 @@ namespace pxt.runner {
                         }, "*");
                 }).finally(() => {
                     $(loading).hide()
+                    if (backButton) $(backButton).show()
                     $(content).show()
                 })
                 .done(() => { });
         }
 
+        function pushHistory() {
+            if (!backButton) return;
+
+            history.push(window.location.hash);
+            if (history.length > 10) {
+                history.shift();
+            }
+
+            if (history.length > 1) {
+                pxsim.U.removeClass(backButton, "disabled");
+            }
+        }
+
+        function goBack() {
+            if (!backButton) return;
+            if (history.length > 1) {
+                // Top is current page
+                history.pop();
+                window.location.hash = history.pop();
+            }
+
+            if (history.length <= 1) {
+                pxsim.U.addClass(backButton, "disabled");
+            }
+        }
+
         function renderHash() {
             let m = /^#(doc|md|tutorial|book|project|projectid|print):([^&?:]+)(:([^&?:]+):([^&?:]+))?/i.exec(window.location.hash);
             if (m) {
+                pushHistory();
                 // navigation occured
                 const p = m[4] ? setEditorContextAsync(
                     /^blocks$/.test(m[4]) ? LanguageMode.Blocks : LanguageMode.TypeScript,
@@ -495,20 +534,22 @@ namespace pxt.runner {
             .then(files => renderProjectFilesAsync(content, files, projectid, template));
     }
 
-    export function renderProjectFilesAsync(content: HTMLElement, files: Map<string>, projectid: string = null, template = "blocks"): Promise<void> {
+    export function renderProjectFilesAsync(content: HTMLElement, files: Map<string>, projectid: string = null, template = "blocks", escapeLinks = false): Promise<void> {
         const cfg = (JSON.parse(files[pxt.CONFIG_NAME]) || {}) as PackageConfig;
 
         let md = `# ${cfg.name} ${cfg.version ? cfg.version : ''}
 
 `;
-        if (projectid)
-            md += `* ${pxt.appTarget.appTheme.shareUrl || "https://makecode.com/"}${projectid}
 
-`;
-        else
-            md += `* ${pxt.appTarget.appTheme.homeUrl}
+        let linkString = projectid ? (pxt.appTarget.appTheme.shareUrl || "https://makecode.com/" + projectid) : pxt.appTarget.appTheme.homeUrl;
+        if (escapeLinks) {
+            // If printing the link will show up twice if it's an actual link
+            linkString = "`" + linkString + "`";
+        }
+        md += `* ${linkString}
 
-`;
+        `;
+
         const readme = "README.md";
         if (files[readme])
             md += files[readme].replace(/^#+/, "$0#") + '\n'; // bump all headers down 1

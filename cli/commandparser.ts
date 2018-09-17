@@ -12,6 +12,7 @@ export interface CommandFlag {
     type?: FlagType;
     aliases?: string[];
     possibleValues?: string[];
+    deprecated?: boolean;
 
 }
 
@@ -228,6 +229,7 @@ export class CommandParser {
         let maxWidth = 0;
         for (const flag in c.flags) {
             const def = c.flags[flag];
+            if (def.deprecated) continue;
             let usage = dash(flag);
             if (def.aliases && def.aliases.length) {
                 usage += " " + def.aliases.map(dash).join(" ");

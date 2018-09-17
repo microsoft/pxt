@@ -364,9 +364,9 @@ namespace ts.pxtc.assembler {
                 if (m && this.looksLikeLabel(m[1])) {
                     v = this.lookupLabel(m[1], true)
                     if (v != null) {
-                        if (m[2] == "fn")
-                            v = this.ei.toFnPtr(v, this.baseOffset)
-                        else {
+                        if (m[2] == "fn") {
+                            v = this.ei.toFnPtr(v, this.baseOffset, m[1])
+                        } else {
                             v >>= 1;
                             if (0 <= v && v <= 0xffff) {
                                 if (m[2] == "hi")
@@ -1097,7 +1097,7 @@ namespace ts.pxtc.assembler {
             this.instructions = {}
         }
 
-        public toFnPtr(v: number, baseOff: number) {
+        public toFnPtr(v: number, baseOff: number, lbl: string) {
             return v;
         }
 

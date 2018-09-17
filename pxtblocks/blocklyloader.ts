@@ -50,12 +50,15 @@ namespace pxt.blocks {
 
             function htmlColorToBytes(hexColor: string) {
                 const v = parseInt(hexColor.replace(/#/, ""), 16)
-                return [(v >> 0) & 0xff, (v >> 8) & 0xff, (v >> 16) & 0xff, 0]
+                return [(v >> 0) & 0xff, (v >> 8) & 0xff, (v >> 16) & 0xff, 0xff]
             }
 
 
             if (!this.palette) {
-                let arrs = pxt.appTarget.runtime.palette.map(htmlColorToBytes)
+                let arrs = pxt.appTarget.runtime.palette.map(htmlColorToBytes);
+
+                // Set the alpha for transparency at index 0
+                arrs[0][3] = 0;
                 this.palette = new Uint8Array(arrs.length * 4)
                 for (let i = 0; i < arrs.length; ++i) {
                     this.palette[i * 4 + 0] = arrs[i][0]
@@ -65,9 +68,13 @@ namespace pxt.blocks {
                 }
             }
 
-            const bpp = magic & 0xf
-            const byteH = bpp == 1 ? (h + 7) >> 8 : ((h * 4 + 31) >> 5) << 2
+            if (magic == 0xe1) {
+                return this.genMonochrome(data, w, h);
+            }
+            return this.genColor(data, w, h);
+        }
 
+        genMonochrome(data: string, w: number, h: number) {
             let outByteW = (w + 3) & ~3
 
             let bmpHeaderSize = 14 + 40 + this.palette.length
@@ -91,35 +98,77 @@ namespace pxt.blocks {
 
             let inP = 4
             let outP = bmpHeaderSize
+            let mask = 0x01
+            let v = data.charCodeAt(inP++)
+            for (let x = 0; x < w; ++x) {
+                outP = bmpHeaderSize + x
+                for (let y = 0; y < h; ++y) {
+                    bmp[outP] = (v & mask) ? 1 : 0
+                    outP += outByteW
+                    mask <<= 1
+                    if (mask == 0x100) {
+                        mask = 0x01
+                        v = data.charCodeAt(inP++)
+                    }
+                }
+            }
 
-            if (magic == 0xe1) {
-                let mask = 0x01
-                let v = data.charCodeAt(inP++)
-                for (let x = 0; x < w; ++x) {
-                    outP = bmpHeaderSize + x
-                    for (let y = 0; y < h; ++y) {
-                        bmp[outP] = (v & mask) ? 1 : 0
+            return "data:image/bmp;base64," + btoa(U.uint8ArrayToString(bmp))
+        }
+
+        genColor(data: string, w: number, h: number) {
+            let outByteW = w << 2;
+            let bmpHeaderSize = 138;
+            let bmpSize = bmpHeaderSize + outByteW * h
+            let bmp = new Uint8Array(bmpSize)
+
+            bmp[0] = 66
+            bmp[1] = 77
+            HF2.write32(bmp, 2, bmpSize)
+            HF2.write32(bmp, 10, bmpHeaderSize)
+            HF2.write32(bmp, 14, 124) // size of this header
+            HF2.write32(bmp, 18, w)
+            HF2.write32(bmp, 22, -h) // not upside down
+            HF2.write16(bmp, 26, 1) // 1 color plane
+            HF2.write16(bmp, 28, 32) // 32bpp
+            HF2.write16(bmp, 30, 3) // magic?
+            HF2.write32(bmp, 38, 2835) // 72dpi
+            HF2.write32(bmp, 42, 2835)
+
+            HF2.write32(bmp, 54, 0xff0000) // Red bitmask
+            HF2.write32(bmp, 58, 0xff00) // Green bitmask
+            HF2.write32(bmp, 62, 0xff) // Blue bitmask
+            HF2.write32(bmp, 66, 0xff000000) // Alpha bitmask
+
+            // Color space (sRGB)
+            bmp[70] = 0x42; // B
+            bmp[71] = 0x47; // G
+            bmp[72] = 0x52; // R
+            bmp[73] = 0x73; // s
+
+            let inP = 4
+            let outP = bmpHeaderSize
+
+            for (let x = 0; x < w; x++) {
+                outP = bmpHeaderSize + (x << 2)
+                for (let y = 0; y < h; y += 2) {
+                    let v = data.charCodeAt(inP++)
+                    const colorStart = (v & 0xf) << 2;
+                    bmp[outP] = this.palette[colorStart]
+                    bmp[outP + 1] = this.palette[colorStart + 1]
+                    bmp[outP + 2] = this.palette[colorStart + 2]
+                    bmp[outP + 3] = this.palette[colorStart + 3]
+                    outP += outByteW
+                    if (y != h - 1) {
+                        const colorStart = ((v >> 4) & 0xf) << 2;
+                        bmp[outP] = this.palette[colorStart]
+                        bmp[outP + 1] = this.palette[colorStart + 1]
+                        bmp[outP + 2] = this.palette[colorStart + 2]
+                        bmp[outP + 3] = this.palette[colorStart + 3]
                         outP += outByteW
-                        mask <<= 1
-                        if (mask == 0x100) {
-                            mask = 0x01
-                            v = data.charCodeAt(inP++)
-                        }
                     }
                 }
-            } else {
-                for (let x = 0; x < w; x++) {
-                    outP = bmpHeaderSize + x
-                    for (let y = 0; y < h; y += 2) {
-                        let v = data.charCodeAt(inP++)
-                        bmp[outP] = v & 0xf
-                        outP += outByteW
-                        if (y != h - 1) {
-                            bmp[outP] = (v >> 4) & 0xf
-                            outP += outByteW
-                        }
-                    }
-                }
+                while (inP & 3) inP++
             }
 
             return "data:image/bmp;base64," + btoa(U.uint8ArrayToString(bmp))
@@ -457,7 +506,8 @@ namespace pxt.blocks {
         else if (part.style.length) {
             return new pxtblockly.FieldStyledLabel(txt, {
                 bold: part.style.indexOf("bold") !== -1,
-                italics: part.style.indexOf("italics") !== -1
+                italics: part.style.indexOf("italics") !== -1,
+                blocksInfo: undefined
             })
         }
         else {
@@ -497,7 +547,7 @@ namespace pxt.blocks {
             (fn.attributes.blockNamespace && nsinfo && nsinfo.attributes.color)
             || fn.attributes.color
             || (nsinfo && nsinfo.attributes.color)
-            || pxt.toolbox.getNamespaceColor(ns.toLowerCase())
+            || pxt.toolbox.getNamespaceColor(ns)
             || 255;
 
         if (fn.attributes.help)
@@ -592,7 +642,7 @@ namespace pxt.blocks {
             block.setInputsInline(!fn.parameters || (fn.parameters.length < 4 && !fn.attributes.imageLiteral));
         }
 
-        const body = fn.parameters ? fn.parameters.filter(pr => pr.type == "() => void")[0] : undefined;
+        const body = fn.parameters ? fn.parameters.filter(pr => pr.type == "() => void" || pr.type == "Action")[0] : undefined;
         if (body || hasHandler) {
             block.appendStatementInput("HANDLER")
                 .setCheck("null");
@@ -753,7 +803,8 @@ namespace pxt.blocks {
                                     data: dd,
                                     colour: color,
                                     label: fieldLabel,
-                                    type: fieldType
+                                    type: fieldType,
+                                    blocksInfo: info
                                 } as Blockly.FieldCustomDropdownOptions;
                                 Util.jsonMergeFrom(options, fn.attributes.paramFieldEditorOptions && fn.attributes.paramFieldEditorOptions[actName] || {});
                                 fields.push(namedField(createFieldEditor(customField, defl, options), defName));
@@ -766,7 +817,8 @@ namespace pxt.blocks {
                             const options = {
                                 colour: color,
                                 label: fieldLabel,
-                                type: fieldType
+                                type: fieldType,
+                                blocksInfo: info
                             } as Blockly.FieldCustomOptions;
                             Util.jsonMergeFrom(options, fn.attributes.paramFieldEditorOptions && fn.attributes.paramFieldEditorOptions[pr.actualName] || {});
                             fields.push(namedField(createFieldEditor(customField, defl, options), pr.definitionName));
@@ -847,7 +899,7 @@ namespace pxt.blocks {
 
     export function hasArrowFunction(fn: pxtc.SymbolInfo): boolean {
         const r = fn.parameters
-            ? fn.parameters.filter(pr => /^\([^\)]*\)\s*=>/.test(pr.type))[0]
+            ? fn.parameters.filter(pr => pr.type === "Action" || /^\([^\)]*\)\s*=>/.test(pr.type))[0]
             : undefined;
         return !!r;
     }
@@ -883,10 +935,6 @@ namespace pxt.blocks {
 
         goog.provide('Blockly.Blocks.device');
         goog.require('Blockly.Blocks');
-
-        if ((window as any).PointerEvent) {
-            document.body.style.touchAction = 'none';
-        }
 
         Blockly.FieldCheckbox.CHECK_CHAR = '■';
         Blockly.BlockSvg.START_HAT = !!pxt.appTarget.appTheme.blockHats;
@@ -1095,7 +1143,8 @@ namespace pxt.blocks {
             customContextMenu: function (options: any[]) {
                 if (!this.isCollapsed()) {
                     let option: any = { enabled: true };
-                    let name = this.getInputTargetBlock('VAR').getField('VAR').getText();
+                    let variable = this.getInputTargetBlock('VAR').getField('VAR');
+                    let name = variable.getText();
                     option.text = lf("Create 'get {0}'", name);
                     let xmlField = goog.dom.createDom('field', null, name);
                     xmlField.setAttribute('name', 'VAR');
@@ -1103,6 +1152,13 @@ namespace pxt.blocks {
                     xmlBlock.setAttribute('type', 'variables_get');
                     option.callback = Blockly.ContextMenu.callbackFactory(this, xmlBlock);
                     options.push(option);
+
+                    const renameOption: any = {enabled: true};
+                    renameOption.text = (Blockly as any).Msg.RENAME_VARIABLE;
+                    renameOption.callback = () => {
+                      (Blockly as any).Variables.renameVariable(this.workspace, variable.getVariable());
+                    }
+                    options.push(renameOption);
                 }
             }
         };
@@ -1297,7 +1353,7 @@ namespace pxt.blocks {
             let ws = this;
 
             // Option to add a workspace comment.
-            if (this.options.comments) {
+            if (this.options.comments && !BrowserUtils.isIE()) {
                 menuOptions.push((Blockly.ContextMenu as any).workspaceCommentOption(ws, e));
             }
 
@@ -1505,6 +1561,9 @@ namespace pxt.blocks {
                 that._selectedItem.addSelect();
             }
         };
+
+        // Get rid of bumping behavior
+        (Blockly as any).Constants.Logic.LOGIC_COMPARE_ONCHANGE_MIXIN.onchange = function () {}
     }
 
     function initOnStart() {
@@ -1911,6 +1970,7 @@ namespace pxt.blocks {
         installBuiltinHelpInfo(mathModuloId);
 
         initMathOpBlock();
+        initMathRoundBlock();
     }
 
     function initVariables() {
@@ -2456,7 +2516,7 @@ namespace pxt.blocks {
                 that.setInputsInline(false);
                 that.appendDummyInput('ON_OFF')
                     .appendField(new Blockly.FieldLabel(lf("breakpoint"), undefined), "DEBUGGER")
-                    .appendField(new pxtblockly.FieldBreakpoint("1", { 'type': 'number' }), "ON_OFF");
+                    .appendField(new pxtblockly.FieldBreakpoint("1", { 'type': 'number' } as any), "ON_OFF");
 
                 setHelpResources(this,
                     pxtc.TS_DEBUGGER_TYPE,
@@ -2680,10 +2740,19 @@ namespace pxt.blocks {
         return pxt.Util.values(apis.byQName).filter(sym => sym.namespace === enumName);
     }
 
-    function getFixedInstanceDropdownValues(apis: pxtc.ApisInfo, qName: string) {
+    export function getFixedInstanceDropdownValues(apis: pxtc.ApisInfo, qName: string) {
         return pxt.Util.values(apis.byQName).filter(sym => sym.kind === pxtc.SymbolKind.Variable
             && sym.attributes.fixedInstance
             && isSubtype(apis, sym.retType, qName));
+    }
+
+    export function generateIcons(instanceSymbols: pxtc.SymbolInfo[]) {
+        const imgConv = new ImageConverter();
+        instanceSymbols.forEach(v => {
+            if (v.attributes.jresURL && !v.attributes.iconURL && U.startsWith(v.attributes.jresURL, "data:image/x-mkcd-f")) {
+                v.attributes.iconURL = imgConv.convert(v.attributes.jresURL)
+            }
+        });
     }
 
     function getConstantDropdownValues(apis: pxtc.ApisInfo, qName: string) {

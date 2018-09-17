@@ -38,6 +38,7 @@ namespace pxtblockly {
         public isFieldCustom_ = true;
 
         private params: ParsedSpriteEditorOptions;
+        private blocksInfo: pxtc.BlocksInfo;
         private editor: SpriteEditor;
         private state: Bitmap;
         private lightMode: boolean;
@@ -47,6 +48,7 @@ namespace pxtblockly {
 
             this.lightMode = params.lightMode;
             this.params = parseFieldOptions(params);
+            this.blocksInfo = params.blocksInfo;
 
             if (!this.state) {
                 this.state = new Bitmap(this.params.initWidth, this.params.initHeight);
@@ -92,12 +94,18 @@ namespace pxtblockly {
 
             let contentDiv = Blockly.DropDownDiv.getContentDiv() as HTMLDivElement;
 
-            this.editor = new SpriteEditor(this.state, this.lightMode);
+            this.editor = new SpriteEditor(this.state, this.blocksInfo, this.lightMode);
             this.editor.render(contentDiv);
             this.editor.rePaint();
 
             this.editor.setActiveColor(this.params.initColor, true);
             this.editor.setSizePresets(this.params.sizes);
+
+            goog.style.setHeight(contentDiv, this.editor.outerHeight() + 1);
+            goog.style.setWidth(contentDiv, this.editor.outerWidth() + 1);
+            goog.style.setStyle(contentDiv, "overflow", "hidden");
+            goog.style.setStyle(contentDiv, "max-height", "500px");
+            goog.dom.classlist.add(contentDiv.parentElement, "sprite-editor-dropdown")
 
             Blockly.DropDownDiv.setColour("#2c3e50", "#2c3e50");
             Blockly.DropDownDiv.showPositionedByBlock(this, this.sourceBlock_, () => {
@@ -112,12 +120,8 @@ namespace pxtblockly {
                 goog.style.setWidth(contentDiv, null);
                 goog.style.setStyle(contentDiv, "overflow", null);
                 goog.style.setStyle(contentDiv, "max-height", null);
+                (goog.dom.classlist as any).remove(contentDiv.parentElement, "sprite-editor-dropdown")
             });
-
-            goog.style.setHeight(contentDiv, this.editor.outerHeight() + 1);
-            goog.style.setWidth(contentDiv, this.editor.outerWidth() + 1);
-            goog.style.setStyle(contentDiv, "overflow", "hidden");
-            goog.style.setStyle(contentDiv, "max-height", "500px");
 
             this.editor.layout();
         }

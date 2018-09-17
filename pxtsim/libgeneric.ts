@@ -336,7 +336,7 @@ namespace pxsim {
         }
 
         export function toNumber(s: string) {
-            return parseInt(s);
+            return parseFloat(s);
         }
 
         // TODO check edge-conditions
@@ -393,6 +393,24 @@ namespace pxsim {
         export function charCodeAt(s: string, i: number) {
             pxtrt.nullCheck(s)
             return inRange(s, i) ? s.charCodeAt(i) : 0;
+        }
+
+        export function indexOf(s: string, searchValue: string, start?: number) {
+            pxtrt.nullCheck(s);
+            if (searchValue == null) return -1;
+            return s.indexOf(searchValue, start);
+        }
+
+        export function lastIndexOf(s: string, searchValue: string, start?: number) {
+            pxtrt.nullCheck(s);
+            if (searchValue == null) return -1;
+            return s.lastIndexOf(searchValue, start);
+        }
+
+        export function includes(s: string, searchValue: string, start?: number) {
+            pxtrt.nullCheck(s);
+            if (searchValue == null) return false;
+            return s.includes(searchValue, start);
         }
     }
 

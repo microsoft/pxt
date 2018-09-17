@@ -1,11 +1,6 @@
 # Telemetry collected by Microsoft MakeCode
 
-Client side telemetry is collected for Microsoft MakeCode websites. Some of the sites are:
-
-* [micro:bit](https://makecode.microbit.org)
-* [adafruit](https://makecode.adafruit.org)
-* [MakeCode for Minecaft](https://minecraft.makecode.com)
-* [MakeCode.com](https://makecode.com).
+Client side telemetry is collected for Microsoft MakeCode [websites](https://makecode.com).
 
 Microsoft MakeCode uses the [Application Insights Javascript SDK](https://github.com/Microsoft/ApplicationInsights-JS) to collect the telemetry information.
 
