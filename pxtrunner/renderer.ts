@@ -161,7 +161,7 @@ namespace pxt.runner {
         let $el = $("." + cls).first();
         if (!$el[0]) return Promise.resolve();
 
-        if (!options.emPixels) options.emPixels = 16;
+        if (!options.emPixels) options.emPixels = 18;
         if (!options.layout) options.layout = pxt.blocks.BlockLayout.Align;
 
         return pxt.runner.decompileToBlocksAsync($el.text(), options)
@@ -260,7 +260,7 @@ namespace pxt.runner {
             let $el = $("." + cls).first();
             if (!$el[0]) return Promise.resolve();
 
-            if (!options.emPixels) options.emPixels = 16;
+            if (!options.emPixels) options.emPixels = 18;
             return pxt.runner.compileBlocksAsync($el.text(), options)
                 .then((r) => {
                     try {
