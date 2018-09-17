@@ -58,6 +58,7 @@ namespace pxt.editor {
         bannerVisible?: boolean;
 
         highContrast?: boolean;
+        print?: boolean;
         greenScreen?: boolean;
 
         home?: boolean;

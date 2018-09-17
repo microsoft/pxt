@@ -251,6 +251,7 @@ declare namespace pxt {
         extendEditor?: boolean; // whether a target specific editor.js is loaded
         extendFieldEditors?: boolean; // wether a target specific fieldeditors.js is loaded
         highContrast?: boolean; // simulator has a high contrast mode
+        print?: boolean; //Print blocks and text feature
         greenScreen?: boolean; // display webcam stream in background
         selectLanguage?: boolean; // add language picker to settings menu
         availableLocales?: string[]; // the list of enabled language codes

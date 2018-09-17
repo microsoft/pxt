@@ -252,7 +252,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             <sui.Item role="menuitem" icon="options" text={lf("Project Settings")} onClick={this.openSettings} tabIndex={-1} />
             {packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Extensions")} onClick={this.showPackageDialog} tabIndex={-1} /> : undefined}
             {boards ? <sui.Item role="menuitem" icon="microchip" text={lf("Change Board")} onClick={this.showBoardDialog} tabIndex={-1} /> : undefined}
-            <sui.Item role="menuitem" icon="print" text={lf("Print...")} onClick={this.print} tabIndex={-1} />
+            {targetTheme.print ? <sui.Item role="menuitem" icon="print" text={lf("Print...")} onClick={this.print} tabIndex={-1} /> : undefined}
             {showSave ? <sui.Item role="menuitem" icon="save" text={lf("Save Project")} onClick={this.saveProject} tabIndex={-1} /> : undefined}
             {!isController ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project")} onClick={this.removeProject} tabIndex={-1} /> : undefined}
             {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={this.showReportAbuse} tabIndex={-1} /> : undefined}
