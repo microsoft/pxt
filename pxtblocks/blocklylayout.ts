@@ -119,7 +119,14 @@ namespace pxt.blocks.layout {
             cvs.width = width * pixelDensity;
             cvs.height = height * pixelDensity;
             img.onload = function () {
-                ctx.drawImage(img, 0, 0, width, height, 0, 0, cvs.width, cvs.height);
+                try {
+                    ctx.drawImage(img, 0, 0, width, height, 0, 0, cvs.width, cvs.height);
+                }
+                catch (e) {
+                    // IE 11 throws an exception
+                    reject(e);
+                    return;
+                }
                 let canvasdata = cvs.toDataURL("image/png");
                 // if the generated image is too big, shrink image
                 while (canvasdata.length > MAX_SCREENSHOT_SIZE) {
@@ -262,6 +269,7 @@ namespace pxt.blocks.layout {
                         imageIconCache[svgUri] = href;
                         image.setAttributeNS(XLINK_NAMESPACE, "href", href);
                     })
+                    .catch(() => { /* Ignore conversion errors from IE */ })
             });
         return Promise.all(p).then(() => { })
     }
