@@ -15,7 +15,7 @@ html {
     overflow: hidden;
     font-size:16px;
 }
-  
+
 body {
     height: 100%;
     padding: 0;
@@ -94,6 +94,7 @@ body {
 /* Editor tools */
 @editorToolsHeight: 10rem;
 @editorToolsCollapsedHeight: 4.7rem;
+@editorToolsCollapsedMobileHeight: 3.4rem;
 #editortools {
     position: fixed;
     top: auto;
@@ -344,22 +345,6 @@ div.simframe > iframe {
 
 #msg > div:empty {
    display: none !important;
-}
-
-/* Scrollbars */
-/* OSX Lion+ hides scrollbars while not in use, this overrides that so it's obvious when a div can be scrolled */
-::-webkit-scrollbar {
-    -moz-appearance: none;
-    -webkit-appearance: none;
-    appearance: none;
-    width: @customScrollbarWidth;
-    height: @customScrollbarWidth;
-}
-::-webkit-scrollbar-thumb {
-    border-radius: 4px;
-    background-color: @thumbBackground;
-    box-shadow: 0 0 1px @thumbBackground;
-    -webkit-box-shadow: 0 0 1px @thumbBackground;
 }
 
 /* Button Colors */
@@ -925,14 +910,19 @@ p.ui.font.small {
 /* Mobile */
 @media only screen and (max-width: @largestMobileScreen) {
     .hideEditorFloats #editortools {
-        height: @editorToolsCollapsedHeight;
+        height: @editorToolsCollapsedMobileHeight;
     }
     .hideEditorFloats #blocksArea, .hideEditorFloats #monacoEditor {
-        bottom: @editorToolsCollapsedHeight;
+        bottom: @editorToolsCollapsedMobileHeight;
     }
 
     .ui.modal.projectsdialog h2.editorname {
         font-size: 1.2rem;
+    }
+
+    .hideEditorFloats #editortools .column.mobile.only {
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
     }
 }
 

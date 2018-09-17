@@ -17,6 +17,18 @@ interface CacheEntry {
     api: VirtualApi;
 }
 
+export enum FetchStatus {
+    Pending,
+    Complete,
+    Error,
+    Offline
+};
+
+export interface DataFetchResult<T> {
+    data?: T;
+    status: FetchStatus;
+}
+
 const virtualApis: pxt.Map<VirtualApi> = {}
 let targetConfig: pxt.TargetConfig = undefined;
 
@@ -201,14 +213,31 @@ function lookup(path: string) {
     return cachedData[path]
 }
 
-function getCached(component: AnyComponent, path: string) {
+function getCached(component: AnyComponent, path: string): DataFetchResult<any> {
     subscribe(component, path)
     let r = lookup(path)
     if (r.api.isSync)
-        return r.api.getSync(r.path)
-    if (expired(r) || r.data instanceof Error)
-        queue(r)
-    return r.data
+        return {
+            data: r.api.getSync(r.path),
+            status: FetchStatus.Complete
+        }
+
+    let fetchRes: DataFetchResult<any> = {
+        data: r.data,
+        status: FetchStatus.Complete
+    };
+
+    if (expired(r) || r.data instanceof Error) {
+        fetchRes.status = r.data instanceof Error ? FetchStatus.Error : FetchStatus.Pending;
+        if (r.api.isOffline && r.api.isOffline()) {
+            // The request will not be requeued so we don't want to show it as pending
+            fetchRes.status = FetchStatus.Offline;
+        } else {
+            queue(r)
+        }
+    }
+
+    return fetchRes;
 }
 
 //
@@ -275,6 +304,14 @@ export class Component<TProps, TState> extends React.Component<TProps, TState> {
     }
 
     getData(path: string) {
+        const fetchResult = this.getDataWithStatus(path);
+        return fetchResult.data;
+    }
+
+    /**
+     * Like getData, but the data is wrapped in a result object that indicates the status of the fetch operation
+     */
+    getDataWithStatus(path: string): DataFetchResult<any> {
         if (!this.renderCoreOk)
             Util.oops("Override renderCore() not render()")
         return getCached(this, path)
@@ -320,31 +357,5 @@ export class PureComponent<TProps, TState> extends React.PureComponent<TProps, T
         return this.renderCore();
     }
 }
-
-export function wrapWorkspace(ws: pxt.workspace.WorkspaceProvider): pxt.workspace.WorkspaceProvider {
-    return {
-        initAsync: ws.initAsync,
-        resetAsync: () => ws.resetAsync().then(() => {
-            clearCache()
-        }),
-        getHeaders: ws.getHeaders,
-        getHeader: ws.getHeader,
-        syncAsync: () => ws.syncAsync().then((state) => {
-            invalidate("header:*");
-            invalidate("text:*");
-            return state;
-        }),
-        getTextAsync: ws.getTextAsync,
-        saveAsync: (h, t) => ws.saveAsync(h, t).then(() => {
-            invalidate("header:" + h.id);
-            invalidate("text:" + h.id);
-        }),
-        saveToCloudAsync: ws.saveToCloudAsync,
-        saveScreenshotAsync: ws.saveScreenshotAsync,
-        installAsync: ws.installAsync,
-        loadedAsync: ws.loadedAsync
-    };
-}
-
 
 loadCache();

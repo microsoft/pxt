@@ -281,7 +281,7 @@ namespace ts.pxtc {
                     if (!value) {
                         U.oops("No value for " + inf.name + " / " + hexb)
                     }
-                    if (opts.nativeType == NATIVE_TYPE_THUMB && !(value & 1)) {
+                    if (!opts.runtimeIsARM && opts.nativeType == NATIVE_TYPE_THUMB && !(value & 1)) {
                         U.oops("Non-thumb addr for " + inf.name + " / " + hexb)
                     }
                     inf.value = value
@@ -296,7 +296,7 @@ namespace ts.pxtc {
 
         export function validateShim(funname: string, shimName: string, attrs: CommentAttrs,
             hasRet: boolean, argIsNumber: boolean[]) {
-            if (shimName == "TD_ID" || shimName == "TD_NOOP")
+            if (shimName == "TD_ID" || shimName == "TD_NOOP" || shimName == "ENUM_GET")
                 return
             if (U.lookup(asmLabels, shimName))
                 return
@@ -317,7 +317,7 @@ namespace ts.pxtc {
                     if (!spec)
                         U.userError("excessive parameters passed to " + nm)
                     if (target.taggedInts) {
-                        let needNum = spec == "I" || spec == "N" || spec == "F"
+                        let needNum = spec == "I" || spec == "N" || spec == "F" || spec == "B"
                         if (spec == "T") {
                             // OK, both number and non-number allowed
                         } else if (needNum && !argIsNumber[i])
@@ -459,6 +459,9 @@ namespace ts.pxtc {
                     pxt.HF2.write16(resbuf, i * 2 + jmpStartAddr, hd[i])
                 applyPatches(null, resbuf)
                 if (uf2) {
+                    let bn = bin.options.name || "pxt"
+                    bn = bn.replace(/[^a-zA-Z0-9\-\.]+/g, "_")
+                    uf2.filename = "Projects/" + bn + ".elf"
                     UF2.writeBytes(uf2, 0, resbuf);
                     return [UF2.serializeFile(uf2)];
                 }
@@ -507,6 +510,31 @@ namespace ts.pxtc {
                     UF2.writeHex(uf2, app)
                 else
                     Util.pushRange(myhex, app)
+            }
+
+            if (bin.packedSource) {
+                if (uf2) {
+                    addr = (uf2.currPtr + 0x1000) & ~0xff
+                    let buf = new Uint8Array(256)
+                    for (let ptr = 0; ptr < bin.packedSource.length; ptr += 256) {
+                        for (let i = 0; i < 256; ++i)
+                            buf[i] = bin.packedSource.charCodeAt(ptr + i)
+                        UF2.writeBytes(uf2, addr, buf, UF2.UF2_FLAG_NOFLASH)
+                        addr += 256
+                    }
+                } else {
+                    upper = 0x2000
+                    addr = 0
+                    myhex.push(hexBytes([0x02, 0x00, 0x00, 0x04, upper >> 8, upper & 0xff]))
+                    for (let i = 0; i < bin.packedSource.length; i += 16) {
+                        let bytes = [0x10, (addr >> 8) & 0xff, addr & 0xff, 0]
+                        for (let j = 0; j < 16; ++j) {
+                            bytes.push((bin.packedSource.charCodeAt(i + j) || 0) & 0xff)
+                        }
+                        myhex.push(hexBytes(bytes))
+                        addr += 16
+                    }
+                }
             }
 
             if (uf2)
@@ -720,46 +748,56 @@ ${hex.hexPrelude()}
         }
     }
 
-    function addSource(meta: string, binstring: string) {
+    function addSource(blob: string) {
+        let res = ""
+
+        for (let i = 0; i < blob.length; ++i) {
+            let v = blob.charCodeAt(i) & 0xff
+            if (v <= 0xf)
+                res += "0" + v.toString(16)
+            else
+                res += v.toString(16)
+        }
+
+        return `
+    .balign 16
+_stored_program: .hex ${res}
+`
+    }
+
+    function packSource(meta: string, binstring: string) {
         let metablob = Util.toUTF8(meta)
         let totallen = metablob.length + binstring.length
 
-        if (totallen > 40000) {
-            return "; program too long\n";
-        }
+        let res = "\x41\x14\x0E\x2F\xB8\x2F\xA2\xBB"
 
-        let str =
-            `
-    .balign 16
-    .hex 41140E2FB82FA2BB
-    .short ${metablob.length}
-    .short ${binstring.length}
-    .short 0, 0   ; future use
+        res += U.uint8ArrayToString([
+            metablob.length & 0xff, metablob.length >> 8,
+            binstring.length & 0xff, binstring.length >> 8,
+            0, 0, 0, 0
+        ])
 
-_stored_program: .string "`
+        res += metablob
+        res += binstring
 
-        let addblob = (b: string) => {
-            for (let i = 0; i < b.length; ++i) {
-                let v = b.charCodeAt(i) & 0xff
-                if (v <= 0xf)
-                    str += "\\x0" + v.toString(16)
-                else
-                    str += "\\x" + v.toString(16)
-            }
-        }
+        if (res.length % 2)
+            res += "\x00"
 
-        addblob(metablob)
-        addblob(binstring)
-
-        str += "\"\n"
-        return str
+        return res
     }
 
     export function processorEmit(bin: Binary, opts: CompileOptions, cres: CompileResult) {
         let src = serialize(bin, opts)
         src = patchSrcHash(bin, src)
-        if (opts.embedBlob)
-            src += addSource(opts.embedMeta, ts.pxtc.decodeBase64(opts.embedBlob))
+        let sourceAtTheEnd = false
+        if (opts.embedBlob) {
+            bin.packedSource = packSource(opts.embedMeta, ts.pxtc.decodeBase64(opts.embedBlob))
+            // TODO more dynamic check for source size
+            if (!bin.target.noSourceInFlash && bin.packedSource.length < 40000) {
+                src += addSource(bin.packedSource)
+                bin.packedSource = null // no need to append anymore
+            }
+        }
         let checksumWords = 8
         let pageSize = hex.flashCodeAlign(opts.target)
         if (opts.target.flashChecksumAddr) {
@@ -795,7 +833,6 @@ __flash_checksums:
 `
         }
         bin.writeFile(pxtc.BINARY_ASM, src)
-        bin.numStmts = cres.breakpoints.length
         let res = assemble(opts.target, bin, src)
         if (res.thumbFile.commPtr)
             bin.commSize = res.thumbFile.commPtr - hex.commBase
@@ -812,7 +849,7 @@ __flash_checksums:
                 bin.checksumBlock = chk;
             }
             if (!pxt.isOutputText(target)) {
-                const myhex = ts.pxtc.encodeBase64(hex.patchHex(bin, res.buf, false, true)[0])
+                const myhex = ts.pxtc.encodeBase64(hex.patchHex(bin, res.buf, false, !!target.useUF2)[0])
                 bin.writeFile(pxt.outputName(target), myhex)
             } else {
                 const myhex = hex.patchHex(bin, res.buf, false, false).join("\r\n") + "\r\n"

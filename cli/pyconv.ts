@@ -771,10 +771,14 @@ function resetCtx(m: py.Module) {
 }
 
 function scope(f: () => B.JsNode) {
-    let prevCtx = U.flatClone(ctx)
-    let r = f()
-    ctx = prevCtx
-    return r
+    const prevCtx = U.flatClone(ctx)
+    let r: B.JsNode;
+    try {
+        r = f()
+    } finally {
+        ctx = prevCtx
+    }
+    return r;
 }
 
 function todoExpr(name: string, e: B.JsNode) {
@@ -908,9 +912,17 @@ function typeAnnot(t: Type) {
     return B.mkText(": " + t2s(t))
 }
 
+function guardedScope(v: py.AST, f: () => B.JsNode) {
+    try {
+        return scope(f);
+    }
+    catch (e) {
+        return B.mkStmt(todoComment(`conversion failed for ${(v as any).name || v.kind}`, []));
+    }
+}
 
 const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
-    FunctionDef: (n: py.FunctionDef) => scope(() => {
+    FunctionDef: (n: py.FunctionDef) => guardedScope(n, () => {
         let isMethod = !!ctx.currClass && !ctx.currFun
         if (!isMethod)
             defvar(n.name, { fundef: n })
@@ -1016,7 +1028,7 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
         return B.mkStmt(B.mkGroup(nodes))
     }),
 
-    ClassDef: (n: py.ClassDef) => scope(() => {
+    ClassDef: (n: py.ClassDef) => guardedScope(n, () => {
         setupScope(n)
         defvar(n.name, { classdef: n })
         U.assert(!ctx.currClass)
@@ -1955,7 +1967,7 @@ export function convertAsync(fns: string[]) {
         .then(buf => {
             pxt.debug(`analyzing python AST (${buf.length} bytes)`)
             let js = JSON.parse(buf.toString("utf8"))
-            fs.writeFileSync("pyast.json", JSON.stringify(js, null, 2), { encoding: "utf8" })
+            nodeutil.writeFileSync("pyast.json", JSON.stringify(js, null, 2), { encoding: "utf8" })
             const rec = (v: any): any => {
                 if (Array.isArray(v)) {
                     for (let i = 0; i < v.length; ++i)

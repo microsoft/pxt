@@ -209,7 +209,6 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
         frame.className = `extension-frame extension-frame-${name}`;
         frame.allowFullscreen = true;
         frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
-        (frame as any).sandbox.value = "allow-scripts allow-same-origin"
         frame.frameBorder = "0";
         frame.style.display = "none";
 

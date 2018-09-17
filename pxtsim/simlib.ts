@@ -25,8 +25,16 @@ namespace pxsim {
         private queues: Map<EventQueue<T>> = {};
         private notifyID: number;
         private notifyOneID: number;
+        private lastEventValue: string | number;
+        private lastEventTimestampUs: number;
+        private backgroundHandlerFlag: boolean = false;
 
         public nextNotifyEvent = 1024;
+
+        public setBackgroundHandlerFlag() {
+            this.backgroundHandlerFlag = true;
+        }
+
         public setNotify(notifyID: number, notifyOneID: number) {
             this.notifyID = notifyID;
             this.notifyOneID = notifyOneID;
@@ -34,16 +42,27 @@ namespace pxsim {
 
         constructor(private runtime: Runtime, private valueToArgs?: EventValueToActionArgs<T>) { }
 
-        private start(id: number | string, evid: number | string, create: boolean) {
-            let k = id + ":" + evid;
+        private start(id: number | string, evid: number | string, create: boolean, background: boolean) {
+            let k = (background ? "back:" : "") + id + ":" + evid;
             let queue = this.queues[k];
             if (!queue) queue = this.queues[k] = new EventQueue<T>(this.runtime, this.valueToArgs);
             return queue;
         }
 
         listen(id: number | string, evid: number | string, handler: RefAction) {
-            let q = this.start(id, evid, true);
-            q.handler = handler;
+            let q = this.start(id, evid, true, this.backgroundHandlerFlag);
+            if (this.backgroundHandlerFlag)
+                q.addHandler(handler);
+            else
+                q.setHandler(handler);
+            this.backgroundHandlerFlag = false;
+        }
+
+        removeBackgroundHandler(handler: RefAction) {
+            Object.keys(this.queues).forEach((k: string) => {
+                if (k.startsWith("back:"))
+                    this.queues[k].removeHandler(handler);
+            });
         }
 
         queue(id: number | string, evid: number | string, value: T = null) {
@@ -51,17 +70,32 @@ namespace pxsim {
             const notifyOne = this.notifyID && this.notifyOneID && id == this.notifyOneID;
             if (notifyOne)
                 id = this.notifyID;
-
-            // grab queue and handle
-            let q = this.start(id, evid, false);
-            if (q) {
-                q.push(value, notifyOne);
+            let qBackground = this.start(id, evid, false, true);
+            let qForeground = this.start(id, evid, false, false);
+            if (qBackground || qForeground) {
+                this.lastEventValue = evid;
+                this.lastEventTimestampUs = U.perfNowUs();
+                let promise: Promise<void> = Promise.resolve();
+                if (qBackground)
+                    promise = qBackground.push(value, notifyOne);
+                // do the foreground handler after the background handlers
+                if (qForeground)
+                    promise.then(() => { qForeground.push(value, notifyOne) })
             }
         }
 
+        // only for foreground handlers
         wait(id: number | string, evid: number | string, cb: (value?: any) => void) {
-            let q = this.start(id, evid, true);
+            let q = this.start(id, evid, true, false);
             q.addAwaiter(cb);
+        }
+
+        getLastEventValue() {
+            return this.lastEventValue;
+        }
+
+        getLastEventTime() {
+            return 0xffffffff & (this.lastEventTimestampUs - runtime.startTimeUs);
         }
     }
 

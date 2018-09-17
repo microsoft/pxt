@@ -1,55 +1,53 @@
-/// <reference path="./grid.ts" />
 /// <reference path="./bitmap.ts" />
 /// <reference path="./tools.ts" />
-/// <reference path="./toolbar.ts" />
+/// <reference path="./reporterBar.ts" />
+/// <reference path="./sidebar.ts" />
+/// <reference path="./gallery.ts" />
+/// <reference path="./header.ts" />
 
 namespace pxtblockly {
     import svg = pxt.svgUtil;
     import lf = pxt.Util.lf;
 
-    // Absolute editor height
-    const TOTAL_HEIGHT = 350;
+    const TOTAL_HEIGHT = 500;
 
-    // Editor padding on all sides
-    const PADDING = 8;
+    const PADDING = 10;
 
-    const PADDING_BOTTOM = 3;
+    const DROP_DOWN_PADDING = 4;
 
     // Height of toolbar (the buttons above the canvas)
-    const TOOLBAR_HEIGHT = 55;
+    const HEADER_HEIGHT = 50;
 
     // Spacing between the toolbar and the canvas
-    const TOOLBAR_CANVAS_MARGIN = 5;
+    const HEADER_CANVAS_MARGIN = 10;
 
     // Height of the bar that displays editor size and info below the canvas
-    const REPORTER_BAR_HEIGHT = 13;
+    const REPORTER_BAR_HEIGHT = 31;
 
     // Spacing between the canvas and reporter bar
     const REPORTER_BAR_CANVAS_MARGIN = 5;
 
-    // Border width between palette swatches
-    const PALETTE_INNER_BORDER = 2;
-
-    // Border width around the outside of the palette
-    const PALETTE_OUTER_BORDER = 3;
-
     // Spacing between palette and paint surface
-    const PALETTE_CANVAS_MARGIN = 0;
+    const SIDEBAR_CANVAS_MARGIN = 10;
+
+    const SIDEBAR_WIDTH = 65;
 
     // Total allowed height of paint surface
-    const CANVAS_HEIGHT = TOTAL_HEIGHT - TOOLBAR_HEIGHT - TOOLBAR_CANVAS_MARGIN
-        - REPORTER_BAR_HEIGHT - REPORTER_BAR_CANVAS_MARGIN - PADDING * 2;
+    const CANVAS_HEIGHT = TOTAL_HEIGHT - HEADER_HEIGHT - HEADER_CANVAS_MARGIN
+        - REPORTER_BAR_HEIGHT - REPORTER_BAR_CANVAS_MARGIN - PADDING + DROP_DOWN_PADDING * 2;
 
-    export class SpriteEditor implements ToolbarHost {
+    const WIDTH = PADDING + SIDEBAR_WIDTH + SIDEBAR_CANVAS_MARGIN + CANVAS_HEIGHT + PADDING - DROP_DOWN_PADDING * 2;
+
+
+    export class SpriteEditor implements SideBarHost, SpriteHeaderHost {
         private group: svg.Group;
         private root: svg.SVG;
 
-        private palette: ColorPalette;
         private paintSurface: CanvasGrid;
-        private toolbar: Toolbar;
-        private repoterBar: svg.Group;
-        private cursorInfo: svg.Text;
-        private canvasDimensions: svg.Text;
+        private sidebar: SideBar;
+        private header: SpriteHeader;
+        private bottomBar: ReporterBar;
+        private gallery: Gallery;
 
         private state: Bitmap;
 
@@ -61,6 +59,9 @@ namespace pxtblockly {
         private toolWidth = 1;
         private color = 1;
 
+        private cursorCol = 0;
+        private cursorRow = 0;
+
         private undoStack: Bitmap[] = [];
         private redoStack: Bitmap[] = [];
 
@@ -68,10 +69,7 @@ namespace pxtblockly {
         private rows: number = 16;
         private colors: string[];
 
-        private width: number;
-        private height: number;
-
-        constructor(bitmap: Bitmap, protected lightMode = false) {
+        constructor(bitmap: Bitmap, blocksInfo: pxtc.BlocksInfo, protected lightMode = false) {
             this.colors = pxt.appTarget.runtime.palette.slice(1);
 
             this.columns = bitmap.width;
@@ -81,27 +79,14 @@ namespace pxtblockly {
 
             this.root = new svg.SVG();
             this.group = this.root.group();
-            this.makeTransparencyFill();
-
-            this.palette = new ColorPalette({
-                rowLength: 2,
-                emptySwatchDisabled: false,
-                cellClass: "palette-swatch",
-                emptySwatchFill: 'url("#alpha-background")',
-                outerMargin: PALETTE_OUTER_BORDER,
-                columnMargin: PALETTE_INNER_BORDER,
-                rowMargin: PALETTE_INNER_BORDER,
-                backgroundFill: "black",
-                colors: this.colors
-            });
-            this.palette.setRootId("sprite-editor-palette");
+            this.createDefs();
 
             this.paintSurface = new CanvasGrid(this.colors, this.state.copy(), this.lightMode);
 
             this.paintSurface.drag((col, row) => {
                 this.debug("gesture (" + PaintTool[this.activeTool] + ")");
                 this.setCell(col, row, this.color, false);
-                this.setCursorInfo(col, row);
+                this.bottomBar.updateCursor(col, row);
             });
 
             this.paintSurface.up((col, row) => {
@@ -115,7 +100,7 @@ namespace pxtblockly {
 
             this.paintSurface.move((col, row) => {
                 this.drawCursor(col, row);
-                this.setCursorInfo(col, row);
+                this.bottomBar.updateCursor(col, row);
             });
 
             this.paintSurface.leave(() => {
@@ -125,26 +110,16 @@ namespace pxtblockly {
                 if (this.edit.isStarted) {
                     this.commit();
                 }
-                this.cursorInfo.text("");
+                this.bottomBar.hideCursor();
             });
 
-            this.group.appendChild(this.palette.getView());
+            this.sidebar = new SideBar(['url("#alpha-background")'].concat(this.colors), this, this.group);
+            this.sidebar.setColor(1);
 
-            this.toolbar = new Toolbar(this.group.group(), {
-                height: TOOLBAR_HEIGHT,
-                width: CANVAS_HEIGHT,
-                buttonMargin: 5,
-                optionsMargin: 3,
-                rowMargin: 5
-            }, this);
+            this.header = new SpriteHeader(this);
+            this.gallery = new Gallery(blocksInfo);
+            this.bottomBar = new ReporterBar(this.group, this, REPORTER_BAR_HEIGHT);
 
-            this.palette.setSelected(this.color);
-            this.palette.onColorSelected(color => {
-                this.setActiveColor(color);
-            });
-            this.setActiveColor(this.color);
-
-            this.drawReporterBar();
             this.updateUndoRedo();
 
             document.addEventListener("keydown", ev => {
@@ -167,15 +142,22 @@ namespace pxtblockly {
                     this.edit.start(col, row);
                 }
                 this.edit.update(col, row);
-                this.paintEdit(this.edit);
+                this.cursorCol = col;
+                this.cursorRow = row;
+                this.paintEdit(this.edit, col, row);
             }
         }
 
         render(el: HTMLDivElement): void {
+            el.appendChild(this.header.getElement());
+            el.appendChild(this.gallery.getElement());
             this.paintSurface.render(el);
             el.appendChild(this.root.el);
             this.layout();
             this.root.attr({ "width": this.outerWidth() + "px", "height": this.outerHeight() + "px" });
+            this.root.el.style.position = "absolute";
+            this.root.el.style.top = "0px";
+            this.root.el.style.left = "0px";
         }
 
         layout(): void {
@@ -183,23 +165,18 @@ namespace pxtblockly {
                 return;
             }
 
-            const paintAreaTop = TOOLBAR_HEIGHT + TOOLBAR_CANVAS_MARGIN + PADDING;
-
-            this.palette.setGridDimensions(CANVAS_HEIGHT);
-            this.palette.translate(PADDING, paintAreaTop);
-
-            const paintAreaLeft = PADDING + this.palette.outerWidth() + PALETTE_CANVAS_MARGIN;
             this.paintSurface.setGridDimensions(CANVAS_HEIGHT);
+
+            // The width of the palette + editor
+            const paintAreaTop = HEADER_HEIGHT + HEADER_CANVAS_MARGIN;
+            const paintAreaLeft = PADDING + SIDEBAR_WIDTH + SIDEBAR_CANVAS_MARGIN;
+
+            this.sidebar.translate(PADDING, paintAreaTop);
             this.paintSurface.updateBounds(paintAreaTop, paintAreaLeft, CANVAS_HEIGHT, CANVAS_HEIGHT);
+            this.bottomBar.layout(paintAreaTop + CANVAS_HEIGHT + REPORTER_BAR_CANVAS_MARGIN, paintAreaLeft, CANVAS_HEIGHT);
 
-            this.repoterBar.translate(paintAreaLeft, paintAreaTop + CANVAS_HEIGHT + REPORTER_BAR_CANVAS_MARGIN);
-            this.canvasDimensions.at(CANVAS_HEIGHT - this.canvasDimensions.el.getComputedTextLength(), 0);
-
-            this.width = paintAreaLeft + CANVAS_HEIGHT + PADDING;
-            this.height = paintAreaTop + CANVAS_HEIGHT + PADDING_BOTTOM + REPORTER_BAR_CANVAS_MARGIN + REPORTER_BAR_HEIGHT;
-
-            this.toolbar.translate(PADDING, PADDING);
-            this.toolbar.setDimensions(this.width - PADDING * 2, TOOLBAR_HEIGHT);
+            this.gallery.layout(0, HEADER_HEIGHT, TOTAL_HEIGHT - HEADER_HEIGHT);
+            this.header.layout();
         }
 
         rePaint() {
@@ -208,14 +185,12 @@ namespace pxtblockly {
 
         setActiveColor(color: number, setPalette = false) {
             if (setPalette) {
-                this.palette.setSelected(color);
             }
             else {
                 this.color = color;
 
                 // If the user is erasing, go back to pencil
                 if (this.activeTool === PaintTool.Erase) {
-                    this.toolbar.resetTool();
                     this.activeTool = PaintTool.Normal;
                 }
 
@@ -231,12 +206,6 @@ namespace pxtblockly {
         setToolWidth(width: number) {
             this.toolWidth = width;
             this.edit = this.newEdit(this.color);
-
-            // Cursor doesn't affect fill, so switch to pencil
-            if (this.activeTool === PaintTool.Fill) {
-                this.toolbar.resetTool();
-                this.activeTool = PaintTool.Normal;
-            }
         }
 
         undo() {
@@ -265,22 +234,12 @@ namespace pxtblockly {
                 this.undoStack.push(this.cachedState)
                 this.redoStack = [];
             }
-            this.columns = width;
-            this.rows = height;
-
             this.state = resizeBitmap(this.cachedState, width, height);
-            this.paintSurface.restore(this.state, true);
-            this.canvasDimensions.text(`${this.columns}x${this.rows}`)
-            this.layout();
-
-            this.paintSurface.showOverlay();
-
-            // Canvas size changed and some edits rely on that (like paint)
-            this.edit = this.newEdit(this.color);
+            this.afterResize(true);
         }
 
         setSizePresets(presets: [number, number][]) {
-            this.toolbar.setSizePresets(presets);
+            this.bottomBar.setSizePresets(presets, this.columns, this.rows);
         }
 
         canvasWidth() {
@@ -292,47 +251,58 @@ namespace pxtblockly {
         }
 
         outerWidth() {
-            return this.width;
+            return WIDTH;
         }
 
         outerHeight() {
-            return this.height;
+            return TOTAL_HEIGHT;
         }
 
         bitmap() {
             return this.state;
         }
 
-        protected drawReporterBar() {
-            this.repoterBar = this.group.group();
-            this.canvasDimensions = this.repoterBar.draw("text")
-                .fontSize(REPORTER_BAR_HEIGHT, svg.LengthUnit.px)
-                .fontFamily("monospace")
-                .fill("white")
-                .offset(0, 0.8, svg.LengthUnit.em)
-                .text(`${this.columns}x${this.rows}`);
+        showGallery() {
+            this.gallery.show((result: Bitmap, err?: string) => {
+                if (err && err !== "cancelled") {
+                    console.error(err);
+                }
+                else if (result) {
+                    this.redoStack = [];
+                    this.pushState(true);
+                    this.restore(result);
+                    this.hideGallery();
+                    this.header.toggle.toggle(true);
+                }
+            });
+        }
 
-            this.cursorInfo = this.repoterBar.draw("text")
-                .fontSize(REPORTER_BAR_HEIGHT, svg.LengthUnit.px)
-                .fontFamily("monospace")
-                .offset(0, 0.8, svg.LengthUnit.em)
-                .fill("white");
+        hideGallery() {
+            this.gallery.hide();
+        }
+
+        private afterResize(showOverlay: boolean) {
+            this.columns = this.state.width;
+            this.rows = this.state.height;
+            this.paintSurface.restore(this.state, true);
+            this.bottomBar.updateDimensions(this.columns, this.rows);
+            this.layout();
+
+            if (showOverlay) this.paintSurface.showOverlay();
+
+            // Canvas size changed and some edits rely on that (like paint)
+            this.edit = this.newEdit(this.color);
         }
 
         private drawCursor(col: number, row: number) {
             if (this.edit) {
-                this.paintSurface.repaint();
-                this.edit.drawCursor(col, row, (c, r) => this.paintSurface.drawColor(c, r, this.edit.color));
+                this.paintSurface.drawCursor(this.edit, col, row);
             }
         }
 
-        private setCursorInfo(col: number, row: number) {
-            this.cursorInfo.text(`${col},${row}`);
-        }
-
-        private paintEdit(edit: Edit) {
+        private paintEdit(edit: Edit, col: number, row: number) {
             this.paintSurface.restore(this.state);
-            this.paintSurface.applyEdit(edit);
+            this.paintSurface.applyEdit(edit, col, row);
         }
 
         private commit() {
@@ -341,7 +311,7 @@ namespace pxtblockly {
                     this.cachedState = undefined;
                 }
                 this.pushState(true);
-                this.paintEdit(this.edit);
+                this.paintEdit(this.edit, this.cursorCol, this.cursorRow);
                 this.state.apply(this.paintSurface.image);
                 this.edit = this.newEdit(this.color);
                 this.redoStack = [];
@@ -360,13 +330,18 @@ namespace pxtblockly {
         }
 
         private restore(bitmap: Bitmap) {
-            this.state.apply(bitmap);
-            this.paintSurface.restore(bitmap, true);
+            if (bitmap.width !== this.state.width || bitmap.height !== this.state.height) {
+                this.state = bitmap;
+                this.afterResize(false);
+            }
+            else {
+                this.state.apply(bitmap);
+                this.paintSurface.restore(bitmap, true);
+            }
         }
 
         private updateUndoRedo() {
-            this.toolbar.setUndoState(this.undoStack.length > 0);
-            this.toolbar.setRedoState(this.redoStack.length > 0);
+            this.bottomBar.updateUndoRedo(this.undoStack.length === 0, this.redoStack.length === 0)
         }
 
         private paintCell(col: number, row: number, color: number) {
@@ -391,7 +366,7 @@ namespace pxtblockly {
             // }
         }
 
-        private makeTransparencyFill() {
+        private createDefs() {
             this.root.define(defs => {
                 const p = defs.create("pattern", "alpha-background")
                     .size(10, 10)
@@ -410,6 +385,21 @@ namespace pxtblockly {
                     .size(5, 5)
                     .fill("#dedede");
             })
+
+            // This is used for detecting when text nodes are in the dom.
+            // getComputedTextLength() requires the node to be in the dom so
+            // by listening when this animation begins we can tell if the
+            // node is rendered or not
+            this.group.style().content(`
+            @keyframes dom-test {
+                0% {
+                    transform: translateX(0px);
+                }
+                100% {
+                    transform: translateX(0px);
+                }
+            }
+            `);
         }
     }
 }

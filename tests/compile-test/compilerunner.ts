@@ -158,18 +158,22 @@ function runCoreAsync(res: pxtc.CompileResult) {
     return new Promise<void>((resolve, reject) => {
         let f = res.outfiles[pxtc.BINARY_JS]
         if (f) {
+            let timeout = setTimeout(() => {
+                reject(new Error("Simulating code timed out"))
+            }, 5000);
             let r = new pxsim.Runtime({ type: "run", code: f })
             r.errorHandler = (e) => {
+                clearTimeout(timeout);
                 reject(e);
             }
             r.run(() => {
-                // console.log("DONE")
+                clearTimeout(timeout);
                 pxsim.dumpLivePointers();
                 resolve()
             })
         }
         else {
-            reject("No compiled js");
+            reject(new Error("No compiled js"));
         }
     })
 }

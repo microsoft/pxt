@@ -307,6 +307,8 @@ export class EditorPackage {
 
     sortedFiles() {
         let lst = Util.values(this.files)
+        if (!pxt.options.debug)
+            lst = lst.filter(f => f.name != pxt.github.GIT_JSON)
         lst.sort((a, b) => a.weight() - b.weight() || Util.strcmp(a.name, b.name))
         return lst
     }
@@ -324,7 +326,13 @@ export class EditorPackage {
     pkgAndDeps(): EditorPackage[] {
         if (this.topPkg != this)
             return this.topPkg.pkgAndDeps();
-        let res = Util.values((this.ksPkg as pxt.MainPackage).deps).map(getEditorPkg)
+        let deps = (this.ksPkg as pxt.MainPackage).deps
+        let depkeys = Object.keys(deps)
+        let res: EditorPackage[] = []
+        for (let k of depkeys) {
+            if (/---/.test(k)) continue
+            res.push(getEditorPkg(deps[k]))
+        }
         if (this.assetsPkg)
             res.push(this.assetsPkg)
         res.push(this.outputPkg)
@@ -383,6 +391,16 @@ class Host
         let proto = pkg.verProtocol()
         let epkg = getEditorPkg(pkg)
 
+        let fromWorkspaceAsync = (arg: string) =>
+            workspace.getTextAsync(arg)
+                .then(scr => {
+                    epkg.setFiles(scr)
+                    if (epkg.isTopLevel() && epkg.header)
+                        return workspace.recomputeHeaderFlagsAsync(epkg.header, scr)
+                    else
+                        return Promise.resolve()
+                })
+
         if (proto == "pub") {
             // make sure it sits in cache
             return workspace.getPublishedScriptAsync(pkg.verArgument())
@@ -391,13 +409,11 @@ class Host
             return workspace.getPublishedScriptAsync(pkg.version())
                 .then(files => epkg.setFiles(files))
         } else if (proto == "workspace") {
-            return workspace.getTextAsync(pkg.verArgument())
-                .then(scr => epkg.setFiles(scr))
+            return fromWorkspaceAsync(pkg.verArgument())
         } else if (proto == "file") {
             let arg = pkg.verArgument()
             if (arg[0] == ".") arg = resolvePath(pkg.parent.verArgument() + "/" + arg)
-            return workspace.getTextAsync(arg)
-                .then(scr => epkg.setFiles(scr));
+            return fromWorkspaceAsync(arg)
         } else if (proto == "embed") {
             epkg.setFiles(pxt.getEmbeddedScript(pkg.verArgument()))
             return Promise.resolve()
@@ -434,7 +450,8 @@ export function mainEditorPkg() {
 
 export function genFileName(extension: string): string {
     /* tslint:disable:no-control-regex */
-    let sanitizedName = mainEditorPkg().header.name.replace(/[()\\\/.,?*^:<>!;'#$%^&|"\x00-\x1F ]\s/g, '');
+    let sanitizedName = mainEditorPkg().header.name.replace(/[()\\\/.,?*^:<>!;'#$%^&|"@+=«»°{}\[\]¾½¼³²¦¬¤¢£~­¯¸`±\x00-\x1F]/g, '');
+    sanitizedName = sanitizedName.trim().replace(/\s+/g, '-');
     /* tslint:enable:no-control-regex */
     if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.fileNameExclusiveFilter) {
         const rx = new RegExp(pxt.appTarget.appTheme.fileNameExclusiveFilter, 'g');
@@ -464,12 +481,9 @@ export function loadPkgAsync(id: string, targetVersion?: string) {
         .catch(core.handleNetworkError)
         .then(() => JSON.parse(theHost.readFile(mainPkg, pxt.CONFIG_NAME)) as pxt.PackageConfig)
         .then(config => {
-            if (!config) return Promise.resolve();
+            if (!config) throw new Error(lf("invalid pxt.json file"));
             return mainPkg.installAllAsync(targetVersion)
-                .then(() => mainEditorPkg().afterMainLoadAsync())
-                .catch(e => {
-                    core.errorNotification(lf("Cannot load package: {0}", e.message))
-                })
+                .then(() => mainEditorPkg().afterMainLoadAsync());
         })
 }
 

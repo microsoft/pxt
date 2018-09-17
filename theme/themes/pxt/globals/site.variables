@@ -90,8 +90,8 @@
     Scroll Bars
 --------------------*/
 
-@useCustomScrollbars: true;
-@customScrollbarWidth: 6px;
+@useCustomScrollbars: false;
+@customScrollbarWidth: 7px;
 
 @thumbBackground: rgba(0, 0, 0, 0.25);
 @thumbInvertedBackground: rgba(255, 255, 255, 0.25);
@@ -105,6 +105,9 @@
 
 @fileLogoUrl: "../docs/static/filelogo.svg";
 @fileLogo: data-uri(@fileLogoUrl);
+
+@githubFileLogoUrl: "../docs/static/githubfilelogo.svg";
+@githubFileLogo: data-uri(@githubFileLogoUrl);
 
 @loaderImageUrl: "../docs/static/loader.svg";
 @loaderImage: data-uri(@loaderImageUrl);
@@ -257,6 +260,7 @@
 @homeDetailViewBackground: darken(@homeScreenBackground, 10%);
 @homeDetailViewColor: @homeCardColor;
 @homeDetailCloseColor: white;
+@homeDetailCloseBackground: @grey;
 
 /*-------------------
    Tutorial

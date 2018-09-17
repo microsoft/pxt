@@ -55,7 +55,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                 wrapperDiv.className = 'ui segment raised loading';
                 if (MarkedContent.blockSnippetCache[code]) {
                     // Use cache
-                    const svg = Blockly.Xml.textToDom(MarkedContent.blockSnippetCache[code]);
+                    const svg = Blockly.Xml.textToDom(pxt.blocks.layout.serializeSvgString(MarkedContent.blockSnippetCache[code]));
                     wrapperDiv.appendChild(svg);
                     pxsim.U.removeClass(wrapperDiv, 'loading');
                 } else {
@@ -111,8 +111,13 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         // replace pre-template in markdown
         markdown = markdown.replace(/@([a-z]+)@/ig, (m, param) => pubinfo[param] || 'unknown macro')
 
+        // create a custom renderer
+        let renderer = new marked.Renderer()
+        pxt.docs.setupRenderer(renderer);
+
         // Set markdown options
         marked.setOptions({
+            renderer: renderer,
             sanitize: true
         })
 

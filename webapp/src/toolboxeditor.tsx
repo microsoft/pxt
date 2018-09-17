@@ -70,7 +70,6 @@ export abstract class ToolboxEditor extends srceditor.Editor {
             // Go through all blocks and apply filter
             this.blockInfo.blocks.forEach(fn => {
                 let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
-                ns = ns.toLowerCase();
 
                 if (fn.attributes.debug && !pxt.options.debug) return;
                 if (fn.attributes.deprecated || fn.attributes.blockHidden) return;
@@ -128,8 +127,10 @@ export abstract class ToolboxEditor extends srceditor.Editor {
                 const blocks = that.getBlocksForCategory(ns, subns).filter(block => that.shouldShowBlock(block.attributes.blockId, ns));
                 if (!blocks.length) return undefined;
 
+                const name = pxt.Util.rlf(`{id:subcategory}${subns}`);
                 return {
                     nameid: ns,
+                    name,
                     subns: subns,
                     color: md.color,
                     icon: md.icon,
@@ -157,7 +158,14 @@ export abstract class ToolboxEditor extends srceditor.Editor {
                     const blocks = that.getBlocksForCategory(ns).filter(block => that.shouldShowBlock(block.attributes.blockId, ns));
                     const hasExtensionButtons = that.extensionsMap[ns];
                     const hasCustomClick = builtInCategory && builtInCategory.customClick;
-                    const hasBlocks = blocks.length || hasExtensionButtons || hasCustomClick;
+
+                    let subcategories: toolbox.ToolboxCategory[];
+
+                    if ((md.subcategories && md.subcategories.length) || that.subcategoryMap[ns]) {
+                        subcategories = createSubCategories([ns, md], md.subcategories || Object.keys(that.subcategoryMap[ns]), isAdvanced);
+                    }
+
+                    const hasBlocks = blocks.length || hasExtensionButtons || hasCustomClick || (subcategories && subcategories.length);
                     // Don't show the category if there are no blocks in it
                     if (!hasBlocks) return undefined;
 
@@ -176,8 +184,7 @@ export abstract class ToolboxEditor extends srceditor.Editor {
                         groupIcons: md.groupIcons,
                         labelLineWidth: md.labelLineWidth,
                         blocks: blocks,
-                        subcategories: md.subcategories || that.subcategoryMap[ns] ?
-                            createSubCategories([ns, md], md.subcategories || Object.keys(that.subcategoryMap[ns]), isAdvanced) : undefined,
+                        subcategories: subcategories,
                         advanced: isAdvanced
                     };
 
@@ -198,19 +205,19 @@ export abstract class ToolboxEditor extends srceditor.Editor {
     abstract showFlyout(treeRow: toolbox.ToolboxCategory): void;
     moveFocusToFlyout() { }
 
-    protected abstract showFlyoutHeadingLabel(ns: string, subns: string, icon: string, color: string): void;
+    protected abstract showFlyoutHeadingLabel(ns: string, name: string, subns: string, icon: string, color: string): void;
     protected abstract showFlyoutGroupLabel(group: string, groupicon: string, labelLineWidth: string): void;
     protected abstract showFlyoutBlocks(ns: string, color: string, blocks: toolbox.BlockDefinition[]): void;
 
     abstractShowFlyout(treeRow: toolbox.ToolboxCategory): boolean {
-        const { nameid: ns, subns, icon, color, groups, groupIcons, labelLineWidth, blocks } = treeRow;
+        const { nameid: ns, name, subns, icon, color, groups, groupIcons, labelLineWidth, blocks } = treeRow;
 
         let fns = blocks;
         if (!fns || !fns.length) return false;
 
         if (!pxt.appTarget.appTheme.hideFlyoutHeadings) {
             // Add the Heading label
-            this.showFlyoutHeadingLabel(ns, subns, icon, color);
+            this.showFlyoutHeadingLabel(ns, name, subns, icon, color);
         }
 
         // Organize and rearrange methods into groups

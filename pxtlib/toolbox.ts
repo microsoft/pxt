@@ -60,6 +60,7 @@ namespace pxt.toolbox {
     }
 
     export function getNamespaceColor(ns: string): string {
+        ns = ns.toLowerCase();
         if (pxt.appTarget.appTheme.blockColors && pxt.appTarget.appTheme.blockColors[ns])
             return pxt.appTarget.appTheme.blockColors[ns] as string;
         if (pxt.toolbox.blockColors[ns])
@@ -68,6 +69,7 @@ namespace pxt.toolbox {
     }
 
     export function getNamespaceIcon(ns: string): string {
+        ns = ns.toLowerCase();
         if (pxt.appTarget.appTheme.blockIcons && pxt.appTarget.appTheme.blockIcons[ns]) {
             return pxt.appTarget.appTheme.blockIcons[ns] as string;
         }

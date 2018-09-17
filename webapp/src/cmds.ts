@@ -1,5 +1,6 @@
 /// <reference path="../../built/pxtlib.d.ts"/>
 import * as core from "./core";
+import * as electron from "./electron";
 import * as pkg from "./package";
 import * as hidbridge from "./hidbridge";
 import Cloud = pxt.Cloud;
@@ -131,7 +132,7 @@ function nativeHostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
 
 function nativeHostSaveCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     pxt.debug(`native save`)
-    core.infoNotification(lf("Flashing device..."));
+    core.infoNotification(lf("Saving file..."));
     const out = resp.outfiles[pxt.outputName()]
     const nativePostMessage = nativeHostPostMessageFunction();
     nativePostMessage(<pxt.editor.NativeHostMessage>{
@@ -141,7 +142,7 @@ function nativeHostSaveCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     return Promise.resolve();
 }
 
-function hidDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
+function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.DeployOptions): Promise<void> {
     pxt.tickEvent(`hid.deploy`)
     // error message handled in browser download
     if (!resp.success)
@@ -151,6 +152,15 @@ function hidDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     let blocks = pxtc.UF2.parseFile(pxt.Util.stringToUint8Array(atob(f)))
     return hidbridge.initAsync()
         .then(dev => dev.reflashAsync(blocks))
+        .catch((e) => {
+            const troubleshootDoc = pxt.appTarget && pxt.appTarget.appTheme && pxt.appTarget.appTheme.appFlashingTroubleshoot;
+            if (e.type === "devicenotfound" && d.reportDeviceNotFoundAsync && !!troubleshootDoc) {
+                pxt.tickEvent("hid.flash.devicenotfound");
+                return d.reportDeviceNotFoundAsync(troubleshootDoc, resp);
+            } else {
+                return pxt.commands.saveOnlyAsync(resp);
+            }
+        });
 }
 
 let askPairingCount = 0;
@@ -287,6 +297,29 @@ function webUsbDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
         .catch(e => askWebUSBPairAsync(resp));
 }
 
+function winrtDeployCoreAsync(r: pxtc.CompileResult, d: pxt.commands.DeployOptions): Promise<void> {
+    return hidDeployCoreAsync(r, d)
+        .timeout(20000)
+        .catch((e) => {
+            return hidbridge.disconnectWrapperAsync()
+                .catch((e) => {
+                    // Best effort disconnect; at this point we don't even know the state of the device
+                    pxt.reportException(e);
+                })
+                .then(() => {
+                    return core.confirmAsync({
+                        header: lf("Something went wrong..."),
+                        body: lf("Flashing your {0} took too long. Please disconnect your {0} from your computer and try reconnecting it.", pxt.appTarget.appTheme.boardName || lf("device")),
+                        disagreeLbl: lf("Ok"),
+                        hideAgree: true
+                    });
+                })
+                .then(() => {
+                    return pxt.commands.saveOnlyAsync(r);
+                });
+        });
+}
+
 function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     pxt.debug('local deployment...');
     core.infoNotification(lf("Uploading .hex file..."));
@@ -313,10 +346,10 @@ export function initCommandsAsync(): Promise<void> {
     pxt.commands.showUploadInstructionsAsync = showUploadInstructionsAsync;
     const forceHexDownload = /forceHexDownload/i.test(window.location.href);
 
-    if (pxt.usb.isAvailable() && (pxt.appTarget.compile.webUSB || /webusb=1/i.test(window.location.href))) {
-        pxt.log(`enabled webusb`)
-        pxt.usb.setEnabled(true)
-        pxt.HF2.mkPacketIOAsync = pxt.usb.mkPacketIOAsync
+    if (pxt.usb.isAvailable() && pxt.appTarget.compile.webUSB) {
+        pxt.log(`enabled webusb`);
+        pxt.usb.setEnabled(true);
+        pxt.HF2.mkPacketIOAsync = pxt.usb.mkPacketIOAsync;
     }
 
     if (isNativeHost()) {
@@ -329,7 +362,7 @@ export function initCommandsAsync(): Promise<void> {
         if (pxt.appTarget.serial && pxt.appTarget.serial.useHF2) {
             pxt.winrt.initWinrtHid(() => hidbridge.initAsync(true).then(() => { }), () => hidbridge.disconnectWrapperAsync());
             pxt.HF2.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
-            pxt.commands.deployCoreAsync = hidDeployCoreAsync;
+            pxt.commands.deployCoreAsync = winrtDeployCoreAsync;
         } else {
             // If we're not using HF2, then the target is using their own deploy logic in extension.ts, so don't use
             // the wrapper callbacks
@@ -347,8 +380,11 @@ export function initCommandsAsync(): Promise<void> {
                         core.infoNotification(lf("file saved!"));
                     }
                 })
-                .catch(() => core.errorNotification(lf("saving file failed...")));
+                .catch((e) => core.errorNotification(lf("saving file failed...")));
         };
+    } else if (electron.isPxtElectron()) {
+        pxt.commands.deployCoreAsync = electron.driveDeployAsync;
+        pxt.commands.electronDeployAsync = electron.driveDeployAsync;
     } else if (hidbridge.shouldUse() && !pxt.appTarget.serial.noDeploy && !forceHexDownload) {
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
     } else if (Cloud.isLocalHost() && Cloud.localToken && !forceHexDownload) { // local node.js

@@ -397,6 +397,7 @@ namespace pxt.blocks {
                     default:
                         if (b.type in e.stdCallTable) {
                             const call = e.stdCallTable[b.type];
+                            if (call.attrs.shim === "ENUM_GET") return;
                             visibleParams(call, countOptionals(b)).forEach((p, i) => {
                                 const isInstance = call.isExtensionMethod && i === 0;
                                 if (p.definitionName && !b.getFieldValue(p.definitionName)) {
@@ -780,6 +781,7 @@ namespace pxt.blocks {
             case "lists_index_set":
                 expr = compileListSet(e, b, comments); break;
             case "math_js_op":
+            case "math_js_round":
                 expr = compileMathJsOp(e, b, comments); break;
             case pxtc.TS_OUTPUT_TYPE:
                 expr = extractTsExpression(e, b, comments); break;
@@ -816,6 +818,7 @@ namespace pxt.blocks {
         errors: Blockly.Block[];
         renames: RenameMap;
         stats: pxt.Map<number>;
+        enums: pxtc.EnumInfo[];
     }
 
     export interface RenameMap {
@@ -850,7 +853,8 @@ namespace pxt.blocks {
             stdCallTable: e.stdCallTable,
             errors: e.errors,
             renames: e.renames,
-            stats: e.stats
+            stats: e.stats,
+            enums: e.enums
         };
     }
 
@@ -880,7 +884,8 @@ namespace pxt.blocks {
                 takenNames: {},
                 oldToNewFunctions: {}
             },
-            stats: {}
+            stats: {},
+            enums: []
         }
     };
 
@@ -1109,6 +1114,11 @@ namespace pxt.blocks {
         if (isMutatingBlock(b) && b.mutation.getMutationType() === MutatorTypes.RestParameterMutator) {
             args = b.mutation.compileMutation(e, comments).children;
         }
+        else if (func.attrs.shim === "ENUM_GET") {
+            const enumName = func.attrs.enumName;
+            const enumMember = b.getFieldValue("MEMBER").replace(/^\d+/, "");
+            return H.mkPropertyAccess(enumMember, mkText(enumName));
+        }
         else {
             args = visibleParams(func, countOptionals(b)).map((p, i) => compileArgument(e, b, p, comments, func.isExtensionMethod && i === 0 && !func.isExpression));
         }
@@ -1202,18 +1212,7 @@ namespace pxt.blocks {
             argumentDeclaration = b.mutation.compileMutation(e, comments);
         }
         else if (stdfun.comp.handlerArgs.length) {
-            let handlerArgs: string[] = []; // = stdfun.handlerArgs.map(arg => escapeVarName(b.getFieldValue("HANDLER_" + arg.name), e));
-            for (let i = 0; i < stdfun.comp.handlerArgs.length; i++) {
-                const arg = stdfun.comp.handlerArgs[i];
-                const varField = b.getField("HANDLER_" + arg.name);
-                const varName = varField && varField.getText();
-                if (varName !== null) {
-                    handlerArgs.push(escapeVarName(varName, e));
-                }
-                else {
-                    break;
-                }
-            }
+            let handlerArgs = getEscapedCBParameters(b, stdfun, e);
             argumentDeclaration = mkText(`function (${handlerArgs.join(", ")})`)
         }
 
@@ -1441,6 +1440,10 @@ namespace pxt.blocks {
                 }
             });
 
+            if (blockInfo.enumsByName) {
+                Object.keys(blockInfo.enumsByName).forEach(k => e.enums.push(blockInfo.enumsByName[k]));
+            }
+
             blockInfo.blocks
                 .forEach(fn => {
                     if (e.stdCallTable[fn.attributes.blockId]) {
@@ -1459,7 +1462,7 @@ namespace pxt.blocks {
                         isExtensionMethod: instance,
                         isExpression: fn.retType && fn.retType !== "void",
                         imageLiteral: fn.attributes.imageLiteral,
-                        hasHandler: !!comp.handlerArgs.length || fn.parameters && fn.parameters.some(p => (p.type == "() => void" || !!p.properties)),
+                        hasHandler: !!comp.handlerArgs.length || fn.parameters && fn.parameters.some(p => (p.type == "() => void" || p.type == "Action" || !!p.properties)),
                         property: !fn.parameters,
                         isIdentity: fn.attributes.shim == "TD_ID"
                     }
@@ -1483,14 +1486,13 @@ namespace pxt.blocks {
 
             if (stdFunc && stdFunc.comp.handlerArgs.length) {
                 let foundIt = false;
-                stdFunc.comp.handlerArgs.forEach(arg => {
+                const names = getEscapedCBParameters(b, stdFunc, e);
+                names.forEach(varName => {
                     if (foundIt) return;
-                    const varField = b.getField("HANDLER_" + arg.name);
-                    let varName = varField && varField.getText();
-                    if (varName != null && escapeVarName(varName, e) === name) {
+                    if (varName === name) {
                         foundIt = true;
                     }
-                });
+                })
                 if (foundIt) {
                     return true;
                 }
@@ -1533,11 +1535,10 @@ namespace pxt.blocks {
 
             let stdFunc = e.stdCallTable[b.type];
             if (stdFunc && stdFunc.comp.handlerArgs.length) {
-                stdFunc.comp.handlerArgs.forEach(arg => {
-                    const varField = b.getField("HANDLER_" + arg.name)
-                    let varName = varField && varField.getText();
+                const names = getEscapedCBParameters(b, stdFunc, e);
+                names.forEach((varName, index) => {
                     if (varName != null) {
-                        trackLocalDeclaration(escapeVarName(varName, e), arg.type);
+                        trackLocalDeclaration(escapeVarName(varName, e), stdFunc.comp.handlerArgs[index].type);
                     }
                 });
             }
@@ -1618,6 +1619,53 @@ namespace pxt.blocks {
                 }
             });
 
+            const stmtsEnums: JsNode[] = [];
+            e.enums.forEach(info => {
+                const models = w.getVariablesOfType(info.name);
+                if (models && models.length) {
+                    const members: [string, number][] = models.map(m => {
+                        const match = /^(\d+)([^0-9].*)$/.exec(m.name);
+                        if (match) {
+                            return [match[2], parseInt(match[1])] as [string, number];
+                        }
+                        else {
+                            // Someone has been messing with the XML...
+                            return [m.name, -1] as [string, number];
+                        }
+                    });
+
+                    members.sort((a, b) => a[1] - b[1]);
+
+                    const nodes: JsNode[] = [];
+                    let lastValue = -1;
+                    members.forEach(([name, value], index) => {
+                        let newNode: JsNode;
+                        if (info.isBitMask) {
+                            const shift = Math.log2(value);
+                            if (shift >= 0 && Math.floor(shift) === shift) {
+                                newNode = H.mkAssign(mkText(name), H.mkSimpleCall("<<", [H.mkNumberLiteral(1), H.mkNumberLiteral(shift)]));
+                            }
+                        }
+                        if (!newNode) {
+                            if (value === lastValue + 1) {
+                                newNode = mkText(name);
+                            }
+                            else {
+                                newNode = H.mkAssign(mkText(name), H.mkNumberLiteral(value));
+                            }
+                        }
+                        nodes.push(newNode);
+                        lastValue = value;
+                    });
+                    const declarations = mkCommaSep(nodes, true);
+                    declarations.glueToBlock = GlueMode.NoSpace;
+                    stmtsEnums.push(mkGroup([
+                        mkText(`enum ${info.name}`),
+                        mkBlock([declarations])
+                    ]));
+                }
+            });
+
             // All variables in this script are compiled as locals within main unless loop or previsouly assigned
             const stmtsVariables = e.bindings.filter(b => !isCompiledAsLocalVariable(b) && b.assigned != VarUsage.Assign)
                 .map(b => {
@@ -1648,7 +1696,7 @@ namespace pxt.blocks {
                     return mkStmt(mkText("let " + b.name + tp + " = "), defl)
                 });
 
-            return stmtsVariables.concat(stmtsMain);
+            return stmtsEnums.concat(stmtsVariables.concat(stmtsMain));
         } catch (err) {
             let be: Blockly.Block = (err as any).block;
             if (be) {
@@ -1858,6 +1906,37 @@ namespace pxt.blocks {
         });
 
         return res;
+    }
+
+    function getEscapedCBParameters(b: Blockly.Block, stdfun: StdFunc, e: Environment) {
+        let handlerArgs: string[] = [];
+        if (stdfun.attrs.draggableParameters) {
+            for (let i = 0; i < stdfun.comp.handlerArgs.length; i++) {
+                const arg = stdfun.comp.handlerArgs[i];
+                const varBlock = getInputTargetBlock(b, "HANDLER_DRAG_PARAM_" + arg.name) as Blockly.Block;
+                const varName = varBlock && varBlock.getField("VAR").getText();
+                if (varName !== null) {
+                    handlerArgs.push(escapeVarName(varName, e));
+                }
+                else {
+                    break;
+                }
+            }
+        }
+        else {
+            for (let i = 0; i < stdfun.comp.handlerArgs.length; i++) {
+                const arg = stdfun.comp.handlerArgs[i];
+                const varField = b.getField("HANDLER_" + arg.name);
+                const varName = varField && varField.getText();
+                if (varName !== null) {
+                    handlerArgs.push(escapeVarName(varName, e));
+                }
+                else {
+                    break;
+                }
+            }
+        }
+        return handlerArgs;
     }
 
     interface Rect {

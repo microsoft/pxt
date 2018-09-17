@@ -81,7 +81,7 @@ namespace pxt.BrowserUtils {
     export function isSafari(): boolean {
         //Could also check isMac but I don't want to risk excluding iOS
         //Checking for iPhone, iPod or iPad as well as Safari in order to detect home screen browsers on iOS
-        return !isChrome() && !isEdge() && !!navigator && /(Safari|iPod|iPhone|iPad)/i.test(navigator.userAgent);
+        return !isChrome() && !isEdge() && !!navigator && /(Macintosh|Safari|iPod|iPhone|iPad)/i.test(navigator.userAgent);
     }
 
     //Safari and WebKit lie about being Firefox
@@ -154,11 +154,12 @@ namespace pxt.BrowserUtils {
         }
         else if (isSafari()) {
             matches = /Version\/([0-9\.]+)/i.exec(navigator.userAgent);
-            // pinned web site have a different user agent
+            // pinned web sites and WKWebview for embedded browsers have a different user agent
             // Mozilla/5.0 (iPhone; CPU iPhone OS 10_2_1 like Mac OS X) AppleWebKit/602.4.6 (KHTML, like Gecko) Mobile/14D27
             // Mozilla/5.0 (iPad; CPU OS 10_3_3 like Mac OS X) AppleWebKit/603.3.8 (KHTML, like Gecko) Mobile/14G60
+            // Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_5) AppleWebKit/605.1.15 (KHTML, like Gecko)
             if (!matches)
-                matches = /(iPod|iPhone|iPad); CPU .*?OS (\d+)/i.exec(navigator.userAgent);
+                matches = /(Macintosh|iPod|iPhone|iPad); (CPU|Intel).*?OS (X )?(\d+)/i.exec(navigator.userAgent);
         }
         else if (isChrome()) {
             matches = /(Chrome|Chromium)\/([0-9\.]+)/i.exec(navigator.userAgent);
@@ -435,8 +436,12 @@ namespace pxt.BrowserUtils {
     }
 
     export function patchCdn(url: string): string {
-        if (!url || !pxt.getOnlineCdnUrl()) return url;
-        return url.replace("@cdnUrl@", pxt.getOnlineCdnUrl());
+        if (!url) return url;
+        const online = pxt.getOnlineCdnUrl();
+        if (online)
+            return url.replace("@cdnUrl@", online);
+        else
+            return url.replace(/@cdnUrl@\/(blob|commit)\/[a-f0-9]{40}\//, "./");
     }
 
     export function initTheme() {
@@ -478,26 +483,6 @@ namespace pxt.BrowserUtils {
                 }
             }
         }
-
-        const sim = pxt.appTarget.simulator;
-        if (sim
-            && sim.boardDefinition
-            && sim.boardDefinition.visual) {
-            let boardDef = sim.boardDefinition.visual as pxsim.BoardImageDefinition;
-            if (boardDef.image) {
-                boardDef.image = patchCdn(boardDef.image)
-                if (boardDef.outlineImage) boardDef.outlineImage = patchCdn(boardDef.outlineImage)
-            }
-        }
-
-        // patch icons in bundled packages
-        Object.keys(pxt.appTarget.bundledpkgs).forEach(pkgid => {
-            const res = pxt.appTarget.bundledpkgs[pkgid];
-            // path config before storing
-            const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
-            if (config.icon) config.icon = patchCdn(config.icon);
-            res[pxt.CONFIG_NAME] = JSON.stringify(config, null, 4);
-        })
     }
 
     /**
@@ -511,5 +496,31 @@ namespace pxt.BrowserUtils {
         } else {
             window.history.replaceState('', '', hash)
         }
+    }
+
+    /**
+     * Simple utility method to join urls.
+     */
+    export function urlJoin(urlPath1: string, urlPath2: string): string {
+        if (!urlPath1) return urlPath2;
+        if (!urlPath2) return urlPath1;
+        const normalizedUrl1 = (urlPath1.indexOf('/') == urlPath1.length - 1) ?
+            urlPath1.substring(0, urlPath1.length - 1) : urlPath1;
+        const normalizedUrl2 = (urlPath2.indexOf('/') == 0) ?
+            urlPath2.substring(1) : urlPath2;
+        return normalizedUrl1 + "/" + normalizedUrl2;
+    }
+
+    /**
+     * Simple utility method to join multiple urls.
+     */
+    export function joinURLs(...parts: string[]): string {
+        let result: string;
+        if (parts) {
+            for (let i = 0; i < parts.length; i++) {
+                result = urlJoin(result, parts[i]);
+            }
+        }
+        return result;
     }
 }

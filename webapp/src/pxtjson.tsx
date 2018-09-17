@@ -106,6 +106,27 @@ export class Editor extends srceditor.Editor {
             .filter(dep => !!dep && dep.isLoaded && !!dep.config && !!dep.config.yotta && !!dep.config.yotta.userConfigs)
             .forEach(dep => userConfigs = userConfigs.concat(dep.config.yotta.userConfigs));
 
+        const gitJsonText = pkg.mainEditorPkg().getAllFiles()[pxt.github.GIT_JSON]
+        const gitJson = JSON.parse(gitJsonText || "{}") as pxt.github.GitJson
+        let gitLink = ""
+        let gitDesc = ""
+        let gitVer = "???"
+        let gitVerLink = "#"
+
+        if (gitJson.repo) {
+            const parsed = pxt.github.parseRepoId(gitJson.repo)
+            gitLink = "https://github.com/" + parsed.fullName
+            gitDesc = parsed.fullName
+            if (parsed.tag && parsed.tag != "master") {
+                gitLink += "/tree/" + parsed.tag
+                gitDesc += "#" + parsed.tag
+            }
+            if (gitJson.commit) {
+                gitVer = gitJson.commit.tag || gitJson.commit.sha.slice(0, 8)
+                gitVerLink = "https://github.com/" + parsed.fullName + "/commit/" + gitJson.commit.sha
+            }
+        }
+
         return (
             <div className="ui content">
                 <h3 className="ui small header">
@@ -122,6 +143,17 @@ export class Editor extends srceditor.Editor {
                             isUserConfigActive={this.isUserConfigActive}
                             applyUserConfig={this.applyUserConfig} />
                     )}
+                    {!gitLink ? undefined :
+                        <p>
+                            {lf("Source repository: ")}
+                            <a target="_blank" href={gitLink} rel="noopener noreferrer">
+                                {gitDesc}
+                            </a>
+                            {lf("; version ")}
+                            <a target="_blank" href={gitVerLink} rel="noopener noreferrer">
+                                {gitVer}
+                            </a>
+                        </p>}
                     <sui.Field>
                         <sui.Button text={lf("Save")} className={`green ${this.isSaving ? 'disabled' : ''}`} onClick={this.save} />
                         <sui.Button text={lf("Edit Settings As text")} onClick={this.editSettingsText} />

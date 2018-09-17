@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html style="height:100%">
+
+<head>
+
+    <link data-inline="yes-please" href="/static/playground/spinner.css" rel="stylesheet" />
+
+    <!-- @include playground-head.html -->
+
+    <style type="text/css">
+        body {
+            margin: 0;
+            padding: 0;
+            border: 0;
+            background: #F9F9F9;
+        }
+
+        #svg {
+            position: relative;
+            height: 100%;
+            width: 100%;
+        }
+
+        .blocklyPreview {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: calc(100% - 1em);
+            max-height: calc(100% - 1em);
+            padding: 10px;
+        }
+
+        path.blocklyFlyoutBackground {
+            fill: #5f6c79 !important;
+            rx: 0 !important;
+            ry: 0 !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="loading">
+        <div class="spinner">
+            <div class="rect1"></div>
+            <div class="rect2"></div>
+            <div class="rect3"></div>
+            <div class="rect4"></div>
+            <div class="rect5"></div>
+        </div>
+    </div>
+
+    <div id="svg"></div>
+
+    <!-- @include playground-workers.html -->
+
+    <script src="/static/playground/testHost.js"></script>
+
+    <script type="text/javascript">
+
+        pxt.webConfig = {};
+        pxt.webConfig.commitCdnUrl = '../static/playground/';
+
+        // Just needs to exist
+        pxt.setAppTarget({
+            id: "core",
+            name: "Microsoft MakeCode",
+            title: "Microsoft MakeCode",
+            versions: undefined,
+            description: "A toolkit to build JavaScript Blocks editors.",
+            bundleddirs: [],
+            compile: {
+                isNative: false,
+                hasHex: false,
+                jsRefCounting: true,
+                floatingPoint: true
+            },
+            bundledpkgs: {},
+            appTheme: {},
+            tsprj: undefined,
+            blocksprj: undefined,
+            runtime: {
+                pauseUntilBlock: { category: "Loops", color: "0x0000ff" }
+            },
+            corepkg: undefined
+        });
+
+        window.addEventListener("message", function (ev) {
+            var msg = ev.data;
+            handleMessage(msg.js, msg.common, msg.helpers);
+        });
+
+        var handleMessage = function (js, common, helpers) {
+            if (js) {
+                // Get opts
+                var dependency = undefined;
+                var pkg = new pxt.MainPackage(new TestHost("test-pkg", "// TODO", dependency ? [dependency] : [], true));
+
+                pkg.getCompileOptionsAsync()
+                    .then(opts => cachedOpts = opts)
+                    .then(opts => {
+                        opts.fileSystem["main.ts"] = ' ';
+                        opts.fileSystem["custom.ts"] = js;
+                        opts.fileSystem["pxt-core.d.ts"] = common;
+                        opts.fileSystem["pxt-helpers.ts"] = helpers;
+                        opts.ast = true;
+                        opts.testMode = true;
+                        opts.ignoreFileResolutionErrors = true;
+
+                        var resp = pxtc.compile(opts);
+                        if (!resp.success) {
+                            console.log('error: ', resp);
+                            return;
+                        }
+
+                        var file = resp.ast.getSourceFile("main.ts");
+                        var apiInfo = pxtc.getApiInfo(opts, resp.ast);
+                        var blockInfo = pxtc.getBlocksInfo(apiInfo);
+
+                        // Initialize blocks in Blockly
+                        pxt.blocks.initialize(blockInfo);
+
+                        // Inject blocks
+                        var nsMap = {};
+                        pxt.blocks.injectBlocks(blockInfo).forEach(fn => {
+                            let ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
+                            ns = ns.toLowerCase();
+
+                            if (!nsMap[ns]) {
+                                nsMap[ns] = [];
+                            }
+                            nsMap[ns].push(fn);
+                        });
+
+                        delete nsMap['math'];
+                        delete nsMap['arrays'];
+                        delete nsMap['text'];
+
+                        var blocksDiv = document.createElementNS('http://www.w3.org/1999/xhtml', 'xml');
+                        blocksDiv.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml');
+                        var xmlList = [];
+
+                        Object.keys(nsMap).forEach(k => {
+                            var ns = k;
+                            var blocks = nsMap[ns];
+
+                            // Go through every block and get it's toolbox xml. 
+                            blocks.forEach(fn => {
+                                if (fn.attributes.debug && !pxt.options.debug) return;
+                                if (fn.attributes.deprecated || fn.attributes.blockHidden) return;
+                                try {
+                                    let comp = pxt.blocks.compileInfo(fn);
+                                    blockXml = pxt.blocks.createToolboxBlock(blockInfo, fn, comp);
+                                    blocksDiv.appendChild(blockXml);
+                                    xmlList.push(blockXml);
+                                } catch (e) {
+                                    console.log(e);
+                                }
+                            })
+                        })
+
+                        var blocksXml = new XMLSerializer().serializeToString(blocksDiv);
+
+                        // Remove loading
+                        var loading = document.getElementById('loading');
+                        loading.parentNode.removeChild(loading);
+                        document.body.style.height = '100%';
+
+                        // let svg = pxt.blocks.render(blocksXml,
+                        //     { snippetMode: true, layout: pxt.blocks.BlockLayout.Align });
+
+                        let svgDiv = document.getElementById('svg');
+                        //svgDiv.appendChild(svg);
+
+                        // Initialize blockly with these blocks. 
+                        var editor = Blockly.inject(svgDiv, 
+                            {
+                                scrollbars: true,
+                                media: pxt.webConfig.commitCdnUrl + "blockly/media/",
+                                sounds: false,
+                                trashcan: false,
+                                collapse: false,
+                                comments: true,
+                                disable: false,
+                                readOnly: false,
+                                hasCategories: false,
+                                toolbox: '<xml id="blocklyToolboxDefinitionFlyout" style="display: none"></xml>',
+                                zoom: {
+                                    enabled: false,
+                                    controls: false,
+                                    wheel: true,
+                                    maxScale: 2.5,
+                                    minScale: .2,
+                                    scaleSpeed: 1.05,
+                                    startScale: pxt.BrowserUtils.isMobile() ? 0.7 : 0.8
+                                }
+                            }
+                        );
+
+                        editor.flyout_.show(xmlList);
+                        editor.flyout_.scrollToStart();
+                    });
+            }
+        };
+    </script>
+</body>
+
+</html>

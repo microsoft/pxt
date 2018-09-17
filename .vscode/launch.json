@@ -2,12 +2,77 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "DebugBuild",
+			"name": "console",
 			"type": "node",
 			"request": "launch",
 			"program": "${workspaceRoot}/built/pxt.js",
 			"stopOnEntry": false,
-			"args": ["build"],
+			"args": [
+				"console"
+			],
+			"cwd": "${workspaceRoot}/../pxt-adafruit",
+			"runtimeExecutable": null,
+			"runtimeArgs": [
+				"--nolazy"
+			],
+			"env": {
+				"NODE_ENV": "development"
+			},
+			"console": "integratedTerminal",
+			"sourceMaps": false,
+			"outFiles": []
+		},
+		{
+			"name": "BuildTarget",
+			"type": "node",
+			"request": "launch",
+			"program": "${workspaceRoot}/built/pxt.js",
+			"stopOnEntry": false,
+			"args": [
+				"buildtarget"
+			],
+			"cwd": "${workspaceRoot}/../pxt-adafruit",
+			"runtimeExecutable": null,
+			"runtimeArgs": [
+				"--nolazy"
+			],
+			"env": {
+				"NODE_ENV": "development"
+			},
+			"console": "integratedTerminal",
+			"sourceMaps": false,
+			"outFiles": []
+		},
+		{
+			"name": "BuildSprites",
+			"type": "node",
+			"request": "launch",
+			"program": "${workspaceRoot}/built/pxt.js",
+			"stopOnEntry": false,
+			"args": [
+				"buildsprites", "space"
+			],
+			"cwd": "${workspaceRoot}/../pxt-32/libs/device",
+			"runtimeExecutable": null,
+			"runtimeArgs": [
+				"--nolazy"
+			],
+			"env": {
+				"NODE_ENV": "development"
+			},
+			"console": "integratedTerminal",
+			"sourceMaps": false,
+			"outFiles": []
+		},
+		{
+			"name": "BuildPackage",
+			"type": "node",
+			"request": "launch",
+			"program": "${workspaceRoot}/built/pxt.js",
+			"stopOnEntry": false,
+			"args": [
+				"build"
+			],
 			"cwd": "${workspaceRoot}/../pxt-adafruit/projects/pxt-seesaw",
 			"runtimeExecutable": null,
 			"runtimeArgs": [
@@ -26,7 +91,10 @@
 			"request": "launch",
 			"program": "${workspaceRoot}/built/pxt.js",
 			"stopOnEntry": false,
-			"args": ["pyconv", "adafruit_seesaw"],
+			"args": [
+				"pyconv",
+				"adafruit_seesaw"
+			],
 			"cwd": "${workspaceRoot}/../pxt-adafruit/projects/Adafruit_CircuitPython_seesaw",
 			"runtimeExecutable": null,
 			"runtimeArgs": [
@@ -40,16 +108,21 @@
 			"outFiles": []
 		},
 		{
-			"name": "Run mocha",
+			"name": "Mocha",
 			"type": "node",
 			"request": "launch",
 			"program": "${workspaceRoot}/node_modules/mocha/bin/_mocha",
 			"stopOnEntry": false,
-			"args": ["built/tests/decompile-test/runner.js", "--no-timeouts"],
+			"args": [
+				"built/tests/decompile-test/runner.js",
+				"--no-timeouts"
+			],
 			"cwd": "${workspaceRoot}",
 			"runtimeExecutable": null,
-			"env": { "NODE_ENV": "testing"}
-			},
+			"env": {
+				"NODE_ENV": "testing"
+			}
+		},
 		{
 			"name": "Attach",
 			"type": "node",

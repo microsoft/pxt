@@ -137,6 +137,8 @@ namespace pxt.editor {
         projects: pxt.workspace.Project[];
         // (optional) filtering argument
         editor?: EditorSyncState;
+        // (optional) controller id, used for determining what the parent controller is
+        controllerId?: string;
     }
 
     export interface EditorWorkspaceSaveRequest extends EditorMessageRequest {
@@ -222,8 +224,9 @@ namespace pxt.editor {
      * The response (EditorMessageResponse) contains the request id and result.
      * Some commands may be async, use the ``id`` field to correlate to the original request.
      */
-    export function bindEditorMessages(projectView: IProjectView) {
-        const allowEditorMessages = pxt.appTarget.appTheme.allowParentController && pxt.BrowserUtils.isIFrame();
+    export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) {
+        const allowEditorMessages = (pxt.appTarget.appTheme.allowParentController || pxt.shell.isControllerMode())
+                                    && pxt.BrowserUtils.isIFrame();
         const allowExtensionMessages = pxt.appTarget.appTheme.allowPackageExtensions;
         const allowSimTelemetry = pxt.appTarget.appTheme.allowSimulatorTelemetry;
 
@@ -235,7 +238,9 @@ namespace pxt.editor {
 
             if (data.type === "pxtpkgext" && allowExtensionMessages) {
                 // Messages sent to the editor iframe from a child iframe containing an extension
-                projectView.handleExtensionRequest(data as ExtensionRequest);
+                getEditorAsync().then(projectView => {
+                    projectView.handleExtensionRequest(data as ExtensionRequest);
+                })
             }
             else if (data.type === "pxtsim" && allowSimTelemetry) {
                 const event = data as EditorMessageEventRequest;
@@ -260,70 +265,73 @@ namespace pxt.editor {
                         p = p.then(() => req.resolve(data as EditorMessageResponse));
                     }
                 } else if (data.type == "pxteditor") { // request from the editor
-                    const req = data as EditorMessageRequest;
-                    pxt.debug(`pxteditor: ${req.action}`);
-                    switch (req.action.toLowerCase()) {
-                        case "switchjavascript": p = p.then(() => projectView.openJavaScript()); break;
-                        case "switchblocks": p = p.then(() => projectView.openBlocks()); break;
-                        case "startsimulator": p = p.then(() => projectView.startSimulator()); break;
-                        case "restartsimulator": p = p.then(() => projectView.restartSimulator()); break;
-                        case "hidesimulator": p = p.then(() => projectView.collapseSimulator()); break;
-                        case "showsimulator": p = p.then(() => projectView.expandSimulator()); break;
-                        case "closeflyout": p = p.then(() => projectView.closeFlyout()); break;
-                        case "redo": p = p.then(() => {
-                            const editor = projectView.editor;
-                            if (editor && editor.hasRedo())
-                                editor.redo();
-                        }); break;
-                        case "undo": p = p.then(() => {
-                            const editor = projectView.editor;
-                            if (editor && editor.hasUndo())
-                                editor.undo();
-                        }); break;
-                        case "setscale": {
-                            const zoommsg = data as EditorMessageSetScaleRequest;
-                            p = p.then(() => projectView.editor.setScale(zoommsg.scale));
-                            break;
+                    getEditorAsync().then(projectView => {
+                        const req = data as EditorMessageRequest;
+                        pxt.debug(`pxteditor: ${req.action}`);
+                        switch (req.action.toLowerCase()) {
+                            case "switchjavascript": p = p.then(() => projectView.openJavaScript()); break;
+                            case "switchblocks": p = p.then(() => projectView.openBlocks()); break;
+                            case "startsimulator": p = p.then(() => projectView.startSimulator()); break;
+                            case "restartsimulator": p = p.then(() => projectView.restartSimulator()); break;
+                            case "hidesimulator": p = p.then(() => projectView.collapseSimulator()); break;
+                            case "showsimulator": p = p.then(() => projectView.expandSimulator()); break;
+                            case "closeflyout": p = p.then(() => projectView.closeFlyout()); break;
+                            case "redo": p = p.then(() => {
+                                const editor = projectView.editor;
+                                if (editor && editor.hasRedo())
+                                    editor.redo();
+                            }); break;
+                            case "undo": p = p.then(() => {
+                                const editor = projectView.editor;
+                                if (editor && editor.hasUndo())
+                                    editor.undo();
+                            }); break;
+                            case "setscale": {
+                                const zoommsg = data as EditorMessageSetScaleRequest;
+                                p = p.then(() => projectView.editor.setScale(zoommsg.scale));
+                                break;
+                            }
+                            case "stopsimulator": {
+                                const stop = data as EditorMessageStopRequest;
+                                p = p.then(() => projectView.stopSimulator(stop.unload));
+                                break;
+                            }
+                            case "newproject": {
+                                const create = data as EditorMessageNewProjectRequest;
+                                p = p.then(() => projectView.newProject(create.options));
+                                break;
+                            }
+                            case "importproject": {
+                                const load = data as EditorMessageImportProjectRequest;
+                                p = p.then(() => projectView.importProjectAsync(load.project, {
+                                    filters: load.filters,
+                                    searchBar: load.searchBar
+                                }));
+                                break;
+                            }
+                            case "proxytosim": {
+                                const simmsg = data as EditorMessageSimulatorMessageProxyRequest;
+                                p = p.then(() => projectView.proxySimulatorMessage(simmsg.content));
+                                break;
+                            }
+                            case "renderblocks": {
+                                const rendermsg = data as EditorMessageRenderBlocksRequest;
+                                p = p.then(() => projectView.renderBlocksAsync(rendermsg))
+                                    .then((r: any) => { resp = r.xml; });
+                                break;
+                            }
+                            case "toggletrace": {
+                                const togglemsg = data as EditorMessageToggleTraceRequest;
+                                p = p.then(() => projectView.toggleTrace(togglemsg.intervalSpeed));
+                                break;
+                            }
+                            case "settracestate": {
+                                const trcmsg = data as EditorMessageSetTraceStateRequest;
+                                p = p.then(() => projectView.setTrace(trcmsg.enabled, trcmsg.intervalSpeed));
+                                break;
+                            }
                         }
-                        case "stopsimulator": {
-                            const stop = data as EditorMessageStopRequest;
-                            p = p.then(() => projectView.stopSimulator(stop.unload));
-                            break;
-                        }
-                        case "newproject": {
-                            const create = data as EditorMessageNewProjectRequest;
-                            p = p.then(() => projectView.newProject(create.options));
-                            break;
-                        }
-                        case "importproject": {
-                            const load = data as EditorMessageImportProjectRequest;
-                            p = p.then(() => projectView.importProjectAsync(load.project, {
-                                filters: load.filters,
-                                searchBar: load.searchBar
-                            }));
-                            break;
-                        }
-                        case "proxytosim": {
-                            const simmsg = data as EditorMessageSimulatorMessageProxyRequest;
-                            p = p.then(() => projectView.proxySimulatorMessage(simmsg.content));
-                            break;
-                        }
-                        case "renderblocks": {
-                            const rendermsg = data as EditorMessageRenderBlocksRequest;
-                            p = p.then(() => projectView.renderBlocksAsync(rendermsg))
-                                .then((r: any) => { resp = r.xml; });
-                            break;
-                        }
-                        case "toggletrace": {
-                            const togglemsg = data as EditorMessageToggleTraceRequest;
-                            p = p.then(() => projectView.toggleTrace(togglemsg.intervalSpeed));
-                            break;
-                        }
-                        case "settracestate": {
-                            const trcmsg = data as EditorMessageSetTraceStateRequest;
-                            p = p.then(() => projectView.setTrace(trcmsg.enabled, trcmsg.intervalSpeed));
-                        }
-                    }
+                    });
                 }
                 p.done(() => sendResponse(data, resp, true, undefined),
                     (err) => sendResponse(data, resp, false, err))

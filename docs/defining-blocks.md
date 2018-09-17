@@ -2,6 +2,8 @@
 
 This section describes how to annotate your PXT APIs to expose them in the Block Editor.
 
+* [Try it live in the playground](https://makecode.com/playground)
+
 All the `//%` annotations are found in TypeScript library files.
 They can optionally be [auto-generated](/simshim) from C++ library files or from TypeScript
 simulator files.
@@ -28,11 +30,33 @@ samples.
 //% color=190 weight=100 icon="\uf1ec" block="Basic Blocks"
 namespace basic {
 ```
-
 * `icon` icon Unicode character from the icon font to display. The [Semantic UI](https://semantic-ui.com/elements/icon.html) icon set has been ported from Font Awesome (v4.5.6 at the time of writing), and a full list can be found at http://fontawesome.io/icons/
 * `color` should be included in a comment line starting with `//%`. The color takes a **hue** value or a HTML color.
+* `weight` determines where your category appears in the toolbox. Higher weight means it appears closer to the top.
 
 To have a category appear under the "Advanced" section of the Block Editor toolbox, add the annotation `advanced=true`.
+
+### Category groups
+
+You can make your block category more organized by grouping similar or related blocks together inside [**groups**](/playground#basic-groups). When using the groups feature, blocks of the same group will appear together in the toolbox flyout and the group's label will be displayed above them.
+This makes it easier for the user to go through your available blocks.
+
+To define your groups, add the `groups` attribute to your namespace. The `groups` attribute is an array of group names. You can individually assign blocks to these groups when defining each block.
+
+> **Note**: The order in which you define your groups is the order in which the groups will appear in the toolbox flyout
+
+> **Note**: Blocks that are not assigned to a named group are placed in the default `others` group, which does not show a label. The `others` group can be used to decide where in the order of groups the ungrouped blocks will appear. This is based on where you place `others` in the `groups` array.
+
+> **Note**: When assigning blocks to groups, names are case sensitive, so make sure the group names you put on your blocks are identical to the ones in your group definitions.
+
+```typescript-ignore
+/**
+ * Provides access to basic micro:bit functionality.
+ */
+//% color=190 weight=100 icon="\uf1ec" block="Basic Blocks"
+//% groups=['LED matrix', 'Control flow', 'others']
+namespace basic {
+```
 
 ## Blocks
 
@@ -44,7 +68,6 @@ export function showNumber(v: number, interval: number = 150): void
 { }
 ```
 
-
 If you need more control over the appearance of the block,
 you can specify the `blockId` and `block` parameters.
 
@@ -54,8 +77,8 @@ you can specify the `blockId` and `block` parameters.
 export function showNumber(v: number, interval: number = 150): void
 { }
 ```
-* `blockId` is a constant, unique id for the block. This id is serialized in block code so changing 
-  it will break your users. If not specified, it is derived from namespace and function names, 
+* `blockId` is a constant, unique id for the block. This id is serialized in block code so changing
+  it will break your users. If not specified, it is derived from namespace and function names,
   so renaming your functions or namespaces will break both your TypeScript and Blocks users.
 * `block` contains the syntax to build the block structure (more below).
 
@@ -84,7 +107,7 @@ a mapping between the block field names and the function names.
 
 ## Supported types
 
-The following types are supported in function signatures that are meant to be exported:
+The following [types](/playground#basic-types) are supported in function signatures that are meant to be exported:
 
 * ``number`` (TypeScript) or ``int`` (C++)
 * ``string`` (TypeScript) or ``StringData*`` (C++)
@@ -175,7 +198,7 @@ The other attributes related to object destructuring mutators include:
 
 ## Enums
 
-Enum are supported and will automatically be represented by a dropdown in blocks.
+[Enum](/playground#basic-enums) is supported and will automatically be represented by a dropdown in blocks.
 
 ```typescript-ignore
 enum Button {
@@ -267,6 +290,7 @@ It is possible to expose instance methods and object factories, either directly
 or with a bit of flattening (which is recommended, as flat, C-style APIs map best to blocks).
 
 ### Direct
+
 ```typescript-ignore
 //%
 class Message {
@@ -402,7 +426,7 @@ class Foo {
     // exposed with custom name
     //% blockCombine block="foo bar"
     foo_bar: number;
-    
+
     // not exposed
     _bar: number;
     _qux: number;
@@ -421,7 +445,7 @@ class Foo {
 
 ## Ordering
 
-All blocks have a default **weight** of 50 that is used to sort them in the UI with the highest weight showing up first. To tweak the ordering,
+All blocks have a default **weight** of 50 that is used to sort them in the UI with the highest weight showing up first. To tweak the [ordering](/playground#basic-ordering),
 simply annotate the function with the ``weight`` macro:
 
 ```
@@ -435,8 +459,18 @@ flag to disable showing it in auto-completion.
 
 ## Grouping
 
-Use the **blockGap** macro to specify the distance to the next block in the toolbox. Combined with the weight parameter,
-this macro allows to define groups of blocks. The default ``blockGap`` value is ``8``.
+To put blocks into a previously defined group (see the [Category](/defining-blocks#category) section at the top of this page), use the `group` attribute.
+The name of the group must match exactly one of the groups you've defined on your namespace.
+
+> **Note**: When using the groups feature, block `weight` is only compared with weights of other blocks in the same group.
+
+```
+//% group="LED Matrix"
+...
+```
+
+If you don't want to show labels, you can manually group blocks together using the **blockGap** macro. It lets you specify the distance between the current block and the next one in the toolbox.
+Combined with the `weight` parameter, it allows you to visually group blocks together, essentially replicating the groups feature but without the labels. The default ``blockGap`` value is ``8``.
 
 ```
 //% blockGap=14

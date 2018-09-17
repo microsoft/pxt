@@ -9,10 +9,26 @@ namespace pxt {
     export import U = pxtc.Util;
     export import Util = pxtc.Util;
 
+
+    export interface TCPIO {
+        onData: (v: Uint8Array) => void;
+        onError: (e: Error) => void;
+        connectAsync(): Promise<void>;
+        sendPacketAsync(pkt: Uint8Array): Promise<void>;
+        error(msg: string): any;
+        disconnectAsync(): Promise<void>;
+    }
+
+    export let mkTCPSocket: (host: string, port: number) => TCPIO;
+
     let savedAppTarget: TargetBundle;
     export function setAppTarget(trg: TargetBundle) {
         appTarget = trg || <TargetBundle>{};
+        patchAppTarget();
+        savedAppTarget = U.clone(appTarget)
+    }
 
+    function patchAppTarget() {
         // patch-up the target
         let comp = appTarget.compile
         if (!comp)
@@ -38,6 +54,8 @@ namespace pxt {
         }
         if (!comp.vtableShift)
             comp.vtableShift = 2
+        if (!comp.useUF2 && !comp.useELF && comp.noSourceInFlash == undefined)
+            comp.noSourceInFlash = true // no point putting sources in hex to be flashed
         if (!appTarget.appTheme) appTarget.appTheme = {}
         if (!appTarget.appTheme.embedUrl)
             appTarget.appTheme.embedUrl = appTarget.appTheme.homeUrl
@@ -46,16 +64,38 @@ namespace pxt {
             if (cs.yottaTarget && !cs.yottaBinary)
                 cs.yottaBinary = "pxt-microbit-app-combined.hex"
         }
-
-        // patch cdn
+        // patch logo locations
         const theme = appTarget.appTheme;
-        let targetImages = Object.keys(theme as any as Map<string>)
-            .filter(k => /(logo|hero)$/i.test(k) && /^@cdnUrl@/.test((theme as any)[k]))
-            .forEach(k => (theme as any)[k] = pxt.BrowserUtils.patchCdn((theme as any)[k]));
+        if (theme) {
+            Object.keys(theme as any as Map<string>)
+                .filter(k => /(logo|hero)$/i.test(k) && /^@cdnUrl@/.test((theme as any)[k]))
+                .forEach(k => (theme as any)[k] = pxt.BrowserUtils.patchCdn((theme as any)[k]));
+        }
 
-        savedAppTarget = U.clone(appTarget)
+        // patching simulator images
+        const sim = appTarget.simulator;
+        if (sim
+            && sim.boardDefinition
+            && sim.boardDefinition.visual) {
+            let boardDef = sim.boardDefinition.visual as pxsim.BoardImageDefinition;
+            if (boardDef.image) {
+                boardDef.image = pxt.BrowserUtils.patchCdn(boardDef.image)
+                if (boardDef.outlineImage) boardDef.outlineImage = pxt.BrowserUtils.patchCdn(boardDef.outlineImage)
+            }
+        }
+
+        // patch icons in bundled packages
+        Object.keys(appTarget.bundledpkgs).forEach(pkgid => {
+            const res = appTarget.bundledpkgs[pkgid];
+            // path config before storing
+            const config = JSON.parse(res[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+            if (config.icon) config.icon = pxt.BrowserUtils.patchCdn(config.icon);
+            res[pxt.CONFIG_NAME] = JSON.stringify(config, null, 4);
+        })
+
     }
 
+    // this is set by compileServiceVariant in pxt.json
     export function setAppTargetVariant(variant: string) {
         appTargetVariant = variant
         appTarget = U.clone(savedAppTarget)
@@ -69,6 +109,25 @@ namespace pxt {
             }
             U.userError(lf("Variant '{0}' not defined in pxtarget.json", variant))
         }
+        patchAppTarget();
+    }
+
+    // This causes the `hw` package to be replaced with `hw---variant` upon package load
+    // the pxt.json of hw---variant would generally specify compileServiceVariant
+    // This is controlled by ?hw=variant or by configuration created by dragging `config.bin`
+    // into editor.
+    export function setHwVariant(variant: string) {
+        if (/^[\w\-]+$/.test(variant))
+            hwVariant = variant
+        else
+            hwVariant = null
+    }
+
+    export function getHwVariants(): PackageConfig[] {
+        if (!pxt.appTarget.variants)
+            return []
+        let hws = Object.keys(pxt.appTarget.bundledpkgs).filter(pkg => /^hw---/.test(pkg))
+        return hws.map(pkg => JSON.parse(pxt.appTarget.bundledpkgs[pkg][CONFIG_NAME]))
     }
 
     export interface PxtOptions {
@@ -145,6 +204,7 @@ namespace pxt {
         runUrl?: string; // "/beta---run"
         docsUrl?: string; // "/beta---docs"
         isStatic?: boolean;
+        verprefix?: string; // "v1"
     }
 
     export function localWebConfig() {
@@ -206,8 +266,10 @@ namespace pxt {
     export interface FsPkg {
         path: string; // eg "foo/bar"
         config: pxt.PackageConfig; // pxt.json
+        header: any;
         files: FsFile[]; // this includes pxt.json
         icon?: string;
+        isDeleted?: boolean; // whether this project has been deleted by the user
     }
 
     export interface FsPkgs {

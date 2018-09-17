@@ -29,8 +29,15 @@ import * as gitfs from './gitfs';
 
 const rimraf: (f: string, opts: any, cb: (err: any, res: any) => void) => void = require('rimraf');
 
-let forceCloudBuild = process.env["KS_FORCE_CLOUD"] === "yes"
+let forceCloudBuild = process.env["KS_FORCE_CLOUD"] !== "no";
 let forceLocalBuild = process.env["PXT_FORCE_LOCAL"] === "yes"
+
+function parseBuildInfo(parsed?: commandParser.ParsedCommand) {
+    if (parsed && parsed.flags["localbuild"]) {
+        forceCloudBuild = false;
+        forceLocalBuild = true;
+    }
+}
 
 const p = new commandParser.CommandParser();
 
@@ -41,6 +48,9 @@ function initTargetCommands() {
         let cli = require.main.require(cmdsjs)
         if (cli.deployCoreAsync) {
             pxt.commands.deployCoreAsync = cli.deployCoreAsync
+        }
+        if (cli.addCommands) {
+            cli.addCommands(p)
         }
     }
 }
@@ -55,6 +65,7 @@ export interface UserConfig {
     noAutoBuild?: boolean;
     noAutoStart?: boolean;
     localBuild?: boolean;
+    noSerial?: boolean;
 }
 
 let reportDiagnostic = reportDiagnosticSimply;
@@ -109,7 +120,7 @@ function mkHomeDirs() {
 
 function saveConfig() {
     mkHomeDirs()
-    fs.writeFileSync(configPath(), JSON.stringify(globalConfig, null, 4) + "\n")
+    nodeutil.writeFileSync(configPath(), JSON.stringify(globalConfig, null, 4) + "\n")
 }
 
 function initConfigAsync(): Promise<void> {
@@ -147,32 +158,26 @@ interface KeyTar {
     deletePassword(service: string, account: string): Promise<void>;
 }
 
+function requireKeyTar(install = false): Promise<KeyTar> {
+    return Promise.resolve(nodeutil.lazyRequire("keytar") as KeyTar);
+}
+
 function passwordGetAsync(account: string): Promise<string> {
-    try {
-        const keytar = require("keytar") as KeyTar;
-        return keytar.getPassword("pxt/" + pxt.appTarget.id, account)
-    } catch (e) {
-        return Promise.resolve(undefined);
-    }
+    return requireKeyTar()
+        .then(keytar => keytar.getPassword("pxt/" + pxt.appTarget.id, account))
+        .catch(e => undefined)
 }
 
 function passwordDeleteAsync(account: string): Promise<void> {
-    try {
-        const keytar = require("keytar") as KeyTar;
-        return keytar.deletePassword("pxt/" + pxt.appTarget.id, account);
-    } catch (e) {
-        return Promise.resolve(undefined);
-    }
+    return requireKeyTar()
+        .then(keytar => keytar.deletePassword("pxt/" + pxt.appTarget.id, account))
+        .catch(e => undefined);
 }
 
 function passwordUpdateAsync(account: string, password: string): Promise<void> {
-    try {
-        const keytar = require("keytar") as KeyTar;
-        return keytar.setPassword("pxt/" + pxt.appTarget.id, account, password);
-    } catch (e) {
-        console.error(e)
-        return Promise.resolve(undefined)
-    }
+    return requireKeyTar(true)
+        .then(keytar => keytar.setPassword("pxt/" + pxt.appTarget.id, account, password))
+        .catch(e => undefined);
 }
 
 const PXT_KEY = "pxt";
@@ -211,8 +216,22 @@ export function logoutAsync() {
         .then(() => pxt.log('access tokens removed'));
 }
 
+let loadGithubTokenAsyncPromise: Promise<void> = undefined;
+export function loadGithubTokenAsync(): Promise<void> {
+    if (!loadGithubTokenAsyncPromise)
+        loadGithubTokenAsyncPromise = pxt.github.token ? Promise.resolve() : passwordGetAsync(GITHUB_KEY)
+            .then(ghtoken => {
+                if (ghtoken) {
+                    pxt.github.token = ghtoken;
+                    pxt.debug(`github token loaded`);
+                }
+            });
+    return loadGithubTokenAsyncPromise;
+}
+
 function searchAsync(...query: string[]) {
-    return pxt.packagesConfigAsync()
+    return loadGithubTokenAsync()
+        .then(() => pxt.packagesConfigAsync())
         .then(config => pxt.github.searchAsync(query.join(" "), config))
         .then(res => {
             for (let r of res) {
@@ -235,7 +254,8 @@ function pkginfoAsync(repopath: string) {
             pxt.log(`shareable url: ${pxt.appTarget.appTheme.embedUrl}#pub:gh/${parsed.fullName}${tag ? "#" + tag : ""}`)
     }
 
-    return pxt.packagesConfigAsync()
+    return loadGithubTokenAsync()
+        .then(() => pxt.packagesConfigAsync())
         .then(config => {
             const status = pxt.github.repoStatus(parsed, config);
             pxt.log(`github org: ${parsed.owner}`);
@@ -308,7 +328,7 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
                                 nodeutil.mkdirP(path.join(args[1], k));
                                 const outf = path.join(args[1], k, fn);
                                 console.log(`writing ${outf}`)
-                                fs.writeFileSync(
+                                nodeutil.writeFileSync(
                                     outf,
                                     rtranslations,
                                     { encoding: "utf8" });
@@ -353,7 +373,7 @@ function langStatsCrowdinAsync(prj: string, key: string, lang: string): Promise<
                 }
             })
             const fn = `crowdinstats.csv`;
-            fs.writeFileSync(fn, r, { encoding: "utf8" });
+            nodeutil.writeFileSync(fn, r, { encoding: "utf8" });
         })
 }
 
@@ -579,7 +599,7 @@ function bumpPxtCoreDepAsync(): Promise<void> {
                     U.userError(`Trying to automatically update major version, please edit package.json manually.`)
                 }
                 pkg["dependencies"][knownPackage] = newVer
-                fs.writeFileSync("package.json", JSON.stringify(pkg, null, 2) + "\n")
+                nodeutil.writeFileSync("package.json", JSON.stringify(pkg, null, 2) + "\n")
                 commitMsg += `bump ${knownPackage} to ${newVer}, `;
             })
     })
@@ -651,7 +671,7 @@ function tagReleaseAsync(parsed: commandParser.ParsedCommand) {
         // all good update ref file
         .then(() => {
             // update index file
-            fs.writeFileSync(fn, JSON.stringify({
+            nodeutil.writeFileSync(fn, JSON.stringify({
                 "appref": "v" + v
             }, null, 4))
             // TODO commit changes
@@ -663,7 +683,7 @@ function bumpAsync(parsed?: commandParser.ParsedCommand) {
     const bumpPxt = parsed && parsed.flags["update"];
     const upload = parsed && parsed.flags["upload"];
     if (fs.existsSync(pxt.CONFIG_NAME)) {
-        if (upload) throw U.userError("upload only supported on packages");
+        if (upload) throw U.userError("upload only supported on targets");
 
         return Promise.resolve()
             .then(() => nodeutil.runGitAsync("pull"))
@@ -748,7 +768,7 @@ function uploadTargetAsync(label: string) {
 }
 
 export function uploadTargetReleaseAsync(parsed?: commandParser.ParsedCommand) {
-    if (parsed.flags && parsed.flags["cloud"]) forceCloudBuild = true;
+    parseBuildInfo(parsed);
     const label = parsed.args[0];
     return internalBuildTargetAsync()
         .then(() => {
@@ -1037,6 +1057,7 @@ function uploadCoreAsync(opts: UploadOptions) {
     if (opts.localDir) {
         let cfg: pxt.WebConfig = {
             "relprefix": opts.localDir,
+            "verprefix": "",
             "workerjs": opts.localDir + "worker.js",
             "monacoworkerjs": opts.localDir + "monacoworker.js",
             "pxtVersion": pxtVersion(),
@@ -1169,7 +1190,6 @@ function uploadCoreAsync(opts: UploadOptions) {
                             if (e.path[0] == "/") {
                                 e.path = opts.localDir + "docs" + e.path;
                             }
-                        trg.appTheme.logoUrl = opts.localDir
                         trg.appTheme.homeUrl = opts.localDir
                         // patch icons in bundled packages
                         Object.keys(trg.bundledpkgs).forEach(pkgid => {
@@ -1337,8 +1357,8 @@ function ghpInitAsync() {
         .catch((e: any) => ghpGitAsync("checkout", "--orphan", "gh-pages"))
         .then(() => ghpGitAsync("rm", "-rf", "."))
         .then(() => {
-            fs.writeFileSync("gh-pages/index.html", "Under construction.")
-            fs.writeFileSync("gh-pages/.gitattributes",
+            nodeutil.writeFileSync("gh-pages/index.html", "Under construction.")
+            nodeutil.writeFileSync("gh-pages/.gitattributes",
                 `# enforce unix style line endings
 *.ts text eol=lf
 *.tsx text eol=lf
@@ -1395,12 +1415,11 @@ export interface BuildTargetOptions {
     localDir?: boolean;
     packaged?: boolean;
     skipCore?: boolean;
+    quick?: boolean;
 }
 
 export function buildTargetAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
-    if (parsed && parsed.flags["cloud"]) {
-        forceCloudBuild = true
-    }
+    parseBuildInfo(parsed);
     const opts: BuildTargetOptions = {};
     if (parsed && parsed.flags["skipCore"])
         opts.skipCore = true;
@@ -1483,6 +1502,16 @@ function buildFolderAsync(p: string, optional?: boolean, outputName?: string): P
         cmd: "node",
         args: ["../node_modules/typescript/bin/tsc"],
         cwd: p
+    }).then(() => {
+        if (tsConfig.prepend) {
+            let files: string[] = tsConfig.prepend
+            files.push(tsConfig.compilerOptions.out)
+            let s = ""
+            for (let f of files) {
+                s += fs.readFileSync(path.resolve(p, f), "utf8") + "\n"
+            }
+            fs.writeFileSync(path.resolve(p, tsConfig.compilerOptions.out), s)
+        }
     })
 }
 
@@ -1649,16 +1678,27 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
     walkDocs(theme.docMenu);
     if (nodeutil.fileExistsSync("targetconfig.json")) {
         const targetConfig = nodeutil.readJson("targetconfig.json") as pxt.TargetConfig;
-        if (targetConfig && targetConfig.galleries)
-            Object.keys(targetConfig.galleries).forEach(k => targetStrings[k] = k);
+        if (targetConfig && targetConfig.galleries) {
+            Object.keys(targetConfig.galleries).forEach(k => {
+                targetStrings[k] = k;
+                const docsRoot = nodeutil.targetDir;
+                const gallerymd = nodeutil.resolveMd(docsRoot, targetConfig.galleries[k]);
+                const gallery = pxt.gallery.parseGalleryMardown(gallerymd);
+                gallery.forEach(cards => cards.cards
+                    .filter(card => card.tags)
+                    .forEach(card => card.tags.forEach(tag => {
+                        targetStrings[tag.label] = tag.label;
+                    })))
+            });
+        }
     }
     let targetStringsSorted: pxt.Map<string> = {};
     Object.keys(targetStrings).sort().map(k => targetStringsSorted[k] = k);
 
     // write files
     nodeutil.mkdirP("built");
-    fs.writeFileSync("built/theme.json", JSON.stringify(cfg.appTheme, null, 2))
-    fs.writeFileSync("built/target-strings.json", JSON.stringify(targetStringsSorted, null, 2))
+    nodeutil.writeFileSync("built/theme.json", JSON.stringify(cfg.appTheme, null, 2))
+    nodeutil.writeFileSync("built/target-strings.json", JSON.stringify(targetStringsSorted, null, 2))
 }
 
 function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
@@ -1698,7 +1738,7 @@ function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
         const iconsFile = (pkg["name"] == "pxt-core") ? 'built/web/icons.css' : 'node_modules/pxt-core/built/web/icons.css';
         const iconsCss = fs.readFileSync(iconsFile, "utf-8");
         semCss = semCss + "\n" + iconsCss;
-        fs.writeFileSync('built/web/semantic.css', semCss);
+        nodeutil.writeFileSync('built/web/semantic.css', semCss);
     }).then(() => {
         // generate blockly css
         if (!fs.existsSync(path.join("theme", "blockly.less")))
@@ -1736,7 +1776,7 @@ function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
                             // process rtl css
                             postcss([rtlcss])
                                 .process(result.css, { from: `built/web/${cssFile}`, to: `built/web/rtl${cssFile}` }).then((result2: any) => {
-                                    fs.writeFileSync(`built/web/rtl${cssFile}`, result2.css, { encoding: "utf8" });
+                                    nodeutil.writeFileSync(`built/web/rtl${cssFile}`, result2.css, { encoding: "utf8" });
                                 });
                         });
                     });
@@ -1748,7 +1788,7 @@ function buildSemanticUIAsync(parsed?: commandParser.ParsedCommand) {
 function buildWebStringsAsync() {
     if (pxt.appTarget.id != "core") return Promise.resolve();
 
-    fs.writeFileSync("built/webstrings.json", JSON.stringify(webstringsJson(), null, 4))
+    nodeutil.writeFileSync("built/webstrings.json", JSON.stringify(webstringsJson(), null, 4))
     return Promise.resolve()
 }
 
@@ -1804,8 +1844,7 @@ ${license}
     tpn += `
 ------------- End of ThirdPartyNotices --------------------------------------------------- */`;
 
-    fs.writeFileSync("THIRD-PARTY-NOTICES.txt", tpn, { encoding: 'utf8' });
-    pxt.log('written THIRD-PARTY-NOTICES.txt');
+    nodeutil.writeFileSync("THIRD-PARTY-NOTICES.txt", tpn, { encoding: 'utf8' });
     return Promise.resolve();
 }
 
@@ -1840,7 +1879,7 @@ function updateDefaultProjects(cfg: pxt.TargetBundle) {
                 }
 
                 if (fileName === pxt.CONFIG_NAME) {
-                    newProject.config = nodeutil.readPkgConfig(projectPath)
+                    newProject.config = nodeutil.readPkgConfig(projectPath);
                     U.iterMap(newProject.config.dependencies, (k, v) => {
                         if (/^file:/.test(v)) {
                             newProject.config.dependencies[k] = "*";
@@ -1879,6 +1918,10 @@ function updateTOC(cfg: pxt.TargetBundle) {
     }
 }
 
+function rebundleAsync() {
+    return buildTargetCoreAsync({ quick: true })
+}
+
 function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
     let cfg = readLocalPxTarget()
     updateDefaultProjects(cfg);
@@ -1911,23 +1954,24 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
     pxt.log(`building target.json in ${process.cwd()}...`)
 
     return buildWebStringsAsync()
-        .then(() => internalGenDocsAsync(false, true))
+        .then(() => options.quick ? null : internalGenDocsAsync(false, true))
         .then(() => forEachBundledPkgAsync((pkg, dirname) => {
             pxt.log(`building ${dirname}`);
-            const isPrj = /prj$/.test(dirname);
+            let isPrj = /prj$/.test(dirname);
+            const isHw = /hw---/.test(dirname);
             const config = nodeutil.readPkgConfig(".")
             const isCore = !!config.core;
-            if (config.additionalFilePath) {
-                dirsToWatch.push(path.resolve(config.additionalFilePath));
-            }
+            for (let p of config.additionalFilePaths)
+                dirsToWatch.push(path.resolve(p));
 
             return pkg.filesToBePublishedAsync(true)
                 .then(res => {
                     if (!isPrj) {
                         cfg.bundledpkgs[path.basename(dirname)] = res
                     }
+                    if (isHw) isPrj = true
                 })
-                .then(() => testForBuildTargetAsync(isPrj || (!options.skipCore && isCore)))
+                .then(() => options.quick ? null : testForBuildTargetAsync(isPrj || (!options.skipCore && isCore)))
                 .then((compileOpts) => {
                     // For the projects, we need to save the base HEX file to the offline HEX cache
                     if (isPrj && pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
@@ -1944,7 +1988,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                         if (fs.existsSync(hexFile)) {
                             pxt.log(`native image already in offline cache for project ${dirname}: ${hexFile}`);
                         } else {
-                            fs.writeFileSync(hexFile, hex.join(os.EOL));
+                            nodeutil.writeFileSync(hexFile, hex.join(os.EOL));
                             pxt.log(`created native image in offline cache for project ${dirname}: ${hexFile}`);
                         }
                     }
@@ -1980,17 +2024,16 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
 
             const webmanifest = buildWebManifest(cfg)
             const targetjson = JSON.stringify(cfg, null, 2)
-            fs.writeFileSync("built/target.json", targetjson)
-            fs.writeFileSync("built/target.js", targetJsPrefix + targetjson)
-            console.log(`size of target.json is ${Buffer.byteLength(targetjson, 'utf8') / 1000} kb`);
+            nodeutil.writeFileSync("built/target.json", targetjson)
+            nodeutil.writeFileSync("built/target.js", targetJsPrefix + targetjson)
             pxt.setAppTarget(cfg) // make sure we're using the latest version
             let targetlight = U.flatClone(cfg)
             delete targetlight.bundleddirs
             delete targetlight.bundledpkgs
             delete targetlight.appTheme
             const targetlightjson = JSON.stringify(targetlight, null, 2);
-            fs.writeFileSync("built/targetlight.json", targetlightjson)
-            fs.writeFileSync("built/sim.webmanifest", JSON.stringify(webmanifest, null, 2))
+            nodeutil.writeFileSync("built/targetlight.json", targetlightjson)
+            nodeutil.writeFileSync("built/sim.webmanifest", JSON.stringify(webmanifest, null, 2))
         })
         .then(() => {
             console.log("target.json built.")
@@ -2052,8 +2095,8 @@ function buildFailed(msg: string, e: any) {
 }
 
 function buildAndWatchTargetAsync(includeSourceMaps = false) {
-    if (!fs.existsSync("sim/tsconfig.json")) {
-        console.log("No sim/tsconfig.json; assuming npm installed package")
+    if (!(fs.existsSync(path.join("sim", "tsconfig.json")) || nodeutil.existsDirSync("sim/public"))) {
+        console.log("No sim/tsconfig.json nor sim/public/; assuming npm installed package")
         return Promise.resolve()
     }
 
@@ -2118,7 +2161,7 @@ function renderDocs(builtPackaged: string, localDir: string) {
             let str = buf.toString("utf8")
             if (/\.md$/.test(f)) {
                 str = nodeutil.resolveMd(".", f.substr(5, f.length - 8));
-                fs.writeFileSync(dd, str, { encoding: "utf8" });
+                nodeutil.writeFileSync(dd, str, { encoding: "utf8" });
             }
             let html = ""
             if (U.endsWith(f, ".md")) {
@@ -2137,22 +2180,23 @@ function renderDocs(builtPackaged: string, localDir: string) {
             buf = new Buffer(html, "utf8")
             dd = dd.slice(0, dd.length - 3) + ".html"
         }
-        fs.writeFileSync(dd, buf)
+        nodeutil.writeFileSync(dd, buf)
     }
     console.log("Docs written.")
 }
 
 export function serveAsync(parsed: commandParser.ParsedCommand) {
-    forceCloudBuild = false; // always use yotta
+    // always use a cloud build
+    // in most cases, the user machine is not properly setup to
+    // build a native binary and our CLI just looks broken
+    // use --localbuild to force localbuild
+    parseBuildInfo(parsed);
 
     let justServe = false
     let packaged = false
     let includeSourceMaps = false;
     let browser: string = parsed.flags["browser"] as string;
 
-    if (parsed.flags["cloud"]) {
-        forceCloudBuild = true
-    }
     if (parsed.flags["just"]) {
         justServe = true
     } else if (parsed.flags["pkg"]) {
@@ -2196,7 +2240,7 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
             wsPort: parsed.flags["wsport"] as number || 0,
             hostname: parsed.flags["hostname"] as string || "",
             browser: parsed.flags["browser"] as string,
-            serial: !parsed.flags["noSerial"]
+            serial: !parsed.flags["noSerial"] && !globalConfig.noSerial
         }))
 }
 
@@ -2272,6 +2316,8 @@ class SnippetHost implements pxt.Host {
                 if (pxt.appTarget.bundledpkgs[module.id]) {
                     let f = readFile(pxt.CONFIG_NAME)
                     const modpkg = JSON.parse(f || "{}") as pxt.PackageConfig;
+                    // TODO this seems to be dead code, additionalFilePath is removed from bundledpkgs
+                    // why not just use bundledpkgs also for files?
                     if (modpkg.additionalFilePath) {
                         try {
                             const ad = path.join(modpkg.additionalFilePath.replace('../../', ''), filename);
@@ -2391,16 +2437,15 @@ class Host
             }
 
         try {
-            // pxt.debug(`reading ${path.resolve(resolved)}`)
+            pxt.debug(`reading ${resolved}`)
             return fs.readFileSync(resolved, "utf8")
         } catch (e) {
             if (!skipAdditionalFiles && module.config) {
-                let addPath = module.config.additionalFilePath
-                if (addPath) {
+                for (let addPath of module.config.additionalFilePaths || []) {
                     try {
+                        pxt.debug(`try read: ${path.join(dir, addPath, filename)}`)
                         return fs.readFileSync(path.join(dir, addPath, filename), "utf8")
                     } catch (e) {
-                        return null
                     }
                 }
             }
@@ -2420,16 +2465,15 @@ class Host
             }
         }
         check(p)
-
         if (U.endsWith(filename, ".uf2"))
-            fs.writeFileSync(p, contents, { encoding: "base64" })
+            nodeutil.writeFileSync(p, contents, { encoding: "base64" })
         else if (U.endsWith(filename, ".elf"))
-            fs.writeFileSync(p, contents, {
+            nodeutil.writeFileSync(p, contents, {
                 encoding: "base64",
                 mode: 0o777
             })
         else
-            fs.writeFileSync(p, contents, { encoding: "utf8" })
+            nodeutil.writeFileSync(p, contents, { encoding: "utf8" })
     }
 
     getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<any> {
@@ -2456,8 +2500,7 @@ class Host
             }
 
             const fn = "built/dockerreq.json"
-            fs.writeFileSync(fn, JSON.stringify(dockerReq, null, 4))
-            pxt.log("wrote " + fn)
+            nodeutil.writeFileSync(fn, JSON.stringify(dockerReq, null, 4))
         }
 
         if (!forceLocalBuild && (extInfo.onlyPublic || forceCloudBuild))
@@ -2505,7 +2548,8 @@ export function installAsync(parsed?: commandParser.ParsedCommand) {
     const packageName = parsed && parsed.args.length ? parsed.args[0] : undefined;
     if (packageName) {
         let parsed = pxt.github.parseRepoId(packageName)
-        return pxt.packagesConfigAsync()
+        return loadGithubTokenAsync()
+            .then(() => pxt.packagesConfigAsync())
             .then(config => (parsed.tag ? Promise.resolve(parsed.tag) : pxt.github.latestVersionAsync(parsed.fullName, config))
                 .then(tag => { parsed.tag = tag })
                 .then(() => pxt.github.pkgConfigAsync(parsed.fullName, parsed.tag))
@@ -2524,144 +2568,10 @@ export function installAsync(parsed?: commandParser.ParsedCommand) {
             .then(() => {
                 let tscfg = "tsconfig.json"
                 if (!fs.existsSync(tscfg) && !fs.existsSync("../" + tscfg)) {
-                    fs.writeFileSync(tscfg, defaultFiles[tscfg])
+                    nodeutil.writeFileSync(tscfg, pxt.defaultFiles[tscfg])
                 }
             })
     }
-}
-
-const defaultFiles: Map<string> = {
-    "tsconfig.json":
-        `{
-    "compilerOptions": {
-        "target": "es5",
-        "noImplicitAny": true,
-        "outDir": "built",
-        "rootDir": "."
-    },
-    "exclude": ["pxt_modules/**/*test.ts"]
-}
-`,
-
-    "test.ts": `// tests go here; this will not be compiled when this package is used as a library
-`,
-
-    "Makefile": `all: deploy
-
-build:
-\tpxt build
-
-deploy:
-\tpxt deploy
-
-test:
-\tpxt test
-`,
-
-    "README.md": `# @NAME@
-
-@DESCRIPTION@
-
-## TODO
-
-- [ ] Add a reference for your blocks here
-- [ ] Add "icon.png" image (300x200) in the root folder
-- [ ] Add "- beta" to the GitHub project description if you are still iterating it.
-- [ ] Turn on your automated build on https://travis-ci.org
-- [ ] Use "pxt bump" to create a tagged release on GitHub
-- [ ] Get your package reviewed and approved @DOCS@packages/approval
-
-Read more at @DOCS@packages/build-your-own
-
-## License
-
-@LICENSE@
-
-## Supported targets
-
-* for PXT/@TARGET@
-(The metadata above is needed for package search.)
-
-`,
-
-    ".gitignore":
-        `built
-node_modules
-yotta_modules
-yotta_targets
-pxt_modules
-*.db
-*.tgz
-`,
-    ".vscode/settings.json":
-        `{
-    "editor.formatOnType": true,
-    "files.autoSave": "afterDelay",
-    "files.watcherExclude": {
-        "**/.git/objects/**": true,
-        "**/built/**": true,
-        "**/node_modules/**": true,
-        "**/yotta_modules/**": true,
-        "**/yotta_targets": true,
-        "**/pxt_modules/**": true
-    },
-    "files.associations": {
-        "*.blocks": "html",
-        "*.jres": "json"
-    },
-    "search.exclude": {
-        "**/built": true,
-        "**/node_modules": true,
-        "**/yotta_modules": true,
-        "**/yotta_targets": true,
-        "**/pxt_modules": true
-    }
-}`,
-    ".travis.yml": `language: node_js
-node_js:
-    - "8.9.4"
-script:
-    - "npm install -g pxt"
-    - "pxt target @TARGET@"
-    - "pxt install"
-    - "pxt build"
-sudo: false
-cache:
-    directories:
-    - npm_modules
-    - pxt_modules`,
-    ".vscode/tasks.json":
-        `
-// A task runner that calls the MakeCode (PXT) compiler
-{
-    "version": "2.0.0",
-    "tasks": [{
-        "label": "pxt deploy",
-        "type": "shell",
-        "command": "pxt deploy",
-        "group": "build",
-        "problemMatcher": [ "$tsc" ]
-    }, {
-        "label": "pxt build",
-        "type": "shell",
-        "command": "pxt build",
-        "group": "test",
-        "problemMatcher": [ "$tsc" ]
-    }, {
-        "label": "pxt clean",
-        "type": "shell",
-        "command": "pxt clean",
-        "group": "test",
-        "problemMatcher": [ "$tsc" ]
-    }, {
-        "label": "pxt serial",
-        "type": "shell",
-        "command": "pxt serial",
-        "group": "test",
-        "problemMatcher": [ "$tsc" ]
-    }]
-}
-`
 }
 
 function addFile(name: string, cont: string) {
@@ -2681,8 +2591,7 @@ function addFile(name: string, cont: string) {
         }
         vars["ns"] = mainPkg.config.name.replace(/[^a-zA-Z0-9]/g, "_")
         cont = cont.replace(/@([a-z]+)@/g, (f, k) => U.lookup(vars, k) || "")
-        fs.writeFileSync(name, cont)
-        console.log(U.lf("Wrote {0}.", name))
+        nodeutil.writeFileSync(name, cont)
     } else {
         console.log(U.lf("Not overwriting {0}.", name))
     }
@@ -2754,28 +2663,9 @@ export function initAsync(parsed: commandParser.ParsedCommand) {
     if (fs.existsSync(pxt.CONFIG_NAME))
         U.userError(`${pxt.CONFIG_NAME} already present`)
 
-    let prj = pxt.appTarget.tsprj || pxt.appTarget.blocksprj;
-    let config = U.clone(prj.config);
-    // remove blocks file
-    Object.keys(prj.files)
-        .filter(f => /\.blocks$/.test(f))
-        .forEach(f => delete prj.files[f]);
-    config.files = config.files.filter(f => !/\.blocks$/.test(f));
+    const files = pxt.packageFiles(path.basename(path.resolve(".")).replace(/^pxt-/, ""))
 
-    config.name = path.basename(path.resolve(".")).replace(/^pxt-/, "")
-    // by default, projects are not public
-    config.public = false;
-
-    let configMap: Map<string> = config as any
-
-    if (!config.license) {
-        config.license = "MIT"
-    }
-    if (!config.version) {
-        config.version = "0.0.0"
-    }
-
-
+    let configMap: Map<string> = JSON.parse(files[pxt.CONFIG_NAME])
     let initPromise = Promise.resolve();
     if (!parsed.flags["useDefaults"]) {
         initPromise = Promise.mapSeries(["name", "description", "license"], f =>
@@ -2787,53 +2677,13 @@ export function initAsync(parsed: commandParser.ParsedCommand) {
 
     return initPromise
         .then(() => {
-            const files: Map<string> = {};
-            for (const f in defaultFiles)
-                files[f] = defaultFiles[f];
-            for (const f in prj.files)
-                if (f != "README.md") // this one we need to keep
-                    files[f] = prj.files[f];
+            files[pxt.CONFIG_NAME] = JSON.stringify(configMap, null, 4) + "\n"
 
-            const pkgFiles = Object.keys(files).filter(s =>
-                /\.(md|ts|asm|cpp|h)$/.test(s))
-
-            const fieldsOrder = [
-                "name",
-                "version",
-                "description",
-                "license",
-                "dependencies",
-                "files",
-                "testFiles",
-                "testDependencies",
-                "public",
-                "targetVersions"
-            ]
-
-            config.files = pkgFiles.filter(s => !/test/.test(s));
-            config.testFiles = pkgFiles.filter(s => /test/.test(s));
-
-            // make it look nice
-            const newCfg: any = {}
-            for (const f of fieldsOrder) {
-                if (configMap.hasOwnProperty(f))
-                    newCfg[f] = configMap[f]
-            }
-            for (const f of Object.keys(configMap)) {
-                if (!newCfg.hasOwnProperty(f))
-                    newCfg[f] = configMap[f]
-            }
-
-            files[pxt.CONFIG_NAME] = JSON.stringify(newCfg, null, 4) + "\n"
-
-            configMap = U.clone(configMap)
-            configMap["target"] = pxt.appTarget.platformid || pxt.appTarget.id
-            configMap["docs"] = pxt.appTarget.appTheme.homeUrl || "./";
+            pxt.packageFilesFixup(files)
 
             U.iterMap(files, (k, v) => {
-                v = v.replace(/@([A-Z]+)@/g, (f, n) => configMap[n.toLowerCase()] || "")
                 nodeutil.mkdirP(path.dirname(k))
-                fs.writeFileSync(k, v)
+                nodeutil.writeFileSync(k, v)
             })
         })
         .then(() => installAsync())
@@ -2939,7 +2789,7 @@ export function formatAsync(parsed: commandParser.ParsedCommand) {
                     if (expected == null)
                         expected = input
                     if (formatted != expected) {
-                        fs.writeFileSync(fn, formatted, { encoding: "utf8" })
+                        nodeutil.writeFileSync(fn, formatted, { encoding: "utf8" })
                         console.log("format test FAILED; written:", fn)
                         numErr++;
                     } else {
@@ -2951,10 +2801,10 @@ export function formatAsync(parsed: commandParser.ParsedCommand) {
                     if (!inPlace)
                         fs.unlink(fn, err => { })
                 } else if (inPlace) {
-                    fs.writeFileSync(f, formatted, { encoding: "utf8" })
+                    nodeutil.writeFileSync(f, formatted, { encoding: "utf8" })
                     console.log("replaced:", f)
                 } else {
-                    fs.writeFileSync(fn, formatted, { encoding: "utf8" })
+                    nodeutil.writeFileSync(fn, formatted, { encoding: "utf8" })
                     console.log("written:", fn)
                 }
 
@@ -3114,6 +2964,7 @@ function testForBuildTargetAsync(useNative: boolean): Promise<pxtc.CompileOption
     return mainPkg.loadAsync()
         .then(() => {
             copyCommonFiles();
+            setBuildEngine();
             let target = mainPkg.getTargetOptions()
             if (target.hasHex)
                 target.isNative = true
@@ -3144,8 +2995,8 @@ function testForBuildTargetAsync(useNative: boolean): Promise<pxtc.CompileOption
 
 function simshimAsync() {
     pxt.debug("looking for shim annotations in the simulator.")
-    if (!nodeutil.existsDirSync("sim")) {
-        pxt.debug("no sim folder, skipping.")
+    if (!fs.existsSync(path.join("sim", "tsconfig.json"))) {
+        pxt.debug("no sim/tsconfig.json; skipping")
         return Promise.resolve();
     }
     let prog = pxtc.plainTsc(path.resolve("sim"))
@@ -3158,12 +3009,15 @@ function simshimAsync() {
             "\n// Auto-generated. Do not edit. Really.\n"
         let cfgname = "libs/" + s + "/" + pxt.CONFIG_NAME
         let cfg = nodeutil.readPkgConfig("libs/" + s)
-        if (cfg.files.indexOf(filename) == -1)
+        if (cfg.files.indexOf(filename) == -1) {
+            if (pxt.appTarget.variants)
+                return Promise.resolve() // this is fine - there are native variants that generate shims
             U.userError(U.lf("please add \"{0}\" to {1}", filename, cfgname))
+        }
         let fn = "libs/" + s + "/" + filename
         if (fs.readFileSync(fn, "utf8") != cont) {
             pxt.debug(`updating ${fn}`)
-            fs.writeFileSync(fn, cont)
+            nodeutil.writeFileSync(fn, cont)
         }
     }
     return Promise.resolve()
@@ -3296,7 +3150,7 @@ function testDirAsync(parsed: commandParser.ParsedCommand) {
                 .then(testAsync)
                 .then(() => {
                     if (pxt.appTarget.compile.hasHex)
-                        fs.writeFileSync(hexPath, fs.readFileSync(`built/binary.${pxt.appTarget.compile.useUF2 ? "uf2" : "hex"}`))
+                        nodeutil.writeFileSync(hexPath, fs.readFileSync(`built/binary.${pxt.appTarget.compile.useUF2 ? "uf2" : "hex"}`))
                 })
         } else {
             let start = Date.now()
@@ -3346,7 +3200,7 @@ function testDirAsync(parsed: commandParser.ParsedCommand) {
                         } else {
                             let hex = res.outfiles["binary.hex"]
                             if (hex) {
-                                fs.writeFileSync(hexPath, hex)
+                                nodeutil.writeFileSync(hexPath, hex)
                                 console.log(`wrote hex: ${hexPath} ${hex.length} bytes; ${Date.now() - start}ms`)
                             }
                         }
@@ -3449,8 +3303,7 @@ function decompileAsync(parsed: commandParser.ParsedCommand) {
         const outFile = replaceFileExtension(f, ".blocks")
         return decompileAsyncWorker(f, parsed.flags["dep"] as string)
             .then(result => {
-                fs.writeFileSync(outFile, result)
-                console.log("Wrote " + outFile)
+                nodeutil.writeFileSync(outFile, result)
             })
     })
         .then(() => {
@@ -3546,14 +3399,14 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
                 Object.keys(resp.outfiles).forEach(outfile => {
                     const ofn = path.join(dir, "built", outfile);
                     pxt.debug(`writing ${ofn}`);
-                    fs.writeFileSync(ofn, resp.outfiles[outfile], 'utf8')
+                    nodeutil.writeFileSync(ofn, resp.outfiles[outfile], 'utf8')
                 })
                 pkg.filesToBePublishedAsync()
                     .then(files => {
                         Object.keys(files).forEach(f => {
                             const fn = path.join(dir, f);
                             pxt.debug(`writing ${fn}`);
-                            fs.writeFileSync(fn, files[f], 'utf8');
+                            nodeutil.writeFileSync(fn, files[f], 'utf8');
                         })
                     })
             }
@@ -3606,13 +3459,24 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
     })
 }
 
-function prepBuildOptionsAsync(mode: BuildOption, quick = false) {
+function setBuildEngine() {
+    const cs = pxt.appTarget.compileService
+    if (cs && cs.buildEngine) {
+        build.setThisBuild(build.buildEngines[cs.buildEngine]);
+        if (!build.thisBuild)
+            U.userError("cannot find build engine: " + cs.buildEngine)
+    }
+}
+
+function prepBuildOptionsAsync(mode: BuildOption, quick = false, ignoreTests = false) {
     ensurePkgDir();
+    mainPkg.ignoreTests = ignoreTests;
     return mainPkg.loadAsync()
         .then(() => {
             if (!quick) {
                 build.buildDalConst(build.thisBuild, mainPkg);
                 copyCommonFiles();
+                setBuildEngine();
             }
             // TODO pass down 'quick' to disable the C++ extension work
             let target = mainPkg.getTargetOptions()
@@ -3634,6 +3498,12 @@ function prepBuildOptionsAsync(mode: BuildOption, quick = false) {
                 opts.testMode = true
             if (mode == BuildOption.GenDocs)
                 opts.ast = true
+
+            if (pxt.appTarget.compile.postProcessSymbols && (mode == BuildOption.Deploy || mode == BuildOption.JustBuild)) {
+                opts.computeUsedSymbols = true
+                opts.ast = true
+            }
+
             return opts;
         })
 }
@@ -3650,6 +3520,8 @@ interface BuildCoreOptions {
     mode: BuildOption;
 
     debug?: boolean;
+    warnDiv?: boolean;
+    ignoreTests?: boolean;
 
     // docs
     locs?: boolean;
@@ -3664,19 +3536,30 @@ function gdbAsync(c: commandParser.ParsedCommand) {
         .then(() => gdb.startAsync(c.args))
 }
 
+function dumplogAsync(c: commandParser.ParsedCommand) {
+    ensurePkgDir()
+    return mainPkg.loadAsync()
+        .then(() => gdb.dumplogAsync())
+}
+
 function buildDalDTSAsync() {
     ensurePkgDir()
     return mainPkg.loadAsync()
-        .then(() => build.buildDalConst(build.thisBuild, mainPkg, true))
+        .then(() => build.buildDalConst(build.thisBuild, mainPkg, true, true))
 }
 
 function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult> {
     let compileOptions: pxtc.CompileOptions;
     let compileResult: pxtc.CompileResult;
     ensurePkgDir();
-    return prepBuildOptionsAsync(buildOpts.mode)
+    pxt.log(`building ${process.cwd()}`)
+    return prepBuildOptionsAsync(buildOpts.mode, false, buildOpts.ignoreTests)
         .then((opts) => {
             compileOptions = opts;
+            if (buildOpts.warnDiv) {
+                pxt.debug(`warning on division operators`);
+                opts.warnDiv = true;
+            }
             opts.breakpoints = buildOpts.mode === BuildOption.DebugSim;
             if (buildOpts.debug) {
                 opts.breakpoints = true
@@ -3708,7 +3591,14 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
                 }));
             }
 
-            pxt.debug(`package built; written to ${pxt.outputName()}; size: ${(res.outfiles[pxt.outputName()] || "").length}`)
+            pxt.log(`package built; written to ${pxt.outputName()}`);
+
+            if (res.usedSymbols && compileOptions.computeUsedSymbols) {
+                const apiInfo = pxtc.getApiInfo(compileOptions, res.ast)
+                for (let k of Object.keys(res.usedSymbols)) {
+                    res.usedSymbols[k] = apiInfo.byQName[k] || null
+                }
+            }
 
             switch (buildOpts.mode) {
                 case BuildOption.GenDocs:
@@ -3929,7 +3819,7 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
                                 const tf = path.join(tfdir, fn);
                                 nodeutil.mkdirP(tfdir)
                                 pxt.log(`writing ${tf}`);
-                                fs.writeFileSync(tf, langTranslations, { encoding: "utf8" });
+                                nodeutil.writeFileSync(tf, langTranslations, { encoding: "utf8" });
 
                                 locFiles[path.relative(projectdir, tf).replace(/\\/g, '/')] = "1";
                             })
@@ -3943,7 +3833,7 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
                             let local: pxt.PackageConfig = nodeutil.readJson(pxtJsonf)
                             local.files = pxtJson.files
                             pxt.log(`writing ${pxtJsonf}`);
-                            fs.writeFileSync(pxtJsonf, JSON.stringify(local, null, 4), { encoding: "utf8" });
+                            nodeutil.writeFileSync(pxtJsonf, JSON.stringify(local, null, 4), { encoding: "utf8" });
                         }
                         return nextFileAsync()
                     });
@@ -3982,7 +3872,7 @@ export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
 
 function internalStaticPkgAsync(builtPackaged: string, label: string, minify: boolean, noAppCache?: boolean) {
     const pref = path.resolve(builtPackaged);
-    const localDir = label == "./" ? "./" : label ? "/" + label + "/" : "/"
+    const localDir = !label ? "./" : `${U.startsWith(label, ".") || U.startsWith(label, "/") ? "" : "/"}${label}${U.endsWith(label, "/") ? "" : "/"}`;
     return uploadCoreAsync({
         label: label || "main",
         pkgversion: "0.0.0",
@@ -4014,6 +3904,19 @@ export function cleanGenAsync(parsed: commandParser.ParsedCommand) {
         .then(() => rimrafAsync("libs/**/shims.d.ts", {}))
         .then(() => rimrafAsync("libs/**/_locales", {}))
         .then(() => { });
+}
+
+export function npmInstallNativeAsync() {
+    pxt.log('installing npm native dependencies')
+    const deps = nodeutil.lazyDependencies();
+    const mods = Object.keys(deps).map(k => `${k}@${deps[k]}`);
+    function nextAsync() {
+        const mod = mods.pop();
+        if (!mod) return Promise.resolve();
+
+        return nodeutil.runNpmAsync("install", mod);
+    }
+    return nextAsync();
 }
 
 interface PNGImage {
@@ -4056,7 +3959,23 @@ function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
     if (!nodeutil.existsDirSync(dir))
         U.userError(`directory '${dir}' does not exist`);
 
-    const metaInfo: SpriteGlobalMeta = nodeutil.readJson(path.join(dir, "meta.json"))
+    // create meta.json file if needed
+    const metaInfoPath = path.join(dir, "meta.json");
+    if (!fs.existsSync(metaInfoPath)) {
+        pxt.log(`${metaInfoPath} not found, creating new one`);
+        fs.writeFileSync(metaInfoPath, JSON.stringify({
+            "width": 16,
+            "height": 16,
+            "blockIdentity": "image.__imagePicker",
+            "creator": "image.ofBuffer",
+            "star": {
+                "namespace": `sprites.${dir.toLowerCase()}`,
+                "mimeType": "image/x-mkcd-f4"
+            }
+        }, null, 4));
+    }
+
+    const metaInfo: SpriteGlobalMeta = nodeutil.readJson(metaInfoPath)
     const jresources: pxt.Map<pxt.JRes> = {}
     const star = metaInfo.star
 
@@ -4100,8 +4019,8 @@ function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
     ts += "}\n"
 
     pxt.log(`save ${metaInfo.basename}.jres and .ts`)
-    fs.writeFileSync(metaInfo.basename + ".jres", JSON.stringify(jresources, null, 2));
-    fs.writeFileSync(metaInfo.basename + ".ts", ts);
+    nodeutil.writeFileSync(metaInfo.basename + ".jres", JSON.stringify(jresources, null, 2));
+    nodeutil.writeFileSync(metaInfo.basename + ".ts", ts);
 
     return Promise.resolve()
 
@@ -4116,7 +4035,7 @@ function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
         let mindelta = 0
         let idx = -1
         for (let i = alpha ? 1 : 0; i < palette.length; ++i) {
-            let delta = scale(palette[i][0] - buf[pix + 0]) + scale(palette[i][1] - buf[pix + 1]) + scale(palette[i][1] - buf[pix + 2])
+            let delta = scale(palette[i][0] - buf[pix + 0]) + scale(palette[i][1] - buf[pix + 1]) + scale(palette[i][2] - buf[pix + 2])
             if (idx < 0 || delta < mindelta) {
                 idx = i
                 mindelta = delta
@@ -4153,8 +4072,8 @@ function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
         if (sheet.width > 255 || sheet.height > 255)
             U.userError(`PNG image too big`)
 
-        if (!info.width) info.width = sheet.width
-        if (!info.height) info.height = sheet.height
+        if (!info.width || info.width > sheet.width) info.width = sheet.width
+        if (!info.height || info.height > sheet.height) info.height = sheet.height
 
         let nx = (sheet.width / info.width) | 0
         let ny = (sheet.height / info.height) | 0
@@ -4162,6 +4081,8 @@ function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
 
         for (let y = 0; y + info.height - 1 < sheet.height; y += info.height)
             for (let x = 0; x + info.width - 1 < sheet.width; x += info.width) {
+                if (info.frames && imgIdx >= info.frames.length) return;
+
                 let img = U.flatClone(sheet)
                 img.data = new Buffer(info.width * info.height * 4)
                 img.width = info.width
@@ -4253,21 +4174,21 @@ export function buildJResAsync(parsed: commandParser.ParsedCommand) {
             const newjr = JSON.stringify(jresources, null, 2);
             if (oldjr != newjr) {
                 pxt.log(`updating ${f}`)
-                fs.writeFileSync(f, newjr);
+                nodeutil.writeFileSync(f, newjr);
             }
         })
     return Promise.resolve();
 }
 
 export function buildAsync(parsed: commandParser.ParsedCommand) {
-    forceCloudBuild = !!parsed.flags["cloud"];
-
+    parseBuildInfo(parsed);
     let mode = BuildOption.JustBuild;
     if (parsed.flags["debug"]) {
         mode = BuildOption.DebugSim;
     }
-
-    return buildCoreAsync({ mode })
+    const warnDiv = !!parsed.flags["warndiv"];
+    const ignoreTests = !!parsed.flags["ignoreTests"];
+    return buildCoreAsync({ mode, warnDiv, ignoreTests })
         .then((compileOpts) => { });
 }
 
@@ -4298,13 +4219,24 @@ function internalGenDocsAsync(docs: boolean, locs: boolean, fileFilter?: string,
         return buildAsync();
 }
 
-export function deployAsync(parsed?: commandParser.ParsedCommand) {
-    const serial = parsed && !!parsed.flags["serial"];
-    return buildCoreAsync({ mode: BuildOption.Deploy })
-        .then((compileOpts) => serial ? serialAsync(parsed) : Promise.resolve())
+export function consoleAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
+    pxt.log(`monitoring console.log`)
+    if (!serial.isInstalled() && !hid.isInstalled()) {
+        pxt.log(`console support not installed, did you run "pxt npminstallnative"?`)
+        return Promise.resolve();
+    }
+    return serialAsync().then(() => hid.serialAsync());
 }
 
-export function runAsync() {
+export function deployAsync(parsed?: commandParser.ParsedCommand) {
+    parseBuildInfo(parsed);
+    const serial = parsed && !!parsed.flags["console"];
+    return buildCoreAsync({ mode: BuildOption.Deploy })
+        .then((compileOpts) => serial ? consoleAsync(parsed) : Promise.resolve())
+}
+
+export function runAsync(parsed?: commandParser.ParsedCommand) {
+    parseBuildInfo(parsed);
     return buildCoreAsync({ mode: BuildOption.Run })
         .then((compileOpts) => { });
 }
@@ -4319,8 +4251,10 @@ export function testAsync() {
         .then((compileOpts) => { });
 }
 
-export function serialAsync(parsed: commandParser.ParsedCommand): Promise<void> {
-    let buf: string = "";
+export function serialAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
+    if (!serial.isInstalled())
+        return Promise.resolve();
+    pxt.log(`start serial monitor`);
     serial.monitorSerial((info, buffer) => {
         process.stdout.write(buffer);
     })
@@ -4451,6 +4385,9 @@ function extractBufferAsync(buf: Buffer, outDir: string): Promise<string[]> {
                 console.log("Couldn't extract.")
                 return undefined;
             }
+            if (json.meta && json.source) {
+                json = typeof json.source == "string" ? JSON.parse(json.source) : json.source
+            }
             if (Array.isArray(json.scripts)) {
                 console.log("Legacy TD workspace.")
                 json.projects = json.scripts.map((scr: any) => ({
@@ -4508,7 +4445,7 @@ export function hex2uf2Async(c: commandParser.ParsedCommand) {
         pxtc.UF2.writeHex(f, buf)
         let uf2buf = new Buffer(pxtc.UF2.serializeFile(f), "binary")
         let uf2fn = filename.replace(/(\.hex)?$/i, ".uf2")
-        fs.writeFileSync(uf2fn, uf2buf)
+        nodeutil.writeFileSync(uf2fn, uf2buf)
         console.log("Wrote: " + uf2fn)
     }
     return Promise.resolve()
@@ -4528,8 +4465,7 @@ function writeProjects(prjs: SavedProject[], outDir: string): string[] {
             fn = fn.replace(/[\/]/g, "-")
             const fullname = path.join(fdir, fn)
             nodeutil.mkdirP(path.dirname(fullname));
-            fs.writeFileSync(fullname, prj.files[fn])
-            pxt.debug("wrote " + fullname)
+            nodeutil.writeFileSync(fullname, prj.files[fn])
         }
         // add default files if not present
         const configMap: pxt.Map<string> = {
@@ -4540,15 +4476,14 @@ function writeProjects(prjs: SavedProject[], outDir: string): string[] {
             "target": pxt.appTarget.platformid || pxt.appTarget.id,
             "docs": pxt.appTarget.appTheme.homeUrl || "./"
         }
-        for (let fn in defaultFiles) {
+        for (let fn in pxt.defaultFiles) {
             if (prj.files[fn]) continue;
             const fullname = path.join(fdir, fn)
             nodeutil.mkdirP(path.dirname(fullname));
 
-            const src = defaultFiles[fn].replace(/@([A-Z]+)@/g, (f, n) => configMap[n.toLowerCase()] || "")
+            const src = pxt.defaultFiles[fn].replace(/@([A-Z]+)@/g, (f, n) => configMap[n.toLowerCase()] || "")
 
-            fs.writeFileSync(fullname, src)
-            pxt.debug("wrote " + fullname)
+            nodeutil.writeFileSync(fullname, src)
         }
 
         // start installing in the background
@@ -4587,7 +4522,7 @@ function cherryPickAsync(parsed: commandParser.ParsedCommand) {
 
 function checkDocsAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
     return internalCheckDocsAsync(
-        !!parsed.flags["snippets"],
+        true,
         parsed.flags["re"] as string,
         !!parsed.flags["fix"]
     )
@@ -4635,7 +4570,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                 });
                 if (md != newmd) {
                     pxt.log(`patching ${f}`)
-                    fs.writeFileSync(f, newmd, { encoding: "utf8" })
+                    nodeutil.writeFileSync(f, newmd, { encoding: "utf8" })
                 }
             });
     }
@@ -4645,7 +4580,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
         const dir = path.join("temp/snippets", snippet.type);
         const fn = `${dir}/${entryPath.replace(/^\//, '').replace(/\//g, '-').replace(/\.\w+$/, '')}-${snipIndex}.${snippet.ext}`;
         nodeutil.mkdirP(dir);
-        fs.writeFileSync(fn, snippet.code);
+        nodeutil.writeFileSync(fn, snippet.code);
         snippet.file = fn;
     }
 
@@ -4747,7 +4682,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
     }
 
     nodeutil.mkdirP("temp");
-    fs.writeFileSync("temp/noSUMMARY.md", noTOCs.sort().map(p => `${Array(p.split(/[\/\\]/g).length - 1).join('     ')}* [${pxt.Util.capitalize(p.split(/[\/\\]/g).reverse()[0].split('-').join(' '))}](${p})`).join('\n'), { encoding: "utf8" });
+    nodeutil.writeFileSync("temp/noSUMMARY.md", noTOCs.sort().map(p => `${Array(p.split(/[\/\\]/g).length - 1).join('     ')}* [${pxt.Util.capitalize(p.split(/[\/\\]/g).reverse()[0].split('-').join(' '))}](${p})`).join('\n'), { encoding: "utf8" });
 
     let p = Promise.resolve();
     // test targetconfig
@@ -4766,6 +4701,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                             {
                                 const tutorialMd = nodeutil.resolveMd(docsRoot, card.url);
                                 const pkgs: pxt.Map<string> = { "blocksprj": "*" };
+                                pxt.Util.jsonMergeFrom(pkgs, pxt.gallery.parsePackagesFromMarkdown(tutorialMd) || {});
                                 addSnippet(<CodeSnippet>{
                                     name: card.name,
                                     code: pxt.tutorial.bundleTutorialCode(tutorialMd),
@@ -5014,7 +4950,7 @@ function extractLocStringsAsync(output: string, dirs: string[]): Promise<void> {
     tr.forEach(function (k) { strings[k] = k; });
 
     nodeutil.mkdirP('built');
-    fs.writeFileSync(`built/${output}.json`, JSON.stringify(strings, null, 2));
+    nodeutil.writeFileSync(`built/${output}.json`, JSON.stringify(strings, null, 2));
 
     pxt.log("log strings: " + fileCnt + " files; " + tr.length + " strings -> " + output + ".json");
     if (errCnt > 0)
@@ -5022,21 +4958,34 @@ function extractLocStringsAsync(output: string, dirs: string[]): Promise<void> {
     return Promise.resolve();
 }
 
-function testGithubPackagesAsync(c?: commandParser.ParsedCommand): Promise<void> {
-    pxt.log(`testing github packages`);
+function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<void> {
+    pxt.log(`-- testing github packages-- `);
+    pxt.log(`make sure to store your github token (using pxt login github TOKEN) to avoid throttling`)
     if (!fs.existsSync("targetconfig.json")) {
         pxt.log(`targetconfig.json not found`);
         return Promise.resolve();
     }
+    const localBuild = !!parsed.flags["cloud"];
+    const warnDiv = !!parsed.flags["warndiv"];
+    const clean = !!parsed.flags["clean"];
     const targetConfig = nodeutil.readJson("targetconfig.json") as pxt.TargetConfig;
     const packages = targetConfig.packages;
     if (!packages) {
         pxt.log(`packages section not found in targetconfig.json`)
     }
-    let errors = 0;
+    let errors: string[] = [];
     let todo: string[];
     const repos: pxt.Map<{ fullname: string; tag: string }> = {};
-    const pkgsroot = path.join("built", "ghpkgs");
+    const pkgsroot = path.join("temp", "ghpkgs");
+
+    function detectDivision(code: string): boolean {
+        // remove /* comments
+        code = code.replace(/\/\*(.|\s)*?\*\//gi, '');
+        // remove // ... comments
+        code = code.replace(/\/\/.*?$/gim, '');
+        // search for comments
+        return /[^\/*]=?\/[^\/*]/.test(code);
+    }
 
     function gitAsync(dir: string, ...args: string[]) {
         return nodeutil.spawnAsync({
@@ -5046,7 +4995,7 @@ function testGithubPackagesAsync(c?: commandParser.ParsedCommand): Promise<void>
         })
     }
 
-    function pxtAsync(dir: string, ...args: string[]) {
+    function pxtAsync(dir: string, args: string[]) {
         return nodeutil.spawnAsync({
             cmd: "node",
             args: [path.join(process.cwd(), "node_modules/pxt-core/pxt-cli/cli.js")].concat(args),
@@ -5058,19 +5007,45 @@ function testGithubPackagesAsync(c?: commandParser.ParsedCommand): Promise<void>
     function nextAsync(): Promise<void> {
         const pkgpgh = todo.pop();
         if (!pkgpgh) {
+            pxt.log('')
             pxt.log(`------------------------`)
-            pxt.log(`${errors} packages with errors`);
+            pxt.log(`${errors.length} packages with errors`);
+            errors.forEach(er => pxt.log(`- [ ]  ${er}`));
             return Promise.resolve();
         }
-
-        pxt.log(`  ${pkgpgh}`)
+        pxt.log('')
+        pxt.log(`  testing ${pkgpgh}`)
         // clone or sync package
+        const buildArgs = ["build", "--ignoreTests"];
+        if (warnDiv) buildArgs.push("--warndiv");
+        if (localBuild) buildArgs.push("--localbuild");
         const pkgdir = path.join(pkgsroot, pkgpgh);
-        return gitAsync(".", "clone", "-q", "-b", repos[pkgpgh].tag, `https://github.com/${pkgpgh}`, pkgdir)
-            .then(() => pxtAsync(pkgdir, "install"))
-            .then(() => pxtAsync(pkgdir, "build"))
+        return (
+            !nodeutil.existsDirSync(pkgdir)
+                ? gitAsync(".", "clone", "-q", "-b", repos[pkgpgh].tag, `https://github.com/${pkgpgh}`, pkgdir)
+                : gitAsync(pkgdir, "fetch").then(() => gitAsync(pkgdir, "checkout", "-f", repos[pkgpgh].tag))
+        )
+            .then(() => pxtAsync(pkgdir, ["clean"]))
+            .then(() => pxtAsync(pkgdir, ["install"]))
+            .then(() => pxtAsync(pkgdir, buildArgs))
+            .then(() => {
+                if (warnDiv) {
+                    // perform a regex search over the repo for / operator
+                    const filesWithDiv: pxt.Map<boolean> = {};
+                    nodeutil.allFiles(pkgdir, 1)
+                        .filter(f => /\.ts$/i.test(f))
+                        .forEach(f => detectDivision(fs.readFileSync(f, { encoding: "utf8" }))
+                            ? (filesWithDiv[f.replace(pkgdir, '').replace(/^[\/\\]/, '')] = true)
+                            : false);
+                    const fsw = Object.keys(filesWithDiv);
+                    if (fsw.length) {
+                        errors.push(`${pkgpgh} div found in ${fsw.join(', ')}`);
+                        pxt.log(errors[errors.length - 1])
+                    }
+                }
+            })
             .catch(e => {
-                errors++;
+                errors.push(`${pkgpgh} ${e}`);
                 pxt.log(e);
                 return Promise.resolve();
             })
@@ -5078,23 +5053,35 @@ function testGithubPackagesAsync(c?: commandParser.ParsedCommand): Promise<void>
     }
 
     // 1. collect packages
-    return rimrafAsync(pkgsroot, {})
+    return loadGithubTokenAsync()
+        .then(() => clean ? rimrafAsync(pkgsroot, {}) : Promise.resolve())
         .then(() => nodeutil.mkdirP(pkgsroot))
         .then(() => pxt.github.searchAsync("", packages))
         .then(ghrepos => ghrepos.filter(ghrepo => ghrepo.status == pxt.github.GitRepoStatus.Approved)
             .map(ghrepo => ghrepo.fullName).concat(packages.approvedRepos || []))
-        .then(fullnames => Promise.all(fullnames.map(fullname => pxt.github.listRefsAsync(fullname)
-            .then(tags => {
-                const tag = tags.reverse()[0] || "master";
-                repos[fullname] = { fullname, tag };
-            }))
-        ).then(() => {
+        .then(fullnames => {
+            // remove dups
+            fullnames = U.unique(fullnames, f => f.toLowerCase());
+            pxt.log(`found ${fullnames.length} approved packages`);
+            fullnames.forEach(fn => pxt.log(`  ${fn}`));
+            return Promise.all(fullnames.map(fullname => pxt.github.listRefsAsync(fullname)
+                .then(tags => {
+                    const tag = tags.reverse()[0] || "master";
+                    if (tag != "master" && !/^v\d+(\.\d+(.\d+)?)?$/.test(tag)) {
+                        errors.push(`${fullname}: invalid tag #${tag || "master"}`);
+                        pxt.log(errors[errors.length - 1]);
+                    }
+                    else
+                        repos[fullname] = { fullname, tag };
+                }))
+            );
+        }).then(() => {
             todo = Object.keys(repos);
-            pxt.log(`found ${todo.length} packages`);
+            pxt.log(`found ${todo.length} approved package with releases`);
+            todo.forEach(fn => pxt.log(`  ${fn}#${repos[fn].tag}`));
             // 2. process each repo
             return nextAsync();
-        })
-        );
+        });
 }
 
 function initCommands() {
@@ -5108,16 +5095,21 @@ function initCommands() {
         name: "deploy",
         help: "build and deploy current package",
         flags: {
-            "serial": { description: "start serial monitor after deployment" }
+            "console": { description: "start console monitor after deployment", aliases: ["serial"] },
+            localbuild: {
+                description: "Build native image using local toolchains",
+                aliases: ["local", "l", "local-build"]
+            },
         },
         onlineHelp: true
     }, deployAsync)
     simpleCmd("run", "build and run current package in the simulator", runAsync);
+    simpleCmd("console", "monitor console messages", consoleAsync, null, true);
     advancedCommand("runfloat", "build and run current package in the simulator, forcing floating point mode", runFloatAsync);
     simpleCmd("update", "update pxt-core reference and install updated version", updateAsync, undefined, true);
     simpleCmd("install", "install new packages, or all package", installAsync, "[package1] [package2] ...");
     simpleCmd("add", "add a feature (.asm, C++ etc) to package", addAsync, "<arguments>");
-    simpleCmd("serial", "listen and print serial commands to console", serialAsync);
+    advancedCommand("serial", "listen and print serial commands to console", serialAsync, undefined, true);
 
     p.defineCommand({
         name: "login",
@@ -5153,13 +5145,20 @@ function initCommands() {
         help: "builds current package",
         onlineHelp: true,
         flags: {
-            cloud: { description: "Force build to happen in the cloud" },
-            debug: { description: "Emit debug information with build" }
+            cloud: { description: "(deprecated) forces build to happen in the cloud" },
+            localbuild: {
+                description: "Build native image using local toolchains",
+                aliases: ["local", "l", "local-build"]
+            },
+            debug: { description: "Emit debug information with build" },
+            warndiv: { description: "Warns about division operators" },
+            ignoreTests: { description: "Ignores tests in compilation", aliases: ["ignore-tests", "ignoretests", "it"] }
         }
     }, buildAsync);
 
     simpleCmd("clean", "removes built folders", cleanAsync);
     advancedCommand("cleangen", "remove generated files", cleanGenAsync);
+    simpleCmd("npminstallnative", "install native dependencies", npmInstallNativeAsync);
 
     p.defineCommand({
         name: "staticpkg",
@@ -5232,7 +5231,11 @@ function initCommands() {
                 aliases: ["include-source-maps"]
             },
             pkg: { description: "serve packaged" },
-            cloud: { description: "forces build to happen in the cloud" },
+            cloud: { description: "(deprecated) forces build to happen in the cloud" },
+            localbuild: {
+                description: "Build native image using local toolchains",
+                aliases: ["local", "l", "local-build"]
+            },
             just: { description: "just serve without building" },
             hostname: {
                 description: "hostname to run serve, default localhost",
@@ -5296,7 +5299,11 @@ function initCommands() {
         advanced: true,
         help: "Builds the current target",
         flags: {
-            cloud: { description: "forces build to happen in the cloud" },
+            cloud: { description: "(deprecated) forces build to happen in the cloud" },
+            localbuild: {
+                description: "Build native image using local toolchains",
+                aliases: ["local", "l", "local-build"]
+            },
             skipCore: {
                 description: "skip native build of core packages",
                 aliases: ["skip-core", "skipcore", "sc"]
@@ -5310,7 +5317,11 @@ function initCommands() {
         argString: "<label>",
         advanced: true,
         flags: {
-            cloud: { description: "forces build to happen in the cloud" }
+            cloud: { description: "(deprecated) forces build to happen in the cloud" },
+            localbuild: {
+                description: "Build native image using local toolchains",
+                aliases: ["local", "l", "local-build"]
+            }
         }
     }, uploadTargetReleaseAsync);
     p.defineCommand({
@@ -5328,7 +5339,7 @@ function initCommands() {
         onlineHelp: true,
         help: "check docs for broken links, typing errors, etc...",
         flags: {
-            snippets: { description: "compile snippets" },
+            snippets: { description: "(obsolete) compile snippets", deprecated: true },
             re: {
                 description: "regular expression that matches the snippets to test",
                 argument: "regex"
@@ -5361,8 +5372,8 @@ function initCommands() {
     advancedCommand("crowdin", "upload, download, clean files to/from crowdin", pc => execCrowdinAsync.apply(undefined, pc.args), "<cmd> <path> [output]")
 
     advancedCommand("hidlist", "list HID devices", hid.listAsync)
-    advancedCommand("hidserial", "run HID serial forwarding", hid.serialAsync)
-    advancedCommand("hiddmesg", "fetch DMESG buffer over HID and print it", hid.dmesgAsync)
+    advancedCommand("hidserial", "run HID serial forwarding", hid.serialAsync, undefined, true);
+    advancedCommand("hiddmesg", "fetch DMESG buffer over HID and print it", hid.dmesgAsync, undefined, true);
     advancedCommand("hexdump", "dump UF2 or BIN file", hexdumpAsync, "<filename>")
     advancedCommand("hex2uf2", "convert .hex file to UF2", hex2uf2Async, "<filename>")
     advancedCommand("flashserial", "flash over SAM-BA", serial.flashSerialAsync, "<filename>")
@@ -5405,14 +5416,28 @@ function initCommands() {
         help: "attempt to start openocd and GDB",
         argString: "[GDB_ARGUMNETS...]",
         anyArgs: true,
-        advanced: true
+        advanced: true,
+        onlineHelp: true
     }, gdbAsync);
+
+    p.defineCommand({
+        name: "dumplog",
+        help: "attempt to dump log using openocd",
+        argString: "",
+        advanced: true,
+    }, dumplogAsync);
 
     p.defineCommand({
         name: "builddaldts",
         help: "build dal.d.ts in current directory (might need to move)",
         advanced: true
     }, buildDalDTSAsync);
+
+    p.defineCommand({
+        name: "rebundle",
+        help: "update packages embedded in target.json (quick version of 'pxt bt')",
+        advanced: true
+    }, rebundleAsync);
 
     p.defineCommand({
         name: "pokerepo",
@@ -5456,7 +5481,15 @@ function initCommands() {
         advanced: true
     }, gendocsAsync);
 
-    simpleCmd("testghpkgs", "Download and build github packages", testGithubPackagesAsync);
+    p.defineCommand({
+        name: "testghpkgs",
+        help: "Download and build approved github packages",
+        flags: {
+            warndiv: { description: "Warns about division operators" },
+            localBuild: { description: "use local C++ compiler", aliases: ["localbuild", "lb"] },
+            clean: { description: "delete all previous repos" }
+        }
+    }, testGithubPackagesAsync);
 
     function simpleCmd(name: string, help: string, callback: (c?: commandParser.ParsedCommand) => Promise<void>, argString?: string, onlineHelp?: boolean): void {
         p.defineCommand({ name, help, onlineHelp, argString }, callback);
@@ -5485,6 +5518,7 @@ function goToPkgDir() {
     let dir = goUp(process.cwd())
     if (!dir) {
         console.error(`Cannot find ${pxt.CONFIG_NAME} in any of the parent directories.`)
+        console.error(`Are you in a package directory?`)
         process.exit(1)
     } else {
         if (dir != process.cwd()) {
@@ -5559,6 +5593,10 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
     if (process.env["PXT_DEBUG"]) {
         pxt.options.debug = true;
         pxt.debug = pxt.log;
+    }
+
+    if (process.env["PXT_ASMDEBUG"]) {
+        ts.pxtc.assembler.debug = true
     }
 
     commonfiles = readJson(__dirname + "/pxt-common.json")
