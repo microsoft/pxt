@@ -23,7 +23,7 @@ namespace pxt.blocks {
         useViewWidth?: boolean;
     }
 
-    export function render(blocksXml: string, options: BlocksRenderOptions = { emPixels: 14, layout: BlockLayout.Align }): SVGSVGElement {
+    export function render(blocksXml: string, options: BlocksRenderOptions = { emPixels: 16, layout: BlockLayout.Align }): SVGSVGElement {
         if (!workspace) {
             blocklyDiv = document.createElement("div");
             blocklyDiv.style.position = "absolute";
@@ -51,7 +51,7 @@ namespace pxt.blocks {
 
             switch (options.layout) {
                 case BlockLayout.Align:
-                    pxt.blocks.layout.verticalAlign(workspace, options.emPixels || 14); break;
+                    pxt.blocks.layout.verticalAlign(workspace, options.emPixels || 16); break;
                 case BlockLayout.Flow:
                     pxt.blocks.layout.flow(workspace, { ratio: options.aspectRatio, useViewWidth: options.useViewWidth }); break;
                 case BlockLayout.Clean:
@@ -75,8 +75,8 @@ namespace pxt.blocks {
             svg.removeAttribute('height');
 
             if (options.emPixels) {
-                svg.style.width = (metrics.contentWidth / options.emPixels) + 'em';
-                svg.style.height = (metrics.contentHeight / options.emPixels) + 'em';
+                svg.style.width = (metrics.contentWidth / options.emPixels) + 'rem';
+                svg.style.height = (metrics.contentHeight / options.emPixels) + 'rem';
             }
 
             return svg as any;

@@ -59,7 +59,10 @@ namespace pxt.blocks.layout {
             y += emPixels; //buffer
         })
         let blocks = ws.getTopBlocks(true);
-        blocks.forEach(block => {
+        blocks.forEach((block, bi) => {
+            // TODO: REMOVE THIS WHEN FIXED IN PXT-BLOCKLY
+            if (block.getStartHat())
+                y += emPixels; // hat height
             block.moveBy(0, y)
             y += block.getHeightWidth().height
             y += emPixels; //buffer
