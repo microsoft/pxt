@@ -110,6 +110,7 @@ namespace pxsim {
         name: string;
         methods: LabelFn[];
         numFields: number;
+        toStringMethod?: LabelFn;
     }
 
     export class RefRecord extends RefObject {

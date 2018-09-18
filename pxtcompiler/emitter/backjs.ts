@@ -58,6 +58,8 @@ namespace ts.pxtc {
             i++
         }
         s += "  ],\n"
+        if (info.toStringMethod)
+            s += "  toStringMethod: " + info.toStringMethod.label() + ",\n"
         s += "};\n"
         return s
     }
@@ -363,6 +365,9 @@ switch (step) {
             } else {
                 let loc = ++lblIdx
                 asyncContinuations.push(loc)
+                if (name == "String_::stringConv") {
+                    write(`if (typeof r0 != "string") {`)
+                }
                 if (topExpr.callingConvention == ir.CallingConvention.Promise) {
                     write(`(function(cb) { ${text}.done(cb) })(buildResume(s, ${loc}));`)
                 } else {
@@ -371,6 +376,7 @@ switch (step) {
                 }
                 write(`checkResumeConsumed();`)
                 write(`return;`)
+                if (name == "String_::stringConv") write(`} else { s.retval = r0; }`)
                 writeRaw(`  case ${loc}:`)
                 write(`r0 = s.retval;`)
             }

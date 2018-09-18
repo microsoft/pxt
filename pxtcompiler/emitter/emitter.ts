@@ -1576,15 +1576,25 @@ ${lbl}: .short 0xffff
             }
         }
 
+        function asString(e: Node) {
+            let isRef = isRefCountedExpr(e as Expression)
+            let expr = emitExpr(e)
+            if (target.isNative || isStringLiteral(e))
+                return irToNode(expr, isRef)
+
+            expr = ir.rtcallMask("String_::stringConv", 1, ir.CallingConvention.Async, [expr])
+            return irToNode(expr, true)
+        }
+
         function emitTemplateExpression(node: TemplateExpression) {
             let numconcat = 0
             let concat = (a: ir.Expr, b: Expression | TemplateLiteralFragment) => {
                 if (isEmptyStringLiteral(b))
                     return a
                 numconcat++
-                return rtcallMask("String_::concat", [irToNode(a, true), b as Expression], null)
+                return rtcallMask("String_::concat", [irToNode(a, true), asString(b)], null)
             }
-            let expr = emitExpr(node.head)
+            let expr = (asString(node.head) as any).valueOverride
             for (let span of node.templateSpans) {
                 expr = concat(expr, span.expression)
                 expr = concat(expr, span.literal)
@@ -3187,13 +3197,13 @@ ${lbl}: .short 0xffff
 
             if (node.operatorToken.kind == SK.PlusToken) {
                 if (isStringType(lt) || isStringType(rt)) {
-                    return rtcallMask("String_::concat", [node.left, node.right], null)
+                    return rtcallMask("String_::concat", [asString(node.left), asString(node.right)], null)
                 }
             }
 
             if (node.operatorToken.kind == SK.PlusEqualsToken && isStringType(lt)) {
                 let cleanup = prepForAssignment(node.left)
-                let post = ir.shared(rtcallMask("String_::concat", [node.left, node.right], null))
+                let post = ir.shared(rtcallMask("String_::concat", [asString(node.left), asString(node.right)], null))
                 emitStore(node.left, irToNode(post))
                 cleanup();
                 return post

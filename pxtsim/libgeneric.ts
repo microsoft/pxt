@@ -324,6 +324,20 @@ namespace pxsim {
     }
 
     export namespace String_ {
+        export function stringConv(v: any) {
+            const cb = getResume();
+            if (v instanceof RefRecord) {
+                if (v.vtable.toStringMethod) {
+                    runtime.runFiberAsync(v.vtable.toStringMethod as any, v)
+                        .done(() => {
+                            cb(runtime.currFrame.retval + "")
+                        })
+                    return
+                }
+            }
+            cb(v + "")
+        }
+
         export function mkEmpty() {
             return ""
         }
