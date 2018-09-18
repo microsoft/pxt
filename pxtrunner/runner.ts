@@ -571,9 +571,12 @@ ${files[f]}
 
         if (cfg && cfg.dependencies && Util.values(cfg.dependencies).some(v => v != '*')) {
             md += `
-## Packages
+## ${lf("Extensions")}
 
-${Object.keys(cfg.dependencies).map(k => `* ${k}, ${cfg.dependencies[k]}`).join('\n')}
+${Object.keys(cfg.dependencies)
+    .filter(k => k != pxt.appTarget.corepkg)
+    .map(k => `* ${k}, ${cfg.dependencies[k]}`)
+    .join('\n')}
 
 \`\`\`package
 ${Object.keys(cfg.dependencies).map(k => `${k}=${cfg.dependencies[k]}`).join('\n')}
@@ -588,7 +591,7 @@ ${Object.keys(cfg.dependencies).map(k => `${k}=${cfg.dependencies[k]}`).join('\n
                 linkString = "`" + linkString + "`";
             }
             md += `
-* url: ${linkString}
+${linkString}
 
 `;
         }
