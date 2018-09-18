@@ -70,7 +70,7 @@ code.hljs {
 div.blocks-svg-list > svg {
     margin-right: 1rem;
     margin-bottom: 1rem;
-    page-break-before: avoid;
+    page-break-inside: avoid;
     vertical-align: top;
 }
 
