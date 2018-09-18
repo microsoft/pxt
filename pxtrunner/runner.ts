@@ -376,11 +376,15 @@ namespace pxt.runner {
             const msg = jobQueue.shift();
             if (!msg) return; // no more work
 
+            const options = msg.options as pxt.blocks.BlocksRenderOptions;
+            options.splitSvg = false; // don't split when requesting rendered images
             pxt.tickEvent("renderer.job")
             jobPromise = pxt.BrowserUtils.loadBlocklyAsync()
                 .then(() => runner.decompileToBlocksAsync(msg.code, msg.options))
-                .then(result => result.blocksSvg ? pxt.blocks.layout.blocklyToSvgAsync(result.blocksSvg, 0, 0, result.blocksSvg.viewBox.baseVal.width, result.blocksSvg.viewBox.baseVal.height) : undefined)
-                .then(res => {
+                .then(result => {
+                    const blocksSvg = result.blocksSvg as SVGSVGElement;
+                    return blocksSvg ? pxt.blocks.layout.blocklyToSvgAsync(blocksSvg, 0, 0, blocksSvg.viewBox.baseVal.width, blocksSvg.viewBox.baseVal.height) : undefined;
+                }).then(res => {
                     window.parent.postMessage(<pxsim.RenderBlocksResponseMessage>{
                         source: "makecode",
                         type: "renderblocks",
@@ -574,9 +578,9 @@ ${files[f]}
 ## ${lf("Extensions")}
 
 ${Object.keys(cfg.dependencies)
-    .filter(k => k != pxt.appTarget.corepkg)
-    .map(k => `* ${k}, ${cfg.dependencies[k]}`)
-    .join('\n')}
+                    .filter(k => k != pxt.appTarget.corepkg)
+                    .map(k => `* ${k}, ${cfg.dependencies[k]}`)
+                    .join('\n')}
 
 \`\`\`package
 ${Object.keys(cfg.dependencies).map(k => `${k}=${cfg.dependencies[k]}`).join('\n')}
@@ -725,13 +729,10 @@ ${linkString}
     }
 
     export function renderMarkdownAsync(content: HTMLElement, md: string, options: RenderMarkdownOptions = {}): Promise<void> {
-        const path = options.path;
-        const parts = (path || '').split('/');
-
         const html = pxt.docs.renderMarkdown({
             template: template,
             markdown: md,
-            theme: pxt.appTarget.appTheme,
+            theme: pxt.appTarget.appTheme
         });
         let blocksAspectRatio = options.blocksAspectRatio
             || window.innerHeight < window.innerWidth ? 1.62 : 1 / 1.62;
@@ -775,7 +776,7 @@ ${linkString}
         compileJS?: pxtc.CompileResult;
         compileBlocks?: pxtc.CompileResult;
         apiInfo?: pxtc.ApisInfo;
-        blocksSvg?: SVGSVGElement;
+        blocksSvg?: Element;
     }
 
     export function decompileToBlocksAsync(code: string, options?: blocks.BlocksRenderOptions): Promise<DecompileResult> {
@@ -811,12 +812,13 @@ ${linkString}
                         if (!bresp.success)
                             return <DecompileResult>{ package: mainPkg, compileJS: resp, compileBlocks: bresp, apiInfo: apis };
                         pxt.debug(bresp.outfiles["main.blocks"])
+                        const blocksSvg = pxt.blocks.render(bresp.outfiles["main.blocks"], options);
                         return <DecompileResult>{
                             package: mainPkg,
                             compileJS: resp,
                             compileBlocks: bresp,
                             apiInfo: apis,
-                            blocksSvg: pxt.blocks.render(bresp.outfiles["main.blocks"], options)
+                            blocksSvg
                         };
                     })
             });

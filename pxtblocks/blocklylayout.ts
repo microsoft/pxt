@@ -50,6 +50,56 @@ namespace pxt.blocks.layout {
 
     declare function unescape(escapeUri: string): string;
 
+    /**
+     * Splits a blockly SVG AFTER a vertical layout. This function relies on the ordering
+     * of blocks / comments to get as getTopBlock(true)/getTopComment(true)
+     */
+    export function splitSvg(svg: SVGSVGElement, ws: Blockly.Workspace, emPixels: number): Element {
+        const div = document.createElement("div") as HTMLDivElement;
+        div.className = "blocks-svg-list"
+
+        function extract(
+            parentClass: string,
+            otherClass: string,
+            blocki: number,
+            size: { height: number, width: number },
+            translate: { x: number, y: number }
+        ) {
+            const svgclone = svg.cloneNode(true) as SVGSVGElement;
+            // collect all blocks
+            const parentSvg = svgclone.querySelector(`g.blocklyWorkspace > g.${parentClass}`) as SVGGElement;
+            const otherSvg = svgclone.querySelector(`g.blocklyWorkspace > g.${otherClass}`) as SVGGElement;
+            const blocksSvg = Util.toArray(parentSvg.querySelectorAll(`g.blocklyWorkspace > g.${parentClass} > g`));
+            const blockSvg = blocksSvg.splice(blocki, 1)[0];
+            // remove all but the block we care about
+            blocksSvg.filter(g => g != blockSvg)
+                .forEach(g => {
+                    g.remove()
+                });
+            // clear transform, remove other group
+            parentSvg.removeAttribute("transform");
+            otherSvg.remove();
+            // patch size
+            blockSvg.setAttribute("transform", `translate(${translate.x}, ${translate.y})`)
+            const width = (size.width / emPixels) + "em";
+            const height = (size.height / emPixels) + "em";
+            svgclone.setAttribute("viewBox", `0 0 ${size.width} ${size.height}`)
+            svgclone.style.width = width;
+            svgclone.style.height = height;
+            svgclone.setAttribute("width", width);
+            svgclone.setAttribute("height", height);
+            div.appendChild(svgclone);
+        }
+
+        ws.getTopComments(true)
+            .forEach((comment, commenti) => extract('blocklyBubbleCanvas', 'blocklyBlockCanvas',
+                commenti, comment.getHeightWidth(), { x: 0, y: 0 }));
+        ws.getTopBlocks(true)
+            .forEach((block, blocki) => extract('blocklyBlockCanvas', 'blocklyBubbleCanvas',
+                blocki, block.getHeightWidth(), { x: 0, y: 0 }));
+        return div;
+    }
+
     export function verticalAlign(ws: Blockly.Workspace, emPixels: number) {
         let y = 0
         let comments = ws.getTopComments(true);
