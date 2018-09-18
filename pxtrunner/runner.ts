@@ -545,7 +545,7 @@ namespace pxt.runner {
             md += files[readme].replace(/^#+/, "$0#") + '\n'; // bump all headers down 1
 
         cfg.files.filter(f => f != pxt.CONFIG_NAME && f != readme)
-            .filter(f => editorLanguageMode != LanguageMode.Blocks || /\.blocks?$/.test(f))
+            .filter(f => (editorLanguageMode == LanguageMode.Blocks) == /\.blocks?$/.test(f))
             .forEach(f => {
                 if (!/^main\.(ts|blocks)$/.test(f))
                     md += `
