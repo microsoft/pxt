@@ -71,6 +71,7 @@ div.blocks-svg-list > svg {
     margin-right: 1rem;
     margin-bottom: 1rem;
     page-break-before: avoid;
+    vertical-align: top;
 }
 
 code {
