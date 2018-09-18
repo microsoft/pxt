@@ -366,7 +366,7 @@ switch (step) {
                 let loc = ++lblIdx
                 asyncContinuations.push(loc)
                 if (name == "String_::stringConv") {
-                    write(`if (typeof r0 != "string") {`)
+                    write(`if ((${args[0]}).vtable) {`)
                 }
                 if (topExpr.callingConvention == ir.CallingConvention.Promise) {
                     write(`(function(cb) { ${text}.done(cb) })(buildResume(s, ${loc}));`)
@@ -376,7 +376,7 @@ switch (step) {
                 }
                 write(`checkResumeConsumed();`)
                 write(`return;`)
-                if (name == "String_::stringConv") write(`} else { s.retval = r0; }`)
+                if (name == "String_::stringConv") write(`} else { s.retval = (${args[0]}) + ""; }`)
                 writeRaw(`  case ${loc}:`)
                 write(`r0 = s.retval;`)
             }
