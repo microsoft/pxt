@@ -74,11 +74,11 @@ namespace pxt.blocks.layout {
             // remove all but the block we care about
             blocksSvg.filter(g => g != blockSvg)
                 .forEach(g => {
-                    g.remove()
+                    g.parentNode.removeChild(g);
                 });
             // clear transform, remove other group
             parentSvg.removeAttribute("transform");
-            otherSvg.remove();
+            otherSvg.parentNode.removeChild(otherSvg);
             // patch size
             blockSvg.setAttribute("transform", `translate(${translate.x}, ${translate.y})`)
             const width = (size.width / emPixels) + "em";
