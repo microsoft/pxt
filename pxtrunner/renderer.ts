@@ -263,6 +263,7 @@ namespace pxt.runner {
             if (!$el[0]) return Promise.resolve();
 
             if (!options.emPixels) options.emPixels = 18;
+            options.splitSvg = true;
             return pxt.runner.compileBlocksAsync($el.text(), options)
                 .then((r) => {
                     try {
