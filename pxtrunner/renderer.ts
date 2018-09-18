@@ -60,7 +60,7 @@ namespace pxt.runner {
         let images = cdn + "images"
         let $h = $('<div class="ui bottom attached tabular icon small compact menu hideprint">'
             + ' <div class="right icon menu"></div></div>');
-        let $c = $('<div class="ui top attached segment nobreak"></div>');
+        let $c = $('<div class="ui top attached segment codewidget"></div>');
         let $menu = $h.find('.right.menu');
 
         const theme = pxt.appTarget.appTheme || {};
@@ -185,7 +185,7 @@ namespace pxt.runner {
             return renderNextSnippetAsync(options.snippetClass, (c, r) => {
                 const s = r.blocksSvg;
                 if (options.snippetReplaceParent) c = c.parent();
-                const segment = $('<div class="ui segment"/>').append(s);
+                const segment = $('<div class="ui segment codewidget"/>').append(s);
                 c.replaceWith(segment);
             }, { package: options.package, snippetMode: false, aspectRatio: options.blocksAspectRatio });
         }
@@ -248,7 +248,7 @@ namespace pxt.runner {
         return renderNextSnippetAsync(options.blocksClass, (c, r) => {
             const s = r.blocksSvg;
             if (options.snippetReplaceParent) c = c.parent();
-            const segment = $('<div class="ui segment"/>').append(s);
+            const segment = $('<div class="ui segment codewidget"/>').append(s);
             c.replaceWith(segment);
         }, { package: options.package, snippetMode: true, aspectRatio: options.blocksAspectRatio });
     }
@@ -279,7 +279,7 @@ namespace pxt.runner {
         return renderNextXmlAsync(cls, (c, r) => {
             const s = r.blocksSvg;
             if (opts.snippetReplaceParent) c = c.parent();
-            const segment = $('<div class="ui segment"/>').append(s);
+            const segment = $('<div class="ui segment codewidget"/>').append(s);
             c.replaceWith(segment);
         }, { package: opts.package, snippetMode: true, aspectRatio: opts.blocksAspectRatio });
     }

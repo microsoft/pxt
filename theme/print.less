@@ -76,6 +76,11 @@
         margin-bottom: 2cm;
     }
 
+    #docs .mainbody .ui.segment,
+    #docs pre {
+        background: none !important;
+    }
+
     /** blockly **/
     .blocklyPath {
         stroke-width: 3px !important;
@@ -100,5 +105,10 @@
     }
     .blocklyCommentTarget, .blocklyCommentHandleTarget, .blocklyResizeSE {
         display: none !important;
+    }
+    /* inline blocks*/
+    span.docs.inlineblock {
+        background: none !important;
+        border: black 2px solid !important;        
     }
 }
