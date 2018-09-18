@@ -119,14 +119,7 @@ namespace pxt.blocks.layout {
             cvs.width = width * pixelDensity;
             cvs.height = height * pixelDensity;
             img.onload = function () {
-                try {
-                    ctx.drawImage(img, 0, 0, width, height, 0, 0, cvs.width, cvs.height);
-                }
-                catch (e) {
-                    // IE 11 throws an exception
-                    reject(e);
-                    return;
-                }
+                ctx.drawImage(img, 0, 0, width, height, 0, 0, cvs.width, cvs.height);
                 let canvasdata = cvs.toDataURL("image/png");
                 // if the generated image is too big, shrink image
                 while (canvasdata.length > MAX_SCREENSHOT_SIZE) {
@@ -252,7 +245,7 @@ namespace pxt.blocks.layout {
     function convertIconsToPngAsync(xsg: Document): Promise<void> {
         if (!imageIconCache) imageIconCache = {};
 
-        if (!(BrowserUtils.isIE() || BrowserUtils.isEdge())) return Promise.resolve();
+        if (!BrowserUtils.isEdge()) return Promise.resolve();
 
         const images = xsg.getElementsByTagName("image") as NodeListOf<Element>;
         const p = pxt.Util.toArray(images)
@@ -269,7 +262,6 @@ namespace pxt.blocks.layout {
                         imageIconCache[svgUri] = href;
                         image.setAttributeNS(XLINK_NAMESPACE, "href", href);
                     })
-                    .catch(() => { /* Ignore conversion errors from IE */ })
             });
         return Promise.all(p).then(() => { })
     }
