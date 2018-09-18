@@ -248,7 +248,7 @@ namespace pxt.blocks.layout {
     function convertIconsToPngAsync(xsg: Document): Promise<void> {
         if (!imageIconCache) imageIconCache = {};
 
-        if (!(BrowserUtils.isIE() || BrowserUtils.isEdge())) return Promise.resolve();
+        if (!BrowserUtils.isEdge()) return Promise.resolve();
 
         const images = xsg.getElementsByTagName("image") as NodeListOf<Element>;
         const p = pxt.Util.toArray(images)
