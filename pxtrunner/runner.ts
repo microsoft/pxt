@@ -291,11 +291,11 @@ namespace pxt.runner {
         TypeScript
     }
 
-    export let languageMode = LanguageMode.Blocks;
+    export let editorLanguageMode = LanguageMode.Blocks;
     export let editorLocale = "en";
 
     export function setEditorContextAsync(mode: LanguageMode, locale: string) {
-        languageMode = mode;
+        editorLanguageMode = mode;
         if (locale != editorLocale) {
             const localeLiveRx = /^live-/;
             editorLocale = locale;
@@ -437,7 +437,7 @@ namespace pxt.runner {
                         case "print":
                             const data = window.localStorage["printjob"];
                             delete window.localStorage["printjob"];
-                            return renderProjectFilesAsync(content, JSON.parse(data), undefined, undefined, true)
+                            return renderProjectFilesAsync(content, JSON.parse(data), undefined, true)
                                 .then(() => pxsim.print(1000));
                         case "project":
                             return renderProjectFilesAsync(content, JSON.parse(src))
@@ -528,35 +528,27 @@ namespace pxt.runner {
         })
     }
 
-    export function renderProjectAsync(content: HTMLElement, projectid: string, template = "blocks"): Promise<void> {
+    export function renderProjectAsync(content: HTMLElement, projectid: string): Promise<void> {
         return Cloud.privateGetTextAsync(projectid + "/text")
             .then(txt => JSON.parse(txt))
-            .then(files => renderProjectFilesAsync(content, files, projectid, template));
+            .then(files => renderProjectFilesAsync(content, files, projectid));
     }
 
-    export function renderProjectFilesAsync(content: HTMLElement, files: Map<string>, projectid: string = null, template = "blocks", escapeLinks = false): Promise<void> {
+    export function renderProjectFilesAsync(content: HTMLElement, files: Map<string>, projectid: string = null, escapeLinks = false): Promise<void> {
         const cfg = (JSON.parse(files[pxt.CONFIG_NAME]) || {}) as PackageConfig;
 
         let md = `# ${cfg.name} ${cfg.version ? cfg.version : ''}
 
 `;
-
-        let linkString = projectid ? (pxt.appTarget.appTheme.shareUrl || "https://makecode.com/" + projectid) : pxt.appTarget.appTheme.homeUrl;
-        if (escapeLinks) {
-            // If printing the link will show up twice if it's an actual link
-            linkString = "`" + linkString + "`";
-        }
-        md += `* ${linkString}
-
-        `;
-
         const readme = "README.md";
         if (files[readme])
             md += files[readme].replace(/^#+/, "$0#") + '\n'; // bump all headers down 1
 
         cfg.files.filter(f => f != pxt.CONFIG_NAME && f != readme)
+            .filter(f => editorLanguageMode != LanguageMode.Blocks || /\.blocks?$/.test(f))
             .forEach(f => {
-                md += `
+                if (!/^main\.(ts|blocks)$/.test(f))
+                    md += `
 ## ${f}
 `;
                 if (/\.ts$/.test(f)) {
@@ -577,7 +569,7 @@ ${files[f]}
                 }
             });
 
-        if (cfg && cfg.dependencies) {
+        if (cfg && cfg.dependencies && Util.values(cfg.dependencies).some(v => v != '*')) {
             md += `
 ## Packages
 
@@ -588,6 +580,15 @@ ${Object.keys(cfg.dependencies).map(k => `${k}=${cfg.dependencies[k]}`).join('\n
 \`\`\`
 `;
         }
+
+        let linkString = projectid ? (pxt.appTarget.appTheme.shareUrl || "https://makecode.com/" + projectid) : pxt.appTarget.appTheme.homeUrl;
+        if (escapeLinks) {
+            // If printing the link will show up twice if it's an actual link
+            linkString = "`" + linkString + "`";
+        }
+        md += `* ${linkString}
+
+`;
         const options: RenderMarkdownOptions = {
             print: true
         }
@@ -746,7 +747,7 @@ ${Object.keys(cfg.dependencies).map(k => `${k}=${cfg.dependencies[k]}`).join('\n
             simulator: true,
             hex: true,
             tutorial: !!options.tutorial,
-            showJavaScript: languageMode == LanguageMode.TypeScript,
+            showJavaScript: editorLanguageMode == LanguageMode.TypeScript,
             hexName: pxt.appTarget.id
         }
         if (options.print) {
