@@ -327,7 +327,7 @@ namespace pxt.runner {
                 if (mp) {
                     const docsUrl = pxt.webConfig.docsUrl || '/--docs';
                     let verPrefix = mp[2] || '';
-                    let url = mp[3] == "doc" ? `${mp[4]}` : `${docsUrl}?md=${mp[4]}`;
+                    let url = mp[3] == "doc" ? (pxt.webConfig.isStatic ? `/docs${mp[4]}.html` : `${mp[4]}`) : `${docsUrl}?md=${mp[4]}`;
                     window.open(BrowserUtils.urlJoin(verPrefix, url), "_blank");
                     // notify parent iframe that we have completed the popout
                     if (window.parent)
