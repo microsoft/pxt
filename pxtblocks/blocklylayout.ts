@@ -54,7 +54,7 @@ namespace pxt.blocks.layout {
      * Splits a blockly SVG AFTER a vertical layout. This function relies on the ordering
      * of blocks / comments to get as getTopBlock(true)/getTopComment(true)
      */
-    export function splitSvg(svg: SVGSVGElement, ws: Blockly.Workspace, emPixels: number): Element {
+    export function splitSvg(svg: SVGSVGElement, ws: Blockly.Workspace, emPixels: number = 18): Element {
         const div = document.createElement("div") as HTMLDivElement;
         div.className = "blocks-svg-list"
 
@@ -95,8 +95,16 @@ namespace pxt.blocks.layout {
             .forEach((comment, commenti) => extract('blocklyBubbleCanvas', 'blocklyBlockCanvas',
                 commenti, comment.getHeightWidth(), { x: 0, y: 0 }));
         ws.getTopBlocks(true)
-            .forEach((block, blocki) => extract('blocklyBlockCanvas', 'blocklyBubbleCanvas',
-                blocki, block.getHeightWidth(), { x: 0, y: 0 }));
+            .forEach((block, blocki) => {
+                const size = block.getHeightWidth();
+                const translate = { x: 0, y: 0 };
+                if (block.getStartHat()) {
+                    size.height += emPixels;
+                    translate.y += emPixels;
+                }
+                extract('blocklyBlockCanvas', 'blocklyBubbleCanvas',
+                blocki, size, translate)
+            });
         return div;
     }
 
