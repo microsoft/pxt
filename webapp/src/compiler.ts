@@ -446,8 +446,11 @@ export function updatePackagesAsync(packages: pkg.EditorPackage[], progressHandl
         })
         .finally(() => {
             // Clean up after
-            backup.isDeleted = true;
-            return workspace.saveAsync(backup);
+            if (backup) {
+                backup.isDeleted = true;
+                return workspace.saveAsync(backup);
+            }
+            return Promise.resolve();
         });
 }
 

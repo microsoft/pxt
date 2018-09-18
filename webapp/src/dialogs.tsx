@@ -248,9 +248,9 @@ class ExtensionErrorWizard extends React.Component<ExtensionErrorWizardProps, Ex
 
         const pkgs = this.props.affectedPackages;
 
-        Promise.delay(10000).then(() => this.props.updatePackages(pkgs, completed => {
+        this.props.updatePackages(pkgs, completed => {
             this.setState({ packagesUpdated: completed });
-        }))
+        })
         .then(success => {
             if (!success) {
                 this.setState({ updateError: lf("Update failed") });
@@ -270,7 +270,7 @@ class ExtensionErrorWizard extends React.Component<ExtensionErrorWizardProps, Ex
 
     render() {
         const { openLegacyEditor, affectedPackages } = this.props;
-        const { updating, updateComplete, packagesUpdated, updateError } = this.state;
+        const { updating, updateComplete, packagesUpdated, updateError, showProgressBar } = this.state;
 
         if (updateError) {
             return <div>
@@ -298,9 +298,12 @@ class ExtensionErrorWizard extends React.Component<ExtensionErrorWizardProps, Ex
                 lf("Updating package {0} of {1}...", packagesUpdated + 1, affectedPackages.length);
 
             return <div>
-                    <div className="ui centered inline text loader">
-                        { progressString }
-                    </div>
+                    { showProgressBar ?
+                        <ProgressBar percentage={100 * (packagesUpdated / affectedPackages.length)} label={progressString} /> :
+                        <div className="ui centered inline text loader">
+                            { progressString }
+                        </div>
+                    }
                 </div>
         }
         else if (updateComplete) {
@@ -341,132 +344,28 @@ class ExtensionErrorWizard extends React.Component<ExtensionErrorWizardProps, Ex
 }
 
 interface ProgressBarProps {
-    ratio: number
-    width: number;
-    height: number;
+    percentage: number
     label?: string;
     cornerRadius?: number;
 }
 
 class ProgressBar extends React.Component<ProgressBarProps, {}> {
     render() {
-        let { ratio, width, height, label, cornerRadius } = this.props;
-        const unfilled = Math.max(width, 0);
-        const filled = Math.max(Math.min(width * ratio, width), 0);
+        let { percentage, label, cornerRadius } = this.props;
+
         cornerRadius = (cornerRadius == null ? 3 : Math.max(cornerRadius, 0));
+        percentage = Math.max(Math.min(percentage, 100), 2);
 
         return <div>
-                <svg>
-                    <rect className="progress-bar-bg" width={unfilled} height={height} rx={cornerRadius} ry={cornerRadius}/>
-                    <rect className="progress-bar-content" width={filled} height={height} rx={cornerRadius} ry={cornerRadius}/>
-                </svg>
-                { label ? <div>{label}</div> : undefined }
-            </div>
-    }
-}
-
-export function renderEditorVersionMessage(onClick: () => void) {
-    return <div className="ui message">
-        <p>{pxt.Util.lf("This project was made in an older version of the editor and may not be compatible with the latest version.")} <a role="button" onClick={onClick}>{pxt.Util.lf("Open the project in the old editor")}.</a></p>
-    </div>
-}
-
-interface PackageErrorListItemProps {
-    package: pkg.EditorPackage;
-    removePackage: () => void;
-}
-
-interface PackageErrorListItemState {
-    expanded: boolean;
-    pendingRemoval: boolean;
-}
-
-class PackageErrorListItem extends React.Component<PackageErrorListItemProps, PackageErrorListItemState> {
-
-    toggle = () => {
-        this.setState({ expanded: !(this.state && this.state.expanded) });
-    }
-
-    pendingRemoval = () => {
-        this.setState({ pendingRemoval: true });
-    }
-
-    clearPending = () => {
-        this.setState({ pendingRemoval: false });
-    }
-
-    render() {
-        const epkg = this.props.package;
-        const kspkg = epkg.getKsPkg();
-        const protocol = kspkg.verProtocol();
-
-        let displayName = epkg.getPkgId();
-        let displayVersion = kspkg.version();
-        let url: string;
-        let icon: JSX.Element;
-
-        switch (protocol) {
-            case "github":
-                displayVersion = kspkg.verArgument();
-                const parsed = pxt.github.parseRepoId(displayVersion);
-                url = pxt.Util.pathJoin("https://github.com", parsed.fullName);
-                icon = <i className="large github middle aligned icon"></i>;
-                break;
-            case "pub":
-                url = pxt.Util.pathJoin(pxt.appTarget.appTheme.shareUrl || "https://makecode.com/", kspkg.verArgument());
-                displayVersion = lf("shared script {0}", kspkg.verArgument());
-                icon = <i className="large share alternate middle aligned icon"></i>;
-                break;
-        }
-
-        const errors = collectErrors(epkg);
-        const isExpanded = this.state && this.state.expanded;
-        const isPending = this.state && this.state.pendingRemoval;
-
-        return <div className="item" key={pxt.Util.htmlEscape(epkg.getPkgId())}>
-            <div className="right floated content">
-            { isPending ?
-                <div>
-                    <button className="ui button negative" role="button" onClick={this.props.removePackage}>{pxt.Util.lf("Remove")}</button>
-                    <button className="ui button" role="button" onClick={this.clearPending}>{pxt.Util.lf("Cancel")}</button>
-                </div> :
-                <button className="ui icon button" role="button" aria-label={lf("Remove dependency")} onClick={this.pendingRemoval}>
-                    <i className="trash icon"></i>
-                </button>
-            }
-            </div>
-            { icon }
-            <div className="content">
-                <a className="header" href={url} >{`${displayName} (${displayVersion})`}</a>
-                <div className="description" onClick={this.toggle} role="button" aria-pressed={!!isExpanded} aria-label={isExpanded ? lf("Hide error list") : lf("Show error list")}>
-                    {errors.length > 1 ? lf("Found {0} errors", errors.length) : lf("Found {0} error", errors.length) }
-                    <i className={`small middle aligned icon caret ${isExpanded ? "down" : "right"}`}></i>
+                <div className="progress-bar-container">
+                    <svg className="progress-bar" width="100%" height="100%">
+                        <rect className="progress-bar-bg" width="100%" height="100%" rx={cornerRadius} ry={cornerRadius}/>
+                        <rect className="progress-bar-content" width={percentage.toString() + "%"} height="100%" rx={cornerRadius} ry={cornerRadius}/>
+                    </svg>
                 </div>
-                <div className={`list package-diagnostics ${isExpanded ? "expanded-list" : ""}`}>
-                    {
-                        errors.map((d, index) => <div className="extra" key={index}>
-                            {`${formatErrorPath(d.fileName)} (line ${d.line + 1}) TS${d.code}: ${ts.pxtc.flattenDiagnosticMessageText(d.messageText, "\n")}`}
-                        </div>)
-                    }
-                </div>
+                { label ? <p className="ui center aligned progress-bar-label">{label}</p> : undefined }
             </div>
-        </div>
     }
-}
-
-function collectErrors(epkg: pkg.EditorPackage) {
-    const result: pxtc.KsDiagnostic[] = [];
-    pxt.Util.values(epkg.files).forEach(f => f.diagnostics && f.diagnostics.forEach(d => d.category === ts.pxtc.DiagnosticCategory.Error && result.push(d)));
-    return result;
-}
-
-function formatErrorPath(fileName: string) {
-    const parts = fileName.split(/[\\\/]/);
-    if (parts.length > 2) {
-        // The first two parts are pxt_modules and the name of the package
-        return parts.splice(2).join("/");
-    }
-    return fileName;
 }
 
 export function showCommitDialogAsync(repo: string) {
