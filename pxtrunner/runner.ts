@@ -581,14 +581,17 @@ ${Object.keys(cfg.dependencies).map(k => `${k}=${cfg.dependencies[k]}`).join('\n
 `;
         }
 
-        let linkString = projectid ? (pxt.appTarget.appTheme.shareUrl || "https://makecode.com/" + projectid) : pxt.appTarget.appTheme.homeUrl;
-        if (escapeLinks) {
-            // If printing the link will show up twice if it's an actual link
-            linkString = "`" + linkString + "`";
-        }
-        md += `* ${linkString}
+        if (projectid) {
+            let linkString = (pxt.appTarget.appTheme.shareUrl || "https://makecode.com/") + projectid;
+            if (escapeLinks) {
+                // If printing the link will show up twice if it's an actual link
+                linkString = "`" + linkString + "`";
+            }
+            md += `
+* url: ${linkString}
 
 `;
+        }
         const options: RenderMarkdownOptions = {
             print: true
         }
