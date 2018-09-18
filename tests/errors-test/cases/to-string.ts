@@ -14,4 +14,4 @@ let c = "Hello " + a.toString()
 let d = (10 + 1) + "" // Should compile fine
 
 let x = new X()
-let dd = x + "" // TS9254
+let dd = x + "" // also OK, this is now handled dynamically

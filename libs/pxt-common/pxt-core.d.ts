@@ -288,7 +288,7 @@ declare interface Boolean {
     /**
      * Returns a string representation of an object.
      */
-    //% shim=Boolean_::toString
+    //% shim=numops::toString
     toString(): string;
 }
 
@@ -312,7 +312,7 @@ declare interface Number {
     /**
      * Returns a string representation of a number.
      */
-    //% shim=Number_::toString
+    //% shim=numops::toString
     toString(): string;
 }
 

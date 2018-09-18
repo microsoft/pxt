@@ -6,8 +6,7 @@
     "bundleddirs": [],
     "compile": {
         "hasHex": false,
-        "jsRefCounting": true,
-        "floatingPoint": false
+        "jsRefCounting": true
     },
     "appTheme": {
         "logoUrl": "https://makecode.com/",

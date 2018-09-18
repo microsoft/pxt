@@ -45,7 +45,7 @@ namespace ts.pxtc {
     function vtableToJs(info: ClassInfo) {
         let s = `var ${info.id}_VT = {\n` +
             `  name: ${JSON.stringify(getName(info.decl))},\n` +
-            `  refmask: ${JSON.stringify(info.refmask)},\n` +
+            `  numFields: ${info.allfields.length},\n` +
             `  methods: [\n`
         for (let m of info.vtable) {
             s += `    ${m.label()},\n`
@@ -58,6 +58,8 @@ namespace ts.pxtc {
             i++
         }
         s += "  ],\n"
+        if (info.toStringMethod)
+            s += "  toStringMethod: " + info.toStringMethod.label() + ",\n"
         s += "};\n"
         return s
     }
@@ -66,8 +68,6 @@ namespace ts.pxtc {
         let jssource = "'use strict';\n"
         if (!bin.target.jsRefCounting)
             jssource += "pxsim.noRefCounting();\n"
-        if (bin.target.floatingPoint)
-            jssource += "pxsim.enableFloatingPoint();\n"
         jssource += "pxsim.setTitle(" + JSON.stringify(bin.options.name || "") + ");\n"
         let cfg: pxt.Map<number> = {}
         let cfgKey: pxt.Map<number> = {}
@@ -114,13 +114,14 @@ switch (step) {
         //console.log("OPT", proc.toString())
 
         proc.locals.forEach(l => {
-            write(`${locref(l)} = ${target.floatingPoint ? "undefined" : "0"};`)
+            write(`${locref(l)} = undefined;`)
         })
 
         if (proc.args.length) {
             write(`if (s.lambdaArgs) {`)
             proc.args.forEach((l, i) => {
-                write(`  ${locref(l)} = ${refCounting && l.isRef() ? "pxtrt.incr" : ""}(s.lambdaArgs[${i}]);`)
+                // TODO incr needed?
+                write(`  ${locref(l)} = ${refCounting ? "pxtrt.incr" : ""}(s.lambdaArgs[${i}]);`)
             })
             write(`  s.lambdaArgs = null;`)
             write(`}`)
@@ -354,7 +355,7 @@ switch (step) {
                 text = `(${args[0]})${name.slice(1)} = (${args[1]})`
             else if (U.startsWith(name, "new "))
                 text = `new ${shimToJs(name.slice(4))}(${args.join(", ")})`
-            else if (bin.target.floatingPoint && U.lookup(jsOpMap, name))
+            else if (U.lookup(jsOpMap, name))
                 text = args.length == 2 ? `(${args[0]} ${U.lookup(jsOpMap, name)} ${args[1]})` : `(${U.lookup(jsOpMap, name)} ${args[0]})`;
             else
                 text = `${shimToJs(name)}(${args.join(", ")})`
@@ -364,6 +365,9 @@ switch (step) {
             } else {
                 let loc = ++lblIdx
                 asyncContinuations.push(loc)
+                if (name == "String_::stringConv") {
+                    write(`if ((${args[0]}).vtable) {`)
+                }
                 if (topExpr.callingConvention == ir.CallingConvention.Promise) {
                     write(`(function(cb) { ${text}.done(cb) })(buildResume(s, ${loc}));`)
                 } else {
@@ -372,6 +376,7 @@ switch (step) {
                 }
                 write(`checkResumeConsumed();`)
                 write(`return;`)
+                if (name == "String_::stringConv") write(`} else { s.retval = (${args[0]}) + ""; }`)
                 writeRaw(`  case ${loc}:`)
                 write(`r0 = s.retval;`)
             }

@@ -325,9 +325,6 @@ declare namespace ts.pxtc {
         hexMimeType?: string;
         driveName?: string;
         jsRefCounting?: boolean;
-        floatingPoint?: boolean;
-        taggedInts?: boolean; // implies floatingPoint and needsUnboxing
-        needsUnboxing?: boolean;
         boxDebug?: boolean;
         deployDrives?: string; // partial name of drives where the .hex file should be copied
         deployFileMarker?: string;
@@ -343,7 +340,6 @@ declare namespace ts.pxtc {
         hidSelectors?: HidSelector[];
         emptyEventHandlerComments?: boolean; // true adds a comment for empty event handlers
         vmOpCodes?: pxt.Map<number>;
-        commonalize?: boolean;
         vtableShift?: number; // defaults to 2, i.e., (1<<2) == 4 byte alignment of vtables, and thus 256k max program size; increase for chips with more flash!
         postProcessSymbols?: boolean;
     }
