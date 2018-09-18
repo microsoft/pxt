@@ -4701,6 +4701,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                             {
                                 const tutorialMd = nodeutil.resolveMd(docsRoot, card.url);
                                 const pkgs: pxt.Map<string> = { "blocksprj": "*" };
+                                pxt.Util.jsonMergeFrom(pkgs, pxt.gallery.parsePackagesFromMarkdown(tutorialMd) || {});
                                 addSnippet(<CodeSnippet>{
                                     name: card.name,
                                     code: pxt.tutorial.bundleTutorialCode(tutorialMd),

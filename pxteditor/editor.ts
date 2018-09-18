@@ -59,6 +59,7 @@ namespace pxt.editor {
         bannerVisible?: boolean;
 
         highContrast?: boolean;
+        print?: boolean;
         greenScreen?: boolean;
 
         home?: boolean;
@@ -276,6 +277,7 @@ namespace pxt.editor {
         showUploadInstructionsAsync?: (fn: string, url: string, confirmAsync: (options: any) => Promise<number>) => Promise<void>;
         toolboxOptions?: IToolboxOptions;
         blocklyPatch?: (pkgTargetVersion: string, dom: Element) => void;
+        webUsbPairDialogAsync?: (confirmAsync: (options: any) => Promise<number>) => Promise<number>;
     }
 
     export interface FieldExtensionOptions {

@@ -32,7 +32,11 @@ export function getDbAsync(): Promise<any> {
     if (pxt.shell.isSandboxMode() || pxt.shell.isReadOnly())
         return memoryDb();
 
-    let temp = new PouchDB("pxt-" + pxt.storage.storageId(), { revs_limit: 2 })
+    const opts: any = {
+        revs_limit: 2
+    };
+
+    let temp = new PouchDB("pxt-" + pxt.storage.storageId(), opts);
     return temp.get('pouchdbsupportabletest')
         .catch(function (error: any) {
             if (error && error.error && error.name == 'indexed_db_went_bad') {
@@ -42,6 +46,7 @@ export function getDbAsync(): Promise<any> {
                 return Promise.resolve(_db);
             }
         })
+        .finally(() => { pxt.log(`PouchDB adapter: ${_db.adapter}`) });
 }
 
 export function destroyAsync(): Promise<void> {

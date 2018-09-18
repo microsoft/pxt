@@ -245,25 +245,26 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         const readOnly = pxt.shell.isReadOnly();
         const isController = pxt.shell.isControllerMode();
         const showSave = !readOnly && !isController && !!targetTheme.saveInMenu;
+        const showGreenScreen = (targetTheme.greenScreen || /greenscreen=1/.test(window.location.href))
+            && greenscreen.isSupported();
 
         return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem">
             <sui.Item role="menuitem" icon="options" text={lf("Project Settings")} onClick={this.openSettings} tabIndex={-1} />
             {packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Extensions")} onClick={this.showPackageDialog} tabIndex={-1} /> : undefined}
             {boards ? <sui.Item role="menuitem" icon="microchip" text={lf("Change Board")} onClick={this.showBoardDialog} tabIndex={-1} /> : undefined}
-            <sui.Item role="menuitem" icon="print" text={lf("Print...")} onClick={this.print} tabIndex={-1} />
+            {targetTheme.print ? <sui.Item role="menuitem" icon="print" text={lf("Print...")} onClick={this.print} tabIndex={-1} /> : undefined}
             {showSave ? <sui.Item role="menuitem" icon="save" text={lf("Save Project")} onClick={this.saveProject} tabIndex={-1} /> : undefined}
             {!isController ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project")} onClick={this.removeProject} tabIndex={-1} /> : undefined}
             {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={this.showReportAbuse} tabIndex={-1} /> : undefined}
             <div className="ui divider"></div>
             {targetTheme.selectLanguage ? <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} tabIndex={-1} /> : undefined}
             {targetTheme.highContrast ? <sui.Item role="menuitem" text={highContrast ? lf("High Contrast Off") : lf("High Contrast On")} onClick={this.toggleHighContrast} tabIndex={-1} /> : undefined}
-            {targetTheme.greenScreen && greenscreen.isSupported() ? <sui.Item role="menuitem" text={greenScreen ? lf("Green Screen Off") : lf("Green Screen On")} onClick={this.toggleGreenScreen} tabIndex={-1} /> : undefined}
+            {showGreenScreen ? <sui.Item role="menuitem" text={greenScreen ? lf("Green Screen Off") : lf("Green Screen On")} onClick={this.toggleGreenScreen} tabIndex={-1} /> : undefined}
             {
                 // we always need a way to clear local storage, regardless if signed in or not
             }
             {!isController ? <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} tabIndex={-1} /> : undefined}
-            {!pxt.usb.isEnabled ? undefined :
-                <sui.Item role="menuitem" icon='usb' text={lf("Pair device")} onClick={this.pair} tabIndex={-1} />}
+            {pxt.usb.isEnabled ? <sui.Item role="menuitem" icon='usb' text={lf("Pair device")} onClick={this.pair} tabIndex={-1} /> : undefined}
             <div className="ui mobile only divider"></div>
             {renderDocItems(this.props.parent, "mobile only")}
             <div className="ui divider"></div>
