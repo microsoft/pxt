@@ -1,5 +1,7 @@
 namespace pxt.commands {
     export interface DeployOptions {
+        reportError?: (e: string) => void;
+        showNotification?: (msg: string) => void;
         reportDeviceNotFoundAsync?: (docPath: string, resp?: ts.pxtc.CompileResult) => Promise<void>;
     }
 
@@ -11,4 +13,5 @@ namespace pxt.commands {
     export let showUploadInstructionsAsync: (fn: string, url: string, confirmAsync: (options: any) => Promise<number>) => Promise<void> = undefined;
     export let saveProjectAsync: (project: pxt.cpp.HexFile) => Promise<void> = undefined;
     export let electronDeployAsync: (r: ts.pxtc.CompileResult) => Promise<void> = undefined; // A pointer to the Electron deploy function, so that targets can access it in their extension.ts
+    export let webUsbPairDialogAsync: (confirmAsync: (options: any) => Promise<number>) => Promise<number> = undefined;
 }

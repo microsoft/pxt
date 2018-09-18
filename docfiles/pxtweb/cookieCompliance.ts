@@ -269,7 +269,7 @@ namespace pxt {
         const hasWindow = typeof window !== "undefined";
         const isUwp = typeof Windows !== "undefined";
         const isPxtElectron = hasWindow && !!(window as any).pxtElectron;
-        const isCC = hasWindow && !!(window as any).ipcRenderer;
+        const isCC = hasWindow && !!(window as any).ipcRenderer || /ipc=1/.test(location.hash) || /ipc=1/.test(location.search); // In WKWebview, ipcRenderer is injected later, so use the URL query
         return isUwp || isPxtElectron || isCC;
     }
     /**
