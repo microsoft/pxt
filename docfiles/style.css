@@ -67,6 +67,13 @@ code.hljs {
     background:transparent !important;
 }
 
+div.blocks-svg-list > svg {
+    margin-right: 1rem;
+    margin-bottom: 1rem;
+    page-break-inside: avoid;
+    vertical-align: top;
+}
+
 code {
         white-space: pre-wrap;
 }

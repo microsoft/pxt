@@ -1664,7 +1664,7 @@ export class ProjectView
         const files = p.getAllFiles();
         // render in sidedocs
         const docsUrl = pxt.webConfig.docsUrl || '/--docs';
-        const mode = "blocks"
+        const mode = theEditor.isBlocksActive() ? "blocks" : "typescript";
         window.localStorage["printjob"] = JSON.stringify(files);
         const url = `${docsUrl}#print:job:${mode}:${pxt.Util.localeInfo()}`;
 
@@ -1792,7 +1792,11 @@ export class ProjectView
         return compiler.getBlocksAsync()
             .then(blocksInfo => compiler.decompileSnippetAsync(req.ts, blocksInfo))
             .then(resp => {
-                const svg = pxt.blocks.render(resp, { snippetMode: true, layout: pxt.blocks.BlockLayout.Align });
+                const svg = pxt.blocks.render(resp, {
+                    snippetMode: true,
+                    layout: pxt.blocks.BlockLayout.Align,
+                    splitSvg: false
+                }) as SVGSVGElement;
                 // TODO: what if svg is undefined? handle that scenario
                 const viewBox = svg.getAttribute("viewBox").split(/\s+/).map(d => parseInt(d));
                 return {
