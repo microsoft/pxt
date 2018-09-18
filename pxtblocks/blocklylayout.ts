@@ -55,6 +55,12 @@ namespace pxt.blocks.layout {
      * of blocks / comments to get as getTopBlock(true)/getTopComment(true)
      */
     export function splitSvg(svg: SVGSVGElement, ws: Blockly.Workspace, emPixels: number = 18): Element {
+        const comments = ws.getTopComments(true);
+        const blocks = ws.getTopBlocks(true)
+        // don't split for a single block
+        if (comments.length + blocks.length < 2)
+            return svg;
+
         const div = document.createElement("div") as HTMLDivElement;
         div.className = "blocks-svg-list"
 
@@ -91,11 +97,9 @@ namespace pxt.blocks.layout {
             div.appendChild(svgclone);
         }
 
-        ws.getTopComments(true)
-            .forEach((comment, commenti) => extract('blocklyBubbleCanvas', 'blocklyBlockCanvas',
-                commenti, comment.getHeightWidth(), { x: 0, y: 0 }));
-        ws.getTopBlocks(true)
-            .forEach((block, blocki) => {
+        comments.forEach((comment, commenti) => extract('blocklyBubbleCanvas', 'blocklyBlockCanvas',
+            commenti, comment.getHeightWidth(), { x: 0, y: 0 }));
+        blocks.forEach((block, blocki) => {
                 const size = block.getHeightWidth();
                 const translate = { x: 0, y: 0 };
                 if (block.getStartHat()) {
@@ -103,7 +107,7 @@ namespace pxt.blocks.layout {
                     translate.y += emPixels;
                 }
                 extract('blocklyBlockCanvas', 'blocklyBubbleCanvas',
-                blocki, size, translate)
+                    blocki, size, translate)
             });
         return div;
     }
