@@ -102,6 +102,7 @@ export class WebCam extends data.Component<WebCamProps, WebCamState> {
     }
 
     render() {
+        // playsInline required for iOS
         const { hasPrompt, devices } = this.state;
         return <div className="videoContainer">
             <video playsInline ref={this.handleVideoRef} />
