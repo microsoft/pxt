@@ -11,6 +11,9 @@ export function merge(prj: Project) {
     let h: Header = prj.header;
     if (!h) {
         prj.header = h = pxt.workspace.freshHeader(lf("Untitled"), U.nowSeconds())
+        if (prj.text && prj.text["main.blocks"]) {
+            prj.header.editor = pxt.BLOCKS_PROJECT_NAME;
+        }
     }
     projects[prj.header.id] = prj;
 }
