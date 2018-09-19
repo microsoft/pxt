@@ -3,6 +3,7 @@
 Sections of document can be named by adding ``#some-name`` after a section header.
 These will be used as the `id` attribute of the corresponding `<hX>` tag, so they
 can be used in links.
+
 For example:
 
 ```markdown
@@ -30,6 +31,16 @@ This will result in:
 <h2 id='also'>See also</h2>
 ...
 ```
+
+And the following URLs will link directly to the above anchors, respectively:
+
+```
+https://makecode.com/path/to/doc#ex`
+https://makecode.com/path/to/doc#ex2`
+https://makecode.com/path/to/doc#also`
+```
+
+> **Note:** Only one anchor can be used per header.
 
 The section span ends when a header with the same or smaller number
 of `#` in front is found. This isn't relevant for plain HTML, but

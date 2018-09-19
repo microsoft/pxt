@@ -230,6 +230,7 @@ export function promptAsync(options: PromptOptions): Promise<string> {
     if (!options.buttons) options.buttons = []
 
     let result = "";
+    let cancelled: boolean = false;
 
     if (!options.hideAgree) {
         options.buttons.push({
@@ -241,6 +242,19 @@ export function promptAsync(options: PromptOptions): Promise<string> {
                 result = dialogInput.value;
             }
         })
+    }
+
+    if (!options.hideCancel) {
+        // Replace the default cancel button with our own
+        options.buttons.push({
+            label: options.disagreeLbl || lf("Cancel"),
+            className: (options.disagreeClass || "cancel"),
+            icon: options.disagreeIcon || "cancel",
+            onclick: () => {
+                cancelled = true;
+            }
+        });
+        options.hideCancel = true;
     }
 
     options.onLoaded = (ref: HTMLElement) => {
@@ -259,7 +273,7 @@ export function promptAsync(options: PromptOptions): Promise<string> {
     };
 
     return dialogAsync(options)
-        .then(() => result)
+        .then(() => cancelled ? null : result);
 }
 
 ///////////////////////////////////////////////////////////

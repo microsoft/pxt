@@ -541,11 +541,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private hideFlyout() {
         // Hide the flyout
         let flyout = document.getElementById('monacoFlyoutWidget');
-        pxsim.U.clear(flyout);
-        flyout.style.display = 'none';
+        if (flyout) {
+            pxsim.U.clear(flyout);
+            flyout.style.display = 'none';
+        }
 
         // Hide the current toolbox category
-        this.toolbox.clearSelection();
+        if (this.toolbox)
+            this.toolbox.clearSelection();
 
         // Clear editor floats
         this.parent.setState({ hideEditorFloats: false });
@@ -558,11 +561,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         //this.editor.getLayoutInfo().glyphMarginLeft = 200;
         this.editor.layout();
 
-        this.toolbox.setState({
-            loading: false,
-            categories: this.getAllCategories(),
-            showSearchBox: this.shouldShowSearch()
-        })
+        if (this.toolbox)
+            this.toolbox.setState({
+                loading: false,
+                categories: this.getAllCategories(),
+                showSearchBox: this.shouldShowSearch()
+            })
     }
 
     getId() {
@@ -627,11 +631,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (model) this.editor.setModel(model);
 
                 this.defineEditorTheme(hc);
-                const shouldShowToolbox = (mode == "typescript" && pxt.appTarget.appTheme.monacoToolbox && !readOnly);
+                const shouldShowToolbox = (
+                    mode == "typescript"
+                    && pxt.appTarget.appTheme.monacoToolbox
+                    && !readOnly
+                    && file.name == "main.ts");
                 if (shouldShowToolbox) {
                     this.beginLoadToolbox(file, hc);
                 } else {
-                    this.toolbox.hide();
+                    if (this.toolbox)
+                        this.toolbox.hide();
                 }
 
                 // Set the current file
@@ -693,7 +702,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     unloadFileAsync(): Promise<void> {
-        this.toolbox.clearSearch();
+        if (this.toolbox)
+            this.toolbox.clearSearch();
         if (this.currFile && this.currFile.getName() == "this/" + pxt.CONFIG_NAME) {
             // Reload the header if a change was made to the config file: pxt.json
             return this.parent.reloadHeaderAsync();
@@ -702,7 +712,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private beginLoadToolbox(file: pkg.File, hc?: boolean) {
-        this.toolbox.showLoading();
+        if (this.toolbox)
+            this.toolbox.showLoading();
         compiler.getBlocksAsync().then(bi => {
             this.blockInfo = bi
             this.nsMap = this.partitionBlocks();
@@ -1231,12 +1242,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     // first try to get fixed instances whose retType matches nsInfo.name
                     // e.g., DigitalPin
                     let exactInstances = fixedInstances.filter(value =>
-                        value.retType == nsInfo.name)
+                        value.retType == nsInfo.qName)
                         .sort((v1, v2) => v1.name.localeCompare(v2.name));
                     // second choice: use fixed instances whose retType extends type of nsInfo.name
                     // e.g., nsInfo.name == AnalogPin and instance retType == PwmPin
                     let extendedInstances = fixedInstances.filter(value =>
-                        getExtendsTypesFor(nsInfo.name).indexOf(value.retType) !== -1)
+                        getExtendsTypesFor(nsInfo.qName).indexOf(value.retType) !== -1)
                         .sort((v1, v2) => v1.name.localeCompare(v2.name));
                     if (exactInstances.length) {
                         snippetPrefix = `${exactInstances[0].name}`
@@ -1248,7 +1259,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 }
                 else if (element.kind == pxtc.SymbolKind.Method || element.kind == pxtc.SymbolKind.Property) {
                     const params = pxt.blocks.compileInfo(element);
-                    snippetPrefix = params.thisParameter.definitionName;
+                    snippetPrefix = params.thisParameter.defaultValue || params.thisParameter.definitionName;
                     isInstance = true;
                 }
                 else if (nsInfo.kind === pxtc.SymbolKind.Class) {

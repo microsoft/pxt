@@ -1,10 +1,8 @@
 import * as path from 'path';
 import * as nodeutil from './nodeutil';
 import * as child_process from 'child_process';
-import * as os from 'os';
 import * as fs from 'fs';
-import * as net from 'net';
-import * as util from 'util';
+import * as buildengine from './buildengine';
 import * as commandParser from './commandparser';
 
 import U = pxt.Util;
@@ -13,9 +11,9 @@ function fatal(msg: string) {
     U.userError(msg)
 }
 
-function getOpenOcdPath() {
+function getOpenOcdPath(cmds = "") {
     function latest(tool: string) {
-        let dir = path.join(pkgDir , "tools/" , tool , "/")
+        let dir = path.join(pkgDir, "tools/", tool, "/")
         if (!fs.existsSync(dir)) fatal(dir + " doesn't exists; " + tool + " not installed in Arduino?")
 
         let subdirs = fs.readdirSync(dir)
@@ -24,7 +22,7 @@ function getOpenOcdPath() {
         subdirs.sort(pxt.semver.strcmp)
         subdirs.reverse()
 
-        let thePath = path.join(dir, subdirs[0] , "/")
+        let thePath = path.join(dir, subdirs[0], "/")
         if (!fs.existsSync(thePath + "bin")) fatal("missing bindir in " + thePath)
 
         return thePath
@@ -74,11 +72,30 @@ function getOpenOcdPath() {
     let script = pxt.appTarget.compile.openocdScript
     if (!script) fatal("no openocdScript in pxtarget.json")
 
-    let cmd = `log_output built/openocd.log; ${script}; init; halt;`
+    if (!cmds)
+        cmds = `
+gdb_port pipe
+gdb_memory_map disable
+
+$_TARGETNAME configure -event gdb-attach {
+    echo "Halting target"
+    halt
+}
+
+$_TARGETNAME configure -event gdb-detach {
+    echo "Resetting target"
+    reset
+}`
+
+    fs.writeFileSync("built/debug.cfg", `
+log_output built/openocd.log
+${script}
+${cmds}
+`)
 
     let args = [openocdBin, "-d2",
         "-s", path.join(openocdPath, "share/openocd/scripts/"),
-        "-c", cmd]
+        "-f", "built/debug.cfg"]
 
     gdbBin = path.join(gccPath, "bin/arm-none-eabi-gdb")
 
@@ -88,23 +105,60 @@ function getOpenOcdPath() {
     return { args, gdbBin }
 }
 
-export function startAsync(gdbArgs: string[]) {
+function codalBin() {
     let cs = pxt.appTarget.compileService
 
-    let f =
-        cs.codalBinary ?
-            "built/codal/build/" + cs.codalBinary :
-            "built/yt/build/" + cs.yottaTarget + "/source/" + cs.yottaBinary.replace(/\.hex$/, "").replace(/-combined$/, "");
+    return cs.codalBinary ?
+        buildengine.thisBuild.buildPath + "/build/" + cs.codalBinary :
+        "built/yt/build/" + cs.yottaTarget + "/source/" + cs.yottaBinary.replace(/\.hex$/, "").replace(/-combined$/, "");
+}
 
-    if (!fs.existsSync(f))
-        fatal("compiled file not found: " + f)
+export async function dumplogAsync() {
+    let m = /0x0000000([0-9a-f]+)\s+codalLogStore\s*$/m.exec(fs.readFileSync(codalBin() + ".map", "utf8"))
+    if (!m) fatal("Can't find codalLogStore symbol in map")
+    let addr = parseInt(m[1], 16) + 4
+    let logSize = 1024
+    let toolPaths = getOpenOcdPath(`
+init
+halt
+set M(0) 0
+mem2array M 8 ${addr} ${logSize}
+resume
+parray M
+shutdown
+`)
+    let oargs = toolPaths.args
+    let res = await nodeutil.spawnWithPipeAsync({
+        cmd: oargs[0],
+        args: oargs.slice(1),
+        silent: true
+    })
+    let buf = Buffer.alloc(logSize)
+    for (let line of res.toString("utf8").split(/\r?\n/)) {
+        let m = /^M\((\d+)\)\s*=\s*(\d+)/.exec(line)
+        if (m)
+            buf[parseInt(m[1])] = parseInt(m[2])
+    }
+    for (let i = 0; i < logSize; ++i) {
+        if (buf[i] == 0) {
+            console.log("\n\n" + buf.slice(0,i).toString("utf8"))
+            break
+        }
+    }
+}
+
+export function startAsync(gdbArgs: string[]) {
+    let elfFile = codalBin()
+    if (!fs.existsSync(elfFile))
+        fatal("compiled file not found: " + elfFile)
 
     let toolPaths = getOpenOcdPath()
     let oargs = toolPaths.args
 
+    // use / not \ for paths on Windows; otherwise gdb has issue starting openocd
     fs.writeFileSync("built/openocd.gdb",
         `
-target extended-remote localhost:3333
+target remote | ${oargs.map(s => `"${s.replace(/\\/g, "/")}"`).join(" ")}
 define rst
   set {int}(0x20008000-4) = 0xf02669ef
   monitor reset halt
@@ -119,12 +173,7 @@ echo Use 'rst' command to re-run program from start (set your breakpoints first!
 
     pxt.log("starting openocd: " + oargs.join(" "))
 
-    let oproc = child_process.spawn(oargs[0], oargs.slice(1), {
-        stdio: "inherit",
-        detached: true,
-    })
-
-    let gdbargs = ["--command=built/openocd.gdb", f].concat(gdbArgs)
+    let gdbargs = ["--command=built/openocd.gdb", elfFile].concat(gdbArgs)
 
     pxt.log("starting gdb with: " + toolPaths.gdbBin + " " + gdbargs.join(" "))
 
@@ -138,29 +187,10 @@ echo Use 'rst' command to re-run program from start (set your breakpoints first!
         proc.kill('SIGINT')
     });
 
-    let shutdownOpenocdAsync = () => new Promise((resolve, reject) => {
-        let s = net.connect(4444)
-        s.on("connect", () => {
-            pxt.log("shutdown openocd...")
-            s.write("shutdown\n")
-            s.end();
-        })
-        s.on("error", () => {
-            pxt.log("Cannot connect to openocd to shut it down. Probably already down.")
-            resolve()
-        })
-        s.on("close", () => resolve())
-    })
-
-    let start = Date.now()
-
     return new Promise<void>((resolve, reject) => {
         proc.on("error", (err: any) => { reject(err) })
         proc.on("close", () => {
             resolve()
         })
     })
-        // wait at least two seconds since starting openocd, before trying to close it
-        .finally(() => Promise.delay(Math.max(0, 2000 - (Date.now() - start)))
-            .then(shutdownOpenocdAsync))
 }

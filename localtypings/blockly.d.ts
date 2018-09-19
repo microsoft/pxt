@@ -734,6 +734,7 @@ declare namespace Blockly {
         getColourSecondary(): string;
         getColourTertiary(): string;
         getDescendants(): Block[];
+        getStartHat(): boolean;
         initSvg(): void;
         removeInput(name: string, opt_quiet?: boolean): void;
         dispose(healGap: boolean): void;
@@ -758,6 +759,7 @@ declare namespace Blockly {
         setShadow(shadow: boolean): void;
         setTitleValue(newValue: string, name: string): void;
         setTooltip(newTip: string | (() => void)): void;
+        setStartHat(on: boolean): void;
         // Passing null will delete current text
         setWarningText(text: string): void;
         setHighlightWarning(isHighlightingWarning: boolean): void;

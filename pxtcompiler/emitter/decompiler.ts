@@ -360,7 +360,7 @@ namespace ts.pxtc.decompiler {
 
         const getCommentRef = (() => { let currentCommentId = 0; return () => `${currentCommentId++}` })();
 
-        ts.forEachChild(file, topLevelNode => {
+        const checkTopNode = (topLevelNode: Node) => {
             if (topLevelNode.kind === SK.FunctionDeclaration && !checkStatement(topLevelNode, env, false, true)) {
                 env.declaredFunctions[getVariableName((topLevelNode as ts.FunctionDeclaration).name)] = true;
             }
@@ -377,7 +377,12 @@ namespace ts.pxtc.decompiler {
                     });
                 });
             }
-        })
+            else if (topLevelNode.kind === SK.Block) {
+                ts.forEachChild(topLevelNode, checkTopNode);
+            }
+        };
+
+        ts.forEachChild(file, checkTopNode);
 
         if (enumMembers.length) {
             write("<variables>")
@@ -445,7 +450,10 @@ ${output}</xml>`;
             if (blockInfo) {
                 return blockInfo.attributes;
             }
-            return undefined;
+            return {
+                paramDefl: {},
+                callingConvention: ir.CallingConvention.Plain
+            };
         }
 
         function countBlock() {
@@ -716,20 +724,7 @@ ${output}</xml>`;
 
             // Could be string concatenation
             if (isTextJoin(n)) {
-                const args: ts.Node[] = [];
-                collectTextJoinArgs(n, args);
-
-                const result = mkExpr("text_join");
-                result.mutation = {
-                    "items": args.length.toString()
-                };
-                result.inputs = [];
-
-                for (let i = 0; i < args.length; i++) {
-                    result.inputs.push(getValue("ADD" + i, args[i], stringType));
-                }
-
-                return result;
+                return getTextJoin(n);
             }
 
             const result = mkExpr(npp.type);
@@ -747,27 +742,44 @@ ${output}</xml>`;
 
             return result;
 
-            function isTextJoin(n: ts.Node): boolean {
-                if (n.kind === SK.BinaryExpression) {
-                    const b = n as ts.BinaryExpression;
-                    if (b.operatorToken.getText() === "+") {
-                        const info: BinaryExpressionInfo = (n as any).exprInfo;
-                        return !!info;
-                    }
-                }
+        }
 
-                return false;
+        function isTextJoin(n: ts.Node): boolean {
+            if (n.kind === SK.BinaryExpression) {
+                const b = n as ts.BinaryExpression;
+                if (b.operatorToken.getText() === "+" || b.operatorToken.kind == SK.PlusEqualsToken) {
+                    const info: BinaryExpressionInfo = (n as any).exprInfo;
+                    return !!info;
+                }
             }
 
-            function collectTextJoinArgs(n: ts.Node, result: ts.Node[]) {
-                if (isTextJoin(n)) {
-                    collectTextJoinArgs((n as ts.BinaryExpression).left, result);
-                    collectTextJoinArgs((n as ts.BinaryExpression).right, result)
-                }
-                else {
-                    result.push(n);
-                }
+            return false;
+        }
+
+        function collectTextJoinArgs(n: ts.Node, result: ts.Node[]) {
+            if (isTextJoin(n)) {
+                collectTextJoinArgs((n as ts.BinaryExpression).left, result);
+                collectTextJoinArgs((n as ts.BinaryExpression).right, result);
             }
+            else {
+                result.push(n);
+            }
+        }
+
+        function getTextJoin(n: ts.Node) {
+            const args: ts.Node[] = [];
+            collectTextJoinArgs(n, args);
+
+            const result = mkExpr("text_join");
+            result.mutation = {
+                "items": args.length.toString()
+            };
+            result.inputs = [];
+
+            for (let i = 0; i < args.length; i++) {
+                result.inputs.push(getValue("ADD" + i, args[i], stringType));
+            }
+            return result;
         }
 
         function getValue(name: string, contents: boolean | number | string | Node, shadowType?: string): ValueNode {
@@ -1175,6 +1187,15 @@ ${output}</xml>`;
                         return getArraySetBlock(n.left as ts.ElementAccessExpression, n.right);
                     }
                 case SK.PlusEqualsToken:
+                    if (isTextJoin(n)) {
+                        const r = mkStmt("variables_set");
+                        const renamed = getVariableName(n.left as ts.Identifier);
+                        trackVariableUsage(renamed, ReferenceType.InBlocksOnly);
+                        r.inputs = [mkValue("VALUE", getTextJoin(n), numberType)];
+                        r.fields = [getField("VAR", renamed)];
+                        return r;
+                    }
+
                     if (n.left.kind == SK.PropertyAccessExpression)
                         return getPropertySetBlock(n.left as ts.PropertyAccessExpression, n.right, "@change@");
                     else
@@ -1385,10 +1406,23 @@ ${output}</xml>`;
             else if (pxt.Util.startsWith(info.qName, "Math.")) {
                 const op = info.qName.substring(5);
                 if (isSupportedMathFunction(op)) {
-                    const r = mkExpr("math_js_op");
+                    let r: ExpressionNode;
+
+                    if (isRoundingFunction(op)) {
+                        r = mkExpr("math_js_round");
+                    } else {
+                        r = mkExpr("math_js_op");
+                        let opType: string;
+                        if (isUnaryMathFunction(op)) opType = "unary";
+                        else if (isInfixMathFunction(op)) opType = "infix";
+                        else opType = "binary";
+
+                        r.mutation = { "op-type": opType };
+                    }
+
                     r.inputs = info.args.map((arg, index) => mkValue("ARG" + index, getOutputBlock(arg), "math_number"))
                     r.fields = [getField("OP", op)];
-                    r.mutation = { "op-type": info.args.length == 2 ? "binary" : "unary" };
+
                     return r;
                 }
             }
@@ -2827,6 +2861,19 @@ ${output}</xml>`;
     }
 
     function isSupportedMathFunction(op: string) {
-        return pxt.blocks.MATH_FUNCTIONS.unary.indexOf(op) !== -1 || pxt.blocks.MATH_FUNCTIONS.binary.indexOf(op) !== -1;
+        return isUnaryMathFunction(op) || isInfixMathFunction(op) || isRoundingFunction(op) ||
+            pxt.blocks.MATH_FUNCTIONS.binary.indexOf(op) !== -1;
+    }
+
+    function isUnaryMathFunction(op: string) {
+        return pxt.blocks.MATH_FUNCTIONS.unary.indexOf(op) !== -1
+    }
+
+    function isInfixMathFunction(op: string) {
+        return pxt.blocks.MATH_FUNCTIONS.infix.indexOf(op) !== -1;
+    }
+
+    function isRoundingFunction(op: string) {
+        return pxt.blocks.ROUNDING_FUNCTIONS.indexOf(op) !== -1;
     }
 }

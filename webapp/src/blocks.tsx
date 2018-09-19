@@ -139,7 +139,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.typeScriptSaveable = false;
         this.editor.clear();
         try {
-            const text = pxt.blocks.importXml(pkg.mainPkg.targetVersion(), s || `<block type="${ts.pxtc.ON_START_TYPE}"></block>`, this.blockInfo, true);
+            const text = s || `<block type="${ts.pxtc.ON_START_TYPE}"></block>`;
             const xml = Blockly.Xml.textToDom(text);
             Blockly.Xml.domToWorkspace(xml, this.editor);
 

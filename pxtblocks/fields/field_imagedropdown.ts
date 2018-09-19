@@ -130,6 +130,12 @@ namespace pxtblockly {
                 dropdownDiv.style.maxHeight = (this.maxRows_ + 0.4) * (maxButtonHeight + 8) + 'px';
             }
 
+            if (pxt.BrowserUtils.isFirefox()) {
+                // This is to compensate for the scrollbar that overlays content in Firefox. It
+                // gets removed in onHide_()
+                Blockly.DropDownDiv.getContentDiv().style.paddingRight = "20px";
+            }
+
             Blockly.DropDownDiv.setColour(this.backgroundColour_, this.borderColour_);
 
             let scale = this.sourceBlock_.workspace.scale;
@@ -170,6 +176,7 @@ namespace pxtblockly {
             Blockly.DropDownDiv.content_.removeAttribute('aria-haspopup');
             Blockly.DropDownDiv.content_.removeAttribute('aria-activedescendant');
             Blockly.DropDownDiv.getContentDiv().style.width = '';
+            Blockly.DropDownDiv.getContentDiv().style.paddingRight = '';
 
             if (this.sourceBlock_) {
                 if (this.sourceBlock_.isShadow()) {

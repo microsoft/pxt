@@ -129,6 +129,14 @@ export class Editor extends srceditor.Editor {
         this.processMessage(smsg);
     }
 
+    mapSource(source: string): string {
+        if (!this.sourceMap[source]) {
+            const sourceIdx = Object.keys(this.sourceMap).length + 1
+            this.sourceMap[source] = lf("source") + sourceIdx.toString()
+        }
+        return this.sourceMap[source]
+    }
+
     processMessage(smsg: pxsim.SimulatorSerialMessage) {
         const sim = !!smsg.sim
         if (sim != this.isSim) return;
@@ -138,15 +146,23 @@ export class Editor extends srceditor.Editor {
         const receivedTime = smsg.receivedTime || Util.now()
 
         this.appendRawData(data);
+        const niceSource = this.mapSource(source);
 
-        if (!this.sourceMap[source]) {
-            const sourceIdx = Object.keys(this.sourceMap).length + 1
-            this.sourceMap[source] = lf("source") + sourceIdx.toString()
+        // packet payload as json
+        if (/^\s*\{[^}]+\}\s*$/.test(data)) {
+            try {
+                const json = JSON.parse(data);
+                const t = parseInt(json["t"]);
+                const s = this.mapSource(json["s"]);
+                const n = json["n"] || "";
+                const v = parseFloat(json["v"]);
+                if (!isNaN(t) && !isNaN(v))
+                    this.appendGraphEntry(s, n, v, receivedTime);
+            }
+            catch (e) { } // invalid js
         }
-        const niceSource = this.sourceMap[source]
-
         // is this a CSV data entry
-        if (/^\s*(-?\d+(\.\d*)?(e[\+\-]\d+)?)(\s*,\s*(-?\d+(\.\d*)?(e[\+\-]\d+)?))+\s*,?\s*$/.test(data)) {
+        else if (/^\s*(-?\d+(\.\d*)?(e[\+\-]\d+)?)(\s*,\s*(-?\d+(\.\d*)?(e[\+\-]\d+)?))+\s*,?\s*$/.test(data)) {
             data.split(/\s*,\s*/).map(s => parseFloat(s))
                 .filter(d => !isNaN(d))
                 .forEach((d, i) => {
@@ -313,6 +329,21 @@ export class Editor extends srceditor.Editor {
     downloadCSV() {
         const sep = lf("{id:csvseparator}\t");
         let csv: string[] = [];
+
+        const hasData = this.charts.length && this.charts.some((chart) => {
+            return Object.keys(chart.datas).length > 0;
+        });
+
+        if (!hasData) {
+            core.confirmAsync({
+                header: lf("No data to export"),
+                hideAgree: true,
+                disagreeLbl: lf("Ok"),
+                body: lf("You must generate some serial data before you can export it.")
+            });
+            return;
+        }
+
         this.charts.forEach(chart => {
             const lines: { name: string; line: number[][]; }[] = [];
             Object.keys(chart.datas).forEach(k => lines.push({ name: k, line: chart.datas[k] }));
@@ -343,13 +374,13 @@ export class Editor extends srceditor.Editor {
 
         core.infoNotification(lf("Exporting data...."));
         const time = new Date(Date.now()).toString().replace(/[^\d]+/g, '-').replace(/(^-|-$)/g, '');
-        pxt.commands.browserDownloadAsync(csvText, pxt.appTarget.id + '-' + lf("{id:csvfilename}data") + '-' + time + ".csv", "text/csv")
+        pxt.commands.browserDownloadAsync(Util.toUTF8(csvText), pxt.appTarget.id + '-' + lf("{id:csvfilename}data") + '-' + time + ".csv", "text/csv")
     }
 
     downloadRaw() {
         core.infoNotification(lf("Exporting text...."));
         const time = new Date(Date.now()).toString().replace(/[^\d]+/g, '-').replace(/(^-|-$)/g, '');
-        pxt.commands.browserDownloadAsync(this.rawDataBuffer, pxt.appTarget.id + '-' + lf("{id:csvfilename}console") + '-' + time + ".txt", "text/plain")
+        pxt.commands.browserDownloadAsync(Util.toUTF8(this.rawDataBuffer), pxt.appTarget.id + '-' + lf("{id:csvfilename}console") + '-' + time + ".txt", "text/plain")
     }
 
     goBack() {

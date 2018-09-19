@@ -64,7 +64,7 @@ namespace pxt.docs.codeCard {
         }
 
         if (card.blocksXml) {
-            let svg = pxt.blocks.render(card.blocksXml);
+            const svg = pxt.blocks.render(card.blocksXml);
             if (!svg) {
                 console.error("failed to render blocks");
                 pxt.debug(card.blocksXml);

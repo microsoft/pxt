@@ -9,6 +9,18 @@ namespace pxt {
     export import U = pxtc.Util;
     export import Util = pxtc.Util;
 
+
+    export interface TCPIO {
+        onData: (v: Uint8Array) => void;
+        onError: (e: Error) => void;
+        connectAsync(): Promise<void>;
+        sendPacketAsync(pkt: Uint8Array): Promise<void>;
+        error(msg: string): any;
+        disconnectAsync(): Promise<void>;
+    }
+
+    export let mkTCPSocket: (host: string, port: number) => TCPIO;
+
     let savedAppTarget: TargetBundle;
     export function setAppTarget(trg: TargetBundle) {
         appTarget = trg || <TargetBundle>{};
@@ -21,25 +33,12 @@ namespace pxt {
         let comp = appTarget.compile
         if (!comp)
             comp = appTarget.compile = { isNative: false, hasHex: false }
-        if (comp.hasHex && comp.jsRefCounting === undefined)
-            comp.jsRefCounting = true
-        if (!comp.hasHex && comp.floatingPoint === undefined)
-            comp.floatingPoint = true
-        if (comp.hasHex && !comp.nativeType)
-            comp.nativeType = pxtc.NATIVE_TYPE_THUMB
-        if (comp.nativeType == pxtc.NATIVE_TYPE_AVR || comp.nativeType == pxtc.NATIVE_TYPE_AVRVM) {
-            comp.shortPointers = true
-            comp.flashCodeAlign = 0x10
+        if (comp.hasHex) {
+            if (!comp.nativeType)
+                comp.nativeType = pxtc.NATIVE_TYPE_THUMB
         }
-        if (comp.nativeType == pxtc.NATIVE_TYPE_CS) {
-            comp.floatingPoint = true
-            comp.needsUnboxing = true
-            comp.jsRefCounting = false
-        }
-        if (comp.taggedInts) {
-            comp.floatingPoint = true
-            comp.needsUnboxing = true
-        }
+        // JS ref counting currently not supported
+        comp.jsRefCounting = false
         if (!comp.vtableShift)
             comp.vtableShift = 2
         if (!comp.useUF2 && !comp.useELF && comp.noSourceInFlash == undefined)
@@ -294,8 +293,6 @@ namespace pxt {
 
     export function outputName(trg: CompileTarget = null) {
         if (!trg) trg = appTarget.compile
-        if (trg.nativeType == ts.pxtc.NATIVE_TYPE_CS)
-            return ts.pxtc.BINARY_CS
         if (trg.useUF2)
             return ts.pxtc.BINARY_UF2
         else if (trg.useELF)
@@ -305,6 +302,6 @@ namespace pxt {
     }
 
     export function isOutputText(trg: CompileTarget = null) {
-        return outputName(trg) == ts.pxtc.BINARY_HEX || outputName(trg) == ts.pxtc.BINARY_CS
+        return outputName(trg) == ts.pxtc.BINARY_HEX
     }
 }
