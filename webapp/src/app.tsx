@@ -1741,7 +1741,7 @@ export class ProjectView
         const files = p.getAllFiles();
         // render in sidedocs
         const docsUrl = pxt.webConfig.docsUrl || '/--docs';
-        const mode = "blocks"
+        const mode = theEditor.isBlocksActive() ? "blocks" : "typescript";
         window.localStorage["printjob"] = JSON.stringify(files);
         const url = `${docsUrl}#print:job:${mode}:${pxt.Util.localeInfo()}`;
 
@@ -1774,8 +1774,11 @@ export class ProjectView
 
     runSimulator(opts: compiler.CompileOptions = {}) {
         const editorId = this.editor ? this.editor.getId().replace(/Editor$/, '') : "unknown";
-        if (opts.background) pxt.tickActivity("autorun", "autorun." + editorId);
-        else pxt.tickEvent(opts.debug ? "debug" : "run", { editor: editorId });
+        if (opts.background) {
+            pxt.tickActivity("autorun", "autorun." + editorId);
+            if (localStorage.getItem("noAutoRun"))
+                return Promise.resolve()
+        } else pxt.tickEvent(opts.debug ? "debug" : "run", { editor: editorId });
 
         if (!opts.background)
             this.editor.beforeCompile();
@@ -1866,7 +1869,11 @@ export class ProjectView
         return compiler.getBlocksAsync()
             .then(blocksInfo => compiler.decompileSnippetAsync(req.ts, blocksInfo))
             .then(resp => {
-                const svg = pxt.blocks.render(resp, { snippetMode: true, layout: pxt.blocks.BlockLayout.Align });
+                const svg = pxt.blocks.render(resp, {
+                    snippetMode: true,
+                    layout: pxt.blocks.BlockLayout.Align,
+                    splitSvg: false
+                }) as SVGSVGElement;
                 // TODO: what if svg is undefined? handle that scenario
                 const viewBox = svg.getAttribute("viewBox").split(/\s+/).map(d => parseInt(d));
                 return {
@@ -2188,13 +2195,23 @@ export class ProjectView
     completeTutorial() {
         pxt.tickEvent("tutorial.complete");
         core.showLoading("leavingtutorial", lf("leaving tutorial..."));
-        this.exitTutorialAsync()
-            .then(() => {
-                let curr = pkg.mainEditorPkg().header;
-                return this.loadHeaderAsync(curr);
-            }).done(() => {
-                core.hideLoading("leavingtutorial");
-            })
+
+        if (pxt.BrowserUtils.isIE()) {
+            // For some reason, going from a tutorial straight to the editor in
+            // IE causes the JavaScript runtime to go bad. In order to work around
+            // the issue we go to the homescreen instead of the to the editor. See
+            // https://github.com/Microsoft/pxt-microbit/issues/1249 for more info.
+            this.exitTutorial();
+        }
+        else {
+            this.exitTutorialAsync()
+                .then(() => {
+                    let curr = pkg.mainEditorPkg().header;
+                    return this.loadHeaderAsync(curr);
+                }).done(() => {
+                    core.hideLoading("leavingtutorial");
+                });
+        }
     }
 
     exitTutorial(removeProject?: boolean) {

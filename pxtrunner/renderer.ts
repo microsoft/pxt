@@ -23,7 +23,8 @@ namespace pxt.runner {
         package?: string;
         showEdit?: boolean;
         showJavaScript?: boolean; // default is to show blocks first
-        downloadScreenshots?: boolean
+        downloadScreenshots?: boolean;
+        split?: boolean; // split in multiple divs if too big
     }
 
     export interface WidgetOptions {
@@ -59,7 +60,7 @@ namespace pxt.runner {
         let images = cdn + "images"
         let $h = $('<div class="ui bottom attached tabular icon small compact menu hideprint">'
             + ' <div class="right icon menu"></div></div>');
-        let $c = $('<div class="ui top attached segment nobreak"></div>');
+        let $c = $('<div class="ui top attached segment codewidget"></div>');
         let $menu = $h.find('.right.menu');
 
         const theme = pxt.appTarget.appTheme || {};
@@ -161,8 +162,9 @@ namespace pxt.runner {
         let $el = $("." + cls).first();
         if (!$el[0]) return Promise.resolve();
 
-        if (!options.emPixels) options.emPixels = 14;
-        if (!options.layout) options.layout = pxt.blocks.BlockLayout.Flow;
+        if (!options.emPixels) options.emPixels = 18;
+        if (!options.layout) options.layout = pxt.blocks.BlockLayout.Align;
+        options.splitSvg = true;
 
         return pxt.runner.decompileToBlocksAsync($el.text(), options)
             .then((r) => {
@@ -183,7 +185,7 @@ namespace pxt.runner {
             return renderNextSnippetAsync(options.snippetClass, (c, r) => {
                 const s = r.blocksSvg;
                 if (options.snippetReplaceParent) c = c.parent();
-                const segment = $('<div class="ui segment"/>').append(s);
+                const segment = $('<div class="ui segment codewidget"/>').append(s);
                 c.replaceWith(segment);
             }, { package: options.package, snippetMode: false, aspectRatio: options.blocksAspectRatio });
         }
@@ -233,7 +235,7 @@ namespace pxt.runner {
             let block = Blockly.Blocks[symbolInfo.attributes.blockId];
             let xml = block && block.codeCard ? block.codeCard.blocksXml : undefined;
 
-            let s = xml ? $(pxt.blocks.render(xml)) : r.compileBlocks && r.compileBlocks.success ? $(r.blocksSvg) : undefined;
+            const s = xml ? $(pxt.blocks.render(xml)) : r.compileBlocks && r.compileBlocks.success ? $(r.blocksSvg) : undefined;
             let sig = info.decl.getText().replace(/^export/, '');
             sig = sig.slice(0, sig.indexOf('{')).trim() + ';';
             let js = $('<code class="lang-typescript highlight"/>').text(sig);
@@ -246,7 +248,7 @@ namespace pxt.runner {
         return renderNextSnippetAsync(options.blocksClass, (c, r) => {
             const s = r.blocksSvg;
             if (options.snippetReplaceParent) c = c.parent();
-            const segment = $('<div class="ui segment"/>').append(s);
+            const segment = $('<div class="ui segment codewidget"/>').append(s);
             c.replaceWith(segment);
         }, { package: options.package, snippetMode: true, aspectRatio: options.blocksAspectRatio });
     }
@@ -260,7 +262,8 @@ namespace pxt.runner {
             let $el = $("." + cls).first();
             if (!$el[0]) return Promise.resolve();
 
-            if (!options.emPixels) options.emPixels = 14;
+            if (!options.emPixels) options.emPixels = 18;
+            options.splitSvg = true;
             return pxt.runner.compileBlocksAsync($el.text(), options)
                 .then((r) => {
                     try {
@@ -277,7 +280,7 @@ namespace pxt.runner {
         return renderNextXmlAsync(cls, (c, r) => {
             const s = r.blocksSvg;
             if (opts.snippetReplaceParent) c = c.parent();
-            const segment = $('<div class="ui segment"/>').append(s);
+            const segment = $('<div class="ui segment codewidget"/>').append(s);
             c.replaceWith(segment);
         }, { package: opts.package, snippetMode: true, aspectRatio: opts.blocksAspectRatio });
     }

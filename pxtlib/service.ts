@@ -14,16 +14,12 @@ namespace ts.pxtc {
     export const TS_OUTPUT_TYPE = "typescript_expression";
     export const PAUSE_UNTIL_TYPE = "pxt_pause_until";
     export const BINARY_JS = "binary.js";
-    export const BINARY_CS = "binary.cs";
     export const BINARY_ASM = "binary.asm";
     export const BINARY_HEX = "binary.hex";
     export const BINARY_UF2 = "binary.uf2";
     export const BINARY_ELF = "binary.elf";
 
     export const NATIVE_TYPE_THUMB = "thumb";
-    export const NATIVE_TYPE_AVR = "AVR";
-    export const NATIVE_TYPE_CS = "C#";
-    export const NATIVE_TYPE_AVRVM = "AVRVM";
 
     export interface ParameterDesc {
         name: string;

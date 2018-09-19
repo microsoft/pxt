@@ -333,7 +333,7 @@ namespace pxt.blocks {
                 name: Util.lf("{id:block}number"),
                 url: '/blocks/math/random',
                 category: 'math',
-                tooltip: (pxt.appTarget && pxt.appTarget.compile && pxt.appTarget.compile.floatingPoint) ?
+                tooltip: (pxt.appTarget && pxt.appTarget.compile) ?
                     Util.lf("a decimal number") : Util.lf("an integer number")
             },
             'math_integer': {

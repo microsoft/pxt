@@ -37,7 +37,6 @@ pxt.setAppTarget({
         isNative: false,
         hasHex: false,
         jsRefCounting: true,
-        floatingPoint: false
     },
     bundledpkgs: {},
     appTheme: {},
@@ -104,30 +103,13 @@ describe("ts compiler", () => {
         }
     };
 
-    describe("without floating point", () => {
-        filenames.forEach(filename => {
-            it("should compile and run " + path.basename(filename), function() {
-                this.timeout(10000)
-                return compileTestAsync(filename)
-            });
-        });
-    });
-
     describe("with floating point", () => {
-        before(() => {
-            pxt.appTarget.compile.floatingPoint = true
-        });
-
         filenames.forEach(filename => {
             it("should compile and run " + path.basename(filename), function() {
                 this.timeout(10000)
                 return compileTestAsync(filename)
             });
         });
-
-        after(() => {
-            pxt.appTarget.compile.floatingPoint = false
-        })
     });
 });
 

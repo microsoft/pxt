@@ -2148,41 +2148,45 @@ function renderDocs(builtPackaged: string, localDir: string) {
     docsTemplate = U.replaceAll(docsTemplate, "/--embed", webpath + "embed.js")
 
     const dirs: Map<boolean> = {}
-    for (const f of nodeutil.allFiles("docs", 8)) {
-        pxt.log(`rendering ${f}`)
-        let dd = path.join(dst, f)
-        let dir = path.dirname(dd)
-        if (!U.lookup(dirs, dir)) {
-            nodeutil.mkdirP(dir)
-            dirs[dir] = true
-        }
-        let buf = fs.readFileSync(f)
-        if (/\.(md|html)$/.test(f)) {
-            let str = buf.toString("utf8")
-            if (/\.md$/.test(f)) {
-                str = nodeutil.resolveMd(".", f.substr(5, f.length - 8));
-                nodeutil.writeFileSync(dd, str, { encoding: "utf8" });
+    for (let docFolder of ["node_modules/pxt-core/common-docs", "docs"]) {
+        for (let f of nodeutil.allFiles(docFolder, 8)) {
+            let origF = f
+            pxt.log(`rendering ${f}`)
+            f = "docs" + f.slice(docFolder.length)
+            let dd = path.join(dst, f)
+            let dir = path.dirname(dd)
+            if (!U.lookup(dirs, dir)) {
+                nodeutil.mkdirP(dir)
+                dirs[dir] = true
             }
-            let html = ""
-            if (U.endsWith(f, ".md")) {
-                html = pxt.docs.renderMarkdown({
-                    template: docsTemplate,
-                    markdown: str,
-                    theme: pxt.appTarget.appTheme,
-                    filepath: f,
+            let buf = fs.readFileSync(origF)
+            if (/\.(md|html)$/.test(f)) {
+                let str = buf.toString("utf8")
+                if (/\.md$/.test(f)) {
+                    str = nodeutil.resolveMd(".", f.substr(5, f.length - 8));
+                    nodeutil.writeFileSync(dd, str, { encoding: "utf8" });
+                }
+                let html = ""
+                if (U.endsWith(f, ".md")) {
+                    html = pxt.docs.renderMarkdown({
+                        template: docsTemplate,
+                        markdown: str,
+                        theme: pxt.appTarget.appTheme,
+                        filepath: f,
+                    })
+                }
+                else
+                    html = server.expandHtml(str)
+                html = html.replace(/(<a[^<>]*)\shref="(\/[^<>"]*)"/g, (f, beg, url) => {
+                    return beg + ` href="${webpath}docs${url}.html"`
                 })
+                buf = new Buffer(html, "utf8")
+                dd = dd.slice(0, dd.length - 3) + ".html"
             }
-            else
-                html = server.expandHtml(str)
-            html = html.replace(/(<a[^<>]*)\shref="(\/[^<>"]*)"/g, (f, beg, url) => {
-                return beg + ` href="${webpath}docs${url}.html"`
-            })
-            buf = new Buffer(html, "utf8")
-            dd = dd.slice(0, dd.length - 3) + ".html"
+            nodeutil.writeFileSync(dd, buf)
         }
-        nodeutil.writeFileSync(dd, buf)
+        console.log("Docs written.")
     }
-    console.log("Docs written.")
 }
 
 export function serveAsync(parsed: commandParser.ParsedCommand) {
@@ -2951,10 +2955,6 @@ function testAssemblers(): Promise<void> {
     let thumb = new pxtc.thumb.ThumbProcessor();
     thumb.testAssembler();
     console.log("- done testing Thumb");
-    console.log("- testing AVR")
-    let avr = new pxtc.avr.AVRProcessor();
-    avr.testAssembler();
-    console.log("- done testing AVR");
     return Promise.resolve();
 }
 
@@ -3853,7 +3853,7 @@ function stringifyTranslations(strings: pxt.Map<string>): string {
 }
 
 export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
-    const route = parsed.flags["route"] as string || ".";
+    const route = parsed.flags["route"] as string || "/";
     const ghpages = parsed.flags["githubpages"];
     const builtPackaged = parsed.flags["output"] as string || "built/packaged";
     const minify = !!parsed.flags["minify"];
@@ -4239,11 +4239,6 @@ export function runAsync(parsed?: commandParser.ParsedCommand) {
     parseBuildInfo(parsed);
     return buildCoreAsync({ mode: BuildOption.Run })
         .then((compileOpts) => { });
-}
-
-function runFloatAsync() {
-    pxt.appTarget.compile.floatingPoint = true
-    return runAsync()
 }
 
 export function testAsync() {
@@ -5105,7 +5100,6 @@ function initCommands() {
     }, deployAsync)
     simpleCmd("run", "build and run current package in the simulator", runAsync);
     simpleCmd("console", "monitor console messages", consoleAsync, null, true);
-    advancedCommand("runfloat", "build and run current package in the simulator, forcing floating point mode", runFloatAsync);
     simpleCmd("update", "update pxt-core reference and install updated version", updateAsync, undefined, true);
     simpleCmd("install", "install new packages, or all package", installAsync, "[package1] [package2] ...");
     simpleCmd("add", "add a feature (.asm, C++ etc) to package", addAsync, "<arguments>");
@@ -5575,8 +5569,6 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
     if (trg.compileService) {
         compileId = trg.compileService.buildEngine || "yotta"
     }
-    if (trg.compile.nativeType == pxtc.NATIVE_TYPE_CS)
-        compileId = "cs"
 
     const versions = pxt.appTarget.versions || ({ target: "", pxt: "" } as pxt.TargetVersions);
     pxt.log(`Using target ${trg.id} with build engine ${compileId}`)

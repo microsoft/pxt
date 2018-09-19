@@ -48,7 +48,6 @@ namespace ts.pxtc {
     // - for calls to user functions, all arguments passed on stack
 
     export abstract class AssemblerSnippets {
-        hasCommonalize(): boolean { return false }
         nop() { return "TBD(nop)" }
         reg_gets_imm(reg: string, imm: number) { return "TBD(reg_gets_imm)" }
         // Registers are stored on the stack in numerical order 
@@ -88,6 +87,7 @@ namespace ts.pxtc {
         }
         helper_prologue() { return "TBD(lambda_prologue)" }
         helper_epilogue() { return "TBD(lambda_epilogue)" }
+        pop_clean(pops: boolean[]) { return "TBD" }
         load_ptr(lbl: string, reg: string) { return "TBD(load_ptr)" }
         load_ptr_full(lbl: string, reg: string) { return "TBD(load_ptr_full)" }
         emit_int(v: number, reg: string) { return "TBD(emit_int)" }
@@ -95,7 +95,7 @@ namespace ts.pxtc {
         string_literal(lbl: string, s: string) {
             return `
 .balign 4
-${lbl}meta: .short 0xffff, ${target.taggedInts ? pxt.REF_TAG_STRING + "," : ""} ${s.length}
+${lbl}meta: .short 0xffff, ${pxt.REF_TAG_STRING}, ${s.length}
 ${lbl}: .string ${asmStringLiteral(s)}
 `
         }
@@ -104,7 +104,7 @@ ${lbl}: .string ${asmStringLiteral(s)}
         hex_literal(lbl: string, data: string) {
             return `
 .balign 4
-${lbl}: .short 0xffff, ${target.taggedInts ? pxt.REF_TAG_BUFFER + "," : ""} ${data.length >> 1}${target.taggedInts ? ", 0x0000" : ""}
+${lbl}: .short 0xffff, ${pxt.REF_TAG_BUFFER}, ${data.length >> 1}, 0x0000
         .hex ${data}${data.length % 4 == 0 ? "" : "00"}
 `
         }
@@ -125,7 +125,7 @@ ${lbl}: .short 0xffff, ${target.taggedInts ? pxt.REF_TAG_BUFFER + "," : ""} ${da
 
     export class ProctoAssembler {
 
-        private t: AssemblerSnippets;
+        private t: ThumbSnippets; // for better "Go To Definition"
         private bin: Binary;
         private resText = ""
         private exprStack: ir.Expr[] = []
@@ -134,13 +134,25 @@ ${lbl}: .short 0xffff, ${target.taggedInts ? pxt.REF_TAG_BUFFER + "," : ""} ${da
         private baseStackSize = 0; // real stack size is this + exprStack.length
 
         constructor(t: AssemblerSnippets, bin: Binary, proc: ir.Procedure) {
-            this.t = t;
+            this.t = t as any; // TODO in future, figure out if we follow the "Snippets" architecture
             this.bin = bin;
             this.proc = proc;
             this.work();
         }
 
         private write = (s: string) => { this.resText += asmline(s); }
+
+        private redirectOutput(f: () => void) {
+            let prevWrite = this.write
+            let res = ""
+            this.write = s => res += asmline(s)
+            try {
+                f()
+            } finally {
+                this.write = prevWrite
+            }
+            return res
+        }
 
         private stackSize() {
             return this.baseStackSize + this.exprStack.length
@@ -262,6 +274,7 @@ ${baseLabel}:
                         break;
                     case ir.SK.Label:
                         this.write(s.lblName + ":")
+                        this.validateJmpStack(s)
                         break;
                     case ir.SK.Breakpoint:
                         if (this.bin.options.breakpoints) {
@@ -292,30 +305,58 @@ ${baseLabel}:
             return l
         }
 
+        private dumpStack() {
+            let r = "["
+            for (let s of this.exprStack) {
+                r += s.sharingInfo() + ": " + s.toString() + "; "
+            }
+            r += "]"
+            return r
+        }
+
         private terminate(expr: ir.Expr) {
             assert(expr.exprKind == ir.EK.SharedRef)
             let arg = expr.args[0]
-            if (arg.currUses == arg.totalUses)
-                return
-            let numEntries = 0
+            // console.log("TERM", arg.sharingInfo(), arg.toString(), this.dumpStack())
+            U.assert(arg.currUses != arg.totalUses)
+            // we should have the terminated expression on top
+            U.assert(this.exprStack[0] === arg, "term at top")
+            // we pretend it's popped and simulate what clearStack would do
+            let numEntries = 1
             while (numEntries < this.exprStack.length) {
                 let ee = this.exprStack[numEntries]
-                if (ee != arg && ee.currUses != ee.totalUses)
+                if (ee.currUses != ee.totalUses)
                     break
                 numEntries++
             }
-            assert(numEntries > 0)
+            // in this branch we just remove all that stuff off the stack
             this.write(`@dummystack ${numEntries}`)
             this.write(this.t.pop_locals(numEntries))
 
+            return numEntries
+        }
+
+        private validateJmpStack(lbl: ir.Stmt, off = 0) {
+            // console.log("Validate:", off, lbl.lblName, this.dumpStack())
+            let currSize = this.exprStack.length - off
+            if (lbl.lblStackSize == null) {
+                lbl.lblStackSize = currSize
+            } else {
+                if (lbl.lblStackSize != currSize) {
+                    console.log(lbl.lblStackSize, currSize)
+                    console.log(this.dumpStack())
+                    U.oops("stack misaligned at: " + lbl.lblName)
+                }
+            }
         }
 
         private emitJmp(jmp: ir.Stmt) {
+            let termOff = 0
             if (jmp.jmpMode == ir.JmpMode.Always) {
                 if (jmp.expr)
                     this.emitExpr(jmp.expr)
                 if (jmp.terminateExpr)
-                    this.terminate(jmp.terminateExpr)
+                    termOff = this.terminate(jmp.terminateExpr)
                 this.write(this.t.unconditional_branch(jmp.lblName) + " ; with expression")
             } else {
                 let lbl = this.mkLbl("jmpz")
@@ -343,14 +384,16 @@ ${baseLabel}:
                 }
 
                 if (jmp.terminateExpr)
-                    this.terminate(jmp.terminateExpr)
+                    termOff = this.terminate(jmp.terminateExpr)
 
                 this.write(this.t.unconditional_branch(jmp.lblName))
                 this.write(lbl + ":")
             }
+
+            this.validateJmpStack(jmp.lbl, termOff)
         }
 
-        private clearStack() {
+        private clearStack(fast = false) {
             let numEntries = 0
             while (this.exprStack.length > 0 && this.exprStack[0].currUses == this.exprStack[0].totalUses) {
                 numEntries++;
@@ -358,6 +401,16 @@ ${baseLabel}:
             }
             if (numEntries)
                 this.write(this.t.pop_locals(numEntries))
+            if (!fast) {
+                let toClear = this.exprStack.filter(e => e.currUses == e.totalUses && e.irCurrUses != -1)
+                if (toClear.length > 0) {
+                    this.write(this.t.reg_gets_imm("r1", 0))
+                    for (let a of toClear) {
+                        a.irCurrUses = -1
+                        this.write(this.loadFromExprStack("r1", a, 0, true))
+                    }
+                }
+            }
         }
 
         private withRef(name: string, isRef: boolean) {
@@ -484,86 +537,305 @@ ${baseLabel}:
             }
         }
 
-        private emitSharedTerminate(e: ir.Expr) {
-            this.emitExpr(e)
-            let arg = e.data as ir.Expr
-            // ??? missing ???
+        private clearArgs(nonRefs: ir.Expr[], refs: ir.Expr[]) {
+            let numArgs = nonRefs.length + refs.length
+
+            let allArgs = nonRefs.concat(refs)
+            for (let r of allArgs) {
+                if (r.currUses != 0 || r.totalUses != 1) {
+                    console.log(r.toString())
+                    console.log(allArgs.map(a => a.toString()))
+                    U.oops(`wrong uses: ${r.currUses} ${r.totalUses}`)
+                }
+            }
+
+            for (let r of nonRefs) {
+                r.currUses = 1
+            }
+
+            if (refs.length == 0) {
+                // no helper in that case
+                this.clearStack()
+                return
+            }
+
+            const s0 = this.exprStack.length
+            const decr = this.redirectOutput(() => {
+                this.write(this.t.mov("r7", "r0"))
+                this.write(this.t.mov("r4", "lr"))
+                let k = 0
+                while (refs.length > 0) {
+                    this.clearStack(true)
+                    let s0 = this.exprStack[0]
+                    let idx = refs.indexOf(s0)
+                    if (idx >= 0) {
+                        this.exprStack.shift()
+                        refs.splice(idx, 1)
+                        this.write(this.t.pop_fixed(["r0"]))
+                        this.write(this.t.inline_decr(k++, this.stackSize()))
+                    } else {
+                        break
+                    }
+                }
+                while (refs.length > 0) {
+                    let r = refs.shift()
+                    r.currUses = 1
+                    this.write(this.loadFromExprStack("r0", r))
+                    this.write(this.t.inline_decr(k++, this.stackSize()))
+                }
+                this.clearStack()
+                this.write(this.t.mov("r0", "r7"))
+                this.write(this.t.helper_ret())
+            })
+            const numPops = s0 - this.exprStack.length
+
+            this.emitHelper(`@dummystack ${numPops}\n` + decr, "clr" + numArgs)
+            this.write(`@dummystack ${-numPops}`)
         }
 
         private emitRtCall(topExpr: ir.Expr) {
-            let info = ir.flattenArgs(topExpr)
-
-            info.precomp.forEach(e => this.emitExpr(e))
-            info.flattened.forEach((a, i) => {
-                U.assert(i <= 3)
-                this.emitExprInto(a, "r" + i)
-            })
-
-            this.clearStack()
-
             let name: string = topExpr.data
-            //console.log("RT",name,topExpr.isAsync)
 
-            if (name == "langsupp::ignore")
-                return
+            let maskInfo = topExpr.mask || { refMask: 0 }
+            let convs = maskInfo.conversions || []
+            let allArgs = topExpr.args.map((a, i) => ({
+                idx: i,
+                expr: a,
+                isSimple: a.isLiteral(),
+                isRef: (maskInfo.refMask & (1 << i)) != 0,
+                conv: convs.find(c => c.argIdx == i)
+            }))
 
-            if (U.startsWith(name, "thumb::")) {
-                this.write(this.t.rt_call(name.slice(7), "r0", "r1"))
+            U.assert(allArgs.length <= 4)
+
+            let seenUpdate = false
+            for (let a of U.reversed(allArgs)) {
+                if (a.expr.isPure()) {
+                    if (!a.isSimple && !a.isRef)
+                        if (!seenUpdate || a.expr.isStateless())
+                            a.isSimple = true
+                } else {
+                    seenUpdate = true
+                }
+            }
+
+            for (let a of allArgs) {
+                // we might want conversion from literal numbers to strings for example
+                if (a.conv) a.isSimple = false
+            }
+
+            let complexArgs = allArgs.filter(a => !a.isSimple)
+
+            if (complexArgs.every(c => c.expr.isPure() && !c.isRef && !c.conv)) {
+                for (let c of complexArgs) c.isSimple = true
+                complexArgs = []
+            }
+
+            let c0 = complexArgs[0]
+            let clearStack = true
+
+            if (complexArgs.length == 1 && !c0.conv && !c0.isRef) {
+                this.emitExpr(c0.expr)
+                if (c0.idx != 0)
+                    this.write(this.t.mov("r" + c0.idx, "r0"))
+                clearStack = false
             } else {
+                for (let a of complexArgs)
+                    this.pushArg(a.expr)
+
+                this.alignExprStack(0)
+
+                let convArgs = complexArgs.filter(a => !!a.conv)
+                if (convArgs.length) {
+                    const conv = this.redirectOutput(() => {
+                        let off = 0
+                        if (this.t.stackAligned())
+                            off += 2
+                        else
+                            off += 1
+                        for (let a of convArgs) {
+                            this.write(this.loadFromExprStack("r0", a.expr, off))
+                            this.alignedCall(a.conv.method, "", off)
+                            if (a.conv.returnsRef)
+                                // replace the entry on the stack with the return value,
+                                // as the original was already decr'ed, but the result
+                                // has yet to be
+                                this.write(this.loadFromExprStack("r0", a.expr, off, true))
+                            this.write(this.t.push_fixed(["r0"]))
+                            off++
+                        }
+                        for (let a of U.reversed(convArgs)) {
+                            off--
+                            this.write(this.t.pop_fixed(["r" + a.idx]))
+                        }
+                        for (let a of complexArgs) {
+                            if (!a.conv)
+                                this.write(this.loadFromExprStack("r" + a.idx, a.expr, off))
+                        }
+                    })
+                    this.emitHelper(this.t.helper_prologue() + conv + this.t.helper_epilogue(), "conv")
+                } else {
+                    // not really worth a helper; some of this will be peep-holed away
+                    for (let a of complexArgs)
+                        this.write(this.loadFromExprStack("r" + a.idx, a.expr))
+                }
+            }
+
+            for (let a of allArgs)
+                if (a.isSimple)
+                    this.emitExprInto(a.expr, "r" + a.idx)
+
+
+            if (name != "langsupp::ignore")
                 this.alignedCall(name)
+
+            if (clearStack) {
+                this.clearArgs(complexArgs.filter(a => !a.isRef).map(a => a.expr),
+                    complexArgs.filter(a => a.isRef).map(a => a.expr))
             }
         }
 
-        private alignedCall(name: string, cmt = "") {
-            let unalign = this.alignStack()
+        private alignedCall(name: string, cmt = "", off = 0) {
+            let unalign = this.alignStack(off)
             this.write(this.t.call_lbl(name) + cmt)
             this.write(unalign)
         }
 
-        private emitHelper(asm: string) {
+        private emitHelper(asm: string, baseName = "hlp") {
             if (!this.bin.codeHelpers[asm]) {
                 let len = Object.keys(this.bin.codeHelpers).length
-                this.bin.codeHelpers[asm] = "_hlp_" + len
+                this.bin.codeHelpers[asm] = `_${baseName}_${len}`
             }
             this.write(this.t.call_lbl(this.bin.codeHelpers[asm]))
         }
 
+        private pushToExprStack(a: ir.Expr) {
+            a.totalUses = 1
+            a.currUses = 0
+            this.exprStack.unshift(a)
+        }
+
+        private pushArg(a: ir.Expr) {
+            this.clearStack(true)
+            let bot = this.exprStack.length
+            this.emitExpr(a)
+            this.clearStack(true)
+            this.write(this.t.push_local("r0") + " ; proc-arg")
+            this.pushToExprStack(a)
+        }
+
+        private loadFromExprStack(r: string, a: ir.Expr, off = 0, store = false) {
+            let idx = this.exprStack.indexOf(a)
+            assert(idx >= 0)
+            return this.t.load_reg_src_off(r, "sp", (idx + off).toString(), true, store) + ` ; estack\n`
+        }
+
+        private pushDummy() {
+            let dummy = ir.numlit(0)
+            dummy.totalUses = 1
+            dummy.currUses = 1
+            this.exprStack.unshift(dummy)
+        }
+
+        private alignExprStack(numargs: number) {
+            let interAlign = this.stackAlignmentNeeded(numargs)
+            if (interAlign) {
+                this.write(this.t.push_locals(interAlign))
+                for (let i = 0; i < interAlign; ++i)
+                    this.pushDummy()
+            }
+        }
+
         private emitProcCall(topExpr: ir.Expr) {
-            let stackBottom = 0
-            let needsRePush = false
-            //console.log("PROCCALL", topExpr.toString())
-            let argStmts = topExpr.args.map((a, i) => {
-                this.emitExpr(a)
-                this.write(this.t.push_local("r0") + " ; proc-arg")
-                a.totalUses = 1
-                a.currUses = 0
-                this.exprStack.unshift(a)
-                if (i == 0) stackBottom = this.exprStack.length
-                if (this.exprStack.length - stackBottom != i)
-                    needsRePush = true
-                return a
-            })
+            let complexArgs: ir.Expr[] = []
+            let theOne: ir.Expr = null
+            let theOneReg = ""
 
-            if (this.stackAlignmentNeeded()) needsRePush = true
+            let seenUpdate = false
+            for (let c of U.reversed(topExpr.args)) {
+                if (c.isPure()) {
+                    if (!seenUpdate || c.isStateless())
+                        continue
+                } else {
+                    seenUpdate = true
+                }
+                complexArgs.push(c)
+            }
+            complexArgs.reverse()
 
-            if (needsRePush) {
-                let interAlign = this.stackAlignmentNeeded(argStmts.length)
-                if (interAlign) {
-                    this.write(this.t.push_locals(interAlign))
-                    for (let i = 0; i < interAlign; ++i) {
-                        let dummy = ir.numlit(0)
-                        dummy.totalUses = 1
-                        dummy.currUses = 1
-                        this.exprStack.unshift(dummy)
+            if (complexArgs.length <= 1) {
+                // in case there is at most one complex argument, we don't need to re-push anything
+                let a0 = complexArgs[0]
+                if (a0) {
+                    theOne = a0
+                    this.clearStack(true)
+                    this.emitExpr(a0)
+                    if (a0 == topExpr.args[topExpr.args.length - 1])
+                        theOneReg = "r0"
+                    else {
+                        theOneReg = "r3"
+                        this.write(this.t.mov("r3", "r0"))
                     }
                 }
+                complexArgs = []
+            } else {
+                for (let a of complexArgs)
+                    this.pushArg(a)
+            }
 
-                for (let a of argStmts) {
-                    let idx = this.exprStack.indexOf(a)
-                    assert(idx >= 0)
-                    this.write(this.t.load_reg_src_off("r0", "sp", idx.toString(), true) + ` ; repush`)
-                    this.write(this.t.push_local("r0") + " ; repush")
+            this.alignExprStack(topExpr.args.length)
+            // available registers
+            let regList = ["r1", "r2", "r3", "r4", "r7"]
+            let regExprs: ir.Expr[] = []
+
+            if (complexArgs.length) {
+                let maxDepth = -1
+                for (let c of complexArgs) {
+                    maxDepth = Math.max(this.exprStack.indexOf(c), maxDepth)
+                }
+                maxDepth++
+                // we have 6 registers to play with
+                if (maxDepth <= regList.length) {
+                    regList = regList.slice(0, maxDepth)
+                    this.write(this.t.pop_fixed(regList))
+                    regExprs = this.exprStack.splice(0, maxDepth)
+
+                    // now push anything that isn't an argument
+                    let pushList: string[] = []
+                    for (let i = maxDepth - 1; i >= 0; --i) {
+                        if (complexArgs.indexOf(regExprs[i]) < 0) {
+                            pushList.push(regList[i])
+                            this.exprStack.unshift(regExprs[i])
+                        }
+                    }
+                    if (pushList.length)
+                        this.write(this.t.push_fixed(pushList))
+                } else {
+                    regList = null
+                    this.write(this.t.reg_gets_imm("r7", 0))
+                }
+            }
+
+            for (let a of U.reversed(topExpr.args)) {
+                if (complexArgs.indexOf(a) >= 0) {
+                    if (regList) {
+                        this.write(this.t.push_fixed([regList[regExprs.indexOf(a)]]))
+                    } else {
+                        this.write(this.loadFromExprStack("r0", a))
+                        this.write(this.t.push_local("r0") + " ; re-push")
+                        this.write(this.loadFromExprStack("r7", a, 1, true))
+                        let idx = this.exprStack.indexOf(a)
+                        let theNull = ir.numlit(0)
+                        theNull.currUses = 1
+                        theNull.totalUses = 1
+                        this.exprStack[idx] = theNull
+                    }
                     this.exprStack.unshift(a)
+                } else if (a === theOne) {
+                    this.write(this.t.push_local(theOneReg) + " ; the one arg")
+                    this.pushToExprStack(a)
+                } else {
+                    this.pushArg(a)
                 }
             }
 
@@ -583,12 +855,12 @@ ${baseLabel}:
                     this.write(this.t.emit_int(procid.mapIdx, "r1"))
                     if (isSet)
                         this.write(this.t.emit_int(procid.ifaceIndex, "r2"))
-                    this.emitHelper(this.t.vcall(procid.mapMethod, isSet, this.bin.options.target.vtableShift))
+                    this.emitHelper(this.t.vcall(procid.mapMethod, isSet, this.bin.options.target.vtableShift), "vcall")
                     this.write(lbl + ":")
                 } else {
-                    this.write(this.t.prologue_vtable(topExpr.args.length - 1, this.bin.options.target.vtableShift))
+                    this.write(this.t.prologue_vtable(0, this.bin.options.target.vtableShift))
 
-                    let effIdx = procid.virtualIndex + 4
+                    let effIdx = procid.virtualIndex + numSpecialMethods + 2
                     if (procid.ifaceIndex != null) {
                         this.write(this.t.load_reg_src_off("r0", "r0", "#4") + " ; iface table")
                         effIdx = procid.ifaceIndex
@@ -615,10 +887,10 @@ ${baseLabel}:
                 addr: 0,
                 callLabel: lbl,
             })
-            for (let a of argStmts) {
-                a.currUses = 1
-            }
-            this.clearStack()
+
+            // note that we have to treat all arguments as refs,
+            // because the procedure might have overriden them and we need to unref them
+            this.clearArgs([], topExpr.args)
         }
 
         private emitStore(trg: ir.Expr, src: ir.Expr) {
@@ -655,7 +927,7 @@ ${baseLabel}:
                 assert(0 <= cell.index && cell.index < 32)
                 return ["r5", cell.index.toString(), true]
             } else if (cell.isarg) {
-                let idx = this.proc.args.length - cell.index - 1
+                let idx = cell.index
                 return ["sp", "args@" + idx.toString() + ":" + this.baseStackSize, false]
             } else {
                 return ["sp", "locals@" + cell.index, false]
@@ -667,69 +939,50 @@ ${baseLabel}:
             this.write("")
             this.write(".section code");
 
-            if (isAVR()) {
-                this.write(this.proc.label() + "_Lit:");
-            } else {
-                if (isMain)
-                    this.write(this.t.unconditional_branch(".themain"))
-                this.write(".balign 4");
-                this.write(this.proc.label() + "_Lit:");
-                this.write(`.short 0xffff, ${pxt.REF_TAG_ACTION}   ; action literal`);
-                if (isMain)
-                    this.write(".themain:")
-            }
+            if (isMain)
+                this.write(this.t.unconditional_branch(".themain"))
+            this.write(".balign 4");
+            this.write(this.proc.label() + "_Lit:");
+            this.write(`.short 0xffff, ${pxt.REF_TAG_ACTION}   ; action literal`);
+            if (isMain)
+                this.write(".themain:")
 
             this.write("@stackmark litfunc");
 
             let parms = this.proc.args.map(a => a.def)
-            this.write(this.t.proc_setup(0, true))
-
-            let pushR7 = this.t.hasCommonalize() || !!target.stackAlign
-
-            if (pushR7)
-                this.write(this.t.push_fixed(["r5", "r6", "r7"]))
-            else
-                this.write(this.t.push_fixed(["r5", "r6"]))
-
-            this.baseStackSize = 4 // above
-
             let numpop = parms.length
 
-            let alignment = this.stackAlignmentNeeded(parms.length)
-            if (alignment) {
-                this.write(this.t.push_locals(alignment))
-                numpop += alignment
-            }
+            this.write(this.t.proc_setup(0, true))
 
-            parms.forEach((_, i) => {
-                if (i >= 3)
-                    U.userError(U.lf("only up to three parameters supported in lambdas"))
-                this.write(this.t.push_local(`r${i + 1}`))
-            })
+            const setup = this.redirectOutput(() => {
+                this.write(this.t.push_fixed(["r4", "r5", "r6", "r7"]))
+                this.baseStackSize = 1 + 4
 
-            let asm = this.t.helper_prologue()
-
-            this.proc.args.forEach((p, i) => {
-                if (p.isRef()) {
-                    let [reg, off, idx] = this.cellref(p)
-                    asm += this.t.load_reg_src_off("r0", reg, off, idx) + "\n"
-                    asm += this.t.call_lbl("pxt::incr") + "\n"
+                let alignment = this.stackAlignmentNeeded(parms.length)
+                if (alignment) {
+                    this.write(this.t.push_locals(alignment))
+                    numpop += alignment
                 }
+
+                parms.forEach((_, i) => {
+                    if (i >= 3)
+                        U.userError(U.lf("only up to three parameters supported in lambdas"))
+                    this.write(this.t.push_local(`r${parms.length - i}`))
+                })
+
+                this.write(this.t.lambda_init())
             })
 
-            asm += this.t.helper_epilogue()
+            let stackEntries = numpop + 4
 
-            this.emitHelper(asm) // using shared helper saves about 3% of binary size
+            this.write(`@dummystack ${stackEntries}`)
+            this.emitHelper(`${setup}\n@dummystack ${-stackEntries}`, "lambda_setup")
             this.write(this.t.call_lbl(this.proc.label()))
 
             if (numpop)
                 this.write(this.t.pop_locals(numpop))
-            if (pushR7)
-                this.write(this.t.pop_fixed(["r6", "r5", "r7"]))
-            else
-                this.write(this.t.pop_fixed(["r6", "r5"]))
+            this.write(this.t.pop_fixed(["r4", "r5", "r6", "r7", "pc"]))
 
-            this.write(this.t.proc_return())
             this.write("@stackempty litfunc");
         }
 

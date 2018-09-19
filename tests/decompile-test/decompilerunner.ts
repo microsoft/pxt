@@ -35,7 +35,6 @@ pxt.setAppTarget({
         isNative: false,
         hasHex: false,
         jsRefCounting: true,
-        floatingPoint: true
     },
     bundledpkgs: {},
     appTheme: {},
