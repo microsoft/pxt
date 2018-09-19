@@ -245,7 +245,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         const readOnly = pxt.shell.isReadOnly();
         const isController = pxt.shell.isControllerMode();
         const showSave = !readOnly && !isController && !!targetTheme.saveInMenu;
-        const showGreenScreen = (targetTheme.greenScreen || /greenscreen=1/.test(window.location.href))
+        const showGreenScreen = (targetTheme.greenScreen || /greenscreen=1/i.test(window.location.href))
             && greenscreen.isSupported();
 
         return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem">
