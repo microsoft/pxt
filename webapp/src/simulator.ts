@@ -55,19 +55,19 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
             const animationClasses = `${animation} visible transition animating`;
             pxsim.U.addClass(el, animationClasses);
 
-            if (pxt.BrowserUtils.isEdge() && coretsx.dialogIsShowing()) {
-                // Workaround for an Edge bug where when a dialog is open and the simulator is
-                // revealed it somehow breaks the page render
-
-                document.body.style.display = "none";
-                requestAnimationFrame(() => {
-                    document.body.style.display = "block";
-                });
-            }
-
             Promise.resolve().delay(500).then(() => {
                 pxsim.U.removeClass(el, animationClasses);
                 el.style.animationDuration = '';
+
+                if (pxt.BrowserUtils.isEdge() && coretsx.dialogIsShowing()) {
+                    // Workaround for an Edge bug where when a dialog is open and the simulator is
+                    // revealed it somehow breaks the page render
+
+                    document.body.style.display = "none";
+                    requestAnimationFrame(() => {
+                        document.body.style.display = "block";
+                    });
+                }
             })
         },
         removeElement: (el, completeHandler) => {
