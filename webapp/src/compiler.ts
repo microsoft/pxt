@@ -424,6 +424,7 @@ export function updatePackagesAsync(packages: pkg.EditorPackage[], progressHandl
         .then(() => workspace.saveAsync(epkg.header))
         .then(() => Promise.each(packages, p => {
                 return epkg.updateDepAsync(p.getPkgId())
+                    .then(() => Promise.delay(5000))
                     .then(() => {
                         ++completed;
                         if (progressHandler) {

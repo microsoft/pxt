@@ -199,7 +199,7 @@ export function showPackageErrorDialogAsync(badPackages: pkg.EditorPackage[], up
     return core.dialogAsync({
         header: lf("Extension Errors"),
         hideCancel: true,
-        jsx: <div>
+        jsx: <div className="wizard-wrapper">
                 <ExtensionErrorWizard openLegacyEditor={openLegacyEditor} affectedPackages={badPackages} updatePackages={updatePackages} />
         </div>
     }).then(() => true);
@@ -262,7 +262,7 @@ class ExtensionErrorWizard extends React.Component<ExtensionErrorWizardProps, Ex
                 }, () => {
                     setTimeout(() => {
                         coretsx.hideDialog();
-                    }, 750);
+                    }, 1500);
                 });
             }
         })
@@ -300,9 +300,13 @@ class ExtensionErrorWizard extends React.Component<ExtensionErrorWizardProps, Ex
             return <div>
                     { showProgressBar ?
                         <ProgressBar percentage={100 * (packagesUpdated / affectedPackages.length)} label={progressString} /> :
-                        <div className="ui centered inline text loader">
+                        <div className="ui centered inline inverted text loader">
                             { progressString }
                         </div>
+                    }
+                    {
+                        showProgressBar ?
+                        <div><button className="ui right floated button">Cancel</button></div> : undefined
                     }
                 </div>
         }
@@ -316,7 +320,7 @@ class ExtensionErrorWizard extends React.Component<ExtensionErrorWizardProps, Ex
         }
 
         return <div>
-                <p>{pxt.Util.lf("Looks like there are some errors in the extensions added to this project that.")}</p>
+                <p>{pxt.Util.lf("Looks like there are some errors in the extensions added to this project")}</p>
                 <div className="ui relaxed list">
                     <div className="item wizard-action" onClick={this.startUpdate}>
                         <i className="medium arrow right middle aligned icon"></i>
