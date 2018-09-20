@@ -107,6 +107,10 @@ export class CoreDialog extends React.Component<core.PromptOptions, {}> {
 
 let currentDialog: CoreDialog;
 
+export function dialogIsShowing() {
+    return !!currentDialog;
+}
+
 export function renderConfirmDialogAsync(options: core.PromptOptions): Promise<void> {
     return Promise.resolve()
         .delay(10)
