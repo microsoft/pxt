@@ -278,7 +278,7 @@ export class ProjectsMenu extends data.Component<ISettingsProps, {}> {
                     {targetTheme.portraitLogo ? (<img className={`ui ${targetTheme.logoWide ? "small" : "mini"} image portrait only`} src={targetTheme.portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)} />) : null}
                 </a>
             </div>
-            <div className="ui item home"><sui.Icon icon={`icon home large`} /> <span>{lf("Home")}</span></div>
+            <div className="ui item home mobile hide"><sui.Icon icon={`icon home large`} /> <span>{lf("Home")}</span></div>
             <div className="right menu">
                 <a href={targetTheme.organizationUrl} target="blank" rel="noopener" className="ui item logo organization" onClick={this.orgIconClick}>
                     {targetTheme.organizationWideLogo || targetTheme.organizationLogo
