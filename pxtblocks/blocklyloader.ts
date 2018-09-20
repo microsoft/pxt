@@ -1353,7 +1353,7 @@ namespace pxt.blocks {
             let ws = this;
 
             // Option to add a workspace comment.
-            if (this.options.comments) {
+            if (this.options.comments && !BrowserUtils.isIE()) {
                 menuOptions.push((Blockly.ContextMenu as any).workspaceCommentOption(ws, e));
             }
 

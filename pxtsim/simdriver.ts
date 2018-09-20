@@ -152,7 +152,6 @@ namespace pxsim {
             frame.allowFullscreen = true;
             frame.setAttribute('allow', 'autoplay');
             frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
-            (frame.sandbox as any).value = "allow-scripts allow-same-origin"
             let simUrl = this.options.simUrl || ((window as any).pxtConfig || {}).simUrl || "/sim/simulator.html"
             frame.className = 'no-select'
             if (this.runOptions.aspectRatio)

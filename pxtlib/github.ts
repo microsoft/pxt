@@ -186,7 +186,7 @@ namespace pxt.github {
 
     export function getCommitAsync(repopath: string, sha: string) {
         return ghGetJsonAsync("https://api.github.com/repos/" + repopath + "/git/commits/" + sha)
-            .then((commit: Commit) => ghGetJsonAsync(commit.tree.url)
+            .then((commit: Commit) => ghGetJsonAsync(commit.tree.url + "?recursive=1")
                 .then((tree: Tree) => {
                     commit.tree = tree
                     return commit

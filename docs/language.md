@@ -25,8 +25,7 @@ functions, lambdas, classes).
 * `debugger` statement for breakpoints
 * conditional operator `? :`; lazy boolean operators
 * namespaces (a form of modules) 
-* all arithmetic operators (including bitwise operators); note that in microcontroller targets
-  all arithmetic is performed on integers, also when simulating in the browser
+* all arithmetic operators (including bitwise operators)
 * strings (with a few common methods)
 * [string templates](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals) (`` `x is ${x}` ``)
 * arrow functions `() => ...`

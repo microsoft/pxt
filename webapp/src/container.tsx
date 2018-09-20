@@ -150,9 +150,15 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.toggleHighContrast = this.toggleHighContrast.bind(this);
         this.toggleGreenScreen = this.toggleGreenScreen.bind(this);
         this.showResetDialog = this.showResetDialog.bind(this);
+        this.showShareDialog = this.showShareDialog.bind(this);
         this.pair = this.pair.bind(this);
         this.showAboutDialog = this.showAboutDialog.bind(this);
         this.print = this.print.bind(this);
+    }
+
+    showShareDialog() {
+        pxt.tickEvent("menu.share", undefined, { interactiveConsent: true });
+        this.props.parent.showShareDialog();
     }
 
     openSettings() {
@@ -245,25 +251,26 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         const readOnly = pxt.shell.isReadOnly();
         const isController = pxt.shell.isControllerMode();
         const showSave = !readOnly && !isController && !!targetTheme.saveInMenu;
+        const showGreenScreen = (targetTheme.greenScreen || /greenscreen=1/i.test(window.location.href))
+            && greenscreen.isSupported();
 
         return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem">
             <sui.Item role="menuitem" icon="options" text={lf("Project Settings")} onClick={this.openSettings} tabIndex={-1} />
             {packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Extensions")} onClick={this.showPackageDialog} tabIndex={-1} /> : undefined}
             {boards ? <sui.Item role="menuitem" icon="microchip" text={lf("Change Board")} onClick={this.showBoardDialog} tabIndex={-1} /> : undefined}
-            <sui.Item role="menuitem" icon="print" text={lf("Print...")} onClick={this.print} tabIndex={-1} />
+            {targetTheme.print ? <sui.Item role="menuitem" icon="print" text={lf("Print...")} onClick={this.print} tabIndex={-1} /> : undefined}
             {showSave ? <sui.Item role="menuitem" icon="save" text={lf("Save Project")} onClick={this.saveProject} tabIndex={-1} /> : undefined}
             {!isController ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project")} onClick={this.removeProject} tabIndex={-1} /> : undefined}
             {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={this.showReportAbuse} tabIndex={-1} /> : undefined}
             <div className="ui divider"></div>
             {targetTheme.selectLanguage ? <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} tabIndex={-1} /> : undefined}
             {targetTheme.highContrast ? <sui.Item role="menuitem" text={highContrast ? lf("High Contrast Off") : lf("High Contrast On")} onClick={this.toggleHighContrast} tabIndex={-1} /> : undefined}
-            {targetTheme.greenScreen && greenscreen.isSupported() ? <sui.Item role="menuitem" text={greenScreen ? lf("Green Screen Off") : lf("Green Screen On")} onClick={this.toggleGreenScreen} tabIndex={-1} /> : undefined}
+            {showGreenScreen ? <sui.Item role="menuitem" text={greenScreen ? lf("Green Screen Off") : lf("Green Screen On")} onClick={this.toggleGreenScreen} tabIndex={-1} /> : undefined}
             {
                 // we always need a way to clear local storage, regardless if signed in or not
             }
             {!isController ? <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} tabIndex={-1} /> : undefined}
-            {!pxt.usb.isEnabled ? undefined :
-                <sui.Item role="menuitem" icon='usb' text={lf("Pair device")} onClick={this.pair} tabIndex={-1} />}
+            {pxt.usb.isEnabled ? <sui.Item role="menuitem" icon='usb' text={lf("Pair device")} onClick={this.pair} tabIndex={-1} /> : undefined}
             <div className="ui mobile only divider"></div>
             {renderDocItems(this.props.parent, "mobile only")}
             <div className="ui divider"></div>
@@ -346,17 +353,19 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         const targetTheme = pxt.appTarget.appTheme;
         const isController = pxt.shell.isControllerMode();
         const homeEnabled = !isController;
-        const sharingEnabled = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && !isController;
         const sandbox = pxt.shell.isSandboxMode();
         const tutorialOptions = this.props.parent.state.tutorialOptions;
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
         const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox && !inTutorial;
         const isRunning = this.props.parent.state.running;
         const hc = !!this.props.parent.state.highContrast;
+        const showShare = !inTutorial && header && pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && !isController;
 
         const logo = (hc ? targetTheme.highContrastLogo : undefined) || targetTheme.logo;
         const portraitLogo = (hc ? targetTheme.highContrastPortraitLogo : undefined) || targetTheme.portraitLogo;
         const rightLogo = sandbox ? targetTheme.portraitLogo : targetTheme.rightLogo;
+        const logoWide = !!targetTheme.logoWide;
+        const portraitLogoSize = logoWide ? "small" : "mini";
 
         const simActive = this.props.parent.isEmbedSimActive();
         const blockActive = this.props.parent.isBlocksActive();
@@ -371,11 +380,11 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
                     {logo || portraitLogo
                         ? <img className={`ui logo ${logo ? " portrait hide" : ''}`} src={logo || portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)} />
                         : <span className="name">{targetTheme.boardName}</span>}
-                    {portraitLogo ? (<img className='ui mini image portrait only' src={portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)} />) : null}
+                    {portraitLogo ? (<img className={`ui ${portraitLogoSize} image portrait only`} src={portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)} />) : null}
                 </a>
                 {targetTheme.betaUrl ? <a href={`${targetTheme.betaUrl}`} className="ui red mini corner top left attached label betalabel" role="menuitem">{lf("Beta")}</a> : undefined}
                 {!inTutorial && homeEnabled ? <sui.Item className="icon openproject" role="menuitem" textClass="landscape only" icon="home large" ariaLabel={lf("Home screen")} text={lf("Home")} onClick={this.goHome} /> : null}
-                {!inTutorial && header && sharingEnabled ? <sui.Item className="icon shareproject" role="menuitem" textClass="widedesktop only" ariaLabel={lf("Share Project")} text={lf("Share")} icon="share alternate large" onClick={this.showShareDialog} /> : null}
+                {showShare ? <sui.Item className="icon shareproject" role="menuitem" textClass="widedesktop only" ariaLabel={lf("Share Project")} text={lf("Share")} icon="share alternate large" onClick={this.showShareDialog} /> : null}
                 {inTutorial ? <sui.Item className="tutorialname" tabIndex={-1} textClass="landscape only" text={tutorialOptions.tutorialName} /> : null}
             </div> : <div className="left menu">
                     <span id="logo" className="ui item logo">

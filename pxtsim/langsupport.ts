@@ -10,7 +10,6 @@ namespace pxsim {
         }
     }
 
-    export let floatingPoint = false;
     export let refCounting = true;
     export let title = "";
     let cfgKey: Map<number> = {}
@@ -54,10 +53,6 @@ namespace pxsim {
 
     export function getConfigData(): ConfigData {
         return { cfg, cfgKey }
-    }
-
-    export function enableFloatingPoint() {
-        floatingPoint = true
     }
 
     export function setTitle(t: string) {
@@ -114,7 +109,8 @@ namespace pxsim {
     export interface VTable {
         name: string;
         methods: LabelFn[];
-        refmask: boolean[];
+        numFields: number;
+        toStringMethod?: LabelFn;
     }
 
     export class RefRecord extends RefObject {
@@ -122,16 +118,15 @@ namespace pxsim {
         vtable: VTable;
 
         destroy() {
-            let refmask = this.vtable.refmask
-            for (let i = 0; i < refmask.length; ++i)
-                if (refmask[i]) decr(this.fields[i])
+            for (let i = 0; i < this.fields.length; ++i)
+                decr(this.fields[i])
             this.fields = null
             this.vtable = null
         }
 
         isRef(idx: number) {
             check(0 <= idx && idx < this.fields.length)
-            return !!this.vtable.refmask[idx]
+            return true
         }
 
         print() {
@@ -272,7 +267,6 @@ namespace pxsim {
 
 
     function num(v: any) {
-        if (!floatingPoint && v === undefined) return 0;
         return v;
     }
 
@@ -589,12 +583,11 @@ namespace pxsim {
     export namespace pxtcore {
         export function mkClassInstance(vtable: VTable) {
             check(!!vtable.methods)
-            check(!!vtable.refmask)
             let r = new RefRecord()
             r.vtable = vtable
-            let len = vtable.refmask.length
+            let len = vtable.numFields
             for (let i = 0; i < len; ++i)
-                r.fields.push(floatingPoint ? undefined : 0)
+                r.fields.push(undefined)
             return r
         }
 

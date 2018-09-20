@@ -181,6 +181,7 @@ declare namespace pxt {
         description?: string;
         twitter?: string;
         defaultLocale?: string;
+        logoWide?: boolean; // the portrait logo is not square, but wide
         logoUrl?: string;
         logo?: string;
         portraitLogo?: string;
@@ -221,6 +222,7 @@ declare namespace pxt {
         coloredToolbox?: boolean; // if true: color the blockly toolbox categories
         invertedToolbox?: boolean; // if true: use the blockly inverted toolbox
         invertedMonaco?: boolean; // if true: use the vs-dark monaco theme
+        lightToc?: boolean; // if true: do NOT use inverted style in docs toc
         blocklyOptions?: Blockly.Options; // Blockly options, see Configuration: https://developers.google.com/blockly/guides/get-started/web
         hideFlyoutHeadings?: boolean; // Hide the flyout headings at the top of the flyout when on a mobile device.
         monacoColors?: pxt.Map<string>; // Monaco theme colors, see https://code.visualstudio.com/docs/getstarted/theme-color-reference
@@ -251,6 +253,7 @@ declare namespace pxt {
         extendEditor?: boolean; // whether a target specific editor.js is loaded
         extendFieldEditors?: boolean; // wether a target specific fieldeditors.js is loaded
         highContrast?: boolean; // simulator has a high contrast mode
+        print?: boolean; //Print blocks and text feature
         greenScreen?: boolean; // display webcam stream in background
         selectLanguage?: boolean; // add language picker to settings menu
         availableLocales?: string[]; // the list of enabled language codes
@@ -324,9 +327,6 @@ declare namespace ts.pxtc {
         hexMimeType?: string;
         driveName?: string;
         jsRefCounting?: boolean;
-        floatingPoint?: boolean;
-        taggedInts?: boolean; // implies floatingPoint and needsUnboxing
-        needsUnboxing?: boolean;
         boxDebug?: boolean;
         deployDrives?: string; // partial name of drives where the .hex file should be copied
         deployFileMarker?: string;
@@ -342,7 +342,6 @@ declare namespace ts.pxtc {
         hidSelectors?: HidSelector[];
         emptyEventHandlerComments?: boolean; // true adds a comment for empty event handlers
         vmOpCodes?: pxt.Map<number>;
-        commonalize?: boolean;
         vtableShift?: number; // defaults to 2, i.e., (1<<2) == 4 byte alignment of vtables, and thus 256k max program size; increase for chips with more flash!
         postProcessSymbols?: boolean;
     }

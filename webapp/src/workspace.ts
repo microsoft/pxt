@@ -193,7 +193,7 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
             h.pubCurrent = false
             h.blobCurrent = false
             h.modificationTime = U.nowSeconds();
-            h.targetVersion = pxt.appTarget.versions.target;
+            h.targetVersion = h.targetVersion || "0.0.0";
         }
         h.saveId = null
         // update version on save
@@ -228,6 +228,8 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
 
 function computePath(h: Header) {
     let path = h.name.replace(/[^a-zA-Z0-9]+/g, " ").trim().replace(/ /g, "-")
+    if (!path)
+        path = "Untitled"; // do not translate
     if (lookup(path)) {
         let n = 2
         while (lookup(path + "-" + n))

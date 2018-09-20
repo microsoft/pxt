@@ -28,7 +28,6 @@ namespace ts.pxtc {
 
     // snippets for ARM Thumb assembly
     export class ThumbSnippets extends AssemblerSnippets {
-        hasCommonalize() { return !!target.commonalize }
         stackAligned() {
             return target.stackAlign && target.stackAlign > 1
         }
@@ -41,6 +40,12 @@ namespace ts.pxtc {
             else return "pop {pc}"
         }
         nop() { return "nop" }
+        mov(trg: string, dst: string) {
+            return `mov ${trg}, ${dst}`
+        }
+        helper_ret() {
+            return `bx r4`
+        }
         reg_gets_imm(reg: string, imm: number) {
             return `movs ${reg}, #${imm}`
         }
@@ -117,10 +122,8 @@ ${lbl}:`
             return name + " " + r0 + ", " + r1;
         }
         call_lbl(lbl: string) {
-            if (target.taggedInts && !target.boxDebug) {
-                let o = U.lookup(inlineArithmetic, lbl)
-                if (o) lbl = o
-            }
+            let o = U.lookup(inlineArithmetic, lbl)
+            if (o) lbl = o
             return "bl " + lbl;
         }
         call_reg(reg: string) {
@@ -130,7 +133,7 @@ ${lbl}:`
         // NOTE: Map from RefRecord
         vcall(mapMethod: string, isSet: boolean, vtableShift: number) {
             return `
-    ldr r0, [sp, #${isSet ? 4 : 0}] ; ld-this
+    ldr r0, [sp, #0] ; ld-this
     ldrh r3, [r0, #2] ; ld-vtable
     lsls r3, r3, #${vtableShift}
     ldr r3, [r3, #4] ; iface table
@@ -141,7 +144,10 @@ ${lbl}:`
     ldr r0, [r3, r1] ; ld-method
     bx r0
 .objlit:
-    ${isSet ? "ldr r2, [sp, #0]" : ""}
+    ${isSet ? "ldr r2, [sp, #4]" : ""}
+    movs r3, #0 ; clear args on stack, so the outside decr() doesn't touch them
+    str r3, [sp, #0]
+    ${isSet ? "str r3, [sp, #4]" : ""}
     ${this.pushLR()}
     bl ${mapMethod}
     ${this.popPC()}
@@ -158,13 +164,10 @@ ${lbl}:`
             return `
     @stackmark args
     ${this.pushLR()}
-    mov r5, r0
 `;
         }
         helper_epilogue() {
             return `
-    bl pxtrt::getGlobalsPtr
-    mov r6, r0
     ${this.popPC()}
     @stackempty args
 `
@@ -185,16 +188,36 @@ ${lbl}:`
 `
         }
 
+        lambda_init() {
+            return `
+    mov r5, r0
+    mov r4, lr
+    bl pxtrt::getGlobalsPtr
+    mov r6, r0
+    bx r4
+`
+        }
+
+        inline_decr(idx: number, stackSize: number) {
+            if (!this.stackAligned()) stackSize = 0
+            // TODO optimize sequences of pops without decr into sub on sp
+            return `
+    lsls r1, r0, #30
+    bne .tag${idx}
+    cmp r0, #0
+    beq .tag${idx}
+    ${stackSize & 1 ? "push {r0} ; align" : ""}
+    bl pxt::decr
+    ${stackSize & 1 ? "pop {r0} ; unalign" : ""}
+.tag${idx}:
+`
+        }
+
         arithmetic() {
             let r = ""
 
-            if (!target.taggedInts || target.boxDebug) {
-                return r
-            }
-
             for (let op of ["adds", "subs", "ands", "orrs", "eors"]) {
-                r +=
-                    `
+                r += `
 _numops_${op}:
     @scope _numops_${op}
     lsls r2, r0, #31
@@ -260,11 +283,19 @@ _numops_fromInt:
 `
 
             for (let op of ["incr", "decr"]) {
+                r += ".section code\n"
+                for (let off = 56; off >= 0; off -= 4) {
+                    r += `
+_pxt_${op}_${off}:
+    ldr r0, [sp, #${off}]
+    ${off == 0 ? '; ' : ''}b _pxt_${op}
+`
+                }
                 r += `
 _pxt_${op}:
-    @scope _pxt_${op}
     lsls r3, r0, #30
     beq .t0
+.skip:
     bx lr
 .t0:
     cmp r0, #0
@@ -272,8 +303,29 @@ _pxt_${op}:
     ${this.pushLR()}
     bl pxt::${op}
     ${this.popPC()}
-.skip:
+`
+                for (let off = 56; off >= 0; off -= 4) {
+                    r += `
+_pxt_${op}_pushR0_${off}:
+    ldr r0, [sp, #${off}]
+    ${off == 0 ? '; ' : ''}b _pxt_${op}_pushR0
+`
+                }
+
+                r += `
+_pxt_${op}_pushR0:
+    push {r0}
+    @dummystack -1
+    lsls r3, r0, #30
+    beq .t2
+.skip2:
     bx lr
+.t2:
+    cmp r0, #0
+    beq .skip2
+    push {lr}
+    bl pxt::${op}
+    pop {pc}
 `
             }
 

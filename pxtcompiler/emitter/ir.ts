@@ -1,3 +1,6 @@
+// TODO remove decr() on variable init
+// TODO figure out why undefined initializer generates code
+
 namespace ts.pxtc.ir {
     let U = pxtc.Util;
     let assert = U.assert;
@@ -32,11 +35,25 @@ namespace ts.pxtc.ir {
         }
     }
 
+    export interface ConvInfo {
+        argIdx: number;
+        method: string;
+        returnsRef?: boolean;
+    }
+
+    export interface MaskInfo {
+        refMask: number;
+        conversions?: ConvInfo[];
+    }
+
     export class Expr extends Node {
         public jsInfo: string;
         public totalUses: number; // how many references this expression has; only for the only child of Shared
         public currUses: number;
+        public irCurrUses: number;
         public callingConvention = CallingConvention.Plain;
+        public mask: MaskInfo;
+        public isStringLiteral: boolean;
 
         constructor(
             public exprKind: EK,
@@ -55,6 +72,7 @@ namespace ts.pxtc.ir {
                 copy.currUses = e.currUses
             }
             copy.callingConvention = e.callingConvention
+            copy.mask = e.mask
             return copy
         }
 
@@ -62,6 +80,15 @@ namespace ts.pxtc.ir {
 
         isPure() {
             return this.isStateless() || this.exprKind == EK.CellRef;
+        }
+
+        isLiteral() {
+            switch (this.exprKind) {
+                case EK.NumberLiteral:
+                case EK.PointerLiteral:
+                    return true;
+                default: return false;
+            }
         }
 
         isStateless() {
@@ -76,11 +103,13 @@ namespace ts.pxtc.ir {
 
         sharingInfo(): string {
             let arg0: ir.Expr = this
+            let id = this.getId()
             if (this.exprKind == EK.SharedRef || this.exprKind == EK.SharedDef) {
                 arg0 = this.args[0]
                 if (!arg0) arg0 = { currUses: "", totalUses: "" } as any
+                else id = arg0.getId()
             }
-            return `${arg0.currUses}/${arg0.totalUses}`
+            return `${arg0.currUses}/${arg0.totalUses} #${id}`
         }
 
         toString(): string {
@@ -138,11 +167,13 @@ namespace ts.pxtc.ir {
         public lblName: string;
         public lbl: Stmt;
         public lblNumUses: number;
+        public lblStackSize: number;
         public jmpMode: JmpMode;
         public lblId: number;
         public breakpointInfo: Breakpoint;
         public stmtNo: number;
         public findIdx: number;
+        // after this jump, the expression will no longer be used and can be cleared from the stack
         public terminateExpr: Expr;
 
         constructor(
@@ -250,7 +281,6 @@ namespace ts.pxtc.ir {
     export class Cell {
         isarg = false;
         iscap = false;
-        _isRef = false;
         _isLocal = false;
         _isGlobal = false;
         _debugType = "?";
@@ -278,7 +308,6 @@ namespace ts.pxtc.ir {
             let n = ""
             if (this.def) n += this.getName() || "?"
             if (this.isarg) n = "ARG " + n
-            if (this.isRef()) n = "REF " + n
             //if (this.isByRefLocal()) n = "BYREF " + n
             return "[" + n + "]"
         }
@@ -289,12 +318,6 @@ namespace ts.pxtc.ir {
             return this.getName().replace(/[^\w]/g, "_") + "___" + getNodeId(this.def)
         }
 
-        refSuffix() {
-            if (this.isRef()) return "Ref"
-            else return ""
-        }
-
-        isRef() { return this._isRef }
         isLocal() { return this._isLocal }
         isGlobal() { return this._isGlobal }
 
@@ -305,14 +328,14 @@ namespace ts.pxtc.ir {
         load() {
             let r = this.loadCore()
 
-            if (target.taggedInts && this.bitSize != BitSize.None) {
+            if (target.isNative && this.bitSize != BitSize.None) {
                 if (this.bitSize == BitSize.UInt32)
                     return rtcall("pxt::fromUInt", [r])
                 return rtcall("pxt::fromInt", [r])
             }
 
             if (this.isByRefLocal())
-                return rtcall("pxtrt::ldloc" + this.refSuffix(), [r])
+                return rtcall("pxtrt::ldlocRef", [r])
 
             if (this.refCountingHandledHere())
                 return op(EK.Incr, [r])
@@ -321,7 +344,7 @@ namespace ts.pxtc.ir {
         }
 
         refCountingHandledHere() {
-            return this.isRef() && !this.isByRefLocal()
+            return !this.isByRefLocal()
         }
 
         isByRefLocal() {
@@ -334,23 +357,17 @@ namespace ts.pxtc.ir {
 
         storeByRef(src: Expr) {
             if (this.isByRefLocal()) {
-                return rtcall("pxtrt::stloc" + this.refSuffix(), [this.loadCore(), src])
+                return rtcall("pxtrt::stlocRef", [this.loadCore(), src])
             } else {
-                if (target.taggedInts && this.bitSize != BitSize.None) {
-                    src = shared(src)
+                if (target.isNative && this.bitSize != BitSize.None) {
                     let cnv = this.bitSize == BitSize.UInt32 ? "pxt::toUInt" : "pxt::toInt"
-                    let iv = shared(rtcall(cnv, [src]))
-                    return op(EK.Sequence, [
-                        iv,
-                        op(EK.Decr, [src]),
-                        this.storeDirect(iv)
-                    ])
+                    return this.storeDirect(rtcall(cnv, [src], 1))
                 }
 
                 if (this.refCountingHandledHere()) {
                     let tmp = shared(src)
                     return op(EK.Sequence, [
-                        tmp,
+                        op(EK.Decr, [tmp]),
                         op(EK.Decr, [this.loadCore()]),
                         this.storeDirect(tmp)
                     ])
@@ -403,7 +420,6 @@ namespace ts.pxtc.ir {
 
     export interface ProcQuery {
         action: ts.FunctionLikeDeclaration;
-        bindings: TypeBinding[];
     }
 
     function noRefCount(e: ir.Expr): boolean {
@@ -438,7 +454,6 @@ namespace ts.pxtc.ir {
         args: Cell[] = [];
         parent: Procedure;
         debugInfo: ProcDebugInfo;
-        bindings: TypeBinding[];
         fillDebugInfo: (th: assembler.File) => void;
         classInfo: ClassInfo;
 
@@ -455,18 +470,11 @@ namespace ts.pxtc.ir {
         }
 
         label() {
-            return getFunctionLabel(this.action, this.bindings)
+            return getFunctionLabel(this.action)
         }
 
         matches(id: ProcQuery) {
-            if (this.action == id.action) {
-                U.assert(this.bindings.length == id.bindings.length, "this.bindings.length == id.bindings.length")
-                for (let i = 0; i < this.bindings.length; ++i)
-                    if (this.bindings[i].isRef != id.bindings[i].isRef)
-                        return false
-                return true
-            }
-            return false
+            return (this.action == id.action)
         }
 
         toString(): string {
@@ -508,9 +516,8 @@ namespace ts.pxtc.ir {
             return l
         }
 
-        mkLocalUnnamed(isRef = false) {
+        mkLocalUnnamed() {
             let uc = new UnnamedCell(this.locals.length, this);
-            uc._isRef = isRef
             this.locals.push(uc)
             return uc
         }
@@ -527,17 +534,12 @@ namespace ts.pxtc.ir {
 
         emitClrIfRef(p: Cell) {
             assert(!p.isGlobal() && !p.iscap, "!p.isGlobal() && !p.iscap")
-            if (p.isRef() || p.isByRefLocal()) {
-                this.emitExpr(op(EK.Decr, [p.loadCore()]))
-            }
+            this.emitExpr(op(EK.Decr, [p.loadCore()]))
         }
 
         emitClrs(finlbl: ir.Stmt, retval: ir.Expr) {
             if (this.isRoot) return;
             this.locals.forEach(p => this.emitClrIfRef(p))
-            if (isStackMachine() && this.args.some(p => p.isRef() || p.isByRefLocal()))
-                this.emitJmp(finlbl, retval, ir.JmpMode.IfLambda)
-            this.args.forEach(p => this.emitClrIfRef(p))
         }
 
         emitJmpZ(trg: string | Stmt, expr: Expr) {
@@ -569,6 +571,8 @@ namespace ts.pxtc.ir {
                         e.args[i] = f(e.args[i])
             }
 
+            // after this, totalUses holds the negation of the actual usage count
+            // also the first SharedRef is replaced with SharedDef
             let refdef = (e: Expr): Expr => {
                 switch (e.exprKind) {
                     case EK.SharedDef: throw U.oops();
@@ -577,6 +581,7 @@ namespace ts.pxtc.ir {
                         if (!arg.totalUses) {
                             arg.totalUses = -1
                             arg.currUses = 0
+                            arg.irCurrUses = 0
                             let e2 = Expr.clone(e)
                             e2.exprKind = EK.SharedDef
                             e2.args[0] = refdef(e2.args[0])
@@ -608,7 +613,16 @@ namespace ts.pxtc.ir {
                             return e.args[0].args[0]
                         break;
                     case EK.Sequence:
-                        e.args = e.args.filter((a, i) => i == e.args.length - 1 || !a.isPure())
+                        e.args = e.args.filter((a, i) => {
+                            if (i != e.args.length - 1 && a.isPure()) {
+                                // in the second opt() phase, we already have computed the total usage counts
+                                // if we drop some expressions, these need to be updated
+                                if (a.exprKind == EK.SharedRef && a.args[0].totalUses > 0)
+                                    a.args[0].totalUses--
+                                return false
+                            }
+                            return true
+                        })
                         break;
                 }
 
@@ -622,9 +636,11 @@ namespace ts.pxtc.ir {
                         //console.log(arg)
                         U.assert(arg.totalUses < 0, "arg.totalUses < 0")
                         U.assert(arg.currUses === 0, "arg.currUses === 0")
+                        // if there is just one usage, strip the SharedDef
                         if (arg.totalUses == -1)
                             return cntuses(arg)
                         else
+                            // now, we start counting for real
                             arg.totalUses = 1;
                         break;
                     case EK.SharedRef:
@@ -634,6 +650,29 @@ namespace ts.pxtc.ir {
                 }
                 iterargs(e, cntuses)
                 return e
+            }
+
+            let sharedincr = (e: Expr): Expr => {
+                //console.log("OUTSH", e.toString())
+                switch (e.exprKind) {
+                    case EK.SharedDef:
+                        iterargs(e, sharedincr)
+                    case EK.SharedRef:
+                        let arg = e.args[0]
+                        U.assert(arg.totalUses > 0, "arg.totalUses > 0")
+                        if (arg.totalUses == 1) {
+                            U.assert(e.exprKind == EK.SharedDef)
+                            return arg
+                        }
+                        arg.irCurrUses++
+                        //console.log("SH", e.data, arg.toString(), arg.irCurrUses, arg.sharingInfo())
+                        if (e.data === "noincr" || arg.irCurrUses == arg.totalUses)
+                            return e; // final one, no incr
+                        return op(EK.Incr, [e])
+                    default:
+                        iterargs(e, sharedincr)
+                        return e
+                }
             }
 
             this.body = this.body.filter(s => {
@@ -678,10 +717,17 @@ namespace ts.pxtc.ir {
             let allBrkp: Breakpoint[] = []
 
             for (let s of this.body) {
+                if (s.expr) {
+                    s.expr = opt(sharedincr(s.expr))
+                }
+
                 if (s.stmtKind == ir.SK.Breakpoint) {
                     allBrkp[s.breakpointInfo.id] = s.breakpointInfo
                 }
             }
+
+            if (pxt.options.debug)
+                pxt.debug(this.toString())
 
             let debugSucc = false
             if (debugSucc) {
@@ -718,57 +764,53 @@ namespace ts.pxtc.ir {
         return op(EK.NumberLiteral, null, v)
     }
 
-    export function shared(expr: Expr) {
+    function sharedCore(expr: Expr, data: string) {
         switch (expr.exprKind) {
-            case EK.NumberLiteral:
             case EK.SharedRef:
-                return expr;
+                expr = expr.args[0]
+                break
+            //case EK.PointerLiteral:
+            case EK.NumberLiteral:
+                return expr
         }
-        return op(EK.SharedRef, [expr])
+
+        let r = op(EK.SharedRef, [expr])
+        r.data = data
+        return r
+    }
+
+    export function sharedNoIncr(expr: Expr) {
+        return sharedCore(expr, "noincr")
+    }
+
+    export function shared(expr: Expr) {
+        return sharedCore(expr, null)
     }
 
     export function ptrlit(lbl: string, jsInfo: string, full = false): Expr {
         let r = op(EK.PointerLiteral, null, lbl)
         r.jsInfo = jsInfo
         if (full) {
-            if (target.isNative && isAVR())
-                // this works for string and hex literals
-                return rtcall("pxt::stringLiteral", [r])
-            else
-                r.args = []
+            r.args = []
         }
         return r
     }
 
-    export function rtcall(name: string, args: Expr[]) {
-        return op(EK.RuntimeCall, args, name)
+    export function rtcall(name: string, args: Expr[], mask = 0) {
+        let r = op(EK.RuntimeCall, args, name)
+        if (mask)
+            r.mask = { refMask: mask }
+        return r
     }
 
     export function rtcallMask(name: string, mask: number, callingConv: CallingConvention, args: Expr[]) {
-        let decrs: ir.Expr[] = []
         if (U.startsWith(name, "@nomask@")) {
             name = name.slice(8)
             mask = 0
         }
-        if (isStackMachine())
-            name += "^" + mask
-        else
-            args = args.map((a, i) => {
-                if (mask & (1 << i)) {
-                    a = shared(a)
-                    decrs.push(op(EK.Decr, [a]))
-                    return a;
-                } else return a;
-            })
-        let r = op(EK.RuntimeCall, args, name)
-        r.callingConvention = callingConv
 
-        if (decrs.length > 0) {
-            r = shared(r)
-            decrs.unshift(r)
-            decrs.push(r)
-            r = op(EK.Sequence, decrs)
-        }
+        let r = rtcall(name, args, mask)
+        r.callingConvention = callingConv
 
         return r
     }
@@ -783,8 +825,7 @@ namespace ts.pxtc.ir {
             complexArgs.push(a)
         }
         complexArgs.reverse()
-        if (isStackMachine())
-            complexArgs = []
+
         let precomp: ir.Expr[] = []
         let flattened = topExpr.args.map(a => {
             let idx = complexArgs.indexOf(a)
@@ -807,6 +848,4 @@ namespace ts.pxtc.ir {
 
         return { precomp, flattened }
     }
-
-
 }

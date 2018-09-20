@@ -346,10 +346,10 @@ export function initCommandsAsync(): Promise<void> {
     pxt.commands.showUploadInstructionsAsync = showUploadInstructionsAsync;
     const forceHexDownload = /forceHexDownload/i.test(window.location.href);
 
-    if (pxt.usb.isAvailable() && (pxt.appTarget.compile.webUSB || /webusb=1/i.test(window.location.href))) {
-        pxt.log(`enabled webusb`)
-        pxt.usb.setEnabled(true)
-        pxt.HF2.mkPacketIOAsync = pxt.usb.mkPacketIOAsync
+    if (pxt.usb.isAvailable() && pxt.appTarget.compile.webUSB) {
+        pxt.log(`enabled webusb`);
+        pxt.usb.setEnabled(true);
+        pxt.HF2.mkPacketIOAsync = pxt.usb.mkPacketIOAsync;
     }
 
     if (isNativeHost()) {
@@ -382,7 +382,7 @@ export function initCommandsAsync(): Promise<void> {
                 })
                 .catch((e) => core.errorNotification(lf("saving file failed...")));
         };
-    } else if (electron.isPxtElectron) {
+    } else if (electron.isPxtElectron()) {
         pxt.commands.deployCoreAsync = electron.driveDeployAsync;
         pxt.commands.electronDeployAsync = electron.driveDeployAsync;
     } else if (hidbridge.shouldUse() && !pxt.appTarget.serial.noDeploy && !forceHexDownload) {

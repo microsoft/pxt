@@ -154,7 +154,6 @@ namespace pxt.runner {
         const cfg = pxt.webConfig
         return Util.updateLocalizationAsync(
             pxt.appTarget.id,
-            true,
             cfg.commitCdnUrl, lang,
             versions ? versions.pxtCrowdinBranch : "",
             versions ? versions.targetCrowdinBranch : "",
@@ -291,17 +290,16 @@ namespace pxt.runner {
         TypeScript
     }
 
-    export let languageMode = LanguageMode.Blocks;
+    export let editorLanguageMode = LanguageMode.Blocks;
     export let editorLocale = "en";
 
     export function setEditorContextAsync(mode: LanguageMode, locale: string) {
-        languageMode = mode;
+        editorLanguageMode = mode;
         if (locale != editorLocale) {
             const localeLiveRx = /^live-/;
             editorLocale = locale;
             return pxt.Util.updateLocalizationAsync(
                 pxt.appTarget.id,
-                true,
                 pxt.webConfig.commitCdnUrl,
                 editorLocale.replace(localeLiveRx, ''),
                 pxt.appTarget.versions.pxtCrowdinBranch,
@@ -327,7 +325,7 @@ namespace pxt.runner {
                 if (mp) {
                     const docsUrl = pxt.webConfig.docsUrl || '/--docs';
                     let verPrefix = mp[2] || '';
-                    let url = mp[3] == "doc" ? `${mp[4]}` : `${docsUrl}?md=${mp[4]}`;
+                    let url = mp[3] == "doc" ? (pxt.webConfig.isStatic ? `/docs${mp[4]}.html` : `${mp[4]}`) : `${docsUrl}?md=${mp[4]}`;
                     window.open(BrowserUtils.urlJoin(verPrefix, url), "_blank");
                     // notify parent iframe that we have completed the popout
                     if (window.parent)
@@ -376,11 +374,15 @@ namespace pxt.runner {
             const msg = jobQueue.shift();
             if (!msg) return; // no more work
 
+            const options = msg.options as pxt.blocks.BlocksRenderOptions;
+            options.splitSvg = false; // don't split when requesting rendered images
             pxt.tickEvent("renderer.job")
             jobPromise = pxt.BrowserUtils.loadBlocklyAsync()
                 .then(() => runner.decompileToBlocksAsync(msg.code, msg.options))
-                .then(result => result.blocksSvg ? pxt.blocks.layout.blocklyToSvgAsync(result.blocksSvg, 0, 0, result.blocksSvg.viewBox.baseVal.width, result.blocksSvg.viewBox.baseVal.height) : undefined)
-                .then(res => {
+                .then(result => {
+                    const blocksSvg = result.blocksSvg as SVGSVGElement;
+                    return blocksSvg ? pxt.blocks.layout.blocklyToSvgAsync(blocksSvg, 0, 0, blocksSvg.viewBox.baseVal.width, blocksSvg.viewBox.baseVal.height) : undefined;
+                }).then(res => {
                     window.parent.postMessage(<pxsim.RenderBlocksResponseMessage>{
                         source: "makecode",
                         type: "renderblocks",
@@ -437,7 +439,7 @@ namespace pxt.runner {
                         case "print":
                             const data = window.localStorage["printjob"];
                             delete window.localStorage["printjob"];
-                            return renderProjectFilesAsync(content, JSON.parse(data), undefined, undefined, true)
+                            return renderProjectFilesAsync(content, JSON.parse(data), undefined, true)
                                 .then(() => pxsim.print(1000));
                         case "project":
                             return renderProjectFilesAsync(content, JSON.parse(src))
@@ -528,35 +530,27 @@ namespace pxt.runner {
         })
     }
 
-    export function renderProjectAsync(content: HTMLElement, projectid: string, template = "blocks"): Promise<void> {
+    export function renderProjectAsync(content: HTMLElement, projectid: string): Promise<void> {
         return Cloud.privateGetTextAsync(projectid + "/text")
             .then(txt => JSON.parse(txt))
-            .then(files => renderProjectFilesAsync(content, files, projectid, template));
+            .then(files => renderProjectFilesAsync(content, files, projectid));
     }
 
-    export function renderProjectFilesAsync(content: HTMLElement, files: Map<string>, projectid: string = null, template = "blocks", escapeLinks = false): Promise<void> {
+    export function renderProjectFilesAsync(content: HTMLElement, files: Map<string>, projectid: string = null, escapeLinks = false): Promise<void> {
         const cfg = (JSON.parse(files[pxt.CONFIG_NAME]) || {}) as PackageConfig;
 
         let md = `# ${cfg.name} ${cfg.version ? cfg.version : ''}
 
 `;
-
-        let linkString = projectid ? (pxt.appTarget.appTheme.shareUrl || "https://makecode.com/" + projectid) : pxt.appTarget.appTheme.homeUrl;
-        if (escapeLinks) {
-            // If printing the link will show up twice if it's an actual link
-            linkString = "`" + linkString + "`";
-        }
-        md += `* ${linkString}
-
-        `;
-
         const readme = "README.md";
         if (files[readme])
             md += files[readme].replace(/^#+/, "$0#") + '\n'; // bump all headers down 1
 
         cfg.files.filter(f => f != pxt.CONFIG_NAME && f != readme)
+            .filter(f => (editorLanguageMode == LanguageMode.Blocks) == /\.blocks?$/.test(f))
             .forEach(f => {
-                md += `
+                if (!/^main\.(ts|blocks)$/.test(f))
+                    md += `
 ## ${f}
 `;
                 if (/\.ts$/.test(f)) {
@@ -577,15 +571,30 @@ ${files[f]}
                 }
             });
 
-        if (cfg && cfg.dependencies) {
+        if (cfg && cfg.dependencies && Util.values(cfg.dependencies).some(v => v != '*')) {
             md += `
-## Packages
+## ${lf("Extensions")}
 
-${Object.keys(cfg.dependencies).map(k => `* ${k}, ${cfg.dependencies[k]}`).join('\n')}
+${Object.keys(cfg.dependencies)
+                    .filter(k => k != pxt.appTarget.corepkg)
+                    .map(k => `* ${k}, ${cfg.dependencies[k]}`)
+                    .join('\n')}
 
 \`\`\`package
 ${Object.keys(cfg.dependencies).map(k => `${k}=${cfg.dependencies[k]}`).join('\n')}
 \`\`\`
+`;
+        }
+
+        if (projectid) {
+            let linkString = (pxt.appTarget.appTheme.shareUrl || "https://makecode.com/") + projectid;
+            if (escapeLinks) {
+                // If printing the link will show up twice if it's an actual link
+                linkString = "`" + linkString + "`";
+            }
+            md += `
+${linkString}
+
 `;
         }
         const options: RenderMarkdownOptions = {
@@ -718,13 +727,10 @@ ${Object.keys(cfg.dependencies).map(k => `${k}=${cfg.dependencies[k]}`).join('\n
     }
 
     export function renderMarkdownAsync(content: HTMLElement, md: string, options: RenderMarkdownOptions = {}): Promise<void> {
-        const path = options.path;
-        const parts = (path || '').split('/');
-
         const html = pxt.docs.renderMarkdown({
             template: template,
             markdown: md,
-            theme: pxt.appTarget.appTheme,
+            theme: pxt.appTarget.appTheme
         });
         let blocksAspectRatio = options.blocksAspectRatio
             || window.innerHeight < window.innerWidth ? 1.62 : 1 / 1.62;
@@ -746,7 +752,7 @@ ${Object.keys(cfg.dependencies).map(k => `${k}=${cfg.dependencies[k]}`).join('\n
             simulator: true,
             hex: true,
             tutorial: !!options.tutorial,
-            showJavaScript: languageMode == LanguageMode.TypeScript,
+            showJavaScript: editorLanguageMode == LanguageMode.TypeScript,
             hexName: pxt.appTarget.id
         }
         if (options.print) {
@@ -768,7 +774,7 @@ ${Object.keys(cfg.dependencies).map(k => `${k}=${cfg.dependencies[k]}`).join('\n
         compileJS?: pxtc.CompileResult;
         compileBlocks?: pxtc.CompileResult;
         apiInfo?: pxtc.ApisInfo;
-        blocksSvg?: SVGSVGElement;
+        blocksSvg?: Element;
     }
 
     export function decompileToBlocksAsync(code: string, options?: blocks.BlocksRenderOptions): Promise<DecompileResult> {
@@ -804,12 +810,13 @@ ${Object.keys(cfg.dependencies).map(k => `${k}=${cfg.dependencies[k]}`).join('\n
                         if (!bresp.success)
                             return <DecompileResult>{ package: mainPkg, compileJS: resp, compileBlocks: bresp, apiInfo: apis };
                         pxt.debug(bresp.outfiles["main.blocks"])
+                        const blocksSvg = pxt.blocks.render(bresp.outfiles["main.blocks"], options);
                         return <DecompileResult>{
                             package: mainPkg,
                             compileJS: resp,
                             compileBlocks: bresp,
                             apiInfo: apis,
-                            blocksSvg: pxt.blocks.render(bresp.outfiles["main.blocks"], options)
+                            blocksSvg
                         };
                     })
             });

@@ -148,6 +148,10 @@ export class ProjectView
     }
 
     updateVisibility() {
+        if (electron.isElectron() || pxt.winrt.isWinRT()) {
+            // Don't suspend when inside apps
+            return;
+        }
         let active = document.visibilityState == 'visible';
         pxt.debug(`page visibility: ${active}`)
         this.setState({ active: active })
@@ -775,6 +779,9 @@ export class ProjectView
             .then(() => {
                 simulator.makeDirty();
                 compiler.newProject();
+                return compiler.applyUpgrades();
+            })
+            .then(() => {
                 let e = this.settings.fileHistory.filter(e => e.id == h.id)[0]
                 let main = pkg.getEditorPkg(pkg.mainPkg)
                 let file = main.getMainFile();
@@ -1346,12 +1353,20 @@ export class ProjectView
     }
 
     pair() {
-        pxt.usb.pairAsync()
-            .then(() => {
-                core.infoNotification(lf("Device paired! Try downloading now."))
-            }, (err: Error) => {
-                core.errorNotification(lf("Failed to pair the device: {0}", err.message))
-            })
+        const prePairAsync = pxt.commands.webUsbPairDialogAsync
+            ? pxt.commands.webUsbPairDialogAsync(core.confirmAsync)
+            : Promise.resolve(1);
+        return prePairAsync.then((res) => {
+            if (res) {
+                return pxt.usb.pairAsync()
+                    .then(() => {
+                        core.infoNotification(lf("Device paired! Try downloading now."))
+                    }, (err: Error) => {
+                        core.errorNotification(lf("Failed to pair the device: {0}", err.message))
+                    });
+            }
+            return Promise.resolve();
+        });
     }
 
     ///////////////////////////////////////////////////////////
@@ -1453,7 +1468,9 @@ export class ProjectView
                     return pxt.commands.saveOnlyAsync(resp);
                 }
                 return pxt.commands.deployCoreAsync(resp, {
-                    reportDeviceNotFoundAsync: (docPath, compileResult) => this.showDeviceNotFoundDialogAsync(docPath, compileResult)
+                    reportDeviceNotFoundAsync: (docPath, compileResult) => this.showDeviceNotFoundDialogAsync(docPath, compileResult),
+                    reportError: (e) => core.errorNotification(e),
+                    showNotification: (msg) => core.infoNotification(msg)
                 })
                     .catch(e => {
                         if (e.notifyUser) {
@@ -1647,7 +1664,7 @@ export class ProjectView
         const files = p.getAllFiles();
         // render in sidedocs
         const docsUrl = pxt.webConfig.docsUrl || '/--docs';
-        const mode = "blocks"
+        const mode = theEditor.isBlocksActive() ? "blocks" : "typescript";
         window.localStorage["printjob"] = JSON.stringify(files);
         const url = `${docsUrl}#print:job:${mode}:${pxt.Util.localeInfo()}`;
 
@@ -1680,8 +1697,11 @@ export class ProjectView
 
     runSimulator(opts: compiler.CompileOptions = {}) {
         const editorId = this.editor ? this.editor.getId().replace(/Editor$/, '') : "unknown";
-        if (opts.background) pxt.tickActivity("autorun", "autorun." + editorId);
-        else pxt.tickEvent(opts.debug ? "debug" : "run", { editor: editorId });
+        if (opts.background) {
+            pxt.tickActivity("autorun", "autorun." + editorId);
+            if (localStorage.getItem("noAutoRun"))
+                return Promise.resolve()
+        } else pxt.tickEvent(opts.debug ? "debug" : "run", { editor: editorId });
 
         if (!opts.background)
             this.editor.beforeCompile();
@@ -1772,7 +1792,11 @@ export class ProjectView
         return compiler.getBlocksAsync()
             .then(blocksInfo => compiler.decompileSnippetAsync(req.ts, blocksInfo))
             .then(resp => {
-                const svg = pxt.blocks.render(resp, { snippetMode: true, layout: pxt.blocks.BlockLayout.Align });
+                const svg = pxt.blocks.render(resp, {
+                    snippetMode: true,
+                    layout: pxt.blocks.BlockLayout.Align,
+                    splitSvg: false
+                }) as SVGSVGElement;
                 // TODO: what if svg is undefined? handle that scenario
                 const viewBox = svg.getAttribute("viewBox").split(/\s+/).map(d => parseInt(d));
                 return {
@@ -1908,7 +1932,8 @@ export class ProjectView
 
     showShareDialog() {
         const header = this.state.header;
-        this.shareEditor.show(header);
+        if (header)
+            this.shareEditor.show(header);
     }
 
     showLanguagePicker() {
@@ -2027,11 +2052,19 @@ export class ProjectView
         let title = tutorialTitle || tutorialId.split('/').reverse()[0].replace('-', ' '); // drop any kind of sub-paths
 
         sounds.initTutorial(); // pre load sounds
+        let tutorialmd: string;
+
         return Promise.resolve()
-            .then(() => {
+            .then(() => pxt.Cloud.downloadMarkdownAsync(tutorialId))
+            .then(md => {
+                if (!md)
+                    throw new Error("tutorial not found");
+                tutorialmd = md;
+                const dependencies = pxt.gallery.parsePackagesFromMarkdown(md);
                 return this.createProjectAsync({
                     name: title,
-                    inTutorial: true
+                    inTutorial: true,
+                    dependencies
                 });
             })
             .then(() => {
@@ -2042,9 +2075,6 @@ export class ProjectView
                     },
                     tracing: undefined
                 });
-            })
-            .then(() => pxt.Cloud.downloadMarkdownAsync(tutorialId))
-            .then(tutorialmd => {
                 const stepInfo = pxt.tutorial.parseTutorialSteps(tutorialId, tutorialmd);
                 return tutorial.getUsedBlocksAsync(tutorialId, tutorialmd)
                     .then((usedBlocks) => {
@@ -2089,13 +2119,23 @@ export class ProjectView
     completeTutorial() {
         pxt.tickEvent("tutorial.complete");
         core.showLoading("leavingtutorial", lf("leaving tutorial..."));
-        this.exitTutorialAsync()
-            .then(() => {
-                let curr = pkg.mainEditorPkg().header;
-                return this.loadHeaderAsync(curr);
-            }).done(() => {
-                core.hideLoading("leavingtutorial");
-            })
+
+        if (pxt.BrowserUtils.isIE()) {
+            // For some reason, going from a tutorial straight to the editor in
+            // IE causes the JavaScript runtime to go bad. In order to work around
+            // the issue we go to the homescreen instead of the to the editor. See
+            // https://github.com/Microsoft/pxt-microbit/issues/1249 for more info.
+            this.exitTutorial();
+        }
+        else {
+            this.exitTutorialAsync()
+                .then(() => {
+                    let curr = pkg.mainEditorPkg().header;
+                    return this.loadHeaderAsync(curr);
+                }).done(() => {
+                    core.hideLoading("leavingtutorial");
+                });
+        }
     }
 
     exitTutorial(removeProject?: boolean) {
@@ -2233,8 +2273,9 @@ export class ProjectView
         const showSideDoc = sideDocs && this.state.sideDocsLoadUrl && !this.state.sideDocsCollapsed;
         const shouldHideEditorFloats = (this.state.hideEditorFloats || this.state.collapseEditorTools) && (!inTutorial || isHeadless);
         const shouldCollapseEditorTools = this.state.collapseEditorTools && (!inTutorial || isHeadless);
+        const logoWide = !!targetTheme.logoWide;
 
-        const isApp = cmds.isNativeHost() || pxt.winrt.isWinRT() || electron.isElectron;
+        const isApp = cmds.isNativeHost() || pxt.winrt.isWinRT() || electron.isElectron();
 
         let rootClassList = [
             "ui",
@@ -2256,6 +2297,7 @@ export class ProjectView
             sandbox && this.isEmbedSimActive() ? 'simView' : '',
             isApp ? "app" : "",
             greenScreen ? "greenscreen" : "",
+            logoWide ? "logo-wide" : "",
             'full-abs'
         ];
         const rootClasses = sui.cx(rootClassList);
@@ -2304,7 +2346,7 @@ export class ProjectView
                 {inHome ? <div id="homescreen" className="full-abs" role="main">
                     <div className="ui home projectsdialog">
                         <div className="menubar" role="banner">
-                            <accessibility.HomeAccessibilityMenu parent={this} highContrast={this.state.highContrast} /> }
+                            <accessibility.HomeAccessibilityMenu parent={this} highContrast={this.state.highContrast} />
                             <projects.ProjectsMenu parent={this} />
                         </div>
                         <projects.Projects parent={this} ref={this.handleHomeRef} />
@@ -2704,6 +2746,9 @@ function initExtensionsAsync(): Promise<void> {
             if (res.blocklyPatch) {
                 pxt.blocks.extensionBlocklyPatch = res.blocklyPatch;
             }
+            if (res.webUsbPairDialogAsync) {
+                pxt.commands.webUsbPairDialogAsync = res.webUsbPairDialogAsync;
+            }
         });
 }
 
@@ -2777,7 +2822,7 @@ document.addEventListener("DOMContentLoaded", () => {
     else if ((pxt.appTarget.appTheme.allowParentController || isController) && pxt.BrowserUtils.isIFrame()) workspace.setupWorkspace("iframe");
     else if (isSandbox) workspace.setupWorkspace("mem");
     else if (pxt.winrt.isWinRT()) workspace.setupWorkspace("uwp");
-    else if (Cloud.isLocalHost() || electron.isPxtElectron) workspace.setupWorkspace("fs");
+    else if (Cloud.isLocalHost() || electron.isPxtElectron()) workspace.setupWorkspace("fs");
     Promise.resolve()
         .then(() => {
             const mlang = /(live)?(force)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
@@ -2789,7 +2834,6 @@ document.addEventListener("DOMContentLoaded", () => {
             const force = !!mlang && !!mlang[2];
             return Util.updateLocalizationAsync(
                 pxt.appTarget.id,
-                false,
                 config.commitCdnUrl,
                 useLang,
                 pxt.appTarget.versions.pxtCrowdinBranch,

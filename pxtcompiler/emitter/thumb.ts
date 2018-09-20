@@ -226,162 +226,10 @@ namespace ts.pxtc.thumb {
 
             return {
                 opcode: (off & 0xf0000000) ? (0xf400 | imm10) : (0xf000 | imm10),
-                opcode2:  isBLX ? (0xe800 | imm11) : (0xf800 | imm11),
+                opcode2: isBLX ? (0xe800 | imm11) : (0xf800 | imm11),
                 stack: 0,
                 numArgs: [v],
                 labelName: actual
-            }
-        }
-
-        public commonalize(file: assembler.File): void {
-            if (!target.commonalize)
-                return
-            // this is a heuristic - we could allow more instructions
-            // to be shared, but it seems to result in less sharing
-            let canBeShared = (l: assembler.Line) => {
-                if (l.type == "empty") return true
-                if (l.type == "instruction") {
-                    let inst = l.instruction
-                    if (inst && inst.canBeShared)
-                        return true
-                    switch (l.words[0]) {
-                        case "pop":
-                        case "push":
-                            if (l.numArgs[0] & ~0xf)
-                                return false // we only allow r0-r3
-                            return true
-                        case "bl":
-                            switch (l.words[1]) {
-                                case "_numops_fromInt":
-                                case "_pxt_incr":
-                                case "_pxt_decr":
-                                case "pxt::incr":
-                                case "pxt::decr":
-                                case "pxt::fromInt":
-                                    return true
-                                default:
-                                    return false
-                            }
-                        default:
-                            return false
-                    }
-                }
-                return false
-            }
-
-            let frag: assembler.Line[] = []
-            let frags: pxt.Map<assembler.Line[][]> = {}
-            let lastLine = -1
-            for (let i = 0; i < file.lines.length; ++i) {
-                let l = file.lines[i]
-                //console.log(i, l.text)
-                if (l.type == "empty")
-                    continue
-                if (canBeShared(l)) {
-                    frag.push(l)
-                } else {
-                    if (l.words[0] == "_js_end")
-                        lastLine = i
-                    if (frag.length > 2) {
-                        let key = ""
-                        for (let ll of frag) {
-                            if (ll.type == "empty") continue
-                            assert(!!ll.instruction);
-                            assert(!!ll.opcode);
-                            if (key) key += ","
-                            if (ll.words[0] == "bl") {
-                                key += "BL " + ll.words[1]
-                            } else {
-                                key += ll.opcode
-                            }
-                        }
-                        if (frags[key])
-                            frags[key].push(frag)
-                        else
-                            frags[key] = [frag]
-                    }
-                    frag = []
-                }
-            }
-
-            if (lastLine < 0)
-                return // testing?
-
-            for (let k of Object.keys(frags)) {
-                let f = frags[k]
-                if (f.length == 1) {
-                    if (f[0].length > 3) {
-                        //console.log(k)
-                        let kleft = k.split(",")
-                        let kright = kleft.slice()
-                        let left = f[0].slice()
-                        let right = f[0].slice()
-                        let res: assembler.Line[] = null
-                        let reskey = ""
-                        while (left.length >= 3) {
-                            kleft.pop()
-                            left.pop()
-                            right.shift()
-                            kright.shift()
-
-                            reskey = kleft.join(",")
-                            let other = frags[reskey]
-                            if (other && other.length) {
-                                res = left
-                                break
-                            }
-                            reskey = kright.join(",")
-                            other = frags[reskey]
-                            if (other && other.length) {
-                                res = right
-                                break
-                            }
-                        }
-                        if (res) {
-                            frags[k] = []
-                            frags[reskey].push(res)
-                        }
-                    }
-                }
-            }
-
-            let addLines: assembler.Line[] = []
-            let seq = 0
-            for (let k of Object.keys(frags)) {
-                let f = frags[k]
-                if (f.length <= 1)
-                    continue
-                if (addLines.length == 0) {
-                    file.buildLine("; shared assembly fragments", addLines)
-                    file.buildLine("@nostackcheck", addLines)
-                    file.buildLine("_frag_start:", addLines)
-                }
-                let hasBL = k.indexOf("BL") >= 0
-                let lbl = "_frag_" + ++seq
-                file.buildLine(`; num.uses: ${f.length}`, addLines)
-                file.buildLine(lbl + ":", addLines)
-                if (hasBL)
-                    file.buildLine("mov r7, lr", addLines)
-                let stack = 0
-                for (let l of f[0]) {
-                    let tx = l.text.replace(/;.*/, "")
-                    if (/@\d/.test(tx))
-                        tx = ".short " + l.opcode + " ; " + tx
-                    file.buildLine(tx, addLines)
-                    stack += l.stack
-                }
-                file.buildLine(hasBL ? "bx r7" : "bx lr", addLines)
-                for (let frag of f) {
-                    frag[0].update("bl " + lbl)
-                    frag[1].update("@dummystack " + stack)
-                    for (let ii = 2; ii < frag.length; ++ii)
-                        frag[ii].update("")
-                }
-            }
-
-
-            if (addLines.length > 0) {
-                file.lines = file.lines.slice(0, lastLine).concat(addLines).concat(file.lines.slice(lastLine))
             }
         }
 
@@ -544,6 +392,19 @@ namespace ts.pxtc.thumb {
                 singleReg(ln) == singleReg(lnNext)) {
                 // RULE: pop {rX}; push {rX} -> ldr rX, [sp, #0]
                 ln.update("ldr r" + singleReg(ln) + ", [sp, #0]")
+                lnNext.update("")
+            } else if (lnop == "push" && lnNext.getOpExt() == "ldr $r5, [sp, $i1]" &&
+                singleReg(ln) == lnNext.numArgs[0] && lnNext.numArgs[1] == 0) {
+                // RULE: push {rX}; ldr rX, [sp, #0] -> push {rX}
+                lnNext.update("")
+            } else if (lnop == "bl" && lnNext.getOp() == "push" &&
+                /^_pxt_(incr|decr)$/.test(ln.words[1]) && singleReg(lnNext) == 0) {
+                ln.update("bl " + ln.words[1] + "_pushR0")
+                lnNext.update("@dummystack 1")
+            } else if (lnop == "ldr" && ln.getOpExt() == "ldr $r5, [sp, $i1]" && lnNext.getOp() == "bl" &&
+                /^_pxt_(incr|decr)(_pushR0)?$/.test(lnNext.words[1]) && ln.numArgs[0] == 0 && ln.numArgs[1] <= 56
+                && lnNext2 && lnNext2.getOp() != "push") {
+                ln.update("bl " + lnNext.words[1] + "_" + ln.numArgs[1])
                 lnNext.update("")
             } else if (lnNext2 && lnop == "push" && singleReg(ln) >= 0 && preservesReg(lnNext, singleReg(ln)) &&
                 lnNext2.getOp() == "pop" && singleReg(ln) == singleReg(lnNext2)) {

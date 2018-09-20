@@ -457,6 +457,8 @@ export function genFileName(extension: string): string {
         const rx = new RegExp(pxt.appTarget.appTheme.fileNameExclusiveFilter, 'g');
         sanitizedName = sanitizedName.replace(rx, '');
     }
+    if (!sanitizedName)
+        sanitizedName = "Untitled"; // do not translate to avoid unicode issues
     const fn = `${pxt.appTarget.nickname || pxt.appTarget.id}-${sanitizedName}${extension}`;
     return fn;
 }
