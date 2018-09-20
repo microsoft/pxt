@@ -2,6 +2,7 @@
 /// <reference path="../../localtypings/pxtparts.d.ts" />
 
 import * as core from "./core";
+import * as coretsx from "./coretsx";
 import U = pxt.U
 
 interface SimulatorConfig {
@@ -53,6 +54,17 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
             el.style.animationDuration = '500ms';
             const animationClasses = `${animation} visible transition animating`;
             pxsim.U.addClass(el, animationClasses);
+
+            if (pxt.BrowserUtils.isEdge() && coretsx.dialogIsShowing()) {
+                // Workaround for an Edge bug where when a dialog is open and the simulator is
+                // revealed it somehow breaks the page render
+
+                document.body.style.display = "none";
+                requestAnimationFrame(() => {
+                    document.body.style.display = "block";
+                });
+            }
+
             Promise.resolve().delay(500).then(() => {
                 pxsim.U.removeClass(el, animationClasses);
                 el.style.animationDuration = '';
@@ -115,7 +127,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                 driver.resume(pxsim.SimulatorDebuggerCommand.StepInto);
                 return;
             }
-            // we had an expected but could not find a block            
+            // we had an expected but could not find a block
             if (!highlighted && brk.exceptionMessage) {
                 pxt.debug(`runtime error: ${brk.exceptionMessage}`);
                 pxt.debug(brk.exceptionStack);
