@@ -821,7 +821,7 @@ namespace ts.pxtc.Util {
                 if (errorCount === stringFiles.length || !translations) {
                     // Retry with non-live translations by setting live to false
                     pxt.tickEvent("translations.livetranslationsfailed");
-                    return downloadTranslationsAsync(targetId, simulator, baseUrl, code, pxtBranch, targetBranch, false);
+                    return downloadTranslationsAsync(targetId, baseUrl, code, pxtBranch, targetBranch, false);
                 }
 
                 return Promise.resolve(translations);
