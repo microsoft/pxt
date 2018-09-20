@@ -752,12 +752,12 @@ namespace ts.pxtc.Util {
         return pxt.appTarget.appTheme && pxt.appTarget.appTheme.availableLocales && pxt.appTarget.appTheme.availableLocales.indexOf(code) > -1;
     }
 
-    export function updateLocalizationAsync(targetId: string, simulator: boolean, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean, force?: boolean): Promise<void> {
+    export function updateLocalizationAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean, force?: boolean): Promise<void> {
         code = normalizeLanguageCode(code);
         if (code === userLanguage() || (!isLocaleEnabled(code) && !force))
             return Promise.resolve();
 
-        return downloadTranslationsAsync(targetId, simulator, baseUrl, code, pxtBranch, targetBranch, live)
+        return downloadTranslationsAsync(targetId, baseUrl, code, pxtBranch, targetBranch, live)
             .then((translations) => {
                 if (translations) {
                     setUserLanguage(code);
@@ -775,22 +775,21 @@ namespace ts.pxtc.Util {
         if (code === userLanguage() || (!isLocaleEnabled(code) && !force))
             return Promise.resolve<pxt.Map<string>>(undefined);
 
-        return downloadTranslationsAsync(targetId, true, baseUrl, code, pxtBranch, targetBranch, live)
+        return downloadTranslationsAsync(targetId, baseUrl, code, pxtBranch, targetBranch, live)
     }
 
-    export function downloadTranslationsAsync(targetId: string, simulator: boolean, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean): Promise<pxt.Map<string>> {
+    export function downloadTranslationsAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean): Promise<pxt.Map<string>> {
         code = normalizeLanguageCode(code);
-        let translationsCacheId = `${code}/${live}/${simulator}`;
+        let translationsCacheId = `${code}/${live}`;
         if (translationsCache()[translationsCacheId]) {
             return Promise.resolve(translationsCache()[translationsCacheId]);
         }
 
-        const stringFiles: { branch: string, path: string }[] = simulator
-            ? [{ branch: targetBranch, path: targetId + "/sim-strings.json" }]
-            : [
-                { branch: pxtBranch, path: "strings.json" },
-                { branch: targetBranch, path: targetId + "/target-strings.json" }
-            ];
+        const stringFiles: { branch: string, path: string }[] = [
+            { branch: pxtBranch, path: "strings.json" },
+            { branch: targetBranch, path: targetId + "/target-strings.json" },
+            { branch: targetBranch, path: targetId + "/sim-strings.json" }
+        ];
         let translations: pxt.Map<string>;
 
         function mergeTranslations(tr: pxt.Map<string>) {

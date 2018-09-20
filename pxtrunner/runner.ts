@@ -154,7 +154,6 @@ namespace pxt.runner {
         const cfg = pxt.webConfig
         return Util.updateLocalizationAsync(
             pxt.appTarget.id,
-            true,
             cfg.commitCdnUrl, lang,
             versions ? versions.pxtCrowdinBranch : "",
             versions ? versions.targetCrowdinBranch : "",
@@ -301,7 +300,6 @@ namespace pxt.runner {
             editorLocale = locale;
             return pxt.Util.updateLocalizationAsync(
                 pxt.appTarget.id,
-                true,
                 pxt.webConfig.commitCdnUrl,
                 editorLocale.replace(localeLiveRx, ''),
                 pxt.appTarget.versions.pxtCrowdinBranch,
