@@ -71,3 +71,9 @@ You can choose a name for your project and save it. Type in a name for the proje
 The **Download** button will copy your program to a drive on your computer. You can copy your program directly to your @boardname@ if it's connected and a drive for it shows up on your computer.
 
 #### #download-images
+
+### Explorer #explorer
+
+All of the files in your project are viewed in the Explorer. Click on the **Explorer** button to expand the Explorer view to see all of the files in the project. Also, in addition to your project files, the Explorer will show all of files used to code all of the blocks in the editor. When you click and select a file, it will open in the editor for you to see and to edit if you want.
+
+#### #explorer-images
