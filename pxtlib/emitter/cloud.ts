@@ -92,7 +92,7 @@ namespace pxt.Cloud {
 
         if (packaged) {
             url = docid;
-            const isUnderDocs = /\/docs\//.test(url);
+            const isUnderDocs = /\/?docs\//.test(url);
             const hasExt = /\.\w+$/.test(url);
             if (!isUnderDocs) {
                 url = `docs/${url}`;
