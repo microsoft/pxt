@@ -103,12 +103,21 @@
     }
     /* TOC */
     .toc a.header {
+        color: black;
+        text-transform: uppercase;
+    }
+    .toc .inverted a.header {
         color: white;
     }
     .toc a.item {
-        color: rgba(255, 255, 255, 1);
+        color: black;
         padding: 10px 15px !important;
+        text-transform: uppercase;
     }
+    .toc .inverted a.item {
+        color: rgba(255, 255, 255, 1);
+    }
+
     .toc a.item:hover {
         text-decoration: @linkHoverUnderline;
     }
