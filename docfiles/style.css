@@ -286,15 +286,6 @@ svg {
     display: none;
 }
 
-/* Search */
-.toc .item.search {
-    margin: -.92857143em -1.14285714em;
-}
-
-.toc .item.search input {
-    border-radius: 0;
-}
-
 .showmobile {
     display: none;
 }

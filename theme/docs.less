@@ -103,10 +103,19 @@
     }
     /* TOC */
     .toc a.header {
+        text-transform: uppercase;
+    }
+    .toc .item.title {
         color: black;
         text-transform: uppercase;
     }
-    .toc .inverted a.header {
+    .toc .inverted .item.title a.header {
+        margin-right: 1em;
+    }
+    .toc .item .header {
+        text-transform: uppercase;
+    }
+    .toc .inverted .item a.header {
         color: white;
     }
     .toc a.item {
@@ -121,6 +130,15 @@
     .toc a.item:hover {
         text-decoration: @linkHoverUnderline;
     }
+
+    .toc .inverted .item.search {
+        margin: -.92857143em -1.14285714em;
+    }
+
+    .toc .item.search input {
+        border-radius: 0;
+    }
+
     .tocmenu .menu {
         padding-left: 20px;
         font-family: @docsPageFont;

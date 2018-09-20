@@ -324,7 +324,7 @@ namespace pxt.docs {
 .ui.inverted.accent { background: ${theme.accentColor}; }
 `
         params["targetstyle"] = style;
-        params["tocclass"] = theme.lightToc ? "light" : "inverted";
+        params["tocclass"] = theme.lightToc ? "lighttoc" : "inverted";
 
         for (let k of Object.keys(theme)) {
             let v = (theme as any)[k]
