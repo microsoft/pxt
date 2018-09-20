@@ -2272,6 +2272,7 @@ export class ProjectView
         const showSideDoc = sideDocs && this.state.sideDocsLoadUrl && !this.state.sideDocsCollapsed;
         const shouldHideEditorFloats = (this.state.hideEditorFloats || this.state.collapseEditorTools) && (!inTutorial || isHeadless);
         const shouldCollapseEditorTools = this.state.collapseEditorTools && (!inTutorial || isHeadless);
+        const logoWide = !!targetTheme.logoWide;
 
         const isApp = cmds.isNativeHost() || pxt.winrt.isWinRT() || electron.isElectron();
 
@@ -2295,6 +2296,7 @@ export class ProjectView
             sandbox && this.isEmbedSimActive() ? 'simView' : '',
             isApp ? "app" : "",
             greenScreen ? "greenscreen" : "",
+            logoWide ? "logoWide" : "",
             'full-abs'
         ];
         const rootClasses = sui.cx(rootClassList);
