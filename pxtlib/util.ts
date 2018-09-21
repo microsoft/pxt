@@ -697,7 +697,7 @@ namespace ts.pxtc.Util {
 
     export function downloadLiveTranslationsAsync(lang: string, filename: string, branch?: string, etag?: string): Promise<pxt.Map<string>> {
         // hitting the cloud
-        function downloadFromCloudAsync() {
+        function downloadFromCloudAsync(strings?: pxt.Map<string>) {
             pxt.debug(`downloading translations for ${lang} ${filename} ${branch || ""}`);
             // https://pxt.io/api/translations?filename=strings.json&lang=pl&approved=true&branch=v0
             let url = `${pxt.Cloud.isLocalHost() ? "https://makecode.com" : ""}/api/translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}&approved=true`;
@@ -706,14 +706,12 @@ namespace ts.pxtc.Util {
             if (etag) headers["If-None-Match"] = etag;
             return requestAsync({ url, headers }).then(resp => {
                 // if 304, translation not changed, skipe
-                if (resp.statusCode == 304)
-                    return undefined;
-                else if (resp.statusCode == 200) {
+                if (resp.statusCode == 304 || resp.statusCode == 200) {
                     // store etag and translations
                     etag = resp.headers["etag"] as string || "";
                     return translationDbAsync()
-                        .then(db => db.setAsync(lang, filename, branch, etag, resp.json))
-                        .then(() => resp.json);
+                        .then(db => db.setAsync(lang, filename, branch, etag, resp.json || strings))
+                        .then(() => resp.json || strings);
                 }
 
                 return resp.json;
@@ -730,9 +728,10 @@ namespace ts.pxtc.Util {
                 // if cached, return immediately
                 if (entry) {
                     etag = entry.etag;
-                    // background update
-                    if (!entry.cached)
-                        downloadFromCloudAsync().done();
+                    // update expired entries
+                    const dt = (Date.now() - entry.time) / 1000;
+                    if (dt > 300) // 5min caching time before trying etag again
+                        downloadFromCloudAsync(entry.strings).done();
                     return entry.strings;
                 } else
                     return downloadFromCloudAsync();
