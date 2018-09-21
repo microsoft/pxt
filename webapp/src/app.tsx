@@ -2009,7 +2009,8 @@ export class ProjectView
 
     showShareDialog() {
         const header = this.state.header;
-        this.shareEditor.show(header);
+        if (header)
+            this.shareEditor.show(header);
     }
 
     showLanguagePicker() {
@@ -2349,6 +2350,7 @@ export class ProjectView
         const showSideDoc = sideDocs && this.state.sideDocsLoadUrl && !this.state.sideDocsCollapsed;
         const shouldHideEditorFloats = (this.state.hideEditorFloats || this.state.collapseEditorTools) && (!inTutorial || isHeadless);
         const shouldCollapseEditorTools = this.state.collapseEditorTools && (!inTutorial || isHeadless);
+        const logoWide = !!targetTheme.logoWide;
 
         const isApp = cmds.isNativeHost() || pxt.winrt.isWinRT() || electron.isElectron();
 
@@ -2372,6 +2374,7 @@ export class ProjectView
             sandbox && this.isEmbedSimActive() ? 'simView' : '',
             isApp ? "app" : "",
             greenScreen ? "greenscreen" : "",
+            logoWide ? "logo-wide" : "",
             'full-abs'
         ];
         const rootClasses = sui.cx(rootClassList);
@@ -2420,7 +2423,7 @@ export class ProjectView
                 {inHome ? <div id="homescreen" className="full-abs" role="main">
                     <div className="ui home projectsdialog">
                         <div className="menubar" role="banner">
-                            <accessibility.HomeAccessibilityMenu parent={this} highContrast={this.state.highContrast} /> }
+                            <accessibility.HomeAccessibilityMenu parent={this} highContrast={this.state.highContrast} />
                             <projects.ProjectsMenu parent={this} />
                         </div>
                         <projects.Projects parent={this} ref={this.handleHomeRef} />
@@ -2908,7 +2911,6 @@ document.addEventListener("DOMContentLoaded", () => {
             const force = !!mlang && !!mlang[2];
             return Util.updateLocalizationAsync(
                 pxt.appTarget.id,
-                false,
                 config.commitCdnUrl,
                 useLang,
                 pxt.appTarget.versions.pxtCrowdinBranch,

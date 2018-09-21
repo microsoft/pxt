@@ -271,6 +271,8 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
 
 function computePath(h: Header) {
     let path = h.name.replace(/[^a-zA-Z0-9]+/g, " ").trim().replace(/ /g, "-")
+    if (!path)
+        path = "Untitled"; // do not translate
     if (lookup(path)) {
         let n = 2
         while (lookup(path + "-" + n))

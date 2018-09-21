@@ -82,7 +82,7 @@ namespace pxt.blocks {
         if (!b) return b;
         // normalize and validate common errors
         // made while translating
-        let nb = b.replace(/%\s+/g, '%');
+        let nb = b.replace(/[^\\]%\s+/g, '%');
         if (nb != b) {
             pxt.log(`block has extra spaces: ${b}`);
             return b;

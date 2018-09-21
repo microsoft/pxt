@@ -538,7 +538,7 @@ namespace pxt {
 
             // live loc of bundled packages
             if (pxt.Util.localizeLive && this.id != "this" && pxt.appTarget.bundledpkgs[this.id]) {
-                pxt.log(`loading live translations for ${this.id}`)
+                pxt.debug(`loading live translations for ${this.id}`)
                 const code = pxt.Util.userLanguage();
                 return Promise.all(filenames.map(
                     fn => pxt.Util.downloadLiveTranslationsAsync(code, `${targetId}/${fn}-strings.json`, theme.crowdinBranch)

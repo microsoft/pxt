@@ -1,7 +1,8 @@
 namespace pxt.Cloud {
     import Util = pxtc.Util;
 
-    export let apiRoot = "https://makecode.com/api/";
+    // hit /api/ to stay on same domain and avoid CORS
+    export let apiRoot = "/api/";
     export let accessToken = "";
     export let localToken = "";
     let _isOnline = true;
@@ -41,8 +42,11 @@ namespace pxt.Cloud {
         if (!Cloud.isOnline()) {
             return offlineError(options.url);
         }
-        if (accessToken) {
-            if (!options.headers) options.headers = {}
+        if (!options.headers) options.headers = {}
+        if (pxt.Cloud.isLocalHost()) {
+            if (Cloud.localToken)
+                options.headers["Authorization"] = Cloud.localToken;
+        } else if (accessToken) {
             options.headers["x-td-access-token"] = accessToken
         }
         return Util.requestAsync(options)
@@ -92,7 +96,7 @@ namespace pxt.Cloud {
 
         if (packaged) {
             url = docid;
-            const isUnderDocs = /\/docs\//.test(url);
+            const isUnderDocs = /\/?docs\//.test(url);
             const hasExt = /\.\w+$/.test(url);
             if (!isUnderDocs) {
                 url = `docs/${url}`;

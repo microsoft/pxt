@@ -697,21 +697,21 @@ namespace ts.pxtc.Util {
 
     export function downloadLiveTranslationsAsync(lang: string, filename: string, branch?: string, etag?: string): Promise<pxt.Map<string>> {
         // hitting the cloud
-        function downloadFromCloudAsync() {
+        function downloadFromCloudAsync(strings?: pxt.Map<string>) {
+            pxt.debug(`downloading translations for ${lang} ${filename} ${branch || ""}`);
             // https://pxt.io/api/translations?filename=strings.json&lang=pl&approved=true&branch=v0
-            let url = `https://makecode.com/api/translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}&approved=true`;
+            let url = `${pxt.Cloud.isLocalHost() ? "https://makecode.com" : ""}/api/translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}&approved=true`;
             if (branch) url += '&branch=' + encodeURIComponent(branch);
             const headers: pxt.Map<string> = {};
             if (etag) headers["If-None-Match"] = etag;
             return requestAsync({ url, headers }).then(resp => {
                 // if 304, translation not changed, skipe
-                if (resp.statusCode == 304)
-                    return undefined;
-                else if (resp.statusCode == 200) {
+                if (resp.statusCode == 304 || resp.statusCode == 200) {
                     // store etag and translations
-                    etag = resp.headers["ETag"] as string || "";
-                    return translationDb.setAsync(lang, filename, branch, etag, resp.json)
-                        .then(() => resp.json);
+                    etag = resp.headers["etag"] as string || "";
+                    return translationDbAsync()
+                        .then(db => db.setAsync(lang, filename, branch, etag, resp.json || strings))
+                        .then(() => resp.json || strings);
                 }
 
                 return resp.json;
@@ -722,14 +722,16 @@ namespace ts.pxtc.Util {
         }
 
         // check for cache
-        return translationDb.getAsync(lang, filename, branch)
+        return translationDbAsync()
+            .then(db => db.getAsync(lang, filename, branch))
             .then((entry: ts.pxtc.Util.ITranslationDbEntry) => {
                 // if cached, return immediately
                 if (entry) {
                     etag = entry.etag;
-                    // background update
-                    if (!entry.cached)
-                        downloadFromCloudAsync().done();
+                    // update expired entries
+                    const dt = (Date.now() - entry.time) / 1000;
+                    if (dt > 300) // 5min caching time before trying etag again
+                        downloadFromCloudAsync(entry.strings).done();
                     return entry.strings;
                 } else
                     return downloadFromCloudAsync();
@@ -751,12 +753,12 @@ namespace ts.pxtc.Util {
         return pxt.appTarget.appTheme && pxt.appTarget.appTheme.availableLocales && pxt.appTarget.appTheme.availableLocales.indexOf(code) > -1;
     }
 
-    export function updateLocalizationAsync(targetId: string, simulator: boolean, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean, force?: boolean): Promise<void> {
+    export function updateLocalizationAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean, force?: boolean): Promise<void> {
         code = normalizeLanguageCode(code);
         if (code === userLanguage() || (!isLocaleEnabled(code) && !force))
             return Promise.resolve();
 
-        return downloadTranslationsAsync(targetId, simulator, baseUrl, code, pxtBranch, targetBranch, live)
+        return downloadTranslationsAsync(targetId, baseUrl, code, pxtBranch, targetBranch, live)
             .then((translations) => {
                 if (translations) {
                     setUserLanguage(code);
@@ -774,22 +776,21 @@ namespace ts.pxtc.Util {
         if (code === userLanguage() || (!isLocaleEnabled(code) && !force))
             return Promise.resolve<pxt.Map<string>>(undefined);
 
-        return downloadTranslationsAsync(targetId, true, baseUrl, code, pxtBranch, targetBranch, live)
+        return downloadTranslationsAsync(targetId, baseUrl, code, pxtBranch, targetBranch, live)
     }
 
-    export function downloadTranslationsAsync(targetId: string, simulator: boolean, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean): Promise<pxt.Map<string>> {
+    export function downloadTranslationsAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean): Promise<pxt.Map<string>> {
         code = normalizeLanguageCode(code);
-        let translationsCacheId = `${code}/${live}/${simulator}`;
+        let translationsCacheId = `${code}/${live}`;
         if (translationsCache()[translationsCacheId]) {
             return Promise.resolve(translationsCache()[translationsCacheId]);
         }
 
-        const stringFiles: { branch: string, path: string }[] = simulator
-            ? [{ branch: targetBranch, path: targetId + "/sim-strings.json" }]
-            : [
-                { branch: pxtBranch, path: "strings.json" },
-                { branch: targetBranch, path: targetId + "/target-strings.json" }
-            ];
+        const stringFiles: { branch: string, path: string }[] = [
+            { branch: pxtBranch, path: "strings.json" },
+            { branch: targetBranch, path: targetId + "/target-strings.json" },
+            { branch: targetBranch, path: targetId + "/sim-strings.json" }
+        ];
         let translations: pxt.Map<string>;
 
         function mergeTranslations(tr: pxt.Map<string>) {
@@ -821,7 +822,7 @@ namespace ts.pxtc.Util {
                 if (errorCount === stringFiles.length || !translations) {
                     // Retry with non-live translations by setting live to false
                     pxt.tickEvent("translations.livetranslationsfailed");
-                    return downloadTranslationsAsync(targetId, simulator, baseUrl, code, pxtBranch, targetBranch, false);
+                    return downloadTranslationsAsync(targetId, baseUrl, code, pxtBranch, targetBranch, false);
                 }
 
                 return Promise.resolve(translations);
@@ -946,7 +947,8 @@ namespace ts.pxtc.BrowserImpl {
                         buffer: (client as any).responseBody || client.response,
                         text: options.responseArrayBuffer ? undefined : client.responseText,
                     }
-                    client.getAllResponseHeaders().split(/\r?\n/).forEach(l => {
+                    const allHeaders = client.getAllResponseHeaders();
+                    allHeaders.split(/\r?\n/).forEach(l => {
                         let m = /^\s*([^:]+): (.*)/.exec(l)
                         if (m) res.headers[m[1].toLowerCase()] = m[2]
                     })

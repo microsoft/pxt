@@ -150,9 +150,15 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.toggleHighContrast = this.toggleHighContrast.bind(this);
         this.toggleGreenScreen = this.toggleGreenScreen.bind(this);
         this.showResetDialog = this.showResetDialog.bind(this);
+        this.showShareDialog = this.showShareDialog.bind(this);
         this.pair = this.pair.bind(this);
         this.showAboutDialog = this.showAboutDialog.bind(this);
         this.print = this.print.bind(this);
+    }
+
+    showShareDialog() {
+        pxt.tickEvent("menu.share", undefined, { interactiveConsent: true });
+        this.props.parent.showShareDialog();
     }
 
     openSettings() {
@@ -347,17 +353,19 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         const targetTheme = pxt.appTarget.appTheme;
         const isController = pxt.shell.isControllerMode();
         const homeEnabled = !isController;
-        const sharingEnabled = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && !isController;
         const sandbox = pxt.shell.isSandboxMode();
         const tutorialOptions = this.props.parent.state.tutorialOptions;
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
         const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox && !inTutorial;
         const isRunning = this.props.parent.state.running;
         const hc = !!this.props.parent.state.highContrast;
+        const showShare = !inTutorial && header && pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && !isController;
 
         const logo = (hc ? targetTheme.highContrastLogo : undefined) || targetTheme.logo;
         const portraitLogo = (hc ? targetTheme.highContrastPortraitLogo : undefined) || targetTheme.portraitLogo;
         const rightLogo = sandbox ? targetTheme.portraitLogo : targetTheme.rightLogo;
+        const logoWide = !!targetTheme.logoWide;
+        const portraitLogoSize = logoWide ? "small" : "mini";
 
         const simActive = this.props.parent.isEmbedSimActive();
         const blockActive = this.props.parent.isBlocksActive();
@@ -372,11 +380,11 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
                     {logo || portraitLogo
                         ? <img className={`ui logo ${logo ? " portrait hide" : ''}`} src={logo || portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)} />
                         : <span className="name">{targetTheme.boardName}</span>}
-                    {portraitLogo ? (<img className='ui mini image portrait only' src={portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)} />) : null}
+                    {portraitLogo ? (<img className={`ui ${portraitLogoSize} image portrait only`} src={portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)} />) : null}
                 </a>
                 {targetTheme.betaUrl ? <a href={`${targetTheme.betaUrl}`} className="ui red mini corner top left attached label betalabel" role="menuitem">{lf("Beta")}</a> : undefined}
                 {!inTutorial && homeEnabled ? <sui.Item className="icon openproject" role="menuitem" textClass="landscape only" icon="home large" ariaLabel={lf("Home screen")} text={lf("Home")} onClick={this.goHome} /> : null}
-                {!inTutorial && header && sharingEnabled ? <sui.Item className="icon shareproject" role="menuitem" textClass="widedesktop only" ariaLabel={lf("Share Project")} text={lf("Share")} icon="share alternate large" onClick={this.showShareDialog} /> : null}
+                {showShare ? <sui.Item className="icon shareproject" role="menuitem" textClass="widedesktop only" ariaLabel={lf("Share Project")} text={lf("Share")} icon="share alternate large" onClick={this.showShareDialog} /> : null}
                 {inTutorial ? <sui.Item className="tutorialname" tabIndex={-1} textClass="landscape only" text={tutorialOptions.tutorialName} /> : null}
             </div> : <div className="left menu">
                     <span id="logo" className="ui item logo">
