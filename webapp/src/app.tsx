@@ -842,6 +842,9 @@ export class ProjectView
         return (h._backupRef ? workspace.restoreFromBackupAsync(h) : Promise.resolve())
             .then(() => pkg.loadPkgAsync(h.id))
             .then(() => {
+                if (!this.state || this.state.header != h) {
+                    this.showPackageErrorsOnNextTypecheck();
+                }
                 simulator.makeDirty();
                 compiler.newProject();
                 return compiler.applyUpgrades();
@@ -1332,7 +1335,6 @@ export class ProjectView
     newProject(options: ProjectCreationOptions = {}) {
         pxt.tickEvent("app.newproject");
         core.showLoading("newproject", lf("creating new project..."));
-        this.showPackageErrorsOnNextTypecheck();
         this.createProjectAsync(options)
             .then(() => Promise.delay(500))
             .done(() => core.hideLoading("newproject"));

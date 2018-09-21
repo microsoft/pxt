@@ -268,32 +268,36 @@ class ExtensionErrorWizard extends React.Component<ExtensionErrorWizardProps, Ex
         })
     }
 
+    protected buildActionList() {
+        const actions: { text: string, callback: () => void }[] = [];
+
+        if (!this.state.updateError) {
+            actions.push({
+                text: lf("Try to Fix"),
+                callback: this.startUpdate
+            });
+        }
+
+        actions.push({
+            text: lf("Ignore errors and open"),
+            callback: coretsx.hideDialog
+        });
+
+        if (this.props.openLegacyEditor) {
+            actions.push({
+                text: lf("Go to the old editor"),
+                callback: this.props.openLegacyEditor
+            });
+        }
+
+        return actions;
+    }
+
     render() {
-        const { openLegacyEditor, affectedPackages } = this.props;
+        const { affectedPackages } = this.props;
         const { updating, updateComplete, packagesUpdated, updateError, showProgressBar } = this.state;
 
-        if (updateError) {
-            return <div>
-                    <p>{pxt.Util.lf("Looks like updating didn't fix the issue")}</p>
-                    <div className="ui relaxed list">
-                        <div className="item wizard-action" onClick={coretsx.hideDialog}>
-                            <i className="medium arrow right middle aligned icon"></i>
-                            <div className="content">
-                                {lf("Open project anyway")}
-                            </div>
-                        </div>
-                    { openLegacyEditor ?
-                        <div className="item wizard-action" onClick={openLegacyEditor}>
-                            <i className="medium arrow right middle aligned icon"></i>
-                            <div className="content">
-                                {lf("Go to the old editor")}
-                            </div>
-                        </div> : undefined
-                    }
-                    </div>
-            </div>;
-        }
-        else if (updating) {
+        if (updating) {
             const progressString = packagesUpdated === affectedPackages.length ? lf("Finishing up...") :
                 lf("Updating package {0} of {1}...", packagesUpdated + 1, affectedPackages.length);
 
@@ -303,10 +307,6 @@ class ExtensionErrorWizard extends React.Component<ExtensionErrorWizardProps, Ex
                         <div className="ui centered inline inverted text loader">
                             { progressString }
                         </div>
-                    }
-                    {
-                        showProgressBar ?
-                        <div><button className="ui right floated button">Cancel</button></div> : undefined
                     }
                 </div>
         }
@@ -319,30 +319,12 @@ class ExtensionErrorWizard extends React.Component<ExtensionErrorWizardProps, Ex
             </div>
         }
 
+        const message = updateError ? lf("Looks like updating didn't fix the issue. How would you like to proceed?") :
+            lf("Looks like there are some errors in the extensions added to this project. How would you like to proceed?");
+
         return <div>
-                <p>{pxt.Util.lf("Looks like there are some errors in the extensions added to this project")}</p>
-                <div className="ui relaxed list">
-                    <div className="item wizard-action" onClick={this.startUpdate}>
-                        <i className="medium arrow right middle aligned icon"></i>
-                        <div className="content">
-                            {lf("Try to fix")}
-                        </div>
-                    </div>
-                    <div className="item wizard-action" onClick={coretsx.hideDialog}>
-                        <i className="medium arrow right middle aligned icon"></i>
-                        <div className="content">
-                            {lf("Open project anyway")}
-                        </div>
-                    </div>
-                    { openLegacyEditor ?
-                        <div className="item wizard-action" onClick={openLegacyEditor}>
-                            <i className="medium arrow right middle aligned icon"></i>
-                            <div className="content">
-                                {lf("Go to the old editor")}
-                            </div>
-                        </div> : undefined
-                    }
-                </div>
+                <p>{message}</p>
+                <WizardMenu actions={this.buildActionList()} />
         </div>
     }
 }
@@ -367,8 +349,27 @@ class ProgressBar extends React.Component<ProgressBarProps, {}> {
                         <rect className="progress-bar-content" width={percentage.toString() + "%"} height="100%" rx={cornerRadius} ry={cornerRadius}/>
                     </svg>
                 </div>
-                { label ? <p className="ui center aligned progress-bar-label">{label}</p> : undefined }
+                { label ? <p className="progress-bar-label">{label}</p> : undefined }
             </div>
+    }
+}
+
+interface WizardMenuProps {
+    actions: { text: string, callback: () => void }[];
+}
+
+class WizardMenu extends React.Component<WizardMenuProps, {}> {
+    render() {
+        return <div className="ui relaxed list" role="menu">
+            { this.props.actions.map(({text, callback}) =>
+                <div className="item wizard-action" onClick={callback} role="menuitem">
+                    <i className="medium arrow right middle aligned icon"></i>
+                    <a className="content">
+                        {text}
+                    </a>
+                </div>)
+            }
+        </div>
     }
 }
 

@@ -419,12 +419,12 @@ export function updatePackagesAsync(packages: pkg.EditorPackage[], progressHandl
         .then(newHeader => {
             backup = newHeader;
             epkg.header._backupRef = backup.id;
+            backup._isBackup = true;
             return workspace.saveAsync(backup);
         })
         .then(() => workspace.saveAsync(epkg.header))
         .then(() => Promise.each(packages, p => {
                 return epkg.updateDepAsync(p.getPkgId())
-                    .then(() => Promise.delay(5000))
                     .then(() => {
                         ++completed;
                         if (progressHandler) {
