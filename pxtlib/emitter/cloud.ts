@@ -92,7 +92,7 @@ namespace pxt.Cloud {
     // 1h check on markdown content
     const MARKDOWN_EXPIRATION = 1 * 60 * 60 * 1000;
     export function markdownAsync(docid: string, locale?: string, live?: boolean): Promise<string> {
-        const branch = pxt.appTarget.versions && pxt.appTarget.versions.target || '?';
+        const branch = "";
         return ts.pxtc.Util.translationDbAsync()
             .then(db => db.getAsync(locale, docid, "")
                 .then(entry => {
