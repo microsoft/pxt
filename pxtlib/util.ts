@@ -700,7 +700,7 @@ namespace ts.pxtc.Util {
         function downloadFromCloudAsync() {
             pxt.debug(`downloading translations for ${lang} ${filename} ${branch || ""}`);
             // https://pxt.io/api/translations?filename=strings.json&lang=pl&approved=true&branch=v0
-            let url = `https://makecode.com/api/translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}&approved=true`;
+            let url = `${/^http:\/\/localhost(:\d+)\/?/i.test(window.location.href) ? "https://makecode.com" : ""}/api/translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}&approved=true`;
             if (branch) url += '&branch=' + encodeURIComponent(branch);
             const headers: pxt.Map<string> = {};
             if (etag) headers["If-None-Match"] = etag;
@@ -710,7 +710,7 @@ namespace ts.pxtc.Util {
                     return undefined;
                 else if (resp.statusCode == 200) {
                     // store etag and translations
-                    etag = resp.headers["ETag"] as string || "";
+                    etag = resp.headers["etag"] as string || "";
                     return translationDb.setAsync(lang, filename, branch, etag, resp.json)
                         .then(() => resp.json);
                 }
@@ -946,7 +946,8 @@ namespace ts.pxtc.BrowserImpl {
                         buffer: (client as any).responseBody || client.response,
                         text: options.responseArrayBuffer ? undefined : client.responseText,
                     }
-                    client.getAllResponseHeaders().split(/\r?\n/).forEach(l => {
+                    const allHeaders = client.getAllResponseHeaders();
+                    allHeaders.split(/\r?\n/).forEach(l => {
                         let m = /^\s*([^:]+): (.*)/.exec(l)
                         if (m) res.headers[m[1].toLowerCase()] = m[2]
                     })
