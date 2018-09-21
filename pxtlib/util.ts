@@ -700,7 +700,7 @@ namespace ts.pxtc.Util {
         function downloadFromCloudAsync() {
             pxt.debug(`downloading translations for ${lang} ${filename} ${branch || ""}`);
             // https://pxt.io/api/translations?filename=strings.json&lang=pl&approved=true&branch=v0
-            let url = `${/^http:\/\/localhost(:\d+)\/?/i.test(window.location.href) ? "https://makecode.com" : ""}/api/translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}&approved=true`;
+            let url = `${pxt.Cloud.isLocalHost() ? "https://makecode.com" : ""}/api/translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}&approved=true`;
             if (branch) url += '&branch=' + encodeURIComponent(branch);
             const headers: pxt.Map<string> = {};
             if (etag) headers["If-None-Match"] = etag;
