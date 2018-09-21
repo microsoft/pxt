@@ -2055,7 +2055,7 @@ export class ProjectView
         let tutorialmd: string;
 
         return Promise.resolve()
-            .then(() => pxt.Cloud.downloadMarkdownAsync(tutorialId))
+            .then(() => pxt.Cloud.markdownAsync(tutorialId))
             .then(md => {
                 if (!md)
                     throw new Error("tutorial not found");

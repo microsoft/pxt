@@ -63,8 +63,8 @@ namespace pxt.Cloud {
             })
     }
 
-    export function privateGetTextAsync(path: string): Promise<string> {
-        return privateRequestAsync({ url: path }).then(resp => resp.text)
+    export function privateGetTextAsync(path: string, headers?: pxt.Map<string>): Promise<string> {
+        return privateRequestAsync({ url: path, headers }).then(resp => resp.text)
     }
 
     export function privateGetAsync(path: string, forceLiveEndpoint: boolean = false): Promise<any> {
@@ -89,7 +89,31 @@ namespace pxt.Cloud {
         })
     }
 
-    export function downloadMarkdownAsync(docid: string, locale?: string, live?: boolean): Promise<string> {
+    // 1h check on markdown content
+    const MARKDOWN_EXPIRATION = 1 * 60 * 60 * 1000;
+    export function markdownAsync(docid: string, locale?: string, live?: boolean): Promise<string> {
+        const branch = "";
+        return ts.pxtc.Util.translationDbAsync()
+            .then(db => db.getAsync(locale, docid, "")
+                .then(entry => {
+                    if (entry && Date.now() - entry.time > MARKDOWN_EXPIRATION)
+                        // background update, 
+                        downloadMarkdownAsync(docid, locale, live, entry.etag)
+                            .then(r => db.setAsync(locale, docid, branch, r.etag, undefined, r.md || entry.md))
+                            .catch(() => { }) // swallow errors
+                            .done();
+                    // return cached entry
+                    if (entry && entry.md)
+                        return entry.md;
+                    // download and cache
+                    else return downloadMarkdownAsync(docid, locale, live)
+                        .then(r => db.setAsync(locale, docid, branch, r.etag, undefined, r.md)
+                            .then(() => r.md))
+                        .catch(() => ""); // no translation
+                }))
+    }
+
+    function downloadMarkdownAsync(docid: string, locale?: string, live?: boolean, etag?: string): Promise<{ md: string; etag?: string; }> {
         const packaged = pxt.webConfig && pxt.webConfig.isStatic;
         const targetVersion = pxt.appTarget.versions && pxt.appTarget.versions.target || '?';
         let url: string;
@@ -114,10 +138,15 @@ namespace pxt.Cloud {
         if (Cloud.isLocalHost() && !live)
             return localRequestAsync(url).then(resp => {
                 if (resp.statusCode == 404)
-                    return privateGetTextAsync(url);
-                else return resp.text
+                    return privateRequestAsync({ url, method: "GET" })
+                        .then(resp => { return { md: resp.text, etag: resp.headers["etag"] }; });
+                else return { md: resp.text, etag: undefined };
             });
-        else return privateGetTextAsync(url);
+        else {
+            const headers: pxt.Map<string> = etag ? { "If-None-Match": etag } : undefined;
+            return privateRequestAsync({ url, method: "GET", headers })
+                .then(resp => { return { md: resp.text, etag: resp.headers["etag"] }; });
+        }
     }
 
     export function privateDeleteAsync(path: string) {

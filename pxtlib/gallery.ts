@@ -89,12 +89,12 @@ namespace pxt.gallery {
     }
 
     export function loadGalleryAsync(name: string): Promise<Gallery[]> {
-        return pxt.Cloud.downloadMarkdownAsync(name, pxt.Util.userLanguage(), pxt.Util.localizeLive)
+        return pxt.Cloud.markdownAsync(name, pxt.Util.userLanguage(), pxt.Util.localizeLive)
             .then(md => parseGalleryMardown(md))
     }
 
     export function loadExampleAsync(name: string, path: string): Promise<GalleryProject> {
-        return pxt.Cloud.downloadMarkdownAsync(path, pxt.Util.userLanguage(), pxt.Util.localizeLive)
+        return pxt.Cloud.markdownAsync(path, pxt.Util.userLanguage(), pxt.Util.localizeLive)
             .then(md => parseExampleMarkdown(name, md))
     }
 }

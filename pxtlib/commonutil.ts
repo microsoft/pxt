@@ -55,13 +55,14 @@ namespace ts.pxtc.Util {
     export interface ITranslationDbEntry {
         id?: string;
         etag: string;
-        strings: pxt.Map<string>;
         time: number;
+        strings?: pxt.Map<string>; // UI string translations
+        md?: string; // markdown content
     }
 
     export interface ITranslationDb {
         getAsync(lang: string, filename: string, branch: string): Promise<ITranslationDbEntry>;
-        setAsync(lang: string, filename: string, branch: string, etag: string, strings: pxt.Map<string>): Promise<void>;
+        setAsync(lang: string, filename: string, branch: string, etag: string, strings?: pxt.Map<string>, md?: string): Promise<void>;
     }
 
     class MemTranslationDb implements ITranslationDb {
@@ -75,14 +76,15 @@ namespace ts.pxtc.Util {
         getAsync(lang: string, filename: string, branch: string): Promise<ITranslationDbEntry> {
             return Promise.resolve(this.get(lang, filename, branch));
         }
-        set(lang: string, filename: string, branch: string, etag: string, strings: pxt.Map<string>) {
+        set(lang: string, filename: string, branch: string, etag: string, strings?: pxt.Map<string>, md?: string) {
             this.translations[this.key(lang, filename, branch)] = {
                 etag,
+                time: Date.now() + 24 * 60 * 60 * 1000, // in-memory expiration is 24h
                 strings,
-                time: Date.now() + 24 * 60 * 60 * 1000 // in-memory expiration is 24h
+                md
             }
         }
-        setAsync(lang: string, filename: string, branch: string, etag: string, strings: pxt.Map<string>): Promise<void> {
+        setAsync(lang: string, filename: string, branch: string, etag: string, strings?: pxt.Map<string>, md?: string): Promise<void> {
             this.set(lang, filename, branch, etag, strings);
             return Promise.resolve();
         }
@@ -111,6 +113,7 @@ namespace ts.pxtc.Util {
             this.mem = new MemTranslationDb();
         }
         getAsync(lang: string, filename: string, branch: string): Promise<ITranslationDbEntry> {
+            lang = (lang || "en-US").toLowerCase(); // normalize locale
             const id = this.mem.key(lang, filename, branch);
             const r = this.mem.get(lang, filename, branch);
             if (r) return Promise.resolve(r);
@@ -129,9 +132,10 @@ namespace ts.pxtc.Util {
                 request.onerror = () => resolve(undefined);
             });
         }
-        setAsync(lang: string, filename: string, branch: string, etag: string, strings: pxt.Map<string>): Promise<void> {
+        setAsync(lang: string, filename: string, branch: string, etag: string, strings?: pxt.Map<string>, md?: string): Promise<void> {
+            lang = (lang || "en-US").toLowerCase(); // normalize locale
             const id = this.mem.key(lang, filename, branch);
-            this.mem.set(lang, filename, branch, etag, strings);
+            this.mem.set(lang, filename, branch, etag, strings, md);
             return new Promise((resolve, reject) => {
                 const transaction = this.db.transaction([IndexedDbTranslationDb.TABLE], "readwrite");
                 transaction.oncomplete = () => resolve();
@@ -141,12 +145,14 @@ namespace ts.pxtc.Util {
                 }
                 const store = transaction.objectStore(IndexedDbTranslationDb.TABLE);
                 // delete all empty entries from strings
-                Object.keys(strings).filter(k => !strings[k]).forEach(k => delete strings[k]);
+                if (strings)
+                    Object.keys(strings).filter(k => !strings[k]).forEach(k => delete strings[k]);
                 const entry: ITranslationDbEntry = {
                     id,
                     etag,
+                    time: Date.now(),
                     strings,
-                    time: Date.now()
+                    md
                 }
                 store.put(entry);
             });
