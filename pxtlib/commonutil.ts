@@ -69,24 +69,21 @@ namespace ts.pxtc.Util {
         key(lang: string, filename: string, branch: string) {
             return `${lang}|${filename}|${branch || "master"}`;
         }
-        time(): number {
-            return Date.now();
-        }
         get(lang: string, filename: string, branch: string): ITranslationDbEntry {
             return this.translations[this.key(lang, filename, branch)];
         }
         getAsync(lang: string, filename: string, branch: string): Promise<ITranslationDbEntry> {
             return Promise.resolve(this.get(lang, filename, branch));
         }
-        set(lang: string, filename: string, branch: string, etag: string, strings: pxt.Map<string>, time: number) {
+        set(lang: string, filename: string, branch: string, etag: string, strings: pxt.Map<string>) {
             this.translations[this.key(lang, filename, branch)] = {
                 etag,
                 strings,
-                time
+                time: Date.now() + 24 * 60 * 60 * 1000 // in-memory expiration is 24h
             }
         }
         setAsync(lang: string, filename: string, branch: string, etag: string, strings: pxt.Map<string>): Promise<void> {
-            this.set(lang, filename, branch, etag, strings, this.time());
+            this.set(lang, filename, branch, etag, strings);
             return Promise.resolve();
         }
     }
@@ -125,7 +122,7 @@ namespace ts.pxtc.Util {
                     const entry: ITranslationDbEntry = request.result;
                     if (entry) {
                         // store in-memory so that we don't try to download again
-                        this.mem.set(lang, filename, branch, entry.etag, entry.strings, entry.time);
+                        this.mem.set(lang, filename, branch, entry.etag, entry.strings);
                         resolve(entry);
                     } else resolve(undefined);
                 }
@@ -134,7 +131,7 @@ namespace ts.pxtc.Util {
         }
         setAsync(lang: string, filename: string, branch: string, etag: string, strings: pxt.Map<string>): Promise<void> {
             const id = this.mem.key(lang, filename, branch);
-            this.mem.set(lang, filename, branch, etag, strings, this.mem.time());
+            this.mem.set(lang, filename, branch, etag, strings);
             return new Promise((resolve, reject) => {
                 const transaction = this.db.transaction([IndexedDbTranslationDb.TABLE], "readwrite");
                 transaction.oncomplete = () => resolve();
@@ -149,7 +146,7 @@ namespace ts.pxtc.Util {
                     id,
                     etag,
                     strings,
-                    time: this.mem.time()
+                    time: Date.now()
                 }
                 store.put(entry);
             });
