@@ -63,8 +63,8 @@ namespace pxt.Cloud {
             })
     }
 
-    export function privateGetTextAsync(path: string): Promise<string> {
-        return privateRequestAsync({ url: path }).then(resp => resp.text)
+    export function privateGetTextAsync(path: string, headers?: pxt.Map<string>): Promise<string> {
+        return privateRequestAsync({ url: path, headers }).then(resp => resp.text)
     }
 
     export function privateGetAsync(path: string, forceLiveEndpoint: boolean = false): Promise<any> {
@@ -89,7 +89,27 @@ namespace pxt.Cloud {
         })
     }
 
-    export function downloadMarkdownAsync(docid: string, locale?: string, live?: boolean): Promise<string> {
+    const MARKDOWN_EXPIRATION = 60 * 1000;
+    export function markdownAsync(docid: string, locale?: string, live?: boolean): Promise<string> {
+        return ts.pxtc.Util.translationDbAsync()
+            .then(db => db.getAsync(locale, docid, "")
+                .then(entry => {
+                    if (entry && Date.now() - entry.time > MARKDOWN_EXPIRATION)
+                        // background update, 
+                        downloadMarkdownAsync(docid, locale, live, entry.etag)
+                            .then(md => db.setAsync(locale, docid, "", entry.etag, undefined, md))
+                            .done();
+                    // return cached entry
+                    if (entry && entry.md)
+                        return entry.md;
+                    // download and cache
+                    else return downloadMarkdownAsync(docid, locale, live)
+                            .then(md => db.setAsync(locale, docid, "", undefined, undefined, md)
+                            .then(() => md));
+                }))
+    }
+
+    function downloadMarkdownAsync(docid: string, locale?: string, live?: boolean, etag?: string): Promise<string> {
         const packaged = pxt.webConfig && pxt.webConfig.isStatic;
         const targetVersion = pxt.appTarget.versions && pxt.appTarget.versions.target || '?';
         let url: string;
@@ -117,7 +137,10 @@ namespace pxt.Cloud {
                     return privateGetTextAsync(url);
                 else return resp.text
             });
-        else return privateGetTextAsync(url);
+        else {
+            const headers: pxt.Map<string> = etag ? { "If-None-Match": etag } : undefined;
+            return privateGetTextAsync(url, headers);
+        }
     }
 
     export function privateDeleteAsync(path: string) {
