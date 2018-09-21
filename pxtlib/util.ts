@@ -711,7 +711,8 @@ namespace ts.pxtc.Util {
                 else if (resp.statusCode == 200) {
                     // store etag and translations
                     etag = resp.headers["etag"] as string || "";
-                    return translationDb.setAsync(lang, filename, branch, etag, resp.json)
+                    return translationDbAsync()
+                        .then(db => db.setAsync(lang, filename, branch, etag, resp.json))
                         .then(() => resp.json);
                 }
 
@@ -723,7 +724,8 @@ namespace ts.pxtc.Util {
         }
 
         // check for cache
-        return translationDb.getAsync(lang, filename, branch)
+        return translationDbAsync()
+            .then(db => db.getAsync(lang, filename, branch))
             .then((entry: ts.pxtc.Util.ITranslationDbEntry) => {
                 // if cached, return immediately
                 if (entry) {

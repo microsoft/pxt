@@ -67,23 +67,96 @@ namespace ts.pxtc.Util {
     class MemTranslationDb implements ITranslationDb {
         translations: pxt.Map<ITranslationDbEntry> = {};
         key(lang: string, filename: string, branch: string) {
-            return `${lang}|${filename}|${branch || ""}`;
+            return `${lang}|${filename}|${branch || "master"}`;
+        }
+        get(lang: string, filename: string, branch: string): ITranslationDbEntry {
+            return this.translations[this.key(lang, filename, branch)];
         }
         getAsync(lang: string, filename: string, branch: string): Promise<ITranslationDbEntry> {
-            return Promise.resolve(this.translations[this.key(lang, filename, branch)]);
+            return Promise.resolve(this.get(lang, filename, branch));
         }
-        setAsync(lang: string, filename: string, branch: string, etag: string, strings: pxt.Map<string>): Promise<void> {
+        set(lang: string, filename: string, branch: string, etag: string, strings: pxt.Map<string>) {
             this.translations[this.key(lang, filename, branch)] = {
                 etag,
                 strings,
                 cached: true
             }
+        }
+        setAsync(lang: string, filename: string, branch: string, etag: string, strings: pxt.Map<string>): Promise<void> {
+            this.set(lang, filename, branch, etag, strings);
             return Promise.resolve();
         }
     }
 
+    class IndexedDbTranslationDb implements ITranslationDb {
+        static TABLE = "files";
+        static KEYPATH = "id";
+        static createAsync(): Promise<IndexedDbTranslationDb> {
+            return new Promise<IndexedDbTranslationDb>((resolve, reject) => {
+                const idb: IDBFactory = window.indexedDB || (<any>window).mozIndexedDB || (<any>window).webkitIndexedDB || (<any>window).msIndexedDB;
+                const r = idb.open("__pxt_translations", 2);
+                r.onsuccess = () => resolve(new IndexedDbTranslationDb(r.result));
+                r.onerror = () => reject(r.error);
+                r.onupgradeneeded = () => {
+                    const db = r.result as IDBDatabase;
+                    db.createObjectStore(IndexedDbTranslationDb.TABLE, { keyPath: IndexedDbTranslationDb.KEYPATH });
+                }
+            });
+        }
+
+        private db: IDBDatabase;
+        private mem: MemTranslationDb;
+        constructor(db: IDBDatabase) {
+            this.db = db;
+            this.mem = new MemTranslationDb();
+        }
+        getAsync(lang: string, filename: string, branch: string): Promise<ITranslationDbEntry> {
+            const id = this.mem.key(lang, filename, branch);
+            const r = this.mem.get(lang, filename, branch);
+            if (r) return Promise.resolve(r);
+            return new Promise<ITranslationDbEntry>((resolve, reject) => {
+                const transaction = this.db.transaction([IndexedDbTranslationDb.TABLE]);
+                const store = transaction.objectStore(IndexedDbTranslationDb.TABLE);
+                const request = store.get(id);
+                request.onsuccess = () => {
+                    this.mem.set(lang, filename, branch, request.result.etag, request.result.strings);
+                    resolve(this.mem.get(lang, filename, branch));
+                }
+                request.onerror = () => resolve(undefined);
+            });
+        }
+        setAsync(lang: string, filename: string, branch: string, etag: string, strings: pxt.Map<string>): Promise<void> {
+            const id = this.mem.key(lang, filename, branch);
+            this.mem.set(lang, filename, branch, etag, strings);
+            return new Promise((resolve, reject) => {
+                const transaction = this.db.transaction([IndexedDbTranslationDb.TABLE], "readwrite");
+                transaction.oncomplete = () => resolve();
+                transaction.onerror = () => {
+                    // ignore set errors
+                    resolve();
+                }
+                const store = transaction.objectStore(IndexedDbTranslationDb.TABLE);
+                // delete all empty entries from strings
+                Object.keys(strings).filter(k => !strings[k]).forEach(k => delete strings[k]);
+                const entry: ITranslationDbEntry = {
+                    id,
+                    etag,
+                    strings
+                }
+                store.put(entry);
+            });
+        }
+    }
+
     // wired up in the app to store translations in pouchdb. MAY BE UNDEFINED!
-    export let translationDb: ITranslationDb = new MemTranslationDb();
+    let _translationDbPromise: Promise<ITranslationDb>;
+    export function translationDbAsync(): Promise<ITranslationDb> {
+        // try indexed db
+        if (!_translationDbPromise)
+            _translationDbPromise = IndexedDbTranslationDb.createAsync()
+                .catch(() => new MemTranslationDb());
+        return _translationDbPromise;
+    }
 
     /**
      * Returns the current user language, prepended by "live-" if in live mode
