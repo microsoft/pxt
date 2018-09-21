@@ -92,13 +92,14 @@ namespace pxt.Cloud {
     // 1h check on markdown content
     const MARKDOWN_EXPIRATION = 1 * 60 * 60 * 1000;
     export function markdownAsync(docid: string, locale?: string, live?: boolean): Promise<string> {
+        const branch = pxt.appTarget.versions && pxt.appTarget.versions.target || '?';
         return ts.pxtc.Util.translationDbAsync()
             .then(db => db.getAsync(locale, docid, "")
                 .then(entry => {
                     if (entry && Date.now() - entry.time > MARKDOWN_EXPIRATION)
                         // background update, 
                         downloadMarkdownAsync(docid, locale, live, entry.etag)
-                            .then(r => db.setAsync(locale, docid, "", r.etag, undefined, r.md || entry.md))
+                            .then(r => db.setAsync(locale, docid, branch, r.etag, undefined, r.md || entry.md))
                             .catch(() => { }) // swallow errors
                             .done();
                     // return cached entry
@@ -106,7 +107,7 @@ namespace pxt.Cloud {
                         return entry.md;
                     // download and cache
                     else return downloadMarkdownAsync(docid, locale, live)
-                        .then(r => db.setAsync(locale, docid, "", r.etag, undefined, r.md)
+                        .then(r => db.setAsync(locale, docid, branch, r.etag, undefined, r.md)
                             .then(() => r.md))
                         .catch(() => ""); // no translation
                 }))
