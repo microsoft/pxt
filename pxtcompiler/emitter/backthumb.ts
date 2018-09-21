@@ -32,11 +32,11 @@ namespace ts.pxtc {
             return target.stackAlign && target.stackAlign > 1
         }
         pushLR() {
-            if (this.stackAligned()) return "push {lr, r3}  ; r3 for align"
+            if (this.stackAligned()) return "push {lr, r6}  ; r6 for align"
             else return "push {lr}"
         }
         popPC() {
-            if (this.stackAligned()) return "pop {pc, r3}  ; r3 for align"
+            if (this.stackAligned()) return "pop {pc, r6}  ; r6 for align"
             else return "pop {pc}"
         }
         nop() { return "nop" }
