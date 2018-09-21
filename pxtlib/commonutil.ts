@@ -119,8 +119,10 @@ namespace ts.pxtc.Util {
                 const store = transaction.objectStore(IndexedDbTranslationDb.TABLE);
                 const request = store.get(id);
                 request.onsuccess = () => {
-                    this.mem.set(lang, filename, branch, request.result.etag, request.result.strings);
-                    resolve(this.mem.get(lang, filename, branch));
+                    if (request.result) {
+                        this.mem.set(lang, filename, branch, request.result.etag, request.result.strings);
+                        resolve(this.mem.get(lang, filename, branch));
+                    } else resolve(undefined);
                 }
                 request.onerror = () => resolve(undefined);
             });
