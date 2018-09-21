@@ -427,24 +427,23 @@ namespace ts.pxtc.Util {
         return path;
     }
 
-    export function pathJoin(a: string, ...rest: string[]) {
-        let res = a ? normalizePath(a) : "";
+    export function pathJoin(a: string, b: string) {
+        normalizePath(a);
+        normalizePath(b);
 
-        while (rest && rest.length) {
-            let segment = normalizePath(rest.shift());
-            if (segment == null) continue;
+        if (!a && !b) return undefined;
+        else if (!a) return b;
+        else if (!b) return a;
 
-            if (res.charAt(res.length - 1) !== "/") {
-                res += "/";
-            }
-
-            if (segment.length && segment.charAt(0) === "/") {
-                segment = segment.substring(1);
-            }
-
-            res += segment;
+        if (a.charAt(a.length - 1) !== "/") {
+            a += "/";
         }
-        return res;
+
+        if (b.charAt(0) == "/") {
+            b = b.substring(1);
+        }
+
+        return a + b;
     }
 
     export let isNodeJS = false;

@@ -104,7 +104,7 @@ namespace pxt.github {
             }
 
             // load and cache
-            return backendGetAsync(`gh/${repopath}/${tag}/text`)
+            return U.httpGetJsonAsync(`${pxt.Cloud.apiRoot}gh/${repopath}/${tag}/text`)
                 .then(v => this.packages[key] = { files: v });
         }
 
@@ -209,7 +209,7 @@ namespace pxt.github {
     export interface CreateCommitReq {
         message: string;
         parents: string[]; // shas
-        tree: string; // sha
+        tree: string; // sha		
     }
 
     function ghPostAsync(path: string, data: any) {
@@ -317,7 +317,7 @@ namespace pxt.github {
         let head: string = null
         const fetch = !useProxy() ?
             ghGetJsonAsync("https://api.github.com/repos/" + repopath + "/git/refs/" + namespace + "/?per_page=100") :
-            backendGetAsync(`gh/${repopath}/refs`)
+            U.httpGetJsonAsync(`${pxt.Cloud.apiRoot}gh/${repopath}/refs`)
                 .then(r => {
                     let res = Object.keys(r.refs)
                         .filter(k => U.startsWith(k, "refs/" + namespace + "/"))
@@ -463,13 +463,7 @@ namespace pxt.github {
     }
 
     export function mkRepoIconUrl(repo: ParsedRepo): string {
-        const path = `gh/${repo.fullName}/icon`
-        if (Cloud.isLocalHost) {
-            // The gh endpoints aren't implemented in the local server so
-            // hit the cloud directly instead
-            return U.pathJoin("https://www.makecode.com", Cloud.apiRoot, path);
-        }
-        return U.pathJoin(Cloud.apiRoot, path);
+        return Cloud.apiRoot + `gh/${repo.fullName}/icon`;
     }
 
     function mkRepo(r: Repo, config: pxt.PackagesConfig, tag?: string): GitRepo {
@@ -545,7 +539,7 @@ namespace pxt.github {
                 .then((r: Repo) => mkRepo(r, config, rid.tag));
 
         // always use proxy
-        return backendGetAsync(`gh/${rid.fullName}`)
+        return Util.httpGetJsonAsync(`${pxt.Cloud.apiRoot}gh/${rid.fullName}`)
             .then(meta => {
                 if (!meta) return undefined;
                 return {
@@ -570,7 +564,7 @@ namespace pxt.github {
                 .then(rs => rs.filter(r => r.status != GitRepoStatus.Banned)); // allow deep links to github repos
 
         let fetch = () => useProxy()
-            ? backendGetAsync(`ghsearch/${appTarget.id}/${appTarget.platformid || appTarget.id}?q=`
+            ? U.httpGetJsonAsync(`${pxt.Cloud.apiRoot}ghsearch/${appTarget.id}/${appTarget.platformid || appTarget.id}?q=`
                 + encodeURIComponent(query))
             : ghGetJsonAsync("https://api.github.com/search/repositories?q="
                 + encodeURIComponent(query + ` in:name,description,readme "for PXT/${appTarget.platformid || appTarget.id}"`))
@@ -684,15 +678,6 @@ namespace pxt.github {
                     return Promise.reject("Make sure to add the ``gist`` scope to your token. " + resp.text);
                 } return Promise.reject(resp.text);
             });
-    }
-
-    function backendGetAsync(url: string) {
-        if (Cloud.isLocalHost()) {
-            // The gh endpoints aren't implemented in the local server so
-            // hit the cloud directly instead
-            return U.httpGetJsonAsync(U.pathJoin("https://www.makecode.com", Cloud.apiRoot, url));
-        }
-        return Cloud.privateGetAsync(url);
     }
 
     export interface GitJson {
