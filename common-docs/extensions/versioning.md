@@ -1,6 +1,6 @@
 ## Package versioning
 
-Content has moved [here](http://www.makecode.com/extensions/versioning)
+Content has moved [here](http://www.makecode.com/packages/versioning)
 
 ## ~ hint
 
