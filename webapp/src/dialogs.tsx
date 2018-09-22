@@ -253,7 +253,10 @@ class ExtensionErrorWizard extends React.Component<ExtensionErrorWizardProps, Ex
         })
         .then(success => {
             if (!success) {
-                this.setState({ updateError: lf("Update failed") });
+                this.setState({
+                    updateError: lf("Update failed"),
+                    updating: false
+                });
             }
             else {
                 this.setState({
@@ -299,7 +302,7 @@ class ExtensionErrorWizard extends React.Component<ExtensionErrorWizardProps, Ex
 
         if (updating) {
             const progressString = packagesUpdated === affectedPackages.length ? lf("Finishing up...") :
-                lf("Updating package {0} of {1}...", packagesUpdated + 1, affectedPackages.length);
+                lf("Updating extension {0} of {1}...", packagesUpdated + 1, affectedPackages.length);
 
             return <div>
                     { showProgressBar ?
@@ -361,8 +364,8 @@ interface WizardMenuProps {
 class WizardMenu extends React.Component<WizardMenuProps, {}> {
     render() {
         return <div className="ui relaxed list" role="menu">
-            { this.props.actions.map(({text, callback}) =>
-                <div className="item wizard-action" onClick={callback} role="menuitem">
+            { this.props.actions.map(({text, callback}, i) =>
+                <div className="item wizard-action" onClick={callback} role="menuitem" key={i}>
                     <i className="medium arrow right middle aligned icon"></i>
                     <a className="content">
                         {text}

@@ -84,16 +84,34 @@ export function getHeaders(withDeleted = false) {
     return r
 }
 
+export function makeBackupAsync(h: Header, text: ScriptText): Promise<Header> {
+    let h2 = U.flatClone(h)
+    h2.id = U.guidGen()
+
+    delete h2._rev
+    delete (h2 as any)._id
+    h2._isBackup = true;
+
+    return importAsync(h2, text)
+        .then(() => {
+            h._backupRef = h2.id;
+            return saveAsync(h2);
+        })
+        .then(() => h2)
+}
+
+
 export function restoreFromBackupAsync(h: Header) {
-    checkSession();
     if (!h._backupRef || h.isDeleted) return Promise.resolve();
-    return getTextAsync(h._backupRef)
+
+    const refId = h._backupRef;
+    return getTextAsync(refId)
         .then(files => {
             h._backupRef = undefined;
             return saveAsync(h, files);
         })
         .then(() => {
-            const backup = getHeader(h._backupRef);
+            const backup = getHeader(refId);
             backup.isDeleted = true;
             return saveAsync(backup);
         })

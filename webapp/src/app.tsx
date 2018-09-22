@@ -416,10 +416,8 @@ export class ProjectView
                 }
 
                 dialogs.showPackageErrorDialogAsync(badPackages, compiler.updatePackagesAsync, openHandler)
-                    .then(didChange => {
-                        if (didChange) {
-                            // this.reloadHeaderAsync();
-                        }
+                    .then(() => {
+                        this.reloadHeaderAsync();
                     });
                 return true;
             }
