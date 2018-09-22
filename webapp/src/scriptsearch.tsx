@@ -17,7 +17,8 @@ import Cloud = pxt.Cloud;
 
 export enum ScriptSearchMode {
     Extensions,
-    Boards
+    Boards,
+    Experiments
 }
 
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
@@ -43,6 +44,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         this.addBundle = this.addBundle.bind(this);
         this.installGh = this.installGh.bind(this);
         this.addLocal = this.addLocal.bind(this);
+        this.toggleExperiment = this.toggleExperiment.bind(this);
     }
 
     hide() {
@@ -110,12 +112,16 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         return res;
     }
 
-    fetchLocal() {
+    fetchLocal(): pxt.workspace.Header[] {
+        if (this.state.mode != ScriptSearchMode.Boards &&
+            this.state.mode != ScriptSearchMode.Extensions) return [];
         return workspace.getHeaders()
             .filter(h => !!h.githubId)
     }
 
     fetchBundled(): pxt.PackageConfig[] {
+        if (this.state.mode != ScriptSearchMode.Boards &&
+            this.state.mode != ScriptSearchMode.Extensions) return [];
         const query = this.state.searchFor;
         const bundled = pxt.appTarget.bundledpkgs;
         const showCore = this.state.mode == ScriptSearchMode.Boards;
@@ -271,14 +277,20 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             });
     }
 
+    toggleExperiment(experiment: pxt.editor.Experiment) {
+        pxt.editor.setExperiment(experiment, !experiment.enabled);
+        this.forceUpdate(); // TODO
+    }
+
     renderCore() {
         if (!this.state.visible) return <div></div>;
 
-        const boards = this.state.mode == ScriptSearchMode.Boards;
+        const mode = this.state.mode;
         const bundles = this.fetchBundled();
         const ghdata = this.fetchGhData();
         const urldata = this.fetchUrlData();
-        const local = this.fetchLocal()
+        const local = this.fetchLocal();
+        const experiments = pxt.editor.experiments();
         const isSearching = this.state.searchFor && (ghdata.status === data.FetchStatus.Pending || urldata.status === data.FetchStatus.Pending);
 
         const coresFirst = (a: pxt.PackageConfig, b: pxt.PackageConfig) => {
@@ -295,9 +307,15 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             return bundles.length + ghdata.data.length + urldata.data.length === 0;
         }
 
-        const headerText = boards ? lf("Boards") : lf("Extensions");
-        const description = boards ? lf("Change development board") : lf("Add an extension to the project");
-        const helpPath = boards ? "/boards" : "/packages";
+        const headerText = mode == ScriptSearchMode.Boards ? lf("Boards")
+            : mode == ScriptSearchMode.Experiments ? lf("Experiments")
+                : lf("Extensions");
+        const description = mode == ScriptSearchMode.Boards ? lf("Change development board")
+            : mode == ScriptSearchMode.Experiments ? lf("Turn on and off experimental features")
+                : lf("Add an extension to the project");
+        const helpPath = ScriptSearchMode.Boards ? "/boards"
+            : mode == ScriptSearchMode.Experiments ? "/experiments"
+                : "/extensions";
         return (
             <sui.Modal isOpen={this.state.visible} dimmer={true}
                 className="searchdialog" size="fullscreen"
@@ -307,7 +325,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                 closeOnDimmerClick closeOnEscape
                 description={description}>
                 <div className="ui">
-                    {!boards ?
+                    {mode == ScriptSearchMode.Extensions ?
                         <div className="ui search">
                             <div className="ui fluid action input" role="search">
                                 <div aria-live="polite" className="accessible-hidden">{lf("{0} result matching '{1}'", bundles.length + ghdata.data.length + urldata.data.length, this.state.searchFor)}</div>
@@ -382,6 +400,17 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     imageUrl={pxt.github.repoIconUrl(scr)}
                                     url={'github:' + scr.fullName}
                                     role="link"
+                                />
+                            )}
+                            {experiments.map(experiment =>
+                                <codecard.CodeCardView
+                                    name={experiment.name}
+                                    description={experiment.description}
+                                    key={'exp' + experiment.id}
+                                    imageUrl={`/static/experiments/${experiment.id}.png`}
+                                    role="link"
+                                    label={experiment.enabled ? lf("On") : undefined}
+                                    onClick={this.toggleExperiment}
                                 />
                             )}
                         </div>
