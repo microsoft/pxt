@@ -195,14 +195,14 @@ function renderVersionLink(name: string, version: string, url: string) {
     </p>;
 }
 
-export function showPackageErrorDialogAsync(badPackages: pkg.EditorPackage[], updatePackages: (packages: pkg.EditorPackage[], progress: (completed: number, total: number) => void) => Promise<boolean>, openLegacyEditor?: () => void): Promise<boolean> {
+export function showPackageErrorDialogAsync(badPackages: pkg.EditorPackage[], updatePackages: (packages: pkg.EditorPackage[], progress: (completed: number, total: number) => void) => Promise<boolean>, openLegacyEditor?: () => void) {
     return core.dialogAsync({
         header: lf("Extension Errors"),
         hideCancel: true,
         jsx: <div className="wizard-wrapper">
                 <ExtensionErrorWizard openLegacyEditor={openLegacyEditor} affectedPackages={badPackages} updatePackages={updatePackages} />
         </div>
-    }).then(() => true);
+    });
 }
 
 interface ExtensionErrorWizardProps {

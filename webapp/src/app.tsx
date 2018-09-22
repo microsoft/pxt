@@ -416,9 +416,7 @@ export class ProjectView
                 }
 
                 dialogs.showPackageErrorDialogAsync(badPackages, compiler.updatePackagesAsync, openHandler)
-                    .then(() => {
-                        this.reloadHeaderAsync();
-                    });
+                    .then(() => this.reloadHeaderAsync());
                 return true;
             }
         }

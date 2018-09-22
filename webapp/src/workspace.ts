@@ -107,7 +107,7 @@ export function restoreFromBackupAsync(h: Header) {
     const refId = h._backupRef;
     return getTextAsync(refId)
         .then(files => {
-            h._backupRef = undefined;
+            delete h._backupRef;
             return saveAsync(h, files);
         })
         .then(() => {
@@ -116,7 +116,7 @@ export function restoreFromBackupAsync(h: Header) {
             return saveAsync(backup);
         })
         .catch(() => {
-            h._backupRef = undefined;
+            delete h._backupRef;
             return saveAsync(h);
         });
 }
