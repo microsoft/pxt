@@ -26,6 +26,7 @@ interface ScriptSearchState {
     searchFor?: string;
     visible?: boolean;
     mode?: ScriptSearchMode;
+    experimentsState?: string;
 }
 
 export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
@@ -49,6 +50,10 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
 
     hide() {
         this.setState({ visible: false });
+        // something changed?
+        if (this.mode == ScriptSearchMode.Boards &&
+            this.state.experimentsState !== pxt.editor.experiments.state())
+            this.props.parent.reloadEditor();
     }
 
     showExtensions() {
@@ -60,7 +65,10 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
     }
 
     showExperiments() {
-        this.setState({ visible: true, searchFor: '', mode: ScriptSearchMode.Experiments });
+        this.setState({
+            visible: true, searchFor: '', mode: ScriptSearchMode.Experiments,
+            experimentsState: pxt.editor.experiments.state()
+        });
     }
 
     fetchUrlData(): data.DataFetchResult<Cloud.JsonScript[]> {
@@ -320,6 +328,9 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         const helpPath = ScriptSearchMode.Boards ? "/boards"
             : mode == ScriptSearchMode.Experiments ? "/experiments"
                 : "/extensions";
+
+        const experimentsChanged = mode == ScriptSearchMode.Experiments
+            && this.state.experimentsState != pxt.editor.experiments.state();
         return (
             <sui.Modal isOpen={this.state.visible} dimmer={true}
                 className="searchdialog" size="fullscreen"
@@ -427,6 +438,11 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                             </div>
                         </div>
                         : undefined}
+                    {experimentsChanged ? <div className="ui items">
+                        <div className="ui item">
+                            {lf("Experiments changed, the editor will reload when leaving this page.")}
+                        </div>
+                    </div> : undefined}
                     {dialogs.githubFooter(lf("Want to create your own extension?"), this.hide)}
                 </div>
             </sui.Modal>

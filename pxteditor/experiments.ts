@@ -39,6 +39,12 @@ namespace pxt.editor.experiments {
         setState(experiment, !isEnabled(experiment));
     }
 
+    export function state(): string {
+        const r: pxt.Map<boolean> = {};
+        const state = all().forEach(experiment => r[experiment.id] = isEnabled(experiment));
+        return JSON.stringify(state);
+    }
+
     export function setState(experiment: Experiment, enabled: boolean) {
         if (enabled == isEnabled(experiment)) return; // no changes
         if (enabled)
