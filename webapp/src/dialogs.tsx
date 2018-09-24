@@ -203,6 +203,8 @@ export function showPackageErrorDialogAsync(badPackages: pkg.EditorPackage[], up
     const token = new Util.CancellationToken();
     const loaderId = "package-update-cancel";
 
+    pxt.tickEvent("update.extensionErrorsShown")
+
     return core.dialogAsync({
         header: lf("Extension Errors"),
         hasCloseIcon: true,
@@ -242,7 +244,7 @@ interface ExtensionErrorWizardState {
     showProgressBar: boolean;
     packagesUpdated: number;
     updateComplete: boolean;
-    updateError?: any;
+    updateError?: boolean;
 }
 
 class ExtensionErrorWizard extends React.Component<ExtensionErrorWizardProps, ExtensionErrorWizardState> {
@@ -261,6 +263,9 @@ class ExtensionErrorWizard extends React.Component<ExtensionErrorWizardProps, Ex
 
     startUpdate() {
         if (this.state.updating) return;
+
+        pxt.tickEvent("update.startExtensionUpdate")
+        const startTime = Date.now();
 
         this.setState({
             updating: true
@@ -285,9 +290,14 @@ class ExtensionErrorWizard extends React.Component<ExtensionErrorWizardProps, Ex
         .then(success => {
             if (this.props.token.isCancelled()) return;
 
+            pxt.tickEvent("update.endExtensionUpdate", {
+                success: "" + success,
+                duration:  Date.now() - startTime
+            });
+
             if (!success) {
                 this.setState({
-                    updateError: lf("Update failed"),
+                    updateError: true,
                     updating: false
                 });
             }
@@ -299,13 +309,15 @@ class ExtensionErrorWizard extends React.Component<ExtensionErrorWizardProps, Ex
 
                 setTimeout(() => {
                     if (this.props.token.isCancelled()) return;
-                    this.openProject();
+                    this.openProject(true);
                 }, 1500);
             }
         })
     }
 
-    openProject() {
+    openProject(quiet = false) {
+        if (!quiet) pxt.tickEvent("update.ignoredExtensionErrors");
+
         this.props.onProjectOpen();
         coretsx.hideDialog();
     }

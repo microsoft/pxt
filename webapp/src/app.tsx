@@ -202,7 +202,10 @@ export class ProjectView
 
     openProjectInLegacyEditor(majorVersion: number) {
         if (!this.editorFile || !this.editorFile.epkg || !this.editorFile.epkg.getTopHeader()) return Promise.resolve();
+
         const header = this.editorFile.epkg.getTopHeader();
+        pxt.tickEvent("update.openLegacyEditor", { version: header.targetVersion });
+
         return workspace.copyProjectToLegacyEditor(header, majorVersion)
             .then(newHeader => {
                 // Push an entry to the history so that the project loads when we change the URL. The editor
