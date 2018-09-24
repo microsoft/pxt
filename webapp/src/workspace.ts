@@ -79,7 +79,7 @@ export function setupWorkspace(id: string) {
 
 export function getHeaders(withDeleted = false) {
     checkSession();
-    let r = allScripts.map(e => e.header).filter(h => (withDeleted || !h.isDeleted) && !h._isBackup)
+    let r = allScripts.map(e => e.header).filter(h => (withDeleted || !h.isDeleted) && !h.isBackup)
     r.sort((a, b) => b.recentUse - a.recentUse)
     return r
 }
@@ -90,11 +90,11 @@ export function makeBackupAsync(h: Header, text: ScriptText): Promise<Header> {
 
     delete h2._rev
     delete (h2 as any)._id
-    h2._isBackup = true;
+    h2.isBackup = true;
 
     return importAsync(h2, text)
         .then(() => {
-            h._backupRef = h2.id;
+            h.backupRef = h2.id;
             return saveAsync(h2);
         })
         .then(() => h2)
@@ -102,12 +102,12 @@ export function makeBackupAsync(h: Header, text: ScriptText): Promise<Header> {
 
 
 export function restoreFromBackupAsync(h: Header) {
-    if (!h._backupRef || h.isDeleted) return Promise.resolve();
+    if (!h.backupRef || h.isDeleted) return Promise.resolve();
 
-    const refId = h._backupRef;
+    const refId = h.backupRef;
     return getTextAsync(refId)
         .then(files => {
-            delete h._backupRef;
+            delete h.backupRef;
             return saveAsync(h, files);
         })
         .then(() => {
@@ -116,7 +116,7 @@ export function restoreFromBackupAsync(h: Header) {
             return saveAsync(backup);
         })
         .catch(() => {
-            delete h._backupRef;
+            delete h.backupRef;
             return saveAsync(h);
         });
 }
@@ -128,10 +128,10 @@ export function cleanupBackupsAsync() {
     const refMap: pxt.Map<boolean> = {};
 
     // Figure out which scripts have backups
-    allHeaders.filter(h => h._backupRef).forEach(h => refMap[h._backupRef] = true);
+    allHeaders.filter(h => h.backupRef).forEach(h => refMap[h.backupRef] = true);
 
     // Delete the backups that don't have any scripts referencing them
-    return Promise.all(allHeaders.filter(h => (h._isBackup && !refMap[h.id])).map(h => {
+    return Promise.all(allHeaders.filter(h => (h.isBackup && !refMap[h.id])).map(h => {
         h.isDeleted = true;
         return saveAsync(h);
     }));

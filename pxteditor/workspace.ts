@@ -30,8 +30,8 @@ namespace pxt.workspace {
         saveId?: any;
         // icon uri
         icon?: string;
-        _backupRef?: string; // guid of backed-up project (present if an update was interrupted)
-        _isBackup?: boolean; // True if this is a backed-up project (for a pending update)
+        backupRef?: string; // guid of backed-up project (present if an update was interrupted)
+        isBackup?: boolean; // True if this is a backed-up project (for a pending update)
     }
 
     export type ScriptText = pxt.Map<string>;

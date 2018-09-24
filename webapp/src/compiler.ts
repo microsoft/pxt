@@ -419,7 +419,7 @@ export function updatePackagesAsync(packages: pkg.EditorPackage[], token?: pxt.U
         .then(files => workspace.makeBackupAsync(epkg.header, files))
         .then(newHeader => {
             backup = newHeader;
-            epkg.header._backupRef = backup.id;
+            epkg.header.backupRef = backup.id;
 
             return workspace.saveAsync(epkg.header);
         })
@@ -439,7 +439,7 @@ export function updatePackagesAsync(packages: pkg.EditorPackage[], token?: pxt.U
         })
         .then(() => {
             if (token) token.throwIfCancelled();
-            delete epkg.header._backupRef;
+            delete epkg.header.backupRef;
             return workspace.saveAsync(epkg.header)
         })
         .then(() => /* Success! */ true)

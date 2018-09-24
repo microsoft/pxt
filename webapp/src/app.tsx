@@ -842,7 +842,7 @@ export class ProjectView
 
         Util.jsonMergeFrom(editorState || {}, this.state.editorState || {});
 
-        return (h._backupRef ? workspace.restoreFromBackupAsync(h) : Promise.resolve())
+        return (h.backupRef ? workspace.restoreFromBackupAsync(h) : Promise.resolve())
             .then(() => pkg.loadPkgAsync(h.id))
             .then(() => {
                 if (!this.state || this.state.header != h) {
