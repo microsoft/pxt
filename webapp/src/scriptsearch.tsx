@@ -448,7 +448,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                 </div>
                             </div>
                         </div> : undefined}
-                    {dialogs.githubFooter(lf("Want to create your own extension?"), this.hide)}
+                    {mode == ScriptSearchMode.Experiments ? dialogs.githubFooter(lf("Want to create your own extension?"), this.hide) : undefined}
                 </div>
             </sui.Modal>
         );
