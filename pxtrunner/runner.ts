@@ -605,7 +605,7 @@ ${linkString}
 
     function renderDocAsync(content: HTMLElement, docid: string): Promise<void> {
         docid = docid.replace(/^\//, "");
-        return pxt.Cloud.downloadMarkdownAsync(docid, editorLocale, pxt.Util.localizeLive)
+        return pxt.Cloud.markdownAsync(docid, editorLocale, pxt.Util.localizeLive)
             .then(md => renderMarkdownAsync(content, md, { path: docid }))
     }
 
@@ -621,7 +621,7 @@ ${linkString}
         // start the work
         let toc: TOCMenuEntry[];
         return Promise.delay(100)
-            .then(() => pxt.Cloud.downloadMarkdownAsync(summaryid, editorLocale, pxt.Util.localizeLive))
+            .then(() => pxt.Cloud.markdownAsync(summaryid, editorLocale, pxt.Util.localizeLive))
             .then(summary => {
                 toc = pxt.docs.buildTOC(summary);
                 pxt.log(`TOC: ${JSON.stringify(toc, null, 2)}`)
@@ -629,7 +629,7 @@ ${linkString}
                 pxt.docs.visitTOC(toc, entry => {
                     if (!/^\//.test(entry.path) || /^\/pkg\//.test(entry.path)) return;
                     tocsp.push(
-                        pxt.Cloud.downloadMarkdownAsync(entry.path, editorLocale, pxt.Util.localizeLive)
+                        pxt.Cloud.markdownAsync(entry.path, editorLocale, pxt.Util.localizeLive)
                             .then(md => {
                                 entry.markdown = md;
                             }, e => {
