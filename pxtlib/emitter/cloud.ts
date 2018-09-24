@@ -2,7 +2,7 @@ namespace pxt.Cloud {
     import Util = pxtc.Util;
 
     // hit /api/ to stay on same domain and avoid CORS
-    export let apiRoot = isLocalHost() ? "https://www.makecode.com/api/" : "/api/";
+    export let apiRoot = isLocalHost() || Util.isNodeJS ? "https://www.makecode.com/api/" : "/api/";
     export let accessToken = "";
     export let localToken = "";
     let _isOnline = true;
@@ -97,7 +97,7 @@ namespace pxt.Cloud {
             .then(db => db.getAsync(locale, docid, "")
                 .then(entry => {
                     if (entry && Date.now() - entry.time > MARKDOWN_EXPIRATION)
-                        // background update, 
+                        // background update,
                         downloadMarkdownAsync(docid, locale, live, entry.etag)
                             .then(r => db.setAsync(locale, docid, branch, r.etag, undefined, r.md || entry.md))
                             .catch(() => { }) // swallow errors
