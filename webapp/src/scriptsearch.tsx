@@ -407,14 +407,15 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                 />
                             )}
                             {experiments.map(experiment =>
-                                <codecard.CodeCardView
+                                <ScriptSearchCodeCard
                                     name={experiment.name}
+                                    scr={experiment}
                                     description={experiment.description}
                                     key={'exp' + experiment.id}
                                     imageUrl={`/static/experiments/${experiment.id}.png`}
                                     role="link"
                                     label={pxt.editor.experiments.isEnabled(experiment) ? lf("On") : undefined}
-                                    onClick={this.toggleExperiment}
+                                    onCardClick={this.toggleExperiment}
                                 />
                             )}
                         </div>
