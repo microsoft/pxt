@@ -281,7 +281,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             {renderDocItems(this.props.parent, "mobile only")}
             <div className="ui divider"></div>
             <sui.Item role="menuitem" text={lf("About...")} onClick={this.showAboutDialog} tabIndex={-1} />
-            {targetTheme.experiments ? <sui.Item role="menuitem" icon="lab" text={lf("Try out experimental features")} onClick={this.showExperiments} tabIndex={-1} /> : undefined}
+            {targetTheme.experiments ? <sui.Item role="menuitem" icon="lab" text={lf("Experiments")} onClick={this.showExperiments} tabIndex={-1} /> : undefined}
             {targetTheme.feedbackUrl ? <a className="ui item" href={targetTheme.feedbackUrl} role="menuitem" title={lf("Give Feedback")} target="_blank" rel="noopener noreferrer" tabIndex={-1}>{lf("Give Feedback")}</a> : undefined}
         </sui.DropdownMenu>;
     }
