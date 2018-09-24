@@ -426,7 +426,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     key={'exp' + experiment.id}
                                     role="link"
                                     label={pxt.editor.experiments.isEnabled(experiment) ? lf("Enabled") : lf("Disabled")}
-                                    labelClass={pxt.editor.experiments.isEnabled(experiment) ? "blue" : "red"}
+                                    labelClass={pxt.editor.experiments.isEnabled(experiment) ? "blue right ribbon" : "red right ribbon"}
                                     onCardClick={this.toggleExperiment}
                                 />
                             )}
