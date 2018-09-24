@@ -9,6 +9,7 @@ import * as cloudsync from "./cloudsync";
 import * as pkg from "./package";
 
 import Cloud = pxt.Cloud;
+import Util = pxt.Util;
 
 
 interface PlainCheckboxProps {
@@ -195,20 +196,45 @@ function renderVersionLink(name: string, version: string, url: string) {
     </p>;
 }
 
-export function showPackageErrorDialogAsync(badPackages: pkg.EditorPackage[], updatePackages: (packages: pkg.EditorPackage[], progress: (completed: number, total: number) => void) => Promise<boolean>, openLegacyEditor?: () => void) {
+export function showPackageErrorDialogAsync(badPackages: pkg.EditorPackage[], updatePackages: (packages: pkg.EditorPackage[], token: Util.CancellationToken) => Promise<boolean>, openLegacyEditor?: () => void) {
+    let projectOpen = false;
+    let onProjectOpen = () => projectOpen = true;
+
+    const token = new Util.CancellationToken();
+    const loaderId = "package-update-cancel";
+
     return core.dialogAsync({
         header: lf("Extension Errors"),
+        hasCloseIcon: true,
         hideCancel: true,
         jsx: <div className="wizard-wrapper">
-                <ExtensionErrorWizard openLegacyEditor={openLegacyEditor} affectedPackages={badPackages} updatePackages={updatePackages} />
-        </div>
+                <ExtensionErrorWizard
+                    openLegacyEditor={openLegacyEditor}
+                    affectedPackages={badPackages}
+                    updatePackages={updatePackages}
+                    onProjectOpen={onProjectOpen}
+                    token={token} />
+            </div>
+    })
+    .then(() => {
+        if (!projectOpen) {
+            core.showLoading(loaderId, lf("Stopping update..."))
+            return token.cancelAsync();
+        }
+        return Promise.resolve();
+    })
+    .then(() => {
+        core.hideLoading(loaderId)
+        return projectOpen;
     });
 }
 
 interface ExtensionErrorWizardProps {
     affectedPackages: pkg.EditorPackage[];
-    updatePackages: (packages: pkg.EditorPackage[], progress: (completed: number, total: number) => void) => Promise<boolean>;
+    updatePackages: (packages: pkg.EditorPackage[], token: Util.CancellationToken) => Promise<boolean>;
     openLegacyEditor?: () => void;
+    onProjectOpen: () => void;
+    token: Util.CancellationToken;
 }
 
 interface ExtensionErrorWizardState {
@@ -229,6 +255,8 @@ class ExtensionErrorWizard extends React.Component<ExtensionErrorWizardProps, Ex
             packagesUpdated: 0
         };
         this.startUpdate = this.startUpdate.bind(this);
+        this.openProject = this.openProject.bind(this);
+        this.openLegacyEditor = this.openLegacyEditor.bind(this);
     }
 
     startUpdate() {
@@ -236,22 +264,27 @@ class ExtensionErrorWizard extends React.Component<ExtensionErrorWizardProps, Ex
 
         this.setState({
             updating: true
-        }, () => {
-            setTimeout(() => {
-                if (this.state.updating) {
-                    this.setState({
-                        showProgressBar: true
-                    });
-                }
-            }, 2000)
         });
 
-        const pkgs = this.props.affectedPackages;
+        setTimeout(() => {
+            if (this.props.token.isCancelled()) return;
+            // Switch to progress bar if the update is taking a long time
+            if (this.state.updating && this.props.affectedPackages.length > 1) {
+                this.setState({
+                    showProgressBar: true
+                });
+            }
+        }, 3000)
 
-        this.props.updatePackages(pkgs, completed => {
+        const pkgs = this.props.affectedPackages;
+        this.props.token.onProgress(completed => {
             this.setState({ packagesUpdated: completed });
-        })
+        });
+
+        this.props.updatePackages(pkgs, this.props.token)
         .then(success => {
+            if (this.props.token.isCancelled()) return;
+
             if (!success) {
                 this.setState({
                     updateError: lf("Update failed"),
@@ -262,34 +295,48 @@ class ExtensionErrorWizard extends React.Component<ExtensionErrorWizardProps, Ex
                 this.setState({
                     updating: false,
                     updateComplete: true
-                }, () => {
-                    setTimeout(() => {
-                        coretsx.hideDialog();
-                    }, 1500);
                 });
+
+                setTimeout(() => {
+                    if (this.props.token.isCancelled()) return;
+                    this.openProject();
+                }, 1500);
             }
         })
     }
 
+    openProject() {
+        this.props.onProjectOpen();
+        coretsx.hideDialog();
+    }
+
+    openLegacyEditor() {
+        this.props.onProjectOpen();
+        this.props.openLegacyEditor();
+    }
+
     protected buildActionList() {
-        const actions: { text: string, callback: () => void }[] = [];
+        const actions: { text: string, title: string, callback: () => void }[] = [];
 
         if (!this.state.updateError) {
             actions.push({
-                text: lf("Try to Fix"),
+                text: lf("Try to fix"),
+                title: lf("Update all extensions in the project to their latest versions"),
                 callback: this.startUpdate
             });
         }
 
         actions.push({
             text: lf("Ignore errors and open"),
-            callback: coretsx.hideDialog
+            title: lf("Ignore errors and open"),
+            callback: this.openProject
         });
 
         if (this.props.openLegacyEditor) {
             actions.push({
                 text: lf("Go to the old editor"),
-                callback: this.props.openLegacyEditor
+                title: lf("Open this project in the editor where it was created"),
+                callback: this.openLegacyEditor
             });
         }
 
@@ -358,18 +405,16 @@ class ProgressBar extends React.Component<ProgressBarProps, {}> {
 }
 
 interface WizardMenuProps {
-    actions: { text: string, callback: () => void }[];
+    actions: { text: string, title: string, callback: () => void }[];
 }
 
-class WizardMenu extends React.Component<WizardMenuProps, {}> {
+class WizardMenu extends sui.StatelessUIElement<WizardMenuProps> {
     render() {
         return <div className="ui relaxed list" role="menu">
-            { this.props.actions.map(({text, callback}, i) =>
-                <div className="item wizard-action" onClick={callback} role="menuitem" key={i}>
-                    <i className="medium arrow right middle aligned icon"></i>
-                    <a className="content">
-                        {text}
-                    </a>
+            { this.props.actions.map(({text, title, callback}, i) =>
+                <div className="item wizard-action" aria-label={title} title={title} onClick={callback} role="menuitem" key={i}>
+                    <span className="left floated"><i className="medium arrow right icon"></i></span>
+                    <sui.Link>{text}</sui.Link>
                 </div>)
             }
         </div>

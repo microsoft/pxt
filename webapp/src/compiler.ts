@@ -409,10 +409,11 @@ function isTsFile(file: pkg.File) {
     return pxt.Util.endsWith(file.getName(), ".ts");
 }
 
-export function updatePackagesAsync(packages: pkg.EditorPackage[], progressHandler?: (completed: number, total: number) => void): Promise<boolean> {
+export function updatePackagesAsync(packages: pkg.EditorPackage[], token?: pxt.Util.CancellationToken): Promise<boolean> {
     const epkg = pkg.mainEditorPkg();
     let backup: pxt.workspace.Header;
     let completed = 0;
+    if (token) token.startOperation();
 
     return workspace.getTextAsync(epkg.header.id)
         .then(files => workspace.makeBackupAsync(epkg.header, files))
@@ -423,12 +424,12 @@ export function updatePackagesAsync(packages: pkg.EditorPackage[], progressHandl
             return workspace.saveAsync(epkg.header);
         })
         .then(() => Promise.each(packages, p => {
+                if (token) token.throwIfCancelled();
                 return epkg.updateDepAsync(p.getPkgId())
+                    .then(() => Promise.delay(5000)) // REMOVE THIS
                     .then(() => {
                         ++completed;
-                        if (progressHandler) {
-                            progressHandler(completed, packages.length);
-                        }
+                        if (token && !token.isCancelled()) token.reportProgress(completed, packages.length);
                     })
                 })
         )
@@ -438,10 +439,11 @@ export function updatePackagesAsync(packages: pkg.EditorPackage[], progressHandl
             return checkPatchAsync();
         })
         .then(() => {
+            if (token) token.throwIfCancelled();
             delete epkg.header._backupRef;
             return workspace.saveAsync(epkg.header)
         })
-        .then(() => true)
+        .then(() => /* Success! */ true)
         .catch(() => {
             // Something went wrong or we broke the project, so restore the backup
             return workspace.restoreFromBackupAsync(epkg.header)
@@ -449,11 +451,16 @@ export function updatePackagesAsync(packages: pkg.EditorPackage[], progressHandl
         })
         .finally(() => {
             // Clean up after
+            let cleanupOperation = Promise.resolve();
             if (backup) {
                 backup.isDeleted = true;
-                return workspace.saveAsync(backup);
+                cleanupOperation = workspace.saveAsync(backup)
             }
-            return Promise.resolve();
+
+            return cleanupOperation
+                .finally(() => {
+                    if (token) token.resolveCancel();
+                });
         });
 }
 

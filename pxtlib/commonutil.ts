@@ -323,6 +323,67 @@ namespace ts.pxtc.Util {
         (<any>e).isUserError = true;
         throw e
     }
+
+    export class CancellationToken {
+        private pending = false;
+        private cancelled = false;
+        private resolve: () => void;
+        private deferred: Promise<void>;
+        private progressHandler: (completed: number, total: number) => void;
+
+        startOperation() {
+            this.pending = true;
+        }
+
+        isRunning() {
+            return this.pending;
+        }
+
+        onProgress(progressHandler: (completed: number, total: number) => void) {
+            this.progressHandler = progressHandler;
+        }
+
+        reportProgress(completed: number, total: number) {
+            if (this.progressHandler) {
+                this.progressHandler(completed, total);
+            }
+        }
+
+        cancel() {
+            this.cancelled = true;
+        }
+
+        cancelAsync() {
+            if (this.cancelled || !this.pending) {
+                this.cancelled = true;
+                this.pending = false;
+                return Promise.resolve();
+            }
+            this.cancelled = true;
+            this.deferred = new Promise(resolve => {
+                this.resolve = resolve;
+            });
+
+            return this.deferred;
+        }
+
+        isCancelled() {
+            return this.cancelled;
+        }
+
+        throwIfCancelled() {
+            if (this.isCancelled()) throw new Error();
+        }
+
+        resolveCancel() {
+            this.pending = false;
+            if (this.deferred) {
+                this.resolve();
+                this.deferred = undefined;
+                this.resolve = undefined;
+            }
+        }
+    }
 }
 
 const lf = ts.pxtc.Util.lf;

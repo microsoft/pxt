@@ -416,7 +416,14 @@ export class ProjectView
                 }
 
                 dialogs.showPackageErrorDialogAsync(badPackages, compiler.updatePackagesAsync, openHandler)
-                    .then(() => this.reloadHeaderAsync());
+                    .then(projectOpen => {
+                        if (projectOpen) {
+                            this.reloadHeaderAsync()
+                        }
+                        else {
+                            this.openHome();
+                        }
+                    });
                 return true;
             }
         }
