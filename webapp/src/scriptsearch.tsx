@@ -413,7 +413,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     key={'exp' + experiment.id}
                                     imageUrl={`/static/experiments/${experiment.id}.png`}
                                     role="link"
-                                    label={pxt.experiments.isEnabled(experiment) ? lf("On") : undefined}
+                                    label={pxt.editor.experiments.isEnabled(experiment) ? lf("On") : undefined}
                                     onClick={this.toggleExperiment}
                                 />
                             )}
