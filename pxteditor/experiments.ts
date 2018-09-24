@@ -13,7 +13,7 @@ namespace pxt.editor.experiments {
     export function syncTheme() {
         const theme: pxt.Map<boolean> = (pxt.appTarget.appTheme || {}) as any;
         all().forEach(experiment => {
-            const enabled = pxt.storage.getLocal(key(experiment));
+            const enabled = isEnabled(experiment);
             theme[experiment.id] = !!enabled;
         })
     }
@@ -30,9 +30,8 @@ namespace pxt.editor.experiments {
         ].filter(experiment => ids.indexOf(experiment.id) > -1);
     }
 
-    export function isEnabled(experiment: Experiment) {
-        const theme: pxt.Map<boolean> = (pxt.appTarget.appTheme || {}) as any;
-        return !!theme[experiment.id];
+    export function isEnabled(experiment: Experiment): boolean {
+        return !!pxt.storage.getLocal(key(experiment));
     }
 
     export function toggle(experiment: Experiment) {

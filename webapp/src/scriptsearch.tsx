@@ -51,7 +51,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
     hide() {
         this.setState({ visible: false });
         // something changed?
-        if (this.state.mode == ScriptSearchMode.Boards &&
+        if (this.state.mode == ScriptSearchMode.Experiments &&
             this.state.experimentsState !== pxt.editor.experiments.state())
             this.props.parent.reloadEditor();
     }
@@ -441,7 +441,10 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                     {experimentsChanged ?
                         <div className="ui items centered">
                             <div className="ui item">
-                                {lf("Experiments changed, the editor will reload when leaving this page.")}
+                                <div className="ui warning message">
+                                    <div className="header">{lf("Experiments changed")}</div>
+                                    {lf("The editor will reload when leaving this page.")}
+                                </div>
                             </div>
                         </div> : undefined}
                     {dialogs.githubFooter(lf("Want to create your own extension?"), this.hide)}
