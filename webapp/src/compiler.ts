@@ -426,7 +426,6 @@ export function updatePackagesAsync(packages: pkg.EditorPackage[], token?: pxt.U
         .then(() => Promise.each(packages, p => {
                 if (token) token.throwIfCancelled();
                 return epkg.updateDepAsync(p.getPkgId())
-                    .then(() => Promise.delay(5000)) // REMOVE THIS
                     .then(() => {
                         ++completed;
                         if (token && !token.isCancelled()) token.reportProgress(completed, packages.length);
