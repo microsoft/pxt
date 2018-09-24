@@ -2010,6 +2010,10 @@ export class ProjectView
         this.scriptSearch.showBoards();
     }
 
+    showExperimentsDialog() {
+        this.scriptSearch.showExperiments();
+    }
+
     showChooseHwDialog() {
         this.chooseHwDialog.show()
     }
@@ -2865,7 +2869,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
         })
         .then(() => pxt.BrowserUtils.initTheme())
-        .then(() => pxt.experiments.syncTheme())
+        .then(() => pxt.editor.experiments.syncTheme())
         .then(() => cmds.initCommandsAsync())
         .then(() => {
             // editor messages need to be enabled early, in case workspace provider is IFrame

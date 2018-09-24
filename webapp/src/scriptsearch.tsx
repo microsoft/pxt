@@ -59,6 +59,10 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         this.setState({ visible: true, searchFor: '', mode: ScriptSearchMode.Boards })
     }
 
+    showExperiments() {
+        this.setState({ visible: true, searchFor: '', mode: ScriptSearchMode.Experiments });
+    }
+
     fetchUrlData(): data.DataFetchResult<Cloud.JsonScript[]> {
         const emptyResult: data.DataFetchResult<Cloud.JsonScript[]> = {
             data: [],
@@ -277,8 +281,8 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             });
     }
 
-    toggleExperiment(experiment: pxt.editor.Experiment) {
-        pxt.editor.setExperiment(experiment, !experiment.enabled);
+    toggleExperiment(experiment: pxt.editor.experiments.Experiment) {
+        pxt.editor.experiments.toggle(experiment);
         this.forceUpdate(); // TODO
     }
 
@@ -290,7 +294,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         const ghdata = this.fetchGhData();
         const urldata = this.fetchUrlData();
         const local = this.fetchLocal();
-        const experiments = pxt.editor.experiments();
+        const experiments = pxt.editor.experiments.all();
         const isSearching = this.state.searchFor && (ghdata.status === data.FetchStatus.Pending || urldata.status === data.FetchStatus.Pending);
 
         const coresFirst = (a: pxt.PackageConfig, b: pxt.PackageConfig) => {
@@ -409,7 +413,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     key={'exp' + experiment.id}
                                     imageUrl={`/static/experiments/${experiment.id}.png`}
                                     role="link"
-                                    label={experiment.enabled ? lf("On") : undefined}
+                                    label={pxt.experiments.isEnabled(experiment) ? lf("On") : undefined}
                                     onClick={this.toggleExperiment}
                                 />
                             )}

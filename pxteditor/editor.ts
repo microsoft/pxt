@@ -225,6 +225,7 @@ namespace pxt.editor {
         showResetDialog(): void;
         showExitAndSaveDialog(): void;
         showChooseHwDialog(): void;
+        showExperimentsDialog(): void;
 
         showPackageDialog(): void;
         showBoardDialog(): void;
