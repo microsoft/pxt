@@ -214,10 +214,10 @@ export class ProjectView
                 const appTheme = pxt.appTarget.appTheme;
                 if (appTheme && appTheme.editorVersionPaths && appTheme.editorVersionPaths[majorVersion]) {
                     const newPath = appTheme.editorVersionPaths[majorVersion];
-                    window.location.href = pxt.Util.pathJoin(pxt.appTarget.name, newPath + "#editor");
+                    window.location.href = pxt.Util.pathJoin(window.location.origin, newPath + "#editor");
                 }
                 else {
-                    window.location.href = pxt.Util.pathJoin(pxt.appTarget.name, "v" + header.targetVersion + "#editor");
+                    window.location.href = pxt.Util.pathJoin(window.location.origin, "v" + header.targetVersion + "#editor");
                 }
             })
             .catch(e => {
