@@ -1,25 +1,25 @@
 # Extension Release Tests
 
-These release tests apply to editor that support GitHub extensions.
+These release tests apply to an editor that supports GitHub extensions.
 
 ## All approved packages compile
 
-* open a command prompt with Git and pxt CLI installed
-* run
+* Open a command prompt with Git and pxt CLI installed
+* Run the following command:
 
 ```
 pxt testghpkgs
 ```
 
-If you get throttled,
+If you get throttled:
 
-* login with your PXT token from https://makecode.com/oauth/get-token
+* Login with your PXT token from https://makecode.com/oauth/get-token:
 
 ```
 pxt login pxt TOKEN
 ```
 
-* login with a GitHub token
+* Login with a GitHub token:
 
 ```
 pxt login github TOKEN
