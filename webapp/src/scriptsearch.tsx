@@ -291,7 +291,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
 
     toggleExperiment(experiment: pxt.editor.experiments.Experiment) {
         pxt.editor.experiments.toggle(experiment);
-        pxt.tickEvent(`experiments.toggle`, { "experiment": experiment.id, "enabled": pxt.editor.experiments.isEnabled(experiment) }, { interactiveConsent: true })
+        pxt.tickEvent(`experiments.toggle`, { "experiment": experiment.id, "enabled": pxt.editor.experiments.isEnabled(experiment) ? 1 : 0 }, { interactiveConsent: true })
         this.forceUpdate();
     }
 
