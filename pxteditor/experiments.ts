@@ -68,6 +68,15 @@ namespace pxt.editor.experiments {
         ].filter(experiment => ids.indexOf(experiment.id) > -1);
     }
 
+    export function clear() {
+        all().forEach(experiment => pxt.storage.removeLocal(key(experiment)));
+        syncTheme();
+    }
+
+    export function someEnabled(): boolean {
+        return all().some(experiment => isEnabled(experiment));
+    }
+
     export function isEnabled(experiment: Experiment): boolean {
         return !!pxt.storage.getLocal(key(experiment));
     }
