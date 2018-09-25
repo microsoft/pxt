@@ -52,6 +52,11 @@ namespace pxt.editor.experiments {
                 id: "instructions",
                 name: lf("Wiring Instructions"),
                 description: lf("Generate step-by-step assembly instructions for breadboard wiring.")
+            },
+            {
+                id: "enableTrace",
+                name: lf("Slow-Mo"),
+                description: lf("Step by step automatic execution of the code")
             }
         ].filter(experiment => ids.indexOf(experiment.id) > -1);
     }

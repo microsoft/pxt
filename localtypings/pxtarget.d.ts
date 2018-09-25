@@ -133,7 +133,8 @@ declare namespace pxt {
         autoRun?: boolean;
         stopOnChange?: boolean;
         hideRestart?: boolean;
-        enableTrace?: boolean;
+        // moved to theme
+        // enableTrace?: boolean;
         debugger?: boolean;
         hideFullscreen?: boolean;
         streams?: boolean;
@@ -257,6 +258,7 @@ declare namespace pxt {
         print?: boolean; //Print blocks and text feature
         greenScreen?: boolean; // display webcam stream in background
         instructions?: boolean; // display make instructions
+        enableTrace?: boolean; // Slow-Mo button
         selectLanguage?: boolean; // add language picker to settings menu
         availableLocales?: string[]; // the list of enabled language codes
         useUploadMessage?: boolean; // change "Download" text to "Upload"
