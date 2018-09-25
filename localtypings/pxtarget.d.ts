@@ -44,7 +44,6 @@ declare namespace pxt {
         serial?: AppSerial;
         appTheme: AppTheme;
         compileService?: TargetCompileService;
-        analytics?: AppAnalytics;
         ignoreDocsErrors?: boolean;
         variants?: Map<AppTarget>; // patches on top of the current AppTarget for different chip variants
     }
@@ -90,11 +89,6 @@ declare namespace pxt {
         palette?: string[];
         screenSize?: Size;
         bannedCategories?: string[]; // a list of categories to exclude blocks from
-    }
-
-    interface AppAnalytics {
-        userVoiceApiKey?: string;
-        userVoiceForumId?: number;
     }
 
     interface AppSerial {
