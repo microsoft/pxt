@@ -341,6 +341,11 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                 closeOnDimmerClick closeOnEscape
                 description={description}>
                 <div className="ui">
+                    {mode == ScriptSearchMode.Experiments ?
+                        <div className="ui message">
+                            <div className="header">{lf("WARNING: EXPERIMENTAL FEATURES AHEAD!")}</div>
+                            {lf("By enabling these features, you could lose some programs. Send us your feedback!")}
+                        </div> : undefined}
                     {mode == ScriptSearchMode.Extensions ?
                         <div className="ui search">
                             <div className="ui fluid action input" role="search">
@@ -441,17 +446,13 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                             </div>
                         </div>
                         : undefined}
-                    {experimentsChanged ?
-                        <div className="ui items centered">
-                            <div className="ui item">
-                                <div className="ui warning message">
-                                    <div className="header">{lf("Experiments changed")}</div>
-                                    {lf("The editor will reload when leaving this page.")}
-                                </div>
-                            </div>
-                        </div> : undefined}
-                    {mode == ScriptSearchMode.Experiments ? dialogs.githubFooter(lf("Want to create your own extension?"), this.hide) : undefined}
                 </div>
+                {experimentsChanged ?
+                    <div className="ui warning message">
+                        <div className="header">{lf("Experiments changed")}</div>
+                        {lf("The editor will reload when leaving this page.")}
+                    </div> : undefined}
+                {mode == ScriptSearchMode.Extensions ? dialogs.githubFooter(lf("Want to create your own extension?"), this.hide) : undefined}
             </sui.Modal>
         );
     }

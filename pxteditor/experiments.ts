@@ -63,7 +63,8 @@ namespace pxt.editor.experiments {
             {
                 id: "debugger",
                 name: lf("Debugger"),
-                description: lf("Step through code and inspect variables in the debugger")
+                description: lf("Step through code and inspect variables in the debugger"),
+                feedbackUrl: "https://github.com/Microsoft/pxt/issues/4729"
             }
         ].filter(experiment => ids.indexOf(experiment.id) > -1);
     }
