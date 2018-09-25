@@ -10,6 +10,7 @@ import * as fileworkspace from "./fileworkspace"
 import * as memoryworkspace from "./memoryworkspace"
 import * as iframeworkspace from "./iframeworkspace"
 import * as cloudsync from "./cloudsync"
+import * as indexedDBWorkspace from "./idbworkspace";
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
@@ -61,6 +62,9 @@ export function setupWorkspace(id: string) {
         case "uwp":
             fileworkspace.setApiAsync(pxt.winrt.workspace.fileApiAsync);
             impl = pxt.winrt.workspace.getProvider(fileworkspace.provider);
+            break;
+        case "idb":
+            impl = indexedDBWorkspace.provider;
             break;
         case "cloud":
         case "browser":
