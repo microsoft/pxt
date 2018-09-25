@@ -3939,6 +3939,8 @@ interface SpriteGlobalMeta {
 interface SpriteInfo {
     width?: number;
     height?: number;
+    xSpacing?: number;
+    ySpacing?: number;
     frames?: string[];
 }
 
@@ -4074,13 +4076,15 @@ function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
 
         if (!info.width || info.width > sheet.width) info.width = sheet.width
         if (!info.height || info.height > sheet.height) info.height = sheet.height
+        if (!info.xSpacing) info.xSpacing = 0;
+        if (!info.ySpacing) info.ySpacing = 0;
 
         let nx = (sheet.width / info.width) | 0
         let ny = (sheet.height / info.height) | 0
         let numSprites = nx * ny
 
-        for (let y = 0; y + info.height - 1 < sheet.height; y += info.height)
-            for (let x = 0; x + info.width - 1 < sheet.width; x += info.width) {
+        for (let y = 0; y + info.height - 1 < sheet.height; y += info.height + info.ySpacing)
+            for (let x = 0; x + info.width - 1 < sheet.width; x += info.width + info.xSpacing) {
                 if (info.frames && imgIdx >= info.frames.length) return;
 
                 let img = U.flatClone(sheet)
