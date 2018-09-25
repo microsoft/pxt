@@ -11,7 +11,7 @@ namespace pxt.editor.experiments {
     }
 
     export function syncTheme() {
-        const theme: pxt.Map<boolean> = (pxt.appTarget.appTheme || {}) as any;
+        const theme: pxt.Map<boolean> = <pxt.Map<boolean>><any>pxt.savedAppTheme();
         const r: pxt.Map<string | number> = {};
         const experiments = all();
         experiments.forEach(experiment => {
@@ -20,8 +20,10 @@ namespace pxt.editor.experiments {
             if (enabled)
                 r[experiment.id] = enabled ? 1 : 0;
         })
-        if (experiments.length && Object.keys(r).length)
+        if (experiments.length && Object.keys(r).length) {
             pxt.tickEvent("experiments.loaded", r);
+            pxt.setAppTargetVariant(null);
+        }
     }
 
     export function all(): Experiment[] {
