@@ -1,6 +1,6 @@
 # Package localization files
 
-Packages can contain localized strings in JSON resource files. This page describes, in detailed steps, how to localize a package.
+Packages can contain localized strings in JSON resource files. This page describes, in detailed steps, how to localize an extension.
 
 ## Overview
 

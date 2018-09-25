@@ -1,12 +1,12 @@
 # Extensions
 
-A package may have an associated editor extension hosted in the Github Pages section of the repo.
+An extension may have an associated editor extension hosted in the Github Pages section of the repo.
 
 * [pxt-neoanim](https://github.com/Microsoft/pxt-neoanim) is an example of specialized NeoPixel animation editor.
 
 ## Configuration
 
-The extension is configured in the [pxt.json](/packages/pxtJson) file by adding an ``extension`` field:
+The extension is configured in the [pxt.json](/extensions/pxt-json) file by adding an ``extension`` field:
 
 ```typescript-ignore
 {

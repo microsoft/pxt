@@ -10,7 +10,7 @@ number). Thus, it's good to have tags like `v0.0.0`, `v0.1.7` etc.
 If there are no tags, PXT will pick the latest commit from the default branch
 (usually `master`).
 
-In both cases, the specific version is hard-coded into the user's package. The version tag is set in the [pxt.json](/packages/pxtJson) for the package:
+In both cases, the specific version is hard-coded into the user's package. The version tag is set in the [pxt.json](/extensions/pxt-json) for the package:
 
 ```typescript-ignore
 {
@@ -20,7 +20,7 @@ In both cases, the specific version is hard-coded into the user's package. The v
 }
 ```
 
-You can use `pxt bump` to bump version of a package. It will `git pull`, update the patch
+You can use `pxt bump` to bump version of an extension. It will `git pull`, update the patch
 version level (but will ask you for an override), create a git tag and push.
 
 ## Package updates

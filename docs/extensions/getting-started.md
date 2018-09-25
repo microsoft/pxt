@@ -2,7 +2,7 @@
 
 This guide describes a simple setup that requires nothing, but a web browser.
 We have another guide, if you want to
-[use command line tools](/packages/getting-started/vscode).
+[use command line tools](/extensions/getting-started/vscode).
 
 ## Step 1: Design blocks in the editor
 
@@ -24,7 +24,7 @@ on the list (might happen for organizational repositories), go back to the Impor
 select **Import URL** and paste the `https://github.com/...` link to your repository.
 
 If you want to create a new repository, select the first option in the list and specify
-repository name and optional description. It is recommended that for a package called
+repository name and optional description. It is recommended that for an extension called
 `banana` the repository should be called `pxt-banana`.
 
 If you want to contribute to an existing repository you don't have write permissions
@@ -32,7 +32,7 @@ to, first fork it using GitHub web interface, and then use the Import URL to imp
 your forked repo. After you made and committed your changes, create a pull request
 using GitHub web interface.
 
-If you're using an existing, non-empty repository that doesn't have a package in it, you
+If you're using an existing, non-empty repository that doesn't have an extension in it, you
 will be asked if you want it initialized (if the repository is empty or just created, there will
 be no confirmation). This might overwrite files you already have there,
 so use with care.
@@ -74,7 +74,7 @@ the users to see the changes.
 
 In order to be searchable by users, packages need to be approved. GitHub organizations or individual repos can be approved.
 
-See [approval](/packages/approval) for more details.
+See [approval](/extensions/approval) for more details.
 
 ### ~ hint
 

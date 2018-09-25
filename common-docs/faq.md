@@ -25,7 +25,7 @@ Read more about [saving](/save) projects.
 
 ## Can I use MakeCode when I'm not connected to the internet? #work-offline
 
-Yes, when MakeCode first loads in the browser, it tells the browser to download the files it needs to work locally. If you later want to add a package to use with your program, you will need to connect again. See the page about using MakeCode [offline](/offline).
+Yes, when MakeCode first loads in the browser, it tells the browser to download the files it needs to work locally. If you later want to add an extension to use with your program, you will need to connect again. See the page about using MakeCode [offline](/offline).
 
 ## What happens when I clear the browser's cache and temporary files? #clear-data
 

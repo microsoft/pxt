@@ -8,7 +8,7 @@ It is easiest to tinker and design your blocks from the editor itself. Use the [
 
 You will need to get a [GitHub](https://github.com) account and create a GitHub repository. At this time, other repository hosting solutions (GitLab, Bitbucket, etc.) are not supported.
 
-Let's say you want to create a package called `banana` for target `TARGET`.
+Let's say you want to create an extension called `banana` for target `TARGET`.
 
 * **create** the repository in GitHub
 * **clone** the repository into `pxt-banana`
@@ -99,7 +99,7 @@ In the editor, paste the full URL to your repo after selecting `Settings -> Exte
 
 In order to be searchable by users, packages need to be approved. GitHub organizations or individual repos can be approved.
 
-See [approval](/packages/approval) for more details.
+See [approval](/extensions/approval) for more details.
 
 ### ~ hint
 

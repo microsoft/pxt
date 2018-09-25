@@ -1,10 +1,10 @@
 # Reference documents
 
-the documentation for the functions in a package namespace are included with the package. They are markdown files written in the format described by [writing docs](https://makecode.com/writing-docs).
+the documentation for the functions in an extension namespace are included with the package. They are markdown files written in the format described by [writing docs](https://makecode.com/writing-docs).
 
 ## Step 0: Document tree discussion
 
-Documentation for namespace functions almost always goes under the _/reference_ document path. Other standard document paths are _/blocks_ and _/types_ but these are for the documents related to built-in blocks. If a package has other related documents that aren't for namespace functions, such as hardware associated with the API in the package, these are placed under another path, like _/device_, in the package.
+Documentation for namespace functions almost always goes under the _/reference_ document path. Other standard document paths are _/blocks_ and _/types_ but these are for the documents related to built-in blocks. If an extension has other related documents that aren't for namespace functions, such as hardware associated with the API in the package, these are placed under another path, like _/device_, in the package.
 
 ### Document file layout
 
@@ -67,7 +67,7 @@ There's no required format for writing the reference documents. However, current
 5. The return value (if any) description and it's type information.
 6. A example use of the function.
 7. Any **See also** links to related reference or external information.
-8. A package tag associating the document with it's package.
+8. An extension tag associating the document with it's package.
 
 **NOTE:** The document sections that come after the title heading begin at second level (`##`) headings.
 
@@ -204,7 +204,7 @@ functions based on signature. The cards show a block from the compiled code of t
 Card pages form the top levels of the reference document tree (usually the second level after the reference page: _reference.md_).
 
 ### ~hint
-The card page isn't automatically added to the top level reference page, _reference.md_,  when a package is added. If a package is included with a target statically, the card page is added manually in a [namespaces](/writing-docs/macros#namespaces) section.
+The card page isn't automatically added to the top level reference page, _reference.md_,  when an extension is added. If an extension is included with a target statically, the card page is added manually in a [namespaces](/writing-docs/macros#namespaces) section.
 ### ~
 
 Cards are declared in a [**cards**](/writing-docs/macros#cards) section in the card markdown page. You have the option of exposing some or all of the available functions from your namespace in the card page. The document for the card page is placed in the _/reference_ folder and has the same name as the namespace folder but with the markdown (md) extension.

@@ -1,6 +1,6 @@
 # Simple package tutorial
 
-As a variation of pxt-banana package example from [getting started](/packages/getting-started), this tutorial project guides you through building a very simple, yet complete, package.
+As a variation of pxt-banana package example from [getting started](/extensions/getting-started), this tutorial project guides you through building a very simple, yet complete, package.
 
 In order to build and test the package, you'll need a running target to add the package to. You can add this example to a target you're already working with or you can use the [pxt-sample](https://github.com/Microsoft/pxt-sample) target.  
 
@@ -44,7 +44,7 @@ namespace tropic {
 }
 ```
 
-We'll quickly use the functions from `tropic` with a little bit of test code to simulate how they will work if they were added from a package. You can add this bit of code at the bottom of project in the editor to test:
+We'll quickly use the functions from `tropic` with a little bit of test code to simulate how they will work if they were added from an extension. You can add this bit of code at the bottom of project in the editor to test:
 
 ```typescript-ignore
 let peeled = false;
@@ -59,7 +59,7 @@ Go to the `/libs` directory in the target's file layout. Make a new directory th
 
 ### Create the package description
 
-We need to make a package description file next. This is called `pxt.json`. The file defines all the components of the package. Our `pxt.json` contains a minimum of what's needed to define our package. Copy the JSON here and save it as `pxt.json` in the `/tropic` directory.
+We need to make an extension description file next. This is called `pxt.json`. The file defines all the components of the package. Our `pxt.json` contains a minimum of what's needed to define our package. Copy the JSON here and save it as `pxt.json` in the `/tropic` directory.
 
 ```typescript-ignore
 {
@@ -77,7 +77,7 @@ We need to make a package description file next. This is called `pxt.json`. The 
 
 This is what the basic entries in the `pxt.json` do:
 
-* **name**: The package name. This is used to search and select the package when you go to add a package in the editor.
+* **name**: The package name. This is used to search and select the package when you go to add an extension in the editor.
 * **description**: The description of the package shown in the package gallery.
 * **icon**: An icon shown along with the description in the package gallery.
 * **files**: The list of sources for the code and blocks of the package.

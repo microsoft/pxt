@@ -76,4 +76,4 @@ export function foo() {
 }
 ```
 
-* use English and provide [localization](/packages/localization) for other locales
+* use English and provide [localization](/extensions/localization) for other locales

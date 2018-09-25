@@ -16,15 +16,15 @@ In this scenario, PXT dynamically loads the neopixel packages directly from GitH
 
 * Got some questions? Join us on our [Community Discord](https://aka.ms/makecodecommunity)!
 
-## Authoring packages
+## Authoring extensions
 
-* [Package getting started guide](/packages/getting-started)
-* Package configuration via [pxt.json](/packages/pxtJson) file
-* [Naming conventions](/packages/naming-conventions)
-* [Package versioning](/packages/versioning)
-* [Package localization](/packages/localization)
-* [Package approval](/packages/approval)
+* [Extension getting started guide](/extensions/getting-started)
+* Extension configuration via [pxt.json](/extensions/pxt-json) file
+* [Naming conventions](/extensions/naming-conventions)
+* [Extension versioning](/extensions/versioning)
+* [Extension localization](/extensions/localization)
+* [Extension approval](/extensions/approval)
 
-## [Editor extensions](/packages/extensions)
+## [Editor extensions](/extensions/extensions)
 
 Packages may provide an optional editor extension. An editor extension is an HTML page that gets loaded inside an iFrame by the editor. It allows to interact with the project or access serial data via messages. Package extensions are hosted on [GitHub pages](https://pages.github.com/).
