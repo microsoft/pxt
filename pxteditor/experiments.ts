@@ -12,10 +12,16 @@ namespace pxt.editor.experiments {
 
     export function syncTheme() {
         const theme: pxt.Map<boolean> = (pxt.appTarget.appTheme || {}) as any;
-        all().forEach(experiment => {
+        const r: pxt.Map<string | number> = {};
+        const experiments = all();
+        experiments.forEach(experiment => {
             const enabled = isEnabled(experiment);
             theme[experiment.id] = !!enabled;
+            if (enabled)
+                r[experiment.id] = enabled ? 1 : 0;
         })
+        if (experiments.length && Object.keys(r).length)
+            pxt.tickEvent("experiments.loaded", r);
     }
 
     export function all(): Experiment[] {
@@ -26,7 +32,7 @@ namespace pxt.editor.experiments {
                 id: "print",
                 name: lf("Print Code"),
                 description: lf("Print the code from the current project")
-            },            
+            },
             {
                 id: "greenScreen",
                 name: lf("Green screen"),
