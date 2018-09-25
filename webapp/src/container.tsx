@@ -154,7 +154,6 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.pair = this.pair.bind(this);
         this.showAboutDialog = this.showAboutDialog.bind(this);
         this.print = this.print.bind(this);
-        this.showExperiments = this.showExperiments.bind(this);
     }
 
     showShareDialog() {
@@ -211,11 +210,6 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         pxt.tickEvent("menu.reset", undefined, { interactiveConsent: true });
         pxt.tickEvent("reset"); // Deprecated, will Feb 2018.
         this.props.parent.showResetDialog();
-    }
-
-    showExperiments() {
-        pxt.tickEvent("menu.experiments", undefined, { interactiveConsent: true });
-        this.props.parent.showExperimentsDialog();
     }
 
     pair() {
@@ -281,7 +275,6 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             {renderDocItems(this.props.parent, "mobile only")}
             <div className="ui divider"></div>
             <sui.Item role="menuitem" text={lf("About...")} onClick={this.showAboutDialog} tabIndex={-1} />
-            {targetTheme.experiments ? <sui.Item role="menuitem" text={lf("Experiments...")} onClick={this.showExperiments} tabIndex={-1} /> : undefined}
             {targetTheme.feedbackUrl ? <a className="ui item" href={targetTheme.feedbackUrl} role="menuitem" title={lf("Give Feedback")} target="_blank" rel="noopener noreferrer" tabIndex={-1}>{lf("Give Feedback")}</a> : undefined}
         </sui.DropdownMenu>;
     }

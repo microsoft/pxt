@@ -84,7 +84,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
     }
 
     private showAboutDialog() {
-        showAboutDialogAsync();
+        showAboutDialogAsync(this.props.parent);
     }
 
     chgHeader(hdr: pxt.workspace.Header) {
