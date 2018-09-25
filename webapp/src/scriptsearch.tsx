@@ -429,7 +429,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     label={pxt.editor.experiments.isEnabled(experiment) ? lf("Enabled") : lf("Disabled")}
                                     labelClass={pxt.editor.experiments.isEnabled(experiment) ? "green right ribbon" : "grey right ribbon"}
                                     onCardClick={this.toggleExperiment}
-                                    learnMoreUrl={experiment.feedbackUrl || `/about/editor-features#${experiment.id}`}
+                                    feedbackUrl={experiment.feedbackUrl}
                                 />
                             )}
                         </div>

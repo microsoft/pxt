@@ -130,6 +130,11 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
                             aria-label={lf("Learn more")} target="_blank" rel="noopener noreferrer">
                             {lf("Learn more")}
                         </a> : undefined}
+                    {card.feedbackUrl ?
+                        <a className="learnmore right floated" href={card.feedbackUrl}
+                            aria-label={lf("Feedback")} target="_blank" rel="noopener noreferrer">
+                            {lf("Feedback")}
+                        </a> : undefined}
                 </div> : undefined}
         </div>;
 
