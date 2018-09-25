@@ -47,6 +47,11 @@ namespace pxt.editor.experiments {
                 id: "allowPackageExtensions",
                 name: lf("Editor Extensions"),
                 description: lf("Allow Extensions to add buttons in the editor.")
+            },
+            {
+                id: "instructions",
+                name: lf("Wiring Instructions"),
+                description: lf("Generate step-by-step assembly instructions for breadboard wiring.")
             }
         ].filter(experiment => ids.indexOf(experiment.id) > -1);
     }

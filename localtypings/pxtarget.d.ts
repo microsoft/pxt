@@ -141,7 +141,8 @@ declare namespace pxt {
         boardDefinition?: pxsim.BoardDefinition;
         dynamicBoardDefinition?: boolean; // if true, boardDefinition comes from board package
         parts?: boolean; // parts enabled?
-        instructions?: boolean;
+        // moved to theme
+        // instructions?: boolean;
         partsAspectRatio?: number; // aspect ratio of the simulator when parts are displayed
         headless?: boolean; // whether simulator should still run while collapsed
         trustedUrls?: string[]; // URLs that are allowed in simulator modal messages
@@ -255,6 +256,7 @@ declare namespace pxt {
         highContrast?: boolean; // simulator has a high contrast mode
         print?: boolean; //Print blocks and text feature
         greenScreen?: boolean; // display webcam stream in background
+        instructions?: boolean; // display make instructions
         selectLanguage?: boolean; // add language picker to settings menu
         availableLocales?: string[]; // the list of enabled language codes
         useUploadMessage?: boolean; // change "Download" text to "Upload"

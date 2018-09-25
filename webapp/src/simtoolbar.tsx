@@ -66,7 +66,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const targetTheme = pxt.appTarget.appTheme;
         const simOpts = pxt.appTarget.simulator;
         const sandbox = pxt.shell.isSandboxMode();
-        const make = !sandbox && parentState.showParts && simOpts && (simOpts.instructions || (simOpts.parts && pxt.options.debug));
+        const make = !sandbox && parentState.showParts && targetTheme.instructions;
 
         const isRunning = parentState.running;
         const isFullscreen = parentState.fullscreen;
@@ -87,7 +87,6 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const runTooltip = isRunning ? lf("Stop the simulator") : lf("Start the simulator");
         const makeTooltip = lf("Open assembly instructions");
         const restartTooltip = lf("Restart the simulator");
-        const debugTooltip = debugging ? lf("Disable Debugging") : lf("Debugging")
         const fullscreenTooltip = isFullscreen ? lf("Exit fullscreen mode") : lf("Launch in fullscreen");
         const muteTooltip = isMuted ? lf("Unmute audio") : lf("Mute audio");
 
