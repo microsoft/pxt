@@ -291,7 +291,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
 
     toggleExperiment(experiment: pxt.editor.experiments.Experiment) {
         pxt.editor.experiments.toggle(experiment);
-        this.forceUpdate(); // TODO
+        this.forceUpdate();
     }
 
     renderCore() {
