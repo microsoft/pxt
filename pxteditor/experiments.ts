@@ -59,6 +59,11 @@ namespace pxt.editor.experiments {
                 id: "enableTrace",
                 name: lf("Slow-Mo"),
                 description: lf("Step by step automatic execution of the code")
+            },
+            {
+                id: "debugger",
+                name: lf("Debugger"),
+                description: lf("Step through code and inspect variables in the debugger")
             }
         ].filter(experiment => ids.indexOf(experiment.id) > -1);
     }
