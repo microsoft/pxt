@@ -24,7 +24,7 @@ The **Home** button takes you to the [Home Screen](@homeurl@) which shows recent
 
 #### #home-images
 
-### Share
+### Share #share
 
 The **Share** button displays the **Share Project** window which lets you publish your project to the public cloud.
 
@@ -36,13 +36,13 @@ To switch the your code view from **Blocks** to **JavaScript**, or back again, p
 
 #### #blocksjs-images
 
-### Help
+### Help #help
 
 The **Help** button shows a menu of help options that take you to support or reference pages.
 
 #### #help-images
 
-### More
+### More #moresettings
 
 The **More** button gives a menu of project settings and options.
 
@@ -60,7 +60,7 @@ There are two zoom buttons in the lower right part of the editor view. The **(+)
 
 #### #zoom-images
 
-### Save Project
+### Save Project #saveproject
 
 You can choose a name for your project and save it. Type in a name for the project and press the **disk icon** to save.
 
