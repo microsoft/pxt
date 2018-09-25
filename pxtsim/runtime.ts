@@ -233,8 +233,8 @@ namespace pxsim {
 
             this.events.push(e)
 
-            // if this is the first event pushed - start processing
-            if (this.events.length == 1 && !this.lock)
+            // start processing, if not already processing
+            if (!this.lock)
                 return this.poke();
             else
                 return Promise.resolve()
@@ -258,8 +258,8 @@ namespace pxsim {
                     this.lock = false
                     // process the log (synchronous)
                     this._addRemoveLog.forEach(l => {
-                        if (l.log === LogType.BackAdd) { this.addHandler(l.act) } 
-                        else if (l.log === LogType.BackRemove) { this.removeHandler(l.act) } 
+                        if (l.log === LogType.BackAdd) { this.addHandler(l.act) }
+                        else if (l.log === LogType.BackRemove) { this.removeHandler(l.act) }
                         else this.setHandler(l.act)
                     });
                     this._addRemoveLog = [];
@@ -272,14 +272,14 @@ namespace pxsim {
         get handlers() {
             return this._handlers;
         }
-        
+
         setHandler(a: RefAction) {
             if (!this.lock) {
                 this._handlers.forEach(old => pxtcore.decr(old))
                 this._handlers = [a];
                 pxtcore.incr(a)
             } else {
-                this._addRemoveLog.push({act: a, log:LogType.UserSet});
+                this._addRemoveLog.push({act: a, log: LogType.UserSet});
             }
         }
 
@@ -288,7 +288,7 @@ namespace pxsim {
                this._handlers.push(a);
                pxtcore.incr(a)
             } else {
-                this._addRemoveLog.push({act: a, log:LogType.BackAdd});
+                this._addRemoveLog.push({act: a, log: LogType.BackAdd});
             }
         }
 
@@ -298,10 +298,10 @@ namespace pxsim {
                 while (index != -1) {
                     this._handlers.splice(index,1)
                     pxtcore.decr(a)
-                    index = this._handlers.indexOf(a)   
+                    index = this._handlers.indexOf(a)
                 }
             } else {
-                this._addRemoveLog.push({act: a, log:LogType.BackRemove});
+                this._addRemoveLog.push({act: a, log: LogType.BackRemove});
             }
         }
 
