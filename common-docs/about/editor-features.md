@@ -70,6 +70,14 @@ You can choose a name for your project and save it. Type in a name for the proje
 
 The **Download** button will copy your program to a drive on your computer. You can copy your program directly to your @boardname@ if it's connected and a drive for it shows up on your computer.
 
+#### ~ hint
+
+**Project name and download filename**
+
+When you download the program for your project, the name you gave the project becomes part of the download file. If you decide to rename the download file, the name you chose for the project, not the current filename, is used and displayed by editor.
+
+#### ~
+
 #### #download-images
 
 ### Explorer #explorer
