@@ -49,3 +49,7 @@ When you download the program for your project, the name you gave the project be
 ## I don't see my question here. What's next?
 
 Can't find your question? Please see our [support](/support) page.
+
+## Where is the "Add Package" button?
+
+Packages were renamed to **Extensions** to align with other code editors. You will find the **Extensions** menu dialog that replace the **Add Package** button.
