@@ -3,7 +3,7 @@ namespace pxt.editor.experiments {
         id: string; // == field in apptheme also assumes image at /static/experiments/ID.png
         name: string;
         description: string;
-        feedbackUrl?: string; // allows user to put feedback
+        feedbackUrl: string; // allows user to put feedback
     }
 
     function key(experiment: Experiment): string {
@@ -33,32 +33,26 @@ namespace pxt.editor.experiments {
             {
                 id: "print",
                 name: lf("Print Code"),
-                description: lf("Print the code from the current project")
+                description: lf("Print the code from the current project"),
+                feedbackUrl: "https://github.com/Microsoft/pxt/issues/4740"
             },
             {
                 id: "greenScreen",
                 name: lf("Green screen"),
-                description: lf("Display a webcam video stream or a green background behind the code.")
-            },
-            {
-                id: "highContrast",
-                name: lf("High Contrast"),
-                description: lf("Color theme with higher color contrast.")
+                description: lf("Display a webcam video stream or a green background behind the code."),
+                feedbackUrl: "https://github.com/Microsoft/pxt/issues/4738"
             },
             {
                 id: "allowPackageExtensions",
                 name: lf("Editor Extensions"),
-                description: lf("Allow Extensions to add buttons in the editor.")
+                description: lf("Allow Extensions to add buttons in the editor."),
+                feedbackUrl: "https://github.com/Microsoft/pxt/issues/4741"
             },
             {
                 id: "instructions",
                 name: lf("Wiring Instructions"),
-                description: lf("Generate step-by-step assembly instructions for breadboard wiring.")
-            },
-            {
-                id: "enableTrace",
-                name: lf("Slow-Mo"),
-                description: lf("Step by step automatic execution of the code")
+                description: lf("Generate step-by-step assembly instructions for breadboard wiring."),
+                feedbackUrl: "https://github.com/Microsoft/pxt/issues/4739"
             },
             {
                 id: "debugger",
