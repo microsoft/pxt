@@ -41,11 +41,7 @@ function getDbAsync(): Promise<pxtc.Util.IDBWrapper> {
 function listAsync(): Promise<pxt.workspace.Header[]> {
     return getDbAsync()
         .then((db) => {
-            return db.getAllAsync<pxt.workspace.Header>(HEADERS_TABLE)
-                .then((res) => { // TEMP
-                    console.log(res);
-                    return res;
-                });
+            return db.getAllAsync<pxt.workspace.Header>(HEADERS_TABLE);
         });
 }
 
@@ -64,10 +60,6 @@ function getAsync(h: Header): Promise<pxt.workspace.File> {
 }
 
 function setAsync(h: Header, prevVer: any, text?: ScriptText): Promise<pxt.workspace.Version> {
-    if (!text) {
-        return Promise.resolve();
-    }
-
     return getDbAsync()
         .then((db) => {
             const dataToStore: StoredText = {
@@ -75,7 +67,7 @@ function setAsync(h: Header, prevVer: any, text?: ScriptText): Promise<pxt.works
                 files: text,
                 _rev: prevVer
             };
-            return db.setAsync(TEXTS_TABLE, dataToStore)
+            return (text ? db.setAsync(TEXTS_TABLE, dataToStore) : Promise.resolve())
                 .then(() => {
                     return db.setAsync(HEADERS_TABLE, h);
                 });

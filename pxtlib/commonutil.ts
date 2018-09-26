@@ -62,6 +62,11 @@ namespace ts.pxtc.Util {
             }
         }
 
+        private errorHandler(err: Error, op: string, reject: (err: Error) => void): void {
+            pxt.reportException(new Error(`${this.name} IDBWrapper error for ${op}: ${err.message}`));
+            reject(err);
+        }
+
         private getObjectStore(name: string, mode: "readonly" | "readwrite" = "readonly"): IDBObjectStore {
             this.throwIfNotOpened();
             const transaction = this._db.transaction([name], mode);
@@ -76,9 +81,7 @@ namespace ts.pxtc.Util {
                     this._db = request.result;
                     resolve();
                 };
-                request.onerror = () => {
-                    reject(new Error(`Cannot open IDB: ${request.error}`));
-                };
+                request.onerror = () => this.errorHandler(request.error, "open", reject);
                 request.onupgradeneeded = (ev) => this.upgradeHandler(ev, request);
             });
         }
@@ -88,7 +91,7 @@ namespace ts.pxtc.Util {
                 const store = this.getObjectStore(storeName);
                 const request = store.get(id);
                 request.onsuccess = () => resolve(request.result as T);
-                request.onerror = () => reject(request.error);
+                request.onerror = () => this.errorHandler(request.error, "get", reject);
             });
         }
 
@@ -106,7 +109,7 @@ namespace ts.pxtc.Util {
                         resolve(data);
                     }
                 };
-                cursor.onerror = () => reject(cursor.error);
+                cursor.onerror = () => this.errorHandler(cursor.error, "getAll", reject);
             });
         }
 
@@ -122,7 +125,7 @@ namespace ts.pxtc.Util {
                 }
 
                 request.onsuccess = () => resolve();
-                request.onerror = () => reject(request.error);
+                request.onerror = () => this.errorHandler(request.error, "set", reject);
             });
         }
 
@@ -131,7 +134,7 @@ namespace ts.pxtc.Util {
                 const store = this.getObjectStore(storeName, "readwrite");
                 const request = store.delete(id);
                 request.onsuccess = () => resolve();
-                request.onerror = () => reject(request.error);
+                request.onerror = () => this.errorHandler(request.error, "delete", reject);
             });
         }
 
@@ -140,7 +143,7 @@ namespace ts.pxtc.Util {
                 const store = this.getObjectStore(storeName, "readwrite");
                 const request = store.clear();
                 request.onsuccess = () => resolve();
-                request.onerror = () => reject(request.error);
+                request.onerror = () => this.errorHandler(request.error, "deleteAll", reject);
             });
         }
     }
@@ -195,21 +198,19 @@ namespace ts.pxtc.Util {
         static TABLE = "files";
         static KEYPATH = "id";
         static createAsync(): Promise<IndexedDbTranslationDb> {
-            return new Promise<IndexedDbTranslationDb>((resolve, reject) => {
-                const idb: IDBFactory = window.indexedDB || (<any>window).mozIndexedDB || (<any>window).webkitIndexedDB || (<any>window).msIndexedDB;
-                const r = idb.open("__pxt_translations", 2);
-                r.onsuccess = () => resolve(new IndexedDbTranslationDb(r.result));
-                r.onerror = () => reject(r.error);
-                r.onupgradeneeded = () => {
-                    const db = r.result as IDBDatabase;
-                    db.createObjectStore(IndexedDbTranslationDb.TABLE, { keyPath: IndexedDbTranslationDb.KEYPATH });
-                }
+            const idbWrapper = new IDBWrapper("__pxt_translations", 2, (ev, r) => {
+                const db = r.result as IDBDatabase;
+                db.createObjectStore(IndexedDbTranslationDb.TABLE, { keyPath: IndexedDbTranslationDb.KEYPATH });
             });
+            return idbWrapper.openAsync()
+                .then(() => {
+                    return Promise.resolve(new IndexedDbTranslationDb(idbWrapper));
+                });
         }
 
-        private db: IDBDatabase;
+        private db: IDBWrapper;
         private mem: MemTranslationDb;
-        constructor(db: IDBDatabase) {
+        constructor(db: IDBWrapper) {
             this.db = db;
             this.mem = new MemTranslationDb();
         }
@@ -218,45 +219,38 @@ namespace ts.pxtc.Util {
             const id = this.mem.key(lang, filename, branch);
             const r = this.mem.get(lang, filename, branch);
             if (r) return Promise.resolve(r);
-            return new Promise<ITranslationDbEntry>((resolve, reject) => {
-                const transaction = this.db.transaction([IndexedDbTranslationDb.TABLE]);
-                const store = transaction.objectStore(IndexedDbTranslationDb.TABLE);
-                const request = store.get(id);
-                request.onsuccess = () => {
-                    const entry: ITranslationDbEntry = request.result;
-                    if (entry) {
+
+            return this.db.getAsync<ITranslationDbEntry>(IndexedDbTranslationDb.TABLE, id)
+                .then((res) => {
+                    if (res) {
                         // store in-memory so that we don't try to download again
-                        this.mem.set(lang, filename, branch, entry.etag, entry.strings);
-                        resolve(entry);
-                    } else resolve(undefined);
-                }
-                request.onerror = () => resolve(undefined);
-            });
+                        this.mem.set(lang, filename, branch, res.etag, res.strings);
+                        return Promise.resolve(res);
+                    }
+                    return Promise.resolve(undefined);
+                })
+                .catch((e) => {
+                    return Promise.resolve(undefined);
+                });
         }
         setAsync(lang: string, filename: string, branch: string, etag: string, strings?: pxt.Map<string>, md?: string): Promise<void> {
             lang = (lang || "en-US").toLowerCase(); // normalize locale
             const id = this.mem.key(lang, filename, branch);
             this.mem.set(lang, filename, branch, etag, strings, md);
-            return new Promise((resolve, reject) => {
-                const transaction = this.db.transaction([IndexedDbTranslationDb.TABLE], "readwrite");
-                transaction.oncomplete = () => resolve();
-                transaction.onerror = () => {
+
+            if (strings)
+                Object.keys(strings).filter(k => !strings[k]).forEach(k => delete strings[k]);
+            const entry: ITranslationDbEntry = {
+                id,
+                etag,
+                time: Date.now(),
+                strings,
+                md
+            }
+            return this.db.setAsync(IndexedDbTranslationDb.TABLE, entry)
+                .catch((e) => {
                     // ignore set errors
-                    resolve();
-                }
-                const store = transaction.objectStore(IndexedDbTranslationDb.TABLE);
-                // delete all empty entries from strings
-                if (strings)
-                    Object.keys(strings).filter(k => !strings[k]).forEach(k => delete strings[k]);
-                const entry: ITranslationDbEntry = {
-                    id,
-                    etag,
-                    time: Date.now(),
-                    strings,
-                    md
-                }
-                store.put(entry);
-            });
+                });
         }
     }
 

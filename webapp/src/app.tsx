@@ -2822,6 +2822,7 @@ document.addEventListener("DOMContentLoaded", () => {
     else if ((pxt.appTarget.appTheme.allowParentController || isController) && pxt.BrowserUtils.isIFrame()) workspace.setupWorkspace("iframe");
     else if (isSandbox) workspace.setupWorkspace("mem");
     else if (pxt.winrt.isWinRT()) workspace.setupWorkspace("uwp");
+    else if (electron.isIpcRenderer() && pxt.BrowserUtils.isSafari()) workspace.setupWorkspace("idb");
     else if (Cloud.isLocalHost() || electron.isPxtElectron()) workspace.setupWorkspace("fs");
     Promise.resolve()
         .then(() => {
