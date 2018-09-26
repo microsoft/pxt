@@ -63,7 +63,7 @@ namespace ts.pxtc.Util {
         }
 
         private errorHandler(err: Error, op: string, reject: (err: Error) => void): void {
-            pxt.log(new Error(`${this.name} IDBWrapper error for ${op}: ${err.message}`));
+            console.error(new Error(`${this.name} IDBWrapper error for ${op}: ${err.message}`));
             reject(err);
         }
 
