@@ -44,7 +44,7 @@ interface has two relevant fields that are populated as specified below:
 ### bundleddirs: string[]
 
 A target can use many packages in addition to the required "corepkg". To 
-ensure that a package is bundled into the web app, you must include it in this list. For 
+ensure that an extension is bundled into the web app, you must include it in this list. For 
 example in http://github.com/microsoft/pxt-microbit/blob/master, we see:
 ```typescript-ignore
     "bundleddirs": [

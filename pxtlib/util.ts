@@ -446,7 +446,8 @@ namespace ts.pxtc.Util {
         return a + b;
     }
 
-    export let isNodeJS = false;
+    // Reliable NodeJS detection is not possible, but the following check should be accurate enough for our needs
+    export let isNodeJS = typeof window === "undefined";
 
     export interface HttpRequestOptions {
         url: string;
