@@ -35,6 +35,7 @@ let allScripts: HeaderWithScript[] = [];
 let headerQ = new U.PromiseQueue();
 
 let impl: WorkspaceProvider;
+let implType: string;
 
 function lookup(id: string) {
     return allScripts.filter(x => x.header.id == id || x.header.path == id)[0]
@@ -46,7 +47,8 @@ export function gitsha(data: string) {
 
 export function setupWorkspace(id: string) {
     U.assert(!impl, "workspace set twice");
-    pxt.debug(`workspace: ${id}`);
+    pxt.log(`workspace: ${id}`);
+    implType = id;
     switch (id) {
         case "fs":
         case "file":
@@ -607,6 +609,14 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
     checkSession();
 
     return impl.listAsync()
+        .catch((e) => {
+            // There might be a problem with the native databases. Switch to memory for this session so the user can at
+            // least use the editor.
+            pxt.tickEvent("workspace.syncerror", { ws: implType });
+            pxt.log("Workspace error, switching to memory workspace");
+            impl = memoryworkspace.provider;
+            return impl.listAsync();
+        })
         .then(headers => {
             let existing = U.toDictionary(allScripts || [], h => h.header.id)
             allScripts = []
