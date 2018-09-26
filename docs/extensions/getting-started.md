@@ -1,4 +1,4 @@
-# Building your own package
+# Building your own extension
 
 This guide describes a simple setup that requires nothing, but a web browser.
 We have another guide, if you want to
@@ -37,7 +37,7 @@ will be asked if you want it initialized (if the repository is empty or just cre
 be no confirmation). This might overwrite files you already have there,
 so use with care.
 
-## Step 3: Developing package
+## Step 3: Developing an extension
 
 Edit `main.ts` as usual. It's good to commit changes to GitHub every now and then
 so you won't lose your work. This is done with the little cloud button
@@ -47,8 +47,8 @@ There is no support for separate commit and push. Commit will always push.
 
 ### Merge conflicts
 
-If you're editing your package on different devices, or multiple people are editing
-the same package, it's possible for merge conflicts to occur. When you commit, we will try to
+If you're editing your extension on different devices, or multiple people are editing
+the same extension, it's possible for merge conflicts to occur. When you commit, we will try to
 resolve these using standard Git methods. Should that fail, we will create
 a pull request with the conflicting changes and move you back to the current online
 master branch. If you want your changes, you will need to use the GitHub merge
@@ -57,7 +57,7 @@ website (there will be a link after you commit).
 ## Step 4: Testing
 
 Create a "test" new project (using the usual big plus button on the home screen).
-Click on **Gear** -> **Extensions**. Select your package from the list. It should
+Click on **Gear** -> **Extensions**. Select your extension from the list. It should
 have a **Local** label next on it.
 
 As you're making changes, you can use two browser windows or tabs.
@@ -65,21 +65,21 @@ You might need to use the browser reload button to refresh blocks in your
 test project. You do not have to commit or bump to make the changes visible
 in your test project.
 
-## Step 5: Publishing your package
+## Step 5: Publishing your extension
 
 Use the little cloud button in Explorer. Check the **bump** option if you want
 the users to see the changes.
 
 ## Step 6: Approval
 
-In order to be searchable by users, packages need to be approved. GitHub organizations or individual repos can be approved.
+In order to be searchable by users, extensions need to be approved. GitHub organizations or individual repos can be approved.
 
 See [approval](/extensions/approval) for more details.
 
 ### ~ hint
 
 **Make sure you keep the line `for PXT/TARGET` (where `TARGET` is the target platform id) 
-in `README.md`. Otherwise the package will not show up in search.**
+in `README.md`. Otherwise the extension will not show up in search.**
 This happens automatically upon repo initialization.
 
 ### ~
@@ -88,6 +88,6 @@ Read more on [defining blocks](/defining-blocks) to learn how to surface your AP
 
 ### Icon
 
-The editor will automatically use any ``icon.png`` file when displaying the package in the editor. **This feature only works for approved packages.**
+The editor will automatically use any ``icon.png`` file when displaying the extension in the editor. **This feature only works for approved extensions.**
 
 The icon should be sized with a 16:9 ratio and of at least ``184`` pixels wide.

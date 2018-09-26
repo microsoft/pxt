@@ -1,12 +1,12 @@
-# Simple package tutorial
+# Simple extension tutorial
 
-As a variation of pxt-banana package example from [getting started](/extensions/getting-started), this tutorial project guides you through building a very simple, yet complete, package.
+As a variation of pxt-banana extension example from [getting started](/extensions/getting-started), this tutorial project guides you through building a very simple, yet complete, extension.
 
-In order to build and test the package, you'll need a running target to add the package to. You can add this example to a target you're already working with or you can use the [pxt-sample](https://github.com/Microsoft/pxt-sample) target.  
+In order to build and test the extension, you'll need a running target to add the extension to. You can add this example to a target you're already working with or you can use the [pxt-sample](https://github.com/Microsoft/pxt-sample) target.  
 
 ## Step 1: Define a namespace and functions
 
-Our package has just one block category called `tropic`. The functions we want to expose for this category are contained inside a namespace with that same name. The block category will appear in the Toolbox with this name.
+Our extension has just one block category called `tropic`. The functions we want to expose for this category are contained inside a namespace with that same name. The block category will appear in the Toolbox with this name.
 
 ```typescript
 namespace tropic {
@@ -53,13 +53,13 @@ if (tropic.pick(TropicalFruit.Banana)) {
 }
 ```
 
-## Step  2: Create the package directory and files
+## Step  2: Create the extension directory and files
 
-Go to the `/libs` directory in the target's file layout. Make a new directory there called `tropic`. All of our new package files will be in there. Open [VSCode](https://code.visualstudio.com) or a similar code editor and copy the code for our example `tropic` namespace as a new TypeScript file (don't include our few lines of test code though). Save the file as `/libs/tropic/tropic.ts`.
+Go to the `/libs` directory in the target's file layout. Make a new directory there called `tropic`. All of our new extension files will be in there. Open [VSCode](https://code.visualstudio.com) or a similar code editor and copy the code for our example `tropic` namespace as a new TypeScript file (don't include our few lines of test code though). Save the file as `/libs/tropic/tropic.ts`.
 
-### Create the package description
+### Create the extension description
 
-We need to make an extension description file next. This is called `pxt.json`. The file defines all the components of the package. Our `pxt.json` contains a minimum of what's needed to define our package. Copy the JSON here and save it as `pxt.json` in the `/tropic` directory.
+We need to make an extension description file next. This is called `pxt.json`. The file defines all the components of the extension. Our `pxt.json` contains a minimum of what's needed to define our extension. Copy the JSON here and save it as `pxt.json` in the `/tropic` directory.
 
 ```typescript-ignore
 {
@@ -77,11 +77,11 @@ We need to make an extension description file next. This is called `pxt.json`. T
 
 This is what the basic entries in the `pxt.json` do:
 
-* **name**: The package name. This is used to search and select the package when you go to add an extension in the editor.
-* **description**: The description of the package shown in the package gallery.
-* **icon**: An icon shown along with the description in the package gallery.
-* **files**: The list of sources for the code and blocks of the package.
-* **dependencies**: The other packages that the code in this package will rely on. Often there is a _core_ package that has basic utility functions, helpers, and or data types that other packages will need.
+* **name**: The extension name. This is used to search and select the extension when you go to add an extension in the editor.
+* **description**: The description of the extension shown in the extension gallery.
+* **icon**: An icon shown along with the description in the extension gallery.
+* **files**: The list of sources for the code and blocks of the extension.
+* **dependencies**: The other extensions that the code in this extension will rely on. Often there is a _core_ extension that has basic utility functions, helpers, and or data types that other extensions will need.
 
 ### Icon file
 
@@ -147,9 +147,9 @@ enum TropicalFruit {
 }
 ```
 
-## Step 4: Add the package to the target
+## Step 4: Add the extension to the target
 
-The target's description file, `pxtarget.json` is in the target's root directory. The packages included with a target are listed in the `bundleddirs` entry. Add the `tropic` package to `bundleddirs`:
+The target's description file, `pxtarget.json` is in the target's root directory. The extensions included with a target are listed in the `bundleddirs` entry. Add the `tropic` extension to `bundleddirs`:
 
 ```typescript-ignore
 "bundleddirs": [
@@ -160,7 +160,7 @@ The target's description file, `pxtarget.json` is in the target's root directory
 
 ## Step 5: Rebuild the target
 
-Stop and restart your target again. The output from ```pxt serve``` as it builds your target will now include the new `tropic` package. The output will display something like:
+Stop and restart your target again. The output from ```pxt serve``` as it builds your target will now include the new `tropic` extension. The output will display something like:
 
 ```console
 ...
@@ -182,9 +182,9 @@ building cmds...
 [run] cd cmds; node ../node_modules/typescript/bin/tsc
 ```
 
-## Step 6: Add the package and try it out!
+## Step 6: Add the extension and try it out!
 
-After the target editor launches from the local server, go to the bottom of the Toolbox in the editor and click on **ADD PACKAGE** (it could be called **EXTENSIONS** or something similar depending on the target). You should see the **tropic** package card with its icon as a gallery selection. Click on it and it will install your package.
+After the target editor launches from the local server, go to the bottom of the Toolbox in the editor and click on **ADD PACKAGE** (it could be called **EXTENSIONS** or something similar depending on the target). You should see the **tropic** extension card with its icon as a gallery selection. Click on it and it will install your extension.
 
 The **tropic** category appears in the toolbox list with the color and icon we set as attributes for the namespace. If you click on the category, you will see the **pick** and **peel** functions with a selectable parameter for the ``TropicalFruit`` type.
 
@@ -199,8 +199,8 @@ if (tropic.pick(TropicalFruit.Banana)) {
 
 Now, switch back to blocks to see **pick** and **peel** appear as blocks. Having added block attributes to the enum values for ``TropicalFruit``, you can go to the parameters for each block and select a different type of fruit.
 
-**NEXT:** add some reference [documentation](./ref-docs) for the package functions.
+**NEXT:** add some reference [documentation](./ref-docs) for the extension functions.
 
 ## See also
 
-[Sources](./sources) for the package tutorial
+[Sources](./sources) for the extension tutorial

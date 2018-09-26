@@ -1,8 +1,8 @@
 # Extension Approval
 
-Only approved extensions may be surfaced in search results in the ``Extensions`` dialog.
+Only approved extensions are available in the search results of the ``Extensions`` dialog.
 GitHub Organizations or GitHub repos can be approved.
 
-Banned extensions are not allowed to be loaded.
+Banned extensions are not allowed to load.
 
 ## #approval
