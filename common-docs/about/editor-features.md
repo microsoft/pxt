@@ -74,7 +74,7 @@ The **Download** button will copy your program to a drive on your computer. You 
 
 **Project name and download filename**
 
-When you download the program for your project, the name you gave the project becomes part of the download file. If you decide to rename the download file, the name you chose for the project, not the current filename, is used and displayed by editor.
+When you download the program for your project, the name you gave the project becomes part of the download file. If you decide to rename the download file, the name you chose for the project, not the current filename, is used and displayed by the editor.
 
 #### ~
 

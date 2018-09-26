@@ -44,7 +44,7 @@ When you share a project it's saved to the public cloud for MakeCode. Anyone can
 
 ## Why does the editor still use the previous project name if I renamed the download file?
 
-When you download the program for your project, the name you gave the project becomes part of the download file. If you decide to rename the download file, the name you chose for the project, not the current filename, is used and displayed by editor.
+When you download the program for your project, the name you gave the project becomes part of the download file. If you decide to rename the download file, the name you chose for the project, not the current filename, is used and displayed by the editor.
 
 ## I don't see my question here. What's next?
 
