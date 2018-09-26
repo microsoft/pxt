@@ -1,4 +1,5 @@
 /// <reference path="./tickEvent.ts" />
+/// <reference path="./apptarget.ts" />
 
 namespace ts.pxtc {
     export let __dummy = 42;
@@ -198,7 +199,7 @@ namespace ts.pxtc.Util {
         static TABLE = "files";
         static KEYPATH = "id";
         static createAsync(): Promise<IndexedDbTranslationDb> {
-            const idbWrapper = new IDBWrapper("__pxt_translations", 2, (ev, r) => {
+            const idbWrapper = new IDBWrapper(`__pxt_translations_${pxt.appTarget.id || ""}`, 2, (ev, r) => {
                 const db = r.result as IDBDatabase;
                 db.createObjectStore(IndexedDbTranslationDb.TABLE, { keyPath: IndexedDbTranslationDb.KEYPATH });
             });
