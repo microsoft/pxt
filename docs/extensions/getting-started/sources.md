@@ -1,6 +1,6 @@
-# Package sources
+# Extension sources
 
-All of the sources for the package tutorial are listed here in complete form.
+All of the sources for the extension tutorial are listed here in complete form.
 
 ## pxt.json
 

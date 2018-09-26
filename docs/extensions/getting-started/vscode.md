@@ -1,4 +1,4 @@
-# Building your own package
+# Building your own extension
 
 ## Step 1: Design blocks in the editor
 
@@ -8,7 +8,7 @@ It is easiest to tinker and design your blocks from the editor itself. Use the [
 
 You will need to get a [GitHub](https://github.com) account and create a GitHub repository. At this time, other repository hosting solutions (GitLab, Bitbucket, etc.) are not supported.
 
-Let's say you want to create a package called `banana` for target `TARGET`.
+Let's say you want to create an extension called `banana` for target `TARGET`.
 
 * **create** the repository in GitHub
 * **clone** the repository into `pxt-banana`
@@ -36,18 +36,18 @@ pxt build
 * edit `pxt.json` and `README.md` with the right descriptions
 * commit files to git: `git add .`, and commit them: `git commit -m "Initial"`
 
-> **Make sure you keep the line `for PXT/TARGET` (where `TARGET` is the target id) in `README.md`. Otherwise, the package will not show up in search.**
+> **Make sure you keep the line `for PXT/TARGET` (where `TARGET` is the target id) in `README.md`. Otherwise, the extension will not show up in search.**
 
-## Step 4: Developing package
+## Step 4: Developing extension
 
-Now, you're ready to develop your package. You can do it with [VSCode](https://code.visualstudio.com/)
+Now, you're ready to develop your extension. You can do it with [VSCode](https://code.visualstudio.com/)
 or from the web editor served from `pxt serve`.
 
-* put the contents of your package in `main.ts`
-* add a sample program using the package in `test.ts`
-* use `pxt` to build and deploy the package with tests; use the web editor to test in the simulator
+* put the contents of your extension in `main.ts`
+* add a sample program using the extension in `test.ts`
+* use `pxt` to build and deploy the extension with tests; use the web editor to test in the simulator
 
-You will develop your package in `pxt-banana`, and then test this work by creating a second project (called, perhaps, "Just Look At It") which includes a reference to `pxt-banana`. 
+You will develop your extension in `pxt-banana`, and then test this work by creating a second project (called, perhaps, "Just Look At It") which includes a reference to `pxt-banana`. 
 
 ### ~ hint
 
@@ -56,16 +56,16 @@ If the local editor fails to open, copy the URL printed in the console and open 
 The local server requires a security token embedded in the URL to serve pages.
 ### ~
 
-For a quick introduction on creating packages, try the [simple package](./getting-started/simple-package) tutorial.
+For a quick introduction on creating extensions, try the [simple extension](./getting-started/simple-extension) tutorial.
 
 ## Step 5: Testing
 
-In order to test your package, you need to create a new project, and manually add a reference back to the package you've been developing.
+In order to test your extension, you need to create a new project, and manually add a reference back to the extensin you've been developing.
 
 * Open the local editor and create a new project. For example, you might call it *Just Look At It*.
 * Open the project settings by clicking the gear (Gear -> ``Project Settings``)
 * Click on ``Edit Settings As Text``
-* Add an entry under ``dependencies`` that points to your package folder:
+* Add an entry under ``dependencies`` that points to your extension folder:
 
 ```typescript-ignore
 {
@@ -80,9 +80,9 @@ In order to test your package, you need to create a new project, and manually ad
 
 * Reload the editor and the new blocks you developed in `pxt-banana` will be loaded into the project "Just Look At It."
 
-## Step 4: Publishing your package
+## Step 4: Publishing your extension
 
-When you're happy with the first version of your package, commit the changes and
+When you're happy with the first version of your extension, commit the changes and
 bump the version and push to github:
 
 ```
@@ -93,18 +93,18 @@ pxt bump
 The `pxt bump` will make sure there are no uncommited changes, bump the version number,
 create a git tag, and push everything to github.
 
-In the editor, paste the full URL to your repo after selecting `Settings -> Extensions`. Your package should show up.
+In the editor, paste the full URL to your repo after selecting `Settings -> Extensions`. Your extension should show up.
 
 ## Step 5: Approval
 
-In order to be searchable by users, packages need to be approved. GitHub organizations or individual repos can be approved.
+In order to be searchable by users, extensions need to be approved. GitHub organizations or individual repos can be approved.
 
-See [approval](/packages/approval) for more details.
+See [approval](/extensions/approval) for more details.
 
 ### ~ hint
 
 **Make sure you keep the line `for PXT/TARGET` (where `TARGET` is the target platform id) 
-in `README.md`. Otherwise the package will not show up in search.**
+in `README.md`. Otherwise the extension will not show up in search.**
 
 ### ~
 
@@ -112,6 +112,6 @@ Read more on [defining blocks](/defining-blocks) to learn how to surface your AP
 
 ### Icon
 
-The editor will automatically use any ``icon.png`` file when displaying the package in the editor. **This feature only works for approved packages.**
+The editor will automatically use any ``icon.png`` file when displaying the extension in the editor. **This feature only works for approved extensions.**
 
 The icon should be sized with a 16:9 ratio and of at least ``184`` pixels wide.

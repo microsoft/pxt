@@ -2,7 +2,7 @@
 
 These release tests apply to an editor that supports GitHub extensions.
 
-## All approved packages compile
+## All approved extensions compile
 
 * Open a command prompt with Git and pxt CLI installed
 * Run the following command:

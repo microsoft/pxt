@@ -1,12 +1,12 @@
-# Extensions
+# Editor extensions
 
-A package may have an associated editor extension hosted in the Github Pages section of the repo.
+An editor extension may have an associated editor extension hosted in the Github Pages section of the repo.
 
 * [pxt-neoanim](https://github.com/Microsoft/pxt-neoanim) is an example of specialized NeoPixel animation editor.
 
 ## Configuration
 
-The extension is configured in the [pxt.json](/packages/pxtJson) file by adding an ``extension`` field:
+The editor extension is configured in the [pxt.json](/extensions/pxt-json) file by adding an ``extension`` field:
 
 ```typescript-ignore
 {
@@ -15,15 +15,15 @@ The extension is configured in the [pxt.json](/packages/pxtJson) file by adding 
 }
 ```
 
-The editor will automatically add an "Editor" button for the extension in the package category. 
+The editor will automatically add an "Editor" button for the editor extension in the extensions category. 
 
 ## Protocol
 
-The editor and the extension &lt;iframe&gt; communicate using a protocol of IFrame messages. 
+The editor and the editor extension &lt;iframe&gt; communicate using a protocol of IFrame messages. 
 
 * Messages have a unique ``id`` to correlate responses to requests.
 * A ``response`` message can be requested. The ``id`` identifer can be used to correlate a receive response to the original query.
-* All messages sent by the extension must contain the extension id, ``extId``. This identifier is passed when loading the &lt;iframe&gt; (see [Initialization](#initialization)).
+* All messages sent by the editor extension must contain the extension id, ``extId``. This identifier is passed when loading the &lt;iframe&gt; (see [Initialization](#initialization)).
 
 ```typescript-ignore
 // sending message
@@ -50,9 +50,9 @@ window.addEventListener("message", function(ev) {
 
 ### Initialization
 
-When the user presses the extension button:
+When the user presses the editor extension button:
 
-* The GitHub pages site is loaded in an &lt;iframe&gt; with an extension id in the hashmark, e.g. https://microsoft.github.io/pxt-neoanim/#extid for the package https://github.com/Microsoft/pxt-neoanim.
+* The GitHub pages site is loaded in an &lt;iframe&gt; with an extension id in the hashmark, e.g. https://microsoft.github.io/pxt-neoanim/#extid for the extension https://github.com/Microsoft/pxt-neoanim.
 
 ### ~ hint
 
@@ -82,7 +82,7 @@ The editor sends a ``extshown`` message when showing the editor frame, and a ``e
 
 ### Read and Write code
 
-The extension can read (``extreadcode``) and write (``extwritecode``) a dedicated TypeScript and JSON file in the project. The JSON file is designed to store rich metadata while the TypeScript is the "code behind" that gets executed. This feature does not require permissions.
+The editor extension can read (``extreadcode``) and write (``extwritecode``) a dedicated TypeScript and JSON file in the project. The JSON file is designed to store rich metadata while the TypeScript is the "code behind" that gets executed. This feature does not require permissions.
 
 #### Write code
 

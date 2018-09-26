@@ -1,10 +1,10 @@
 # Reference documents
 
-the documentation for the functions in a package namespace are included with the package. They are markdown files written in the format described by [writing docs](https://makecode.com/writing-docs).
+the documentation for the functions in an extension namespace are included with the extension. They are markdown files written in the format described by [writing docs](https://makecode.com/writing-docs).
 
 ## Step 0: Document tree discussion
 
-Documentation for namespace functions almost always goes under the _/reference_ document path. Other standard document paths are _/blocks_ and _/types_ but these are for the documents related to built-in blocks. If a package has other related documents that aren't for namespace functions, such as hardware associated with the API in the package, these are placed under another path, like _/device_, in the package.
+Documentation for namespace functions almost always goes under the _/reference_ document path. Other standard document paths are _/blocks_ and _/types_ but these are for the documents related to built-in blocks. If an extension has other related documents that aren't for namespace functions, such as hardware associated with the API in the extension, these are placed under another path, like _/device_, in the extension.
 
 ### Document file layout
 
@@ -31,7 +31,7 @@ localhost:3232/reference/tropic/peel
 
 ### Additional paths
 
-If your package needs to include some additional information that's not reference related, you add that in another folder under _/docs_. Also, if you include other namespaces in the same package, the documents for those follow the same layout structure but in a different folder under the namespace folder. In this example, there's a document for some device information and another namespace called `cabana`:
+If your extension needs to include some additional information that's not reference related, you add that in another folder under _/docs_. Also, if you include other namespaces in the same extension, the documents for those follow the same layout structure but in a different folder under the namespace folder. In this example, there's a document for some device information and another namespace called `cabana`:
 
 ```
 /libs
@@ -67,7 +67,7 @@ There's no required format for writing the reference documents. However, current
 5. The return value (if any) description and it's type information.
 6. A example use of the function.
 7. Any **See also** links to related reference or external information.
-8. A package tag associating the document with it's package.
+8. An extension tag associating the document with it's extension.
 
 **NOTE:** The document sections that come after the title heading begin at second level (`##`) headings.
 
@@ -110,7 +110,7 @@ tropic
 ```
 ````
 
-Copy the markdown for the **pick** function reference and save it as _pick.md_ under _/docs/reference/tropic_ in the package folder.
+Copy the markdown for the **pick** function reference and save it as _pick.md_ under _/docs/reference/tropic_ in the extension folder.
 
 ## Step 3: Write the reference document: `peel.md`
 
@@ -204,12 +204,12 @@ functions based on signature. The cards show a block from the compiled code of t
 Card pages form the top levels of the reference document tree (usually the second level after the reference page: _reference.md_).
 
 ### ~hint
-The card page isn't automatically added to the top level reference page, _reference.md_,  when a package is added. If a package is included with a target statically, the card page is added manually in a [namespaces](/writing-docs/macros#namespaces) section.
+The card page isn't automatically added to the top level reference page, _reference.md_,  when an extension is added. If an extension is included with a target statically, the card page is added manually in a [namespaces](/writing-docs/macros#namespaces) section.
 ### ~
 
 Cards are declared in a [**cards**](/writing-docs/macros#cards) section in the card markdown page. You have the option of exposing some or all of the available functions from your namespace in the card page. The document for the card page is placed in the _/reference_ folder and has the same name as the namespace folder but with the markdown (md) extension.
 
-Here's the card page for the `tropic` namespace package called `tropic.md`:
+Here's the card page for the `tropic` namespace extension called `tropic.md`:
 
 ````markdown
 # Tropic
@@ -232,14 +232,14 @@ Copy the markdown for the card page and save it as _/docs/reference/tropic.md_.
 
 ## Step 6: Try out the documents!
 
-Everything's in place now to make the documents work with the blocks and the in the _/reference_ document path. Stop and restart the target to have `pxt serve` rebuild the package with the new documents.
+Everything's in place now to make the documents work with the blocks and the in the _/reference_ document path. Stop and restart the target to have `pxt serve` rebuild the extension with the new documents.
 
 Open a new browser page and navigate to ``localhost:3232/reference/tropic``. You should see the card page for **Tropic** appear. Click on one of the cards to see a reference page.
 
-Go back over to the editor and in the blocks view, right-click one of the blocks from the **Tropic** package. Select **help** in the menu and see the reference show up in the doc slider.
+Go back over to the editor and in the blocks view, right-click one of the blocks from the **Tropic** extension. Select **help** in the menu and see the reference show up in the doc slider.
 
-**NEXT:** add a [class and use object instances](./objects-instances) in your package namespace.
+**NEXT:** add a [class and use object instances](./objects-instances) in your extension namespace.
 
 ## See also
 
-[Sources](./sources) for the package tutorial
+[Sources](./sources) for the extension tutorial
