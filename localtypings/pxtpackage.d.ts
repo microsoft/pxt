@@ -112,6 +112,7 @@ declare namespace pxt {
         url?: string;
         learnMoreUrl?: string;
         buyUrl?: string;
+        feedbackUrl?: string;
         responsive?: boolean;
         cardType?: "file" | "example" | "codeExample" | "tutorial" | "side" | "template" | "package" | "hw";
 

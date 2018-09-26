@@ -28,6 +28,10 @@ namespace pxt {
         savedAppTarget = U.clone(appTarget)
     }
 
+    export function savedAppTheme(): AppTheme {
+        return savedAppTarget ? savedAppTarget.appTheme : undefined;
+    }
+
     function patchAppTarget() {
         // patch-up the target
         let comp = appTarget.compile
@@ -79,7 +83,6 @@ namespace pxt {
             if (config.icon) config.icon = pxt.BrowserUtils.patchCdn(config.icon);
             res[pxt.CONFIG_NAME] = JSON.stringify(config, null, 4);
         })
-
     }
 
     // this is set by compileServiceVariant in pxt.json
