@@ -134,19 +134,31 @@ export function githubFooter(msg: string, close: () => void) {
     }
 }
 
-export function showAboutDialogAsync() {
+export function showAboutDialogAsync(projectView: pxt.editor.IProjectView) {
     const compileService = pxt.appTarget.compileService;
-    const description = pxt.appTarget.description || pxt.appTarget.title;
     const githubUrl = pxt.appTarget.appTheme.githubUrl;
     const targetTheme = pxt.appTarget.appTheme;
     const versions: pxt.TargetVersions = pxt.appTarget.versions;
     const showCompile = compileService && compileService.githubCorePackage && compileService.gittag && compileService.serviceId;
+
+    const buttons: sui.ModalButton[] = [];
+    if (targetTheme.experiments)
+        buttons.push({
+            label: lf("Experiments"),
+            className: "secondary",
+            onclick: () => {
+                core.hideDialog();
+                pxt.tickEvent("about.experiments", undefined, { interactiveConsent: true });
+                projectView.showExperimentsDialog();
+            }
+        })
 
     core.confirmAsync({
         header: lf("About"),
         hideCancel: true,
         agreeLbl: lf("Ok"),
         agreeClass: "positive",
+        buttons,
         jsx: <div>
             {githubUrl && versions ?
                 renderVersionLink(pxt.appTarget.name, versions.target, `${githubUrl}/releases/tag/v${versions.target}`)
@@ -164,7 +176,6 @@ export function showAboutDialogAsync() {
             </p>
             {targetTheme.copyrightText ? <p> {targetTheme.copyrightText} </p> : undefined}
         </div>
-
     }).done();
 }
 

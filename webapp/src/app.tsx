@@ -2013,7 +2013,7 @@ export class ProjectView
     }
 
     showAboutDialog() {
-        dialogs.showAboutDialogAsync();
+        dialogs.showAboutDialogAsync(this);
     }
 
     showShareDialog() {
@@ -2094,6 +2094,10 @@ export class ProjectView
 
     showBoardDialog() {
         this.scriptSearch.showBoards();
+    }
+
+    showExperimentsDialog() {
+        this.scriptSearch.showExperiments();
     }
 
     showChooseHwDialog() {
@@ -2348,7 +2352,7 @@ export class ProjectView
         const inHome = this.state.home && !sandbox;
         const inEditor = !!this.state.header;
         const { lightbox, greenScreen } = this.state;
-        const simDebug = (simOpts && !simOpts.enableTrace) || pxt.options.debug;
+        const simDebug = !!targetTheme.enableTrace || !!pxt.options.debug;
 
         const { hideMenuBar, hideEditorToolbar } = targetTheme;
         const isHeadless = simOpts && simOpts.headless;
@@ -2908,6 +2912,7 @@ document.addEventListener("DOMContentLoaded", () => {
     else if ((pxt.appTarget.appTheme.allowParentController || isController) && pxt.BrowserUtils.isIFrame()) workspace.setupWorkspace("iframe");
     else if (isSandbox) workspace.setupWorkspace("mem");
     else if (pxt.winrt.isWinRT()) workspace.setupWorkspace("uwp");
+    else if (electron.isIpcRenderer() && pxt.BrowserUtils.isSafari()) workspace.setupWorkspace("idb");
     else if (Cloud.isLocalHost() || electron.isPxtElectron()) workspace.setupWorkspace("fs");
     Promise.resolve()
         .then(() => {
@@ -2951,6 +2956,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
         })
         .then(() => pxt.BrowserUtils.initTheme())
+        .then(() => pxt.editor.experiments.syncTheme())
         .then(() => cmds.initCommandsAsync())
         .then(() => {
             // editor messages need to be enabled early, in case workspace provider is IFrame
