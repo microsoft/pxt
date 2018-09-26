@@ -3934,11 +3934,14 @@ interface SpriteGlobalMeta {
     height?: number;
     blockIdentity: string;
     creator: string;
+    standaloneSprites?: string[];
 }
 
 interface SpriteInfo {
     width?: number;
     height?: number;
+    xSpacing?: number;
+    ySpacing?: number;
     frames?: string[];
 }
 
@@ -4013,7 +4016,8 @@ function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
         let bn = m[2]
         let jn = m[1] + m[2] + ".json"
         bn = bn.replace(/-1bpp/, "").replace(/[^\w]/g, "_")
-        processImage(bn, fn, jn)
+        const standalone = metaInfo.standaloneSprites && metaInfo.standaloneSprites.indexOf(bn) !== -1;
+        processImage(bn, fn, jn, standalone)
     }
 
     ts += "}\n"
@@ -4044,7 +4048,7 @@ function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
         return idx
     }
 
-    function processImage(basename: string, pngName: string, jsonName: string) {
+    function processImage(basename: string, pngName: string, jsonName: string, standalone: boolean) {
         let info: SpriteInfo = {}
         if (nodeutil.fileExistsSync(jsonName))
             info = nodeutil.readJson(jsonName)
@@ -4072,15 +4076,25 @@ function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
         if (sheet.width > 255 || sheet.height > 255)
             U.userError(`PNG image too big`)
 
-        if (!info.width || info.width > sheet.width) info.width = sheet.width
-        if (!info.height || info.height > sheet.height) info.height = sheet.height
+        if (standalone) {
+            // Image contains a single sprite
+            info.width = sheet.width;
+            info.height = sheet.height;
+        }
+        else {
+            if (!info.width || info.width > sheet.width) info.width = sheet.width
+            if (!info.height || info.height > sheet.height) info.height = sheet.height
+        }
+
+        if (!info.xSpacing) info.xSpacing = 0;
+        if (!info.ySpacing) info.ySpacing = 0;
 
         let nx = (sheet.width / info.width) | 0
         let ny = (sheet.height / info.height) | 0
         let numSprites = nx * ny
 
-        for (let y = 0; y + info.height - 1 < sheet.height; y += info.height)
-            for (let x = 0; x + info.width - 1 < sheet.width; x += info.width) {
+        for (let y = 0; y + info.height - 1 < sheet.height; y += info.height + info.ySpacing)
+            for (let x = 0; x + info.width - 1 < sheet.width; x += info.width + info.xSpacing) {
                 if (info.frames && imgIdx >= info.frames.length) return;
 
                 let img = U.flatClone(sheet)
