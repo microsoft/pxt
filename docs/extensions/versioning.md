@@ -25,7 +25,7 @@ version level (but will ask you for an override), create a git tag and push.
 
 ## Loading a previous extension version
 
-If an older user project is incompatible with the current version of the editor, the editor will prompt the user asking to take a certain load. These optional actions are:
+If an older user project is incompatible with the current version of the editor, the editor will prompt the user asking to take a certain load action. These optional actions are:
 
 1. **Try to fix**: The project is upgraded to the current version of the editor if it's compatible with the editor's current core API. An upgrade of any required extensions is attempted also. A failure to upgrade will  prompt the user again but only with options **2** and **3**.
 
