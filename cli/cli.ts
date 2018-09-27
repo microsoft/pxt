@@ -3824,7 +3824,7 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
                                 if (!langTranslations) return;
 
                                 // validate translations
-                                if (/strings\.json$/.test(fn) && !/jsdoc-strings\.json$/.test(fn)) {
+                                if (/-strings\.json$/.test(fn) && !/jsdoc-strings\.json$/.test(fn)) {
                                     // block definitions                                    
                                     Object.keys(dataLang).forEach(id => {
                                         const tr = dataLang[id];
