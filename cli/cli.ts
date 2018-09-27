@@ -3828,8 +3828,7 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
                                     // block definitions                                    
                                     Object.keys(dataLang).forEach(id => {
                                         const tr = dataLang[id];
-                                        if (tr != pxt.blocks.normalizeBlock(tr))
-                                            errors.push(`${fn} ${lang} ${id} has syntax issues`)
+                                        pxt.blocks.normalizeBlock(tr, err => errors.push(`${fn} ${lang} ${id}: ${err}`));
                                     });
                                 }
 
