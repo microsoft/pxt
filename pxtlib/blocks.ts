@@ -87,6 +87,16 @@ namespace pxt.blocks {
             pxt.log(`block has extra spaces: ${b}`);
             return b;
         }
+
+        // remove spaces around %foo = ==> %foo=
+        b = nb;
+        nb = b.replace(/(%\w+)\s*=\s*(\w+)/, '$1=$2');
+        if (nb != b) {
+            pxt.log(`block has space between %name and = : ${b}`)
+            b = nb;
+        }
+
+        // remove spaces before after pipe
         nb = nb.replace(/\s*\|\s*/g, '|');
         return nb;
     }
