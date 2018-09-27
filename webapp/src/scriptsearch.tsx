@@ -144,6 +144,11 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             .filter(pk => showCore == !!pk.core); // show core in "boards" mode
     }
 
+    fetchExperiments(): pxt.editor.experiments.Experiment[] {
+        if (this.state.mode != ScriptSearchMode.Experiments) return [];
+        return pxt.editor.experiments.all();
+    }
+
     shouldComponentUpdate(nextProps: ISettingsProps, nextState: ScriptSearchState, nextContext: any): boolean {
         return this.state.visible != nextState.visible
             || this.state.searchFor != nextState.searchFor
@@ -303,7 +308,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         const ghdata = this.fetchGhData();
         const urldata = this.fetchUrlData();
         const local = this.fetchLocal();
-        const experiments = pxt.editor.experiments.all();
+        const experiments = this.fetchExperiments();
         const isSearching = this.state.searchFor && (ghdata.status === data.FetchStatus.Pending || urldata.status === data.FetchStatus.Pending);
 
         const coresFirst = (a: pxt.PackageConfig, b: pxt.PackageConfig) => {
