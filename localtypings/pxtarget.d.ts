@@ -180,6 +180,7 @@ declare namespace pxt {
         logoWide?: boolean; // the portrait logo is not square, but wide
         logoUrl?: string;
         logo?: string;
+        hideMenubarLogo?: boolean; // if true, partner logo won't be shown in the top-left corner (menu bar)
         portraitLogo?: string;
         highContrastLogo?: string;
         highContrastPortraitLogo?: string;
