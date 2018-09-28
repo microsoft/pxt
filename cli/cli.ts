@@ -387,9 +387,9 @@ async function exportCrowdinAsync(prj: string, key: string, filter?: (f: pxt.cro
     for (const f of allFiles) {
         pxt.log(`crowdin: downloading ${f.fullName}`)
         const tr = await pxt.crowdin.downloadTranslationsAsync("", prj, key, f.fullName, { translatedOnly: true, validatedOnly: true });
-        Object.keys(tr).forEach(lang => {
+        Object.keys(tr).filter(lang => tr[lang]).forEach(lang => {
             const fn = `${lang}/${f.fullName}`;
-            const trs = JSON.stringify(tr[lang], null, 2);
+            const trs = pxt.crowdin.stringifyTranslations(tr[lang]);
             nodeutil.mkdirP(path.dirname(fn));
             nodeutil.writeFileSync(fn, trs, { encoding: "utf8" });
         })
