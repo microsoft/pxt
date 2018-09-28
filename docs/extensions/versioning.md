@@ -23,15 +23,15 @@ In both cases, the specific version is hard-coded into the user's extension. The
 You can use `pxt bump` to bump version of an extension. It will `git pull`, update the patch
 version level (but will ask you for an override), create a git tag and push.
 
-## Loading a previous extension version
+## Resolving incompatibile versions
 
-If an older user project is incompatible with the current version of the editor, the editor will prompt the user asking to take a certain load action. These optional actions are:
+If an extension version used by a project isn't current, errors might occur when the editor trys to load the project. Extension versions used by the project may be incompatible with the current editor. If errors occur in an extension when the editor trys to load a project, the user is prompted to have the edtior attempt an action to try and resolve them. These actions are:
 
-1. **Try to fix**: The project is upgraded to the current version of the editor if it's compatible with the editor's current core API. An upgrade of any required extensions is attempted also. A failure to upgrade will  prompt the user again but only with options **2** and **3**.
+1. **Try to fix**: The extentions used by the project are upgraded to their current versions and the editor attempts to reload the project. If any errors are found again, the user is prompted to try a load action again but can only choose from options **2** or **3**.
 
-2. **Ignore errors and load**: The project and/or its extensions are loaded anyway. The user must resolve any incompatibilty problems with the code either in the project or loaded extensions.
+2. **Ignore errors and load**: The project and its extensions are loaded anyway. The user must resolve any incompatibilty problems with the project and extensions.
 
-3. **Go to the old editor**: The project is loaded in a previous version of the editor that supports both the project and extension versions.
+3. **Go to the old editor**: This option only appears if the project was created in a previous version of the editor and if the editor is in a web browser. With this action, the project is loaded with an older editor version that matches the project version. This will restore the conditions of the editor environment that existed when the project was last saved.
 
 ## Extension updates
 
