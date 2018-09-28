@@ -403,6 +403,7 @@ async function exportCrowdinAsync(prj: string, key: string): Promise<void> {
         plugged: 0
     };
     // find all files that end with strings.json
+    report(`* ${info.languages.length} languages`);
     const filenames = U.unique(allFiles.filter(f => /-strings\.json$/.test(f.fullName)).map(f => pxt.crowdin.normalizeFileName(f.name)), f => f);
     for (const filename of filenames) {
 
@@ -411,8 +412,8 @@ async function exportCrowdinAsync(prj: string, key: string): Promise<void> {
         // get all files matching file name
         let variants = 0;
         const files = allFiles.filter(f => U.endsWith(f.fullName, filename));
+        if (files.length < 2) continue;
         report(`* ${files.length} clones`)
-        report(`* ${info.languages.length} languages`);
         for (const lang of info.languages) {
             report(`### ${lang.name} (${lang.code})`);
             // collect all translations for this language
@@ -486,6 +487,7 @@ async function exportCrowdinAsync(prj: string, key: string): Promise<void> {
         }
     }
 
+    report(`## Totals`);
     report(`* ${totals.strings} strings`);
     report(`* ${totals.variants} variants`);
     report(`* ${totals.plugged} plugged`)
