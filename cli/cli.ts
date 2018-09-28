@@ -446,7 +446,8 @@ async function exportCrowdinAsync(prj: string, key: string): Promise<void> {
                                 error(`- [ ] different translation for ${s} in [${tm[s].variants[0].fullName}](https://crowdin.com/translate/${prj}/${tm[s].variants[0].id}/en-${lang.code}) vs [${file.fullName}](https://crowdin.com/translate/${prj}/${file.id}/en-${lang.code})
 
     ${tm[s].translation}
-    ${strings[s]}`)
+    ${strings[s]}
+`)
                                 variants++;
                             }
                         } else { // no translation yet
