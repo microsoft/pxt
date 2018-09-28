@@ -394,6 +394,11 @@ async function exportCrowdinAsync(prj: string, key: string): Promise<void> {
         if (/^#/.test(msg))
             reportMd += "\r\n";
     }
+    let errorMd = "";
+    function error(msg: string) {
+        report(msg);
+        errorMd += msg + "\r\n";
+    }
 
     info.languages = [{ code: "fr", name: "french" }];
     const allFiles = pxt.crowdin.filterAndFlattenFiles(info.files);
@@ -406,13 +411,13 @@ async function exportCrowdinAsync(prj: string, key: string): Promise<void> {
     report(`* ${info.languages.length} languages`);
     const filenames = U.unique(allFiles.filter(f => /-strings\.json$/.test(f.fullName)).map(f => pxt.crowdin.normalizeFileName(f.name)), f => f);
     for (const filename of filenames) {
+        const files = allFiles.filter(f => U.endsWith(f.fullName, filename));
+        if (files.length < 2) continue;
 
         report(`## ${filename}`);
 
         // get all files matching file name
         let variants = 0;
-        const files = allFiles.filter(f => U.endsWith(f.fullName, filename));
-        if (files.length < 2) continue;
         report(`* ${files.length} clones`)
         for (const lang of info.languages) {
             report(`### ${lang.name} (${lang.code})`);
@@ -438,9 +443,10 @@ async function exportCrowdinAsync(prj: string, key: string): Promise<void> {
                         if (tm[s]) { // duplicate translation
                             if (tm[s].translation != strings[s]) { // different translation
                                 tm[s].variants.push(file);
-                                report(`- [ ] different translation for ${s} in [${tm[s].variants[0].fullName}](https://crowdin.com/translate/${prj}/${tm[s].variants[0].id}/en-${lang.code}) vs [${file.fullName}](https://crowdin.com/translate/${prj}/${file.id}/en-${lang.code})`)
-                                report(`    ${tm[s].translation}`)
-                                report(`    ${strings[s]}`)
+                                error(`- [ ] different translation for ${s} in [${tm[s].variants[0].fullName}](https://crowdin.com/translate/${prj}/${tm[s].variants[0].id}/en-${lang.code}) vs [${file.fullName}](https://crowdin.com/translate/${prj}/${file.id}/en-${lang.code})
+
+    ${tm[s].translation}
+    ${strings[s]}`)
                                 variants++;
                             }
                         } else { // no translation yet
@@ -492,8 +498,8 @@ async function exportCrowdinAsync(prj: string, key: string): Promise<void> {
     report(`* ${totals.variants} variants`);
     report(`* ${totals.plugged} plugged`)
 
-    nodeutil.writeFileSync("status.md", reportMd, { encoding: "utf8" });
-    pxt.log("written status.md")
+    nodeutil.writeFileSync("error.md", errorMd, { encoding: "utf8" });
+    pxt.log("written error.md")
 }
 
 function uploadCrowdinAsync(branch: string, prj: string, key: string, p: string, dir?: string): Promise<void> {
@@ -5073,7 +5079,7 @@ function extractLocStringsAsync(output: string, dirs: string[]): Promise<void> {
     let tr = Object.keys(translationStrings)
     tr.sort()
     let strings: pxt.Map<string> = {};
-    tr.forEach(function(k) { strings[k] = k; });
+    tr.forEach(function (k) { strings[k] = k; });
 
     nodeutil.mkdirP('built');
     nodeutil.writeFileSync(`built/${output}.json`, JSON.stringify(strings, null, 2));
