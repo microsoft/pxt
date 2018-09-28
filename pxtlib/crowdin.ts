@@ -82,6 +82,16 @@ namespace pxt.crowdin {
         }
     }
 
+    export function stringifyTranslations(strings: pxt.Map<string>): string {
+        const trg: pxt.Map<string> = {};
+        Object.keys(strings).sort().forEach(k => {
+            const v = strings[k].trim();
+            if (v) trg[k] = v;
+        })
+        if (Object.keys(trg).length == 0) return undefined;
+        else return JSON.stringify(trg, null, 2);
+    }
+
     export function createDirectoryAsync(branch: string, prj: string, key: string, name: string, incr?: () => void): Promise<void> {
         name = normalizeFileName(name);
         pxt.debug(`create directory ${branch || ""}/${name}`)
@@ -179,9 +189,9 @@ namespace pxt.crowdin {
         }
     }
 
-    function filterAndFlattenFiles(files: CrowdinFileInfo[], crowdinPath?: string): CrowdinFileInfo[] {
-        const pxtCrowdinBranch = pxt.appTarget.versions.pxtCrowdinBranch || "";
-        const targetCrowdinBranch = pxt.appTarget.versions.targetCrowdinBranch || "";
+    export function filterAndFlattenFiles(files: CrowdinFileInfo[], crowdinPath?: string): CrowdinFileInfo[] {
+        const pxtCrowdinBranch = pxt.appTarget.versions ? pxt.appTarget.versions.pxtCrowdinBranch : "" || "";
+        const targetCrowdinBranch = pxt.appTarget.versions ? pxt.appTarget.versions.targetCrowdinBranch : "" || "";
 
         let allFiles: CrowdinFileInfo[] = [];
 

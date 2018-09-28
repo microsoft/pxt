@@ -311,18 +311,19 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
             if (!crowdinCredentials) return Promise.resolve();
             const key = crowdinCredentials.key;
             cmd = cmd.toLowerCase();
-            if (!args[0] && (cmd != "clean" && cmd != "stats")) throw new Error(cmd == "status" ? "language missing" : "filename missing");
+            if (!args[0] && (cmd != "clean" && cmd != "stats" && cmd != "export")) throw new Error(cmd == "status" ? "language missing" : "filename missing");
             switch (cmd) {
                 case "stats": return statsCrowdinAsync(prj, key);
                 case "clean": return cleanCrowdinAsync(prj, key, args[0] || "docs");
                 case "upload": return uploadCrowdinAsync(branch, prj, key, args[0], args[1]);
+                case "export": return exportCrowdinAsync(prj, key, f => /strings\.json$/.test(f.name));
                 case "download": {
                     if (!args[1]) throw new Error("output path missing");
                     const fn = path.basename(args[0]);
                     return pxt.crowdin.downloadTranslationsAsync(branch, prj, key, args[0], { translatedOnly: true, validatedOnly: true })
                         .then(r => {
                             Object.keys(r).forEach(k => {
-                                const rtranslations = stringifyTranslations(r[k]);
+                                const rtranslations = pxt.crowdin.stringifyTranslations(r[k]);
                                 if (!rtranslations) return;
 
                                 nodeutil.mkdirP(path.join(args[1], k));
@@ -377,6 +378,23 @@ function langStatsCrowdinAsync(prj: string, key: string, lang: string): Promise<
         })
 }
 
+async function exportCrowdinAsync(prj: string, key: string, filter?: (f: pxt.crowdin.CrowdinFileInfo) => boolean): Promise<void> {
+    const info = await pxt.crowdin.projectInfoAsync(prj, key)
+    let allFiles = pxt.crowdin.filterAndFlattenFiles(info.files);
+    if (filter) allFiles = allFiles.filter(filter);
+    pxt.log(`crowdin: found ${allFiles.length}, ${info.languages.length} languages`);
+
+    for (const f of allFiles) {
+        pxt.log(`crowdin: downloading ${f.fullName}`)
+        const tr = await pxt.crowdin.downloadTranslationsAsync("", prj, key, f.fullName, { translatedOnly: true, validatedOnly: true });
+        Object.keys(tr).forEach(lang => {
+            const fn = `${lang}/${f.fullName}`;
+            const trs = JSON.stringify(tr[lang], null, 2);
+            nodeutil.mkdirP(path.dirname(fn));
+            nodeutil.writeFileSync(fn, trs, { encoding: "utf8" });
+        })
+    }
+}
 
 function uploadCrowdinAsync(branch: string, prj: string, key: string, p: string, dir?: string): Promise<void> {
     let fn = path.basename(p);
@@ -3820,7 +3838,7 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
                             .filter(lang => Object.keys(data[lang]).some(k => !!data[lang][k]))
                             .forEach(lang => {
                                 const dataLang = data[lang];
-                                const langTranslations = stringifyTranslations(dataLang);
+                                const langTranslations = pxt.crowdin.stringifyTranslations(dataLang);
                                 if (!langTranslations) return;
 
                                 // validate translations
@@ -3857,16 +3875,6 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
             }
             return nextFileAsync();
         });
-}
-
-function stringifyTranslations(strings: pxt.Map<string>): string {
-    const trg: pxt.Map<string> = {};
-    Object.keys(strings).sort().forEach(k => {
-        const v = strings[k].trim();
-        if (v) trg[k] = v;
-    })
-    if (Object.keys(trg).length == 0) return undefined;
-    else return JSON.stringify(trg, null, 2);
 }
 
 export function staticpkgAsync(parsed: commandParser.ParsedCommand) {
@@ -5394,7 +5402,7 @@ function initCommands() {
 
     advancedCommand("augmentdocs", "test markdown docs replacements", augmnetDocsAsync, "<temlate.md> <doc.md>");
 
-    advancedCommand("crowdin", "upload, download, clean files to/from crowdin", pc => execCrowdinAsync.apply(undefined, pc.args), "<cmd> <path> [output]")
+    advancedCommand("crowdin", "upload, download, clean, export files to/from crowdin", pc => execCrowdinAsync.apply(undefined, pc.args), "<cmd> <path> [output]")
 
     advancedCommand("hidlist", "list HID devices", hid.listAsync)
     advancedCommand("hidserial", "run HID serial forwarding", hid.serialAsync, undefined, true);
