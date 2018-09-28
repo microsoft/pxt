@@ -133,7 +133,8 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
             && !pxt.shell.isSandboxMode();
 
         if (showExperiments) {
-            return <GenericBanner id="experimentsbanner" parent={this.props.parent} bannerType={"negative"} >
+            const displayTime = 20 * 1000; // 20 seconds
+            return <GenericBanner id="experimentsbanner" parent={this.props.parent} bannerType={"negative"} displayTime={displayTime} >
                 <sui.Icon icon="information circle" />
                 <div className="header">{lf("Experiments enabled.")}</div>
                 <sui.Link className="link" ariaLabel={lf("Clear")} onClick={this.clearExperiments} >{lf("Clear")}</sui.Link>

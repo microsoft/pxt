@@ -116,20 +116,25 @@ export function renderConfirmDialogAsync(options: core.PromptOptions): Promise<v
         .delay(10)
         .then(() => {
             const wrapper = document.body.appendChild(document.createElement('div'));
-            currentDialog = ReactDOM.render(React.createElement(CoreDialog, options), wrapper);
+            const newDialog = ReactDOM.render(React.createElement(CoreDialog, options), wrapper);
+            currentDialog = newDialog;
 
             function cleanup() {
                 ReactDOM.unmountComponentAtNode(wrapper);
                 setTimeout(() => {
                     wrapper.parentElement.removeChild(wrapper);
+                    if (newDialog === currentDialog) currentDialog = undefined;
                 })
             }
-            return currentDialog.promise.finally(() => cleanup());
+            return newDialog.promise.finally(() => cleanup());
         });
 }
 
 export function hideDialog() {
-    if (currentDialog) currentDialog.hide();
+    if (currentDialog)  {
+        currentDialog.hide();
+        currentDialog = undefined;
+    }
 }
 
 export interface LoadingDimmerProps {

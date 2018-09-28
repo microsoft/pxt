@@ -141,7 +141,14 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             .map(k => JSON.parse(bundled[k]["pxt.json"]) as pxt.PackageConfig)
             .filter(pk => !query || pk.name.toLowerCase().indexOf(query.toLowerCase()) > -1) // search filter
             .filter(pk => !pkg.mainPkg.deps[pk.name]) // don't show package already referenced
+            .filter(pk => !/---/.test(pk.name)) //filter any package with ---, these are part of common-packages such as core---linux or music---pwm
             .filter(pk => showCore == !!pk.core); // show core in "boards" mode
+
+    }
+
+    fetchExperiments(): pxt.editor.experiments.Experiment[] {
+        if (this.state.mode != ScriptSearchMode.Experiments) return [];
+        return pxt.editor.experiments.all();
     }
 
     shouldComponentUpdate(nextProps: ISettingsProps, nextState: ScriptSearchState, nextContext: any): boolean {
@@ -303,7 +310,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         const ghdata = this.fetchGhData();
         const urldata = this.fetchUrlData();
         const local = this.fetchLocal();
-        const experiments = pxt.editor.experiments.all();
+        const experiments = this.fetchExperiments();
         const isSearching = this.state.searchFor && (ghdata.status === data.FetchStatus.Pending || urldata.status === data.FetchStatus.Pending);
 
         const coresFirst = (a: pxt.PackageConfig, b: pxt.PackageConfig) => {

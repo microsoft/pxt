@@ -37,6 +37,7 @@ namespace pxt.editor {
         sideDocsLoadUrl?: string; // set once to load the side docs frame
         sideDocsCollapsed?: boolean;
         projectName?: string;
+        suppressPackageWarning?: boolean;
 
         tutorialOptions?: TutorialOptions;
         lightbox?: boolean;

@@ -3779,6 +3779,7 @@ function uploadBundledTranslationsAsync(crowdinDir: string, branch: string, prj:
 }
 
 export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedCommand) {
+    const errors: string[] = [];
     return crowdinCredentialsAsync()
         .then(cred => {
             if (!cred) return Promise.resolve();
@@ -3798,7 +3799,13 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
 
             const nextFileAsync = (): Promise<void> => {
                 const f = todo.pop();
-                if (!f) return Promise.resolve();
+                if (!f) {
+                    if (errors.length) {
+                        pxt.log(`${errors.length} errors in translated blocks`);
+                        errors.forEach(error => `error: ${pxt.log(error)}`);
+                    }
+                    return Promise.resolve();
+                }
 
                 const fn = path.basename(f);
                 const crowdf = path.join(crowdinDir, fn);
@@ -3812,8 +3819,18 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
                         Object.keys(data)
                             .filter(lang => Object.keys(data[lang]).some(k => !!data[lang][k]))
                             .forEach(lang => {
-                                const langTranslations = stringifyTranslations(data[lang]);
+                                const dataLang = data[lang];
+                                const langTranslations = stringifyTranslations(dataLang);
                                 if (!langTranslations) return;
+
+                                // validate translations
+                                if (/-strings\.json$/.test(fn) && !/jsdoc-strings\.json$/.test(fn)) {
+                                    // block definitions                                    
+                                    Object.keys(dataLang).forEach(id => {
+                                        const tr = dataLang[id];
+                                        pxt.blocks.normalizeBlock(tr, err => errors.push(`${fn} ${lang} ${id}: ${err}`));
+                                    });
+                                }
 
                                 const tfdir = path.join(locdir, lang);
                                 const tf = path.join(tfdir, fn);
