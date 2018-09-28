@@ -141,7 +141,9 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             .map(k => JSON.parse(bundled[k]["pxt.json"]) as pxt.PackageConfig)
             .filter(pk => !query || pk.name.toLowerCase().indexOf(query.toLowerCase()) > -1) // search filter
             .filter(pk => !pkg.mainPkg.deps[pk.name]) // don't show package already referenced
+            .filter(pk => !/---/.test(pk.name)) //filter any package with ---, these are part of common-packages such as core---linux or music---pwm
             .filter(pk => showCore == !!pk.core); // show core in "boards" mode
+
     }
 
     fetchExperiments(): pxt.editor.experiments.Experiment[] {
