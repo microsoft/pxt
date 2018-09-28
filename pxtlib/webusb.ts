@@ -379,8 +379,6 @@ namespace pxt.usb {
     }
 
     export function isAvailable() {
-        // TODO: support other Windows SKU than Windows 10
-        return !!(navigator as any).usb &&
-            (!pxt.BrowserUtils.isWindows() || pxt.BrowserUtils.isWindows10());
+        return !!(navigator as any).usb
     }
 }
