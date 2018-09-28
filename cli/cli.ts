@@ -496,14 +496,6 @@ function pxtFileList(pref: string) {
 
 }
 
-function semverCmp(a: string, b: string) {
-    let parse = (s: string) => {
-        let v = s.split(/\./).map(parseInt)
-        return v[0] * 100000000 + v[1] * 10000 + v[2]
-    }
-    return parse(a) - parse(b)
-}
-
 let readJson = nodeutil.readJson;
 
 function travisAsync() {
