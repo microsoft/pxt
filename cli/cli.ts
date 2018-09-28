@@ -419,7 +419,7 @@ async function exportCrowdinAsync(prj: string, key: string): Promise<void> {
             const tr: Map<Map<string>> = {};
             const tm: Map<{ translation: string; variants?: pxt.crowdin.CrowdinFileInfo[]; }> = {};
             for (const file of files) {
-                pxt.log(`downloading ${file.fullName}`)
+                pxt.debug(`downloading ${file.fullName}`)
                 const exportFileUri = pxt.crowdin.apiUri(branch, prj, key, "export-file", {
                     file: pxt.crowdin.normalizeFileName(file.fullName),
                     language: lang.code,
@@ -437,9 +437,9 @@ async function exportCrowdinAsync(prj: string, key: string): Promise<void> {
                         if (tm[s]) { // duplicate translation
                             if (tm[s].translation != strings[s]) { // different translation
                                 tm[s].variants.push(file);
-                                pxt.log(`* different translation for ${s} in [${tm[s].variants[0].fullName}](https://crowdin.com/translate/${prj}/${tm[s].variants[0].id}/en-${lang.code}) vs [${file.fullName}](https://crowdin.com/translate/${prj}/${file.id}/en-${lang.code})`)
-                                pxt.log(`    ${tm[s].translation}`)
-                                pxt.log(`    ${strings[s]}`)
+                                report(`- [ ] different translation for ${s} in [${tm[s].variants[0].fullName}](https://crowdin.com/translate/${prj}/${tm[s].variants[0].id}/en-${lang.code}) vs [${file.fullName}](https://crowdin.com/translate/${prj}/${file.id}/en-${lang.code})`)
+                                report(`    ${tm[s].translation}`)
+                                report(`    ${strings[s]}`)
                                 variants++;
                             }
                         } else { // no translation yet
