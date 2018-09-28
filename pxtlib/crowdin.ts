@@ -1,7 +1,7 @@
 namespace pxt.crowdin {
     export const KEY_VARIABLE = "CROWDIN_KEY";
 
-    function apiUri(branch: string, prj: string, key: string, cmd: string, args?: Map<string>) {
+    export function apiUri(branch: string, prj: string, key: string, cmd: string, args?: Map<string>) {
         Util.assert(!!prj && !!key && !!cmd);
         const apiRoot = "https://api.crowdin.com/api/project/" + prj + "/";
         let suff = "?key=" + key;
@@ -125,7 +125,7 @@ namespace pxt.crowdin {
             })
     }
 
-    function normalizeFileName(filename: string): string {
+    export function normalizeFileName(filename: string): string {
         return filename.replace(/\\/g, '/');
     }
 

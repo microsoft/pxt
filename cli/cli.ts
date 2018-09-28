@@ -316,7 +316,7 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
                 case "stats": return statsCrowdinAsync(prj, key);
                 case "clean": return cleanCrowdinAsync(prj, key, args[0] || "docs");
                 case "upload": return uploadCrowdinAsync(branch, prj, key, args[0], args[1]);
-                case "export": return exportCrowdinAsync(prj, key, f => /strings\.json$/.test(f.name));
+                case "export": return exportCrowdinAsync(prj, key);
                 case "download": {
                     if (!args[1]) throw new Error("output path missing");
                     const fn = path.basename(args[0]);
@@ -378,22 +378,120 @@ function langStatsCrowdinAsync(prj: string, key: string, lang: string): Promise<
         })
 }
 
-async function exportCrowdinAsync(prj: string, key: string, filter?: (f: pxt.crowdin.CrowdinFileInfo) => boolean): Promise<void> {
-    const info = await pxt.crowdin.projectInfoAsync(prj, key)
-    let allFiles = pxt.crowdin.filterAndFlattenFiles(info.files);
-    if (filter) allFiles = allFiles.filter(filter);
-    pxt.log(`crowdin: found ${allFiles.length}, ${info.languages.length} languages`);
+async function exportCrowdinAsync(prj: string, key: string): Promise<void> {
+    const branch = ""
+    const infoUri = pxt.crowdin.apiUri(branch, prj, key, "info", { json: "true" });
+    const respText = await pxt.Util.httpGetTextAsync(infoUri);
+    const info = JSON.parse(respText) as pxt.crowdin.CrowdinProjectInfo;
+    if (!info) return;
 
-    for (const f of allFiles) {
-        pxt.log(`crowdin: downloading ${f.fullName}`)
-        const tr = await pxt.crowdin.downloadTranslationsAsync("", prj, key, f.fullName, { translatedOnly: true, validatedOnly: true });
-        Object.keys(tr).filter(lang => tr[lang]).forEach(lang => {
-            const fn = `${lang}/${f.fullName}`;
-            const trs = pxt.crowdin.stringifyTranslations(tr[lang]);
-            nodeutil.mkdirP(path.dirname(fn));
-            nodeutil.writeFileSync(fn, trs, { encoding: "utf8" });
-        })
+    let reportMd = "";
+    function report(msg: string) {
+        pxt.log(msg);
+        if (/^#/.test(msg))
+            reportMd += "\r\n";
+        reportMd += msg + "\r\n";
+        if (/^#/.test(msg))
+            reportMd += "\r\n";
     }
+
+    info.languages = [{ code: "fr", name: "french" }];
+    const allFiles = pxt.crowdin.filterAndFlattenFiles(info.files);
+    const totals = {
+        strings: 0,
+        variants: 0,
+        plugged: 0
+    };
+    // find all files that end with strings.json
+    const filenames = U.unique(allFiles.filter(f => /-strings\.json$/.test(f.fullName)).map(f => pxt.crowdin.normalizeFileName(f.name)), f => f);
+    for (const filename of filenames) {
+
+        report(`## ${filename}`);
+
+        // get all files matching file name
+        let variants = 0;
+        const files = allFiles.filter(f => U.endsWith(f.fullName, filename));
+        report(`* ${files.length} clones`)
+        report(`* ${info.languages.length} languages`);
+        for (const lang of info.languages) {
+            report(`### ${lang.name} (${lang.code})`);
+            // collect all translations for this language
+            const tr: Map<Map<string>> = {};
+            const tm: Map<{ translation: string; variants?: pxt.crowdin.CrowdinFileInfo[]; }> = {};
+            for (const file of files) {
+                pxt.log(`downloading ${file.fullName}`)
+                const exportFileUri = pxt.crowdin.apiUri(branch, prj, key, "export-file", {
+                    file: pxt.crowdin.normalizeFileName(file.fullName),
+                    language: lang.code,
+                    export_translated_only: "1",
+                    export_approved_only: "1",
+                    json: "true"
+                });
+                const stringsText = await pxt.Util.httpGetTextAsync(exportFileUri);
+                const strings = JSON.parse(stringsText || "{}") || {};
+                tr[file.fullName] = strings;
+                // build global database
+                Object.keys(strings)
+                    .filter(s => strings[s]) // ignore empty entries
+                    .forEach(s => {
+                        if (tm[s]) { // duplicate translation
+                            if (tm[s].translation != strings[s]) { // different translation
+                                tm[s].variants.push(file);
+                                pxt.log(`* different translation for ${s} in [${tm[s].variants[0].fullName}](https://crowdin.com/translate/${prj}/${tm[s].variants[0].id}/en-${lang.code}) vs [${file.fullName}](https://crowdin.com/translate/${prj}/${file.id}/en-${lang.code})`)
+                                pxt.log(`    ${tm[s].translation}`)
+                                pxt.log(`    ${strings[s]}`)
+                                variants++;
+                            }
+                        } else { // no translation yet
+                            tm[s] = {
+                                translation: strings[s],
+                                variants: [file]
+                            }
+                        }
+                    })
+            }
+            const tmlength = Object.keys(tm).length;
+            report(`* ${tmlength} strings`);
+            if (variants)
+                report(`* ${variants} variants`);
+
+            // fill holes
+            let plugged = 0;
+            Object.keys(tr).forEach(filename => {
+                const trstrings = tr[filename];
+                Object.keys(trstrings)
+                    .forEach(s => {
+                        if (!trstrings[s] && tm[s]) {
+                            const translation = tm[s];
+                            if (translation.variants.length == 1) {
+                                trstrings[s] = translation.translation;
+                                plugged++;
+                            }
+                        }
+                    })
+                // save file           
+                const trs = pxt.crowdin.stringifyTranslations(trstrings);
+                if (trs) {
+                    const fn = path.join(lang.code, filename);
+                    nodeutil.mkdirP(path.dirname(fn));
+                    nodeutil.writeFileSync(fn, trs, { encoding: "utf8" });
+                }
+            });
+            if (plugged)
+                report(`plugged ${plugged} holes`)
+
+            totals.strings += tmlength;
+            totals.variants += variants;
+            totals.plugged += plugged;
+        }
+    }
+
+    report(`* ${totals.strings} strings`);
+    report(`* ${totals.variants} variants`);
+    report(`* ${totals.plugged} plugged`)
+
+    nodeutil.writeFileSync("status.md", reportMd, { encoding: "utf8" });
+    pxt.log("written status.md")
 }
 
 function uploadCrowdinAsync(branch: string, prj: string, key: string, p: string, dir?: string): Promise<void> {
@@ -4973,7 +5071,7 @@ function extractLocStringsAsync(output: string, dirs: string[]): Promise<void> {
     let tr = Object.keys(translationStrings)
     tr.sort()
     let strings: pxt.Map<string> = {};
-    tr.forEach(function (k) { strings[k] = k; });
+    tr.forEach(function(k) { strings[k] = k; });
 
     nodeutil.mkdirP('built');
     nodeutil.writeFileSync(`built/${output}.json`, JSON.stringify(strings, null, 2));
