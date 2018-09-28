@@ -443,10 +443,11 @@ async function exportCrowdinAsync(prj: string, key: string): Promise<void> {
                         if (tm[s]) { // duplicate translation
                             if (tm[s].translation != strings[s]) { // different translation
                                 tm[s].variants.push(file);
-                                error(`- [ ] different translation for ${s} in [${tm[s].variants[0].fullName}](https://crowdin.com/translate/${prj}/${tm[s].variants[0].id}/en-${lang.code}) vs [${file.fullName}](https://crowdin.com/translate/${prj}/${file.id}/en-${lang.code})
-
-    ${tm[s].translation}
-    ${strings[s]}
+                                error(`- [ ] **${s}** in [${tm[s].variants[0].fullName}](https://crowdin.com/translate/${prj}/${tm[s].variants[0].id}/en-${lang.code}) vs [${file.fullName}](https://crowdin.com/translate/${prj}/${file.id}/en-${lang.code})
+\`\`\`\`
+${tm[s].translation}
+${strings[s]}
+\`\`\`\`
 `)
                                 variants++;
                             }
