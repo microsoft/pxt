@@ -12,6 +12,7 @@ namespace pxt.runner {
         code?: string;
         highContrast?: boolean;
         light?: boolean;
+        fullScreen?: boolean;
     }
 
     class EditorPackage {
@@ -276,7 +277,7 @@ namespace pxt.runner {
                         highContrast: simOptions.highContrast,
                         light: simOptions.light
                     };
-                    if (pxt.appTarget.simulator)
+                    if (pxt.appTarget.simulator && !simOptions.fullScreen)
                         runOptions.aspectRatio = parts.length && pxt.appTarget.simulator.partsAspectRatio
                             ? pxt.appTarget.simulator.partsAspectRatio
                             : pxt.appTarget.simulator.aspectRatio;
