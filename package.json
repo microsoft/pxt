@@ -49,19 +49,21 @@
   },
   "dependencies": {
     "bluebird": "3.5.1",
+    "browserify": "16.2.0",
+    "cssnano": "3.10.0",
+    "dom-parser": "^0.1.5",
     "faye-websocket": "0.11.1",
+    "less": "2.7.3",
     "lzma": "2.3.2",
     "marked": "0.3.19",
-    "rimraf": "2.5.4",
-    "request": "2.85.0",
     "pngjs": "3.3.2",
-    "browserify": "16.2.0",
-    "uglify-js": "3.3.21",
     "postcss": "6.0.21",
+    "request": "2.85.0",
+    "rimraf": "2.5.4",
     "rtlcss": "2.2.1",
-    "cssnano": "3.10.0",
-    "less": "2.7.3",
-    "semantic-ui-less": "2.2.14"
+    "semantic-ui-less": "2.2.14",
+    "uglify-js": "3.3.21",
+    "xmldom": "^0.1.27"
   },
   "lazyDependencies": {
     "keytar": "4.2.1",

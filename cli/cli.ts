@@ -385,6 +385,7 @@ async function exportCrowdinAsync(prj: string, key: string): Promise<void> {
     const respText = await pxt.Util.httpGetTextAsync(infoUri);
     const info = JSON.parse(respText) as pxt.crowdin.CrowdinProjectInfo;
     if (!info) return;
+    info.languages = info.languages.filter(lang => lang.code != "en"); // don't self translate
 
     function report(msg: string) {
         pxt.log(msg);
