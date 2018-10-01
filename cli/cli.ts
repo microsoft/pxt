@@ -398,11 +398,11 @@ async function exportCrowdinAsync(prj: string, key: string): Promise<void> {
     let errorMds: pxt.Map<string> = {};
     function error(lang: string, msg: string) {
         report(msg);
-        if (!errorMds[lang]) errorMds[lang] = '';
+        if (!errorMds[lang]) errorMds[lang] = `# Translations error for ${lang}\r\n\r\n`;
         errorMds[lang] += msg + "\r\n";
     }
 
-    info.languages = [{ code: "fr", name: "english" }];
+    info.languages = [{ code: "fr", name: "French" }];
     const allFiles = pxt.crowdin.filterAndFlattenFiles(info.files);
     const totals = {
         strings: 0,
