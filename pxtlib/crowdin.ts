@@ -264,4 +264,53 @@ namespace pxt.crowdin {
                 return allFiles;
             });
     }
+
+    export interface XliffEntry {
+        filename: string;
+        fileId: string;
+        stringId: string;
+        approved: boolean;
+        language: string;
+        source: string;
+        target: string;
+        context: string;
+    }
+
+    export function parseXliff(parser: DOMParser, xml: string): pxt.Map<XliffEntry> {
+        const r: pxt.Map<XliffEntry> = {};
+        if (!xml) return r;
+
+        const doc = parser.parseFromString(xml, "application/xml");
+        Util.toArray(doc.getElementsByTagName("file"))
+            .forEach(file => {
+                const filename = normalizeFileName(file.getAttribute("original").replace(/^\//, ''));
+                const language = file.getAttribute("target-language");
+                const fileId = file.getAttribute("id");
+                Util.toArray(file.getElementsByTagName("trans-unit"))
+                    .forEach(node => {
+                        const approved = node.getAttribute("approved") == "yes";
+                        const source = node.getElementsByTagName("source").item(0).textContent;
+                        let target = node.getElementsByTagName("target").item(0).textContent;
+                        const context = node.getElementsByTagName("note").item(0).textContent
+                            .split('\n')[0]
+                            .replace(/^Context:\s+->\s+/i, '');
+                        // ignore unapproved, no translation
+                        if (!approved) return;
+                        if (target == source) {
+                            target = "";
+                        }
+                        r[context + '||' + source] = {
+                            filename,
+                            fileId,
+                            stringId: node.getAttribute("id"),
+                            approved,
+                            language,
+                            source,
+                            target,
+                            context
+                        };
+                    })
+            })
+        return r;
+    }
 }

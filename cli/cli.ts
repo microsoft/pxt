@@ -379,6 +379,7 @@ function langStatsCrowdinAsync(prj: string, key: string, lang: string): Promise<
 }
 
 async function exportCrowdinAsync(prj: string, key: string): Promise<void> {
+    const DOMParser = require('xmldom').DOMParser;
     const branch = ""
     const infoUri = pxt.crowdin.apiUri(branch, prj, key, "info", { json: "true" });
     const respText = await pxt.Util.httpGetTextAsync(infoUri);
@@ -394,13 +395,14 @@ async function exportCrowdinAsync(prj: string, key: string): Promise<void> {
         if (/^#/.test(msg))
             reportMd += "\r\n";
     }
-    let errorMd = "";
-    function error(msg: string) {
+    let errorMds: pxt.Map<string> = {};
+    function error(lang: string, msg: string) {
         report(msg);
-        errorMd += msg + "\r\n";
+        if (!errorMds[lang]) errorMds[lang] = '';
+        errorMds[lang] += msg + "\r\n";
     }
 
-    info.languages = [{ code: "fr", name: "french" }];
+    info.languages = [{ code: "fr", name: "english" }];
     const allFiles = pxt.crowdin.filterAndFlattenFiles(info.files);
     const totals = {
         strings: 0,
@@ -422,8 +424,8 @@ async function exportCrowdinAsync(prj: string, key: string): Promise<void> {
         for (const lang of info.languages) {
             report(`### ${lang.name} (${lang.code})`);
             // collect all translations for this language
-            const tr: Map<Map<string>> = {};
-            const tm: Map<{ translation: string; variants?: pxt.crowdin.CrowdinFileInfo[]; }> = {};
+            const fileXliffEntries: Map<Map<pxt.crowdin.XliffEntry>> = {};
+            const allXliffEntries: Map<{ translation: string; variants?: pxt.crowdin.XliffEntry[]; }> = {};
             for (const file of files) {
                 pxt.debug(`downloading ${file.fullName}`)
                 const exportFileUri = pxt.crowdin.apiUri(branch, prj, key, "export-file", {
@@ -431,55 +433,65 @@ async function exportCrowdinAsync(prj: string, key: string): Promise<void> {
                     language: lang.code,
                     export_translated_only: "1",
                     export_approved_only: "1",
-                    json: "true"
+                    format: "xliff"
                 });
-                const stringsText = await pxt.Util.httpGetTextAsync(exportFileUri);
-                const strings = JSON.parse(stringsText || "{}") || {};
-                tr[file.fullName] = strings;
+                const xliff = await pxt.Util.httpGetTextAsync(exportFileUri);
+                {
+                    const fn = path.join("xliff", lang.code, filename + ".xml");
+                    nodeutil.mkdirP(path.dirname(fn));
+                    nodeutil.writeFileSync(fn, xliff, { encoding: "utf8" });
+                }
+                const fxliff = pxt.crowdin.parseXliff(new DOMParser(), xliff);
+                fileXliffEntries[file.fullName] = fxliff;
                 // build global database
-                Object.keys(strings)
-                    .filter(s => strings[s]) // ignore empty entries
+                Object.keys(fxliff)
+                    .filter(s => !!fxliff[s].target) // ignore empty entries
                     .forEach(s => {
-                        if (tm[s]) { // duplicate translation
-                            if (tm[s].translation != strings[s]) { // different translation
-                                tm[s].variants.push(file);
-                                error(`- [ ] **${s}** in [${tm[s].variants[0].fullName}](https://crowdin.com/translate/${prj}/${tm[s].variants[0].id}/en-${lang.code}) vs [${file.fullName}](https://crowdin.com/translate/${prj}/${file.id}/en-${lang.code})
+                        if (allXliffEntries[s]) { // duplicate translation
+                            if (allXliffEntries[s].translation != fxliff[s].target) { // different translation
+                                allXliffEntries[s].variants.push(fxliff[s]);
+                                error(lang.code, `- [ ] **${s}** in [${allXliffEntries[s].variants[0].filename}](https://crowdin.com/translate/${prj}/${allXliffEntries[s].variants[0].fileId}/en-${lang.code}#${allXliffEntries[s].variants[0].stringId}) vs [${fxliff[s].filename}](https://crowdin.com/translate/${prj}/${fxliff[s].fileId}/en-${fxliff[s].language}#${fxliff[s].stringId})
 \`\`\`\`
-${tm[s].translation}
-${strings[s]}
+${allXliffEntries[s].translation}
+${fxliff[s].target}
 \`\`\`\`
 `)
                                 variants++;
                             }
                         } else { // no translation yet
-                            tm[s] = {
-                                translation: strings[s],
-                                variants: [file]
+                            allXliffEntries[s] = {
+                                translation: fxliff[s].target,
+                                variants: [fxliff[s]]
                             }
                         }
                     })
             }
-            const tmlength = Object.keys(tm).length;
+            const tmlength = Object.keys(allXliffEntries).length;
             report(`* ${tmlength} strings`);
             if (variants)
                 report(`* ${variants} variants`);
 
             // fill holes
             let plugged = 0;
-            Object.keys(tr).forEach(filename => {
-                const trstrings = tr[filename];
-                Object.keys(trstrings)
+            Object.keys(fileXliffEntries).forEach(filename => {
+                const filestrings: pxt.Map<string> = {};
+                const fileXliff = fileXliffEntries[filename];
+                // xliff => source map
+                Object.keys(fileXliff).map(k => fileXliff[k])
+                    .forEach(entry => filestrings[entry.context] = entry.target);
+                Object.keys(fileXliff)
                     .forEach(s => {
-                        if (!trstrings[s] && tm[s]) {
-                            const translation = tm[s];
-                            if (translation.variants.length == 1) {
-                                trstrings[s] = translation.translation;
-                                plugged++;
-                            }
+                        const fxliff = fileXliff[s]
+                        const translation = allXliffEntries[s];
+                        if (!filestrings[fxliff.context]
+                            && translation && translation.variants.length == 1) {
+                            filestrings[fxliff.context] = translation.translation;
+                            pxt.log(`  plugging ${fxliff.context}`);
+                            plugged++;
                         }
                     })
                 // save file           
-                const trs = pxt.crowdin.stringifyTranslations(trstrings);
+                const trs = pxt.crowdin.stringifyTranslations(filestrings);
                 if (trs) {
                     const fn = path.join(lang.code, filename);
                     nodeutil.mkdirP(path.dirname(fn));
@@ -500,8 +512,10 @@ ${strings[s]}
     report(`* ${totals.variants} variants`);
     report(`* ${totals.plugged} plugged`)
 
-    nodeutil.writeFileSync("error.md", errorMd, { encoding: "utf8" });
-    pxt.log("written error.md")
+    Object.keys(errorMds).forEach(lang => {
+        nodeutil.writeFileSync(`error-${lang}.md`, errorMds[lang], { encoding: "utf8" });
+        pxt.log(`written error-${lang}.md`)
+    });
 }
 
 function uploadCrowdinAsync(branch: string, prj: string, key: string, p: string, dir?: string): Promise<void> {
