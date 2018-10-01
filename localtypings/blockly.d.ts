@@ -67,6 +67,7 @@ declare namespace goog {
     }
 
     namespace color {
+        function lighten(rgb: number[], factor: number): number[];
         function darken(rgb: number[], factor: number): number[];
         function rgbArrayToHex(rgb: number[]): string;
         function hexToRgb(hex: string): number[];

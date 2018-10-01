@@ -24,7 +24,8 @@ namespace pxtblockly {
 
         private params: any;
         private onColor = "#FF3130";
-        private offColor = "#A0C9F0";
+        private offColor: string;
+        private static DEFAULT_OFF_COLOR = "#A0C9F0";
 
         // The number of columns
         private matrixWidth: number = 5;
@@ -188,7 +189,12 @@ namespace pxtblockly {
         }
 
         private getColor(x: number, y: number) {
-            return this.cellState[x][y] ? this.onColor : this.offColor;
+            if (!this.offColor) {
+                const primaryColour = (this.sourceBlock_.isShadow()) ?
+                    this.sourceBlock_.parentBlock_.getColour() : this.sourceBlock_.getColour();
+                this.offColor = goog.color.rgbArrayToHex(goog.color.lighten(goog.color.hexToRgb(primaryColour), 0.6));
+            }
+            return this.cellState[x][y] ? this.onColor : (this.offColor || FieldMatrix.DEFAULT_OFF_COLOR);
         }
 
         private updateCell(x: number, y: number) {
