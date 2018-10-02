@@ -1,6 +1,6 @@
 # JavaScript
 
-The Microsoft MakeCode programming environment uses JavaScript along with the [Static TypeScript](http://makecode.com/language) language.
+The Microsoft MakeCode programming environment uses JavaScript along with the [Static TypeScript](https://makecode.com/language) language.
 
 These topics give a brief introduction to JavaScript with MakeCode:
 
