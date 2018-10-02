@@ -801,6 +801,7 @@ namespace pxt.cpp {
                 cfg[k] = v
             })
             res.generatedFiles["/codal.json"] = JSON.stringify(codalJson, null, 4) + "\n"
+            pxt.debug(`codal.json: ${res.generatedFiles["/codal.json"]}`);
         } else if (isPlatformio) {
             const iniLines = compileService.platformioIni.slice()
             // TODO merge configjson
@@ -825,6 +826,7 @@ namespace pxt.cpp {
                 "bin": "./source"
             }
             res.generatedFiles["/module.json"] = JSON.stringify(moduleJson, null, 4) + "\n"
+            pxt.debug(`module.json: ${res.generatedFiles["/module.json"]}`)
         }
 
         if (compile.boxDebug) {
@@ -836,8 +838,11 @@ namespace pxt.cpp {
 
         res.generatedFiles[sourcePath + "pointers.cpp"] = includesInc + protos.finish() + abiInc + pointersInc + "\nPXT_SHIMS_END\n"
         res.generatedFiles[sourcePath + "pxtconfig.h"] = pxtConfig
-        if (isYotta)
+        pxt.debug(`pxtconfig.h: ${res.generatedFiles[sourcePath + "pxtconfig.h"]}`)
+        if (isYotta) {
             res.generatedFiles["/config.json"] = JSON.stringify(configJson, null, 4) + "\n"
+            pxt.debug(`yotta config.json: ${res.generatedFiles["/config.json"]}`)
+        }
         res.generatedFiles[sourcePath + "main.cpp"] = `
 #include "pxt.h"
 #ifdef PXT_MAIN
@@ -846,8 +851,8 @@ PXT_MAIN
 int main() {
     uBit.init();
     pxt::start();
-    while (1) uBit.sleep(10000);
-    return 0;
+    release_fiber();
+    return 0;   // your program will never reach this line.
 }
 #endif
 `
