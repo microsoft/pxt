@@ -281,6 +281,62 @@ namespace pxsim {
                 audio.play();
             })
         }
+
+        function frequencyFromMidiNoteNumber(note: number) {
+            return 440 * Math.pow(2, (note - 69) / 12);
+        }
+
+        let midiAccessPromise: Promise<any> = undefined;
+        let midi: any = undefined;
+        let midiOutputs: any = undefined;
+        export function sendMidiMessageAsync(buf: RefBuffer, byteOffset: number): Promise<void> {
+            const data = buf.data.slice(byteOffset);
+            if (!midiAccessPromise)
+                midiAccessPromise = new Promise((resolve, reject) => {
+                    (<any>navigator).requestMIDIAccess()
+                        .then((m: any) => {
+                            midi = m;
+                            midi.onstatechange = (): void => midiOutputs = undefined; // refresh cache 
+                            resolve();
+                        }, (e: any) => {
+                            midi = undefined;
+                            resolve();
+                        });
+                });
+            return midiAccessPromise.then(() => {
+                if (midi) {
+                    if (!midiOutputs)
+                        midiOutputs = midi.outputs.values();
+                    if (midiOutputs && midiOutputs.size) {
+                        // proxy message to outputs
+                        midiOutputs.forEach(function (port: any, key: any) {
+                            port.send(data);
+                        });
+                        // done!
+                        return;
+                    }
+                }
+
+                // no midi access or no midi element,
+                // limited interpretation of midi commands
+                const cmd = data[0] >> 4;
+                const channel = data[0] & 0xf;
+                const noteNumber = data[1] || 0;
+                const noteFrequency = frequencyFromMidiNoteNumber(noteNumber);
+                const velocity = data[2] || 0;
+
+                // ignore drums
+                if (channel == 9)
+                    return;
+                if (cmd == 8 || ((cmd == 9) && (velocity == 0))) { // with MIDI, note on with velocity zero is the same as note off
+                    // note off
+                    stop();
+                } else if (cmd == 9) {
+                    // note on
+                    tone(noteFrequency, velocity / 127.0);
+                }
+            })
+        }
     }
 
     export interface IPointerEvents {
