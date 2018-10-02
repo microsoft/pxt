@@ -78,15 +78,25 @@ namespace pxt.blocks {
         "Math.max": { blockId: "math_op2", params: ["x", "y"] }
     };
 
-    export function normalizeBlock(b: string): string {
+    export function normalizeBlock(b: string, err: (msg: string) => void = pxt.log): string {
         if (!b) return b;
         // normalize and validate common errors
         // made while translating
         let nb = b.replace(/[^\\]%\s+/g, '%');
         if (nb != b) {
-            pxt.log(`block has extra spaces: ${b}`);
+            err(`block has extra spaces: ${b}`);
             return b;
         }
+
+        // remove spaces around %foo = ==> %foo=
+        b = nb;
+        nb = b.replace(/(%\w+)\s*=\s*(\w+)/, '$1=$2');
+        if (nb != b) {
+            err(`block has space between %name and = : ${b}`)
+            b = nb;
+        }
+
+        // remove spaces before after pipe
         nb = nb.replace(/\s*\|\s*/g, '|');
         return nb;
     }

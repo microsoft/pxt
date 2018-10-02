@@ -1,5 +1,6 @@
 import * as pkg from "./package";
 import * as core from "./core";
+import * as workspace from "./workspace";
 
 import U = pxt.Util;
 
@@ -408,11 +409,81 @@ function isTsFile(file: pkg.File) {
     return pxt.Util.endsWith(file.getName(), ".ts");
 }
 
+export function updatePackagesAsync(packages: pkg.EditorPackage[], token?: pxt.Util.CancellationToken): Promise<boolean> {
+    const epkg = pkg.mainEditorPkg();
+    let backup: pxt.workspace.Header;
+    let completed = 0;
+    if (token) token.startOperation();
+
+    return workspace.getTextAsync(epkg.header.id)
+        .then(files => workspace.makeBackupAsync(epkg.header, files))
+        .then(newHeader => {
+            backup = newHeader;
+            epkg.header.backupRef = backup.id;
+
+            return workspace.saveAsync(epkg.header);
+        })
+        .then(() => Promise.each(packages, p => {
+                if (token) token.throwIfCancelled();
+                return epkg.updateDepAsync(p.getPkgId())
+                    .then(() => {
+                        ++completed;
+                        if (token && !token.isCancelled()) token.reportProgress(completed, packages.length);
+                    })
+                })
+        )
+        .then(() => pkg.loadPkgAsync(epkg.header.id))
+        .then(() => {
+            newProject();
+            return checkPatchAsync();
+        })
+        .then(() => {
+            if (token) token.throwIfCancelled();
+            delete epkg.header.backupRef;
+            return workspace.saveAsync(epkg.header)
+        })
+        .then(() => /* Success! */ true)
+        .catch(() => {
+            // Something went wrong or we broke the project, so restore the backup
+            return workspace.restoreFromBackupAsync(epkg.header)
+                .then(() => false);
+        })
+        .finally(() => {
+            // Clean up after
+            let cleanupOperation = Promise.resolve();
+            if (backup) {
+                backup.isDeleted = true;
+                cleanupOperation = workspace.saveAsync(backup)
+            }
+
+            return cleanupOperation
+                .finally(() => {
+                    if (token) token.resolveCancel();
+                });
+        });
+}
+
+
 export function newProject() {
     firstTypecheck = null;
     cachedApis = null;
     cachedBlocks = null;
     workerOpAsync("reset", {}).done();
+}
+
+export function getPackagesWithErrors(): pkg.EditorPackage[] {
+    const badPackages: pxt.Map<pkg.EditorPackage> = {};
+
+    const topPkg = pkg.mainEditorPkg();
+    if (topPkg) {
+        topPkg.forEachFile(file => {
+            if (file.diagnostics && file.diagnostics.length && file.epkg && !file.epkg.isTopLevel() &&
+                    file.diagnostics.some(d => d.category === ts.pxtc.DiagnosticCategory.Error)) {
+                badPackages[file.epkg.getPkgId()] = file.epkg;
+            }
+        });
+    }
+    return pxt.Util.values(badPackages);
 }
 
 function blocksOptions(): pxtc.service.BlocksOptions {

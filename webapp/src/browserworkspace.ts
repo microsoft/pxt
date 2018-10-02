@@ -73,6 +73,10 @@ function getAsync(h: Header): Promise<pxt.workspace.File> {
 }
 
 function setAsync(h: Header, prevVer: any, text?: ScriptText) {
+    return setCoreAsync(headers, texts, h, prevVer, text);
+}
+
+function setCoreAsync(headers: db.Table, texts: db.Table, h: Header, prevVer: any, text?: ScriptText) {
     let retrev = ""
     return (!text ? Promise.resolve() :
         texts.setAsync({
@@ -89,6 +93,22 @@ function setAsync(h: Header, prevVer: any, text?: ScriptText) {
         });
 }
 
+export function copyProjectToLegacyEditor(h: Header, majorVersion: number): Promise<Header> {
+    const prefix = pxt.appTarget.appTheme.browserDbPrefixes && pxt.appTarget.appTheme.browserDbPrefixes[majorVersion];
+
+    const oldHeaders = new db.Table(prefix ? `${prefix}-header` : `header`);
+    const oldTexts = new db.Table(prefix ? `${prefix}-text` : `text`);
+
+    const header = pxt.Util.clone(h);
+    delete (header as any)._id;
+    delete header._rev;
+    header.id = pxt.Util.guidGen();
+
+    return getAsync(h)
+        .then(resp => setCoreAsync(oldHeaders, oldTexts, header, undefined, resp.text))
+        .then(rev => header);
+}
+
 function deleteAsync(h: Header, prevVer: any) {
     return headers.deleteAsync(h)
         .then(() => texts.deleteAsync({ id: h.id, _rev: h._rev }));
@@ -98,7 +118,6 @@ function resetAsync() {
     // workspace.resetAsync already clears all tables
     return Promise.resolve();
 }
-
 export const provider: WorkspaceProvider = {
     getAsync,
     setAsync,
