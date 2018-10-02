@@ -309,6 +309,8 @@ namespace pxsim {
         }
 
         export function sendMidiMessageAsync(buf: RefBuffer): Promise<void> {
+            if (_mute) return Promise.resolve(); // do nothing if muted
+
             const data = buf.data;
             if (!midiAccessPromise)
                 midiAccessPromise = new Promise((resolve, reject) => {
