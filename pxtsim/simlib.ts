@@ -347,6 +347,7 @@ namespace pxsim {
                 const noteNumber = data[1] || 0;
                 const noteFrequency = frequencyFromMidiNoteNumber(noteNumber);
                 const velocity = data[2] || 0;
+                //console.log(`midi: cmd ${cmd} channel (-1) ${channel} note ${noteNumber} f ${noteFrequency} v ${velocity}`)
 
                 // ignore drums
                 if (channel == 9)
