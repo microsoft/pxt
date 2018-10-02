@@ -291,16 +291,14 @@ namespace pxsim {
             return 440 * Math.pow(2, (note - 69) / 12);
         }
 
-        let midiAccessPromise: Promise<any> = undefined;
-        let midi: any = undefined;
-        let midiOutputs: any = undefined;
+        let midiAccessPromise: Promise<WebMidi.MIDIAccess> = undefined;
+        let midi: WebMidi.MIDIAccess = undefined;
+        let midiOutputs: WebMidi.MIDIOutputMap = undefined;
 
         function stopMidi() {
             if (midiOutputs) {
                 try {
-                    midiOutputs.forEach(function (port: any, key: any) {
-                        port.reset();
-                    });
+                    midiOutputs.forEach((port) => port.clear());
                 }
                 catch (e) {
                     midiOutputs = undefined;
@@ -314,8 +312,15 @@ namespace pxsim {
             const data = buf.data;
             if (!midiAccessPromise)
                 midiAccessPromise = new Promise((resolve, reject) => {
-                    (<any>navigator).requestMIDIAccess()
-                        .then((m: any) => {
+                    // test if browser supports it
+                    if (!navigator.requestMIDIAccess) {
+                        midi = undefined;
+                        resolve();
+                        return;
+                    }
+                    // try connecting
+                    navigator.requestMIDIAccess()
+                        .then(m => {
                             midi = m;
                             midi.onstatechange = (): void => midiOutputs = undefined; // refresh cache 
                             resolve();
@@ -327,13 +332,11 @@ namespace pxsim {
             return midiAccessPromise.then(() => {
                 if (midi) {
                     if (!midiOutputs)
-                        midiOutputs = midi.outputs.values();
+                        midiOutputs = midi.outputs;
                     if (midiOutputs && midiOutputs.size) {
                         // proxy message to outputs
                         try {
-                            midiOutputs.forEach(function (port: any, key: any) {
-                                port.send(data);
-                            });
+                            midiOutputs.forEach((port) => port.send(data));
                             // done!
                             return;
                         } catch (e) {
