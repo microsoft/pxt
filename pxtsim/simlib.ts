@@ -308,8 +308,8 @@ namespace pxsim {
             }
         }
 
-        export function sendMidiMessageAsync(buf: RefBuffer, byteOffset: number): Promise<void> {
-            const data = buf.data.slice(byteOffset);
+        export function sendMidiMessageAsync(buf: RefBuffer): Promise<void> {
+            const data = buf.data;
             if (!midiAccessPromise)
                 midiAccessPromise = new Promise((resolve, reject) => {
                     (<any>navigator).requestMIDIAccess()
