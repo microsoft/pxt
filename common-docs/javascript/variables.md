@@ -14,7 +14,7 @@ Declaring a variable in JavaScript has always traditionally been done with the `
 var a = 10;
 ```
 
-The `var` construct has some [problems](http://www.typescriptlang.org/docs/handbook/variable-declarations.html), 
+The `var` construct has some [problems](https://www.typescriptlang.org/docs/handbook/variable-declarations.html), 
 which is why `let` statements were introduced. Apart from the keyword used, `let` statements are written 
 the same way `var` statements are.
 
