@@ -291,14 +291,14 @@ namespace pxsim {
             return 440 * Math.pow(2, (note - 69) / 12);
         }
 
-        let midiAccessPromise: Promise<WebMidi.MIDIAccess> = undefined;
-        let midi: WebMidi.MIDIAccess = undefined;
-        let midiOutputs: WebMidi.MIDIOutputMap = undefined;
+        let midiAccessPromise: Promise<any/*WebMidi.MIDIAccess*/> = undefined;
+        let midi: any /*WebMidi.MIDIAccess*/ = undefined;
+        let midiOutputs: any /*WebMidi.MIDIOutputMap*/ = undefined;
 
         function stopMidi() {
             if (midiOutputs) {
                 try {
-                    midiOutputs.forEach((port) => port.clear());
+                    midiOutputs.forEach((port: any /*WebMidi.MIDIOutput*/) => port.clear());
                 }
                 catch (e) {
                     midiOutputs = undefined;
@@ -313,14 +313,14 @@ namespace pxsim {
             if (!midiAccessPromise)
                 midiAccessPromise = new Promise((resolve, reject) => {
                     // test if browser supports it
-                    if (!navigator.requestMIDIAccess) {
+                    if (!(<any>navigator).requestMIDIAccess) {
                         midi = undefined;
                         resolve();
                         return;
                     }
                     // try connecting
-                    navigator.requestMIDIAccess()
-                        .then(m => {
+                    (<any>navigator).requestMIDIAccess()
+                        .then((m: any /*WebMidi.MIDIAccess*/) => {
                             midi = m;
                             midi.onstatechange = (): void => midiOutputs = undefined; // refresh cache 
                             resolve();
@@ -336,7 +336,7 @@ namespace pxsim {
                     if (midiOutputs && midiOutputs.size) {
                         // proxy message to outputs
                         try {
-                            midiOutputs.forEach((port) => port.send(data));
+                            midiOutputs.forEach((port: any /*WebMidi.MIDIOutput*/) => port.send(data));
                             // done!
                             return;
                         } catch (e) {
