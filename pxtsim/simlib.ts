@@ -209,12 +209,17 @@ namespace pxsim {
             stop();
         }
 
-        export function stop() {
+        function stopTone() {
             if (_vca) _vca.gain.value = 0;
             _frequency = 0;
             if (audio) {
                 audio.pause();
             }
+        }
+
+        export function stop() {
+            stopTone();
+            stopMidi();
         }
 
         export function frequency(): number {
@@ -289,6 +294,20 @@ namespace pxsim {
         let midiAccessPromise: Promise<any> = undefined;
         let midi: any = undefined;
         let midiOutputs: any = undefined;
+
+        function stopMidi() {
+            if (midiOutputs) {
+                try {
+                    midiOutputs.forEach(function (port: any, key: any) {
+                        port.reset();
+                    });
+                }
+                catch (e) {
+                    midiOutputs = undefined;
+                }
+            }
+        }
+
         export function sendMidiMessageAsync(buf: RefBuffer, byteOffset: number): Promise<void> {
             const data = buf.data.slice(byteOffset);
             if (!midiAccessPromise)
@@ -309,11 +328,15 @@ namespace pxsim {
                         midiOutputs = midi.outputs.values();
                     if (midiOutputs && midiOutputs.size) {
                         // proxy message to outputs
-                        midiOutputs.forEach(function (port: any, key: any) {
-                            port.send(data);
-                        });
-                        // done!
-                        return;
+                        try {
+                            midiOutputs.forEach(function (port: any, key: any) {
+                                port.send(data);
+                            });
+                            // done!
+                            return;
+                        } catch (e) {
+                            midiOutputs = undefined;
+                        }
                     }
                 }
 
@@ -330,7 +353,7 @@ namespace pxsim {
                     return;
                 if (cmd == 8 || ((cmd == 9) && (velocity == 0))) { // with MIDI, note on with velocity zero is the same as note off
                     // note off
-                    stop();
+                    stopTone();
                 } else if (cmd == 9) {
                     // note on
                     tone(noteFrequency, velocity / 127.0);
