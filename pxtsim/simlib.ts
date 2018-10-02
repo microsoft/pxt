@@ -355,8 +355,8 @@ namespace pxsim {
                     // note off
                     stopTone();
                 } else if (cmd == 9) {
-                    // note on
-                    tone(noteFrequency, velocity / 127.0);
+                    // note on -- todo handle velocity
+                    tone(noteFrequency, 1);
                 }
             })
         }
