@@ -415,6 +415,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     imageUrl={pxt.github.repoIconUrl(scr)}
                                     label={/\bbeta\b/i.test(scr.description) ? lf("Beta") : undefined}
                                     role="link"
+                                    learnMoreUrl={`/pkg/${scr.fullName}`}
                                 />
                             )}
                             {ghdata.data.filter(repo => repo.status != pxt.github.GitRepoStatus.Approved).map(scr =>
@@ -428,6 +429,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     imageUrl={pxt.github.repoIconUrl(scr)}
                                     url={'github:' + scr.fullName}
                                     role="link"
+                                    learnMoreUrl={`/pkg/${scr.fullName}`}
                                 />
                             )}
                             {experiments.map(experiment =>
