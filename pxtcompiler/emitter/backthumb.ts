@@ -204,10 +204,8 @@ ${lbl}:`
             return `
     lsls r1, r0, #30
     bne .tag${idx}
-    cmp r0, #0
-    beq .tag${idx}
     ${stackSize & 1 ? "push {r0} ; align" : ""}
-    bl pxt::decr
+    bl _pxt_decr
     ${stackSize & 1 ? "pop {r0} ; unalign" : ""}
 .tag${idx}:
 `
@@ -291,6 +289,7 @@ _pxt_${op}_${off}:
     ${off == 0 ? '; ' : ''}b _pxt_${op}
 `
                 }
+                // SPEED the inline ldrh/strh saves 10%
                 r += `
 _pxt_${op}:
     lsls r3, r0, #30
@@ -300,6 +299,16 @@ _pxt_${op}:
 .t0:
     cmp r0, #0
     beq .skip
+    ldrh r3, [r0, #0]
+    ${op == "decr" ? "subs r3, r3, #2" : ""}
+    ${op == "decr" ? "bmi .full" : ""}
+    asrs r2, r3, #1
+    bcc .skip
+    beq .full
+    ${op == "incr" ? "adds r3, r3, #2" : ""}
+    strh r3, [r0, #0]
+    bx lr
+.full:
     ${this.pushLR()}
     bl pxt::${op}
     ${this.popPC()}
