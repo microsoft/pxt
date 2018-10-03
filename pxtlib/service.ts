@@ -204,6 +204,7 @@ namespace ts.pxtc {
         _def?: ParsedBlockDef;
         _expandedDef?: ParsedBlockDef;
         _untranslatedBlock?: string; // The block definition before it was translated
+        _shadowOverrides?: pxt.Map<string>;
         jsDoc?: string;
         paramHelp?: pxt.Map<string>;
         // foo.defl=12 -> paramDefl: { foo: "12" }
@@ -726,6 +727,9 @@ namespace ts.pxtc {
                         } else {
                             res.paramDefl[n.slice(0, n.length - 5)] = v
                         }
+                    } else if (U.endsWith(n, ".shadow")) {
+                        if (!res._shadowOverrides) res._shadowOverrides = {};
+                        res._shadowOverrides[n.slice(0, n.length - 7)] = v;
                     } else if (U.endsWith(n, ".fieldEditor")) {
                         if (!res.paramFieldEditor) res.paramFieldEditor = {}
                         res.paramFieldEditor[n.slice(0, n.length - 12)] = v
@@ -846,10 +850,21 @@ namespace ts.pxtc {
     export function updateBlockDef(attrs: CommentAttrs) {
         if (attrs.block) {
             const parts = attrs.block.split("||");
-            attrs._def = parseBlockDefinition(parts[0]);
+            attrs._def = applyOverrides(parseBlockDefinition(parts[0]));
             if (!attrs._def) pxt.debug("Unable to parse block def for id: " + attrs.blockId);
-            if (parts[1]) attrs._expandedDef = parseBlockDefinition(parts[1]);
+            if (parts[1]) attrs._expandedDef = applyOverrides(parseBlockDefinition(parts[1]));
             if (parts[1] && !attrs._expandedDef) pxt.debug("Unable to parse expanded block def for id: " + attrs.blockId);
+        }
+
+        function applyOverrides(def: ParsedBlockDef) {
+            if (attrs._shadowOverrides) {
+                def.parameters.forEach(p => {
+                    const shadow = attrs._shadowOverrides[p.name];
+                    if (shadow === "unset") delete p.shadowBlockId;
+                    else if (shadow != null) p.shadowBlockId = shadow;
+                });
+            }
+            return def;
         }
     }
 
