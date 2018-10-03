@@ -600,7 +600,7 @@ function bumpPxtCoreDepAsync(): Promise<void> {
                 }
                 pkg["dependencies"][knownPackage] = newVer
                 nodeutil.writeFileSync("package.json", JSON.stringify(pkg, null, 2) + "\n")
-                commitMsg = `bump ${knownPackage} to ${newVer}`;
+                commitMsg += `${commitMsg ? ", " : ""}bump ${knownPackage} to ${newVer}`;
             })
     })
 
