@@ -600,7 +600,7 @@ function bumpPxtCoreDepAsync(): Promise<void> {
                 }
                 pkg["dependencies"][knownPackage] = newVer
                 nodeutil.writeFileSync("package.json", JSON.stringify(pkg, null, 2) + "\n")
-                commitMsg += `bump ${knownPackage} to ${newVer}, `;
+                commitMsg = `bump ${knownPackage} to ${newVer}`;
             })
     })
 
@@ -3825,7 +3825,7 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
 
                                 // validate translations
                                 if (/-strings\.json$/.test(fn) && !/jsdoc-strings\.json$/.test(fn)) {
-                                    // block definitions                                    
+                                    // block definitions
                                     Object.keys(dataLang).forEach(id => {
                                         const tr = dataLang[id];
                                         pxt.blocks.normalizeBlock(tr, err => errors.push(`${fn} ${lang} ${id}: ${err}`));
