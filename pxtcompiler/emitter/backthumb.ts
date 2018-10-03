@@ -280,6 +280,30 @@ _numops_fromInt:
     ${this.popPC()}
 `
 
+            // SPEED the inline ldrh/strh saves ~20%
+            const inlineIncrDecr = (op: string) => `
+        lsls r3, r0, #30
+        beq .t0
+    .skip:
+        bx lr
+    .t0:
+        cmp r0, #0
+        beq .skip
+        ldrh r3, [r0, #0]
+        ${op == "decr" ? "subs r3, r3, #2" : ""}
+        ${op == "decr" ? "bmi .full" : ""}
+        asrs r2, r3, #1
+        bcc .skip
+        beq .full
+        ${op == "incr" ? "adds r3, r3, #2" : ""}
+        strh r3, [r0, #0]
+        bx lr
+    .full:
+        ${this.pushLR()}
+        bl pxt::${op}
+        ${this.popPC()}
+`
+
             for (let op of ["incr", "decr"]) {
                 r += ".section code\n"
                 for (let off = 56; off >= 0; off -= 4) {
@@ -289,30 +313,9 @@ _pxt_${op}_${off}:
     ${off == 0 ? '; ' : ''}b _pxt_${op}
 `
                 }
-                // SPEED the inline ldrh/strh saves 10%
-                r += `
-_pxt_${op}:
-    lsls r3, r0, #30
-    beq .t0
-.skip:
-    bx lr
-.t0:
-    cmp r0, #0
-    beq .skip
-    ldrh r3, [r0, #0]
-    ${op == "decr" ? "subs r3, r3, #2" : ""}
-    ${op == "decr" ? "bmi .full" : ""}
-    asrs r2, r3, #1
-    bcc .skip
-    beq .full
-    ${op == "incr" ? "adds r3, r3, #2" : ""}
-    strh r3, [r0, #0]
-    bx lr
-.full:
-    ${this.pushLR()}
-    bl pxt::${op}
-    ${this.popPC()}
-`
+                r += `_pxt_${op}:\n${inlineIncrDecr(op)}`
+
+                r += ".section code\n"
                 for (let off = 56; off >= 0; off -= 4) {
                     r += `
 _pxt_${op}_pushR0_${off}:
@@ -325,16 +328,7 @@ _pxt_${op}_pushR0_${off}:
 _pxt_${op}_pushR0:
     push {r0}
     @dummystack -1
-    lsls r3, r0, #30
-    beq .t2
-.skip2:
-    bx lr
-.t2:
-    cmp r0, #0
-    beq .skip2
-    push {lr}
-    bl pxt::${op}
-    pop {pc}
+    ${inlineIncrDecr(op)}
 `
             }
 
