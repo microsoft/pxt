@@ -654,14 +654,25 @@ ${baseLabel}:
                         else
                             off += 1
                         for (let a of convArgs) {
-                            this.write(this.loadFromExprStack("r0", a.expr, off))
-                            this.alignedCall(a.conv.method, "", off)
-                            if (a.conv.returnsRef)
-                                // replace the entry on the stack with the return value,
-                                // as the original was already decr'ed, but the result
-                                // has yet to be
-                                this.write(this.loadFromExprStack("r0", a.expr, off, true))
-                            this.write(this.t.push_fixed(["r0"]))
+                            if (isThumb() && a.conv.method == "pxt::toInt") {
+                                // SPEED 1.25%
+                                this.write(this.loadFromExprStack("r0", a.expr, off))
+                                this.write("asrs r0, r0, #1")
+                                this.write("bcs .isint" + off)
+                                this.write("lsls r0, r0, #1")
+                                this.alignedCall(a.conv.method, "", off)
+                                this.write(".isint" + off + ":")
+                                this.write(this.t.push_fixed(["r0"]))
+                            } else {
+                                this.write(this.loadFromExprStack("r0", a.expr, off))
+                                this.alignedCall(a.conv.method, "", off)
+                                if (a.conv.returnsRef)
+                                    // replace the entry on the stack with the return value,
+                                    // as the original was already decr'ed, but the result
+                                    // has yet to be
+                                    this.write(this.loadFromExprStack("r0", a.expr, off, true))
+                                this.write(this.t.push_fixed(["r0"]))
+                            }
                             off++
                         }
                         for (let a of U.reversed(convArgs)) {
