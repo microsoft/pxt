@@ -263,6 +263,12 @@ namespace pxt.runner {
                 let js = resp.outfiles[pxtc.BINARY_JS];
                 if (js) {
                     let options: pxsim.SimulatorDriverOptions = {};
+                    options.onSimulatorCommand = msg => {
+                        if (msg.command === "restart") {
+                            driver.run(js, runOptions);
+                        }
+                    };
+
                     let driver = new pxsim.SimulatorDriver(container, options);
 
                     let fnArgs = resp.usedArguments;
