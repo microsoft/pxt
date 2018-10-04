@@ -136,13 +136,13 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             this.state.mode != ScriptSearchMode.Extensions) return [];
         const query = this.state.searchFor;
         const bundled = pxt.appTarget.bundledpkgs;
-        const showCore = this.state.mode == ScriptSearchMode.Boards;
+        const boards = this.state.mode == ScriptSearchMode.Boards;
         return Object.keys(bundled).filter(k => !/prj$/.test(k))
             .map(k => JSON.parse(bundled[k]["pxt.json"]) as pxt.PackageConfig)
             .filter(pk => !query || pk.name.toLowerCase().indexOf(query.toLowerCase()) > -1) // search filter
-            .filter(pk => !pkg.mainPkg.deps[pk.name]) // don't show package already referenced
+            .filter(pk => boards || !pkg.mainPkg.deps[pk.name]) // don't show package already referenced in extensions
             .filter(pk => !/---/.test(pk.name)) //filter any package with ---, these are part of common-packages such as core---linux or music---pwm
-            .filter(pk => showCore == !!pk.core); // show core in "boards" mode
+            .filter(pk => boards == !!pk.core); // show core in "boards" mode
 
     }
 
@@ -415,6 +415,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     imageUrl={pxt.github.repoIconUrl(scr)}
                                     label={/\bbeta\b/i.test(scr.description) ? lf("Beta") : undefined}
                                     role="link"
+                                    learnMoreUrl={`/pkg/${scr.fullName}`}
                                 />
                             )}
                             {ghdata.data.filter(repo => repo.status != pxt.github.GitRepoStatus.Approved).map(scr =>
@@ -428,6 +429,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     imageUrl={pxt.github.repoIconUrl(scr)}
                                     url={'github:' + scr.fullName}
                                     role="link"
+                                    learnMoreUrl={`/pkg/${scr.fullName}`}
                                 />
                             )}
                             {experiments.map(experiment =>

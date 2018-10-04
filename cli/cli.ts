@@ -159,13 +159,13 @@ interface KeyTar {
 }
 
 function requireKeyTar(install = false): Promise<KeyTar> {
-    return Promise.resolve(nodeutil.lazyRequire("keytar") as KeyTar);
+    return Promise.resolve(nodeutil.lazyRequire("keytar", install) as KeyTar);
 }
 
 function passwordGetAsync(account: string): Promise<string> {
     return requireKeyTar()
         .then(keytar => keytar.getPassword("pxt/" + pxt.appTarget.id, account))
-        .catch(e => undefined)
+        .catch(e => process.env["PXT_PASSWORD"] || undefined)
 }
 
 function passwordDeleteAsync(account: string): Promise<void> {
@@ -600,7 +600,7 @@ function bumpPxtCoreDepAsync(): Promise<void> {
                 }
                 pkg["dependencies"][knownPackage] = newVer
                 nodeutil.writeFileSync("package.json", JSON.stringify(pkg, null, 2) + "\n")
-                commitMsg += `bump ${knownPackage} to ${newVer}, `;
+                commitMsg += `${commitMsg ? ", " : ""}bump ${knownPackage} to ${newVer}`;
             })
     })
 
@@ -3825,7 +3825,7 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
 
                                 // validate translations
                                 if (/-strings\.json$/.test(fn) && !/jsdoc-strings\.json$/.test(fn)) {
-                                    // block definitions                                    
+                                    // block definitions
                                     Object.keys(dataLang).forEach(id => {
                                         const tr = dataLang[id];
                                         pxt.blocks.normalizeBlock(tr, err => errors.push(`${fn} ${lang} ${id}: ${err}`));

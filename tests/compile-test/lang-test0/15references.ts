@@ -8,21 +8,21 @@ function testRefLocals(): void {
         msg(i + "");
         let copy = i;
         control.runInBackground(() => {
-            control.pause(10 * i);
+            pause(10 * i);
             copy = copy + 10;
         });
         control.runInBackground(() => {
-            control.pause(20 * i);
+            pause(20 * i);
             s = s + copy;
         });
     }
-    control.pause(200);
+    pause(200);
     assert(s == "101112", "reflocals");
 }
 
 function byRefParam_0(p: number): void {
     control.runInBackground(() => {
-        control.pause(1);
+        pause(1);
         sum = sum + p;
     });
     p = p + 1;
@@ -31,7 +31,7 @@ function byRefParam_0(p: number): void {
 function byRefParam_2(pxx: number): void {
     pxx = pxx + 1;
     control.runInBackground(() => {
-        control.pause(1);
+        pause(1);
         sum = sum + pxx;
     });
 }
@@ -44,13 +44,13 @@ function testByRefParams(): void {
     sum = 0;
     let x = 1;
     control.runInBackground(() => {
-        control.pause(1);
+        pause(1);
         sum = sum + x;
     });
     x = 2;
     byRefParam_0(4);
     byRefParam_2(10);
-    control.pause(30);
+    pause(330);
     assert(sum == 18, "by ref");
     sum = 0
     msg("byref done")
@@ -71,13 +71,13 @@ function refparamWrite2(testrec: Testrec): void {
 
 function refparamWrite3(testrecX: Testrec): void {
     control.runInBackground(() => {
-        control.pause(1);
+        pause(1);
         assert(testrecX.str == "foo", "ff");
         testrecX.str = testrecX.str + "x";
     });
     testrecX = new Testrec();
     testrecX.str = "foo";
-    control.pause(30);
+    pause(130);
     assert(testrecX.str == "foox", "ff2");
 }
 
