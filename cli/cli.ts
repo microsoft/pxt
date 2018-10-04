@@ -159,13 +159,13 @@ interface KeyTar {
 }
 
 function requireKeyTar(install = false): Promise<KeyTar> {
-    return Promise.resolve(nodeutil.lazyRequire("keytar") as KeyTar);
+    return Promise.resolve(nodeutil.lazyRequire("keytar", install) as KeyTar);
 }
 
 function passwordGetAsync(account: string): Promise<string> {
     return requireKeyTar()
         .then(keytar => keytar.getPassword("pxt/" + pxt.appTarget.id, account))
-        .catch(e => undefined)
+        .catch(e => process.env["PXT_PASSWORD"] || undefined)
 }
 
 function passwordDeleteAsync(account: string): Promise<void> {
