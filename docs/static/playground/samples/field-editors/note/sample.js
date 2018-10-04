@@ -7,7 +7,8 @@ namespace music {
      * @param note pitch of the tone to play in Hertz (Hz), eg: Note.C
      */
     //% blockId=music_play_note
-    //% block="play tone %note=device_note tone"
+    //% block="play tone $note tone"
+    //% note.shadow="device_note"
     export function playTone(note: number) {
 
     }
@@ -16,7 +17,7 @@ namespace music {
      * Get the frequency of a note.
      * @param note the note name, eg: Note.C
      */
-    //% blockId=device_note block="%note"
+    //% blockId=device_note block="$note"
     //% shim=TD_ID
     //% color="#ffffff" colorSecondary="#ffffff" colorTertiary="#D83B01"
     //% note.fieldEditor="note" note.defl="262"
