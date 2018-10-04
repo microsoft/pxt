@@ -44,7 +44,7 @@ function testEnums() {
     assert(switchB(En.D) == 13, "x4")
     assert(switchB(En.E) == 14, "x5")
 
-    control.pause(3)
+    pause(3)
 
     let kk = 1
     if (kk & En2.D2) {
