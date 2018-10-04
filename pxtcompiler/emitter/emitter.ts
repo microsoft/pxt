@@ -2246,10 +2246,10 @@ ${lbl}: .short 0xffff
         }
 
         function emitNewExpression(node: NewExpression) {
-            let t = typeOf(node)
-            if (isArrayType(t)) {
+            let t = checker.getTypeAtLocation(node);
+            if (t && isArrayType(t)) {
                 throw oops();
-            } else if (isPossiblyGenericClassType(t)) {
+            } else if (t && isPossiblyGenericClassType(t)) {
                 let classDecl = <ClassDeclaration>getDecl(node.expression)
                 if (classDecl.kind != SK.ClassDeclaration) {
                     userError(9221, lf("new expression only supported on class types"))
