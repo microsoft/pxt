@@ -245,40 +245,47 @@ namespace pxsim {
                     bbFit: bbFit
                 };
             };
-            if (def.instantiation.kind === "singleton") {
-                partIRs.push(mkIR(def, name));
-            } else if (def.instantiation.kind === "function") {
-                let fnAlloc = def.instantiation as PartFunctionDefinition;
-                let fnNms = fnAlloc.fullyQualifiedName.split(',');
-                let callsitesTrackedArgsHash: { [index: string]: number } = {};
-                fnNms.forEach(fnNm => { if (this.opts.fnArgs[fnNm]) this.opts.fnArgs[fnNm].forEach((targetArg: string) => { callsitesTrackedArgsHash[targetArg] = 1 }); });
-                let callsitesTrackedArgs: string[] = Object.keys(callsitesTrackedArgsHash);
-                if (!(!!callsitesTrackedArgs && !!callsitesTrackedArgs.length)) {
-                    console.log(`error: parts failed to read pin(s) from callsite for: ${fnNms}`);
-                    return undefined;
-                }
-                callsitesTrackedArgs.forEach(fnArgsStr => {
-                    const fnArgsSplit = fnArgsStr.split(",");
-                    if (fnArgsSplit.length != fnAlloc.argumentRoles.length) {
-                        console.log(`error: parts mismatch between number of arguments at callsite (function name: ${fnNms}) vs number of argument roles in part definition (part: ${name}).`);
-                        return ;
+
+            // support for multiple possible instantions
+            const instantiations = def.instantiations || [];
+            if (def.instantiation) instantiations.push(def.instantiation)
+
+            instantiations.forEach(instantiation => {
+                if (instantiation.kind === "singleton") {
+                    partIRs.push(mkIR(def, name));
+                } else if (instantiation.kind === "function") {
+                    let fnAlloc = instantiation as PartFunctionDefinition;
+                    let fnNms = fnAlloc.fullyQualifiedName.split(',');
+                    let callsitesTrackedArgsHash: { [index: string]: number } = {};
+                    fnNms.forEach(fnNm => { if (this.opts.fnArgs[fnNm]) this.opts.fnArgs[fnNm].forEach((targetArg: string) => { callsitesTrackedArgsHash[targetArg] = 1 }); });
+                    let callsitesTrackedArgs: string[] = Object.keys(callsitesTrackedArgsHash);
+                    if (!(!!callsitesTrackedArgs && !!callsitesTrackedArgs.length)) {
+                        console.log(`error: parts failed to read pin(s) from callsite for: ${fnNms}`);
+                        return undefined;
                     }
-                    let instPins: PinTarget[] = [];
-                    let paramArgs: Map<string> = {};
-                    fnArgsSplit.forEach((arg, idx) => {
-                        let role = fnAlloc.argumentRoles[idx];
-                        if (role.partParameter !== undefined) {
-                            paramArgs[role.partParameter] = arg;
+                    callsitesTrackedArgs.forEach(fnArgsStr => {
+                        const fnArgsSplit = fnArgsStr.split(",");
+                        if (fnArgsSplit.length != fnAlloc.argumentRoles.length) {
+                            console.log(`error: parts mismatch between number of arguments at callsite (function name: ${fnNms}) vs number of argument roles in part definition (part: ${name}).`);
+                            return;
                         }
-                        if (role.pinInstantiationIdx !== undefined) {
-                            let instIdx = role.pinInstantiationIdx;
-                            let pin = readPin(arg);
-                            instPins[instIdx] = pin;
-                        }
+                        let instPins: PinTarget[] = [];
+                        let paramArgs: Map<string> = {};
+                        fnArgsSplit.forEach((arg, idx) => {
+                            let role = fnAlloc.argumentRoles[idx];
+                            if (role.partParameter !== undefined) {
+                                paramArgs[role.partParameter] = arg;
+                            }
+                            if (role.pinInstantiationIdx !== undefined) {
+                                let instIdx = role.pinInstantiationIdx;
+                                let pin = readPin(arg);
+                                instPins[instIdx] = pin;
+                            }
+                        });
+                        partIRs.push(mkIR(def, name, instPins, paramArgs));
                     });
-                    partIRs.push(mkIR(def, name, instPins, paramArgs));
-                });
-            }
+                }
+            })
             return partIRs.filter(ir => !!ir);
         }
         private computePartDimensions(def: PartDefinition, name: string): PartBBFit {
