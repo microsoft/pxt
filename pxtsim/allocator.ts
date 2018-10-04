@@ -202,7 +202,7 @@ namespace pxsim {
 
         private allocPartIRs(def: PartDefinition, name: string, bbFit: PartBBFit): PartIR[] {
             let partIRs: PartIR[] = [];
-            let mkIR = (def: PartDefinition, name: string, instPins?: PinTarget[], partParams?: Map<string>): PartIR => {
+            const mkIR = (def: PartDefinition, name: string, instPins?: PinTarget[], partParams?: Map<string>): PartIR => {
                 let pinIRs: PinIR[] = [];
                 for (let i = 0; i < def.numberOfPins; i++) {
                     let pinDef = def.pinDefinitions[i];
@@ -211,8 +211,10 @@ namespace pxsim {
                         pinTarget = <PinTarget>pinDef.target;
                     } else {
                         let instIdx = (<PinInstantiationIdx>pinDef.target).pinInstantiationIdx;
-                        U.assert(!!instPins && instPins[instIdx] !== undefined,
-                            `No pin found for PinInstantiationIdx: ${instIdx}. (Is the part missing an ArgumentRole or "trackArgs=" annotations?)`);
+                        if (!(!!instPins && instPins[instIdx] !== undefined)) {
+                            console.log(`error: parts no pin found for PinInstantiationIdx: ${instIdx}. (Is the part missing an ArgumentRole or "trackArgs=" annotations?)`);
+                            return undefined;
+                        }
                         pinTarget = instPins[instIdx];
                     }
                     let pinLoc = def.visual.pinLocations[i];
@@ -251,11 +253,16 @@ namespace pxsim {
                 let callsitesTrackedArgsHash: { [index: string]: number } = {};
                 fnNms.forEach(fnNm => { if (this.opts.fnArgs[fnNm]) this.opts.fnArgs[fnNm].forEach((targetArg: string) => { callsitesTrackedArgsHash[targetArg] = 1 }); });
                 let callsitesTrackedArgs: string[] = Object.keys(callsitesTrackedArgsHash);
-                U.assert(!!callsitesTrackedArgs && !!callsitesTrackedArgs.length, "Failed to read pin(s) from callsite for: " + fnNms);
+                if (!(!!callsitesTrackedArgs && !!callsitesTrackedArgs.length)) {
+                    console.log(`error: parts failed to read pin(s) from callsite for: ${fnNms}`);
+                    return undefined;
+                }
                 callsitesTrackedArgs.forEach(fnArgsStr => {
-                    let fnArgsSplit = fnArgsStr.split(",");
-                    U.assert(fnArgsSplit.length === fnAlloc.argumentRoles.length,
-                        `Mismatch between number of arguments at callsite (function name: ${fnNms}) vs number of argument roles in part definition (part: ${name}).`);
+                    const fnArgsSplit = fnArgsStr.split(",");
+                    if (fnArgsSplit.length != fnAlloc.argumentRoles.length) {
+                        console.log(`error: parts mismatch between number of arguments at callsite (function name: ${fnNms}) vs number of argument roles in part definition (part: ${name}).`);
+                        return ;
+                    }
                     let instPins: PinTarget[] = [];
                     let paramArgs: Map<string> = {};
                     fnArgsSplit.forEach((arg, idx) => {
@@ -272,7 +279,7 @@ namespace pxsim {
                     partIRs.push(mkIR(def, name, instPins, paramArgs));
                 });
             }
-            return partIRs;
+            return partIRs.filter(ir => !!ir);
         }
         private computePartDimensions(def: PartDefinition, name: string): PartBBFit {
             let pinLocs = def.visual.pinLocations;
