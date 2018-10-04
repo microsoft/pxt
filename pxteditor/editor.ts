@@ -82,6 +82,7 @@ namespace pxt.editor {
         inTutorial?: boolean;
         dependencies?: pxt.Map<string>;
         tsOnly?: boolean;
+        changeBoardOnLoad?: boolean; // if applicable, pop up the "boards" dialog after creating the project
     }
 
     export interface ProjectFilters {

@@ -1089,7 +1089,7 @@ export class ProjectView
             const checkAsync = this.tryCheckTargetVersionAsync(data.meta.targetVersions && data.meta.targetVersions.target);
             if (checkAsync) {
                 checkAsync.done(() => {
-                    if (createNewIfFailed) this.newProject();
+                    if (createNewIfFailed) this.newProject({ changeBoardOnLoad: true });
                 });
                 return;
             }
@@ -1174,7 +1174,7 @@ export class ProjectView
                 let hexFile = JSON.parse(project) as pxt.cpp.HexFile;
                 return this.importHex(hexFile);
             }).catch(() => {
-                return this.newProject();
+                return this.newProject({ changeBoardOnLoad: true });
             })
     }
 
@@ -1335,7 +1335,9 @@ export class ProjectView
     newEmptyProject(name?: string, documentation?: string) {
         this.newProject({
             filesOverride: { "main.blocks": `<xml xmlns="http://www.w3.org/1999/xhtml"></xml>` },
-            name, documentation
+            name,
+            documentation,
+            changeBoardOnLoad: true
         })
     }
 
@@ -1344,7 +1346,12 @@ export class ProjectView
         core.showLoading("newproject", lf("creating new project..."));
         this.createProjectAsync(options)
             .then(() => Promise.delay(500))
-            .done(() => core.hideLoading("newproject"));
+            .done(() => {
+                core.hideLoading("newproject")
+                if (options.changeBoardOnLoad && pxt.appTarget.appTheme.chooseBoardOnNewProject &&
+                    pxt.appTarget.simulator && !!pxt.appTarget.simulator.dynamicBoardDefinition)
+                    this.showBoardDialog();
+            });
     }
 
     createProjectAsync(options: ProjectCreationOptions): Promise<void> {
@@ -2660,7 +2667,7 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
             return true;
         case "newproject": // shortcut to create a new blocks proj
             pxt.tickEvent("hash.newproject")
-            editor.newProject();
+            editor.newEmptyProject();
             pxt.BrowserUtils.changeHash("");
             return true;
         case "newjavascript": // shortcut to create a new JS proj
@@ -2669,7 +2676,8 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
                 prj: pxt.appTarget.blocksprj,
                 filesOverride: {
                     "main.blocks": ""
-                }
+                },
+                changeBoardOnLoad: true
             });
             pxt.BrowserUtils.changeHash("");
             return true;
@@ -3003,7 +3011,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             // default handlers
             if (hd) return theEditor.loadHeaderAsync(hd, theEditor.state.editorState)
-            else theEditor.newProject();
+            else theEditor.newProject({ changeBoardOnLoad: true });
             return Promise.resolve();
         })
         .then(() => {
