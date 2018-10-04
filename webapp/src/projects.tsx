@@ -348,7 +348,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
 
     newProject() {
         pxt.tickEvent("projects.new", undefined, { interactiveConsent: true });
-        this.props.parent.newProject();
+        this.props.parent.newProject({ changeBoardOnLoad: true });
     }
 
     closeDetail() {
