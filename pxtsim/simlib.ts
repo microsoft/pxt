@@ -292,6 +292,8 @@ namespace pxsim {
 
         export function sendMidiMessage(buf: RefBuffer) {
             const data = buf.data;
+            if (!data.length) // garbage.
+                return;
 
             // no midi access or no midi element,
             // limited interpretation of midi commands
@@ -576,3 +578,4 @@ namespace pxsim {
             return [Math.floor(h), Math.floor(s), Math.floor(l)];
         }
     }
+}
