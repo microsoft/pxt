@@ -655,7 +655,7 @@ ${baseLabel}:
                             off += 1
                         for (let a of convArgs) {
                             if (isThumb() && a.conv.method == "pxt::toInt") {
-                                // SPEED 1.25%
+                                // SPEED 2.5%
                                 this.write(this.loadFromExprStack("r0", a.expr, off))
                                 this.write("asrs r0, r0, #1")
                                 this.write("bcs .isint" + off)
