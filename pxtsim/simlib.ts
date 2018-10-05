@@ -305,13 +305,14 @@ namespace pxsim {
             //console.log(`midi: cmd ${cmd} channel (-1) ${channel} note ${noteNumber} f ${noteFrequency} v ${velocity}`)
 
             // play drums regardless
-            // if (channel == 9) return;            
             if (cmd == 8 || ((cmd == 9) && (velocity == 0))) { // with MIDI, note on with velocity zero is the same as note off
                 // note off
                 stopTone();
             } else if (cmd == 9) {
                 // note on -- todo handle velocity
                 tone(noteFrequency, 1);
+                if (channel == 9) // drums don't call noteOff
+                    setTimeout(() => stopTone(), 500);
             }
         }
     }
