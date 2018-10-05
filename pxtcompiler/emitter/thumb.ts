@@ -401,9 +401,8 @@ namespace ts.pxtc.thumb {
                 /^_pxt_(incr|decr)$/.test(ln.words[1]) && singleReg(lnNext) == 0) {
                 ln.update("bl " + ln.words[1] + "_pushR0")
                 lnNext.update("@dummystack 1")
-            // TODO SPEED ~5%
-            } else if (lnop == "XXldr" && ln.getOpExt() == "ldr $r5, [sp, $i1]" && lnNext.getOp() == "bl" &&
-                /^_pxt_(incr|decr)(_pushR0)?$/.test(lnNext.words[1]) && ln.numArgs[0] == 0 && ln.numArgs[1] <= 56
+            } else if (lnop == "ldr" && ln.getOpExt() == "ldr $r5, [sp, $i1]" && lnNext.getOp() == "bl" &&
+                /^_pxt_(incr|decr)(_pushR0)?$/.test(lnNext.words[1]) && ln.numArgs[0] == 0 && ln.numArgs[1] <= 32
                 && lnNext2 && lnNext2.getOp() != "push") {
                 ln.update("bl " + lnNext.words[1] + "_" + ln.numArgs[1])
                 lnNext.update("")

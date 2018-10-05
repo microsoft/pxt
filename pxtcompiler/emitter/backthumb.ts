@@ -282,48 +282,57 @@ _numops_fromInt:
 
             // SPEED the inline ldrh/strh saves ~20%
             const inlineIncrDecr = (op: string) => `
-        lsls r3, r0, #30
-        beq .t0
-    .skip:
-        bx lr
-    .t0:
-        cmp r0, #0
-        beq .skip
-        ldrh r3, [r0, #0]
-        ${op == "decr" ? "subs r3, r3, #2" : ""}
-        ${op == "decr" ? "bmi .full" : ""}
-        asrs r2, r3, #1
-        bcc .skip
-        beq .full
-        ${op == "incr" ? "adds r3, r3, #2" : ""}
-        strh r3, [r0, #0]
-        bx lr
-    .full:
-        ${this.pushLR()}
-        bl pxt::${op}
-        ${this.popPC()}
+    lsls r3, r0, #30
+    beq .t0
+.skip:
+    bx lr
+.t0:
+    cmp r0, #0
+    beq .skip
+    ldrh r3, [r0, #0]
+    ${op == "decr" ? "subs r3, r3, #2" : ""}
+    ${op == "decr" ? "bmi .full" : ""}
+    asrs r2, r3, #1
+    bcc .skip
+    beq .full
+    ${op == "incr" ? "adds r3, r3, #2" : ""}
+    strh r3, [r0, #0]
+    bx lr
+.full:
+    ${this.pushLR()}
+    bl pxt::${op}
+    ${this.popPC()}
 `
 
-            for (let op of ["incr", "decr"]) {
-                r += ".section code\n"
-                for (let off = 56; off >= 0; off -= 4) {
+            const withLDR = (op: string, push = false) => {
+                for (let off = 32; off >= 0; off -= 4) {
                     r += `
 _pxt_${op}_${off}:
     ldr r0, [sp, #${off}]
-    ${off == 0 ? '; ' : ''}b _pxt_${op}
 `
+                    if (off) {
+                        if (push)
+                            r += `
+    push {r0}
+    @dummystack -1
+`
+                        r += `
+    lsls r3, r0, #30
+    beq .t0
+    bx lr
+`
+                    }
                 }
+
+            }
+
+            for (let op of ["incr", "decr"]) {
+                r += ".section code\n"
+                withLDR(op)
                 r += `_pxt_${op}:\n${inlineIncrDecr(op)}`
 
                 r += ".section code\n"
-                for (let off = 56; off >= 0; off -= 4) {
-                    r += `
-_pxt_${op}_pushR0_${off}:
-    ldr r0, [sp, #${off}]
-    ${off == 0 ? '; ' : ''}b _pxt_${op}_pushR0
-`
-                }
-
+                withLDR(op + "_pushR0", true)
                 r += `
 _pxt_${op}_pushR0:
     push {r0}
