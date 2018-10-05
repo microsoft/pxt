@@ -1442,7 +1442,7 @@ namespace ts.pxtc {
 
             bin.otherLiterals.push(`
 .balign 4
-${lbl}: .short 0xffff
+${lbl}: .short ${pxt.REFCNT_FLASH}
         .short ${w}, ${h}
         .byte ${lit}
 `)

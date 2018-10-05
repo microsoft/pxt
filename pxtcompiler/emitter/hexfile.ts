@@ -358,11 +358,13 @@ namespace ts.pxtc {
         }
 
         function applyPatches(f: UF2.BlockFile, binfile: Uint8Array = null) {
+            // TODO: this isn't used anymore
+
             // constant strings in the binary are 4-byte aligned, and marked
             // with "@PXT@:" at the beginning - this 6 byte string needs to be
-            // replaced with proper reference count (0xffff to indicate read-only
+            // replaced with proper reference count (0xfffe to indicate read-only
             // flash location), string virtual table, and the length of the string
-            let stringVT = [0xff, 0xff, 0x01, 0x00]
+            let stringVT = [0xfe, 0xff, 0x01, 0x00]
             assert(stringVT.length == 4)
             let patchAt = (b: Uint8Array, i: number,
                 readMore: () => Uint8Array) => {
@@ -544,7 +546,7 @@ namespace ts.pxtc {
 
     function emitStrings(snippets: AssemblerSnippets, bin: Binary) {
         for (let s of Object.keys(bin.strings)) {
-            // string representation of DAL - 0xffff in general for ref-counted objects means it's static and shouldn't be incr/decred
+            // string representation of DAL - 0xfffe in general for ref-counted objects means it's static and shouldn't be incr/decred
             bin.otherLiterals.push(snippets.string_literal(bin.strings[s], s))
         }
 
@@ -552,7 +554,7 @@ namespace ts.pxtc {
             let lbl = bin.doubles[data]
             bin.otherLiterals.push(`
 .balign 4
-${lbl}: .short 0xffff, ${pxt.REF_TAG_NUMBER}
+${lbl}: .short ${pxt.REFCNT_FLASH}, ${pxt.REF_TAG_NUMBER}
         .hex ${data}
 `)
         }
