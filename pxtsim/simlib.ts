@@ -219,7 +219,6 @@ namespace pxsim {
 
         export function stop() {
             stopTone();
-            stopMidi();
         }
 
         export function frequency(): number {
@@ -291,80 +290,30 @@ namespace pxsim {
             return 440 * Math.pow(2, (note - 69) / 12);
         }
 
-        let midiAccessPromise: Promise<any/*WebMidi.MIDIAccess*/> = undefined;
-        let midi: any /*WebMidi.MIDIAccess*/ = undefined;
-        let midiOutputs: any /*WebMidi.MIDIOutputMap*/ = undefined;
-
-        function stopMidi() {
-            if (midiOutputs) {
-                try {
-                    midiOutputs.forEach((port: any /*WebMidi.MIDIOutput*/) => port.clear());
-                }
-                catch (e) {
-                    midiOutputs = undefined;
-                }
-            }
-        }
-
-        export function sendMidiMessageAsync(buf: RefBuffer): Promise<void> {
-            if (_mute) return Promise.resolve(); // do nothing if muted
-
+        export function sendMidiMessage(buf: RefBuffer) {
             const data = buf.data;
-            if (!midiAccessPromise)
-                midiAccessPromise = new Promise((resolve, reject) => {
-                    // test if browser supports it
-                    if (!(<any>navigator).requestMIDIAccess) {
-                        midi = undefined;
-                        resolve();
-                        return;
-                    }
-                    // try connecting
-                    (<any>navigator).requestMIDIAccess()
-                        .then((m: any /*WebMidi.MIDIAccess*/) => {
-                            midi = m;
-                            midi.onstatechange = (): void => midiOutputs = undefined; // refresh cache 
-                            resolve();
-                        }, (e: any) => {
-                            midi = undefined;
-                            resolve();
-                        });
-                });
-            return midiAccessPromise.then(() => {
-                if (midi) {
-                    if (!midiOutputs)
-                        midiOutputs = midi.outputs;
-                    if (midiOutputs && midiOutputs.size) {
-                        // proxy message to outputs
-                        try {
-                            midiOutputs.forEach((port: any /*WebMidi.MIDIOutput*/) => port.send(data));
-                            // done!
-                            return;
-                        } catch (e) {
-                            midiOutputs = undefined;
-                        }
-                    }
-                }
+            if (!data.length) // garbage.
+                return;
 
-                // no midi access or no midi element,
-                // limited interpretation of midi commands
-                const cmd = data[0] >> 4;
-                const channel = data[0] & 0xf;
-                const noteNumber = data[1] || 0;
-                const noteFrequency = frequencyFromMidiNoteNumber(noteNumber);
-                const velocity = data[2] || 0;
-                //console.log(`midi: cmd ${cmd} channel (-1) ${channel} note ${noteNumber} f ${noteFrequency} v ${velocity}`)
+            // no midi access or no midi element,
+            // limited interpretation of midi commands
+            const cmd = data[0] >> 4;
+            const channel = data[0] & 0xf;
+            const noteNumber = data[1] || 0;
+            const noteFrequency = frequencyFromMidiNoteNumber(noteNumber);
+            const velocity = data[2] || 0;
+            //console.log(`midi: cmd ${cmd} channel (-1) ${channel} note ${noteNumber} f ${noteFrequency} v ${velocity}`)
 
-                // ignore drums
-                if (channel == 9)
-                    return;
-                if (cmd == 8 || ((cmd == 9) && (velocity == 0))) { // with MIDI, note on with velocity zero is the same as note off
-                    // note off
-                    stopTone();
-                } else if (cmd == 9) {
-                    // note on -- todo handle velocity
-                    tone(noteFrequency, 1);
-                }
-            })
+            // play drums regardless
+            if (cmd == 8 || ((cmd == 9) && (velocity == 0))) { // with MIDI, note on with velocity zero is the same as note off
+                // note off
+                stopTone();
+            } else if (cmd == 9) {
+                // note on -- todo handle velocity
+                tone(noteFrequency, 1);
+                if (channel == 9) // drums don't call noteOff
+                    setTimeout(() => stopTone(), 500);
+            }
         }
     }
 
