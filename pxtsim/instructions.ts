@@ -576,6 +576,7 @@ namespace pxsim.instructions {
         partDefinitions: Map<PartDefinition>;
         fnArgs: any;
         configData: pxsim.ConfigData;
+        print?: boolean;
     }
 
     export function renderParts(container: HTMLElement, options: RenderPartsOptions) {
@@ -626,6 +627,9 @@ namespace pxsim.instructions {
         //final
         let finalPanel = mkFinalPanel(props);
         container.appendChild(finalPanel);
+
+        if (options.print)
+            pxsim.print(2000);
     }
 
     export function renderInstructions(msg: SimulatorInstructionsMessage) {

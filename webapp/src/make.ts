@@ -59,7 +59,8 @@ function renderAsync(container: HTMLElement): Promise<HTMLIFrameElement> {
                     parts,
                     partDefinitions,
                     fnArgs,
-                    configData
+                    configData,
+                    print: true
                 }
             }, "*")
 
@@ -72,6 +73,7 @@ export function makeAsync(): Promise<void> {
     return core.dialogAsync({
         header: lf("Make"),
         size: "large",
+        hideCancel: true,
         htmlBody: `
         <div class="ui container">
             <div id="makecontainer" style="position:relative;height:0;padding-bottom:40%;overflow:hidden;">
@@ -79,18 +81,7 @@ export function makeAsync(): Promise<void> {
         </div>`, onLoaded: (_) => {
             renderAsync(_.querySelectorAll("#makecontainer")[0] as HTMLElement)
                 .done(r => iframe = r);
-        },
-        buttons: [{
-            label: lf("Print"),
-            onclick: () => {
-                if (iframe && iframe.contentWindow) {
-                    iframe.contentWindow.postMessage(<pxsim.SimulatorMessage>{
-                        type: "print"
-                    }, "*");
-                }
-            },
-            icon: "print"
-        }]
+        }
     }).then(r => {
 
     })
