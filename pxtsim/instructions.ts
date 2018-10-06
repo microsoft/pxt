@@ -625,8 +625,8 @@ namespace pxsim.instructions {
         }
 
         //final
-        let finalPanel = mkFinalPanel(props);
-        container.appendChild(finalPanel);
+        //let finalPanel = mkFinalPanel(props);
+        //container.appendChild(finalPanel);
 
         if (options.print)
             pxsim.print(2000);
