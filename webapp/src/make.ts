@@ -74,6 +74,7 @@ export function makeAsync(): Promise<void> {
         header: lf("Make"),
         size: "large",
         hideCancel: true,
+        hasCloseIcon: true,
         htmlBody: `
         <div class="ui container">
             <div id="makecontainer" style="position:relative;height:0;padding-bottom:40%;overflow:hidden;">
