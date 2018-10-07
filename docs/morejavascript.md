@@ -201,3 +201,23 @@ Four options:
 
 In the second case, we could construct full stack trace in the editor, and there
 is little overhead. I'm leaning towards that option.
+
+## Field access
+
+* keep global mapping from field index to field name (for every possible field); 16 bit?  to compress vtable
+* vtable has name for every field
+
+* generate set and get procedures for every field; these can be probably also used for the synthetic
+  interface methods for these fields
+* fast path: check if it's the correct type (class); if so just fetch the field
+* type check: allocate one bit for every base class in vtable; leafs can just use id numbers
+* slow path: lookup by name (or idx)
+
+## GC
+
+* most likely mark-and-sweep; generational is overkill?
+* GC can be only triggered from within TS code
+* GC check together with exception check (use same global bit)
+* trigger GC when close to full, not exactly full
+* think about ISRs; but most likely not, since the IRQ can hit during GC cycle
+
