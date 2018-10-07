@@ -6,6 +6,17 @@
     <title>simulator</title>
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
     <style>
+        /* fix for iOS; see https://github.com/PierBover/ios-iframe-fix */
+        #wrap {
+            position: fixed;
+            top: 0;
+            right:0;
+            bottom:0;
+            left: 0;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
+
         html {
             width: 100%;
             height: 100%;
@@ -22,7 +33,6 @@
             position: relative;
             background: transparent;
             width: 100%;
-            padding-bottom: 81.96%;
             display: inline-block;
         }
 
@@ -67,9 +77,12 @@
             font-family: monospace;
         }
     </style>
+    <style id="injected-style">
+    </style>
 </head>
 
 <body>
+    <div id="wrap">
     <div id='loading' style='font-size: 25px; font-family:monospace; margin: 20% auto; width: 200px;'>
         loading...
     </div>
@@ -77,6 +90,7 @@
     </div>
     <footer id="footer" style="display:none;">
     </footer>
+</div>
 
     <script>
         // This line gets patched up by the cloud
@@ -97,6 +111,7 @@
         var sims = document.getElementById('simulators');
         var highContrast = !!/hc(?:[:=])1/i.exec(window.location.href);
         var light = !!/light(?:[:=])1/i.exec(window.location.href);
+        var fullScreen = !!/fullscreen(?:[:=])1/i.exec(window.location.href);
 
         if (!id && !code && !debugSim) {
             console.error("missing id or code");
@@ -104,7 +119,20 @@
             return;
         }
 
+        if (fullScreen) {
+            document.getElementById("injected-style").textContent =
+                "#simulators {\n"
+                + "    height: 100%;\n"
+                + "}\n"
+                + "div.simframe {\n"
+                + "    height: calc(100% - 1rem);\n"
+                + "    padding-bottom: 0 !important;\n"
+                + "}\n";
+        }
+
         function initAppCache() {
+            if (!window.applicationCache)
+                return;
             if (window.applicationCache.status === window.applicationCache.UPDATEREADY)
                     window.location.reload();
             window.applicationCache.addEventListener('updateready', function () {
@@ -132,11 +160,12 @@
                 })
             }
             else if (!debugSim) {
-                var options = { 
+                var options = {
                     id: id ? id[1] : undefined,
                     code: code ? decodeURIComponent(code[1]) : undefined,
                     highContrast: highContrast,
-                    light: light
+                    light: light,
+                    fullScreen: fullScreen
                 };
                 console.log('simulating script')
                 pxt.runner.simulateAsync(sims, options).done(function() {

@@ -39,12 +39,15 @@ function getAsync(h: Header): Promise<pxt.workspace.File> {
 
 function setAsync(h: Header, prevVer: any, text?: ScriptText) {
     return mem.provider.setAsync(h, prevVer, text)
-        .then(() => pxt.editor.postHostMessageAsync(<pxt.editor.EditorWorkspaceSaveRequest>{
-            type: "pxthost",
-            action: "workspacesave",
-            project: { h, text },
-            response: false
-        })).then(() => { })
+        .then(() => {
+            const projectText = (text || (mem.projects[h.id] && mem.projects[h.id].text));
+            return pxt.editor.postHostMessageAsync(<pxt.editor.EditorWorkspaceSaveRequest>{
+                    type: "pxthost",
+                    action: "workspacesave",
+                    project: { header: h, text: projectText },
+                    response: false
+                })
+        }).then(() => { })
 }
 
 function resetAsync(): Promise<void> {

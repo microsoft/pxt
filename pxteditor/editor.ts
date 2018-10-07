@@ -37,6 +37,7 @@ namespace pxt.editor {
         sideDocsLoadUrl?: string; // set once to load the side docs frame
         sideDocsCollapsed?: boolean;
         projectName?: string;
+        suppressPackageWarning?: boolean;
 
         tutorialOptions?: TutorialOptions;
         lightbox?: boolean;
@@ -58,6 +59,7 @@ namespace pxt.editor {
         bannerVisible?: boolean;
 
         highContrast?: boolean;
+        print?: boolean;
         greenScreen?: boolean;
 
         home?: boolean;
@@ -80,6 +82,7 @@ namespace pxt.editor {
         inTutorial?: boolean;
         dependencies?: pxt.Map<string>;
         tsOnly?: boolean;
+        changeBoardOnLoad?: boolean; // if applicable, pop up the "boards" dialog after creating the project
     }
 
     export interface ProjectFilters {
@@ -169,6 +172,7 @@ namespace pxt.editor {
         toggleSimulatorFullscreen(): void;
         proxySimulatorMessage(content: string): void;
         toggleTrace(intervalSpeed?: number): void;
+        setTrace(enabled: boolean, intervalSpeed?: number): void;
         toggleMute(): void;
         openInstructions(): void;
         closeFlyout(): void;
@@ -223,6 +227,7 @@ namespace pxt.editor {
         showResetDialog(): void;
         showExitAndSaveDialog(): void;
         showChooseHwDialog(): void;
+        showExperimentsDialog(): void;
 
         showPackageDialog(): void;
         showBoardDialog(): void;
@@ -274,6 +279,7 @@ namespace pxt.editor {
         showUploadInstructionsAsync?: (fn: string, url: string, confirmAsync: (options: any) => Promise<number>) => Promise<void>;
         toolboxOptions?: IToolboxOptions;
         blocklyPatch?: (pkgTargetVersion: string, dom: Element) => void;
+        webUsbPairDialogAsync?: (confirmAsync: (options: any) => Promise<number>) => Promise<number>;
     }
 
     export interface FieldExtensionOptions {

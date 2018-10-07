@@ -186,7 +186,7 @@ namespace pxt.github {
 
     export function getCommitAsync(repopath: string, sha: string) {
         return ghGetJsonAsync("https://api.github.com/repos/" + repopath + "/git/commits/" + sha)
-            .then((commit: Commit) => ghGetJsonAsync(commit.tree.url)
+            .then((commit: Commit) => ghGetJsonAsync(commit.tree.url + "?recursive=1")
                 .then((tree: Tree) => {
                     commit.tree = tree
                     return commit
@@ -563,8 +563,13 @@ namespace pxt.github {
             return Promise.all(repos.map(id => repoAsync(id.path, config)))
                 .then(rs => rs.filter(r => r.status != GitRepoStatus.Banned)); // allow deep links to github repos
 
-        query += ` in:name,description,readme "for PXT/${appTarget.platformid || appTarget.id}"`
-        return ghGetJsonAsync("https://api.github.com/search/repositories?q=" + encodeURIComponent(query))
+        let fetch = () => useProxy()
+            ? U.httpGetJsonAsync(`${pxt.Cloud.apiRoot}ghsearch/${appTarget.id}/${appTarget.platformid || appTarget.id}?q=`
+                + encodeURIComponent(query))
+            : ghGetJsonAsync("https://api.github.com/search/repositories?q="
+                + encodeURIComponent(query + ` in:name,description,readme "for PXT/${appTarget.platformid || appTarget.id}"`))
+
+        return fetch()
             .then((rs: SearchResults) =>
                 rs.items.map(item => mkRepo(item, config))
                     .filter(r => r.status == GitRepoStatus.Approved || (config.allowUnapproved && r.status == GitRepoStatus.Unknown))

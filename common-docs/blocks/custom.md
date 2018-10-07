@@ -1,6 +1,6 @@
 # Custom blocks
 
-This page provides a short introduction to defining your own blocks in PXT. 
+This page provides a short introduction to defining your own blocks in MakeCode. 
 
 ## Custom blocks? I can't find it in the editor!
 
@@ -41,7 +41,7 @@ If you already have added this file to your project, simply navigate to it using
 
 ## Using a shared project in **Extensions**
 
-You can add a shared project as a dependent package and re-use all the blocks from that project. Just click on the **Extensions**
+You can add a shared project as a dependent extension and re-use all the blocks from that project. Just click on the **Extensions**
 button, paste the shared project url, and search.
 
 ## Development cycle
@@ -58,4 +58,4 @@ The easiest way to share your blocks is to share the entire project using the [s
 
 ## Taking it to GitHub
 
-If you plan to reuse those blocks further, you might consider turning them into a [package](/packages).
+If you plan to reuse those blocks further, you might consider turning them into an [extension](/extensions).

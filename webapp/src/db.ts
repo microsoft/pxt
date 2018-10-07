@@ -32,7 +32,11 @@ export function getDbAsync(): Promise<any> {
     if (pxt.shell.isSandboxMode() || pxt.shell.isReadOnly())
         return memoryDb();
 
-    let temp = new PouchDB("pxt-" + pxt.storage.storageId(), { revs_limit: 2 })
+    const opts: any = {
+        revs_limit: 2
+    };
+
+    let temp = new PouchDB("pxt-" + pxt.storage.storageId(), opts);
     return temp.get('pouchdbsupportabletest')
         .catch(function (error: any) {
             if (error && error.error && error.name == 'indexed_db_went_bad') {
@@ -42,6 +46,7 @@ export function getDbAsync(): Promise<any> {
                 return Promise.resolve(_db);
             }
         })
+        .finally(() => { pxt.log(`PouchDB adapter: ${_db.adapter}`) });
 }
 
 export function destroyAsync(): Promise<void> {
@@ -84,61 +89,6 @@ export class Table {
         return getDbAsync().then(db => db.put(obj)).then((resp: any) => resp.rev)
     }
 }
-
-class TranslationDb implements ts.pxtc.Util.ITranslationDb {
-    table: Table;
-    memCache: pxt.Map<ts.pxtc.Util.ITranslationDbEntry> = {};
-
-    constructor() {
-        this.table = new Table("translations");
-    }
-
-    private key(lang: string, filename: string, branch: string) {
-        return `${lang}-${filename}-${branch || ""}`;
-    }
-
-    getAsync(lang: string, filename: string, branch?: string): Promise<ts.pxtc.Util.ITranslationDbEntry> {
-        const id = this.key(lang, filename, branch);
-        // only update once per session
-        const entry = this.memCache[id];
-        if (entry) {
-            pxt.debug(`translation cache live hit ${id}`);
-            return Promise.resolve(entry);
-        }
-
-        // load from pouchdb
-        pxt.debug(`translation cache: load ${id}`)
-        return this.table.getAsync(id).then(
-            v => {
-                pxt.debug(`translation cache hit ${id}`);
-                return v;
-            },
-            e => {
-                pxt.debug(`translation cache miss ${id}`);
-                return undefined;
-            } // not found
-        );
-    }
-    setAsync(lang: string, filename: string, branch: string, etag: string, strings: pxt.Map<string>): Promise<void> {
-        const id = this.key(lang, filename, branch);
-        const entry: ts.pxtc.Util.ITranslationDbEntry = {
-            id,
-            etag,
-            strings
-        };
-        pxt.debug(`translation cache: save ${id}-${etag}`)
-        const mem = pxt.Util.clone(entry);
-        mem.cached = true;
-        delete (<any>mem)._rev;
-        this.memCache[id] = mem;
-        return this.table.forceSetAsync(entry).then(() => { }, e => {
-            pxt.log(`translate cache: conflict for ${id}`);
-        });
-    }
-
-}
-
-ts.pxtc.Util.translationDb = new TranslationDb();
 
 class GithubDb implements pxt.github.IGithubDb {
     // in memory cache

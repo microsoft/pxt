@@ -102,16 +102,32 @@
         color: black;
     }
     /* TOC */
-    .toc a.header {
+    .toc .inverted .item.title a.header {
+        margin-right: 1em;
+    }
+    .toc .inverted .item a.header {
         color: white;
     }
     .toc a.item {
-        color: rgba(255, 255, 255, 1);
+        color: black;
         padding: 10px 15px !important;
     }
+    .toc .inverted a.item {
+        color: rgba(255, 255, 255, 1);
+    }
+
     .toc a.item:hover {
         text-decoration: @linkHoverUnderline;
     }
+
+    .toc .inverted .item.search {
+        margin: -.92857143em -1.14285714em;
+    }
+
+    .toc .item.search input {
+        border-radius: 0;
+    }
+
     .tocmenu .menu {
         padding-left: 20px;
         font-family: @docsPageFont;
@@ -119,6 +135,28 @@
     /* Buttons */
     .ui.primary.button p {
         color: white;
+    }
+
+    #sidedocs-back-button {
+        margin-top: 1.25rem;
+        margin-left: 1.25rem;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    #sidedocs-back-button.disabled {
+        color: #aeaeae;
+        cursor: not-allowed;
+    }
+    table {
+        border-collapse: collapse;
+    }
+    table tr th, table tr td {
+        border: 1px solid #333;
+        padding: 6px 13px;
+    }
+    table tr:nth-child(2n) {
+        background-color: #f8f8f8;
     }
 }
 

@@ -44,7 +44,6 @@ declare namespace pxt {
         serial?: AppSerial;
         appTheme: AppTheme;
         compileService?: TargetCompileService;
-        analytics?: AppAnalytics;
         ignoreDocsErrors?: boolean;
         variants?: Map<AppTarget>; // patches on top of the current AppTarget for different chip variants
     }
@@ -92,11 +91,6 @@ declare namespace pxt {
         bannedCategories?: string[]; // a list of categories to exclude blocks from
     }
 
-    interface AppAnalytics {
-        userVoiceApiKey?: string;
-        userVoiceForumId?: number;
-    }
-
     interface AppSerial {
         useHF2?: boolean;
         noDeploy?: boolean;
@@ -106,7 +100,6 @@ declare namespace pxt {
         nameFilter?: string; // regex to match devices
         rawHID?: boolean;
         log?: boolean; // pipe messages to log
-        chromeExtension?: string; // unique identifier of the chrome extension
         editorTheme?: SerialTheme;
     }
 
@@ -133,15 +126,18 @@ declare namespace pxt {
         autoRun?: boolean;
         stopOnChange?: boolean;
         hideRestart?: boolean;
-        enableTrace?: boolean;
-        debugger?: boolean;
+        // moved to theme
+        // enableTrace?: boolean;
+        // moved to theme
+        // debugger?: boolean;
         hideFullscreen?: boolean;
         streams?: boolean;
         aspectRatio?: number; // width / height
         boardDefinition?: pxsim.BoardDefinition;
         dynamicBoardDefinition?: boolean; // if true, boardDefinition comes from board package
         parts?: boolean; // parts enabled?
-        instructions?: boolean;
+        // moved to theme
+        // instructions?: boolean;
         partsAspectRatio?: number; // aspect ratio of the simulator when parts are displayed
         headless?: boolean; // whether simulator should still run while collapsed
         trustedUrls?: string[]; // URLs that are allowed in simulator modal messages
@@ -181,8 +177,10 @@ declare namespace pxt {
         description?: string;
         twitter?: string;
         defaultLocale?: string;
+        logoWide?: boolean; // the portrait logo is not square, but wide
         logoUrl?: string;
         logo?: string;
+        hideMenubarLogo?: boolean; // if true, partner logo won't be shown in the top-left corner (menu bar)
         portraitLogo?: string;
         highContrastLogo?: string;
         highContrastPortraitLogo?: string;
@@ -221,6 +219,7 @@ declare namespace pxt {
         coloredToolbox?: boolean; // if true: color the blockly toolbox categories
         invertedToolbox?: boolean; // if true: use the blockly inverted toolbox
         invertedMonaco?: boolean; // if true: use the vs-dark monaco theme
+        lightToc?: boolean; // if true: do NOT use inverted style in docs toc
         blocklyOptions?: Blockly.Options; // Blockly options, see Configuration: https://developers.google.com/blockly/guides/get-started/web
         hideFlyoutHeadings?: boolean; // Hide the flyout headings at the top of the flyout when on a mobile device.
         monacoColors?: pxt.Map<string>; // Monaco theme colors, see https://code.visualstudio.com/docs/getstarted/theme-color-reference
@@ -251,7 +250,11 @@ declare namespace pxt {
         extendEditor?: boolean; // whether a target specific editor.js is loaded
         extendFieldEditors?: boolean; // wether a target specific fieldeditors.js is loaded
         highContrast?: boolean; // simulator has a high contrast mode
+        print?: boolean; //Print blocks and text feature
         greenScreen?: boolean; // display webcam stream in background
+        instructions?: boolean; // display make instructions
+        enableTrace?: boolean; // Slow-Mo button
+        debugger?: boolean; // debugger button
         selectLanguage?: boolean; // add language picker to settings menu
         availableLocales?: string[]; // the list of enabled language codes
         useUploadMessage?: boolean; // change "Download" text to "Upload"
@@ -265,10 +268,14 @@ declare namespace pxt {
         defaultBlockGap?: number; // For targets to override block gap
         hideShareEmbed?: boolean; // don't show advanced embedding options in share dialog
         hideNewProjectButton?: boolean; // do not show the "new project" button in home page
+        saveInMenu?: boolean; // move save icon under gearwheel menu
         fileNameExclusiveFilter?: string; // anything that does not match this regex is removed from the filename,
         copyrightText?: string; // footer text for any copyright text to be included at the bottom of the home screen and about page
         appFlashingTroubleshoot?: string; // Path to the doc about troubleshooting UWP app flashing failures, e.g. /device/windows-app/troubleshoot
         browserDbPrefixes?: { [majorVersion: number]: string }; // Prefix used when storing projects in the DB to allow side-by-side projects of different major versions
+        editorVersionPaths?: { [majorVersion: number]: string }; // A map of major editor versions to their corresponding paths (alpha, v1, etc.)
+        experiments?: string[]; // list of experiment ids, also enables this feature
+        chooseBoardOnNewProject?: boolean; // when multiple boards are support, show board dialog on "new project"
     }
 
     interface SocialOptions {
@@ -323,9 +330,6 @@ declare namespace ts.pxtc {
         hexMimeType?: string;
         driveName?: string;
         jsRefCounting?: boolean;
-        floatingPoint?: boolean;
-        taggedInts?: boolean; // implies floatingPoint and needsUnboxing
-        needsUnboxing?: boolean;
         boxDebug?: boolean;
         deployDrives?: string; // partial name of drives where the .hex file should be copied
         deployFileMarker?: string;
@@ -341,7 +345,6 @@ declare namespace ts.pxtc {
         hidSelectors?: HidSelector[];
         emptyEventHandlerComments?: boolean; // true adds a comment for empty event handlers
         vmOpCodes?: pxt.Map<number>;
-        commonalize?: boolean;
         vtableShift?: number; // defaults to 2, i.e., (1<<2) == 4 byte alignment of vtables, and thus 256k max program size; increase for chips with more flash!
         postProcessSymbols?: boolean;
     }

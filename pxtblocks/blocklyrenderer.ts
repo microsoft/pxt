@@ -21,9 +21,10 @@ namespace pxt.blocks {
         package?: string;
         snippetMode?: boolean;
         useViewWidth?: boolean;
+        splitSvg?: boolean;
     }
 
-    export function render(blocksXml: string, options: BlocksRenderOptions = { emPixels: 14, layout: BlockLayout.Flow }): SVGSVGElement {
+    export function render(blocksXml: string, options: BlocksRenderOptions = { emPixels: 18, layout: BlockLayout.Align }): Element {
         if (!workspace) {
             blocklyDiv = document.createElement("div");
             blocklyDiv.style.position = "absolute";
@@ -49,9 +50,10 @@ namespace pxt.blocks {
             Blockly.Xml.domToWorkspace(xml, workspace);
             Blockly.Events.enable();
 
-            switch (options.layout) {
+            const layout = options.splitSvg ? BlockLayout.Align : options.layout;
+            switch (layout) {
                 case BlockLayout.Align:
-                    pxt.blocks.layout.verticalAlign(workspace, options.emPixels || 14); break;
+                    pxt.blocks.layout.verticalAlign(workspace, options.emPixels || 18); break;
                 case BlockLayout.Flow:
                     pxt.blocks.layout.flow(workspace, { ratio: options.aspectRatio, useViewWidth: options.useViewWidth }); break;
                 case BlockLayout.Clean:
@@ -79,7 +81,9 @@ namespace pxt.blocks {
                 svg.style.height = (metrics.contentHeight / options.emPixels) + 'em';
             }
 
-            return svg as any;
+            return options.splitSvg
+                ? pxt.blocks.layout.splitSvg(svg, workspace, options.emPixels)
+                : svg;
         } catch (e) {
             pxt.reportException(e);
 

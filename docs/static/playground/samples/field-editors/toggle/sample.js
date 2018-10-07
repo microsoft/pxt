@@ -3,7 +3,8 @@ namespace sample {
     /**
      * Render a boolean as a down/up toggle
      */
-    //% block="%down=toggleDownUp"
+    //% block="$down"
+    //% down.shadow="toggleDownUp"
     export function downUp(down: boolean): boolean {
         return down;
     }
@@ -11,7 +12,8 @@ namespace sample {
     /**
      * Render a boolean as an up/down toggle
      */
-    //% block="%up=toggleUpDown"
+    //% block="$up"
+    //% up.shadow="toggleUpDown"
     export function upDown(up: boolean): boolean {
         return up;
     }
@@ -19,7 +21,8 @@ namespace sample {
     /**
      * Render a boolean as a high/low toggle
      */
-    //% block="%high=toggleHighLow"
+    //% block="$high"
+    //% high.shadow="toggleHighLow"
     export function highLow(high: boolean): boolean {
         return high;
     }
@@ -28,7 +31,8 @@ namespace sample {
     /**
      * Render a boolean as a on/off toggle
      */
-    //%  block="%on=toggleOnOff"
+    //% block="$on"
+    //% on.shadow="toggleOnOff"
     export function onOff(on: boolean): boolean {
         return on;
     }
@@ -36,7 +40,8 @@ namespace sample {
     /**
      * Render a boolean as a yes/no toggle
      */
-    //% block="%yes=toggleYesNo"
+    //% block="$yes"
+    //% yes.shadow="toggleYesNo"
     export function yesNo(yes: boolean): boolean {
         return yes;
     }

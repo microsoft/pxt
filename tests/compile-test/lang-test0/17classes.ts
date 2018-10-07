@@ -1,4 +1,4 @@
-class Foo {
+class XFoo {
     pin: number;
     buf: number[];
 
@@ -24,7 +24,7 @@ class Foo {
 }
 
 function testClass() {
-    let f = new Foo(272, 100);
+    let f = new XFoo(272, 100);
     assert(f.getPin() == 172, "ctor")
     f.setPin(42)
     assert(f.getPin() == 42, "getpin")
@@ -32,7 +32,7 @@ function testClass() {
 
 function testToString() {
     msg("testToString")
-    let f = new Foo(44, 2)
+    let f = new XFoo(44, 2)
     let s = "" + f
     assert(s == "Foo42", "ts")
 }

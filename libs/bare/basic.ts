@@ -1,8 +1,16 @@
-namespace serial {
+namespace control {
     //% shim=serial::writeString
-    export function writeString(s: string) {
+    export function __log(s: string) {
+    }
+
+    export function dmesg(s: string) {
+        // ignore
     }
 }
+
+//% async
+//% shim=basic::pause
+function pause(ms: number): void {}
 
 namespace control {
     /**
@@ -20,7 +28,4 @@ namespace control {
     //% blockId="control_in_background" block="run in background" blockGap=8 shim=control::inBackground
     export function runInBackground(a: () => void): void
     { }
-
-
-
 }

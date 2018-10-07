@@ -1026,7 +1026,6 @@ namespace ts.pxtc.assembler {
                 return;
 
             this.ei.expandLdlit(this);
-            this.ei.commonalize(this);
             this.clearLabels();
             this.iterLines();
 
@@ -1157,8 +1156,6 @@ namespace ts.pxtc.assembler {
             assert(false)
         }
 
-        public commonalize(file: assembler.File): void {
-        }
         public expandLdlit(f: File): void {
         }
 

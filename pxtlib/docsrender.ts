@@ -270,7 +270,7 @@ namespace pxt.docs {
             params["homeurl"] = html2Quote(theme.homeUrl);
         params["targetid"] = theme.id || "???";
         params["targetname"] = theme.name || "Microsoft MakeCode";
-        params["targetlogo"] = theme.docsLogo ? `<img aria-hidden="true" role="presentation" class="ui mini image" src="${theme.docsLogo}" />` : ""
+        params["targetlogo"] = theme.docsLogo ? `<img aria-hidden="true" role="presentation" class="ui ${theme.logoWide ? "small" : "mini"} image" src="${theme.docsLogo}" />` : ""
         let ghURLs = d.ghEditURLs || []
         if (ghURLs.length) {
             let ghText = `<p style="margin-top:1em">\n`
@@ -324,6 +324,7 @@ namespace pxt.docs {
 .ui.inverted.accent { background: ${theme.accentColor}; }
 `
         params["targetstyle"] = style;
+        params["tocclass"] = theme.lightToc ? "lighttoc" : "inverted";
 
         for (let k of Object.keys(theme)) {
             let v = (theme as any)[k]

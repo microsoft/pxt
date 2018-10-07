@@ -2,15 +2,18 @@
 
 //
 // Note that this is supposed to run from command line.
-// Do not use anything besides control.pause, control.runInBackground, console.log
+// Do not use anything besides pause, control.runInBackground, console.log
 //
 
-control.pause(2000)
+pause(2000)
 
 function msg(s: string): void {
-    serial.writeString(s)
-    serial.writeString("\n")
-    //control.pause(50);
+    control.__log(s)
+    control.__log("\n")
+    control.dmesg(s)
+    //serial.writeString(s)
+    //serial.writeString("\n")
+    //pause(50);
 }
 
 msg("start!")
@@ -21,7 +24,7 @@ function assert(cond: boolean, m?: string) {
         if (m)
             msg(m)
         while (1) {
-            control.pause(1000)
+            pause(1000)
         }
     }
 }

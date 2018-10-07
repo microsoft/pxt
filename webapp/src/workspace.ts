@@ -10,6 +10,7 @@ import * as fileworkspace from "./fileworkspace"
 import * as memoryworkspace from "./memoryworkspace"
 import * as iframeworkspace from "./iframeworkspace"
 import * as cloudsync from "./cloudsync"
+import * as indexedDBWorkspace from "./idbworkspace";
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
@@ -34,6 +35,7 @@ let allScripts: HeaderWithScript[] = [];
 let headerQ = new U.PromiseQueue();
 
 let impl: WorkspaceProvider;
+let implType: string;
 
 function lookup(id: string) {
     return allScripts.filter(x => x.header.id == id || x.header.path == id)[0]
@@ -43,9 +45,17 @@ export function gitsha(data: string) {
     return (sha1("blob " + U.toUTF8(data).length + "\u0000" + data) + "")
 }
 
+export function copyProjectToLegacyEditor(header: Header, majorVersion: number): Promise<Header> {
+    if (!isBrowserWorkspace()) {
+        return Promise.reject("Copy operation only works in browser workspace");
+    }
+    return cloudworkspace.copyProjectToLegacyEditor(header, majorVersion);
+}
+
 export function setupWorkspace(id: string) {
     U.assert(!impl, "workspace set twice");
-    pxt.debug(`workspace: ${id}`);
+    pxt.log(`workspace: ${id}`);
+    implType = id;
     switch (id) {
         case "fs":
         case "file":
@@ -62,6 +72,9 @@ export function setupWorkspace(id: string) {
             fileworkspace.setApiAsync(pxt.winrt.workspace.fileApiAsync);
             impl = pxt.winrt.workspace.getProvider(fileworkspace.provider);
             break;
+        case "idb":
+            impl = indexedDBWorkspace.provider;
+            break;
         case "cloud":
         case "browser":
         default:
@@ -72,9 +85,62 @@ export function setupWorkspace(id: string) {
 
 export function getHeaders(withDeleted = false) {
     checkSession();
-    let r = allScripts.map(e => e.header).filter(h => withDeleted || !h.isDeleted)
+    let r = allScripts.map(e => e.header).filter(h => (withDeleted || !h.isDeleted) && !h.isBackup)
     r.sort((a, b) => b.recentUse - a.recentUse)
     return r
+}
+
+export function makeBackupAsync(h: Header, text: ScriptText): Promise<Header> {
+    let h2 = U.flatClone(h)
+    h2.id = U.guidGen()
+
+    delete h2._rev
+    delete (h2 as any)._id
+    h2.isBackup = true;
+
+    return importAsync(h2, text)
+        .then(() => {
+            h.backupRef = h2.id;
+            return saveAsync(h2);
+        })
+        .then(() => h2)
+}
+
+
+export function restoreFromBackupAsync(h: Header) {
+    if (!h.backupRef || h.isDeleted) return Promise.resolve();
+
+    const refId = h.backupRef;
+    return getTextAsync(refId)
+        .then(files => {
+            delete h.backupRef;
+            return saveAsync(h, files);
+        })
+        .then(() => {
+            const backup = getHeader(refId);
+            backup.isDeleted = true;
+            return saveAsync(backup);
+        })
+        .catch(() => {
+            delete h.backupRef;
+            return saveAsync(h);
+        });
+}
+
+export function cleanupBackupsAsync() {
+    checkSession();
+    const allHeaders = allScripts.map(e => e.header);
+
+    const refMap: pxt.Map<boolean> = {};
+
+    // Figure out which scripts have backups
+    allHeaders.filter(h => h.backupRef).forEach(h => refMap[h.backupRef] = true);
+
+    // Delete the backups that don't have any scripts referencing them
+    return Promise.all(allHeaders.filter(h => (h.isBackup && !refMap[h.id])).map(h => {
+        h.isDeleted = true;
+        return saveAsync(h);
+    }));
 }
 
 export function getHeader(id: string) {
@@ -106,6 +172,7 @@ export function initAsync() {
     allScripts = []
 
     return syncAsync()
+        .then(state => cleanupBackupsAsync().then(() => state));
 }
 
 export function getTextAsync(id: string): Promise<ScriptText> {
@@ -193,10 +260,10 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
             h.pubCurrent = false
             h.blobCurrent = false
             h.modificationTime = U.nowSeconds();
-            h.targetVersion = pxt.appTarget.versions.target;
+            h.targetVersion = h.targetVersion || "0.0.0";
         }
         h.saveId = null
-        // update version on save    
+        // update version on save
     }
 
     // perma-delete
@@ -228,6 +295,8 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
 
 function computePath(h: Header) {
     let path = h.name.replace(/[^a-zA-Z0-9]+/g, " ").trim().replace(/ /g, "-")
+    if (!path)
+        path = "Untitled"; // do not translate
     if (lookup(path)) {
         let n = 2
         while (lookup(path + "-" + n))
@@ -380,7 +449,7 @@ export async function commitAsync(hd: Header, msg: string, tag = "", filenames: 
     let files = await getTextAsync(hd.id)
     let gitjsontext = files[GIT_JSON]
     if (!gitjsontext)
-        U.userError(lf("Not a git package."))
+        U.userError(lf("Not a git extension."))
     let gitjson = JSON.parse(gitjsontext) as GitJson
     let parsed = pxt.github.parseRepoId(gitjson.repo)
     let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig
@@ -588,7 +657,7 @@ export function installByIdAsync(id: string) {
                         meta: scr.meta,
                         editor: scr.editor,
                         target: scr.target,
-                        targetVersion: scr.targetVersion
+                        targetVersion: scr.targetVersion || (scr.meta && scr.meta.versions && scr.meta.versions.target)
                     }, files)))
 }
 
@@ -601,6 +670,14 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
     checkSession();
 
     return impl.listAsync()
+        .catch((e) => {
+            // There might be a problem with the native databases. Switch to memory for this session so the user can at
+            // least use the editor.
+            pxt.tickEvent("workspace.syncerror", { ws: implType });
+            pxt.log("Workspace error, switching to memory workspace");
+            impl = memoryworkspace.provider;
+            return impl.listAsync();
+        })
         .then(headers => {
             let existing = U.toDictionary(allScripts || [], h => h.header.id)
             allScripts = []
@@ -659,6 +736,10 @@ export function listAssetsAsync(id: string): Promise<pxt.workspace.Asset[]> {
     if (impl.listAssetsAsync)
         return impl.listAssetsAsync(id)
     return Promise.resolve([])
+}
+
+export function isBrowserWorkspace() {
+    return impl === cloudworkspace.provider;
 }
 
 

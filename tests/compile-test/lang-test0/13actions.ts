@@ -10,7 +10,7 @@ function inBg() {
     control.runInBackground(() => {
         glb1 = glb1 + 1
     })
-    control.pause(50)
+    pause(50)
     assert(glb1 == 18, "inbg0")
     assert(rec.str == "foo", "inbg1")
     glb1 = 0

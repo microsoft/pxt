@@ -37,7 +37,6 @@ pxt.setAppTarget({
         isNative: false,
         hasHex: false,
         jsRefCounting: true,
-        floatingPoint: false
     },
     bundledpkgs: {},
     appTheme: {},
@@ -104,30 +103,13 @@ describe("ts compiler", () => {
         }
     };
 
-    describe("without floating point", () => {
-        filenames.forEach(filename => {
-            it("should compile and run " + path.basename(filename), function() {
-                this.timeout(10000)
-                return compileTestAsync(filename)
-            });
-        });
-    });
-
     describe("with floating point", () => {
-        before(() => {
-            pxt.appTarget.compile.floatingPoint = true
-        });
-
         filenames.forEach(filename => {
             it("should compile and run " + path.basename(filename), function() {
                 this.timeout(10000)
                 return compileTestAsync(filename)
             });
         });
-
-        after(() => {
-            pxt.appTarget.compile.floatingPoint = false
-        })
     });
 });
 
@@ -158,18 +140,22 @@ function runCoreAsync(res: pxtc.CompileResult) {
     return new Promise<void>((resolve, reject) => {
         let f = res.outfiles[pxtc.BINARY_JS]
         if (f) {
+            let timeout = setTimeout(() => {
+                reject(new Error("Simulating code timed out"))
+            }, 5000);
             let r = new pxsim.Runtime({ type: "run", code: f })
             r.errorHandler = (e) => {
+                clearTimeout(timeout);
                 reject(e);
             }
             r.run(() => {
-                // console.log("DONE")
+                clearTimeout(timeout);
                 pxsim.dumpLivePointers();
                 resolve()
             })
         }
         else {
-            reject("No compiled js");
+            reject(new Error("No compiled js"));
         }
     })
 }

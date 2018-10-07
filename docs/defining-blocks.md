@@ -103,7 +103,7 @@ type = string
 * the function parameter are mapped **in order** to `%parameter` argument. The loader automatically builds
 a mapping between the block field names and the function names.
 * the block will automatically switch to external inputs when enough parameters are detected
-* A block type `=type` can be specified optionally for each parameter. It will be used to populate the shadow type.
+* Using `=type` in the block string for shadow blocks is deprecated. See "Specifying shadow blocks" for more details.
 
 ## Supported types
 
@@ -114,6 +114,25 @@ The following [types](/playground#basic-types) are supported in function signatu
 * enums (see below)
 * custom classes that are also exported
 * arrays of the above
+
+## Specifying shadow blocks
+
+A "shadow" block is a block which cannot be removed from its parent but can have
+other blocks placed on top. They are used to ensure that block inputs always have
+valid values instead of leaving a "hole" behind when a block is removed. All parameters
+are given shadow blocks in PXT for the supported types (listed above). To specify a shadow block
+for an unsupported type or to override a default shadow, use the following syntax:
+
+```typescript-ignore
+//% block="$myParam"
+//% myParam.shadow="myShadowBlockID"
+function myFunction(myParam: number): void {}
+```
+
+If an existing block definition specifies the shadow block id within the block string,
+the value can be changed using the above syntax without altering the block string. This
+allows the shadow block to be changed without invalidating the localization of the block.
+Setting the shadow id to `unset` will remove any existing shadow value.
 
 ## Specifying min and max values
 

@@ -15,7 +15,7 @@ html {
     overflow: hidden;
     font-size:16px;
 }
-  
+
 body {
     height: 100%;
     padding: 0;
@@ -94,6 +94,7 @@ body {
 /* Editor tools */
 @editorToolsHeight: 10rem;
 @editorToolsCollapsedHeight: 4.7rem;
+@editorToolsCollapsedMobileHeight: 3.4rem;
 #editortools {
     position: fixed;
     top: auto;
@@ -644,6 +645,7 @@ p.ui.font.small {
 /* Large Monitor */
 @media only screen and (min-width: @largeMonitorBreakpoint) {
     #editorlogo > .poweredbylogo {
+        .includePoweredByLogos(); // set the @poweredByLarge variable
         background-image: @poweredByLarge;
     }
 }
@@ -651,6 +653,7 @@ p.ui.font.small {
 /* Small Monitor */
 @media only screen and (min-width: @computerBreakpoint) and (max-width: @largestSmallMonitor) {
     #editorlogo > .poweredbylogo {
+        .includePoweredByLogos(); // set the @poweredByLarge variable
         background-image: @poweredByLarge;
     }
 }
@@ -663,6 +666,7 @@ p.ui.font.small {
     #editorlogo > .poweredbylogo {
         height: 12px;
         bottom: 3px;
+        .includePoweredByLogos(); // set the @poweredBySmall variable
         background-image: @poweredBySmall;
     }
 }
@@ -675,6 +679,7 @@ p.ui.font.small {
     #editorlogo > .poweredbylogo {
         height: 13px;
         bottom: 3px;
+        .includePoweredByLogos(); // set the @poweredBySmall variable
         background-image: @poweredBySmall;
     }
 }
@@ -905,14 +910,26 @@ p.ui.font.small {
 /* Mobile */
 @media only screen and (max-width: @largestMobileScreen) {
     .hideEditorFloats #editortools {
-        height: @editorToolsCollapsedHeight;
+        height: @editorToolsCollapsedMobileHeight;
     }
     .hideEditorFloats #blocksArea, .hideEditorFloats #monacoEditor {
-        bottom: @editorToolsCollapsedHeight;
+        bottom: @editorToolsCollapsedMobileHeight;
     }
 
     .ui.modal.projectsdialog h2.editorname {
         font-size: 1.2rem;
+    }
+
+    .hideEditorFloats #editortools .column.mobile.only {
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+    }
+
+    .logo-wide #mainmenu {
+        .ui.logo.brand,
+        .ui.logo.organization {
+            display: none !important;
+        }
     }
 }
 

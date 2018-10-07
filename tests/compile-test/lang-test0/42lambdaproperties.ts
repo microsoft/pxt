@@ -20,6 +20,7 @@ namespace LambdaProperty {
     export function test() {
         assert(x.bar() == 3);
         assert(x.baz(42) == 43);
+        x = null // release memory
     }
 }
 LambdaProperty.test()

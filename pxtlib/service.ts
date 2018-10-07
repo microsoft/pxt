@@ -14,16 +14,12 @@ namespace ts.pxtc {
     export const TS_OUTPUT_TYPE = "typescript_expression";
     export const PAUSE_UNTIL_TYPE = "pxt_pause_until";
     export const BINARY_JS = "binary.js";
-    export const BINARY_CS = "binary.cs";
     export const BINARY_ASM = "binary.asm";
     export const BINARY_HEX = "binary.hex";
     export const BINARY_UF2 = "binary.uf2";
     export const BINARY_ELF = "binary.elf";
 
     export const NATIVE_TYPE_THUMB = "thumb";
-    export const NATIVE_TYPE_AVR = "AVR";
-    export const NATIVE_TYPE_CS = "C#";
-    export const NATIVE_TYPE_AVRVM = "AVRVM";
 
     export interface ParameterDesc {
         name: string;
@@ -165,6 +161,7 @@ namespace ts.pxtc {
         group?: string;
         whenUsed?: boolean;
         jres?: string;
+        useLoc?: string; // The qName of another API whose localization will be used if this API is not translated and if both block definitions are identical
         // On namepspace
         subcategories?: string[];
         groups?: string[];
@@ -206,6 +203,8 @@ namespace ts.pxtc {
         _source?: string;
         _def?: ParsedBlockDef;
         _expandedDef?: ParsedBlockDef;
+        _untranslatedBlock?: string; // The block definition before it was translated
+        _shadowOverrides?: pxt.Map<string>;
         jsDoc?: string;
         paramHelp?: pxt.Map<string>;
         // foo.defl=12 -> paramDefl: { foo: "12" }
@@ -498,7 +497,7 @@ namespace ts.pxtc {
                 }
                 ex.attributes.block =
                     isGet ? `%${paramName} %property` :
-                    isSet ? `set %${paramName} %property to %${paramValue}` :
+                        isSet ? `set %${paramName} %property to %${paramValue}` :
                             `change %${paramName} %property by %${paramValue}`
                 updateBlockDef(ex.attributes)
                 blocks.push(ex)
@@ -632,7 +631,21 @@ namespace ts.pxtc {
                         fn.parameters.forEach(pi => pi.description = loc[`${fn.qName}|param|${pi.name}`] || pi.description);
                 }
                 const nsDoc = loc['{id:category}' + Util.capitalize(fn.qName)];
-                const locBlock = loc[`${fn.qName}|block`];
+                let locBlock = loc[`${fn.qName}|block`];
+
+                if (!locBlock && fn.attributes.useLoc) {
+                    const otherFn = apis.byQName[fn.attributes.useLoc];
+
+                    if (otherFn) {
+                        const otherTranslation = loc[`${otherFn.qName}|block`];
+                        const isSameBlockDef = fn.attributes.block === (otherFn.attributes._untranslatedBlock || otherFn.attributes.block);
+
+                        if (isSameBlockDef && !!otherTranslation) {
+                            locBlock = otherTranslation;
+                        }
+                    }
+                }
+
                 if (nsDoc) {
                     // Check for "friendly namespace"
                     if (fn.attributes.block) {
@@ -645,6 +658,7 @@ namespace ts.pxtc {
                     const ps = pxt.blocks.compileInfo(fn);
                     const oldBlock = fn.attributes.block;
                     fn.attributes.block = pxt.blocks.normalizeBlock(locBlock);
+                    fn.attributes._untranslatedBlock = oldBlock;
                     if (oldBlock != fn.attributes.block) {
                         const locps = pxt.blocks.compileInfo(fn);
                         if (JSON.stringify(ps) != JSON.stringify(locps)) {
@@ -713,6 +727,9 @@ namespace ts.pxtc {
                         } else {
                             res.paramDefl[n.slice(0, n.length - 5)] = v
                         }
+                    } else if (U.endsWith(n, ".shadow")) {
+                        if (!res._shadowOverrides) res._shadowOverrides = {};
+                        res._shadowOverrides[n.slice(0, n.length - 7)] = v;
                     } else if (U.endsWith(n, ".fieldEditor")) {
                         if (!res.paramFieldEditor) res.paramFieldEditor = {}
                         res.paramFieldEditor[n.slice(0, n.length - 12)] = v
@@ -833,10 +850,21 @@ namespace ts.pxtc {
     export function updateBlockDef(attrs: CommentAttrs) {
         if (attrs.block) {
             const parts = attrs.block.split("||");
-            attrs._def = parseBlockDefinition(parts[0]);
+            attrs._def = applyOverrides(parseBlockDefinition(parts[0]));
             if (!attrs._def) pxt.debug("Unable to parse block def for id: " + attrs.blockId);
-            if (parts[1]) attrs._expandedDef = parseBlockDefinition(parts[1]);
+            if (parts[1]) attrs._expandedDef = applyOverrides(parseBlockDefinition(parts[1]));
             if (parts[1] && !attrs._expandedDef) pxt.debug("Unable to parse expanded block def for id: " + attrs.blockId);
+        }
+
+        function applyOverrides(def: ParsedBlockDef) {
+            if (attrs._shadowOverrides) {
+                def.parameters.forEach(p => {
+                    const shadow = attrs._shadowOverrides[p.name];
+                    if (shadow === "unset") delete p.shadowBlockId;
+                    else if (shadow != null) p.shadowBlockId = shadow;
+                });
+            }
+            return def;
         }
     }
 

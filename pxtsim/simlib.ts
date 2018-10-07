@@ -27,8 +27,14 @@ namespace pxsim {
         private notifyOneID: number;
         private lastEventValue: string | number;
         private lastEventTimestampUs: number;
+        private backgroundHandlerFlag: boolean = false;
 
         public nextNotifyEvent = 1024;
+
+        public setBackgroundHandlerFlag() {
+            this.backgroundHandlerFlag = true;
+        }
+
         public setNotify(notifyID: number, notifyOneID: number) {
             this.notifyID = notifyID;
             this.notifyOneID = notifyOneID;
@@ -36,16 +42,27 @@ namespace pxsim {
 
         constructor(private runtime: Runtime, private valueToArgs?: EventValueToActionArgs<T>) { }
 
-        private start(id: number | string, evid: number | string, create: boolean) {
-            let k = id + ":" + evid;
+        private start(id: number | string, evid: number | string, create: boolean, background: boolean) {
+            let k = (background ? "back:" : "") + id + ":" + evid;
             let queue = this.queues[k];
             if (!queue) queue = this.queues[k] = new EventQueue<T>(this.runtime, this.valueToArgs);
             return queue;
         }
 
         listen(id: number | string, evid: number | string, handler: RefAction) {
-            let q = this.start(id, evid, true);
-            q.handler = handler;
+            let q = this.start(id, evid, true, this.backgroundHandlerFlag);
+            if (this.backgroundHandlerFlag)
+                q.addHandler(handler);
+            else
+                q.setHandler(handler);
+            this.backgroundHandlerFlag = false;
+        }
+
+        removeBackgroundHandler(handler: RefAction) {
+            Object.keys(this.queues).forEach((k: string) => {
+                if (k.startsWith("back:"))
+                    this.queues[k].removeHandler(handler);
+            });
         }
 
         queue(id: number | string, evid: number | string, value: T = null) {
@@ -53,18 +70,23 @@ namespace pxsim {
             const notifyOne = this.notifyID && this.notifyOneID && id == this.notifyOneID;
             if (notifyOne)
                 id = this.notifyID;
-
-            // grab queue and handle
-            let q = this.start(id, evid, false);
-            if (q) {
+            let qBackground = this.start(id, evid, false, true);
+            let qForeground = this.start(id, evid, false, false);
+            if (qBackground || qForeground) {
                 this.lastEventValue = evid;
                 this.lastEventTimestampUs = U.perfNowUs();
-                q.push(value, notifyOne);
+                let promise: Promise<void> = Promise.resolve();
+                if (qBackground)
+                    promise = qBackground.push(value, notifyOne);
+                // do the foreground handler after the background handlers
+                if (qForeground)
+                    promise.then(() => { qForeground.push(value, notifyOne) })
             }
         }
 
+        // only for foreground handlers
         wait(id: number | string, evid: number | string, cb: (value?: any) => void) {
-            let q = this.start(id, evid, true);
+            let q = this.start(id, evid, true, false);
             q.addAwaiter(cb);
         }
 
@@ -187,12 +209,16 @@ namespace pxsim {
             stop();
         }
 
-        export function stop() {
+        function stopTone() {
             if (_vca) _vca.gain.value = 0;
             _frequency = 0;
             if (audio) {
                 audio.pause();
             }
+        }
+
+        export function stop() {
+            stopTone();
         }
 
         export function frequency(): number {
@@ -258,6 +284,36 @@ namespace pxsim {
                 audio.onerror = () => res();
                 audio.play();
             })
+        }
+
+        function frequencyFromMidiNoteNumber(note: number) {
+            return 440 * Math.pow(2, (note - 69) / 12);
+        }
+
+        export function sendMidiMessage(buf: RefBuffer) {
+            const data = buf.data;
+            if (!data.length) // garbage.
+                return;
+
+            // no midi access or no midi element,
+            // limited interpretation of midi commands
+            const cmd = data[0] >> 4;
+            const channel = data[0] & 0xf;
+            const noteNumber = data[1] || 0;
+            const noteFrequency = frequencyFromMidiNoteNumber(noteNumber);
+            const velocity = data[2] || 0;
+            //console.log(`midi: cmd ${cmd} channel (-1) ${channel} note ${noteNumber} f ${noteFrequency} v ${velocity}`)
+
+            // play drums regardless
+            if (cmd == 8 || ((cmd == 9) && (velocity == 0))) { // with MIDI, note on with velocity zero is the same as note off
+                // note off
+                stopTone();
+            } else if (cmd == 9) {
+                // note on -- todo handle velocity
+                tone(noteFrequency, 1);
+                if (channel == 9) // drums don't call noteOff
+                    setTimeout(() => stopTone(), 500);
+            }
         }
     }
 

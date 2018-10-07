@@ -23,8 +23,9 @@ namespace pxtblockly {
         public isFieldCustom_ = true;
 
         private params: any;
-        private onColor = "#FF3130";
-        private offColor = "#A0C9F0";
+        private onColor = "#FFFFFF";
+        private offColor: string;
+        private static DEFAULT_OFF_COLOR = "#000000";
 
         // The number of columns
         private matrixWidth: number = 5;
@@ -141,6 +142,9 @@ namespace pxtblockly {
             pxsim.pointerEvents.down.forEach(evid => this.sourceBlock_.getSvgRoot().removeEventListener(evid, this.dontHandleMouseEvent_));
             this.sourceBlock_.getSvgRoot().removeEventListener(pxsim.pointerEvents.move, this.dontHandleMouseEvent_);
             document.removeEventListener(pxsim.pointerEvents.up, this.clearLedDragHandler);
+            document.removeEventListener(pxsim.pointerEvents.leave, this.clearLedDragHandler);
+
+            (Blockly as any).Touch.clearTouchIdentifier();
 
             ev.stopPropagation();
             ev.preventDefault();
@@ -170,6 +174,7 @@ namespace pxtblockly {
                 this.sourceBlock_.getSvgRoot().addEventListener(pxsim.pointerEvents.move, this.dontHandleMouseEvent_);
 
                 document.addEventListener(pxsim.pointerEvents.up, this.clearLedDragHandler);
+                document.addEventListener(pxsim.pointerEvents.leave, this.clearLedDragHandler);
 
                 ev.stopPropagation();
                 ev.preventDefault();
@@ -184,7 +189,11 @@ namespace pxtblockly {
         }
 
         private getColor(x: number, y: number) {
-            return this.cellState[x][y] ? this.onColor : this.offColor;
+            if (!this.offColor) {
+                this.offColor = (this.sourceBlock_.isShadow()) ?
+                    this.sourceBlock_.parentBlock_.getColourTertiary() : this.sourceBlock_.getColourTertiary();
+            }
+            return this.cellState[x][y] ? this.onColor : (this.offColor || FieldMatrix.DEFAULT_OFF_COLOR);
         }
 
         private updateCell(x: number, y: number) {

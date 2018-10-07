@@ -5,7 +5,7 @@ function testStringOps(): void {
     assert(parseInt("-123") == -123, "tonum");
     assert("fo"[1] == "o", "at");
     assert("fo".length == 2, "count");
-    assert("fo".charCodeAt(17) == 0, "ct oor");
+    assert(!"fo".charCodeAt(17), "nan");
 }
 
 testStringOps();

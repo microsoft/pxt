@@ -36,7 +36,7 @@ namespace language {
      */
     //% shim=ENUM_GET
     //% blockId=color_enum_shim
-    //% block="Color %arg"
+    //% block="Color $arg"
     //% enumName="Colors"
     //% enumMemberName="color"
     //% enumPromptHint="e.g. Green, Orange, ..."
@@ -62,7 +62,7 @@ namespace language {
      */
     //% shim=ENUM_GET
     //% blockId=flag_enum_shim
-    //% block="Flag %arg"
+    //% block="Flag $arg"
     //% enumName="Flags"
     //% enumMemberName="flag"
     //% enumPromptHint="e.g. B, C, ..."
@@ -80,7 +80,8 @@ namespace language {
      * should be of type "number" (not the enum type)
      */
     //% blockId=show_color
-    //% block="show $color=color_enum_shim"
+    //% block="show $color"
+    //% color.shadow="color_enum_shim"
     export function showColor(color: number) {
 
     }

@@ -321,7 +321,7 @@ namespace pxsim {
     }
 
     function initAppcache() {
-        if (typeof window !== 'undefined') {
+        if (typeof window !== 'undefined' && window.applicationCache) {
             if (window.applicationCache.status === window.applicationCache.UPDATEREADY)
                 reload();
             window.applicationCache.addEventListener("updateready", () => {

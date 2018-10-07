@@ -335,11 +335,21 @@ namespace pxt.usb {
         }).then(io => io.reconnectAsync())
     }
 
+    export function isPairedAsync(): Promise<boolean> {
+        return getDeviceAsync()
+            .then((dev) => {
+                return Promise.resolve(true);
+            })
+            .catch(() => {
+                return Promise.resolve(false);
+            });
+    }
+
     function getDeviceAsync(): Promise<USBDevice> {
         return ((navigator as any).usb.getDevices() as Promise<USBDevice[]>)
             .then<USBDevice>((devs: USBDevice[]) => {
                 if (!devs || !devs.length)
-                    return Promise.reject(new USBError(U.lf("No USB device selected or connected; try pairing!")))
+                    U.userError(U.lf("No USB device selected or connected; try pairing!"))
                 return devs[0]
             })
     }
@@ -369,8 +379,6 @@ namespace pxt.usb {
     }
 
     export function isAvailable() {
-        // TODO: support other Windows SKU than Windows 10
-        return !!(navigator as any).usb &&
-            (!pxt.BrowserUtils.isWindows() || pxt.BrowserUtils.isWindows10());
+        return !!(navigator as any).usb
     }
 }

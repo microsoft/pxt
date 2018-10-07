@@ -265,13 +265,12 @@ namespace ts.pxtc {
 
         const locStrings: pxt.Map<string> = {};
         const jsdocStrings: pxt.Map<string> = {};
-        const nameToFilename = (n: string) => n.replace(/([A-Z])/g, function (m) { return '-' + m.toLowerCase(); });
         const writeLoc = (si: SymbolInfo) => {
             if (!options.locs || !si.qName) {
                 return;
             }
-            if (si.attributes.deprecated || /^__/.test(si.name))
-                return; // skip deprecated or function starting with __
+            if (/^__/.test(si.name))
+                return; // skip functions starting with __
             pxt.debug(`loc: ${si.qName}`)
             // must match blockly loader
             if (si.kind != SymbolKind.EnumMember) {
@@ -654,7 +653,11 @@ namespace ts.pxtc.service {
                     success: true,
                     times: {}
                 }
-                const binOutput = compileBinary(service.getProgram(), null, host.opts, res, "main.ts");
+                const program = service.getProgram();
+                const sources = program.getSourceFiles();
+                // entry point is main.ts or the last file which should be the test file if any
+                const entryPoint = sources.filter(f => f.fileName == "main.ts")[0] || sources[sources.length - 1];
+                const binOutput = compileBinary(program, null, host.opts, res, entryPoint ? entryPoint.fileName : "main.ts");
                 allD = binOutput.diagnostics
             }
 

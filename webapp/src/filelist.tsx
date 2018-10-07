@@ -48,8 +48,8 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
 
     private removePkg(p: pkg.EditorPackage) {
         core.confirmAsync({
-            header: lf("Remove {0} package", p.getPkgId()),
-            body: lf("You are about to remove a package from your project. Are you sure?"),
+            header: lf("Remove {0} extension", p.getPkgId()),
+            body: lf("You are about to remove an extension from your project. Are you sure?"),
             agreeClass: "red",
             agreeIcon: "trash",
             agreeLbl: lf("Remove it"),
@@ -108,10 +108,11 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             && p.getKsPkg().level <= 1;
         const upd = p.getKsPkg() && p.getKsPkg().verProtocol() == "github";
         const meta: pkg.PackageMeta = this.getData("open-pkg-meta:" + p.getPkgId());
+        const version = upd ? p.getKsPkg().verArgument().split('#')[1] : undefined; // extract github tag
         return [<PackgeTreeItem key={"hd-" + p.getPkgId()}
             pkg={p} isActive={expandedPkg == p.getPkgId()} onItemClick={this.togglePkg}
             hasDelete={del} onItemRemove={this.removePkg}
-            hasRefresh={upd} onItemRefresh={this.updatePkg} >
+            version={version} hasRefresh={upd} onItemRefresh={this.updatePkg} >
             {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
             {p.getPkgId()}
             {expandedPkg == p.getPkgId() ?
@@ -307,6 +308,7 @@ interface PackageTreeItemProps {
     onItemRefresh: (p: pkg.EditorPackage) => void;
     isActive?: boolean;
     hasRefresh?: boolean;
+    version?: string;
     hasDelete?: boolean;
 }
 
@@ -339,7 +341,7 @@ class PackgeTreeItem extends sui.StatelessUIElement<PackageTreeItemProps> {
     }
 
     renderCore() {
-        const { onItemClick, onItemRemove, onItemRefresh,
+        const { onItemClick, onItemRemove, onItemRefresh, version,
             isActive, hasRefresh, hasDelete, pkg: p, ...rest } = this.props;
 
         return <div className="header link item" role="treeitem"
@@ -347,10 +349,10 @@ class PackgeTreeItem extends sui.StatelessUIElement<PackageTreeItemProps> {
             aria-label={lf("{0}, {1}", p.getPkgId(), isActive ? lf("expanded") : lf("collapsed"))}
             onClick={this.handleClick} tabIndex={0} onKeyDown={sui.fireClickOnEnter} {...rest}>
             <sui.Icon icon={`chevron ${isActive ? "down" : "right"} icon`} />
-            {hasRefresh ? <sui.Button className="primary label" icon="refresh" title={lf("Refresh package {0}", p.getPkgId())}
-                onClick={this.handleRefresh} onKeyDown={this.handleButtonKeydown} /> : ''}
-            {hasDelete ? <sui.Button className="primary label" icon="trash" title={lf("Delete package {0}", p.getPkgId())}
-                onClick={this.handleRemove} onKeyDown={this.handleButtonKeydown} /> : ''}
+            {hasRefresh ? <sui.Button className="primary label" icon="refresh" title={lf("Refresh extension {0}", p.getPkgId())}
+                onClick={this.handleRefresh} onKeyDown={this.handleButtonKeydown} text={version || ''}></sui.Button> : undefined}
+            {hasDelete ? <sui.Button className="primary label" icon="trash" title={lf("Delete extension {0}", p.getPkgId())}
+                onClick={this.handleRemove} onKeyDown={this.handleButtonKeydown} /> : undefined}
 
             {this.props.children}
         </div>
