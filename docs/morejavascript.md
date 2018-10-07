@@ -213,6 +213,10 @@ is little overhead. I'm leaning towards that option.
 * type check: allocate one bit for every base class in vtable; leafs can just use id numbers
 * slow path: lookup by name (or idx)
 
+* method calls - first statement of the method could be to check the this pointer, and if not
+  try to lookup field with this method name and run it
+* still couldn't do stuff like `foo.doSomething = bar.doSomething` if `typeof foo != typeof bar`
+
 ## GC
 
 * most likely mark-and-sweep; generational is overkill?
