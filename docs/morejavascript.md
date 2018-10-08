@@ -216,6 +216,7 @@ is little overhead. I'm leaning towards that option.
 * method calls - first statement of the method could be to check the this pointer, and if not
   try to lookup field with this method name and run it
 * still couldn't do stuff like `foo.doSomething = bar.doSomething` if `typeof foo != typeof bar`
+* sensible fix: make `foo.doSomething` be equivalent to `foo.doSomething.bind(foo)`; or just disallow
 
 ## GC
 
@@ -224,4 +225,5 @@ is little overhead. I'm leaning towards that option.
 * GC check together with exception check (use same global bit)
 * trigger GC when close to full, not exactly full
 * think about ISRs; but most likely not, since the IRQ can hit during GC cycle
-
+* note that the GC has to scan stacks of suspended threads; most likely before calling C++ functions that can suspend, we will need to save the `sp` to know which part of stack to scan
+* we also need to save `sp` before `blx` in `pxt::runAction`
