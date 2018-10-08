@@ -757,11 +757,15 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
     save() {
         const { projectName: newName } = this.state;
         this.hide();
-        if (this.props.parent.state.projectName != newName) pxt.tickEvent("exitandsave.projectrename", undefined, { interactiveConsent: true });
-        this.props.parent.updateHeaderNameAsync(newName)
-            .done(() => {
-                this.props.parent.openHome();
-            })
+        let p = Promise.resolve();
+        // save project name if valid change
+        if (newName && this.props.parent.state.projectName != newName) {
+            pxt.tickEvent("exitandsave.projectrename", undefined, { interactiveConsent: true });
+            p = p.then(() => this.props.parent.updateHeaderNameAsync(newName));
+        }
+        p.done(() => {
+            this.props.parent.openHome();
+        })
     }
 
     renderCore() {
