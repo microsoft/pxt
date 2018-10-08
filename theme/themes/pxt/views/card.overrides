@@ -108,16 +108,28 @@ a.ui.card:focus,
 }
 
 .setExampleCardFullHeight() when (@exampleCardFullHeight) {
-    .ui.card.example {
-        .ui.image, .ui.cardimage {
-            height: 12rem;
+    .projectsdialog {
+        .ui.card.example {
+            .ui.image, .ui.cardimage {
+                height: 12rem !important;
+            }
+            .ui.image ~ .content {
+                background: @exampleCardFullHeightBackground;
+                position: absolute;
+                bottom: 0;
+                .header {
+                    color: @exampleCardFullHeightColor;
+                }
+            }
         }
-        .ui.image ~ .content {
-            background: @exampleCardFullHeightBackground;
-            position: absolute;
-            bottom: 0;
-            .header {
-                color: @exampleCardFullHeightColor;
+    }
+    /* Mobile only */
+    @media only screen and (max-width: @largestMobileScreen) {
+        .projectsdialog {
+            .ui.card.example {
+                .ui.image, .ui.cardimage {
+                    height: 8.4rem !important;
+                }
             }
         }
     }
