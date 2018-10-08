@@ -50,7 +50,7 @@ CACHE:
 /blb/images/Bars_black.gif
 
 # ai
-/blb/ai.0.js
+/doccdn/ai.0.js
 
 @workerjs@
 @monacoworkerjs@
