@@ -24,7 +24,7 @@
 
     #maineditor, #filelist, .blocklyToolboxDiv, svg.blocklySvg,
     .monaco-editor, .monaco-editor .margin, .monaco-editor .monaco-editor-background,
-    .monacoToolboxDiv, .fullscreensim #boardview {
+    .monacoToolboxDiv {
         background-image: none !important;
         background-color: transparent !important;
         border: none !important;
@@ -50,5 +50,14 @@
                 color: black;
             }
         }
+    }
+}
+
+.fullscreensim.greenscreen {
+    div#boardview {
+        background-image: none !important;
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;    
     }
 }
