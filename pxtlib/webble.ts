@@ -22,7 +22,7 @@ namespace pxt.webBluetooth {
         server: BluetoothRemoteGATTServer = undefined;
         service: BluetoothRemoteGATTService = undefined;
         readCharacteristic: BluetoothRemoteGATTCharacteristic = undefined;
-        decoder: TextDecoder = new TextDecoder('utf8');
+        decoder: TextDecoder = new TextDecoder();
 
         constructor(device: BluetoothDevice) {
             this.device = device;
@@ -30,20 +30,26 @@ namespace pxt.webBluetooth {
         }
 
         connectAsync() {
+            pxt.debug(`connecting ${this.device.name}`)
             return this.device.gatt.connect()
                 .then(server => {
+                    pxt.debug(`gatt server connected`)
                     this.server = server;
                     return this.server.getPrimaryService(UART_SERVICE_UUID);
                 })
                 .then(service => {
+                    pxt.debug(`uart service connected`)
                     this.service = service;
                     return this.service.getCharacteristic(UART_CHARACTERISTIC_RX_UUID);
                 }).then(readCharacteristic => {
+                    pxt.debug(`read characteristic connected`)
                     this.readCharacteristic = readCharacteristic;
                     return this.readCharacteristic.startNotifications()
                 }).then(() => {
                     this.readCharacteristic.addEventListener('characteristicvaluechanged', this.handleNotifications)
-                }, e => {
+                }, (e: Error) => {
+                    pxt.log(`uart: error`)
+                    pxt.log(e);
                     this.disconnect();
                 })
         }
