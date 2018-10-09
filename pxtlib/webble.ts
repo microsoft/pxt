@@ -33,28 +33,30 @@ namespace pxt.webBluetooth {
 
         connectAsync() {
             pxt.debug(`connecting ${this.device.name}`)
-            return this.device.gatt.connect()
-                .then(server => {
-                    pxt.debug(`gatt server connected`)
-                    this.server = server;
-                    return this.server.getPrimaryService(UART_SERVICE_UUID);
-                })
-                .then(service => {
-                    pxt.debug(`uart service connected`)
-                    this.service = service;
-                    return this.service.getCharacteristic(UART_CHARACTERISTIC_RX_UUID);
-                }).then(readCharacteristic => {
-                    pxt.debug(`read characteristic connected`)
-                    this.readCharacteristic = readCharacteristic;
-                    return this.readCharacteristic.startNotifications()
-                }).then(() => {
-                    this.readCharacteristic.addEventListener('characteristicvaluechanged', this.handleNotifications)
-                }, (e: Error) => {
-                    pxt.log(`uart: error`)
-                    pxt.log(e);
-                    this.disconnect();
-                    return Promise.resolve();
-                });
+            return new Promise((resolve, reject) => {
+                this.device.gatt.connect()
+                    .then(server => {
+                        pxt.debug(`gatt server connected`)
+                        this.server = server;
+                        return this.server.getPrimaryService(UART_SERVICE_UUID);
+                    })
+                    .then(service => {
+                        pxt.debug(`uart service connected`)
+                        this.service = service;
+                        return this.service.getCharacteristic(UART_CHARACTERISTIC_RX_UUID);
+                    }).then(readCharacteristic => {
+                        pxt.debug(`read characteristic connected`)
+                        this.readCharacteristic = readCharacteristic;
+                        return this.readCharacteristic.startNotifications()
+                    }).then(() => {
+                        this.readCharacteristic.addEventListener('characteristicvaluechanged', this.handleNotifications);
+                        resolve();
+                    }, (e: Error) => {
+                        pxt.log(`uart: error ${e.message}`)
+                        this.disconnect();
+                        resolve();
+                    });
+            });
         }
 
         handleDisconnected(event: Event) {
@@ -65,7 +67,7 @@ namespace pxt.webBluetooth {
             //TODO TextEncoder support
             const buffer = new Uint8Array((<any>event.target).value);
             let text = ''; buffer.forEach(x => text += String.fromCharCode(x));
-            pxt.log(`uart rx: ${text}`)
+            pxt.debug(`uart rx: ${text}`)
             window.postMessage({
                 type: "serial",
                 id: this.device.name || "ble",
@@ -84,8 +86,7 @@ namespace pxt.webBluetooth {
                 this.service = undefined;
                 this.readCharacteristic = undefined;
             } catch (e) {
-                pxt.log(`uart: error while disconnecting`)
-                pxt.log(e);
+                pxt.log(`uart: error ${e.message}`)
             }
         }
     }
@@ -98,9 +99,7 @@ namespace pxt.webBluetooth {
 
         pxt.log(`uart: requesting device`)
         return navigator.bluetooth.requestDevice({
-            filters: [{
-                namePrefix: "BBC micro:bit"
-            }],
+            acceptAllDevices: true,
             optionalServices: [UART_SERVICE_UUID]
         }).then(device => {
             pxt.log(`uart: received device ${device.name}`)
