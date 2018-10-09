@@ -333,7 +333,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         const description = mode == ScriptSearchMode.Boards ? lf("Change development board")
             : mode == ScriptSearchMode.Experiments ? lf("Turn on and off experimental features")
                 : lf("Add an extension to the project");
-        const helpPath = ScriptSearchMode.Boards ? "/boards"
+        const helpPath = mode == ScriptSearchMode.Boards ? "/boards"
             : mode == ScriptSearchMode.Experiments ? "/experiments"
                 : "/extensions";
 
