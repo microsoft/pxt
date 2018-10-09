@@ -8,25 +8,27 @@ namespace pxt.webBluetooth {
     }
 
     export function isAvailable() {
-        return !!navigator.bluetooth
+        return !!navigator.bluetooth;
     }
 
 
     // https://lancaster-university.github.io/microbit-docs/resources/bluetooth/bluetooth_profile.html
-    const UART_SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
-    const UART_CHARACTERISTIC_RX_UUID = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
-    const UART_CHARACTERISTIC_TX_UUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
+    const UART_SERVICE_UUID: BluetoothServiceUUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e'; // must be lower case!
+    const UART_CHARACTERISTIC_RX_UUID: BluetoothCharacteristicUUID = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
+    //const UART_CHARACTERISTIC_TX_UUID: BluetoothCharacteristicUUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
 
     class UartReader {
         device: BluetoothDevice = undefined;
         server: BluetoothRemoteGATTServer = undefined;
         service: BluetoothRemoteGATTService = undefined;
         readCharacteristic: BluetoothRemoteGATTCharacteristic = undefined;
-        decoder: TextDecoder = new TextDecoder();
 
         constructor(device: BluetoothDevice) {
             this.device = device;
+            this.handleDisconnected = this.handleDisconnected.bind(this);
             this.handleNotifications = this.handleNotifications.bind(this);
+
+            device.addEventListener('gattserverdisconnected', this.handleDisconnected);
         }
 
         connectAsync() {
@@ -51,11 +53,18 @@ namespace pxt.webBluetooth {
                     pxt.log(`uart: error`)
                     pxt.log(e);
                     this.disconnect();
-                })
+                    return Promise.resolve();
+                });
+        }
+
+        handleDisconnected(event: Event) {
+            this.disconnect();
         }
 
         handleNotifications(event: Event) {
-            const text = this.decoder.decode((<any>event.target).value);
+            //TODO TextEncoder support
+            const buffer = new Uint8Array((<any>event.target).value);
+            let text = ''; buffer.forEach(x => text += String.fromCharCode(x));
             pxt.log(`uart rx: ${text}`)
             window.postMessage({
                 type: "serial",
@@ -86,11 +95,15 @@ namespace pxt.webBluetooth {
         if (reader)
             reader.disconnect();
         reader = undefined;
+
+        pxt.log(`uart: requesting device`)
         return navigator.bluetooth.requestDevice({
             filters: [{
-                services: [UART_SERVICE_UUID]
-            }]
+                namePrefix: "BBC micro:bit"
+            }],
+            optionalServices: [UART_SERVICE_UUID]
         }).then(device => {
+            pxt.log(`uart: received device ${device.name}`)
             reader = new UartReader(device);
             return reader.connectAsync();
         })

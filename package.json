@@ -106,8 +106,7 @@
     "@types/react": "16.0.25",
     "@types/react-dom": "16.0.3",
     "@types/request": "2.0.8",
-    "@types/web-bluetooth": "0.0.4",
-    "@types/text-encoding": "0.0.34"
+    "@types/web-bluetooth": "0.0.4"
   },
   "scripts": {
     "build": "jake",

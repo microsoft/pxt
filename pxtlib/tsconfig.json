@@ -8,6 +8,6 @@
         "newLine": "LF",
         "sourceMap": false,
         "lib": ["dom", "dom.iterable", "scripthost", "es6"],
-        "types": ["highlight.js", "marked", "bluebird", "web-bluetooth", "text-encoding"]
+        "types": ["highlight.js", "marked", "bluebird", "web-bluetooth"]
     }
 }
