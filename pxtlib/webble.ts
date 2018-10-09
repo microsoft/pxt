@@ -60,6 +60,7 @@ namespace pxt.webBluetooth {
         }
 
         handleDisconnected(event: Event) {
+            pxt.debug(`uart: gatt disconnected`)
             this.disconnect();
         }
 

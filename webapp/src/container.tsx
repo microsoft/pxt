@@ -220,7 +220,10 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
 
     pairBluetooth() {
         pxt.tickEvent("menu.pair.bluetooth")
-        pxt.webBluetooth.pairAsync().done();
+        pxt.webBluetooth.pairAsync()
+            .then(() => {
+
+            });
     }
 
     showAboutDialog() {
