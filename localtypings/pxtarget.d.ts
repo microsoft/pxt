@@ -277,6 +277,7 @@ declare namespace pxt {
         experiments?: string[]; // list of experiment ids, also enables this feature
         chooseBoardOnNewProject?: boolean; // when multiple boards are support, show board dialog on "new project"
         bluetoothUartConsole?: boolean; // pair with BLE UART services and pipe console output
+        bluetoothUartNamePrefix?: string; // device name prefix -- required
     }
 
     interface SocialOptions {

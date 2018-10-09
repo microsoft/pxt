@@ -31,7 +31,7 @@ namespace pxt.webBluetooth {
             device.addEventListener('gattserverdisconnected', this.handleDisconnected);
         }
 
-        connectAsync() {
+        connectAsync(): Promise<void> {
             pxt.debug(`connecting ${this.device.name}`)
             return new Promise((resolve, reject) => {
                 this.device.gatt.connect()
@@ -99,7 +99,9 @@ namespace pxt.webBluetooth {
 
         pxt.log(`uart: requesting device`)
         return navigator.bluetooth.requestDevice({
-            acceptAllDevices: true,
+            filters: [{
+                namePrefix: pxt.appTarget.appTheme.bluetoothUartNamePrefix
+            }],
             optionalServices: [UART_SERVICE_UUID]
         }).then(device => {
             pxt.log(`uart: received device ${device.name}`)
