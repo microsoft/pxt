@@ -517,17 +517,6 @@ namespace pxsim {
         export function mapGet(map: RefMap, key: number) {
             let i = map.findIdx(key);
             if (i < 0) {
-                decr(map)
-                return 0;
-            }
-            let r = map.data[i].val;
-            decr(map)
-            return r;
-        }
-
-        export function mapGetRef(map: RefMap, key: number) {
-            let i = map.findIdx(key);
-            if (i < 0) {
                 decr(map);
                 return 0;
             }
@@ -537,25 +526,6 @@ namespace pxsim {
         }
 
         export function mapSet(map: RefMap, key: number, val: any, keyName?: string) {
-            let i = map.findIdx(key);
-            if (i < 0) {
-                map.data.push({
-                    key: key << 1,
-                    val: val,
-                    keyName: keyName
-                });
-            } else {
-                if (map.data[i].key & 1) {
-                    decr(map.data[i].val);
-                    map.data[i].key = key << 1;
-                }
-                map.data[i].val = val;
-                map.data[i].keyName = keyName;
-            }
-            decr(map)
-        }
-
-        export function mapSetRef(map: RefMap, key: number, val: any, keyName?: string) {
             let i = map.findIdx(key);
             if (i < 0) {
                 map.data.push({

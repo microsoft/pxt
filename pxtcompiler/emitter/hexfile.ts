@@ -628,7 +628,7 @@ ${hex.hexPrelude()}
     .word _pxt_config_data
     .short 0 ; patched with comm section size
     .short 0 ; reserved
-    .word 0 ; reserved
+    .word _pxt_iface_member_names
 `
         let snippets: AssemblerSnippets = null;
         snippets = new ThumbSnippets()
@@ -649,6 +649,13 @@ ${hex.hexPrelude()}
         asmsource += `\n.balign 4\n_pxt_config_data:\n`
         for (let d of bin.res.configData || []) {
             asmsource += `    .word ${d.key}, ${d.value}  ; ${d.name}=${d.value}\n`
+        }
+        asmsource += `    .word 0\n\n`
+
+        asmsource += `\n.balign 4\n_pxt_iface_member_names:\n`
+        for (let d of bin.ifaceMembers) {
+            let lbl = bin.emitString(d)
+            asmsource += `    .word ${lbl}meta\n`
         }
         asmsource += `    .word 0\n\n`
 

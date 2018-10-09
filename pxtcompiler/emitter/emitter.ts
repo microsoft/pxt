@@ -431,7 +431,7 @@ namespace ts.pxtc {
     }
 
     function castableToStructureType(t: Type) {
-        return isStructureType(t) || (t.flags & (TypeFlags.Null | TypeFlags.Undefined))
+        return isStructureType(t) || (t.flags & (TypeFlags.Null | TypeFlags.Undefined | TypeFlags.Any))
     }
 
     function isPossiblyGenericClassType(t: Type) {
@@ -467,7 +467,7 @@ namespace ts.pxtc {
         let ok = TypeFlags.String | TypeFlags.Number | TypeFlags.Boolean |
             TypeFlags.StringLiteral | TypeFlags.NumberLiteral | TypeFlags.BooleanLiteral |
             TypeFlags.Void | TypeFlags.Enum | TypeFlags.EnumLiteral | TypeFlags.Null | TypeFlags.Undefined |
-            TypeFlags.Never | TypeFlags.TypeParameter
+            TypeFlags.Never | TypeFlags.TypeParameter | TypeFlags.Any
         if ((t.flags & ok) == 0) {
             if (isArrayType(t)) return t;
             if (isClassType(t)) return t;
@@ -663,8 +663,8 @@ namespace ts.pxtc {
         occursCheck.push(key)
 
         // we don't allow Any!
-        if (superType.flags & TypeFlags.Any)
-            return insertSubtype(key, [false, "Unsupported type: any."])
+        //if (superType.flags & TypeFlags.Any)
+        //    return insertSubtype(key, [false, "Unsupported type: any."])
 
         // outlaw all things that can't be cast to class/interface
         if (isStructureType(superType) && !castableToStructureType(subType)) {
@@ -1105,6 +1105,8 @@ namespace ts.pxtc {
                 }
             }
             v = ifaceMembers[name] = nextIfaceMemberId++
+            bin.ifaceMembers.push(name)
+            bin.emitString(name)
             return v
         }
 
@@ -1641,7 +1643,7 @@ ${lbl}: .short ${pxt.REFCNT_FLASH}
                 if (!opts.target.isNative)
                     args.push(emitStringLiteral(keyName));
                 // internal decr on all args
-                proc.emitExpr(ir.rtcall("pxtrt::mapSetRef", args))
+                proc.emitExpr(ir.rtcall("pxtrt::mapSet", args))
             })
             return expr
         }
@@ -1662,8 +1664,10 @@ ${lbl}: .short ${pxt.REFCNT_FLASH}
             if (!decl || (decl.kind == SK.PropertyDeclaration && !isStatic(decl))
                 || decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
                 emitExpr(node.expression, false)
-                if (!decl)
-                    return ir.numlit(0)
+                if (!decl) {
+                    return ir.rtcallMask("pxtrt::mapGetByString", 0,
+                        ir.CallingConvention.Plain, [emitExpr(node.expression), emitStringLiteral(node.name.text)])
+                }
             }
             if (decl.kind == SK.GetAccessor) {
                 return emitCallCore(node, node, [], null)
@@ -1696,13 +1700,6 @@ ${lbl}: .short ${pxt.REFCNT_FLASH}
                 return ir.rtcall(ev, [])
             } else if (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
                 return emitCallCore(node, node, [], null, decl as any, node.expression)
-                /*
-                if (attrs.shim) {
-                    callInfo.args.push(node.expression)
-                    return emitShim(decl, node, [node.expression])
-                } else {
-                    throw unhandled(node, lf("no {shim:...}"), 9236);
-                }*/
             } else if (decl.kind == SK.PropertyDeclaration) {
                 if (isStatic(decl)) {
                     return emitLocalLoad(decl as PropertyDeclaration)
@@ -1730,17 +1727,21 @@ ${lbl}: .short ${pxt.REFCNT_FLASH}
             }
 
             let indexer: string = null
+            let stringOk = false
             if (!assign && isStringType(t)) {
                 indexer = "String_::charAt"
-            } else if (isArrayType(t))
+            } else if (isArrayType(t)) {
                 indexer = assign ? "Array_::setAt" : "Array_::getAt"
-            else if (isInterfaceType(t)) {
+            } else if (isInterfaceType(t)) {
                 attrs = parseCommentsOnSymbol(t.symbol)
                 indexer = assign ? attrs.indexerSet : attrs.indexerGet
+            } else if (t.flags & (TypeFlags.Any | TypeFlags.StructuredOrTypeVariable)) {
+                indexer = assign ? "pxtrt::mapSetGeneric" : "pxtrt::mapGetGeneric"
+                stringOk = true
             }
 
             if (indexer) {
-                if (isNumberLike(node.argumentExpression)) {
+                if (stringOk || isNumberLike(node.argumentExpression)) {
                     let args = [node.expression, node.argumentExpression]
                     return rtcallMask(indexer, args, attrs, assign ? [assign] : [])
                 } else {
@@ -2083,7 +2084,7 @@ ${lbl}: .short ${pxt.REFCNT_FLASH}
                         if (vinst.parentClassInfo.isUsed)
                             markFunctionUsed(vinst.decl)
                     }
-                    // we need to mark the parent as used, otherwise vtable layout faile, see #3740
+                    // we need to mark the parent as used, otherwise vtable layout fails, see #3740
                     if (info.decl.kind == SK.MethodDeclaration)
                         markFunctionUsed(info.decl)
                 }
@@ -2132,9 +2133,9 @@ ${lbl}: .short ${pxt.REFCNT_FLASH}
                             pid.mapIdx = pid.ifaceIndex
                             if (args.length == 2) {
                                 pid.ifaceIndex = getIfaceMemberId("set/" + name)
-                                pid.mapMethod = "pxtrt::mapSetRef"
+                                pid.mapMethod = "pxtrt::mapSet"
                             } else {
-                                pid.mapMethod = "pxtrt::mapGetRef"
+                                pid.mapMethod = "pxtrt::mapGet"
                             }
                         }
                         return res
@@ -2795,7 +2796,15 @@ ${lbl}: .short ${pxt.REFCNT_FLASH}
                 } else if (decl && (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment)) {
                     proc.emitExpr(emitCallCore(trg, trg, [src], null, decl as FunctionLikeDeclaration))
                 } else {
-                    proc.emitExpr(ir.op(EK.Store, [emitExpr(trg), emitExpr(src)]))
+                    let trg2 = emitExpr(trg)
+                    emitPropertyAccess
+                    if (trg2.exprKind == EK.RuntimeCall && trg2.data == "pxtrt::mapGetByString") {
+                        trg2.data = "pxtrt::mapSetByString"
+                        trg2.args.push(emitExpr(src))
+                        proc.emitExpr(trg2)
+                    } else {
+                        proc.emitExpr(ir.op(EK.Store, [trg2, emitExpr(src)]))
+                    }
                 }
             } else if (trg.kind == SK.ElementAccessExpression) {
                 proc.emitExpr(emitIndexedAccess(trg as ElementAccessExpression, src))
@@ -3185,7 +3194,7 @@ ${lbl}: .short ${pxt.REFCNT_FLASH}
                     return emitLazyBinaryExpression(node);
             }
 
-            if (isNumericalType(lt) && isNumericalType(rt)) {
+            if (isNumericalType(lt) || isNumericalType(rt)) {
                 let noEq = stripEquals(node.operatorToken.kind)
                 let shimName = simpleInstruction(node, noEq || node.operatorToken.kind)
                 if (!shimName)
@@ -3210,7 +3219,7 @@ ${lbl}: .short ${pxt.REFCNT_FLASH}
             }
 
 
-            if (isStringType(lt) && isStringType(rt)) {
+            if (isStringType(lt) || isStringType(rt)) {
                 switch (node.operatorToken.kind) {
                     case SK.EqualsEqualsToken:
                     case SK.EqualsEqualsEqualsToken:
@@ -3241,7 +3250,7 @@ ${lbl}: .short ${pxt.REFCNT_FLASH}
                 case SK.ExclamationEqualsToken:
                     return shim("langsupp::ptrneq");
                 default:
-                    throw unhandled(node.operatorToken, lf("unknown generic operator"), 9252)
+                    throw unhandled(node.operatorToken, lf("unknown argument types: {0} and {1}", checker.typeToString(lt), checker.typeToString(rt)), 9252)
             }
         }
 
@@ -4019,6 +4028,7 @@ ${lbl}: .short ${pxt.REFCNT_FLASH}
         commSize = 0;
         packedSource: string;
 
+        ifaceMembers: string[] = [];
         strings: pxt.Map<string> = {};
         hexlits: pxt.Map<string> = {};
         doubles: pxt.Map<string> = {};
