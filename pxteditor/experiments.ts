@@ -59,6 +59,11 @@ namespace pxt.editor.experiments {
                 name: lf("Debugger"),
                 description: lf("Step through code and inspect variables in the debugger"),
                 feedbackUrl: "https://github.com/Microsoft/pxt/issues/4729"
+            },
+            {
+                id: "bluetoothUartConsole",
+                name: "Bluetooth Console",
+                description: lf("Receives UART message through Web Bluetooth")
             }
         ].filter(experiment => ids.indexOf(experiment.id) > -1);
     }
