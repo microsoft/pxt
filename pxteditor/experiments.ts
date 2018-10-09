@@ -63,7 +63,8 @@ namespace pxt.editor.experiments {
             {
                 id: "bluetoothUartConsole",
                 name: "Bluetooth Console",
-                description: lf("Receives UART message through Web Bluetooth")
+                description: lf("Receives UART message through Web Bluetooth"),
+                feedbackUrl: "..."
             }
         ].filter(experiment => ids.indexOf(experiment.id) > -1);
     }
