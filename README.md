@@ -98,7 +98,7 @@ browser tests. To execute them, run `npm run test:all` in the root directory.
 
 ## License
 
-MIT
+[MIT License](https://github.com/Microsoft/pxt/blob/master/LICENSE)
 
 ## Code of Conduct
 
