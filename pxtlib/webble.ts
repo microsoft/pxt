@@ -14,6 +14,7 @@ namespace pxt.webBluetooth {
     }
 
 
+    // Nordic UART BLE service
     // https://lancaster-university.github.io/microbit-docs/resources/bluetooth/bluetooth_profile.html
     const UART_SERVICE_UUID: BluetoothServiceUUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e'; // must be lower case!
     //const UART_CHARACTERISTIC_RX_UUID: BluetoothCharacteristicUUID = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
