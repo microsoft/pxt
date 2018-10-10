@@ -6,6 +6,7 @@ import * as sui from "./sui";
 import * as tutorial from "./tutorial";
 import * as container from "./container";
 import * as greenscreen from "./greenscreen";
+import * as core from "./core";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -220,10 +221,9 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
 
     pairBluetooth() {
         pxt.tickEvent("menu.pair.bluetooth")
+        core.showLoading("webblepair", lf("Pairing Bluetooth device..."))
         pxt.webBluetooth.pairAsync()
-            .then(() => {
-
-            });
+            .then(() => core.hideLoading("webblepair"));
     }
 
     showAboutDialog() {

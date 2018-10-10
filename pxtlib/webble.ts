@@ -16,14 +16,14 @@ namespace pxt.webBluetooth {
 
     // https://lancaster-university.github.io/microbit-docs/resources/bluetooth/bluetooth_profile.html
     const UART_SERVICE_UUID: BluetoothServiceUUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e'; // must be lower case!
-    const UART_CHARACTERISTIC_RX_UUID: BluetoothCharacteristicUUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
-    //const UART_CHARACTERISTIC_TX_UUID: BluetoothCharacteristicUUID = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
+    //const UART_CHARACTERISTIC_RX_UUID: BluetoothCharacteristicUUID = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
+    const UART_CHARACTERISTIC_TX_UUID: BluetoothCharacteristicUUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
 
     class UartReader {
         device: BluetoothDevice = undefined;
         server: BluetoothRemoteGATTServer = undefined;
         service: BluetoothRemoteGATTService = undefined;
-        readCharacteristic: BluetoothRemoteGATTCharacteristic = undefined;
+        txCharacteristic: BluetoothRemoteGATTCharacteristic = undefined;
 
         constructor(device: BluetoothDevice) {
             this.device = device;
@@ -45,13 +45,13 @@ namespace pxt.webBluetooth {
                     .then(service => {
                         pxt.debug(`uart: uart service connected`)
                         this.service = service;
-                        return this.service.getCharacteristic(UART_CHARACTERISTIC_RX_UUID);
-                    }).then(readCharacteristic => {
+                        return this.service.getCharacteristic(UART_CHARACTERISTIC_TX_UUID);
+                    }).then(txCharacteristic => {
                         pxt.debug(`uart: read characteristic connected`)
-                        this.readCharacteristic = readCharacteristic;
-                        return this.readCharacteristic.startNotifications()
+                        this.txCharacteristic = txCharacteristic;
+                        return this.txCharacteristic.startNotifications()
                     }).then(() => {
-                        this.readCharacteristic.addEventListener('characteristicvaluechanged', this.handleNotifications);
+                        this.txCharacteristic.addEventListener('characteristicvaluechanged', this.handleNotifications);
                         resolve();
                     }, (e: Error) => {
                         pxt.log(`uart: error ${e.message}`)
@@ -82,15 +82,15 @@ namespace pxt.webBluetooth {
 
         disconnect() {
             try {
-                if (this.readCharacteristic) {
-                    this.readCharacteristic.stopNotifications();
-                    this.readCharacteristic.removeEventListener('characteristicvaluechanged', this.handleNotifications);
+                if (this.txCharacteristic) {
+                    this.txCharacteristic.stopNotifications();
+                    this.txCharacteristic.removeEventListener('characteristicvaluechanged', this.handleNotifications);
                 }
                 if (this.device)
                     this.device.gatt.disconnect();
                 this.server = undefined;
                 this.service = undefined;
-                this.readCharacteristic = undefined;
+                this.txCharacteristic = undefined;
             } catch (e) {
                 pxt.log(`uart: error ${e.message}`)
             }
