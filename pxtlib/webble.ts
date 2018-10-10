@@ -84,11 +84,16 @@ namespace pxt.webBluetooth {
         disconnect() {
             try {
                 if (this.txCharacteristic) {
-                    this.txCharacteristic.stopNotifications();
-                    this.txCharacteristic.removeEventListener('characteristicvaluechanged', this.handleNotifications);
+                    try {
+                        this.txCharacteristic.stopNotifications();
+                        this.txCharacteristic.removeEventListener('characteristicvaluechanged', this.handleNotifications);
+                    } catch (e) { }
                 }
-                if (this.device)
-                    this.device.gatt.disconnect();
+                if (this.device && this.device.gatt && this.device.gatt.connected) {
+                    try {
+                        this.device.gatt.disconnect();
+                    } catch (e) { }
+                }
                 this.server = undefined;
                 this.service = undefined;
                 this.txCharacteristic = undefined;
@@ -112,6 +117,9 @@ namespace pxt.webBluetooth {
             pxt.log(`uart: received device ${device.name}`)
             reader = new UartReader(device);
             return reader.connectAsync();
+        }, e => {
+            pxt.log(`uart: error ${e.message}`)
+            return Promise.resolve();
         })
     }
 }
