@@ -1888,6 +1888,7 @@ ${lbl}: .short ${pxt.REFCNT_FLASH}
 
         function isNumericLiteral(node: Expression) {
             switch (node.kind) {
+                case SK.UndefinedKeyword:
                 case SK.NullKeyword:
                 case SK.TrueKeyword:
                 case SK.FalseKeyword:
@@ -1915,10 +1916,7 @@ ${lbl}: .short ${pxt.REFCNT_FLASH}
                             let defl = attrs.paramDefl[getName(prm)]
                             let expr = defl ? emitLit(parseInt(defl)) : null
                             if (expr == null) {
-                                if (typeOf(prm).flags & TypeFlags.NumberLike)
-                                    expr = emitLit(0)
-                                else
-                                    expr = emitLit(undefined)
+                                expr = emitLit(undefined)
                             }
                             args.push(irToNode(expr))
                         } else {
@@ -2640,7 +2638,7 @@ ${lbl}: .short ${pxt.REFCNT_FLASH}
         }
 
         function emitDeleteExpression(node: DeleteExpression) { }
-        function emitTypeOfExpression(node: TypeOfExpression) { 
+        function emitTypeOfExpression(node: TypeOfExpression) {
             return rtcallMask("pxt::typeOf", [node.expression], null)
         }
         function emitVoidExpression(node: VoidExpression) { }
