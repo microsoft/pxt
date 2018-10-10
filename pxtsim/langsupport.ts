@@ -223,18 +223,17 @@ namespace pxsim {
     }
 
     export interface MapEntry {
-        key: number;
+        key: string;
         val: any;
-        keyName?: string; // for object literals + !isNative
     }
 
     export class RefMap extends RefObject {
         vtable = 42;
         data: MapEntry[] = [];
 
-        findIdx(key: number) {
+        findIdx(key: string) {
             for (let i = 0; i < this.data.length; ++i) {
-                if (this.data[i].key >> 1 == key)
+                if (this.data[i].key == key)
                     return i;
             }
             return -1;
@@ -243,9 +242,7 @@ namespace pxsim {
         destroy() {
             super.destroy()
             for (let i = 0; i < this.data.length; ++i) {
-                if (this.data[i].key & 1) {
-                    decr(this.data[i].val);
-                }
+                decr(this.data[i].val);
                 this.data[i].val = 0;
             }
             this.data = []
@@ -259,7 +256,7 @@ namespace pxsim {
         toAny(): any {
             const r: any = {};
             this.data.forEach(d => {
-                r[d.keyName] = RefObject.toAny(d.val);
+                r[d.key] = RefObject.toAny(d.val);
             })
             return r;
         }
@@ -514,7 +511,17 @@ namespace pxsim {
             return new RefMap();
         }
 
+        export let mapKeyNames: string[]
+
         export function mapGet(map: RefMap, key: number) {
+            return mapGetByString(map, mapKeyNames[key])
+        }
+
+        export function mapSet(map: RefMap, key: number, val: any) {
+            return mapSetByString(map, mapKeyNames[key], val)
+        }
+
+        export function mapGetByString(map: RefMap, key: string) {
             let i = map.findIdx(key);
             if (i < 0) {
                 decr(map);
@@ -525,22 +532,19 @@ namespace pxsim {
             return r;
         }
 
-        export function mapSet(map: RefMap, key: number, val: any, keyName?: string) {
+        export const mapSetGeneric = mapSetByString
+        export const mapGetGeneric = mapGetByString
+
+        export function mapSetByString(map: RefMap, key: string, val: any) {
             let i = map.findIdx(key);
             if (i < 0) {
                 map.data.push({
-                    key: (key << 1) | 1,
+                    key: key,
                     val: val,
-                    keyName: keyName
                 });
             } else {
-                if (map.data[i].key & 1) {
-                    decr(map.data[i].val);
-                } else {
-                    map.data[i].key = (key << 1) | 1;
-                }
+                decr(map.data[i].val);
                 map.data[i].val = val;
-                map.data[i].keyName = keyName;
             }
             decr(map)
         }

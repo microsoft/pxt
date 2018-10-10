@@ -78,6 +78,7 @@ namespace ts.pxtc {
         jssource += "pxsim.setConfigData(" +
             JSON.stringify(cfg, null, 1) + ", " +
             JSON.stringify(cfgKey, null, 1) + ");\n"
+        jssource += "pxsim.pxtrt.mapKeyNames = " + JSON.stringify(bin.ifaceMembers, null, 1) + ";\n"
         bin.procs.forEach(p => {
             jssource += "\n" + irToJS(bin, p) + "\n"
         })

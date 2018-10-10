@@ -1637,8 +1637,6 @@ ${lbl}: .short ${pxt.REFCNT_FLASH}
                     ir.numlit(getIfaceMemberId(keyName)),
                     emitExpr(p.initializer)
                 ];
-                if (!opts.target.isNative)
-                    args.push(emitStringLiteral(keyName));
                 // internal decr on all args
                 proc.emitExpr(ir.rtcall("pxtrt::mapSet", args))
             })
