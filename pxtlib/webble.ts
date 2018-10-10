@@ -9,6 +9,7 @@ namespace pxt.webBluetooth {
 
     export function isAvailable() {
         return !!navigator.bluetooth
+            && ('TextDecoder' in window) // needed for reading data
             && pxt.appTarget.appTheme.bluetoothUartFilters
             && pxt.appTarget.appTheme.bluetoothUartFilters.length > 0;
     }
@@ -68,11 +69,10 @@ namespace pxt.webBluetooth {
         }
 
         handleNotifications(event: Event) {
-            //TODO TextEncoder support
-            const buffer = new Uint8Array((<any>event.target).value.buffer);
-            let text = ''; buffer.forEach(x => text += String.fromCharCode(x));
+            const dataView: DataView = (<any>event.target).value;
+            const decoder = new (<any>window).TextDecoder();
+            const text = decoder.decode(dataView);
             if (text) {
-                pxt.debug(`uart rx: ${buffer.byteLength} bytes`)
                 window.postMessage({
                     type: "serial",
                     id: this.device.name || "ble",
