@@ -83,13 +83,13 @@ namespace pxt.webBluetooth {
 
         disconnect() {
             try {
-                if (this.txCharacteristic) {
-                    try {
-                        this.txCharacteristic.stopNotifications();
-                        this.txCharacteristic.removeEventListener('characteristicvaluechanged', this.handleNotifications);
-                    } catch (e) { }
-                }
                 if (this.device && this.device.gatt && this.device.gatt.connected) {
+                    if (this.txCharacteristic) {
+                        try {
+                            this.txCharacteristic.stopNotifications();
+                            this.txCharacteristic.removeEventListener('characteristicvaluechanged', this.handleNotifications);
+                        } catch (e) { }
+                    }
                     try {
                         this.device.gatt.disconnect();
                     } catch (e) { }
