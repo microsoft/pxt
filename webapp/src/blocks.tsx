@@ -816,12 +816,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private getDefaultOptions() {
         if (this.blocklyOptionsCache) return this.blocklyOptionsCache;
         const readOnly = pxt.shell.isReadOnly();
+        const theme = pxt.appTarget.appTheme;
         const blocklyOptions: Blockly.Options = {
             scrollbars: true,
             media: pxt.webConfig.commitCdnUrl + "blockly/media/",
             sound: true,
             trashcan: false,
-            collapse: false,
+            collapse: !!theme.blocklyCollapse,
             comments: true,
             disable: false,
             readOnly: readOnly,
