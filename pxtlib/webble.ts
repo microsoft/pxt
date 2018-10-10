@@ -16,8 +16,8 @@ namespace pxt.webBluetooth {
 
     // https://lancaster-university.github.io/microbit-docs/resources/bluetooth/bluetooth_profile.html
     const UART_SERVICE_UUID: BluetoothServiceUUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e'; // must be lower case!
-    const UART_CHARACTERISTIC_RX_UUID: BluetoothCharacteristicUUID = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
-    //const UART_CHARACTERISTIC_TX_UUID: BluetoothCharacteristicUUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
+    const UART_CHARACTERISTIC_RX_UUID: BluetoothCharacteristicUUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
+    //const UART_CHARACTERISTIC_TX_UUID: BluetoothCharacteristicUUID = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
 
     class UartReader {
         device: BluetoothDevice = undefined;
@@ -68,14 +68,16 @@ namespace pxt.webBluetooth {
 
         handleNotifications(event: Event) {
             //TODO TextEncoder support
-            const buffer = new Uint8Array((<any>event.target).value);
+            const buffer = new Uint8Array((<any>event.target).value.buffer);
             let text = ''; buffer.forEach(x => text += String.fromCharCode(x));
-            pxt.debug(`uart rx: ${text}`)
-            window.postMessage({
-                type: "serial",
-                id: this.device.name || "ble",
-                data: text
-            }, "*")
+            if (text) {
+                pxt.debug(`uart rx: ${buffer.byteLength} bytes`)
+                window.postMessage({
+                    type: "serial",
+                    id: this.device.name || "ble",
+                    data: text
+                }, "*")
+            }
         }
 
         disconnect() {
