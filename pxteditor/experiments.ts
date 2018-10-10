@@ -64,7 +64,7 @@ namespace pxt.editor.experiments {
                 id: "bluetoothUartConsole",
                 name: "Bluetooth Console",
                 description: lf("Receives UART message through Web Bluetooth"),
-                feedbackUrl: "..."
+                feedbackUrl: "https://github.com/Microsoft/pxt/issues/4796"
             }
         ].filter(experiment => ids.indexOf(experiment.id) > -1);
     }
