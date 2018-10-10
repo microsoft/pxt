@@ -347,6 +347,11 @@ export function initCommandsAsync(): Promise<void> {
         pxt.HF2.mkPacketIOAsync = pxt.usb.mkPacketIOAsync;
     }
 
+    if (pxt.webBluetooth.isAvailable() && pxt.appTarget.appTheme.bluetoothUartConsole) {
+        pxt.log(`enabled webble`)
+        pxt.webBluetooth.setEnabled(true);
+    }
+
     if (isNativeHost()) {
         pxt.debug(`deploy/save using webkit host`);
         pxt.commands.deployCoreAsync = nativeHostDeployCoreAsync;

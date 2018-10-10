@@ -6,6 +6,7 @@ import * as sui from "./sui";
 import * as tutorial from "./tutorial";
 import * as container from "./container";
 import * as greenscreen from "./greenscreen";
+import * as core from "./core";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -152,6 +153,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.showResetDialog = this.showResetDialog.bind(this);
         this.showShareDialog = this.showShareDialog.bind(this);
         this.pair = this.pair.bind(this);
+        this.pairBluetooth = this.pairBluetooth.bind(this);
         this.showAboutDialog = this.showAboutDialog.bind(this);
         this.print = this.print.bind(this);
     }
@@ -217,6 +219,13 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.props.parent.pair();
     }
 
+    pairBluetooth() {
+        pxt.tickEvent("menu.pair.bluetooth")
+        core.showLoading("webblepair", lf("Pairing Bluetooth device..."))
+        pxt.webBluetooth.pairAsync()
+            .then(() => core.hideLoading("webblepair"));
+    }
+
     showAboutDialog() {
         pxt.tickEvent("menu.about");
         this.props.parent.showAboutDialog();
@@ -271,6 +280,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             }
             {!isController ? <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} tabIndex={-1} /> : undefined}
             {pxt.usb.isEnabled ? <sui.Item role="menuitem" icon='usb' text={lf("Pair device")} onClick={this.pair} tabIndex={-1} /> : undefined}
+            {pxt.webBluetooth.isEnabled ? <sui.Item role="menuitem" icon='bluetooth' text={lf("Pair Bluetooth")} onClick={this.pairBluetooth} tabIndex={-1} /> : undefined}
             <div className="ui mobile only divider"></div>
             {renderDocItems(this.props.parent, "mobile only")}
             <div className="ui divider"></div>
