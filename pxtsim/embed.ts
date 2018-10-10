@@ -114,6 +114,7 @@ namespace pxsim {
         type: "jacdac";
         packetType: "control" | "pkt";
         packet: Uint8Array;
+        address?: number;
     }
     export interface SimulatorRadioPacketPayload {
         type: number;
