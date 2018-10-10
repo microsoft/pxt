@@ -171,7 +171,11 @@ namespace helpers {
             start = Math.max(len + start, 0);
         }
 
-        if (end < 0 || end == null) {
+        if (end == null) {
+            end = len;
+        }
+
+        if (end < 0) {
             end = len + end;
         }
 
