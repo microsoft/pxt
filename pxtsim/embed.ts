@@ -110,7 +110,11 @@ namespace pxsim {
         type: "i2c";
         data: Uint8Array;
     }
-
+    export interface SimulatorJacDacPacketMessage extends SimulatorMessage {
+        type: "jacdac";
+        packetType: "control" | "pkt";
+        packet: Uint8Array;
+    }
     export interface SimulatorRadioPacketPayload {
         type: number;
         groupId: number;
