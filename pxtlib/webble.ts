@@ -8,7 +8,9 @@ namespace pxt.webBluetooth {
     }
 
     export function isAvailable() {
-        return !!navigator.bluetooth;
+        return !!navigator.bluetooth
+            && pxt.appTarget.appTheme.bluetoothUartFilters
+            && pxt.appTarget.appTheme.bluetoothUartFilters.length > 0;
     }
 
 
@@ -32,20 +34,20 @@ namespace pxt.webBluetooth {
         }
 
         connectAsync(): Promise<void> {
-            pxt.debug(`connecting ${this.device.name}`)
+            pxt.debug(`uart: connecting ${this.device.name}`)
             return new Promise((resolve, reject) => {
                 this.device.gatt.connect()
                     .then(server => {
-                        pxt.debug(`gatt server connected`)
+                        pxt.debug(`uart: gatt server connected`)
                         this.server = server;
                         return this.server.getPrimaryService(UART_SERVICE_UUID);
                     })
                     .then(service => {
-                        pxt.debug(`uart service connected`)
+                        pxt.debug(`uart: uart service connected`)
                         this.service = service;
                         return this.service.getCharacteristic(UART_CHARACTERISTIC_RX_UUID);
                     }).then(readCharacteristic => {
-                        pxt.debug(`read characteristic connected`)
+                        pxt.debug(`uart: read characteristic connected`)
                         this.readCharacteristic = readCharacteristic;
                         return this.readCharacteristic.startNotifications()
                     }).then(() => {
@@ -82,7 +84,8 @@ namespace pxt.webBluetooth {
                     this.readCharacteristic.stopNotifications();
                     this.readCharacteristic.removeEventListener('characteristicvaluechanged', this.handleNotifications);
                 }
-                this.device.gatt.disconnect();
+                if (this.device)
+                    this.device.gatt.disconnect();
                 this.server = undefined;
                 this.service = undefined;
                 this.readCharacteristic = undefined;
@@ -100,9 +103,7 @@ namespace pxt.webBluetooth {
 
         pxt.log(`uart: requesting device`)
         return navigator.bluetooth.requestDevice({
-            filters: [{
-                namePrefix: pxt.appTarget.appTheme.bluetoothUartNamePrefix
-            }],
+            filters: pxt.appTarget.appTheme.bluetoothUartFilters,
             optionalServices: [UART_SERVICE_UUID]
         }).then(device => {
             pxt.log(`uart: received device ${device.name}`)
