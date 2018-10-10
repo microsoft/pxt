@@ -189,16 +189,17 @@ namespace pxtblockly {
         }
 
         private getColor(x: number, y: number) {
-            if (!this.offColor) {
-                this.offColor = (this.sourceBlock_.isShadow()) ?
-                    this.sourceBlock_.parentBlock_.getColourTertiary() : this.sourceBlock_.getColourTertiary();
-            }
             return this.cellState[x][y] ? this.onColor : (this.offColor || FieldMatrix.DEFAULT_OFF_COLOR);
+        }
+
+        private getOpacity(x: number, y: number) {
+            return this.cellState[x][y] ? '1.0' : '0.2';
         }
 
         private updateCell(x: number, y: number) {
             const cellRect = this.cells[x][y];
             cellRect.setAttribute("fill", this.getColor(x, y));
+            cellRect.setAttribute("fill-opacity", this.getOpacity(x, y));
             cellRect.setAttribute('class', `blocklyLed${this.cellState[x][y] ? 'On' : 'Off'}`);
         }
 
