@@ -338,6 +338,7 @@ declare namespace ts.pxtc {
         flashEnd?: number;
         flashUsableEnd?: number;
         flashChecksumAddr?: number;
+        ramSize?: number;
         patches?: pxt.Map<UpgradePolicy[]>; // semver range -> upgrade policies
         openocdScript?: string;
         onStartText?: boolean;

@@ -155,20 +155,36 @@ export function startAsync(gdbArgs: string[]) {
     let toolPaths = getOpenOcdPath()
     let oargs = toolPaths.args
 
+    let goToApp = ""
+    let goToBl = ""
+
+    if (/at91samd/.test(pxt.appTarget.compile.openocdScript)) {
+        let ramSize = pxt.appTarget.compile.ramSize || 0x8000
+        let addr = 0x20000000 + ramSize - 4
+        goToApp = `set {int}(${addr}) = 0xf02669ef`
+        goToBl = `set {int}(${addr}) = 0xf01669ef`
+    }
+
     // use / not \ for paths on Windows; otherwise gdb has issue starting openocd
     fs.writeFileSync("built/openocd.gdb",
         `
 target remote | ${oargs.map(s => `"${s.replace(/\\/g, "/")}"`).join(" ")}
 define rst
-  set {int}(0x20008000-4) = 0xf02669ef
+  ${goToApp}
   monitor reset halt
   continue
+end
+define boot
+  ${goToBl}
+  monitor reset
+  quit
 end
 define irq
   echo "Current IRQ: "
   p (*(int*)0xE000ED04 & 0x1f) - 16
 end
-echo Use 'rst' command to re-run program from start (set your breakpoints first!).\\n
+echo \\nUse 'rst' command to re-run program from start (set your breakpoints first!).\\n
+echo Use 'boot' to go into bootloader.\\n\\n
 `)
 
     pxt.log("starting openocd: " + oargs.join(" "))
