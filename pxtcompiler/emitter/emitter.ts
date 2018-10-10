@@ -1009,9 +1009,6 @@ namespace ts.pxtc {
                 case ts.SyntaxKind.TaggedTemplateExpression:
                     syntax = lf("tagged templates")
                     break
-                case ts.SyntaxKind.TypeOfExpression:
-                    syntax = lf("typeof")
-                    break
                 case ts.SyntaxKind.SpreadElement:
                     syntax = lf("spread")
                     break
@@ -2643,7 +2640,9 @@ ${lbl}: .short ${pxt.REFCNT_FLASH}
         }
 
         function emitDeleteExpression(node: DeleteExpression) { }
-        function emitTypeOfExpression(node: TypeOfExpression) { }
+        function emitTypeOfExpression(node: TypeOfExpression) { 
+            return rtcallMask("pxt::typeOf", [node.expression], null)
+        }
         function emitVoidExpression(node: VoidExpression) { }
         function emitAwaitExpression(node: AwaitExpression) { }
         function emitPrefixUnaryExpression(node: PrefixUnaryExpression): ir.Expr {
@@ -2797,7 +2796,6 @@ ${lbl}: .short ${pxt.REFCNT_FLASH}
                     proc.emitExpr(emitCallCore(trg, trg, [src], null, decl as FunctionLikeDeclaration))
                 } else {
                     let trg2 = emitExpr(trg)
-                    emitPropertyAccess
                     if (trg2.exprKind == EK.RuntimeCall && trg2.data == "pxtrt::mapGetByString") {
                         trg2.data = "pxtrt::mapSetByString"
                         trg2.args.push(emitExpr(src))
@@ -3194,16 +3192,6 @@ ${lbl}: .short ${pxt.REFCNT_FLASH}
                     return emitLazyBinaryExpression(node);
             }
 
-            if (isNumericalType(lt) || isNumericalType(rt)) {
-                let noEq = stripEquals(node.operatorToken.kind)
-                let shimName = simpleInstruction(node, noEq || node.operatorToken.kind)
-                if (!shimName)
-                    unhandled(node.operatorToken, lf("unsupported numeric operator"), 9250)
-                if (noEq)
-                    return emitIncrement(node.left, shimName, false, node.right)
-                return shim(shimName)
-            }
-
             if (node.operatorToken.kind == SK.PlusToken) {
                 if (isStringType(lt) || isStringType(rt)) {
                     return rtcallMask("String_::concat", [asString(node.left), asString(node.right)], null)
@@ -3238,6 +3226,17 @@ ${lbl}: .short ${pxt.REFCNT_FLASH}
                     default:
                         unhandled(node.operatorToken, lf("unknown string operator"), 9251)
                 }
+            }
+
+            // fallback to numeric operation if none of the argument is string and some are numbers
+            if (isNumericalType(lt) || isNumericalType(rt)) {
+                let noEq = stripEquals(node.operatorToken.kind)
+                let shimName = simpleInstruction(node, noEq || node.operatorToken.kind)
+                if (!shimName)
+                    unhandled(node.operatorToken, lf("unsupported numeric operator"), 9250)
+                if (noEq)
+                    return emitIncrement(node.left, shimName, false, node.right)
+                return shim(shimName)
             }
 
             switch (node.operatorToken.kind) {
@@ -3900,6 +3899,8 @@ ${lbl}: .short ${pxt.REFCNT_FLASH}
                     return emitTemplateExpression(<TemplateExpression>node);
                 case SK.ObjectLiteralExpression:
                     return emitObjectLiteral(<ObjectLiteralExpression>node);
+                case SK.TypeOfExpression:
+                    return emitTypeOfExpression(<TypeOfExpression>node);
                 default:
                     unhandled(node);
                     return null
@@ -3935,8 +3936,6 @@ ${lbl}: .short ${pxt.REFCNT_FLASH}
                     return emitTaggedTemplateExpression(<TaggedTemplateExpression>node);
                 case SyntaxKind.DeleteExpression:
                     return emitDeleteExpression(<DeleteExpression>node);
-                case SyntaxKind.TypeOfExpression:
-                    return emitTypeOfExpression(<TypeOfExpression>node);
                 case SyntaxKind.VoidExpression:
                     return emitVoidExpression(<VoidExpression>node);
                 case SyntaxKind.AwaitExpression:
