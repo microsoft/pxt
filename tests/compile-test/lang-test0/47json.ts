@@ -6,16 +6,18 @@ function testDeflUndefinedForNumber(f:number, g?:number) {
 
 function checkJSON() {
     msg("JSON")
-    
-    let strings = ["foo", "foo\n", "\"", "\b\t\r\n", ""]
+
 
     testDeflUndefinedForNumber(3)
 
+        /*
+    let strings = ["foo", "foo\n", "\"", "\b\t\r\n", ""]
     for (let s of strings) {
         assert(JSON.parse(JSON.stringify(s)) === s, s)
     }
-
+    
     assert(JSON.parse("\"\\u000A\\u0058\\u004C\\u004d\"") == "\nXLM", "uni")
+    */
 
     let ss = "12" + "34"
     assert(ss.slice(1) == "234", "sl0")
@@ -30,9 +32,11 @@ function checkJSON() {
         baz: [1,2]
     }
 
+    /*
     let s0 = JSON.stringify(v)
     assert(s0 == `{"foo":1,"bar":"foo","baz":[1,2]}`, "S0")
     assert(s0 == JSON.stringify(JSON.parse(s0)), "PP")
+    */
 }
 
 checkJSON()
