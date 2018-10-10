@@ -308,15 +308,6 @@ namespace ts.pxtc {
                     let spec = inf.argsFmt[i + 1]
                     if (!spec)
                         U.userError("excessive parameters passed to " + nm)
-                    if (target.isNative) {
-                        let needNum = spec == "I" || spec == "N" || spec == "F" || spec == "B"
-                        if (spec == "T") {
-                            // OK, both number and non-number allowed
-                        } else if (needNum && !argIsNumber[i])
-                            U.userError("expecting number at parameter " + (i + 1) + " of " + nm)
-                        else if (!needNum && argIsNumber[i])
-                            U.userError("expecting non-number at parameter " + (i + 1) + " of " + nm + " / " + inf.argsFmt)
-                    }
                 }
                 if (argIsNumber.length != inf.argsFmt.length - 1)
                     U.userError(`not enough arguments for ${nm} (got ${argIsNumber.length}; fmt=${inf.argsFmt})`)

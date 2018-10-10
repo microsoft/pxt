@@ -2985,8 +2985,9 @@ ${lbl}: .short ${pxt.REFCNT_FLASH}
                 } else if (f == "_" || f == "T" || f == "N") {
                     return r
                 } else if (f == "I") {
-                    if (!isNumber)
-                        U.userError("argsFmt=...I... but argument not a number in " + name)
+                    //toInt can handle non-number values as well
+                    //if (!isNumber)
+                    //    U.userError("argsFmt=...I... but argument not a number in " + name)
                     if (r.exprKind == EK.NumberLiteral && typeof r.data == "number") {
                         return ir.numlit(r.data >> 1)
                     }
