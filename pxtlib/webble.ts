@@ -8,10 +8,19 @@ namespace pxt.webBluetooth {
     }
 
     export function isAvailable() {
+        return hasConsole() || hasPartialFlash();
+    }
+
+    export function hasConsole() {
         return !!navigator && !!navigator.bluetooth
             && ('TextDecoder' in window) // needed for reading data
             && pxt.appTarget.appTheme.bluetoothUartFilters
             && pxt.appTarget.appTheme.bluetoothUartFilters.length > 0;
+    }
+
+    export function hasPartialFlash() {
+        return !!navigator && !!navigator.bluetooth
+            && !!pxt.appTarget.appTheme.bluetoothPartialFlashing;
     }
 
     function wrapPromise<T>(p: Promise<T>): Promise<T> {
@@ -26,8 +35,8 @@ namespace pxt.webBluetooth {
         protected cancelConnectAsync() {
             if (this.connectPromise && this.connectPromise.isCancellable() && !this.connectPromise.isFulfilled()) {
                 this.connectPromise.cancel();
-                this.connectPromise = undefined;
             }
+            this.connectPromise = undefined;
         }
 
         protected createConnectPromise(): Promise<void> {
@@ -36,7 +45,7 @@ namespace pxt.webBluetooth {
 
         connectAsync(): Promise<void> {
             if (!this.connectPromise)
-                this.connectPromise = this.createConnectPromise();
+                this.connectPromise = wrapPromise(this.createConnectPromise());
             return this.connectPromise;
         }
 
@@ -49,14 +58,42 @@ namespace pxt.webBluetooth {
         constructor(protected device: BLEDevice, private reconnect: boolean) {
             super();
             this.handleDisconnected = this.handleDisconnected.bind(this);
-            if (this.reconnect)
-                this.device.device.addEventListener('gattserverdisconnected', this.handleDisconnected);
+            this.device.device.addEventListener('gattserverdisconnected', this.handleDisconnected);
         }
 
         handleDisconnected(event: Event) {
-            setTimeout(() => {
-                this.connectAsync();
-            }, 500);
+            this.cancelConnectAsync();
+            // give a 1sec for device to reboot
+            if (this.reconnect)
+                setTimeout(
+                    () => this.exponentialBackoffConnect(10, 500),
+                    1000);
+        }
+
+        /* Utils */
+        // This function keeps calling "toTry" until promise resolves or has
+        // retried "max" number of times. First retry has a delay of "delay" seconds.
+        // "success" is called upon success.
+        private exponentialBackoffConnect(max: number, delay: number) {
+            pxt.debug(`uart: retry connect`)
+            this.connectAsync()
+                .then(() => {
+                    pxt.debug(`uart: reconnect success`)
+                })
+                .catch(_ => {
+                    if (!this.device.isPaired) {
+                        pxt.debug(`uart: give up, device unpaired`)
+                        return;
+                    }
+                    if (max == 0) {
+                        pxt.debug(`uart: give up, max tries`)
+                        return; // give up
+                    }
+                    pxt.debug(`uart: retry connect ${delay}ms... (${max} tries left)`);
+                    setTimeout(() => {
+                        this.exponentialBackoffConnect(--max, delay * 2);
+                    }, delay);
+                });
         }
     }
 
@@ -79,15 +116,15 @@ namespace pxt.webBluetooth {
                 return Promise.resolve();
             pxt.debug(`ble: connecting uart`);
             return this.device.connectAsync()
-                .then(() => wrapPromise(this.device.gatt.getPrimaryService(UARTService.SERVICE_UUID)))
+                .then(() => this.device.gatt.getPrimaryService(UARTService.SERVICE_UUID))
                 .then(service => {
                     pxt.debug(`ble: uart service connected`)
                     this.uartService = service;
-                    return wrapPromise(this.uartService.getCharacteristic(UARTService.CHARACTERISTIC_TX_UUID));
+                    return this.uartService.getCharacteristic(UARTService.CHARACTERISTIC_TX_UUID);
                 }).then(txCharacteristic => {
                     pxt.debug(`ble: uart tx characteristic connected`)
                     this.txCharacteristic = txCharacteristic;
-                    return wrapPromise(this.txCharacteristic.startNotifications())
+                    return this.txCharacteristic.startNotifications()
                 }).then(() => {
                     this.txCharacteristic.addEventListener('characteristicvaluechanged', this.handleUARTNotifications);
                 });
@@ -168,14 +205,14 @@ namespace pxt.webBluetooth {
         }
 
         protected createConnectPromise(): Promise<void> {
-            pxt.debug(`ble: connecting to partial flash service`);
+            pxt.debug(`pf: connecting to partial flash service`);
             return this.device.connectAsync()
-                .then(() => wrapPromise(this.device.gatt.getPrimaryService(PartialFlashingService.SERVICE_UUID)))
+                .then(() => this.device.gatt.getPrimaryService(PartialFlashingService.SERVICE_UUID))
                 .then(service => {
-                    pxt.debug(`ble: connecting to partial flash characteristic`)
-                    return wrapPromise(service.getCharacteristic(PartialFlashingService.CHARACTERISTIC_UUID));
+                    pxt.debug(`pf: connecting to characteristic`)
+                    return service.getCharacteristic(PartialFlashingService.CHARACTERISTIC_UUID);
                 }).then(characteristic => {
-                    pxt.debug(`ble: starting notifications of partial flash`)
+                    pxt.debug(`pf: starting notifications`)
                     this.pfCharacteristic = characteristic;
                     this.pfCharacteristic.startNotifications();
                     this.pfCharacteristic.addEventListener('characteristicvaluechanged', this.handleCharacteristic);
@@ -218,7 +255,7 @@ namespace pxt.webBluetooth {
                 .then(() => new Promise((resolve, reject) => {
                     this.flashResolve = resolve;
                     this.flashReject = reject;
-                    pxt.debug(`ble: check partial flash service version`)
+                    pxt.debug(`pf: check service version`)
                     this.state = PartialFlashingState.StatusRequested;
                     this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.STATUS]));
                 }));
@@ -226,7 +263,7 @@ namespace pxt.webBluetooth {
 
         private checkStateTransition(cmd: number, acceptedStates: PartialFlashingState) {
             if (!(this.state & acceptedStates)) {
-                pxt.debug(`ble: flash cmd ${cmd} in state ${this.state.toString(16)} `);
+                pxt.debug(`pf: flash cmd ${cmd} in state ${this.state.toString(16)} `);
                 this.disconnect();
                 return false;
             }
@@ -237,7 +274,7 @@ namespace pxt.webBluetooth {
             const dataView: DataView = (<any>event.target).value;
             const packet = new Uint8Array(dataView.buffer);
             const cmd = packet[0];
-            pxt.debug(`ble: flash state ${this.state} - cmd ${cmd}`);
+            pxt.debug(`pf: flash state ${this.state} - cmd ${cmd}`);
             if (this.state == PartialFlashingState.Idle) // rogue response
                 return;
             switch (cmd) {
@@ -255,17 +292,17 @@ namespace pxt.webBluetooth {
                         this.device.disconnect(); // disconnect WebBLE services
                         Promise.delay(1000)
                             .then(() => {
-                                pxt.debug(`ble: reconnect to pairing mode`)
+                                pxt.debug(`pf: reconnect to pairing mode`)
                                 return this.connectAsync()
                             }).then(() => {
-                                pxt.debug(`ble: request DAL region (in pairing mode)`)
+                                pxt.debug(`pf: request DAL region (in pairing mode)`)
                                 this.state = PartialFlashingState.RegionDALRequested;
                                 this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.REGION_INFO, PartialFlashingService.REGION_DAL]));
                             })
                         return;
                     }
 
-                    pxt.debug(`ble: reading DAL region`)
+                    pxt.debug(`pf: reading DAL region`)
                     this.state = PartialFlashingState.RegionDALRequested;
                     this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.REGION_INFO, PartialFlashingService.REGION_DAL]));
                     break;
@@ -286,7 +323,7 @@ namespace pxt.webBluetooth {
                             this.clearFlashData();
                         }
 
-                        pxt.debug(`ble: reading makecode region`)
+                        pxt.debug(`pf: reading makecode region`)
                         this.state = PartialFlashingState.RegionMakeCodeRequested;
                         this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.REGION_INFO, PartialFlashingService.REGION_MAKECODE]));
                     } else if (packet[1] == PartialFlashingService.REGION_MAKECODE) {
@@ -300,7 +337,7 @@ namespace pxt.webBluetooth {
                         return;
                     switch (packet[1]) {
                         case PartialFlashingService.PACKET_OUT_OF_ORDER:
-                            pxt.debug(`ble: packet out of order`);
+                            pxt.debug(`pf: packet out of order`);
                             break;
                         case PartialFlashingService.PACKET_WRITTEN:
                             this.offset += 64;
@@ -317,7 +354,7 @@ namespace pxt.webBluetooth {
                             break;
                     }
                 default:
-                    pxt.debug(`ble: unknown message ${pxt.Util.toHex(packet)}`);
+                    pxt.debug(`pf: unknown message ${pxt.Util.toHex(packet)}`);
                     this.disconnect();
                     break;
             }
@@ -364,8 +401,8 @@ namespace pxt.webBluetooth {
     export class BLEDevice extends BLERemote {
         device: BluetoothDevice = undefined;
         private services: BLEService[] = [];
-        uartService: UARTService;
-        partialFlashingService: PartialFlashingService;
+        uartService: UARTService; // may be undefined
+        partialFlashingService: PartialFlashingService; // may be undefined
 
         constructor(device: BluetoothDevice) {
             super();
@@ -373,8 +410,14 @@ namespace pxt.webBluetooth {
             this.handleDisconnected = this.handleDisconnected.bind(this);
             this.device.addEventListener('gattserverdisconnected', this.handleDisconnected);
 
-            this.services.push(this.uartService = new UARTService(this));
-            this.services.push(this.partialFlashingService = new PartialFlashingService(this));
+            if (hasConsole())
+                this.services.push(this.uartService = new UARTService(this));
+            if (hasPartialFlash())
+                this.services.push(this.partialFlashingService = new PartialFlashingService(this));
+        }
+
+        get isPaired() {
+            return this === bleDevice;
         }
 
         get name(): string {
@@ -423,9 +466,14 @@ namespace pxt.webBluetooth {
         if (bleDevice) return Promise.resolve();
 
         pxt.log(`ble: requesting device`)
+        const optionalServices = [];
+        if (pxt.appTarget.appTheme.bluetoothUartFilters)
+            optionalServices.push(UARTService.SERVICE_UUID);
+        if (pxt.appTarget.appTheme.bluetoothPartialFlashing)
+            optionalServices.push(PartialFlashingService.SERVICE_UUID)
         return navigator.bluetooth.requestDevice({
             filters: pxt.appTarget.appTheme.bluetoothUartFilters,
-            optionalServices: [UARTService.SERVICE_UUID, PartialFlashingService.SERVICE_UUID]
+            optionalServices
         }).then(device => {
             pxt.log(`ble: received device ${device.name}`)
             bleDevice = new BLEDevice(device);
