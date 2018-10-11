@@ -381,7 +381,6 @@ namespace pxt.webBluetooth {
     }
 
     let bleDevice: BLEDevice = undefined;
-
     function connectAsync(): Promise<void> {
         if (bleDevice) return Promise.resolve();
 
@@ -393,6 +392,10 @@ namespace pxt.webBluetooth {
             pxt.log(`ble: received device ${device.name}`)
             bleDevice = new BLEDevice(device);
         });
+    }
+
+    export function isPaired(): boolean {
+        return !!bleDevice;
     }
 
     export function pairAsync(): Promise<void> {
@@ -407,9 +410,9 @@ namespace pxt.webBluetooth {
                 })
     }
 
-    export function flashAsync(bin: string): Promise<void> {
-        const hex = new Uint8Array(64);
+    export function flashAsync(resp: pxtc.CompileResult, d: pxt.commands.DeployOptions = {}): Promise<void> {        
+        const hex = resp.outfiles[ts.pxtc.BINARY_HEX];
         return connectAsync()
-            .then(() => bleDevice.partialFlashingService.flashAsync(hex));
+            .then(() => bleDevice.partialFlashingService.flashAsync(new Uint8Array(64)));
     }
 }
