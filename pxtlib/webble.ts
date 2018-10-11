@@ -173,17 +173,13 @@ namespace pxt.webBluetooth {
         USBFlashRequired = 1 << 7
     }
 
-    interface BlockCursor {
-        block: number;
-        offset: number;
-    }
-
     // https://github.com/microbit-sam/microbit-docs/blob/master/docs/ble/partial-flashing-service.md
     export class PartialFlashingService extends BLEService {
         static SERVICE_UUID = 'e97dd91d-251d-470a-a062-fa1922dfa9a8';
         static CHARACTERISTIC_UUID = 'e97d3b10-251d-470a-a062-fa1922dfa9a8';
         static REGION_INFO = 0x00;
         static FLASH_DATA = 0x01;
+        static WRITE_NOTIFICATION = 0x01;
         static PACKET_OUT_OF_ORDER = 0xAA;
         static PACKET_WRITTEN = 0xFF;
         static END_OF_TRANSMISSION = 0x02;
@@ -203,13 +199,11 @@ namespace pxt.webBluetooth {
         private mode: number;
         private regions: { start: number; end: number; hash: string; }[];
 
-
-        private offset: number;
         private hex: string;
-        private uf2: ts.pxtc.UF2.BlockFile;
-        private cursor: BlockCursor;
+        private bytes: Uint8Array;
         private dalHash: string;
         private makeCodeHash: string;
+        private flashOffset: number;
 
         private flashResolve: (theResult?: void | PromiseLike<void>) => void;
         private flashReject: (e: any) => void;
@@ -251,34 +245,41 @@ namespace pxt.webBluetooth {
             this.version = 0;
             this.mode = 0;
             this.regions = [];
-            this.offset = 0;
             this.hex = undefined;
-            this.uf2 = undefined;
+            this.bytes = undefined;
             this.dalHash = undefined;
             this.makeCodeHash = undefined;
             this.flashReject = undefined;
             this.flashResolve = undefined;
+            this.flashOffset = undefined;
         }
 
         // finds block starting with MAGIC_BLOCK
-        private findMagicBlock(): BlockCursor {
-            if (!this.uf2) return undefined;
+        private findMagicBlock(): number {
+            if (!this.bytes) return undefined;
             const magic = PartialFlashingService.MAGIC_MARKER;
-            for (let b = 0; b < this.uf2.blocks.length; ++b) {
-                const block = this.uf2.blocks[b];
-                for (let offset = 0; offset < block.length - magic.length; offset += 16) {
-                    let match = true;
-                    for (let j = 0; j < magic.length; ++j) {
-                        if (magic[j] != block[offset + j]) {
-                            match = false;
-                            break;
-                        }
+
+            for (let offset = 0; offset + magic.length < this.bytes.length; offset += 16) {
+                let match = true;
+                for (let j = 0; j < magic.length; ++j) {
+                    if (magic[j] != this.bytes[offset + j]) {
+                        match = false;
+                        break;
                     }
-                    if (match)
-                        return { block: b, offset: offset + magic.length };
                 }
+                if (match)
+                    return offset;
             }
-            return undefined;
+            return -1;
+        }
+
+        private isCursorAtMarker(marker: Uint8Array): boolean {
+            if (this.flashOffset + marker.length > this.bytes.length)
+                return false;
+            for (let i = 0; i < marker.length; ++i)
+                if (this.bytes[this.flashOffset + i] != marker[i])
+                    return false;
+            return true;
         }
 
         flashAsync(hex: string): Promise<void> {
@@ -288,19 +289,20 @@ namespace pxt.webBluetooth {
             }
             this.clearFlashData();
             this.hex = hex;
-            this.uf2 = ts.pxtc.UF2.newBlockFile();
-            ts.pxtc.UF2.writeHex(this.uf2, this.hex.split(/\r?\n/));
-            this.cursor = this.findMagicBlock();
-            if (!this.cursor) {
+            const uf2 = ts.pxtc.UF2.newBlockFile();
+            ts.pxtc.UF2.writeHex(uf2, this.hex.split(/\r?\n/));
+            this.bytes = U.stringToUint8Array(ts.pxtc.UF2.serializeFile(uf2));
+            const offset = this.findMagicBlock();
+            if (offset < 0) {
                 pxt.debug(`pf: magic block not found, not a valid HEX file`);
                 U.userError(lf("Invalid file"));
             }
 
             pxt.debug(`pf: found magic block`);
             // magic + 16bytes = hash
-            const magicBlock = this.uf2.blocks[this.cursor.block];
-            this.dalHash = Util.toHex(magicBlock.slice(this.cursor.offset, this.cursor.offset + 8));
-            this.makeCodeHash = Util.toHex(magicBlock.slice(this.cursor.offset + 8, this.cursor.offset + 16));
+            const hashOffset = offset + PartialFlashingService.MAGIC_MARKER.length;
+            this.dalHash = Util.toHex(this.bytes.slice(hashOffset, hashOffset + 8));
+            this.makeCodeHash = Util.toHex(this.bytes.slice(hashOffset + 8, hashOffset + 16));
 
             pxt.debug(`pf: DAL hash ${this.dalHash}`)
             pxt.debug(`pf: MakeCode hash ${this.makeCodeHash}`)
@@ -343,23 +345,23 @@ namespace pxt.webBluetooth {
                     this.mode = packet[2];
                     pxt.debug(`ble: flash service version ${this.version} mode ${this.mode}`)
                     // what happens when there is no pairing mode?
-                   /* if (this.mode != PartialFlashingService.MODE_PAIRING) {
-                        pxt.debug(`ble: reset into pairing mode`)
-                        this.state = PartialFlashingState.PairingModeRequested;
-                        this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.RESET, PartialFlashingService.MODE_PAIRING]));
-
-                        this.device.disconnect(); // disconnect WebBLE services
-                        Promise.delay(1000)
-                            .then(() => {
-                                pxt.debug(`pf: reconnect to pairing mode`)
-                                return this.connectAsync()
-                            }).then(() => {
-                                pxt.debug(`pf: request DAL region (in pairing mode)`)
-                                this.state = PartialFlashingState.RegionDALRequested;
-                                this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.REGION_INFO, PartialFlashingService.REGION_DAL]));
-                            })
-                        return;
-                    } */
+                    /* if (this.mode != PartialFlashingService.MODE_PAIRING) {
+                         pxt.debug(`ble: reset into pairing mode`)
+                         this.state = PartialFlashingState.PairingModeRequested;
+                         this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.RESET, PartialFlashingService.MODE_PAIRING]));
+ 
+                         this.device.disconnect(); // disconnect WebBLE services
+                         Promise.delay(1000)
+                             .then(() => {
+                                 pxt.debug(`pf: reconnect to pairing mode`)
+                                 return this.connectAsync()
+                             }).then(() => {
+                                 pxt.debug(`pf: request DAL region (in pairing mode)`)
+                                 this.state = PartialFlashingState.RegionDALRequested;
+                                 this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.REGION_INFO, PartialFlashingService.REGION_DAL]));
+                             })
+                         return;
+                     } */
 
                     pxt.debug(`pf: reading DAL region`)
                     this.state = PartialFlashingState.RegionDALRequested;
@@ -380,6 +382,7 @@ namespace pxt.webBluetooth {
                             this.state = PartialFlashingState.USBFlashRequired;
                             this.flashReject(new Error("USB flashing required"));
                             this.clearFlashData();
+                            return;
                         }
 
                         pxt.debug(`pf: DAL hash match, reading makecode region`)
@@ -393,21 +396,26 @@ namespace pxt.webBluetooth {
                             this.clearFlashData();
                         } else {
                             // ready to flash the data in 4 chunks
+                            this.flashOffset = region.start;
+                            pxt.debug(`pf: starting to flash from address ${this.flashOffset.toString(16)}`);
                             this.flashNextPacket();
                         }
                     }
                     break;
-                case PartialFlashingService.FLASH_DATA:
+                case PartialFlashingService.WRITE_NOTIFICATION:
                     if (!this.checkStateTransition(cmd, PartialFlashingState.Flash))
                         return;
                     switch (packet[1]) {
                         case PartialFlashingService.PACKET_OUT_OF_ORDER:
                             pxt.debug(`pf: packet out of order`);
+                            U.assert(false, 'packet out of order')
                             break;
                         case PartialFlashingService.PACKET_WRITTEN:
-                            this.offset += 64;
-                            if (this.offset == this.hex.length) {
-                                pxt.debug('ble: end transmission')
+                            // move cursor
+                            this.flashOffset += 64;
+                            if (this.isCursorAtMarker(PartialFlashingService.SOURCE_MARKER)
+                                || this.flashOffset > this.bytes.length) {
+                                pxt.debug('pf: end transmission')
                                 this.state = PartialFlashingState.EndOfTransmision;
                                 this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.END_OF_TRANSMISSION]));
                                 // we are done!
@@ -429,38 +437,45 @@ namespace pxt.webBluetooth {
         private flashNextPacket() {
             this.state = PartialFlashingState.Flash;
 
-            pxt.debug(`ble: flashing offset ${this.offset} of ${this.hex.length}`);
-            /*
-                        const o = this.offset;
-                        const chunk = new Uint8Array(16);
-                        chunk[0] = PartialFlashingService.FLASH_DATA;
-            
-                        chunk[3] = 0; // packet number
-                        chunk[1] = o >> 8; // 2 bytes of offset
-                        chunk[2] = o;
-                        for (let i = 0; i < 16; i++)
-                            chunk[4 + i] = this.hex[i];
-                        this.pfCharacteristic.writeValue(chunk);
-            
-                        chunk[3] = 1; // packet number
-                        chunk[1] = o >> 24; // other 2 bytes of offset
-                        chunk[2] = o >> 16;
-                        for (let i = 0; i < 16; i++)
-                            chunk[4 + i] = this.hex[16 + i];
-                        this.pfCharacteristic.writeValue(chunk);
-            
-                        chunk[3] = 2; // packet number
-                        chunk[1] = 0;
-                        chunk[2] = 0;
-                        for (let i = 0; i < 16; i++)
-                            chunk[4 + i] = this.hex[32 + i];
-                        this.pfCharacteristic.writeValue(chunk);
-            
-                        chunk[3] = 3; // packet number
-                        for (let i = 0; i < 16; i++)
-                            chunk[4 + i] = this.hex[48 + i];
-                        this.pfCharacteristic.writeValue(chunk);
-                        */
+            const offset = this.flashOffset - this.regions[1].start;
+            const hex = this.bytes.slice(this.flashOffset, this.flashOffset + 64);
+            pxt.debug(`pf: flashing offset ${offset.toString(16)}`);
+
+            const chunk = new Uint8Array(20);
+            chunk[0] = PartialFlashingService.FLASH_DATA;
+            chunk[1] = offset >> 8; // 2 bytes of offset
+            chunk[2] = offset;
+            chunk[3] = 0; // packet number
+            for (let i = 0; i < 16; i++)
+                chunk[4 + i] = hex[i];
+            this.pfCharacteristic.writeValue(chunk);
+
+            chunk[0] = PartialFlashingService.FLASH_DATA;
+            chunk[1] = offset >> 24; // other 2 bytes of offset
+            chunk[2] = offset >> 16;
+            chunk[3] = 1; // packet number
+            for (let i = 0; i < 16; i++)
+                chunk[4 + i] = hex[16 + i] || 0;
+            this.pfCharacteristic.writeValue(chunk);
+
+            chunk[0] = PartialFlashingService.FLASH_DATA;
+            chunk[1] = 0;
+            chunk[2] = 0;
+            chunk[3] = 2; // packet number
+            for (let i = 0; i < 16; i++)
+                chunk[4 + i] = hex[32 + i] || 0;
+            this.pfCharacteristic.writeValue(chunk);
+
+            chunk[0] = PartialFlashingService.FLASH_DATA;
+            chunk[1] = 0;
+            chunk[2] = 0;
+            chunk[3] = 3; // packet number
+            for (let i = 0; i < 16; i++)
+                chunk[4 + i] = hex[48 + i] || 0;
+            this.pfCharacteristic.writeValue(chunk);
+
+            // now we wait for a write notification
+            pxt.debug(`pf: flash packets sent, waiting for write confirmation`)
         }
     }
 
