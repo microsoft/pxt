@@ -737,7 +737,7 @@ declare namespace Blockly {
         getStartHat(): boolean;
         initSvg(): void;
         removeInput(name: string, opt_quiet?: boolean): void;
-        dispose(healGap: boolean): void;
+        dispose(healGap: boolean, animate?: boolean): void;
         setCollapsed(collapsed: boolean): void;
         setColour(colour: number | string, secondaryColour?: string, tertiaryColour?: string): void;
         setOutputShape(shape: number): void;
@@ -969,6 +969,7 @@ declare namespace Blockly {
     class WorkspaceSvg {
         moveDrag(e: Event): goog.math.Coordinate;
         showContextMenu_(e: Event): void;
+        static buildDeleteList_(topBlocks: Blockly.Block[]): Blockly.Block[];
     }
 
 
