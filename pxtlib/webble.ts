@@ -97,9 +97,11 @@ namespace pxt.webBluetooth {
         RegionDALRequested = 1 << 3,
         RegionMakeCodeRequested = 1 << 4,
         Flash = 1 << 5,
-        EndOfTransmision = 1 << 6
+        EndOfTransmision = 1 << 6,
+        USBFlashRequired = 1 << 7
     }
 
+    // https://github.com/microbit-sam/microbit-docs/blob/master/docs/ble/partial-flashing-service.md
     class PartialFlashingService extends BLEService {
         static SERVICE_UUID = 'e97dd91d-251d-470a-a062-fa1922dfa9a8';
         static CHARACTERISTIC_UUID = 'e97d3b10-251d-470a-a062-fa1922dfa9a8';
@@ -125,6 +127,7 @@ namespace pxt.webBluetooth {
 
         private offset: number;
         private hex: Uint8Array;
+        private dalHash: string;
         private flashResolve: (theResult?: void | PromiseLike<void>) => void;
         private flashReject: (e: any) => void;
 
@@ -173,6 +176,7 @@ namespace pxt.webBluetooth {
             this.regions = [];
             this.offset = 0;
             this.hex = undefined;
+            this.dalHash = undefined;
             this.flashReject = undefined;
             this.flashResolve = undefined;
         }
@@ -184,6 +188,7 @@ namespace pxt.webBluetooth {
             }
             this.clearFlashData();
             this.hex = hex;
+            this.dalHash = "";
             return this.connectAsync()
                 .then(() => new Promise((resolve, reject) => {
                     this.flashResolve = resolve;
@@ -239,6 +244,13 @@ namespace pxt.webBluetooth {
                     };
                     pxt.debug(`read region ${packet[1]} start ${region.start.toString(16)} end ${region.end.toString(16)} hash ${region.hash}`)
                     if (packet[1] == PartialFlashingService.REGION_DAL) {
+                        if (region.hash != this.dalHash) {
+                            pxt.debug(`ble: DAL hash does not match, partial flashing not possible`)
+                            this.state = PartialFlashingState.USBFlashRequired;
+                            this.flashReject(new Error("USB flashing required"));
+                            this.clearFlashData();
+                        }
+
                         pxt.debug(`ble: reading makecode region`)
                         this.state = PartialFlashingState.RegionMakeCodeRequested;
                         this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.REGION_INFO, PartialFlashingService.REGION_MAKECODE]));
