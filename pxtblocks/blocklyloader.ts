@@ -1436,14 +1436,14 @@ namespace pxt.blocks {
             }
 
             const deleteOption = {
-                text: deleteList.length == 1 ? msg.DELETE_BLOCK : msg.DELETE_ALL_BLOCKS,
-                enabled: deleteList.length > 0,
+                text: deleteCount == 1 ? msg.DELETE_BLOCK : msg.DELETE_ALL_BLOCKS,
+                enabled: deleteCount > 0,
                 callback: function () {
                     pxt.tickEvent("blocks.context.delete", undefined, { interactiveConsent: true });
-                    if (deleteList.length < 2) {
+                    if (deleteCount < 2) {
                         deleteNext();
                     } else {
-                        Blockly.prompt(lf("Delete all {0} blocks?", deleteList.length), null, (ok) => {
+                        Blockly.confirm(lf("Delete all {0} blocks?", deleteCount), (ok) => {
                             if (ok) {
                                 deleteNext();
                             }
