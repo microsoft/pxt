@@ -20,7 +20,7 @@ namespace pxt.webBluetooth {
         })
     }
 
-    class BLEService {
+    export class BLEService {
         constructor(protected device: BLEDevice) { }
 
         connectAsync(): Promise<void> {
@@ -30,7 +30,7 @@ namespace pxt.webBluetooth {
         disconnect(): void { }
     }
 
-    class UARTService extends BLEService {
+    export class UARTService extends BLEService {
         // Nordic UART BLE service
         static SERVICE_UUID: BluetoothServiceUUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e'; // must be lower case!
         static CHARACTERISTIC_RX_UUID: BluetoothCharacteristicUUID = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
@@ -102,7 +102,7 @@ namespace pxt.webBluetooth {
     }
 
     // https://github.com/microbit-sam/microbit-docs/blob/master/docs/ble/partial-flashing-service.md
-    class PartialFlashingService extends BLEService {
+    export class PartialFlashingService extends BLEService {
         static SERVICE_UUID = 'e97dd91d-251d-470a-a062-fa1922dfa9a8';
         static CHARACTERISTIC_UUID = 'e97d3b10-251d-470a-a062-fa1922dfa9a8';
         static REGION_INFO = 0x00;
@@ -330,7 +330,7 @@ namespace pxt.webBluetooth {
         }
     }
 
-    class BLEDevice {
+    export class BLEDevice {
         private device: BluetoothDevice = undefined;
         private services: BLEService[] = [];
         uartService: UARTService;
@@ -380,7 +380,7 @@ namespace pxt.webBluetooth {
         }
     }
 
-    let bleDevice: BLEDevice = undefined;
+    export let bleDevice: BLEDevice = undefined;
     function connectAsync(): Promise<void> {
         if (bleDevice) return Promise.resolve();
 
