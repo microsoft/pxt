@@ -776,21 +776,17 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
             onclick: this.save,
             icon: 'check',
             className: 'approve positive'
-        }, {
-            label: lf("Cancel"),
-            icon: 'cancel',
-            onclick: this.cancel
         }]
 
         return (
             <sui.Modal isOpen={visible} className="exitandsave" size="tiny"
                 onClose={this.hide} dimmer={true} buttons={actions}
-                closeIcon={true} header={lf("Exit Project")}
+                closeIcon={true} header={lf("Project has no name {0}", "😞")}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
                 modalDidOpen={this.modalDidOpen}
             >
                 <div className="ui form">
-                    <sui.Input ref="filenameinput" autoFocus id={"projectNameInput"} label={lf("Project Name")}
+                    <sui.Input ref="filenameinput" autoFocus id={"projectNameInput"} label={lf("Name")}
                         ariaLabel={lf("Type a name for your project")}
                         value={projectName || ''} onChange={this.handleChange} />
                 </div>
