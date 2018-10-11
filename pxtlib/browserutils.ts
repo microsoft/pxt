@@ -20,6 +20,10 @@ namespace pxt.BrowserUtils {
         return hasNavigator() && /(Win32|Win64|WOW64)/i.test(navigator.platform) && /Windows NT 10/i.test(navigator.userAgent);
     }
 
+    export function isIos(): boolean {
+        return hasNavigator() && /(iPad|iPhone|iPod)/i.test(navigator.platform);
+    }
+
     export function isMobile(): boolean {
         return hasNavigator() && /mobi/i.test(navigator.userAgent);
     }

@@ -650,7 +650,7 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
             >
                 <div className={pxt.github.token ? "ui three cards" : "ui two cards"}>
-                    {pxt.appTarget.compile ?
+                    {pxt.appTarget.compile && !pxt.BrowserUtils.isIos() ?
                         <codecard.CodeCardView
                             ariaLabel={lf("Open files from your computer")}
                             role="button"
