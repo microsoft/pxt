@@ -61,38 +61,43 @@ namespace pxt.webBluetooth {
             this.device.device.addEventListener('gattserverdisconnected', this.handleDisconnected);
         }
 
+        private reconnectPromise: Promise<void> = undefined;
         handleDisconnected(event: Event) {
             this.cancelConnectAsync();
             // give a 1sec for device to reboot
-            if (this.reconnect)
-                setTimeout(
-                    () => this.exponentialBackoffConnect(10, 500),
-                    1000);
+            if (this.reconnect) {
+                if (!this.reconnectPromise)
+                    this.reconnectPromise =
+                        Promise.delay(1000)
+                            .then(() => this.exponentialBackoffConnectAsync(10, 500));
+            }
         }
 
         /* Utils */
         // This function keeps calling "toTry" until promise resolves or has
         // retried "max" number of times. First retry has a delay of "delay" seconds.
         // "success" is called upon success.
-        private exponentialBackoffConnect(max: number, delay: number) {
+        private exponentialBackoffConnectAsync(max: number, delay: number): Promise<void> {
             pxt.debug(`uart: retry connect`)
-            this.connectAsync()
+            return this.connectAsync()
                 .then(() => {
                     pxt.debug(`uart: reconnect success`)
+                    this.reconnectPromise = undefined;
                 })
                 .catch(_ => {
                     if (!this.device.isPaired) {
                         pxt.debug(`uart: give up, device unpaired`)
-                        return;
+                        this.reconnectPromise = undefined;
+                        return undefined;
                     }
                     if (max == 0) {
                         pxt.debug(`uart: give up, max tries`)
-                        return; // give up
+                        this.reconnectPromise = undefined;
+                        return undefined; // give up
                     }
                     pxt.debug(`uart: retry connect ${delay}ms... (${max} tries left)`);
-                    setTimeout(() => {
-                        this.exponentialBackoffConnect(--max, delay * 2);
-                    }, delay);
+                    return Promise.delay(delay)
+                        .then(() => this.exponentialBackoffConnectAsync(--max, delay * 2));
                 });
         }
     }
