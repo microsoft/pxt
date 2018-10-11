@@ -781,7 +781,7 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
         return (
             <sui.Modal isOpen={visible} className="exitandsave" size="tiny"
                 onClose={this.hide} dimmer={true} buttons={actions}
-                closeIcon={true} header={lf("Project has no name") + " 😞"}
+                closeIcon={true} header={lf("Project has no name {0}", "😞")}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
                 modalDidOpen={this.modalDidOpen}
             >
