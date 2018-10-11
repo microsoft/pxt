@@ -1413,19 +1413,12 @@ namespace pxt.blocks {
 
             // Option to delete all blocks.
             // Count the number of blocks that are deletable.
-            let deleteList: any[] = [];
-            function addDeletableBlocks(block: any) {
-                if (block.isDeletable()) {
-                    deleteList = deleteList.concat(block.getDescendants());
-                } else {
-                    let children = block.getChildren();
-                    for (let i = 0; i < children.length; i++) {
-                        addDeletableBlocks(children[i]);
-                    }
-                }
-            }
-            for (let i = 0; i < topBlocks.length; i++) {
-                addDeletableBlocks(topBlocks[i]);
+            let deleteList = Blockly.WorkspaceSvg.buildDeleteList_(topBlocks);
+            let deleteCount = 0;
+            for (let i = 0; i < deleteList.length; i++) {
+              if (!deleteList[i].isShadow()) {
+                deleteCount++;
+              }
             }
 
             function deleteNext() {
@@ -1443,14 +1436,18 @@ namespace pxt.blocks {
             }
 
             const deleteOption = {
-                text: deleteList.length == 1 ? lf("Delete Block") :
-                    lf("Delete All Blocks", deleteList.length),
+                text: deleteList.length == 1 ? msg.DELETE_BLOCK : msg.DELETE_ALL_BLOCKS,
                 enabled: deleteList.length > 0,
                 callback: function () {
                     pxt.tickEvent("blocks.context.delete", undefined, { interactiveConsent: true });
-                    if (deleteList.length < 2 ||
-                        window.confirm(lf("Delete all {0} blocks?", deleteList.length))) {
+                    if (deleteList.length < 2) {
                         deleteNext();
+                    } else {
+                        Blockly.prompt(lf("Delete all {0} blocks?", deleteList.length), null, (ok) => {
+                            if (ok) {
+                                deleteNext();
+                            }
+                        });
                     }
                 }
             };
