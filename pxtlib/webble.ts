@@ -364,10 +364,10 @@ namespace pxt.webBluetooth {
     }
 
     let bleDevice: BLEDevice = undefined;
-    export function pairAsync(): Promise<void> {
-        if (bleDevice)
-            bleDevice.disconnect();
-        bleDevice = undefined;
+
+    function connectAsync(): Promise<void> {
+        if (bleDevice) return Promise.resolve();
+
         pxt.log(`ble: requesting device`)
         return navigator.bluetooth.requestDevice({
             filters: pxt.appTarget.appTheme.bluetoothUartFilters,
@@ -375,9 +375,22 @@ namespace pxt.webBluetooth {
         }).then(device => {
             pxt.log(`ble: received device ${device.name}`)
             bleDevice = new BLEDevice(device);
-            return bleDevice.uartService.connectAsync();
-        }, e => {
-            pxt.log(`ble: error ${e.message}`)
-        })
+        });
+    }
+
+    export function pairAsync(): Promise<void> {
+        if (bleDevice)
+            bleDevice.disconnect();
+        bleDevice = undefined;
+        return connectAsync()
+            .then(() => bleDevice.uartService.connectAsync()
+                , e => {
+                    pxt.log(`ble: error ${e.message}`)
+                })
+    }
+
+    export function flashAsync(hex: Uint8Array): Promise<void> {
+        return connectAsync()
+            .then(() => bleDevice.partialFlashingService.flashAsync(hex));
     }
 }
