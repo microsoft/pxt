@@ -8,7 +8,7 @@ namespace pxt.webBluetooth {
     }
 
     export function isAvailable() {
-        return !!navigator.bluetooth
+        return !!navigator && !!navigator.bluetooth
             && ('TextDecoder' in window) // needed for reading data
             && pxt.appTarget.appTheme.bluetoothUartFilters
             && pxt.appTarget.appTheme.bluetoothUartFilters.length > 0;
@@ -389,7 +389,8 @@ namespace pxt.webBluetooth {
                 })
     }
 
-    export function flashAsync(hex: Uint8Array): Promise<void> {
+    export function flashAsync(bin: string): Promise<void> {
+        const hex = new Uint8Array(64);
         return connectAsync()
             .then(() => bleDevice.partialFlashingService.flashAsync(hex));
     }

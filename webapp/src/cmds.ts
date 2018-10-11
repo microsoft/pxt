@@ -292,6 +292,11 @@ function webUsbDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
         .catch(e => askWebUSBPairAsync(resp));
 }
 
+function webBluetoothDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
+    pxt.tickEvent(`webble.deploy`)
+    return pxt.webBluetooth.flashAsync(resp.outfiles[ts.pxtc.BINARY_HEX]);
+}
+
 function winrtDeployCoreAsync(r: pxtc.CompileResult, d: pxt.commands.DeployOptions): Promise<void> {
     return hidDeployCoreAsync(r, d)
         .timeout(20000)
@@ -356,6 +361,8 @@ export function initCommandsAsync(): Promise<void> {
         pxt.debug(`deploy/save using webkit host`);
         pxt.commands.deployCoreAsync = nativeHostDeployCoreAsync;
         pxt.commands.saveOnlyAsync = nativeHostSaveCoreAsync;
+    } else if (pxt.webBluetooth.isEnabled) {
+        pxt.commands.deployCoreAsync = webBluetoothDeployCoreAsync;
     } else if (pxt.usb.isEnabled && pxt.appTarget.compile.useUF2) {
         pxt.commands.deployCoreAsync = webUsbDeployCoreAsync;
     } else if (pxt.winrt.isWinRT()) { // windows app
