@@ -578,7 +578,12 @@ namespace ts.pxtc {
             }
     }
 
+    let checkSubtypes = false
+
     function typeCheckSubtoSup(sub: Node | Type, sup: Node | Type) {
+        if (!checkSubtypes)
+            return
+
         // get the direct types
         let supTypeLoc = (sup as any).kind ? checker.getTypeAtLocation(sup as Node) : sup as Type;
         let subTypeLoc = (sub as any).kind ? checker.getTypeAtLocation(sub as Node) : sub as Type;
@@ -663,8 +668,8 @@ namespace ts.pxtc {
         occursCheck.push(key)
 
         // we don't allow Any!
-        //if (superType.flags & TypeFlags.Any)
-        //    return insertSubtype(key, [false, "Unsupported type: any."])
+        if (superType.flags & TypeFlags.Any)
+            return insertSubtype(key, [false, "Unsupported type: any."])
 
         // outlaw all things that can't be cast to class/interface
         if (isStructureType(superType) && !castableToStructureType(subType)) {
