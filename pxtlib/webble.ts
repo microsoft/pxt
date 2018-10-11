@@ -48,7 +48,7 @@ namespace pxt.webBluetooth {
     }
 
     export class BLEService extends BLERemote {
-        constructor(protected device: BLEDevice, private reconnect: boolean) {
+        constructor(protected device: BLEDevice, protected autoReconnect: boolean) {
             super();
             this.handleDisconnected = this.handleDisconnected.bind(this);
             this.device.device.addEventListener('gattserverdisconnected', this.handleDisconnected);
@@ -58,7 +58,7 @@ namespace pxt.webBluetooth {
         handleDisconnected(event: Event) {
             this.cancelConnectAsync();
             // give a 1sec for device to reboot
-            if (this.reconnect) {
+            if (this.autoReconnect) {
                 if (!this.reconnectPromise)
                     this.reconnectPromise =
                         Promise.delay(1000)
@@ -90,7 +90,7 @@ namespace pxt.webBluetooth {
                     }
                     pxt.debug(`uart: retry connect ${delay}ms... (${max} tries left)`);
                     return Promise.delay(delay)
-                        .then(() => this.exponentialBackoffConnectAsync(--max, delay * 2));
+                        .then(() => this.exponentialBackoffConnectAsync(--max, delay * 1.5));
                 });
         }
     }
@@ -115,6 +115,12 @@ namespace pxt.webBluetooth {
             pxt.debug(`ble: connecting uart`);
             return this.device.connectAsync()
                 .then(() => this.device.gatt.getPrimaryService(UARTService.SERVICE_UUID))
+                .catch(e => {
+                    // crashes when the service is missing
+                    pxt.debug(`uart: failed to find service, disable reconnect`)
+                    this.autoReconnect = false;
+                    throw e; // bubble up
+                })
                 .then(service => {
                     pxt.debug(`ble: uart service connected`)
                     this.uartService = service;
@@ -293,20 +299,24 @@ namespace pxt.webBluetooth {
             pxt.debug(`pf: found magic block`);
             // magic + 16bytes = hash
             const magicBlock = this.uf2.blocks[this.cursor.block];
-            this.dalHash = Util.toHex(magicBlock.slice(this.cursor.offset + 16, this.cursor.offset + 24));
-            this.makeCodeHash = Util.toHex(magicBlock.slice(this.cursor.offset + 24, this.cursor.offset + 32));
+            this.dalHash = Util.toHex(magicBlock.slice(this.cursor.offset, this.cursor.offset + 8));
+            this.makeCodeHash = Util.toHex(magicBlock.slice(this.cursor.offset + 8, this.cursor.offset + 16));
 
             pxt.debug(`pf: DAL hash ${this.dalHash}`)
             pxt.debug(`pf: MakeCode hash ${this.makeCodeHash}`)
 
             return this.connectAsync()
-                .then(() => new Promise((resolve, reject) => {
+                .then(() => new Promise<void>((resolve, reject) => {
                     this.flashResolve = resolve;
                     this.flashReject = reject;
                     pxt.debug(`pf: check service version`)
                     this.state = PartialFlashingState.StatusRequested;
                     this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.STATUS]));
-                }));
+                })).then(() => { },
+                    e => {
+                        pxt.log(`pf: error ${e.message}`)
+                        this.clearFlashData();
+                    });
         }
 
         private checkStateTransition(cmd: number, acceptedStates: PartialFlashingState) {
@@ -332,7 +342,8 @@ namespace pxt.webBluetooth {
                     this.version = packet[1];
                     this.mode = packet[2];
                     pxt.debug(`ble: flash service version ${this.version} mode ${this.mode}`)
-                    if (this.mode != PartialFlashingService.MODE_PAIRING) {
+                    // what happens when there is no pairing mode?
+                   /* if (this.mode != PartialFlashingService.MODE_PAIRING) {
                         pxt.debug(`ble: reset into pairing mode`)
                         this.state = PartialFlashingState.PairingModeRequested;
                         this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.RESET, PartialFlashingService.MODE_PAIRING]));
@@ -348,7 +359,7 @@ namespace pxt.webBluetooth {
                                 this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.REGION_INFO, PartialFlashingService.REGION_DAL]));
                             })
                         return;
-                    }
+                    } */
 
                     pxt.debug(`pf: reading DAL region`)
                     this.state = PartialFlashingState.RegionDALRequested;
@@ -371,14 +382,15 @@ namespace pxt.webBluetooth {
                             this.clearFlashData();
                         }
 
-                        pxt.debug(`pf: reading makecode region`)
+                        pxt.debug(`pf: DAL hash match, reading makecode region`)
                         this.state = PartialFlashingState.RegionMakeCodeRequested;
                         this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.REGION_INFO, PartialFlashingService.REGION_MAKECODE]));
                     } else if (packet[1] == PartialFlashingService.REGION_MAKECODE) {
-                        if (region.hash != this.makeCodeHash) {
+                        if (region.hash == this.makeCodeHash) {
                             pxt.debug(`pf: MakeCode hash matches, nothing to do`)
                             this.state = PartialFlashingState.Idle;
                             this.flashResolve();
+                            this.clearFlashData();
                         } else {
                             // ready to flash the data in 4 chunks
                             this.flashNextPacket();
