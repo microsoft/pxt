@@ -292,11 +292,6 @@ function webUsbDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
         .catch(e => askWebUSBPairAsync(resp));
 }
 
-function webBluetoothDeployCoreAsync(resp: pxtc.CompileResult, d: pxt.commands.DeployOptions): Promise<void> {
-    pxt.tickEvent(`webble.deploy`)
-    return pxt.webBluetooth.flashAsync(resp, d);
-}
-
 function winrtDeployCoreAsync(r: pxtc.CompileResult, d: pxt.commands.DeployOptions): Promise<void> {
     return hidDeployCoreAsync(r, d)
         .timeout(20000)
