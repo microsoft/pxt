@@ -634,7 +634,6 @@ declare namespace Blockly {
         onItemSelected(menu: goog.ui.Menu, menuItem: goog.ui.MenuItem): void;
         positionArrow(x: number): number;
         shouldShowRect_(): boolean;
-        getAnchorDimensions_(): goog.math.Box;
     }
 
     class FieldNumber extends FieldTextInput {

@@ -6,7 +6,6 @@ namespace pxtblockly {
         columns?: string;
         maxRows?: string;
         width?: string;
-        itemColour?: string;
     }
 
     export class FieldImageDropdown extends Blockly.FieldDropdown implements Blockly.FieldCustom {
@@ -21,7 +20,6 @@ namespace pxtblockly {
         protected maxRows_: number;
 
         protected backgroundColour_: string;
-        protected itemColour_: string;
         protected borderColour_: string;
 
         protected savedPrimary_: string;
@@ -34,7 +32,6 @@ namespace pxtblockly {
             this.width_ = parseInt(options.width) || 300;
 
             this.backgroundColour_ = pxtblockly.parseColour(options.colour);
-            this.itemColour_ = options.itemColour || "rgba(255, 255, 255, 0.6)";
             this.borderColour_ = pxt.toolbox.fadeColor(this.backgroundColour_, 0.4, false);
         }
 
