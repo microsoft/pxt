@@ -108,9 +108,10 @@ namespace pxt.webBluetooth {
         static PACKET_OUT_OF_ORDER = 0xAA;
         static PACKET_WRITTEN = 0xFF;
         static END_OF_TRANSMISSION = 0x02;
-        static MICROBIT_STATUS = 0xEE;
-        static MICROBIT_RESET = 0xFF;
-        static MICROBIT_MODE_PAIRING = 0x01;
+        static STATUS = 0xEE;
+        static RESET = 0xFF;
+        static MODE_PAIRING = 0;
+        static MODE_APPLICATION = 0x01;
         static REGION_SOFTDEVICE = 0x00;
         static REGION_DAL = 0x01;
         static REGION_MAKECODE = 0x02;
@@ -189,7 +190,7 @@ namespace pxt.webBluetooth {
                     this.flashReject = reject;
                     pxt.debug(`ble: check partial flash service version`)
                     this.state = PartialFlashingState.StatusRequested;
-                    this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.MICROBIT_STATUS]));
+                    this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.STATUS]));
                 }));
         }
 
@@ -210,16 +211,16 @@ namespace pxt.webBluetooth {
             if (this.state == PartialFlashingState.Idle) // rogue response
                 return;
             switch (cmd) {
-                case PartialFlashingService.MICROBIT_STATUS:
+                case PartialFlashingService.STATUS:
                     if (!this.checkStateTransition(cmd, PartialFlashingState.StatusRequested))
                         return;
                     this.version = packet[1];
                     this.mode = packet[2];
                     pxt.debug(`ble: flash service version ${this.version} mode ${this.mode}`)
-                    if (this.mode != PartialFlashingService.MICROBIT_MODE_PAIRING) {
+                    if (this.mode != PartialFlashingService.MODE_PAIRING) {
                         pxt.debug(`ble: reset into pairing mode`)
                         this.state = PartialFlashingState.PairingModeRequested;
-                        this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.MICROBIT_RESET, PartialFlashingService.MICROBIT_MODE_PAIRING]));
+                        this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.RESET, PartialFlashingService.MICROBIT_MODE_PAIRING]));
                         // user needs to try again TODO
                         return;
                     }
@@ -383,7 +384,8 @@ namespace pxt.webBluetooth {
             bleDevice.disconnect();
         bleDevice = undefined;
         return connectAsync()
-            .then(() => bleDevice.uartService.connectAsync()
+            .then(() => bleDevice.uartService.connectAsync())
+            .then(() => pxt.log(`ble: uart connected`)
                 , e => {
                     pxt.log(`ble: error ${e.message}`)
                 })
