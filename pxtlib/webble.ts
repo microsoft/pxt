@@ -153,7 +153,6 @@ namespace pxt.webBluetooth {
         }
 
         disconnect() {
-            this.state = PartialFlashingState.Idle;
             if (this.pfCharacteristic && this.device.connected) {
                 try {
                     this.pfCharacteristic.stopNotifications();
@@ -163,11 +162,6 @@ namespace pxt.webBluetooth {
                     pxt.log(`ble: partial flash disconnect error ${e.message}`);
                 }
             }
-            this.pfCharacteristic = undefined;
-            const rej = this.flashReject;
-            this.clearFlashData();
-            if (rej)
-                rej(new Error("device disconnected"))
         }
 
         private clearFlashData() {
@@ -217,7 +211,7 @@ namespace pxt.webBluetooth {
                 return;
             switch (cmd) {
                 case PartialFlashingService.STATUS:
-                    if (!this.checkStateTransition(cmd, PartialFlashingState.StatusRequested))
+                    if (!this.checkStateTransition(cmd, PartialFlashingState.StatusRequested | PartialFlashingState.PairingModeRequested))
                         return;
                     this.version = packet[1];
                     this.mode = packet[2];
@@ -225,8 +219,18 @@ namespace pxt.webBluetooth {
                     if (this.mode != PartialFlashingService.MODE_PAIRING) {
                         pxt.debug(`ble: reset into pairing mode`)
                         this.state = PartialFlashingState.PairingModeRequested;
-                        this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.RESET, PartialFlashingService.MICROBIT_MODE_PAIRING]));
-                        // user needs to try again TODO
+                        this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.RESET, PartialFlashingService.MODE_PAIRING]));
+
+                        this.device.disconnect(); // disconnect WebBLE services
+                        Promise.delay(1000)
+                            .then(() => {
+                                pxt.debug(`ble: reconnect to pairing mode`)
+                                return this.connectAsync()
+                            }).then(() => {
+                                pxt.debug(`ble: request DAL region (in pairing mode)`)
+                                this.state = PartialFlashingState.RegionDALRequested;
+                                this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.REGION_INFO, PartialFlashingService.REGION_DAL]));
+                            })
                         return;
                     }
 
