@@ -167,6 +167,11 @@ namespace pxt.webBluetooth {
         USBFlashRequired = 1 << 7
     }
 
+    interface BlockCursor {
+        block: number;
+        offset: number;
+    }
+
     // https://github.com/microbit-sam/microbit-docs/blob/master/docs/ble/partial-flashing-service.md
     export class PartialFlashingService extends BLEService {
         static SERVICE_UUID = 'e97dd91d-251d-470a-a062-fa1922dfa9a8';
@@ -196,7 +201,7 @@ namespace pxt.webBluetooth {
         private offset: number;
         private hex: string;
         private uf2: ts.pxtc.UF2.BlockFile;
-        private magicBlock: Uint8Array;
+        private cursor: BlockCursor;
         private dalHash: string;
         private makeCodeHash: string;
 
@@ -250,19 +255,22 @@ namespace pxt.webBluetooth {
         }
 
         // finds block starting with MAGIC_BLOCK
-        private findMagicBlock(): Uint8Array {
+        private findMagicBlock(): BlockCursor {
             if (!this.uf2) return undefined;
             const magic = PartialFlashingService.MAGIC_MARKER;
-            for (const block of this.uf2.blocks) {
-                let match = true;
-                for (let j = 0; j < magic.length; ++j) {
-                    if (magic[j] !== block[j]) {
-                        match = false;
-                        break;
+            for (let b = 0; b < this.uf2.blocks.length; ++b) {
+                const block = this.uf2.blocks[b];
+                for (let offset = 0; offset < block.length - magic.length; offset += 16) {
+                    let match = true;
+                    for (let j = 0; j < magic.length; ++j) {
+                        if (magic[j] != block[offset + j]) {
+                            match = false;
+                            break;
+                        }
                     }
+                    if (match)
+                        return { block: b, offset: offset + magic.length };
                 }
-                if (match)
-                    return block;
             }
             return undefined;
         }
@@ -275,16 +283,18 @@ namespace pxt.webBluetooth {
             this.clearFlashData();
             this.hex = hex;
             this.uf2 = ts.pxtc.UF2.newBlockFile();
-            this.magicBlock = this.findMagicBlock();
-            if (!this.magicBlock) {
+            ts.pxtc.UF2.writeHex(this.uf2, this.hex.split(/\r?\n/));
+            this.cursor = this.findMagicBlock();
+            if (!this.cursor) {
                 pxt.debug(`pf: magic block not found, not a valid HEX file`);
                 U.userError(lf("Invalid file"));
             }
 
             pxt.debug(`pf: found magic block`);
             // magic + 16bytes = hash
-            this.dalHash = Util.toHex(this.magicBlock.slice(PartialFlashingService.MAGIC_MARKER.length + 16, 8));
-            this.makeCodeHash = Util.toHex(this.magicBlock.slice(PartialFlashingService.MAGIC_MARKER.length + 24, 8));
+            const magicBlock = this.uf2.blocks[this.cursor.block];
+            this.dalHash = Util.toHex(magicBlock.slice(this.cursor.offset + 16, this.cursor.offset + 24));
+            this.makeCodeHash = Util.toHex(magicBlock.slice(this.cursor.offset + 24, this.cursor.offset + 32));
 
             pxt.debug(`pf: DAL hash ${this.dalHash}`)
             pxt.debug(`pf: MakeCode hash ${this.makeCodeHash}`)
@@ -408,36 +418,37 @@ namespace pxt.webBluetooth {
             this.state = PartialFlashingState.Flash;
 
             pxt.debug(`ble: flashing offset ${this.offset} of ${this.hex.length}`);
-
-            const o = this.offset;
-            const chunk = new Uint8Array(16);
-            chunk[0] = PartialFlashingService.FLASH_DATA;
-
-            chunk[3] = 0; // packet number
-            chunk[1] = o >> 8; // 2 bytes of offset
-            chunk[2] = o;
-            for (let i = 0; i < 16; i++)
-                chunk[4 + i] = this.hex[i];
-            this.pfCharacteristic.writeValue(chunk);
-
-            chunk[3] = 1; // packet number
-            chunk[1] = o >> 24; // other 2 bytes of offset
-            chunk[2] = o >> 16;
-            for (let i = 0; i < 16; i++)
-                chunk[4 + i] = this.hex[16 + i];
-            this.pfCharacteristic.writeValue(chunk);
-
-            chunk[3] = 2; // packet number
-            chunk[1] = 0;
-            chunk[2] = 0;
-            for (let i = 0; i < 16; i++)
-                chunk[4 + i] = this.hex[32 + i];
-            this.pfCharacteristic.writeValue(chunk);
-
-            chunk[3] = 3; // packet number
-            for (let i = 0; i < 16; i++)
-                chunk[4 + i] = this.hex[48 + i];
-            this.pfCharacteristic.writeValue(chunk);
+            /*
+                        const o = this.offset;
+                        const chunk = new Uint8Array(16);
+                        chunk[0] = PartialFlashingService.FLASH_DATA;
+            
+                        chunk[3] = 0; // packet number
+                        chunk[1] = o >> 8; // 2 bytes of offset
+                        chunk[2] = o;
+                        for (let i = 0; i < 16; i++)
+                            chunk[4 + i] = this.hex[i];
+                        this.pfCharacteristic.writeValue(chunk);
+            
+                        chunk[3] = 1; // packet number
+                        chunk[1] = o >> 24; // other 2 bytes of offset
+                        chunk[2] = o >> 16;
+                        for (let i = 0; i < 16; i++)
+                            chunk[4 + i] = this.hex[16 + i];
+                        this.pfCharacteristic.writeValue(chunk);
+            
+                        chunk[3] = 2; // packet number
+                        chunk[1] = 0;
+                        chunk[2] = 0;
+                        for (let i = 0; i < 16; i++)
+                            chunk[4 + i] = this.hex[32 + i];
+                        this.pfCharacteristic.writeValue(chunk);
+            
+                        chunk[3] = 3; // packet number
+                        for (let i = 0; i < 16; i++)
+                            chunk[4 + i] = this.hex[48 + i];
+                        this.pfCharacteristic.writeValue(chunk);
+                        */
         }
     }
 
