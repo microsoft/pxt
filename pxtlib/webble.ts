@@ -14,6 +14,7 @@ namespace pxt.webBluetooth {
     export function hasConsole() {
         return !!navigator && !!navigator.bluetooth
             && ('TextDecoder' in window) // needed for reading data
+            && pxt.appTarget.appTheme.bluetoothUartConsole
             && pxt.appTarget.appTheme.bluetoothUartFilters
             && pxt.appTarget.appTheme.bluetoothUartFilters.length > 0;
     }
