@@ -183,6 +183,8 @@ namespace pxt.webBluetooth {
         static REGION_SOFTDEVICE = 0x00;
         static REGION_DAL = 0x01;
         static REGION_MAKECODE = 0x02;
+        static MAGIC_MARKER = Util.fromHex('708E3B92C615A841C49866C975EE5197');
+        static SOURCE_MARKER = Util.fromHex('41140E2FB82FA2BB');
 
         private pfCharacteristic: BluetoothRemoteGATTCharacteristic;
         private state = PartialFlashingState.Idle;
@@ -192,8 +194,12 @@ namespace pxt.webBluetooth {
 
 
         private offset: number;
-        private hex: Uint8Array;
+        private hex: string;
+        private uf2: ts.pxtc.UF2.BlockFile;
+        private magicBlock: Uint8Array;
         private dalHash: string;
+        private makeCodeHash: string;
+
         private flashResolve: (theResult?: void | PromiseLike<void>) => void;
         private flashReject: (e: any) => void;
 
@@ -236,19 +242,53 @@ namespace pxt.webBluetooth {
             this.regions = [];
             this.offset = 0;
             this.hex = undefined;
+            this.uf2 = undefined;
             this.dalHash = undefined;
+            this.makeCodeHash = undefined;
             this.flashReject = undefined;
             this.flashResolve = undefined;
         }
 
-        flashAsync(hex: Uint8Array): Promise<void> {
+        // finds block starting with MAGIC_BLOCK
+        private findMagicBlock(): Uint8Array {
+            if (!this.uf2) return undefined;
+            const magic = PartialFlashingService.MAGIC_MARKER;
+            for (const block of this.uf2.blocks) {
+                let match = true;
+                for (let j = 0; j < magic.length; ++j) {
+                    if (magic[j] !== block[j]) {
+                        match = false;
+                        break;
+                    }
+                }
+                if (match)
+                    return block;
+            }
+            return undefined;
+        }
+
+        flashAsync(hex: string): Promise<void> {
             if (this.hex) {
-                pxt.debug(`ble: flashing already in progress`)
+                pxt.debug(`pf: flashing already in progress`)
                 return Promise.resolve();
             }
             this.clearFlashData();
             this.hex = hex;
-            this.dalHash = "";
+            this.uf2 = ts.pxtc.UF2.newBlockFile();
+            this.magicBlock = this.findMagicBlock();
+            if (!this.magicBlock) {
+                pxt.debug(`pf: magic block not found, not a valid HEX file`);
+                U.userError(lf("Invalid file"));
+            }
+
+            pxt.debug(`pf: found magic block`);
+            // magic + 16bytes = hash
+            this.dalHash = Util.toHex(this.magicBlock.slice(PartialFlashingService.MAGIC_MARKER.length + 16, 8));
+            this.makeCodeHash = Util.toHex(this.magicBlock.slice(PartialFlashingService.MAGIC_MARKER.length + 24, 8));
+
+            pxt.debug(`pf: DAL hash ${this.dalHash}`)
+            pxt.debug(`pf: MakeCode hash ${this.makeCodeHash}`)
+
             return this.connectAsync()
                 .then(() => new Promise((resolve, reject) => {
                     this.flashResolve = resolve;
@@ -315,7 +355,7 @@ namespace pxt.webBluetooth {
                     pxt.debug(`read region ${packet[1]} start ${region.start.toString(16)} end ${region.end.toString(16)} hash ${region.hash}`)
                     if (packet[1] == PartialFlashingService.REGION_DAL) {
                         if (region.hash != this.dalHash) {
-                            pxt.debug(`ble: DAL hash does not match, partial flashing not possible`)
+                            pxt.debug(`pf: DAL hash does not match, partial flashing not possible`)
                             this.state = PartialFlashingState.USBFlashRequired;
                             this.flashReject(new Error("USB flashing required"));
                             this.clearFlashData();
@@ -325,9 +365,14 @@ namespace pxt.webBluetooth {
                         this.state = PartialFlashingState.RegionMakeCodeRequested;
                         this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.REGION_INFO, PartialFlashingService.REGION_MAKECODE]));
                     } else if (packet[1] == PartialFlashingService.REGION_MAKECODE) {
-                        // test hashes 
-                        // ready to flash the data in 4 chunks
-                        this.flashNextPacket();
+                        if (region.hash != this.makeCodeHash) {
+                            pxt.debug(`pf: MakeCode hash matches, nothing to do`)
+                            this.state = PartialFlashingState.Idle;
+                            this.flashResolve();
+                        } else {
+                            // ready to flash the data in 4 chunks
+                            this.flashNextPacket();
+                        }
                     }
                     break;
                 case PartialFlashingService.FLASH_DATA:
@@ -497,6 +542,6 @@ namespace pxt.webBluetooth {
     export function flashAsync(resp: pxtc.CompileResult, d: pxt.commands.DeployOptions = {}): Promise<void> {
         const hex = resp.outfiles[ts.pxtc.BINARY_HEX];
         return connectAsync()
-            .then(() => bleDevice.partialFlashingService.flashAsync(new Uint8Array(64)));
+            .then(() => bleDevice.partialFlashingService.flashAsync(hex));
     }
 }
