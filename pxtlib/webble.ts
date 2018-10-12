@@ -213,7 +213,6 @@ namespace pxt.webBluetooth {
         static REGION_DAL = 0x01;
         static REGION_MAKECODE = 0x02;
         static MAGIC_MARKER = Util.fromHex('708E3B92C615A841C49866C975EE5197');
-        static SOURCE_MARKER = Util.fromHex('41140E2FB82FA2BB');
 
         private pfCharacteristic: BluetoothRemoteGATTCharacteristic;
         private state = PartialFlashingState.Idle;
@@ -224,7 +223,6 @@ namespace pxt.webBluetooth {
         private hex: string;
         private bin: Uint8Array;
         private magicOffset: number;
-        private sourceOffset: number;
         private dalHash: string;
         private makeCodeHash: string;
         private flashOffset: number;
@@ -242,7 +240,6 @@ namespace pxt.webBluetooth {
             this.hex = undefined;
             this.bin = undefined;
             this.magicOffset = undefined;
-            this.sourceOffset = undefined;
             this.dalHash = undefined;
             this.makeCodeHash = undefined;
             this.flashReject = undefined;
@@ -332,7 +329,8 @@ namespace pxt.webBluetooth {
             this.hex = hex;
             const uf2 = ts.pxtc.UF2.newBlockFile();
             ts.pxtc.UF2.writeHex(uf2, this.hex.split(/\r?\n/));
-            this.bin = ts.pxtc.UF2.toBin(U.stringToUint8Array(ts.pxtc.UF2.serializeFile(uf2))).buf;
+            const flashUsableEnd = pxt.appTarget.compile.flashUsableEnd;
+            this.bin = ts.pxtc.UF2.toBin(U.stringToUint8Array(ts.pxtc.UF2.serializeFile(uf2)), flashUsableEnd).buf;
             pxt.debug(`pf: bin bytes ${this.bin.length}`)
             this.magicOffset = this.findMarker(0, PartialFlashingService.MAGIC_MARKER);
             pxt.debug(`pf: magic block ${this.magicOffset.toString(16)}`);
@@ -340,9 +338,7 @@ namespace pxt.webBluetooth {
                 pxt.debug(`pf: magic block not found, not a valid HEX file`);
                 U.userError(lf("Invalid file"));
             }
-            this.sourceOffset = this.findMarker(this.magicOffset, PartialFlashingService.SOURCE_MARKER);
-            pxt.debug(`pf: source block ${this.sourceOffset.toString(16)}`);
-            pxt.debug(`pf: bytes to flash ${(this.sourceOffset > 0 ? this.sourceOffset : this.bin.length) - this.magicOffset}`)
+            pxt.debug(`pf: bytes to flash ${this.bin.length - this.magicOffset}`)
 
             // magic + 16bytes = hash
             const hashOffset = this.magicOffset + PartialFlashingService.MAGIC_MARKER.length;
@@ -433,10 +429,6 @@ namespace pxt.webBluetooth {
                             pxt.debug(`pf: magic offset and MakeCode region.start not matching`);
                             U.userError(lf("Invalid file"));
                         }
-                        if (this.sourceOffset < 0) {
-                            this.sourceOffset = this.bin.length - 1;
-                            pxt.debug(`pf: source marker not found, defaulting to eof ${this.sourceOffset.toString(16)}`);
-                        }
                         if (region.hash == this.makeCodeHash) {
                             pxt.debug(`pf: MakeCode hash matches, nothing to do`)
                             this.state = PartialFlashingState.Idle;
@@ -464,7 +456,7 @@ namespace pxt.webBluetooth {
                             // move cursor
                             this.flashOffset += 64;
                             this.flashPacketNumber += 4;
-                            if (this.flashOffset >= this.sourceOffset) {
+                            if (this.flashOffset >= this.bin.length) {
                                 pxt.debug('pf: end transmission')
                                 this.state = PartialFlashingState.EndOfTransmision;
                                 this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.END_OF_TRANSMISSION]));
@@ -492,10 +484,10 @@ namespace pxt.webBluetooth {
             this.flashPacketToken.startOperation();
 
             const hex = this.bin.slice(this.flashOffset, this.flashOffset + 64);
-            pxt.debug(`pf: flashing ${this.flashOffset.toString(16)} / ${this.sourceOffset.toString(16)} ${((this.flashOffset - this.magicOffset) / (this.sourceOffset - this.magicOffset) * 100) >> 0}%`);
+            pxt.debug(`pf: flashing ${this.flashOffset.toString(16)} / ${this.bin.length.toString(16)} ${((this.flashOffset - this.magicOffset) / (this.bin.length - this.magicOffset) * 100) >> 0}%`);
 
             // add delays or chrome crashes
-            const delay = 30;
+            const delay = 40;
             let chunk = new Uint8Array(20);
             Promise.delay(delay)
                 .then(() => {
