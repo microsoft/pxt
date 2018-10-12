@@ -19,6 +19,7 @@ namespace pxt.webBluetooth {
     export class BLERemote {
         private connectPromise: Promise<void> = undefined;
         public aliveToken: pxt.Util.CancellationToken;
+        public connectionTimeout = 20000; // 20 second default timeout
 
         constructor(aliveToken: pxt.Util.CancellationToken) {
             this.aliveToken = aliveToken;
@@ -42,8 +43,9 @@ namespace pxt.webBluetooth {
 
         connectAsync(): Promise<void> {
             if (!this.connectPromise)
-                this.connectPromise = this.alivePromise(this.createConnectPromise());
+                this.connectPromise = this.alivePromise(this.createConnectPromise())
             return this.connectPromise
+                .timeout(this.connectionTimeout, "connection timeout")
                 .then(() => this.aliveToken.throwIfCancelled())
                 .catch(e => {
                     // connection failed, clear promise to try again
@@ -63,6 +65,8 @@ namespace pxt.webBluetooth {
     }
 
     export class BLEService extends BLERemote {
+        public autoReconnectDelay = 1000;
+
         constructor(protected device: BLEDevice, protected autoReconnect: boolean) {
             super(device.aliveToken);
             this.handleDisconnected = this.handleDisconnected.bind(this);
@@ -72,16 +76,15 @@ namespace pxt.webBluetooth {
         private reconnectPromise: Promise<void> = undefined;
         handleDisconnected(event: Event) {
             this.cancelConnect();
+            if (this.aliveToken.isCancelled()) return;
             // give a 1sec for device to reboot
-            if (this.autoReconnect && !this.aliveToken.isCancelled()) {
-                if (!this.reconnectPromise)
-                    this.reconnectPromise =
-                        Promise.delay(1000)
-                            .then(() => this.exponentialBackoffConnectAsync(10, 500))
-                            .catch(() => {
-                                this.reconnectPromise = undefined;
-                            });
-            }
+            if (this.autoReconnect && !this.reconnectPromise)
+                this.reconnectPromise =
+                    Promise.delay(this.autoReconnectDelay)
+                        .then(() => this.exponentialBackoffConnectAsync(10, 500))
+                        .catch(() => {
+                            this.reconnectPromise = undefined;
+                        });
         }
 
         /* Utils */
@@ -90,6 +93,7 @@ namespace pxt.webBluetooth {
         // "success" is called upon success.
         private exponentialBackoffConnectAsync(max: number, delay: number): Promise<void> {
             pxt.debug(`uart: retry connect`)
+            this.aliveToken.throwIfCancelled();
             return this.connectAsync()
                 .then(() => {
                     this.aliveToken.throwIfCancelled();
@@ -103,14 +107,19 @@ namespace pxt.webBluetooth {
                         this.reconnectPromise = undefined;
                         return undefined;
                     }
-                    if (max == 0 || !this.autoReconnect) {
+                    if (!this.autoReconnect) {
+                        pxt.debug(`ble: autoreconnect disabled`)
+                        this.reconnectPromise = undefined;
+                        return undefined;
+                    }
+                    if (max == 0) {
                         pxt.debug(`uart: give up, max tries`)
                         this.reconnectPromise = undefined;
                         return undefined; // give up
                     }
                     pxt.debug(`uart: retry connect ${delay}ms... (${max} tries left)`);
                     return Promise.delay(delay)
-                        .then(() => this.exponentialBackoffConnectAsync(--max, delay * 1.5));
+                        .then(() => this.exponentialBackoffConnectAsync(--max, delay * 1.8));
                 })
         }
     }
@@ -135,12 +144,6 @@ namespace pxt.webBluetooth {
             pxt.debug(`ble: connecting uart`);
             return this.device.connectAsync()
                 .then(() => this.alivePromise(this.device.gatt.getPrimaryService(UARTService.SERVICE_UUID)))
-                .catch(e => {
-                    // crashes when the service is missing
-                    pxt.debug(`uart: failed to find service, disable reconnect`)
-                    this.autoReconnect = false;
-                    throw e; // bubble up
-                })
                 .then(service => {
                     pxt.debug(`ble: uart service connected`)
                     this.uartService = service;
