@@ -345,23 +345,23 @@ namespace pxt.webBluetooth {
                     this.mode = packet[2];
                     pxt.debug(`ble: flash service version ${this.version} mode ${this.mode}`)
                     // what happens when there is no pairing mode?
-                    /* if (this.mode != PartialFlashingService.MODE_PAIRING) {
-                         pxt.debug(`ble: reset into pairing mode`)
-                         this.state = PartialFlashingState.PairingModeRequested;
-                         this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.RESET, PartialFlashingService.MODE_PAIRING]));
- 
-                         this.device.disconnect(); // disconnect WebBLE services
-                         Promise.delay(1000)
-                             .then(() => {
-                                 pxt.debug(`pf: reconnect to pairing mode`)
-                                 return this.connectAsync()
-                             }).then(() => {
-                                 pxt.debug(`pf: request DAL region (in pairing mode)`)
-                                 this.state = PartialFlashingState.RegionDALRequested;
-                                 this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.REGION_INFO, PartialFlashingService.REGION_DAL]));
-                             })
-                         return;
-                     } */
+                    if (this.mode != PartialFlashingService.MODE_PAIRING) {
+                        pxt.debug(`ble: reset into pairing mode`)
+                        this.state = PartialFlashingState.PairingModeRequested;
+                        this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.RESET, PartialFlashingService.MODE_PAIRING]));
+
+                        this.device.disconnect(); // disconnect WebBLE services
+                        Promise.delay(2000)
+                            .then(() => {
+                                pxt.debug(`pf: reconnect to pairing mode`)
+                                return this.connectAsync()
+                            }).then(() => {
+                                pxt.debug(`pf: request DAL region (in pairing mode)`)
+                                this.state = PartialFlashingState.RegionDALRequested;
+                                this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.REGION_INFO, PartialFlashingService.REGION_DAL]));
+                            })
+                        return;
+                    }
 
                     pxt.debug(`pf: reading DAL region`)
                     this.state = PartialFlashingState.RegionDALRequested;
