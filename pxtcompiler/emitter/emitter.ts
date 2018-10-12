@@ -90,7 +90,7 @@ namespace ts.pxtc {
         console.log(stringKind(n))
     }
 
-    // next free error 9275
+    // next free error 9276
     function userError(code: number, msg: string, secondary = false): Error {
         let e = new Error(msg);
         (<any>e).ksEmitterUserError = true;
@@ -314,6 +314,9 @@ namespace ts.pxtc {
 
     export interface ClassInfo {
         id: string;
+        derivedClasses?: ClassInfo[];
+        classNo?: number;
+        lastSubtypeNo?: number;
         baseClassInfo: ClassInfo;
         decl: ClassDeclaration;
         allfields: FieldWithAddInfo[];
@@ -1205,6 +1208,9 @@ namespace ts.pxtc {
             if (inf.vtable)
                 return inf.vtable
             let tbl = inf.baseClassInfo ? getVTable(inf.baseClassInfo).slice(0) : []
+            inf.derivedClasses = []
+            if (inf.baseClassInfo)
+                inf.baseClassInfo.derivedClasses.push(inf)
 
             scope(() => {
                 for (let m of inf.methods) {
@@ -2215,6 +2221,20 @@ ${lbl}: .short ${pxt.REFCNT_FLASH}
             for (let info of bin.usedClassInfos) {
                 getVTable(info) // gets cached
             }
+            let classNo = 1
+            const number = (i: ClassInfo) => {
+                U.assert(!i.classNo)
+                i.classNo = classNo++
+                i.derivedClasses.forEach(number)
+                i.lastSubtypeNo = classNo - 1
+            }
+            for (let info of bin.usedClassInfos) {
+                let par = info
+                while (par.baseClassInfo)
+                    par = par.baseClassInfo
+                if (!par.classNo)
+                    number(par)
+            }
         }
 
         function getCtor(decl: ClassDeclaration) {
@@ -3054,6 +3074,19 @@ ${lbl}: .short ${pxt.REFCNT_FLASH}
             proc.emitLbl(lbl)
         }
 
+        function emitInstanceOfExpression(node: BinaryExpression) {
+            let tp = typeOf(node.right)
+            let classDecl = isPossiblyGenericClassType(tp) ? <ClassDeclaration>getDecl(node.right) : null
+            if (!classDecl || classDecl.kind != SK.ClassDeclaration) {
+                userError(9275, lf("unsupported instanceof expression"))
+            }
+            let info = getClassInfo(tp, classDecl)
+            markClassUsed(info)
+            let r = ir.op(ir.EK.InstanceOf, [emitExpr(node.left)], info)
+            r.jsInfo = "bool"
+            return r
+        }
+
         function emitLazyBinaryExpression(node: BinaryExpression) {
             let left = emitExpr(node.left)
             let isString = isStringType(typeOf(node.left));
@@ -3192,6 +3225,8 @@ ${lbl}: .short ${pxt.REFCNT_FLASH}
                 case SK.BarBarToken:
                 case SK.AmpersandAmpersandToken:
                     return emitLazyBinaryExpression(node);
+                case SK.InstanceOfKeyword:
+                    return emitInstanceOfExpression(node);
             }
 
             if (node.operatorToken.kind == SK.PlusToken) {

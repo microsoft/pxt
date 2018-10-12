@@ -132,6 +132,7 @@ ${lbl}: .short ${pxt.REFCNT_FLASH}, ${pxt.REF_TAG_BUFFER}, ${data.length >> 1}, 
         private calls: ProcCallInfo[] = []
         private proc: ir.Procedure = null;
         private baseStackSize = 0; // real stack size is this + exprStack.length
+        private labelledHelpers: pxt.Map<string> = {};
 
         constructor(t: AssemblerSnippets, bin: Binary, proc: ir.Procedure) {
             this.t = t as any; // TODO in future, figure out if we follow the "Snippets" architecture
@@ -518,9 +519,55 @@ ${baseLabel}:
                 case ir.EK.Sequence:
                     e.args.forEach(e => this.emitExpr(e))
                     return this.clearStack()
+                case ir.EK.InstanceOf:
+                    return this.emitInstanceOf(e)
                 default:
                     return this.emitExprInto(e, "r0")
             }
+        }
+
+        private emitInstanceOf(e: ir.Expr) {
+            let info: ClassInfo = e.data
+            this.emitExpr(e.args[0])
+
+            let lbl = "inst_" + info.id + "_" + e.jsInfo
+
+            this.emitLabelledHelper(lbl, () => {
+                this.write(`lsls r1, r0, #30`)
+                this.write(`bne .fail`) // tagged
+                if (target.stackAlign) {
+                    // assume linux - we can't read from NULL
+                    // on regular ARM the NULL address contains base stack, which is aligned, so we hit the C++ case below
+                    this.write(`cmp r0, #0`)
+                    this.write(`beq .fail`) // null
+                }
+                this.write(`ldr r1, [r0, #0]`)
+                this.write(`lsls r2, r1, #30`)
+                this.write(`beq .fail`) // C++ class
+                this.write(`lsrs r1, r1, #16`)
+                this.write(`cmp r1, #100`)
+                this.write(`ble .fail`) // built-in
+                this.write(`lsls r1, r1, #${target.vtableShift}`)
+                this.write(`ldrh r2, [r1, #8]`)
+                this.write(`cmp r2, #${info.classNo}`)
+                if (info.classNo == info.lastSubtypeNo) {
+                    this.write("bne .fail") // different class
+                } else {
+                    this.write("blt .fail")
+                    this.write(`cmp r2, #${info.lastSubtypeNo}`)
+                    this.write("bgt .fail")
+                }
+
+                if (e.jsInfo == "bool") {
+                    this.write(`movs r0, #${taggedTrue}`)
+                    this.write(`bx lr`)
+                    this.write(`.fail:`)
+                    this.write(`movs r0, #${taggedFalse}`)
+                    this.write(`bx lr`)
+                } else {
+                    U.oops()
+                }
+            })
         }
 
         private emitSharedDef(e: ir.Expr) {
@@ -712,6 +759,16 @@ ${baseLabel}:
             this.write(unalign)
         }
 
+        private emitLabelledHelper(lbl: string, generate: () => void) {
+            if (!this.labelledHelpers[lbl]) {
+                let outp = this.redirectOutput(generate)
+                this.emitHelper(outp, lbl)
+                this.labelledHelpers[lbl] = this.bin.codeHelpers[outp];
+            } else {
+                this.write(this.t.call_lbl(this.labelledHelpers[lbl]))
+            }
+        }
+
         private emitHelper(asm: string, baseName = "hlp") {
             if (!this.bin.codeHelpers[asm]) {
                 let len = Object.keys(this.bin.codeHelpers).length
@@ -871,7 +928,7 @@ ${baseLabel}:
                 } else {
                     this.write(this.t.prologue_vtable(0, this.bin.options.target.vtableShift))
 
-                    let effIdx = procid.virtualIndex + numSpecialMethods + 2
+                    let effIdx = procid.virtualIndex + numSpecialMethods + 3
                     if (procid.ifaceIndex != null) {
                         this.write(this.t.load_reg_src_off("r0", "r0", "#4") + " ; iface table")
                         effIdx = procid.ifaceIndex

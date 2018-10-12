@@ -21,6 +21,7 @@ namespace ts.pxtc.ir {
         Sequence,
         JmpValue,
         Nop,
+        InstanceOf,
     }
 
     let currExprId = 0

@@ -573,6 +573,9 @@ ${info.id}_VT:
 
         s += `        ${ptrSz} ${info.id}_IfaceVT\n`
 
+        s += `        .short ${info.classNo} ; class ID\n`
+        s += `        .short 0 ; reserved\n`
+
         addPtr("pxt::RefRecord_destroy")
         addPtr("pxt::RefRecord_print")
         if (info.toStringMethod)
