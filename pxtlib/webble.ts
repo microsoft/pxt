@@ -44,7 +44,12 @@ namespace pxt.webBluetooth {
             if (!this.connectPromise)
                 this.connectPromise = this.alivePromise(this.createConnectPromise());
             return this.connectPromise
-                .then(() => this.aliveToken.throwIfCancelled());
+                .then(() => this.aliveToken.throwIfCancelled())
+                .catch(e => {
+                    // connection failed, clear promise to try again
+                    this.connectPromise = undefined;
+                    throw e;
+                });
         }
 
         disconnect(): void {
@@ -74,7 +79,6 @@ namespace pxt.webBluetooth {
                         Promise.delay(1000)
                             .then(() => this.exponentialBackoffConnectAsync(10, 500))
                             .catch(() => {
-                                this.aliveToken.resolveCancel();
                                 this.reconnectPromise = undefined;
                             });
             }
@@ -99,7 +103,7 @@ namespace pxt.webBluetooth {
                         this.reconnectPromise = undefined;
                         return undefined;
                     }
-                    if (max == 0) {
+                    if (max == 0 || !this.autoReconnect) {
                         pxt.debug(`uart: give up, max tries`)
                         this.reconnectPromise = undefined;
                         return undefined; // give up
@@ -107,9 +111,6 @@ namespace pxt.webBluetooth {
                     pxt.debug(`uart: retry connect ${delay}ms... (${max} tries left)`);
                     return Promise.delay(delay)
                         .then(() => this.exponentialBackoffConnectAsync(--max, delay * 1.5));
-                })
-                .catch(() => {
-                    this.aliveToken.resolveCancel();
                 })
         }
     }
