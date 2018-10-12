@@ -139,8 +139,6 @@ namespace pxt.webBluetooth {
         }
 
         protected createConnectPromise(): Promise<void> {
-            if (this.device.connected && this.txCharacteristic)
-                return Promise.resolve();
             pxt.debug(`ble: connecting uart`);
             return this.device.connectAsync()
                 .then(() => this.alivePromise(this.device.gatt.getPrimaryService(UARTService.SERVICE_UUID)))
@@ -154,6 +152,7 @@ namespace pxt.webBluetooth {
                     return this.txCharacteristic.startNotifications()
                 }).then(() => {
                     this.txCharacteristic.addEventListener('characteristicvaluechanged', this.handleUARTNotifications);
+                    pxt.tickEvent("webble.uart.connected");
                 });
         }
 
@@ -634,10 +633,9 @@ namespace pxt.webBluetooth {
         }
 
         protected createConnectPromise(): Promise<void> {
+            pxt.debug(`ble: connecting gatt server`)
             return this.alivePromise<void>(this.device.gatt.connect()
-                .then(() => {
-                    pxt.debug(`ble: gatt connected`);
-                }));
+                .then(() => pxt.debug(`ble: gatt server connected`)));
         }
 
         handleDisconnected(event: Event) {
@@ -700,8 +698,14 @@ namespace pxt.webBluetooth {
     }
 
     export function flashAsync(resp: pxtc.CompileResult, d: pxt.commands.DeployOptions = {}): Promise<void> {
+        pxt.tickEvent("webble.flash");
         const hex = resp.outfiles[ts.pxtc.BINARY_HEX];
         return connectAsync()
-            .then(() => bleDevice.partialFlashingService.flashAsync(hex));
+            .then(() => bleDevice.partialFlashingService.flashAsync(hex))
+            .then(() => pxt.tickEvent("webble.flash.success"))
+            .catch(e => {
+                pxt.tickEvent("webble.fail.fail", { "message": e.message });
+                throw e;
+            });
     }
 }
