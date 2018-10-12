@@ -17,7 +17,7 @@ For a list of all the new updates and features, please read our earlier [blog po
 
 ## ~
 
-https://youtu.be/aPloZmwx0_0
+https://youtu.be/aPloZmwx0_0)
 
 ### ~ hint
 
