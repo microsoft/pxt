@@ -6,9 +6,7 @@ Mark your calendars and buy a cake. The new MakeCode for micro:bit editor will b
 
 ## What's new?
 
-For a list of all the new updates and features, please read our earlier [blog post](/blog/microbit/v1-beta). 
-
-https://youtu.be/aPloZmwx0_0
+For a list of all the new updates and features, please read our earlier [blog post](/blog/microbit/v1-beta) or this [video](https://youtu.be/aPloZmwx0_0). 
 
  Here is a quick recap of the changes:
 * New Home Page with recent projects, tutorials and examples
