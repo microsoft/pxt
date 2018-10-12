@@ -204,6 +204,8 @@ namespace pxt.webBluetooth {
         private dalHash: string;
         private makeCodeHash: string;
         private flashOffset: number;
+        private flashPacketNumber: number;
+        private flashPacketToken: pxt.Util.CancellationToken;
 
         private flashResolve: (theResult?: void | PromiseLike<void>) => void;
         private flashReject: (e: any) => void;
@@ -230,6 +232,8 @@ namespace pxt.webBluetooth {
 
         disconnect() {
             super.disconnect();
+            if (this.flashPacketToken)
+                this.flashPacketToken.cancel();
             if (this.pfCharacteristic && this.device.connected) {
                 try {
                     this.pfCharacteristic.stopNotifications();
@@ -401,8 +405,9 @@ namespace pxt.webBluetooth {
                         } else {
                             // ready to flash the data in 4 chunks
                             this.flashOffset = region.start;
+                            this.flashPacketNumber = 0;
                             pxt.debug(`pf: starting to flash from address ${this.flashOffset.toString(16)}`);
-                            setTimeout(() => this.flashNextPacket(), 1);
+                            this.flashNextPacket();
                         }
                     }
                     break;
@@ -412,6 +417,8 @@ namespace pxt.webBluetooth {
                     switch (packet[1]) {
                         case PartialFlashingService.PACKET_OUT_OF_ORDER:
                             pxt.debug(`pf: packet out of order`);
+                            if (this.flashPacketToken)
+                                this.flashPacketToken.cancel();
                             U.assert(false, 'packet out of order')
                             break;
                         case PartialFlashingService.PACKET_WRITTEN:
@@ -426,10 +433,11 @@ namespace pxt.webBluetooth {
                                 this.flashResolve();
                                 this.clearFlashData();
                             } else { // keep flashing
-                                setTimeout(() => this.flashNextPacket(), 1);
+                                this.flashNextPacket();
                             }
                             break;
                     }
+                    break;
                 default:
                     pxt.debug(`pf: unknown message ${pxt.Util.toHex(packet)}`);
                     this.disconnect();
@@ -441,44 +449,62 @@ namespace pxt.webBluetooth {
         private flashNextPacket() {
             this.state = PartialFlashingState.Flash;
 
+            this.flashPacketToken = new pxt.Util.CancellationToken()
+            this.flashPacketToken.startOperation();
+
             const hex = this.bin.slice(this.flashOffset, this.flashOffset + 64);
             pxt.debug(`pf: flashing offset ${this.flashOffset.toString(16)} (page boundary ${!(this.flashOffset % 0x400)})`);
 
+            // add delays or chrome crashes
+            const delay = 50;
             let chunk = new Uint8Array(20);
-            chunk[0] = PartialFlashingService.FLASH_DATA;
-            chunk[1] = (this.flashOffset >> 8) & 0xff;
-            chunk[2] = (this.flashOffset >> 0) & 0xff;
-            chunk[3] = 0; // packet number
-            for (let i = 0; i < 16; i++)
-                chunk[4 + i] = hex[i];
-            this.pfCharacteristic.writeValue(chunk);
-
-            chunk[0] = PartialFlashingService.FLASH_DATA;
-            chunk[1] = (this.flashOffset >> 24) & 0xff;
-            chunk[2] = (this.flashOffset >> 16) & 0xff;
-            chunk[3] = 1; // packet number
-            for (let i = 0; i < 16; i++)
-                chunk[4 + i] = hex[16 + i] || 0;
-            this.pfCharacteristic.writeValue(chunk);
-
-            chunk[0] = PartialFlashingService.FLASH_DATA;
-            chunk[1] = 0;
-            chunk[2] = 0;
-            chunk[3] = 2; // packet number
-            for (let i = 0; i < 16; i++)
-                chunk[4 + i] = hex[32 + i] || 0;
-            this.pfCharacteristic.writeValue(chunk);
-
-            chunk[0] = PartialFlashingService.FLASH_DATA;
-            chunk[1] = 0;
-            chunk[2] = 0;
-            chunk[3] = 3; // packet number
-            for (let i = 0; i < 16; i++)
-                chunk[4 + i] = hex[48 + i] || 0;
-            this.pfCharacteristic.writeValue(chunk);
-
-            // now we wait for a write notification
-            pxt.debug(`pf: flash packets sent, waiting for write confirmation`)
+            Promise.delay(delay)
+                .then(() => {
+                    this.flashPacketToken.throwIfCancelled();
+                    chunk[0] = PartialFlashingService.FLASH_DATA;
+                    chunk[1] = (this.flashOffset >> 8) & 0xff;
+                    chunk[2] = (this.flashOffset >> 0) & 0xff;
+                    chunk[3] = this.flashPacketNumber++; // packet number
+                    for (let i = 0; i < 16; i++)
+                        chunk[4 + i] = hex[i];
+                    pxt.debug(`pf: chunk 0 ${Util.toHex(chunk)}`)
+                    this.pfCharacteristic.writeValue(chunk);
+                }).delay(delay).then(() => {
+                    this.flashPacketToken.throwIfCancelled();
+                    chunk[0] = PartialFlashingService.FLASH_DATA;
+                    chunk[1] = (this.flashOffset >> 24) & 0xff;
+                    chunk[2] = (this.flashOffset >> 16) & 0xff;
+                    chunk[3] = this.flashPacketNumber++; // packet number
+                    for (let i = 0; i < 16; i++)
+                        chunk[4 + i] = hex[16 + i] || 0;
+                    pxt.debug(`pf: chunk 1 ${Util.toHex(chunk)}`)
+                    this.pfCharacteristic.writeValue(chunk);
+                }).delay(delay).then(() => {
+                    this.flashPacketToken.throwIfCancelled();
+                    chunk[0] = PartialFlashingService.FLASH_DATA;
+                    chunk[1] = 0;
+                    chunk[2] = 0;
+                    chunk[3] = this.flashPacketNumber++; // packet number
+                    for (let i = 0; i < 16; i++)
+                        chunk[4 + i] = hex[32 + i] || 0;
+                    pxt.debug(`pf: chunk 2 ${Util.toHex(chunk)}`)
+                    this.pfCharacteristic.writeValue(chunk);
+                }).delay(delay).then(() => {
+                    this.flashPacketToken.throwIfCancelled();
+                    chunk[0] = PartialFlashingService.FLASH_DATA;
+                    chunk[1] = 0;
+                    chunk[2] = 0;
+                    chunk[3] = this.flashPacketNumber++; // packet number
+                    for (let i = 0; i < 16; i++)
+                        chunk[4 + i] = hex[48 + i] || 0;
+                    pxt.debug(`pf: chunk 3 ${Util.toHex(chunk)}`)
+                    this.pfCharacteristic.writeValue(chunk);
+                }).then(() => {
+                    // now we wait for a write notification
+                    pxt.debug(`pf: flash packets sent, waiting for write confirmation`)
+                }).catch(() => {
+                    this.flashPacketToken.resolveCancel();
+                })
         }
     }
 
