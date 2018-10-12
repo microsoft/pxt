@@ -357,7 +357,6 @@ export class Button extends StatelessUIElement<ButtonProps> {
     renderCore() {
         const { labelPosition, color, size, disabled } = this.props;
         const classes = cx([
-            'ui button',
             color,
             size,
             disabled ? 'disabled' : '',
@@ -996,7 +995,12 @@ export class Modal extends React.Component<ModalProps, ModalState> {
             className={classes}
             style={customStyles}
             aria={aria} {...rest}>
-            {header ? <div id={this.id + 'title'} className={"header " + (headerClass || "")}>
+            {header || isFullscreen ? <div id={this.id + 'title'} className={"header " + (headerClass || "")}>
+                {isFullscreen ?
+                    <Button className="back-button large" title={lf("Go back")} tabIndex={0} onClick={onClose} onKeyDown={fireClickOnEnter}>
+                        <Icon icon="arrow left" />
+                        <span className="ui text landscape only">{lf("Go back")}</span>
+                    </Button> : undefined}
                 {header}
                 {helpUrl ?
                     <a className={`ui huge icon clear helpIcon`} href={helpUrl} target="_docs" role="button" aria-label={lf("Help on {0} dialog", header)}>
@@ -1030,10 +1034,6 @@ export class Modal extends React.Component<ModalProps, ModalState> {
                 onClick={onClose}
                 onKeyDown={fireClickOnEnter}
             ><Icon icon="close remove circle" /> </div> : undefined}
-            {isFullscreen ?
-                <Button text={lf("Go back")} title={lf("Go back to the editor")} className="icon circular small editorBack left labeled" ariaLabel={lf("Go back")} onClick={onClose} onKeyDown={fireClickOnEnter}>
-                    <Icon icon="arrow left" />
-                </Button> : undefined}
         </ReactModal>
     }
 }

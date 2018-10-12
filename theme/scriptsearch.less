@@ -10,6 +10,9 @@
     color: white;
     border-radius: 0;
     text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 .ui.searchdialog.modal .ui.search {
     max-width: 50%;
@@ -26,6 +29,13 @@
 .ui.searchdialog.modal .ui.inline.loader:before {
     width: 4rem;
     height: 4rem;
+}
+
+/* Mobile only */
+@media only screen and (max-width: @largestMobileScreen) {
+    .ui.searchdialog.modal .ui.search {
+        max-width: 100%;
+    }
 }
 
 /*******************************
