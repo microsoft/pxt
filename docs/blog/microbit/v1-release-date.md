@@ -16,7 +16,6 @@ For a list of all the new updates and features, please read our earlier [blog po
 * Support for floating point arithmetic
 
 ## ~
-
 https://youtu.be/aPloZmwx0_0)
 
 ### ~ hint
