@@ -542,16 +542,15 @@ namespace pxt.webBluetooth {
                     // give 500ms (A LOT) to process packet or consider the protocol stuck
                     // and send a bogus package to trigger an out of order situations
                     const currentFlashOffset = this.flashOffset;
-                    const transferDaemon = () => {
-                        Promise.delay(500)
+                    const transferDaemonAsync: () => Promise<void> = () => {
+                        return Promise.delay(500)
                             .then(() => {
                                 // are we stuck?
                                 if (currentFlashOffset != this.flashOffset // transfer ok
                                     || this.flashPacketToken.isCancelled() // transfer cancelled
                                     || this.aliveToken.isCancelled() // service is closed
                                     || this.state != PartialFlashingState.Flash // flash state changed
-                                    || this.device.connected // somehow, device disconnected
-                                ) return;
+                                ) return Promise.resolve();
                                 // we are definitely stuck
                                 pxt.debug(`pf: packet transfer deadlock, force restart`)
                                 chunk[0] = PartialFlashingService.FLASH_DATA;
@@ -562,16 +561,17 @@ namespace pxt.webBluetooth {
                                     chunk[4 + i] = 0;
                                 this.pfCharacteristic.writeValue(chunk);
                                 // keep trying
-                                transferDaemon();
-                            }).catch(e => {
-                                // something went clearly wrong
-                                if (this.flashReject) {
-                                    this.flashReject(new Error("failed packet transfer"))
-                                    this.clearFlashData();
-                                }
-                            })
+                                return transferDaemonAsync();
+                            });
                     };
-                    transferDaemon();
+                    transferDaemonAsync()
+                        .catch(e => {
+                            // something went clearly wrong
+                            if (this.flashReject) {
+                                this.flashReject(new Error("failed packet transfer"))
+                                this.clearFlashData();
+                            }
+                        })
                 }).catch(() => {
                     this.flashPacketToken.resolveCancel();
                 })
