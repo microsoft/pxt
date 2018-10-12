@@ -8,9 +8,9 @@ same [Monaco][] editor that powers [Visual Studio Code][].
 
 [@homeurl@]: @homeurl@
 [web workers]: http://www.w3.org/TR/workers/
-[typescript]: http://www.typescriptlang.org
+[typescript]: https://www.typescriptlang.org
 [monaco]: https://microsoft.github.io/monaco-editor/
-[visual studio code]: http://code.visualstudio.com
+[visual studio code]: https://code.visualstudio.com
 
 Most modern browsers automatically update themselves. In some environments,
 such as schools, these automatic updates are disabled for security. **We
