@@ -200,7 +200,7 @@ namespace pxt.webBluetooth {
         private regions: { start: number; end: number; hash: string; }[];
 
         private hex: string;
-        private bytes: Uint8Array;
+        private bin: Uint8Array;
         private dalHash: string;
         private makeCodeHash: string;
         private flashOffset: number;
@@ -246,7 +246,7 @@ namespace pxt.webBluetooth {
             this.mode = 0;
             this.regions = [];
             this.hex = undefined;
-            this.bytes = undefined;
+            this.bin = undefined;
             this.dalHash = undefined;
             this.makeCodeHash = undefined;
             this.flashReject = undefined;
@@ -256,13 +256,13 @@ namespace pxt.webBluetooth {
 
         // finds block starting with MAGIC_BLOCK
         private findMagicBlock(): number {
-            if (!this.bytes) return undefined;
+            if (!this.bin) return undefined;
             const magic = PartialFlashingService.MAGIC_MARKER;
 
-            for (let offset = 0; offset + magic.length < this.bytes.length; offset += 16) {
+            for (let offset = 0; offset + magic.length < this.bin.length; offset += 16) {
                 let match = true;
                 for (let j = 0; j < magic.length; ++j) {
-                    if (magic[j] != this.bytes[offset + j]) {
+                    if (magic[j] != this.bin[offset + j]) {
                         match = false;
                         break;
                     }
@@ -274,10 +274,10 @@ namespace pxt.webBluetooth {
         }
 
         private isCursorAtMarker(marker: Uint8Array): boolean {
-            if (this.flashOffset + marker.length > this.bytes.length)
+            if (this.flashOffset + marker.length > this.bin.length)
                 return false;
             for (let i = 0; i < marker.length; ++i)
-                if (this.bytes[this.flashOffset + i] != marker[i])
+                if (this.bin[this.flashOffset + i] != marker[i])
                     return false;
             return true;
         }
@@ -291,19 +291,20 @@ namespace pxt.webBluetooth {
             this.hex = hex;
             const uf2 = ts.pxtc.UF2.newBlockFile();
             ts.pxtc.UF2.writeHex(uf2, this.hex.split(/\r?\n/));
-            this.bytes = U.stringToUint8Array(ts.pxtc.UF2.serializeFile(uf2));
+            this.bin = ts.pxtc.UF2.toBin(U.stringToUint8Array(ts.pxtc.UF2.serializeFile(uf2))).buf;
+            pxt.debug(`pf: bin bytes ${this.bin.length}`)
             const offset = this.findMagicBlock();
             if (offset < 0) {
                 pxt.debug(`pf: magic block not found, not a valid HEX file`);
                 U.userError(lf("Invalid file"));
             }
 
-            pxt.debug(`pf: found magic block`);
+            pxt.debug(`pf: magic block at ${offset.toString(16)}`);
             // magic + 16bytes = hash
             const hashOffset = offset + PartialFlashingService.MAGIC_MARKER.length;
-            this.dalHash = Util.toHex(this.bytes.slice(hashOffset, hashOffset + 8));
-            this.makeCodeHash = Util.toHex(this.bytes.slice(hashOffset + 8, hashOffset + 16));
-
+            pxt.debug(`pf: hash offset ${hashOffset.toString(16)}`);
+            this.dalHash = Util.toHex(this.bin.slice(hashOffset, hashOffset + 8));
+            this.makeCodeHash = Util.toHex(this.bin.slice(hashOffset + 8, hashOffset + 16));
             pxt.debug(`pf: DAL hash ${this.dalHash}`)
             pxt.debug(`pf: MakeCode hash ${this.makeCodeHash}`)
 
@@ -414,7 +415,7 @@ namespace pxt.webBluetooth {
                             // move cursor
                             this.flashOffset += 64;
                             if (this.isCursorAtMarker(PartialFlashingService.SOURCE_MARKER)
-                                || this.flashOffset > this.bytes.length) {
+                                || this.flashOffset >= this.bin.length) {
                                 pxt.debug('pf: end transmission')
                                 this.state = PartialFlashingState.EndOfTransmision;
                                 this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.END_OF_TRANSMISSION]));
@@ -437,22 +438,21 @@ namespace pxt.webBluetooth {
         private flashNextPacket() {
             this.state = PartialFlashingState.Flash;
 
-            const offset = this.flashOffset;
-            const hex = this.bytes.slice(this.flashOffset, this.flashOffset + 64);
-            pxt.debug(`pf: flashing offset ${offset.toString(16)}`);
+            const hex = this.bin.slice(this.flashOffset, this.flashOffset + 64);
+            pxt.debug(`pf: flashing offset ${this.flashOffset.toString(16)}`);
 
             let chunk = new Uint8Array(20);
             chunk[0] = PartialFlashingService.FLASH_DATA;
-            chunk[1] = offset >> 8; // 2 bytes of offset
-            chunk[2] = offset;
+            chunk[1] = this.flashOffset >> 8; // 2 bytes of offset
+            chunk[2] = this.flashOffset;
             chunk[3] = 0; // packet number
             for (let i = 0; i < 16; i++)
                 chunk[4 + i] = hex[i];
             this.pfCharacteristic.writeValue(chunk);
 
             chunk[0] = PartialFlashingService.FLASH_DATA;
-            chunk[1] = offset >> 24; // other 2 bytes of offset
-            chunk[2] = offset >> 16;
+            chunk[1] = this.flashOffset >> 24; // other 2 bytes of offset
+            chunk[2] = this.flashOffset >> 16;
             chunk[3] = 1; // packet number
             for (let i = 0; i < 16; i++)
                 chunk[4 + i] = hex[16 + i] || 0;
