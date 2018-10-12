@@ -375,7 +375,7 @@ namespace pxt.webBluetooth {
                         end: (packet[6] << 24) | (packet[7] << 16) | (packet[8] << 8) | packet[9],
                         hash: pxt.Util.toHex(packet.slice(10))
                     };
-                    pxt.debug(`read region ${packet[1]} start ${region.start.toString(16)} end ${region.end.toString(16)} hash ${region.hash}`)
+                    pxt.debug(`pf: read region ${packet[1]} start ${region.start.toString(16)} end ${region.end.toString(16)} hash ${region.hash}`)
                     if (packet[1] == PartialFlashingService.REGION_DAL) {
                         if (region.hash != this.dalHash) {
                             pxt.debug(`pf: DAL hash does not match, partial flashing not possible`)
@@ -437,7 +437,7 @@ namespace pxt.webBluetooth {
         private flashNextPacket() {
             this.state = PartialFlashingState.Flash;
 
-            const offset = this.flashOffset - this.regions[1].start;
+            const offset = this.flashOffset;
             const hex = this.bytes.slice(this.flashOffset, this.flashOffset + 64);
             pxt.debug(`pf: flashing offset ${offset.toString(16)}`);
 
