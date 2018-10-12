@@ -551,7 +551,7 @@ namespace pxt.webBluetooth {
                                     || this.aliveToken.isCancelled() // service is closed
                                     || this.state != PartialFlashingState.Flash // flash state changed
                                     || this.device.connected // somehow, device disconnected
-                                    ) return;
+                                ) return;
                                 // we are definitely stuck
                                 pxt.debug(`pf: packet transfer deadlock, force restart`)
                                 chunk[0] = PartialFlashingService.FLASH_DATA;
@@ -562,8 +562,13 @@ namespace pxt.webBluetooth {
                                     chunk[4 + i] = 0;
                                 this.pfCharacteristic.writeValue(chunk);
                                 // keep trying
-                                Promise.delay(500)
-                                    .then(() => transferDaemon())
+                                transferDaemon();
+                            }).catch(e => {
+                                // something went clearly wrong
+                                if (this.flashReject) {
+                                    this.flashReject(new Error("failed packet transfer"))
+                                    this.clearFlashData();
+                                }
                             })
                     };
                     transferDaemon();
