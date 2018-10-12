@@ -25,7 +25,7 @@ namespace pxt.webBluetooth {
     export class BLERemote {
         private connectPromise: Promise<void> = undefined;
 
-        protected cancelConnectAsync() {
+        protected cancelConnect(): void {
             if (this.connectPromise && this.connectPromise.isCancellable() && !this.connectPromise.isFulfilled()) {
                 this.connectPromise.cancel();
             }
@@ -43,7 +43,7 @@ namespace pxt.webBluetooth {
         }
 
         disconnect(): void {
-            this.cancelConnectAsync();
+            this.cancelConnect();
         }
     }
 
@@ -56,7 +56,7 @@ namespace pxt.webBluetooth {
 
         private reconnectPromise: Promise<void> = undefined;
         handleDisconnected(event: Event) {
-            this.cancelConnectAsync();
+            this.cancelConnect();
             // give a 1sec for device to reboot
             if (this.autoReconnect) {
                 if (!this.reconnectPromise)
@@ -179,7 +179,6 @@ namespace pxt.webBluetooth {
         static CHARACTERISTIC_UUID = 'e97d3b10-251d-470a-a062-fa1922dfa9a8';
         static REGION_INFO = 0x00;
         static FLASH_DATA = 0x01;
-        static WRITE_NOTIFICATION = 0x01;
         static PACKET_OUT_OF_ORDER = 0xAA;
         static PACKET_WRITTEN = 0xFF;
         static END_OF_TRANSMISSION = 0x02;
@@ -407,7 +406,7 @@ namespace pxt.webBluetooth {
                         }
                     }
                     break;
-                case PartialFlashingService.WRITE_NOTIFICATION:
+                case PartialFlashingService.FLASH_DATA:
                     if (!this.checkStateTransition(cmd, PartialFlashingState.Flash))
                         return;
                     switch (packet[1]) {
@@ -443,20 +442,20 @@ namespace pxt.webBluetooth {
             this.state = PartialFlashingState.Flash;
 
             const hex = this.bin.slice(this.flashOffset, this.flashOffset + 64);
-            pxt.debug(`pf: flashing offset ${this.flashOffset.toString(16)}`);
+            pxt.debug(`pf: flashing offset ${this.flashOffset.toString(16)} (page boundary ${!(this.flashOffset % 0x400)})`);
 
             let chunk = new Uint8Array(20);
             chunk[0] = PartialFlashingService.FLASH_DATA;
-            chunk[1] = this.flashOffset >> 8; // 2 bytes of offset
-            chunk[2] = this.flashOffset;
+            chunk[1] = (this.flashOffset >> 8) & 0xff;
+            chunk[2] = (this.flashOffset >> 0) & 0xff;
             chunk[3] = 0; // packet number
             for (let i = 0; i < 16; i++)
                 chunk[4 + i] = hex[i];
             this.pfCharacteristic.writeValue(chunk);
 
             chunk[0] = PartialFlashingService.FLASH_DATA;
-            chunk[1] = this.flashOffset >> 24; // other 2 bytes of offset
-            chunk[2] = this.flashOffset >> 16;
+            chunk[1] = (this.flashOffset >> 24) & 0xff;
+            chunk[2] = (this.flashOffset >> 16) & 0xff;
             chunk[3] = 1; // packet number
             for (let i = 0; i < 16; i++)
                 chunk[4 + i] = hex[16 + i] || 0;
