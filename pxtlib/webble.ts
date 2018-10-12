@@ -201,6 +201,7 @@ namespace pxt.webBluetooth {
 
         private hex: string;
         private bin: Uint8Array;
+        private magicOffset: number;
         private dalHash: string;
         private makeCodeHash: string;
         private flashOffset: number;
@@ -293,16 +294,15 @@ namespace pxt.webBluetooth {
             ts.pxtc.UF2.writeHex(uf2, this.hex.split(/\r?\n/));
             this.bin = ts.pxtc.UF2.toBin(U.stringToUint8Array(ts.pxtc.UF2.serializeFile(uf2))).buf;
             pxt.debug(`pf: bin bytes ${this.bin.length}`)
-            const offset = this.findMagicBlock();
-            if (offset < 0) {
+            this.magicOffset = this.findMagicBlock();
+            if (this.magicOffset < 0) {
                 pxt.debug(`pf: magic block not found, not a valid HEX file`);
                 U.userError(lf("Invalid file"));
             }
 
-            pxt.debug(`pf: magic block at ${offset.toString(16)}`);
+            pxt.debug(`pf: magic block at ${this.magicOffset.toString(16)}`);
             // magic + 16bytes = hash
-            const hashOffset = offset + PartialFlashingService.MAGIC_MARKER.length;
-            pxt.debug(`pf: hash offset ${hashOffset.toString(16)}`);
+            const hashOffset = this.magicOffset + PartialFlashingService.MAGIC_MARKER.length;
             this.dalHash = Util.toHex(this.bin.slice(hashOffset, hashOffset + 8));
             this.makeCodeHash = Util.toHex(this.bin.slice(hashOffset + 8, hashOffset + 16));
             pxt.debug(`pf: DAL hash ${this.dalHash}`)
@@ -390,6 +390,10 @@ namespace pxt.webBluetooth {
                         this.state = PartialFlashingState.RegionMakeCodeRequested;
                         this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.REGION_INFO, PartialFlashingService.REGION_MAKECODE]));
                     } else if (packet[1] == PartialFlashingService.REGION_MAKECODE) {
+                        if (region.start != this.magicOffset) {
+                            pxt.debug(`pf: magic offset and MakeCode region.start not matching`);
+                            U.userError(lf("Invalid file"));
+                        }
                         if (region.hash == this.makeCodeHash) {
                             pxt.debug(`pf: MakeCode hash matches, nothing to do`)
                             this.state = PartialFlashingState.Idle;
