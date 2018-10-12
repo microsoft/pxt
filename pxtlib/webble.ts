@@ -234,6 +234,22 @@ namespace pxt.webBluetooth {
         private flashResolve: (theResult?: void | PromiseLike<void>) => void;
         private flashReject: (e: any) => void;
 
+        private clearFlashData() {
+            this.version = 0;
+            this.mode = 0;
+            this.regions = [];
+
+            this.hex = undefined;
+            this.bin = undefined;
+            this.magicOffset = undefined;
+            this.sourceOffset = undefined;
+            this.dalHash = undefined;
+            this.makeCodeHash = undefined;
+            this.flashReject = undefined;
+            this.flashResolve = undefined;
+            this.flashOffset = undefined;
+        }
+
         constructor(protected device: BLEDevice) {
             super(device, false);
             this.handleCharacteristic = this.handleCharacteristic.bind(this);
@@ -276,19 +292,6 @@ namespace pxt.webBluetooth {
                     pxt.log(`ble: partial flash disconnect error ${e.message}`);
                 }
             }
-        }
-
-        private clearFlashData() {
-            this.version = 0;
-            this.mode = 0;
-            this.regions = [];
-            this.hex = undefined;
-            this.bin = undefined;
-            this.dalHash = undefined;
-            this.makeCodeHash = undefined;
-            this.flashReject = undefined;
-            this.flashResolve = undefined;
-            this.flashOffset = undefined;
         }
 
         // finds block starting with MAGIC_BLOCK
@@ -339,6 +342,7 @@ namespace pxt.webBluetooth {
             }
             this.sourceOffset = this.findMarker(this.magicOffset, PartialFlashingService.SOURCE_MARKER);
             pxt.debug(`pf: source block ${this.sourceOffset.toString(16)}`);
+            pxt.debug(`pf: bytes to flash ${(this.sourceOffset > 0 ? this.sourceOffset : this.bin.length) - this.magicOffset}`)
 
             // magic + 16bytes = hash
             const hashOffset = this.magicOffset + PartialFlashingService.MAGIC_MARKER.length;
@@ -429,11 +433,9 @@ namespace pxt.webBluetooth {
                             pxt.debug(`pf: magic offset and MakeCode region.start not matching`);
                             U.userError(lf("Invalid file"));
                         }
-                        if (this.sourceOffset < 0)
-                            this.sourceOffset = Math.min(this.bin.length, region.end) - PartialFlashingService.SOURCE_MARKER.length;
-                        if (this.sourceOffset > region.end) {
-                            pxt.debug(`pf: code update too large`)
-                            U.userError('too much code')
+                        if (this.sourceOffset < 0) {
+                            this.sourceOffset = this.bin.length - 1;
+                            pxt.debug(`pf: source marker not found, defaulting to eof ${this.sourceOffset.toString(16)}`);
                         }
                         if (region.hash == this.makeCodeHash) {
                             pxt.debug(`pf: MakeCode hash matches, nothing to do`)
@@ -490,7 +492,7 @@ namespace pxt.webBluetooth {
             this.flashPacketToken.startOperation();
 
             const hex = this.bin.slice(this.flashOffset, this.flashOffset + 64);
-            pxt.debug(`pf: flashing ${this.flashOffset.toString(16)} ${this.sourceOffset.toString(16)}`);
+            pxt.debug(`pf: flashing ${this.flashOffset.toString(16)} / ${this.sourceOffset.toString(16)} ${((this.flashOffset - this.magicOffset) / (this.sourceOffset - this.magicOffset) * 100) >> 0}%`);
 
             // add delays or chrome crashes
             const delay = 30;
@@ -580,7 +582,7 @@ namespace pxt.webBluetooth {
         resumeUART() {
             if (this.uartService) {
                 this.uartService.autoReconnect = true;
-                this.uartService.connectAsync();
+                this.uartService.connectAsync().catch(() => {})
             }
         }
 
@@ -645,6 +647,8 @@ namespace pxt.webBluetooth {
         }).then(device => {
             pxt.log(`ble: received device ${device.name}`)
             bleDevice = new BLEDevice(device);
+            bleDevice.startServices(); // some services have rety logic even if the first GATT connect fails
+            return bleDevice.connectAsync();
         });
     }
 
@@ -658,10 +662,6 @@ namespace pxt.webBluetooth {
             bleDevice = undefined;
         }
         return connectAsync()
-            .then(() => {
-                pxt.log(`ble: device connected`)
-                bleDevice.startServices();
-            })
             .catch(e => {
                 bleDevice.aliveToken.resolveCancel();
                 pxt.log(`ble: error ${e.message}`)
