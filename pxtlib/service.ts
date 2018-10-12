@@ -1252,7 +1252,7 @@ namespace ts.pxtc {
                 let ptr = i * 512
                 let bl = parseBlock(blocks.slice(ptr, ptr + 512))
                 if (!bl) continue
-                if (endAddr && bl.targetAddr > endAddr) break;
+                if (endAddr && bl.targetAddr  + 256 > endAddr) break;
                 if (curraddr == -1) {
                     curraddr = bl.targetAddr
                     appstartaddr = curraddr
