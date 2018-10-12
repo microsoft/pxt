@@ -4,7 +4,7 @@ Mark your calendars and buy a cake. The new MakeCode for micro:bit editor will b
 
 ![micro:bit v1 release date marked on calendar](/static/blog/microbit/v1-release-date/mark-calendar.jpg)
 
-For a list of all the new updates and features, please read our earlier [blog post](/blog/microbit/v1-beta) for the beta release, or check out the video.  Here is a quick recap of the changes:
+For a list of all the new updates and features, please read our earlier [blog post](/blog/microbit/v1-beta) for the beta release, or check out the [video](https://youtu.be/aPloZmwx0_0).  Here is a quick recap of the changes:
 * New Home Page with recent projects, tutorials and examples
 * Updated look-and-feel of the Blocks
 * Inline block expansion/collapse for If Then and Array blocks
