@@ -441,7 +441,7 @@ namespace pxt.webBluetooth {
             const hex = this.bytes.slice(this.flashOffset, this.flashOffset + 64);
             pxt.debug(`pf: flashing offset ${offset.toString(16)}`);
 
-            const chunk = new Uint8Array(20);
+            let chunk = new Uint8Array(20);
             chunk[0] = PartialFlashingService.FLASH_DATA;
             chunk[1] = offset >> 8; // 2 bytes of offset
             chunk[2] = offset;
@@ -450,6 +450,7 @@ namespace pxt.webBluetooth {
                 chunk[4 + i] = hex[i];
             this.pfCharacteristic.writeValue(chunk);
 
+            chunk = new Uint8Array(20);
             chunk[0] = PartialFlashingService.FLASH_DATA;
             chunk[1] = offset >> 24; // other 2 bytes of offset
             chunk[2] = offset >> 16;
@@ -458,6 +459,7 @@ namespace pxt.webBluetooth {
                 chunk[4 + i] = hex[16 + i] || 0;
             this.pfCharacteristic.writeValue(chunk);
 
+            chunk = new Uint8Array(20);
             chunk[0] = PartialFlashingService.FLASH_DATA;
             chunk[1] = 0;
             chunk[2] = 0;
@@ -466,6 +468,7 @@ namespace pxt.webBluetooth {
                 chunk[4 + i] = hex[32 + i] || 0;
             this.pfCharacteristic.writeValue(chunk);
 
+            chunk = new Uint8Array(20);
             chunk[0] = PartialFlashingService.FLASH_DATA;
             chunk[1] = 0;
             chunk[2] = 0;
