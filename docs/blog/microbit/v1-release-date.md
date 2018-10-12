@@ -8,15 +8,14 @@ Mark your calendars and buy a cake. The new MakeCode for micro:bit editor will b
 
 For a list of all the new updates and features, please read our earlier [blog post](/blog/microbit/v1-beta). 
 
+[![MakeCode Team interview video](https://img.youtube.com/vi/aPloZmwx0_0/hqdefault.jpg)](https://youtu.be/aPloZmwx0_0)
+
  Here is a quick recap of the changes:
 * New Home Page with recent projects, tutorials and examples
 * Updated look-and-feel of the Blocks
 * Inline block expansion/collapse for If Then and Array blocks
 * Simplified variable creation process
 * Support for floating point arithmetic
-
-## ~
-https://youtu.be/aPloZmwx0_0)
 
 ### ~ hint
 
