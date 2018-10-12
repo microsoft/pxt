@@ -278,6 +278,7 @@ declare namespace pxt {
         chooseBoardOnNewProject?: boolean; // when multiple boards are support, show board dialog on "new project"
         bluetoothUartConsole?: boolean; // pair with BLE UART services and pipe console output
         bluetoothUartFilters?: { name?: string; namePrefix?: string; }[]; // device name prefix -- required
+        bluetoothPartialFlashing?: boolean; // enable partial flashing over BLE
     }
 
     interface SocialOptions {

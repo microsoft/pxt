@@ -1242,7 +1242,7 @@ namespace ts.pxtc {
             buf: Uint8Array;
         }
 
-        export function toBin(blocks: Uint8Array): ShiftedBuffer {
+        export function toBin(blocks: Uint8Array, endAddr: number = undefined): ShiftedBuffer {
             if (blocks.length < 512)
                 return null
             let curraddr = -1
@@ -1252,6 +1252,7 @@ namespace ts.pxtc {
                 let ptr = i * 512
                 let bl = parseBlock(blocks.slice(ptr, ptr + 512))
                 if (!bl) continue
+                if (endAddr && bl.targetAddr > endAddr) break;
                 if (curraddr == -1) {
                     curraddr = bl.targetAddr
                     appstartaddr = curraddr
