@@ -213,9 +213,12 @@ namespace pxt.webBluetooth {
         static REGION_DAL = 0x01;
         static REGION_MAKECODE = 0x02;
         static MAGIC_MARKER = Util.fromHex('708E3B92C615A841C49866C975EE5197');
+        static CHUNK_MIN_DELAY = 20;
+        static CHUNK_MAX_DELAY = 50;
 
         private pfCharacteristic: BluetoothRemoteGATTCharacteristic;
         private state = PartialFlashingState.Idle;
+        private chunkDelay: number;
         private version: number;
         private mode: number;
         private regions: { start: number; end: number; hash: string; }[];
@@ -237,6 +240,7 @@ namespace pxt.webBluetooth {
             this.mode = 0;
             this.regions = [];
 
+            this.chunkDelay = PartialFlashingService.CHUNK_MIN_DELAY;
             this.hex = undefined;
             this.bin = undefined;
             this.magicOffset = undefined;
@@ -449,10 +453,15 @@ namespace pxt.webBluetooth {
                     switch (packet[1]) {
                         case PartialFlashingService.PACKET_OUT_OF_ORDER:
                             pxt.debug(`pf: packet out of order`);
+                            this.flashPacketToken.cancel(); // cancel pending writes
                             this.flashPacketNumber += 4;
+                            this.chunkDelay = Math.min(this.chunkDelay + 5,
+                                PartialFlashingService.CHUNK_MAX_DELAY);
                             this.flashNextPacket();
                             break;
                         case PartialFlashingService.PACKET_WRITTEN:
+                            this.chunkDelay = Math.max(this.chunkDelay - 1,
+                                PartialFlashingService.CHUNK_MIN_DELAY);
                             // move cursor
                             this.flashOffset += 64;
                             this.flashPacketNumber += 4;
@@ -487,9 +496,8 @@ namespace pxt.webBluetooth {
             pxt.debug(`pf: flashing ${this.flashOffset.toString(16)} / ${this.bin.length.toString(16)} ${((this.flashOffset - this.magicOffset) / (this.bin.length - this.magicOffset) * 100) >> 0}%`);
 
             // add delays or chrome crashes
-            const delay = 40;
             let chunk = new Uint8Array(20);
-            Promise.delay(delay)
+            Promise.delay(this.chunkDelay)
                 .then(() => {
                     this.flashPacketToken.throwIfCancelled();
                     chunk[0] = PartialFlashingService.FLASH_DATA;
@@ -500,7 +508,7 @@ namespace pxt.webBluetooth {
                         chunk[4 + i] = hex[i];
                     //pxt.debug(`pf: chunk 0 ${Util.toHex(chunk)}`)
                     this.pfCharacteristic.writeValue(chunk);
-                }).delay(delay).then(() => {
+                }).delay(this.chunkDelay).then(() => {
                     this.flashPacketToken.throwIfCancelled();
                     chunk[0] = PartialFlashingService.FLASH_DATA;
                     chunk[1] = (this.flashOffset >> 24) & 0xff;
@@ -510,7 +518,7 @@ namespace pxt.webBluetooth {
                         chunk[4 + i] = hex[16 + i] || 0;
                     //pxt.debug(`pf: chunk 1 ${Util.toHex(chunk)}`)
                     this.pfCharacteristic.writeValue(chunk);
-                }).delay(delay).then(() => {
+                }).delay(this.chunkDelay).then(() => {
                     this.flashPacketToken.throwIfCancelled();
                     chunk[0] = PartialFlashingService.FLASH_DATA;
                     chunk[1] = 0;
@@ -520,7 +528,7 @@ namespace pxt.webBluetooth {
                         chunk[4 + i] = hex[32 + i] || 0;
                     //pxt.debug(`pf: chunk 2 ${Util.toHex(chunk)}`)
                     this.pfCharacteristic.writeValue(chunk);
-                }).delay(delay).then(() => {
+                }).delay(this.chunkDelay).then(() => {
                     this.flashPacketToken.throwIfCancelled();
                     chunk[0] = PartialFlashingService.FLASH_DATA;
                     chunk[1] = 0;
@@ -531,8 +539,26 @@ namespace pxt.webBluetooth {
                     //pxt.debug(`pf: chunk 3 ${Util.toHex(chunk)}`)
                     this.pfCharacteristic.writeValue(chunk);
                 }).then(() => {
-                    // now we wait for a write notification
-                    //pxt.debug(`pf: flash packets sent, waiting for write confirmation`)
+                    // give 500ms (A LOT) to process packet or consider the protocol stuck
+                    // and send a bogus package to trigger an out of order situations
+                    const currentFlashOffset = this.flashOffset;
+                    Promise.delay(500)
+                        .then(() => {
+                            // are we stuck?
+                            if (!this.flashPacketToken.isCancelled()
+                                && this.state == PartialFlashingState.Flash
+                                && currentFlashOffset == this.flashOffset) {
+                                // we are definitely stuck
+                                pxt.debug(`pf: packet transfer deadlock, force restart`)
+                                chunk[0] = PartialFlashingService.FLASH_DATA;
+                                chunk[1] = 0;
+                                chunk[2] = 0;
+                                chunk[3] = ~0; // bobus packet number
+                                for (let i = 0; i < 16; i++)
+                                    chunk[4 + i] = 0;
+                                this.pfCharacteristic.writeValue(chunk);
+                            }
+                        })
                 }).catch(() => {
                     this.flashPacketToken.resolveCancel();
                 })
@@ -574,7 +600,7 @@ namespace pxt.webBluetooth {
         resumeUART() {
             if (this.uartService) {
                 this.uartService.autoReconnect = true;
-                this.uartService.connectAsync().catch(() => {})
+                this.uartService.connectAsync().catch(() => { })
             }
         }
 
