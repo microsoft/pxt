@@ -408,8 +408,9 @@ export class Editor extends srceditor.Editor {
                 <div id="serialHeader" className="ui serialHeader">
                     <div className="leftHeaderWrapper">
                         <div className="leftHeader">
-                            <sui.Button text={lf("Go back")} title={lf("Go back to the previous editor")} className="icon circular small editorBack left labeled" ariaLabel={lf("Go back")} onClick={this.goBack}>
+                            <sui.Button className="back-button" title={lf("Go back")} tabIndex={0} onClick={this.goBack} onKeyDown={sui.fireClickOnEnter}>
                                 <sui.Icon icon="arrow left" />
+                                <span className="ui text landscape only">{lf("Go back")}</span>
                             </sui.Button>
                         </div>
                     </div>

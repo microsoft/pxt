@@ -3,6 +3,10 @@
 *******************************/
 
 
+/*******************************
+        Full screen
+*******************************/
+
 /* Full screen modal */
 .modals.dimmer .ui.fullscreen.modal,
 .modals.dimmer .ui.fullscreen.scrolling.modal {
@@ -17,6 +21,24 @@
     overflow-y: auto;
     -webkit-overflow-scrolling: 'touch';
     user-select: none;
+}
+
+.ui.button.back-button {
+    background: none !important;
+    border: none !important;
+}
+
+.ui.fullscreen.modal .ui.button.back-button {
+    color: white !important;
+    padding: 0 !important;
+}
+
+/* Mobile only */
+@media only screen and (max-width: @largestMobileScreen) {
+
+    .ui.fullscreen.modal > .header {
+        padding: @mobileHeaderPadding !important
+    }
 }
 
 /* Fix for a semantic hover issue when hovering over the modal's search box */
