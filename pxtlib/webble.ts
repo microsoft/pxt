@@ -67,7 +67,7 @@ namespace pxt.webBluetooth {
     export class BLEService extends BLERemote {
         public autoReconnectDelay = 1000;
 
-        constructor(protected device: BLEDevice, protected autoReconnect: boolean) {
+        constructor(protected device: BLEDevice, public autoReconnect: boolean) {
             super(device.aliveToken);
             this.handleDisconnected = this.handleDisconnected.bind(this);
             this.device.device.addEventListener('gattserverdisconnected', this.handleDisconnected);
@@ -305,6 +305,17 @@ namespace pxt.webBluetooth {
                 pxt.debug(`pf: flashing already in progress`)
                 return Promise.resolve();
             }
+            this.device.pauseUART();
+            return this.createFlashPromise(hex)
+                .finally(() => this.device.resumeUART())
+        }
+
+        private createFlashPromise(hex: string): Promise<void> {
+            if (this.hex) {
+                pxt.debug(`pf: flashing already in progress`)
+                return Promise.resolve();
+            }
+
             this.clearFlashData();
             this.hex = hex;
             const uf2 = ts.pxtc.UF2.newBlockFile();
@@ -555,6 +566,25 @@ namespace pxt.webBluetooth {
             this.aliveToken.startOperation();
         }
 
+        startServices() {
+            this.services.filter(service => service.autoReconnectDelay)
+                .forEach(service => service.connectAsync());
+        }
+
+        pauseUART() {
+            if (this.uartService) {
+                this.uartService.autoReconnect = false;
+                this.uartService.disconnect();
+            }
+        }
+
+        resumeUART() {
+            if (this.uartService) {
+                this.uartService.autoReconnect = true;
+                this.uartService.connectAsync();
+            }
+        }
+
         get isPaired() {
             return this === bleDevice;
         }
@@ -629,12 +659,14 @@ namespace pxt.webBluetooth {
             bleDevice = undefined;
         }
         return connectAsync()
-            .then(() => bleDevice.uartService.connectAsync())
-            .then(() => pxt.log(`ble: uart connected`)
-                , e => {
-                    bleDevice.aliveToken.resolveCancel();
-                    pxt.log(`ble: error ${e.message}`)
-                })
+            .then(() => {
+                pxt.log(`ble: device connected`)
+                bleDevice.startServices();
+            })
+            .catch(e => {
+                bleDevice.aliveToken.resolveCancel();
+                pxt.log(`ble: error ${e.message}`)
+            })
     }
 
     export function flashAsync(resp: pxtc.CompileResult, d: pxt.commands.DeployOptions = {}): Promise<void> {
