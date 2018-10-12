@@ -16,19 +16,23 @@ namespace pxt.webBluetooth {
             && !!pxt.appTarget.appTheme.bluetoothPartialFlashing;
     }
 
-    function wrapPromise<T>(p: Promise<T>): Promise<T> {
-        return new Promise((resolve, reject) => {
-            p.then(r => resolve(r), e => reject(e));
-        })
-    }
-
     export class BLERemote {
         private connectPromise: Promise<void> = undefined;
+        public aliveToken: pxt.Util.CancellationToken;
+
+        constructor(aliveToken: pxt.Util.CancellationToken) {
+            this.aliveToken = aliveToken;
+        }
+
+        protected alivePromise<T>(p: Promise<T>): Promise<T> {
+            return new Promise((resolve, reject) => {
+                if (this.aliveToken.isCancelled())
+                    reject(new Error());
+                p.then(r => resolve(r), e => reject(e));
+            })
+        }
 
         protected cancelConnect(): void {
-            if (this.connectPromise && this.connectPromise.isCancellable() && !this.connectPromise.isFulfilled()) {
-                this.connectPromise.cancel();
-            }
             this.connectPromise = undefined;
         }
 
@@ -38,18 +42,24 @@ namespace pxt.webBluetooth {
 
         connectAsync(): Promise<void> {
             if (!this.connectPromise)
-                this.connectPromise = wrapPromise(this.createConnectPromise());
-            return this.connectPromise;
+                this.connectPromise = this.alivePromise(this.createConnectPromise());
+            return this.connectPromise
+                .then(() => this.aliveToken.throwIfCancelled());
         }
 
         disconnect(): void {
             this.cancelConnect();
         }
+
+        kill() {
+            this.disconnect();
+            this.aliveToken.cancel();
+        }
     }
 
     export class BLEService extends BLERemote {
         constructor(protected device: BLEDevice, protected autoReconnect: boolean) {
-            super();
+            super(device.aliveToken);
             this.handleDisconnected = this.handleDisconnected.bind(this);
             this.device.device.addEventListener('gattserverdisconnected', this.handleDisconnected);
         }
@@ -58,11 +68,15 @@ namespace pxt.webBluetooth {
         handleDisconnected(event: Event) {
             this.cancelConnect();
             // give a 1sec for device to reboot
-            if (this.autoReconnect) {
+            if (this.autoReconnect && !this.aliveToken.isCancelled()) {
                 if (!this.reconnectPromise)
                     this.reconnectPromise =
                         Promise.delay(1000)
-                            .then(() => this.exponentialBackoffConnectAsync(10, 500));
+                            .then(() => this.exponentialBackoffConnectAsync(10, 500))
+                            .catch(() => {
+                                this.aliveToken.resolveCancel();
+                                this.reconnectPromise = undefined;
+                            });
             }
         }
 
@@ -74,10 +88,12 @@ namespace pxt.webBluetooth {
             pxt.debug(`uart: retry connect`)
             return this.connectAsync()
                 .then(() => {
+                    this.aliveToken.throwIfCancelled();
                     pxt.debug(`uart: reconnect success`)
                     this.reconnectPromise = undefined;
                 })
                 .catch(_ => {
+                    this.aliveToken.throwIfCancelled();
                     if (!this.device.isPaired) {
                         pxt.debug(`uart: give up, device unpaired`)
                         this.reconnectPromise = undefined;
@@ -91,7 +107,10 @@ namespace pxt.webBluetooth {
                     pxt.debug(`uart: retry connect ${delay}ms... (${max} tries left)`);
                     return Promise.delay(delay)
                         .then(() => this.exponentialBackoffConnectAsync(--max, delay * 1.5));
-                });
+                })
+                .catch(() => {
+                    this.aliveToken.resolveCancel();
+                })
         }
     }
 
@@ -110,11 +129,11 @@ namespace pxt.webBluetooth {
         }
 
         protected createConnectPromise(): Promise<void> {
-            if (this.txCharacteristic)
+            if (this.device.connected && this.txCharacteristic)
                 return Promise.resolve();
             pxt.debug(`ble: connecting uart`);
             return this.device.connectAsync()
-                .then(() => this.device.gatt.getPrimaryService(UARTService.SERVICE_UUID))
+                .then(() => this.alivePromise(this.device.gatt.getPrimaryService(UARTService.SERVICE_UUID)))
                 .catch(e => {
                     // crashes when the service is missing
                     pxt.debug(`uart: failed to find service, disable reconnect`)
@@ -124,7 +143,7 @@ namespace pxt.webBluetooth {
                 .then(service => {
                     pxt.debug(`ble: uart service connected`)
                     this.uartService = service;
-                    return this.uartService.getCharacteristic(UARTService.CHARACTERISTIC_TX_UUID);
+                    return this.alivePromise(this.uartService.getCharacteristic(UARTService.CHARACTERISTIC_TX_UUID));
                 }).then(txCharacteristic => {
                     pxt.debug(`ble: uart tx characteristic connected`)
                     this.txCharacteristic = txCharacteristic;
@@ -219,10 +238,10 @@ namespace pxt.webBluetooth {
         protected createConnectPromise(): Promise<void> {
             pxt.debug(`pf: connecting to partial flash service`);
             return this.device.connectAsync()
-                .then(() => this.device.gatt.getPrimaryService(PartialFlashingService.SERVICE_UUID))
+                .then(() => this.alivePromise(this.device.gatt.getPrimaryService(PartialFlashingService.SERVICE_UUID)))
                 .then(service => {
                     pxt.debug(`pf: connecting to characteristic`)
-                    return service.getCharacteristic(PartialFlashingService.CHARACTERISTIC_UUID);
+                    return this.alivePromise(service.getCharacteristic(PartialFlashingService.CHARACTERISTIC_UUID));
                 }).then(characteristic => {
                     pxt.debug(`pf: starting notifications`)
                     this.pfCharacteristic = characteristic;
@@ -321,13 +340,19 @@ namespace pxt.webBluetooth {
         private checkStateTransition(cmd: number, acceptedStates: PartialFlashingState) {
             if (!(this.state & acceptedStates)) {
                 pxt.debug(`pf: flash cmd ${cmd} in state ${this.state.toString(16)} `);
-                this.disconnect();
+                this.flashReject(new Error());
+                this.clearFlashData();
                 return false;
             }
             return true;
         }
 
         private handleCharacteristic(ev: Event) {
+            // check service is still alive
+            if (this.aliveToken.isCancelled()) {
+                this.flashReject(new Error());
+                this.clearFlashData();
+            }
             const dataView: DataView = (<any>event.target).value;
             const packet = new Uint8Array(dataView.buffer);
             const cmd = packet[0];
@@ -508,12 +533,12 @@ namespace pxt.webBluetooth {
 
     export class BLEDevice extends BLERemote {
         device: BluetoothDevice = undefined;
-        private services: BLEService[] = [];
         uartService: UARTService; // may be undefined
         partialFlashingService: PartialFlashingService; // may be undefined
+        private services: BLEService[] = [];
 
         constructor(device: BluetoothDevice) {
-            super();
+            super(new pxt.Util.CancellationToken());
             this.device = device;
             this.handleDisconnected = this.handleDisconnected.bind(this);
             this.device.addEventListener('gattserverdisconnected', this.handleDisconnected);
@@ -522,6 +547,8 @@ namespace pxt.webBluetooth {
                 this.services.push(this.uartService = new UARTService(this));
             if (hasPartialFlash())
                 this.services.push(this.partialFlashingService = new PartialFlashingService(this));
+
+            this.aliveToken.startOperation();
         }
 
         get isPaired() {
@@ -541,7 +568,7 @@ namespace pxt.webBluetooth {
         }
 
         protected createConnectPromise(): Promise<void> {
-            return wrapPromise<void>(this.device.gatt.connect()
+            return this.alivePromise<void>(this.device.gatt.connect()
                 .then(() => {
                     pxt.debug(`ble: gatt connected`);
                 }));
@@ -593,13 +620,15 @@ namespace pxt.webBluetooth {
     }
 
     export function pairAsync(): Promise<void> {
-        if (bleDevice)
-            bleDevice.disconnect();
-        bleDevice = undefined;
+        if (bleDevice) {
+            bleDevice.kill();
+            bleDevice = undefined;
+        }
         return connectAsync()
             .then(() => bleDevice.uartService.connectAsync())
             .then(() => pxt.log(`ble: uart connected`)
                 , e => {
+                    bleDevice.aliveToken.resolveCancel();
                     pxt.log(`ble: error ${e.message}`)
                 })
     }
