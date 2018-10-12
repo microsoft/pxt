@@ -292,10 +292,10 @@ namespace pxt.webBluetooth {
         }
 
         // finds block starting with MAGIC_BLOCK
-        private findMarker(marker: Uint8Array): number {
+        private findMarker(offset: number, marker: Uint8Array): number {
             if (!this.bin) return -1;
 
-            for (let offset = 0; offset + marker.length < this.bin.length; offset += 16) {
+            for (; offset + marker.length < this.bin.length; offset += 16) {
                 let match = true;
                 for (let j = 0; j < marker.length; ++j) {
                     if (marker[j] != this.bin[offset + j]) {
@@ -331,15 +331,15 @@ namespace pxt.webBluetooth {
             ts.pxtc.UF2.writeHex(uf2, this.hex.split(/\r?\n/));
             this.bin = ts.pxtc.UF2.toBin(U.stringToUint8Array(ts.pxtc.UF2.serializeFile(uf2))).buf;
             pxt.debug(`pf: bin bytes ${this.bin.length}`)
-            this.magicOffset = this.findMarker(PartialFlashingService.MAGIC_MARKER);
-            this.sourceOffset = this.findMarker(PartialFlashingService.SOURCE_MARKER);
+            this.magicOffset = this.findMarker(0, PartialFlashingService.MAGIC_MARKER);
+            pxt.debug(`pf: magic block ${this.magicOffset.toString(16)}`);
             if (this.magicOffset < 0) {
                 pxt.debug(`pf: magic block not found, not a valid HEX file`);
                 U.userError(lf("Invalid file"));
             }
-
-            pxt.debug(`pf: magic block ${this.magicOffset.toString(16)}`);
+            this.sourceOffset = this.findMarker(this.magicOffset, PartialFlashingService.SOURCE_MARKER);
             pxt.debug(`pf: source block ${this.sourceOffset.toString(16)}`);
+
             // magic + 16bytes = hash
             const hashOffset = this.magicOffset + PartialFlashingService.MAGIC_MARKER.length;
             this.dalHash = Util.toHex(this.bin.slice(hashOffset, hashOffset + 8));
@@ -566,7 +566,7 @@ namespace pxt.webBluetooth {
         }
 
         startServices() {
-            this.services.filter(service => service.autoReconnectDelay)
+            this.services.filter(service => service.autoReconnect)
                 .forEach(service => service.connectAsync().catch(() => { }));
         }
 
