@@ -1143,8 +1143,6 @@ namespace pxt.blocks {
             customContextMenu: function (options: any[]) {
                 if (!this.isCollapsed()) {
                     let option: any = { enabled: true };
-                    let variable = this.getInputTargetBlock('VAR').getField('VAR');
-                    let name = variable.getText();
                     option.text = lf("Create 'get {0}'", name);
                     let xmlField = goog.dom.createDom('field', null, name);
                     xmlField.setAttribute('name', 'VAR');
@@ -1152,13 +1150,6 @@ namespace pxt.blocks {
                     xmlBlock.setAttribute('type', 'variables_get');
                     option.callback = Blockly.ContextMenu.callbackFactory(this, xmlBlock);
                     options.push(option);
-
-                    const renameOption: any = {enabled: true};
-                    renameOption.text = (Blockly as any).Msg.RENAME_VARIABLE;
-                    renameOption.callback = () => {
-                      (Blockly as any).Variables.renameVariable(this.workspace, variable.getVariable());
-                    }
-                    options.push(renameOption);
                 }
             }
         };
