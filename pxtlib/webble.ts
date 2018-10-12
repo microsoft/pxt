@@ -417,13 +417,13 @@ namespace pxt.webBluetooth {
                     switch (packet[1]) {
                         case PartialFlashingService.PACKET_OUT_OF_ORDER:
                             pxt.debug(`pf: packet out of order`);
-                            if (this.flashPacketToken)
-                                this.flashPacketToken.cancel();
-                            U.assert(false, 'packet out of order')
+                            this.flashPacketNumber += 4;
+                            this.flashNextPacket();
                             break;
                         case PartialFlashingService.PACKET_WRITTEN:
                             // move cursor
                             this.flashOffset += 64;
+                            this.flashPacketNumber += 4;
                             if (this.isCursorAtMarker(PartialFlashingService.SOURCE_MARKER)
                                 || this.flashOffset >= this.bin.length) {
                                 pxt.debug('pf: end transmission')
@@ -456,7 +456,7 @@ namespace pxt.webBluetooth {
             pxt.debug(`pf: flashing offset ${this.flashOffset.toString(16)} (page boundary ${!(this.flashOffset % 0x400)})`);
 
             // add delays or chrome crashes
-            const delay = 50;
+            const delay = 20;
             let chunk = new Uint8Array(20);
             Promise.delay(delay)
                 .then(() => {
@@ -464,7 +464,7 @@ namespace pxt.webBluetooth {
                     chunk[0] = PartialFlashingService.FLASH_DATA;
                     chunk[1] = (this.flashOffset >> 8) & 0xff;
                     chunk[2] = (this.flashOffset >> 0) & 0xff;
-                    chunk[3] = this.flashPacketNumber++; // packet number
+                    chunk[3] = this.flashPacketNumber; // packet number
                     for (let i = 0; i < 16; i++)
                         chunk[4 + i] = hex[i];
                     pxt.debug(`pf: chunk 0 ${Util.toHex(chunk)}`)
@@ -474,7 +474,7 @@ namespace pxt.webBluetooth {
                     chunk[0] = PartialFlashingService.FLASH_DATA;
                     chunk[1] = (this.flashOffset >> 24) & 0xff;
                     chunk[2] = (this.flashOffset >> 16) & 0xff;
-                    chunk[3] = this.flashPacketNumber++; // packet number
+                    chunk[3] = this.flashPacketNumber + 1; // packet number
                     for (let i = 0; i < 16; i++)
                         chunk[4 + i] = hex[16 + i] || 0;
                     pxt.debug(`pf: chunk 1 ${Util.toHex(chunk)}`)
@@ -484,7 +484,7 @@ namespace pxt.webBluetooth {
                     chunk[0] = PartialFlashingService.FLASH_DATA;
                     chunk[1] = 0;
                     chunk[2] = 0;
-                    chunk[3] = this.flashPacketNumber++; // packet number
+                    chunk[3] = this.flashPacketNumber + 2; // packet number
                     for (let i = 0; i < 16; i++)
                         chunk[4 + i] = hex[32 + i] || 0;
                     pxt.debug(`pf: chunk 2 ${Util.toHex(chunk)}`)
@@ -494,7 +494,7 @@ namespace pxt.webBluetooth {
                     chunk[0] = PartialFlashingService.FLASH_DATA;
                     chunk[1] = 0;
                     chunk[2] = 0;
-                    chunk[3] = this.flashPacketNumber++; // packet number
+                    chunk[3] = this.flashPacketNumber + 3; // packet number
                     for (let i = 0; i < 16; i++)
                         chunk[4 + i] = hex[48 + i] || 0;
                     pxt.debug(`pf: chunk 3 ${Util.toHex(chunk)}`)
