@@ -542,12 +542,16 @@ namespace pxt.webBluetooth {
                     // give 500ms (A LOT) to process packet or consider the protocol stuck
                     // and send a bogus package to trigger an out of order situations
                     const currentFlashOffset = this.flashOffset;
-                    Promise.delay(500)
-                        .then(() => {
-                            // are we stuck?
-                            if (!this.flashPacketToken.isCancelled()
-                                && this.state == PartialFlashingState.Flash
-                                && currentFlashOffset == this.flashOffset) {
+                    const transferDaemon = () => {
+                        Promise.delay(500)
+                            .then(() => {
+                                // are we stuck?
+                                if (currentFlashOffset != this.flashOffset // transfer ok
+                                    || this.flashPacketToken.isCancelled() // transfer cancelled
+                                    || this.aliveToken.isCancelled() // service is closed
+                                    || this.state != PartialFlashingState.Flash // flash state changed
+                                    || this.device.connected // somehow, device disconnected
+                                    ) return;
                                 // we are definitely stuck
                                 pxt.debug(`pf: packet transfer deadlock, force restart`)
                                 chunk[0] = PartialFlashingService.FLASH_DATA;
@@ -557,8 +561,12 @@ namespace pxt.webBluetooth {
                                 for (let i = 0; i < 16; i++)
                                     chunk[4 + i] = 0;
                                 this.pfCharacteristic.writeValue(chunk);
-                            }
-                        })
+                                // keep trying
+                                Promise.delay(500)
+                                    .then(() => transferDaemon())
+                            })
+                    };
+                    transferDaemon();
                 }).catch(() => {
                     this.flashPacketToken.resolveCancel();
                 })
