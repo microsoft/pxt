@@ -212,8 +212,8 @@ namespace pxt.webBluetooth {
         static REGION_DAL = 0x01;
         static REGION_MAKECODE = 0x02;
         static MAGIC_MARKER = Util.fromHex('708E3B92C615A841C49866C975EE5197');
-        static CHUNK_MIN_DELAY = 20;
-        static CHUNK_MAX_DELAY = 50;
+        static CHUNK_MIN_DELAY = 25;
+        static CHUNK_MAX_DELAY = 75;
 
         private pfCharacteristic: BluetoothRemoteGATTCharacteristic;
         private state = PartialFlashingState.Idle;
@@ -271,10 +271,9 @@ namespace pxt.webBluetooth {
                     // looks like we asked the device to reconnect in pairing mode, 
                     // let's see if that worked out
                     if (this.state == PartialFlashingState.PairingModeRequested) {
+                        pxt.debug(`pf: checking pairing mode`)
                         this.autoReconnect = false;
-                        pxt.debug(`pf: request DAL region (in pairing mode)`)
-                        this.state = PartialFlashingState.RegionDALRequested;
-                        this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.REGION_INFO, PartialFlashingService.REGION_DAL]));
+                        this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.STATUS]));
                     }
                 });
         }
@@ -393,15 +392,6 @@ namespace pxt.webBluetooth {
                     this.version = packet[1];
                     this.mode = packet[2];
                     pxt.debug(`ble: flash service version ${this.version} mode ${this.mode}`)
-                    // what happens when there is no pairing mode?
-                    if (this.mode != PartialFlashingService.MODE_PAIRING) {
-                        pxt.debug(`ble: reset into pairing mode`)
-                        this.state = PartialFlashingState.PairingModeRequested;
-                        this.autoReconnect = true;
-                        this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.RESET, PartialFlashingService.MODE_PAIRING]));
-                        return;
-                    }
-
                     pxt.debug(`pf: reading DAL region`)
                     this.state = PartialFlashingState.RegionDALRequested;
                     this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.REGION_INFO, PartialFlashingService.REGION_DAL]));
@@ -417,13 +407,13 @@ namespace pxt.webBluetooth {
                     pxt.debug(`pf: read region ${packet[1]} start ${region.start.toString(16)} end ${region.end.toString(16)} hash ${region.hash}`)
                     if (packet[1] == PartialFlashingService.REGION_DAL) {
                         if (region.hash != this.dalHash) {
+                            pxt.tickEvent("webble.flash.DALrequired");
                             pxt.debug(`pf: DAL hash does not match, partial flashing not possible`)
                             this.state = PartialFlashingState.USBFlashRequired;
                             this.flashReject(new Error("USB flashing required"));
                             this.clearFlashData();
                             return;
                         }
-
                         pxt.debug(`pf: DAL hash match, reading makecode region`)
                         this.state = PartialFlashingState.RegionMakeCodeRequested;
                         this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.REGION_INFO, PartialFlashingService.REGION_MAKECODE]));
@@ -433,11 +423,26 @@ namespace pxt.webBluetooth {
                             U.userError(lf("Invalid file"));
                         }
                         if (region.hash == this.makeCodeHash) {
-                            pxt.debug(`pf: MakeCode hash matches, nothing to do`)
+                            pxt.tickEvent("webble.flash.noop");
+                            pxt.debug(`pf: MakeCode hash matches, same code!`)
+
+                            // always restart even to match USB drag and drop behavior
+                            pxt.debug(`pf: restart application mode`)
+                            this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.RESET, PartialFlashingService.MODE_APPLICATION]));
+
                             this.state = PartialFlashingState.Idle;
                             this.flashResolve();
                             this.clearFlashData();
                         } else {
+                            // must be in pairing mode
+                            if (this.mode != PartialFlashingService.MODE_PAIRING) {
+                                pxt.debug(`ble: application mode, reset into pairing mode`)
+                                this.state = PartialFlashingState.PairingModeRequested;
+                                this.autoReconnect = true;
+                                this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.RESET, PartialFlashingService.MODE_PAIRING]));
+                                return;
+                            }
+
                             // ready to flash the data in 4 chunks
                             this.flashOffset = region.start;
                             this.flashPacketNumber = 0;
@@ -454,7 +459,7 @@ namespace pxt.webBluetooth {
                             pxt.debug(`pf: packet out of order`);
                             this.flashPacketToken.cancel(); // cancel pending writes
                             this.flashPacketNumber += 4;
-                            this.chunkDelay = Math.min(this.chunkDelay + 5,
+                            this.chunkDelay = Math.min(this.chunkDelay + 10,
                                 PartialFlashingService.CHUNK_MAX_DELAY);
                             this.flashNextPacket();
                             break;
