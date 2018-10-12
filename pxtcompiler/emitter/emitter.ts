@@ -782,6 +782,8 @@ namespace ts.pxtc {
         name: string;
         isRef: boolean;
         shimName: string;
+        classInfo: ClassInfo;
+        needsCheck: boolean;
     }
 
     export type VarOrParam = VariableDeclaration | ParameterDeclaration | PropertyDeclaration | BindingElement;
@@ -2763,13 +2765,15 @@ ${lbl}: .short ${pxt.REFCNT_FLASH}
             throw unhandled(node, lf("unsupported postfix unary operation"), 9246)
         }
 
-        function fieldIndexCore(info: ClassInfo, fld: FieldWithAddInfo, t: Type) {
+        function fieldIndexCore(info: ClassInfo, fld: FieldWithAddInfo, t: Type): FieldAccessInfo {
             let attrs = parseComments(fld)
             return {
                 idx: info.allfields.indexOf(fld),
                 name: getName(fld),
                 isRef: true,
-                shimName: attrs.shim
+                shimName: attrs.shim,
+                classInfo: info,
+                needsCheck: true
             }
         }
 

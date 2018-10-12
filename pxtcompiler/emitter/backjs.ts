@@ -321,6 +321,10 @@ switch (step) {
                     return emitSharedDef(e)
                 case EK.Sequence:
                     return e.args.forEach(emitExpr)
+                case EK.InstanceOf:
+                    emitExpr(e.args[0])
+                    write(`TODO!`)
+                    return
                 default:
                     write(`r0 = ${emitExprInto(e)};`)
             }

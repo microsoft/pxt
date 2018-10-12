@@ -131,6 +131,7 @@ namespace ts.pxtc.ir {
                 case EK.Incr:
                 case EK.Decr:
                 case EK.FieldAccess:
+                case EK.InstanceOf:
                     return this.args[0].canUpdateCells()
 
                 case EK.RuntimeCall:
@@ -237,6 +238,9 @@ namespace ts.pxtc.ir {
 
                     case EK.Sequence:
                         return "(" + e.args.map(str).join("; ") + ")"
+                    
+                    case EK.InstanceOf:
+                        return "(" + str(e.args[0]) + " instanceof " + (e.data as ClassInfo).id + ")"
 
                     case EK.Store:
                         return `{ ${str(e.args[0])} := ${str(e.args[1])} }`

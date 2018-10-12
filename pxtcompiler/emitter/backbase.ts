@@ -505,9 +505,8 @@ ${baseLabel}:
                     this.emitCallRaw("pxt::decr")
                     break;
                 case ir.EK.FieldAccess:
-                    let info = e.data as FieldAccessInfo
-                    // it does the decr itself, no mask
-                    return this.emitExpr(ir.rtcall(this.withRef("pxtrt::ldfld", info.isRef), [e.args[0], ir.numlit(info.idx)]))
+                    this.emitExpr(e.args[0])
+                    return this.emitFieldAccess(e)
                 case ir.EK.Store:
                     return this.emitStore(e.args[0], e.args[1])
                 case ir.EK.RuntimeCall:
@@ -520,20 +519,72 @@ ${baseLabel}:
                     e.args.forEach(e => this.emitExpr(e))
                     return this.clearStack()
                 case ir.EK.InstanceOf:
-                    return this.emitInstanceOf(e)
+                    this.emitExpr(e.args[0])
+                    return this.emitInstanceOf(e.data, e.jsInfo)
                 default:
                     return this.emitExprInto(e, "r0")
             }
         }
 
-        private emitInstanceOf(e: ir.Expr) {
-            let info: ClassInfo = e.data
-            this.emitExpr(e.args[0])
+        private emitFieldAccess(e: ir.Expr, store = false) {
+            let info = e.data as FieldAccessInfo
+            let pref = store ? "st" : "ld"
+            let lbl = pref + "fld_" + info.classInfo.id + "_" + info.name
+            if (info.needsCheck) {
+                this.emitInstanceOf(info.classInfo, "validateDecr")
+                lbl += "_chk"
+            }
+            this.emitLabelledHelper(lbl, () => {
+                let off = info.idx * 4 + 4
+                let xoff = "#" + off
+                if (off > 124) {
+                    this.t.emit_int(off, "r3")
+                    xoff = "r3"
+                }
 
-            let lbl = "inst_" + info.id + "_" + e.jsInfo
+                this.write(`mov r7, lr`)
+
+                if (store) {
+                    this.write(`push {r0, r1}`)
+                    this.write(`ldr r0, [r0, ${xoff}]`)
+                    this.write(`bl _pxt_decr`)
+                    this.write(`pop {r0, r1}`)
+                    if (off > 124)
+                        this.t.emit_int(off, "r3")
+                    this.write(`str r1, [r0, ${xoff}]`)
+                    if (info.needsCheck)
+                        this.write(`ldrh r2, [r0, #0]`)
+                } else {
+                    this.write(`ldr r4, [r0, ${xoff}]`)
+                }
+
+
+                if (info.needsCheck) {
+                    // already decremented, but need to check for refcnt=0
+                    this.write(`cmp r2, #1`)
+                    this.write(`bne .notzero`)
+                    this.write(`bl pxt::deleteRefObject`)
+                    this.write(`.notzero:`)
+                } else {
+                    // need to decrement
+                    this.write(`bl _pxt_decr`)
+                }
+
+                if (!store) {
+                    this.write(`mov r0, r4`)
+                    this.write(`bl _pxt_incr`)
+                }
+
+                this.write(`bx r7`)
+            })
+        }
+
+        private emitInstanceOf(info: ClassInfo, tp: string) {
+
+            let lbl = "inst_" + info.id + "_" + tp
 
             this.emitLabelledHelper(lbl, () => {
-                this.write(`lsls r1, r0, #30`)
+                this.write(`lsls r2, r0, #30`)
                 this.write(`bne .fail`) // tagged
                 if (target.stackAlign) {
                     // assume linux - we can't read from NULL
@@ -541,29 +592,41 @@ ${baseLabel}:
                     this.write(`cmp r0, #0`)
                     this.write(`beq .fail`) // null
                 }
-                this.write(`ldr r1, [r0, #0]`)
-                this.write(`lsls r2, r1, #30`)
+                this.write(`ldr r3, [r0, #0]`)
+                this.write(`lsls r2, r3, #30`)
                 this.write(`beq .fail`) // C++ class
-                this.write(`lsrs r1, r1, #16`)
-                this.write(`cmp r1, #100`)
+                if (tp == "validateDecr") {
+                    this.write(`bmi .inflash`)
+                    this.write(`uxth r2, r3`)
+                    this.write(`subs r2, #2`)
+                    this.write(`blt .fail`) // ref-cnt underflow!
+                    this.write(`strh r2, [r0, #0]`)
+                    this.write(`.inflash:`)
+                }
+                this.write(`lsrs r3, r3, #16`)
+                this.write(`cmp r3, #100`)
                 this.write(`ble .fail`) // built-in
-                this.write(`lsls r1, r1, #${target.vtableShift}`)
-                this.write(`ldrh r2, [r1, #8]`)
-                this.write(`cmp r2, #${info.classNo}`)
+                this.write(`lsls r3, r3, #${target.vtableShift}`)
+                this.write(`ldrh r3, [r3, #8]`)
+                this.write(`cmp r3, #${info.classNo}`)
                 if (info.classNo == info.lastSubtypeNo) {
                     this.write("bne .fail") // different class
                 } else {
                     this.write("blt .fail")
-                    this.write(`cmp r2, #${info.lastSubtypeNo}`)
+                    this.write(`cmp r3, #${info.lastSubtypeNo}`)
                     this.write("bgt .fail")
                 }
 
-                if (e.jsInfo == "bool") {
+                if (tp == "bool") {
                     this.write(`movs r0, #${taggedTrue}`)
                     this.write(`bx lr`)
                     this.write(`.fail:`)
                     this.write(`movs r0, #${taggedFalse}`)
                     this.write(`bx lr`)
+                } else if (tp == "validate" || tp == "validateDecr") {
+                    this.write(`bx lr`)
+                    this.write(`.fail:`)
+                    this.write(`bl pxt::failedCast`)
                 } else {
                     U.oops()
                 }
@@ -640,7 +703,7 @@ ${baseLabel}:
             this.write(`@dummystack ${-numPops}`)
         }
 
-        private emitRtCall(topExpr: ir.Expr) {
+        private emitRtCall(topExpr: ir.Expr, genCall: () => void = null) {
             let name: string = topExpr.data
 
             let maskInfo = topExpr.mask || { refMask: 0 }
@@ -743,9 +806,12 @@ ${baseLabel}:
                 if (a.isSimple)
                     this.emitExprInto(a.expr, "r" + a.idx)
 
-
-            if (name != "langsupp::ignore")
-                this.alignedCall(name)
+            if (genCall) {
+                genCall()
+            } else {
+                if (name != "langsupp::ignore")
+                    this.alignedCall(name)
+            }
 
             if (clearStack) {
                 this.clearArgs(complexArgs.filter(a => !a.isRef).map(a => a.expr),
@@ -980,9 +1046,7 @@ ${baseLabel}:
                     }
                     break;
                 case ir.EK.FieldAccess:
-                    let info = trg.data as FieldAccessInfo
-                    // it does the decr itself, no mask
-                    this.emitExpr(ir.rtcall(this.withRef("pxtrt::stfld", info.isRef), [trg.args[0], ir.numlit(info.idx), src]))
+                    this.emitRtCall(ir.rtcall("dummy", [trg.args[0], src]), () => this.emitFieldAccess(trg, true))
                     break;
                 default: oops();
             }
