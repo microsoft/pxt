@@ -398,7 +398,7 @@ namespace pxt.webBluetooth {
                             // ready to flash the data in 4 chunks
                             this.flashOffset = region.start;
                             pxt.debug(`pf: starting to flash from address ${this.flashOffset.toString(16)}`);
-                            this.flashNextPacket();
+                            setTimeout(() => this.flashNextPacket(), 1);
                         }
                     }
                     break;
@@ -422,7 +422,7 @@ namespace pxt.webBluetooth {
                                 this.flashResolve();
                                 this.clearFlashData();
                             } else { // keep flashing
-                                this.flashNextPacket();
+                                setTimeout(() => this.flashNextPacket(), 1);
                             }
                             break;
                     }
@@ -450,7 +450,6 @@ namespace pxt.webBluetooth {
                 chunk[4 + i] = hex[i];
             this.pfCharacteristic.writeValue(chunk);
 
-            chunk = new Uint8Array(20);
             chunk[0] = PartialFlashingService.FLASH_DATA;
             chunk[1] = offset >> 24; // other 2 bytes of offset
             chunk[2] = offset >> 16;
@@ -459,7 +458,6 @@ namespace pxt.webBluetooth {
                 chunk[4 + i] = hex[16 + i] || 0;
             this.pfCharacteristic.writeValue(chunk);
 
-            chunk = new Uint8Array(20);
             chunk[0] = PartialFlashingService.FLASH_DATA;
             chunk[1] = 0;
             chunk[2] = 0;
@@ -468,7 +466,6 @@ namespace pxt.webBluetooth {
                 chunk[4 + i] = hex[32 + i] || 0;
             this.pfCharacteristic.writeValue(chunk);
 
-            chunk = new Uint8Array(20);
             chunk[0] = PartialFlashingService.FLASH_DATA;
             chunk[1] = 0;
             chunk[2] = 0;
