@@ -50,6 +50,7 @@
         "45enumtostring.ts",
         "46dynamicmaps.ts",
         "47json.ts",
+        "48instanceof.ts",
         "99final.ts"
     ],
     "public": true,
