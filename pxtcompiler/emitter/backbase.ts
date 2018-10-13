@@ -245,6 +245,10 @@ ${baseLabel}:
             this.write(this.t.proc_setup(numlocals))
             this.baseStackSize += numlocals
 
+            if (this.proc.classInfo && this.proc.info.thisParameter) {
+                this.write(`ldr r0, [sp, args@0]`)
+                this.emitInstanceOf(this.proc.classInfo, "validate")
+            }
 
             this.write("@stackmark locals")
             this.write(`${locLabel}:`)

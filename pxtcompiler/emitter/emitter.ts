@@ -1271,7 +1271,7 @@ namespace ts.pxtc {
                     if (isIfaceMemberUsed(fname)) {
                         if (!fld.irGetter)
                             fld.irGetter = mkBogusMethod(inf, fname)
-                        let idx = fieldIndexCore(inf, fld, typeOf(fld))
+                        let idx = fieldIndexCore(inf, fld, false)
                         emitSynthetic(fld.irGetter, (proc) => {
                             // we skip final decr, but the ldfld call will do its own decr
                             let access = ir.op(EK.FieldAccess, [proc.args[0].load()], idx)
@@ -1289,7 +1289,7 @@ namespace ts.pxtc {
                                 symbol: {}
                             });
                         }
-                        let idx = fieldIndexCore(inf, fld, typeOf(fld))
+                        let idx = fieldIndexCore(inf, fld, false)
                         emitSynthetic(fld.irSetter, (proc) => {
                             // decrs work out
                             let access = ir.op(EK.FieldAccess, [proc.args[0].load()], idx)
@@ -2765,7 +2765,7 @@ ${lbl}: .short ${pxt.REFCNT_FLASH}
             throw unhandled(node, lf("unsupported postfix unary operation"), 9246)
         }
 
-        function fieldIndexCore(info: ClassInfo, fld: FieldWithAddInfo, t: Type): FieldAccessInfo {
+        function fieldIndexCore(info: ClassInfo, fld: FieldWithAddInfo, needsCheck = true): FieldAccessInfo {
             let attrs = parseComments(fld)
             return {
                 idx: info.allfields.indexOf(fld),
@@ -2773,7 +2773,7 @@ ${lbl}: .short ${pxt.REFCNT_FLASH}
                 isRef: true,
                 shimName: attrs.shim,
                 classInfo: info,
-                needsCheck: true
+                needsCheck
             }
         }
 
@@ -2781,7 +2781,7 @@ ${lbl}: .short ${pxt.REFCNT_FLASH}
             const tp = typeOf(pacc.expression)
             if (isPossiblyGenericClassType(tp)) {
                 const info = getClassInfo(tp)
-                return fieldIndexCore(info, getFieldInfo(info, pacc.name.text), typeOf(pacc))
+                return fieldIndexCore(info, getFieldInfo(info, pacc.name.text), pacc.expression.kind == SK.ThisKeyword ? false : true)
             } else {
                 throw unhandled(pacc, lf("bad field access"), 9247)
             }
@@ -3738,7 +3738,7 @@ ${lbl}: .short ${pxt.REFCNT_FLASH}
 
                 const myType = checker.getTypeOfSymbolAtLocation(checker.getPropertyOfType(parentType, propertyName.text), bindingElement);
                 return [
-                    ir.op(EK.FieldAccess, [parentAccess], fieldIndexCore(info, getFieldInfo(info, propertyName.text), myType)),
+                    ir.op(EK.FieldAccess, [parentAccess], fieldIndexCore(info, getFieldInfo(info, propertyName.text))),
                     myType
                 ];
             } else {

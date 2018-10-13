@@ -239,7 +239,7 @@ and dynamic maps.
   and dynamic which checks if there is enough arguments and if not,
   pushes some zeroes - the dynamic one would be also used for lambdas,
   so we can drop the 3-arg limitation
-* the dynamic type of `x` in `x.f` needs to be validated; no need to check for `x == this` 
+* when calling interface methods, we need to check for the right type and null entries in the table
 * types of `Buffer`, `Image` and other built-in types arg currently not validated
 
 * default parameters are resolved at call site; they should be resolved in the
@@ -253,3 +253,7 @@ and dynamic maps.
 * the `delete` statement is currently disallowed; it can be implemented
   rather easily, though on classes it will just assign `undefined`
 * how to validate types of C++ classes (Pin mostly)?
+
+### Done
+
+* the dynamic type of `x` in `x.f` needs to be validated; no need to check for `x == this` 
