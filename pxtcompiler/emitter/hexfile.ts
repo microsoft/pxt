@@ -310,7 +310,7 @@ namespace ts.pxtc {
                         U.userError("excessive parameters passed to " + nm)
                 }
                 if (argIsNumber.length != inf.argsFmt.length - 1)
-                    U.userError(`not enough arguments for ${nm} (got ${argIsNumber.length}; fmt=${inf.argsFmt})`)
+                    U.userError(`not enough arguments for ${nm} (got ${argIsNumber.length}; fmt=${inf.argsFmt.join(",")})`)
             } else {
                 U.userError("function not found: " + nm)
             }

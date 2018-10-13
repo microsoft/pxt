@@ -384,7 +384,7 @@ declare namespace ts.pxtc {
 
     interface FuncInfo {
         name: string;
-        argsFmt: string;
+        argsFmt: string[];
         value: number;
     }
 

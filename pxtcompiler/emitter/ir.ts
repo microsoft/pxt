@@ -40,6 +40,7 @@ namespace ts.pxtc.ir {
         argIdx: number;
         method: string;
         returnsRef?: boolean;
+        refTag?: number;
     }
 
     export interface MaskInfo {

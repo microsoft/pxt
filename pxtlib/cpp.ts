@@ -488,7 +488,7 @@ namespace pxt.cpp {
                     default:
                         if (U.lookup(knownEnums, tp))
                             return "I"
-                        return "_";
+                        return "_" + tp;
                 }
             }
 
@@ -549,7 +549,7 @@ namespace pxt.cpp {
                     abiInc += `extern "C" void ${m[1]}();\n`
                     res.functions.push({
                         name: m[1],
-                        argsFmt: "",
+                        argsFmt: [],
                         value: 0
                     })
                 }
@@ -569,10 +569,10 @@ namespace pxt.cpp {
                     let funName = m[3]
                     let origArgs = m[4]
                     currAttrs = currAttrs.trim().replace(/ \w+\.defl=\w+/g, "")
-                    let argsFmt = mapRunTimeType(retTp)
+                    let argsFmt = [mapRunTimeType(retTp)]
                     let args = origArgs.split(/,/).filter(s => !!s).map(s => {
                         let r = parseArg(parsedAttrs, s)
-                        argsFmt += mapRunTimeType(r.type)
+                        argsFmt.push(mapRunTimeType(r.type))
                         return `${r.name}: ${mapType(r.type)}`
                     })
                     let numArgs = args.length

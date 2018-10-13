@@ -584,7 +584,6 @@ ${baseLabel}:
         }
 
         private emitInstanceOf(info: ClassInfo, tp: string) {
-
             let lbl = "inst_" + info.id + "_" + tp
 
             this.emitLabelledHelper(lbl, () => {
@@ -608,17 +607,22 @@ ${baseLabel}:
                     this.write(`.inflash:`)
                 }
                 this.write(`lsrs r3, r3, #16`)
-                this.write(`cmp r3, #100`)
-                this.write(`ble .fail`) // built-in
-                this.write(`lsls r3, r3, #${target.vtableShift}`)
-                this.write(`ldrh r3, [r3, #8]`)
-                this.write(`cmp r3, #${info.classNo}`)
-                if (info.classNo == info.lastSubtypeNo) {
-                    this.write("bne .fail") // different class
+                if (info.refTag) {
+                    this.write(`cmp r3, #${info.refTag}`)
+                    this.write(`bne .fail`)
                 } else {
-                    this.write("blt .fail")
-                    this.write(`cmp r3, #${info.lastSubtypeNo}`)
-                    this.write("bgt .fail")
+                    this.write(`cmp r3, #100`)
+                    this.write(`ble .fail`) // built-in
+                    this.write(`lsls r3, r3, #${target.vtableShift}`)
+                    this.write(`ldrh r3, [r3, #8]`)
+                    this.write(`cmp r3, #${info.classNo}`)
+                    if (info.classNo == info.lastSubtypeNo) {
+                        this.write("bne .fail") // different class
+                    } else {
+                        this.write("blt .fail")
+                        this.write(`cmp r3, #${info.lastSubtypeNo}`)
+                        this.write("bgt .fail")
+                    }
                 }
 
                 if (tp == "bool") {
@@ -779,12 +783,16 @@ ${baseLabel}:
                                 this.write(this.t.push_fixed(["r0"]))
                             } else {
                                 this.write(this.loadFromExprStack("r0", a.expr, off))
-                                this.alignedCall(a.conv.method, "", off)
-                                if (a.conv.returnsRef)
-                                    // replace the entry on the stack with the return value,
-                                    // as the original was already decr'ed, but the result
-                                    // has yet to be
-                                    this.write(this.loadFromExprStack("r0", a.expr, off, true))
+                                if (a.conv.refTag) {
+                                    this.emitInstanceOf({ id: "refTag" + a.conv.refTag, refTag: a.conv.refTag } as any, "validate")
+                                } else {
+                                    this.alignedCall(a.conv.method, "", off)
+                                    if (a.conv.returnsRef)
+                                        // replace the entry on the stack with the return value,
+                                        // as the original was already decr'ed, but the result
+                                        // has yet to be
+                                        this.write(this.loadFromExprStack("r0", a.expr, off, true))
+                                }
                                 this.write(this.t.push_fixed(["r0"]))
                             }
                             off++

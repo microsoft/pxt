@@ -304,6 +304,15 @@ namespace ts.pxtc {
             isClassFunction(decl)
     }
 
+    function getRefTagToValidate(tp: string): number {
+        switch (tp) {
+            case "_Buffer": return pxt.REF_TAG_BUFFER
+            case "_Image": return pxt.REF_TAG_IMAGE
+            //case "_Action": return pxt.REF_TAG_ACTION
+            default: return null
+        }
+    }
+
     export interface CallInfo {
         decl: Declaration;
         qName: string;
@@ -314,6 +323,7 @@ namespace ts.pxtc {
 
     export interface ClassInfo {
         id: string;
+        refTag?: number;
         derivedClasses?: ClassInfo[];
         classNo?: number;
         lastSubtypeNo?: number;
@@ -2987,7 +2997,7 @@ ${lbl}: .short ${pxt.REFCNT_FLASH}
         }
 
         function rtcallMask(name: string, args: Expression[], attrs: CommentAttrs, append: Expression[] = null) {
-            let fmt = ""
+            let fmt: string[] = []
             let inf = hex.lookupFunc(name)
             if (inf) fmt = inf.argsFmt
 
@@ -3000,7 +3010,7 @@ ${lbl}: .short ${pxt.REFCNT_FLASH}
                 let r = emitExpr(a)
                 if (!opts.target.isNative)
                     return r
-                let f = fmt.charAt(i + 1)
+                let f = fmt[i + 1]
                 let isNumber = isNumberLike(a)
 
                 if (!f && name.indexOf("::") < 0) {
@@ -3009,7 +3019,15 @@ ${lbl}: .short ${pxt.REFCNT_FLASH}
                 }
                 if (!f) {
                     throw U.userError("not enough args for " + name)
-                } else if (f == "_" || f == "T" || f == "N") {
+                } else if (f[0] == "_" || f == "T" || f == "N") {
+                    let t = getRefTagToValidate(f)
+                    if (t) {
+                        convInfos.push({
+                            argIdx: i,
+                            method: "_validate",
+                            refTag: t
+                        })
+                    }
                     return r
                 } else if (f == "I") {
                     //toInt can handle non-number values as well
@@ -3058,13 +3076,14 @@ ${lbl}: .short ${pxt.REFCNT_FLASH}
             if (!r.mask) r.mask = { refMask: 0 }
             r.mask.conversions = convInfos
             if (opts.target.isNative) {
-                if (fmt.charAt(0) == "I")
+                let f0 = fmt[0]
+                if (f0 == "I")
                     r = fromInt(r)
-                else if (fmt.charAt(0) == "B")
+                else if (f0 == "B")
                     r = fromBool(r)
-                else if (fmt.charAt(0) == "F")
+                else if (f0 == "F")
                     r = fromFloat(r)
-                else if (fmt.charAt(0) == "D") {
+                else if (f0 == "D") {
                     U.oops("double returns not yet supported") // take two words
                     r = fromDouble(r)
                 }
