@@ -1497,6 +1497,14 @@ export class ProjectView
     beforeCompile() { }
 
     compile(saveOnly = false) {
+        if (this.state.compileToken) {
+            // already compiling? cancel
+            pxt.tickEvent("compile.cancel");
+            pxt.debug('cancel compiling...');
+            this.state.compileToken.cancel();
+            return;
+        }
+
         pxt.tickEvent("compile");
         pxt.debug('compiling...');
 
@@ -1513,13 +1521,9 @@ export class ProjectView
         if (!pxt.appTarget.compile.useModulator && pxt.BrowserUtils.isBrowserDownloadInSameWindow() && !pxt.BrowserUtils.isBrowserDownloadWithinUserContext())
             userContextWindow = window.open("");
 
-        if (this.state.compiling) {
-            pxt.tickEvent("compile.double");
-            return;
-        }
-
         const simRestart = this.state.running;
-        this.setState({ compiling: true });
+        const compileToken = new pxt.Util.CancellationToken().startOperation();
+        this.setState({ compileToken });
         this.clearSerial();
         this.editor.beforeCompile();
         if (simRestart) this.stopSimulator();
@@ -1527,6 +1531,7 @@ export class ProjectView
         compiler.compileAsync({ native: true, forceEmit: true, preferredEditor: this.getPreferredEditor() })
             .then<pxtc.CompileResult>(resp => {
                 this.editor.setDiagnostics(this.editorFile, state)
+                compileToken.throwIfCancelled();
                 let fn = pxt.outputName()
                 if (!resp.outfiles[fn]) {
                     pxt.tickEvent("compile.noemit")
@@ -1545,6 +1550,7 @@ export class ProjectView
                 else
                     return resp
             }).then(resp => {
+                compileToken.throwIfCancelled();
                 if (!resp) return Promise.resolve();
                 if (saveOnly) {
                     return pxt.commands.saveOnlyAsync(resp);
@@ -1560,11 +1566,15 @@ export class ProjectView
                     }
                 }
                 return pxt.commands.deployCoreAsync(resp, {
+                    cancellationToken: compileToken,
                     reportDeviceNotFoundAsync: (docPath, compileResult) => this.showDeviceNotFoundDialogAsync(docPath, compileResult),
                     reportError: (e) => core.errorNotification(e),
                     showNotification: (msg) => core.infoNotification(msg)
                 })
                     .catch(e => {
+                        // operation got cancelled
+                        if (pxt.Util.CancellationToken.isCancelledError(e))
+                            return;
                         if (e.notifyUser) {
                             core.warningNotification(e.message);
                         } else {
@@ -1572,16 +1582,18 @@ export class ProjectView
                             core.warningNotification(errorText);
                         }
                         pxt.reportException(e);
-                        if (userContextWindow)
-                            try { userContextWindow.close() } catch (e) { }
                     })
             }).catch((e: Error) => {
+                if (pxt.Util.CancellationToken.isCancelledError(e))
+                    return;
                 pxt.reportException(e);
                 core.errorNotification(lf("Compilation failed, please contact support."));
-                if (userContextWindow)
-                    try { userContextWindow.close() } catch (e) { }
             }).finally(() => {
-                this.setState({ compiling: false, isSaving: false });
+                if (userContextWindow) {
+                    try { userContextWindow.close() } catch (e) { }
+                    userContextWindow = undefined;
+                }
+                this.setState({ compileToken: undefined, isSaving: false });
                 if (simRestart) this.runSimulator();
             })
             .done();

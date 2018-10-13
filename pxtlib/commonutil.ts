@@ -427,8 +427,14 @@ namespace ts.pxtc.Util {
         private deferred: Promise<void>;
         private progressHandler: (completed: number, total: number) => void;
 
+        static ERROR_MESSAGE = "OperationCancelled";
+        static isCancelledError(e: Error) {
+            return e && (<any>e).__cancelled;
+        }
+
         startOperation() {
             this.pending = true;
+            return this;
         }
 
         isRunning() {
@@ -468,7 +474,11 @@ namespace ts.pxtc.Util {
         }
 
         throwIfCancelled() {
-            if (this.isCancelled()) throw new Error();
+            if (this.isCancelled()) {
+                const e = new Error(CancellationToken.ERROR_MESSAGE);
+                (<any>e).__cancelled = true;
+                throw e;
+            }
         }
 
         resolveCancel() {

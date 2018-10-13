@@ -93,7 +93,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        const { home, tutorialOptions, hideEditorFloats, collapseEditorTools, projectName, compiling, isSaving, running } = this.props.parent.state;
+        const { home, tutorialOptions, hideEditorFloats, collapseEditorTools, projectName, compileToken, isSaving, running } = this.props.parent.state;
 
         if (home) return <div />; // Don't render if we're in the home screen
 
@@ -111,7 +111,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const compileBtn = compile.hasHex || compile.saveAsPNG;
         const simOpts = pxt.appTarget.simulator;
         const compileTooltip = lf("Download your code to the {0}", targetTheme.boardName);
-        const compileLoading = !!compiling;
+        const compileLoading = !!compileToken;
         const runTooltip = running ? lf("Stop the simulator") : lf("Start the simulator");
         const restartTooltip = lf("Restart the simulator");
         const collapseTooltip = collapsed ? lf("Show the simulator") : lf("Hide the simulator");

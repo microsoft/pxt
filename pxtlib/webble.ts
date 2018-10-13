@@ -222,6 +222,7 @@ namespace pxt.webBluetooth {
         private mode: number;
         private regions: { start: number; end: number; hash: string; }[];
 
+        private flashToken: pxt.Util.CancellationToken;
         private hex: string;
         private bin: Uint8Array;
         private magicOffset: number;
@@ -248,6 +249,7 @@ namespace pxt.webBluetooth {
             this.flashReject = undefined;
             this.flashResolve = undefined;
             this.flashOffset = undefined;
+            this.flashToken = undefined;
         }
 
         constructor(protected device: BLEDevice) {
@@ -311,23 +313,21 @@ namespace pxt.webBluetooth {
             return -1;
         }
 
-        flashAsync(hex: string): Promise<void> {
-            if (this.hex) {
-                pxt.debug(`pf: flashing already in progress`)
-                return Promise.resolve();
-            }
+        flashAsync(hex: string, token: pxt.Util.CancellationToken): Promise<void> {
             this.device.pauseUART();
+            this.clearFlashData();
+            this.flashToken = token;
             return this.createFlashPromise(hex)
                 .finally(() => this.device.resumeUART())
         }
 
         private createFlashPromise(hex: string): Promise<void> {
             if (this.hex) {
+                // this should not happen.
                 pxt.debug(`pf: flashing already in progress`)
                 return Promise.resolve();
             }
 
-            this.clearFlashData();
             this.hex = hex;
             const uf2 = ts.pxtc.UF2.newBlockFile();
             ts.pxtc.UF2.writeHex(uf2, this.hex.split(/\r?\n/));
@@ -375,7 +375,7 @@ namespace pxt.webBluetooth {
 
         private handleCharacteristic(ev: Event) {
             // check service is still alive
-            if (this.aliveToken.isCancelled()) {
+            if (this.aliveToken.isCancelled() || this.flashToken.isCancelled()) {
                 this.flashReject(new Error());
                 this.clearFlashData();
             }
@@ -553,6 +553,7 @@ namespace pxt.webBluetooth {
                                 if (currentFlashOffset != this.flashOffset // transfer ok
                                     || this.flashPacketToken.isCancelled() // transfer cancelled
                                     || this.aliveToken.isCancelled() // service is closed
+                                    || this.flashToken.isCancelled() // flashing is cancelled
                                     || this.state != PartialFlashingState.Flash // flash state changed
                                 ) return Promise.resolve();
                                 // we are definitely stuck
@@ -705,8 +706,9 @@ namespace pxt.webBluetooth {
     export function flashAsync(resp: pxtc.CompileResult, d: pxt.commands.DeployOptions = {}): Promise<void> {
         pxt.tickEvent("webble.flash");
         const hex = resp.outfiles[ts.pxtc.BINARY_HEX];
+        const token = d.cancellationToken || new pxt.Util.CancellationToken().startOperation();
         return connectAsync()
-            .then(() => bleDevice.partialFlashingService.flashAsync(hex))
+            .then(() => bleDevice.partialFlashingService.flashAsync(hex, token))
             .then(() => pxt.tickEvent("webble.flash.success"))
             .catch(e => {
                 pxt.tickEvent("webble.fail.fail", { "message": e.message });
