@@ -142,7 +142,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
             downloadButtonClasses = "disabled";
             saveButtonClasses = "loading disabled";
         } else if (compileLoading) {
-            downloadButtonClasses = "loading disabled";
+            downloadButtonClasses = "loading";
             saveButtonClasses = "disabled";
         }
 
