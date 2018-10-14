@@ -357,7 +357,6 @@ export class Button extends StatelessUIElement<ButtonProps> {
     renderCore() {
         const { labelPosition, color, size, disabled } = this.props;
         const classes = cx([
-            'ui button',
             color,
             size,
             disabled ? 'disabled' : '',
