@@ -106,10 +106,15 @@ namespace pxt.editor {
         tutorialReady?: boolean; // current tutorial page
     }
 
+    export interface ModalDialogButton {
+        label: string;
+        url?: string;
+    }
+
     export interface ModalDialogOptions {
         header: string;
         body: string;
-        copyable?: string;
+        buttons?: ModalDialogButton[];
     }
 
     export interface IProjectView {

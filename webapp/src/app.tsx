@@ -2107,8 +2107,9 @@ export class ProjectView
         return core.dialogAsync({
             header: options.header,
             body: options.body,
-            copyable: options.copyable,
-            hideCancel: true
+            hideCancel: true,
+            hasCloseIcon: true,
+            buttons: options.buttons
         })
     }
 
