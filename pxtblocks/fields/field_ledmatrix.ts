@@ -40,7 +40,6 @@ namespace pxtblockly {
         private cells: SVGRectElement[][] = [];
         private elt: SVGSVGElement;
 
-        private isMouseDown_: boolean;
         private currentDragState_: boolean;
 
         constructor(text: string, params: any, validator?: Function) {
@@ -138,13 +137,14 @@ namespace pxtblockly {
         }
 
         private clearLedDragHandler = (ev: MouseEvent) => {
-            this.isMouseDown_ = false;
             pxsim.pointerEvents.down.forEach(evid => this.sourceBlock_.getSvgRoot().removeEventListener(evid, this.dontHandleMouseEvent_));
             this.sourceBlock_.getSvgRoot().removeEventListener(pxsim.pointerEvents.move, this.dontHandleMouseEvent_);
             document.removeEventListener(pxsim.pointerEvents.up, this.clearLedDragHandler);
             document.removeEventListener(pxsim.pointerEvents.leave, this.clearLedDragHandler);
 
             (Blockly as any).Touch.clearTouchIdentifier();
+
+            this.elt.removeEventListener(pxsim.pointerEvents.move, this.handleRootMouseMoveListener);
 
             ev.stopPropagation();
             ev.preventDefault();
@@ -155,37 +155,64 @@ namespace pxtblockly {
             const ty = y * (FieldMatrix.CELL_WIDTH + FieldMatrix.CELL_VERTICAL_MARGIN) + FieldMatrix.CELL_VERTICAL_MARGIN;
 
             const cellG = pxsim.svg.child(this.elt, "g", { transform: `translate(${tx} ${ty})` }) as SVGGElement;
-            const cellRect = pxsim.svg.child(cellG, "rect", { 'class': `blocklyLed${this.cellState[x][y] ? 'On' : 'Off'}`, 'cursor': 'pointer', width: FieldMatrix.CELL_WIDTH, height: FieldMatrix.CELL_WIDTH, fill: this.getColor(x, y), rx: FieldMatrix.CELL_CORNER_RADIUS }) as SVGRectElement;
+            const cellRect = pxsim.svg.child(cellG, "rect", {
+                'class': `blocklyLed${this.cellState[x][y] ? 'On' : 'Off'}`,
+                'cursor': 'pointer',
+                width: FieldMatrix.CELL_WIDTH, height: FieldMatrix.CELL_WIDTH,
+                fill: this.getColor(x, y),
+                'data-x': x,
+                'data-y': y,
+                rx: FieldMatrix.CELL_CORNER_RADIUS }) as SVGRectElement;
             this.cells[x][y] = cellRect;
-
-            const toggleRect = () => {
-                this.cellState[x][y] = this.currentDragState_;
-                this.updateValue();
-            }
 
             if ((this.sourceBlock_.workspace as any).isFlyout) return;
 
             pxsim.pointerEvents.down.forEach(evid => cellRect.addEventListener(evid, (ev: MouseEvent) => {
                 this.currentDragState_ = !this.cellState[x][y];
-                toggleRect();
-                // Mark that the mouse is down, a mouse enter onto any other rect at this point will toggle the rect
-                this.isMouseDown_ = true;
+
+                // select and hide chaff
+                Blockly.hideChaff();
+                this.sourceBlock_.select();
+
+                this.toggleRect(x, y);
                 pxsim.pointerEvents.down.forEach(evid => this.sourceBlock_.getSvgRoot().addEventListener(evid, this.dontHandleMouseEvent_));
                 this.sourceBlock_.getSvgRoot().addEventListener(pxsim.pointerEvents.move, this.dontHandleMouseEvent_);
 
                 document.addEventListener(pxsim.pointerEvents.up, this.clearLedDragHandler);
                 document.addEventListener(pxsim.pointerEvents.leave, this.clearLedDragHandler);
 
+                // Begin listening on the canvas and toggle any matches
+                this.elt.addEventListener(pxsim.pointerEvents.move, this.handleRootMouseMoveListener);
+
                 ev.stopPropagation();
                 ev.preventDefault();
             }, false));
+        }
 
-            cellRect.addEventListener(pxsim.pointerEvents.enter, (ev: MouseEvent) => {
-                if (this.isMouseDown_) {
-                    toggleRect();
-                    ev.stopPropagation();
-                }
-            }, false);
+        private toggleRect = (x: number, y: number) => {
+            this.cellState[x][y] = this.currentDragState_;
+            this.updateValue();
+        }
+
+        private handleRootMouseMoveListener = (ev: MouseEvent) => {
+            let clientX;
+            let clientY;
+            if ((ev as any).changedTouches && (ev as any).changedTouches.length == 1) {
+                // Handle touch events
+                clientX = (ev as any).changedTouches[0].clientX;
+                clientY = (ev as any).changedTouches[0].clientY;
+            } else {
+                // All other events (pointer + mouse)
+                clientX = ev.clientX;
+                clientY = ev.clientY;
+            }
+            const target = document.elementFromPoint(clientX, clientY);
+            if (!target) return;
+            const x = target.getAttribute('data-x');
+            const y = target.getAttribute('data-y');
+            if (x != null && y != null) {
+                this.toggleRect(parseInt(x), parseInt(y));
+            }
         }
 
         private getColor(x: number, y: number) {
