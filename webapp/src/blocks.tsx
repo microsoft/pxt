@@ -1265,7 +1265,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             if (fn) {
                 if (!shouldShowBlock(fn)) return undefined;
                 let comp = pxt.blocks.compileInfo(fn);
-                blockXml = pxt.blocks.createToolboxBlock(this.blockInfo, fn, comp, ignoregap);
+                blockXml = pxt.blocks.createToolboxBlock(this.blockInfo, fn, comp);
 
                 if (fn.attributes.optionalVariableArgs && fn.attributes.toolboxVariableArgs) {
                     const handlerArgs = comp.handlerArgs;
@@ -1315,9 +1315,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     else {
                         varName = Util.htmlEscape(rawName);
                     }
-                    const defaultBlockGap = pxt.appTarget.appTheme && pxt.appTarget.appTheme.defaultBlockGap.toString() || 8;
                     const setblock = Blockly.Xml.textToDom(`
-<block type="variables_set" gap="${Util.htmlEscape((!ignoregap ? fn.attributes.blockGap || defaultBlockGap : defaultBlockGap) + "")}">
+<block type="variables_set" gap="${Util.htmlEscape((fn.attributes.blockGap || 8) + "")}">
 <field name="VAR" variabletype="">${varName}</field>
 </block>`);
                     {
@@ -1335,11 +1334,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }
         } else {
             blockXml = Blockly.Xml.textToDom(block.blockXml);
+        }
+        if (blockXml) {
             if (ignoregap) {
                 blockXml.setAttribute("gap", `${pxt.appTarget.appTheme && pxt.appTarget.appTheme.defaultBlockGap.toString() || 8}`);
             }
-        }
-        if (blockXml) {
             pxt.Util.toArray(blockXml.querySelectorAll('shadow'))
                 .filter(shadow => !shadow.innerHTML)
                 .forEach((shadow, i) => {
