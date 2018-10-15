@@ -2103,6 +2103,16 @@ export class ProjectView
         this.scriptSearch.showBoards();
     }
 
+    showModalDialogAsync(options: pxt.editor.ModalDialogOptions) {
+        return core.dialogAsync({
+            header: options.header,
+            body: options.body,
+            hideCancel: true,
+            hasCloseIcon: true,
+            buttons: options.buttons
+        })
+    }
+
     showExperimentsDialog() {
         this.scriptSearch.showExperiments();
     }
