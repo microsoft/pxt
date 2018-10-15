@@ -255,13 +255,13 @@ for (let i = 0; i < 10; i++) {
 </div>
 
 <script>
-var makecodeUrl = "@name@";
+var makecodeUrl = "@homeUrl@";
 var blocksClass = "blocks";
 
 var injectRenderer = function () {
     var f = $("<iframe>", {
         id: "makecoderenderer",
-        src: `https://${makecodeUrl}/--docs?render=1&lang=${$('html').attr('lang')}`
+        src: `${makecodeUrl}--docs?render=1&lang=${$('html').attr('lang')}`
     });
     f.css("position", "absolute");
     f.css("left", 0);
