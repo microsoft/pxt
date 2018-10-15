@@ -238,7 +238,7 @@ namespace pxt.editor {
         showPackageDialog(): void;
         showBoardDialog(): void;
 
-        showModalDialogAsync(options: ModalDialogOptions): void;
+        showModalDialogAsync(options: ModalDialogOptions): Promise<void>;
     }
 
     export interface IHexFileImporter {
