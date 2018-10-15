@@ -109,6 +109,7 @@ namespace pxt.editor {
     export interface ModalDialogOptions {
         header: string;
         body: string;
+        copyable?: string;
     }
 
     export interface IProjectView {
