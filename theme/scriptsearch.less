@@ -1,22 +1,35 @@
 
-/* Extensions */
-.ui.searchdialog.modal,
-.ui.searchdialog.modal > .content {
-    background: @extensionsBackground;
-}
-.ui.searchdialog.modal > .header {
-    background: @extensionsHeaderBackground;
-    padding: 1rem;
-    color: white;
-    border-radius: 0;
+
+/*******************************
+        Modal Header actions
+*******************************/
+
+/*
+.ui.fullscreen.modal > .header {
     text-align: center;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    
+    .header-actions {
+        position: absolute;
+        top: 0.8rem;
+        right: 1rem;
+    }
 }
+
+@media only screen and (max-width: @largestMobileScreen) {
+    .ui.fullscreen.modal > .header {
+        .header-actions {
+            top: 0.35rem;
+            right: 0.4rem;
+        }
+    }
+}
+
+*/
+
 .ui.searchdialog.modal .ui.search {
     max-width: 50%;
     margin: auto;
+    flex-grow: 1;
 }
 .ui.searchdialog.modal > .closeIcon .close {
     color: white;
@@ -56,11 +69,6 @@
     &:focus, &:hover {
         color: darken(white, 20%) !important;
     }
-}
-
-.ui.modal > .header .helpIcon {
-    float: right;
-    color: white;
 }
 
 @HCextensionsHeaderBackground: black;
