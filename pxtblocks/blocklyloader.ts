@@ -1143,8 +1143,6 @@ namespace pxt.blocks {
             customContextMenu: function (options: any[]) {
                 if (!this.isCollapsed()) {
                     let option: any = { enabled: true };
-                    let variable = this.getInputTargetBlock('VAR').getField('VAR');
-                    let name = variable.getText();
                     option.text = lf("Create 'get {0}'", name);
                     let xmlField = goog.dom.createDom('field', null, name);
                     xmlField.setAttribute('name', 'VAR');
@@ -1152,13 +1150,6 @@ namespace pxt.blocks {
                     xmlBlock.setAttribute('type', 'variables_get');
                     option.callback = Blockly.ContextMenu.callbackFactory(this, xmlBlock);
                     options.push(option);
-
-                    const renameOption: any = {enabled: true};
-                    renameOption.text = (Blockly as any).Msg.RENAME_VARIABLE;
-                    renameOption.callback = () => {
-                      (Blockly as any).Variables.renameVariable(this.workspace, variable.getVariable());
-                    }
-                    options.push(renameOption);
                 }
             }
         };
@@ -1329,7 +1320,8 @@ namespace pxt.blocks {
         msg.ENABLE_BLOCK = lf("Enable Block");
         msg.DISABLE_BLOCK = lf("Disable Block");
         msg.DELETE_BLOCK = lf("Delete Block");
-        msg.DELETE_X_BLOCKS = lf("Delete All Blocks");
+        msg.DELETE_X_BLOCKS = lf("Delete Blocks");
+        msg.DELETE_ALL_BLOCKS = lf("Delete All Blocks");
         msg.HELP = lf("Help");
 
         // inject hook to handle openings docs
@@ -1412,19 +1404,12 @@ namespace pxt.blocks {
 
             // Option to delete all blocks.
             // Count the number of blocks that are deletable.
-            let deleteList: any[] = [];
-            function addDeletableBlocks(block: any) {
-                if (block.isDeletable()) {
-                    deleteList = deleteList.concat(block.getDescendants());
-                } else {
-                    let children = block.getChildren();
-                    for (let i = 0; i < children.length; i++) {
-                        addDeletableBlocks(children[i]);
-                    }
-                }
-            }
-            for (let i = 0; i < topBlocks.length; i++) {
-                addDeletableBlocks(topBlocks[i]);
+            let deleteList = Blockly.WorkspaceSvg.buildDeleteList_(topBlocks);
+            let deleteCount = 0;
+            for (let i = 0; i < deleteList.length; i++) {
+              if (!deleteList[i].isShadow()) {
+                deleteCount++;
+              }
             }
 
             function deleteNext() {
@@ -1442,14 +1427,18 @@ namespace pxt.blocks {
             }
 
             const deleteOption = {
-                text: deleteList.length == 1 ? lf("Delete Block") :
-                    lf("Delete All Blocks", deleteList.length),
-                enabled: deleteList.length > 0,
+                text: deleteCount == 1 ? msg.DELETE_BLOCK : msg.DELETE_ALL_BLOCKS,
+                enabled: deleteCount > 0,
                 callback: function () {
                     pxt.tickEvent("blocks.context.delete", undefined, { interactiveConsent: true });
-                    if (deleteList.length < 2 ||
-                        window.confirm(lf("Delete all {0} blocks?", deleteList.length))) {
+                    if (deleteCount < 2) {
                         deleteNext();
+                    } else {
+                        Blockly.confirm(lf("Delete all {0} blocks?", deleteCount), (ok) => {
+                            if (ok) {
+                                deleteNext();
+                            }
+                        });
                     }
                 }
             };

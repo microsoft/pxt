@@ -363,6 +363,11 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         this.rootElement = c;
     }
 
+    isRtl() {
+        const { editorname } = this.props;
+        return editorname == 'monaco' ? false : Util.isUserLanguageRtl();
+    }
+
     renderCore() {
         const { editorname, parent } = this.props;
         const { showAdvanced, visible, loading, selectedItem, expandedItem, hasSearch, showSearchBox, hasError } = this.state;
@@ -406,7 +411,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
                 <div role="tree">
                     {hasSearch ? <CategoryItem key={"search"} toolbox={this} index={index++} selected={selectedItem == "search"} treeRow={searchTreeRow} onCategoryClick={this.setSelection} /> : undefined}
                     {nonAdvancedCategories.map((treeRow) => (
-                        <CategoryItem key={treeRow.nameid} toolbox={this} index={index++} selected={selectedItem == treeRow.nameid} childrenVisible={expandedItem == treeRow.nameid} treeRow={treeRow} onCategoryClick={this.setSelection}>
+                        <CategoryItem key={treeRow.nameid}  toolbox={this} index={index++} selected={selectedItem == treeRow.nameid} childrenVisible={expandedItem == treeRow.nameid} treeRow={treeRow} onCategoryClick={this.setSelection}>
                             {treeRow.subcategories ? treeRow.subcategories.map((subTreeRow) => (
                                 <CategoryItem key={subTreeRow.nameid + subTreeRow.subns} index={index++} toolbox={this} selected={selectedItem == (subTreeRow.nameid + subTreeRow.subns)} treeRow={subTreeRow} onCategoryClick={this.setSelection} />
                             )) : undefined}
@@ -534,7 +539,7 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
         const { selected } = this.state;
 
         return <TreeItem>
-            <TreeRow ref={this.handleTreeRowRef} {...this.props} selected={selected}
+            <TreeRow ref={this.handleTreeRowRef} isRtl={toolbox.isRtl()} {...this.props} selected={selected}
                 onClick={this.handleClick} onKeyDown={this.handleKeyDown} />
             <TreeGroup visible={childrenVisible}>
                 {this.props.children}
@@ -567,6 +572,7 @@ export interface TreeRowProps {
     onClick?: () => void;
     onKeyDown?: (e: React.KeyboardEvent<any>) => void;
     selected?: boolean;
+    isRtl?: boolean;
 }
 
 export class TreeRow extends data.Component<TreeRowProps, {}> {
@@ -621,7 +627,7 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
     }
 
     renderCore() {
-        const { selected, onClick, onKeyDown } = this.props;
+        const { selected, onClick, onKeyDown, isRtl } = this.props;
         const { nameid, subns, name, icon, color } = this.props.treeRow;
         const appTheme = pxt.appTarget.appTheme;
         const metaColor = this.getMetaColor();
@@ -634,17 +640,21 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
             paddingLeft: '0px'
         }
         let treeRowClass = 'blocklyTreeRow';
-        if (appTheme.coloredToolbox) {
-            // Colored toolbox
-            treeRowStyle.color = `${metaColor}`;
-            treeRowStyle.borderLeft = `8px solid ${metaColor}`;
-        } else if (appTheme.invertedToolbox) {
+        if (appTheme.invertedToolbox) {
             // Inverted toolbox
             treeRowStyle.backgroundColor = (metaColor || '#ddd');
             treeRowStyle.color = '#fff';
         } else {
-            // Standard toolbox
-            treeRowStyle.borderLeft = `8px solid ${metaColor}`;
+            if (appTheme.coloredToolbox) {
+                // Colored toolbox
+                treeRowStyle.color = `${metaColor}`;
+            }
+            const border = `8px solid ${metaColor}`;
+            if (isRtl) {
+                treeRowStyle.borderRight = border;
+            } else {
+                treeRowStyle.borderLeft = border;
+            }
         }
 
         // Selected

@@ -37,6 +37,7 @@ namespace pxt.editor {
         sideDocsLoadUrl?: string; // set once to load the side docs frame
         sideDocsCollapsed?: boolean;
         projectName?: string;
+        suppressPackageWarning?: boolean;
 
         tutorialOptions?: TutorialOptions;
         lightbox?: boolean;
@@ -81,6 +82,7 @@ namespace pxt.editor {
         inTutorial?: boolean;
         dependencies?: pxt.Map<string>;
         tsOnly?: boolean;
+        changeBoardOnLoad?: boolean; // if applicable, pop up the "boards" dialog after creating the project
     }
 
     export interface ProjectFilters {
@@ -102,6 +104,17 @@ namespace pxt.editor {
         tutorialStepInfo?: pxt.tutorial.TutorialStepInfo[];
         tutorialStep?: number; // current tutorial page
         tutorialReady?: boolean; // current tutorial page
+    }
+
+    export interface ModalDialogButton {
+        label: string;
+        url?: string;
+    }
+
+    export interface ModalDialogOptions {
+        header: string;
+        body: string;
+        buttons?: ModalDialogButton[];
     }
 
     export interface IProjectView {
@@ -225,9 +238,12 @@ namespace pxt.editor {
         showResetDialog(): void;
         showExitAndSaveDialog(): void;
         showChooseHwDialog(): void;
+        showExperimentsDialog(): void;
 
         showPackageDialog(): void;
         showBoardDialog(): void;
+
+        showModalDialogAsync(options: ModalDialogOptions): Promise<void>;
     }
 
     export interface IHexFileImporter {

@@ -127,10 +127,10 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
 
         const run = true;
         const restart = run && !simOpts.hideRestart;
-        const trace = run && !!simOpts.enableTrace;
+        const trace = !!targetTheme.enableTrace;
         const tracing = this.props.parent.state.tracing;
         const traceTooltip = tracing ? lf("Disable Slow-Mo") : lf("Slow-Mo")
-        const debug = !trace && !!simOpts.debugger && !readOnly;
+        const debug = !!targetTheme.debugger && !readOnly;
         const debugging = this.props.parent.state.debugging;
         const debugTooltip = debugging ? lf("Disable Debugging") : lf("Debugging")
         const downloadIcon = pxt.appTarget.appTheme.downloadIcon || "download";
@@ -330,7 +330,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                             </div>
                         </div> :
                         <div className="ui item">
-                            {showCollapsed ? <EditorToolbarButton icon={`${collapseEditorTools ? 'toggle ' + (isRtl ? 'left' : 'right') : 'toggle ' + (isRtl ? 'right' : 'left')}`} className={`large collapse-button ${collapsed ? 'collapsed' : ''}`} title={collapseTooltip} onButtonClick={this.toggleCollapse} view='computer' /> : undefined}
+                            {showCollapsed && collapseEditorTools ? <EditorToolbarButton icon={`toggle ${collapseEditorTools ? (isRtl ? 'left' : 'right') : (isRtl ? 'right' : 'left')}`} className={`large collapse-button ${collapsed ? 'collapsed' : ''}`} title={collapseTooltip} onButtonClick={this.toggleCollapse} view='computer' /> : undefined}
                             {debug ? <EditorToolbarButton key='debugbtn' icon="xicon bug" className={`large debug-button ${debugging ? 'orange' : ''}`} title={debugTooltip} onButtonClick={this.toggleDebugging} view='computer' /> : undefined}
                             {compileBtn ? <EditorToolbarButton icon={downloadIcon} className={`primary huge fluid download-button ${downloadButtonClasses}`} text={downloadText} title={compileTooltip} onButtonClick={this.compile} view='computer' /> : undefined}
                         </div>

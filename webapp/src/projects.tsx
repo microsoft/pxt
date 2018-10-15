@@ -84,7 +84,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
     }
 
     private showAboutDialog() {
-        showAboutDialogAsync();
+        showAboutDialogAsync(this.props.parent);
     }
 
     chgHeader(hdr: pxt.workspace.Header) {
@@ -233,7 +233,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             )}
             {targetTheme.organizationUrl || targetTheme.organizationUrl || targetTheme.privacyUrl || targetTheme.copyrightText ? <div className="ui horizontal small divided link list homefooter">
                 {targetTheme.organizationUrl && targetTheme.organization ? <a className="item" target="_blank" rel="noopener noreferrer" href={targetTheme.organizationUrl}>{targetTheme.organization}</a> : undefined}
-                {targetTheme.selectLanguage ? <sui.Link className="item" text={lf("Language")} onClick={this.showLanguagePicker} onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                {targetTheme.selectLanguage ? <sui.Link className="item" icon="xicon globe" text={lf("Language")} onClick={this.showLanguagePicker} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                 {targetTheme.termsOfUseUrl ? <a target="_blank" className="item" href={targetTheme.termsOfUseUrl} rel="noopener noreferrer">{lf("Terms of Use")}</a> : undefined}
                 {targetTheme.privacyUrl ? <a target="_blank" className="item" href={targetTheme.privacyUrl} rel="noopener noreferrer">{lf("Privacy")}</a> : undefined}
                 {pxt.appTarget.versions ? <sui.Link className="item" text={`v${pxt.appTarget.versions.target}`} onClick={this.showAboutDialog} onKeyDown={sui.fireClickOnEnter} /> : undefined}
@@ -348,7 +348,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
 
     newProject() {
         pxt.tickEvent("projects.new", undefined, { interactiveConsent: true });
-        this.props.parent.newProject();
+        this.props.parent.newProject({ changeBoardOnLoad: true });
     }
 
     closeDetail() {
@@ -757,11 +757,15 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
     save() {
         const { projectName: newName } = this.state;
         this.hide();
-        if (this.props.parent.state.projectName != newName) pxt.tickEvent("exitandsave.projectrename", undefined, { interactiveConsent: true });
-        this.props.parent.updateHeaderNameAsync(newName)
-            .done(() => {
-                this.props.parent.openHome();
-            })
+        let p = Promise.resolve();
+        // save project name if valid change
+        if (newName && this.props.parent.state.projectName != newName) {
+            pxt.tickEvent("exitandsave.projectrename", undefined, { interactiveConsent: true });
+            p = p.then(() => this.props.parent.updateHeaderNameAsync(newName));
+        }
+        p.done(() => {
+            this.props.parent.openHome();
+        })
     }
 
     renderCore() {
@@ -772,21 +776,17 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
             onclick: this.save,
             icon: 'check',
             className: 'approve positive'
-        }, {
-            label: lf("Cancel"),
-            icon: 'cancel',
-            onclick: this.cancel
         }]
 
         return (
             <sui.Modal isOpen={visible} className="exitandsave" size="tiny"
                 onClose={this.hide} dimmer={true} buttons={actions}
-                closeIcon={true} header={lf("Exit Project")}
+                closeIcon={true} header={lf("Project has no name {0}", "😞")}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
                 modalDidOpen={this.modalDidOpen}
             >
                 <div className="ui form">
-                    <sui.Input ref="filenameinput" autoFocus id={"projectNameInput"} label={lf("Project Name")}
+                    <sui.Input ref="filenameinput" autoFocus id={"projectNameInput"} label={lf("Name")}
                         ariaLabel={lf("Type a name for your project")}
                         value={projectName || ''} onChange={this.handleChange} />
                 </div>

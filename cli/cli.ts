@@ -159,13 +159,13 @@ interface KeyTar {
 }
 
 function requireKeyTar(install = false): Promise<KeyTar> {
-    return Promise.resolve(nodeutil.lazyRequire("keytar") as KeyTar);
+    return Promise.resolve(nodeutil.lazyRequire("keytar", install) as KeyTar);
 }
 
 function passwordGetAsync(account: string): Promise<string> {
     return requireKeyTar()
         .then(keytar => keytar.getPassword("pxt/" + pxt.appTarget.id, account))
-        .catch(e => undefined)
+        .catch(e => process.env["PXT_PASSWORD"] || undefined)
 }
 
 function passwordDeleteAsync(account: string): Promise<void> {
@@ -600,7 +600,7 @@ function bumpPxtCoreDepAsync(): Promise<void> {
                 }
                 pkg["dependencies"][knownPackage] = newVer
                 nodeutil.writeFileSync("package.json", JSON.stringify(pkg, null, 2) + "\n")
-                commitMsg += `bump ${knownPackage} to ${newVer}, `;
+                commitMsg += `${commitMsg ? ", " : ""}bump ${knownPackage} to ${newVer}`;
             })
     })
 
@@ -1009,8 +1009,6 @@ function gitHash(buf: Buffer) {
 }
 
 function uploadCoreAsync(opts: UploadOptions) {
-    let liteId = "<none>"
-
     let targetConfig = readLocalPxTarget();
     let defaultLocale = targetConfig.appTheme.defaultLocale;
     let hexCache = path.join("built", "hexcache");
@@ -1026,7 +1024,7 @@ function uploadCoreAsync(opts: UploadOptions) {
     let logos = (targetConfig.appTheme as any as Map<string>);
     let targetImages = Object.keys(logos)
         .filter(k => /(logo|hero)$/i.test(k) && /^\.\//.test(logos[k]));
-    let targetImagesHashed = targetImages.map(k => uploadArtFile(logos[k]));
+    let targetImagesHashed = pxt.Util.unique(targetImages.map(k => uploadArtFile(logos[k])), url => url);
 
     let targetEditorJs = "";
     if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor)
@@ -3779,6 +3777,7 @@ function uploadBundledTranslationsAsync(crowdinDir: string, branch: string, prj:
 }
 
 export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedCommand) {
+    const errors: string[] = [];
     return crowdinCredentialsAsync()
         .then(cred => {
             if (!cred) return Promise.resolve();
@@ -3798,7 +3797,13 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
 
             const nextFileAsync = (): Promise<void> => {
                 const f = todo.pop();
-                if (!f) return Promise.resolve();
+                if (!f) {
+                    if (errors.length) {
+                        pxt.log(`${errors.length} errors in translated blocks`);
+                        errors.forEach(error => `error: ${pxt.log(error)}`);
+                    }
+                    return Promise.resolve();
+                }
 
                 const fn = path.basename(f);
                 const crowdf = path.join(crowdinDir, fn);
@@ -3812,8 +3817,18 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
                         Object.keys(data)
                             .filter(lang => Object.keys(data[lang]).some(k => !!data[lang][k]))
                             .forEach(lang => {
-                                const langTranslations = stringifyTranslations(data[lang]);
+                                const dataLang = data[lang];
+                                const langTranslations = stringifyTranslations(dataLang);
                                 if (!langTranslations) return;
+
+                                // validate translations
+                                if (/-strings\.json$/.test(fn) && !/jsdoc-strings\.json$/.test(fn)) {
+                                    // block definitions
+                                    Object.keys(dataLang).forEach(id => {
+                                        const tr = dataLang[id];
+                                        pxt.blocks.normalizeBlock(tr, err => errors.push(`${fn} ${lang} ${id}: ${err}`));
+                                    });
+                                }
 
                                 const tfdir = path.join(locdir, lang);
                                 const tf = path.join(tfdir, fn);
@@ -3934,11 +3949,14 @@ interface SpriteGlobalMeta {
     height?: number;
     blockIdentity: string;
     creator: string;
+    standaloneSprites?: string[];
 }
 
 interface SpriteInfo {
     width?: number;
     height?: number;
+    xSpacing?: number;
+    ySpacing?: number;
     frames?: string[];
 }
 
@@ -4013,7 +4031,8 @@ function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
         let bn = m[2]
         let jn = m[1] + m[2] + ".json"
         bn = bn.replace(/-1bpp/, "").replace(/[^\w]/g, "_")
-        processImage(bn, fn, jn)
+        const standalone = metaInfo.standaloneSprites && metaInfo.standaloneSprites.indexOf(bn) !== -1;
+        processImage(bn, fn, jn, standalone)
     }
 
     ts += "}\n"
@@ -4044,7 +4063,7 @@ function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
         return idx
     }
 
-    function processImage(basename: string, pngName: string, jsonName: string) {
+    function processImage(basename: string, pngName: string, jsonName: string, standalone: boolean) {
         let info: SpriteInfo = {}
         if (nodeutil.fileExistsSync(jsonName))
             info = nodeutil.readJson(jsonName)
@@ -4072,15 +4091,25 @@ function buildJResSpritesCoreAsync(parsed: commandParser.ParsedCommand) {
         if (sheet.width > 255 || sheet.height > 255)
             U.userError(`PNG image too big`)
 
-        if (!info.width || info.width > sheet.width) info.width = sheet.width
-        if (!info.height || info.height > sheet.height) info.height = sheet.height
+        if (standalone) {
+            // Image contains a single sprite
+            info.width = sheet.width;
+            info.height = sheet.height;
+        }
+        else {
+            if (!info.width || info.width > sheet.width) info.width = sheet.width
+            if (!info.height || info.height > sheet.height) info.height = sheet.height
+        }
+
+        if (!info.xSpacing) info.xSpacing = 0;
+        if (!info.ySpacing) info.ySpacing = 0;
 
         let nx = (sheet.width / info.width) | 0
         let ny = (sheet.height / info.height) | 0
         let numSprites = nx * ny
 
-        for (let y = 0; y + info.height - 1 < sheet.height; y += info.height)
-            for (let x = 0; x + info.width - 1 < sheet.width; x += info.width) {
+        for (let y = 0; y + info.height - 1 < sheet.height; y += info.height + info.ySpacing)
+            for (let x = 0; x + info.width - 1 < sheet.width; x += info.width + info.xSpacing) {
                 if (info.frames && imgIdx >= info.frames.length) return;
 
                 let img = U.flatClone(sheet)

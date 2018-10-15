@@ -65,11 +65,11 @@ namespace pxsim {
         // current time in microseconds
         export function perfNowUs(): number {
             const perf = typeof performance != "undefined" ?
-                performance.now.bind(performance)                 ||
-                (performance as any).moznow.bind(performance)     ||
-                (performance as any).msNow.bind(performance)      ||
-                (performance as any).webkitNow.bind(performance)  ||
-                (performance as any).oNow.bind(performance)       :
+                performance.now.bind(performance) ||
+                (performance as any).moznow.bind(performance) ||
+                (performance as any).msNow.bind(performance) ||
+                (performance as any).webkitNow.bind(performance) ||
+                (performance as any).oNow.bind(performance) :
                 Date.now;
             return perf() * 1000;
         }
@@ -397,6 +397,16 @@ namespace pxsim {
                 window.parent.postMessage(data, "*");
             }
             if (Runtime.messagePosted) Runtime.messagePosted(data);
+        }
+
+        restart() {
+            this.kill();
+            setTimeout(() =>
+                pxsim.Runtime.postMessage(<pxsim.SimulatorCommandMessage>{
+                    type: "simulator",
+                    command: "restart"
+                }), 500);
+
         }
 
         kill() {

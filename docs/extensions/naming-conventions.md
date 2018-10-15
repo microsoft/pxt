@@ -1,7 +1,7 @@
 # Naming Conventions
 
 Although not enforced, these naming conventions help keep the blocks and functions in the MakeCode editor consistent. 
-As much as possible, please try to follow these conventions and consider exceptions only when absolutely necessary. Thank you for creating MakeCode packages!
+As much as possible, please try to follow these conventions and consider exceptions only when absolutely necessary. Thank you for creating MakeCode extensions!
 
 ## TypeScript conventions
 
@@ -76,4 +76,4 @@ export function foo() {
 }
 ```
 
-* use English and provide [localization](/packages/localization) for other locales
+* use English and provide [localization](/extensions/localization) for other locales

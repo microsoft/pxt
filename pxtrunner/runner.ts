@@ -12,6 +12,7 @@ namespace pxt.runner {
         code?: string;
         highContrast?: boolean;
         light?: boolean;
+        fullScreen?: boolean;
     }
 
     class EditorPackage {
@@ -262,6 +263,12 @@ namespace pxt.runner {
                 let js = resp.outfiles[pxtc.BINARY_JS];
                 if (js) {
                     let options: pxsim.SimulatorDriverOptions = {};
+                    options.onSimulatorCommand = msg => {
+                        if (msg.command === "restart") {
+                            driver.run(js, runOptions);
+                        }
+                    };
+
                     let driver = new pxsim.SimulatorDriver(container, options);
 
                     let fnArgs = resp.usedArguments;
@@ -276,7 +283,7 @@ namespace pxt.runner {
                         highContrast: simOptions.highContrast,
                         light: simOptions.light
                     };
-                    if (pxt.appTarget.simulator)
+                    if (pxt.appTarget.simulator && !simOptions.fullScreen)
                         runOptions.aspectRatio = parts.length && pxt.appTarget.simulator.partsAspectRatio
                             ? pxt.appTarget.simulator.partsAspectRatio
                             : pxt.appTarget.simulator.aspectRatio;
@@ -605,7 +612,7 @@ ${linkString}
 
     function renderDocAsync(content: HTMLElement, docid: string): Promise<void> {
         docid = docid.replace(/^\//, "");
-        return pxt.Cloud.downloadMarkdownAsync(docid, editorLocale, pxt.Util.localizeLive)
+        return pxt.Cloud.markdownAsync(docid, editorLocale, pxt.Util.localizeLive)
             .then(md => renderMarkdownAsync(content, md, { path: docid }))
     }
 
@@ -621,7 +628,7 @@ ${linkString}
         // start the work
         let toc: TOCMenuEntry[];
         return Promise.delay(100)
-            .then(() => pxt.Cloud.downloadMarkdownAsync(summaryid, editorLocale, pxt.Util.localizeLive))
+            .then(() => pxt.Cloud.markdownAsync(summaryid, editorLocale, pxt.Util.localizeLive))
             .then(summary => {
                 toc = pxt.docs.buildTOC(summary);
                 pxt.log(`TOC: ${JSON.stringify(toc, null, 2)}`)
@@ -629,7 +636,7 @@ ${linkString}
                 pxt.docs.visitTOC(toc, entry => {
                     if (!/^\//.test(entry.path) || /^\/pkg\//.test(entry.path)) return;
                     tocsp.push(
-                        pxt.Cloud.downloadMarkdownAsync(entry.path, editorLocale, pxt.Util.localizeLive)
+                        pxt.Cloud.markdownAsync(entry.path, editorLocale, pxt.Util.localizeLive)
                             .then(md => {
                                 entry.markdown = md;
                             }, e => {

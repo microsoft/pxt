@@ -1,6 +1,6 @@
 # Objects and instances
 
-To create objects that associate certain operations more logically, you can have classes in your namespace. In the `tropic` package, the **pick** function simply returns a **boolean** to indicate that the action was successful or not. The **pick** function would make more sense if it actually returned a `fruit` object like a `banana` if successful.
+To create objects that associate certain operations more logically, you can have classes in your namespace. In the `tropic` extension, the **pick** function simply returns a **boolean** to indicate that the action was successful or not. The **pick** function would make more sense if it actually returned a `fruit` object like a `banana` if successful.
 
 ## Step 1: Make a fruit object
 
@@ -189,7 +189,7 @@ public peel(): void {
 }
 ```
 
-Now, lets's add the new `banana` class to the `tropic` namespace created in the simple package tutorial. Take the code from [banana.ts](./sources#banana-ts) in the supplied sources and save it in the tropic package under _/libs/tropic_. Go to the `pxt.json` file and add "banana.ts" to the `files` list.
+Now, lets's add the new `banana` class to the `tropic` namespace created in the simple extension tutorial. Take the code from [banana.ts](./sources#banana-ts) in the supplied sources and save it in the tropic extension under _/libs/tropic_. Go to the `pxt.json` file and add "banana.ts" to the `files` list.
 
 ```typescript-ignore
 "files": [
@@ -198,7 +198,7 @@ Now, lets's add the new `banana` class to the `tropic` namespace created in the 
 ],
 ```
 
-Restart your target to build the package with the `banana` class added. In the Toolbox you will now see the `banana` methods in the **Tropic** category tagged with the `fruit` instance. Go to the JavaScript editor and paste in this code to test your class:
+Restart your target to build the extension with the `banana` class added. In the Toolbox you will now see the `banana` methods in the **Tropic** category tagged with the `fruit` instance. Go to the JavaScript editor and paste in this code to test your class:
 
 ```typescript-ignore
 let fruit = tropic.pickBanana()
@@ -243,7 +243,7 @@ fruit.ripen()
 
 ## Step 5: Default instances
 
-Maybe you want to have an instance of your class already created when your package is installed. To do this you make a constant and assign it to a new object instance. Here we've added the `fruit` constant as an instance of `banana`.
+Maybe you want to have an instance of your class already created when your extension is installed. To do this you make a constant and assign it to a new object instance. Here we've added the `fruit` constant as an instance of `banana`.
 
 ```typescript-ignore
 namespace tropic {
@@ -278,7 +278,7 @@ public peel(): void {
 }
 ```
 
-Repeat this for the other methods too. Restart your target to build these changes into the `tropic` package. Go to the Toolbox and drag the **peel** block from **Tropic**. You'll see that it has no instance parameter with it and it's usable directly. Delete that block, go into the JavaScript editor and paste in this code:
+Repeat this for the other methods too. Restart your target to build these changes into the `tropic` extension. Go to the Toolbox and drag the **peel** block from **Tropic**. You'll see that it has no instance parameter with it and it's usable directly. Delete that block, go into the JavaScript editor and paste in this code:
 
 ```typescript-ignore
 if (!(tropic.fruit.ripe())) {
@@ -301,4 +301,4 @@ Switch back to blocks. Notice that the last **peel** method has the `otherFruit`
 
 [Objects and instance methods](/defining-blocks#objects-and-instance-methods) section in [Defining blocks](/defining-blocks)
 
-[Sources](./sources) for the package tutorial
+[Sources](./sources) for the extension tutorial
