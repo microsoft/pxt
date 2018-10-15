@@ -108,7 +108,8 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             && p.getKsPkg().level <= 1;
         const upd = p.getKsPkg() && p.getKsPkg().verProtocol() == "github";
         const meta: pkg.PackageMeta = this.getData("open-pkg-meta:" + p.getPkgId());
-        const version = upd ? p.getKsPkg().verArgument().split('#')[1] : undefined; // extract github tag
+        let version = upd ? p.getKsPkg().verArgument().split('#')[1] : undefined; // extract github tag
+        if (version && version.length > 7) version = version.substring(0, 7);
         return [<PackgeTreeItem key={"hd-" + p.getPkgId()}
             pkg={p} isActive={expandedPkg == p.getPkgId()} onItemClick={this.togglePkg}
             hasDelete={del} onItemRemove={this.removePkg}
