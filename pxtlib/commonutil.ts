@@ -429,7 +429,7 @@ namespace ts.pxtc.Util {
 
         static ERROR_MESSAGE = "OperationCancelled";
         static isCancelledError(e: Error) {
-            return e && (<any>e).__cancelled;
+            return e && (<any>e).type == "cancelled";
         }
 
         startOperation() {
@@ -476,7 +476,7 @@ namespace ts.pxtc.Util {
         throwIfCancelled() {
             if (this.isCancelled()) {
                 const e = new Error(CancellationToken.ERROR_MESSAGE);
-                (<any>e).__cancelled = true;
+                (<any>e).type = "cancelled";
                 throw e;
             }
         }
