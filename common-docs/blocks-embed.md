@@ -255,7 +255,7 @@ for (let i = 0; i < 10; i++) {
 </div>
 
 <script>
-var makecodeUrl = "@name@";
+var makecodeUrl = "makecode.microbit.org";
 var blocksClass = "blocks";
 
 var injectRenderer = function () {
