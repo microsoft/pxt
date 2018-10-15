@@ -195,7 +195,6 @@ declare namespace pxt {
         embedUrl?: string;
         betaUrl?: string;
         docMenu?: DocMenuEntry[];
-        TOC?: TOCMenuEntry[];
         hideSideDocs?: boolean;
         homeScreenHero?: string; // home screen hero image
         sideDoc?: string; // deprecated
