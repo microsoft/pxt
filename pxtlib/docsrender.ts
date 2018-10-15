@@ -92,6 +92,7 @@ namespace pxt.docs {
         boxes?: Map<string>;
         macros?: Map<string>;
         settings?: Map<string>;
+        TOC?: TOCMenuEntry[];
     }
 
     function parseHtmlAttrs(s: string) {
@@ -187,7 +188,7 @@ namespace pxt.docs {
             }
             return false
         };
-        (theme.TOC || []).forEach(isCurrentTOC)
+        (d.TOC || []).forEach(isCurrentTOC)
 
         let currentTocEntry: TOCMenuEntry;
         let recTOC = (m: TOCMenuEntry, lev: number) => {
@@ -229,7 +230,7 @@ namespace pxt.docs {
         }
 
         params["menu"] = (theme.docMenu || []).map(e => recMenu(e, 0)).join("\n")
-        params["TOC"] = (theme.TOC || []).map(e => recTOC(e, 0)).join("\n")
+        params["TOC"] = (d.TOC || []).map(e => recTOC(e, 0)).join("\n")
 
         if (theme.appStoreID)
             params["appstoremeta"] = `<meta name="apple-itunes-app" content="app-id=${U.htmlEscape(theme.appStoreID)}"/>`
