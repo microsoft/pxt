@@ -22,7 +22,7 @@ namespace pxsim {
     }
 
     export class EventBusGeneric<T> {
-        private queues: Map<EventQueue<T>> = {};
+        private queues: Map<Map<Map<EventQueue<T>>>> = {};
         private notifyID: number;
         private notifyOneID: number;
         private lastEventValue: string | number;
@@ -43,10 +43,11 @@ namespace pxsim {
         constructor(private runtime: Runtime, private valueToArgs?: EventValueToActionArgs<T>) { }
 
         private start(id: number | string, evid: number | string, create: boolean, background: boolean) {
-            let k = (background ? "back:" : "") + id + ":" + evid;
-            let queue = this.queues[k];
-            if (!queue) queue = this.queues[k] = new EventQueue<T>(this.runtime, this.valueToArgs);
-            return queue;
+            let k = (background ? "back" : "fore")
+            if (!this.queues[k]) this.queues[k] = {}
+            if (!this.queues[k][id]) this.queues[k][id] = {} 
+            if (!this.queues[k][id][evid]) this.queues[k][id][evid] = new EventQueue<T>(this.runtime, this.valueToArgs);
+            return this.queues[k][id][evid];
         }
 
         listen(id: number | string, evid: number | string, handler: RefAction) {
@@ -60,8 +61,10 @@ namespace pxsim {
 
         removeBackgroundHandler(handler: RefAction) {
             Object.keys(this.queues).forEach((k: string) => {
-                if (k.startsWith("back:"))
-                    this.queues[k].removeHandler(handler);
+                if (k.startsWith("back"))
+                    Object.keys(this.queues[k]).forEach(id => 
+                        Object.keys(this.queues[k][id]).forEach(evid => 
+                            this.queues[k][id][evid].removeHandler(handler)));
             });
         }
 
@@ -70,18 +73,16 @@ namespace pxsim {
             const notifyOne = this.notifyID && this.notifyOneID && id == this.notifyOneID;
             if (notifyOne)
                 id = this.notifyID;
-            let qBackground = this.start(id, evid, false, true);
-            let qForeground = this.start(id, evid, false, false);
-            if (qBackground || qForeground) {
-                this.lastEventValue = evid;
-                this.lastEventTimestampUs = U.perfNowUs();
-                let promise: Promise<void> = Promise.resolve();
-                if (qBackground)
-                    promise = qBackground.push(value, notifyOne);
-                // do the foreground handler after the background handlers
-                if (qForeground)
-                    promise.then(() => { qForeground.push(value, notifyOne) })
-            }
+            // TODO: need to handle ANY here
+            let queues = [ this.start(id, evid, false, true), this.start(id, evid, false, false) ]
+            this.lastEventValue = evid;
+            this.lastEventTimestampUs = U.perfNowUs();
+            let promise: Promise<void> = Promise.resolve();
+            queues.forEach(q => {
+                if (q) {
+                    promise = promise.then(() => q.push(value, notifyOne))
+                }
+            })
         }
 
         // only for foreground handlers

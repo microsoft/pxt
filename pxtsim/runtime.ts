@@ -281,12 +281,16 @@ namespace pxsim {
             } else {
                 this._addRemoveLog.push({act: a, log: LogType.UserSet});
             }
-        }
+    }
 
         addHandler(a: RefAction) {
             if (!this.lock) {
-               this._handlers.push(a);
-               pxtcore.incr(a)
+                let index = this._handlers.indexOf(a)
+                // only add if new, just like CODAL
+                if (index == -1) {
+                    this._handlers.push(a);
+                    pxtcore.incr(a)
+                }
             } else {
                 this._addRemoveLog.push({act: a, log: LogType.BackAdd});
             }
@@ -295,10 +299,9 @@ namespace pxsim {
         removeHandler(a: RefAction) {
             if (!this.lock) {
                 let index = this._handlers.indexOf(a)
-                while (index != -1) {
+                if (index != -1) {
                     this._handlers.splice(index,1)
                     pxtcore.decr(a)
-                    index = this._handlers.indexOf(a)
                 }
             } else {
                 this._addRemoveLog.push({act: a, log: LogType.BackRemove});
