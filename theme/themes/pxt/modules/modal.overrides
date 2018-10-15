@@ -3,47 +3,9 @@
 *******************************/
 
 
-/*******************************
-        Full screen
-*******************************/
-
-/* Full screen modal */
-.modals.dimmer .ui.fullscreen.modal,
-.modals.dimmer .ui.fullscreen.scrolling.modal {
-    position: absolute !important;
-    top: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-    height: 100%;
-    width: 100%;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: 'touch';
-    user-select: none;
-}
-
-.ui.button.back-button {
-    background: none !important;
-    border: none !important;
-}
-
-.ui.fullscreen.modal .ui.button.back-button {
-    color: white !important;
-    padding: 0 !important;
-}
-
-/* Mobile only */
-@media only screen and (max-width: @largestMobileScreen) {
-
-    .ui.fullscreen.modal > .header {
-        padding: @mobileHeaderPadding !important
-    }
-}
-
 /* Fix for a semantic hover issue when hovering over the modal's search box */
 .ui.search .action:hover {
-    background: white !important;
+    background: none !important;
 }
 
 /*******************************
@@ -59,6 +21,119 @@
 }
 .setModalContentColor();
 
+/*******************************
+        Fullscreen modal
+*******************************/
+
+/* Full screen modal */
+.modals.dimmer .ui.fullscreen.modal,
+.modals.dimmer .ui.fullscreen.scrolling.modal {
+    position: absolute !important;
+    top: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    display: flex !important;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: 'touch';
+    user-select: none;
+}
+
+/* Back button */
+.ui.button.back-button {
+    background: none !important;
+    border: none !important;
+}
+
+.ui.fullscreen.modal,
+.ui.fullscreen.modal > .content {
+    background: @extensionsBackground;
+}
+.ui.fullscreen.modal {
+    > .header {
+        background: @extensionsHeaderBackground;
+        color: @extensionsHeaderColor;
+        border-radius: 0;
+        display: flex;
+        height: @mainMenuHeight;
+        align-items: center;
+        padding: 0 !important;
+
+        .header-title {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2rem;
+            height: 100%;
+        }
+        .header-close {
+            flex-basis: 20rem;
+            padding: 1rem;
+            order: -1;
+            z-index: 1;
+            .back-button {
+                display: flex;
+                align-items: center;
+                font-weight: normal;
+            }
+        }
+        .header-help {
+            flex-basis: 20rem;
+            padding: 1rem;
+            display: flex;
+            justify-content: flex-end;
+            .help-button .icon {
+                margin: 0;
+            }
+        }
+    }
+
+    .header-actions {
+        display: flex;
+        padding: 0 1rem;
+        align-items: center;
+        justify-content: flex-end;
+        flex-direction: row;
+        height: @mainMenuHeight;
+        background: @extensionsSecondaryBackground;
+    }
+
+    > .content {
+        padding: 1rem;
+        flex: 1;
+        overflow-y: auto;
+        height: calc(100% - @mainMenuHeight);
+        -webkit-overflow-scrolling: touch;
+        border: 0;
+    }
+
+    .has-actions .content {
+        height: calc(100% - (2 * @mainMenuHeight));
+    }
+    .ui.button.back-button, .ui.help-button {
+        color: @extensionsHeaderColor !important;
+        padding: 0 !important;
+    }
+}
+
+/* Mobile + Tablet */
+@media only screen and (max-width: @largestTabletScreen) {
+
+    .ui.fullscreen.modal {
+        > .header {
+            height: @mobileMenuHeight;
+        }
+        .has-actions .content {
+            height: calc(100% - @mobileMenuHeight - @mainMenuHeight);
+        }
+    }
+    
+}
 
 /*******************************
         Modal Close Icon

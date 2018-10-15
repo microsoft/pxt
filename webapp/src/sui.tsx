@@ -855,6 +855,7 @@ export interface ModalProps extends ReactModal.Props {
     dimmerClassName?: string;
 
     helpUrl?: string;
+    headerActions?: JSX.Element[];
     buttons?: ModalButton[];
     onPositionChanged?: Function;
     allowResetFocus?: boolean;
@@ -955,7 +956,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
     render() {
         const { isOpen, size, longer, basic, className,
             onClose, closeIcon, children,
-            header, headerClass, helpUrl, description,
+            header, headerClass, headerActions, helpUrl, description,
             closeOnDimmerClick, closeOnDocumentClick, closeOnEscape,
             shouldCloseOnEsc, shouldCloseOnOverlayClick, shouldFocusAfterRender, ...rest } = this.props;
         const { marginTop, scrolling, mountClasses } = this.state;
@@ -985,6 +986,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
                 marginTop: marginTop
             }
         }
+
         return <ReactModal isOpen={isOpen} ref="modal" appElement={appElement}
             onRequestClose={this.onRequestClose} onAfterOpen={this.afterOpen}
             shouldReturnFocusAfterClose={true} shouldFocusAfterRender={shouldFocusAfterRender}
@@ -996,23 +998,27 @@ export class Modal extends React.Component<ModalProps, ModalState> {
             style={customStyles}
             aria={aria} {...rest}>
             {header || isFullscreen ? <div id={this.id + 'title'} className={"header " + (headerClass || "")}>
-                {isFullscreen ?
-                    <Button className="back-button large" title={lf("Go back")} tabIndex={0} onClick={onClose} onKeyDown={fireClickOnEnter}>
+                <span className="header-title" style={{margin: `0 ${helpUrl ? '-20rem' : '0'} 0 ${isFullscreen ? '-20rem' : '0'}`}}>{header}</span>
+                {isFullscreen ? <div className="header-close">
+                    <Button className="back-button large" title={lf("Go back")} onClick={onClose} tabIndex={0} onKeyDown={fireClickOnEnter}>
                         <Icon icon="arrow left" />
                         <span className="ui text landscape only">{lf("Go back")}</span>
-                    </Button> : undefined}
-                {header}
+                    </Button>
+                </div> : undefined}
                 {helpUrl ?
-                    <a className={`ui huge icon clear helpIcon`} href={helpUrl} target="_docs" role="button" aria-label={lf("Help on {0} dialog", header)}>
-                        <Icon icon="help" />
-                    </a>
+                    <div className="header-help">
+                        <a className={`ui icon help-button`} href={helpUrl} target="_docs" role="button" aria-label={lf("Help on {0} dialog", header)}>
+                            <Icon icon="help" />
+                        </a>
+                    </div>
                     : undefined}
             </div> : undefined}
-            {description ? <label id={this.id + 'description'} className="accessible-hidden">{description}</label> : undefined}
-            <div id={this.id + 'desc'} className={`${longer ? 'scrolling' : ''} content`}>
+            {description && !isFullscreen ? <label id={this.id + 'description'} className="accessible-hidden">{description}</label> : undefined}
+            {isFullscreen && headerActions ? <div className="header-actions">{headerActions}</div> : undefined}
+            <div id={this.id + 'desc'} className={`${longer ? 'scrolling' : ''} ${headerActions ? 'has-actions' : ''} content`}>
                 {children}
             </div>
-            {this.props.buttons && this.props.buttons.length > 0 ?
+            {!isFullscreen && this.props.buttons && this.props.buttons.length > 0 ?
                 <div className="actions">
                     {this.props.buttons.map(action =>
                         action.url ?

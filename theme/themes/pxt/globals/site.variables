@@ -176,7 +176,9 @@
 --------------------*/
 
 @extensionsHeaderBackground: @mainMenuInvertedBackground;
+@extensionsSecondaryBackground: fade(@extensionsHeaderBackground, 30%);
 @extensionsBackground: @blocklySvgColor;
+@extensionsHeaderColor: white;
 
 /*-------------------
    Side Docs
