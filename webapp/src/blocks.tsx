@@ -916,6 +916,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private partitionBlocks() {
         const res: pxt.Map<toolbox.BlockDefinition[]> = {};
+        this.topBlocks = [];
 
         const that = this;
         function setSubcategory(ns: string, subcat: string) {
@@ -939,6 +940,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 setSubcategory(ns, lf("more"));
             } else if (subcat) {
                 setSubcategory(ns, subcat);
+            }
+
+            if (fn.attributes.topblock) {
+                this.topBlocks.push(fn);
             }
         });
 
@@ -1107,6 +1112,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             return;
         }
 
+        if (ns == 'topblocks') {
+            this.showTopBlocksFlyout();
+            return;
+        }
+
         this.flyoutXmlList = [];
         if (this.flyoutBlockXmlCache[ns + subns]) {
             pxt.debug("showing flyout with blocks from flyout blocks xml cache");
@@ -1159,7 +1169,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const searchBlocks = this.toolbox.getSearchBlocks();
 
         searchBlocks.forEach((block) => {
-            const blockXmlList = this.getBlockXml(block);
+            const blockXmlList = this.getBlockXml(block, true);
             if (blockXmlList) this.flyoutXmlList = this.flyoutXmlList.concat(blockXmlList);
         })
 
@@ -1167,6 +1177,26 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             let label = goog.dom.createDom('label');
             label.setAttribute('text', lf("No search results..."));
             this.flyoutXmlList.push(label);
+        }
+        this.showFlyoutInternal_(this.flyoutXmlList);
+    }
+
+    private showTopBlocksFlyout() {
+        this.flyoutXmlList = [];
+        const topBlocks = this.getTopBlocks();
+        if (topBlocks.length == 0) {
+            let label = goog.dom.createDom('label');
+            label.setAttribute('text', lf("No basic blocks..."));
+            this.flyoutXmlList.push(label);
+        } else {
+            // Show a heading
+            this.showFlyoutHeadingLabel('topblocks', lf("{id:category}Basic"), null,
+                pxt.toolbox.getNamespaceIcon('topblocks'), pxt.toolbox.getNamespaceColor('topblocks'));
+
+            topBlocks.forEach((block) => {
+                const blockXmlList = this.getBlockXml(block, true);
+                if (blockXmlList) this.flyoutXmlList = this.flyoutXmlList.concat(blockXmlList);
+            })
         }
         this.showFlyoutInternal_(this.flyoutXmlList);
     }
@@ -1208,7 +1238,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     ////////////          Block methods           /////////////
     ///////////////////////////////////////////////////////////
 
-    private getBlockXml(block: toolbox.BlockDefinition, shadow?: boolean): Element[] {
+    private getBlockXml(block: toolbox.BlockDefinition, ignoregap?: boolean, shadow?: boolean): Element[] {
         const that = this;
         let blockXml: Element;
         // Check if the block is built in, ignore it as it's already defined in snippets
@@ -1228,14 +1258,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     return `<field name="${field}">${value}<\/field>`;
                 });
             }
-            return builtin ? this.getBlockXml(builtin) : undefined;
+            return builtin ? this.getBlockXml(builtin, ignoregap) : undefined;
         }
         if (!block.blockXml) {
             let fn = pxt.blocks.blockSymbol(block.attributes.blockId);
             if (fn) {
                 if (!shouldShowBlock(fn)) return undefined;
                 let comp = pxt.blocks.compileInfo(fn);
-                blockXml = pxt.blocks.createToolboxBlock(this.blockInfo, fn, comp);
+                blockXml = pxt.blocks.createToolboxBlock(this.blockInfo, fn, comp, ignoregap);
 
                 if (fn.attributes.optionalVariableArgs && fn.attributes.toolboxVariableArgs) {
                     const handlerArgs = comp.handlerArgs;
@@ -1285,9 +1315,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     else {
                         varName = Util.htmlEscape(rawName);
                     }
-
+                    const defaultBlockGap = pxt.appTarget.appTheme && pxt.appTarget.appTheme.defaultBlockGap.toString() || 8;
                     const setblock = Blockly.Xml.textToDom(`
-<block type="variables_set" gap="${Util.htmlEscape((fn.attributes.blockGap || 8) + "")}">
+<block type="variables_set" gap="${Util.htmlEscape((!ignoregap ? fn.attributes.blockGap || defaultBlockGap : defaultBlockGap) + "")}">
 <field name="VAR" variabletype="">${varName}</field>
 </block>`);
                     {
@@ -1305,6 +1335,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }
         } else {
             blockXml = Blockly.Xml.textToDom(block.blockXml);
+            if (ignoregap) {
+                blockXml.setAttribute("gap", `${pxt.appTarget.appTheme && pxt.appTarget.appTheme.defaultBlockGap.toString() || 8}`);
+            }
         }
         if (blockXml) {
             pxt.Util.toArray(blockXml.querySelectorAll('shadow'))
@@ -1312,7 +1345,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 .forEach((shadow, i) => {
                     let type = shadow.getAttribute('type');
                     const builtin = snippets.allBuiltinBlocks()[type];
-                    let b = this.getBlockXml(builtin ? builtin : { name: type, attributes: { blockId: type } }, true);
+                    let b = this.getBlockXml(builtin ? builtin : { name: type, attributes: { blockId: type } }, ignoregap, true);
                     /* tslint:disable:no-inner-html setting one element's contents to the other */
                     if (b && b.length > 0 && b[0]) shadow.innerHTML = b[0].innerHTML;
                     /* tslint:enable:no-inner-html */

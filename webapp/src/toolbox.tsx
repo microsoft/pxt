@@ -22,6 +22,7 @@ export const enum CategoryNameID {
 // this is a supertype of pxtc.SymbolInfo (see partitionBlocks)
 export interface BlockDefinition {
     name: string;
+    namespace?: string;
     type?: string;
     snippet?: string;
     snippetName?: string;
@@ -39,6 +40,7 @@ export interface BlockDefinition {
         blockHidden?: boolean;
         group?: string;
         subcategory?: string;
+        topblockWeight?: number;
     };
     noNamespace?: boolean;
     retType?: string;
@@ -373,6 +375,8 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         const { showAdvanced, visible, loading, selectedItem, expandedItem, hasSearch, showSearchBox, hasError } = this.state;
         if (!visible) return <div style={{ display: 'none' }} />
 
+        const hasTopBlocks = !!pxt.appTarget.appTheme.topBlocks;
+
         if (loading || hasError) return <div>
             <div className="blocklyTreeRoot">
                 <div className="blocklyTreeRow" style={{ opacity: 0 }} />
@@ -395,6 +399,12 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         this.items = this.getAllCategoriesList();
 
         const searchTreeRow = ToolboxSearch.getSearchTreeRow();
+        const topBlocksTreeRow = {
+            nameid: 'topblocks',
+            name: lf("{id:category}Basic"),
+            color: pxt.toolbox.getNamespaceColor('topblocks'),
+            icon: pxt.toolbox.getNamespaceIcon('topblocks')
+        };
 
         const appTheme = pxt.appTarget.appTheme;
         const classes = sui.cx([
@@ -410,6 +420,7 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
             <div className="blocklyTreeRoot">
                 <div role="tree">
                     {hasSearch ? <CategoryItem key={"search"} toolbox={this} index={index++} selected={selectedItem == "search"} treeRow={searchTreeRow} onCategoryClick={this.setSelection} /> : undefined}
+                    {hasTopBlocks ? <CategoryItem key={"topblocks"} toolbox={this} selected={selectedItem == "topblocks"} treeRow={topBlocksTreeRow} onCategoryClick={this.setSelection} /> : undefined}
                     {nonAdvancedCategories.map((treeRow) => (
                         <CategoryItem key={treeRow.nameid}  toolbox={this} index={index++} selected={selectedItem == treeRow.nameid} childrenVisible={expandedItem == treeRow.nameid} treeRow={treeRow} onCategoryClick={this.setSelection}>
                             {treeRow.subcategories ? treeRow.subcategories.map((subTreeRow) => (

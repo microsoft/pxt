@@ -348,13 +348,13 @@ namespace pxt.blocks {
         return button;
     }
 
-    export function createToolboxBlock(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, comp: pxt.blocks.BlockCompileInfo): HTMLElement {
+    export function createToolboxBlock(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, comp: pxt.blocks.BlockCompileInfo, ignoregap?: boolean): HTMLElement {
         //
         // toolbox update
         //
         let block = document.createElement("block");
         block.setAttribute("type", fn.attributes.blockId);
-        if (fn.attributes.blockGap)
+        if (fn.attributes.blockGap && !ignoregap)
             block.setAttribute("gap", fn.attributes.blockGap);
         else if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.defaultBlockGap)
             block.setAttribute("gap", pxt.appTarget.appTheme.defaultBlockGap.toString());

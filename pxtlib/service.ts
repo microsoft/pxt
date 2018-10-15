@@ -162,6 +162,8 @@ namespace ts.pxtc {
         whenUsed?: boolean;
         jres?: string;
         useLoc?: string; // The qName of another API whose localization will be used if this API is not translated and if both block definitions are identical
+        topblock?: boolean;
+        topblockWeight?: number;
         // On namepspace
         subcategories?: string[];
         groups?: string[];
@@ -693,7 +695,7 @@ namespace ts.pxtc {
         return r;
     }
 
-    const numberAttributes = ["weight", "imageLiteral"]
+    const numberAttributes = ["weight", "imageLiteral", "topblockWeight"]
     const booleanAttributes = [
         "advanced",
         "handlerStatement",
@@ -704,7 +706,8 @@ namespace ts.pxtc {
         "blockCombine",
         "enumIsBitMask",
         "decompileIndirectFixedInstances",
-        "draggableParameters"
+        "draggableParameters",
+        "topblock"
     ];
 
     export function parseCommentString(cmt: string): CommentAttrs {
