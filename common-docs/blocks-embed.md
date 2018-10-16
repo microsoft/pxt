@@ -29,7 +29,7 @@ To render blocks in your own HTML documents or to make plugins for a document pl
 
 ### ~ hint
 
-Try this [fiddle](https://jsfiddle.net/ndyz1d57/1/) to see an embedded blocks rendering example.
+Try this [fiddle](https://jsfiddle.net/ndyz1d57/80/) to see an embedded blocks rendering example.
 
 ### ~
 
