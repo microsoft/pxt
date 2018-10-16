@@ -326,7 +326,9 @@ namespace ts.pxtc.assembler {
                 return this.parseOneInt(s.slice(0, s.length - 2)) + 1
             }
 
-
+            let shm = /(.*)>>(\d+)$/.exec(s)
+            if (shm)
+                return this.parseOneInt(shm[1]) >> parseInt(shm[2])
 
             // handle hexadecimal and binary encodings
             if (s[0] == "0") {

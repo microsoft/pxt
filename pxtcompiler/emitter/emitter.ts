@@ -1462,9 +1462,10 @@ namespace ts.pxtc {
             if (c % 2 != 0)
                 lit += "0"
 
+            // this is codal's format!
             bin.otherLiterals.push(`
 .balign 4
-${lbl}: .short ${pxt.REFCNT_FLASH}
+${lbl}: .short 0xffff
         .short ${w}, ${h}
         .byte ${lit}
 `)

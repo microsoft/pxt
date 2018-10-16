@@ -92,10 +92,18 @@ namespace ts.pxtc {
         load_ptr_full(lbl: string, reg: string) { return "TBD(load_ptr_full)" }
         emit_int(v: number, reg: string) { return "TBD(emit_int)" }
 
+        obj_header(vt:string){
+            if(target.gc)
+                return `.word ${vt}`
+            else
+                return `.short ${pxt.REFCNT_FLASH}, ${vt}>>${target.vtableShift}`
+        }
+
         string_literal(lbl: string, s: string) {
             return `
 .balign 4
-${lbl}meta: .short ${pxt.REFCNT_FLASH}, ${pxt.REF_TAG_STRING}, ${s.length}
+${lbl}meta: ${this.obj_header("pxt::string_vt")}
+        .short ${s.length}
 ${lbl}: .string ${asmStringLiteral(s)}
 `
         }
@@ -104,7 +112,8 @@ ${lbl}: .string ${asmStringLiteral(s)}
         hex_literal(lbl: string, data: string) {
             return `
 .balign 4
-${lbl}: .short ${pxt.REFCNT_FLASH}, ${pxt.REF_TAG_BUFFER}, ${data.length >> 1}, 0x0000
+${lbl}: ${this.obj_header("pxt::buffer_vt")}
+        .short ${data.length >> 1}, 0x0000
         .hex ${data}${data.length % 4 == 0 ? "" : "00"}
 `
         }
@@ -1087,7 +1096,7 @@ ${baseLabel}:
                 this.write(this.t.unconditional_branch(".themain"))
             this.write(".balign 4");
             this.write(this.proc.label() + "_Lit:");
-            this.write(`.short ${pxt.REFCNT_FLASH}, ${pxt.REF_TAG_ACTION}   ; action literal`);
+            this.write(this.t.obj_header("pxt::RefAction_vtable"));
             if (isMain)
                 this.write(".themain:")
 

@@ -620,6 +620,19 @@ namespace pxt.cpp {
                     return;
                 }
 
+                m = /^\s*extern const (\w+) (\w+);/.exec(ln)
+                if (currAttrs && m) {
+                    let fi: pxtc.FuncInfo = {
+                        name: currNs + "::" + m[2],
+                        argsFmt: [],
+                        value: null
+                    }
+                    res.functions.push(fi)
+                    pointersInc += "PXT_FNPTR(&::" + fi.name + "),\n"
+                    currAttrs = ""
+                    return;
+                }
+
                 m = /^\s*(\w+)\s+(\w+)\s*;/.exec(ln)
                 if (currAttrs && m) {
                     let parsedAttrs = pxtc.parseCommentString(currAttrs)

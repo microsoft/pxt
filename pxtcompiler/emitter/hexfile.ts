@@ -289,7 +289,7 @@ namespace ts.pxtc {
                     if (!value) {
                         U.oops("No value for " + inf.name + " / " + hexb)
                     }
-                    if (!opts.runtimeIsARM && opts.nativeType == NATIVE_TYPE_THUMB && !(value & 1)) {
+                    if (inf.argsFmt.length && !opts.runtimeIsARM && opts.nativeType == NATIVE_TYPE_THUMB && !(value & 1)) {
                         U.oops("Non-thumb addr for " + inf.name + " / " + hexb)
                     }
                     inf.value = value
@@ -373,16 +373,36 @@ namespace ts.pxtc {
             if (!(bytes[0] == 0x40 && bytes[1] == 0x50 && bytes[2] == 0x58 && bytes[3] == 0x54))
                 oops();
             // @:
-            if (bytes[4] == 0x40 && bytes[5] == 0x3a) {
-                let len = 0
-                while (6 + len < bytes.length) {
-                    if (bytes[6 + len] == 0)
-                        break
-                    len++
+            if (bytes[5] == 0x3a) {
+                let isString = false
+                let isBuffer = false
+                if (bytes[4] == 0x40) isString = true
+                else if (bytes[4] == 0x23) isBuffer = true
+                else return null
+
+                let vt = lookupFunctionAddr(isString ? "pxt::string_vt" : "pxt::buffer_vt")
+                let headerBytes = new Uint8Array(6)
+
+                if (!vt) oops();
+
+                if (target.gc) {
+                    pxt.HF2.write32(headerBytes, 0, vt)
+                } else {
+                    pxt.HF2.write16(headerBytes, 0, parseInt(pxt.REFCNT_FLASH))
+                    pxt.HF2.write16(headerBytes, 2, vt >> target.vtableShift)
                 }
+
+                let len = 0
+                if (isString)
+                    while (6 + len < bytes.length) {
+                        if (bytes[6 + len] == 0)
+                            break
+                        len++
+                    }
                 if (6 + len >= bytes.length)
                     U.oops("constant string too long!")
-                return stringVT.concat([len & 0xff, len >> 8])
+                pxt.HF2.write16(headerBytes, 4, len)
+                return headerBytes
                 //console.log("patch file: @" + addr + ": " + U.toHex(patchV))
             }
             return null
@@ -432,7 +452,7 @@ namespace ts.pxtc {
             }
         }
 
-        function writeHex(myhex: string[], lineNo: number, offsetInLine: number, patch: number[]) {
+        function writeHex(myhex: string[], lineNo: number, offsetInLine: number, patch: ArrayLike<number>) {
             let src = 0
             while (src < patch.length) {
                 let parsedLine = parseHexBytes(myhex[lineNo])
@@ -614,7 +634,7 @@ namespace ts.pxtc {
             let lbl = bin.doubles[data]
             bin.otherLiterals.push(`
 .balign 4
-${lbl}: .short ${pxt.REFCNT_FLASH}, ${pxt.REF_TAG_NUMBER}
+${lbl}: ${snippets.obj_header("pxt::number_vt")}
         .hex ${data}
 `)
         }
