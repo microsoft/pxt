@@ -2258,6 +2258,7 @@ let commonfiles: Map<string> = {}
 class SnippetHost implements pxt.Host {
     //Global cache of module files
     files: Map<Map<string>> = {}
+    cache: pxt.Map<string> = {};
 
     constructor(public name: string, public main: string, public extraDependencies: pxt.Map<string>, private includeCommon = false) { }
 
@@ -2374,7 +2375,6 @@ class SnippetHost implements pxt.Host {
         return pxt.hex.getHexInfoAsync(this, extInfo)
     }
 
-    private cache: pxt.Map<string> = {};
     cacheStoreAsync(id: string, val: string): Promise<void> {
         this.cache[id] = val;
         return Promise.resolve()
@@ -3358,7 +3358,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
     }
     snippets = snippets.filter(snippet => filenameMatch.test(snippet.name));
     let ignoreCount = 0
-
+    const cache: pxt.Map<string> = {};
     const successes: string[] = []
     interface FailureInfo {
         filename: string
@@ -3378,7 +3378,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
     return Promise.map(snippets, (snippet: CodeSnippet) => {
         const name = snippet.name;
         const fn = snippet.file || snippet.name;
-        pxt.debug(`compiling ${fn} (${snippet.type})`);
+        pxt.log(`  ${fn} (${snippet.type})`);
 
         if (snippet.ext == "json") {
             try {
@@ -3401,7 +3401,9 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
             return Promise.resolve();
         }
 
-        const pkg = new pxt.MainPackage(new SnippetHost("snippet" + name, snippet.code, snippet.packages));
+        const host = new SnippetHost("snippet" + name, snippet.code, snippet.packages);
+        host.cache = cache;
+        const pkg = new pxt.MainPackage(host);
         return pkg.installAllAsync()
             .then(() => pkg.getCompileOptionsAsync().then(opts => {
                 opts.ast = true
@@ -3460,7 +3462,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
                     }
                 ])
             }))
-    }, { concurrency: 4 }).then((a: any) => {
+    }, { concurrency: 8 }).then((a: any) => {
         pxt.log(`${successes.length}/${successes.length + failures.length} snippets compiled to blocks, ${failures.length} failed`)
         if (ignoreCount > 0) {
             pxt.log(`Skipped ${ignoreCount} snippets`)
