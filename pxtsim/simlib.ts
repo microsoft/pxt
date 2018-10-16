@@ -22,7 +22,7 @@ namespace pxsim {
     }
 
     export class EventBusGeneric<T> {
-        private queues: Map<Map<Map<EventQueue<T>>>> = {};
+        private queues: Map<EventQueue<T>> = {};
         private notifyID: number;
         private notifyOneID: number;
         private lastEventValue: string | number;
@@ -42,16 +42,14 @@ namespace pxsim {
 
         constructor(private runtime: Runtime, private valueToArgs?: EventValueToActionArgs<T>) { }
 
-        private start(id: number | string, evid: number | string, create: boolean, background: boolean) {
-            let k = (background ? "back" : "fore")
-            if (!this.queues[k]) this.queues[k] = {}
-            if (!this.queues[k][id]) this.queues[k][id] = {} 
-            if (!this.queues[k][id][evid]) this.queues[k][id][evid] = new EventQueue<T>(this.runtime, this.valueToArgs);
-            return this.queues[k][id][evid];
+        private start(id: number | string, evid: number | string, background: boolean, create: boolean = false) {
+            let key = (background ? "back" : "fore") + ":" + id + ":" + evid
+            if (!this.queues[key] && create) this.queues[key] = new EventQueue<T>(this.runtime, this.valueToArgs);;
+            return this.queues[key];
         }
 
         listen(id: number | string, evid: number | string, handler: RefAction) {
-            let q = this.start(id, evid, true, this.backgroundHandlerFlag);
+            let q = this.start(id, evid, this.backgroundHandlerFlag, true);
             if (this.backgroundHandlerFlag)
                 q.addHandler(handler);
             else
@@ -61,11 +59,23 @@ namespace pxsim {
 
         removeBackgroundHandler(handler: RefAction) {
             Object.keys(this.queues).forEach((k: string) => {
-                if (k.startsWith("back"))
-                    Object.keys(this.queues[k]).forEach(id => 
-                        Object.keys(this.queues[k][id]).forEach(evid => 
-                            this.queues[k][id][evid].removeHandler(handler)));
+                if (k.startsWith("back:"))
+                    this.queues[k].removeHandler(handler)
             });
+        }
+
+        // this handles ANY (0) semantics for id and evid
+        private getQueues(id: number | string, evid: number | string, bg: boolean) {
+            let ret = [ this.start(0, 0, bg) ]
+            if (id == 0 && evid == 0)
+                return ret
+            if (id == 0)
+                ret.push(this.start(0, evid, bg))
+            if (evid == 0)
+                ret.push(this.start(id, 0, bg))
+            if (id != 0 && evid != 0)
+                ret.push(this.start(id, evid, bg))
+            return ret
         }
 
         queue(id: number | string, evid: number | string, value: T = null) {
@@ -73,21 +83,15 @@ namespace pxsim {
             const notifyOne = this.notifyID && this.notifyOneID && id == this.notifyOneID;
             if (notifyOne)
                 id = this.notifyID;
-            // TODO: need to handle ANY here
-            let queues = [ this.start(id, evid, false, true), this.start(id, evid, false, false) ]
+            let queues = this.getQueues(id, evid, true).concat(this.getQueues(id, evid, false))
             this.lastEventValue = evid;
             this.lastEventTimestampUs = U.perfNowUs();
-            let promise: Promise<void> = Promise.resolve();
-            queues.forEach(q => {
-                if (q) {
-                    promise = promise.then(() => q.push(value, notifyOne))
-                }
-            })
+            Promise.each(queues, (q) => { if (q) return q.push(value, notifyOne); else return Promise.resolve() })
         }
 
         // only for foreground handlers
         wait(id: number | string, evid: number | string, cb: (value?: any) => void) {
-            let q = this.start(id, evid, true, false);
+            let q = this.start(id, evid, false, true);
             q.addAwaiter(cb);
         }
 
