@@ -255,13 +255,13 @@ for (let i = 0; i < 10; i++) {
 </div>
 
 <script>
-var makecodeUrl = "@name@";
+var makecodeUrl = "@homeurl@";
 var blocksClass = "blocks";
 
 var injectRenderer = function () {
     var f = $("<iframe>", {
         id: "makecoderenderer",
-        src: `https://${makecodeUrl}/--docs?render=1&lang=${$('html').attr('lang')}`
+        src: `${makecodeUrl}--docs?render=1&lang=${$('html').attr('lang')}`
     });
     f.css("position", "absolute");
     f.css("left", 0);
@@ -277,7 +277,7 @@ function makeCodeRenderPre(pre) {
         type: "renderblocks",
         id: pre.id,
         code: pre.innerText
-    }, "*");
+    }, "@homeurl@");
 }
 
 var attachBlocksListener = function () {
@@ -318,3 +318,7 @@ $(function () {
 </body>
 </html>
 ```
+
+## Laziness
+
+You can detect whether you have any snippet on your page before loading the rendering iFrame.
