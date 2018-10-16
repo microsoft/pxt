@@ -2382,8 +2382,6 @@ class SnippetHost implements pxt.Host {
     }
 
     downloadPackageAsync(pkg: pxt.Package): Promise<void> {
-        if (!/^file:/.test(pkg._verspec))
-            pxt.log(`downloadPackageAsync(${pkg.id} -> ${pkg._verspec})`)
         return pkg.commonDownloadAsync()
             .then(resp => {
                 if (resp) {
@@ -2404,8 +2402,6 @@ class SnippetHost implements pxt.Host {
         let stdDeps: Map<string> = {}
         for (const extraDep in this.extraDependencies) {
             const ver = this.extraDependencies[extraDep];
-            if (ver != "*")
-                pxt.log(`extra dep: ${extraDep} -> ${ver}`)
             stdDeps[extraDep] = ver == "*" ? `file:../${extraDep}` : ver;
         }
         return stdDeps

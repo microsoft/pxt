@@ -8,9 +8,7 @@
 			"program": "${workspaceRoot}/built/pxt.js",
 			"stopOnEntry": false,
 			"args": [
-				"checkdocs",
-				"--re",
-				"Square"
+				"checkdocs"
 			],
 			"cwd": "${workspaceRoot}/../pxt-microbit",
 			"runtimeExecutable": null,
