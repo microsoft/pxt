@@ -107,12 +107,26 @@ namespace ts.pxtc {
         function parseHexBytes(bytes: string): number[] {
             bytes = bytes.replace(/^[\s:]/, "")
             if (!bytes) return []
-            let m = /^([a-f0-9][a-f0-9])/i.exec(bytes)
-            if (m)
-                return [parseInt(m[1], 16)].concat(parseHexBytes(bytes.slice(2)))
-            else
+            let outp: number[] = []
+            let bytes2 = bytes.replace(/([a-f0-9][a-f0-9])/ig, m => {
+                outp.push(parseInt(m, 16))
+                return ""
+            })
+            if (bytes2)
                 throw oops("bad bytes " + bytes)
+            return outp
         }
+
+        function parseHexRecord(bytes: string) {
+            let b = parseHexBytes(bytes)
+            return {
+                len: b[0],
+                addr: (b[1] << 8) | b[2],
+                type: b[3],
+
+            }
+        }
+
 
         // setup for a particular .hex template file (which corresponds to the C++ source in included packages and the board)
         export function flashCodeAlign(opts: CompileTarget) {
@@ -348,33 +362,38 @@ namespace ts.pxtc {
             return r.toUpperCase();
         }
 
-        function applyPatches(f: UF2.BlockFile, binfile: Uint8Array = null) {
-            // TODO: this isn't used anymore
-
-            // constant strings in the binary are 4-byte aligned, and marked
-            // with "@PXT@:" at the beginning - this 6 byte string needs to be
-            // replaced with proper reference count (0xfffe to indicate read-only
-            // flash location), string virtual table, and the length of the string
+        // constant strings in the binary are 4-byte aligned, and marked
+        // with "@PXT@:" at the beginning - this 6 byte string needs to be
+        // replaced with proper reference count (0xfffe to indicate read-only
+        // flash location), string virtual table, and the length of the string
+        function patchString(bytes: ArrayLike<number>) {
             let stringVT = [0xfe, 0xff, 0x01, 0x00]
             assert(stringVT.length == 4)
+            // @PXT
+            if (!(bytes[0] == 0x40 && bytes[1] == 0x50 && bytes[2] == 0x58 && bytes[3] == 0x54))
+                oops();
+            // @:
+            if (bytes[4] == 0x40 && bytes[5] == 0x3a) {
+                let len = 0
+                while (6 + len < bytes.length) {
+                    if (bytes[6 + len] == 0)
+                        break
+                    len++
+                }
+                if (6 + len >= bytes.length)
+                    U.oops("constant string too long!")
+                return stringVT.concat([len & 0xff, len >> 8])
+                //console.log("patch file: @" + addr + ": " + U.toHex(patchV))
+            }
+            return null
+        }
+
+        function applyPatches(f: UF2.BlockFile, binfile: Uint8Array = null) {
             let patchAt = (b: Uint8Array, i: number,
                 readMore: () => Uint8Array) => {
                 // @PXT
                 if (b[i] == 0x40 && b[i + 1] == 0x50 && b[i + 2] == 0x58 && b[i + 3] == 0x54) {
-                    let bytes = readMore()
-                    // @:
-                    if (bytes[4] == 0x40 && bytes[5] == 0x3a) {
-                        let len = 0
-                        while (6 + len < bytes.length) {
-                            if (bytes[6 + len] == 0)
-                                break
-                            len++
-                        }
-                        if (6 + len >= bytes.length)
-                            U.oops("constant string too long!")
-                        return stringVT.concat([len & 0xff, len >> 8])
-                        //console.log("patch file: @" + addr + ": " + U.toHex(patchV))
-                    }
+                    return patchString(readMore())
                 }
                 return null
             }
@@ -397,6 +416,55 @@ namespace ts.pxtc {
                     }
                 }
             }
+        }
+
+        function applyHexPatches(myhex: string[]) {
+            const marker = "40505854" // @PXT
+            for (let i = 0; i < myhex.length; ++i) {
+                let idx = myhex[i].indexOf(marker)
+                if (idx > 0) {
+                    let off = (idx - 9) >> 1
+                    let bytes = readHex(myhex, i, off, 200)
+                    let patch = patchString(bytes)
+                    if (patch)
+                        writeHex(myhex, i, off, patch)
+                }
+            }
+        }
+
+        function writeHex(myhex: string[], lineNo: number, offsetInLine: number, patch: number[]) {
+            let src = 0
+            while (src < patch.length) {
+                let parsedLine = parseHexBytes(myhex[lineNo])
+                parsedLine.pop() // pop the checksum
+                if (parsedLine[3] == 0x00) {
+                    // if data
+                    let pos = 4 + offsetInLine
+                    let len = parsedLine.length - pos
+                    for (let i = 0; i < len; ++i)
+                        if (src < patch.length)
+                            parsedLine[pos++] = patch[src++]
+                    myhex[lineNo] = hexBytes(parsedLine)
+                }
+                lineNo++
+                offsetInLine = 0
+            }
+        }
+
+        function readHex(myhex: string[], lineNo: number, offsetInLine: number, len: number) {
+            let outp: number[] = []
+            while (outp.length < len) {
+                let b = parseHexBytes(myhex[lineNo])
+                b.pop() // pop the checksum
+                if (b[3] == 0x00) {
+                    // if data
+                    let data = b.slice(4 + offsetInLine)
+                    U.pushRange(outp, data)
+                }
+                lineNo++
+                offsetInLine = 0
+            }
+            return outp
         }
 
         export function patchHex(bin: Binary, buf: number[], shortForm: boolean, useuf2: boolean) {
@@ -464,6 +532,7 @@ namespace ts.pxtc {
                     UF2.writeBytes(uf2, bin.target.flashChecksumAddr, bytes)
                 }
             } else {
+                applyHexPatches(myhex)
                 myhex[jmpStartIdx] = hexBytes(nextLine(hd, jmpStartAddr))
                 if (bin.checksumBlock) {
                     U.oops("checksum block in HEX not implemented yet")
