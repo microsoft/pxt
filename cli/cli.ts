@@ -1009,8 +1009,6 @@ function gitHash(buf: Buffer) {
 }
 
 function uploadCoreAsync(opts: UploadOptions) {
-    let liteId = "<none>"
-
     let targetConfig = readLocalPxTarget();
     let defaultLocale = targetConfig.appTheme.defaultLocale;
     let hexCache = path.join("built", "hexcache");
@@ -1026,7 +1024,7 @@ function uploadCoreAsync(opts: UploadOptions) {
     let logos = (targetConfig.appTheme as any as Map<string>);
     let targetImages = Object.keys(logos)
         .filter(k => /(logo|hero)$/i.test(k) && /^\.\//.test(logos[k]));
-    let targetImagesHashed = targetImages.map(k => uploadArtFile(logos[k]));
+    let targetImagesHashed = pxt.Util.unique(targetImages.map(k => uploadArtFile(logos[k])), url => url);
 
     let targetEditorJs = "";
     if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor)

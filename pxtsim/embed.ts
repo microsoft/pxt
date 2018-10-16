@@ -65,7 +65,7 @@ namespace pxsim {
     }
 
     export interface SimulatorEventBusMessage extends SimulatorMessage {
-        type: "event";
+        type: "eventbus";
         id: number;
         eventid: number;
         value?: number;

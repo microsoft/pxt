@@ -106,6 +106,17 @@ namespace pxt.editor {
         tutorialReady?: boolean; // current tutorial page
     }
 
+    export interface ModalDialogButton {
+        label: string;
+        url?: string;
+    }
+
+    export interface ModalDialogOptions {
+        header: string;
+        body: string;
+        buttons?: ModalDialogButton[];
+    }
+
     export interface IProjectView {
         state: IAppState;
         setState(st: IAppState): void;
@@ -231,6 +242,8 @@ namespace pxt.editor {
 
         showPackageDialog(): void;
         showBoardDialog(): void;
+
+        showModalDialogAsync(options: ModalDialogOptions): Promise<void>;
     }
 
     export interface IHexFileImporter {

@@ -29,7 +29,7 @@ To render blocks in your own HTML documents or to make plugins for a document pl
 
 ### ~ hint
 
-Try this [fiddle](https://jsfiddle.net/ndyz1d57/1/) to see an embedded blocks rendering example.
+Try this [fiddle](https://jsfiddle.net/ndyz1d57/80/) to see an embedded blocks rendering example.
 
 ### ~
 
@@ -255,13 +255,13 @@ for (let i = 0; i < 10; i++) {
 </div>
 
 <script>
-var makecodeUrl = "@name@";
+var makecodeUrl = "@homeurl@";
 var blocksClass = "blocks";
 
 var injectRenderer = function () {
     var f = $("<iframe>", {
         id: "makecoderenderer",
-        src: `https://${makecodeUrl}/--docs?render=1&lang=${$('html').attr('lang')}`
+        src: `${makecodeUrl}--docs?render=1&lang=${$('html').attr('lang')}`
     });
     f.css("position", "absolute");
     f.css("left", 0);
@@ -277,7 +277,7 @@ function makeCodeRenderPre(pre) {
         type: "renderblocks",
         id: pre.id,
         code: pre.innerText
-    }, "*");
+    }, "@homeurl@");
 }
 
 var attachBlocksListener = function () {
@@ -318,3 +318,7 @@ $(function () {
 </body>
 </html>
 ```
+
+## Laziness
+
+You can detect whether you have any snippet on your page before loading the rendering iFrame.

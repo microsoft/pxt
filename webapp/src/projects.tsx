@@ -757,11 +757,15 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
     save() {
         const { projectName: newName } = this.state;
         this.hide();
-        if (this.props.parent.state.projectName != newName) pxt.tickEvent("exitandsave.projectrename", undefined, { interactiveConsent: true });
-        this.props.parent.updateHeaderNameAsync(newName)
-            .done(() => {
-                this.props.parent.openHome();
-            })
+        let p = Promise.resolve();
+        // save project name if valid change
+        if (newName && this.props.parent.state.projectName != newName) {
+            pxt.tickEvent("exitandsave.projectrename", undefined, { interactiveConsent: true });
+            p = p.then(() => this.props.parent.updateHeaderNameAsync(newName));
+        }
+        p.done(() => {
+            this.props.parent.openHome();
+        })
     }
 
     renderCore() {
@@ -772,21 +776,17 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
             onclick: this.save,
             icon: 'check',
             className: 'approve positive'
-        }, {
-            label: lf("Cancel"),
-            icon: 'cancel',
-            onclick: this.cancel
         }]
 
         return (
             <sui.Modal isOpen={visible} className="exitandsave" size="tiny"
                 onClose={this.hide} dimmer={true} buttons={actions}
-                closeIcon={true} header={lf("Exit Project")}
+                closeIcon={true} header={lf("Project has no name {0}", "😞")}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
                 modalDidOpen={this.modalDidOpen}
             >
                 <div className="ui form">
-                    <sui.Input ref="filenameinput" autoFocus id={"projectNameInput"} label={lf("Project Name")}
+                    <sui.Input ref="filenameinput" autoFocus id={"projectNameInput"} label={lf("Name")}
                         ariaLabel={lf("Type a name for your project")}
                         value={projectName || ''} onChange={this.handleChange} />
                 </div>

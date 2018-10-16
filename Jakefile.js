@@ -303,6 +303,7 @@ file("built/web/pxtlib.js", [
     jake.mkdirP("built/web")
     jake.cpR("node_modules/jquery/dist/jquery.min.js", "built/web/jquery.js")
     jake.cpR("node_modules/bluebird/js/browser/bluebird.min.js", "built/web/bluebird.min.js")
+    jake.cpR("node_modules/applicationinsights-js/dist/ai.0.js", "built/web/ai.0.js")
 
     jake.cpR("built/pxtlib.js", "built/web/")
     jake.cpR("built/pxtcompiler.js", "built/web/")

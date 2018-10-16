@@ -162,6 +162,8 @@ namespace ts.pxtc {
         whenUsed?: boolean;
         jres?: string;
         useLoc?: string; // The qName of another API whose localization will be used if this API is not translated and if both block definitions are identical
+        topblock?: boolean;
+        topblockWeight?: number;
         // On namepspace
         subcategories?: string[];
         groups?: string[];
@@ -693,7 +695,7 @@ namespace ts.pxtc {
         return r;
     }
 
-    const numberAttributes = ["weight", "imageLiteral"]
+    const numberAttributes = ["weight", "imageLiteral", "topblockWeight"]
     const booleanAttributes = [
         "advanced",
         "handlerStatement",
@@ -704,7 +706,8 @@ namespace ts.pxtc {
         "blockCombine",
         "enumIsBitMask",
         "decompileIndirectFixedInstances",
-        "draggableParameters"
+        "draggableParameters",
+        "topblock"
     ];
 
     export function parseCommentString(cmt: string): CommentAttrs {
@@ -1242,7 +1245,7 @@ namespace ts.pxtc {
             buf: Uint8Array;
         }
 
-        export function toBin(blocks: Uint8Array): ShiftedBuffer {
+        export function toBin(blocks: Uint8Array, endAddr: number = undefined): ShiftedBuffer {
             if (blocks.length < 512)
                 return null
             let curraddr = -1
@@ -1252,6 +1255,7 @@ namespace ts.pxtc {
                 let ptr = i * 512
                 let bl = parseBlock(blocks.slice(ptr, ptr + 512))
                 if (!bl) continue
+                if (endAddr && bl.targetAddr  + 256 > endAddr) break;
                 if (curraddr == -1) {
                     curraddr = bl.targetAddr
                     appstartaddr = curraddr

@@ -22,6 +22,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         this.openInstructions = this.openInstructions.bind(this);
         this.startStopSimulator = this.startStopSimulator.bind(this);
         this.toggleSimulatorFullscreen = this.toggleSimulatorFullscreen.bind(this);
+        this.toggleSimulatorCollapse = this.toggleSimulatorCollapse.bind(this);
     }
 
     openInstructions() {
@@ -59,6 +60,11 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         this.props.parent.toggleSimulatorFullscreen();
     }
 
+    toggleSimulatorCollapse() {
+        pxt.tickEvent("simulator.toggleCollapse", { view: 'computer', collapsedTo: '' + !this.props.parent.state.collapseEditorTools }, { interactiveConsent: true });
+        this.props.parent.toggleSimulatorCollapse();
+    }
+
     renderCore() {
         const parentState = this.props.parent.state;
         if (!parentState.currFile) return <div />
@@ -89,6 +95,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const restartTooltip = lf("Restart the simulator");
         const fullscreenTooltip = isFullscreen ? lf("Exit fullscreen mode") : lf("Launch in fullscreen");
         const muteTooltip = isMuted ? lf("Unmute audio") : lf("Mute audio");
+        const collapseTooltip = lf("Hide the simulator");
 
         return <aside className="ui item grid centered portrait hide simtoolbar" role="complementary" aria-label={lf("Simulator toolbar")}>
             <div className={`ui icon tiny buttons ${isFullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
@@ -99,8 +106,11 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
             </div>
             <div className={`ui icon tiny buttons ${isFullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
                 {audio ? <sui.Button key='mutebtn' className={`mute-button ${isMuted ? 'red' : ''}`} icon={`${isMuted ? 'volume off' : 'volume up'}`} title={muteTooltip} onClick={this.toggleMute} /> : undefined}
+            </div>
+            <div className={`ui icon tiny buttons ${isFullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
+                {!isFullscreen ? <sui.Button key='collapsebtn' className={`collapse-button`} icon={`icon toggle left`} title={collapseTooltip} onClick={this.toggleSimulatorCollapse} /> : undefined}
                 {fullscreen ? <sui.Button key='fullscreenbtn' className={`fullscreen-button`} icon={`xicon ${isFullscreen ? 'fullscreencollapse' : 'fullscreen'}`} title={fullscreenTooltip} onClick={this.toggleSimulatorFullscreen} /> : undefined}
             </div>
-        </aside>;
+        </aside >;
     }
 }

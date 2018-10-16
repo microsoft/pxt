@@ -121,7 +121,7 @@ export class ProjectView
         this.state = {
             showFiles: false,
             home: shouldShowHomeScreen,
-            active: document.visibilityState == 'visible',
+            active: document.visibilityState == 'visible' || electron.isElectron() || pxt.winrt.isWinRT(),
             collapseEditorTools: pxt.appTarget.simulator.headless || (!isSandbox && pxt.BrowserUtils.isMobile()),
             highContrast: isHighContrast
         };
@@ -2101,6 +2101,16 @@ export class ProjectView
 
     showBoardDialog() {
         this.scriptSearch.showBoards();
+    }
+
+    showModalDialogAsync(options: pxt.editor.ModalDialogOptions) {
+        return core.dialogAsync({
+            header: options.header,
+            body: options.body,
+            hideCancel: true,
+            hasCloseIcon: true,
+            buttons: options.buttons
+        })
     }
 
     showExperimentsDialog() {

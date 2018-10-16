@@ -346,7 +346,6 @@ export function initCommandsAsync(): Promise<void> {
         pxt.usb.setEnabled(true);
         pxt.HF2.mkPacketIOAsync = pxt.usb.mkPacketIOAsync;
     }
-
     if (isNativeHost()) {
         pxt.debug(`deploy/save using webkit host`);
         pxt.commands.deployCoreAsync = nativeHostDeployCoreAsync;

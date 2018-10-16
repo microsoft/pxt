@@ -276,6 +276,10 @@ declare namespace pxt {
         editorVersionPaths?: { [majorVersion: number]: string }; // A map of major editor versions to their corresponding paths (alpha, v1, etc.)
         experiments?: string[]; // list of experiment ids, also enables this feature
         chooseBoardOnNewProject?: boolean; // when multiple boards are support, show board dialog on "new project"
+        bluetoothUartConsole?: boolean; // pair with BLE UART services and pipe console output
+        bluetoothUartFilters?: { name?: string; namePrefix?: string; }[]; // device name prefix -- required
+        bluetoothPartialFlashing?: boolean; // enable partial flashing over BLE
+        topBlocks?: boolean; // show a top blocks category in the editor
     }
 
     interface SocialOptions {

@@ -1,6 +1,6 @@
 {
   "name": "pxt-core",
-  "version": "4.1.20",
+  "version": "4.1.36",
   "description": "Microsoft MakeCode, also known as Programming Experience Toolkit (PXT), provides Blocks / JavaScript tools and editors",
   "keywords": [
     "TypeScript",
@@ -61,7 +61,8 @@
     "rtlcss": "2.2.1",
     "cssnano": "3.10.0",
     "less": "2.7.3",
-    "semantic-ui-less": "2.2.14"
+    "semantic-ui-less": "2.2.14",
+    "applicationinsights-js": "^1.0.20"
   },
   "lazyDependencies": {
     "keytar": "4.2.1",
@@ -104,7 +105,8 @@
     "@types/node": "8.0.53",
     "@types/react": "16.0.25",
     "@types/react-dom": "16.0.3",
-    "@types/request": "2.0.8"
+    "@types/request": "2.0.8",
+    "@types/web-bluetooth": "0.0.4"
   },
   "scripts": {
     "build": "jake",
