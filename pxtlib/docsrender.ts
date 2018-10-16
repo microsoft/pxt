@@ -363,6 +363,7 @@ namespace pxt.docs {
         ghEditURLs?: string[];
         repo?: { name: string; fullName: string; tag?: string };
         throwOnError?: boolean; // check for missing macros
+        TOC?: TOCMenuEntry[]; // TOC parsed here
     }
 
     export function setupRenderer(renderer: marked.Renderer) {
@@ -452,6 +453,7 @@ namespace pxt.docs {
             versionPath: opts.versionPath,
             ghEditURLs: opts.ghEditURLs,
             params: pubinfo,
+            TOC: opts.TOC
         }
         prepTemplate(d)
 
