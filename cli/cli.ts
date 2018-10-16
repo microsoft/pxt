@@ -2267,6 +2267,9 @@ class SnippetHost implements pxt.Host {
     }
 
     readFile(module: pxt.Package, filename: string): string {
+        if (filename == pxt.github.GIT_JSON)
+            return null;
+
         if (this.files[module.id] && this.files[module.id][filename]) {
             return this.files[module.id][filename]
         }
