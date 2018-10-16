@@ -2262,6 +2262,7 @@ class SnippetHost implements pxt.Host {
     constructor(public name: string, public main: string, public extraDependencies: pxt.Map<string>, private includeCommon = false) { }
 
     resolve(module: pxt.Package, filename: string): string {
+        pxt.log(`resolve ${module.id}. ${filename}`)
         return ""
     }
 
@@ -2280,12 +2281,10 @@ class SnippetHost implements pxt.Host {
                         "ignoreConflicts": true
                     },
                     "files": this.includeCommon ? [
-                        "main.blocks", //TODO: Probably don't want this
                         "main.ts",
                         "pxt-core.d.ts",
                         "pxt-helpers.ts"
                     ] : [
-                            "main.blocks", //TODO: Probably don't want this
                             "main.ts",
                         ]
                 })
@@ -2351,8 +2350,8 @@ class SnippetHost implements pxt.Host {
             }
         }
 
-        pxt.debug(`unresolved file ${module.id}/${filename}`)
-        return ""
+        pxt.log(`unresolved file ${module.id}/${filename}`)
+        return null
     }
 
     private getRepoDir() {
@@ -2385,7 +2384,14 @@ class SnippetHost implements pxt.Host {
     downloadPackageAsync(pkg: pxt.Package): Promise<void> {
         if (!/^file:/.test(pkg._verspec))
             pxt.log(`downloadPackageAsync(${pkg.id} -> ${pkg._verspec})`)
-        return Promise.resolve()
+        return pkg.commonDownloadAsync()
+            .then(resp => {
+                if (resp) {
+                    U.iterMap(resp, (fn: string, cont: string) => {
+                        pkg.host().writeFile(pkg, fn, cont)
+                    })
+                }
+            })
     }
 
     resolveVersionAsync(pkg: pxt.Package): Promise<string> {
