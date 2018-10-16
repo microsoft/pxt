@@ -174,6 +174,7 @@ namespace pxt.docs {
             href: "/docs"
         }]
 
+        const TOC = d.TOC || theme.TOC || [];
         let tocPath: TOCMenuEntry[] = []
         let isCurrentTOC = (m: TOCMenuEntry) => {
             for (let c of m.subitems || []) {
@@ -188,7 +189,7 @@ namespace pxt.docs {
             }
             return false
         };
-        (d.TOC || []).forEach(isCurrentTOC)
+        TOC.forEach(isCurrentTOC)
 
         let currentTocEntry: TOCMenuEntry;
         let recTOC = (m: TOCMenuEntry, lev: number) => {
@@ -230,7 +231,7 @@ namespace pxt.docs {
         }
 
         params["menu"] = (theme.docMenu || []).map(e => recMenu(e, 0)).join("\n")
-        params["TOC"] = (d.TOC || []).map(e => recTOC(e, 0)).join("\n")
+        params["TOC"] = TOC.map(e => recTOC(e, 0)).join("\n")
 
         if (theme.appStoreID)
             params["appstoremeta"] = `<meta name="apple-itunes-app" content="app-id=${U.htmlEscape(theme.appStoreID)}"/>`

@@ -1904,6 +1904,17 @@ function updateDefaultProjects(cfg: pxt.TargetBundle) {
     }
 }
 
+function updateTOC(cfg: pxt.TargetBundle) {
+    if (!cfg.appTheme) return; // no theme to update
+     // Update Table of Contents from SUMMARY.md file
+    const summaryMD = nodeutil.resolveMd(nodeutil.targetDir, "SUMMARY");
+    if (!summaryMD) {
+        pxt.log('no SUMMARY file found');
+    } else {
+        cfg.appTheme.TOC = pxt.docs.buildTOC(summaryMD)
+    }
+}
+
 function rebundleAsync() {
     return buildTargetCoreAsync({ quick: true })
 }
@@ -1911,6 +1922,7 @@ function rebundleAsync() {
 function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
     let cfg = readLocalPxTarget()
     updateDefaultProjects(cfg);
+    updateTOC(cfg);
     cfg.bundledpkgs = {}
     pxt.setAppTarget(cfg);
     let statFiles: Map<number> = {}
