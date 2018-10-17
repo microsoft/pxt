@@ -1906,7 +1906,6 @@ function updateDefaultProjects(cfg: pxt.TargetBundle) {
 
 function updateTOC(cfg: pxt.TargetBundle) {
     if (!cfg.appTheme) return; // no theme to update
-
     // Update Table of Contents from SUMMARY.md file
     const summaryMD = nodeutil.resolveMd(nodeutil.targetDir, "SUMMARY");
     if (!summaryMD) {
