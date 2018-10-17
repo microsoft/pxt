@@ -2,25 +2,16 @@
 
 * [About](/about)
 * [FAQ](/faq)
+* [Support](/support)
 * [Projects](/projects)
 * [Reference](/reference)
 * [Blocks](/blocks)
 * [JavaScript](/javascript)
 * [Types](/types)
 
-## #support
-
-* [Support](/support)
-
-## #projects
-
-## #examples
-
-## #courses
-
-## #reference
-
 ## #packages
+
+* [Extensions](/extensions)
 
 ## Miscellaneous #misc
 
