@@ -60,7 +60,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                 el.style.animationDuration = '';
 
                 if (pxt.BrowserUtils.isEdge() && coretsx.dialogIsShowing()) {
-                    // Workaround for an Edge bug where when a dialog is open and the simulator is
+                    // Workaround for a Microsoft Edge bug where when a dialog is open and the simulator is
                     // revealed it somehow breaks the page render. See https://github.com/Microsoft/pxt/pull/4707
                     // for more details
 
