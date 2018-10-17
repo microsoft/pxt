@@ -1,6 +1,6 @@
 # [Editor](/editor)
 
-* [Translate](/editor/translate)
-* [Sharing projects](/editor/share)
-* [Offline support](/editor/offline)
 * [Save](/editor/save)
+* [Sharing projects](/editor/share)
+* [Translate](/editor/translate)
+* [Offline support](/editor/offline)
