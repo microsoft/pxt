@@ -86,9 +86,9 @@ namespace pxsim {
             let queues = this.getQueues(id, evid, true).concat(this.getQueues(id, evid, false))
             this.lastEventValue = evid;
             this.lastEventTimestampUs = U.perfNowUs();
-            Promise.each(queues, (q) => { 
-                if (q) return q.push(value, notifyOne); 
-                else return Promise.resolve() 
+            Promise.each(queues, (q) => {
+                if (q) return q.push(value, notifyOne);
+                else return Promise.resolve()
             })
         }
 
