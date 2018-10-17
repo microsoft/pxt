@@ -1,5 +1,5 @@
-# Blocks #blocks
-
+# [Blocks](/blocks)
+    
 * [On Start](/blocks/on-start)
 * [Loops](/blocks/loops)
     * [repeat](/blocks/loops/repeat)
@@ -13,10 +13,5 @@
     * [change var](/blocks/variables/change)
     * [var](/blocks/variables/var)
 * [Math](/blocks/math)
-
-## Advanced #advanced
-
 * [JavaScript blocks](/blocks/javascript-blocks)
 * [Custom blocks](/blocks/custom)
-
-## #others

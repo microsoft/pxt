@@ -54,7 +54,7 @@ Make sure that your code compiles and that the comments look correct.
 
 ## Sharing your blocks
 
-The easiest way to share your blocks is to share the entire project using the [share button](/share).
+The easiest way to share your blocks is to share the entire project using the [share button](/editor/share).
 
 ## Taking it to GitHub
 
