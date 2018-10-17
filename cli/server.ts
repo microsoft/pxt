@@ -1034,6 +1034,15 @@ export function serveAsync(options: ServeOptions) {
             }
         }
 
+        // redirect
+        let redirectFile = path.join(docsDir, pathname + "-ref.json");
+        if (nodeutil.fileExistsSync(redirectFile)) {
+            const redir = nodeutil.readJson(redirectFile);
+            res.writeHead(301, { location: redir["redirect"] })
+            res.end()
+            return ;
+        }
+
         let webFile = path.join(docsDir, pathname)
         if (!nodeutil.fileExistsSync(webFile)) {
             if (nodeutil.fileExistsSync(webFile + ".html")) {
