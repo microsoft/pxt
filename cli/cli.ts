@@ -3347,6 +3347,7 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
 }
 
 function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> {
+    pxt.github.forceProxy = true; // avoid throttling in CI machines
     let filenameMatch: RegExp;
     try {
         let pattern = re || '.*';
