@@ -92,6 +92,7 @@ namespace pxt.docs {
         boxes?: Map<string>;
         macros?: Map<string>;
         settings?: Map<string>;
+        TOC?: TOCMenuEntry[];
     }
 
     function parseHtmlAttrs(s: string) {
@@ -173,6 +174,7 @@ namespace pxt.docs {
             href: "/docs"
         }]
 
+        const TOC = d.TOC || theme.TOC || [];
         let tocPath: TOCMenuEntry[] = []
         let isCurrentTOC = (m: TOCMenuEntry) => {
             for (let c of m.subitems || []) {
@@ -187,7 +189,7 @@ namespace pxt.docs {
             }
             return false
         };
-        (theme.TOC || []).forEach(isCurrentTOC)
+        TOC.forEach(isCurrentTOC)
 
         let currentTocEntry: TOCMenuEntry;
         let recTOC = (m: TOCMenuEntry, lev: number) => {
@@ -229,7 +231,7 @@ namespace pxt.docs {
         }
 
         params["menu"] = (theme.docMenu || []).map(e => recMenu(e, 0)).join("\n")
-        params["TOC"] = (theme.TOC || []).map(e => recTOC(e, 0)).join("\n")
+        params["TOC"] = TOC.map(e => recTOC(e, 0)).join("\n")
 
         if (theme.appStoreID)
             params["appstoremeta"] = `<meta name="apple-itunes-app" content="app-id=${U.htmlEscape(theme.appStoreID)}"/>`
@@ -362,6 +364,7 @@ namespace pxt.docs {
         ghEditURLs?: string[];
         repo?: { name: string; fullName: string; tag?: string };
         throwOnError?: boolean; // check for missing macros
+        TOC?: TOCMenuEntry[]; // TOC parsed here
     }
 
     export function setupRenderer(renderer: marked.Renderer) {
@@ -451,6 +454,7 @@ namespace pxt.docs {
             versionPath: opts.versionPath,
             ghEditURLs: opts.ghEditURLs,
             params: pubinfo,
+            TOC: opts.TOC
         }
         prepTemplate(d)
 

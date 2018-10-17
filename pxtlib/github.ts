@@ -48,7 +48,11 @@ namespace pxt.github {
         head?: string;
     }
 
+    export let forceProxy = false;
+
     export function useProxy() {
+        if (forceProxy)
+            return true;
         if (U.isNodeJS)
             return false // bypass proxy for CLI
         if (token)

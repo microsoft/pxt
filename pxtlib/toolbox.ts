@@ -12,7 +12,8 @@ namespace pxt.toolbox {
         addpackage: '#717171',
         search: '#000',
         debug: '#e03030',
-        default: '#dddddd'
+        default: '#dddddd',
+        topblocks: '#aa8f00'
     }
 
     export const blockIcons: Map<number | string> = {
@@ -29,7 +30,8 @@ namespace pxt.toolbox {
         addpackage: '\uf055',
         search: '\uf002',
         debug: '\uf111',
-        default: '\uf12e'
+        default: '\uf12e',
+        topblocks: '\uf005'
     }
 
     let toolboxStyle: HTMLStyleElement;
