@@ -5,7 +5,6 @@ The Microsoft MakeCode programming environment uses JavaScript along with the [S
 These topics give a brief introduction to JavaScript with MakeCode:
 
 | | | |
-|-|-|-|
 | **[Calling](/javascript/call)** | | How to use a function |
 | **[Sequencing](/javascript/sequence)** | | Ordering statements in code |
 | **[Variables](/javascript/variables)** | | Make a way to remember data |
