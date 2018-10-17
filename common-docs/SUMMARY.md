@@ -2,8 +2,15 @@
 
 * [About](/about)
 * [FAQ](/faq)
+* [Projects](/projects)
+* [Reference](/reference)
+* [Blocks](/blocks)
+* [JavaScript](/javascript)
+* [Types](/types)
 
 ## #support
+
+* [Support](/support)
 
 ## #projects
 
@@ -14,50 +21,6 @@
 ## #reference
 
 ## #packages
-
-## Blocks #blocks
-
-* [Blocks](/blocks)
-    * [On Start](/blocks/on-start)
-    * [Loops](/blocks/loops)
-        * [repeat](/blocks/loops/repeat)
-        * [for](/blocks/loops/for)
-        * [while](/blocks/loops/while)
-    * [Logic](/blocks/logic)
-        * [if](/blocks/logic/if)
-        * [Boolean](/blocks/logic/boolean)
-    * [Variables](/blocks/variables)
-        * [assign](/blocks/variables/assign)
-        * [change var](/blocks/variables/change)
-        * [var](/blocks/variables/var)
-    * [Math](/blocks/math)
-    * [JavaScript blocks](/blocks/javascript-blocks)
-    * [Custom blocks](/blocks/custom)
-
-## JavaScript #javaScript
-
-* [JavaScript](/javascript)
-    * [Calling](/javascript/call)
-    * [Sequencing](/javascript/sequence)
-    * [Variables](/javascript/variables)
-    * [Operators](/javascript/operators)
-    * [Statements](/javascript/statements)
-    * [Functions](/javascript/functions)
-    * [Types](/javascript/types)
-    * [Classes](/javascript/classes)
-    * [Interfaces](/javascript/interfaces)
-    * [Generics](/javascript/generics)
-
-## Types #types
-
-* [Types](/types)
-    * [Number](/types/number)
-    * [String](/types/string)
-    * [Boolean](/types/boolean)
-    * [Array](/types/array)
-    * [Function](/types/function)
-
-## #other
 
 ## Miscellaneous #misc
 
