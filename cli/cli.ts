@@ -4576,12 +4576,6 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
         return Promise.resolve();
     const docsRoot = nodeutil.targetDir;
     const docsTemplate = server.expandDocFileTemplate("docs.html")
-    const summaryMD = nodeutil.resolveMd(docsRoot, "SUMMARY");
-
-    if (!summaryMD) {
-        pxt.log('no SUMMARY.md file found, skipping check docs');
-        return Promise.resolve();
-    }
     pxt.log(`checking docs`);
 
     const noTOCs: string[] = [];
@@ -4662,12 +4656,19 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
             entry.subitems.forEach(checkTOCEntry);
     }
 
-    const toc = pxt.docs.buildTOC(summaryMD);
-    if (!toc) {
-        pxt.log('unable to parse SUMMARY.md');
-        return Promise.resolve();
-    }
-    toc.forEach(checkTOCEntry);
+    nodeutil.allFiles("docs", 5).filter(f => /SUMMARY\.md$/.test(f))
+        .forEach(summaryFile => {
+            const summaryPath = path.join(path.dirname(summaryFile), 'SUMMARY').replace(/^docs[\/\\]/, '');
+            pxt.log(`looking for ${summaryPath}`);
+            const summaryMD = nodeutil.resolveMd(docsRoot, summaryPath);
+            const toc = pxt.docs.buildTOC(summaryMD);
+            if (!toc) {
+                pxt.log(`invalid SUMMARY`);
+                broken++;
+            } else {
+                toc.forEach(checkTOCEntry);
+            }
+        });
 
     // push entries from pxtarget
     const theme = pxt.appTarget.appTheme;
