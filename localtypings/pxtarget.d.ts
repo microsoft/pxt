@@ -279,6 +279,7 @@ declare namespace pxt {
         bluetoothUartConsole?: boolean; // pair with BLE UART services and pipe console output
         bluetoothUartFilters?: { name?: string; namePrefix?: string; }[]; // device name prefix -- required
         bluetoothPartialFlashing?: boolean; // enable partial flashing over BLE
+        topBlocks?: boolean; // show a top blocks category in the editor
     }
 
     interface SocialOptions {
