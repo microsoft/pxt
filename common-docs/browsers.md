@@ -71,9 +71,9 @@ version of one of the following:
 
 ![](/static/configurations/ie-version.png)
 
-### Edge
+### Microsoft Edge
 
-Edge automatically updates, so you should always be using the latest version
+Microsoft Edge automatically updates, so you should always be using the latest version
 
 * Click on the menu icon in the top right (three dots)
 * Scroll to the bottom

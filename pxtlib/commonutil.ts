@@ -282,16 +282,6 @@ namespace ts.pxtc.Util {
     }
 
     export function isUserLanguageRtl(): boolean {
-        // ar: Arabic
-        // dv: Divehi
-        // fa: Farsi
-        // ha: Hausa
-        // he: Hebrew
-        // ks: Kashmiri
-        // ku: Kurdish
-        // ps: Pashto
-        // ur: Urdu
-        // yi: Yiddish
         return /^ar|dv|fa|ha|he|ks|ku|ps|ur|yi/i.test(_localizeLang);
     }
 

@@ -5,7 +5,7 @@ namespace pxsim.visuals {
             -webkit-user-select: none;   /* Chrome/Safari/Opera */
             -khtml-user-select: none;    /* Konqueror */
             -moz-user-select: none;      /* Firefox */
-            -ms-user-select: none;       /* Internet Explorer/Edge */
+            -ms-user-select: none;       /* Internet Explorer/Microsoft Edge */
             user-select: none;           /* Non-prefixed version, currently
                                             not supported by any browser */
         }
