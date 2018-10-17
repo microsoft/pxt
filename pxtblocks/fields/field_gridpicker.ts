@@ -200,7 +200,7 @@ namespace pxtblockly {
                             const touchTarget = document.elementFromPoint(e.clientX, e.clientY);
                             const title = (touchTarget as any).title || (touchTarget as any).alt;
                             this.tooltip_.textContent = title;
-                            // Show the tooltip 
+                            // Show the tooltip
                             this.tooltip_.style.visibility = title ? 'visible' : 'hidden';
                             this.tooltip_.style.display = title ? '' : 'none';
                         }
@@ -229,7 +229,7 @@ namespace pxtblockly {
                             if (this.closeModal_) {
                                 this.buttonClick_(e);
                             } else {
-                                // Clear all current hovers. 
+                                // Clear all current hovers.
                                 const currentHovers = tableContainer.getElementsByClassName('goog-menuitem-highlight');
                                 for (let i = 0; i < currentHovers.length; i++) {
                                     Blockly.utils.removeClass(currentHovers[i], 'goog-menuitem-highlight');
@@ -398,7 +398,7 @@ namespace pxtblockly {
                 height: paddingContainer.offsetHeight
             }; //goog.style.getSize(paddingContainer);
 
-            // Set width 
+            // Set width
             const windowSize = goog.dom.getViewportSize();
             if (this.width_ > windowSize.width) {
                 this.width_ = windowSize.width;
@@ -535,7 +535,7 @@ namespace pxtblockly {
                 } else {
                     this.highlightAndScrollSelected(tableContainer, scrollContainer)
                 }
-                // Hide the tooltip 
+                // Hide the tooltip
                 this.tooltip_.style.visibility = 'hidden';
                 this.tooltip_.style.display = 'none';
             }, 300, false));
@@ -715,7 +715,7 @@ namespace pxtblockly {
 
         /**
          * Updates the width of the field. This calls getCachedWidth which won't cache
-         * the approximated width on IE/Edge when `getComputedTextLength` fails. Once
+         * the approximated width on IE/Microsoft Edge when `getComputedTextLength` fails. Once
          * it eventually does succeed, the result will be cached.
          **/
         updateWidth() {

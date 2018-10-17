@@ -32,7 +32,7 @@ function setDiagnostics(diagnostics: pxtc.KsDiagnostic[]) {
     f.numDiagnosticsOverride = diagnostics.filter(d => d.category == ts.pxtc.DiagnosticCategory.Error).length
 }
 
-let hang = new Promise<any>(() => { })
+let noOpAsync = new Promise<any>(() => { })
 
 function catchUserErrorAndSetDiags(r: any) {
     return (v: any) => {
@@ -100,7 +100,7 @@ export function compileAsync(options: CompileOptions = {}): Promise<pxtc.Compile
                     return resp
                 })
         })
-        .catch(catchUserErrorAndSetDiags(hang))
+        .catch(catchUserErrorAndSetDiags(noOpAsync))
 }
 
 function assembleCore(src: string): Promise<{ words: number[] }> {
