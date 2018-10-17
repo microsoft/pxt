@@ -4661,14 +4661,12 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
             const summaryPath = path.join(path.dirname(summaryFile), 'SUMMARY').replace(/^docs[\/\\]/, '');
             pxt.log(`looking for ${summaryPath}`);
             const summaryMD = nodeutil.resolveMd(docsRoot, summaryPath);
-            if (summaryMD) {
-                const toc = pxt.docs.buildTOC(summaryMD);
-                if (!toc) {
-                    pxt.log(`invalid SUMMARY`);
-                    broken++;
-                } else {
-                    toc.forEach(checkTOCEntry);
-                }
+            const toc = pxt.docs.buildTOC(summaryMD);
+            if (!toc) {
+                pxt.log(`invalid SUMMARY`);
+                broken++;
+            } else {
+                toc.forEach(checkTOCEntry);
             }
         });
 
