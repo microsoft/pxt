@@ -10,5 +10,7 @@
 * [Classes](/javascript/classes)
 * [Interfaces](/javascript/interfaces)
 * [Generics](/javascript/generics)
+* [Visual Studio Code support](/javascript/code)
+* [Command Line Interface](/cli)
 
 ## #others

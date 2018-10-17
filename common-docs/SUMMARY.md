@@ -11,10 +11,3 @@
 * [Extensions](/extensions)
 * [Editor](/editor)
 * [Browsers](/browsers)
-
-## Developers #devs
-
-* Developers
-    * [Command Line Interface](/cli)
-    * [Visual Studio Code support](/code)
-    * [Blocks Embed](/blocks-embed)
