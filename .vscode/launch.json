@@ -2,13 +2,13 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "serve",
+			"name": "checkdocs",
 			"type": "node",
 			"request": "launch",
 			"program": "${workspaceRoot}/built/pxt.js",
 			"stopOnEntry": false,
 			"args": [
-				"serve"
+				"checkdocs"
 			],
 			"cwd": "${workspaceRoot}/../pxt-microbit",
 			"runtimeExecutable": null,

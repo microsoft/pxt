@@ -2257,14 +2257,19 @@ let commonfiles: Map<string> = {}
 class SnippetHost implements pxt.Host {
     //Global cache of module files
     files: Map<Map<string>> = {}
+    cache: pxt.Map<string> = {};
 
-    constructor(public name: string, public main: string, public extraDependencies: string[], private includeCommon = false) { }
+    constructor(public name: string, public main: string, public extraDependencies: pxt.Map<string>, private includeCommon = false) { }
 
     resolve(module: pxt.Package, filename: string): string {
+        pxt.log(`resolve ${module.id}. ${filename}`)
         return ""
     }
 
     readFile(module: pxt.Package, filename: string): string {
+        if (filename == pxt.github.GIT_JSON)
+            return null;
+
         if (this.files[module.id] && this.files[module.id][filename]) {
             return this.files[module.id][filename]
         }
@@ -2279,12 +2284,10 @@ class SnippetHost implements pxt.Host {
                         "ignoreConflicts": true
                     },
                     "files": this.includeCommon ? [
-                        "main.blocks", //TODO: Probably don't want this
                         "main.ts",
                         "pxt-core.d.ts",
                         "pxt-helpers.ts"
                     ] : [
-                            "main.blocks", //TODO: Probably don't want this
                             "main.ts",
                         ]
                 })
@@ -2350,8 +2353,8 @@ class SnippetHost implements pxt.Host {
             }
         }
 
-        pxt.debug(`unresolved file ${module.id}/${filename}`)
-        return ""
+        pxt.log(`unresolved file ${module.id}/${filename}`)
+        return null
     }
 
     private getRepoDir() {
@@ -2372,29 +2375,36 @@ class SnippetHost implements pxt.Host {
     }
 
     cacheStoreAsync(id: string, val: string): Promise<void> {
-        //console.log(`cacheStoreAsync(${id}, ${val})`)
+        this.cache[id] = val;
         return Promise.resolve()
     }
 
     cacheGetAsync(id: string): Promise<string> {
-        //console.log(`cacheGetAsync(${id})`)
-        return Promise.resolve("")
+        return Promise.resolve(this.cache[id] || "")
     }
 
     downloadPackageAsync(pkg: pxt.Package): Promise<void> {
-        //console.log(`downloadPackageAsync(${pkg.id})`)
-        return Promise.resolve()
+        return pkg.commonDownloadAsync()
+            .then(resp => {
+                if (resp) {
+                    U.iterMap(resp, (fn: string, cont: string) => {
+                        pkg.host().writeFile(pkg, fn, cont)
+                    })
+                }
+            })
     }
 
     resolveVersionAsync(pkg: pxt.Package): Promise<string> {
-        //console.log(`resolveVersionAsync(${pkg.id})`)
+        if (!/^file:/.test(pkg._verspec))
+            pxt.log(`resolveVersionAsync(${pkg.id})`)
         return Promise.resolve("*")
     }
 
     private dependencies(): Map<string> {
         let stdDeps: Map<string> = {}
-        for (let extraDep of this.extraDependencies) {
-            stdDeps[extraDep] = `file:../${extraDep}`
+        for (const extraDep in this.extraDependencies) {
+            const ver = this.extraDependencies[extraDep];
+            stdDeps[extraDep] = ver == "*" ? `file:../${extraDep}` : ver;
         }
         return stdDeps
     }
@@ -3257,7 +3267,9 @@ function testPkgConflictsAsync() {
             failures.push({ testCase: tc.id, reason });
         };
 
-        let mainPkg = new pxt.MainPackage(new SnippetHost("package conflict tests", tc.main, tc.dependencies));
+        const dep: pxt.Map<string> = {};
+        tc.dependencies.forEach(d => dep[d] = "*");
+        let mainPkg = new pxt.MainPackage(new SnippetHost("package conflict tests", tc.main, dep));
         tc.expectedConflicts = tc.expectedConflicts.sort();
         tc.expectedInUse = tc.expectedInUse.sort();
 
@@ -3313,9 +3325,13 @@ function decompileAsync(parsed: commandParser.ParsedCommand) {
 function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
     return new Promise<string>((resolve, reject) => {
         const input = fs.readFileSync(f, "utf8")
-        const pkg = new pxt.MainPackage(new SnippetHost("decompile-pkg", input, dependency ? [dependency] : [], true));
+        const dep: pxt.Map<string> = {};
+        if (dependency)
+            dep[dependency] = "*";
+        const pkg = new pxt.MainPackage(new SnippetHost("decompile-pkg", input, dep, true));
 
-        pkg.getCompileOptionsAsync()
+        pkg.installAllAsync()
+            .then(() => pkg.getCompileOptionsAsync())
             .then(opts => {
                 opts.ast = true;
                 const decompiled = pxtc.decompile(opts, "main.ts");
@@ -3330,6 +3346,7 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
 }
 
 function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> {
+    pxt.github.forceProxy = true; // avoid throttling in CI machines
     let filenameMatch: RegExp;
     try {
         let pattern = re || '.*';
@@ -3341,7 +3358,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
     }
     snippets = snippets.filter(snippet => filenameMatch.test(snippet.name));
     let ignoreCount = 0
-
+    const cache: pxt.Map<string> = {};
     const successes: string[] = []
     interface FailureInfo {
         filename: string
@@ -3361,7 +3378,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
     return Promise.map(snippets, (snippet: CodeSnippet) => {
         const name = snippet.name;
         const fn = snippet.file || snippet.name;
-        pxt.debug(`compiling ${fn} (${snippet.type})`);
+        pxt.log(`  ${fn} (${snippet.type})`);
 
         if (snippet.ext == "json") {
             try {
@@ -3384,65 +3401,68 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
             return Promise.resolve();
         }
 
-        const pkg = new pxt.MainPackage(new SnippetHost("snippet" + name, snippet.code, Object.keys(snippet.packages)));
-        return pkg.getCompileOptionsAsync().then(opts => {
-            opts.ast = true
-            let resp = pxtc.compile(opts)
+        const host = new SnippetHost("snippet" + name, snippet.code, snippet.packages);
+        host.cache = cache;
+        const pkg = new pxt.MainPackage(host);
+        return pkg.installAllAsync()
+            .then(() => pkg.getCompileOptionsAsync().then(opts => {
+                opts.ast = true
+                let resp = pxtc.compile(opts)
 
-            if (resp.outfiles && snippet.file) {
-                const dir = snippet.file.replace(/\.ts$/, '');
-                nodeutil.mkdirP(dir);
-                nodeutil.mkdirP(path.join(dir, "built"));
-                Object.keys(resp.outfiles).forEach(outfile => {
-                    const ofn = path.join(dir, "built", outfile);
-                    pxt.debug(`writing ${ofn}`);
-                    nodeutil.writeFileSync(ofn, resp.outfiles[outfile], 'utf8')
-                })
-                pkg.filesToBePublishedAsync()
-                    .then(files => {
-                        Object.keys(files).forEach(f => {
-                            const fn = path.join(dir, f);
-                            pxt.debug(`writing ${fn}`);
-                            nodeutil.writeFileSync(fn, files[f], 'utf8');
+                if (resp.outfiles && snippet.file) {
+                    const dir = snippet.file.replace(/\.ts$/, '');
+                    nodeutil.mkdirP(dir);
+                    nodeutil.mkdirP(path.join(dir, "built"));
+                    Object.keys(resp.outfiles).forEach(outfile => {
+                        const ofn = path.join(dir, "built", outfile);
+                        pxt.debug(`writing ${ofn}`);
+                        nodeutil.writeFileSync(ofn, resp.outfiles[outfile], 'utf8')
+                    })
+                    pkg.filesToBePublishedAsync()
+                        .then(files => {
+                            Object.keys(files).forEach(f => {
+                                const fn = path.join(dir, f);
+                                pxt.debug(`writing ${fn}`);
+                                nodeutil.writeFileSync(fn, files[f], 'utf8');
+                            })
                         })
-                    })
-            }
-            if (resp.success) {
-                if (/^block/.test(snippet.type)) {
-                    //Similar to pxtc.decompile but allows us to get blocksInfo for round trip
-                    const file = resp.ast.getSourceFile('main.ts');
-                    const apis = pxtc.getApiInfo(opts, resp.ast);
-                    const blocksInfo = pxtc.getBlocksInfo(apis);
-                    const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, {
-                        snippetMode: false,
-                        errorOnGreyBlocks: true
-                    })
-                    const success = !!bresp.outfiles['main.blocks']
-                    if (success) return addSuccess(name)
-                    else return addFailure(fn, bresp.diagnostics)
+                }
+                if (resp.success) {
+                    if (/^block/.test(snippet.type)) {
+                        //Similar to pxtc.decompile but allows us to get blocksInfo for round trip
+                        const file = resp.ast.getSourceFile('main.ts');
+                        const apis = pxtc.getApiInfo(opts, resp.ast);
+                        const blocksInfo = pxtc.getBlocksInfo(apis);
+                        const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, {
+                            snippetMode: false,
+                            errorOnGreyBlocks: true
+                        })
+                        const success = !!bresp.outfiles['main.blocks']
+                        if (success) return addSuccess(name)
+                        else return addFailure(fn, bresp.diagnostics)
+                    }
+                    else {
+                        return addSuccess(fn)
+                    }
                 }
                 else {
-                    return addSuccess(fn)
+                    return addFailure(name, resp.diagnostics)
                 }
-            }
-            else {
-                return addFailure(name, resp.diagnostics)
-            }
-        }).catch((e: Error) => {
-            addFailure(name, [
-                {
-                    code: 4242,
-                    category: ts.DiagnosticCategory.Error,
-                    messageText: e.message,
-                    fileName: fn,
-                    start: 1,
-                    line: 1,
-                    length: 1,
-                    column: 1
-                }
-            ])
-        })
-    }, { concurrency: 4 }).then((a: any) => {
+            }).catch((e: Error) => {
+                addFailure(name, [
+                    {
+                        code: 4242,
+                        category: ts.DiagnosticCategory.Error,
+                        messageText: e.message,
+                        fileName: fn,
+                        start: 1,
+                        line: 1,
+                        length: 1,
+                        column: 1
+                    }
+                ])
+            }))
+    }, { concurrency: 8 }).then((a: any) => {
         pxt.log(`${successes.length}/${successes.length + failures.length} snippets compiled to blocks, ${failures.length} failed`)
         if (ignoreCount > 0) {
             pxt.log(`Skipped ${ignoreCount} snippets`)

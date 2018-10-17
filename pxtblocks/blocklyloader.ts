@@ -1525,32 +1525,6 @@ namespace pxt.blocks {
             }
         };
 
-        // TODO: look into porting this code over to pxt-blockly
-        // Fix highlighting bug in edge
-        (<any>Blockly).Flyout.prototype.addBlockListeners_ = function (root: any, block: any, rect: any) {
-            this.listeners_.push(Blockly.bindEventWithChecks_(root, 'mousedown', null,
-                this.blockMouseDown_(block)));
-            this.listeners_.push(Blockly.bindEventWithChecks_(rect, 'mousedown', null,
-                this.blockMouseDown_(block)));
-            this.listeners_.push(Blockly.bindEvent_(root, 'mouseover', block,
-                block.addSelect));
-            this.listeners_.push(Blockly.bindEvent_(root, 'mouseout', block,
-                block.removeSelect));
-            this.listeners_.push(Blockly.bindEvent_(rect, 'mouseover', block,
-                block.addSelect));
-            this.listeners_.push(Blockly.bindEvent_(rect, 'mouseout', block,
-                block.removeSelect));
-
-            const that = this;
-            function select() {
-                if (that._selectedItem && that._selectedItem.svgGroup_) {
-                    that._selectedItem.removeSelect();
-                }
-                that._selectedItem = block;
-                that._selectedItem.addSelect();
-            }
-        };
-
         // Get rid of bumping behavior
         (Blockly as any).Constants.Logic.LOGIC_COMPARE_ONCHANGE_MIXIN.onchange = function () {}
     }
