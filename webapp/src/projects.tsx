@@ -342,7 +342,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
     }
 
     fetchLocalData(): pxt.workspace.Header[] {
-        let headers: pxt.workspace.Header[] = this.getData("header:*")
+        const headers: pxt.workspace.Header[] = this.getData("header:*")
         return headers;
     }
 
@@ -455,6 +455,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         } else {
             const headers = this.fetchLocalData();
             const showNewProject = pxt.appTarget.appTheme && !pxt.appTarget.appTheme.hideNewProjectButton;
+            const bundledcoresvgs = pxt.appTarget.bundledcoresvgs;
             return <carousel.Carousel bleedPercent={20}>
                 {showNewProject ? <div role="button" className="ui card link newprojectcard" title={lf("Creates a new empty project")}
                     onClick={this.newProject} onKeyDown={sui.fireClickOnEnter} >
@@ -463,19 +464,21 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                         <span className="header">{lf("New Project")}</span>
                     </div>
                 </div> : undefined}
-                {headers.map((scr, index) =>
-                    <ProjectsCodeCard
+                {headers.map((scr, index) => {
+                    const boardsvg = scr.board && bundledcoresvgs && bundledcoresvgs[scr.board];
+                    return <ProjectsCodeCard
                         key={'local' + scr.id + scr.recentUse}
                         // ref={(view) => { if (index === 1) this.latestProject = view }}
                         cardType="file"
-                        className={scr.githubId ? "file github" : "file"}
+                        className={boardsvg ? undefined : scr.board ? "" : scr.githubId ? "file github" : "file"}
+                        imageUrl={boardsvg}
                         name={scr.name}
                         time={scr.recentUse}
                         url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}
                         scr={scr}
                         onCardClick={this.handleCardClick}
-                    />
-                )}
+                    />;
+                })}
             </carousel.Carousel>
         }
     }
