@@ -699,6 +699,7 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
 
 export interface ExitAndSaveDialogState {
     visible?: boolean;
+    emoji?: string;
     projectName?: string;
 }
 
@@ -707,7 +708,8 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
     constructor(props: ISettingsProps) {
         super(props);
         this.state = {
-            visible: false
+            visible: false,
+            emoji: "😞"
         }
 
         this.hide = this.hide.bind(this);
@@ -748,10 +750,10 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
     handleChange(name: string) {
         this.setState({ projectName: name });
         let header = document.getElementsByClassName("exitandsave").item(0).firstChild as HTMLElement;
-        if (name === "" || name === "Untitled") {
-            header.innerText = header.innerText.replace("😊", "😞");
+        if (name === "" || name === lf("Untitled")) {
+            this.setState({emoji: "😞"})
         } else {
-            header.innerText = header.innerText.replace("😞", "😊");
+            this.setState({emoji: "😊"})
         }
     }
 
@@ -775,7 +777,7 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
     }
 
     renderCore() {
-        const { visible, projectName } = this.state;
+        const { visible, emoji, projectName } = this.state;
 
         const actions: sui.ModalButton[] = [{
             label: lf("Done"),
@@ -787,7 +789,7 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
         return (
             <sui.Modal isOpen={visible} className="exitandsave" size="tiny"
                 onClose={this.hide} dimmer={true} buttons={actions}
-                closeIcon={true} header={lf("Project has no name {0}", "😞")}
+                closeIcon={true} header={lf("Project has no name {0}", emoji)}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
                 modalDidOpen={this.modalDidOpen}
             >
