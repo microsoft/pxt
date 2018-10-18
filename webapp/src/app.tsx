@@ -2369,7 +2369,7 @@ export class ProjectView
         const inHome = this.state.home && !sandbox;
         const inEditor = !!this.state.header;
         const { lightbox, greenScreen } = this.state;
-        const simDebug = !!targetTheme.enableTrace || !!pxt.options.debug;
+        const simDebug = !!targetTheme.debugger;
 
         const { hideMenuBar, hideEditorToolbar } = targetTheme;
         const isHeadless = simOpts && simOpts.headless;
