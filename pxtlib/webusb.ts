@@ -75,7 +75,9 @@ namespace pxt.usb {
     export interface USBEndpoint {
         endpointNumber: number;
         direction: USBDirection;
+        /* tslint:disable:no-reserved-keywords external API */
         type: USBEndpointType;
+        /* tslint:enable:no-reserved-keywords */
         packetSize: number;
     }
 

@@ -90,7 +90,7 @@ export class CoreDialog extends React.Component<core.PromptOptions, {}> {
                 closeOnEscape={!options.hideCancel}
                 modalDidOpen={this.modalDidOpen}
             >
-                {options.type == 'prompt' ? <div className="ui fluid icon input">
+                {options.dialogType == 'prompt' ? <div className="ui fluid icon input">
                     <input autoFocus type="text" id="promptDialogInput" placeholder={options.defaultValue} />
                 </div> : undefined}
                 {options.jsx}

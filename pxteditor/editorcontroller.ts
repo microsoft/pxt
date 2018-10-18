@@ -1,3 +1,4 @@
+/* tslint:disable:no-reserved-keywords externally consumed API */
 namespace pxt.editor {
     export interface EditorMessage {
         /**
@@ -199,6 +200,7 @@ namespace pxt.editor {
 
     export interface EditorPkgExtMessageRequest extends EditorMessageRequest {
         // extension identifier
+        /* tslint:disable:no-reserved-keywords externally consumed API */
         package: string;
     }
 
@@ -417,3 +419,4 @@ namespace pxt.editor {
         })
     }
 }
+/* tslint:enable:no-reserved-keywords */

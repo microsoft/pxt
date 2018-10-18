@@ -2,7 +2,9 @@
 /// <reference path="commonutil.ts"/>
 
 namespace pxt.docs {
+    /* tslint:disable:no-reserved-keywords just a declaration*/
     declare var require: any;
+    /* tslint:enable:no-reserved-keywords */
     import U = pxtc.Util;
 
     let markedInstance: typeof marked;

@@ -21,7 +21,7 @@ namespace pxt.blocks {
         actualName: string;
 
         // Declared parameter type as it appears in the code
-        type?: string;
+        tsType?: string;
 
         // Parameter name as it appears in the block string. This is the name that
         // gets used for the input/field in the Blockly block
@@ -66,7 +66,7 @@ namespace pxt.blocks {
 
     export interface HandlerArg {
         name: string,
-        type: string,
+        tsType: string,
         inBlockDef: boolean
     }
 
@@ -137,7 +137,7 @@ namespace pxt.blocks {
                 actualName: THIS_NAME,
                 definitionName: defName,
                 shadowBlockId: def.shadowBlockId,
-                type: fn.namespace,
+                tsType: fn.namespace,
                 defaultValue: isVar ? def.varName : undefined,
 
                 // Normally we pass ths actual parameter name, but the "this" parameter doesn't have one
@@ -171,8 +171,8 @@ namespace pxt.blocks {
 
                     (res.parameters as BlockParameter[]).push({
                         actualName: p.name,
-                        type: p.type,
-                        defaultValue: isVar ? (def.varName || p.default) : p.default,
+                        tsType: p.tsType,
+                        defaultValue: isVar ? (def.varName || p.defaultValue) : p.defaultValue,
                         definitionName: defName,
                         shadowBlockId: def && def.shadowBlockId,
                         isOptional: defParameters ? defParameters.indexOf(def) >= optionalStart : false,
@@ -187,7 +187,7 @@ namespace pxt.blocks {
                     p.handlerParameters.forEach(arg => {
                         res.handlerArgs.push({
                             name: arg.name,
-                            type: arg.type,
+                            tsType: arg.tsType,
                             inBlockDef: defParameters ? defParameters.some(def => def.ref && def.name === arg.name) : false
                         });
                     })

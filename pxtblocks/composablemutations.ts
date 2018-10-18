@@ -200,7 +200,7 @@ namespace pxt.blocks {
                         // FIXME: Could probably be smarter here, right now this does not respect
                         // any options passed to the child block. Need to factor that out of BlocklyLoader
                         const param = comp.definitionNameToParam[def.parameters[optIndex].name];
-                        const shadowId = param.shadowBlockId || shadowBlockForType(param.type);
+                        const shadowId = param.shadowBlockId || shadowBlockForType(param.tsType);
                         if (shadowId) {
                             const nb = b.workspace.newBlock(shadowId);
                             nb.setShadow(true);
@@ -283,14 +283,14 @@ namespace pxt.blocks {
         }
     }
 
-    function shadowBlockForType(type: string) {
-        switch (type) {
+    function shadowBlockForType(tsType: string) {
+        switch (tsType) {
             case "number": return "math_number";
             case "boolean": return "logic_boolean"
             case "string": return "text";
         }
 
-        if (isArrayType(type)) {
+        if (isArrayType(tsType)) {
             return "lists_create_with";
         }
 

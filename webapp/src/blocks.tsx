@@ -762,7 +762,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         for (const variable of vars) {
             const value = getValueOfVariable(variable);
-            if (this.debugVariables) this.debugVariables.set(variable, value);
+            if (this.debugVariables) this.debugVariables.setValue(variable, value);
         }
 
         if (this.debugVariables) this.debugVariables.update();
@@ -1342,9 +1342,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             pxt.Util.toArray(blockXml.querySelectorAll('shadow'))
                 .filter(shadow => !shadow.innerHTML)
                 .forEach((shadow, i) => {
-                    let type = shadow.getAttribute('type');
-                    const builtin = snippets.allBuiltinBlocks()[type];
-                    let b = this.getBlockXml(builtin ? builtin : { name: type, attributes: { blockId: type } }, ignoregap, true);
+                    let blockType = shadow.getAttribute('type');
+                    const builtin = snippets.allBuiltinBlocks()[blockType];
+                    let b = this.getBlockXml(builtin ? builtin : { name: blockType, attributes: { blockId: blockType } }, ignoregap, true);
                     /* tslint:disable:no-inner-html setting one element's contents to the other */
                     if (b && b.length > 0 && b[0]) shadow.innerHTML = b[0].innerHTML;
                     /* tslint:enable:no-inner-html */

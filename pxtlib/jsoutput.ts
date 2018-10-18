@@ -7,7 +7,7 @@ namespace pxt.blocks {
     }
 
     export interface JsNode {
-        type: NT;
+        nodeType: NT;
         children: JsNode[];
         op: string;
         id?: string;
@@ -39,7 +39,7 @@ namespace pxt.blocks {
 
     export function mkNode(tp: NT, pref: string, children: JsNode[]): JsNode {
         return {
-            type: tp,
+            nodeType: tp,
             op: pref,
             children: children
         }
@@ -70,7 +70,7 @@ namespace pxt.blocks {
 
     export function mkStmt(...nodes: JsNode[]) {
         let last = nodes[nodes.length - 1]
-        if (last && last.type == NT.Block) {
+        if (last && last.nodeType == NT.Block) {
             // OK - no newline needed
         } else {
             nodes.push(mkNewLine())
@@ -280,7 +280,7 @@ namespace pxt.blocks {
 
         function flatten(e0: JsNode) {
             function rec(e: JsNode, outPrio: number) {
-                if (e.type != NT.Infix) {
+                if (e.nodeType != NT.Infix) {
                     for (let c of e.children)
                         rec(c, -1)
                     return
@@ -319,7 +319,7 @@ namespace pxt.blocks {
                 }
                 if (infixPri < outPrio) pushOp(")");
 
-                e.type = NT.Prefix
+                e.nodeType = NT.Prefix
                 e.op = ""
                 e.children = r
             }
@@ -347,7 +347,7 @@ namespace pxt.blocks {
 
             let start = getCurrentLine();
 
-            switch (n.type) {
+            switch (n.nodeType) {
                 case NT.Infix:
                     U.oops("no infix should be left")
                     break

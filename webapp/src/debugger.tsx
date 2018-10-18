@@ -38,14 +38,14 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         this.setState({ variables: {} });
     }
 
-    set(name: string, value: pxsim.Variables) {
+    setValue(name: string, value: pxsim.Variables) {
         this.nextVariables[name] = value;
     }
 
     static renderValue(v: any): string {
         let sv = '';
-        let type = typeof v;
-        switch (type) {
+        let typeString = typeof v;
+        switch (typeString) {
             case "undefined": sv = "undefined"; break;
             case "number": sv = v + ""; break;
             case "boolean": sv = v + ""; break;

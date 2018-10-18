@@ -67,7 +67,7 @@
         ],
         "no-inner-html": true,
         "no-octal-literal": true,
-        // pxt:override "no-reserved-keywords": true,
+        "no-reserved-keywords": true,
         "no-string-based-set-immediate": true,
         "no-string-based-set-interval": true,
         "no-string-based-set-timeout": true,

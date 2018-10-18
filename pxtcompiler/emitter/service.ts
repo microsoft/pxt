@@ -11,23 +11,23 @@ namespace ts.pxtc {
 
     function renderDefaultVal(apis: pxtc.ApisInfo, p: pxtc.ParameterDesc, imgLit: boolean, cursorMarker: string): string {
         if (p.initializer) return p.initializer
-        if (p.default) return p.default
-        if (p.type == "number") return "0"
-        if (p.type == "boolean") return "false"
-        else if (p.type == "string") {
+        if (p.defaultValue) return p.defaultValue
+        if (p.tsType == "number") return "0"
+        if (p.tsType == "boolean") return "false"
+        else if (p.tsType == "string") {
             if (imgLit) {
                 imgLit = false
                 return "`" + defaultImgLit + cursorMarker + "`";
             }
             return `"${cursorMarker}"`
         }
-        let si = apis ? Util.lookup(apis.byQName, p.type) : undefined;
+        let si = apis ? Util.lookup(apis.byQName, p.tsType) : undefined;
         if (si && si.kind == SymbolKind.Enum) {
-            let en = Util.values(apis.byQName).filter(e => e.namespace == p.type)[0]
+            let en = Util.values(apis.byQName).filter(e => e.namespace == p.tsType)[0]
             if (en)
                 return en.namespace + "." + en.name;
         }
-        let m = /^\((.*)\) => (.*)$/.exec(p.type)
+        let m = /^\((.*)\) => (.*)$/.exec(p.tsType)
         if (m)
             return `(${m[1]}) => {\n    ${cursorMarker}\n}`
         return placeholderChar;
@@ -80,18 +80,18 @@ namespace ts.pxtc {
         if (decl.modifiers && decl.modifiers.some(m => m.kind == SK.PrivateKeyword || m.kind == SK.ProtectedKeyword))
             return false;
 
-        let symbol = decl.symbol
+        let tsSymbol = decl.symbol
 
-        if (!symbol)
+        if (!tsSymbol)
             return false;
 
         while (true) {
-            let parSymbol: Symbol = (symbol as any).parent
-            if (parSymbol) symbol = parSymbol
+            let parSymbol: Symbol = (tsSymbol as any).parent
+            if (parSymbol) tsSymbol = parSymbol
             else break
         }
 
-        let topDecl = symbol.valueDeclaration || symbol.declarations[0]
+        let topDecl = tsSymbol.valueDeclaration || tsSymbol.declarations[0]
 
         if (topDecl.kind == SK.VariableDeclaration)
             topDecl = topDecl.parent.parent as Declaration
@@ -196,14 +196,14 @@ namespace ts.pxtc {
                         if (attributes.mutate === "objectdestructuring") {
                             assert(callbackParameters.length > 0);
                             props = typechecker.getTypeAtLocation(callbackParameters[0].valueDeclaration).getProperties().map(prop => {
-                                return { name: prop.getName(), type: typechecker.typeToString(typechecker.getTypeOfSymbolAtLocation(prop, callbackParameters[0].valueDeclaration)) }
+                                return { name: prop.getName(), tsType: typechecker.typeToString(typechecker.getTypeOfSymbolAtLocation(prop, callbackParameters[0].valueDeclaration)) }
                             });
                         }
                         else {
                             parameters = callbackParameters.map((sym, i) => {
                                 return {
                                     name: sym.getName(),
-                                    type: typechecker.typeToString(typechecker.getTypeOfSymbolAtLocation(sym, p))
+                                    tsType: typechecker.typeToString(typechecker.getTypeOfSymbolAtLocation(sym, p))
                                 };
                             });
                         }
@@ -227,7 +227,7 @@ namespace ts.pxtc {
                     return {
                         name: n,
                         description: desc,
-                        type: typeOf(p.type, p),
+                        tsType: typeOf(p.type, p),
                         initializer: p.initializer ? p.initializer.getText() : attributes.paramDefl[n],
                         default: attributes.paramDefl[n],
                         properties: props,
@@ -250,7 +250,7 @@ namespace ts.pxtc {
     }
 
     export interface GenDocsOptions {
-        package?: boolean;
+        packageName?: boolean;
         locs?: boolean;
         docs?: boolean;
     }
@@ -448,8 +448,8 @@ namespace ts.pxtc {
         return res
     }
 
-    export function getFullName(typechecker: TypeChecker, symbol: Symbol): string {
-        return typechecker.getFullyQualifiedName(symbol);
+    export function getFullName(typechecker: TypeChecker, tsSymbol: Symbol): string {
+        return typechecker.getFullyQualifiedName(tsSymbol);
     }
 
     export function fillCompletionEntries(program: Program, symbols: Symbol[], r: CompletionInfo, apiInfo: ApisInfo) {
@@ -888,21 +888,21 @@ namespace ts.pxtc.service {
                     return `function () {}`;
             }
 
-            const type = checker ? checker.getTypeAtLocation(param) : undefined;
-            if (type) {
-                if (isObjectType(type)) {
-                    if (type.objectFlags & ts.ObjectFlags.Anonymous) {
-                        const sigs = checker.getSignaturesOfType(type, ts.SignatureKind.Call);
+            const tsType = checker ? checker.getTypeAtLocation(param) : undefined;
+            if (tsType) {
+                if (isObjectType(tsType)) {
+                    if (tsType.objectFlags & ts.ObjectFlags.Anonymous) {
+                        const sigs = checker.getSignaturesOfType(tsType, ts.SignatureKind.Call);
                         if (sigs.length) {
                             return getFunctionString(sigs[0]);
                         }
                         return `function () {}`;
                     }
                 }
-                if (type.flags & ts.TypeFlags.EnumLike) {
-                    return getDefaultEnumValue(type, checker);
+                if (tsType.flags & ts.TypeFlags.EnumLike) {
+                    return getDefaultEnumValue(tsType, checker);
                 }
-                if (type.flags & ts.TypeFlags.NumberLike) {
+                if (tsType.flags & ts.TypeFlags.NumberLike) {
                     return "0";
                 }
             }

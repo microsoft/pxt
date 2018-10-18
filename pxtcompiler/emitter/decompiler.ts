@@ -52,23 +52,23 @@ namespace ts.pxtc.decompiler {
     const stringType = "text";
     const booleanType = "logic_boolean";
 
-    const ops: pxt.Map<{ type: string; op?: string; leftName?: string; rightName?: string }> = {
-        "+": { type: "math_arithmetic", op: "ADD" },
-        "-": { type: "math_arithmetic", op: "MINUS" },
-        "/": { type: "math_arithmetic", op: "DIVIDE" },
-        "*": { type: "math_arithmetic", op: "MULTIPLY" },
-        "**": { type: "math_arithmetic", op: "POWER" },
-        "%": { type: "math_modulo", leftName: "DIVIDEND", rightName: "DIVISOR" },
-        "<": { type: "logic_compare", op: "LT" },
-        "<=": { type: "logic_compare", op: "LTE" },
-        ">": { type: "logic_compare", op: "GT" },
-        ">=": { type: "logic_compare", op: "GTE" },
-        "==": { type: "logic_compare", op: "EQ" },
-        "===": { type: "logic_compare", op: "EQ" },
-        "!=": { type: "logic_compare", op: "NEQ" },
-        "!==": { type: "logic_compare", op: "NEQ" },
-        "&&": { type: "logic_operation", op: "AND" },
-        "||": { type: "logic_operation", op: "OR" },
+    const ops: pxt.Map<{ blockType: string; op?: string; leftName?: string; rightName?: string }> = {
+        "+": { blockType: "math_arithmetic", op: "ADD" },
+        "-": { blockType: "math_arithmetic", op: "MINUS" },
+        "/": { blockType: "math_arithmetic", op: "DIVIDE" },
+        "*": { blockType: "math_arithmetic", op: "MULTIPLY" },
+        "**": { blockType: "math_arithmetic", op: "POWER" },
+        "%": { blockType: "math_modulo", leftName: "DIVIDEND", rightName: "DIVISOR" },
+        "<": { blockType: "logic_compare", op: "LT" },
+        "<=": { blockType: "logic_compare", op: "LTE" },
+        ">": { blockType: "logic_compare", op: "GT" },
+        ">=": { blockType: "logic_compare", op: "GTE" },
+        "==": { blockType: "logic_compare", op: "EQ" },
+        "===": { blockType: "logic_compare", op: "EQ" },
+        "!=": { blockType: "logic_compare", op: "NEQ" },
+        "!==": { blockType: "logic_compare", op: "NEQ" },
+        "&&": { blockType: "logic_operation", op: "AND" },
+        "||": { blockType: "logic_operation", op: "OR" },
     }
 
     /*
@@ -98,7 +98,7 @@ namespace ts.pxtc.decompiler {
      */
     interface BlocklyVariableDeclaration {
         name: string;
-        type: string;
+        typeName: string;
     }
 
     interface BlocklyNode {
@@ -124,7 +124,7 @@ namespace ts.pxtc.decompiler {
     }
 
     interface BlockNode extends BlocklyNode {
-        type: string;
+        blockType: string;
         inputs?: ValueNode[];
         fields?: FieldNode[]
         mutation?: pxt.Map<string>;
@@ -373,7 +373,7 @@ namespace ts.pxtc.decompiler {
                     // It's safe to do because enum members can't start with numbers.
                     enumMembers.push({
                         name: value + name,
-                        type: enumName
+                        typeName: enumName
                     });
                 });
             }
@@ -387,7 +387,7 @@ namespace ts.pxtc.decompiler {
         if (enumMembers.length) {
             write("<variables>")
             enumMembers.forEach(e => {
-                write(`<variable type="${U.htmlEscape(e.type)}">${U.htmlEscape(e.name)}</variable>`)
+                write(`<variable type="${U.htmlEscape(e.typeName)}">${U.htmlEscape(e.name)}</variable>`)
             });
             write("</variables>")
         }
@@ -465,24 +465,24 @@ ${output}</xml>`;
             }
         }
 
-        function mkStmt(type: string): StatementNode {
+        function mkStmt(blockType: string): StatementNode {
             countBlock();
             return {
                 kind: "statement",
-                type
+                blockType
             };
         }
 
-        function mkExpr(type: string): ExpressionNode {
+        function mkExpr(blockType: string): ExpressionNode {
             countBlock();
             return {
                 kind: "expr",
-                type
+                blockType
             };
         }
 
         function mkValue(name: string, value: ExpressionNode | TextNode, shadowType?: string): ValueNode {
-            if (shadowType && value.kind === "expr" && (value as ExpressionNode).type !== shadowType) {
+            if (shadowType && value.kind === "expr" && (value as ExpressionNode).blockType !== shadowType) {
                 // Count the shadow block that will be emitted
                 countBlock();
             }
@@ -509,7 +509,7 @@ ${output}</xml>`;
                 return;
             }
 
-            openBlockTag(n.type)
+            openBlockTag(n.blockType)
             emitBlockNodeCore(n);
 
             if (n.data !== undefined) {
@@ -558,9 +558,9 @@ ${output}</xml>`;
 
             if (n.value.kind === "expr") {
                 const value = n.value as ExpressionNode;
-                emitShadowOnly = value.type === n.shadowType;
+                emitShadowOnly = value.blockType === n.shadowType;
                 if (!emitShadowOnly) {
-                    switch (value.type) {
+                    switch (value.blockType) {
                         case "math_number":
                         case "math_integer":
                         case "math_whole_number":
@@ -619,14 +619,14 @@ ${output}</xml>`;
                 const node = n as ExpressionNode;
                 const tag = shadow || node.isShadow ? "shadow" : "block";
 
-                write(`<${tag} type="${U.htmlEscape(node.type)}">`)
+                write(`<${tag} type="${U.htmlEscape(node.blockType)}">`)
                 emitBlockNodeCore(node);
                 write(`</${tag}>`)
             }
         }
 
-        function openBlockTag(type: string) {
-            write(`<block type="${U.htmlEscape(type)}">`)
+        function openBlockTag(blockType: string) {
+            write(`<block type="${U.htmlEscape(blockType)}">`)
         }
 
         function closeBlockTag() {
@@ -727,7 +727,7 @@ ${output}</xml>`;
                 return getTextJoin(n);
             }
 
-            const result = mkExpr(npp.type);
+            const result = mkExpr(npp.blockType);
             result.fields = [];
             result.inputs = [];
 
@@ -797,12 +797,12 @@ ${output}</xml>`;
             else {
                 value = getOutputBlock(contents)
             }
-            if (value.kind == "expr" && (value as ExpressionNode).type == "math_number") {
+            if (value.kind == "expr" && (value as ExpressionNode).blockType == "math_number") {
                 const actualValue = value.fields[0].value as number;
                 if (shadowType == "math_integer" && actualValue % 1 === 0)
-                    (value as ExpressionNode).type = "math_integer";
+                    (value as ExpressionNode).blockType = "math_integer";
                 if (shadowType == "math_whole_number" && actualValue % 1 === 0 && actualValue > 0)
-                    (value as ExpressionNode).type = "math_whole_number";
+                    (value as ExpressionNode).blockType = "math_whole_number";
             }
 
             return mkValue(name, value, shadowType);
@@ -826,8 +826,8 @@ ${output}</xml>`;
             return getFieldBlock("logic_boolean", "BOOL", value ? "TRUE" : "FALSE");
         }
 
-        function getFieldBlock(type: string, fieldName: string, value: string, isShadow?: boolean): ExpressionNode {
-            const r = mkExpr(type);
+        function getFieldBlock(blockType: string, fieldName: string, value: string, isShadow?: boolean): ExpressionNode {
+            const r = mkExpr(blockType);
             r.fields = [getField(fieldName, value)];
             r.isShadow = isShadow;
             return r;
@@ -1481,7 +1481,7 @@ ${output}</xml>`;
             countBlock();
             const r = {
                 kind: asExpression ? "expr" : "statement",
-                type: attributes.blockId
+                blockType: attributes.blockId
             } as StatementNode;
 
             const addInput = (v: ValueNode) => (r.inputs || (r.inputs = [])).push(v);
@@ -1801,9 +1801,9 @@ ${output}</xml>`;
             }
         }
 
-        function trackVariableUsage(name: string, type: ReferenceType) {
+        function trackVariableUsage(name: string, refType: ReferenceType) {
             if (varUsages[name] !== ReferenceType.InTextBlocks) {
-                varUsages[name] = type;
+                varUsages[name] = refType;
             }
         }
 
@@ -2365,8 +2365,8 @@ ${output}</xml>`;
                         }
                     }
                 }
-                else if (env.blocks.apis.byQName[paramInfo.type]) {
-                    const typeInfo = env.blocks.apis.byQName[paramInfo.type];
+                else if (env.blocks.apis.byQName[paramInfo.tsType]) {
+                    const typeInfo = env.blocks.apis.byQName[paramInfo.tsType];
                     if (typeInfo.attributes.fixedInstances) {
                         if (decompileFixedInst(param)) {
                             return undefined;
@@ -2396,7 +2396,7 @@ ${output}</xml>`;
                 function checkEnumArgument(enumArg: ts.Node) {
                     if (enumArg.kind === SK.PropertyAccessExpression) {
                         const enumName = (enumArg as PropertyAccessExpression).expression as Identifier;
-                        if (enumName.kind === SK.Identifier && enumName.text === paramInfo.type) {
+                        if (enumName.kind === SK.Identifier && enumName.text === paramInfo.tsType) {
                             return true;
                         }
                     }
@@ -2843,8 +2843,8 @@ ${output}</xml>`;
         }
     }
 
-    function isLiteralBlockType(type: string) {
-        switch (type) {
+    function isLiteralBlockType(blockType: string) {
+        switch (blockType) {
             case numberType:
             case integerNumberType:
             case wholeNumberType:

@@ -113,9 +113,9 @@ namespace ts.pxtc {
         return target.isNative && (target.nativeType == NATIVE_TYPE_THUMB)
     }
 
-    function isThisType(type: TypeParameter) {
+    function isThisType(typeParam: TypeParameter) {
         // Internal TS field
-        return (type as any).isThisType;
+        return (typeParam as any).isThisType;
     }
 
     function isSyntheticThis(def: Declaration) {
@@ -358,9 +358,9 @@ namespace ts.pxtc {
         }
     }
 
-    export function parseCommentsOnSymbol(symbol: Symbol): CommentAttrs {
+    export function parseCommentsOnSymbol(tsSymbol: Symbol): CommentAttrs {
         let cmts = ""
-        for (let decl of symbol.declarations) {
+        for (let decl of tsSymbol.declarations) {
             cmts += getComments(decl)
         }
         return parseCommentString(cmts)
@@ -777,7 +777,9 @@ namespace ts.pxtc {
     }
 
     export type VarOrParam = VariableDeclaration | ParameterDeclaration | PropertyDeclaration | BindingElement;
+    /* tslint:disable:no-reserved-keywords external API */
     export type TypedDecl = Declaration & { type?: TypeNode }
+    /* tslint:enable:no-reserved-keywords */
 
     export interface VariableAddInfo {
         captured?: boolean;
@@ -4064,7 +4066,7 @@ ${lbl}: .short 0xffff
         }
     }
 
-    function isNumberLikeType(type: Type) {
-        return !!(type.flags & (TypeFlags.NumberLike | TypeFlags.EnumLike | TypeFlags.BooleanLike))
+    function isNumberLikeType(tsType: Type) {
+        return !!(tsType.flags & (TypeFlags.NumberLike | TypeFlags.EnumLike | TypeFlags.BooleanLike))
     }
 }

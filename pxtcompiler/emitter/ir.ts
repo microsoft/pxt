@@ -299,7 +299,7 @@ namespace ts.pxtc.ir {
         getDebugInfo(): CellInfo {
             return {
                 name: this.getName(),
-                type: this._debugType,
+                cellType: this._debugType,
                 index: this.index,
             }
         }

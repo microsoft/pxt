@@ -1,5 +1,5 @@
 /// <reference path="../localtypings/vscode-debug-protocol.d.ts" />
-
+/* tslint:disable:no-reserved-keywords external API */
 /**
  * Heavily adapted from https://github.com/Microsoft/vscode-debugadapter-node
  * and altered to run in a browser and communcate via JSON over a websocket
@@ -748,3 +748,4 @@ namespace pxsim.protocol {
         }
     }
 }
+/* tslint:enable:no-reserved-keywords */

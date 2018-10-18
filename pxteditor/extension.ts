@@ -1,3 +1,4 @@
+/* tslint:disable:no-reserved-keywords externally consumed API */
 namespace pxt.editor {
     export interface DataStreams<T> {
         console?: T;
@@ -175,3 +176,4 @@ namespace pxt.editor {
     export interface WriteCodeResponse extends ExtensionResponse {
     }
 }
+/* tslint:enable:no-reserved-keywords externally consumed API */

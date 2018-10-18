@@ -203,7 +203,7 @@ namespace pxsim.visuals {
             };
             let coord = this.getBBCoord(rowCol);
             part.moveToCoord(coord);
-            let getCmpClass = (type: string) => `sim-${type}-cmp`;
+            let getCmpClass = (tp: string) => `sim-${tp}-cmp`;
             let cls = getCmpClass(partInst.name);
             svg.addClass(part.element, cls);
             svg.addClass(part.element, "sim-cmp");

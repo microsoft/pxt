@@ -69,7 +69,7 @@ namespace pxt.blocks {
     export class Point {
         constructor(
             public link: Point,
-            public type: string,
+            public typeName: string,
             public parentType?: Point,
             public childType?: Point
 
@@ -109,12 +109,12 @@ namespace pxt.blocks {
         }
 
 
-        let t = unify(_p1.type, _p2.type);
+        let t = unify(_p1.typeName, _p2.typeName);
 
         p1.link = _p2;
         _p1.link = _p2;
-        p1.type = null;
-        p2.type = t;
+        p1.typeName = null;
+        p2.typeName = t;
     }
 
     // Ground types.
@@ -156,10 +156,10 @@ namespace pxt.blocks {
             return find((<any>b).p);
 
         if (b.type == "variables_get")
-            return find(lookup(e, escapeVarName(b.getField("VAR").getText(), e)).type);
+            return find(lookup(e, escapeVarName(b.getField("VAR").getText(), e)).tsType);
 
         if (!b.outputConnection) {
-            return ground(pUnit.type);
+            return ground(pUnit.typeName);
         }
 
         const check = b.outputConnection.check_ && b.outputConnection.check_.length ? b.outputConnection.check_[0] : "T";
@@ -180,7 +180,7 @@ namespace pxt.blocks {
                             if (t.parentType) {
                                 return t.parentType;
                             }
-                            tp = ground(t.type + "[]");
+                            tp = ground(t.typeName + "[]");
                             genericLink(tp, t);
                             break;
                         }
@@ -207,7 +207,7 @@ namespace pxt.blocks {
                     if (parentType.childType) {
                         return parentType.childType;
                     }
-                    const p = isArrayType(parentType.type) ? mkPoint(parentType.type.substr(-2)) : mkPoint(null);
+                    const p = isArrayType(parentType.typeName) ? mkPoint(parentType.typeName.substr(-2)) : mkPoint(null);
                     genericLink(parentType, p);
                     return p;
                 }
@@ -231,21 +231,21 @@ namespace pxt.blocks {
             throw new Error("cannot mix " + t1 + " with " + t2);
     }
 
-    function isArrayType(type: string) {
-        return type && type.indexOf("[]") !== -1;
+    function isArrayType(typeString: string) {
+        return typeString && typeString.indexOf("[]") !== -1;
     }
 
-    function mkPlaceholderBlock(e: Environment, parent: Blockly.Block, type?: string): Blockly.Block {
+    function mkPlaceholderBlock(e: Environment, parent: Blockly.Block, argType?: string): Blockly.Block {
         // XXX define a proper placeholder block type
         return <any>{
             type: "placeholder",
-            p: mkPoint(type || null),
+            p: mkPoint(argType || null),
             workspace: e.workspace,
             parentBlock_: parent
         };
     }
 
-    function attachPlaceholderIf(e: Environment, b: Blockly.Block, n: string, type?: string) {
+    function attachPlaceholderIf(e: Environment, b: Blockly.Block, n: string, argType?: string) {
         // Ugly hack to keep track of the type we want there.
         const target = b.getInputTargetBlock(n);
         if (!target) {
@@ -254,7 +254,7 @@ namespace pxt.blocks {
             }
 
             if (!placeholders[b.id][n]) {
-                placeholders[b.id][n] = mkPlaceholderBlock(e, b, type);
+                placeholders[b.id][n] = mkPlaceholderBlock(e, b, argType);
             }
         }
         else if (target.type === pxtc.TS_OUTPUT_TYPE && !((target as any).p)) {
@@ -297,12 +297,12 @@ namespace pxt.blocks {
             try {
                 switch (b.type) {
                     case "math_op2":
-                        unionParam(e, b, "x", ground(pNumber.type));
-                        unionParam(e, b, "y", ground(pNumber.type));
+                        unionParam(e, b, "x", ground(pNumber.typeName));
+                        unionParam(e, b, "y", ground(pNumber.typeName));
                         break;
 
                     case "math_op3":
-                        unionParam(e, b, "x", ground(pNumber.type));
+                        unionParam(e, b, "x", ground(pNumber.typeName));
                         break;
 
                     case "math_arithmetic":
@@ -310,12 +310,12 @@ namespace pxt.blocks {
                         switch (b.getFieldValue("OP")) {
                             case "ADD": case "MINUS": case "MULTIPLY": case "DIVIDE":
                             case "LT": case "LTE": case "GT": case "GTE": case "POWER":
-                                unionParam(e, b, "A", ground(pNumber.type));
-                                unionParam(e, b, "B", ground(pNumber.type));
+                                unionParam(e, b, "A", ground(pNumber.typeName));
+                                unionParam(e, b, "B", ground(pNumber.typeName));
                                 break;
                             case "AND": case "OR":
-                                attachPlaceholderIf(e, b, "A", pBoolean.type);
-                                attachPlaceholderIf(e, b, "B", pBoolean.type);
+                                attachPlaceholderIf(e, b, "A", pBoolean.typeName);
+                                attachPlaceholderIf(e, b, "B", pBoolean.typeName);
                                 break;
                             case "EQ": case "NEQ":
                                 attachPlaceholderIf(e, b, "A");
@@ -332,34 +332,34 @@ namespace pxt.blocks {
                         break;
 
                     case "logic_operation":
-                        attachPlaceholderIf(e, b, "A", pBoolean.type);
-                        attachPlaceholderIf(e, b, "B", pBoolean.type);
+                        attachPlaceholderIf(e, b, "A", pBoolean.typeName);
+                        attachPlaceholderIf(e, b, "B", pBoolean.typeName);
                         break;
 
                     case "logic_negate":
-                        attachPlaceholderIf(e, b, "BOOL", pBoolean.type);
+                        attachPlaceholderIf(e, b, "BOOL", pBoolean.typeName);
                         break;
 
                     case "controls_if":
                         for (let i = 0; i <= (<Blockly.IfBlock>b).elseifCount_; ++i)
-                            attachPlaceholderIf(e, b, "IF" + i, pBoolean.type);
+                            attachPlaceholderIf(e, b, "IF" + i, pBoolean.typeName);
                         break;
 
                     case "pxt_controls_for":
                     case "controls_simple_for":
-                        unionParam(e, b, "TO", ground(pNumber.type));
+                        unionParam(e, b, "TO", ground(pNumber.typeName));
                         break;
                     case "pxt_controls_for_of":
                     case "controls_for_of":
                         unionParam(e, b, "LIST", ground("Array"));
                         const listTp = returnType(e, getInputTargetBlock(b, "LIST"));
-                        const elementTp = lookup(e, escapeVarName(getLoopVariableField(b).getField("VAR").getText(), e)).type;
+                        const elementTp = lookup(e, escapeVarName(getLoopVariableField(b).getField("VAR").getText(), e)).tsType;
                         genericLink(listTp, elementTp);
                         break;
                     case "variables_set":
                     case "variables_change":
                         let x = escapeVarName(b.getField("VAR").getText(), e);
-                        let p1 = lookup(e, x).type;
+                        let p1 = lookup(e, x).tsType;
                         attachPlaceholderIf(e, b, "VALUE");
                         let rhs = getInputTargetBlock(b, "VALUE");
                         if (rhs) {
@@ -372,15 +372,15 @@ namespace pxt.blocks {
                         }
                         break;
                     case "controls_repeat_ext":
-                        unionParam(e, b, "TIMES", ground(pNumber.type));
+                        unionParam(e, b, "TIMES", ground(pNumber.typeName));
                         break;
 
                     case "device_while":
-                        attachPlaceholderIf(e, b, "COND", pBoolean.type);
+                        attachPlaceholderIf(e, b, "COND", pBoolean.typeName);
                         break;
                     case "lists_index_get":
                         unionParam(e, b, "LIST", ground("Array"));
-                        unionParam(e, b, "INDEX", ground(pNumber.type));
+                        unionParam(e, b, "INDEX", ground(pNumber.typeName));
                         const listType = returnType(e, getInputTargetBlock(b, "LIST"));
                         const ret = returnType(e, b);
                         genericLink(listType, ret);
@@ -389,7 +389,7 @@ namespace pxt.blocks {
                         unionParam(e, b, "LIST", ground("Array"));
                         attachPlaceholderIf(e, b, "VALUE");
                         handleGenericType(b, "LIST");
-                        unionParam(e, b, "INDEX", ground(pNumber.type));
+                        unionParam(e, b, "INDEX", ground(pNumber.typeName));
                         break;
                     case pxtc.PAUSE_UNTIL_TYPE:
                         unionParam(e, b, "PREDICATE", pBoolean);
@@ -437,8 +437,8 @@ namespace pxt.blocks {
         // Last pass: if some variable has no type (because it was never used or
         // assigned to), just unify it with int...
         e.bindings.forEach((b: Binding) => {
-            if (getConcreteType(b.type).type == null)
-                union(b.type, ground(pNumber.type));
+            if (getConcreteType(b.tsType).typeName == null)
+                union(b.tsType, ground(pNumber.typeName));
         });
 
         function connectionCheck(i: Blockly.Input) {
@@ -451,7 +451,7 @@ namespace pxt.blocks {
                 const gen = getInputTargetBlock(b, genericArgs[0].name);
                 if (gen) {
                     const arg = returnType(e, gen);
-                    const arrayType = arg.type ? ground(returnType(e, gen).type + "[]") : ground(null);
+                    const arrayType = arg.typeName ? ground(returnType(e, gen).typeName + "[]") : ground(null);
                     genericLink(arrayType, arg);
                     unionParam(e, b, name, arrayType);
                     return true;
@@ -483,19 +483,19 @@ namespace pxt.blocks {
         const t = find(point)
         if (found.indexOf(t) === -1) {
             found.push(t);
-            if (!t.type || t.type === "Array") {
+            if (!t.typeName || t.typeName === "Array") {
                 if (t.parentType) {
                     const parent = getConcreteType(t.parentType, found);
-                    if (parent.type && parent.type !== "Array") {
-                        t.type = parent.type.substr(0, parent.type.length - 2);
+                    if (parent.typeName && parent.typeName !== "Array") {
+                        t.typeName = parent.typeName.substr(0, parent.typeName.length - 2);
                         return t;
                     }
                 }
 
                 if (t.childType) {
                     const child = getConcreteType(t.childType, found);
-                    if (child.type) {
-                        t.type = child.type + "[]";
+                    if (child.typeName) {
+                        t.typeName = child.typeName + "[]";
                         return t;
                     }
 
@@ -556,12 +556,12 @@ namespace pxt.blocks {
         let left = getInputTargetBlock(b, "A");
         let right = getInputTargetBlock(b, "B");
         let args = [compileExpression(e, left, comments), compileExpression(e, right, comments)];
-        let t = returnType(e, left).type;
+        let t = returnType(e, left).typeName;
 
-        if (t == pString.type) {
+        if (t == pString.typeName) {
             if (bOp == "EQ") return H.mkSimpleCall("==", args);
             else if (bOp == "NEQ") return H.mkSimpleCall("!=", args);
-        } else if (t == pBoolean.type)
+        } else if (t == pBoolean.typeName)
             return H.mkSimpleCall(opToTok[bOp], args);
 
         // Compilation of math operators.
@@ -699,16 +699,16 @@ namespace pxt.blocks {
     }
 
     function defaultValueForType(t: Point): JsNode {
-        if (t.type == null) {
-            union(t, ground(pNumber.type));
+        if (t.typeName == null) {
+            union(t, ground(pNumber.typeName));
             t = find(t);
         }
 
-        if (isArrayType(t.type)) {
+        if (isArrayType(t.typeName)) {
             return mkText("[]");
         }
 
-        switch (t.type) {
+        switch (t.typeName) {
             case "boolean":
                 return H.mkBooleanLiteral(false);
             case "number":
@@ -730,7 +730,7 @@ namespace pxt.blocks {
         let expr: JsNode;
         if (b.disabled || b.type == "placeholder") {
             const ret = find(returnType(e, b));
-            if (ret.type === "Array") {
+            if (ret.typeName === "Array") {
                 // FIXME: Can't use default type here because TS complains about
                 // the array having an implicit any type. However, forcing this
                 // to be a number array may cause type issues. Also, potential semicolon
@@ -835,7 +835,7 @@ namespace pxt.blocks {
 
     export interface Binding {
         name: string;
-        type: Point;
+        tsType: Point;
         declaredInLocalScope: number;
         assigned?: VarUsage; // records the first usage of this variable (read/assign)
         mustBeGlobal?: boolean;
@@ -849,7 +849,7 @@ namespace pxt.blocks {
         assert(lookup(e, x) == null);
         return {
             workspace: e.workspace,
-            bindings: [{ name: x, type: ground(t), declaredInLocalScope: 0 }].concat(e.bindings),
+            bindings: [{ name: x, tsType: ground(t), declaredInLocalScope: 0 }].concat(e.bindings),
             stdCallTable: e.stdCallTable,
             errors: e.errors,
             renames: e.renames,
@@ -1033,7 +1033,7 @@ namespace pxt.blocks {
         let binding = lookup(e, name);
         if (!binding.assigned)
             binding.assigned = VarUsage.Read;
-        assert(binding != null && binding.type != null);
+        assert(binding != null && binding.tsType != null);
         return mkText(name);
     }
 
@@ -1331,7 +1331,7 @@ namespace pxt.blocks {
         }
 
         r.forEach(l => {
-            if (l.type === NT.Block || l.type === NT.Prefix && Util.startsWith(l.op, "//")) {
+            if (l.nodeType === NT.Block || l.nodeType === NT.Prefix && Util.startsWith(l.op, "//")) {
                 l.id = b.id
             }
         });
@@ -1371,7 +1371,7 @@ namespace pxt.blocks {
                         else {
                             e.bindings.push({
                                 name: n,
-                                type: mkPoint(null),
+                                tsType: mkPoint(null),
                                 assigned: VarUsage.Assign,
                                 declaredInLocalScope: 1,
                                 mustBeGlobal: false
@@ -1462,7 +1462,7 @@ namespace pxt.blocks {
                         isExtensionMethod: instance,
                         isExpression: fn.retType && fn.retType !== "void",
                         imageLiteral: fn.attributes.imageLiteral,
-                        hasHandler: !!comp.handlerArgs.length || fn.parameters && fn.parameters.some(p => (p.type == "() => void" || p.type == "Action" || !!p.properties)),
+                        hasHandler: !!comp.handlerArgs.length || fn.parameters && fn.parameters.some(p => (p.tsType == "() => void" || p.tsType == "Action" || !!p.properties)),
                         property: !fn.parameters,
                         isIdentity: fn.attributes.shim == "TD_ID"
                     }
@@ -1501,10 +1501,10 @@ namespace pxt.blocks {
             return variableIsScoped(b.getSurroundParent(), name);
         };
 
-        function trackLocalDeclaration(name: string, type: string) {
+        function trackLocalDeclaration(name: string, tsType: string) {
             // It's ok for two loops to share the same variable.
             if (lookup(e, name) == null)
-                e = extend(e, name, type);
+                e = extend(e, name, tsType);
             lookup(e, name).declaredInLocalScope++;
             // If multiple loops share the same
             // variable, that means there's potential race conditions in concurrent
@@ -1521,7 +1521,7 @@ namespace pxt.blocks {
                     trackLocalDeclaration(x, null);
                 }
                 else {
-                    trackLocalDeclaration(x, pNumber.type);
+                    trackLocalDeclaration(x, pNumber.typeName);
                 }
             }
             else if (isMutatingBlock(b)) {
@@ -1538,7 +1538,7 @@ namespace pxt.blocks {
                 const names = getEscapedCBParameters(b, stdFunc, e);
                 names.forEach((varName, index) => {
                     if (varName != null) {
-                        trackLocalDeclaration(escapeVarName(varName, e), stdFunc.comp.handlerArgs[index].type);
+                        trackLocalDeclaration(escapeVarName(varName, e), stdFunc.comp.handlerArgs[index].tsType);
                     }
                 });
             }
@@ -1613,7 +1613,7 @@ namespace pxt.blocks {
                     append(stmtsMain, compileStartEvent(e, b).children);
                 else {
                     const compiled = compileStatements(e, b)
-                    if (compiled.type == NT.Block)
+                    if (compiled.nodeType == NT.Block)
                         append(stmtsMain, compiled.children);
                     else stmtsMain.push(compiled)
                 }
@@ -1669,10 +1669,10 @@ namespace pxt.blocks {
             // All variables in this script are compiled as locals within main unless loop or previsouly assigned
             const stmtsVariables = e.bindings.filter(b => !isCompiledAsLocalVariable(b) && b.assigned != VarUsage.Assign)
                 .map(b => {
-                    const t = getConcreteType(b.type);
+                    const t = getConcreteType(b.tsType);
                     let defl: JsNode;
 
-                    if (t.type === "Array") {
+                    if (t.typeName === "Array") {
                         defl = mkText("[]");
                     }
                     else {
@@ -1681,7 +1681,7 @@ namespace pxt.blocks {
 
                     let tp = ""
                     if (defl.op == "null" || defl.op == "[]") {
-                        let tpname = t.type
+                        let tpname = t.typeName
                         // If the type is "Array" or null[] it means that we failed to narrow the type of array.
                         // Best we can do is just default to number[]
                         if (tpname === "Array" || tpname === "null[]") {

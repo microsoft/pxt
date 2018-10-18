@@ -38,7 +38,7 @@ namespace pxt.HWDBG {
     let hid: pxt.HF2.Wrapper
 
     interface ExtCallInfo {
-        from: pxtc.ProcDebugInfo;
+        fromCall: pxtc.ProcDebugInfo;
         to: pxtc.ProcDebugInfo;
         stack: number;
     }
@@ -214,7 +214,7 @@ namespace pxt.HWDBG {
 
             if (!ci) break
 
-            pi = ci.from
+            pi = ci.fromCall
             sp += ci.stack - pi.localsMark
         }
     }
@@ -249,7 +249,7 @@ namespace pxt.HWDBG {
                     let gbuf = st.globals
 
                     let readV = () => {
-                        switch (l.type) {
+                        switch (l.cellType) {
                             case "uint32": return H.read32(gbuf, l.index)
                             case "int32": return H.read32(gbuf, l.index) | 0
                             case "uint16": return H.read16(gbuf, l.index)
@@ -312,7 +312,7 @@ namespace pxt.HWDBG {
                     //console.log(pdi)
                     for (let ci of pdi.calls) {
                         callInfos[ci.addr + ""] = {
-                            from: pdi,
+                            fromCall: pdi,
                             to: procLookup[ci.procIndex],
                             stack: ci.stack
                         }

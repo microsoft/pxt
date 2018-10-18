@@ -181,8 +181,8 @@ namespace pxt.blocks {
 
     // Matches arrays and tuple types
     const arrayTypeRegex = /^(?:Array<.+>)|(?:.+\[\])|(?:\[.+\])$/;
-    export function isArrayType(type: string) {
-        return arrayTypeRegex.test(type);
+    export function isArrayType(typeString: string) {
+        return arrayTypeRegex.test(typeString);
     }
 
     type NamedField = { field: Blockly.Field, name?: string };
@@ -190,7 +190,7 @@ namespace pxt.blocks {
     // list of built-in blocks, should be touched.
     let _builtinBlocks: Map<{
         block: Blockly.BlockDefinition;
-        symbol?: pxtc.SymbolInfo;
+        symbolInfo?: pxtc.SymbolInfo;
     }>;
     export function builtinBlocks() {
         if (!_builtinBlocks) {
@@ -221,8 +221,8 @@ namespace pxt.blocks {
     }
     let cachedBlocks: Map<CachedBlock> = {};
 
-    export function blockSymbol(type: string): pxtc.SymbolInfo {
-        let b = cachedBlocks[type];
+    export function blockSymbol(blockType: string): pxtc.SymbolInfo {
+        let b = cachedBlocks[blockType];
         return b ? b.fn : undefined;
     }
 
@@ -237,7 +237,7 @@ namespace pxt.blocks {
             defaultValue = defaultV;
         }
 
-        if (p.type == "number" && shadowId == "value") {
+        if (p.tsType == "number" && shadowId == "value") {
             const field = document.createElement("field");
             field.setAttribute("name", p.definitionName);
             field.appendChild(document.createTextNode("0"));
@@ -252,9 +252,9 @@ namespace pxt.blocks {
         const shadow = document.createElement(isVariable ? "block" : "shadow");
         value.appendChild(shadow);
 
-        const typeInfo = typeDefaults[p.type];
+        const typeInfo = typeDefaults[p.tsType];
 
-        shadow.setAttribute("type", shadowId || typeInfo && typeInfo.block || p.type);
+        shadow.setAttribute("type", shadowId || typeInfo && typeInfo.block || p.tsType);
         shadow.setAttribute("colour", (Blockly as any).Colours.textField);
 
         if (typeInfo && (!shadowId || typeInfo.block === shadowId || shadowId === "math_number_minmax")) {
@@ -274,7 +274,7 @@ namespace pxt.blocks {
             field.setAttribute("name", fieldName);
 
             let value: Text;
-            if (p.type == "boolean") {
+            if (p.tsType == "boolean") {
                 value = document.createTextNode((defaultValue || typeInfo.defaultValue).toUpperCase())
             }
             else {
@@ -364,7 +364,7 @@ namespace pxt.blocks {
         }
         if (fn.parameters) {
             comp.parameters.filter(pr => !pr.isOptional &&
-                (/^(string|number|boolean)$/.test(pr.type) || pr.shadowBlockId || pr.defaultValue))
+                (/^(string|number|boolean)$/.test(pr.tsType) || pr.shadowBlockId || pr.defaultValue))
                 .forEach(pr => {
                     let shadowValue: Element;
                     let container: HTMLElement;
@@ -445,7 +445,7 @@ namespace pxt.blocks {
             .map(fn => {
                 if (fn.attributes.blockBuiltin) {
                     Util.assert(!!builtinBlocks()[fn.attributes.blockId]);
-                    builtinBlocks()[fn.attributes.blockId].symbol = fn;
+                    builtinBlocks()[fn.attributes.blockId].symbolInfo = fn;
                 } else {
                     let comp = compileInfo(fn);
                     let block = createToolboxBlock(blockInfo, fn, comp);
@@ -642,7 +642,7 @@ namespace pxt.blocks {
             block.setInputsInline(!fn.parameters || (fn.parameters.length < 4 && !fn.attributes.imageLiteral));
         }
 
-        const body = fn.parameters ? fn.parameters.filter(pr => pr.type == "() => void" || pr.type == "Action")[0] : undefined;
+        const body = fn.parameters ? fn.parameters.filter(pr => pr.tsType == "() => void" || pr.tsType == "Action")[0] : undefined;
         if (body || hasHandler) {
             block.appendStatementInput("HANDLER")
                 .setCheck("null");
@@ -729,7 +729,7 @@ namespace pxt.blocks {
                             return;
                         }
 
-                        let typeInfo = U.lookup(info.apis.byQName, pr.type)
+                        let typeInfo = U.lookup(info.apis.byQName, pr.tsType)
 
                         hasParameter = true;
                         const defName = pr.definitionName;
@@ -738,16 +738,16 @@ namespace pxt.blocks {
                         let isEnum = typeInfo && typeInfo.kind == pxtc.SymbolKind.Enum
                         let isFixed = typeInfo && !!typeInfo.attributes.fixedInstances && !pr.shadowBlockId;
                         let isConstantShim = !!fn.attributes.constantShim;
-                        let isCombined = pr.type == "@combined@"
+                        let isCombined = pr.tsType == "@combined@"
                         let customField = pr.fieldEditor;
                         let fieldLabel = defName.charAt(0).toUpperCase() + defName.slice(1);
-                        let fieldType = pr.type;
+                        let fieldType = pr.tsType;
 
                         if (isEnum || isFixed || isConstantShim || isCombined) {
                             let syms: pxtc.SymbolInfo[];
 
                             if (isEnum) {
-                                syms = getEnumDropdownValues(info.apis, pr.type);
+                                syms = getEnumDropdownValues(info.apis, pr.tsType);
                             }
                             else if (isFixed) {
                                 syms = getFixedInstanceDropdownValues(info.apis, typeInfo.qName);
@@ -825,8 +825,8 @@ namespace pxt.blocks {
                         } else {
                             inputName = defName;
                             if (instance && part.name === "this") {
-                                inputCheck = pr.type;
-                            } else if (pr.type == "number") {
+                                inputCheck = pr.tsType;
+                            } else if (pr.tsType == "number") {
                                 if (pr.shadowBlockId && pr.shadowBlockId == "value") {
                                     inputName = undefined;
                                     fields.push(namedField(new Blockly.FieldTextInput("0", Blockly.FieldTextInput.numberValidator), defName));
@@ -834,9 +834,9 @@ namespace pxt.blocks {
                                 else {
                                     inputCheck = "Number"
                                 }
-                            } else if (pr.type == "boolean") {
+                            } else if (pr.tsType == "boolean") {
                                 inputCheck = "Boolean"
-                            } else if (pr.type == "string") {
+                            } else if (pr.tsType == "string") {
                                 if (pr.shadowOptions && pr.shadowOptions.toString) {
                                     inputCheck = undefined;
                                 }
@@ -844,7 +844,7 @@ namespace pxt.blocks {
                                     inputCheck = "String"
                                 }
                             } else {
-                                inputCheck = pr.type == "T" ? undefined : (isArrayType(pr.type) ? ["Array", pr.type] : pr.type);
+                                inputCheck = pr.tsType == "T" ? undefined : (isArrayType(pr.tsType) ? ["Array", pr.tsType] : pr.tsType);
                             }
                         }
                     }
@@ -899,7 +899,7 @@ namespace pxt.blocks {
 
     export function hasArrowFunction(fn: pxtc.SymbolInfo): boolean {
         const r = fn.parameters
-            ? fn.parameters.filter(pr => pr.type === "Action" || /^\([^\)]*\)\s*=>/.test(pr.type))[0]
+            ? fn.parameters.filter(pr => pr.tsType === "Action" || /^\([^\)]*\)\s*=>/.test(pr.tsType))[0]
             : undefined;
         return !!r;
     }
@@ -2615,9 +2615,9 @@ namespace pxt.blocks {
      *     </value>
      * </block>
      */
-    export function mkPredicateBlock(type: string) {
+    export function mkPredicateBlock(blockType: string) {
         const block = document.createElement("block");
-        block.setAttribute("type", type);
+        block.setAttribute("type", blockType);
 
         const value = document.createElement("value");
         value.setAttribute("name", "PREDICATE");
@@ -2629,9 +2629,9 @@ namespace pxt.blocks {
         return block;
     }
 
-    export function mkFieldBlock(type: string, fieldName: string, fieldValue: string, isShadow: boolean) {
+    export function mkFieldBlock(blockType: string, fieldName: string, fieldValue: string, isShadow: boolean) {
         const fieldBlock = document.createElement(isShadow ? "shadow" : "block");
-        fieldBlock.setAttribute("type", Util.htmlEscape(type));
+        fieldBlock.setAttribute("type", Util.htmlEscape(blockType));
 
         const field = document.createElement("field");
         field.setAttribute("name", Util.htmlEscape(fieldName));

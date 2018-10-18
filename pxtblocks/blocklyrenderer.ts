@@ -18,7 +18,7 @@ namespace pxt.blocks {
         clean?: boolean;
         aspectRatio?: number;
         packageId?: string;
-        package?: string;
+        packageName?: string;
         snippetMode?: boolean;
         useViewWidth?: boolean;
         splitSvg?: boolean;
@@ -87,7 +87,7 @@ namespace pxt.blocks {
         } catch (e) {
             pxt.reportException(e);
 
-            // We re-use the workspace across renders, catch any errors so we know to 
+            // We re-use the workspace across renders, catch any errors so we know to
             // create a new workspace if there was an error
             if (workspace) workspace.dispose();
             workspace = undefined;

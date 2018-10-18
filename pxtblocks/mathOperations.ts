@@ -49,11 +49,11 @@ namespace pxt.blocks {
                     },
                     domToMutation: saved => {
                         if (saved.hasAttribute("op-type")) {
-                            const type = saved.getAttribute("op-type");
-                            if (type != "unary") {
+                            const opType = saved.getAttribute("op-type");
+                            if (opType != "unary") {
                                 addArgInput(b, true);
                             }
-                            changeInputOrder(b, type === "infix");
+                            changeInputOrder(b, opType === "infix");
                         }
                     }
                 });

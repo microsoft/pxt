@@ -134,7 +134,7 @@ namespace pxtblockly {
 
         setCell(col: number, row: number, color: number, commit: boolean): void {
             if (commit) {
-                this.state.set(col, row, color);
+                this.state.setPixel(col, row, color);
                 this.paintCell(col, row, color);
             }
             else {

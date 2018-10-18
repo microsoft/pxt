@@ -46,15 +46,15 @@ namespace pxt.runner {
     class Host
         implements pxt.Host {
 
-        readFile(module: pxt.Package, filename: string): string {
-            let epkg = getEditorPkg(module)
+        readFile(pxtPackage: pxt.Package, filename: string): string {
+            let epkg = getEditorPkg(pxtPackage)
             return U.lookup(epkg.files, filename)
         }
 
-        writeFile(module: pxt.Package, filename: string, contents: string): void {
+        writeFile(pxtPackage: pxt.Package, filename: string, contents: string): void {
             if (filename == pxt.CONFIG_NAME)
                 return; // ignore config writes
-            throw Util.oops("trying to write " + module + " / " + filename)
+            throw Util.oops("trying to write " + pxtPackage + " / " + filename)
         }
 
         getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo> {
@@ -777,7 +777,7 @@ ${linkString}
     }
 
     export interface DecompileResult {
-        package: pxt.MainPackage;
+        mainPackage: pxt.MainPackage;
         compileJS?: pxtc.CompileResult;
         compileBlocks?: pxtc.CompileResult;
         apiInfo?: pxtc.ApisInfo;
@@ -787,7 +787,7 @@ ${linkString}
     export function decompileToBlocksAsync(code: string, options?: blocks.BlocksRenderOptions): Promise<DecompileResult> {
         // code may be undefined or empty!!!
         const packageid = options && options.packageId ? "pub:" + options.packageId :
-            options && options.package ? "docs:" + options.package
+            options && options.packageName ? "docs:" + options.packageName
                 : null;
         return loadPackageAsync(packageid, code)
             .then(() => getCompileOptionsAsync(appTarget.compile ? appTarget.compile.hasHex : false))
@@ -800,7 +800,7 @@ ${linkString}
                 if (resp.diagnostics && resp.diagnostics.length > 0)
                     resp.diagnostics.forEach(diag => console.error(diag.messageText));
                 if (!resp.success)
-                    return Promise.resolve<DecompileResult>({ package: mainPkg, compileJS: resp });
+                    return Promise.resolve<DecompileResult>({ mainPackage: mainPkg, compileJS: resp });
 
                 // decompile to blocks
                 let apis = pxtc.getApiInfo(opts, resp.ast);
@@ -815,11 +815,11 @@ ${linkString}
                         if (bresp.diagnostics && bresp.diagnostics.length > 0)
                             bresp.diagnostics.forEach(diag => console.error(diag.messageText));
                         if (!bresp.success)
-                            return <DecompileResult>{ package: mainPkg, compileJS: resp, compileBlocks: bresp, apiInfo: apis };
+                            return <DecompileResult>{ mainPackage: mainPkg, compileJS: resp, compileBlocks: bresp, apiInfo: apis };
                         pxt.debug(bresp.outfiles["main.blocks"])
                         const blocksSvg = pxt.blocks.render(bresp.outfiles["main.blocks"], options);
                         return <DecompileResult>{
-                            package: mainPkg,
+                            mainPackage: mainPkg,
                             compileJS: resp,
                             compileBlocks: bresp,
                             apiInfo: apis,
@@ -831,7 +831,7 @@ ${linkString}
 
     export function compileBlocksAsync(code: string, options?: blocks.BlocksRenderOptions): Promise<DecompileResult> {
         const packageid = options && options.packageId ? "pub:" + options.packageId :
-            options && options.package ? "docs:" + options.package
+            options && options.packageName ? "docs:" + options.packageName
                 : null;
         return loadPackageAsync(packageid, "")
             .then(() => getCompileOptionsAsync(appTarget.compile ? appTarget.compile.hasHex : false))
@@ -844,7 +844,7 @@ ${linkString}
                         const blocksInfo = pxtc.getBlocksInfo(apis);
                         pxt.blocks.initializeAndInject(blocksInfo);
                         return <DecompileResult>{
-                            package: mainPkg,
+                            mainPackage: mainPkg,
                             blocksSvg: pxt.blocks.render(code, options),
                             apiInfo: apis
                         };

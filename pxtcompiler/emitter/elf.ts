@@ -1,7 +1,9 @@
 namespace pxt.elf {
     interface ProgramHeader {
         _filepos: number;
+        /* tslint:disable:no-reserved-keywords shipped API */
         type: PHT;
+        /* tslint:enable:no-reserved-keywords */
         offset: number;
         vaddr: number;
         paddr: number;

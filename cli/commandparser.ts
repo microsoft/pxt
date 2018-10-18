@@ -9,7 +9,7 @@ export interface CommandFlag {
     description: string;
 
     argument?: string;
-    type?: FlagType;
+    argType?: FlagType;
     aliases?: string[];
     possibleValues?: string[];
     deprecated?: boolean;
@@ -133,10 +133,10 @@ export class CommandParser {
                     throw new Error(`Unknown value for flag '${currentFlag}', '${match[2]}'`);
                 }
 
-                if (!currentFlagDef.type || currentFlagDef.type === "string") {
+                if (!currentFlagDef.argType || currentFlagDef.argType === "string") {
                     flags[currentFlag] = match[2];
                 }
-                else if (currentFlagDef.type === "boolean") {
+                else if (currentFlagDef.argType === "boolean") {
                     flags[currentFlag] = match[2].toLowerCase() === "true";
                 }
                 else {
@@ -240,7 +240,7 @@ export class CommandParser {
                     usage += ` <${def.possibleValues.join("|")}>`;
                 }
                 else {
-                    usage += def.type && def.type === "number" ? " <number>" : " <value>"
+                    usage += def.argType && def.argType === "number" ? " <number>" : " <value>"
                 }
             }
 

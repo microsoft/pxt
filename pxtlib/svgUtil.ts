@@ -25,8 +25,8 @@ namespace pxt.svgUtil {
     export class BaseElement<T extends SVGElement> {
         el: T;
         protected titleElement: SVGTitleElement;
-        constructor(type: string) {
-            this.el = elt(type) as T;
+        constructor(tag: string) {
+            this.el = elt(tag) as T;
         }
         attr(attributes: Map<string | number | boolean>): this {
             Object.keys(attributes).forEach(at => {
@@ -78,28 +78,28 @@ namespace pxt.svgUtil {
     }
 
     export class DrawContext<T extends SVGElement> extends BaseElement<T> {
-        draw(type: "text"): Text;
-        draw(type: "circle"): Circle;
-        draw(type: "rect"): Rect;
-        draw(type: "line"): Line;
-        draw(type: "polygon"): Polygon;
-        draw(type: "polyline"): Polyline;
-        draw(type: "path"): Path;
-        draw(type: string): Drawable<SVGElement> {
-            const el = drawable(type as any /*FIXME?*/);
+        draw(tag: "text"): Text;
+        draw(tag: "circle"): Circle;
+        draw(tag: "rect"): Rect;
+        draw(tag: "line"): Line;
+        draw(tag: "polygon"): Polygon;
+        draw(tag: "polyline"): Polyline;
+        draw(tag: "path"): Path;
+        draw(tag: string): Drawable<SVGElement> {
+            const el = drawable(tag as any /*FIXME?*/);
             this.el.appendChild(el.el);
             return el;
         }
 
-        element(type: "text", cb: (newElement: Text) => void): this;
-        element(type: "circle", cb: (newElement: Circle) => void): this;
-        element(type: "rect", cb: (newElement: Rect) => void): this;
-        element(type: "line", cb: (newElement: Line) => void): this;
-        element(type: "polygon", cb: (newElement: Polygon) => void): this;
-        element(type: "polyline", cb: (newElement: Polyline) => void): this;
-        element(type: "path", cb: (newElement: Path) => void): this;
-        element(type: string, cb: (newElement: any) => void): this {
-            cb(this.draw(type as any /*FIXME?*/));
+        element(tag: "text", cb: (newElement: Text) => void): this;
+        element(tag: "circle", cb: (newElement: Circle) => void): this;
+        element(tag: "rect", cb: (newElement: Rect) => void): this;
+        element(tag: "line", cb: (newElement: Line) => void): this;
+        element(tag: "polygon", cb: (newElement: Polygon) => void): this;
+        element(tag: "polyline", cb: (newElement: Polyline) => void): this;
+        element(tag: "path", cb: (newElement: Path) => void): this;
+        element(tag: string, cb: (newElement: any) => void): this {
+            cb(this.draw(tag as any /*FIXME?*/));
             return this;
         }
 
@@ -232,20 +232,20 @@ namespace pxt.svgUtil {
             parent.appendChild(this.el);
         }
 
-        create(type: "path", id: string): Path;
-        create(type: "pattern", id: string): Pattern;
-        create(type: "radialGradient", id: string): RadialGradient;
-        create(type: "linearGradient", id: string): LinearGradient;
-        create(type: "clipPath", id: string): ClipPath;
-        create(type: string, id: string): BaseElement<any> {
+        create(tag: "path", id: string): Path;
+        create(tag: "pattern", id: string): Pattern;
+        create(tag: "radialGradient", id: string): RadialGradient;
+        create(tag: "linearGradient", id: string): LinearGradient;
+        create(tag: "clipPath", id: string): ClipPath;
+        create(tag: string, id: string): BaseElement<any> {
             let el: BaseElement<SVGElement>;
-            switch (type) {
+            switch (tag) {
                 case "path": el = new Path(); break;
                 case "pattern": el = new Pattern(); break;
                 case "radialGradient": el = new RadialGradient(); break;
                 case "linearGradient": el = new LinearGradient(); break;
                 case "clipPath": el = new ClipPath(); break;
-                default: el = new BaseElement(type);
+                default: el = new BaseElement(tag);
             }
             el.id(id);
             this.el.appendChild(el.el);
@@ -340,8 +340,8 @@ namespace pxt.svgUtil {
             return this;
         }
 
-        anchor(type: "start" | "middle" | "end" | "inherit") {
-            return this.setAttribute("text-anchor", type);
+        anchor(tag: "start" | "middle" | "end" | "inherit") {
+            return this.setAttribute("text-anchor", tag);
         }
     }
 
@@ -407,20 +407,20 @@ namespace pxt.svgUtil {
         constructor() { super("line"); }
 
         at(x1: number, y1: number, x2?: number, y2?: number): this {
-            this.from(x1, y1);
+            this.start(x1, y1);
             if (x2 != undefined && y2 != undefined) {
-                this.to(x2, y2);
+                this.end(x2, y2);
             }
             return this;
         }
 
-        from(x1: number, y1: number): this {
+        start(x1: number, y1: number): this {
             this.setAttribute("x1", x1);
             this.setAttribute("y1", y1);
             return this;
         }
 
-        to(x2: number, y2: number): this {
+        end(x2: number, y2: number): this {
             this.setAttribute("x2", x2);
             this.setAttribute("y2", y2);
             return this;
@@ -432,7 +432,7 @@ namespace pxt.svgUtil {
             return this.setAttribute("points", points);
         }
 
-        with(points: {
+        withPoints(points: {
             x: number;
             y: number;
         }[]): this {
@@ -559,20 +559,20 @@ namespace pxt.svgUtil {
         }
     }
 
-    function elt(type: string): SVGElement {
-        let el = document.createElementNS("http://www.w3.org/2000/svg", type);
+    function elt(tag: string): SVGElement {
+        let el = document.createElementNS("http://www.w3.org/2000/svg", tag);
         return el;
     }
 
-    function drawable(type: "text"): Text;
-    function drawable(type: "circle"): Circle;
-    function drawable(type: "rect"): Rect;
-    function drawable(type: "line"): Line;
-    function drawable(type: "polygon"): Polygon;
-    function drawable(type: "polyline"): Polyline;
-    function drawable(type: "path"): Path;
-    function drawable(type: string): Drawable<SVGElement> {
-        switch (type) {
+    function drawable(tag: "text"): Text;
+    function drawable(tag: "circle"): Circle;
+    function drawable(tag: "rect"): Rect;
+    function drawable(tag: "line"): Line;
+    function drawable(tag: "polygon"): Polygon;
+    function drawable(tag: "polyline"): Polyline;
+    function drawable(tag: "path"): Path;
+    function drawable(tag: string): Drawable<SVGElement> {
+        switch (tag) {
             case "text": return new Text();
             case "circle": return new Circle();
             case "rect": return new Rect();
@@ -580,7 +580,7 @@ namespace pxt.svgUtil {
             case "polygon": return new Polygon();
             case "polyline": return new Polyline();
             case "path": return new Path();
-            default: return new Drawable(type);
+            default: return new Drawable(tag);
         }
     }
 

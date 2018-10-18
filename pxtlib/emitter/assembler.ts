@@ -100,7 +100,7 @@ namespace ts.pxtc.assembler {
                                 stack = (v / this.ei.wordSize());
                         }
                     } else if (enc.isRegList) {
-                        // register lists are ARM-specific - this code not used in AVR 
+                        // register lists are ARM-specific - this code not used in AVR
                         if (actual != "{") return emitErr("expecting {", actual);
                         v = 0;
                         while (tokens[j] != "}") {
@@ -133,7 +133,7 @@ namespace ts.pxtc.assembler {
                                 if (ln.bin.finalEmit)
                                     return emitErr("unknown label", actual)
                                 else
-                                    // just need some value when we are 
+                                    // just need some value when we are
                                     // doing some pass other than finalEmit
                                     v = 8; // needs to be divisible by 4 etc
                             }
@@ -185,9 +185,9 @@ namespace ts.pxtc.assembler {
 
     // represents a line of assembly from a file
     export class Line {
-        public type: string;
+        public lineType: string;
         public lineNo: number;
-        public words: string[]; // the tokens in this line 
+        public words: string[]; // the tokens in this line
         public scope: string;
         public location: number;
         public instruction: Instruction;
@@ -219,9 +219,9 @@ namespace ts.pxtc.assembler {
             this.numArgs = null;
             this.words = tokenize(s) || [];
             if (this.words.length == 0)
-                this.type = "empty";
+                this.lineType = "empty";
             else if (this.words[0][0] == "@")
-                this.type = "directive";
+                this.lineType = "directive";
         }
     }
 
@@ -283,7 +283,7 @@ namespace ts.pxtc.assembler {
             return this.location() + this.baseOffset;
         }
 
-        // parsing of an "integer", well actually much more than 
+        // parsing of an "integer", well actually much more than
         // just that
         public parseOneInt(s: string): number {
             if (!s)
@@ -814,7 +814,7 @@ namespace ts.pxtc.assembler {
             if (w0.charAt(w0.length - 1) == ":") {
                 let m = /^([\.\w]+):$/.exec(words[0])
                 if (m) {
-                    l.type = "label";
+                    l.lineType = "label";
                     l.text = m[1] + ":"
                     l.words = [m[1]]
                     if (words.length > 1) {
@@ -830,14 +830,14 @@ namespace ts.pxtc.assembler {
 
             let c0 = w0.charAt(0)
             if (c0 == "." || c0 == "@") {
-                l.type = "directive";
+                l.lineType = "directive";
                 if (l.words[0] == "@scope")
                     this.handleDirective(l);
             } else {
                 if (l.words.length == 0)
-                    l.type = "empty";
+                    l.lineType = "empty";
                 else
-                    l.type = "instruction";
+                    l.lineType = "instruction";
             }
         }
 
@@ -869,7 +869,7 @@ namespace ts.pxtc.assembler {
 
                 if (l.words.length == 0) return;
 
-                if (l.type == "label") {
+                if (l.lineType == "label") {
                     let lblname = this.scopedName(l.words[0])
                     this.prevLabel = lblname
                     if (this.finalEmit) {
@@ -890,11 +890,11 @@ namespace ts.pxtc.assembler {
                         }
                     }
                     l.location = this.location()
-                } else if (l.type == "directive") {
+                } else if (l.lineType == "directive") {
                     this.handleDirective(l);
-                } else if (l.type == "instruction") {
+                } else if (l.lineType == "instruction") {
                     this.handleInstruction(l);
-                } else if (l.type == "empty") {
+                } else if (l.lineType == "empty") {
                     // nothing
                 } else {
                     oops()
@@ -950,7 +950,7 @@ namespace ts.pxtc.assembler {
                     if (!text.trim()) return;
                 }
                 if (debug)
-                    if (ln.type == "label" || ln.type == "instruction")
+                    if (ln.lineType == "label" || ln.lineType == "instruction")
                         text += ` \t; 0x${(ln.location + this.baseOffset).toString(16)}`
                 res += text + "\n"
             })
@@ -960,7 +960,7 @@ namespace ts.pxtc.assembler {
 
         private peepHole() {
             // TODO add: str X; ldr X -> str X ?
-            let mylines = this.lines.filter(l => l.type != "empty")
+            let mylines = this.lines.filter(l => l.lineType != "empty")
 
             for (let i = 0; i < mylines.length; ++i) {
                 let ln = mylines[i];
@@ -969,7 +969,7 @@ namespace ts.pxtc.assembler {
                 let lnNext = mylines[i + 1];
                 if (!lnNext) continue;
                 let lnNext2 = mylines[i + 2]
-                if (ln.type == "instruction") {
+                if (ln.lineType == "instruction") {
                     this.ei.peephole(ln, lnNext, lnNext2)
                 }
             }
@@ -1073,7 +1073,7 @@ namespace ts.pxtc.assembler {
     export interface Encoder {
         name: string;
         pretty: string;
-        // given a value, check it is the right number of bits and 
+        // given a value, check it is the right number of bits and
         // translate the value to the proper set of bits
         encode: (v: number) => number;
         isRegister: boolean;
@@ -1248,7 +1248,7 @@ namespace ts.pxtc.assembler {
     function parseString(s: string) {
         s = s.replace(/\\\\/g, "\\B")           // don't get confused by double backslash
             .replace(/\\(['\?])/g, (f, q) => q) // these are not valid in JSON yet valid in C
-            .replace(/\\[z0]/g, "\u0000")      // \0 is valid in C 
+            .replace(/\\[z0]/g, "\u0000")      // \0 is valid in C
             .replace(/\\x([0-9a-f][0-9a-f])/gi, (f, h) => "\\u00" + h)
             .replace(/\\B/g, "\\\\") // undo anti-confusion above
         try {

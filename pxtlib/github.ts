@@ -1,3 +1,4 @@
+/* tslint:disable:no-reserved-keywords GitHub API response names */
 namespace pxt.github {
     export interface GHRef {
         ref: string;
@@ -213,7 +214,7 @@ namespace pxt.github {
     export interface CreateCommitReq {
         message: string;
         parents: string[]; // shas
-        tree: string; // sha		
+        tree: string; // sha
     }
 
     function ghPostAsync(path: string, data: any) {
@@ -691,3 +692,5 @@ namespace pxt.github {
 
     export const GIT_JSON = ".git.json"
 }
+
+/* tslint:enable:no-reserved-keywords */

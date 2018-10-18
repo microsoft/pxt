@@ -185,7 +185,7 @@ namespace pxtblockly {
                 let v = data.charCodeAt(index++)
                 for (let x = 0; x < w; ++x) {
                     for (let y = 0; y < h; ++y) {
-                        out.set(x, y, (v & mask) ? 1 : 0);
+                        out.setPixel(x, y, (v & mask) ? 1 : 0);
                         mask <<= 1
                         if (mask == 0x100) {
                             mask = 0x01
@@ -199,9 +199,9 @@ namespace pxtblockly {
                 for (let x = 0; x < w; x++) {
                     for (let y = 0; y < h; y += 2) {
                         let v = data.charCodeAt(index++)
-                        out.set(x, y, v & 0xf);
+                        out.setPixel(x, y, v & 0xf);
                         if (y != h - 1) {
-                            out.set(x, y + 1, (v >> 4) & 0xf);
+                            out.setPixel(x, y + 1, (v >> 4) & 0xf);
                         }
                     }
                     while (index & 3) index++

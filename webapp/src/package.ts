@@ -25,7 +25,7 @@ export class File implements pxt.editor.IFile {
     diagnostics: pxtc.KsDiagnostic[];
     numDiagnosticsOverride: number;
     filters: pxt.editor.ProjectFilters;
-    forceChangeCallback: ((from: string, to: string) => void);
+    forceChangeCallback: ((fromString: string, to: string) => void);
 
     constructor(public epkg: EditorPackage, public name: string, public content: string) { }
 
@@ -97,7 +97,7 @@ export class File implements pxt.editor.IFile {
         }
     }
 
-    setForceChangeCallback(callback: (from: string, to: string) => void) {
+    setForceChangeCallback(callback: (fromString: string, to: string) => void) {
         this.forceChangeCallback = callback;
     }
 }
@@ -351,21 +351,21 @@ export class EditorPackage {
 class Host
     implements pxt.Host {
 
-    readFile(module: pxt.Package, filename: string): string {
-        let epkg = getEditorPkg(module)
+    readFile(pxtPackage: pxt.Package, filename: string): string {
+        let epkg = getEditorPkg(pxtPackage)
         let file = epkg.files[filename]
         return file ? file.content : null
     }
 
-    writeFile(module: pxt.Package, filename: string, contents: string, force?: boolean): void {
+    writeFile(pxtPackage: pxt.Package, filename: string, contents: string, force?: boolean): void {
         if (filename == pxt.CONFIG_NAME || force) {
             // only write config writes
-            let epkg = getEditorPkg(module)
+            let epkg = getEditorPkg(pxtPackage)
             let file = epkg.files[filename];
             file.setContentAsync(contents, force).done();
             return;
         }
-        throw Util.oops("trying to write " + module + " / " + filename)
+        throw Util.oops("trying to write " + pxtPackage + " / " + filename)
     }
 
     getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo> {

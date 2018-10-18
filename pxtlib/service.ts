@@ -24,9 +24,9 @@ namespace ts.pxtc {
     export interface ParameterDesc {
         name: string;
         description: string;
-        type: string;
+        tsType: string;
         initializer?: string;
-        default?: string;
+        defaultValue?: string;
         properties?: PropertyDesc[];
         handlerParameters?: PropertyDesc[];
         options?: pxt.Map<PropertyOption>;
@@ -35,7 +35,7 @@ namespace ts.pxtc {
 
     export interface PropertyDesc {
         name: string;
-        type: string;
+        tsType: string;
     }
 
     export interface PropertyOption {
@@ -309,7 +309,7 @@ namespace ts.pxtc {
 
     export interface CellInfo {
         name: string;
-        type: string;
+        cellType: string;
         index: number;
     }
 
@@ -369,7 +369,7 @@ namespace ts.pxtc {
     interface Token {
         kind: TokenKind;
         content?: string;
-        type?: string;
+        typeString?: string;
         name?: string;
     }
 
@@ -384,8 +384,8 @@ namespace ts.pxtc {
             return [];
 
         let parts: string[] = [];
-        Object.keys(resp.usedSymbols).forEach(symbol => {
-            let info = resp.usedSymbols[symbol]
+        Object.keys(resp.usedSymbols).forEach(symbolInfo => {
+            let info = resp.usedSymbols[symbolInfo]
             if (info && info.attributes.parts) {
                 let partsRaw = info.attributes.parts;
                 if (partsRaw) {
@@ -484,14 +484,14 @@ namespace ts.pxtc {
                                 U.lf("the name of the property to read") :
                                 U.lf("the name of the property to change"),
                             isEnum: true,
-                            type: "@combined@"
+                            tsType: "@combined@"
                         },
                         {
                             name: "value",
                             description: isSet ?
                                 U.lf("the new value of the property") :
                                 U.lf("the amount by which to change the property"),
-                            type: s.retType,
+                            tsType: s.retType,
                         }
                     ].slice(0, isGet ? 1 : 2),
                     retType: isGet ? s.retType : "void",
@@ -909,7 +909,7 @@ namespace ts.pxtc {
                     if (contentText !== undefined && def[strIndex++ + 1] === "(") {
                         const contentClass = eatEnclosure(")");
                         if (contentClass !== undefined) {
-                            newToken = { kind: TokenKind.TaggedText, content: contentText, type: contentClass };
+                            newToken = { kind: TokenKind.TaggedText, content: contentText, typeString: contentClass };
                             break;
                         }
                     }
@@ -930,7 +930,7 @@ namespace ts.pxtc {
                         varName = eatEnclosure(")");
                         if (!varName) strIndex = oldIndex;
                     }
-                    newToken = { kind: (char === "$") ? TokenKind.ParamRef : TokenKind.Parameter, content: param[0], type: param[1], name: varName };
+                    newToken = { kind: (char === "$") ? TokenKind.ParamRef : TokenKind.Parameter, content: param[0], typeString: param[1], name: varName };
                     break;
             }
 
@@ -996,13 +996,13 @@ namespace ts.pxtc {
 
             /* tslint:disable:possible-timing-attack  (tslint thinks all variables named token are passwords...) */
             if (token == TokenKind.Parameter) {
-                const param: BlockParameter = { kind: "param", name: tokens[i].content, shadowBlockId: tokens[i].type, ref: false };
+                const param: BlockParameter = { kind: "param", name: tokens[i].content, shadowBlockId: tokens[i].typeString, ref: false };
                 if (tokens[i].name) param.varName = tokens[i].name;
                 parts.push(param);
                 parameters.push(param);
             }
             else if (token == TokenKind.ParamRef) {
-                const param: BlockParameter = { kind: "param", name: tokens[i].content, shadowBlockId: tokens[i].type, ref: true };
+                const param: BlockParameter = { kind: "param", name: tokens[i].content, shadowBlockId: tokens[i].typeString, ref: true };
                 if (tokens[i].name) param.varName = tokens[i].name;
                 parts.push(param);
                 parameters.push(param);
@@ -1013,7 +1013,7 @@ namespace ts.pxtc {
             }
             else if (token == TokenKind.TaggedText) {
                 pushCurrentLabel();
-                labelStack.push({ kind: "label", text: tokens[i].content, cssClass: tokens[i].type } as BlockLabel)
+                labelStack.push({ kind: "label", text: tokens[i].content, cssClass: tokens[i].typeString } as BlockLabel)
             }
             else if (token == TokenKind.Pipe) {
                 parts.push({ kind: "break" });

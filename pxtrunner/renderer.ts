@@ -20,7 +20,7 @@ namespace pxt.runner {
         hexName?: string;
         pxtUrl?: string;
         packageClass?: string;
-        package?: string;
+        packageName?: string;
         showEdit?: boolean;
         showJavaScript?: boolean; // default is to show blocks first
         downloadScreenshots?: boolean;
@@ -66,7 +66,7 @@ namespace pxt.runner {
         const theme = pxt.appTarget.appTheme || {};
         if (woptions.showEdit && !theme.hideDocsEdit) { // edit button
             const $editBtn = $(`<a class="item" role="button" tabindex="0" aria-label="${lf("edit")}"><i role="presentation" aria-hidden="true" class="edit icon"></i></a>`).click(() => {
-                decompileResult.package.compressToFileAsync(options.showJavaScript ? pxt.JAVASCRIPT_PROJECT_NAME : pxt.BLOCKS_PROJECT_NAME)
+                decompileResult.mainPackage.compressToFileAsync(options.showJavaScript ? pxt.JAVASCRIPT_PROJECT_NAME : pxt.BLOCKS_PROJECT_NAME)
                     .done(buf => window.open(`${getEditUrl(options)}/#project:${ts.pxtc.encodeBase64(Util.uint8ArrayToString(buf))}`, 'pxt'))
             })
             $menu.append($editBtn);
@@ -187,7 +187,7 @@ namespace pxt.runner {
                 if (options.snippetReplaceParent) c = c.parent();
                 const segment = $('<div class="ui segment codewidget"/>').append(s);
                 c.replaceWith(segment);
-            }, { package: options.package, snippetMode: false, aspectRatio: options.blocksAspectRatio });
+            }, { packageName: options.packageName, snippetMode: false, aspectRatio: options.blocksAspectRatio });
         }
 
         let snippetCount = 0;
@@ -206,7 +206,7 @@ namespace pxt.runner {
                 hexname: hexname,
                 hex: hex,
             });
-        }, { package: options.package, aspectRatio: options.blocksAspectRatio });
+        }, { packageName: options.packageName, aspectRatio: options.blocksAspectRatio });
     }
 
     function decompileCallInfo(stmt: ts.Statement): pxtc.CallInfo {
@@ -241,7 +241,7 @@ namespace pxt.runner {
             let js = $('<code class="lang-typescript highlight"/>').text(sig);
             if (options.snippetReplaceParent) c = c.parent();
             fillWithWidget(options, c, js, s, r, { showJs: true, hideGutter: true });
-        }, { package: options.package, snippetMode: true, aspectRatio: options.blocksAspectRatio });
+        }, { packageName: options.packageName, snippetMode: true, aspectRatio: options.blocksAspectRatio });
     }
 
     function renderBlocksAsync(options: ClientRenderOptions): Promise<void> {
@@ -250,7 +250,7 @@ namespace pxt.runner {
             if (options.snippetReplaceParent) c = c.parent();
             const segment = $('<div class="ui segment codewidget"/>').append(s);
             c.replaceWith(segment);
-        }, { package: options.package, snippetMode: true, aspectRatio: options.blocksAspectRatio });
+        }, { packageName: options.packageName, snippetMode: true, aspectRatio: options.blocksAspectRatio });
     }
 
     function renderBlocksXmlAsync(opts: ClientRenderOptions): Promise<void> {
@@ -282,7 +282,7 @@ namespace pxt.runner {
             if (opts.snippetReplaceParent) c = c.parent();
             const segment = $('<div class="ui segment codewidget"/>').append(s);
             c.replaceWith(segment);
-        }, { package: opts.package, snippetMode: true, aspectRatio: opts.blocksAspectRatio });
+        }, { packageName: opts.packageName, snippetMode: true, aspectRatio: opts.blocksAspectRatio });
     }
 
     function renderNamespaces(options: ClientRenderOptions): Promise<void> {
@@ -542,7 +542,7 @@ namespace pxt.runner {
 
             if (replaceParent) c = c.parent();
             c.replaceWith(ul)
-        }, { package: options.package, aspectRatio: options.blocksAspectRatio })
+        }, { packageName: options.packageName, aspectRatio: options.blocksAspectRatio })
     }
 
     function fillCodeCardAsync(c: JQuery, cards: pxt.CodeCard[], options: pxt.docs.codeCard.CodeCardRenderOptions): Promise<void> {
@@ -632,7 +632,7 @@ namespace pxt.runner {
         $('.' + options.packageClass).each((i, c) => {
             let $c = $(c);
             let name = $c.text().split('\n').map(s => s.replace(/\s*/g, '')).filter(s => !!s).join(',');
-            options.package = options.package ? `${options.package},${name}` : name;
+            options.packageName = options.packageName ? `${options.packageName},${name}` : name;
             if (options.snippetReplaceParent) $c = $c.parent();
             $c.remove();
         });

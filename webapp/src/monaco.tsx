@@ -654,9 +654,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (this.fileType == FileType.Markdown)
                     this.parent.setSideMarkdown(file.content);
 
-                this.currFile.setForceChangeCallback((from: string, to: string) => {
-                    if (from != to) {
-                        pxt.debug(`File changed (from ${from}, to ${to}). Reloading editor`)
+                this.currFile.setForceChangeCallback((fromString: string, to: string) => {
+                    if (fromString != to) {
+                        pxt.debug(`File changed (from ${fromString}, to ${to}). Reloading editor`)
                         this.loadFileAsync(this.currFile);
                     }
                 });

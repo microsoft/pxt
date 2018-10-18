@@ -11,7 +11,7 @@ interface Type extends TypeOptions {
 
 interface FieldDesc {
     name: string;
-    type: Type;
+    fieldType: Type;
     inClass: py.ClassDef;
     fundef?: py.FunctionDef;
     isGetSet?: boolean;
@@ -54,7 +54,7 @@ namespace py {
         kind: "Arg";
         arg: identifier;
         annotation?: Expr;
-        type?: Type;
+        argType?: Type;
     }
 
     export interface Arguments extends AST {
@@ -92,7 +92,7 @@ namespace py {
 
     export interface ExceptHandler extends AST {
         kind: "ExceptHandler";
-        type?: Expr;
+        exType?: Expr;
         name?: identifier;
         body: Stmt[];
     }
@@ -247,7 +247,7 @@ namespace py {
     }
     export interface ImportFrom extends Stmt {
         kind: "ImportFrom";
-        module?: identifier;
+        moduleName?: identifier;
         names: Alias[];
         level?: int;
     }
@@ -387,7 +387,7 @@ namespace py {
     }
     export interface Constant extends Expr {
         kind: "Constant";
-        value: any; // ??? 
+        value: any; // ???
     }
 
     // the following expression can appear in assignment context
@@ -450,7 +450,7 @@ def to_json(val):
         for attr_name in dir(val):
             if not attr_name.startswith("_"):
                 js[attr_name] = to_json(getattr(val, attr_name))
-        return js    
+        return js
     if isinstance(val, (bytearray, bytes)):
         return [x for x in val]
     raise Exception("unhandled: %s (type %s)" % (val, type(val)))
@@ -537,7 +537,7 @@ interface VarDescOptions {
 }
 
 interface VarDesc extends VarDescOptions {
-    type: Type;
+    varType: Type;
     name: string;
 }
 
@@ -566,7 +566,7 @@ function defvar(n: string, opts: VarDescOptions) {
     let scopeDef = currentScope()
     let v = scopeDef.vars[n]
     if (!v) {
-        v = scopeDef.vars[n] = { type: mkType(), name: n }
+        v = scopeDef.vars[n] = { varType: mkType(), name: n }
     }
     for (let k of Object.keys(opts)) {
         (v as any)[k] = (opts as any)[k]
@@ -706,7 +706,7 @@ function getClassField(ct: py.ClassDef, n: string, checkOnly = false, skipBases 
         ct.fields[n] = {
             inClass: ct,
             name: n,
-            type: mkType()
+            fieldType: mkType()
         }
     }
     return ct.fields[n]
@@ -813,14 +813,14 @@ function doArgs(args: py.Arguments, isMethod: boolean) {
     let didx = args.defaults.length - nargs.length
     let lst = nargs.map(a => {
         let v = defvar(a.arg, { isParam: true })
-        if (!a.type) a.type = v.type
-        let res = [quote(a.arg), typeAnnot(v.type)]
+        if (!a.argType) a.argType = v.varType
+        let res = [quote(a.arg), typeAnnot(v.varType)]
         if (a.annotation)
             res.push(todoExpr("annotation", expr(a.annotation)))
         if (didx >= 0) {
             res.push(B.mkText(" = "))
             res.push(expr(args.defaults[didx]))
-            unify(a.type, typeOf(args.defaults[didx]))
+            unify(a.argType, typeOf(args.defaults[didx]))
         }
         didx++
         return B.mkGroup(res)
@@ -963,13 +963,13 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
                         let i2cDevClass =
                             lookupSymbol("adafruit_bus_device.i2c_device.I2CDevice") as py.ClassDef
                         if (i2cDevClass)
-                            unifyClass(vv.type, i2cDevClass)
+                            unifyClass(vv.varType, i2cDevClass)
                     }
                     vv = n.vars["value"]
                     if (funname == "__set__" && vv) {
                         let cf = getClassField(ctx.currClass, "__get__")
                         if (cf.fundef)
-                            unify(vv.type, cf.fundef.retType)
+                            unify(vv.varType, cf.fundef.retType)
                     }
                     let nargs = n.args.args
                     if (nargs[1].arg == "obj") {
@@ -1051,7 +1051,7 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
 
         let fieldDefs = U.values(n.fields)
             .filter(f => !f.fundef && !f.isStatic && !f.isGetSet)
-            .map((f) => B.mkStmt(quote(f.name), typeAnnot(f.type)))
+            .map((f) => B.mkStmt(quote(f.name), typeAnnot(f.fieldType)))
         body.children = fieldDefs.concat(body.children)
 
         return B.mkStmt(B.mkGroup(nodes))
@@ -1099,22 +1099,22 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
             let attrTp = typeOf(n.value)
             let getter = getTypeField(attrTp, "__get__", true)
             if (getter) {
-                unify(fd.type, getter.fundef.retType)
+                unify(fd.fieldType, getter.fundef.retType)
                 let implNm = "_" + nm
                 let fdBack = getClassField(ctx.currClass, implNm)
-                unify(fdBack.type, attrTp)
+                unify(fdBack.fieldType, attrTp)
                 let setter = getTypeField(attrTp, "__set__", true)
                 let res = [
                     B.mkNewLine(),
                     B.mkStmt(B.mkText("private "), quote(implNm), typeAnnot(attrTp))
                 ]
                 if (!getter.fundef.alwaysThrows)
-                    res.push(B.mkStmt(B.mkText(`get ${quoteStr(nm)}()`), typeAnnot(fd.type), B.mkBlock([
+                    res.push(B.mkStmt(B.mkText(`get ${quoteStr(nm)}()`), typeAnnot(fd.fieldType), B.mkBlock([
                         B.mkText(`return this.${quoteStr(implNm)}.get(this.i2c_device)`),
                         B.mkNewLine()
                     ])))
                 if (!setter.fundef.alwaysThrows)
-                    res.push(B.mkStmt(B.mkText(`set ${quoteStr(nm)}(value`), typeAnnot(fd.type),
+                    res.push(B.mkStmt(B.mkText(`set ${quoteStr(nm)}(value`), typeAnnot(fd.fieldType),
                         B.mkText(`) `), B.mkBlock([
                             B.mkText(`this.${quoteStr(implNm)}.set(this.i2c_device, value)`),
                             B.mkNewLine()
@@ -1126,7 +1126,7 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
             } else if (currIteration < 2) {
                 return B.mkText("/* skip for now */")
             }
-            unify(fd.type, typeOf(n.targets[0]))
+            unify(fd.fieldType, typeOf(n.targets[0]))
             fd.isStatic = true
             pref = "static "
         }
@@ -1223,7 +1223,7 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
                 let v = defvar(id, { isLocal: true })
                 id = quoteStr(id)
                 res.push(B.mkStmt(B.mkText("const " + id + " = "), devRef))
-                unify(typeOf(it.context_expr), v.type)
+                unify(typeOf(it.context_expr), v.varType)
                 devRef = B.mkText(id)
             }
             res.push(B.mkStmt(B.mkInfix(devRef, ".", B.mkText("begin()"))))
@@ -1282,11 +1282,11 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
         let res: B.JsNode[] = []
         for (let nn of n.names) {
             if (nn.name == "*")
-                defvar(n.module, {
+                defvar(n.moduleName, {
                     isImportStar: true
                 })
             else {
-                let fullname = n.module + "." + nn.name
+                let fullname = n.moduleName + "." + nn.name
                 let sym = lookupSymbol(fullname)
                 let currname = nn.asname || nn.name
                 if (sym && sym.kind == "Module") {
@@ -1321,8 +1321,8 @@ const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
         for (let e of n.handlers) {
             r.push(B.mkText("catch ("), e.name ? quote(e.name) : B.mkText("_"))
             // This isn't JS syntax, but PXT doesn't support try at all anyway
-            if (e.type)
-                r.push(B.mkText("/* instanceof "), expr(e.type), B.mkText(" */"))
+            if (e.exType)
+                r.push(B.mkText("/* instanceof "), expr(e.exType), B.mkText(" */"))
             r.push(B.mkText(")"), stmts(e.body))
         }
         if (n.finalbody.length)
@@ -1354,7 +1354,7 @@ function possibleDef(n: py.Name) {
         } else {
             n.isdef = false
         }
-        unify(n.tsType, curr.type)
+        unify(n.tsType, curr.varType)
     }
 
     if (n.isdef)
@@ -1579,8 +1579,8 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
         for (let i = 0; i < n.args.length; ++i) {
             let e = n.args[i]
             allargs.push(expr(e))
-            if (fdargs[i] && fdargs[i].type) {
-                unify(typeOf(e), fdargs[i].type)
+            if (fdargs[i] && fdargs[i].argType) {
+                unify(typeOf(e), fdargs[i].argType)
             }
         }
 
@@ -1704,7 +1704,7 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
             if (over.scale) {
                 allargs = allargs.map(a => {
                     let s = "?"
-                    if (a.type == B.NT.Prefix && a.children.length == 0)
+                    if (a.nodeType == B.NT.Prefix && a.children.length == 0)
                         s = a.op
                     let n = parseFloat(s)
                     if (!isNaN(n)) {
@@ -1778,7 +1778,7 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
     Attribute: (n: py.Attribute) => {
         let part = typeOf(n.value)
         let fd = getTypeField(part, n.attr)
-        if (fd) unify(n.tsType, fd.type)
+        if (fd) unify(n.tsType, fd.fieldType)
         return B.mkInfix(expr(n.value), ".", B.mkText(quoteStr(n.attr)))
     },
     Subscript: (n: py.Subscript) => {
@@ -1810,7 +1810,7 @@ const exprMap: Map<(v: py.Expr) => B.JsNode> = {
         } else {
             let v = lookupVar(n.id)
             if (v) {
-                unify(n.tsType, v.type)
+                unify(n.tsType, v.varType)
                 if (v.isImport)
                     return quote(n.id) // it's import X = Y.Z.X, use X not Y.Z.X
             }
@@ -1874,9 +1874,9 @@ function stmt(e: py.Stmt): B.JsNode {
 
 function isEmpty(b: B.JsNode): boolean {
     if (!b) return true
-    if (b.type == B.NT.Prefix && b.op == "")
+    if (b.nodeType == B.NT.Prefix && b.op == "")
         return b.children.every(isEmpty)
-    if (b.type == B.NT.NewLine)
+    if (b.nodeType == B.NT.NewLine)
         return true
     return false
 }

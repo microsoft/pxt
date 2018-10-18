@@ -145,7 +145,7 @@ namespace pxtblockly {
             for (let r = 0; r < this.state.height; r++) {
                 res += "\n"
                 for (let c = 0; c < this.state.width; c++) {
-                    res += hexChars[this.state.get(c, r)] + " ";
+                    res += hexChars[this.state.getPixel(c, r)] + " ";
                 }
             }
 
@@ -247,10 +247,10 @@ namespace pxtblockly {
                 const row = sprite[r];
                 for (let c = 0; c < spriteWidth; c++) {
                     if (c < row.length) {
-                        this.state.set(c, r, row[c]);
+                        this.state.setPixel(c, r, row[c]);
                     }
                     else {
-                        this.state.set(c, r, 0);
+                        this.state.setPixel(c, r, 0);
                     }
                 }
             }
@@ -286,7 +286,7 @@ namespace pxtblockly {
 
             for (let c = 0; c < this.state.width; c++) {
                 for (let r = 0; r < this.state.height; r++) {
-                    const color = this.state.get(c, r);
+                    const color = this.state.getPixel(c, r);
 
                     if (color) {
                         context.fillStyle = colors[color - 1];

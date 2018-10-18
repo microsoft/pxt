@@ -37,7 +37,7 @@ namespace pxtblockly {
         protected rightElement: svg.Group;
         protected rightText: svg.Text;
 
-        protected switch: svg.Rect;
+        protected switchRect: svg.Rect;
         protected root: svg.Group;
         protected props: ToggleProps;
 
@@ -111,7 +111,7 @@ namespace pxtblockly {
                 .corners(TOGGLE_CORNER_RADIUS, TOGGLE_CORNER_RADIUS);
 
             // Draw the switch
-            this.switch = this.root.draw("rect")
+            this.switchRect = this.root.draw("rect")
                 .at(TOGGLE_BORDER_WIDTH, TOGGLE_BORDER_WIDTH)
                 .size((TOGGLE_WIDTH - TOGGLE_BORDER_WIDTH * 2) / 2, TOGGLE_HEIGHT - TOGGLE_BORDER_WIDTH * 2)
                 .fill(this.props.switchColor)
@@ -138,14 +138,14 @@ namespace pxtblockly {
 
         toggle(quiet = false) {
             if (this.isLeft) {
-                this.switch.removeClass("toggle-left");
-                this.switch.appendClass("toggle-right");
+                this.switchRect.removeClass("toggle-left");
+                this.switchRect.appendClass("toggle-right");
                 this.leftText.fill(this.props.unselectedTextColor);
                 this.rightText.fill(this.props.selectedTextColor);
             }
             else {
-                this.switch.removeClass("toggle-right");
-                this.switch.appendClass("toggle-left");
+                this.switchRect.removeClass("toggle-right");
+                this.switchRect.appendClass("toggle-left");
                 this.leftText.fill(this.props.selectedTextColor);
                 this.rightText.fill(this.props.unselectedTextColor);
             }

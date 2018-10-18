@@ -19,8 +19,8 @@ namespace pxt.blocks {
         return res;
     }
 
-    export function getBlocksWithType(parent: Document | Element, type: string) {
-        return getChildrenWithAttr(parent, "block", "type", type);
+    export function getBlocksWithType(parent: Document | Element, blockType: string) {
+        return getChildrenWithAttr(parent, "block", "type", blockType);
     }
 
     export function getChildrenWithAttr(parent:  Document | Element, tag: string, attr: string, value: string) {
@@ -103,7 +103,7 @@ namespace pxt.blocks {
     }
 
     /**
-     * This callback is populated from the editor extension result. 
+     * This callback is populated from the editor extension result.
      * Allows a target to provide version specific blockly updates
      */
     export let extensionBlocklyPatch: (pkgTargetVersion: string, dom: Element) => void;
@@ -117,11 +117,11 @@ namespace pxt.blocks {
             if (upgrades) {
                 // patch block types
                 upgrades.filter(up => up.type == "blockId")
-                    .forEach(up => Object.keys(up.map).forEach(type => {
-                        getBlocksWithType(doc, type)
+                    .forEach(up => Object.keys(up.map).forEach(blockType => {
+                        getBlocksWithType(doc, blockType)
                             .forEach(blockNode => {
-                                blockNode.setAttribute("type", up.map[type]);
-                                pxt.debug(`patched block ${type} -> ${up.map[type]}`);
+                                blockNode.setAttribute("type", up.map[blockType]);
+                                pxt.debug(`patched block ${blockType} -> ${up.map[blockType]}`);
                             });
                     }))
 
@@ -129,9 +129,9 @@ namespace pxt.blocks {
                 upgrades.filter(up => up.type == "blockValue")
                     .forEach(up => Object.keys(up.map).forEach(k => {
                         const m = k.split('.');
-                        const type = m[0];
+                        const blockType = m[0];
                         const name = m[1];
-                        getBlocksWithType(doc, type)
+                        getBlocksWithType(doc, blockType)
                             .reduce<Element[]>((prev, current) => prev.concat(getDirectChildren(current, "value")), [])
                             .forEach(blockNode => {
                                 blockNode.setAttribute("name", up.map[k]);
@@ -172,14 +172,14 @@ namespace pxt.blocks {
     }
 
     function patchBlock(info: pxtc.BlocksInfo, enums: Map<string>, block: Element): void {
-        let type = block.getAttribute("type");
-        let b = Blockly.Blocks[type];
-        let symbol = blockSymbol(type);
-        if (!symbol || !b) return;
+        let blockType = block.getAttribute("type");
+        let b = Blockly.Blocks[blockType];
+        let symbolInfo = blockSymbol(blockType);
+        if (!symbolInfo || !b) return;
 
-        let comp = compileInfo(symbol);
-        symbol.parameters.forEach((p, i) => {
-            let ptype = info.apis.byQName[p.type];
+        let comp = compileInfo(symbolInfo);
+        symbolInfo.parameters.forEach((p, i) => {
+            let ptype = info.apis.byQName[p.tsType];
             if (ptype && ptype.kind == pxtc.SymbolKind.Enum) {
                 let field = getFirstChildWithAttr(block, "field", "name", comp.actualNameToParam[p.name].definitionName);
                 if (field) {

@@ -76,7 +76,7 @@ namespace pxtblockly {
         }
 
         update(col: number, row: number) {
-            this.drawCore(col, row, (c, r) => this.mask.set(c, r));
+            this.drawCore(col, row, (c, r) => this.mask.setBit(c, r));
         }
 
         drawCursor(col: number, row: number, draw: (c: number, r: number) => void) {
@@ -86,8 +86,8 @@ namespace pxtblockly {
         protected doEditCore(bitmap: Bitmap) {
             for (let c = 0; c < bitmap.width; c++) {
                 for (let r = 0; r < bitmap.height; r++) {
-                    if (this.mask.get(c, r)) {
-                        bitmap.set(c, r, this.color);
+                    if (this.mask.getBit(c, r)) {
+                        bitmap.setPixel(c, r, this.color);
                     }
                 }
             }
@@ -118,7 +118,7 @@ namespace pxtblockly {
             const br = this.bottomRight();
             for (let c = tl[0]; c <= br[0]; c++) {
                 for (let r = tl[1]; r <= br[1]; r++) {
-                    bitmap.set(c, r, this.color);
+                    bitmap.setPixel(c, r, this.color);
                 }
             }
         }
@@ -143,12 +143,12 @@ namespace pxtblockly {
             if (tl[0] > br[0] || tl[1] > br[1]) return;
 
             for (let c = tl[0]; c <= br[0]; c++) {
-                bitmap.set(c, tl[1], this.color);
-                bitmap.set(c, br[1], this.color);
+                bitmap.setPixel(c, tl[1], this.color);
+                bitmap.setPixel(c, br[1], this.color);
             }
             for (let r = tl[1]; r <= br[1]; r++) {
-                bitmap.set(tl[0], r, this.color);
-                bitmap.set(br[0], r, this.color);
+                bitmap.setPixel(tl[0], r, this.color);
+                bitmap.setPixel(br[0], r, this.color);
             }
         }
     }
@@ -169,7 +169,7 @@ namespace pxtblockly {
         protected bresenham(x0: number, y0: number, x1: number, y1: number, bitmap: Bitmap) {
             const dx = x1 - x0;
             const dy = y1 - y0;
-            const draw = (c: number, r: number) => bitmap.set(c, r, this.color);
+            const draw = (c: number, r: number) => bitmap.setPixel(c, r, this.color);
             if (dx === 0) {
                 const startY = dy >= 0 ? y0 : y1;
                 const endY = dy >= 0 ? y1 : y0;
@@ -241,14 +241,14 @@ namespace pxtblockly {
             let y = 0;
             let err = 0;
             while (x >= y) {
-                bitmap.set(cx + x, cy + y, this.color);
-                bitmap.set(cx + x, cy - y, this.color);
-                bitmap.set(cx + y, cy + x, this.color);
-                bitmap.set(cx + y, cy - x, this.color);
-                bitmap.set(cx - y, cy + x, this.color);
-                bitmap.set(cx - y, cy - x, this.color);
-                bitmap.set(cx - x, cy + y, this.color);
-                bitmap.set(cx - x, cy - y, this.color);
+                bitmap.setPixel(cx + x, cy + y, this.color);
+                bitmap.setPixel(cx + x, cy - y, this.color);
+                bitmap.setPixel(cx + y, cy + x, this.color);
+                bitmap.setPixel(cx + y, cy - x, this.color);
+                bitmap.setPixel(cx - y, cy + x, this.color);
+                bitmap.setPixel(cx - y, cy - x, this.color);
+                bitmap.setPixel(cx - x, cy + y, this.color);
+                bitmap.setPixel(cx - x, cy - y, this.color);
                 if (err <= 0) {
                     y += 1;
                     err += 2 * y + 1;
@@ -278,18 +278,18 @@ namespace pxtblockly {
         }
 
         protected doEditCore(bitmap: Bitmap) {
-            const replColor = bitmap.get(this.col, this.row);
+            const replColor = bitmap.getPixel(this.col, this.row);
             if (replColor === this.color) {
                 return;
             }
 
             const mask = new Bitmask(bitmap.width, bitmap.height);
-            mask.set(this.col, this.row);
+            mask.setBit(this.col, this.row);
             const q: Coord[] = [[this.col, this.row]];
             while (q.length) {
                 const [c, r] = q.pop();
-                if (bitmap.get(c, r) === replColor) {
-                    bitmap.set(c, r, this.color);
+                if (bitmap.getPixel(c, r) === replColor) {
+                    bitmap.setPixel(c, r, this.color);
                     tryPush(c + 1, r);
                     tryPush(c - 1, r);
                     tryPush(c, r + 1);
@@ -298,8 +298,8 @@ namespace pxtblockly {
             }
 
             function tryPush(x: number, y: number) {
-                if (x >= 0 && x < mask.width && y >= 0 && y < mask.height && !mask.get(x, y)) {
-                    mask.set(x, y);
+                if (x >= 0 && x < mask.width && y >= 0 && y < mask.height && !mask.getBit(x, y)) {
+                    mask.setBit(x, y);
                     q.push([x, y]);
                 }
             }

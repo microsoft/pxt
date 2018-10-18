@@ -1,3 +1,4 @@
+/* tslint:disable:no-reserved-keywords shipped API */
 namespace pxsim {
     export type BoardPin = string;
     export interface BBLoc {
@@ -580,3 +581,4 @@ namespace pxsim.visuals {
         return [Math.floor(h), Math.floor(s), Math.floor(l)];
     }
 }
+/* tslint:enable:no-reserved-keywords */

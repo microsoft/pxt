@@ -11,14 +11,14 @@ namespace pxtblockly {
             this.buf = new Uint8Array(Math.ceil(width * height / 2));
         }
 
-        set(col: number, row: number, value: number) {
+        setPixel(col: number, row: number, value: number) {
             if (col < this.width && row < this.height && col >= 0 && row  >= 0) {
                 const index = this.coordToIndex(col, row);
                 this.setCore(index, value);
             }
         }
 
-        get(col: number, row: number) {
+        getPixel(col: number, row: number) {
             if (col < this.width && row < this.height && col >= 0 && row  >= 0) {
                 const index = this.coordToIndex(col, row);
                 return this.getCore(index);
@@ -32,7 +32,7 @@ namespace pxtblockly {
             sub.y0 = row;
             for (let c = 0; c < width; c++) {
                 for (let r = 0; r < height; r++) {
-                    sub.set(c, r, this.get(col + c, row + r));
+                    sub.setPixel(c, r, this.getPixel(col + c, row + r));
                 }
             }
             return sub;
@@ -41,7 +41,7 @@ namespace pxtblockly {
         apply(change: Bitmap) {
             for (let c = 0; c < change.width; c++) {
                 for (let r = 0; r < change.height; r++) {
-                    this.set(change.x0 + c, change.y0 + r, change.get(c, r));
+                    this.setPixel(change.x0 + c, change.y0 + r, change.getPixel(c, r));
                 }
             }
         }
@@ -78,14 +78,14 @@ namespace pxtblockly {
             this.mask = new Uint8Array(Math.ceil(width * height / 8));
         }
 
-        set(col: number, row: number) {
+        setBit(col: number, row: number) {
             const cellIndex = col + this.width * row;
             const index = cellIndex >> 3;
             const offset = cellIndex & 7;
             this.mask[index] |= (1 << offset);
         }
 
-        get(col: number, row: number) {
+        getBit(col: number, row: number) {
             const cellIndex = col + this.width * row;
             const index = cellIndex >> 3;
             const offset = cellIndex & 7;

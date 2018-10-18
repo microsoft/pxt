@@ -36,7 +36,7 @@ export async function uploadRefs(id: string, repoUrl: string): Promise<void> {
         await checkHash(id);
         //console.log('commit: ' + id);
         let obj = await getGitObjectAsync(id);
-        if (obj.type != "commit")
+        if (obj.objType != "commit")
             throw new Error("bad type")
         if (obj.commit.parents) {
             // Iterate through every parent and parse the commit.
@@ -61,11 +61,11 @@ export async function uploadRefs(id: string, repoUrl: string): Promise<void> {
         await checkHash(id);
         if (mode.indexOf('1') != 0) {
             let obj = await getGitObjectAsync(id);
-            if (obj.type == 'tree') {
+            if (obj.objType == 'tree') {
                 //console.log('tree:' + obj.id);
                 await processTree(obj.tree);
             } else {
-                throw new Error("bad entry type: " + obj.type)
+                throw new Error("bad entry type: " + obj.objType)
             }
         }
     }
@@ -122,11 +122,11 @@ export async function uploadRefs(id: string, repoUrl: string): Promise<void> {
             for (let missing of missingHashes) {
                 let obj = await getGitObjectAsync(missing);
                 // Upload data to cloud
-                console.log(`uploading raw ${missing} with type ${obj.type} to cloud`);
+                console.log(`uploading raw ${missing} with type ${obj.objType} to cloud`);
                 await pxt.Cloud.privateRequestAsync({
                     url: `upload/raw`,
                     data: {
-                        type: obj.type,
+                        type: obj.objType,
                         content: obj.data.toString('base64'),
                         encoding: 'base64',
                         hash: missing
@@ -152,13 +152,13 @@ export async function uploadRefs(id: string, repoUrl: string): Promise<void> {
         if (!id || /[\r\n]/.test(id))
             throw new Error("bad id: " + id)
 
-        let cached = gitCache.get(id)
+        let cached = gitCache.getEntry(id)
         if (cached)
             return Promise.resolve(cached)
 
         return apiLockAsync.enqueue("cat-file", () => {
             // check again, maybe the object has been cached while we were waiting
-            cached = gitCache.get(id)
+            cached = gitCache.getEntry(id)
             if (cached)
                 return Promise.resolve(cached)
 
@@ -170,7 +170,7 @@ export async function uploadRefs(id: string, repoUrl: string): Promise<void> {
             let bufs: Buffer[] = []
             let res: GitObject = {
                 id: id,
-                type: "",
+                objType: "",
                 memsize: 64,
                 data: null
             }
@@ -179,7 +179,7 @@ export async function uploadRefs(id: string, repoUrl: string): Promise<void> {
                 gitCatFileBuf.shiftAsync()
                     .then(buf => {
                         startGitCatFile() // make sure the usage counter is updated
-                        if (!res.type) {
+                        if (!res.objType) {
                             //console.log(`cat-file ${id} -> ${buf.length} bytes; ${buf[0]} ${buf[1]}`)
                             if (typeBuf) {
                                 buf = Buffer.concat([typeBuf, buf])
@@ -215,7 +215,7 @@ export async function uploadRefs(id: string, repoUrl: string): Promise<void> {
                                 throw new Error("invalid cat-file response: "
                                     + lineS + " <nl> " + buf.toString("utf8"))
                             res.id = m[1]
-                            res.type = m[2]
+                            res.objType = m[2]
                             sizeLeft = parseInt(m[3])
                             res.memsize += sizeLeft // approximate
                         }
@@ -234,16 +234,16 @@ export async function uploadRefs(id: string, repoUrl: string): Promise<void> {
 
             return loop().then(obj => {
                 //console.log(`[cat-file] ${id} -> ${obj.id} ${obj.type} ${obj.data.length}`)
-                if (obj.type == "tree") {
+                if (obj.objType == "tree") {
                     obj.tree = parseTree(obj.data)
-                } else if (obj.type == "commit") {
+                } else if (obj.objType == "commit") {
                     obj.commit = parseCommit(obj.data)
                 }
 
                 // check if this is an object in a specific revision, not say on 'master'
                 // and if it's small enough to warant caching
                 if (/^[0-9a-f]{40}/.test(id)) {
-                    gitCache.set(id, obj, obj.memsize)
+                    gitCache.setEntry(id, obj, obj.memsize)
                 }
 
                 return obj
@@ -254,7 +254,7 @@ export async function uploadRefs(id: string, repoUrl: string): Promise<void> {
 
 export interface GitObject {
     id: string;
-    type: string;
+    objType: string;
     memsize: number;
     data: Buffer;
     tree?: TreeEntry[];
@@ -289,14 +289,14 @@ const maxCacheEltSize = 256 * 1024
 export class Cache<T> {
     cache: SMap<T> = {}
     size = 0
-    get(key: string) {
+    getEntry(key: string) {
         if (!key) return null
         if (this.cache.hasOwnProperty(key))
             return this.cache[key]
         return null
     }
 
-    set(key: string, v: T, sz: number) {
+    setEntry(key: string, v: T, sz: number) {
         if (!key) return
         delete this.cache[key]
         if (!v || sz > maxCacheEltSize) return

@@ -1,4 +1,6 @@
+/* tslint:disable:no-reserved-keywords */
 declare var require: any;
+/* tslint:enable:no-reserved-keywords */
 import * as Promise from "bluebird";
 (window as any).Promise = Promise;
 

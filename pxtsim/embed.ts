@@ -1,5 +1,6 @@
 /// <reference path="../localtypings/pxtparts.d.ts"/>
 
+/* tslint:disable:no-reserved-keywords shipped API */
 namespace pxsim {
     export interface SimulatorRunMessage extends SimulatorMessage {
         type: "run";
@@ -345,3 +346,4 @@ if (typeof window !== 'undefined') {
         pxsim.Embed.start();
     });
 }
+/* tslint:enable:no-reserved-keywords */

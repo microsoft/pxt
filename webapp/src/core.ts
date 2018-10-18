@@ -142,7 +142,7 @@ export interface PromptOptions extends ConfirmOptions {
 }
 
 export interface DialogOptions {
-    type?: string;
+    dialogType?: string;
     hideCancel?: boolean;
     disagreeLbl?: string;
     disagreeClass?: string;
@@ -163,7 +163,7 @@ export interface DialogOptions {
 }
 
 export function dialogAsync(options: DialogOptions): Promise<void> {
-    if (!options.type) options.type = 'dialog';
+    if (!options.dialogType) options.dialogType = 'dialog';
     if (!options.hideCancel) {
         if (!options.buttons) options.buttons = [];
         options.buttons.push({
@@ -180,7 +180,7 @@ export function hideDialog() {
 }
 
 export function confirmAsync(options: ConfirmOptions): Promise<number> {
-    options.type = 'confirm';
+    options.dialogType = 'confirm';
     if (!options.buttons) options.buttons = []
 
     let result = 0
@@ -226,7 +226,7 @@ export function confirmDelete(what: string, cb: () => Promise<void>) {
 }
 
 export function promptAsync(options: PromptOptions): Promise<string> {
-    options.type = 'prompt';
+    options.dialogType = 'prompt';
     if (!options.buttons) options.buttons = []
 
     let result = "";

@@ -52,7 +52,7 @@ namespace pxt.blocks {
     }
 
     interface BlockName {
-        type: string;
+        blockType: string;
         name: string;
     }
 
@@ -72,7 +72,7 @@ namespace pxt.blocks {
                 else {
                     let found = false;
                     for (const param of info.parameters) {
-                        if (param.type.indexOf("=>") !== -1) {
+                        if (param.tsType.indexOf("=>") !== -1) {
                             if (!param.properties || param.properties.length === 0) {
                                 console.error("Destructuring mutations only supported for functions with an event parameter that has multiple properties");
                                 return;
@@ -150,7 +150,7 @@ namespace pxt.blocks {
             this.initializeMutatorTopBlock();
             this.initializeMutatorSubBlocks(subBlocks);
 
-            const mutatorToolboxTypes = subBlocks.map(s => s.type);
+            const mutatorToolboxTypes = subBlocks.map(s => s.blockType);
 
             this.block.setMutator(new Blockly.Mutator(mutatorToolboxTypes));
         }
@@ -159,7 +159,7 @@ namespace pxt.blocks {
         public compose(topBlock: Blockly.Block): void {
             const allBlocks = topBlock.getDescendants().map(subBlock => {
                 return {
-                    type: subBlock.type,
+                    blockType: subBlock.type,
                     name: subBlock.inputList[0].name
                 };
             });
@@ -231,7 +231,7 @@ namespace pxt.blocks {
             const initializer = this.initializeMutatorSubBlock.bind(this);
 
             subBlocks.forEach(blockName => {
-                Blockly.Blocks[blockName.type] = Blockly.Blocks[blockName.type] || {
+                Blockly.Blocks[blockName.blockType] = Blockly.Blocks[blockName.blockType] || {
                     init: function() { initializer(this as Blockly.Block, blockName.name, colour) }
                 };
             });
@@ -416,10 +416,10 @@ namespace pxt.blocks {
 
             return this.info.parameters[this.paramIndex].properties.map(property => {
                 // Used when compiling the destructured arguments
-                this.parameterTypes[property.name] = property.type;
+                this.parameterTypes[property.name] = property.tsType;
 
                 return {
-                    type: this.propertyId(property.name),
+                    blockType: this.propertyId(property.name),
                     name: property.name
                 };
             });
@@ -472,7 +472,7 @@ namespace pxt.blocks {
 
         private getParameterIndex() {
             for (let i = 0; i < this.info.parameters.length; i++) {
-                if (this.info.parameters[i].type.indexOf("=>") !== -1) {
+                if (this.info.parameters[i].tsType.indexOf("=>") !== -1) {
                     return i;
                 }
             }
@@ -536,7 +536,7 @@ namespace pxt.blocks {
         protected getSubBlockNames(): BlockName[] {
             return [{
                 name: "Value",
-                type: ArrayMutator.entryTypeName
+                blockType: ArrayMutator.entryTypeName
             }];
         }
 
@@ -617,7 +617,7 @@ namespace pxt.blocks {
         protected getSubBlockNames(): BlockName[] {
             return [{
                 name: "Instance",
-                type: DefaultInstanceMutator.instanceSubBlockType
+                blockType: DefaultInstanceMutator.instanceSubBlockType
             }];
         }
 

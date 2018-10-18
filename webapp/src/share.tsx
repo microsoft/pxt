@@ -163,11 +163,11 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
                         : undefined}
                     {url && ready ? <div>
                         <p>{lf("Your project is ready! Use the address below to share your projects.")}</p>
-                        <sui.Input id="projectUri" class="mini" readOnly={true} lines={1} value={url} copy={true} selectOnClick={true} aria-describedby="projectUriLabel" />
+                        <sui.Input id="projectUri" className="mini" readOnly={true} lines={1} value={url} copy={true} selectOnClick={true} aria-describedby="projectUriLabel" />
                         <label htmlFor="projectUri" id="projectUriLabel" className="accessible-hidden">{lf("This is the read-only internet address of your project.")}</label>
                         {showSocialIcons ? <div className="social-icons">
-                            <SocialButton url={url} ariaLabel="Facebook" type='facebook' heading={lf("Share on Facebook")} />
-                            <SocialButton url={url} ariaLabel="Twitter" type='twitter' heading={lf("Share on Twitter")} />
+                            <SocialButton url={url} ariaLabel="Facebook" service='facebook' heading={lf("Share on Facebook")} />
+                            <SocialButton url={url} ariaLabel="Twitter" service='twitter' heading={lf("Share on Twitter")} />
                         </div> : undefined}
                     </div>
                         : undefined}
@@ -181,7 +181,7 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
                             </sui.Menu> : undefined}
                         {advancedMenu ?
                             <sui.Field>
-                                <sui.Input id="embedCode" class="mini" readOnly={true} lines={4} value={embed} copy={ready} disabled={!ready} selectOnClick={true} />
+                                <sui.Input id="embedCode" className="mini" readOnly={true} lines={4} value={embed} copy={ready} disabled={!ready} selectOnClick={true} />
                                 <label htmlFor="embedCode" id="embedCodeLabel" className="accessible-hidden">{lf("This is the read-only code for the selected tab.")}</label>
                             </sui.Field> : null}
                     </div> : undefined}
@@ -193,7 +193,7 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
 
 interface SocialButtonProps {
     url?: string;
-    type?: "facebook" | "twitter";
+    service?: "facebook" | "twitter";
     ariaLabel?: string;
     heading?: string;
 }
@@ -208,7 +208,7 @@ class SocialButton extends data.Component<SocialButtonProps, {}> {
     }
 
     handleClick(e: React.MouseEvent<any>) {
-        const { type, url: shareUrl, heading } = this.props;
+        const { service, url: shareUrl, heading } = this.props;
 
         let twitterText = lf("Check out what I made!");
         const socialOptions = pxt.appTarget.appTheme.socialOptions;
@@ -225,10 +225,10 @@ class SocialButton extends data.Component<SocialButtonProps, {}> {
             (socialOptions.hashtags ? `&hashtags=${encodeURIComponent(socialOptions.hashtags)}` : '') +
             (socialOptions.related ? `&related=${encodeURIComponent(socialOptions.related)}` : '');
 
-        pxt.tickEvent(`share.${type}`, undefined, { interactiveConsent: true })
+        pxt.tickEvent(`share.${service}`, undefined, { interactiveConsent: true })
 
         let url = '';
-        switch (type) {
+        switch (service) {
             case "facebook": url = fbUrl; break;
             case "twitter": url = twitterUrl; break;
         }
@@ -237,9 +237,9 @@ class SocialButton extends data.Component<SocialButtonProps, {}> {
     }
 
     renderCore() {
-        const { type, ariaLabel } = this.props;
-        return <a role="button" className={`ui button large icon ${type}`} tabIndex={0} aria-label={ariaLabel}
-            onClick={this.handleClick}><sui.Icon icon={type} /></a>
+        const { service, ariaLabel } = this.props;
+        return <a role="button" className={`ui button large icon ${service}`} tabIndex={0} aria-label={ariaLabel}
+            onClick={this.handleClick}><sui.Icon icon={service} /></a>
     }
 }
 

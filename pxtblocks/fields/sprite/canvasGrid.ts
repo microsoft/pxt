@@ -69,7 +69,7 @@ namespace pxtblockly {
         }
 
         writeColor(col: number, row: number, color: number) {
-            this.image.set(col, row, color);
+            this.image.setPixel(col, row, color);
             this.drawColor(col, row, color);
         }
 
@@ -257,7 +257,7 @@ namespace pxtblockly {
         protected redraw() {
             for (let c = 0; c < this.image.width; c++) {
                 for (let r = 0; r < this.image.height; r++) {
-                    this.drawColor(c, r, this.image.get(c, r));
+                    this.drawColor(c, r, this.image.getPixel(c, r));
                 }
             }
         }
@@ -399,8 +399,8 @@ namespace pxtblockly {
             }
         }
 
-        subscribe(type: GestureType, handler: GestureHandler) {
-            this.handlers[type] = handler;
+        subscribe(gesture: GestureType, handler: GestureHandler) {
+            this.handlers[gesture] = handler;
         }
 
         protected update(col: number, row: number) {
@@ -408,9 +408,9 @@ namespace pxtblockly {
             this.lastRow = row;
         }
 
-        protected fire(type: GestureType) {
-            if (this.handlers[type]) {
-                this.handlers[type](this.lastCol, this.lastRow);
+        protected fire(gesture: GestureType) {
+            if (this.handlers[gesture]) {
+                this.handlers[gesture](this.lastCol, this.lastRow);
             }
         }
     }

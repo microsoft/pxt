@@ -1,7 +1,9 @@
 /// <reference path="../localtypings/pxtarget.d.ts"/>
 
 namespace pxt {
+    /* tslint:disable:no-reserved-keywords just a declaration*/
     declare var require: any;
+    /* tslint:enable:no-reserved-keywords */
 
     let lzmaPromise: Promise<any>;
     function getLzmaAsync() {

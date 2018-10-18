@@ -853,7 +853,7 @@ function gitUploadAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
         })
         .then(() => {
             let roottree: Map<GitEntry> = {}
-            let get = (tree: GitTree, path: string): GitEntry => {
+            let getGitEntry = (tree: GitTree, path: string): GitEntry => {
                 let subt = U.lookup(tree, path)
                 if (!subt)
                     subt = tree[path] = {}
@@ -862,12 +862,12 @@ function gitUploadAsync(opts: UploadOptions, uplReqs: Map<BlobReq>) {
             let lookup = (tree: GitTree, path: string): GitEntry => {
                 let m = /^([^\/]+)\/(.*)/.exec(path)
                 if (m) {
-                    let subt = get(tree, m[1])
+                    let subt = getGitEntry(tree, m[1])
                     U.assert(!subt.hash)
                     if (!subt.subtree) subt.subtree = {}
                     return lookup(subt.subtree, m[2])
                 } else {
-                    return get(tree, path)
+                    return getGitEntry(tree, path)
                 }
             }
             for (let fn of Object.keys(uplReqs)) {
@@ -1170,8 +1170,8 @@ function uploadCoreAsync(opts: UploadOptions) {
                 }
 
                 if (replFiles.indexOf(fileName) >= 0) {
-                    for (let from of Object.keys(replacements)) {
-                        content = U.replaceAll(content, from, replacements[from])
+                    for (let fromString of Object.keys(replacements)) {
+                        content = U.replaceAll(content, fromString, replacements[fromString])
                     }
                     if (opts.localDir) {
                         data = new Buffer(content, "utf8")
@@ -2261,19 +2261,19 @@ class SnippetHost implements pxt.Host {
 
     constructor(public name: string, public main: string, public extraDependencies: pxt.Map<string>, private includeCommon = false) { }
 
-    resolve(module: pxt.Package, filename: string): string {
-        pxt.log(`resolve ${module.id}. ${filename}`)
+    resolve(pxtPackage: pxt.Package, filename: string): string {
+        pxt.log(`resolve ${pxtPackage.id}. ${filename}`)
         return ""
     }
 
-    readFile(module: pxt.Package, filename: string): string {
+    readFile(pxtPackage: pxt.Package, filename: string): string {
         if (filename == pxt.github.GIT_JSON)
             return null;
 
-        if (this.files[module.id] && this.files[module.id][filename]) {
-            return this.files[module.id][filename]
+        if (this.files[pxtPackage.id] && this.files[pxtPackage.id][filename]) {
+            return this.files[pxtPackage.id][filename]
         }
-        if (module.id == "this") {
+        if (pxtPackage.id == "this") {
             if (filename == "pxt.json") {
                 return JSON.stringify(<pxt.PackageConfig>{
                     "name": this.name.replace(/[^a-zA-z0-9]/g, ''),
@@ -2295,14 +2295,14 @@ class SnippetHost implements pxt.Host {
             else if (filename == "main.ts") {
                 return this.main
             }
-        } else if (pxt.appTarget.bundledpkgs[module.id] && filename === pxt.CONFIG_NAME) {
-            return pxt.appTarget.bundledpkgs[module.id][pxt.CONFIG_NAME];
+        } else if (pxt.appTarget.bundledpkgs[pxtPackage.id] && filename === pxt.CONFIG_NAME) {
+            return pxt.appTarget.bundledpkgs[pxtPackage.id][pxt.CONFIG_NAME];
         } else {
             const readFile = (filename: string) => {
                 let ps = [
-                    path.join(module.id, filename),
-                    path.join('libs', module.id, filename),
-                    path.join('libs', module.id, 'built', filename),
+                    path.join(pxtPackage.id, filename),
+                    path.join('libs', pxtPackage.id, filename),
+                    path.join('libs', pxtPackage.id, 'built', filename),
                 ];
                 for (let p of ps) {
                     try {
@@ -2317,7 +2317,7 @@ class SnippetHost implements pxt.Host {
             let contents = readFile(filename)
             if (contents == null) {
                 // try additional package location
-                if (pxt.appTarget.bundledpkgs[module.id]) {
+                if (pxt.appTarget.bundledpkgs[pxtPackage.id]) {
                     let f = readFile(pxt.CONFIG_NAME)
                     const modpkg = JSON.parse(f || "{}") as pxt.PackageConfig;
                     // TODO this seems to be dead code, additionalFilePath is removed from bundledpkgs
@@ -2335,25 +2335,25 @@ class SnippetHost implements pxt.Host {
             }
 
             if (contents) {
-                this.writeFile(module, filename, contents)
+                this.writeFile(pxtPackage, filename, contents)
                 return contents
             }
         }
 
-        if (module.id === "this") {
+        if (pxtPackage.id === "this") {
             if (filename === "pxt-core.d.ts") {
                 const contents = fs.readFileSync(path.join(this.getRepoDir(), "libs", "pxt-common", "pxt-core.d.ts"), 'utf8');
-                this.writeFile(module, filename, contents);
+                this.writeFile(pxtPackage, filename, contents);
                 return contents;
             }
             else if (filename === "pxt-helpers.ts") {
                 const contents = fs.readFileSync(path.resolve(this.getRepoDir(), "libs", "pxt-common", "pxt-helpers.ts"), 'utf8');
-                this.writeFile(module, filename, contents);
+                this.writeFile(pxtPackage, filename, contents);
                 return contents;
             }
         }
 
-        pxt.log(`unresolved file ${module.id}/${filename}`)
+        pxt.log(`unresolved file ${pxtPackage.id}/${filename}`)
         return null
     }
 
@@ -2363,11 +2363,11 @@ class SnippetHost implements pxt.Host {
         return cwd.substr(0, i + 5);
     }
 
-    writeFile(module: pxt.Package, filename: string, contents: string) {
-        if (!this.files[module.id]) {
-            this.files[module.id] = {}
+    writeFile(pxtPackage: pxt.Package, filename: string, contents: string) {
+        if (!this.files[pxtPackage.id]) {
+            this.files[pxtPackage.id] = {}
         }
-        this.files[module.id][filename] = contents
+        this.files[pxtPackage.id][filename] = contents
     }
 
     getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo> {
@@ -2414,31 +2414,31 @@ class Host
     implements pxt.Host {
     fileOverrides: Map<string> = {}
 
-    resolve(module: pxt.Package, filename: string) {
+    resolve(pxtPackage: pxt.Package, filename: string) {
         //pxt.debug(`resolving ${module.level}:${module.id} -- ${filename} in ${path.resolve(".")}`)
-        if (module.level == 0) {
+        if (pxtPackage.level == 0) {
             return "./" + filename
-        } else if (module.verProtocol() == "file") {
-            let fn = module.verArgument() + "/" + filename
-            if (module.level > 1 && module.addedBy[0])
-                fn = this.resolve(module.addedBy[0], fn)
+        } else if (pxtPackage.verProtocol() == "file") {
+            let fn = pxtPackage.verArgument() + "/" + filename
+            if (pxtPackage.level > 1 && pxtPackage.addedBy[0])
+                fn = this.resolve(pxtPackage.addedBy[0], fn)
             return fn
         } else {
-            return "pxt_modules/" + module.id + "/" + filename
+            return "pxt_modules/" + pxtPackage.id + "/" + filename
         }
     }
 
-    readFile(module: pxt.Package, filename: string, skipAdditionalFiles?: boolean): string {
+    readFile(pxtPackage: pxt.Package, filename: string, skipAdditionalFiles?: boolean): string {
         const commonFile = U.lookup(commonfiles, filename)
         if (commonFile != null) return commonFile;
 
         const overFile = U.lookup(this.fileOverrides, filename)
-        if (module.level == 0 && overFile != null) {
+        if (pxtPackage.level == 0 && overFile != null) {
             pxt.debug(`found override for ${filename}`)
             return overFile;
         }
 
-        const resolved = this.resolve(module, filename)
+        const resolved = this.resolve(pxtPackage, filename)
         const dir = path.dirname(resolved)
         if (filename == pxt.CONFIG_NAME)
             try {
@@ -2451,8 +2451,8 @@ class Host
             pxt.debug(`reading ${resolved}`)
             return fs.readFileSync(resolved, "utf8")
         } catch (e) {
-            if (!skipAdditionalFiles && module.config) {
-                for (let addPath of module.config.additionalFilePaths || []) {
+            if (!skipAdditionalFiles && pxtPackage.config) {
+                for (let addPath of pxtPackage.config.additionalFilePaths || []) {
                     try {
                         pxt.debug(`try read: ${path.join(dir, addPath, filename)}`)
                         return fs.readFileSync(path.join(dir, addPath, filename), "utf8")
@@ -2464,8 +2464,8 @@ class Host
         }
     }
 
-    writeFile(module: pxt.Package, filename: string, contents: string): void {
-        let p = this.resolve(module, filename)
+    writeFile(pxtPackage: pxt.Package, filename: string, contents: string): void {
+        let p = this.resolve(pxtPackage, filename)
         let check = (p: string) => {
             let dir = p.replace(/\/[^\/]+$/, "")
             if (dir != p) {
@@ -3378,7 +3378,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
     return Promise.map(snippets, (snippet: CodeSnippet) => {
         const name = snippet.name;
         const fn = snippet.file || snippet.name;
-        pxt.log(`  ${fn} (${snippet.type})`);
+        pxt.log(`  ${fn} (${snippet.langType})`);
 
         if (snippet.ext == "json") {
             try {
@@ -3428,7 +3428,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
                         })
                 }
                 if (resp.success) {
-                    if (/^block/.test(snippet.type)) {
+                    if (/^block/.test(snippet.langType)) {
                         //Similar to pxtc.decompile but allows us to get blocksInfo for round trip
                         const file = resp.ast.getSourceFile('main.ts');
                         const apis = pxtc.getApiInfo(opts, resp.ast);
@@ -3628,7 +3628,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
                     }
                     pxt.debug(`generating api docs (${Object.keys(apiInfo.byQName).length})`);
                     const md = pxtc.genDocs(mainPkg.config.name, apiInfo, {
-                        package: mainPkg.config.name != pxt.appTarget.corepkg && !mainPkg.config.core,
+                        packageName: mainPkg.config.name != pxt.appTarget.corepkg && !mainPkg.config.core,
                         locs: buildOpts.locs,
                         docs: buildOpts.docs
                     })
@@ -4614,7 +4614,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
 
     function addSnippet(snippet: CodeSnippet, entryPath: string, snipIndex: number) {
         snippets.push(snippet);
-        const dir = path.join("temp/snippets", snippet.type);
+        const dir = path.join("temp/snippets", snippet.langType);
         const fn = `${dir}/${entryPath.replace(/^\//, '').replace(/\//g, '-').replace(/\.\w+$/, '')}-${snipIndex}.${snippet.ext}`;
         nodeutil.mkdirP(dir);
         nodeutil.writeFileSync(fn, snippet.code);
@@ -4749,7 +4749,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                                 addSnippet(<CodeSnippet>{
                                     name: card.name,
                                     code: pxt.tutorial.bundleTutorialCode(tutorialMd),
-                                    type: "blocks",
+                                    langType: "blocks",
                                     ext: "ts",
                                     packages: pkgs
                                 }, "tutorial" + gal.name, cardIndex);
@@ -4764,7 +4764,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                                 addSnippet(<CodeSnippet>{
                                     name: card.name,
                                     code: prj.filesOverride["main.ts"],
-                                    type: "blocks",
+                                    langType: "blocks",
                                     ext: "ts",
                                     packages: pkgs
                                 }, "example" + gal.name, cardIndex);
@@ -4857,7 +4857,7 @@ export function publishGistAsync(parsed: commandParser.ParsedCommand) {
 }
 
 export interface SnippetInfo {
-    type: string;
+    langType: string;
     code: string;
     ignore: boolean;
     index: number;
@@ -4867,11 +4867,11 @@ export function getSnippets(source: string): SnippetInfo[] {
     let snippets: SnippetInfo[] = []
     let re = /^`{3}([\S]+)?\s*\n([\s\S]+?)\n`{3}\s*?$/gm;
     let index = 0
-    source.replace(re, (match, type, code) => {
+    source.replace(re, (match, langType, code) => {
         snippets.push({
-            type: type ? type.replace(/-ignore$/i, "") : "pre",
+            langType: langType ? langType.replace(/-ignore$/i, "") : "pre",
             code: code,
-            ignore: type ? /-ignore/g.test(type) : false,
+            ignore: langType ? /-ignore/g.test(langType) : false,
             index: index
         })
         index++
@@ -4883,7 +4883,7 @@ export function getSnippets(source: string): SnippetInfo[] {
 export interface CodeSnippet {
     name: string;
     code: string;
-    type: string;
+    langType: string;
     ext: string;
     packages: pxt.Map<string>;
     file?: string;
@@ -4901,11 +4901,11 @@ export function getCodeSnippets(fileName: string, md: string): CodeSnippet[] {
         "codecard": "json"
     }
     const snippets = getSnippets(md);
-    const codeSnippets = snippets.filter(snip => !snip.ignore && !!supported[snip.type]);
+    const codeSnippets = snippets.filter(snip => !snip.ignore && !!supported[snip.langType]);
     const pkgs: pxt.Map<string> = {
         "blocksprj": "*"
     }
-    snippets.filter(snip => snip.type == "package")
+    snippets.filter(snip => snip.langType == "package")
         .map(snip => snip.code.split('\n'))
         .forEach(lines => lines
             .map(l => l.replace(/\s*$/, ''))
@@ -4920,8 +4920,8 @@ export function getCodeSnippets(fileName: string, md: string): CodeSnippet[] {
         return {
             name: `${pkgName}-${i}`,
             code: snip.code,
-            type: snip.type,
-            ext: supported[snip.type],
+            langType: snip.langType,
+            ext: supported[snip.langType],
             packages: pkgs
         };
     })
@@ -5211,7 +5211,7 @@ function initCommands() {
             "route": {
                 description: "route appended to generated files",
                 argument: "route",
-                type: "string",
+                argType: "string",
                 aliases: ["r"]
             },
             "githubpages": {
@@ -5283,19 +5283,19 @@ function initCommands() {
             hostname: {
                 description: "hostname to run serve, default localhost",
                 aliases: ["h"],
-                type: "string",
+                argType: "string",
                 argument: "hostname"
             },
             port: {
                 description: "port to bind server, default 3232",
                 aliases: ["p"],
-                type: "number",
+                argType: "number",
                 argument: "port"
             },
             wsport: {
                 description: "port to bind websocket server, default 3233",
                 aliases: ["w"],
-                type: "number",
+                argType: "number",
                 argument: "wsport"
             }
         }
@@ -5438,7 +5438,7 @@ function initCommands() {
         flags: {
             "name": {
                 description: "name of the branch",
-                type: "string",
+                argType: "string",
                 argument: "name"
             }
         }
@@ -5450,7 +5450,7 @@ function initCommands() {
         argString: "<file1.ts> <file2.ts> ...",
         advanced: true,
         flags: {
-            dep: { description: "include specified path as a dependency to the project", type: "string", argument: "path" }
+            dep: { description: "include specified path as a dependency to the project", argType: "string", argument: "path" }
         }
     }, decompileAsync);
 
@@ -5518,7 +5518,7 @@ function initCommands() {
         flags: {
             docs: { description: "produce docs files", aliases: ["doc"] },
             locs: { description: "produce localization files", aliases: ["loc"] },
-            files: { description: "file name filter (regex)", type: "string", argument: "files" },
+            files: { description: "file name filter (regex)", argType: "string", argument: "files" },
             create: { description: "only write new files" }
         },
         advanced: true

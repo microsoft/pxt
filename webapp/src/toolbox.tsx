@@ -23,7 +23,9 @@ export const enum CategoryNameID {
 export interface BlockDefinition {
     name: string;
     namespace?: string;
+    /* tslint:disable:no-reserved-keywords shipped API*/
     type?: string;
+    /* tslint:enable:no-reserved-keywords */
     snippet?: string;
     snippetName?: string;
     snippetOnly?: boolean;
@@ -51,7 +53,9 @@ export interface BlockDefinition {
 
 export interface ButtonDefinition {
     name: string;
+    /* tslint:disable:no-reserved-keywords shipped API */
     type: "button";
+    /* tslint:enable:no-reserved-keywords */
     attributes: {
         blockId?: string;
         label?: string;

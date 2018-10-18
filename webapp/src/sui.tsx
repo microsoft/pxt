@@ -438,9 +438,9 @@ export class Field extends data.Component<{
 export interface InputProps {
     label?: string;
     inputLabel?: string;
-    class?: string;
+    className?: string;
     value?: string;
-    type?: string;
+    inputType?: string;
     placeholder?: string;
     disabled?: boolean;
     onChange?: (v: string) => void;
@@ -524,15 +524,15 @@ export class Input extends data.Component<InputProps, { value: string }> {
                     {!p.lines || p.lines == 1 ? <input
                         autoFocus={p.autoFocus}
                         id={p.id}
-                        className={p.class || ""}
-                        type={p.type || "text"}
+                        className={p.className || ""}
+                        type={p.inputType || "text"}
                         placeholder={p.placeholder} value={value || ''}
                         readOnly={!!p.readOnly}
                         onClick={this.handleClick}
                         onChange={this.handleChange} />
                         : <textarea
                             id={p.id}
-                            className={"ui input " + (p.class || "") + (p.inputLabel ? " labelled" : "")}
+                            className={"ui input " + (p.className || "") + (p.inputLabel ? " labelled" : "")}
                             rows={p.lines}
                             placeholder={p.placeholder}
                             value={value || ''}
@@ -554,7 +554,7 @@ export class Input extends data.Component<InputProps, { value: string }> {
 export interface CheckBoxProps {
     label?: string;
     inputLabel?: string;
-    class?: string;
+    className?: string;
     checked?: boolean;
     onChange: (v: string) => void;
 }

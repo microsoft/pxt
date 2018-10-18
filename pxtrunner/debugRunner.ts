@@ -17,7 +17,9 @@ namespace pxt.runner {
      * information for the server-side runner.
      */
     interface RunnerMessage extends DebugProtocol.ProtocolMessage {
+        /* tslint:disable:no-reserved-keywords external API */
         type: "runner";
+        /* tslint:enable:no-reserved-keywords */
         subtype: string;
     }
 

@@ -1,7 +1,7 @@
 /* Docs:
  *
  * Thumb 16-bit Instruction Set Quick Reference Card
- *   http://infocenter.arm.com/help/topic/com.arm.doc.qrc0006e/QRC0006_UAL16.pdf 
+ *   http://infocenter.arm.com/help/topic/com.arm.doc.qrc0006e/QRC0006_UAL16.pdf
  *
  * ARMv6-M Architecture Reference Manual (bit encoding of instructions)
  *   http://ecee.colorado.edu/ecen3000/labs/lab3/files/DDI0419C_arm_architecture_v6m_reference_manual.pdf
@@ -243,7 +243,7 @@ namespace ts.pxtc.thumb {
             for (let i = 0; i < f.lines.length; ++i) {
                 let line = f.lines[i]
                 outlines.push(line)
-                if (line.type == "instruction" && line.instruction && line.instruction.name == "ldlit") {
+                if (line.lineType == "instruction" && line.instruction && line.instruction.name == "ldlit") {
                     if (!nextGoodSpot) {
                         let limit = line.location + 900 // leave some space - real limit is 1020
                         let j = i + 1
@@ -259,7 +259,7 @@ namespace ts.pxtc.thumb {
                         } else {
                             needsJumpOver = true
                             while (--j > i) {
-                                if (f.lines[j].type == "instruction") {
+                                if (f.lines[j].lineType == "instruction") {
                                     nextGoodSpot = f.lines[j]
                                     break
                                 }
