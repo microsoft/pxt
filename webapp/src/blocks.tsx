@@ -1337,7 +1337,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
         if (blockXml) {
             if (ignoregap) {
-                blockXml.setAttribute("gap", `${pxt.appTarget.appTheme && pxt.appTarget.appTheme.defaultBlockGap.toString() || 8}`);
+                blockXml.setAttribute("gap", `${pxt.appTarget.appTheme
+                    && pxt.appTarget.appTheme.defaultBlockGap && pxt.appTarget.appTheme.defaultBlockGap.toString() || 8}`);
             }
             pxt.Util.toArray(blockXml.querySelectorAll('shadow'))
                 .filter(shadow => !shadow.innerHTML)
