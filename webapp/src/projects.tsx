@@ -470,7 +470,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                         key={'local' + scr.id + scr.recentUse}
                         // ref={(view) => { if (index === 1) this.latestProject = view }}
                         cardType="file"
-                        className={boardsvg ? undefined : scr.board ? "" : scr.githubId ? "file github" : "file"}
+                        className={boardsvg && scr.board ? "file board" : scr.githubId ? "file github" : "file"}
                         imageUrl={boardsvg}
                         name={scr.name}
                         time={scr.recentUse}
