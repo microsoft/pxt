@@ -27,6 +27,7 @@ These keyboard shortcuts are used in the [JavaScript editor](#javascript-editor)
 
 * By default, pressing ``Tab`` in the editor will insert the tab character.
 * Toggle this behavior by pressing ``Control+M`` on **Windows** or ``⌘+M`` on **Mac**.
+* In order to jump to the toolbox from the editor. Press ``Control+T`` on **Windows** or ``⌘+T`` on **Mac**.
 
 ### Drop-down menu
 

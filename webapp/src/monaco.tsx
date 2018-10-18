@@ -364,11 +364,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }
 
             // Accessibility shortcut, add a way to quickly jump to the monaco toolbox
-            const arrow = Util.isUserLanguageRtl() ? monaco.KeyCode.RightArrow : monaco.KeyCode.LeftArrow;
             this.editor.addAction({
                 id: "jumptoolbox",
                 label: lf("Jump to Toolbox"),
-                keybindings: [monaco.KeyMod.CtrlCmd | arrow],
+                keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_T],
                 keybindingContext: "!editorReadonly",
                 precondition: "!editorReadonly",
                 run: () => Promise.resolve(this.moveFocusToToolbox())
