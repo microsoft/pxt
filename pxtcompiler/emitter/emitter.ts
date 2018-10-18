@@ -2146,15 +2146,13 @@ ${lbl}: .short 0xffff
                         // where recv is a map obejct
                         let name = getName(decl)
                         let res = mkProcCallCore(null, null, args.map((x) => emitExpr(x)), getIfaceMemberId(name))
-                        if (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
-                            let pid = res.data as ir.ProcId
-                            pid.mapIdx = pid.ifaceIndex
-                            if (args.length == 2) {
-                                pid.ifaceIndex = getIfaceMemberId("set/" + name)
-                                pid.mapMethod = "pxtrt::mapSet"
-                            } else {
-                                pid.mapMethod = "pxtrt::mapGet"
-                            }
+                        let pid = res.data as ir.ProcId
+                        pid.mapIdx = pid.ifaceIndex
+                        if (args.length == 2) {
+                            pid.ifaceIndex = getIfaceMemberId("set/" + name)
+                            pid.mapMethod = "pxtrt::mapSet"
+                        } else {
+                            pid.mapMethod = "pxtrt::mapGet"
                         }
                         return res
                     } else {

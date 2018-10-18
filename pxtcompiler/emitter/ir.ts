@@ -40,7 +40,7 @@ namespace ts.pxtc.ir {
         argIdx: number;
         method: string;
         returnsRef?: boolean;
-        refTag?: number;
+        refTag?: pxt.BuiltInType;
     }
 
     export interface MaskInfo {
@@ -475,9 +475,9 @@ namespace ts.pxtc.ir {
             this.args = []
         }
 
-        litLabel() {
+        vtLabel() {
             this.info.usedAsValue = true
-            return this.label() + "_Lit"
+            return this.label() + "_args"
         }
 
         label() {

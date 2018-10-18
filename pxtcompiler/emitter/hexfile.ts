@@ -668,7 +668,7 @@ ${info.id}_VT:
         addPtr("pxt::RefRecord_destroy")
         addPtr("pxt::RefRecord_print")
         if (info.toStringMethod)
-            s += `        ${ptrSz} ${info.toStringMethod.litLabel()}\n`
+            s += `        ${ptrSz} ${info.toStringMethod.vtLabel()}\n`
         else
             addPtr("0")
 
@@ -692,7 +692,7 @@ ${info.id}_VT:
 ${info.id}_IfaceVT:
 `
         for (let m of info.itable) {
-            addPtr(m ? m.litLabel() : "0")
+            addPtr(m ? m.vtLabel() : "0")
         }
 
         s += "\n"

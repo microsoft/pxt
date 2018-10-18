@@ -594,41 +594,156 @@ ${baseLabel}:
             })
         }
 
+        private emitClassCall(procid: ir.ProcId) {
+            let effIdx = procid.virtualIndex + numSpecialMethods + 3
+            this.write(this.t.emit_int(effIdx * 4, "r1"))
+
+            let info = procid.proc.classInfo
+            this.emitLabelledHelper("classCall_" + info.id, () => {
+                this.write(`ldr r0, [sp, #0] ; ld-this`)
+                this.loadVTable()
+                this.checkSubtype(info)
+                this.write(`ldr r1, [r3, r1] ; ld-method`)
+                this.write(`bx r1 ; keep lr from caller`)
+                this.write(`.fail:`)
+                this.write(`bl pxt::failedCast`)
+            })
+        }
+
+        private emitIfaceCall(procid: ir.ProcId, numargs: number) {
+            this.write(this.t.emit_int(numargs, "r4"))
+            this.write(this.t.emit_int(procid.ifaceIndex * 4, "r1"))
+
+            this.emitLabelledHelper("ifacecall" + numargs, () => {
+                this.write(`ldr r0, [sp, #0] ; ld-this`)
+                this.loadVTable()
+
+                this.write(`
+                    ldr r2, [r3, #4] ; iface table
+                    cmp r2, #0
+                    beq .objlit
+                    ldr r2, [r2, r1] ; ld-method
+                    cmp r2, #0
+                    beq .fail2
+                    bx r2
+                
+                .objlit:
+                    ldrh r2, [r3, #8]
+                    cmp r2, #${pxt.BuiltInType.RefMap}
+                    bne .fail
+                    ${this.t.pushLR()}
+                    bl pxt::mapGet
+                    ${this.t.popPC()}
+                ; move args
+                `)
+
+                for (let i = 0; i < numargs; ++i) {
+                    if (i == numargs - 1)
+                        // we keep the actual lambda value on the stack, so it gets decremented
+                        this.write(`movs r1, r0`)
+                    else
+                        this.write(`ldr r1, [sp, #4*${i + 1}]`)
+                    this.write(`str r1, [sp, #4*${i}]`)
+                }
+
+                // one argument consumed
+                this.write(`subs r4, #1`)
+
+                this.lambdaCall()
+
+                this.write(`
+                .fail:
+                    bl pxt::failedCast
+                .fail2:
+                    bl pxt::missingProperty
+                `)
+            })
+        }
+
+        private emitGetSet(procid: ir.ProcId) {
+            let isSet = /Set/.test(procid.mapMethod)
+            this.write(this.t.emit_int(procid.mapIdx, "r1"))
+            if (isSet)
+                this.write(this.t.emit_int(procid.ifaceIndex, "r4"))
+
+            let outp = this.redirectOutput(() => {
+                this.write(`ldr r0, [sp, #0] ; ld-this`)
+                this.loadVTable()
+                this.write(`
+                    ldr r2, [r3, #4] ; iface table
+                    cmp r2, #0
+                    beq .objlit
+                    lsls r1, ${isSet ? "r4" : "r1"}, #2
+                    ldr r1, [r2, r1] ; ld-method
+                    cmp r1, #0
+                    beq .fail2
+                    bx r1
+                
+                .objlit:
+                    ldrh r2, [r3, #8]
+                    cmp r2, #${pxt.BuiltInType.RefMap}
+                    bne .fail
+                    ${isSet ? "ldr r2, [sp, #4]" : ""}
+                    movs r3, #0 ; clear args on stack, so the outside decr() doesn't touch them
+                    str r3, [sp, #0]
+                    ${isSet ? "str r3, [sp, #4]" : ""}
+                    ${this.t.pushLR()}
+                    bl ${procid.mapMethod}
+                    ${this.t.popPC()}
+                
+                .fail:
+                    bl pxt::failedCast
+                .fail2:
+                    bl pxt::missingProperty
+                `)
+            })
+            this.emitHelper(outp, "vcall")
+        }
+
+        // vtable in r3; no clobber
+        private checkSubtype(info: ClassInfo) {
+            this.write(`ldrh r3, [r3, #8]`)
+            this.write(`cmp r3, #${info.classNo}`)
+            if (info.classNo == info.lastSubtypeNo) {
+                this.write("bne .fail") // different class
+            } else {
+                this.write("blt .fail")
+                this.write(`cmp r3, #${info.lastSubtypeNo}`)
+                this.write("bgt .fail")
+            }
+        }
+
+        // keep r0, keep r1, clobber r2, vtable in r3
+        private loadVTable(decr = false) {
+            this.write(`lsls r2, r0, #30`)
+            this.write(`bne .fail`) // tagged
+            this.write(`cmp r0, #0`)
+            this.write(`beq .fail`) // null
+
+            this.write(`ldr r3, [r0, #0]`)
+
+            if (!target.gc) {
+                this.write(`lsls r2, r3, #30`)
+                this.write(`beq .fail`) // C++ class - TODO remove
+                if (decr) {
+                    this.write(`bmi .inflash`)
+                    this.write(`uxth r2, r3`)
+                    this.write(`subs r2, #2`)
+                    this.write(`blt .fail`) // ref-cnt underflow!
+                    this.write(`strh r2, [r0, #0]`)
+                    this.write(`.inflash:`)
+                }
+                this.write(`lsrs r3, r3, #16`)
+                this.write(`lsls r3, r3, #${target.vtableShift}`)
+            }
+        }
+
         private emitInstanceOf(info: ClassInfo, tp: string) {
             let lbl = "inst_" + info.id + "_" + tp
 
             this.emitLabelledHelper(lbl, () => {
-                this.write(`lsls r2, r0, #30`)
-                this.write(`bne .fail`) // tagged
-                this.write(`cmp r0, #0`)
-                this.write(`beq .fail`) // null
-
-                this.write(`ldr r3, [r0, #0]`)
-
-                if (!target.gc) {
-                    this.write(`lsls r2, r3, #30`)
-                    this.write(`beq .fail`) // C++ class - TODO remove
-                    if (tp == "validateDecr") {
-                        this.write(`bmi .inflash`)
-                        this.write(`uxth r2, r3`)
-                        this.write(`subs r2, #2`)
-                        this.write(`blt .fail`) // ref-cnt underflow!
-                        this.write(`strh r2, [r0, #0]`)
-                        this.write(`.inflash:`)
-                    }
-                    this.write(`lsrs r3, r3, #16`)
-                    this.write(`lsls r3, r3, #${target.vtableShift}`)
-                }
-
-                this.write(`ldrh r3, [r3, #8]`)
-                this.write(`cmp r3, #${info.classNo}`)
-                if (info.classNo == info.lastSubtypeNo) {
-                    this.write("bne .fail") // different class
-                } else {
-                    this.write("blt .fail")
-                    this.write(`cmp r3, #${info.lastSubtypeNo}`)
-                    this.write("bgt .fail")
-                }
+                this.loadVTable(tp == "validateDecr")
+                this.checkSubtype(info)
 
                 if (tp == "bool") {
                     this.write(`movs r0, #${taggedTrue}`)
@@ -638,11 +753,6 @@ ${baseLabel}:
                     this.write(`bx lr`)
                 } else if (tp == "validate" || tp == "validateDecr") {
                     this.write(`bx lr`)
-                    this.write(`.fail:`)
-                    this.write(`bl pxt::failedCast`)
-                } else if (tp == "lambda") {
-                    this.write(`ldr r1, [r0, #8]`)
-                    this.write(`bx r1`) // we keep lr from the caller
                     this.write(`.fail:`)
                     this.write(`bl pxt::failedCast`)
                 } else {
@@ -721,8 +831,8 @@ ${baseLabel}:
             this.write(`@dummystack ${-numPops}`)
         }
 
-        private validateTypeNo(typeNo: number, tp = "validate") {
-            this.emitInstanceOf({ id: "builtin" + typeNo, classNo: typeNo, lastSubtypeNo: typeNo } as any, tp)
+        private builtInClassNo(typeNo: pxt.BuiltInType): ClassInfo {
+            return { id: "builtin" + typeNo, classNo: typeNo, lastSubtypeNo: typeNo } as any
         }
 
         private emitRtCall(topExpr: ir.Expr, genCall: () => void = null) {
@@ -798,7 +908,7 @@ ${baseLabel}:
                             } else {
                                 this.write(this.loadFromExprStack("r0", a.expr, off))
                                 if (a.conv.refTag) {
-                                    this.validateTypeNo(a.conv.refTag)
+                                    this.emitInstanceOf(this.builtInClassNo(a.conv.refTag), "validate")
                                 } else {
                                     this.alignedCall(a.conv.method, "", off)
                                     if (a.conv.returnsRef)
@@ -918,7 +1028,8 @@ _pxt_lambda_trampoline:
                 mov r5, r2
                 mov r6, r3
                 mov r7, r0`)
-            this.validateTypeNo(pxt.BuiltInType.RefAction)
+            // TODO should inline this?
+            this.emitInstanceOf(this.builtInClassNo(pxt.BuiltInType.RefAction), "validate")
             this.write(`
                 ${rfNo}mov r0, sp
                 ${rfNo}bl pxt::pushThreadContext
@@ -982,9 +1093,7 @@ _pxt_lambda_trampoline:
                     this.pushArg(a)
             }
 
-            let numArgs = topExpr.args.length
-            if (isLambda) numArgs--
-            this.alignExprStack(numArgs)
+            this.alignExprStack(topExpr.args.length)
 
             // available registers
             let regList = ["r1", "r2", "r3", "r4", "r7"]
@@ -1051,41 +1160,24 @@ _pxt_lambda_trampoline:
 
             let procIdx = -1
             if (isLambda) {
-                this.write(`movs r4, #${numArgs}`)
+                this.write(`movs r4, #${topExpr.args.length - 1}`)
                 this.write(this.loadFromExprStack("r0", topExpr.args[0]))
-                this.validateTypeNo(pxt.BuiltInType.RefAction, "lambda")
+                this.emitLabelledHelper("_lambda_call", () => this.lambdaCall())
             } else if (procid.virtualIndex != null || procid.ifaceIndex != null) {
                 let custom = this.t.method_call(procid, topExpr)
                 if (custom) {
                     this.write(custom)
-                    this.write(lbl + ":")
                 } else if (procid.mapMethod) {
                     let isSet = /Set/.test(procid.mapMethod)
                     assert(isSet == (topExpr.args.length == 2))
                     assert(!isSet == (topExpr.args.length == 1))
-                    this.write(this.t.emit_int(procid.mapIdx, "r1"))
-                    if (isSet)
-                        this.write(this.t.emit_int(procid.ifaceIndex, "r2"))
-                    this.emitHelper(this.t.vcall(procid.mapMethod, isSet, this.bin.options.target.vtableShift), "vcall")
-                    this.write(lbl + ":")
+                    this.emitGetSet(procid)
+                } else if (procid.ifaceIndex != null) {
+                    this.emitIfaceCall(procid, topExpr.args.length)
                 } else {
-                    this.write(this.t.prologue_vtable(0, this.bin.options.target.vtableShift))
-
-                    let effIdx = procid.virtualIndex + numSpecialMethods + 3
-                    if (procid.ifaceIndex != null) {
-                        this.write(this.t.load_reg_src_off("r0", "r0", "#4") + " ; iface table")
-                        effIdx = procid.ifaceIndex
-                    }
-                    if (effIdx <= 31) {
-                        this.write(this.t.load_reg_src_off("r0", "r0", effIdx.toString(), true) + " ; ld-method")
-                    } else {
-                        this.write(this.t.emit_int(effIdx * 4, "r1"))
-                        this.write(this.t.load_reg_src_off("r0", "r0", "r1") + " ; ld-method")
-                    }
-
-                    this.write(this.t.call_reg("r0"))
-                    this.write(lbl + ":")
+                    this.emitClassCall(procid)
                 }
+                this.write(lbl + ":")
             } else {
                 let proc = procid.proc
                 procIdx = proc.seqNo
@@ -1107,6 +1199,15 @@ _pxt_lambda_trampoline:
             } else {
                 this.clearArgs([], topExpr.args)
             }
+        }
+
+        private lambdaCall() {
+            this.loadVTable()
+            this.checkSubtype(this.builtInClassNo(pxt.BuiltInType.RefAction))
+            this.write(`ldr r1, [r0, #8]`)
+            this.write(`bx r1`) // we keep lr from the caller
+            this.write(`.fail:`)
+            this.write(`bl pxt::failedCast`)
         }
 
         private emitStore(trg: ir.Expr, src: ir.Expr) {
