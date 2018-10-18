@@ -18,6 +18,7 @@ namespace ts.pxtc {
     export const taggedUndefined = 0
     export const taggedNull = taggedSpecialValue(1)
     export const taggedFalse = taggedSpecialValue(2)
+    export const taggedNaN = taggedSpecialValue(3)
     export const taggedTrue = taggedSpecialValue(16)
     function fitsTaggedInt(vn: number) {
         if (target.boxDebug) return false
@@ -2960,9 +2961,11 @@ ${lbl}: .short 0xffff
                 else if (v === false) return ir.numlit(taggedFalse)
                 else if (v === true) return ir.numlit(taggedTrue)
                 else if (typeof v == "number") {
-                    if (fitsTaggedInt(v as number))
+                    if (fitsTaggedInt(v as number)) {
                         return ir.numlit(((v as number) << 1) | 1)
-                    else {
+                    } else if (v != v) {
+                        return ir.numlit(taggedNaN)
+                    } else {
                         let lbl = bin.emitDouble(v as number)
                         return ir.ptrlit(lbl, JSON.stringify(v), true)
                     }
