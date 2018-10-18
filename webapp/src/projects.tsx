@@ -749,9 +749,9 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
         this.setState({ projectName: name });
         let header = document.getElementsByClassName("exitandsave").item(0).firstChild as HTMLElement;
         if (name === "" || name === "Untitled") {
-            header.innerHTML = header.innerHTML.replace("😊", "😞");
+            header.innerText = header.innerText.replace("😊", "😞");
         } else {
-            header.innerHTML = header.innerHTML.replace("😞", "😊");
+            header.innerText = header.innerText.replace("😞", "😊");
         }
     }
 
