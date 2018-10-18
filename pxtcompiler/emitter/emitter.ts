@@ -2237,7 +2237,7 @@ ${lbl}: .short 0xffff
             for (let info of bin.usedClassInfos) {
                 getVTable(info) // gets cached
             }
-            let classNo = 1
+            let classNo = pxt.BuiltInType.User0
             const number = (i: ClassInfo) => {
                 U.assert(!i.classNo)
                 i.classNo = classNo++
