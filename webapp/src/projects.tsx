@@ -749,7 +749,6 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
 
     handleChange(name: string) {
         this.setState({ projectName: name });
-        let header = document.getElementsByClassName("exitandsave").item(0).firstChild as HTMLElement;
         if (name === "" || name === lf("Untitled")) {
             this.setState({emoji: "😞"})
         } else {
