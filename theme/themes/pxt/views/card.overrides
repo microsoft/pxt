@@ -36,9 +36,15 @@
     }
 }
 
-.ui.card.github {
+.ui.card.file.github {
     .fileimage {
         background-image: @githubFileLogo;
+    }
+}
+
+.ui.card.file.board {
+    .fileimage {
+        background-image: unset;
     }
 }
 

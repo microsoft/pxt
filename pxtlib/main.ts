@@ -83,6 +83,26 @@ namespace pxt {
             if (config.icon) config.icon = pxt.BrowserUtils.patchCdn(config.icon);
             res[pxt.CONFIG_NAME] = JSON.stringify(config, null, 4);
         })
+
+        // find all core packages images
+        if (appTarget.simulator && appTarget.simulator.dynamicBoardDefinition) {
+            appTarget.bundledcoresvgs = {};
+            Object.keys(pxt.appTarget.bundledpkgs)
+                .map(id => {
+                    const files = pxt.appTarget.bundledpkgs[id];
+                    // builtin packages are guaranteed to parse out
+                    const pxtjson: pxt.PackageConfig = JSON.parse(files["pxt.json"]);
+                    if (pxtjson.core && files["board.json"]) {
+                        const boardjson = JSON.parse(files["board.json"]) as pxsim.BoardDefinition;
+                        if (boardjson && boardjson.visual && (<pxsim.BoardImageDefinition>boardjson.visual).image) {
+                            let boardimg = (<pxsim.BoardImageDefinition>boardjson.visual).image;
+                            if (/^pkg:\/\//.test(boardimg))
+                                boardimg = files[boardimg.slice(6)];
+                            appTarget.bundledcoresvgs[id] = `data:image/svg+xml;base64,${ts.pxtc.encodeBase64(pxt.Util.toUTF8(boardimg))}`;
+                        }
+                    }
+                });
+        }
     }
 
     // this is set by compileServiceVariant in pxt.json
