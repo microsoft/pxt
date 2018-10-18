@@ -305,7 +305,7 @@ function upgradeFromBlocksAsync(): Promise<UpgradeResult> {
 
     pxt.debug("Applying upgrades to blocks")
 
-    return  pxt.BrowserUtils.loadBlocklyAsync() 
+    return  pxt.BrowserUtils.loadBlocklyAsync()
         .then(() => getBlocksAsync())
         .then(info => {
             ws = new Blockly.Workspace();
