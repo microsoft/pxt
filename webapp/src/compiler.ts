@@ -305,7 +305,8 @@ function upgradeFromBlocksAsync(): Promise<UpgradeResult> {
 
     pxt.debug("Applying upgrades to blocks")
 
-    return getBlocksAsync()
+    return  pxt.BrowserUtils.loadBlocklyAsync() 
+        .then(() => getBlocksAsync())
         .then(info => {
             ws = new Blockly.Workspace();
             const text = pxt.blocks.importXml(targetVersion, fileText, info, true);
