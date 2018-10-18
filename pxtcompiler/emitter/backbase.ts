@@ -595,10 +595,10 @@ ${baseLabel}:
         }
 
         private emitClassCall(procid: ir.ProcId) {
-            let effIdx = procid.virtualIndex + numSpecialMethods + 3
+            let effIdx = procid.virtualIndex + numSpecialMethods() + 3
             this.write(this.t.emit_int(effIdx * 4, "r1"))
 
-            let info = procid.proc.classInfo
+            let info = procid.classInfo
             this.emitLabelledHelper("classCall_" + info.id, () => {
                 this.write(`ldr r0, [sp, #0] ; ld-this`)
                 this.loadVTable()
@@ -632,7 +632,7 @@ ${baseLabel}:
                     cmp r2, #${pxt.BuiltInType.RefMap}
                     bne .fail
                     ${this.t.pushLR()}
-                    bl pxt::mapGet
+                    bl pxtrt::mapGet
                     ${this.t.popPC()}
                 ; move args
                 `)
@@ -1033,7 +1033,7 @@ _pxt_lambda_trampoline:
             this.write(`
                 ${rfNo}mov r0, sp
                 ${rfNo}bl pxt::pushThreadContext
-                ${gcNo}bl pxt::getGlobalsPtr
+                ${gcNo}bl pxtrt::getGlobalsPtr
                 push {r4, r5, r6, r7} ; push args and the lambda
                 mov r6, r0          ; save ctx or globals
                 mov r5, r7          ; save lambda for closure
@@ -1162,7 +1162,11 @@ _pxt_lambda_trampoline:
             if (isLambda) {
                 this.write(`movs r4, #${topExpr.args.length - 1}`)
                 this.write(this.loadFromExprStack("r0", topExpr.args[0]))
-                this.emitLabelledHelper("_lambda_call", () => this.lambdaCall())
+                this.emitLabelledHelper("lambda_call", () => {
+                    this.lambdaCall()
+                    this.write(`.fail:`)
+                    this.write(`bl pxt::failedCast`)
+                })
             } else if (procid.virtualIndex != null || procid.ifaceIndex != null) {
                 let custom = this.t.method_call(procid, topExpr)
                 if (custom) {
@@ -1204,10 +1208,20 @@ _pxt_lambda_trampoline:
         private lambdaCall() {
             this.loadVTable()
             this.checkSubtype(this.builtInClassNo(pxt.BuiltInType.RefAction))
-            this.write(`ldr r1, [r0, #8]`)
-            this.write(`bx r1`) // we keep lr from the caller
-            this.write(`.fail:`)
-            this.write(`bl pxt::failedCast`)
+            // the conditional branch below saves stack space for functions that do not require closure
+            this.write(`
+                ldrh r1, [r0, #4]
+                cmp r1, #0
+                bne .pushR5 
+                ldr r1, [r0, #8]
+                bx r1 ; keep lr from the caller
+            .pushR5:
+                push {r5, lr}
+                mov r5, r0
+                ldr r1, [r0, #8]
+                blx r1
+                pop {r5, pc}
+            `)            
         }
 
         private emitStore(trg: ir.Expr, src: ir.Expr) {
@@ -1239,8 +1253,9 @@ _pxt_lambda_trampoline:
             if (cell.isGlobal()) {
                 throw oops()
             } else if (cell.iscap) {
-                assert(0 <= cell.index && cell.index < 32)
-                return ["r5", cell.index.toString(), true]
+                let idx = cell.index + 3
+                assert(0 <= idx && idx < 32)
+                return ["r5", idx.toString(), true]
             } else if (cell.isarg) {
                 let idx = cell.index
                 return ["sp", "args@" + idx.toString() + ":" + this.baseStackSize, false]
@@ -1258,15 +1273,17 @@ _pxt_lambda_trampoline:
             if (isMain)
                 this.proc.info.usedAsValue = true
 
-            if (!this.proc.info.usedAsValue)
+            if (!this.proc.info.usedAsValue && !this.proc.info.usedAsIface)
                 return
 
             // TODO can use InlineRefAction_vtable or something to limit the size of the thing
 
-            this.write(this.proc.label() + "_Lit:");
-            this.write(this.t.obj_header("pxt::RefAction_vtable"));
-            this.write(`.short 0, 0 ; no captured vars`)
-            this.write(`.word ${this.proc.label()}_args@fn`)
+            if (this.proc.info.usedAsValue) {
+                this.write(this.proc.label() + "_Lit:");
+                this.write(this.t.obj_header("pxt::RefAction_vtable"));
+                this.write(`.short 0, 0 ; no captured vars`)
+                this.write(`.word ${this.proc.label()}_args@fn`)
+            }
 
             this.write(`${this.proc.label()}_args:`)
 

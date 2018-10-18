@@ -422,6 +422,7 @@ namespace ts.pxtc.ir {
         ifaceIndex: number;
         mapMethod?: string;
         mapIdx?: number;
+        classInfo?: ClassInfo;
     }
 
     export interface ProcQuery {
@@ -476,7 +477,6 @@ namespace ts.pxtc.ir {
         }
 
         vtLabel() {
-            this.info.usedAsValue = true
             return this.label() + "_args"
         }
 

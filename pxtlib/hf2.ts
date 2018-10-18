@@ -2,6 +2,7 @@ namespace pxt {
     // keep all of these in sync with pxtbase.h
     export const REFCNT_FLASH = "0xfffe"
     export const VTABLE_MAGIC = 0xF9
+    export const ValTypeObject = 4
     export enum BuiltInType {
         BoxedString = 1,
         BoxedNumber = 2,

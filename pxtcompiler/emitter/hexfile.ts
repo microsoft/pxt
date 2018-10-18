@@ -645,28 +645,43 @@ ${lbl}: ${snippets.obj_header("pxt::number_vt")}
         }
     }
 
-    export const numSpecialMethods = 3;
-    export function vtableToAsm(info: ClassInfo, opts: CompileOptions) {
+    export function numSpecialMethods() {
+        return target.gc ? 5 : 3
+    }
+
+    export function vtableToAsm(info: ClassInfo, opts: CompileOptions, bin: Binary) {
+        /*
+        uint16_t numbytes;
+        ValType objectType;
+        uint8_t magic;
+        PVoid *ifaceTable;
+        BuiltInType classNo;
+        uint16_t reserved;
+        PVoid methods[2 or 4];
+        */
+
+        let ptrSz = target.shortPointers ? ".short" : ".word"
         let s = `
         .balign ${1 << opts.target.vtableShift}
 ${info.id}_VT:
         .short ${info.allfields.length * 4 + 4}  ; size in bytes
-        .byte ${info.vtable.length + numSpecialMethods}, 0  ; num. methods
+        .byte ${pxt.ValTypeObject}, ${pxt.VTABLE_MAGIC} ; magic
+        ${ptrSz} ${info.itable.length ? info.id + "_IfaceVT" : 0}
+        .short ${info.classNo} ; class-id
+        .short 0 ; reserved
 `;
 
-        let ptrSz = target.shortPointers ? ".short" : ".word"
         let addPtr = (n: string) => {
             if (n != "0") n += "@fn"
             s += `        ${ptrSz} ${n}\n`
         }
 
-        s += `        ${ptrSz} ${info.id}_IfaceVT\n`
-
-        s += `        .short ${info.classNo} ; class ID\n`
-        s += `        .short 0 ; reserved\n`
-
         addPtr("pxt::RefRecord_destroy")
         addPtr("pxt::RefRecord_print")
+        if (target.gc) {
+            addPtr("pxt::RefRecord_scan")
+            addPtr("pxt::RefRecord_size")
+        }
         if (info.toStringMethod)
             s += `        ${ptrSz} ${info.toStringMethod.vtLabel()}\n`
         else
@@ -676,12 +691,8 @@ ${info.id}_VT:
             addPtr(m.label())
         }
 
-        // TODO remove refmask once the runtimes are patched
-        let refmask = info.allfields.map(v => "1")
-        while (refmask.length < 2 || refmask.length % 2 != 0)
-            refmask.push("0")
-
-        s += `        .byte ${refmask.join(",")}\n`
+        if (!info.itable.length)
+            return s + "\n"
 
         // VTable for interface method is just linear. If we ever have lots of interface
         // methods and lots of classes this could become a problem. We could use a table
@@ -691,6 +702,10 @@ ${info.id}_VT:
         .balign ${target.shortPointers ? 2 : 4}
 ${info.id}_IfaceVT:
 `
+
+        while (info.itable.length < bin.ifaceMembers.length)
+            info.itable.push(null)
+
         for (let m of info.itable) {
             addPtr(m ? m.vtLabel() : "0")
         }
@@ -719,13 +734,14 @@ ${hex.hexPrelude()}
 `
         let snippets: AssemblerSnippets = null;
         snippets = new ThumbSnippets()
+
         bin.procs.forEach(p => {
             let p2a = new ProctoAssembler(snippets, bin, p)
             asmsource += "\n" + p2a.getAssembly() + "\n"
         })
 
         bin.usedClassInfos.forEach(info => {
-            asmsource += vtableToAsm(info, opts)
+            asmsource += vtableToAsm(info, opts, bin)
         })
 
         U.iterMap(bin.codeHelpers, (code, lbl) => {

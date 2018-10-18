@@ -814,6 +814,7 @@ namespace ts.pxtc {
         isUsed?: boolean;
         parentClassInfo?: ClassInfo;
         usedAsValue?: boolean;
+        usedAsIface?: boolean;
     }
 
     function mkBogusMethod(info: ClassInfo, name: string, parameter?: any) {
@@ -854,7 +855,6 @@ namespace ts.pxtc {
         let functionInfo: pxt.Map<FunctionAddInfo> = {};
         let irCachesToClear: NodeWithCache[] = []
         let ifaceMembers: pxt.Map<number> = {}
-        let nextIfaceMemberId = 0;
         let autoCreateFunctions: pxt.Map<boolean> = {}
         let configEntries: pxt.Map<ConfigEntry> = {}
         let currJres: pxt.JRes = null
@@ -1121,7 +1121,7 @@ namespace ts.pxtc {
                         markFunctionUsed(m)
                 }
             }
-            v = ifaceMembers[name] = nextIfaceMemberId++
+            v = ifaceMembers[name] = bin.ifaceMembers.length
             bin.ifaceMembers.push(name)
             bin.emitString(name)
             return v
@@ -1229,6 +1229,7 @@ namespace ts.pxtc {
                     let minf = getFunctionInfo(m)
                     if (isToString(m)) {
                         inf.toStringMethod = lookupProc(m)
+                        inf.toStringMethod.info.usedAsIface = true
                     }
                     if (minf.virtualParent) {
                         let key = classFunctionKey(m)
@@ -1256,6 +1257,7 @@ namespace ts.pxtc {
                     let id = getIfaceMemberId(name)
                     inf.itable[id] = proc
                     inf.itableInfo[id] = name
+                    proc.info.usedAsIface = true
                     assert(!!proc, "!!proc")
                 }
 
@@ -2108,7 +2110,7 @@ ${lbl}: .short 0xffff
                 }
                 if (info.virtualParent && !isSuper) {
                     U.assert(!bin.finalPass || info.virtualIndex != null, "!bin.finalPass || info.virtualIndex != null")
-                    return mkProcCallCore(null, info.virtualIndex, args.map((x) => emitExpr(x)))
+                    return mkMethodCall(info.parentClassInfo, info.virtualIndex, null, args.map((x) => emitExpr(x)))
                 }
                 if (attrs.shim && !hasShimDummy(decl)) {
                     return emitShim(decl, node, args);
@@ -2139,13 +2141,13 @@ ${lbl}: .short 0xffff
                     return emitPlain();
                 } else if (decl.kind == SK.MethodSignature) {
                     let name = getName(decl)
-                    return mkProcCallCore(null, null, args.map((x) => emitExpr(x)), getIfaceMemberId(name))
+                    return mkMethodCall(null, null, getIfaceMemberId(name), args.map((x) => emitExpr(x)))
                 } else if (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
                     if (node == funcExpr) {
                         // in this special base case, we have property access recv.foo
                         // where recv is a map obejct
                         let name = getName(decl)
-                        let res = mkProcCallCore(null, null, args.map((x) => emitExpr(x)), getIfaceMemberId(name))
+                        let res = mkMethodCall(null, null, getIfaceMemberId(name), args.map((x) => emitExpr(x)))
                         let pid = res.data as ir.ProcId
                         pid.mapIdx = pid.ifaceIndex
                         if (args.length == 2) {
@@ -2179,7 +2181,7 @@ ${lbl}: .short 0xffff
             args.unshift(funcExpr)
             callInfo.args.unshift(funcExpr)
 
-            return mkProcCallCore(null, -1, args.map(x => emitExpr(x)))
+            return mkMethodCall(null, -1, null, args.map(x => emitExpr(x)))
         }
 
         function mkProcCallCore(proc: ir.Procedure, vidx: number, args: ir.Expr[], ifaceIdx: number = null) {
@@ -2187,6 +2189,16 @@ ${lbl}: .short 0xffff
                 proc: proc,
                 virtualIndex: vidx,
                 ifaceIndex: ifaceIdx
+            }
+            return ir.op(EK.ProcCall, args, data)
+        }
+
+        function mkMethodCall(ci: ClassInfo, vidx: number, ifaceIdx: number, args: ir.Expr[]) {
+            let data: ir.ProcId = {
+                proc: proc,
+                virtualIndex: vidx,
+                ifaceIndex: ifaceIdx,
+                classInfo: ci
             }
             return ir.op(EK.ProcCall, args, data)
         }
@@ -2499,6 +2511,7 @@ ${lbl}: .short 0xffff
             if (caps.length > 0) {
                 assert(getEnclosingFunction(node) != null, "getEnclosingFunction(node) != null)")
                 lit = ir.sharedNoIncr(ir.rtcall("pxt::mkAction", [ir.numlit(caps.length), emitFunLitCore(node, true)]))
+                info.usedAsValue = true
                 caps.forEach((l, i) => {
                     let loc = proc.localIndex(l)
                     if (!loc)
