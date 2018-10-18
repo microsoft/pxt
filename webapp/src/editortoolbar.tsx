@@ -116,6 +116,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const restartTooltip = lf("Restart the simulator");
         const collapseTooltip = collapsed ? lf("Show the simulator") : lf("Hide the simulator");
         const headless = simOpts.headless;
+        const pairingButton = !!targetTheme.pairingButton;
 
         const hasUndo = this.props.parent.editor.hasUndo();
         const hasRedo = this.props.parent.editor.hasRedo();
@@ -330,7 +331,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                             </div>
                         </div> :
                         <div className="ui item">
-                            {showCollapsed && collapseEditorTools ? <EditorToolbarButton icon={`toggle ${collapseEditorTools ? (isRtl ? 'left' : 'right') : (isRtl ? 'right' : 'left')}`} className={`large collapse-button ${collapsed ? 'collapsed' : ''}`} title={collapseTooltip} onButtonClick={this.toggleCollapse} view='computer' /> : undefined}
+                            {showCollapsed && !pairingButton ? <EditorToolbarButton icon={`toggle ${collapseEditorTools ? (isRtl ? 'left' : 'right') : (isRtl ? 'right' : 'left')}`} className={`large collapse-button ${collapsed ? 'collapsed' : ''}`} title={collapseTooltip} onButtonClick={this.toggleCollapse} view='computer' /> : undefined}
                             {debug ? <EditorToolbarButton key='debugbtn' icon="xicon bug" className={`large debug-button ${debugging ? 'orange' : ''}`} title={debugTooltip} onButtonClick={this.toggleDebugging} view='computer' /> : undefined}
                             {compileBtn ? <EditorToolbarButton icon={downloadIcon} className={`primary huge fluid download-button ${downloadButtonClasses}`} text={downloadText} title={compileTooltip} onButtonClick={this.compile} view='computer' /> : undefined}
                         </div>
