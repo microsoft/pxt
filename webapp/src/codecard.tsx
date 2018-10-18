@@ -99,7 +99,7 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
                 {imageUrl ? <div className="ui imagewrapper">
                     <div className={`ui cardimage`} data-src={imageUrl} ref="lazyimage" />
                 </div> : undefined}
-                {card.cardType == "file" ? <div className="ui fileimage" /> : undefined}
+                {card.cardType == "file" && !imageUrl ? <div className="ui fileimage" /> : undefined}
             </div> : undefined}
             {card.icon || card.iconContent ?
                 <div className="ui imagewrapper"><div className={`ui button massive fluid ${card.iconColor} ${card.iconContent ? "iconcontent" : ""}`}>

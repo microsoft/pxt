@@ -98,7 +98,7 @@ namespace pxt {
                             let boardimg = (<pxsim.BoardImageDefinition>boardjson.visual).image;
                             if (/^pkg:\/\//.test(boardimg))
                                 boardimg = files[boardimg.slice(6)];
-                            appTarget.bundledcoresvgs[id] = pxt.Util.toDataUri(boardimg);
+                            appTarget.bundledcoresvgs[id] = `data:image/svg+xml;base64,${ts.pxtc.encodeBase64(pxt.Util.toUTF8(boardimg))}`;
                         }
                     }
                 });
