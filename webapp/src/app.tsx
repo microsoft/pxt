@@ -1763,7 +1763,8 @@ export class ProjectView
 
         core.dialogAsync({
             header: lf("Print Code"),
-            disagreeLbl: lf("Close"),
+            hasCloseIcon: true,
+            hideCancel: true,
             size: "large",
             jsx:
                 /* tslint:disable:react-iframe-missing-sandbox */
