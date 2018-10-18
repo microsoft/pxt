@@ -39,8 +39,7 @@ namespace pxtblockly {
             const options = this.getOptions();
             if (this.shouldSort_) options.sort();
             for (let i = 0; i < options.length; i++) {
-                const option = options[i];
-                let content = (options[i] as any)[0]; // Human-readable text or image.
+                const content = (options[i] as any)[0]; // Human-readable text or image.
                 const value = (options[i] as any)[1]; // Language-neutral value.
                 // Icons with the type property placeholder take up space but don't have any functionality
                 // Use for special-case layouts
@@ -91,7 +90,7 @@ namespace pxtblockly {
                 button.appendChild(buttonImg);
                 if (this.addLabel_) {
                     const buttonText = this.createTextNode_(content.alt);
-                    buttonText.setAttribute('data-value', content.alt);
+                    buttonText.setAttribute('data-value', value);
                     button.appendChild(buttonText);
                 }
                 contentDiv.appendChild(button);
