@@ -306,9 +306,9 @@ namespace ts.pxtc {
 
     function getRefTagToValidate(tp: string): number {
         switch (tp) {
-            case "_Buffer": return pxt.REF_TAG_BUFFER
-            case "_Image": return pxt.REF_TAG_IMAGE
-            //case "_Action": return pxt.REF_TAG_ACTION
+            case "_Buffer": return pxt.BuiltInType.BoxedBuffer
+            case "_Image": return pxt.BuiltInType.RefImage
+            case "_Action": return pxt.BuiltInType.RefAction
             default: return null
         }
     }
@@ -323,7 +323,6 @@ namespace ts.pxtc {
 
     export interface ClassInfo {
         id: string;
-        refTag?: number;
         derivedClasses?: ClassInfo[];
         classNo?: number;
         lastSubtypeNo?: number;
@@ -814,6 +813,7 @@ namespace ts.pxtc {
         virtualIndex?: number;
         isUsed?: boolean;
         parentClassInfo?: ClassInfo;
+        usedAsValue?: boolean;
     }
 
     function mkBogusMethod(info: ClassInfo, name: string, parameter?: any) {
@@ -1538,6 +1538,7 @@ ${lbl}: .short 0xffff
                 return info.location.load()
             } else {
                 assert(!bin.finalPass || info.capturedVars.length == 0, "!bin.finalPass || info.capturedVars.length == 0")
+                info.usedAsValue = true
                 return emitFunLitCore(f)
             }
         }
@@ -2176,19 +2177,11 @@ ${lbl}: .short 0xffff
                     userError(9220, lf("namespaces cannot be called directly"))
             }
 
-            // otherwise we assume a lambda
-            if (args.length > 3)
-                userError(9217, lf("lambda functions with more than 3 arguments not supported"))
-
-            let suff = args.length + ""
-
             // here's where we will recurse to generate funcExpr
             args.unshift(funcExpr)
             callInfo.args.unshift(funcExpr)
 
-            // lambdas do not decr() arguments themselves; do it normally with getMask()
-            return ir.rtcallMask("pxt::runAction" + suff, getMask(args), ir.CallingConvention.Async,
-                args.map((x) => emitExpr(x)))
+            return mkProcCallCore(null, -1, args.map(x => emitExpr(x)))
         }
 
         function mkProcCallCore(proc: ir.Procedure, vidx: number, args: ir.Expr[], ifaceIdx: number = null) {
@@ -2507,7 +2500,7 @@ ${lbl}: .short 0xffff
             // if no captured variables, then we can get away with a plain pointer to code
             if (caps.length > 0) {
                 assert(getEnclosingFunction(node) != null, "getEnclosingFunction(node) != null)")
-                lit = ir.sharedNoIncr(ir.rtcall("pxt::mkAction", [ir.numlit(caps.length), ir.numlit(caps.length), emitFunLitCore(node, true)]))
+                lit = ir.sharedNoIncr(ir.rtcall("pxt::mkAction", [ir.numlit(caps.length), emitFunLitCore(node, true)]))
                 caps.forEach((l, i) => {
                     let loc = proc.localIndex(l)
                     if (!loc)
@@ -2524,6 +2517,7 @@ ${lbl}: .short 0xffff
             } else {
                 if (isExpression) {
                     lit = emitFunLitCore(node)
+                    info.usedAsValue = true
                 }
             }
 

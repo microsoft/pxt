@@ -514,8 +514,8 @@ namespace ts.pxtc {
                 return bytes
             }
 
-            // 0x4209 is the version number matching pxt-microbit-core
-            let hd = [0x4209, 0, bytecodeStartAddrPadded & 0xffff, bytecodeStartAddrPadded >>> 16]
+            // 0x4210 is the version number matching pxt-microbit-core
+            let hd = [0x4210, 0, bytecodeStartAddrPadded & 0xffff, bytecodeStartAddrPadded >>> 16]
             let tmp = hexTemplateHash()
             for (let i = 0; i < 4; ++i)
                 hd.push(parseInt(swapBytes(tmp.slice(i * 4, i * 4 + 4)), 16))
@@ -668,7 +668,7 @@ ${info.id}_VT:
         addPtr("pxt::RefRecord_destroy")
         addPtr("pxt::RefRecord_print")
         if (info.toStringMethod)
-            s += `        ${ptrSz} ${info.toStringMethod.label()}_Lit\n`
+            s += `        ${ptrSz} ${info.toStringMethod.litLabel()}\n`
         else
             addPtr("0")
 
@@ -692,7 +692,7 @@ ${info.id}_VT:
 ${info.id}_IfaceVT:
 `
         for (let m of info.itable) {
-            addPtr(m ? m.label() : "0")
+            addPtr(m ? m.litLabel() : "0")
         }
 
         s += "\n"
@@ -712,6 +712,10 @@ ${hex.hexPrelude()}
     .short 0 ; patched with comm section size
     .short 0 ; reserved
     .word _pxt_iface_member_names
+    .word _pxt_lambda_trampoline@fn
+    .word 0 ; reserved
+    .word 0 ; reserved
+    .word 0 ; reserved
 `
         let snippets: AssemblerSnippets = null;
         snippets = new ThumbSnippets()

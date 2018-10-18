@@ -300,7 +300,7 @@ namespace pxsim {
 
     // wraps simulator code as STS code - useful for default event handlers
     export function syntheticRefAction(f: (s: StackFrame) => any) {
-        return pxtcore.mkAction(0, 0, s => _leave(s, f(s)))
+        return pxtcore.mkAction(0, s => _leave(s, f(s)))
     }
 
     export class Runtime {

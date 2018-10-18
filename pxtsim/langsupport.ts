@@ -137,12 +137,12 @@ namespace pxsim {
 
     export class RefAction extends RefObject {
         fields: any[] = [];
-        reflen: number
+        len: number
         func: LabelFn;
 
         isRef(idx: number) {
             check(0 <= idx && idx < this.fields.length)
-            return idx < this.reflen
+            return idx < this.len
         }
 
         ldclo(n: number) {
@@ -152,7 +152,7 @@ namespace pxsim {
         }
 
         destroy() {
-            for (let i = 0; i < this.reflen; ++i)
+            for (let i = 0; i < this.len; ++i)
                 decr(this.fields[i])
             this.fields = null
             this.func = null
@@ -165,9 +165,9 @@ namespace pxsim {
     }
 
     export namespace pxtcore {
-        export function mkAction(reflen: number, len: number, fn: LabelFn) {
+        export function mkAction(len: number, fn: LabelFn) {
             let r = new RefAction();
-            r.reflen = reflen
+            r.len = len
             r.func = fn
             for (let i = 0; i < len; ++i)
                 r.fields.push(null)
@@ -198,14 +198,6 @@ namespace pxsim {
 
         export function runAction0(a: RefAction) {
             runAction3(a, null, null, null)
-        }
-    }
-
-    export class RefLocal extends RefObject {
-        v = 0;
-
-        print() {
-            //console.log(`RefLocal id:${this.id} refs:${this.refcnt} v:${this.v}`)
         }
     }
 
@@ -469,25 +461,13 @@ namespace pxsim {
             decr(r)
         }
 
-        export function ldloc(r: RefLocal) {
-            return r.v
-        }
-
-        export function ldlocRef(r: RefLocal) {
+        export function ldlocRef(r: RefRefLocal) {
             return incr(r.v)
-        }
-
-        export function stloc(r: RefLocal, v: any) {
-            r.v = v;
         }
 
         export function stlocRef(r: RefRefLocal, v: any) {
             decr(r.v)
             r.v = v;
-        }
-
-        export function mkloc() {
-            return new RefLocal();
         }
 
         export function mklocRef() {

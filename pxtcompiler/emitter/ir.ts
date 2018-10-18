@@ -475,6 +475,11 @@ namespace ts.pxtc.ir {
             this.args = []
         }
 
+        litLabel() {
+            this.info.usedAsValue = true
+            return this.label() + "_Lit"
+        }
+
         label() {
             return getFunctionLabel(this.action)
         }

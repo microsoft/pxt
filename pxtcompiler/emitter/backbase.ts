@@ -92,8 +92,8 @@ namespace ts.pxtc {
         load_ptr_full(lbl: string, reg: string) { return "TBD(load_ptr_full)" }
         emit_int(v: number, reg: string) { return "TBD(emit_int)" }
 
-        obj_header(vt:string){
-            if(target.gc)
+        obj_header(vt: string) {
+            if (target.gc)
                 return `.word ${vt}`
             else
                 return `.short ${pxt.REFCNT_FLASH}, ${vt}>>${target.vtableShift}`
@@ -148,6 +148,9 @@ ${lbl}: ${this.obj_header("pxt::buffer_vt")}
             this.bin = bin;
             this.proc = proc;
             this.work();
+            // emit the trampoline once, happen to be after the root function
+            if (this.proc.isRoot)
+                this.emitLambdaTrampoline()
         }
 
         private write = (s: string) => { this.resText += asmline(s); }
@@ -198,8 +201,7 @@ ${lbl}: ${this.obj_header("pxt::buffer_vt")}
 ;
 `)
 
-            if (this.proc.args.length <= 3)
-                this.emitLambdaWrapper(this.proc.isRoot)
+            this.emitLambdaWrapper(this.proc.isRoot)
 
             let baseLabel = this.proc.label()
             let bkptLabel = baseLabel + "_bkpt"
@@ -598,40 +600,34 @@ ${baseLabel}:
             this.emitLabelledHelper(lbl, () => {
                 this.write(`lsls r2, r0, #30`)
                 this.write(`bne .fail`) // tagged
-                if (target.stackAlign) {
-                    // assume linux - we can't read from NULL
-                    // on regular ARM the NULL address contains base stack, which is aligned, so we hit the C++ case below
-                    this.write(`cmp r0, #0`)
-                    this.write(`beq .fail`) // null
-                }
+                this.write(`cmp r0, #0`)
+                this.write(`beq .fail`) // null
+
                 this.write(`ldr r3, [r0, #0]`)
-                this.write(`lsls r2, r3, #30`)
-                this.write(`beq .fail`) // C++ class
-                if (tp == "validateDecr") {
-                    this.write(`bmi .inflash`)
-                    this.write(`uxth r2, r3`)
-                    this.write(`subs r2, #2`)
-                    this.write(`blt .fail`) // ref-cnt underflow!
-                    this.write(`strh r2, [r0, #0]`)
-                    this.write(`.inflash:`)
-                }
-                this.write(`lsrs r3, r3, #16`)
-                if (info.refTag) {
-                    this.write(`cmp r3, #${info.refTag}`)
-                    this.write(`bne .fail`)
-                } else {
-                    this.write(`cmp r3, #100`)
-                    this.write(`ble .fail`) // built-in
-                    this.write(`lsls r3, r3, #${target.vtableShift}`)
-                    this.write(`ldrh r3, [r3, #8]`)
-                    this.write(`cmp r3, #${info.classNo}`)
-                    if (info.classNo == info.lastSubtypeNo) {
-                        this.write("bne .fail") // different class
-                    } else {
-                        this.write("blt .fail")
-                        this.write(`cmp r3, #${info.lastSubtypeNo}`)
-                        this.write("bgt .fail")
+
+                if (!target.gc) {
+                    this.write(`lsls r2, r3, #30`)
+                    this.write(`beq .fail`) // C++ class - TODO remove
+                    if (tp == "validateDecr") {
+                        this.write(`bmi .inflash`)
+                        this.write(`uxth r2, r3`)
+                        this.write(`subs r2, #2`)
+                        this.write(`blt .fail`) // ref-cnt underflow!
+                        this.write(`strh r2, [r0, #0]`)
+                        this.write(`.inflash:`)
                     }
+                    this.write(`lsrs r3, r3, #16`)
+                    this.write(`lsls r3, r3, #${target.vtableShift}`)
+                }
+
+                this.write(`ldrh r3, [r3, #8]`)
+                this.write(`cmp r3, #${info.classNo}`)
+                if (info.classNo == info.lastSubtypeNo) {
+                    this.write("bne .fail") // different class
+                } else {
+                    this.write("blt .fail")
+                    this.write(`cmp r3, #${info.lastSubtypeNo}`)
+                    this.write("bgt .fail")
                 }
 
                 if (tp == "bool") {
@@ -642,6 +638,11 @@ ${baseLabel}:
                     this.write(`bx lr`)
                 } else if (tp == "validate" || tp == "validateDecr") {
                     this.write(`bx lr`)
+                    this.write(`.fail:`)
+                    this.write(`bl pxt::failedCast`)
+                } else if (tp == "lambda") {
+                    this.write(`ldr r1, [r0, #8]`)
+                    this.write(`bx r1`) // we keep lr from the caller
                     this.write(`.fail:`)
                     this.write(`bl pxt::failedCast`)
                 } else {
@@ -720,6 +721,10 @@ ${baseLabel}:
             this.write(`@dummystack ${-numPops}`)
         }
 
+        private validateTypeNo(typeNo: number, tp = "validate") {
+            this.emitInstanceOf({ id: "builtin" + typeNo, classNo: typeNo, lastSubtypeNo: typeNo } as any, tp)
+        }
+
         private emitRtCall(topExpr: ir.Expr, genCall: () => void = null) {
             let name: string = topExpr.data
 
@@ -793,7 +798,7 @@ ${baseLabel}:
                             } else {
                                 this.write(this.loadFromExprStack("r0", a.expr, off))
                                 if (a.conv.refTag) {
-                                    this.emitInstanceOf({ id: "refTag" + a.conv.refTag, refTag: a.conv.refTag } as any, "validate")
+                                    this.validateTypeNo(a.conv.refTag)
                                 } else {
                                     this.alignedCall(a.conv.method, "", off)
                                     if (a.conv.returnsRef)
@@ -901,10 +906,49 @@ ${baseLabel}:
             }
         }
 
+        private emitLambdaTrampoline() {
+            let gcNo = target.gc ? ";" : ""
+            let rfNo = !target.gc ? ";" : ""
+            let r3 = target.stackAlign ? "r3," : ""
+            this.write(`
+.section code
+_pxt_lambda_trampoline:
+                push {${r3} r4, r5, r6, r7, lr}
+                mov r4, r1
+                mov r5, r2
+                mov r6, r3
+                mov r7, r0`)
+            this.validateTypeNo(pxt.BuiltInType.RefAction)
+            this.write(`
+                ${rfNo}mov r0, sp
+                ${rfNo}bl pxt::pushThreadContext
+                ${gcNo}bl pxt::getGlobalsPtr
+                push {r4, r5, r6, r7} ; push args and the lambda
+                mov r6, r0          ; save ctx or globals
+                mov r5, r7          ; save lambda for closure
+                ${gcNo}mov r0, r7
+                ${gcNo}bl _pxt_incr        ; make sure lambda stays alive
+                ldr r0, [r5, #8]    ; ld fnptr
+                movs r4, #3         ; 3 args
+                blx r0              ; execute the actual lambda
+                mov r7, r0          ; save result
+                @dummystack 4
+                add sp, #4*4        ; remove arguments and lambda
+                ${gcNo}mov r0, r5   ; decrement lambda
+                ${gcNo}bl _pxt_decr
+                ${rfNo}mov r0, r6   ; or pop the thread context
+                ${rfNo}bl pxt::popThreadContext
+                mov r0, r7 ; restore result
+                pop {${r3} r4, r5, r6, r7, pc}`)
+        }
+
         private emitProcCall(topExpr: ir.Expr) {
             let complexArgs: ir.Expr[] = []
             let theOne: ir.Expr = null
             let theOneReg = ""
+            let procid = topExpr.data as ir.ProcId
+
+            let isLambda = procid.virtualIndex == -1
 
             let seenUpdate = false
             for (let c of U.reversed(topExpr.args)) {
@@ -938,7 +982,10 @@ ${baseLabel}:
                     this.pushArg(a)
             }
 
-            this.alignExprStack(topExpr.args.length)
+            let numArgs = topExpr.args.length
+            if (isLambda) numArgs--
+            this.alignExprStack(numArgs)
+
             // available registers
             let regList = ["r1", "r2", "r3", "r4", "r7"]
             let regExprs: ir.Expr[] = []
@@ -971,7 +1018,12 @@ ${baseLabel}:
                 }
             }
 
-            for (let a of U.reversed(topExpr.args)) {
+            let argsToPush = U.reversed(topExpr.args)
+            // for lambda, move the first argument (lambda object) to the end
+            if (isLambda)
+                argsToPush.unshift(argsToPush.pop())
+
+            for (let a of argsToPush) {
                 if (complexArgs.indexOf(a) >= 0) {
                     if (regList) {
                         this.write(this.t.push_fixed([regList[regExprs.indexOf(a)]]))
@@ -995,10 +1047,14 @@ ${baseLabel}:
             }
 
             let lbl = this.mkLbl("_proccall")
+            let argsToClear = topExpr.args.slice()
 
-            let procid = topExpr.data as ir.ProcId
             let procIdx = -1
-            if (procid.virtualIndex != null || procid.ifaceIndex != null) {
+            if (isLambda) {
+                this.write(`movs r4, #${numArgs}`)
+                this.write(this.loadFromExprStack("r0", topExpr.args[0]))
+                this.validateTypeNo(pxt.BuiltInType.RefAction, "lambda")
+            } else if (procid.virtualIndex != null || procid.ifaceIndex != null) {
                 let custom = this.t.method_call(procid, topExpr)
                 if (custom) {
                     this.write(custom)
@@ -1045,7 +1101,12 @@ ${baseLabel}:
 
             // note that we have to treat all arguments as refs,
             // because the procedure might have overriden them and we need to unref them
-            this.clearArgs([], topExpr.args)
+            // this doesn't apply to the lambda expression itself though
+            if (isLambda && topExpr.args[0].isStateless()) {
+                this.clearArgs([topExpr.args[0]], topExpr.args.slice(1))
+            } else {
+                this.clearArgs([], topExpr.args)
+            }
         }
 
         private emitStore(trg: ir.Expr, src: ir.Expr) {
@@ -1088,55 +1149,73 @@ ${baseLabel}:
         }
 
         private emitLambdaWrapper(isMain: boolean) {
-            let node = this.proc.action
             this.write("")
             this.write(".section code");
 
-            if (isMain)
-                this.write(this.t.unconditional_branch(".themain"))
             this.write(".balign 4");
+
+            if (isMain)
+                this.proc.info.usedAsValue = true
+
+            if (!this.proc.info.usedAsValue)
+                return
+
+            // TODO can use InlineRefAction_vtable or something to limit the size of the thing
+
             this.write(this.proc.label() + "_Lit:");
             this.write(this.t.obj_header("pxt::RefAction_vtable"));
-            if (isMain)
-                this.write(".themain:")
+            this.write(`.short 0, 0 ; no captured vars`)
+            this.write(`.word ${this.proc.label()}_args@fn`)
 
-            this.write("@stackmark litfunc");
+            this.write(`${this.proc.label()}_args:`)
 
-            let parms = this.proc.args.map(a => a.def)
-            let numpop = parms.length
+            let numargs = this.proc.args.length
+            if (numargs == 0)
+                return
 
-            this.write(this.t.proc_setup(0, true))
+            this.write(`cmp r4, #${numargs}`)
+            this.write(`bge ${this.proc.label()}`)
 
-            const setup = this.redirectOutput(() => {
-                this.write(this.t.push_fixed(["r4", "r5", "r6", "r7"]))
-                this.baseStackSize = 1 + 4
+            let needsAlign = this.stackAlignmentNeeded(numargs + 1)
 
-                let alignment = this.stackAlignmentNeeded(parms.length)
-                if (alignment) {
-                    this.write(this.t.push_locals(alignment))
-                    numpop += alignment
+            let numpush = needsAlign ? numargs + 2 : numargs + 1
+
+            this.write(`push {lr}`)
+
+            this.emitLabelledHelper(`expand_args_${numargs}`, () => {
+                this.write(`movs r0, #0`)
+                this.write(`movs r1, #0`)
+                if (needsAlign)
+                    this.write(`push {r0}`)
+                for (let i = numargs; i > 0; i--) {
+                    if (i != numargs) {
+                        this.write(`cmp r4, #${i}`)
+                        this.write(`blt .zero${i}`)
+                        this.write(`ldr r0, [sp, #${numpush - 1}*4]`)
+                        this.write(`str r1, [sp, #${numpush - 1}*4] ; clear existing`)
+                        this.write(`.zero${i}:`)
+                    }
+                    this.write(`push {r0}`)
                 }
-
-                parms.forEach((_, i) => {
-                    if (i >= 3)
-                        U.userError(U.lf("only up to three parameters supported in lambdas"))
-                    this.write(this.t.push_local(`r${parms.length - i}`))
-                })
-
-                this.write(this.t.lambda_init())
+                this.write(`bx lr`)
             })
 
-            let stackEntries = numpop + 4
+            this.write(`bl ${this.proc.label()}`)
 
-            this.write(`@dummystack ${stackEntries}`)
-            this.emitHelper(`${setup}\n@dummystack ${-stackEntries}`, "lambda_setup")
-            this.write(this.t.call_lbl(this.proc.label()))
+            this.emitLabelledHelper(`clr_and_ret_${numargs}`, () => {
+                this.write(`@dummystack ${numpush}`)
+                this.write(`mov r7, r0`)
+                for (let i = numargs; i > 0; i--) {
+                    this.write(`pop {r0}`)
+                    this.write(`bl _pxt_decr`)
+                }
+                this.write(`mov r0, r7`)
+                if (needsAlign)
+                    this.write(`pop {r1, pc}`)
+                else
+                    this.write(`pop {pc}`)
+            })
 
-            if (numpop)
-                this.write(this.t.pop_locals(numpop))
-            this.write(this.t.pop_fixed(["r4", "r5", "r6", "r7", "pc"]))
-
-            this.write("@stackempty litfunc");
         }
 
         private emitCallRaw(name: string) {
