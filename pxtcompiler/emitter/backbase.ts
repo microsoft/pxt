@@ -549,6 +549,18 @@ ${baseLabel}:
                 this.emitInstanceOf(info.classInfo, "validateDecr")
                 lbl += "_chk"
             }
+
+            if (target.gc) {
+                let off = info.idx * 4 + 4
+                let xoff = "#" + off
+                if (off > 124) {
+                    this.t.emit_int(off, "r3")
+                    xoff = "r3"
+                }
+                this.write(`${store ? "str" : "ldr"} r0, [r0, ${xoff}]`)
+                return
+            }
+
             this.emitLabelledHelper(lbl, () => {
                 let off = info.idx * 4 + 4
                 let xoff = "#" + off
@@ -789,8 +801,11 @@ ${baseLabel}:
                 r.currUses = 1
             }
 
-            if (refs.length == 0) {
+            if (target.gc || refs.length == 0) {
                 // no helper in that case
+                for (let r of refs) {
+                    r.currUses = 1
+                }
                 this.clearStack()
                 return
             }
@@ -808,7 +823,7 @@ ${baseLabel}:
                         this.exprStack.shift()
                         refs.splice(idx, 1)
                         this.write(this.t.pop_fixed(["r0"]))
-                        this.write(this.t.inline_decr(k++, this.stackSize()))
+                        this.write(this.t.inline_decr(k++))
                     } else {
                         break
                     }
@@ -817,7 +832,7 @@ ${baseLabel}:
                     let r = refs.shift()
                     r.currUses = 1
                     this.write(this.loadFromExprStack("r0", r))
-                    this.write(this.t.inline_decr(k++, this.stackSize()))
+                    this.write(this.t.inline_decr(k++))
                 }
                 this.clearStack()
                 this.write(this.t.mov("r0", "r7"))
@@ -1390,20 +1405,26 @@ ${baseLabel}:
 
             this.write(`bl ${this.proc.label()}`)
 
-            this.emitLabelledHelper(`clr_and_ret_${numargs}`, () => {
-                this.write(`@dummystack ${numpush}`)
-                this.write(`mov r7, r0`)
-                for (let i = numargs; i > 0; i--) {
-                    this.write(`pop {r0}`)
-                    this.write(`bl _pxt_decr`)
-                }
-                this.write(`mov r0, r7`)
-                if (needsAlign)
-                    this.write(`pop {r1, pc}`)
-                else
-                    this.write(`pop {pc}`)
-            })
-
+            if (target.gc) {
+                let stackSize = numargs + (needsAlign ? 1 : 0)
+                this.write(`@dummystack ${stackSize}`)
+                this.write(`add sp, #4*${stackSize}`)
+                this.write(`pop {pc}`)
+            } else {
+                this.emitLabelledHelper(`clr_and_ret_${numargs}`, () => {
+                    this.write(`@dummystack ${numpush}`)
+                    this.write(`mov r7, r0`)
+                    for (let i = numargs; i > 0; i--) {
+                        this.write(`pop {r0}`)
+                        this.write(`bl _pxt_decr`)
+                    }
+                    this.write(`mov r0, r7`)
+                    if (needsAlign)
+                        this.write(`pop {r1, pc}`)
+                    else
+                        this.write(`pop {pc}`)
+                })
+            }
         }
 
         private emitCallRaw(name: string) {

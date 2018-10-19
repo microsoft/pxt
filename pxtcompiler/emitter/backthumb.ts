@@ -205,21 +205,42 @@ ${lbl}:`
 `
         }
 
-        inline_decr(idx: number, stackSize: number) {
-            if (!this.stackAligned()) stackSize = 0
+        inline_decr(idx: number) {
             // TODO optimize sequences of pops without decr into sub on sp
             return `
     lsls r1, r0, #30
     bne .tag${idx}
-    ${stackSize & 1 ? "push {r0} ; align" : ""}
     bl _pxt_decr
-    ${stackSize & 1 ? "pop {r0} ; unalign" : ""}
 .tag${idx}:
 `
         }
 
         arithmetic() {
             let r = ""
+
+            const boxedOp = (op: string) => {
+                let r = ".boxed:\n"
+                if (target.gc)
+                    r += `
+                    ${this.pushLR()}
+                    ${op}
+                    ${this.popPC()}
+                `
+                else
+                    r += `
+                    push {r4, lr}
+                    push {r0, r1}  
+                    ${op}  
+                    movs r4, r0
+                    pop {r0}
+                    bl _pxt_decr
+                    pop {r0}
+                    bl _pxt_decr
+                    movs r0, r4
+                    pop {r4, pc}
+                `
+                return r
+            }
 
             for (let op of ["adds", "subs", "ands", "orrs", "eors"]) {
                 r += `
@@ -245,19 +266,7 @@ _numops_${op}:
                     r += `    blx lr\n`
                 }
 
-                r += `
-.boxed:
-    push {r4, lr}
-    push {r0, r1}
-    bl numops::${op}
-    movs r4, r0
-    pop {r0}
-    bl _pxt_decr
-    pop {r0}
-    bl _pxt_decr
-    movs r0, r4
-    pop {r4, pc}
-`
+                r += boxedOp(`bl numops::${op}`)
             }
 
             r += `
@@ -331,7 +340,10 @@ _pxt_${op}_${off}:
 
             }
 
-            for (let op of ["incr", "decr"]) {
+            let ops = ["incr", "decr"]
+            if (target.gc) ops = []
+
+            for (let op of ops) {
                 r += ".section code\n"
                 withLDR(op)
                 r += `_pxt_${op}:\n${inlineIncrDecr(op)}`
@@ -376,19 +388,8 @@ _cmp_${op}:
 .true:
     movs r0, #1
     bx lr
-.boxed:
-    push {r4, lr}
-    push {r0, r1}    
-    bl numops::${op}
-    bl numops::toBoolDecr
-    movs r4, r0
-    pop {r0}
-    bl _pxt_decr
-    pop {r0}
-    bl _pxt_decr
-    movs r0, r4
-    pop {r4, pc}
 `
+                r += boxedOp(`bl numops::${op}\n    bl numops::toBoolDecr`)
             }
 
             return r

@@ -683,7 +683,7 @@ ${info.id}_VT:
         addPtr("pxt::RefRecord_print")
         if (target.gc) {
             addPtr("pxt::RefRecord_scan")
-            addPtr("pxt::RefRecord_size")
+            addPtr("pxt::RefRecord_gcsize")
         }
         let toStr = info.toStringMethod
         addPtr(toStr ? toStr.vtLabel() : "0")
