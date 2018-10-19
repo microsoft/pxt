@@ -104,6 +104,14 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
             })
     }
 
+    private renderOthers(content: HTMLElement) {
+        // remove package blocks
+        pxt.Util.toArray(content.querySelectorAll(`.lang-package`))
+            .forEach((langBlock: HTMLElement) => {
+                langBlock.parentNode.removeChild(langBlock);
+            });
+    }
+
     renderMarkdown(markdown: string) {
         const content = this.refs["marked-content"] as HTMLDivElement;
         const pubinfo = this.getBuiltinMacros();
@@ -129,6 +137,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         // We'll go through a series of adjustments here, rendering inline blocks, blocks and snippets as needed
         this.renderInlineBlocks(content);
         this.renderSnippets(content);
+        this.renderOthers(content);
     }
 
     componentDidMount() {
