@@ -100,9 +100,7 @@ namespace pxsim {
         constructor(
             public func: LabelFn,
             public caps: any[],
-            public a0: any,
-            public a1: any,
-            public a2: any,
+            public args: any[],
             public cb: ResumeFn) { }
     }
 
@@ -111,6 +109,7 @@ namespace pxsim {
         methods: LabelFn[];
         numFields: number;
         toStringMethod?: LabelFn;
+        classNo: number;
     }
 
     export class RefRecord extends RefObject {
@@ -174,30 +173,18 @@ namespace pxsim {
             return r
         }
 
-        export function runAction3(a: RefAction, a0: any, a1: any, a2: any) {
+        export function runAction(a: RefAction, args: any[]) {
             let cb = getResume();
 
             if (a instanceof RefAction) {
                 pxtrt.incr(a)
-                cb(new FnWrapper(a.func, a.fields, a0, a1, a2, () => {
+                cb(new FnWrapper(a.func, a.fields, args, () => {
                     pxtrt.decr(a)
                 }))
             } else {
                 // no-closure case
-                cb(new FnWrapper(<any>a, null, a0, a1, a2, null))
+                cb(new FnWrapper(<any>a, null, args, null))
             }
-        }
-
-        export function runAction2(a: RefAction, a0: any, a1: any) {
-            runAction3(a, a0, a1, null)
-        }
-
-        export function runAction1(a: RefAction, v: any) {
-            runAction3(a, v, null, null)
-        }
-
-        export function runAction0(a: RefAction) {
-            runAction3(a, null, null, null)
         }
     }
 

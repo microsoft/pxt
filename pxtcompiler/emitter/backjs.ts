@@ -42,6 +42,7 @@ namespace ts.pxtc {
         let s = `var ${info.id}_VT = {\n` +
             `  name: ${JSON.stringify(getName(info.decl))},\n` +
             `  numFields: ${info.allfields.length},\n` +
+            `  classNo: ${info.classNo},\n` +
             `  methods: [\n`
         for (let m of info.vtable) {
             s += `    ${m.label()},\n`
@@ -319,10 +320,24 @@ switch (step) {
                     return e.args.forEach(emitExpr)
                 case EK.InstanceOf:
                     emitExpr(e.args[0])
-                    write(`TODO!`)
+                    emitInstanceOf(e.data, e.jsInfo)
                     return
                 default:
                     write(`r0 = ${emitExprInto(e)};`)
+            }
+        }
+
+        function checkSubtype(info: ClassInfo) {
+            return `checkSubtype(r0, ${info.classNo}, ${info.lastSubtypeNo})`
+        }
+
+        function emitInstanceOf(info: ClassInfo, tp: string) {
+            if (tp == "bool")
+                write(`r0 = ${checkSubtype(info)};`)
+            else if (tp == "validate" || tp == "validateDecr") {
+                write(`if (!${checkSubtype(info)}) failedCast(r0);`)
+            } else {
+                U.oops()
             }
         }
 
@@ -396,10 +411,19 @@ switch (step) {
             let lblId = ++lblIdx
             write(`${frameRef} = { fn: ${proc ? proc.label() : null}, parent: s };`)
 
+            let isLambda = procid.virtualIndex == -1
+
             //console.log("PROCCALL", topExpr.toString())
             topExpr.args.forEach((a, i) => {
                 emitExpr(a)
-                write(`${frameRef}.arg${i} = r0;`)
+                let arg = `arg${i}`
+                if (isLambda) {
+                    if (i == 0)
+                        arg = `argL`
+                    else
+                        arg = `arg${i - 1}`
+                }
+                write(`${frameRef}.${arg} = r0;`)
             })
 
             write(`s.pc = ${lblId};`)
@@ -417,6 +441,9 @@ switch (step) {
                 if (procid.mapMethod) {
                     write(`}`)
                 }
+            } else if (procid.virtualIndex == -1) {
+                // lambda call
+                write(`setupLambda(${frameRef}, ${frameRef}.argL);`)
             } else if (procid.virtualIndex != null) {
                 assert(procid.virtualIndex >= 0)
                 write(`pxsim.check(typeof ${frameRef}.arg0  != "number", "Can't access property of null/undefined.")`)

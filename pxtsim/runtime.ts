@@ -359,7 +359,7 @@ namespace pxsim {
                 U.nextTick(() => {
                     runtime = this;
                     this.setupTop(resolve)
-                    pxtcore.runAction3(a, arg0, arg1, arg2)
+                    pxtcore.runAction(a, [arg0, arg1, arg2])
                     decr(a) // if it's still running, action.run() has taken care of incrementing the counter
                 }))
         }
@@ -702,6 +702,24 @@ namespace pxsim {
                 currResume = buildResume(s, retPC)
             }
 
+            function setupLambda(s: StackFrame, a: RefAction | LabelFn) {
+                if (a instanceof RefAction) {
+                    s.fn = a.func
+                    s.caps = a.fields
+                } else {
+                    s.fn = a
+                }
+            }
+
+            function checkSubtype(v: RefRecord, low: number, high: number) {
+                return v && v.vtable && low <= v.vtable.classNo && v.vtable.classNo <= high;
+            }
+
+            function failedCast(v: any) {
+                // TODO generate the right panic codes
+                oops("failed cast on " + v)
+            }
+
             function buildResume(s: StackFrame, retPC: number) {
                 if (currResume) oops("already has resume")
                 s.pc = retPC;
@@ -722,7 +740,7 @@ namespace pxsim {
                         let frame: StackFrame = {
                             parent: s,
                             fn: w.func,
-                            lambdaArgs: [w.a0, w.a1, w.a2],
+                            lambdaArgs: w.args,
                             pc: 0,
                             caps: w.caps,
                             depth: s.depth + 1,
