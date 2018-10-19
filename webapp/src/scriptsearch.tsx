@@ -324,6 +324,10 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             if (abeta != bbeta)
                 return abeta ? 1 : -1;
 
+            // use weight if core packages
+            if (a.core && b.core && a.weight != b.weight)
+                return -(a.weight || 0) + (b.weight || 0);
+
             // alphabetical sort
             return pxt.Util.strcmp(a.name, b.name)
         }

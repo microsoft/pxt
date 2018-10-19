@@ -50,6 +50,8 @@ declare namespace pxt {
         additionalFilePath?: string;
         additionalFilePaths?: string[];
         core?: boolean;
+        // used for sorting for core packages
+        weight?: number;
         gistId?: string;
         extension?: PackageExtension; // describe the associated extension if any
         dalDTS?: {
