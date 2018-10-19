@@ -114,7 +114,7 @@ namespace pxt {
                     // Apply any appTheme overrides
                     let v = appTarget.queryVariants[queryRegex];
                     if (v) {
-                        U.jsonMergeFrom(appTarget.appTheme, v);
+                        U.jsonMergeFrom(appTarget, v);
                     }
                 }
             });
