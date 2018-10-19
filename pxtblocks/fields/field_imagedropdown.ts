@@ -152,6 +152,7 @@ namespace pxtblockly {
          */
         protected buttonClick_ = function (e: any) {
             let value = e.target.getAttribute('data-value');
+            if (!value) return;
             this.setValue(value);
             this.setText(value);
             Blockly.DropDownDiv.hide();
