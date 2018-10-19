@@ -313,10 +313,6 @@ namespace pxsim {
         export function toFloat(v: number) { return v }
 
         export function ignore(v: any) { return v; }
-
-        export function ptreqDecr(a: any, b: any) {
-            return Number_.eqDecr(a, b)
-        }
     }
 
     export namespace pxtcore {

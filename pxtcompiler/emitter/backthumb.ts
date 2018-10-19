@@ -188,6 +188,13 @@ ${lbl}:`
 `
         }
 
+        load_vtable(trg: string, src: string) {
+            if (target.gc)
+                return `ldr ${trg}, [${src}, #0]`
+            else
+                return `ldrh ${trg}, [${src}, #2]\n    lsls ${trg}, ${trg}, #${target.vtableShift}`
+        }
+
         lambda_init() {
             return `
     mov r5, r0
@@ -339,12 +346,24 @@ _pxt_${op}_pushR0:
 `
             }
 
+            /*
+    lsls r2, r0, #30
+    bne .r0prim
+    cmp r0, #0
+    beq .r0prim
+    ${this.load_vtable("r2", "r0")}
+    ldrb r2, [r2, #2]
+    cmp r2, #${pxt.ValTypeObject}
+    bne .r0prim
+    ; r0 is object
+            */
+
             for (let op of Object.keys(thumbCmpMap)) {
                 op = op.replace(/.*::/, "")
                 // this make sure to set the Z flag correctly
                 r += `
+.section code
 _cmp_${op}:
-    @scope _cmp_${op}
     lsls r2, r0, #31
     beq .boxed
     lsls r2, r1, #31
@@ -359,14 +378,12 @@ _cmp_${op}:
     bx lr
 .boxed:
     push {r4, lr}
-    push {r0, r1}
+    push {r0, r1}    
     bl numops::${op}
     bl numops::toBoolDecr
     movs r4, r0
     pop {r0}
-    ${this.stackAligned() ? "push {r0} ; align" : ""}
     bl _pxt_decr
-    ${this.stackAligned() ? "pop {r0} ; unalign" : ""}
     pop {r0}
     bl _pxt_decr
     movs r0, r4

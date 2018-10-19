@@ -183,8 +183,19 @@ define irq
   echo "Current IRQ: "
   p (*(int*)0xE000ED04 & 0x1f) - 16
 end
+define exn
+  echo PC:
+  p ((void**)$sp)[5]
+  echo LR:
+  p ((void**)$sp)[6]
+end
+define log
+  set height 0
+  set width 0
+  printf "%s", codalLogStore.buffer
+end
 echo \\nUse 'rst' command to re-run program from start (set your breakpoints first!).\\n
-echo Use 'boot' to go into bootloader.\\n\\n
+echo Use 'boot' to go into bootloader, 'log' to dump DMESG, and 'exn' to display exception info.\\n\\n
 `)
 
     pxt.log("starting openocd: " + oargs.join(" "))

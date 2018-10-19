@@ -645,8 +645,11 @@ ${lbl}: ${snippets.obj_header("pxt::number_vt")}
         }
     }
 
-    export function numSpecialMethods() {
-        return target.gc ? 5 : 3
+    export function firstMethodOffset() {
+        // 3 words header
+        // 4 or 2 mem mgmt methods
+        // 1 toString
+        return 3 + (target.gc ? 4 : 2) + 1
     }
 
     export function vtableToAsm(info: ClassInfo, opts: CompileOptions, bin: Binary) {
@@ -682,10 +685,8 @@ ${info.id}_VT:
             addPtr("pxt::RefRecord_scan")
             addPtr("pxt::RefRecord_size")
         }
-        if (info.toStringMethod)
-            s += `        ${ptrSz} ${info.toStringMethod.vtLabel()}\n`
-        else
-            addPtr("0")
+        let toStr = info.toStringMethod
+        addPtr(toStr ? toStr.vtLabel() : "0")
 
         for (let m of info.vtable) {
             addPtr(m.label())

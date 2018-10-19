@@ -23,10 +23,6 @@ namespace ts.pxtc {
         "numops::eqq": "===",
         "numops::neqq": "!==",
         "numops::neq": "!=",
-        "langsupp::ptreq": "==",
-        "langsupp::ptreqq": "===",
-        "langsupp::ptrneqq": "!==",
-        "langsupp::ptrneq": "!=",
     }
 
     export function isBuiltinSimOp(name: string) {

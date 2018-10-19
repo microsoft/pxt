@@ -595,7 +595,7 @@ ${baseLabel}:
         }
 
         private emitClassCall(procid: ir.ProcId) {
-            let effIdx = procid.virtualIndex + numSpecialMethods() + 3
+            let effIdx = procid.virtualIndex + firstMethodOffset()
             this.write(this.t.emit_int(effIdx * 4, "r1"))
 
             let info = procid.classInfo
@@ -647,9 +647,7 @@ ${baseLabel}:
                 }
 
                 // one argument consumed
-                this.write(`subs r4, #1`)
-
-                this.lambdaCall()
+                this.lambdaCall(numargs - 1)
 
                 this.write(`
                 .fail:
@@ -700,16 +698,16 @@ ${baseLabel}:
             this.emitHelper(outp, "vcall")
         }
 
-        // vtable in r3; no clobber
-        private checkSubtype(info: ClassInfo) {
-            this.write(`ldrh r3, [r3, #8]`)
-            this.write(`cmp r3, #${info.classNo}`)
+        // vtable in r3; clobber r2
+        private checkSubtype(info: ClassInfo, failLbl = ".fail") {
+            this.write(`ldrh r2, [r3, #8]`)
+            this.write(`cmp r2, #${info.classNo}`)
             if (info.classNo == info.lastSubtypeNo) {
-                this.write("bne .fail") // different class
+                this.write(`bne ${failLbl}`) // different class
             } else {
-                this.write("blt .fail")
-                this.write(`cmp r3, #${info.lastSubtypeNo}`)
-                this.write("bgt .fail")
+                this.write(`blt ${failLbl}`)
+                this.write(`cmp r2, #${info.lastSubtypeNo}`)
+                this.write(`bgt ${failLbl}`)
             }
         }
 
@@ -1021,8 +1019,8 @@ ${baseLabel}:
             let rfNo = !target.gc ? ";" : ""
             let r3 = target.stackAlign ? "r3," : ""
             this.write(`
-.section code
-_pxt_lambda_trampoline:
+            .section code
+            _pxt_lambda_trampoline:
                 push {${r3} r4, r5, r6, r7, lr}
                 mov r4, r1
                 mov r5, r2
@@ -1051,6 +1049,45 @@ _pxt_lambda_trampoline:
                 ${rfNo}bl pxt::popThreadContext
                 mov r0, r7 ; restore result
                 pop {${r3} r4, r5, r6, r7, pc}`)
+
+            this.write(`
+            .section code
+            _pxt_stringConv:
+            `)
+
+            this.loadVTable()
+            this.checkSubtype(this.builtInClassNo(pxt.BuiltInType.BoxedString), ".notstring")
+
+            this.write(`
+                bx lr
+
+            .notstring: ; no string, but vtable in r3
+                ldr r7, [r3, #4*${firstMethodOffset() - 1}]
+                cmp r7, #0
+                beq .fail
+                push {r0, lr}
+                ${gcNo}bl _pxt_incr
+                movs r4, #1
+                blx r7
+                ${rfNo}str r0, [sp, #0]
+                ${gcNo}mov r7, r0
+                ${gcNo}pop {r0}
+                ${gcNo}bl _pxt_decr
+                ${gcNo}mov r0, r7
+                ${gcNo}push {r7}
+                b .numops
+
+            .fail: ; not an object or no toString
+                push {r0, lr}
+            .numops:
+                bl numops::toString
+                ${rfNo}pop {r1}
+                ${gcNo}mov r7, r0
+                ${gcNo}pop {r0}
+                ${gcNo}bl _pxt_decr
+                ${gcNo}mov r0, r7
+                pop {pc}
+            `)
         }
 
         private emitProcCall(topExpr: ir.Expr) {
@@ -1160,10 +1197,10 @@ _pxt_lambda_trampoline:
 
             let procIdx = -1
             if (isLambda) {
-                this.write(`movs r4, #${topExpr.args.length - 1}`)
+                let numargs = topExpr.args.length - 1
                 this.write(this.loadFromExprStack("r0", topExpr.args[0]))
-                this.emitLabelledHelper("lambda_call", () => {
-                    this.lambdaCall()
+                this.emitLabelledHelper("lambda_call" + numargs, () => {
+                    this.lambdaCall(numargs)
                     this.write(`.fail:`)
                     this.write(`bl pxt::failedCast`)
                 })
@@ -1205,23 +1242,56 @@ _pxt_lambda_trampoline:
             }
         }
 
-        private lambdaCall() {
+        private lambdaCall(numargs: number) {
             this.loadVTable()
             this.checkSubtype(this.builtInClassNo(pxt.BuiltInType.RefAction))
             // the conditional branch below saves stack space for functions that do not require closure
             this.write(`
+                movs r4, #${numargs}
                 ldrh r1, [r0, #4]
                 cmp r1, #0
                 bne .pushR5 
                 ldr r1, [r0, #8]
                 bx r1 ; keep lr from the caller
             .pushR5:
-                push {r5, lr}
+                sub sp, #8
+            `)
+
+            // move arguments two steps up
+            for (let i = 0; i < numargs; ++i) {
+                this.write(`ldr r1, [sp, #4*${i + 2}]`)
+                this.write(`str r1, [sp, #4*${i}]`)
+            }
+
+            let gcNo = target.gc ? ";" : ""
+
+            this.write(`
+                str r5, [sp, #4*${numargs}]
+                mov r1, lr
+                str r1, [sp, #4*${numargs + 1}]
                 mov r5, r0
-                ldr r1, [r0, #8]
-                blx r1
-                pop {r5, pc}
-            `)            
+                ldr r7, [r5, #8]
+                ${gcNo}ldr r0, [sp, #4*${numargs}]
+                ${gcNo}bl _pxt_incr
+                blx r7
+                ${gcNo}mov r7, r0
+                ldr r4, [sp, #4*${numargs + 1}]
+                ldr r5, [sp, #4*${numargs}]
+                ${gcNo}mov r0, r5
+                ${gcNo}bl _pxt_decr
+            `)
+
+            // move arguments back where they were
+            for (let i = 0; i < numargs; ++i) {
+                this.write(`ldr r1, [sp, #4*${i}]`)
+                this.write(`str r1, [sp, #4*${i + 2}]`)
+            }
+
+            this.write(`
+                add sp, #8
+                ${gcNo}mov r0, r7
+                bx r4
+            `)
         }
 
         private emitStore(trg: ir.Expr, src: ir.Expr) {

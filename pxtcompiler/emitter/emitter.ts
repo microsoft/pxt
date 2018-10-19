@@ -1608,7 +1608,6 @@ ${lbl}: .short 0xffff
             let expr = emitExpr(e)
             if (target.isNative || isStringLiteral(e))
                 return irToNode(expr, isRef)
-
             expr = ir.rtcallMask("String_::stringConv", 1, ir.CallingConvention.Async, [expr])
             return irToNode(expr, true)
         }
@@ -1857,13 +1856,6 @@ ${lbl}: .short 0xffff
             let attrs = parseComments(decl)
             let hasRet = !(typeOf(node).flags & TypeFlags.Void)
             let nm = attrs.shim
-
-            switch (nm) {
-                case "Number_::toString":
-                case "Boolean_::toString":
-                    nm = "numops::toString"
-                    break;
-            }
 
             if (nm.indexOf('(') >= 0) {
                 let parse = /(.*)\((.*)\)$/.exec(nm)
@@ -3059,7 +3051,7 @@ ${lbl}: .short 0xffff
                     if (!r.isStringLiteral) {
                         convInfos.push({
                             argIdx: i,
-                            method: "numops::stringConv",
+                            method: "_pxt_stringConv",
                             returnsRef: true
                         })
                         // set the mask - the result of conversion is a ref
@@ -3209,7 +3201,6 @@ ${lbl}: .short 0xffff
                 case SK.LessThanLessThanToken: return "numops::lsls";
                 case SK.GreaterThanGreaterThanToken: return "numops::asrs"
                 case SK.GreaterThanGreaterThanGreaterThanToken: return "numops::lsrs"
-                // these could be compiled to branches but this is more code-size efficient
                 case SK.LessThanEqualsToken: return "numops::le";
                 case SK.LessThanToken: return "numops::lt";
                 case SK.GreaterThanEqualsToken: return "numops::ge";
@@ -3275,51 +3266,14 @@ ${lbl}: .short 0xffff
                 return post
             }
 
-
-            if (isStringType(lt) || isStringType(rt)) {
-                switch (node.operatorToken.kind) {
-                    case SK.EqualsEqualsToken:
-                    case SK.EqualsEqualsEqualsToken:
-                    case SK.ExclamationEqualsEqualsToken:
-                    case SK.ExclamationEqualsToken:
-                        break; // let the generic case handle this
-                    case SK.LessThanEqualsToken:
-                    case SK.LessThanToken:
-                    case SK.GreaterThanEqualsToken:
-                    case SK.GreaterThanToken:
-                        return ir.rtcallMask(
-                            mapIntOpName(simpleInstruction(node, node.operatorToken.kind)),
-                            opts.target.boxDebug ? 1 : 0,
-                            ir.CallingConvention.Plain,
-                            [fromInt(shim("String_::compare")), emitLit(0)])
-                    default:
-                        unhandled(node.operatorToken, lf("unknown string operator"), 9251)
-                }
-            }
-
             // fallback to numeric operation if none of the argument is string and some are numbers
-            if (isNumericalType(lt) || isNumericalType(rt)) {
-                let noEq = stripEquals(node.operatorToken.kind)
-                let shimName = simpleInstruction(node, noEq || node.operatorToken.kind)
-                if (!shimName)
-                    unhandled(node.operatorToken, lf("unsupported numeric operator"), 9250)
-                if (noEq)
-                    return emitIncrement(node.left, shimName, false, node.right)
-                return shim(shimName)
-            }
-
-            switch (node.operatorToken.kind) {
-                case SK.EqualsEqualsToken:
-                    return shim("langsupp::ptreq");
-                case SK.EqualsEqualsEqualsToken:
-                    return shim("langsupp::ptreqq");
-                case SK.ExclamationEqualsEqualsToken:
-                    return shim("langsupp::ptrneqq");
-                case SK.ExclamationEqualsToken:
-                    return shim("langsupp::ptrneq");
-                default:
-                    throw unhandled(node.operatorToken, lf("unknown argument types: {0} and {1}", checker.typeToString(lt), checker.typeToString(rt)), 9252)
-            }
+            let noEq = stripEquals(node.operatorToken.kind)
+            let shimName = simpleInstruction(node, noEq || node.operatorToken.kind)
+            if (!shimName)
+                unhandled(node.operatorToken, lf("unsupported operator"), 9250)
+            if (noEq)
+                return emitIncrement(node.left, shimName, false, node.right)
+            return shim(shimName)
         }
 
         function emitConditionalExpression(node: ConditionalExpression) {
