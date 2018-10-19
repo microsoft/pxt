@@ -1300,7 +1300,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         mutatedBlocks.push(mutatedBlock);
                     });
                     return mutatedBlocks;
-                } else if (fn.attributes.blockSetVariable != undefined && fn.retType) {
+                } else if (fn.attributes.blockSetVariable != undefined && fn.retType && !shadow) {
                     // if requested, wrap block into a "set variable block"
                     const rawName = fn.attributes.blockSetVariable;
 
