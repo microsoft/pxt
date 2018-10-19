@@ -726,7 +726,7 @@ ${hex.hexPrelude()}
     .short 0 ; patched with number of words resulting from assembly
     .word _pxt_config_data
     .short 0 ; patched with comm section size
-    .short 0 ; reserved
+    .short ${bin.nonPtrGlobals}
     .word _pxt_iface_member_names
     .word _pxt_lambda_trampoline@fn
     .word 0 ; reserved

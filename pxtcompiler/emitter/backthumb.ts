@@ -32,11 +32,12 @@ namespace ts.pxtc {
             return target.stackAlign && target.stackAlign > 1
         }
         pushLR() {
-            if (this.stackAligned()) return "push {lr, r6}  ; r6 for align"
+            // r5 should contain GC-able value
+            if (this.stackAligned()) return "push {lr, r5}  ; r5 for align"
             else return "push {lr}"
         }
         popPC() {
-            if (this.stackAligned()) return "pop {pc, r6}  ; r6 for align"
+            if (this.stackAligned()) return "pop {pc, r5}  ; r5 for align"
             else return "pop {pc}"
         }
         nop() { return "nop" }
@@ -63,6 +64,7 @@ namespace ts.pxtc {
         proc_return() { return "pop {pc}" }
 
         debugger_stmt(lbl: string) {
+            if (target.gc) oops()
             return `
     @stackempty locals
     ldr r0, [r6, #0] ; debugger
@@ -73,6 +75,7 @@ ${lbl}:
         }
 
         debugger_bkpt(lbl: string) {
+            if (target.gc) oops()
             return `
     @stackempty locals
     ldr r0, [r6, #0] ; brk
@@ -82,6 +85,7 @@ ${lbl}:
         }
 
         debugger_proc(lbl: string) {
+            if (target.gc) oops()
             return `
     ldr r0, [r6, #0]  ; brk-entry
     ldr r0, [r0, #4]  ; brk-entry

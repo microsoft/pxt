@@ -2211,19 +2211,25 @@ ${lbl}: .short 0xffff
             let globals = bin.globals.slice(0)
             // stable-sort globals, with smallest first, because "strh/b" have
             // smaller immediate range than plain "str" (and same for "ldr")
+            // All the pointers go at the end, for GC
             globals.forEach((g, i) => g.index = i)
+            const sz = (b: BitSize) => b == BitSize.None ? 10 : sizeOfBitSize(b)
             globals.sort((a, b) =>
-                sizeOfBitSize(a.bitSize) - sizeOfBitSize(b.bitSize) ||
+                sz(a.bitSize) - sz(b.bitSize) ||
                 a.index - b.index)
             let currOff = numReservedGlobals * 4
+            let firstPointer = 0
             for (let g of globals) {
                 let sz = sizeOfBitSize(g.bitSize)
                 while (currOff & (sz - 1))
                     currOff++ // align
+                if (!firstPointer && g.bitSize == BitSize.None)
+                    firstPointer = currOff
                 g.index = currOff
                 currOff += sz
             }
             bin.globalsWords = (currOff + 3) >> 2
+            bin.nonPtrGlobals = firstPointer ? (firstPointer >> 2) : bin.globalsWords
         }
 
         function emitVTables() {
@@ -4038,6 +4044,7 @@ ${lbl}: .short 0xffff
         procs: ir.Procedure[] = [];
         globals: ir.Cell[] = [];
         globalsWords: number;
+        nonPtrGlobals: number;
         finalPass = false;
         target: CompileTarget;
         writeFile = (fn: string, cont: string) => { };

@@ -768,6 +768,8 @@ namespace ts.pxtc.ir {
     }
 
     export function op(kind: EK, args: Expr[], data?: any): Expr {
+        if (target.gc && (kind == EK.Incr || kind == EK.Decr))
+            return args[0]
         return new Expr(kind, args, data)
     }
 

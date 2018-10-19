@@ -473,7 +473,11 @@ ${baseLabel}:
                             this.write(this.t.emit_int(cell.index, reg))
                             off = reg
                         }
-                        this.write(this.t.load_reg_src_off(reg, "r6", off, false, false, inf))
+                        if (target.gc) {
+                            this.write(this.t.load_reg_src_off("r4", "r6", "#0"))
+                            this.write(this.t.load_reg_src_off(reg, "r4", off, false, false, inf))
+                        } else
+                            this.write(this.t.load_reg_src_off(reg, "r6", off, false, false, inf))
                     } else {
                         let [src, imm, idx] = this.cellref(cell)
                         this.write(this.t.load_reg_src_off(reg, src, imm, idx))
@@ -1321,7 +1325,12 @@ ${baseLabel}:
                             this.write(this.t.emit_int(cell.index, "r1"))
                             off = "r1"
                         }
-                        this.write(this.t.load_reg_src_off("r0", "r6", off, false, true, inf))
+
+                        if (target.gc) {
+                            this.write(this.t.load_reg_src_off("r4", "r6", "#0"))
+                            this.write(this.t.load_reg_src_off("r0", "r4", off, false, true, inf))
+                        } else
+                            this.write(this.t.load_reg_src_off("r0", "r6", off, false, true, inf))
                     } else {
                         let [reg, imm, off] = this.cellref(cell)
                         this.write(this.t.load_reg_src_off("r0", reg, imm, off, true))
