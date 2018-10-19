@@ -103,6 +103,22 @@ namespace pxt {
                     }
                 });
         }
+
+        // patch any pre-configured query url appTheme overrides
+        if (appTarget.queryVariants && typeof window !== 'undefined') {
+            const href = window.location.href;
+            Object.keys(appTarget.queryVariants).forEach(queryRegex => {
+                const regex = new RegExp(queryRegex, "i");
+                const match = regex.exec(href);
+                if (match) {
+                    // Apply any appTheme overrides
+                    let v = appTarget.queryVariants[queryRegex];
+                    if (v) {
+                        U.jsonMergeFrom(appTarget.appTheme, v);
+                    }
+                }
+            });
+        }
     }
 
     // this is set by compileServiceVariant in pxt.json
