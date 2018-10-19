@@ -1970,10 +1970,11 @@ namespace pxt.blocks {
         };
         Blockly.Variables.flyoutCategoryBlocks = function (workspace) {
             let variableModelList = workspace.getVariablesOfType('');
-            variableModelList.sort(Blockly.VariableModel.compareByName);
 
             let xmlList: HTMLElement[] = [];
             if (variableModelList.length > 0) {
+                let mostRecentVariable = variableModelList[variableModelList.length - 1];
+                variableModelList.sort(Blockly.VariableModel.compareByName);
                 // variables getters first
                 for (let i = 0; i < variableModelList.length; i++) {
                     const variable = variableModelList[i];
@@ -1989,12 +1990,11 @@ namespace pxt.blocks {
                 }
                 xmlList[xmlList.length - 1].setAttribute('gap', '24');
 
-                let firstVariable = variableModelList[0];
                 if (Blockly.Blocks['variables_set']) {
                     let gap = Blockly.Blocks['variables_change'] ? 8 : 24;
                     let blockText = '<xml>' +
                         '<block type="variables_set" gap="' + gap + '">' +
-                        Blockly.Variables.generateVariableFieldXmlString(firstVariable) +
+                        Blockly.Variables.generateVariableFieldXmlString(mostRecentVariable) +
                         '</block>' +
                         '</xml>';
                     let block = Blockly.Xml.textToDom(blockText).firstChild as HTMLElement;
@@ -2016,7 +2016,7 @@ namespace pxt.blocks {
                     let gap = Blockly.Blocks['variables_get'] ? 20 : 8;
                     let blockText = '<xml>' +
                         '<block type="variables_change" gap="' + gap + '">' +
-                        Blockly.Variables.generateVariableFieldXmlString(firstVariable) +
+                        Blockly.Variables.generateVariableFieldXmlString(mostRecentVariable) +
                         '<value name="DELTA">' +
                         '<shadow type="math_number">' +
                         '<field name="NUM">1</field>' +
