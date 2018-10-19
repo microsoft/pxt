@@ -249,7 +249,6 @@ namespace pxt.blocks {
         const value = document.createElement("value");
         value.setAttribute("name", p.definitionName);
 
-        const shadowInfo = info.blocksById[shadowId];
         const shadow = document.createElement(isVariable ? "block" : "shadow");
         value.appendChild(shadow);
 
@@ -257,13 +256,6 @@ namespace pxt.blocks {
 
         shadow.setAttribute("type", shadowId || typeInfo && typeInfo.block || p.type);
         shadow.setAttribute("colour", (Blockly as any).Colours.textField);
-
-        if (shadowInfo && shadowInfo.attributes.blockSetVariable) {
-            // trivially 'fixes' it, but breaks blockSetVariable things
-            shadowInfo.attributes.blockSetVariable = undefined;
-            
-            return value; // probably don't return here in final version?
-        }
 
         if (typeInfo && (!shadowId || typeInfo.block === shadowId || shadowId === "math_number_minmax")) {
             const field = document.createElement("field");
@@ -300,6 +292,7 @@ namespace pxt.blocks {
                 shadow.appendChild(field);
             }
             else if (shadowId) {
+                const shadowInfo = info.blocksById[shadowId];
                 if (shadowInfo && shadowInfo.attributes._def && shadowInfo.attributes._def.parameters.length) {
                     const shadowParam = shadowInfo.attributes._def.parameters[0];
                     field.setAttribute("name", shadowParam.name);
