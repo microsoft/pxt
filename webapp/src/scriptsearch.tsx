@@ -313,13 +313,22 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         const experiments = this.fetchExperiments();
         const isSearching = this.state.searchFor && (ghdata.status === data.FetchStatus.Pending || urldata.status === data.FetchStatus.Pending);
 
-        const coresFirst = (a: pxt.PackageConfig, b: pxt.PackageConfig) => {
+        const compareConfig = (a: pxt.PackageConfig, b: pxt.PackageConfig) => {
+            // core first
             if (a.core != b.core)
                 return a.core ? -1 : 1;
+
+            // non-beta first
+            const abeta = pxt.isPkgBeta(a);
+            const bbeta = pxt.isPkgBeta(b);
+            if (abeta != bbeta)
+                return abeta ? 1 : -1;
+
+            // alphabetical sort
             return pxt.Util.strcmp(a.name, b.name)
         }
 
-        bundles.sort(coresFirst)
+        bundles.sort(compareConfig)
         const isEmpty = () => {
             if (!this.state.searchFor || isSearching) {
                 return false;
@@ -400,7 +409,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     imageUrl={scr.icon}
                                     scr={scr}
                                     onCardClick={this.addBundle}
-                                    label={/\bbeta\b/i.test(scr.description) ? lf("Beta") : undefined}
+                                    label={pxt.isPkgBeta(scr) ? lf("Beta") : undefined}
                                     role="link"
                                 />
                             )}
@@ -413,7 +422,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     onCardClick={this.installGh}
                                     url={'github:' + scr.fullName}
                                     imageUrl={pxt.github.repoIconUrl(scr)}
-                                    label={/\bbeta\b/i.test(scr.description) ? lf("Beta") : undefined}
+                                    label={pxt.isPkgBeta(scr) ? lf("Beta") : undefined}
                                     role="link"
                                     learnMoreUrl={`/pkg/${scr.fullName}`}
                                 />
@@ -427,6 +436,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                     scr={scr}
                                     onCardClick={this.installGh}
                                     imageUrl={pxt.github.repoIconUrl(scr)}
+                                    label={pxt.isPkgBeta(scr) ? lf("Beta") : undefined}
                                     url={'github:' + scr.fullName}
                                     role="link"
                                     learnMoreUrl={`/pkg/${scr.fullName}`}
