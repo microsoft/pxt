@@ -131,7 +131,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
     chgCode(scr: pxt.CodeCard, loadBlocks: boolean, prj?: pxt.ProjectTemplate) {
         core.showLoading("changingcode", lf("loading..."));
         pxt.gallery.loadExampleAsync(scr.name.toLowerCase(), scr.url)
-            .done((opts: pxt.editor.ProjectCreationOptions) => {
+            .then((opts: pxt.editor.ProjectCreationOptions) => {
                 if (opts) {
                     if (prj) opts.prj = prj;
                     opts.features = scr.features;
@@ -158,7 +158,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                     }
                 }
                 core.hideLoading("changingcode");
-            });
+            }).done(() => { });
     }
 
     importProject() {
@@ -754,9 +754,9 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
     handleChange(name: string) {
         this.setState({ projectName: name });
         if (name === "" || name === lf("Untitled")) {
-            this.setState({emoji: "😞"})
+            this.setState({ emoji: "😞" })
         } else {
-            this.setState({emoji: "😊"})
+            this.setState({ emoji: "😊" })
         }
     }
 

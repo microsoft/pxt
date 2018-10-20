@@ -1348,11 +1348,6 @@ export class ProjectView
             .then(() => Promise.delay(500))
             .done(() => {
                 core.hideLoading("newproject")
-                if (pxt.appTarget.appTheme.chooseBoardOnNewProject
-                    && pxt.appTarget.simulator
-                    && !!pxt.appTarget.simulator.dynamicBoardDefinition
-                    && (options.changeBoardOnLoad || options.features))
-                    this.showBoardDialog(options.features);
             });
     }
 
@@ -1381,7 +1376,16 @@ export class ProjectView
             target: pxt.appTarget.id,
             targetVersion: pxt.appTarget.versions.target,
             temporary: options.temporary
-        }, files).then(hd => this.loadHeaderAsync(hd, { filters: options.filters }, options.inTutorial))
+        }, files)
+            .then(hd => this.loadHeaderAsync(hd, { filters: options.filters }, options.inTutorial))
+            .then(() => {
+                if (pxt.appTarget.appTheme.chooseBoardOnNewProject
+                    && pxt.appTarget.simulator
+                    && !!pxt.appTarget.simulator.dynamicBoardDefinition
+                    && (options.changeBoardOnLoad || options.features))
+                    return this.showBoardDialogAsync(options.features);
+                return Promise.resolve();
+            })
     }
 
     switchTypeScript() {
@@ -2102,8 +2106,8 @@ export class ProjectView
         this.scriptSearch.showExtensions();
     }
 
-    showBoardDialog(features?: string[]) {
-        this.scriptSearch.showBoards(features);
+    showBoardDialogAsync(features?: string[]): Promise<void> {
+        return this.scriptSearch.showBoardsAsync(features);
     }
 
     showModalDialogAsync(options: pxt.editor.ModalDialogOptions) {

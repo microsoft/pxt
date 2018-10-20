@@ -28,6 +28,7 @@ interface ScriptSearchState {
     mode?: ScriptSearchMode;
     experimentsState?: string;
     features?: string[];
+    resolve?: () => void;
 }
 
 export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
@@ -50,26 +51,38 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
     }
 
     hide() {
-        this.setState({ visible: false });
+        const r = this.state.resolve;
+        this.setState({ visible: false, resolve: undefined });
         // something changed?
         if (this.state.mode == ScriptSearchMode.Experiments &&
             this.state.experimentsState !== pxt.editor.experiments.state())
             this.props.parent.reloadEditor();
+        // resolve?
+        if (r) r();
     }
 
     showExtensions() {
-        this.setState({ visible: true, searchFor: '', mode: ScriptSearchMode.Extensions, features: undefined })
+        this.setState({ visible: true, searchFor: '', mode: ScriptSearchMode.Extensions, features: undefined, resolve: undefined })
     }
 
-    showBoards(features?: string[]) {
-        this.setState({ visible: true, searchFor: '', mode: ScriptSearchMode.Boards, features })
+    showBoardsAsync(features?: string[]): Promise<void> {
+        return new Promise((resolve) => {
+            this.setState({
+                visible: true,
+                searchFor: '',
+                mode: ScriptSearchMode.Boards,
+                features,
+                resolve
+            })
+        });
     }
 
     showExperiments() {
         this.setState({
             visible: true, searchFor: '', mode: ScriptSearchMode.Experiments,
             experimentsState: pxt.editor.experiments.state(),
-            features: undefined
+            features: undefined,
+            resolve: undefined
         });
     }
 

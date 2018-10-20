@@ -242,7 +242,7 @@ namespace pxt.editor {
         showExperimentsDialog(): void;
 
         showPackageDialog(): void;
-        showBoardDialog(): void;
+        showBoardDialogAsync(): Promise<void>;
 
         showModalDialogAsync(options: ModalDialogOptions): Promise<void>;
     }
