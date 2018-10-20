@@ -223,7 +223,7 @@ namespace pxt.editor {
 
         editor: IEditor;
 
-        startTutorial(tutorialId: string, tutorialTitle?: string, features?: string[]): void;
+        startTutorial(tutorialId: string, tutorialTitle?: string): void;
         showLightbox(): void;
         hideLightbox(): void;
 

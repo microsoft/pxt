@@ -108,7 +108,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             case "side":
                 this.props.parent.newEmptyProject(scr.name, scr.url);
                 break;
-            case "tutorial": this.props.parent.startTutorial(scr.url, scr.name, scr.features); break;
+            case "tutorial": this.props.parent.startTutorial(scr.url, scr.name); break;
             default:
                 const m = /^\/#tutorial:([a-z0A-Z0-9\-\/]+)$/.exec(scr.url); // Tutorial
                 if (m) this.props.parent.startTutorial(m[1]);

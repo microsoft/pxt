@@ -2151,18 +2151,18 @@ export class ProjectView
     ////////////             Tutorials            /////////////
     ///////////////////////////////////////////////////////////
 
-    startTutorial(tutorialId: string, tutorialTitle?: string, features?: string[]) {
+    startTutorial(tutorialId: string, tutorialTitle?: string) {
         pxt.tickEvent("tutorial.start");
         // Check for Internet access
         if (!pxt.Cloud.isNavigatorOnline()) {
             core.errorNotification(lf("No Internet access, please connect and try again."));
         } else {
             core.showLoading("tutorial", lf("starting tutorial..."));
-            this.startTutorialAsync(tutorialId, tutorialTitle, features);
+            this.startTutorialAsync(tutorialId, tutorialTitle);
         }
     }
 
-    startTutorialAsync(tutorialId: string, tutorialTitle?: string, features?: string[]): Promise<void> {
+    startTutorialAsync(tutorialId: string, tutorialTitle?: string): Promise<void> {
         let title = tutorialTitle || tutorialId.split('/').reverse()[0].replace('-', ' '); // drop any kind of sub-paths
 
         sounds.initTutorial(); // pre load sounds
@@ -2175,11 +2175,11 @@ export class ProjectView
                     throw new Error("tutorial not found");
                 tutorialmd = md;
                 const dependencies = pxt.gallery.parsePackagesFromMarkdown(md);
+                const features = pxt.gallery.parseFeaturesFromMarkdown(md);
                 return this.createProjectAsync({
                     name: title,
                     inTutorial: true,
-                    dependencies,
-                    features
+                    dependencies
                 });
             })
             .then(() => {

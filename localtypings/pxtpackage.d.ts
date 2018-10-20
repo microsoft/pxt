@@ -58,7 +58,6 @@ declare namespace pxt {
             includeDirs: string[];
             excludePrefix?: string[];
         };
-        features?: string; // used for compatility check with examples, tutorias
     }
 
     interface PackageExtension {
