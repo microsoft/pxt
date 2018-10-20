@@ -29,7 +29,7 @@ namespace pxt.gallery {
         let features: string[] = [];
         pm[1].split('\n').map(s => s.replace(/\s*/g, '')).filter(s => !!s)
             .map(l => l.split('='))
-            .filter(kv => kv[0] == "feature" && !!kv[2])
+            .filter(kv => kv[0] == "feature" && !!kv[1])
             .forEach(kv => features.push(kv[1]));
         return features.length ? features : undefined;
     }
