@@ -289,8 +289,12 @@ namespace ts.pxtc {
                     if (!value) {
                         U.oops("No value for " + inf.name + " / " + hexb)
                     }
-                    if (inf.argsFmt.length && !opts.runtimeIsARM && opts.nativeType == NATIVE_TYPE_THUMB && !(value & 1)) {
-                        U.oops("Non-thumb addr for " + inf.name + " / " + hexb)
+                    if (inf.argsFmt.length == 0) {
+                        value ^= 1
+                    } else {
+                        if (!opts.runtimeIsARM && opts.nativeType == NATIVE_TYPE_THUMB && !(value & 1)) {
+                            U.oops("Non-thumb addr for " + inf.name + " / " + hexb)
+                        }
                     }
                     inf.value = value
                 }
@@ -380,10 +384,12 @@ namespace ts.pxtc {
                 else if (bytes[4] == 0x23) isBuffer = true
                 else return null
 
-                let vt = lookupFunctionAddr(isString ? "pxt::string_vt" : "pxt::buffer_vt")                
+                let vt = lookupFunctionAddr(isString ? "pxt::string_vt" : "pxt::buffer_vt")
                 let headerBytes = new Uint8Array(6)
 
-                if (!vt || (vt & 1)) oops();
+                if (!vt) oops("missing vt: " + isString)
+                vt ^= 1
+                if (vt & 3) oops("Unaligned vt: " + vt)
 
                 if (target.gc) {
                     pxt.HF2.write32(headerBytes, 0, vt)
