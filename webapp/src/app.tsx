@@ -2179,7 +2179,8 @@ export class ProjectView
                 return this.createProjectAsync({
                     name: title,
                     inTutorial: true,
-                    dependencies
+                    dependencies,
+                    features
                 });
             })
             .then(() => {

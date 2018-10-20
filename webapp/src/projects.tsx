@@ -134,7 +134,6 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             .then((opts: pxt.editor.ProjectCreationOptions) => {
                 if (opts) {
                     if (prj) opts.prj = prj;
-                    opts.features = scr.features;
                     if (loadBlocks) {
                         return this.props.parent.createProjectAsync(opts)
                             .then(() => {

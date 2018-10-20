@@ -133,8 +133,6 @@ declare namespace pxt {
 
         target?: string;
         className?: string;
-
-        features?: string[]; // core required features
     }
 
     interface CodeCardTag {
