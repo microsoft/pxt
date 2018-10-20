@@ -327,10 +327,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                         }
                         return Promise.resolve();
                     });
-            }).then(() => {
-                if (this.state.resolve)
-                    this.state.resolve();
-            })
+            });
     }
 
     toggleExperiment(experiment: pxt.editor.experiments.Experiment) {
