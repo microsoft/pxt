@@ -53,6 +53,16 @@ Simple provide a list of package name using the ``package`` macro.
     microbit-bluetooth
     ```
 
+### features
+
+You can specify required "features" for a given documentation page. In the case of a multi-board editor,
+MakeCode will match the feature set with existing boards.
+
+    ```config
+    feature=pinsled
+    feature=pinsd1
+    ```
+
 ### blocks
 
 The **blocks** language renders a JavaScript snippet into blocks and provide a simulator if needed.
