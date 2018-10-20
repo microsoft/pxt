@@ -380,10 +380,10 @@ namespace ts.pxtc {
                 else if (bytes[4] == 0x23) isBuffer = true
                 else return null
 
-                let vt = lookupFunctionAddr(isString ? "pxt::string_vt" : "pxt::buffer_vt")
+                let vt = lookupFunctionAddr(isString ? "pxt::string_vt" : "pxt::buffer_vt")                
                 let headerBytes = new Uint8Array(6)
 
-                if (!vt) oops();
+                if (!vt || (vt & 1)) oops();
 
                 if (target.gc) {
                     pxt.HF2.write32(headerBytes, 0, vt)

@@ -125,9 +125,16 @@ ${lbl}:`
         rt_call(name: string, r0: string, r1: string) {
             return name + " " + r0 + ", " + r1;
         }
-        call_lbl(lbl: string) {
+        call_lbl(lbl: string, saveStack?: boolean) {
             let o = U.lookup(inlineArithmetic, lbl)
-            if (o) lbl = o
+            if (o) {
+                lbl = o
+                saveStack = false
+            }
+            if (!saveStack && lbl.indexOf("::") > 0)
+                saveStack = true
+            if (saveStack)
+                return this.callCPP(lbl)
             return "bl " + lbl;
         }
         call_reg(reg: string) {
@@ -153,7 +160,7 @@ ${lbl}:`
     str r3, [sp, #0]
     ${isSet ? "str r3, [sp, #4]" : ""}
     ${this.pushLR()}
-    bl ${mapMethod}
+    ${this.callCPP(mapMethod)}
     ${this.popPC()}
 `;
         }
@@ -209,6 +216,29 @@ ${lbl}:`
 `
         }
 
+        saveThreadStack() {
+            if (target.gc)
+                return "mov r7, sp\n    str r7, [r6, #4]\n"
+            else
+                return ""
+        }
+
+        restoreThreadStack() {
+            // TODO only for debug build!
+            if (target.gc && target.gcDebug)
+                return "movs r7, #0\n    str r7, [r6, #4]\n"
+            else
+                return ""
+        }
+
+        callCPPPush(lbl: string) {
+            return this.pushLR() + "\n" + this.callCPP(lbl) + "\n" + this.popPC() + "\n"
+        }
+
+        callCPP(lbl: string) {
+            return this.saveThreadStack() + "bl " + lbl + "\n" + this.restoreThreadStack()
+        }
+
         inline_decr(idx: number) {
             // TODO optimize sequences of pops without decr into sub on sp
             return `
@@ -227,7 +257,9 @@ ${lbl}:`
                 if (target.gc)
                     r += `
                     ${this.pushLR()}
+                    ${this.saveThreadStack()}
                     ${op}
+                    ${this.restoreThreadStack()}
                     ${this.popPC()}
                 `
                 else
@@ -280,10 +312,8 @@ _numops_toInt:
     bcc .over
     blx lr
 .over:
-    ${this.pushLR()}
     lsls r0, r0, #1
-    bl pxt::toInt
-    ${this.popPC()}
+    ${this.callCPPPush("pxt::toInt")}
 
 _numops_fromInt:
     lsls r2, r0, #1
@@ -293,9 +323,7 @@ _numops_fromInt:
     adds r0, r2, #1
     blx lr
 .over2:
-    ${this.pushLR()}
-    bl pxt::fromInt
-    ${this.popPC()}
+    ${this.callCPPPush("pxt::fromInt")}
 `
 
             // SPEED the inline ldrh/strh saves ~20%
@@ -317,9 +345,7 @@ _numops_fromInt:
     strh r3, [r0, #0]
     bx lr
 .full:
-    ${this.pushLR()}
-    bl pxt::${op}
-    ${this.popPC()}
+    ${this.callCPPPush("pxt::" + op)}
 `
 
             const withLDR = (op: string, push = false) => {

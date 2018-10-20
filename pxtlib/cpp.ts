@@ -850,6 +850,10 @@ namespace pxt.cpp {
             pxtConfig += "#define PXT_GC 1\n"
         }
 
+        if (compile.gcDebug) {
+            pxtConfig += "#define PXT_GC_DEBUG 1\n"
+        }
+
         if (compile.vtableShift)
             pxtConfig += `#define PXT_VTABLE_SHIFT ${compile.vtableShift}\n`
 

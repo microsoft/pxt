@@ -77,7 +77,7 @@ namespace ts.pxtc {
             return "TBD(load_reg_src_off)";
         }
         rt_call(name: string, r0: string, r1: string) { return "TBD(rt_call)"; }
-        call_lbl(lbl: string) { return "TBD(call_lbl)" }
+        call_lbl(lbl: string, saveStack?: boolean) { return "TBD(call_lbl)" }
         call_reg(reg: string) { return "TBD(call_reg)" }
         vcall(mapMethod: string, isSet: boolean, vtableShift: number) {
             return "TBD(vcall)"
@@ -474,8 +474,8 @@ ${baseLabel}:
                             off = reg
                         }
                         if (target.gc) {
-                            this.write(this.t.load_reg_src_off("r4", "r6", "#0"))
-                            this.write(this.t.load_reg_src_off(reg, "r4", off, false, false, inf))
+                            this.write(this.t.load_reg_src_off("r7", "r6", "#0"))
+                            this.write(this.t.load_reg_src_off(reg, "r7", off, false, false, inf))
                         } else
                             this.write(this.t.load_reg_src_off(reg, "r6", off, false, false, inf))
                     } else {
@@ -622,7 +622,7 @@ ${baseLabel}:
                 this.write(`ldr r1, [r3, r1] ; ld-method`)
                 this.write(`bx r1 ; keep lr from caller`)
                 this.write(`.fail:`)
-                this.write(`bl pxt::failedCast`)
+                this.write(this.t.callCPP("pxt::failedCast"))
             })
         }
 
@@ -647,9 +647,7 @@ ${baseLabel}:
                     ldrh r2, [r3, #8]
                     cmp r2, #${pxt.BuiltInType.RefMap}
                     bne .fail
-                    ${this.t.pushLR()}
-                    bl pxtrt::mapGet
-                    ${this.t.popPC()}
+                    ${this.t.callCPPPush("pxtrt::mapGet")}
                 ; move args
                 `)
 
@@ -667,9 +665,9 @@ ${baseLabel}:
 
                 this.write(`
                 .fail:
-                    bl pxt::failedCast
+                    ${this.t.callCPP("pxt::failedCast")}
                 .fail2:
-                    bl pxt::missingProperty
+                    ${this.t.callCPP("pxt::missingProperty")}
                 `)
             })
         }
@@ -701,14 +699,12 @@ ${baseLabel}:
                     movs r3, #0 ; clear args on stack, so the outside decr() doesn't touch them
                     str r3, [sp, #0]
                     ${isSet ? "str r3, [sp, #4]" : ""}
-                    ${this.t.pushLR()}
-                    bl ${procid.mapMethod}
-                    ${this.t.popPC()}
+                    ${this.t.callCPPPush(procid.mapMethod)}
                 
                 .fail:
-                    bl pxt::failedCast
+                    ${this.t.callCPP("pxt::failedCast")}
                 .fail2:
-                    bl pxt::missingProperty
+                    ${this.t.callCPP("pxt::missingProperty")}
                 `)
             })
             this.emitHelper(outp, "vcall")
@@ -768,7 +764,7 @@ ${baseLabel}:
                 } else if (tp == "validate" || tp == "validateDecr") {
                     this.write(`bx lr`)
                     this.write(`.fail:`)
-                    this.write(`bl pxt::failedCast`)
+                    this.write(this.t.callCPP("pxt::failedCast"))
                 } else {
                     U.oops()
                 }
@@ -963,7 +959,7 @@ ${baseLabel}:
                 genCall()
             } else {
                 if (name != "langsupp::ignore")
-                    this.alignedCall(name)
+                    this.alignedCall(name, "", 0, true)
             }
 
             if (clearStack) {
@@ -972,9 +968,9 @@ ${baseLabel}:
             }
         }
 
-        private alignedCall(name: string, cmt = "", off = 0) {
+        private alignedCall(name: string, cmt = "", off = 0, saveStack = false) {            
             let unalign = this.alignStack(off)
-            this.write(this.t.call_lbl(name) + cmt)
+            this.write(this.t.call_lbl(name, saveStack) + cmt)
             this.write(unalign)
         }
 
@@ -1099,7 +1095,7 @@ ${baseLabel}:
             .fail: ; not an object or no toString
                 push {r0, lr}
             .numops:
-                bl numops::toString
+                ${this.t.callCPP("numops::toString")}
                 ${rfNo}pop {r1}
                 ${gcNo}mov r7, r0
                 ${gcNo}pop {r0}
@@ -1221,7 +1217,7 @@ ${baseLabel}:
                 this.emitLabelledHelper("lambda_call" + numargs, () => {
                     this.lambdaCall(numargs)
                     this.write(`.fail:`)
-                    this.write(`bl pxt::failedCast`)
+                    this.write(this.t.callCPP("pxt::failedCast"))
                 })
             } else if (procid.virtualIndex != null || procid.ifaceIndex != null) {
                 let custom = this.t.method_call(procid, topExpr)
@@ -1327,8 +1323,8 @@ ${baseLabel}:
                         }
 
                         if (target.gc) {
-                            this.write(this.t.load_reg_src_off("r4", "r6", "#0"))
-                            this.write(this.t.load_reg_src_off("r0", "r4", off, false, true, inf))
+                            this.write(this.t.load_reg_src_off("r7", "r6", "#0"))
+                            this.write(this.t.load_reg_src_off("r0", "r7", off, false, true, inf))
                         } else
                             this.write(this.t.load_reg_src_off("r0", "r6", off, false, true, inf))
                     } else {
