@@ -145,8 +145,8 @@ window.addEventListener("message", function (ev) {
             img.width = msg.width;
             img.height = msg.height;
             var snippet = document.getElementById(id)
-            snippet.parentElement.insertBefore(img, snippet)
-            snippet.parentElement.removeChild(snippet);
+            snippet.parentNode.insertBefore(img, snippet)
+            snippet.parentNode.removeChild(snippet);
             break;
     }
 }, false);
@@ -303,8 +303,8 @@ var attachBlocksListener = function () {
                 img.width = msg.width;
                 img.height = msg.height;
                 var pre = document.getElementById(id)
-                pre.parentElement.insertBefore(img, pre)
-                pre.parentElement.removeChild(pre);
+                pre.parentNode.insertBefore(img, pre)
+                pre.parentNode.removeChild(pre);
                 break;
         }
     }, false);
