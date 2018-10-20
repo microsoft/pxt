@@ -636,7 +636,11 @@ namespace pxt.runner {
             if (options.snippetReplaceParent) $c = $c.parent();
             $c.remove();
         });
-        $('.lang-config').remove();
+        $('.lang-config').each((i, c) => {
+            let $c = $(c);
+            if (options.snippetReplaceParent) $c = $c.parent();
+            $c.remove();
+        })
     }
 
     function renderTypeScript(options?: ClientRenderOptions) {
