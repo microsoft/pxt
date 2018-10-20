@@ -50,12 +50,20 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         this.toggleExperiment = this.toggleExperiment.bind(this);
     }
 
-    hide() {
+    private hide() {
         this.setState({ visible: false });
         // something changed?
         if (this.state.mode == ScriptSearchMode.Experiments &&
             this.state.experimentsState !== pxt.editor.experiments.state())
             this.props.parent.reloadEditor();
+    }
+
+    private afterHide() {
+        const r = this.state.resolve;
+        if (r) {
+            this.setState({ resolve: undefined })
+            r();
+        }
     }
 
     showExtensions() {
@@ -200,6 +208,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             if (urlPath === "devtools" && electron.isPxtElectron()) {
                 electron.openDevTools();
                 this.hide();
+                this.afterHide();
             } else {
                 let homeUrl = pxt.appTarget.appTheme.homeUrl;
                 if (!/\/$/.test(homeUrl)) {
@@ -222,19 +231,15 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         this.hide();
         let p = pkg.mainEditorPkg();
         return p.addDepAsync(scr.name, "pub:" + scr.id)
-            .then(() => this.props.parent.reloadHeaderAsync());
+            .then(() => this.props.parent.reloadHeaderAsync())
+            .finally(() => this.afterHide());
     }
 
     addBundle(scr: pxt.PackageConfig) {
         pxt.tickEvent("packages.bundled", { name: scr.name });
         this.hide();
         this.addDepIfNoConflict(scr, "*")
-            .done(() => {
-                if (this.state.resolve) {
-                    this.state.resolve();
-                    this.setState({ resolve: undefined });
-                }
-            });
+            .finally(() => this.afterHide());
     }
 
     addLocal(hd: pxt.workspace.Header) {
@@ -243,8 +248,9 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         workspace.getTextAsync(hd.id)
             .then(files => {
                 let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig
-                this.addDepIfNoConflict(cfg, "workspace:" + hd.id)
+                return this.addDepIfNoConflict(cfg, "workspace:" + hd.id)
             })
+            .finally(() => this.afterHide());
     }
 
     installGh(scr: pxt.github.GitRepo) {
@@ -260,7 +266,10 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                 })
                 .then(cfg => this.addDepIfNoConflict(cfg, "github:" + scr.fullName + "#" + tag)))
             .catch(core.handleNetworkError)
-            .finally(() => core.hideLoading("downloadingpackage"));
+            .finally(() => {
+                this.afterHide();
+                core.hideLoading("downloadingpackage")
+            });
     }
 
     addDepIfNoConflict(config: pxt.PackageConfig, version: string) {
