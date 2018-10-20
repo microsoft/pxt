@@ -27,6 +27,7 @@ interface ScriptSearchState {
     visible?: boolean;
     mode?: ScriptSearchMode;
     experimentsState?: string;
+    features?: string[];
 }
 
 export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchState> {
@@ -57,17 +58,18 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
     }
 
     showExtensions() {
-        this.setState({ visible: true, searchFor: '', mode: ScriptSearchMode.Extensions })
+        this.setState({ visible: true, searchFor: '', mode: ScriptSearchMode.Extensions, features: undefined })
     }
 
-    showBoards() {
-        this.setState({ visible: true, searchFor: '', mode: ScriptSearchMode.Boards })
+    showBoards(features?: string[]) {
+        this.setState({ visible: true, searchFor: '', mode: ScriptSearchMode.Boards, features })
     }
 
     showExperiments() {
         this.setState({
             visible: true, searchFor: '', mode: ScriptSearchMode.Experiments,
-            experimentsState: pxt.editor.experiments.state()
+            experimentsState: pxt.editor.experiments.state(),
+            features: undefined
         });
     }
 
@@ -137,12 +139,14 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         const query = this.state.searchFor;
         const bundled = pxt.appTarget.bundledpkgs;
         const boards = this.state.mode == ScriptSearchMode.Boards;
+        const features = this.state.features;
         return Object.keys(bundled).filter(k => !/prj$/.test(k))
             .map(k => JSON.parse(bundled[k]["pxt.json"]) as pxt.PackageConfig)
             .filter(pk => !query || pk.name.toLowerCase().indexOf(query.toLowerCase()) > -1) // search filter
             .filter(pk => boards || !pkg.mainPkg.deps[pk.name]) // don't show package already referenced in extensions
             .filter(pk => !/---/.test(pk.name)) //filter any package with ---, these are part of common-packages such as core---linux or music---pwm
-            .filter(pk => boards == !!pk.core); // show core in "boards" mode
+            .filter(pk => boards == !!pk.core) // show core in "boards" mode
+            .filter(pk => !features || features.every(f => pk.features && pk.features.indexOf(f) > -1)); // ensure features are supported
 
     }
 

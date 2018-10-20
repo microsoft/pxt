@@ -58,6 +58,7 @@ declare namespace pxt {
             includeDirs: string[];
             excludePrefix?: string[];
         };
+        features?: string; // used for compatility check with examples, tutorias
     }
 
     interface PackageExtension {
@@ -133,6 +134,8 @@ declare namespace pxt {
 
         target?: string;
         className?: string;
+
+        features?: string[]; // core required features
     }
 
     interface CodeCardTag {

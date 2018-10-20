@@ -1348,9 +1348,11 @@ export class ProjectView
             .then(() => Promise.delay(500))
             .done(() => {
                 core.hideLoading("newproject")
-                if (options.changeBoardOnLoad && pxt.appTarget.appTheme.chooseBoardOnNewProject &&
-                    pxt.appTarget.simulator && !!pxt.appTarget.simulator.dynamicBoardDefinition)
-                    this.showBoardDialog();
+                if (pxt.appTarget.appTheme.chooseBoardOnNewProject
+                    && pxt.appTarget.simulator
+                    && !!pxt.appTarget.simulator.dynamicBoardDefinition
+                    && (options.changeBoardOnLoad || options.features))
+                    this.showBoardDialog(options.features);
             });
     }
 
@@ -2100,8 +2102,8 @@ export class ProjectView
         this.scriptSearch.showExtensions();
     }
 
-    showBoardDialog() {
-        this.scriptSearch.showBoards();
+    showBoardDialog(features?: string[]) {
+        this.scriptSearch.showBoards(features);
     }
 
     showModalDialogAsync(options: pxt.editor.ModalDialogOptions) {
@@ -2145,18 +2147,18 @@ export class ProjectView
     ////////////             Tutorials            /////////////
     ///////////////////////////////////////////////////////////
 
-    startTutorial(tutorialId: string, tutorialTitle?: string) {
+    startTutorial(tutorialId: string, tutorialTitle?: string, features?: string[]) {
         pxt.tickEvent("tutorial.start");
         // Check for Internet access
         if (!pxt.Cloud.isNavigatorOnline()) {
             core.errorNotification(lf("No Internet access, please connect and try again."));
         } else {
             core.showLoading("tutorial", lf("starting tutorial..."));
-            this.startTutorialAsync(tutorialId, tutorialTitle);
+            this.startTutorialAsync(tutorialId, tutorialTitle, features);
         }
     }
 
-    startTutorialAsync(tutorialId: string, tutorialTitle?: string): Promise<void> {
+    startTutorialAsync(tutorialId: string, tutorialTitle?: string, features?: string[]): Promise<void> {
         let title = tutorialTitle || tutorialId.split('/').reverse()[0].replace('-', ' '); // drop any kind of sub-paths
 
         sounds.initTutorial(); // pre load sounds
@@ -2172,7 +2174,8 @@ export class ProjectView
                 return this.createProjectAsync({
                     name: title,
                     inTutorial: true,
-                    dependencies
+                    dependencies,
+                    features
                 });
             })
             .then(() => {

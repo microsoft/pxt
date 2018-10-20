@@ -83,6 +83,7 @@ namespace pxt.editor {
         dependencies?: pxt.Map<string>;
         tsOnly?: boolean;
         changeBoardOnLoad?: boolean; // if applicable, pop up the "boards" dialog after creating the project
+        features?: string[]; // features required by core package
     }
 
     export interface ProjectFilters {
@@ -222,7 +223,7 @@ namespace pxt.editor {
 
         editor: IEditor;
 
-        startTutorial(tutorialId: string, tutorialTitle?: string): void;
+        startTutorial(tutorialId: string, tutorialTitle?: string, features?: string[]): void;
         showLightbox(): void;
         hideLightbox(): void;
 
