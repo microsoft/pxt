@@ -51,22 +51,25 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
     }
 
     hide() {
-        const r = this.state.resolve;
-        this.setState({ visible: false, resolve: undefined });
+        this.setState({ visible: false });
         // something changed?
         if (this.state.mode == ScriptSearchMode.Experiments &&
             this.state.experimentsState !== pxt.editor.experiments.state())
             this.props.parent.reloadEditor();
-        // resolve?
-        if (r) r();
     }
 
     showExtensions() {
-        this.setState({ visible: true, searchFor: '', mode: ScriptSearchMode.Extensions, features: undefined, resolve: undefined })
+        this.setState({
+            visible: true,
+            searchFor: '',
+            mode: ScriptSearchMode.Extensions,
+            features: undefined,
+            resolve: undefined
+        })
     }
 
     showBoardsAsync(features?: string[]): Promise<void> {
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
             this.setState({
                 visible: true,
                 searchFor: '',
@@ -226,7 +229,12 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         pxt.tickEvent("packages.bundled", { name: scr.name });
         this.hide();
         this.addDepIfNoConflict(scr, "*")
-            .done();
+            .done(() => {
+                if (this.state.resolve) {
+                    this.state.resolve();
+                    this.setState({ resolve: undefined });
+                }
+            });
     }
 
     addLocal(hd: pxt.workspace.Header) {
@@ -310,7 +318,10 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                         }
                         return Promise.resolve();
                     });
-            });
+            }).then(() => {
+                if (this.state.resolve)
+                    this.state.resolve();
+            })
     }
 
     toggleExperiment(experiment: pxt.editor.experiments.Experiment) {
