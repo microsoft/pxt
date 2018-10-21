@@ -320,10 +320,8 @@ export class ProjectView
         // any other editeable .ts or pxt.json
         else if (this.isAnyEditeableJavaScriptOrPackageActive()) {
             this.saveFileAsync()
-                .then(() => {
-                    compiler.newProject();
-                    return compiler.getBlocksAsync()
-                })
+                .then(() => compiler.newProjectAsync())
+                .then(() => compiler.getBlocksAsync())
                 .done((bi: pxtc.BlocksInfo) => {
                     pxt.blocks.initializeAndInject(bi);
                     this.blocksEditor.updateBlocksInfo(bi);
@@ -852,9 +850,8 @@ export class ProjectView
                     this.showPackageErrorsOnNextTypecheck();
                 }
                 simulator.makeDirty();
-                compiler.newProject();
-                return compiler.applyUpgrades();
-            })
+                return compiler.newProjectAsync();
+            }).then(() => compiler.applyUpgradesAsync())
             .then(() => {
                 let e = this.settings.fileHistory.filter(e => e.id == h.id)[0]
                 let main = pkg.getEditorPkg(pkg.mainPkg)
