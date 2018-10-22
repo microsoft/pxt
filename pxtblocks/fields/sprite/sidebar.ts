@@ -100,7 +100,10 @@ namespace pxtblockly {
             const buttonGroup = new CursorMultiButton(this.sizeGroup, TOOLBAR_WIDTH);
             buttonGroup.onSelected(index => {
                 this.setCursorSize(1 + (index * 2));
-            })
+            });
+            // Sets the first button to show as selected
+            buttonGroup.selected = 0;
+            buttonGroup.buttons[0].setSelected(true);
         }
 
         protected initTools() {
