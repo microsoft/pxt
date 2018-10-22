@@ -673,8 +673,7 @@ namespace pxt.runner {
             render(e, true);
             $(e).removeClass('lang-typescript');
             $(e).parent('div').addClass('invalid');
-            var $icon = $("<i>", {"class": "icon ban"});
-            $(e).parent('div').prepend($icon);
+            $(e).parent('div').prepend($("<i>", {"class": "icon ban"}));
             $(e).addClass('invalid');
         });
         $('code.lang-typescript-valid').each((i, e) => {
@@ -683,8 +682,7 @@ namespace pxt.runner {
             render(e, true);
             $(e).removeClass('lang-typescript');
             $(e).parent('div').addClass('valid');
-            var $icon = $("<i>", {"class": "icon check"});
-            $(e).parent('div').prepend($icon);
+            $(e).parent('div').prepend($("<i>", {"class": "icon check"}));
             $(e).addClass('valid');
         });
     }
