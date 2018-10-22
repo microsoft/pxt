@@ -106,7 +106,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
 
     private renderOthers(content: HTMLElement) {
         // remove package blocks
-        pxt.Util.toArray(content.querySelectorAll(`.lang-package`))
+        pxt.Util.toArray(content.querySelectorAll(`.lang-package,.lang-config`))
             .forEach((langBlock: HTMLElement) => {
                 langBlock.parentNode.removeChild(langBlock);
             });

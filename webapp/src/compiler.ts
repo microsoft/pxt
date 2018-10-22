@@ -246,7 +246,7 @@ export interface UpgradeResult {
     errorCodes?: pxt.Map<number>;
 }
 
-export function applyUpgrades(): Promise<UpgradeResult> {
+export function applyUpgradesAsync(): Promise<UpgradeResult> {
     const mainPkg = pkg.mainPkg;
     const epkg = pkg.getEditorPkg(mainPkg);
     const pkgVersion = pxt.semver.parse(epkg.header.targetVersion || "0.0.0");
@@ -434,10 +434,8 @@ export function updatePackagesAsync(packages: pkg.EditorPackage[], token?: pxt.U
                 })
         )
         .then(() => pkg.loadPkgAsync(epkg.header.id))
-        .then(() => {
-            newProject();
-            return checkPatchAsync();
-        })
+        .then(() => newProjectAsync())
+        .then(() => checkPatchAsync())
         .then(() => {
             if (token) token.throwIfCancelled();
             delete epkg.header.backupRef;
@@ -465,11 +463,11 @@ export function updatePackagesAsync(packages: pkg.EditorPackage[], token?: pxt.U
 }
 
 
-export function newProject() {
+export function newProjectAsync() {
     firstTypecheck = null;
     cachedApis = null;
     cachedBlocks = null;
-    workerOpAsync("reset", {}).done();
+    return workerOpAsync("reset", {});
 }
 
 export function getPackagesWithErrors(): pkg.EditorPackage[] {

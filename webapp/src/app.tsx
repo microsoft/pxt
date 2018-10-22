@@ -320,10 +320,8 @@ export class ProjectView
         // any other editeable .ts or pxt.json
         else if (this.isAnyEditeableJavaScriptOrPackageActive()) {
             this.saveFileAsync()
-                .then(() => {
-                    compiler.newProject();
-                    return compiler.getBlocksAsync()
-                })
+                .then(() => compiler.newProjectAsync())
+                .then(() => compiler.getBlocksAsync())
                 .done((bi: pxtc.BlocksInfo) => {
                     pxt.blocks.initializeAndInject(bi);
                     this.blocksEditor.updateBlocksInfo(bi);
@@ -784,9 +782,7 @@ export class ProjectView
                         workspace.saveAsync(curr, {})
                             .then(() => {
                                 this.openHome();
-                            }).finally(() => {
-                                core.hideLoading("tutorial")
-                            });
+                            }).finally(() => core.hideLoading("tutorial"));
                         break;
                 }
                 break;
@@ -852,9 +848,8 @@ export class ProjectView
                     this.showPackageErrorsOnNextTypecheck();
                 }
                 simulator.makeDirty();
-                compiler.newProject();
-                return compiler.applyUpgrades();
-            })
+                return compiler.newProjectAsync();
+            }).then(() => compiler.applyUpgradesAsync())
             .then(() => {
                 let e = this.settings.fileHistory.filter(e => e.id == h.id)[0]
                 let main = pkg.getEditorPkg(pkg.mainPkg)
@@ -898,7 +893,7 @@ export class ProjectView
                                     core.showLoading("removedep", lf("Removing {0}...", lib.id))
                                     pkg.mainEditorPkg().removeDepAsync(lib.id)
                                         .then(() => this.reloadHeaderAsync())
-                                        .done(() => core.hideLoading("removedep"));
+                                        .finally(() => core.hideLoading("removedep"));
                                 }
                             })
                             core.dialogAsync({
@@ -1089,7 +1084,7 @@ export class ProjectView
             const checkAsync = this.tryCheckTargetVersionAsync(data.meta.targetVersions && data.meta.targetVersions.target);
             if (checkAsync) {
                 checkAsync.done(() => {
-                    if (createNewIfFailed) this.newProject({ changeBoardOnLoad: true });
+                    if (createNewIfFailed) this.newProject();
                 });
                 return;
             }
@@ -1174,7 +1169,7 @@ export class ProjectView
                 let hexFile = JSON.parse(project) as pxt.cpp.HexFile;
                 return this.importHex(hexFile);
             }).catch(() => {
-                return this.newProject({ changeBoardOnLoad: true });
+                return this.newProject();
             })
     }
 
@@ -1336,8 +1331,7 @@ export class ProjectView
         this.newProject({
             filesOverride: { "main.blocks": `<xml xmlns="http://www.w3.org/1999/xhtml"></xml>` },
             name,
-            documentation,
-            changeBoardOnLoad: true
+            documentation
         })
     }
 
@@ -1345,13 +1339,9 @@ export class ProjectView
         pxt.tickEvent("app.newproject");
         core.showLoading("newproject", lf("creating new project..."));
         this.createProjectAsync(options)
+            .then(() => this.autoChooseBoardAsync())
             .then(() => Promise.delay(500))
-            .done(() => {
-                core.hideLoading("newproject")
-                if (options.changeBoardOnLoad && pxt.appTarget.appTheme.chooseBoardOnNewProject &&
-                    pxt.appTarget.simulator && !!pxt.appTarget.simulator.dynamicBoardDefinition)
-                    this.showBoardDialog();
-            });
+            .finally(() => core.hideLoading("newproject"));
     }
 
     createProjectAsync(options: ProjectCreationOptions): Promise<void> {
@@ -1379,7 +1369,51 @@ export class ProjectView
             target: pxt.appTarget.id,
             targetVersion: pxt.appTarget.versions.target,
             temporary: options.temporary
-        }, files).then(hd => this.loadHeaderAsync(hd, { filters: options.filters }, options.inTutorial))
+        }, files)
+            .then(hd => this.loadHeaderAsync(hd, { filters: options.filters }, options.inTutorial));
+    }
+
+    // in multiboard targets, allow use to pick a different board
+    // after the project is loaded
+    // this could be done prior to the project creation too
+    private autoChooseBoardAsync(features?: string[]): Promise<void> {
+        if (pxt.appTarget.appTheme.chooseBoardOnNewProject
+            && pxt.appTarget.simulator
+            && !!pxt.appTarget.simulator.dynamicBoardDefinition)
+            return this.showBoardDialogAsync(features);
+        return Promise.resolve();
+    }
+
+    importExampleAsync(options: pxt.editor.ExampleImportOptions): Promise<void> {
+        const { name, path, loadBlocks, prj } = options;
+        core.showLoading("changingcode", lf("loading..."));
+        let features: string[];
+        return pxt.gallery.loadExampleAsync(name.toLowerCase(), path)
+            .then(example => {
+                if (!example) return Promise.resolve();
+                const opts: pxt.editor.ProjectCreationOptions = example;
+                if (prj) opts.prj = prj;
+                features = example.features;
+                if (loadBlocks) {
+                    return this.createProjectAsync(opts)
+                        .then(() => {
+                            return compiler.getBlocksAsync()
+                                .then(blocksInfo => compiler.decompileAsync("main.ts", blocksInfo))
+                                .then(resp => {
+                                    pxt.debug(`example decompilation: ${resp.success}`)
+                                    if (resp.success) {
+                                        this.overrideBlocksFile(resp.outfiles["main.blocks"])
+                                    }
+                                })
+                        });
+                } else {
+                    opts.tsOnly = true
+                    return this.createProjectAsync(opts)
+                        .then(() => Promise.delay(500));
+                }
+            })
+            .then(() => this.autoChooseBoardAsync(features))
+            .finally(() => core.hideLoading("changingcode"))
     }
 
     switchTypeScript() {
@@ -2100,8 +2134,8 @@ export class ProjectView
         this.scriptSearch.showExtensions();
     }
 
-    showBoardDialog() {
-        this.scriptSearch.showBoards();
+    showBoardDialogAsync(features?: string[]): Promise<void> {
+        return this.scriptSearch.showBoardsAsync(features);
     }
 
     showModalDialogAsync(options: pxt.editor.ModalDialogOptions) {
@@ -2169,11 +2203,12 @@ export class ProjectView
                     throw new Error("tutorial not found");
                 tutorialmd = md;
                 const dependencies = pxt.gallery.parsePackagesFromMarkdown(md);
+                const features = pxt.gallery.parseFeaturesFromMarkdown(md);
                 return this.createProjectAsync({
                     name: title,
                     inTutorial: true,
                     dependencies
-                });
+                }).then(() => this.autoChooseBoardAsync(features));
             })
             .then(() => {
                 this.setState({
@@ -2219,9 +2254,7 @@ export class ProjectView
                     })
             }).catch((e) => {
                 core.handleNetworkError(e);
-            }).finally(() => {
-                core.hideLoading("tutorial");
-            });
+            }).finally(() => core.hideLoading("tutorial"));
     }
 
     completeTutorial() {
@@ -2240,9 +2273,7 @@ export class ProjectView
                 .then(() => {
                     let curr = pkg.mainEditorPkg().header;
                     return this.loadHeaderAsync(curr);
-                }).done(() => {
-                    core.hideLoading("leavingtutorial");
-                });
+                }).finally(() => core.hideLoading("leavingtutorial"));
         }
     }
 
@@ -2250,7 +2281,7 @@ export class ProjectView
         pxt.tickEvent("tutorial.exit");
         core.showLoading("leavingtutorial", lf("leaving tutorial..."));
         this.exitTutorialAsync(removeProject)
-            .done(() => {
+            .finally(() => {
                 core.hideLoading("leavingtutorial");
                 this.openHome();
             })
@@ -2687,8 +2718,7 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
                 prj: pxt.appTarget.blocksprj,
                 filesOverride: {
                     "main.blocks": ""
-                },
-                changeBoardOnLoad: true
+                }
             });
             pxt.BrowserUtils.changeHash("");
             return true;
@@ -2721,7 +2751,7 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
             pxt.BrowserUtils.changeHash("");
             core.showLoading("loadingproject", lf("loading project..."));
             editor.importProjectFromFileAsync(fileContents)
-                .done(() => core.hideLoading("loadingproject"));
+                .finally(() => core.hideLoading("loadingproject"));
             return true;
         case "reload": // need to reload last project - handled later in the load process
             if (loading) pxt.BrowserUtils.changeHash("");
@@ -3022,7 +3052,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             // default handlers
             if (hd) return theEditor.loadHeaderAsync(hd, theEditor.state.editorState)
-            else theEditor.newProject({ changeBoardOnLoad: true });
+            else theEditor.newProject();
             return Promise.resolve();
         })
         .then(() => {

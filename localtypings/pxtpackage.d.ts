@@ -58,6 +58,7 @@ declare namespace pxt {
             includeDirs: string[];
             excludePrefix?: string[];
         };
+        features?: string[];
     }
 
     interface PackageExtension {
