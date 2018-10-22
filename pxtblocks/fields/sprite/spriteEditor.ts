@@ -203,10 +203,10 @@ namespace pxtblockly {
 
                 // If the user is erasing, go back to pencil
                 if (this.activeTool === PaintTool.Erase) {
-                    this.activeTool = PaintTool.Normal;
+                    this.sidebar.setTool(PaintTool.Normal);
+                } else {
+                    this.edit = this.newEdit(this.color);
                 }
-
-                this.edit = this.newEdit(this.color);
             }
         }
 
