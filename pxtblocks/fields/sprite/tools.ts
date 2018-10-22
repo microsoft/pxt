@@ -222,15 +222,10 @@ namespace pxtblockly {
             const br = this.bottomRight();
             const dx = br[0] - tl[0];
             const dy = br[1] - tl[1];
-            if (dx < dy) {
-                br[1] = tl[1] + dx;
-            }
-            else {
-                br[0] = tl[0] + dy;
-            }
-            const radius = Math.floor((br[0] - tl[0]) / 2);
-            const cx = tl[0] + radius;
-            const cy = tl[1] + radius;
+
+            const radius = Math.floor(Math.hypot(dx, dy));
+            const cx = this.startCol;
+            const cy = this.startRow;
 
             this.midpoint(cx, cy, radius, bitmap);
         }
