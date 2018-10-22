@@ -184,12 +184,10 @@ namespace pxtblockly {
 
         getButtonForTool(tool: PaintTool) {
             switch (tool) {
-                case PaintTool.Normal: return this.pencilTool;
                 case PaintTool.Normal:
                 case PaintTool.Line: return this.pencilTool;
                 case PaintTool.Erase: return this.eraseTool;
                 case PaintTool.Fill: return this.fillTool;
-                case PaintTool.Rectangle: return this.rectangleTool;
                 case PaintTool.Rectangle:
                 case PaintTool.Circle: return this.rectangleTool;
                 default: return undefined;
