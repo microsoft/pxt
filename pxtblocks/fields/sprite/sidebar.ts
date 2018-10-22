@@ -183,7 +183,7 @@ namespace pxtblockly {
         }
 
         getButtonForTool(tool: PaintTool) {
-             switch (tool) {
+            switch (tool) {
                 case PaintTool.Normal: return this.pencilTool;
                 case PaintTool.Normal:
                 case PaintTool.Line: return this.pencilTool;
@@ -193,7 +193,7 @@ namespace pxtblockly {
                 case PaintTool.Rectangle:
                 case PaintTool.Circle: return this.rectangleTool;
                 default: return undefined;
-             }
-         }
+            }
+        }
     }
 }
