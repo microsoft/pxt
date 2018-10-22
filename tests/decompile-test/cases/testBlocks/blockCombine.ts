@@ -18,6 +18,11 @@ namespace bc {
         //% blockCombine block="z (depth)"
         set z(value: number) {
         }
+
+        //% blockId=testgetter block="%test(mytest) get bool"
+        get testgetter(): boolean {
+            return false;
+        }
     }
 
     //% blockId=bc_create_test block="create test"
