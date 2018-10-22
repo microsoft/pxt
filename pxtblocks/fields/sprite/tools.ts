@@ -237,9 +237,11 @@ namespace pxtblockly {
 
         // https://en.wikipedia.org/wiki/Midpoint_circle_algorithm
         midpoint(cx: number, cy: number, radius: number, bitmap: Bitmap) {
-            let x = radius;
+            let x = radius - 1;
             let y = 0;
-            let err = 0;
+            let dx = 1;
+            let dy = 1;
+            let err = dx - (radius * 2);
             while (x >= y) {
                 bitmap.set(cx + x, cy + y, this.color);
                 bitmap.set(cx + x, cy - y, this.color);
@@ -250,12 +252,14 @@ namespace pxtblockly {
                 bitmap.set(cx - x, cy + y, this.color);
                 bitmap.set(cx - x, cy - y, this.color);
                 if (err <= 0) {
-                    y += 1;
-                    err += 2 * y + 1;
+                    y++;
+                    err += dy;
+                    dy += 2;
                 }
                 if (err > 0) {
-                    x -= 1;
-                    err -= 2 * x + 1;
+                    x--;
+                    dx += 2;
+                    err += dx - (radius * 2);
                 }
             }
         }
