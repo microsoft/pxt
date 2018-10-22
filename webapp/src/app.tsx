@@ -1373,6 +1373,9 @@ export class ProjectView
             .then(hd => this.loadHeaderAsync(hd, { filters: options.filters }, options.inTutorial));
     }
 
+    // in multiboard targets, allow use to pick a different board
+    // after the project is loaded
+    // this could be done prior to the project creation too
     private autoChooseBoardAsync(features?: string[]): Promise<void> {
         if (pxt.appTarget.appTheme.chooseBoardOnNewProject
             && pxt.appTarget.simulator
