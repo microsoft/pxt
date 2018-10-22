@@ -57,7 +57,7 @@
             pxtFrame.style.bottom = 0;
             pxtFrame.style.width = "1px";
             pxtFrame.style.height = "1px";
-            pxtFrame.src = "/--docs?render=1"
+            pxtFrame.src = "/@versionsuff@--docs?render=1"
             document.body.appendChild(pxtFrame);
         }
 
@@ -92,7 +92,7 @@
                         var code = document.getElementById(id)
                         var a = document.createElement("a")
                         a.target = "_blank"
-                        a.href = (pxtConfig ? pxtConfig.targetUrl : "") + "/#pub:" + projectid;
+                        a.href = (pxtConfig ? pxtConfig.targetUrl : "") + "/@versionsuff@#pub:" + projectid;
                         a.appendChild(img)
                         code.parentElement.insertBefore(a, code)
                         code.parentElement.removeChild(code);
