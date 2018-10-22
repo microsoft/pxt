@@ -82,8 +82,13 @@ namespace pxt.editor {
         inTutorial?: boolean;
         dependencies?: pxt.Map<string>;
         tsOnly?: boolean;
-        changeBoardOnLoad?: boolean; // if applicable, pop up the "boards" dialog after creating the project
-        features?: string[]; // features required by core package
+    }
+
+    export interface ExampleImportOptions {
+        name: string;
+        path: string;
+        loadBlocks?: boolean;
+        prj?: ProjectTemplate;
     }
 
     export interface ProjectFilters {
@@ -147,6 +152,7 @@ namespace pxt.editor {
         newEmptyProject(name?: string, documentation?: string): void;
         newProject(options?: ProjectCreationOptions): void;
         createProjectAsync(options: ProjectCreationOptions): Promise<void>;
+        importExampleAsync(options: ExampleImportOptions): Promise<void>;
         importProjectDialog(): void;
         removeProject(): void;
         editText(): void;

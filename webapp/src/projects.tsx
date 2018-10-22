@@ -129,30 +129,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
     }
 
     chgCode(scr: pxt.CodeCard, loadBlocks: boolean, prj?: pxt.ProjectTemplate) {
-        core.showLoading("changingcode", lf("loading..."));
-        pxt.gallery.loadExampleAsync(scr.name.toLowerCase(), scr.url)
-            .then((opts: pxt.editor.ProjectCreationOptions) => {
-                if (!opts) return Promise.resolve();
-                if (prj) opts.prj = prj;
-                if (loadBlocks) {
-                    return this.props.parent.createProjectAsync(opts)
-                        .then(() => {
-                            return compiler.getBlocksAsync()
-                                .then(blocksInfo => compiler.decompileAsync("main.ts", blocksInfo))
-                                .then(resp => {
-                                    pxt.debug(`example decompilation: ${resp.success}`)
-                                    if (resp.success) {
-                                        this.props.parent.overrideBlocksFile(resp.outfiles["main.blocks"])
-                                    }
-                                })
-                        });
-                } else {
-                    opts.tsOnly = true
-                    return this.props.parent.createProjectAsync(opts)
-                        .then(() => Promise.delay(500));
-                }
-            })
-            .finally(() => core.hideLoading("changingcode"))
+        return this.props.parent.importExampleAsync({ name: scr.name,  path: scr.url, loadBlocks, prj });
     }
 
     importProject() {
@@ -343,7 +320,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
 
     newProject() {
         pxt.tickEvent("projects.new", undefined, { interactiveConsent: true });
-        this.props.parent.newProject({ changeBoardOnLoad: true });
+        this.props.parent.newProject();
     }
 
     closeDetail() {
