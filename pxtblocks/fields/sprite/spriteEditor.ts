@@ -298,9 +298,11 @@ namespace pxtblockly {
             if (tool == PaintTool.Rectangle) {
                 //Change icon back to square
                 btn.setText("\uf096");
+                btn.title(lf("Rectangle"));
             } else if (tool == PaintTool.Normal) {
                 //Change icon back to pencil
                 btn.setText("\uf040");
+                btn.title(lf("Pencil"));
             }
             btn.onClick(() => this.sidebar.setTool(tool));
             if ((this.activeTool == PaintTool.Circle && tool == PaintTool.Rectangle)
@@ -314,6 +316,7 @@ namespace pxtblockly {
                 if (!this.controlDown) {
                     let btn = (this.sidebar.getButtonForTool(PaintTool.Rectangle) as TextButton);
                     btn.setText("\uf10c");
+                    btn.title(lf("Circle"));
                     btn.onClick(() => this.sidebar.setTool(PaintTool.Circle));
                     if (this.activeTool == PaintTool.Rectangle) {
                         this.setActiveTool(PaintTool.Circle);
@@ -324,6 +327,7 @@ namespace pxtblockly {
                 if (!this.shiftDown) {
                     let btn = (this.sidebar.getButtonForTool(PaintTool.Normal) as TextButton);
                     btn.setText("\uf07e");
+                    btn.title(lf("Line"));
                     btn.onClick(() => this.sidebar.setTool(PaintTool.Line));
                     if (this.activeTool == PaintTool.Normal) {
                         this.setActiveTool(PaintTool.Line);
