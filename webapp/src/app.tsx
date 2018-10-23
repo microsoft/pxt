@@ -2792,10 +2792,16 @@ function loadHeaderBySharedId(id: string) {
         .finally(() => core.hideLoading("loadingheader"));
 }
 
+const handleHashChange = (e: HashChangeEvent) => {
+    handleHash(parseHash(), false);
+}
+
 function initHashchange() {
-    window.addEventListener("hashchange", e => {
-        handleHash(parseHash(), false);
-    });
+    window.addEventListener("hashchange", handleHashChange);
+}
+
+function clearHashChange() {
+    window.removeEventListener("hashchange", handleHashChange)
 }
 
 function initExtensionsAsync(): Promise<void> {
@@ -2892,6 +2898,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const hash = parseHash();
     const appCacheUpdated = () => {
         try {
+            // Prevent us from stripping out the hash before the reload is complete
+            clearHashChange();
             // On embedded pages, preserve the loaded project
             if (pxt.BrowserUtils.isIFrame() && (hash.cmd === "pub" || hash.cmd === "sandbox")) {
                 location.hash = `#${hash.cmd}:${hash.arg}`;
