@@ -162,6 +162,8 @@ namespace ts.pxtc {
         whenUsed?: boolean;
         jres?: string;
         useLoc?: string; // The qName of another API whose localization will be used if this API is not translated and if both block definitions are identical
+        topblock?: boolean;
+        topblockWeight?: number;
         // On namepspace
         subcategories?: string[];
         groups?: string[];
@@ -204,6 +206,7 @@ namespace ts.pxtc {
         _def?: ParsedBlockDef;
         _expandedDef?: ParsedBlockDef;
         _untranslatedBlock?: string; // The block definition before it was translated
+        _shadowOverrides?: pxt.Map<string>;
         jsDoc?: string;
         paramHelp?: pxt.Map<string>;
         // foo.defl=12 -> paramDefl: { foo: "12" }
@@ -692,7 +695,7 @@ namespace ts.pxtc {
         return r;
     }
 
-    const numberAttributes = ["weight", "imageLiteral"]
+    const numberAttributes = ["weight", "imageLiteral", "topblockWeight"]
     const booleanAttributes = [
         "advanced",
         "handlerStatement",
@@ -703,7 +706,8 @@ namespace ts.pxtc {
         "blockCombine",
         "enumIsBitMask",
         "decompileIndirectFixedInstances",
-        "draggableParameters"
+        "draggableParameters",
+        "topblock"
     ];
 
     export function parseCommentString(cmt: string): CommentAttrs {
@@ -726,6 +730,9 @@ namespace ts.pxtc {
                         } else {
                             res.paramDefl[n.slice(0, n.length - 5)] = v
                         }
+                    } else if (U.endsWith(n, ".shadow")) {
+                        if (!res._shadowOverrides) res._shadowOverrides = {};
+                        res._shadowOverrides[n.slice(0, n.length - 7)] = v;
                     } else if (U.endsWith(n, ".fieldEditor")) {
                         if (!res.paramFieldEditor) res.paramFieldEditor = {}
                         res.paramFieldEditor[n.slice(0, n.length - 12)] = v
@@ -846,10 +853,21 @@ namespace ts.pxtc {
     export function updateBlockDef(attrs: CommentAttrs) {
         if (attrs.block) {
             const parts = attrs.block.split("||");
-            attrs._def = parseBlockDefinition(parts[0]);
+            attrs._def = applyOverrides(parseBlockDefinition(parts[0]));
             if (!attrs._def) pxt.debug("Unable to parse block def for id: " + attrs.blockId);
-            if (parts[1]) attrs._expandedDef = parseBlockDefinition(parts[1]);
+            if (parts[1]) attrs._expandedDef = applyOverrides(parseBlockDefinition(parts[1]));
             if (parts[1] && !attrs._expandedDef) pxt.debug("Unable to parse expanded block def for id: " + attrs.blockId);
+        }
+
+        function applyOverrides(def: ParsedBlockDef) {
+            if (attrs._shadowOverrides) {
+                def.parameters.forEach(p => {
+                    const shadow = attrs._shadowOverrides[p.name];
+                    if (shadow === "unset") delete p.shadowBlockId;
+                    else if (shadow != null) p.shadowBlockId = shadow;
+                });
+            }
+            return def;
         }
     }
 
@@ -1227,7 +1245,7 @@ namespace ts.pxtc {
             buf: Uint8Array;
         }
 
-        export function toBin(blocks: Uint8Array): ShiftedBuffer {
+        export function toBin(blocks: Uint8Array, endAddr: number = undefined): ShiftedBuffer {
             if (blocks.length < 512)
                 return null
             let curraddr = -1
@@ -1237,6 +1255,7 @@ namespace ts.pxtc {
                 let ptr = i * 512
                 let bl = parseBlock(blocks.slice(ptr, ptr + 512))
                 if (!bl) continue
+                if (endAddr && bl.targetAddr  + 256 > endAddr) break;
                 if (curraddr == -1) {
                     curraddr = bl.targetAddr
                     appstartaddr = curraddr

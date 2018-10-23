@@ -70,7 +70,7 @@ MakeCode is tested with several screen readers to ensure accessibility on all pl
 
 * Voice Over (included in macOS). Test with Safari, Chrome and FireFox on macOS.
 * [NVDA](https://www.nvaccess.org/) (for Windows). Check it with Chrome and FireFox.
-* Narrator (included in Windows). Test with IE and MS Edge.
+* Narrator (included in Windows). Test with IE and Microsoft Edge.
 * [JAWS](http://www.freedomscientific.com/Products/Blindness/JAWS). Run a test with this screen reader since it is the one most widely used readers for Windows. It is commonly used along with FireFox.
 
 **JAWS is not free to use**. For Microsoft employees, a business license key is available at Microsoft's internal tools site.

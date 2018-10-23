@@ -92,6 +92,7 @@ namespace pxt.docs {
         boxes?: Map<string>;
         macros?: Map<string>;
         settings?: Map<string>;
+        TOC?: TOCMenuEntry[];
     }
 
     function parseHtmlAttrs(s: string) {
@@ -173,6 +174,7 @@ namespace pxt.docs {
             href: "/docs"
         }]
 
+        const TOC = d.TOC || theme.TOC || [];
         let tocPath: TOCMenuEntry[] = []
         let isCurrentTOC = (m: TOCMenuEntry) => {
             for (let c of m.subitems || []) {
@@ -187,7 +189,7 @@ namespace pxt.docs {
             }
             return false
         };
-        (theme.TOC || []).forEach(isCurrentTOC)
+        TOC.forEach(isCurrentTOC)
 
         let currentTocEntry: TOCMenuEntry;
         let recTOC = (m: TOCMenuEntry, lev: number) => {
@@ -229,7 +231,7 @@ namespace pxt.docs {
         }
 
         params["menu"] = (theme.docMenu || []).map(e => recMenu(e, 0)).join("\n")
-        params["TOC"] = (theme.TOC || []).map(e => recTOC(e, 0)).join("\n")
+        params["TOC"] = TOC.map(e => recTOC(e, 0)).join("\n")
 
         if (theme.appStoreID)
             params["appstoremeta"] = `<meta name="apple-itunes-app" content="app-id=${U.htmlEscape(theme.appStoreID)}"/>`
@@ -249,12 +251,12 @@ namespace pxt.docs {
 
         if (currentTocEntry) {
             if (currentTocEntry.prevPath) {
-                params["prev"] = `<a href="${currentTocEntry.prevPath}" class="navigation navigation-prev " title="${currentTocEntry.prevName}">
+                params["prev"] = `<a href="${normalizeUrl(currentTocEntry.prevPath)}" class="navigation navigation-prev " title="${currentTocEntry.prevName}">
                                     <i class="icon angle left"></i>
                                 </a>`;
             }
             if (currentTocEntry.nextPath) {
-                params["next"] = `<a href="${currentTocEntry.nextPath}" class="navigation navigation-next " title="${currentTocEntry.nextName}">
+                params["next"] = `<a href="${normalizeUrl(currentTocEntry.nextPath)}" class="navigation navigation-next " title="${currentTocEntry.nextName}">
                                     <i class="icon angle right"></i>
                                 </a>`;
             }
@@ -349,6 +351,14 @@ namespace pxt.docs {
             "searchBar1",
             "searchBar2"
         ])
+
+        // Normalize any path URL with any version path in the current URL
+        function normalizeUrl(href: string) {
+            if (!href) return href;
+            const relative = href.indexOf('/') == 0;
+            if (relative && d.versionPath) href = `/${d.versionPath}${href}`;
+            return href;
+        }
     }
 
     export interface RenderOptions {
@@ -362,6 +372,7 @@ namespace pxt.docs {
         ghEditURLs?: string[];
         repo?: { name: string; fullName: string; tag?: string };
         throwOnError?: boolean; // check for missing macros
+        TOC?: TOCMenuEntry[]; // TOC parsed here
     }
 
     export function setupRenderer(renderer: marked.Renderer) {
@@ -451,6 +462,7 @@ namespace pxt.docs {
             versionPath: opts.versionPath,
             ghEditURLs: opts.ghEditURLs,
             params: pubinfo,
+            TOC: opts.TOC
         }
         prepTemplate(d)
 

@@ -36,9 +36,15 @@
     }
 }
 
-.ui.card.github {
+.ui.card.file.github {
     .fileimage {
         background-image: @githubFileLogo;
+    }
+}
+
+.ui.card.file.board {
+    .fileimage {
+        background-image: unset;
     }
 }
 
@@ -108,16 +114,28 @@ a.ui.card:focus,
 }
 
 .setExampleCardFullHeight() when (@exampleCardFullHeight) {
-    .ui.card.example {
-        .ui.image, .ui.cardimage {
-            height: 12rem;
+    .projectsdialog {
+        .ui.card.example {
+            .ui.image, .ui.cardimage {
+                height: 12rem !important;
+            }
+            .ui.image ~ .content {
+                background: @exampleCardFullHeightBackground;
+                position: absolute;
+                bottom: 0;
+                .header {
+                    color: @exampleCardFullHeightColor;
+                }
+            }
         }
-        .ui.image ~ .content {
-            background: @exampleCardFullHeightBackground;
-            position: absolute;
-            bottom: 0;
-            .header {
-                color: @exampleCardFullHeightColor;
+    }
+    /* Mobile only */
+    @media only screen and (max-width: @largestMobileScreen) {
+        .projectsdialog {
+            .ui.card.example {
+                .ui.image, .ui.cardimage {
+                    height: 8.4rem !important;
+                }
             }
         }
     }

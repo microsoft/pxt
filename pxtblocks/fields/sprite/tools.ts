@@ -222,24 +222,21 @@ namespace pxtblockly {
             const br = this.bottomRight();
             const dx = br[0] - tl[0];
             const dy = br[1] - tl[1];
-            if (dx < dy) {
-                br[1] = tl[1] + dx;
-            }
-            else {
-                br[0] = tl[0] + dy;
-            }
-            const radius = Math.floor((br[0] - tl[0]) / 2);
-            const cx = tl[0] + radius;
-            const cy = tl[1] + radius;
+
+            const radius = Math.floor(Math.hypot(dx, dy));
+            const cx = this.startCol;
+            const cy = this.startRow;
 
             this.midpoint(cx, cy, radius, bitmap);
         }
 
         // https://en.wikipedia.org/wiki/Midpoint_circle_algorithm
         midpoint(cx: number, cy: number, radius: number, bitmap: Bitmap) {
-            let x = radius;
+            let x = radius - 1;
             let y = 0;
-            let err = 0;
+            let dx = 1;
+            let dy = 1;
+            let err = dx - (radius * 2);
             while (x >= y) {
                 bitmap.set(cx + x, cy + y, this.color);
                 bitmap.set(cx + x, cy - y, this.color);
@@ -250,12 +247,14 @@ namespace pxtblockly {
                 bitmap.set(cx - x, cy + y, this.color);
                 bitmap.set(cx - x, cy - y, this.color);
                 if (err <= 0) {
-                    y += 1;
-                    err += 2 * y + 1;
+                    y++;
+                    err += dy;
+                    dy += 2;
                 }
                 if (err > 0) {
-                    x -= 1;
-                    err -= 2 * x + 1;
+                    x--;
+                    dx += 2;
+                    err += dx - (radius * 2);
                 }
             }
         }

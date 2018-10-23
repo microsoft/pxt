@@ -279,6 +279,7 @@ export abstract class ToolboxEditor extends srceditor.Editor {
 
     protected extensionsMap: pxt.Map<pxt.PackageConfig> = {};
     protected subcategoryMap: pxt.Map<pxt.Map<boolean>> = {};
+    protected topBlocks: toolbox.BlockDefinition[] = [];
 
     // To be extended by editor
     getNamespaceAttrs(ns: string): pxtc.CommentAttrs {
@@ -315,5 +316,15 @@ export abstract class ToolboxEditor extends srceditor.Editor {
             }
         })
         return namespaces;
+    }
+
+    getTopBlocks(): toolbox.BlockDefinition[] {
+        // Order top blocks by weight
+        return this.topBlocks.sort((fn1, fn2) => {
+            // sort by fn weight
+            const w1 = fn1.attributes.topblockWeight || fn1.attributes.weight || 50;
+            const w2 = fn2.attributes.topblockWeight || fn2.attributes.weight || 50;
+            return w2 >= w1 ? 1 : -1;
+        });
     }
 }

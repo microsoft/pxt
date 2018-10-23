@@ -67,6 +67,7 @@ declare namespace goog {
     }
 
     namespace color {
+        function lighten(rgb: number[], factor: number): number[];
         function darken(rgb: number[], factor: number): number[];
         function rgbArrayToHex(rgb: number[]): string;
         function hexToRgb(hex: string): number[];
@@ -476,7 +477,7 @@ declare namespace goog {
 declare namespace Blockly {
     let selected: any;
     function bindEvent_(node: any, eventName: string, target: any, fn: (e: any) => void): void;
-    function bindEventWithChecks_(node: any, eventName: string, target: any, fn: (e: any) => void, nocapture?: boolean): any;
+    function bindEventWithChecks_(node: any, eventName: string, target: any, fn: (e: any) => void, nocapture?: boolean, noPreventDefault?: boolean): any;
     function unbindEvent_(bindData: any): Function;
     function svgResize(workspace: Blockly.Workspace): void;
     function hueToRgb(hue: number): string;
@@ -633,7 +634,6 @@ declare namespace Blockly {
         onItemSelected(menu: goog.ui.Menu, menuItem: goog.ui.MenuItem): void;
         positionArrow(x: number): number;
         shouldShowRect_(): boolean;
-        getAnchorDimensions_(): goog.math.Box;
     }
 
     class FieldNumber extends FieldTextInput {
@@ -737,7 +737,7 @@ declare namespace Blockly {
         getStartHat(): boolean;
         initSvg(): void;
         removeInput(name: string, opt_quiet?: boolean): void;
-        dispose(healGap: boolean): void;
+        dispose(healGap: boolean, animate?: boolean): void;
         setCollapsed(collapsed: boolean): void;
         setColour(colour: number | string, secondaryColour?: string, tertiaryColour?: string): void;
         setOutputShape(shape: number): void;
@@ -969,6 +969,7 @@ declare namespace Blockly {
     class WorkspaceSvg {
         moveDrag(e: Event): goog.math.Coordinate;
         showContextMenu_(e: Event): void;
+        static buildDeleteList_(topBlocks: Blockly.Block[]): Blockly.Block[];
     }
 
 

@@ -28,11 +28,6 @@
     cursor: inherit;
 }
 
-.blocklyToolboxDiv[dir="RTL"] .blocklyTreeRow,
-.monacoToolboxDiv[dir="RTL"] .blocklyTreeRow {
-    margin-left: 8px;
-}
-
 .blocklyToolboxDiv.blocklyToolboxDeleting {
     background: lighten(@red, 10%) !important;
 }
@@ -176,6 +171,7 @@ span.blocklyTreeIcon {
     height: 100%;
     display: none;
     vertical-align: middle;
+    user-select: none;
 }
 
 div.blocklyTreeIcon span {
@@ -208,8 +204,10 @@ div.blocklyTreeIcon span {
 /* Large Monitor */
 @media only screen and (min-width: @largeMonitorBreakpoint) {
     /* Blockly */
-    div.blocklyTreeRow {
+    div.blocklyToolboxDiv, div.monacoToolboxDiv {
         min-width: @blocklyRowWidthWide;
+    }
+    div.blocklyTreeRow {
         min-height: @blocklyRowHeightWide;
     }
     span.blocklyTreeIcon {
@@ -224,8 +222,10 @@ div.blocklyTreeIcon span {
 /* Small Monitor */
 @media only screen and (min-width: @computerBreakpoint) and (max-width: @largestSmallMonitor) {
     /* Blockly row */
-    div.blocklyTreeRow {
+    div.blocklyToolboxDiv, div.monacoToolboxDiv {
         min-width: @blocklyRowWidthComputer;
+    }
+    div.blocklyTreeRow {
         min-height: @blocklyRowHeightComputer;
     }
     span.blocklyTreeIcon {
@@ -240,8 +240,10 @@ div.blocklyTreeIcon span {
 /* Tablet */
 @media only screen and (min-width: @tabletBreakpoint) and (max-width: @largestTabletScreen) {
     /* Blockly */
-    div.blocklyTreeRow {
+    div.blocklyToolboxDiv, div.monacoToolboxDiv {
         min-width: @blocklyRowWidthTablet;
+    }
+    div.blocklyTreeRow {
         min-height: @blocklyRowHeightTablet;
         border-left-width: 12px !important;
     }
@@ -259,8 +261,10 @@ div.blocklyTreeIcon span {
 
 /* Mobile */
 @media only screen and (max-width: @largestMobileScreen) {
-    div.blocklyTreeRow {
+    div.blocklyToolboxDiv, div.monacoToolboxDiv {
         min-width: @blocklyRowWidthMobile;
+    }
+    div.blocklyTreeRow {
         min-height: @blocklyRowHeightMobile;
         border-left-width: 6px !important;
     }
@@ -318,7 +322,13 @@ div.blocklyTreeIcon span {
         font-size: 3rem;
     }
     /* Hide the blockly toolbox search */
-    #blocklySearchArea {
-        display: none !important;
+    #blocklySearchInput.ui.icon.input {
+        input {
+            padding-right: 0 !important;
+            padding-left: 0.2rem;
+        }
+        i.icon {
+            display: none;
+        }
     }
 }

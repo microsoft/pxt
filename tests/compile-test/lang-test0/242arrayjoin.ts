@@ -1,6 +1,6 @@
 function testArrayJoin() {
     {
-        msg("testArraySort")
+        msg("testArrayJoin")
         let strs = [1, 2, 3];
         let r = "A" + strs.join("X");
         assert(r == "A1X2X3", "join");

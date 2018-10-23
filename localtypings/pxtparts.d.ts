@@ -61,7 +61,9 @@ declare namespace pxsim {
         // metadata for each pin
         pinDefinitions: PartPinDefinition[],
         // description of how part is instantiated
-        instantiation: PartSingletonDefinition | PartFunctionDefinition,
+        instantiation?: PartSingletonDefinition | PartFunctionDefinition,
+        // description of how part is instantiated
+        instantiations?: (PartSingletonDefinition | PartFunctionDefinition)[],
         // list describing number and order of assembly instruction steps; the length is how many steps this part needs
         assembly: AssemblyStepDefinition[],
     }

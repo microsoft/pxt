@@ -282,16 +282,6 @@ namespace ts.pxtc.Util {
     }
 
     export function isUserLanguageRtl(): boolean {
-        // ar: Arabic
-        // dv: Divehi
-        // fa: Farsi
-        // ha: Hausa
-        // he: Hebrew
-        // ks: Kashmiri
-        // ku: Kurdish
-        // ps: Pashto
-        // ur: Urdu
-        // yi: Yiddish
         return /^ar|dv|fa|ha|he|ks|ku|ps|ur|yi/i.test(_localizeLang);
     }
 
@@ -418,6 +408,67 @@ namespace ts.pxtc.Util {
         let e = new Error(msg);
         (<any>e).isUserError = true;
         throw e
+    }
+
+    export class CancellationToken {
+        private pending = false;
+        private cancelled = false;
+        private resolve: () => void;
+        private deferred: Promise<void>;
+        private progressHandler: (completed: number, total: number) => void;
+
+        startOperation() {
+            this.pending = true;
+        }
+
+        isRunning() {
+            return this.pending;
+        }
+
+        onProgress(progressHandler: (completed: number, total: number) => void) {
+            this.progressHandler = progressHandler;
+        }
+
+        reportProgress(completed: number, total: number) {
+            if (this.progressHandler) {
+                this.progressHandler(completed, total);
+            }
+        }
+
+        cancel() {
+            this.cancelled = true;
+        }
+
+        cancelAsync() {
+            if (this.cancelled || !this.pending) {
+                this.cancelled = true;
+                this.pending = false;
+                return Promise.resolve();
+            }
+            this.cancelled = true;
+            this.deferred = new Promise(resolve => {
+                this.resolve = resolve;
+            });
+
+            return this.deferred;
+        }
+
+        isCancelled() {
+            return this.cancelled;
+        }
+
+        throwIfCancelled() {
+            if (this.isCancelled()) throw new Error();
+        }
+
+        resolveCancel() {
+            this.pending = false;
+            if (this.deferred) {
+                this.resolve();
+                this.deferred = undefined;
+                this.resolve = undefined;
+            }
+        }
     }
 }
 

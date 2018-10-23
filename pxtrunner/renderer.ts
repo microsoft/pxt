@@ -636,6 +636,11 @@ namespace pxt.runner {
             if (options.snippetReplaceParent) $c = $c.parent();
             $c.remove();
         });
+        $('.lang-config').each((i, c) => {
+            let $c = $(c);
+            if (options.snippetReplaceParent) $c = $c.parent();
+            $c.remove();
+        })
     }
 
     function renderTypeScript(options?: ClientRenderOptions) {
@@ -662,8 +667,10 @@ namespace pxt.runner {
             $(e).removeClass('lang-typescript');
         });
         $('code.lang-typescript-ignore').each((i, e) => {
-            render(e, true);
             $(e).removeClass('lang-typescript-ignore')
+            $(e).addClass('lang-typescript');
+            render(e, true);
+            $(e).removeClass('lang-typescript');
         });
     }
 

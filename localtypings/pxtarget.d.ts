@@ -46,6 +46,7 @@ declare namespace pxt {
         compileService?: TargetCompileService;
         ignoreDocsErrors?: boolean;
         variants?: Map<AppTarget>; // patches on top of the current AppTarget for different chip variants
+        queryVariants?: Map<AppTarget>; // patches on top of the current AppTarget using query url regex
     }
 
     interface ProjectTemplate {
@@ -180,6 +181,7 @@ declare namespace pxt {
         logoWide?: boolean; // the portrait logo is not square, but wide
         logoUrl?: string;
         logo?: string;
+        hideMenubarLogo?: boolean; // if true, partner logo won't be shown in the top-left corner (menu bar)
         portraitLogo?: string;
         highContrastLogo?: string;
         highContrastPortraitLogo?: string;
@@ -272,7 +274,14 @@ declare namespace pxt {
         copyrightText?: string; // footer text for any copyright text to be included at the bottom of the home screen and about page
         appFlashingTroubleshoot?: string; // Path to the doc about troubleshooting UWP app flashing failures, e.g. /device/windows-app/troubleshoot
         browserDbPrefixes?: { [majorVersion: number]: string }; // Prefix used when storing projects in the DB to allow side-by-side projects of different major versions
+        editorVersionPaths?: { [majorVersion: number]: string }; // A map of major editor versions to their corresponding paths (alpha, v1, etc.)
         experiments?: string[]; // list of experiment ids, also enables this feature
+        chooseBoardOnNewProject?: boolean; // when multiple boards are support, show board dialog on "new project"
+        bluetoothUartConsole?: boolean; // pair with BLE UART services and pipe console output
+        bluetoothUartFilters?: { name?: string; namePrefix?: string; }[]; // device name prefix -- required
+        bluetoothPartialFlashing?: boolean; // enable partial flashing over BLE
+        topBlocks?: boolean; // show a top blocks category in the editor
+        pairingButton?: boolean; // display a pairing button
     }
 
     interface SocialOptions {
@@ -306,6 +315,7 @@ declare namespace pxt {
 
     interface TargetBundle extends AppTarget {
         bundledpkgs: Map<Map<string>>;   // @internal use only (cache)
+        bundledcoresvgs?: Map<string>;   // @internal use only (cache)
         bundleddirs: string[];
         versions: TargetVersions;        // @derived
     }

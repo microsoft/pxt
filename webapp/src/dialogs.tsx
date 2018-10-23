@@ -4,9 +4,12 @@ import * as ReactDOM from "react-dom";
 import * as sui from "./sui";
 import * as data from "./data";
 import * as core from "./core";
+import * as coretsx from "./coretsx";
 import * as cloudsync from "./cloudsync";
+import * as pkg from "./package";
 
 import Cloud = pxt.Cloud;
+import Util = pxt.Util;
 
 
 interface PlainCheckboxProps {
@@ -204,7 +207,242 @@ function renderVersionLink(name: string, version: string, url: string) {
     </p>;
 }
 
+export function showPackageErrorDialogAsync(badPackages: pkg.EditorPackage[], updatePackages: (packages: pkg.EditorPackage[], token: Util.CancellationToken) => Promise<boolean>, openLegacyEditor?: () => void) {
+    let projectOpen = false;
+    let onProjectOpen = () => projectOpen = true;
 
+    const token = new Util.CancellationToken();
+    const loaderId = "package-update-cancel";
+
+    pxt.tickEvent("update.extensionErrorsShown")
+
+    return core.dialogAsync({
+        header: lf("Extension Errors"),
+        hasCloseIcon: true,
+        hideCancel: true,
+        jsx: <div className="wizard-wrapper">
+                <ExtensionErrorWizard
+                    openLegacyEditor={openLegacyEditor}
+                    affectedPackages={badPackages}
+                    updatePackages={updatePackages}
+                    onProjectOpen={onProjectOpen}
+                    token={token} />
+            </div>
+    })
+    .then(() => {
+        if (!projectOpen) {
+            core.showLoading(loaderId, lf("Stopping update..."))
+            return token.cancelAsync();
+        }
+        return Promise.resolve();
+    })
+    .then(() => {
+        core.hideLoading(loaderId)
+        return projectOpen;
+    });
+}
+
+interface ExtensionErrorWizardProps {
+    affectedPackages: pkg.EditorPackage[];
+    updatePackages: (packages: pkg.EditorPackage[], token: Util.CancellationToken) => Promise<boolean>;
+    openLegacyEditor?: () => void;
+    onProjectOpen: () => void;
+    token: Util.CancellationToken;
+}
+
+interface ExtensionErrorWizardState {
+    updating: boolean;
+    showProgressBar: boolean;
+    packagesUpdated: number;
+    updateComplete: boolean;
+    updateError?: boolean;
+}
+
+class ExtensionErrorWizard extends React.Component<ExtensionErrorWizardProps, ExtensionErrorWizardState> {
+    constructor(props: ExtensionErrorWizardProps) {
+        super(props);
+        this.state = {
+            updating: false,
+            showProgressBar: false,
+            updateComplete: false,
+            packagesUpdated: 0
+        };
+        this.startUpdate = this.startUpdate.bind(this);
+        this.openProject = this.openProject.bind(this);
+        this.openLegacyEditor = this.openLegacyEditor.bind(this);
+    }
+
+    startUpdate() {
+        if (this.state.updating) return;
+
+        pxt.tickEvent("update.startExtensionUpdate")
+        const startTime = Date.now();
+
+        this.setState({
+            updating: true
+        });
+
+        setTimeout(() => {
+            if (this.props.token.isCancelled()) return;
+            // Switch to progress bar if the update is taking a long time
+            if (this.state.updating && this.props.affectedPackages.length > 1) {
+                this.setState({
+                    showProgressBar: true
+                });
+            }
+        }, 3000)
+
+        const pkgs = this.props.affectedPackages;
+        this.props.token.onProgress(completed => {
+            this.setState({ packagesUpdated: completed });
+        });
+
+        this.props.updatePackages(pkgs, this.props.token)
+        .then(success => {
+            if (this.props.token.isCancelled()) return;
+
+            pxt.tickEvent("update.endExtensionUpdate", {
+                success: "" + success,
+                duration:  Date.now() - startTime
+            });
+
+            if (!success) {
+                this.setState({
+                    updateError: true,
+                    updating: false
+                });
+            }
+            else {
+                this.setState({
+                    updating: false,
+                    updateComplete: true
+                });
+
+                setTimeout(() => {
+                    if (this.props.token.isCancelled()) return;
+                    this.openProject(true);
+                }, 1500);
+            }
+        })
+    }
+
+    openProject(quiet = false) {
+        if (!quiet) pxt.tickEvent("update.ignoredExtensionErrors");
+
+        this.props.onProjectOpen();
+        coretsx.hideDialog();
+    }
+
+    openLegacyEditor() {
+        this.props.onProjectOpen();
+        this.props.openLegacyEditor();
+    }
+
+    protected buildActionList() {
+        const actions: { text: string, title: string, callback: () => void }[] = [];
+
+        if (!this.state.updateError) {
+            actions.push({
+                text: lf("Try to fix"),
+                title: lf("Update all extensions in the project to their latest versions"),
+                callback: this.startUpdate
+            });
+        }
+
+        actions.push({
+            text: lf("Ignore errors and open"),
+            title: lf("Ignore errors and open"),
+            callback: this.openProject
+        });
+
+        if (this.props.openLegacyEditor) {
+            actions.push({
+                text: lf("Go to the old editor"),
+                title: lf("Open this project in the editor where it was created"),
+                callback: this.openLegacyEditor
+            });
+        }
+
+        return actions;
+    }
+
+    render() {
+        const { affectedPackages } = this.props;
+        const { updating, updateComplete, packagesUpdated, updateError, showProgressBar } = this.state;
+
+        if (updating) {
+            const progressString = packagesUpdated === affectedPackages.length ? lf("Finishing up...") :
+                lf("Updating extension {0} of {1}...", packagesUpdated + 1, affectedPackages.length);
+
+            return <div>
+                    { showProgressBar ?
+                        <ProgressBar percentage={100 * (packagesUpdated / affectedPackages.length)} label={progressString} /> :
+                        <div className="ui centered inline inverted text loader">
+                            { progressString }
+                        </div>
+                    }
+                </div>
+        }
+        else if (updateComplete) {
+            return <div>
+                <h2 className="ui center aligned icon header">
+                    <i className="green check circle outline icon"></i>
+                    {lf("Update complete")}
+                </h2>
+            </div>
+        }
+
+        const message = updateError ? lf("Looks like updating didn't fix the issue. How would you like to proceed?") :
+            lf("Looks like there are some errors in the extensions added to this project. How would you like to proceed?");
+
+        return <div>
+                <p>{message}</p>
+                <WizardMenu actions={this.buildActionList()} />
+        </div>
+    }
+}
+
+interface ProgressBarProps {
+    percentage: number
+    label?: string;
+    cornerRadius?: number;
+}
+
+class ProgressBar extends React.Component<ProgressBarProps, {}> {
+    render() {
+        let { percentage, label, cornerRadius } = this.props;
+
+        cornerRadius = (cornerRadius == null ? 3 : Math.max(cornerRadius, 0));
+        percentage = Math.max(Math.min(percentage, 100), 2);
+
+        return <div>
+                <div className="progress-bar-container">
+                    <svg className="progress-bar" width="100%" height="100%">
+                        <rect className="progress-bar-bg" width="100%" height="100%" rx={cornerRadius} ry={cornerRadius}/>
+                        <rect className="progress-bar-content" width={percentage.toString() + "%"} height="100%" rx={cornerRadius} ry={cornerRadius}/>
+                    </svg>
+                </div>
+                { label ? <p className="progress-bar-label">{label}</p> : undefined }
+            </div>
+    }
+}
+
+interface WizardMenuProps {
+    actions: { text: string, title: string, callback: () => void }[];
+}
+
+class WizardMenu extends sui.StatelessUIElement<WizardMenuProps> {
+    render() {
+        return <div className="ui relaxed list" role="menu">
+            { this.props.actions.map(({text, title, callback}, i) =>
+                <div className="item wizard-action" aria-label={title} title={title} onClick={callback} role="menuitem" key={i}>
+                    <span className="left floated"><i className="medium arrow right icon"></i></span>
+                    <sui.Link>{text}</sui.Link>
+                </div>)
+            }
+        </div>
+    }
+}
 
 export function showCommitDialogAsync(repo: string) {
     let input: HTMLInputElement;

@@ -129,35 +129,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
     }
 
     chgCode(scr: pxt.CodeCard, loadBlocks: boolean, prj?: pxt.ProjectTemplate) {
-        core.showLoading("changingcode", lf("loading..."));
-        pxt.gallery.loadExampleAsync(scr.name.toLowerCase(), scr.url)
-            .done((opts: pxt.editor.ProjectCreationOptions) => {
-                if (opts) {
-                    if (prj) opts.prj = prj;
-                    if (loadBlocks) {
-                        return this.props.parent.createProjectAsync(opts)
-                            .then(() => {
-                                return compiler.getBlocksAsync()
-                                    .then(blocksInfo => compiler.decompileAsync("main.ts", blocksInfo))
-                                    .then(resp => {
-                                        pxt.debug(`example decompilation: ${resp.success}`)
-                                        if (resp.success) {
-                                            this.props.parent.overrideBlocksFile(resp.outfiles["main.blocks"])
-                                        }
-                                    })
-                            })
-                            .done(() => {
-                                core.hideLoading("changingcode");
-                            })
-                    } else {
-                        opts.tsOnly = true
-                        return this.props.parent.createProjectAsync(opts)
-                            .then(() => Promise.delay(500))
-                            .done(() => core.hideLoading("changingcode"));
-                    }
-                }
-                core.hideLoading("changingcode");
-            });
+        return this.props.parent.importExampleAsync({ name: scr.name,  path: scr.url, loadBlocks, prj });
     }
 
     importProject() {
@@ -342,7 +314,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
     }
 
     fetchLocalData(): pxt.workspace.Header[] {
-        let headers: pxt.workspace.Header[] = this.getData("header:*")
+        const headers: pxt.workspace.Header[] = this.getData("header:*")
         return headers;
     }
 
@@ -455,6 +427,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         } else {
             const headers = this.fetchLocalData();
             const showNewProject = pxt.appTarget.appTheme && !pxt.appTarget.appTheme.hideNewProjectButton;
+            const bundledcoresvgs = pxt.appTarget.bundledcoresvgs;
             return <carousel.Carousel bleedPercent={20}>
                 {showNewProject ? <div role="button" className="ui card link newprojectcard" title={lf("Creates a new empty project")}
                     onClick={this.newProject} onKeyDown={sui.fireClickOnEnter} >
@@ -463,19 +436,21 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                         <span className="header">{lf("New Project")}</span>
                     </div>
                 </div> : undefined}
-                {headers.map((scr, index) =>
-                    <ProjectsCodeCard
+                {headers.map((scr, index) => {
+                    const boardsvg = scr.board && bundledcoresvgs && bundledcoresvgs[scr.board];
+                    return <ProjectsCodeCard
                         key={'local' + scr.id + scr.recentUse}
                         // ref={(view) => { if (index === 1) this.latestProject = view }}
                         cardType="file"
-                        className={scr.githubId ? "file github" : "file"}
+                        className={boardsvg && scr.board ? "file board" : scr.githubId ? "file github" : "file"}
+                        imageUrl={boardsvg}
                         name={scr.name}
                         time={scr.recentUse}
                         url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}
                         scr={scr}
                         onCardClick={this.handleCardClick}
-                    />
-                )}
+                    />;
+                })}
             </carousel.Carousel>
         }
     }
@@ -699,6 +674,7 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
 
 export interface ExitAndSaveDialogState {
     visible?: boolean;
+    emoji?: string;
     projectName?: string;
 }
 
@@ -707,7 +683,8 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
     constructor(props: ISettingsProps) {
         super(props);
         this.state = {
-            visible: false
+            visible: false,
+            emoji: "😞"
         }
 
         this.hide = this.hide.bind(this);
@@ -747,6 +724,11 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
 
     handleChange(name: string) {
         this.setState({ projectName: name });
+        if (name === "" || name === lf("Untitled")) {
+            this.setState({ emoji: "😞" })
+        } else {
+            this.setState({ emoji: "😊" })
+        }
     }
 
     cancel() {
@@ -757,36 +739,36 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
     save() {
         const { projectName: newName } = this.state;
         this.hide();
-        if (this.props.parent.state.projectName != newName) pxt.tickEvent("exitandsave.projectrename", undefined, { interactiveConsent: true });
-        this.props.parent.updateHeaderNameAsync(newName)
-            .done(() => {
-                this.props.parent.openHome();
-            })
+        let p = Promise.resolve();
+        // save project name if valid change
+        if (newName && this.props.parent.state.projectName != newName) {
+            pxt.tickEvent("exitandsave.projectrename", undefined, { interactiveConsent: true });
+            p = p.then(() => this.props.parent.updateHeaderNameAsync(newName));
+        }
+        p.done(() => {
+            this.props.parent.openHome();
+        })
     }
 
     renderCore() {
-        const { visible, projectName } = this.state;
+        const { visible, emoji, projectName } = this.state;
 
         const actions: sui.ModalButton[] = [{
             label: lf("Done"),
             onclick: this.save,
             icon: 'check',
             className: 'approve positive'
-        }, {
-            label: lf("Cancel"),
-            icon: 'cancel',
-            onclick: this.cancel
         }]
 
         return (
             <sui.Modal isOpen={visible} className="exitandsave" size="tiny"
                 onClose={this.hide} dimmer={true} buttons={actions}
-                closeIcon={true} header={lf("Exit Project")}
+                closeIcon={true} header={lf("Project has no name {0}", emoji)}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
                 modalDidOpen={this.modalDidOpen}
             >
                 <div className="ui form">
-                    <sui.Input ref="filenameinput" autoFocus id={"projectNameInput"} label={lf("Project Name")}
+                    <sui.Input ref="filenameinput" autoFocus id={"projectNameInput"} label={lf("Name")}
                         ariaLabel={lf("Type a name for your project")}
                         value={projectName || ''} onChange={this.handleChange} />
                 </div>

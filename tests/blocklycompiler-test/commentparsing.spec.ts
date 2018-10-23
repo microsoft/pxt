@@ -404,6 +404,50 @@ describe("comment attribute parser", () => {
             })
         });
     });
+
+    it("should allow overrides of shadow values in the block string", () => {
+        const parsed = pxtc.parseCommentString(`
+            /**
+             * Configures the Pulse-width modulation (PWM) of the analog
+             * output to the
+             * @param micros period in micro seconds. eg:20000
+             * @param whatever period in milli seconds.
+             */
+            //% block="$micros $whatever=oldShadowBlock"
+            //% micros.shadow="shadowBlock1"
+            //% whatever.shadow="shadowBlock2"
+        `)._def;
+
+        checkParam("micros", "shadowBlock1");
+        checkParam("whatever", "shadowBlock2")
+
+        function checkParam(name: string, shadow: string) {
+            chai.assert(parsed.parameters.filter(p => p.name === name && p.shadowBlockId == shadow).length == 1);
+            chai.assert(parsed.parts.filter(p => p.kind === "param" && p.name === name && p.shadowBlockId == shadow).length === 1);
+        }
+    });
+
+    it("should allow shadow values in the block string to be unset", () => {
+        const parsed = pxtc.parseCommentString(`
+            /**
+             * Configures the Pulse-width modulation (PWM) of the analog
+             * output to the
+             * @param micros period in micro seconds. eg:20000
+             * @param whatever period in milli seconds.
+             */
+            //% block="$micros $whatever=oldShadowBlock"
+            //% whatever.shadow="unset"
+            //% micros.shadow="unset"
+        `)._def;
+
+        checkParam("micros", undefined);
+        checkParam("whatever", undefined);
+
+        function checkParam(name: string, shadow: string) {
+            chai.assert(parsed.parameters.filter(p => p.name === name && p.shadowBlockId == shadow).length == 1);
+            chai.assert(parsed.parts.filter(p => p.kind === "param" && p.name === name && p.shadowBlockId == shadow).length === 1);
+        }
+    });
 });
 
 function brk(): pxtc.BlockBreak {

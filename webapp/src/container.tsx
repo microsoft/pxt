@@ -6,6 +6,7 @@ import * as sui from "./sui";
 import * as tutorial from "./tutorial";
 import * as container from "./container";
 import * as greenscreen from "./greenscreen";
+import * as core from "./core";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -152,6 +153,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.showResetDialog = this.showResetDialog.bind(this);
         this.showShareDialog = this.showShareDialog.bind(this);
         this.pair = this.pair.bind(this);
+        this.pairBluetooth = this.pairBluetooth.bind(this);
         this.showAboutDialog = this.showAboutDialog.bind(this);
         this.print = this.print.bind(this);
     }
@@ -173,7 +175,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
 
     showBoardDialog() {
         pxt.tickEvent("menu.changeboard", undefined, { interactiveConsent: true });
-        this.props.parent.showBoardDialog();
+        this.props.parent.showBoardDialogAsync().done();
     }
 
     saveProject() {
@@ -215,6 +217,13 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
     pair() {
         pxt.tickEvent("menu.pair");
         this.props.parent.pair();
+    }
+
+    pairBluetooth() {
+        pxt.tickEvent("menu.pair.bluetooth")
+        core.showLoading("webblepair", lf("Pairing Bluetooth device..."))
+        pxt.webBluetooth.pairAsync()
+            .then(() => core.hideLoading("webblepair"));
     }
 
     showAboutDialog() {
@@ -271,6 +280,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             }
             {!isController ? <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} tabIndex={-1} /> : undefined}
             {pxt.usb.isEnabled ? <sui.Item role="menuitem" icon='usb' text={lf("Pair device")} onClick={this.pair} tabIndex={-1} /> : undefined}
+            {pxt.webBluetooth.isAvailable() ? <sui.Item role="menuitem" icon='bluetooth' text={lf("Pair Bluetooth")} onClick={this.pairBluetooth} tabIndex={-1} /> : undefined}
             <div className="ui mobile only divider"></div>
             {renderDocItems(this.props.parent, "mobile only")}
             <div className="ui divider"></div>
@@ -375,12 +385,14 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         /* tslint:disable:react-a11y-anchors */
         return <div id="mainmenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar" aria-label={lf("Main menu")}>
             {!sandbox ? <div className="left menu">
-                <a href={isController ? targetTheme.logoUrl : undefined} aria-label={lf("{0} Logo", targetTheme.boardName)} role="menuitem" target="blank" rel="noopener" className="ui item logo brand" tabIndex={0} onClick={this.brandIconClick} onKeyDown={sui.fireClickOnEnter}>
-                    {logo || portraitLogo
-                        ? <img className={`ui logo ${logo ? " portrait hide" : ''}`} src={logo || portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)} />
-                        : <span className="name">{targetTheme.boardName}</span>}
-                    {portraitLogo ? (<img className={`ui ${portraitLogoSize} image portrait only`} src={portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)} />) : null}
-                </a>
+                {targetTheme.hideMenubarLogo ? undefined :
+                    <a href={isController ? targetTheme.logoUrl : undefined} aria-label={lf("{0} Logo", targetTheme.boardName)} role="menuitem" target="blank" rel="noopener" className="ui item logo brand" tabIndex={0} onClick={this.brandIconClick} onKeyDown={sui.fireClickOnEnter}>
+                        {logo || portraitLogo
+                            ? <img className={`ui logo ${logo ? " portrait hide" : ''}`} src={logo || portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)} />
+                            : <span className="name">{targetTheme.boardName}</span>}
+                        {portraitLogo ? (<img className={`ui ${portraitLogoSize} image portrait only`} src={portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)} />) : null}
+                    </a>
+                }
                 {targetTheme.betaUrl ? <a href={`${targetTheme.betaUrl}`} className="ui red mini corner top left attached label betalabel" role="menuitem">{lf("Beta")}</a> : undefined}
                 {!inTutorial && homeEnabled ? <sui.Item className="icon openproject" role="menuitem" textClass="landscape only" icon="home large" ariaLabel={lf("Home screen")} text={lf("Home")} onClick={this.goHome} /> : null}
                 {showShare ? <sui.Item className="icon shareproject" role="menuitem" textClass="widedesktop only" ariaLabel={lf("Share Project")} text={lf("Share")} icon="share alternate large" onClick={this.showShareDialog} /> : null}

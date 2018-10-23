@@ -6,7 +6,6 @@ namespace pxtblockly {
         columns?: string;
         maxRows?: string;
         width?: string;
-        itemColour?: string;
     }
 
     export class FieldImageDropdown extends Blockly.FieldDropdown implements Blockly.FieldCustom {
@@ -21,7 +20,6 @@ namespace pxtblockly {
         protected maxRows_: number;
 
         protected backgroundColour_: string;
-        protected itemColour_: string;
         protected borderColour_: string;
 
         protected savedPrimary_: string;
@@ -34,7 +32,6 @@ namespace pxtblockly {
             this.width_ = parseInt(options.width) || 300;
 
             this.backgroundColour_ = pxtblockly.parseColour(options.colour);
-            this.itemColour_ = options.itemColour || "rgba(255, 255, 255, 0.6)";
             this.borderColour_ = pxt.toolbox.fadeColor(this.backgroundColour_, 0.4, false);
         }
 
@@ -97,14 +94,6 @@ namespace pxtblockly {
                 button.style.backgroundColor = backgroundColor;
                 button.style.borderColor = this.borderColour_;
                 Blockly.bindEvent_(button, 'click', this, this.buttonClick_);
-                Blockly.bindEvent_(button, 'mouseup', this, this.buttonClick_);
-                // These are applied manually instead of using the :hover pseudoclass
-                // because Android has a bad long press "helper" menu and green highlight
-                // that we must prevent with ontouchstart preventDefault
-                Blockly.bindEvent_(button, 'mousedown', button, function (e) {
-                    this.setAttribute('class', 'blocklyDropDownButton blocklyDropDownButtonHover');
-                    e.preventDefault();
-                });
                 Blockly.bindEvent_(button, 'mouseover', button, function () {
                     this.setAttribute('class', 'blocklyDropDownButton blocklyDropDownButtonHover');
                     contentDiv.setAttribute('aria-activedescendant', this.id);
@@ -163,6 +152,7 @@ namespace pxtblockly {
          */
         protected buttonClick_ = function (e: any) {
             let value = e.target.getAttribute('data-value');
+            if (!value) return;
             this.setValue(value);
             this.setText(value);
             Blockly.DropDownDiv.hide();
@@ -223,7 +213,7 @@ namespace pxtblockly {
 
         /**
          * Updates the width of the field. This calls getCachedWidth which won't cache
-         * the approximated width on IE/Edge when `getComputedTextLength` fails. Once
+         * the approximated width on IE/Microsoft Edge when `getComputedTextLength` fails. Once
          * it eventually does succeed, the result will be cached.
          **/
         updateWidth() {

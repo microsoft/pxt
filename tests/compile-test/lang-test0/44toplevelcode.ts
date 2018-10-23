@@ -13,7 +13,7 @@ control.runInBackground(() => {
     xsum = xsum + 10;
 })
 
-control.pause(20)
+pause(20)
 assert(xsum == 65, "mainforBg")
 xsum = 0
 

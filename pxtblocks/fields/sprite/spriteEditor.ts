@@ -69,6 +69,10 @@ namespace pxtblockly {
         private rows: number = 16;
         private colors: string[];
 
+
+        private controlDown: boolean = false;
+        private shiftDown: boolean = false;
+        private mouseDown: boolean = false;
         constructor(bitmap: Bitmap, blocksInfo: pxtc.BlocksInfo, protected lightMode = false) {
             this.colors = pxt.appTarget.runtime.palette.slice(1);
 
@@ -92,10 +96,18 @@ namespace pxtblockly {
             this.paintSurface.up((col, row) => {
                 this.debug("gesture end (" + PaintTool[this.activeTool] + ")");
                 this.commit();
+                this.mouseDown = false;
+                if (this.activeTool == PaintTool.Circle && !this.controlDown) {
+                    this.switchIconBack(PaintTool.Rectangle);
+                }
+                if (this.activeTool == PaintTool.Line && !this.shiftDown) {
+                    this.switchIconBack(PaintTool.Normal);
+                }
             });
 
             this.paintSurface.down((col, row) => {
                 this.setCell(col, row, this.color, false);
+                this.mouseDown = true;
             });
 
             this.paintSurface.move((col, row) => {
@@ -191,10 +203,10 @@ namespace pxtblockly {
 
                 // If the user is erasing, go back to pencil
                 if (this.activeTool === PaintTool.Erase) {
-                    this.activeTool = PaintTool.Normal;
+                    this.sidebar.setTool(PaintTool.Normal);
+                } else {
+                    this.edit = this.newEdit(this.color);
                 }
-
-                this.edit = this.newEdit(this.color);
             }
         }
 
@@ -279,6 +291,77 @@ namespace pxtblockly {
 
         hideGallery() {
             this.gallery.hide();
+        }
+
+        switchIconBack(tool: PaintTool) {
+            let btn = (this.sidebar.getButtonForTool(tool) as TextButton);
+            if (tool == PaintTool.Rectangle) {
+                //Change icon back to square
+                btn.setText("\uf096");
+                btn.title(lf("Rectangle"));
+            } else if (tool == PaintTool.Normal) {
+                //Change icon back to pencil
+                btn.setText("\uf040");
+                btn.title(lf("Pencil"));
+            }
+            btn.onClick(() => this.sidebar.setTool(tool));
+            if ((this.activeTool == PaintTool.Circle && tool == PaintTool.Rectangle)
+                    || (this.activeTool == PaintTool.Line && tool == PaintTool.Normal)) {
+                this.setActiveTool(tool);
+            }
+        }
+
+        private keyDown = (event: KeyboardEvent) => {
+            if (event.keyCode == 17) { // Control
+                if (!this.controlDown) {
+                    let btn = (this.sidebar.getButtonForTool(PaintTool.Rectangle) as TextButton);
+                    btn.setText("\uf10c");
+                    btn.title(lf("Circle"));
+                    btn.onClick(() => this.sidebar.setTool(PaintTool.Circle));
+                    if (this.activeTool == PaintTool.Rectangle) {
+                        this.setActiveTool(PaintTool.Circle);
+                    }
+                }
+                this.controlDown = true;
+            } else if (event.keyCode == 16) { // Shift
+                if (!this.shiftDown) {
+                    let btn = (this.sidebar.getButtonForTool(PaintTool.Normal) as TextButton);
+                    btn.setText("\uf07e");
+                    btn.title(lf("Line"));
+                    btn.onClick(() => this.sidebar.setTool(PaintTool.Line));
+                    if (this.activeTool == PaintTool.Normal) {
+                        this.setActiveTool(PaintTool.Line);
+                    }
+                }
+                this.shiftDown = true;
+            }
+
+        }
+
+        private keyUp = (event: KeyboardEvent) => {
+            if (event.keyCode == 17) { // Control
+                this.controlDown = false;
+                // If not drawing a circle, switch back to Rectangle
+                if (!(this.mouseDown && this.activeTool == PaintTool.Circle)) {
+                    this.switchIconBack(PaintTool.Rectangle);
+                }
+            } else if (event.keyCode == 16) { // Shift
+                this.shiftDown = false;
+                // If not drawing a line, switch back to Pencil
+                if (!(this.mouseDown && this.activeTool == PaintTool.Line)) {
+                    this.switchIconBack(PaintTool.Normal);
+                }
+            }
+        }
+
+        addKeyListeners() {
+            document.addEventListener("keydown", this.keyDown);
+            document.addEventListener("keyup", this.keyUp);
+        }
+
+        removeKeyListeners() {
+            document.removeEventListener("keydown", this.keyDown);
+            document.removeEventListener("keyup", this.keyUp);
         }
 
         private afterResize(showOverlay: boolean) {

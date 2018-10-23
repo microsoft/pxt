@@ -8,9 +8,9 @@ same [Monaco][] editor that powers [Visual Studio Code][].
 
 [@homeurl@]: @homeurl@
 [web workers]: http://www.w3.org/TR/workers/
-[typescript]: http://www.typescriptlang.org
+[typescript]: https://www.typescriptlang.org
 [monaco]: https://microsoft.github.io/monaco-editor/
-[visual studio code]: http://code.visualstudio.com
+[visual studio code]: https://code.visualstudio.com
 
 Most modern browsers automatically update themselves. In some environments,
 such as schools, these automatic updates are disabled for security. **We
@@ -20,7 +20,7 @@ browsers**, but if you can't then you must use at least:
 | Browser             | Minimum version | Release date   | Windows     | Mac        | Mobile OS  |
 | ------------------- | --------------- | -------------- | ----------- | ---------- | ---------- |
 | - - - - - - - - - - - - - - - - - - - | - - - - - - - - - - - - - - - | - - - - - - - - - - - - - - | - - - - - - - - - - - | - - - - - - - - - - | - - - - - - - - - - |
-| Edge                | 12              | March 2015     | Windows 10+ | N/A        | N/A        |
+| Microsoft Edge      | 12              | March 2015     | Windows 10+ | N/A        | N/A        |
 | Internet Explorer   | 11              | October 2013   | Windows 7+  | N/A        | N/A        |
 | Mozilla Firefox     | 31 ESR          | July 2014      | Windows XP+ | OS X 10.6+ | N/A        |
 | Google Chrome       | 38              | October 2014   | Windows XP+ | OS X 10.6+ | Android 5+ |
