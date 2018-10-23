@@ -385,19 +385,21 @@ async function exportCrowdinAsync(prj: string, key: string): Promise<void> {
     const info = JSON.parse(respText) as pxt.crowdin.CrowdinProjectInfo;
     const pxtCrowdinBranch = pxt.appTarget.versions ? pxt.appTarget.versions.pxtCrowdinBranch : "" || "";
     const targetCrowdinBranch = pxt.appTarget.versions ? pxt.appTarget.versions.targetCrowdinBranch : "" || "";
- 
-    if (!info) return;
-    info.languages = info.languages.filter(lang => lang.code != "en"); // don't self translate
+    let errorMds: pxt.Map<string> = {};
 
     function report(msg: string) {
         pxt.log(msg);
     }
-    let errorMds: pxt.Map<string> = {};
     function error(lang: string, msg: string) {
         report(msg);
         if (!errorMds[lang]) errorMds[lang] = `# Translations error for ${lang}\r\n\r\n`;
         errorMds[lang] += msg + "\r\n";
     }
+
+
+    if (!info) return;
+    info.languages = info.languages.filter(lang => lang.code != "en"); // don't self translate
+    report(`* ${info.languages.length} languages`);
 
     //info.languages = [{ code: "fr", name: "French" }];
     const allFiles = pxt.crowdin.filterAndFlattenFiles(info.files);
@@ -408,7 +410,6 @@ async function exportCrowdinAsync(prj: string, key: string): Promise<void> {
         plugged: 0
     };
     // find all files that end with strings.json
-    report(`* ${info.languages.length} languages`);
     const filenames = U.unique(allFiles.filter(f => /-strings\.json$/.test(f.fullName)).map(f => pxt.crowdin.normalizeFileName(f.name)), f => f)
         .filter(f => !/^(target|sim)-strings\.json$/.test(f));
     for (const filename of filenames) {
