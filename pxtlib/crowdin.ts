@@ -119,7 +119,7 @@ namespace pxt.crowdin {
         return filename.replace(/\\/g, '/');
     }
 
-    export function uploadTranslationAsync(branch: string, prj: string, key: string, filename: string, data: string) {
+    export function uploadTranslationSourceAsync(branch: string, prj: string, key: string, filename: string, data: string) {
         Util.assert(!!prj);
         Util.assert(!!key);
 
@@ -179,7 +179,7 @@ namespace pxt.crowdin {
         }
     }
 
-    function filterAndFlattenFiles(files: CrowdinFileInfo[], crowdinPath?: string): CrowdinFileInfo[] {
+    export function filterAndFlattenFiles(files: CrowdinFileInfo[], crowdinPath?: string, excludePxt?: boolean): CrowdinFileInfo[] {
         const pxtCrowdinBranch = pxt.appTarget.versions.pxtCrowdinBranch || "";
         const targetCrowdinBranch = pxt.appTarget.versions.targetCrowdinBranch || "";
 
@@ -190,7 +190,7 @@ namespace pxt.crowdin {
 
         // top level files are for PXT, subolder are targets
         allFiles = allFiles.filter(f => {
-            if (f.fullName.indexOf('/') < 0) return f.branch == pxtCrowdinBranch; // pxt file
+            if (f.fullName.indexOf('/') < 0) return f.branch == pxtCrowdinBranch && !excludePxt; // pxt file
             else return f.branch == targetCrowdinBranch;
         })
 
@@ -213,9 +213,9 @@ namespace pxt.crowdin {
         return allFiles;
     }
 
-    export function projectInfoAsync(prj: string, key: string): Promise<CrowdinProjectInfo> {
+    export function projectInfoAsync(branch: string, prj: string, key: string): Promise<CrowdinProjectInfo> {
         const q: Map<string> = { json: "true" }
-        const infoUri = apiUri("", prj, key, "info", q);
+        const infoUri = apiUri(branch, prj, key, "info", q);
         return Util.httpGetTextAsync(infoUri).then(respText => {
             const info = JSON.parse(respText) as CrowdinProjectInfo;
             return info;
@@ -225,11 +225,11 @@ namespace pxt.crowdin {
     /**
      * Scans files in crowdin and report files that are not on disk anymore
      */
-    export function listFilesAsync(prj: string, key: string, crowdinPath: string): Promise<{ fullName: string; branch: string; }[]> {
+    export function listFilesAsync(branch: string, prj: string, key: string, crowdinPath: string): Promise<{ fullName: string; branch: string; }[]> {
 
         pxt.log(`crowdin: listing files under ${crowdinPath}`);
 
-        return projectInfoAsync(prj, key)
+        return projectInfoAsync(branch, prj, key)
             .then(info => {
                 if (!info) throw new Error("info failed")
 

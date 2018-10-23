@@ -313,9 +313,10 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
             cmd = cmd.toLowerCase();
             if (!args[0] && (cmd != "clean" && cmd != "stats")) throw new Error(cmd == "status" ? "language missing" : "filename missing");
             switch (cmd) {
-                case "stats": return statsCrowdinAsync(prj, key);
-                case "clean": return cleanCrowdinAsync(prj, key, args[0] || "docs");
+                case "stats": return statsCrowdinAsync(branch, prj, key);
+                case "clean": return cleanCrowdinAsync(branch, prj, key, args[0] || "docs");
                 case "upload": return uploadCrowdinAsync(branch, prj, key, args[0], args[1]);
+                case "branch": return branchCrowdinAsync(branch, prj, key, args[0]);
                 case "download": {
                     if (!args[1]) throw new Error("output path missing");
                     const fn = path.basename(args[0]);
@@ -340,19 +341,19 @@ export function execCrowdinAsync(cmd: string, ...args: string[]): Promise<void> 
         })
 }
 
-function cleanCrowdinAsync(prj: string, key: string, dir: string): Promise<void> {
+function cleanCrowdinAsync(branch: string, prj: string, key: string, dir: string): Promise<void> {
     const p = pxt.appTarget.id + "/" + dir;
-    return pxt.crowdin.listFilesAsync(prj, key, p)
+    return pxt.crowdin.listFilesAsync(branch, prj, key, p)
         .then(files => {
             files.filter(f => !nodeutil.fileExistsSync(f.fullName.substring(pxt.appTarget.id.length + 1)))
                 .forEach(f => pxt.log(`crowdin: dead file: ${f.branch ? f.branch + "/" : ""}${f.fullName}`));
         })
 }
 
-function statsCrowdinAsync(prj: string, key: string): Promise<void> {
+function statsCrowdinAsync(branch: string, prj: string, key: string): Promise<void> {
     pxt.log(`collecting crowdin stats for ${prj}`);
 
-    return pxt.crowdin.projectInfoAsync(prj, key)
+    return pxt.crowdin.projectInfoAsync(branch, prj, key)
         .then(info => {
             if (!info) throw new Error("info failed")
             return Promise.all(info.languages.map(lang => langStatsCrowdinAsync(prj, key, lang.code)))
@@ -383,7 +384,20 @@ function uploadCrowdinAsync(branch: string, prj: string, key: string, p: string,
     if (dir) fn = dir.replace(/[\\/]*$/g, '') + '/' + fn;
     const data = JSON.parse(fs.readFileSync(p, "utf8")) as Map<string>;
     pxt.log(`upload ${fn} (${Object.keys(data).length} strings) to https://crowdin.com/project/${prj}${branch ? `?branch=${branch}` : ''}`);
-    return pxt.crowdin.uploadTranslationAsync(branch, prj, key, fn, JSON.stringify(data));
+    return pxt.crowdin.uploadTranslationSourceAsync(branch, prj, key, fn, JSON.stringify(data));
+}
+
+function branchCrowdinAsync(branch: string, prj: string, key: string, newBranch: string): Promise<void> {
+    const p = pxt.appTarget.id;
+    pxt.log(`crowdin: branching from ${prj}/${p}#${branch || ""} -> #${newBranch || ""}`)
+    return pxt.crowdin.projectInfoAsync(branch, prj, key)
+        .then(info => {
+            const files = pxt.crowdin.filterAndFlattenFiles(info.files, "", true);
+            pxt.log(`crowdin: found ${files.length} target files`)
+            files.forEach(file => {
+                pxt.log(`crowdin: branching ${file.fullName}`);
+            })
+        });
 }
 
 export function apiAsync(path: string, postArguments?: string): Promise<void> {
@@ -528,7 +542,7 @@ function travisAsync() {
                 .then(() => execCrowdinAsync("upload", "built/strings.json"))
                 .then(() => buildWebStringsAsync())
                 .then(() => execCrowdinAsync("upload", "built/webstrings.json"))
-                .then(() => internalUploadTargetTranslationsAsync(!!rel));
+                .then(() => internalUploadTargetTranslationSourcesAsync(!!rel));
         return p;
     } else {
         pxt.log("target build");
@@ -550,7 +564,7 @@ function travisAsync() {
                 pxt.log("target uploaded");
                 if (uploadLocs) {
                     pxt.log("uploading translations...");
-                    return internalUploadTargetTranslationsAsync(!!rel)
+                    return internalUploadTargetTranslationSourcesAsync(!!rel)
                         .then(() => pxt.log("translations uploaded"));
                 }
                 pxt.log("skipping translations upload");
@@ -3690,12 +3704,12 @@ function crowdinCredentialsAsync(): Promise<{ prj: string; key: string; branch: 
         });
 }
 
-export function uploadTargetTranslationsAsync(parsed?: commandParser.ParsedCommand) {
+export function uploadTargetTranslationSourcesAsync(parsed?: commandParser.ParsedCommand) {
     const uploadDocs = parsed && !!parsed.flags["docs"];
-    return internalUploadTargetTranslationsAsync(uploadDocs);
+    return internalUploadTargetTranslationSourcesAsync(uploadDocs);
 }
 
-function internalUploadTargetTranslationsAsync(uploadDocs: boolean) {
+function internalUploadTargetTranslationSourcesAsync(uploadDocs: boolean) {
     pxt.log("retrieving Crowdin credentials...");
     return crowdinCredentialsAsync()
         .then(cred => {
@@ -3708,23 +3722,23 @@ function internalUploadTargetTranslationsAsync(uploadDocs: boolean) {
                     return Promise.resolve();
                 }
                 pxt.log("uploading core translations...");
-                return uploadDocsTranslationsAsync("docs", crowdinDir, cred.branch, cred.prj, cred.key)
-                    .then(() => uploadDocsTranslationsAsync("common-docs", crowdinDir, cred.branch, cred.prj, cred.key))
+                return uploadDocsTranslationSourcesAsync("docs", crowdinDir, cred.branch, cred.prj, cred.key)
+                    .then(() => uploadDocsTranslationSourcesAsync("common-docs", crowdinDir, cred.branch, cred.prj, cred.key))
             } else {
                 pxt.log("uploading target translations...");
                 return execCrowdinAsync("upload", "built/target-strings.json", crowdinDir)
                     .then(() => execCrowdinAsync("upload", "built/sim-strings.json", crowdinDir))
-                    .then(() => uploadBundledTranslationsAsync(crowdinDir, cred.branch, cred.prj, cred.key))
+                    .then(() => uploadBundledTranslationSourcesAsync(crowdinDir, cred.branch, cred.prj, cred.key))
                     .then(() => {
                         if (uploadDocs) {
                             pxt.log("uploading docs...");
-                            return uploadDocsTranslationsAsync("docs", crowdinDir, cred.branch, cred.prj, cred.key)
+                            return uploadDocsTranslationSourcesAsync("docs", crowdinDir, cred.branch, cred.prj, cred.key)
                                 // scan for docs in bundled packages
                                 .then(() => Promise.all(pxt.appTarget.bundleddirs
                                     // there must be a folder under .../docs
                                     .filter(pkgDir => nodeutil.existsDirSync(path.join(pkgDir, "docs")))
                                     // upload to crowdin
-                                    .map(pkgDir => uploadDocsTranslationsAsync(path.join(pkgDir, "docs"), crowdinDir, cred.branch, cred.prj, cred.key)
+                                    .map(pkgDir => uploadDocsTranslationSourcesAsync(path.join(pkgDir, "docs"), crowdinDir, cred.branch, cred.prj, cred.key)
                                     )).then(() => {
                                         pxt.log("docs uploaded");
                                     }))
@@ -3736,7 +3750,7 @@ function internalUploadTargetTranslationsAsync(uploadDocs: boolean) {
         });
 }
 
-function uploadDocsTranslationsAsync(srcDir: string, crowdinDir: string, branch: string, prj: string, key: string): Promise<void> {
+function uploadDocsTranslationSourcesAsync(srcDir: string, crowdinDir: string, branch: string, prj: string, key: string): Promise<void> {
     pxt.log(`uploading from ${srcDir} to ${crowdinDir} under project ${prj}/${branch || ""}`)
 
     let ignoredDirectories: Map<boolean> = {};
@@ -3758,21 +3772,21 @@ function uploadDocsTranslationsAsync(srcDir: string, crowdinDir: string, branch:
         const crowdd = path.dirname(crowdf);
         // check if file should be ignored
         if (ignoredDirectoriesList.filter(d => path.dirname(f).indexOf(d) == 0).length > 0) {
-            pxt.log(`skpping ${f} because of .crowdinignore file`)
+            pxt.log(`skipping ${f} because of .crowdinignore file`)
             return nextFileAsync(todo.pop());
         }
 
         const data = fs.readFileSync(f, 'utf8');
         pxt.log(`uploading ${f} to ${crowdf}`);
         return ensureFolderAsync(crowdd)
-            .then(() => pxt.crowdin.uploadTranslationAsync(branch, prj, key, crowdf, data))
+            .then(() => pxt.crowdin.uploadTranslationSourceAsync(branch, prj, key, crowdf, data))
             .then(() => nextFileAsync(todo.pop()));
     }
     return ensureFolderAsync(path.join(crowdinDir, srcDir))
         .then(() => nextFileAsync(todo.pop()));
 }
 
-function uploadBundledTranslationsAsync(crowdinDir: string, branch: string, prj: string, key: string): Promise<void> {
+function uploadBundledTranslationSourcesAsync(crowdinDir: string, branch: string, prj: string, key: string): Promise<void> {
     const todo: string[] = [];
     pxt.appTarget.bundleddirs.forEach(dir => {
         const locdir = path.join(dir, "_locales");
@@ -3789,7 +3803,7 @@ function uploadBundledTranslationsAsync(crowdinDir: string, branch: string, prj:
         const data = JSON.parse(fs.readFileSync(f, 'utf8')) as Map<string>;
         const crowdf = path.join(crowdinDir, path.basename(f));
         pxt.log(`uploading ${f} to ${crowdf}`);
-        return pxt.crowdin.uploadTranslationAsync(branch, prj, key, crowdf, JSON.stringify(data))
+        return pxt.crowdin.uploadTranslationSourceAsync(branch, prj, key, crowdf, JSON.stringify(data))
             .then(nextFileAsync);
     }
     return nextFileAsync();
@@ -5499,7 +5513,7 @@ function initCommands() {
             docs: { description: "upload markdown docs folder as well" }
         },
         advanced: true
-    }, uploadTargetTranslationsAsync);
+    }, uploadTargetTranslationSourcesAsync);
 
     p.defineCommand({
         name: "format",
