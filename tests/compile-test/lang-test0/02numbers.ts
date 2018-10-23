@@ -22,10 +22,6 @@ function testNums(): void {
     assert(x == 42, "add");
     x = 40 / 2;
     assert(x == 20, "div");
-    let r = fib(15);
-    msg("FB")
-    msg("FIB" + r);
-    assert(r == 987, "fib");
     let x3 = doStuff(x, 2);
     msg("nums#0")
     assert(x3 == 10, "call order");
@@ -74,6 +70,12 @@ function testNums(): void {
     if (!x) {
         assert(false, "wrong bang")
     }
+
+    let r = fib(15);
+    msg("FB")
+    msg("FIB" + r);
+    assert(r == 987, "fib");
+
     msg("nums#5")
 }
 
