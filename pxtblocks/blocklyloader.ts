@@ -71,7 +71,9 @@ namespace pxt.blocks {
             if (magic == 0xe1) {
                 return this.genMonochrome(data, w, h);
             }
-            return this.genColor(data, w, h);
+
+            const scaleFactor = ((pxt.BrowserUtils.isEdge() || pxt.BrowserUtils.isIE()) && w < 100 && h < 100) ? 3 : 1;
+            return this.genColor(data, w, h, scaleFactor);
         }
 
         genMonochrome(data: string, w: number, h: number) {
@@ -116,7 +118,11 @@ namespace pxt.blocks {
             return "data:image/bmp;base64," + btoa(U.uint8ArrayToString(bmp))
         }
 
-        genColor(data: string, w: number, h: number) {
+        genColor(data: string, width: number, height: number, intScale: number) {
+            intScale = Math.max(1, intScale | 0);
+            const w = width * intScale;
+            const h = height * intScale;
+
             let outByteW = w << 2;
             let bmpHeaderSize = 138;
             let bmpSize = bmpHeaderSize + outByteW * h
@@ -150,25 +156,37 @@ namespace pxt.blocks {
             let outP = bmpHeaderSize
 
             for (let x = 0; x < w; x++) {
+                let high = false;
                 outP = bmpHeaderSize + (x << 2)
-                for (let y = 0; y < h; y += 2) {
-                    let v = data.charCodeAt(inP++)
-                    const colorStart = (v & 0xf) << 2;
+                let columnStart = inP;
+
+                let v = data.charCodeAt(inP++);
+                let colorStart = high ? (((v >> 4) & 0xf) << 2) : ((v & 0xf) << 2);
+
+                for (let y = 0; y < h; y ++) {
                     bmp[outP] = this.palette[colorStart]
                     bmp[outP + 1] = this.palette[colorStart + 1]
                     bmp[outP + 2] = this.palette[colorStart + 2]
                     bmp[outP + 3] = this.palette[colorStart + 3]
                     outP += outByteW
-                    if (y != h - 1) {
-                        const colorStart = ((v >> 4) & 0xf) << 2;
-                        bmp[outP] = this.palette[colorStart]
-                        bmp[outP + 1] = this.palette[colorStart + 1]
-                        bmp[outP + 2] = this.palette[colorStart + 2]
-                        bmp[outP + 3] = this.palette[colorStart + 3]
-                        outP += outByteW
+
+                    if (y % intScale === intScale - 1) {
+                        if (high) {
+                            v = data.charCodeAt(inP++);
+                        }
+                        high = !high;
+
+                        colorStart = high ? (((v >> 4) & 0xf) << 2) : ((v & 0xf) << 2);
                     }
                 }
-                while (inP & 3) inP++
+
+                if (x % intScale === intScale - 1)  {
+                    if (!(height % 2)) --inP;
+                    while (inP & 3) inP++
+                }
+                else {
+                    inP = columnStart;
+                }
             }
 
             return "data:image/bmp;base64," + btoa(U.uint8ArrayToString(bmp))
