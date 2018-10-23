@@ -190,8 +190,8 @@ namespace pxt.crowdin {
     }
 
     export function filterAndFlattenFiles(files: CrowdinFileInfo[], crowdinPath?: string, excludePxt?: boolean): CrowdinFileInfo[] {
-        const pxtCrowdinBranch = pxt.appTarget.versions ? pxt.appTarget.versions.pxtCrowdinBranch : "" || "";
-        const targetCrowdinBranch = pxt.appTarget.versions ? pxt.appTarget.versions.targetCrowdinBranch : "" || "";
+        const pxtCrowdinBranch = (pxt.appTarget.versions && pxt.appTarget.versions.pxtCrowdinBranch) || "";
+        const targetCrowdinBranch = (pxt.appTarget.versions && pxt.appTarget.versions.targetCrowdinBranch) || "";
 
         let allFiles: CrowdinFileInfo[] = [];
 
