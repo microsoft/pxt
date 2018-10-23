@@ -561,7 +561,10 @@ ${baseLabel}:
                     this.t.emit_int(off, "r3")
                     xoff = "r3"
                 }
-                this.write(`${store ? "str" : "ldr"} r0, [r0, ${xoff}]`)
+                if (store)
+                    this.write(`str r1, [r0, ${xoff}]`)
+                else
+                    this.write(`ldr r0, [r0, ${xoff}]`)
                 return
             }
 
@@ -689,6 +692,7 @@ ${baseLabel}:
                     ldr r1, [r2, r1] ; ld-method
                     cmp r1, #0
                     beq .fail2
+                    movs r4, #${isSet ? 2 : 1}
                     bx r1
                 
                 .objlit:
@@ -968,8 +972,10 @@ ${baseLabel}:
             }
         }
 
-        private alignedCall(name: string, cmt = "", off = 0, saveStack = false) {            
+        private alignedCall(name: string, cmt = "", off = 0, saveStack = false) {
             let unalign = this.alignStack(off)
+            if (U.startsWith(name, "_cmp_"))
+                saveStack = false
             this.write(this.t.call_lbl(name, saveStack) + cmt)
             this.write(unalign)
         }
@@ -1325,8 +1331,9 @@ ${baseLabel}:
                         if (target.gc) {
                             this.write(this.t.load_reg_src_off("r7", "r6", "#0"))
                             this.write(this.t.load_reg_src_off("r0", "r7", off, false, true, inf))
-                        } else
+                        } else {
                             this.write(this.t.load_reg_src_off("r0", "r6", off, false, true, inf))
+                        }
                     } else {
                         let [reg, imm, off] = this.cellref(cell)
                         this.write(this.t.load_reg_src_off("r0", reg, imm, off, true))
