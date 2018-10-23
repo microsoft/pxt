@@ -129,7 +129,7 @@ namespace pxt.crowdin {
         return filename.replace(/\\/g, '/');
     }
 
-    export function uploadTranslationAsync(branch: string, prj: string, key: string, filename: string, data: string) {
+    export function uploadTranslationSourceAsync(branch: string, prj: string, key: string, filename: string, data: string) {
         Util.assert(!!prj);
         Util.assert(!!key);
 
