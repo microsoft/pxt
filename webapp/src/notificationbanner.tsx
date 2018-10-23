@@ -126,12 +126,12 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
             if (showNewEditorLinkBanner) {
                 return (
                     <GenericBanner id="beta" parent={this.props.parent} delayTime={delayTime} displayTime={displayTime} sleepTime={sleepTime}>
-                        <sui.Link class="link" target="_blank" ariaLabel={lf("Open beta url")} href={targetConfig.newEditorLink} onClick={this.handleBannerClick}>
+                        <sui.Link class="link" target="_blank" ariaLabel={lf("Open new editor url")} href={targetConfig.newEditorLink} onClick={this.handleBannerClick}>
                             <img className="bannerIcon" src={pxt.Util.pathJoin(pxt.webConfig.commitCdnUrl, `images/logo.svg`)} alt={lf("MakeCode logo")}></img>
                             
                         </sui.Link>
-                        <sui.Link class="link" target="_blank" ariaLabel={lf("Open beta url")} href={targetConfig.newEditorLink} onClick={this.handleBannerClick}>
-                            {lf("Try the beta!")}
+                        <sui.Link class="link" target="_blank" ariaLabel={lf("Open new editor url")} href={targetConfig.newEditorLink} onClick={this.handleBannerClick}>
+                            {lf("Update on October 26th")}
                         </sui.Link> 
                     </GenericBanner>
                 );
