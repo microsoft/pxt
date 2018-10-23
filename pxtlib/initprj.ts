@@ -137,11 +137,11 @@ cache:
     export function packageFiles(name: string) {
         let prj = pxt.appTarget.tsprj || pxt.appTarget.blocksprj;
         let config = U.clone(prj.config);
-        // remove blocks file
+        // remove blocks file and dal.d.ts
         Object.keys(prj.files)
-            .filter(f => /\.blocks$/.test(f))
+            .filter(f => /\.blocks$/.test(f) || f == pxt.DAL_DTS)
             .forEach(f => delete prj.files[f]);
-        config.files = config.files.filter(f => !/\.blocks$/.test(f));
+        config.files = config.files.filter(f => !(/\.blocks$/.test(f) || f == pxt.DAL_DTS));
 
         config.name = name;
         // by default, projects are not public
