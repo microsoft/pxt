@@ -12,9 +12,9 @@ We’ve organized this list by product:
 
 Guides to introduce students to the micro:bit hardware -
 
-* Micro:bit hardware components (https://microbit.org/guide/features/)
-* Quick Start guide (https://microbit.org/guide/quick/)
-* The micro:bit is a mini-computer (https://makecode.microbit.org/courses/csintro/algorithms/overview)
+* [Micro:bit hardware components](https://microbit.org/guide/features/)
+* [Quick Start guide](https://microbit.org/guide/quick/)
+* [The micro:bit is a mini-computer](https://makecode.microbit.org/courses/csintro/algorithms/overview)
 
 ### 2. Tutorials
 
@@ -34,7 +34,7 @@ Facilitated making and coding activities for students -
 * [Banana Keyboard](https://makecode.microbit.org/projects/banana-keyboard) – turn your micro:bit into a Makey Makey using fruit to play music!
 * [Duct Tape Wallet/Purse](https://makecode.microbit.org/projects/wallet) – code a counter and create a wallet or purse out of duct tape
 * [Soil Moisture](https://makecode.microbit.org/courses/ucp-science/soil-moisture) – use the micro:bit to measure the soil moisture level for plants
-* Downloadable, Printable PDF’s and PPT’s for some activities posted here (https://1drv.ms/f/s!AmMIW5Hxi0RtgYxHjyqgGf-xVAeUWg)
+* Downloadable, Printable PDF’s and PPT’s for some activities posted [here](https://1drv.ms/f/s!AmMIW5Hxi0RtgYxHjyqgGf-xVAeUWg)
  
 ## MakeCode for Circuit Playground Express
 
@@ -44,9 +44,9 @@ Facilitated making and coding activities for students -
 
 Guides to introduce students to the Circuit Playground Express -
 
-* Adafruit Circuit Playground Express hardware components (https://learn.adafruit.com/adafruit-circuit-playground-express)
-* Circuit Playground is for Everyone video (https://youtu.be/4lGRgO40UhM)
-* Get to know Circuit Playground Express & MakeCode PDF file (https://1drv.ms/b/s!AmMIW5Hxi0RtgP8iWXPOvinYRfQloA)
+* Adafruit Circuit Playground Express [hardware components](https://learn.adafruit.com/adafruit-circuit-playground-express)
+* [Circuit Playground is for Everyone](https://youtu.be/4lGRgO40UhM) video
+* [Get to know Circuit Playground Express & MakeCode](https://1drv.ms/b/s!AmMIW5Hxi0RtgP8iWXPOvinYRfQloA) PDF file
 
 ### 2. Tutorials
 
@@ -66,7 +66,7 @@ Facilitated making and coding activities for students -
 * [Dandelion](https://makecode.adafruit.com/projects/dandelion) – blow on your Circuit Playground Express flower to see the lights glow
 * [Guitar](https://makecode.adafruit.com/projects/guitar) – make an air guitar from cardboard and Circuit Playground Express
 * [Headlamp](https://makecode.adafruit.com/projects/headlamp) – turn the lights on automatically in the dark
-* Downloadable, Printable PDF’s and PPT’s for some activities posted here (https://1drv.ms/f/s!AmMIW5Hxi0RtgP4zW7aGra5-jta-fA)
+* Downloadable, Printable PDF’s and PPT’s for some activities posted [here](https://1drv.ms/f/s!AmMIW5Hxi0RtgP4zW7aGra5-jta-fA)
 
 ## MakeCode for Minecraft
 
@@ -108,13 +108,13 @@ Short, step-by-step tutorials for students to go through on their own -
 * [Red Light, Green Light](https://makecode.mindstorms.com/#tutorial:tutorials/redlight-greenlight) – play red light, green light with the color sensor
 * [Line Following](https://makecode.mindstorms.com/#tutorial:tutorials/line-following) – have your robot follow a line
 
-**Note:** you will need to make sure your LEGO MINDSTORMS EV3 brick is updated with the latest firmware. Instructions on how to do this is posted here (https://makecode.mindstorms.com/troubleshoot).
+**Note:** you will need to make sure your LEGO MINDSTORMS EV3 brick is updated with the latest firmware. Instructions on how to do this is posted [here](https://makecode.mindstorms.com/troubleshoot).
 
 ## MakeCode for Cue
 
 ![Wonder Workshop Cue badge](/static/blog/csed-week/ww-cue-badge.png)
 
-* Challenges and Code samples in the Cue App (https://www.makewonder.com/cue_the_cleverbot/explore/)
+* Challenges and Code samples in the [Cue App](https://www.makewonder.com/cue_the_cleverbot/explore/)
 
 ## MakeCode for Chibitronics
 
