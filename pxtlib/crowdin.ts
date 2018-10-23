@@ -189,7 +189,7 @@ namespace pxt.crowdin {
         }
     }
 
-    export function filterAndFlattenFiles(files: CrowdinFileInfo[], crowdinPath?: string): CrowdinFileInfo[] {
+    export function filterAndFlattenFiles(files: CrowdinFileInfo[], crowdinPath?: string, excludePxt?: boolean): CrowdinFileInfo[] {
         const pxtCrowdinBranch = pxt.appTarget.versions ? pxt.appTarget.versions.pxtCrowdinBranch : "" || "";
         const targetCrowdinBranch = pxt.appTarget.versions ? pxt.appTarget.versions.targetCrowdinBranch : "" || "";
 
@@ -200,7 +200,7 @@ namespace pxt.crowdin {
 
         // top level files are for PXT, subolder are targets
         allFiles = allFiles.filter(f => {
-            if (f.fullName.indexOf('/') < 0) return f.branch == pxtCrowdinBranch; // pxt file
+            if (f.fullName.indexOf('/') < 0) return f.branch == pxtCrowdinBranch && !excludePxt; // pxt file
             else return f.branch == targetCrowdinBranch;
         })
 

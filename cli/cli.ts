@@ -380,10 +380,12 @@ function langStatsCrowdinAsync(prj: string, key: string, lang: string): Promise<
 
 async function exportCrowdinAsync(prj: string, key: string): Promise<void> {
     const DOMParser = require('xmldom').DOMParser;
-    const branch = ""
-    const infoUri = pxt.crowdin.apiUri(branch, prj, key, "info", { json: "true" });
+    const infoUri = pxt.crowdin.apiUri("", prj, key, "info", { json: "true" });
     const respText = await pxt.Util.httpGetTextAsync(infoUri);
     const info = JSON.parse(respText) as pxt.crowdin.CrowdinProjectInfo;
+    const pxtCrowdinBranch = pxt.appTarget.versions ? pxt.appTarget.versions.pxtCrowdinBranch : "" || "";
+    const targetCrowdinBranch = pxt.appTarget.versions ? pxt.appTarget.versions.targetCrowdinBranch : "" || "";
+ 
     if (!info) return;
     info.languages = info.languages.filter(lang => lang.code != "en"); // don't self translate
 
@@ -399,6 +401,7 @@ async function exportCrowdinAsync(prj: string, key: string): Promise<void> {
 
     //info.languages = [{ code: "fr", name: "French" }];
     const allFiles = pxt.crowdin.filterAndFlattenFiles(info.files);
+    report(`found ${allFiles.length} files`);
     const totals = {
         strings: 0,
         variants: 0,
@@ -423,8 +426,9 @@ async function exportCrowdinAsync(prj: string, key: string): Promise<void> {
             const fileXliffEntries: Map<Map<pxt.crowdin.XliffEntry>> = {};
             const allXliffEntries: Map<{ translation: string; variants?: pxt.crowdin.XliffEntry[]; }> = {};
             for (const file of files) {
-                pxt.debug(`downloading ${file.fullName}`)
-                const exportFileUri = pxt.crowdin.apiUri(branch, prj, key, "export-file", {
+                const fileBranch = file.fullName.indexOf('/') < 0 ? pxtCrowdinBranch : targetCrowdinBranch;
+                pxt.debug(`downloading ${file.fullName}#${fileBranch}`)
+                const exportFileUri = pxt.crowdin.apiUri(fileBranch, prj, key, "export-file", {
                     file: pxt.crowdin.normalizeFileName(file.fullName),
                     language: lang.code,
                     export_translated_only: "0",
