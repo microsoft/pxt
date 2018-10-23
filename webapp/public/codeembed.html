@@ -57,7 +57,7 @@
             pxtFrame.style.bottom = 0;
             pxtFrame.style.width = "1px";
             pxtFrame.style.height = "1px";
-            pxtFrame.src = "/--docs?render=1"
+            pxtFrame.src =  (pxtConfig ? pxtConfig.docsUrl : '---docs') + '?render=1';
             document.body.appendChild(pxtFrame);
         }
 
