@@ -54,7 +54,9 @@ function migratePrefixesAsync(): Promise<void> {
                 .then((previousHeaders: pxt.workspace.Header[]) => {
                     return Promise.map(previousHeaders, (h) => copyProject(h));
                 })
-                .then(() => { });
+                .then(() => {
+                    if (!location.hash) location.hash = "#editor";
+                });
         });
 }
 
