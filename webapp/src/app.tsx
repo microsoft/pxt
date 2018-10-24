@@ -2894,6 +2894,9 @@ function initExtensionsAsync(): Promise<void> {
             if (res.webUsbPairDialogAsync) {
                 pxt.commands.webUsbPairDialogAsync = res.webUsbPairDialogAsync;
             }
+            if (res.eventListener) {
+                pxt.events.eventListener = res.eventListener;
+            }
         });
 }
 

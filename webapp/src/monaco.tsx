@@ -1360,6 +1360,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 monacoEditor.editor.setPosition(endPos);
                 monacoEditor.editor.focus();
                 //monacoEditor.editor.setSelection(new monaco.Range(currPos.lineNumber, currPos.column, endPos.lineNumber, endPos.column));
+
+                // Fire a create event
+                pxt.events.fire(new pxt.events.CreateEvent('js', fn.attributes.blockId));
             };
             monacoBlock.ondragstart = (e: DragEvent) => {
                 pxt.tickEvent("monaco.toolbox.itemdrag", undefined, { interactiveConsent: true });
@@ -1370,6 +1373,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 let insertText = snippetPrefix ? `${snippetPrefix}.${snippet}` : snippet;
                 insertText = addNamespace ? `${firstWord(namespaceToUse)}.${insertText}` : insertText;
                 e.dataTransfer.setData('text', insertText); // IE11 only supports text
+
+                // Fire a create event
+                pxt.events.fire(new pxt.events.CreateEvent('js', fn.attributes.blockId));
             }
             monacoBlock.ondragend = (e: DragEvent) => {
                 monacoFlyout.style.transform = "none";

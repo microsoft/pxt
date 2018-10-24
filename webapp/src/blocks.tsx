@@ -378,6 +378,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (ev.xml.tagName == 'SHADOW')
                     this.cleanUpShadowBlocks();
                 this.parent.setState({ hideEditorFloats: false });
+                pxt.events.fire(new pxt.events.CreateEvent('blocks', blockId));
             }
             if (ev.type == 'ui') {
                 if (ev.element == 'category') {
