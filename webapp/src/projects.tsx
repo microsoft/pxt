@@ -399,6 +399,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                                 tags={scr.tags}
                                 scr={scr} index={index}
                                 onCardClick={this.handleCardClick}
+                                cardType={scr.cardType}
                             />
                         )}
                     </carousel.Carousel>
