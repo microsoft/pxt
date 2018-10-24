@@ -129,7 +129,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
     }
 
     chgCode(scr: pxt.CodeCard, loadBlocks: boolean, prj?: pxt.ProjectTemplate) {
-        return this.props.parent.importExampleAsync({ name: scr.name,  path: scr.url, loadBlocks, prj });
+        return this.props.parent.importExampleAsync({ name: scr.name, path: scr.url, loadBlocks, prj });
     }
 
     importProject() {
@@ -420,6 +420,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                                 scr={scr}
                                 onClick={this.props.onClick}
                                 cardType={scr.cardType}
+                                tags={scr.tags}
                             />
                         )}
                     </div>
@@ -491,6 +492,7 @@ export interface ProjectsDetailProps extends ISettingsProps {
     scr?: any;
     onClick: (scr: any) => void;
     cardType: string;
+    tags?: string[];
 }
 
 export interface ProjectsDetailState {
@@ -513,7 +515,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
     }
 
     renderCore() {
-        const { name, description, imageUrl, largeImageUrl, youTubeId, cardType } = this.props;
+        const { name, description, imageUrl, largeImageUrl, youTubeId, cardType, tags } = this.props;
 
         const image = largeImageUrl || imageUrl || (youTubeId ? `https://img.youtube.com/vi/${youTubeId}/0.jpg` : undefined);
 
@@ -540,6 +542,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                 <div className="segment">
                     <div className="header"> {name} </div>
                     <p className="detail">
+                        {tags ? tags.map(tag => <a className={`ui basic ${tag.color || ''} label`}>{pxt.Util.rlf(tag.label)}</a>) : undefined}
                         {description}
                     </p>
                     <div className="actions">
