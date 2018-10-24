@@ -518,6 +518,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         const { name, description, imageUrl, largeImageUrl, youTubeId, cardType, tags } = this.props;
 
         const image = largeImageUrl || imageUrl || (youTubeId ? `https://img.youtube.com/vi/${youTubeId}/0.jpg` : undefined);
+        const tagColors: pxt.Map<string> = pxt.appTarget.appTheme.tagColors || {};
 
         let clickIcon: string = '';
         let clickLabel = lf("Show Instructions");
@@ -542,8 +543,8 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                 <div className="segment">
                     <div className="header"> {name} </div>
                     <p className="detail">
-                        {tags ? tags.map(tag => <a className={`ui basic ${tag.color || ''} label`}>{pxt.Util.rlf(tag.label)}</a>) : undefined}
-                        {description}
+                        <div>{description}</div>
+                        {tags ? tags.map(tag => <div className={`ui basic ${tagColors[tag] || ''} label`}>{pxt.Util.rlf(tag)}</div>) : undefined}
                     </p>
                     <div className="actions">
                         {actions.map(action =>
