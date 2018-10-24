@@ -44,8 +44,8 @@ You have to create a new repo.
 
 ## Freezing extensions
 
-It is possible to freeze an approved extension to a particular tag in GitHub per editor major version. This is useful in a servicing scenario where an older (incompatible) editor is kept online in parallel with a new editor.
-The editor author can run ``pxt testghpkgs`` to generate the list of current packages and tags and save them in the ``pxtargetconfig.json`` to freeze those versions.
+It's possible to freeze, or lock, an approved extension to a particular tag in GitHub based on editor major version. This is useful in a servicing scenario where an older (incompatible) editor is kept online in parallel with a new editor.
+The editor author can run ``pxt testghpkgs`` to generate the list of current extensions and tags and save them in the ``pxtargetconfig.json`` to freeze those versions*.
 
 ```
 {
@@ -57,3 +57,5 @@ The editor author can run ``pxt testghpkgs`` to generate the list of current pac
         }
 }
 ```
+
+\* Extensions are denoted as `packages` in the JSON.
