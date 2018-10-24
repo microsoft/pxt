@@ -3907,6 +3907,8 @@ ${lbl}: .short 0xffff
                     return emitImportEqualsDeclaration(<ImportEqualsDeclaration>node);
                 case SK.EmptyStatement:
                     return;
+                case SK.SemicolonClassElement:
+                    return;
                 default:
                     unhandled(node);
             }
