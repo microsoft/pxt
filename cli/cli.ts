@@ -5107,7 +5107,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
             // remove dups
             fullnames = U.unique(fullnames, f => f.toLowerCase());
             pxt.log(`found ${fullnames.length} approved packages`);
-            fullnames.forEach(fn => pxt.log(`  ${fn}`));
+            pxt.log(JSON.stringify(fullnames, null, 2));
             return Promise.all(fullnames.map(fullname => pxt.github.listRefsAsync(fullname)
                 .then(tags => {
                     const tag = tags.reverse()[0] || "master";
