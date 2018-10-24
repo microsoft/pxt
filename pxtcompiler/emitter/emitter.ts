@@ -58,7 +58,7 @@ namespace ts.pxtc {
         pxtNodeWave: number;
     }
 
-    export interface FieldWithAddInfo extends PropertyDeclaration {
+    export interface FieldWithAddInfo extends NamedDeclaration {
         irGetter?: MethodDeclaration;
         irSetter?: MethodDeclaration;
     }
@@ -1380,13 +1380,23 @@ namespace ts.pxtc {
             }
         }
 
+        function isCtorField(p: ParameterDeclaration) {
+            if (!p.modifiers) return false
+            for (let m of p.modifiers) {
+                if (m.kind == SK.PrivateKeyword ||
+                    m.kind == SK.PublicKeyword ||
+                    m.kind == SK.ProtectedKeyword)
+                    return true
+            }
+            return false
+        }
+
         function getClassInfo(t: Type, decl: ClassDeclaration = null) {
             if (!decl)
                 decl = <ClassDeclaration>t.symbol.valueDeclaration
             let id = safeName(decl) + "__C" + getNodeId(decl)
             let info: ClassInfo = classInfos[id]
             if (!info) {
-                let reffields: PropertyDeclaration[] = []
                 info = {
                     id: id,
                     allfields: [],
@@ -1404,9 +1414,13 @@ namespace ts.pxtc {
                     for (let mem of decl.members) {
                         if (mem.kind == SK.PropertyDeclaration) {
                             let pdecl = <PropertyDeclaration>mem
-                            reffields.push(pdecl)
                             info.allfields.push(pdecl)
-                        } else if (isClassFunction(mem) && mem.kind != SK.Constructor) {
+                        } else if (mem.kind == SK.Constructor) {
+                            for (let p of (mem as FunctionLikeDeclaration).parameters) {
+                                if (isCtorField(p))
+                                    info.allfields.push(p)
+                            }
+                        } else if (isClassFunction(mem)) {
                             let minf = getFunctionInfo(mem as any)
                             minf.parentClassInfo = info
                             info.methods.push(mem as any)
@@ -1415,8 +1429,6 @@ namespace ts.pxtc {
                     if (info.baseClassInfo) {
                         info.allfields = info.baseClassInfo.allfields.concat(info.allfields)
                         computeVtableInfo(info)
-                    } else {
-                        info.allfields = reffields.slice(0)
                     }
                 })
 
@@ -1722,7 +1734,7 @@ ${lbl}: .short 0xffff
                 return ir.rtcall(ev, [])
             } else if (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
                 return emitCallCore(node, node, [], null, decl as any, node.expression)
-            } else if (decl.kind == SK.PropertyDeclaration) {
+            } else if (decl.kind == SK.PropertyDeclaration || decl.kind == SK.Parameter) {
                 if (isStatic(decl)) {
                     return emitLocalLoad(decl as PropertyDeclaration)
                 }
@@ -2552,7 +2564,6 @@ ${lbl}: .short 0xffff
 
             if (node.parent.kind == SK.ClassDeclaration) {
                 let parClass = node.parent as ClassDeclaration
-                let numTP = parClass.typeParameters ? parClass.typeParameters.length : 0
                 let classInfo = getClassInfo(null, parClass)
                 if (proc.classInfo)
                     assert(proc.classInfo == classInfo, "proc.classInfo == classInfo")
@@ -2567,10 +2578,14 @@ ${lbl}: .short 0xffff
             }
 
             const destructuredParameters: ParameterDeclaration[] = []
+            const fieldAssignmentParameters: ParameterDeclaration[] = []
 
             proc.args = getParameters(node).map((p, i) => {
                 if (p.name.kind === SK.ObjectBindingPattern) {
                     destructuredParameters.push(p)
+                }
+                if (node.kind == SK.Constructor && isCtorField(p)) {
+                    fieldAssignmentParameters.push(p)
                 }
                 let l = new ir.Cell(i, p, getVarInfo(p))
                 l.isarg = true
@@ -2588,6 +2603,14 @@ ${lbl}: .short 0xffff
             })
 
             destructuredParameters.forEach(dp => emitVariableDeclaration(dp))
+
+            // for constructor(public foo:number) generate this.foo = foo;
+            for (let p of fieldAssignmentParameters) {
+                let idx = fieldIndexCore(proc.classInfo,
+                    getFieldInfo(proc.classInfo, getName(p)), false)
+                let trg2 = ir.op(EK.FieldAccess, [emitLocalLoad(info.thisParameter)], idx)
+                proc.emitExpr(ir.op(EK.Store, [trg2, emitLocalLoad(p)]))
+            }
 
             if (node.body.kind == SK.Block) {
                 emit(node.body);
@@ -2667,7 +2690,6 @@ ${lbl}: .short 0xffff
             if (!node.body)
                 return undefined;
 
-            let info = getFunctionInfo(node)
             let lit: ir.Expr = null
 
             scope(() => {

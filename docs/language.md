@@ -40,6 +40,7 @@ functions, lambdas, classes).
 * classes implementing interfaces (explicitly and implicitly)
 * object literals `{ foo: 1, bar: "two" }`
 * `typeof` expression
+* `public`/`private` annotations on constructor arguments (syntactic sugar to make them into fields)
 
 The following used to be disallowed, but should be supported now,
 though they require testing:
@@ -64,19 +65,18 @@ Static TypeScript has *nominal typing* for classes, rather than the *structural 
 We generally stay away from the more dynamic parts of JavaScript.  Things you may miss and we may implement:
 
 * object destructuring with initializers
-* shorthand properties
+* shorthand properties (`{a, b: 1}` parsed as `{a: a, b: 1}`)
 * exceptions (`throw`, `try ... catch`, `try ... finally`);
   currently all exceptions just stop the program
 * using generic functions as values and nested generic functions
 * initializers for class fields
-* `public`/`private` annotations on constructor arguments (syntactic sugar to make them into fields)
 * binding with arrays or objects: `let [a, b] = ...; let { x, y } = ...`
 * `delete` statement (on object literals)
 * spread and reset operators (statically typed)
 * support of `enums` as run-time arrays
 * lambda functions with more than three arguments
 * `new` on non-class types
-* using a built-in as a value
+* using a built-in function as a value
 
 Things that we are not very likely to implement due to the scope of the project
 or other constraints (note that if you don't know what a given feature is, you're
