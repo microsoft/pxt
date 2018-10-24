@@ -488,7 +488,7 @@ namespace pxt.cpp {
                     default:
                         if (U.lookup(knownEnums, tp))
                             return "I"
-                        return "_" + tp;
+                        return "_" + tp.replace(/[\*_]+$/, "");
                 }
             }
 

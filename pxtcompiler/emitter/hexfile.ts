@@ -625,9 +625,20 @@ namespace ts.pxtc {
     }
 
     export function asmline(s: string) {
-        if (!/(^[\s;])|(:$)/.test(s))
-            s = "    " + s
-        return s + "\n"
+        if (s.indexOf("\n") >= 0) {
+            s = s.replace(/^\s*/mg, "")
+                .replace(/^(.*)$/mg, (l, x) => {
+                    if ((x[0] == ";" && x[1] == " ") || /:\*$/.test(x))
+                        return x
+                    else
+                        return "    " + x
+                })
+            return s + "\n"
+        } else {
+            if (!/(^[\s;])|(:$)/.test(s))
+                s = "    " + s
+            return s + "\n"
+        }
     }
 
     function emitStrings(snippets: AssemblerSnippets, bin: Binary) {

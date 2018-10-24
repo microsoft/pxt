@@ -149,8 +149,10 @@ ${lbl}: ${this.obj_header("pxt::buffer_vt")}
             this.proc = proc;
             this.work();
             // emit the trampoline once, happen to be after the root function
-            if (this.proc.isRoot)
+            if (this.proc.isRoot) {
                 this.emitLambdaTrampoline()
+                this.emitArrayMethods()
+            }
         }
 
         private write = (s: string) => { this.resText += asmline(s); }
@@ -715,21 +717,21 @@ ${baseLabel}:
         }
 
         // vtable in r3; clobber r2
-        private checkSubtype(info: ClassInfo, failLbl = ".fail") {
-            this.write(`ldrh r2, [r3, #8]`)
-            this.write(`cmp r2, #${info.classNo}`)
+        private checkSubtype(info: ClassInfo, failLbl = ".fail", r2 = "r2") {
+            this.write(`ldrh ${r2}, [r3, #8]`)
+            this.write(`cmp ${r2}, #${info.classNo}`)
             if (info.classNo == info.lastSubtypeNo) {
                 this.write(`bne ${failLbl}`) // different class
             } else {
                 this.write(`blt ${failLbl}`)
-                this.write(`cmp r2, #${info.lastSubtypeNo}`)
+                this.write(`cmp ${r2}, #${info.lastSubtypeNo}`)
                 this.write(`bgt ${failLbl}`)
             }
         }
 
         // keep r0, keep r1, clobber r2, vtable in r3
-        private loadVTable(decr = false) {
-            this.write(`lsls r2, r0, #30`)
+        private loadVTable(decr = false, r2 = "r2") {
+            this.write(`lsls ${r2}, r0, #30`)
             this.write(`bne .fail`) // tagged
             this.write(`cmp r0, #0`)
             this.write(`beq .fail`) // null
@@ -737,14 +739,14 @@ ${baseLabel}:
             this.write(`ldr r3, [r0, #0]`)
 
             if (!target.gc) {
-                this.write(`lsls r2, r3, #30`)
+                this.write(`lsls ${r2}, r3, #30`)
                 this.write(`beq .fail`) // C++ class - TODO remove
                 if (decr) {
                     this.write(`bmi .inflash`)
-                    this.write(`uxth r2, r3`)
-                    this.write(`subs r2, #2`)
+                    this.write(`uxth ${r2}, r3`)
+                    this.write(`subs ${r2}, #2`)
                     this.write(`blt .fail`) // ref-cnt underflow!
-                    this.write(`strh r2, [r0, #0]`)
+                    this.write(`strh ${r2}, [r0, #0]`)
                     this.write(`.inflash:`)
                 }
                 this.write(`lsrs r3, r3, #16`)
@@ -1032,6 +1034,83 @@ ${baseLabel}:
                 this.write(this.t.push_locals(interAlign))
                 for (let i = 0; i < interAlign; ++i)
                     this.pushDummy()
+            }
+        }
+
+        private emitArrayMethods() {
+            for (let op of ["get", "set"]) {
+                this.write(`
+                .section code
+                _pxt_array_${op}:
+                `)
+
+                this.loadVTable(false, "r4")
+                this.checkSubtype(this.builtInClassNo(pxt.BuiltInType.RefCollection), ".fail", "r4")
+
+                // on linux we use 32 bits for array size
+                const ldrSize = target.stackAlign ? "ldr" : "ldrh"
+
+                this.write(`
+                    asrs r1, r1, #1
+                    bcc .notint
+                    ${ldrSize} r4, [r0, #8]
+                    cmp r1, r4
+                    bhs .oob
+                    lsls r1, r1, #2
+                    ldr r4, [r0, #4]
+                `);
+
+                if (target.gc) {
+                    if (op == "set") {
+                        this.write(`
+                            str r2, [r4, r1]
+                            bx lr
+                        `)
+                    } else {
+                        this.write(`
+                            ldr r0, [r4, r1]
+                            bx lr
+                        `)
+                    }
+                } else {
+                    if (op == "set") {
+                        this.write(`
+                            ldr r0, [r4, r1]
+                            str r2, [r4, r1]
+                            mov r4, r2
+                            push {lr}
+                            bl _pxt_decr
+                            mov r0, r4
+                            bl _pxt_incr
+                            pop {pc}
+                        `)
+                    } else {
+                        this.write(`
+                            ldr r0, [r4, r1]
+                            push {lr}
+                            bl _pxt_incr
+                            pop {pc}
+                        `)
+                    }
+                }
+
+
+                this.write(`
+                .notint:
+                    lsls r1, r1, #1
+                    push {r0, r2}
+                    mov r0, r1
+                    ${this.t.callCPP("pxt::toInt")}
+                    mov r1, r0
+                    pop {r0, r2}
+                .oob:
+                    ${this.t.pushLR()}
+                    ${this.t.callCPP(`Array_::${op}At`)}
+                    ${this.t.popPC()}
+
+                .fail:
+                    bl pxt::failedCast
+                `)
             }
         }
 

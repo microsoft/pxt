@@ -310,7 +310,9 @@ namespace ts.pxtc {
             case "_Buffer": return pxt.BuiltInType.BoxedBuffer
             case "_Image": return pxt.BuiltInType.RefImage
             case "_Action": return pxt.BuiltInType.RefAction
-            default: return null
+            case "_RefCollection": return pxt.BuiltInType.RefCollection
+            default:
+                return null
         }
     }
 
@@ -3047,6 +3049,17 @@ ${lbl}: .short 0xffff
             let fmt: string[] = []
             let inf = hex.lookupFunc(name)
             if (inf) fmt = inf.argsFmt
+
+            if (isThumb()) {
+                if (name == "Array_::getAt") {
+                    name = "_pxt_array_get"
+                    fmt = ["T", "T", "T"]
+                }
+                if (name == "Array_::setAt") {
+                    name = "_pxt_array_set"
+                    fmt = ["T", "T", "T", "T"]
+                }
+            }
 
             if (append) args = args.concat(append)
 
