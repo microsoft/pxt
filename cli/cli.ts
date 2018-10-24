@@ -4473,12 +4473,12 @@ function testGithubPackagesAsync(parsed?: commandParser.ParsedCommand): Promise<
         .then(fullnames => Promise.all(fullnames.map(fullname => pxt.github.listRefsAsync(fullname)
             .then(tags => {
                 const tag = tags.reverse()[0] || "master";
-                pxt.log(`"${fullname}#${tag}",`);
                 repos[fullname] = { fullname, tag };
             }))
         ).then(() => {
             todo = Object.keys(repos);
             pxt.log(`found ${todo.length} packages`);
+            pxt.log(JSON.stringify(Object.keys(repos).map(k => `${repos[k].fullname}#${repos[k].tag}`), null, 2));
             // 2. process each repo
             return nextAsync();
         })

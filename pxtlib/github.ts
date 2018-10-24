@@ -418,7 +418,7 @@ namespace pxt.github {
 
         if (!parsed) return Promise.resolve<string>(null);
 
-        return repoAsync(parsed.fullName, config)
+        return repoAsync(parsed.fullName, config.packages)
             .then(scr => {
                 if (!scr) return undefined;
                 return listRefsExtAsync(scr.fullName, "tags")
