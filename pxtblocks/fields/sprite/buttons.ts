@@ -179,7 +179,6 @@ namespace pxtblockly {
         cx: number;
         cy: number;
         root: svg.Group;
-        inDom = false;
         clickHandler: () => void;
 
         constructor(root: svg.Group, cx: number, cy: number) {
@@ -188,14 +187,6 @@ namespace pxtblockly {
             this.cy = cy;
             this.root.onClick(() => this.clickHandler && this.clickHandler());
             this.root.appendClass("sprite-editor-button");
-            this.root.el.addEventListener("animationstart", () => {
-                this.inDom = true;
-                this.layout();
-            });
-
-            // This animation does nothing, but the above event will fire once the
-            // node has definitely been added to the DOM
-            this.root.el.style.animation = "dom-test";
         }
 
         public getElement() {
@@ -251,15 +242,13 @@ namespace pxtblockly {
             this.textEl = mkText(text)
                 .appendClass(className);
 
+            this.textEl.moveTo(this.cx, this.cy);
+
             this.root.appendChild(this.textEl);
         }
 
         setText(text: string) {
             this.textEl.text(text);
-            if (this.inDom) this.layout();
-        }
-
-        layout() {
             this.textEl.moveTo(this.cx, this.cy);
         }
     }
