@@ -381,8 +381,7 @@ namespace pxt.runner {
             const msg = jobQueue.shift();
             if (!msg) return; // no more work
 
-            let options = msg.options as pxt.blocks.BlocksRenderOptions;
-            if (!options) options = {};
+            const options = (msg.options || {}) as pxt.blocks.BlocksRenderOptions;
             options.splitSvg = false; // don't split when requesting rendered images
             pxt.tickEvent("renderer.job")
             jobPromise = pxt.BrowserUtils.loadBlocklyAsync()
