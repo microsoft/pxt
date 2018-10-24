@@ -429,9 +429,10 @@ namespace pxt.github {
                         tags = tags.filter(t => /^v\d+(\.\d+(\.\d+)?)?$/i.test(t));
 
                         // check if the version has been frozen for this release
+                        const packageConfig = config.packages;
                         const targetVersion = pxt.appTarget.versions && pxt.semver.tryParse(pxt.appTarget.versions.target);
-                        if (targetVersion && config.releases && config.releases["v" + targetVersion.major]) {
-                            const release = config.releases["v" + targetVersion.major]
+                        if (targetVersion && packageConfig && packageConfig.releases && packageConfig.releases["v" + targetVersion.major]) {
+                            const release = packageConfig.releases["v" + targetVersion.major]
                                 .map(repo => pxt.github.parseRepoId(repo))
                                 .filter(repo => repo.fullName.toLowerCase() == parsed.fullName.toLowerCase())
                             [0];
