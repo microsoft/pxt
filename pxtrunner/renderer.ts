@@ -154,7 +154,7 @@ namespace pxt.runner {
         }
     }
 
-    const renderQueue: {
+    let renderQueue: {
         el: JQuery;
         source: string;
         options: blocks.BlocksRenderOptions;
@@ -196,20 +196,7 @@ namespace pxt.runner {
 
         renderQueue.push({ el: $el, source: $el.text(), options, render, cls });
         $el.removeClass(cls);
-        return Promise.delay(1, renderNextSnippetAsync(cls, render, options));
-        /*
-        return pxt.runner.decompileToBlocksAsync($el.text(), options)
-            .then((r) => {
-                try {
-                    render($el, r);
-                } catch (e) {
-                    console.error('error while rendering ' + $el.html())
-                    $el.append($('<div/>').addClass("ui segment warning").text(e.message));
-                }
-                $el.removeClass(cls);
-                return Promise.delay(1, renderNextSnippetAsync(cls, render, options));
-            })
-        */
+        return renderNextSnippetAsync(cls, render, options);
     }
 
     function renderSnippetsAsync(options: ClientRenderOptions): Promise<void> {
@@ -730,6 +717,7 @@ namespace pxt.runner {
             });
         }
 
+        renderQueue = [];
         renderTypeScript(options);
         return Promise.resolve()
             .then(() => renderNextCodeCardAsync(options.codeCardClass, options))
