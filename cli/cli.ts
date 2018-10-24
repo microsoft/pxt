@@ -4472,8 +4472,14 @@ function testGithubPackagesAsync(parsed?: commandParser.ParsedCommand): Promise<
         )
         .then(fullnames => Promise.all(fullnames.map(fullname => pxt.github.listRefsAsync(fullname)
             .then(tags => {
-                const tag = tags.reverse()[0] || "master";
-                repos[fullname] = { fullname, tag };
+                tags = tags.filter(t => /^v\d+(\.\d+(\.\d+)?)?$/i.test(t)); //
+                const tag = tags.reverse()[0];
+                if (!tag) {
+                    errors.push(`${fullname} does not have a version tag`);
+                    pxt.log(`${fullname} does not have a version tag`)
+                } else {
+                    repos[fullname] = { fullname, tag };
+                }
             }))
         ).then(() => {
             todo = Object.keys(repos);
