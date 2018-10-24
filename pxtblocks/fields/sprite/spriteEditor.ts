@@ -70,7 +70,6 @@ namespace pxtblockly {
         private colors: string[];
 
 
-        private controlDown: boolean = false;
         private shiftDown: boolean = false;
         private mouseDown: boolean = false;
         constructor(bitmap: Bitmap, blocksInfo: pxtc.BlocksInfo, protected lightMode = false) {
@@ -97,7 +96,7 @@ namespace pxtblockly {
                 this.debug("gesture end (" + PaintTool[this.activeTool] + ")");
                 this.commit();
                 this.mouseDown = false;
-                if (this.activeTool == PaintTool.Circle && !this.controlDown) {
+                if (this.activeTool == PaintTool.Circle && !this.shiftDown) {
                     this.switchIconBack(PaintTool.Rectangle);
                 }
                 if (this.activeTool == PaintTool.Line && !this.shiftDown) {
@@ -312,18 +311,7 @@ namespace pxtblockly {
         }
 
         private keyDown = (event: KeyboardEvent) => {
-            if (event.keyCode == 17) { // Control
-                if (!this.controlDown) {
-                    let btn = (this.sidebar.getButtonForTool(PaintTool.Rectangle) as TextButton);
-                    btn.setText("\uf10c");
-                    btn.title(lf("Circle"));
-                    btn.onClick(() => this.sidebar.setTool(PaintTool.Circle));
-                    if (this.activeTool == PaintTool.Rectangle) {
-                        this.setActiveTool(PaintTool.Circle);
-                    }
-                }
-                this.controlDown = true;
-            } else if (event.keyCode == 16) { // Shift
+            if (event.keyCode == 16) { // Shift
                 if (!this.shiftDown) {
                     let btn = (this.sidebar.getButtonForTool(PaintTool.Normal) as TextButton);
                     btn.setText("\uf07e");
@@ -332,6 +320,13 @@ namespace pxtblockly {
                     if (this.activeTool == PaintTool.Normal) {
                         this.setActiveTool(PaintTool.Line);
                     }
+                    btn = (this.sidebar.getButtonForTool(PaintTool.Rectangle) as TextButton);
+                    btn.setText("\uf10c");
+                    btn.title(lf("Circle"));
+                    btn.onClick(() => this.sidebar.setTool(PaintTool.Circle));
+                    if (this.activeTool == PaintTool.Rectangle) {
+                        this.setActiveTool(PaintTool.Circle);
+                    }
                 }
                 this.shiftDown = true;
             }
@@ -339,17 +334,19 @@ namespace pxtblockly {
         }
 
         private keyUp = (event: KeyboardEvent) => {
-            if (event.keyCode == 17) { // Control
-                this.controlDown = false;
-                // If not drawing a circle, switch back to Rectangle
-                if (!(this.mouseDown && this.activeTool == PaintTool.Circle)) {
-                    this.switchIconBack(PaintTool.Rectangle);
-                }
-            } else if (event.keyCode == 16) { // Shift
+            // If not drawing a circle, switch back to Rectangle and Pencil
+            if (event.keyCode == 16) { // Shift
                 this.shiftDown = false;
-                // If not drawing a line, switch back to Pencil
-                if (!(this.mouseDown && this.activeTool == PaintTool.Line)) {
+                if (this.mouseDown) {
+                    if (this.activeTool != PaintTool.Line) {
+                        this.switchIconBack(PaintTool.Normal);
+                    }
+                    if (this.activeTool != PaintTool.Circle) {
+                        this.switchIconBack(PaintTool.Rectangle);
+                    }
+                } else {
                     this.switchIconBack(PaintTool.Normal);
+                    this.switchIconBack(PaintTool.Rectangle);
                 }
             }
         }
