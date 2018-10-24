@@ -21,7 +21,8 @@ declare namespace pxt {
 
     interface PackagesConfig {
         approvedOrgs?: string[];
-        approvedRepos?: string[];
+        approvedRepos?: string[]; // list of company/project
+        releases?: pxt.Map<string[]>;  // per major version list of approved company/project#tag
         bannedOrgs?: string[];
         bannedRepos?: string[];
         allowUnapproved?: boolean;

@@ -4473,7 +4473,7 @@ function testGithubPackagesAsync(parsed?: commandParser.ParsedCommand): Promise<
         .then(fullnames => Promise.all(fullnames.map(fullname => pxt.github.listRefsAsync(fullname)
             .then(tags => {
                 const tag = tags.reverse()[0] || "master";
-                pxt.log(`${fullname}#${tag}`);
+                pxt.log(`"${fullname}#${tag}",`);
                 repos[fullname] = { fullname, tag };
             }))
         ).then(() => {
