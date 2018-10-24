@@ -643,9 +643,8 @@ namespace pxt.github {
 
                         // check if the version has been frozen for this release
                         const targetVersion = pxt.appTarget.versions && pxt.semver.tryParse(pxt.appTarget.versions.target);
-                        const approvedReleases = config.approvedReleases;
-                        if (approvedReleases && targetVersion && approvedReleases["v" + targetVersion.major]) {
-                            const release = approvedReleases["v" + targetVersion.major]
+                        if (targetVersion && config.releases && config.releases["v" + targetVersion.major]) {
+                            const release = config.releases["v" + targetVersion.major]
                                 .map(repo => pxt.github.parseRepoId(repo))
                                 .filter(repo => repo.fullName.toLowerCase() == parsed.fullName.toLowerCase())
                                 [0];
