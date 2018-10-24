@@ -41,6 +41,7 @@ functions, lambdas, classes).
 * object literals `{ foo: 1, bar: "two" }`
 * `typeof` expression
 * `public`/`private` annotations on constructor arguments (syntactic sugar to make them into fields)
+* initializers for class fields
 
 The following used to be disallowed, but should be supported now,
 though they require testing:
@@ -69,7 +70,6 @@ We generally stay away from the more dynamic parts of JavaScript.  Things you ma
 * exceptions (`throw`, `try ... catch`, `try ... finally`);
   currently all exceptions just stop the program
 * using generic functions as values and nested generic functions
-* initializers for class fields
 * binding with arrays or objects: `let [a, b] = ...; let { x, y } = ...`
 * `delete` statement (on object literals)
 * spread and reset operators (statically typed)

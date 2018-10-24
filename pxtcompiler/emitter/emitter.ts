@@ -1686,8 +1686,11 @@ ${lbl}: .short 0xffff
                 emitVariableDeclaration(node)
                 return
             }
-            if (node.initializer)
-                userError(9209, lf("class field initializers not supported"))
+            if (node.initializer) {
+                let info = getClassInfo(typeOf(node.parent))
+                if (bin.finalPass && !info.ctor)
+                    userError(9209, lf("class field initializers require an explicit constructor"))
+            }
             // do nothing
         }
         function emitShorthandPropertyAssignment(node: ShorthandPropertyAssignment) { }
@@ -2562,6 +2565,8 @@ ${lbl}: .short 0xffff
 
             proc.captured = locals;
 
+            const initalizedFields: PropertyDeclaration[] = []
+
             if (node.parent.kind == SK.ClassDeclaration) {
                 let parClass = node.parent as ClassDeclaration
                 let classInfo = getClassInfo(null, parClass)
@@ -2574,6 +2579,12 @@ ${lbl}: .short 0xffff
                         assert(classInfo.ctor == proc, "classInfo.ctor == proc")
                     else
                         classInfo.ctor = proc
+                    for (let f of classInfo.allfields) {
+                        if (f.kind == SK.PropertyDeclaration) {
+                            let fi = f as PropertyDeclaration
+                            if (fi.initializer) initalizedFields.push(fi)
+                        }
+                    }
                 }
             }
 
@@ -2610,6 +2621,13 @@ ${lbl}: .short 0xffff
                     getFieldInfo(proc.classInfo, getName(p)), false)
                 let trg2 = ir.op(EK.FieldAccess, [emitLocalLoad(info.thisParameter)], idx)
                 proc.emitExpr(ir.op(EK.Store, [trg2, emitLocalLoad(p)]))
+            }
+
+            for (let f of initalizedFields) {
+                let idx = fieldIndexCore(proc.classInfo,
+                    getFieldInfo(proc.classInfo, getName(f)), false)
+                let trg2 = ir.op(EK.FieldAccess, [emitLocalLoad(info.thisParameter)], idx)
+                proc.emitExpr(ir.op(EK.Store, [trg2, emitExpr(f.initializer)]))
             }
 
             if (node.body.kind == SK.Block) {
