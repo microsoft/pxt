@@ -348,7 +348,6 @@ namespace pxtblockly {
                     this.switchIconBack(PaintTool.Normal);
                     this.switchIconBack(PaintTool.Rectangle);
                 }
-                
             }
         }
 
