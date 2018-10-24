@@ -1045,7 +1045,8 @@ namespace pxt.blocks {
                         "check": ['Array']
                     }
                 ],
-                "output": 'Number'
+                "output": 'Number',
+                "outputShape": Blockly.OUTPUT_SHAPE_ROUND
             });
         }
 
@@ -1793,6 +1794,7 @@ namespace pxt.blocks {
                         }
                     ],
                     "colour": pxt.toolbox.blockColors['arrays'],
+                    "outputShape": Blockly.OUTPUT_SHAPE_ROUND,
                     "inputsInline": true
                 });
 
@@ -1868,6 +1870,7 @@ namespace pxt.blocks {
                     ],
                     "inputsInline": true,
                     "output": "Number",
+                    "outputShape": Blockly.OUTPUT_SHAPE_ROUND,
                     "colour": pxt.toolbox.getNamespaceColor('math')
                 });
 
@@ -1900,6 +1903,7 @@ namespace pxt.blocks {
                     ],
                     "inputsInline": true,
                     "output": "Number",
+                    "outputShape": Blockly.OUTPUT_SHAPE_ROUND,
                     "colour": pxt.toolbox.getNamespaceColor('math')
                 });
 
@@ -2474,7 +2478,8 @@ namespace pxt.blocks {
                         "check": ['String']
                     }
                 ],
-                "output": 'Number'
+                "output": 'Number',
+                "outputShape": Blockly.OUTPUT_SHAPE_ROUND
             });
         }
         installBuiltinHelpInfo(textLengthId);
