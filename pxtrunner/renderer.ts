@@ -175,7 +175,7 @@ namespace pxt.runner {
                     console.error('error while rendering ' + el.html())
                     el.append($('<div/>').addClass("ui segment warning").text(e.message));
                 }
-                el.removeClass(cls);
+                el.removeClass("lang-shadow");
                 return consumeRenderQueueAsync();
             })
         });
@@ -195,6 +195,7 @@ namespace pxt.runner {
         options.splitSvg = true;
 
         renderQueue.push({ el: $el, source: $el.text(), options, render, cls });
+        $el.addClass("lang-shadow");
         $el.removeClass(cls);
         return renderNextSnippetAsync(cls, render, options);
     }
