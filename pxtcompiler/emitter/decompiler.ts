@@ -450,7 +450,12 @@ ${output}</xml>`;
         function attrs(callInfo: pxtc.CallInfo): pxtc.CommentAttrs {
             const blockInfo = blocksInfo.apis.byQName[callInfo.qName];
             if (blockInfo) {
-                return blockInfo.attributes;
+                const attributes = blockInfo.attributes;
+
+                // Check to make sure this block wasn't filtered out (bannedCategories)
+                if (!attributes.blockId || blocksInfo.blocksById[attributes.blockId] || attributes.blockId === pxtc.PAUSE_UNTIL_TYPE) {
+                    return blockInfo.attributes;
+                }
             }
             return {
                 paramDefl: {},
