@@ -517,8 +517,12 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
 
         const image = largeImageUrl || imageUrl || (youTubeId ? `https://img.youtube.com/vi/${youTubeId}/0.jpg` : undefined);
 
+        let clickIcon: string = '';
         let clickLabel = lf("Show Instructions");
-        if (cardType == "tutorial") clickLabel = lf("Start Tutorial");
+        if (cardType == "tutorial") {
+            clickLabel = lf("Start Tutorial");
+            clickIcon = "magic";
+        }
         else if (cardType == "codeExample" || cardType == "example") clickLabel = lf("Open Example");
         else if (cardType == "template") clickLabel = lf("New Project");
         else if (youTubeId) clickLabel = lf("Play Video");
@@ -526,7 +530,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         const actions = [{
             label: clickLabel,
             onClick: this.handleDetailClick,
-            icon: '',
+            icon: clickIcon,
             className: 'huge positive'
         }]
 
