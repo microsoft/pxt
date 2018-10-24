@@ -413,12 +413,12 @@ namespace pxt.github {
         return stringifyRepo(parseRepoId(id))
     }
 
-    export function latestVersionAsync(path: string, config: TargetConfig): Promise<string> {
+    export function latestVersionAsync(path: string, config: PackagesConfig): Promise<string> {
         let parsed = parseRepoId(path)
 
         if (!parsed) return Promise.resolve<string>(null);
 
-        return repoAsync(parsed.fullName, config.packages)
+        return repoAsync(parsed.fullName, config)
             .then(scr => {
                 if (!scr) return undefined;
                 return listRefsExtAsync(scr.fullName, "tags")
@@ -429,10 +429,9 @@ namespace pxt.github {
                         tags = tags.filter(t => /^v\d+(\.\d+(\.\d+)?)?$/i.test(t));
 
                         // check if the version has been frozen for this release
-                        const packageConfig = config.packages;
                         const targetVersion = pxt.appTarget.versions && pxt.semver.tryParse(pxt.appTarget.versions.target);
-                        if (targetVersion && packageConfig && packageConfig.releases && packageConfig.releases["v" + targetVersion.major]) {
-                            const release = packageConfig.releases["v" + targetVersion.major]
+                        if (targetVersion && config && config.releases && config.releases["v" + targetVersion.major]) {
+                            const release = config.releases["v" + targetVersion.major]
                                 .map(repo => pxt.github.parseRepoId(repo))
                                 .filter(repo => repo.fullName.toLowerCase() == parsed.fullName.toLowerCase())
                             [0];
