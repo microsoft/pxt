@@ -3089,7 +3089,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (theEditor && theEditor.editor) {
             theEditor.editor.resize(ev);
 
-            // The order of WebView resize in IOS is a little weird, so we'll resize it again after a second
+            // The order WKWebView resize events on IOS is weird, resize again to be sure
             if (pxt.BrowserUtils.isIOS()) {
                 setTimeout(() => {
                     theEditor.editor.resize(ev);
