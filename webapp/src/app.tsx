@@ -155,7 +155,7 @@ export class ProjectView
         let active = document.visibilityState == 'visible';
         pxt.debug(`page visibility: ${active}`)
         this.setState({ active: active })
-        if (!active && pxt.appTarget.simulator.autoRun) {
+        if (!active && (pxt.appTarget.simulator && pxt.appTarget.simulator.autoRun)) {
             if (this.state.running) {
                 this.stopSimulator();
                 this.setState({ resumeOnVisibility: true });
