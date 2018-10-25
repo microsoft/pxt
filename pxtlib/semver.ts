@@ -115,7 +115,7 @@ namespace pxt.semver {
      * Filters and sort tags from latest to oldest (semver wize)
      * @param tags 
      */
-    export function sortTags(tags: string[]): string[] {
+    export function sortLatestTags(tags: string[]): string[] {
         const v = tags.filter(tag => !!semver.tryParse(tag));
         v.sort(strcmp);
         v.reverse();

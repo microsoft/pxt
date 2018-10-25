@@ -5112,7 +5112,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
             pxt.log(JSON.stringify(fullnames, null, 2));
             return Promise.all(fullnames.map(fullname => pxt.github.listRefsAsync(fullname)
                 .then(tags => {
-                    const tag = pxt.semver.sortTags(tags)[0];
+                    const tag = pxt.semver.sortLatestTags(tags)[0];
                     if (!tag) {
                         errors.push(`${fullname}: no valid release found`);
                         pxt.log(errors[errors.length - 1]);
