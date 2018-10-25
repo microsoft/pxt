@@ -177,7 +177,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                 </div> : undefined}
                             {targetTheme.bigRunButton ?
                                 <div className="big-play-button-wrapper">
-                                    <EditorToolbarButton role="menuitem" tooltip={bigRunButtonTooltip} tooltipId="startbtn-mobile" tooltipDelayShow={500} tooltipPlace={"top"} className={`big-play-button play-button ${running ? "stop" : "play"}`} key='runmenubtn' icon={running ? "stop" : "play"} title={bigRunButtonTooltip} onButtonClick={this.startStopSimulator} view='mobile' />
+                                    <EditorToolbarButton role="menuitem" className={`big-play-button play-button ${running ? "stop" : "play"}`} key='runmenubtn' icon={running ? "stop" : "play"} title={bigRunButtonTooltip} onButtonClick={this.startStopSimulator} view='mobile' />
                                 </div> : undefined}
                         </div>
                     </div> :
@@ -255,7 +255,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                 </div> : undefined}
                             {targetTheme.bigRunButton ?
                                 <div className="big-play-button-wrapper">
-                                    <EditorToolbarButton role="menuitem" tooltip={bigRunButtonTooltip} tooltipId="startbtn-tablet" tooltipDelayShow={500} tooltipPlace={"top"} className={`big-play-button play-button ${running ? "stop" : "play"}`} key='runmenubtn' icon={running ? "stop" : "play"} title={bigRunButtonTooltip} onButtonClick={this.startStopSimulator} view='tablet' />
+                                    <EditorToolbarButton role="menuitem" className={`big-play-button play-button ${running ? "stop" : "play"}`} key='runmenubtn' icon={running ? "stop" : "play"} title={bigRunButtonTooltip} onButtonClick={this.startStopSimulator} view='tablet' />
                                 </div> : undefined}
                         </div>
                     </div>
@@ -371,7 +371,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                             </div> : undefined}
                         {targetTheme.bigRunButton ?
                             <div className="big-play-button-wrapper">
-                                <EditorToolbarButton role="menuitem" tooltip={bigRunButtonTooltip} tooltipId="startbtn-computer" tooltipDelayShow={500} tooltipPlace={"top"} className={`big-play-button play-button ${running ? "stop" : "play"}`} key='runmenubtn' icon={running ? "stop" : "play"} title={bigRunButtonTooltip} onButtonClick={this.startStopSimulator} view='computer' />
+                                <EditorToolbarButton role="menuitem" className={`big-play-button play-button ${running ? "stop" : "play"}`} key='runmenubtn' icon={running ? "stop" : "play"} title={bigRunButtonTooltip} onButtonClick={this.startStopSimulator} view='computer' />
                             </div> : undefined}
                     </div>
                 </div>
