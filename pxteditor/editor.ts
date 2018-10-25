@@ -179,11 +179,12 @@ namespace pxt.editor {
 
         anonymousPublishAsync(): Promise<string>;
 
-        startStopSimulator(): void;
+        startStopSimulator(clickTrigger?: boolean): void;
         stopSimulator(unload?: boolean): void;
         restartSimulator(debug?: boolean): void;
         startSimulator(debug?: boolean): void;
         runSimulator(): void;
+        isSimulatorRunning(): boolean;
         expandSimulator(): void;
         collapseSimulator(): void;
         toggleSimulatorCollapse(): void;
@@ -281,6 +282,7 @@ namespace pxt.editor {
     export interface ExtensionOptions {
         blocklyToolbox: ToolboxDefinition;
         monacoToolbox: ToolboxDefinition;
+        projectView: IProjectView;
     }
 
     export interface IToolboxOptions {
