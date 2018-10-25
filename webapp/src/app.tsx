@@ -155,7 +155,7 @@ export class ProjectView
         let active = document.visibilityState == 'visible';
         pxt.debug(`page visibility: ${active}`)
         this.setState({ active: active })
-        if (!active) {
+        if (!active && (pxt.appTarget.simulator && pxt.appTarget.simulator.autoRun)) {
             if (this.state.running) {
                 this.stopSimulator();
                 this.setState({ resumeOnVisibility: true });
@@ -1665,12 +1665,18 @@ export class ProjectView
     ////////////             Simulator            /////////////
     ///////////////////////////////////////////////////////////
 
-    startStopSimulator() {
+    shouldStartSimulator() {
+        const hasHome = !pxt.shell.isControllerMode();
+        if (!hasHome) return true;
+        return !this.state.home;
+    }
+
+    startStopSimulator(clickTrigger?: boolean) {
         if (this.state.running) {
             this.stopSimulator()
         } else {
             this.maybeShowPackageErrors(true);
-            this.startSimulator();
+            this.startSimulator(undefined, clickTrigger);
         }
     }
 
@@ -1701,10 +1707,14 @@ export class ProjectView
         }
     }
 
-    startSimulator(debug?: boolean) {
-        pxt.tickEvent('simulator.start')
+    startSimulator(debug?: boolean, clickTrigger?: boolean) {
+        pxt.tickEvent('simulator.start');
+        if (!this.shouldStartSimulator()) {
+            pxt.log("Tried to start simulator when we shouldn't");
+            return;
+        }
         this.saveFileAsync()
-            .then(() => this.runSimulator(debug ? { debug: true } : {}));
+            .then(() => this.runSimulator(debug ? { debug: true } : {}, clickTrigger));
     }
 
     stopSimulator(unload?: boolean) {
@@ -1823,7 +1833,11 @@ export class ProjectView
         if (devIndicator) devIndicator.clear()
     }
 
-    runSimulator(opts: compiler.CompileOptions = {}) {
+    isSimulatorRunning() {
+        return this.state.running;
+    }
+
+    runSimulator(opts: compiler.CompileOptions = {}, clickTrigger?: boolean) {
         const editorId = this.editor ? this.editor.getId().replace(/Editor$/, '') : "unknown";
         if (opts.background) {
             pxt.tickActivity("autorun", "autorun." + editorId);
@@ -1844,7 +1858,7 @@ export class ProjectView
                 this.clearSerial();
                 this.editor.setDiagnostics(this.editorFile, state)
                 if (resp.outfiles[pxtc.BINARY_JS]) {
-                    simulator.run(pkg.mainPkg, opts.debug, resp, this.state.mute, this.state.highContrast, pxt.options.light)
+                    simulator.run(pkg.mainPkg, opts.debug, resp, this.state.mute, this.state.highContrast, pxt.options.light, clickTrigger)
                     this.setState({ running: true, showParts: simulator.driver.runOptions.parts.length > 0 })
                 } else if (!opts.background) {
                     core.warningNotification(lf("Oops, we could not run this project. Please check your code for errors."))
@@ -2403,7 +2417,7 @@ export class ProjectView
         const { lightbox, greenScreen } = this.state;
         const simDebug = !!targetTheme.debugger;
 
-        const { hideMenuBar, hideEditorToolbar } = targetTheme;
+        const { hideMenuBar, hideEditorToolbar, transparentEditorToolbar } = targetTheme;
         const isHeadless = simOpts && simOpts.headless;
         const selectLanguage = targetTheme.selectLanguage;
         const showEditorToolbar = inEditor && !hideEditorToolbar && this.editor.hasEditorToolbar();
@@ -2421,6 +2435,7 @@ export class ProjectView
             lightbox ? 'dimmable dimmed' : 'dimmable',
             shouldHideEditorFloats ? " hideEditorFloats" : '',
             shouldCollapseEditorTools ? " collapsedEditorTools" : '',
+            transparentEditorToolbar ? " transparentEditorTools" : '',
             this.state.fullscreen ? 'fullscreensim' : '',
             this.state.highContrast ? 'hc' : '',
             showSideDoc ? 'sideDocs' : '',
@@ -2430,7 +2445,7 @@ export class ProjectView
             pxt.options.light ? 'light' : '',
             pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : '',
             hideMenuBar ? 'hideMenuBar' : '',
-            !showEditorToolbar ? 'hideEditorToolbar' : '',
+            !showEditorToolbar || transparentEditorToolbar ? 'hideEditorToolbar' : '',
             this.state.bannerVisible ? "notificationBannerVisible" : "",
             this.state.debugging ? "debugging" : "",
             sandbox && this.isEmbedSimActive() ? 'simView' : '',
@@ -2840,7 +2855,8 @@ function initExtensionsAsync(): Promise<void> {
     pxt.debug('loading editor extensions...');
     const opts: pxt.editor.ExtensionOptions = {
         blocklyToolbox: blocklyToolbox.getToolboxDefinition(),
-        monacoToolbox: monacoToolbox.getToolboxDefinition()
+        monacoToolbox: monacoToolbox.getToolboxDefinition(),
+        projectView: theEditor
     };
     return pxt.BrowserUtils.loadScriptAsync("editor.js")
         .then(() => pxt.editor.initExtensionsAsync(opts))
@@ -3086,8 +3102,16 @@ document.addEventListener("DOMContentLoaded", () => {
             theEditor.saveSettings()
     });
     window.addEventListener("resize", ev => {
-        if (theEditor && theEditor.editor)
-            theEditor.editor.resize(ev)
+        if (theEditor && theEditor.editor) {
+            theEditor.editor.resize(ev);
+
+            // The order WKWebView resize events on IOS is weird, resize again to be sure
+            if (pxt.BrowserUtils.isIOS()) {
+                setTimeout(() => {
+                    theEditor.editor.resize(ev);
+                }, 1000);
+            }
+        }
     }, false);
 
     const ipcRenderer = (window as any).ipcRenderer;

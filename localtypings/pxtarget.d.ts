@@ -284,6 +284,14 @@ declare namespace pxt {
         topBlocks?: boolean; // show a top blocks category in the editor
         pairingButton?: boolean; // display a pairing button
         tagColors?: pxt.Map<string>; // optional colors for tags
+        /**
+         * Internal and temporary flags:
+         * These flags may be removed without notice, please don't take a dependency on them
+         */
+        simCollapseInMenu?: boolean; // don't show any of the collapse / uncollapse buttons down the bottom, instead show it in the menu
+        bigRunButton?: boolean; // show the run button as a big button on the right
+        transparentEditorToolbar?: boolean; // make the editor toolbar float with a transparent background
+        hideProjectRename?: boolean; // Temporary flag until we figure out a better way to show the name
     }
 
     interface SocialOptions {

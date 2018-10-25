@@ -24,6 +24,10 @@ namespace pxt.BrowserUtils {
         return hasNavigator() && /mobi/i.test(navigator.userAgent);
     }
 
+    export function isIOS(): boolean {
+        return hasNavigator() && /iPad|iPhone|iPod/.test(navigator.userAgent);
+    }
+
     //MacIntel on modern Macs
     export function isMac(): boolean {
         return hasNavigator() && /Mac/i.test(navigator.platform);

@@ -43,6 +43,7 @@ namespace pxsim {
         localizedStrings?: pxsim.Map<string>;
         refCountingDebug?: boolean;
         version?: string;
+        clickTrigger?: boolean;
     }
 
     export interface HwDebugger {
@@ -268,7 +269,8 @@ namespace pxsim {
                 cdnUrl: opts.cdnUrl,
                 localizedStrings: opts.localizedStrings,
                 refCountingDebug: opts.refCountingDebug,
-                version: opts.version
+                version: opts.version,
+                clickTrigger: opts.clickTrigger
             }
 
             this.applyAspectRatio();

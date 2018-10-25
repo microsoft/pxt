@@ -242,7 +242,10 @@ export function isDirty(): boolean { // in need of a restart?
     return dirty;
 }
 
-export function run(pkg: pxt.MainPackage, debug: boolean, res: pxtc.CompileResult, mute?: boolean, highContrast?: boolean, light?: boolean) {
+export function run(pkg: pxt.MainPackage, debug: boolean,
+    res: pxtc.CompileResult, mute?: boolean,
+    highContrast?: boolean, light?: boolean,
+    clickTrigger?: boolean) {
     makeClean();
     const js = res.outfiles[pxtc.BINARY_JS]
     const boardDefinition = pxt.appTarget.simulator.boardDefinition;
@@ -263,7 +266,8 @@ export function run(pkg: pxt.MainPackage, debug: boolean, res: pxtc.CompileResul
         cdnUrl: pxt.webConfig.commitCdnUrl,
         localizedStrings: simTranslations,
         refCountingDebug: pxt.options.debug,
-        version: pkg.version()
+        version: pkg.version(),
+        clickTrigger: clickTrigger
     }
     postSimEditorEvent("started");
 
