@@ -218,7 +218,8 @@ export function logoutAsync() {
 
 let loadGithubTokenAsyncPromise: Promise<void> = undefined;
 export function loadGithubTokenAsync(): Promise<void> {
-    if (!loadGithubTokenAsyncPromise)
+    if (!loadGithubTokenAsyncPromise) {
+        if (process.env["GITHUB_ACCESS_TOKEN"]) pxt.github.token = process.env["GITHUB_ACCESS_TOKEN"];
         loadGithubTokenAsyncPromise = pxt.github.token ? Promise.resolve() : passwordGetAsync(GITHUB_KEY)
             .then(ghtoken => {
                 if (ghtoken) {
@@ -226,6 +227,7 @@ export function loadGithubTokenAsync(): Promise<void> {
                     pxt.debug(`github token loaded`);
                 }
             });
+    }
     return loadGithubTokenAsyncPromise;
 }
 
@@ -5042,7 +5044,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
     function pxtAsync(dir: string, args: string[]) {
         return nodeutil.spawnAsync({
             cmd: "node",
-            args: [path.join(process.cwd(), "node_modules/pxt-core/pxt-cli/cli.js")].concat(args),
+            args: [path.join(process.cwd(), "node_modules", "pxt-core", "pxt-cli", "cli.js")].concat(args),
             cwd: dir
         })
     }
@@ -5110,9 +5112,9 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
             pxt.log(JSON.stringify(fullnames, null, 2));
             return Promise.all(fullnames.map(fullname => pxt.github.listRefsAsync(fullname)
                 .then(tags => {
-                    const tag = tags.reverse()[0] || "master";
-                    if (tag != "master" && !/^v\d+(\.\d+(.\d+)?)?$/.test(tag)) {
-                        errors.push(`${fullname}: invalid tag #${tag || "master"}`);
+                    const tag = pxt.semver.sortLatestTags(tags)[0];
+                    if (!tag) {
+                        errors.push(`${fullname}: no valid release found`);
                         pxt.log(errors[errors.length - 1]);
                     }
                     else
