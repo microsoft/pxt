@@ -3086,8 +3086,16 @@ document.addEventListener("DOMContentLoaded", () => {
             theEditor.saveSettings()
     });
     window.addEventListener("resize", ev => {
-        if (theEditor && theEditor.editor)
-            theEditor.editor.resize(ev)
+        if (theEditor && theEditor.editor) {
+            theEditor.editor.resize(ev);
+
+            // The order WKWebView resize events on IOS is weird, resize again to be sure
+            if (pxt.BrowserUtils.isIOS()) {
+                setTimeout(() => {
+                    theEditor.editor.resize(ev);
+                }, 1000);
+            }
+        }
     }, false);
 
     const ipcRenderer = (window as any).ipcRenderer;
