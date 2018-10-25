@@ -116,7 +116,7 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
                 {card.time ? <span key="date" className="date">{pxt.Util.timeSince(card.time)}</span> : null}
             </div> : undefined}
             {card.extracontent || card.tags || card.learnMoreUrl || card.buyUrl || card.feedbackUrl ?
-                <div className="extra content hidemobile">
+                <div className="ui extra content widedesktop only">
                     {card.extracontent}
                     {card.tags ? card.tags.map(tag =>
                         <span key={`tag${tag}`} className={`ui label tiny`}>{pxt.Util.rlf(tag)}</span>
