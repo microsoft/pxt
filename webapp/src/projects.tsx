@@ -542,9 +542,11 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             <div className="column eight wide">
                 <div className="segment">
                     <div className="header"> {name} </div>
+                    {tags ? <div className="ui labels">
+                        {tags.map(tag => <div className={`ui ${tagColors[tag] || ''} label`}>{pxt.Util.rlf(tag)}
+                        </div>)}</div> : undefined}
                     <p className="detail">
                         <div>{description}</div>
-                        {tags ? tags.map(tag => <div className={`ui basic ${tagColors[tag] || ''} label`}>{pxt.Util.rlf(tag)}</div>) : undefined}
                     </p>
                     <div className="actions">
                         {actions.map(action =>
