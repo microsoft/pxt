@@ -111,6 +111,17 @@ namespace pxt.semver {
         return lwr <= 0 && hr < 0;
     }
 
+    /**
+     * Filters and sort tags from latest to oldest (semver wize)
+     * @param tags 
+     */
+    export function sortTags(tags: string[]): string[] {
+        const v = tags.filter(tag => !!semver.tryParse(tag));
+        v.sort(strcmp);
+        v.reverse();
+        return v;
+    }
+
     export function test() {
         console.log("Test semver")
         let d = [
@@ -148,5 +159,4 @@ namespace pxt.semver {
         U.assert(!inRange("1.2.4 - 4.2.3", v))
         U.assert(!inRange("0.0.0 - 0.0.1", v))
     }
-
 }
