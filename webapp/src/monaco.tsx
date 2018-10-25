@@ -31,6 +31,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     loadedMonaco: boolean;
     loadingMonaco: boolean;
     giveFocusOnLoading: boolean = false;
+    fieldDecorations: string[] = [];
+
+    protected feWidget: FieldEditorHost;
 
     hasBlocks() {
         if (!this.currFile) return true
@@ -277,6 +280,36 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.isReady = true
     }
 
+    handleMatches(matches: pxtc.service.SymbolMatch[]) {
+        if (matches && fieldEditors) {
+            const decorations: monaco.editor.IModelDeltaDecoration[] = [];
+            matches.forEach(match => {
+                for (const fe of fieldEditors) {
+                    if (fe.matcher.qname === match.qname && fe.matcher.sourcefile === match.sourcefile) {
+                        match.locations.forEach(location => {
+                            decorations.push({
+                                range: new monaco.Range(location.line, location.column, location.endLine, location.endColumn),
+                                options: {
+                                    glyphMarginClassName: "sprite-editor"
+                                }
+                            });
+                        })
+                        break;
+                    }
+                }
+            });
+            this.fieldDecorations = this.editor.deltaDecorations(this.fieldDecorations, decorations);
+        }
+    }
+
+    showFieldEditor(range: monaco.Range, fe: pxt.editor.MonacoFieldEditor) {
+        if (this.feWidget) {
+            this.feWidget.close();
+        }
+        this.feWidget = new FieldEditorHost(fe, range, this.editor.getModel());
+        this.feWidget.showAsync(this.editor);
+    }
+
     public loadMonacoAsync(): Promise<void> {
         if (this.editor || this.loadingMonaco) return Promise.resolve();
         this.loadingMonaco = true;
@@ -290,7 +323,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.loadingMonaco = false;
             this.loadedMonaco = true;
 
-            this.editor.updateOptions({ fontSize: this.parent.settings.editorFontSize });
+            this.editor.updateOptions({ glyphMargin: true, fontSize: this.parent.settings.editorFontSize });
 
             this.editor.addAction({
                 id: "save",
@@ -1451,6 +1484,67 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
         return monacoBlock;
     }
+}
+
+class FieldEditorHost implements pxt.editor.MonacoFieldEditorHost, monaco.editor.IContentWidget {
+    protected widgetDiv: HTMLDivElement;
+    protected content: HTMLDivElement;
+    protected editor: monaco.editor.IStandaloneCodeEditor;
+
+    constructor(protected fe: pxt.editor.MonacoFieldEditor, protected range: monaco.Range, protected model: monaco.editor.IModel) {
+        this.widgetDiv = document.createElement("div");
+        this.content = document.createElement("div");
+        this.widgetDiv.appendChild(this.content);
+    }
+
+    getId() {
+        return "pxt-monaco-field-editor";
+    }
+
+    getDomNode() {
+        return this.widgetDiv;
+    }
+
+    contentDiv(): HTMLDivElement {
+        return this.content;
+    }
+
+    getPosition(): monaco.editor.IContentWidgetPosition {
+        return {
+			position: {
+				lineNumber: this.range.startLineNumber,
+				column: this.range.startColumn
+			},
+			preference: [monaco.editor.ContentWidgetPositionPreference.BELOW, monaco.editor.ContentWidgetPositionPreference.ABOVE]
+		};
+    }
+
+    showAsync(editor: monaco.editor.IStandaloneCodeEditor) {
+        editor.addContentWidget(this);
+        return Promise.resolve()
+            .then(() => {
+                editor.addContentWidget(this);
+                return this.fe.showEditorAsync(this.range, this);
+            })
+            .finally(() => {
+                this.close();
+            })
+    }
+
+    getText(range: monaco.Range): string {
+        return this.model.getValueInRange(range);
+    }
+
+    close(): void {
+        this.editor.removeContentWidget(this);
+        this.fe.dispose();
+    }
+}
+
+let fieldEditors: pxt.editor.MonacoFieldEditor[];
+
+export function registerFieldEditors(editors: pxt.editor.MonacoFieldEditor[]) {
+    fieldEditors = editors;
 }
 
 function firstWord(s: string) {

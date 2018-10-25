@@ -33,6 +33,7 @@ function setDiagnostics(diagnostics: pxtc.KsDiagnostic[]) {
 }
 
 let noOpAsync = new Promise<any>(() => { })
+let symbolMatchers: pxtc.service.SymbolMatcher[];
 
 function catchUserErrorAndSetDiags(r: any) {
     return (v: any) => {
@@ -120,7 +121,7 @@ export function assembleAsync(src: string) {
 }
 
 function compileCoreAsync(opts: pxtc.CompileOptions): Promise<pxtc.CompileResult> {
-    return workerOpAsync("compile", { options: opts })
+    return workerOpAsync("compile", { options: opts, symbolMatchers: symbolMatchers })
 }
 
 export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo, oldWorkspace?: Blockly.Workspace, blockFile?: string): Promise<pxtc.CompileResult> {
@@ -483,6 +484,10 @@ export function getPackagesWithErrors(): pkg.EditorPackage[] {
         });
     }
     return pxt.Util.values(badPackages);
+}
+
+export function setSymbolMatchers(matchers: pxtc.service.SymbolMatcher[]) {
+    symbolMatchers = matchers;
 }
 
 function blocksOptions(): pxtc.service.BlocksOptions {

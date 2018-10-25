@@ -1561,6 +1561,12 @@ export class ProjectView
         compiler.compileAsync({ native: true, forceEmit: true, preferredEditor: this.getPreferredEditor() })
             .then<pxtc.CompileResult>(resp => {
                 this.editor.setDiagnostics(this.editorFile, state)
+
+                if (this.textEditor && resp.symbolMatches) {
+                    (this.textEditor as monaco.Editor).handleMatches(resp.symbolMatches);
+                }
+
+
                 let fn = pxt.outputName()
                 if (!resp.outfiles[fn]) {
                     pxt.tickEvent("compile.noemit")
@@ -1843,6 +1849,9 @@ export class ProjectView
             .then(resp => {
                 this.clearSerial();
                 this.editor.setDiagnostics(this.editorFile, state)
+                if (this.textEditor && resp.symbolMatches) {
+                    (this.textEditor as monaco.Editor).handleMatches(resp.symbolMatches);
+                }
                 if (resp.outfiles[pxtc.BINARY_JS]) {
                     simulator.run(pkg.mainPkg, opts.debug, resp, this.state.mute, this.state.highContrast, pxt.options.light)
                     this.setState({ running: true, showParts: simulator.driver.runOptions.parts.length > 0 })
@@ -2893,6 +2902,10 @@ function initExtensionsAsync(): Promise<void> {
             }
             if (res.webUsbPairDialogAsync) {
                 pxt.commands.webUsbPairDialogAsync = res.webUsbPairDialogAsync;
+            }
+            if (res.monacoEditors) {
+                compiler.setSymbolMatchers(res.monacoEditors.map(m => m.matcher));
+                monaco.registerFieldEditors(res.monacoEditors);
             }
         });
 }

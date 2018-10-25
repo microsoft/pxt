@@ -627,7 +627,7 @@ namespace ts.pxtc.service {
         },
 
         compile: v => {
-            return compile(v.options)
+            return compile(v.options, v.symbolMatchers)
         },
         decompile: v => {
             const bannedCategories = v.blocks ? v.blocks.bannedCategories : undefined;
