@@ -93,9 +93,8 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
                     </div>
                     {card.header}
                 </div> : null}
-            {card.label || card.blocksXml || card.typeScript || imageUrl || cardType == "file" || cardType == "tutorial" ? <div className={"ui image"}>
+            {card.label || card.blocksXml || card.typeScript || imageUrl || cardType == "file" ? <div className={"ui image"}>
                 {card.label ? <label className={`ui ${card.labelClass ? card.labelClass : "orange left ribbon"} label`}>{card.label}</label> : undefined}
-                {cardType == "tutorial" ? <label className={`ui purple right corner label tutoriallabel`}><i className="magic icon" /></label> : undefined}
                 {card.typeScript ? <pre key="promots">{card.typeScript}</pre> : undefined}
                 {cardType != "file" && imageUrl ? <div className="ui imagewrapper">
                     <div className={`ui cardimage`} data-src={imageUrl} ref="lazyimage" />
@@ -117,7 +116,7 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
                 {card.time ? <span key="date" className="date">{pxt.Util.timeSince(card.time)}</span> : null}
             </div> : undefined}
             {card.extracontent || card.tags || card.learnMoreUrl || card.buyUrl || card.feedbackUrl ?
-                <div className="extra content">
+                <div className="extra content hidemobile">
                     {card.extracontent}
                     {card.tags ? card.tags.map(tag =>
                         <span key={`tag${tag}`} className={`ui label tiny`}>{pxt.Util.rlf(tag)}</span>
