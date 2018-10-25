@@ -520,11 +520,9 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         const image = largeImageUrl || imageUrl || (youTubeId ? `https://img.youtube.com/vi/${youTubeId}/0.jpg` : undefined);
         const tagColors: pxt.Map<string> = pxt.appTarget.appTheme.tagColors || {};
 
-        let clickIcon: string = '';
         let clickLabel = lf("Show Instructions");
         if (cardType == "tutorial") {
             clickLabel = lf("Start Tutorial");
-            clickIcon = "magic";
         }
         else if (cardType == "codeExample" || cardType == "example") clickLabel = lf("Open Example");
         else if (cardType == "template") clickLabel = lf("New Project");
@@ -533,7 +531,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         const actions = [{
             label: clickLabel,
             onClick: this.handleDetailClick,
-            icon: clickIcon,
+            icon: '',
             className: 'huge positive'
         }]
 
@@ -546,7 +544,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                         {tags.map(tag => <div className={`ui ${tagColors[tag] || ''} label`}>{pxt.Util.rlf(tag)}
                         </div>)}</div> : undefined}
                     <p className="detail">
-                        <div>{description}</div>
+                        {description}
                     </p>
                     <div className="actions">
                         {actions.map(action =>
