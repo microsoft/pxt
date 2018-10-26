@@ -400,10 +400,16 @@ export class ProjectView
     }
 
     private maybeShowPackageErrors(force = false) {
+        // Only show in blocks or main.ts
+        if (this.state.currFile) {
+            const fn = this.state.currFile.name;
+            if (!pkg.File.blocksFileNameRx.test(fn) && fn !== "main.ts") return false;
+        }
+
         if (!this.state.suppressPackageWarning || force) {
+            this.setState({ suppressPackageWarning: true });
             const badPackages = compiler.getPackagesWithErrors();
             if (badPackages.length) {
-                this.setState({ suppressPackageWarning: true });
 
                 const h = this.state.header;
                 const currentVersion = pxt.semver.parse(pxt.appTarget.versions.target);
@@ -421,7 +427,7 @@ export class ProjectView
                         if (projectOpen) {
                             this.reloadHeaderAsync()
                         }
-                        else {
+                        else if (!force) {
                             this.openHome();
                         }
                     });
