@@ -301,9 +301,11 @@ namespace pxt.editor {
     export interface MonacoFieldEditorHost {
         contentDiv(): HTMLDivElement;
         getText(range: monaco.Range): string;
+        blocksInfo(): pxtc.BlocksInfo;
     }
 
     export interface MonacoFieldEditor {
+        id: string;
         matcher: pxtc.service.SymbolMatcher;
 
         getRangeInfo(range: monaco.Range, host: MonacoFieldEditor): MonacoRangeInfo;

@@ -31,7 +31,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     loadedMonaco: boolean;
     loadingMonaco: boolean;
     giveFocusOnLoading: boolean = false;
-    fieldDecorations: string[] = [];
+    fieldDecorations: pxt.Map<string[]> = {};
 
     protected feWidget: FieldEditorHost;
 
@@ -282,23 +282,25 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     handleMatches(matches: pxtc.service.SymbolMatch[]) {
         if (matches && fieldEditors) {
-            const decorations: monaco.editor.IModelDeltaDecoration[] = [];
             matches.forEach(match => {
                 for (const fe of fieldEditors) {
                     if (fe.matcher.qname === match.qname && fe.matcher.sourcefile === match.sourcefile) {
+                        const decorations: monaco.editor.IModelDeltaDecoration[] = [];
                         match.locations.forEach(location => {
                             decorations.push({
-                                range: new monaco.Range(location.line, location.column, location.endLine, location.endColumn),
+                                range: new monaco.Range(location.line + 1, location.column, location.endLine + 1, location.endColumn),
                                 options: {
                                     glyphMarginClassName: "sprite-editor"
                                 }
                             });
                         })
+
+                        const old = this.fieldDecorations[fe.id] || [];
+                        this.fieldDecorations[fe.id] = this.editor.deltaDecorations(old, decorations);
                         break;
                     }
                 }
             });
-            this.fieldDecorations = this.editor.deltaDecorations(this.fieldDecorations, decorations);
         }
     }
 
@@ -484,6 +486,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.editorViewZones = [];
 
             this.setupToolbox(editorArea);
+            this.setupFieldEditors();
         })
     }
 
@@ -563,6 +566,36 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }
         };
         this.editor.addOverlayWidget(flyoutWidget);
+    }
+
+    private setupFieldEditors() {
+        this.editor.onMouseDown((e: monaco.editor.IEditorMouseEvent) => {
+            if (e.target.type !== monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) {
+                return;
+            }
+            const line = e.target.position.lineNumber;
+            const model = this.editor.getModel();
+            const decorations = model.getDecorationsInRange(new monaco.Range(line, model.getLineMinColumn(line), line, model.getLineMaxColumn(line)));
+            if (decorations.length) {
+                for (const decoration of decorations) {
+                    const fe = this.getAssociatedFieldEditor(decoration);
+                    if (fe) {
+                        this.showFieldEditor(decoration.range, fe);
+                        return;
+                    }
+                }
+            }
+        })
+    }
+
+    private getAssociatedFieldEditor(decoration: monaco.editor.IModelDecoration) {
+        for (const fe of fieldEditors) {
+            const decorations = this.fieldDecorations[fe.id];
+            if (decorations && decorations.indexOf(decoration.id) !== -1) {
+                return fe;
+            }
+        }
+        return undefined;
     }
 
     public closeFlyout() {
@@ -1490,9 +1523,13 @@ class FieldEditorHost implements pxt.editor.MonacoFieldEditorHost, monaco.editor
     protected widgetDiv: HTMLDivElement;
     protected content: HTMLDivElement;
     protected editor: monaco.editor.IStandaloneCodeEditor;
+    protected blocks: pxtc.BlocksInfo;
 
     constructor(protected fe: pxt.editor.MonacoFieldEditor, protected range: monaco.Range, protected model: monaco.editor.IModel) {
         this.widgetDiv = document.createElement("div");
+
+        this.widgetDiv.style.backgroundColor = "darkgrey";
+
         this.content = document.createElement("div");
         this.widgetDiv.appendChild(this.content);
     }
@@ -1520,9 +1557,10 @@ class FieldEditorHost implements pxt.editor.MonacoFieldEditorHost, monaco.editor
     }
 
     showAsync(editor: monaco.editor.IStandaloneCodeEditor) {
-        editor.addContentWidget(this);
-        return Promise.resolve()
-            .then(() => {
+        this.editor = editor;
+        return compiler.getBlocksAsync()
+            .then(bi => {
+                this.blocks = bi;
                 editor.addContentWidget(this);
                 return this.fe.showEditorAsync(this.range, this);
             })
@@ -1533,6 +1571,10 @@ class FieldEditorHost implements pxt.editor.MonacoFieldEditorHost, monaco.editor
 
     getText(range: monaco.Range): string {
         return this.model.getValueInRange(range);
+    }
+
+    blocksInfo(): pxtc.BlocksInfo {
+        return this.blocks;
     }
 
     close(): void {
