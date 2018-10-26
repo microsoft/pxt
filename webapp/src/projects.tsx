@@ -129,7 +129,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
     }
 
     chgCode(scr: pxt.CodeCard, loadBlocks: boolean, prj?: pxt.ProjectTemplate) {
-        return this.props.parent.importExampleAsync({ name: scr.name,  path: scr.url, loadBlocks, prj });
+        return this.props.parent.importExampleAsync({ name: scr.name, path: scr.url, loadBlocks, prj });
     }
 
     importProject() {
@@ -684,7 +684,7 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
         super(props);
         this.state = {
             visible: false,
-            emoji: "😞"
+            emoji: ""
         }
 
         this.hide = this.hide.bind(this);
@@ -695,7 +695,7 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
     }
 
     componentWillReceiveProps(newProps: ISettingsProps) {
-        this.setState({ projectName: newProps.parent.state.projectName })
+        this.handleChange(newProps.parent.state.projectName);
     }
 
     hide() {
@@ -703,6 +703,7 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
     }
 
     show() {
+        pxt.tickEvent('exitandsave.show', undefined, { interactiveConsent: false });
         this.setState({ visible: true });
     }
 
@@ -724,10 +725,18 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
 
     handleChange(name: string) {
         this.setState({ projectName: name });
-        if (name === "" || name === lf("Untitled")) {
-            this.setState({ emoji: "😞" })
+        const untitled = lf("Untitled");
+        name = name || ""; // gard against null/undefined
+        if (!name || pxt.Util.toArray(untitled).some((c, i) => untitled.substr(0, i + 1) == name)) {
+            this.setState({ emoji: "😞" });
         } else {
-            this.setState({ emoji: "😊" })
+            const emojis = ["😌", "😄", "😃", "😍"];
+            let emoji = emojis[Math.min(name.length, emojis.length) - 1];
+            const n = name.length >> 1;
+            if (n > emojis.length)
+                for (let i = 0; i < Math.min(2, n - emojis.length); ++i)
+                    emoji += emojis[emojis.length - 1];
+            this.setState({ emoji })
         }
     }
 
@@ -742,7 +751,7 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
         let p = Promise.resolve();
         // save project name if valid change
         if (newName && this.props.parent.state.projectName != newName) {
-            pxt.tickEvent("exitandsave.projectrename", undefined, { interactiveConsent: true });
+            pxt.tickEvent("exitandsave.projectrename", { length: newName && newName.length }, { interactiveConsent: true });
             p = p.then(() => this.props.parent.updateHeaderNameAsync(newName));
         }
         p.done(() => {
