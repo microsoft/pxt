@@ -7,6 +7,19 @@ namespace pxt {
 }
 
 namespace pxt.analytics {
+    const defaultProps: Map<string> = {};
+    const defaultMeasures: Map<number> = {};
+
+    export function addDefaultProperties(props: Map<string | number>) {
+        for (const k in props) {
+            if (typeof props[k] == "string") {
+                defaultProps[k] = <string>props[k];
+            } else {
+                defaultMeasures[k] = <number>props[k];
+            }
+        }
+    }
+
     export function enable() {
         if (!pxt.aiTrackException || !pxt.aiTrackEvent) return;
 
@@ -21,12 +34,12 @@ namespace pxt.analytics {
             }
             if (!data) pxt.aiTrackEvent(id);
             else {
-                const props: Map<string> = {};
-                const measures: Map<number> = {};
+                const props: Map<string> = defaultProps || {};
+                const measures: Map<number> = defaultMeasures || {};
                 for (const k in data)
                     if (typeof data[k] == "string") props[k] = <string>data[k];
                     else measures[k] = <number>data[k];
-                    pxt.aiTrackEvent(id, props, measures);
+                pxt.aiTrackEvent(id, props, measures);
             }
         };
 
