@@ -728,11 +728,7 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
         const untitled = lf("Untitled");
         name = name || ""; // gard against null/undefined
         if (!name || pxt.Util.toArray(untitled).some((c, i) => untitled.substr(0, i + 1) == name)) {
-            let emoji = "";
-            const n = name.length >> 1;
-            for (let i = 0; i < Math.min(n, 2) + 1; ++i)
-                emoji += "😞";
-            this.setState({ emoji });
+            this.setState({ emoji: "😞" });
         } else {
             const emojis = ["😌", "😄", "😃", "😍"];
             let emoji = emojis[Math.min(name.length, emojis.length) - 1];
