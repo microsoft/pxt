@@ -129,7 +129,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
     }
 
     chgCode(scr: pxt.CodeCard, loadBlocks: boolean, prj?: pxt.ProjectTemplate) {
-        return this.props.parent.importExampleAsync({ name: scr.name,  path: scr.url, loadBlocks, prj });
+        return this.props.parent.importExampleAsync({ name: scr.name, path: scr.url, loadBlocks, prj });
     }
 
     importProject() {
@@ -724,10 +724,16 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
 
     handleChange(name: string) {
         this.setState({ projectName: name });
-        if (name === "" || name === lf("Untitled")) {
+        const untitled = lf("Untitled");
+        if (pxt.Util.toArray(untitled).some((c, i) => untitled.substr(0, i) == name)) {
             this.setState({ emoji: "😞" })
         } else {
-            this.setState({ emoji: "😊" })
+            const emojis = ["😌", "😄", "😃", "😍"];
+            let emoji = emojis[Math.min(name.length, emojis.length) - 1];
+            if (name.length > emojis.length)
+                for (let i = 0; i < Math.min(2, name.length - emojis.length); ++i)
+                    emoji += emojis[emojis.length - 1];
+            this.setState({ emoji })
         }
     }
 
