@@ -1253,7 +1253,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         const comment = fn.attributes.jsDoc;
 
-        let snippetPrefix = fn.noNamespace ? "" : ns;
+        let snippetPrefix = fn.noNamespace ? "" : (fn.attributes.blockNamespace || fn.namespace);
         let isInstance = false;
         let addNamespace = false;
         let namespaceToUse = "";
