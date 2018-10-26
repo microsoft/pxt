@@ -304,7 +304,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
-    showFieldEditor(range: monaco.Range, fe: pxt.editor.MonacoFieldEditor) {
+    showFieldEditor(range: monaco.Range, fe: pxtblockly.MonacoFieldEditor) {
         if (this.feWidget) {
             this.feWidget.close();
         }
@@ -569,6 +569,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private setupFieldEditors() {
+        registerFieldEditor(pxtblockly.spriteEditorDefinition);
         this.editor.onMouseDown((e: monaco.editor.IEditorMouseEvent) => {
             if (e.target.type !== monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) {
                 return;
@@ -580,7 +581,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 for (const decoration of decorations) {
                     const fe = this.getAssociatedFieldEditor(decoration);
                     if (fe) {
-                        this.showFieldEditor(decoration.range, fe);
+                        this.showFieldEditor(decoration.range, new fe.proto());
                         return;
                     }
                 }
@@ -1519,13 +1520,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 }
 
-class FieldEditorHost implements pxt.editor.MonacoFieldEditorHost, monaco.editor.IContentWidget {
+class FieldEditorHost implements pxtblockly.MonacoFieldEditorHost, monaco.editor.IContentWidget {
     protected widgetDiv: HTMLDivElement;
     protected content: HTMLDivElement;
     protected editor: monaco.editor.IStandaloneCodeEditor;
     protected blocks: pxtc.BlocksInfo;
 
-    constructor(protected fe: pxt.editor.MonacoFieldEditor, protected range: monaco.Range, protected model: monaco.editor.IModel) {
+    constructor(protected fe: pxtblockly.MonacoFieldEditor, protected range: monaco.Range, protected model: monaco.editor.IModel) {
         this.widgetDiv = document.createElement("div");
 
         this.widgetDiv.style.backgroundColor = "darkgrey";
@@ -1583,10 +1584,11 @@ class FieldEditorHost implements pxt.editor.MonacoFieldEditorHost, monaco.editor
     }
 }
 
-let fieldEditors: pxt.editor.MonacoFieldEditor[];
+let fieldEditors: pxtblockly.MonacoFieldEditorDefinition[];
 
-export function registerFieldEditors(editors: pxt.editor.MonacoFieldEditor[]) {
-    fieldEditors = editors;
+export function registerFieldEditor(def: pxtblockly.MonacoFieldEditorDefinition) {
+    if (!fieldEditors) fieldEditors = [def];
+    else fieldEditors.push(def);
 }
 
 function firstWord(s: string) {

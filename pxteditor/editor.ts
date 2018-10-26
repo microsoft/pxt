@@ -288,31 +288,6 @@ namespace pxt.editor {
         monacoToolbox?: ToolboxDefinition;
     }
 
-    export interface TextEdit {
-        range: monaco.Range;
-        replacement: string;
-    }
-
-    export interface MonacoRangeInfo {
-        icon: string;
-        fold?: boolean;
-    }
-
-    export interface MonacoFieldEditorHost {
-        contentDiv(): HTMLDivElement;
-        getText(range: monaco.Range): string;
-        blocksInfo(): pxtc.BlocksInfo;
-    }
-
-    export interface MonacoFieldEditor {
-        id: string;
-        matcher: pxtc.service.SymbolMatcher;
-
-        getRangeInfo(range: monaco.Range, host: MonacoFieldEditor): MonacoRangeInfo;
-        showEditorAsync(editrange: monaco.Range, host: MonacoFieldEditorHost): Promise<TextEdit>;
-        dispose(): void;
-    }
-
     export interface ExtensionResult {
         hexFileImporters?: IHexFileImporter[];
         resourceImporters?: IResourceImporter[];
@@ -325,7 +300,6 @@ namespace pxt.editor {
         toolboxOptions?: IToolboxOptions;
         blocklyPatch?: (pkgTargetVersion: string, dom: Element) => void;
         webUsbPairDialogAsync?: (confirmAsync: (options: any) => Promise<number>) => Promise<number>;
-        monacoEditors?: MonacoFieldEditor[];
     }
 
     export interface FieldExtensionOptions {

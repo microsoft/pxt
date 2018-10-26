@@ -1,4 +1,7 @@
 namespace pxtblockly {
+    // These are the characters used to output literals (but we support aliases for some of these)
+    const hexChars = [".", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f"];
+
     export type Coord = [number, number];
 
     /**
@@ -97,5 +100,84 @@ namespace pxtblockly {
         const result = new Bitmap(width, height);
         result.apply(img);
         return result;
+    }
+
+    export function imageLiteralToBitmap(text: string): Bitmap {
+        // Strip the tagged template string business and the whitespace. We don't have to exhaustively
+        // replace encoded characters because the compiler will catch any disallowed characters and throw
+        // an error before the decompilation happens. 96 is backtick and 9 is tab
+        text = text.replace(/[ `]|(?:&#96;)|(?:&#9;)|(?:img)/g, "").trim();
+        text = text.replace(/&#10;/g, "\n");
+
+        const rows = text.split("\n");
+
+        // We support "ragged" sprites so not all rows will be the same length
+        const sprite: number[][] = [];
+        let spriteWidth = 0;
+
+        for (let r = 0; r < rows.length; r++) {
+            const row = rows[r];
+            const rowValues: number[] = [];
+            for (let c = 0; c < row.length; c++) {
+                // This list comes from libs/screen/targetOverrides.ts in pxt-arcade
+                // Technically, this could change per target.
+                switch (row[c]) {
+                    case "0": case ".": rowValues.push(0); break;
+                    case "1": case "#": rowValues.push(1); break;
+                    case "2": case "T": rowValues.push(2); break;
+                    case "3": case "t": rowValues.push(3); break;
+                    case "4": case "N": rowValues.push(4); break;
+                    case "5": case "n": rowValues.push(5); break;
+                    case "6": case "G": rowValues.push(6); break;
+                    case "7": case "g": rowValues.push(7); break;
+                    case "8": rowValues.push(8); break;
+                    case "9": rowValues.push(9); break;
+                    case "a": case "A": case "R": rowValues.push(10); break;
+                    case "b": case "B": case "P": rowValues.push(11); break;
+                    case "c": case "C": case "p": rowValues.push(12); break;
+                    case "d": case "D": case "O": rowValues.push(13); break;
+                    case "e": case "E": case "Y": rowValues.push(14); break;
+                    case "f": case "F": case "W": rowValues.push(15); break;
+                }
+            }
+
+            if (rowValues.length) {
+                sprite.push(rowValues);
+                spriteWidth = Math.max(spriteWidth, rowValues.length);
+            }
+        }
+
+        const spriteHeight = sprite.length;
+
+        const result = new pxtblockly.Bitmap(spriteWidth, spriteHeight)
+
+        for (let r = 0; r < spriteHeight; r++) {
+            const row = sprite[r];
+            for (let c = 0; c < spriteWidth; c++) {
+                if (c < row.length) {
+                    result.set(c, r, row[c]);
+                }
+                else {
+                    result.set(c, r, 0);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    export function bitmapToImageLiteral(bitmap: Bitmap): string {
+        let res = "img`";
+
+        for (let r = 0; r < bitmap.height; r++) {
+            res += "\n"
+            for (let c = 0; c < bitmap.width; c++) {
+                res += hexChars[bitmap.get(c, r)] + " ";
+            }
+        }
+
+        res += "\n`";
+
+        return res;
     }
 }

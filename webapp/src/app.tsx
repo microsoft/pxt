@@ -2903,10 +2903,6 @@ function initExtensionsAsync(): Promise<void> {
             if (res.webUsbPairDialogAsync) {
                 pxt.commands.webUsbPairDialogAsync = res.webUsbPairDialogAsync;
             }
-            if (res.monacoEditors) {
-                compiler.setSymbolMatchers(res.monacoEditors.map(m => m.matcher));
-                monaco.registerFieldEditors(res.monacoEditors);
-            }
         });
 }
 
