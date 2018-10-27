@@ -342,7 +342,11 @@ describe("blockly compiler", function () {
         });
 
         it("should change variable names that collide with tagged template function names", (done: () => void) => {
-            blockTestAsync("tagged_template").then(done, done);
+            blockTestAsync("tagged_template_variable").then(done, done);
+        });
+
+        it("should change function names that collide with tagged template function names", (done: () => void) => {
+            blockTestAsync("tagged_template_function").then(done, done);
         });
 
         it("should change reserved names", (done: () => void) => {
