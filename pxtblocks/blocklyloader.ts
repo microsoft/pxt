@@ -2332,7 +2332,7 @@ namespace pxt.blocks {
                 let newBlock = workspace.getBlockById(newBlockIds[0]);
                 newBlock.select();
                 // Center on the new block so we know where it is
-                workspace.centerOnBlock(newBlock.id);
+                workspace.centerOnBlock(newBlock.id, true);
             }
 
             workspace.registerButtonCallback('CREATE_FUNCTION', function (button) {
