@@ -1431,11 +1431,11 @@ namespace pxt.blocks {
 
         // append functions in stdcalltable
         if (blockInfo) {
-            // Enums are not enclosed in namespaces, so add them to the taken names
-            // to avoid collision
+            // Enums and tagged templates are not enclosed in namespaces,
+            // so add them to the taken names to avoid collision
             Object.keys(blockInfo.apis.byQName).forEach(name => {
                 const info = blockInfo.apis.byQName[name];
-                if (info.kind === pxtc.SymbolKind.Enum) {
+                if (info.kind === pxtc.SymbolKind.Enum || info.kind === pxtc.SymbolKind.Function) {
                     e.renames.takenNames[info.qName] = true;
                 }
             });
