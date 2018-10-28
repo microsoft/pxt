@@ -370,6 +370,8 @@ namespace ts.pxtc.Util {
 
     let sForPlural = true;
     export function lf_va(format: string, args: any[]): string {
+        if (!format) return format;
+
         locStats[format] = (locStats[format] || 0) + 1;
         let lfmt = Util._localize(format)
 
