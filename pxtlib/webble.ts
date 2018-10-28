@@ -257,7 +257,7 @@ namespace pxt.webBluetooth {
         static REGION_DAL = 0x01;
         static REGION_MAKECODE = 0x02;
         static MAGIC_MARKER = Util.fromHex('708E3B92C615A841C49866C975EE5197');
-        static CHUNK_MIN_DELAY = 25;
+        static CHUNK_MIN_DELAY = 0;
         static CHUNK_MAX_DELAY = 75;
 
         private pfCharacteristic: BluetoothRemoteGATTCharacteristic;
@@ -440,7 +440,8 @@ namespace pxt.webBluetooth {
                     pxt.debug(`ble: flash service version ${this.version} mode ${this.mode}`)
                     pxt.debug(`pf: reading DAL region`)
                     this.state = PartialFlashingState.RegionDALRequested;
-                    this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.REGION_INFO, PartialFlashingService.REGION_DAL]));
+                    this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.REGION_INFO, PartialFlashingService.REGION_DAL]))
+                        .then(() => { })
                     break;
                 case PartialFlashingService.REGION_INFO:
                     if (!this.checkStateTransition(cmd, PartialFlashingState.RegionDALRequested | PartialFlashingState.RegionMakeCodeRequested))
@@ -462,7 +463,8 @@ namespace pxt.webBluetooth {
                         }
                         pxt.debug(`pf: DAL hash match, reading makecode region`)
                         this.state = PartialFlashingState.RegionMakeCodeRequested;
-                        this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.REGION_INFO, PartialFlashingService.REGION_MAKECODE]));
+                        this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.REGION_INFO, PartialFlashingService.REGION_MAKECODE]))
+                            .then(() => { });
                     } else if (packet[1] == PartialFlashingService.REGION_MAKECODE) {
                         if (region.start != this.magicOffset) {
                             pxt.debug(`pf: magic offset and MakeCode region.start not matching`);
@@ -474,18 +476,20 @@ namespace pxt.webBluetooth {
 
                             // always restart even to match USB drag and drop behavior
                             pxt.debug(`pf: restart application mode`)
-                            this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.RESET, PartialFlashingService.MODE_APPLICATION]));
-
-                            this.state = PartialFlashingState.Idle;
-                            this.flashResolve();
-                            this.clearFlashData();
+                            this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.RESET, PartialFlashingService.MODE_APPLICATION]))
+                                .then(() => {
+                                    this.state = PartialFlashingState.Idle;
+                                    this.flashResolve();
+                                    this.clearFlashData();
+                                })
                         } else {
                             // must be in pairing mode
                             if (this.mode != PartialFlashingService.MODE_PAIRING) {
                                 pxt.debug(`ble: application mode, reset into pairing mode`)
                                 this.state = PartialFlashingState.PairingModeRequested;
                                 this.autoReconnect = true;
-                                this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.RESET, PartialFlashingService.MODE_PAIRING]));
+                                this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.RESET, PartialFlashingService.MODE_PAIRING]))
+                                    .then(() => { });
                                 return;
                             }
 
@@ -518,10 +522,12 @@ namespace pxt.webBluetooth {
                             if (this.flashOffset >= this.bin.length) {
                                 pxt.debug('pf: end transmission')
                                 this.state = PartialFlashingState.EndOfTransmision;
-                                this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.END_OF_TRANSMISSION]));
-                                // we are done!
-                                this.flashResolve();
-                                this.clearFlashData();
+                                this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.END_OF_TRANSMISSION]))
+                                    .finally(() => {
+                                        // we are done!
+                                        this.flashResolve();
+                                        this.clearFlashData();
+                                    })
                             } else { // keep flashing
                                 this.flashNextPacket();
                             }
