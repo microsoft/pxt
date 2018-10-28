@@ -124,49 +124,40 @@ namespace pxt.webBluetooth {
         }
     }
 
-    export class UARTService extends BLEService {
-        // Nordic UART BLE service
-        static SERVICE_UUID: BluetoothServiceUUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e'; // must be lower case!
-        static CHARACTERISTIC_RX_UUID: BluetoothCharacteristicUUID = '6e400003-b5a3-f393-e0a9-e50e24dcca9e';
-        static CHARACTERISTIC_TX_UUID: BluetoothCharacteristicUUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
-
-        uartService: BluetoothRemoteGATTService;
+    export class BLETXService extends BLEService {
+        service: BluetoothRemoteGATTService;
         txCharacteristic: BluetoothRemoteGATTCharacteristic;
 
-        constructor(protected device: BLEDevice) {
+        constructor(protected device: BLEDevice, private serviceUUID: BluetoothServiceUUID, private txCharacteristicUUID: BluetoothServiceUUID) {
             super(device, true);
-            this.handleUARTNotifications = this.handleUARTNotifications.bind(this);
+            this.handleValueChanged = this.handleValueChanged.bind(this);
         }
 
         protected createConnectPromise(): Promise<void> {
-            pxt.debug(`ble: connecting uart`);
+            pxt.debug(`ble: connecting hf2`);
             return this.device.connectAsync()
-                .then(() => this.alivePromise(this.device.gatt.getPrimaryService(UARTService.SERVICE_UUID)))
+                .then(() => this.alivePromise(this.device.gatt.getPrimaryService(this.serviceUUID)))
                 .then(service => {
-                    pxt.debug(`ble: uart service connected`)
-                    this.uartService = service;
-                    return this.alivePromise(this.uartService.getCharacteristic(UARTService.CHARACTERISTIC_TX_UUID));
+                    pxt.debug(`ble: hf2 service connected`)
+                    this.service = service;
+                    return this.alivePromise(this.service.getCharacteristic(this.txCharacteristicUUID));
                 }).then(txCharacteristic => {
-                    pxt.debug(`ble: uart tx characteristic connected`)
+                    pxt.debug(`ble: hf2 tx characteristic connected`)
                     this.txCharacteristic = txCharacteristic;
                     return this.txCharacteristic.startNotifications()
                 }).then(() => {
-                    this.txCharacteristic.addEventListener('characteristicvaluechanged', this.handleUARTNotifications);
-                    pxt.tickEvent("webble.uart.connected");
+                    this.txCharacteristic.addEventListener('characteristicvaluechanged', this.handleValueChanged);
+                    pxt.tickEvent("webble.tx.connected");
                 });
         }
 
-        handleUARTNotifications(event: Event) {
+        handlePacket(data: DataView) {
+
+        }
+
+        private handleValueChanged(event: Event) {
             const dataView: DataView = (<any>event.target).value;
-            const decoder = new (<any>window).TextDecoder();
-            const text = decoder.decode(dataView);
-            if (text) {
-                window.postMessage({
-                    type: "serial",
-                    id: this.device.name || "ble",
-                    data: text
-                }, "*")
-            }
+            this.handlePacket(dataView);
         }
 
         disconnect() {
@@ -174,13 +165,67 @@ namespace pxt.webBluetooth {
             if (this.txCharacteristic && this.device.connected) {
                 try {
                     this.txCharacteristic.stopNotifications();
-                    this.txCharacteristic.removeEventListener('characteristicvaluechanged', this.handleUARTNotifications);
+                    this.txCharacteristic.removeEventListener('characteristicvaluechanged', this.handleValueChanged);
                 } catch (e) {
-                    pxt.log(`uart: error ${e.message}`)
+                    pxt.log(`ble: error ${e.message}`)
                 }
             }
-            this.uartService = undefined;
+            this.service = undefined;
             this.txCharacteristic = undefined;
+        }
+    }
+
+
+    export class HF2Service extends BLETXService {
+        static SERVICE_UUID: BluetoothServiceUUID = 'b112f5e6-2679-30da-a26e-0273-b6043849';
+        static CHARACTERISTIC_TX_UUID: BluetoothCharacteristicUUID = 'b112f5e6-2679-30da-a26e-0273-b604384a';
+        static BLEHF2_FLAG_SERIAL_OUT = 0x80;
+        static BLEHF2_FLAG_SERIAL_ERR = 0xC0;
+
+        constructor(protected device: BLEDevice) {
+            super(device, HF2Service.SERVICE_UUID, HF2Service.CHARACTERISTIC_TX_UUID);
+        }
+
+        handlePacket(data: DataView) {
+            const cmd = data.getUint8(0);
+            switch (cmd & 0xc0) {
+                case HF2Service.BLEHF2_FLAG_SERIAL_OUT:
+                case HF2Service.BLEHF2_FLAG_SERIAL_ERR:
+                    const n = Math.min(data.byteLength - 1, cmd & ~0xc0); // length in bytes
+                    let text = "";
+                    for (let i = 0; i < n; ++i)
+                        text += String.fromCharCode(data.getUint8(i + 1));
+                    if (text) {
+                        window.postMessage({
+                            type: "serial",
+                            id: this.device.name || "hf2",
+                            data: text
+                        }, "*")
+                    }
+                    break;
+            }
+        }
+    }
+
+    export class UARTService extends BLETXService {
+        // Nordic UART BLE service
+        static SERVICE_UUID: BluetoothServiceUUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e'; // must be lower case!
+        static CHARACTERISTIC_TX_UUID: BluetoothCharacteristicUUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
+
+        constructor(protected device: BLEDevice) {
+            super(device, UARTService.SERVICE_UUID, UARTService.CHARACTERISTIC_TX_UUID);
+        }
+
+        handlePacket(data: DataView) {
+            const decoder = new (<any>window).TextDecoder();
+            const text = decoder.decode(data);
+            if (text) {
+                window.postMessage({
+                    type: "serial",
+                    id: this.device.name || "uart",
+                    data: text
+                }, "*")
+            }
         }
     }
 
@@ -273,8 +318,9 @@ namespace pxt.webBluetooth {
                     if (this.state == PartialFlashingState.PairingModeRequested) {
                         pxt.debug(`pf: checking pairing mode`)
                         this.autoReconnect = false;
-                        this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.STATUS]));
+                        return this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.STATUS]));
                     }
+                    return Promise.resolve();
                 });
         }
 
@@ -355,7 +401,7 @@ namespace pxt.webBluetooth {
                     this.flashReject = reject;
                     pxt.debug(`pf: check service version`)
                     this.state = PartialFlashingState.StatusRequested;
-                    this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.STATUS]));
+                    return this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.STATUS]));
                 })).then(() => { },
                     e => {
                         pxt.log(`pf: error ${e.message}`)
@@ -511,7 +557,7 @@ namespace pxt.webBluetooth {
                     for (let i = 0; i < 16; i++)
                         chunk[4 + i] = hex[i];
                     //pxt.debug(`pf: chunk 0 ${Util.toHex(chunk)}`)
-                    this.pfCharacteristic.writeValue(chunk);
+                    return this.pfCharacteristic.writeValue(chunk);
                 }).delay(this.chunkDelay).then(() => {
                     this.flashPacketToken.throwIfCancelled();
                     chunk[0] = PartialFlashingService.FLASH_DATA;
@@ -521,7 +567,7 @@ namespace pxt.webBluetooth {
                     for (let i = 0; i < 16; i++)
                         chunk[4 + i] = hex[16 + i] || 0;
                     //pxt.debug(`pf: chunk 1 ${Util.toHex(chunk)}`)
-                    this.pfCharacteristic.writeValue(chunk);
+                    return this.pfCharacteristic.writeValue(chunk);
                 }).delay(this.chunkDelay).then(() => {
                     this.flashPacketToken.throwIfCancelled();
                     chunk[0] = PartialFlashingService.FLASH_DATA;
@@ -531,7 +577,7 @@ namespace pxt.webBluetooth {
                     for (let i = 0; i < 16; i++)
                         chunk[4 + i] = hex[32 + i] || 0;
                     //pxt.debug(`pf: chunk 2 ${Util.toHex(chunk)}`)
-                    this.pfCharacteristic.writeValue(chunk);
+                    return this.pfCharacteristic.writeValue(chunk);
                 }).delay(this.chunkDelay).then(() => {
                     this.flashPacketToken.throwIfCancelled();
                     chunk[0] = PartialFlashingService.FLASH_DATA;
@@ -541,7 +587,7 @@ namespace pxt.webBluetooth {
                     for (let i = 0; i < 16; i++)
                         chunk[4 + i] = hex[48 + i] || 0;
                     //pxt.debug(`pf: chunk 3 ${Util.toHex(chunk)}`)
-                    this.pfCharacteristic.writeValue(chunk);
+                    return this.pfCharacteristic.writeValue(chunk);
                 }).then(() => {
                     // give 500ms (A LOT) to process packet or consider the protocol stuck
                     // and send a bogus package to trigger an out of order situations
@@ -563,9 +609,8 @@ namespace pxt.webBluetooth {
                                 chunk[3] = ~0; // bobus packet number
                                 for (let i = 0; i < 16; i++)
                                     chunk[4 + i] = 0;
-                                this.pfCharacteristic.writeValue(chunk);
-                                // keep trying
-                                return transferDaemonAsync();
+                                return this.pfCharacteristic.writeValue(chunk)
+                                    .then(() => transferDaemonAsync())
                             });
                     };
                     transferDaemonAsync()
@@ -585,6 +630,7 @@ namespace pxt.webBluetooth {
     export class BLEDevice extends BLERemote {
         device: BluetoothDevice = undefined;
         uartService: UARTService; // may be undefined
+        hf2Service: HF2Service; // may be undefined
         partialFlashingService: PartialFlashingService; // may be undefined
         private services: BLEService[] = [];
 
@@ -594,8 +640,10 @@ namespace pxt.webBluetooth {
             this.handleDisconnected = this.handleDisconnected.bind(this);
             this.device.addEventListener('gattserverdisconnected', this.handleDisconnected);
 
-            if (hasConsole())
+            if (hasConsole()) {
                 this.services.push(this.uartService = new UARTService(this));
+                this.services.push(this.hf2Service = new HF2Service(this));
+            }
             if (hasPartialFlash())
                 this.services.push(this.partialFlashingService = new PartialFlashingService(this));
 
@@ -671,9 +719,11 @@ namespace pxt.webBluetooth {
 
         pxt.log(`ble: requesting device`)
         const optionalServices = [];
-        if (pxt.appTarget.appTheme.bluetoothUartFilters)
+        if (hasConsole()) {
             optionalServices.push(UARTService.SERVICE_UUID);
-        if (pxt.appTarget.appTheme.bluetoothPartialFlashing)
+            optionalServices.push(HF2Service.SERVICE_UUID);
+        }
+        if (hasPartialFlash())
             optionalServices.push(PartialFlashingService.SERVICE_UUID)
         return navigator.bluetooth.requestDevice({
             filters: pxt.appTarget.appTheme.bluetoothUartFilters,
