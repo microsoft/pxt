@@ -283,7 +283,7 @@ declare namespace pxt {
         bluetoothPartialFlashing?: boolean; // enable partial flashing over BLE
         topBlocks?: boolean; // show a top blocks category in the editor
         pairingButton?: boolean; // display a pairing button
-
+        tagColors?: pxt.Map<string>; // optional colors for tags
         /**
          * Internal and temporary flags:
          * These flags may be removed without notice, please don't take a dependency on them

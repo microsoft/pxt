@@ -399,6 +399,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                                 tags={scr.tags}
                                 scr={scr} index={index}
                                 onCardClick={this.handleCardClick}
+                                cardType={scr.cardType}
                             />
                         )}
                     </carousel.Carousel>
@@ -419,6 +420,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                                 scr={scr}
                                 onClick={this.props.onClick}
                                 cardType={scr.cardType}
+                                tags={scr.tags}
                             />
                         )}
                     </div>
@@ -490,6 +492,7 @@ export interface ProjectsDetailProps extends ISettingsProps {
     scr?: any;
     onClick: (scr: any) => void;
     cardType: string;
+    tags?: string[];
 }
 
 export interface ProjectsDetailState {
@@ -512,12 +515,15 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
     }
 
     renderCore() {
-        const { name, description, imageUrl, largeImageUrl, youTubeId, cardType } = this.props;
+        const { name, description, imageUrl, largeImageUrl, youTubeId, cardType, tags } = this.props;
 
         const image = largeImageUrl || imageUrl || (youTubeId ? `https://img.youtube.com/vi/${youTubeId}/0.jpg` : undefined);
+        const tagColors: pxt.Map<string> = pxt.appTarget.appTheme.tagColors || {};
 
         let clickLabel = lf("Show Instructions");
-        if (cardType == "tutorial") clickLabel = lf("Start Tutorial");
+        if (cardType == "tutorial") {
+            clickLabel = lf("Start Tutorial");
+        }
         else if (cardType == "codeExample" || cardType == "example") clickLabel = lf("Open Example");
         else if (cardType == "template") clickLabel = lf("New Project");
         else if (youTubeId) clickLabel = lf("Play Video");
@@ -534,6 +540,9 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             <div className="column eight wide">
                 <div className="segment">
                     <div className="header"> {name} </div>
+                    {tags ? <div className="ui labels">
+                        {tags.map(tag => <div className={`ui ${tagColors[tag] || ''} label`}>{pxt.Util.rlf(tag)}
+                        </div>)}</div> : undefined}
                     <p className="detail">
                         {description}
                     </p>

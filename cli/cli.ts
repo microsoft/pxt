@@ -1687,7 +1687,7 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
                 gallery.forEach(cards => cards.cards
                     .filter(card => card.tags)
                     .forEach(card => card.tags.forEach(tag => {
-                        targetStrings[tag.label] = tag.label;
+                        targetStrings[tag] = tag;
                     })))
             });
         }
