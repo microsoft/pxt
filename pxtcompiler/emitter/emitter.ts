@@ -59,8 +59,6 @@ namespace ts.pxtc {
     }
 
     export interface FieldWithAddInfo extends NamedDeclaration {
-        irGetter?: MethodDeclaration;
-        irSetter?: MethodDeclaration;
     }
 
     type TemplateLiteralFragment = TemplateHead | TemplateMiddle | TemplateTail;
@@ -324,6 +322,14 @@ namespace ts.pxtc {
         isAutoCreate?: boolean;
     }
 
+    export interface ITableEntry {
+        name: string;
+        idx: number;
+        info: number;
+        proc: ir.Procedure; // null, when name is a simple field
+        setProc?: ir.Procedure;
+    }
+
     export interface ClassInfo {
         id: string;
         derivedClasses?: ClassInfo[];
@@ -336,8 +342,7 @@ namespace ts.pxtc {
         attrs: CommentAttrs;
         isUsed?: boolean;
         vtable?: ir.Procedure[];
-        itable?: ir.Procedure[];
-        itableInfo?: string[];
+        itable?: ITableEntry[];
         ctor?: ir.Procedure;
         toStringMethod?: ir.Procedure;
     }
@@ -820,28 +825,6 @@ namespace ts.pxtc {
         usedAsIface?: boolean;
     }
 
-    function mkBogusMethod(info: ClassInfo, name: string, parameter?: any) {
-        let rootFunction = <any>{
-            kind: SK.MethodDeclaration,
-            parameters: parameter ? [parameter] : [],
-            name: {
-                kind: SK.Identifier,
-                text: name,
-                pos: 0,
-                end: 0
-            },
-            body: {
-                kind: SK.Block,
-                statements: []
-            },
-            parent: info.decl,
-            pos: 0,
-            end: 0,
-            isBogusFunction: true,
-        }
-        return rootFunction as MethodDeclaration
-    }
-
     export function compileBinary(
         program: Program,
         host: CompilerHost,
@@ -858,6 +841,7 @@ namespace ts.pxtc {
         let functionInfo: pxt.Map<FunctionAddInfo> = {};
         let irCachesToClear: NodeWithCache[] = []
         let ifaceMembers: pxt.Map<number> = {}
+        let explicitlyUsedIfaceMembers: pxt.Map<number> = {}
         let autoCreateFunctions: pxt.Map<boolean> = {}
         let configEntries: pxt.Map<ConfigEntry> = {}
         let currJres: pxt.JRes = null
@@ -1115,17 +1099,22 @@ namespace ts.pxtc {
             }
         }
 
-        function getIfaceMemberId(name: string) {
-            let v = U.lookup(ifaceMembers, name)
-            if (v != null) return v
-            for (let inf of bin.usedClassInfos) {
-                for (let m of inf.methods) {
-                    if (getName(m) == name)
-                        markFunctionUsed(m)
+        function getIfaceMemberId(name: string, markUsed = false) {
+            if (markUsed && !U.lookup(explicitlyUsedIfaceMembers, name)) {
+                U.assert(!bin.finalPass)
+                explicitlyUsedIfaceMembers[name] = 1
+                for (let inf of bin.usedClassInfos) {
+                    for (let m of inf.methods) {
+                        if (getName(m) == name)
+                            markFunctionUsed(m)
+                    }
                 }
             }
-            v = ifaceMembers[name] = bin.ifaceMembers.length
-            bin.ifaceMembers.push(name)
+            let v = U.lookup(ifaceMembers, name)
+            if (v != null) return v
+            U.assert(!bin.finalPass)
+            // this gets renumbered before the final pass
+            v = ifaceMembers[name] = -1;
             bin.emitString(name)
             return v
         }
@@ -1254,80 +1243,43 @@ namespace ts.pxtc {
                 }
                 inf.vtable = tbl
                 inf.itable = []
-                inf.itableInfo = []
 
-                let storeIface = (name: string, proc: ir.Procedure) => {
-                    let id = getIfaceMemberId(name)
-                    inf.itable[id] = proc
-                    inf.itableInfo[id] = name
-                    proc.info.usedAsIface = true
-                    assert(!!proc, "!!proc")
-                }
-
-                let emitSynthetic = (fn: MethodDeclaration, fill: (p: ir.Procedure) => void) => {
-                    let proc = lookupProc(fn)
-                    if (!proc) {
-                        scope(() => {
-                            emitFuncCore(fn)
-                            proc = lookupProc(fn)
-                            proc.body = []
-                            fill(proc)
-                        })
-                    }
-                    assert(!!proc, "!!proc")
-                    storeIface(getName(fn), proc)
-                }
-
-                for (let fld0 of inf.allfields) {
-                    let fld = fld0 as FieldWithAddInfo
+                for (let fld of inf.allfields) {
                     let fname = getName(fld)
-                    let setname = "set/" + fname
-
-                    if (isIfaceMemberUsed(fname)) {
-                        if (!fld.irGetter)
-                            fld.irGetter = mkBogusMethod(inf, fname)
-                        let idx = fieldIndexCore(inf, fld, false)
-                        emitSynthetic(fld.irGetter, (proc) => {
-                            // we skip final decr, but the ldfld call will do its own decr
-                            let access = ir.op(EK.FieldAccess, [proc.args[0].load()], idx)
-                            emitInJmpValue(access)
-                        })
-                    }
-
-                    if (isIfaceMemberUsed(setname)) {
-                        if (!fld.irSetter) {
-                            fld.irSetter = mkBogusMethod(inf, setname, {
-                                kind: SK.Parameter,
-                                name: { text: "v" },
-                                parent: fld.irSetter,
-                                typeOverride: typeOf(fld),
-                                symbol: {}
-                            });
-                        }
-                        let idx = fieldIndexCore(inf, fld, false)
-                        emitSynthetic(fld.irSetter, (proc) => {
-                            // decrs work out
-                            let access = ir.op(EK.FieldAccess, [proc.args[0].load()], idx)
-                            proc.emitExpr(ir.op(EK.Store, [access, proc.args[1].load()]))
-                        })
-                    }
+                    let finfo = fieldIndexCore(inf, fld, false)
+                    inf.itable.push({
+                        name: fname,
+                        info: (finfo.idx + 1) * 4,
+                        idx: getIfaceMemberId(fname),
+                        proc: null
+                    })
                 }
+
                 for (let curr = inf; curr; curr = curr.baseClassInfo) {
                     for (let m of curr.methods) {
-                        let n = getName(m)
-                        if (isIfaceMemberUsed(n)) {
-                            let id = getIfaceMemberId(n)
-                            if (!inf.itable[id]) {
-                                storeIface(n, lookupProc(m))
+                        const n = getName(m)
+                        if (isIfaceMemberUsed(n) || isUsed(m)) {
+                            const proc = lookupProc(m)
+                            const ex = inf.itable.find(e => e.name == n)
+                            const isSet = m.kind == SK.SetAccessor
+                            const isGet = m.kind == SK.GetAccessor
+                            if (ex) {
+                                if (isSet && !ex.setProc)
+                                    ex.setProc = proc
+                                else if (isGet && !ex.proc)
+                                    ex.proc = proc
+                            } else {
+                                inf.itable.push({
+                                    name: n,
+                                    info: 0,
+                                    idx: getIfaceMemberId(n),
+                                    proc: !isSet ? proc : null,
+                                    setProc: isSet ? proc : null
+                                })
                             }
+                            proc.info.usedAsIface = true
                         }
                     }
-                }
-                for (let i = 0; i < inf.itable.length; ++i)
-                    if (!inf.itable[i])
-                        inf.itable[i] = null // avoid undefined
-                for (let k of Object.keys(ifaceMembers)) {
-                    inf.itableInfo[ifaceMembers[k]] = k
                 }
             })
 
@@ -2151,17 +2103,17 @@ ${lbl}: .short 0xffff
                     return emitPlain();
                 } else if (decl.kind == SK.MethodSignature) {
                     let name = getName(decl)
-                    return mkMethodCall(null, null, getIfaceMemberId(name), args.map((x) => emitExpr(x)))
+                    return mkMethodCall(null, null, getIfaceMemberId(name, true), args.map((x) => emitExpr(x)))
                 } else if (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
                     if (node == funcExpr) {
                         // in this special base case, we have property access recv.foo
                         // where recv is a map obejct
                         let name = getName(decl)
-                        let res = mkMethodCall(null, null, getIfaceMemberId(name), args.map((x) => emitExpr(x)))
+                        let res = mkMethodCall(null, null, getIfaceMemberId(name, true), args.map((x) => emitExpr(x)))
                         let pid = res.data as ir.ProcId
                         pid.mapIdx = pid.ifaceIndex
                         if (args.length == 2) {
-                            pid.ifaceIndex = getIfaceMemberId("set/" + name)
+                            pid.ifaceIndex = getIfaceMemberId("set/" + name, true)
                             pid.mapMethod = "pxtrt::mapSet"
                         } else {
                             pid.mapMethod = "pxtrt::mapGet"
@@ -2253,6 +2205,24 @@ ${lbl}: .short 0xffff
             for (let info of bin.usedClassInfos) {
                 getVTable(info) // gets cached
             }
+
+            let keys = Object.keys(ifaceMembers)
+            keys.sort(U.strcmp)
+            keys.unshift("") // make sure idx=0 is invalid
+            bin.emitString("")
+            bin.ifaceMembers = keys
+            ifaceMembers = {}
+            let idx = 0
+            for (let k of keys) {
+                ifaceMembers[k] = idx++
+            }
+
+            for (let info of bin.usedClassInfos) {
+                for (let e of info.itable) {
+                    e.idx = getIfaceMemberId(e.name)
+                }
+            }
+
             let classNo = pxt.BuiltInType.User0
             const number = (i: ClassInfo) => {
                 U.assert(!i.classNo)
@@ -2274,7 +2244,7 @@ ${lbl}: .short 0xffff
         }
 
         function isIfaceMemberUsed(name: string) {
-            return U.lookup(ifaceMembers, name) != null
+            return U.lookup(explicitlyUsedIfaceMembers, name) != null
         }
 
         function markClassUsed(info: ClassInfo) {
@@ -4111,8 +4081,10 @@ ${lbl}: .short 0xffff
         numStmts = 1;
         commSize = 0;
         packedSource: string;
+        itEntries = 0;
+        itFullEntries = 0;
 
-        ifaceMembers: string[] = [];
+        ifaceMembers: string[];
         strings: pxt.Map<string> = {};
         hexlits: pxt.Map<string> = {};
         doubles: pxt.Map<string> = {};

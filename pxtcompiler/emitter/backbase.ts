@@ -152,6 +152,7 @@ ${lbl}: ${this.obj_header("pxt::buffer_vt")}
             if (this.proc.isRoot) {
                 this.emitLambdaTrampoline()
                 this.emitArrayMethods()
+                this.emitFieldMethods()
             }
         }
 
@@ -631,89 +632,156 @@ ${baseLabel}:
             })
         }
 
-        private emitIfaceCall(procid: ir.ProcId, numargs: number) {
-            this.write(this.t.emit_int(numargs, "r4"))
-            this.write(this.t.emit_int(procid.ifaceIndex * 4, "r1"))
+        private emitIfaceCall(procid: ir.ProcId, numargs: number, getset = "") {
+            this.write(this.t.emit_int(procid.ifaceIndex, "r1"))
 
-            this.emitLabelledHelper("ifacecall" + numargs, () => {
+            this.emitLabelledHelper("ifacecall" + numargs + "_" + getset, () => {
                 this.write(`ldr r0, [sp, #0] ; ld-this`)
                 this.loadVTable()
 
                 this.write(`
-                    ldr r2, [r3, #4] ; iface table
-                    cmp r2, #0
-                    beq .objlit
-                    ldr r2, [r2, r1] ; ld-method
-                    cmp r2, #0
-                    beq .fail2
-                    bx r2
-                
-                .objlit:
-                    ldrh r2, [r3, #8]
-                    cmp r2, #${pxt.BuiltInType.RefMap}
-                    bne .fail
-                    ${this.t.callCPPPush("pxtrt::mapGet")}
-                ; move args
-                `)
+                    ldr r2, [r3, #12] ; load mult
+                    movs r7, r2
+                    beq .objlit ; built-in types have mult=0
+                    muls r7, r1
+                    lsrs r7, r2
+                    lsls r7, r7, #1 ; r7 - hash offset
+                    ldr r3, [r3, #4] ; iface table
+                    adds r3, r3, r7
+                    ; r0-this, r1-method idx, r2-free, r3-hash entry, r4-num args, r7-free
+                    `)
 
-                for (let i = 0; i < numargs; ++i) {
-                    if (i == numargs - 1)
-                        // we keep the actual lambda value on the stack, so it gets decremented
-                        this.write(`movs r1, r0`)
-                    else
-                        this.write(`ldr r1, [sp, #4*${i + 1}]`)
-                    this.write(`str r1, [sp, #4*${i}]`)
+                for (let i = 0; i < vtLookups; ++i) {
+                    if (i > 0)
+                        this.write("    adds r3, #2")
+                    this.write(`
+                    ldrh r2, [r3, #0] ; r2-offset of descriptor
+                    ldrh r7, [r2, r3] ; r7-method idx
+                    cmp r7, r1
+                    beq .hit
+                    `)
                 }
 
-                // one argument consumed
-                this.lambdaCall(numargs - 1)
-
                 this.write(`
-                .fail:
-                    ${this.t.callCPP("pxt::failedCast")}
-                .fail2:
-                    ${this.t.callCPP("pxt::missingProperty")}
+                    b .fail2
+                .hit:
+                    adds r3, r3, r2 ; r3-descriptor
+                    ldr r2, [r3, #4]
+                    lsls r7, r2, #31
+                    beq .field
                 `)
-            })
-        }
 
-        private emitGetSet(procid: ir.ProcId) {
-            let isSet = /Set/.test(procid.mapMethod)
-            this.write(this.t.emit_int(procid.mapIdx, "r1"))
-            if (isSet)
-                this.write(this.t.emit_int(procid.ifaceIndex, "r4"))
+                if (getset == "set") {
+                    this.write(`
+                        ; check for next descriptor
+                        ldrh r7, [r3, #8]
+                        cmp r7, r1
+                        bne .fail2 ; no setter!
+                        ldr r2, [r3, #12]
+                    `)
+                }
 
-            let outp = this.redirectOutput(() => {
-                this.write(`ldr r0, [sp, #0] ; ld-this`)
-                this.loadVTable()
+                this.write(this.t.emit_int(numargs, "r4"))
                 this.write(`
-                    ldr r2, [r3, #4] ; iface table
-                    cmp r2, #0
-                    beq .objlit
-                    lsls r1, ${isSet ? "r4" : "r1"}, #2
-                    ldr r1, [r2, r1] ; ld-method
-                    cmp r1, #0
-                    beq .fail2
-                    movs r4, #${isSet ? 2 : 1}
-                    bx r1
-                
+                    bx r2
                 .objlit:
                     ldrh r2, [r3, #8]
                     cmp r2, #${pxt.BuiltInType.RefMap}
                     bne .fail
-                    ${isSet ? "ldr r2, [sp, #4]" : ""}
-                    movs r3, #0 ; clear args on stack, so the outside decr() doesn't touch them
-                    str r3, [sp, #0]
-                    ${isSet ? "str r3, [sp, #4]" : ""}
-                    ${this.t.callCPPPush(procid.mapMethod)}
-                
+                    mov r4, lr
+                `)
+
+                if (getset && !target.gc) {
+                    this.write("movs r3, #0")
+                    this.write("str r3, [sp, #0] ; clear so it won't get decr()ed outside")
+                }
+
+                if (getset == "set") {
+                    this.write("ldr r2, [sp, #4] ; ld-val")
+                    if (!target.gc)
+                        this.write("str r3, [sp, #4] ; clear so it won't get decr()ed outside")
+                }
+
+                this.write(this.t.callCPP(getset == "set" ? "pxtrt::mapSet" : "pxtrt::mapGet"))
+
+                if (getset) {
+                    this.write("bx r4")
+                } else {
+                    this.write("mov lr, r4")
+                    this.write("b .moveArgs")
+                }
+
+                this.write(".field:")
+                if (getset == "set") {
+                    if (target.gc) {
+                        this.write(`
+                            ldr r3, [sp, #4] ; ld-val
+                            str r3, [r0, r2] ; store field
+                            bx lr
+                        `)
+                    } else {
+                        this.write(`
+                            ldr r7, [r0, r2] ; load field
+                            ldr r3, [sp, #4] ; ld-val
+                            str r7, [sp, #4] ; save previous value - it will get decr()ed outside
+                            str r3, [r0, r2] ; store field
+                            bx lr
+                        `)
+                    }
+                } else if (getset == "get") {
+                    if (target.gc) {
+                        this.write(`
+                            ldr r0, [r0, r2] ; load field
+                            bx lr
+                        `)
+                    } else {
+                        this.write(`
+                            mov r4, lr
+                            ldr r0, [r0, r2] ; load field
+                            bl _pxt_incr
+                            bx r4
+                        `)
+                    }
+                } else {
+                    if (target.gc) {
+                        this.write(`
+                            ldr r0, [r0, r2] ; load field
+                        `)
+                    } else {
+                        this.write(`
+                            mov r4, lr
+                            ldr r7, [r0, r2] ; load field
+                            bl _pxt_decr
+                            mov r0, r7
+                            bl _pxt_incr
+                            mov lr, r4
+                        `)
+                    }
+                }
+
+                if (!getset) {
+                    this.write(`.moveArgs:`)
+
+                    for (let i = 0; i < numargs; ++i) {
+                        if (i == numargs - 1)
+                            // we keep the actual lambda value on the stack, so it gets decremented
+                            this.write(`movs r1, r0`)
+                        else
+                            this.write(`ldr r1, [sp, #4*${i + 1}]`)
+                        this.write(`str r1, [sp, #4*${i}]`)
+                    }
+
+                    // one argument consumed
+                    this.lambdaCall(numargs - 1)
+                }
+
+                this.write(`
                 .fail:
                     ${this.t.callCPP("pxt::failedCast")}
                 .fail2:
                     ${this.t.callCPP("pxt::missingProperty")}
                 `)
             })
-            this.emitHelper(outp, "vcall")
         }
 
         // vtable in r3; clobber r2
@@ -1037,6 +1105,9 @@ ${baseLabel}:
             }
         }
 
+        private emitFieldMethods() {
+        }
+
         private emitArrayMethods() {
             for (let op of ["get", "set"]) {
                 this.write(`
@@ -1320,7 +1391,7 @@ ${baseLabel}:
                     let isSet = /Set/.test(procid.mapMethod)
                     assert(isSet == (topExpr.args.length == 2))
                     assert(!isSet == (topExpr.args.length == 1))
-                    this.emitGetSet(procid)
+                    this.emitIfaceCall(procid, topExpr.args.length, isSet ? "set" : "get")
                 } else if (procid.ifaceIndex != null) {
                     this.emitIfaceCall(procid, topExpr.args.length)
                 } else {

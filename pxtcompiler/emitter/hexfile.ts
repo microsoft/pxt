@@ -663,11 +663,73 @@ ${lbl}: ${snippets.obj_header("pxt::number_vt")}
     }
 
     export function firstMethodOffset() {
-        // 3 words header
+        // 4 words header
         // 4 or 2 mem mgmt methods
         // 1 toString
-        return 3 + (target.gc ? 4 : 2) + 1
+        return 4 + (target.gc ? 4 : 2) + 1
     }
+
+    const primes = [
+        21078089, 22513679, 15655169, 18636881, 19658081, 21486649, 21919277, 20041213, 20548751,
+        16180187, 18361627, 19338023, 19772677, 16506547, 23530697, 22998697, 21225203, 19815283,
+        23679599, 19822889, 21136133, 19540043, 21837031, 18095489, 23924267, 23434627, 22582379,
+        21584111, 22615171, 23403001, 19640683, 19998031, 18460439, 20105387, 17595791, 16482043,
+        23199959, 18881641, 21578371, 22765747, 20170273, 16547639, 16434589, 21435019, 20226751,
+        19506731, 21454393, 23224541, 23431973, 23745511,
+    ]
+
+    export const vtLookups = 3
+    function computeHashMultiplier(nums: number[]) {
+        let shift = 32
+        U.assert(U.unique(nums, v => "" + v).length == nums.length, "non unique")
+        for (let sz = 2; ; sz = sz << 1) {
+            shift--
+            if (sz < nums.length) continue
+            let minColl = -1
+            let minMult = -1
+            let minArr: Uint16Array
+            for (let mult0 of primes) {
+                let mult = (mult0 << 8) | shift
+                let arr = new Uint16Array(sz + vtLookups + 1)
+                U.assert((arr.length & 1) == 0)
+                let numColl = 0
+                let vals = []
+                for (let n of nums) {
+                    U.assert(n > 0)
+                    let k = Math.imul(n, mult) >>> shift
+                    vals.push(k)
+                    let found = false
+                    for (let l = 0; l < vtLookups; l++) {
+                        if (!arr[k + l]) {
+                            found = true
+                            arr[k + l] = n
+                            break
+                        }
+                        numColl++
+                    }
+                    if (!found) {
+                        numColl = -1
+                        break
+                    }
+                }
+
+                if (minColl == -1 || minColl > numColl) {
+                    minColl = numColl
+                    minMult = mult
+                    minArr = arr
+                }
+            }
+
+            if (minColl >= 0) {
+                return {
+                    mult: minMult,
+                    mapping: minArr,
+                    size: sz
+                }
+            }
+        }
+    }
+
 
     export function vtableToAsm(info: ClassInfo, opts: CompileOptions, bin: Binary) {
         /*
@@ -677,8 +739,13 @@ ${lbl}: ${snippets.obj_header("pxt::number_vt")}
         PVoid *ifaceTable;
         BuiltInType classNo;
         uint16_t reserved;
+        uint32_t ifaceHashMult;
         PVoid methods[2 or 4];
         */
+
+        const ifaceInfo = computeHashMultiplier(info.itable.map(e => e.idx))
+        //if (info.itable.length == 0)
+        //    ifaceInfo.mult = 0
 
         let ptrSz = target.shortPointers ? ".short" : ".word"
         let s = `
@@ -686,9 +753,10 @@ ${lbl}: ${snippets.obj_header("pxt::number_vt")}
 ${info.id}_VT:
         .short ${info.allfields.length * 4 + 4}  ; size in bytes
         .byte ${pxt.ValTypeObject}, ${pxt.VTABLE_MAGIC} ; magic
-        ${ptrSz} ${info.itable.length ? info.id + "_IfaceVT" : 0}
+        ${ptrSz} ${info.id}_IfaceVT
         .short ${info.classNo} ; class-id
         .short 0 ; reserved
+        .word ${ifaceInfo.mult} ; hash-mult
 `;
 
         let addPtr = (n: string) => {
@@ -709,24 +777,44 @@ ${info.id}_VT:
             addPtr(m.label())
         }
 
-        if (!info.itable.length)
-            return s + "\n"
-
-        // VTable for interface method is just linear. If we ever have lots of interface
-        // methods and lots of classes this could become a problem. We could use a table
-        // of (iface-member-id, function-addr) pairs and binary search.
         // See https://makecode.microbit.org/15593-01779-41046-40599 for Thumb binary search.
         s += `
         .balign ${target.shortPointers ? 2 : 4}
 ${info.id}_IfaceVT:
 `
 
-        while (info.itable.length < bin.ifaceMembers.length)
-            info.itable.push(null)
+        const descSize = 8
+        const zeroOffset = ifaceInfo.mapping.length * 2
 
-        for (let m of info.itable) {
-            addPtr(m ? m.vtLabel() : "0")
+        let descs = ""
+        let offset = zeroOffset
+        let offsets: pxt.Map<number> = {}
+        for (let e of info.itable) {
+            offsets[e.idx + ""] = offset
+            descs += `  .short ${e.idx}, ${e.info} ; ${e.name}\n`
+            descs += `  .word ${e.proc ? e.proc.vtLabel() : e.info}\n`
+            offset += descSize
+            if (e.setProc) {
+                descs += `  .short ${e.idx}, 0 ; set ${e.name}\n`
+                descs += `  .word ${e.setProc.vtLabel()}@fn\n`
+                offset += descSize
+            }
         }
+
+        descs += "  .word 0, 0 ; the end\n"
+        offset += descSize
+
+        let map = ifaceInfo.mapping
+
+        for (let i = 0; i < map.length; ++i) {
+            bin.itEntries++
+            if (map[i])
+                bin.itFullEntries++
+        }
+
+        // offsets are relative to the position in the array
+        s += "  .short " + U.toArray(map).map((e, i) => (offsets[e + ""] || zeroOffset) - (i * 2)).join(", ") + "\n"
+        s += descs
 
         s += "\n"
         return s
@@ -857,7 +945,8 @@ ${hex.hexPrelude()}
         let b = mkProcessorFile(target)
         b.emit(src);
 
-        src = b.getSource(!peepDbg, bin.numStmts, target.flashEnd);
+        src = `; Interface tables: ${bin.itFullEntries}/${bin.itEntries} (${Math.round(100 * bin.itFullEntries / bin.itEntries)}%)\n` +
+            b.getSource(!peepDbg, bin.numStmts, target.flashEnd);
 
         throwAssemblerErrors(b)
 

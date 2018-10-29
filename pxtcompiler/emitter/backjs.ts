@@ -48,13 +48,13 @@ namespace ts.pxtc {
             s += `    ${m.label()},\n`
         }
         s += "  ],\n"
-        s += "  iface: [\n"
-        let i = 0
+        s += "  iface: {\n"
         for (let m of info.itable) {
-            s += `    ${m ? m.label() : "null"},  // ${info.itableInfo[i] || "."}\n`
-            i++
+            s += `    "${m.name}": ${m.proc ? m.proc.label() : "getField"},\n`
+            if (m.setProc)
+                s += `    "set/${m.name}": ${m.setProc.label()},\n`
         }
-        s += "  ],\n"
+        s += "  },\n"
         if (info.toStringMethod)
             s += "  toStringMethod: " + info.toStringMethod.label() + ",\n"
         s += "};\n"
