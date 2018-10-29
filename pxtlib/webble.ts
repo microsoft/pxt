@@ -170,7 +170,7 @@ namespace pxt.webBluetooth {
 
         disconnect() {
             super.disconnect();
-            if (this.txCharacteristic && this.device.connected) {
+            if (this.txCharacteristic && this.device && this.device.connected) {
                 try {
                     this.txCharacteristic.stopNotifications();
                     this.txCharacteristic.removeEventListener('characteristicvaluechanged', this.handleValueChanged);
@@ -650,12 +650,20 @@ namespace pxt.webBluetooth {
         partialFlashingService: PartialFlashingService; // may be undefined
         private services: BLEService[] = [];
         private pendingResumeLogOnDisconnection = false;
+        public servicesVersion = 0;
 
         constructor(device: BluetoothDevice) {
             super("ble", new pxt.Util.CancellationToken());
             this.device = device;
             this.handleDisconnected = this.handleDisconnected.bind(this);
+            this.handleServiceAdded = this.handleServiceAdded.bind(this);
+            this.handleServiceChanged = this.handleServiceChanged.bind(this);
+            this.handleServiceRemoved = this.handleServiceRemoved.bind(this);
+
             this.device.addEventListener('gattserverdisconnected', this.handleDisconnected);
+            this.device.addEventListener('serviceadded', this.handleServiceAdded);
+            this.device.addEventListener('servicechanged', this.handleServiceChanged);
+            this.device.addEventListener('serviceremoved', this.handleServiceRemoved);
 
             if (hasConsole()) {
                 this.services.push(this.uartService = new UARTService(this));
@@ -718,6 +726,21 @@ namespace pxt.webBluetooth {
             this.debug(`connecting gatt server`)
             return this.alivePromise<void>(this.device.gatt.connect()
                 .then(() => this.debug(`gatt server connected`)));
+        }
+
+        handleServiceAdded(event: Event) {
+            this.debug(`service added`);
+            this.servicesVersion++;
+        }
+
+        handleServiceRemoved(event: Event) {
+            this.debug(`service removed`);
+            this.servicesVersion++;
+        }
+
+        handleServiceChanged(event: Event) {
+            this.debug(`service changed`);
+            this.servicesVersion++;
         }
 
         handleDisconnected(event: Event) {
