@@ -16,6 +16,11 @@ namespace pxt.webBluetooth {
             && !!pxt.appTarget.appTheme.bluetoothPartialFlashing;
     }
 
+    export function isValidUUID(id: string): boolean {
+        // https://webbluetoothcg.github.io/web-bluetooth/#uuids
+        return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(id);
+    }
+
     export class BLERemote {
         public id: string;
         public aliveToken: pxt.Util.CancellationToken;
