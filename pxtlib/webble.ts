@@ -767,7 +767,7 @@ namespace pxt.webBluetooth {
         }
         return connectAsync()
             .catch(e => {
-                if (bleDevice)
+                if (bleDevice && bleDevice.aliveToken)
                     bleDevice.aliveToken.resolveCancel();
                 pxt.log(`ble: error ${e.message}`)
             })
