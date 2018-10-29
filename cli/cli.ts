@@ -1634,6 +1634,38 @@ function buildWebManifest(cfg: pxt.TargetBundle) {
     return webmanifest;
 }
 
+function processLf(filename: string, translationStrings: pxt.Map<string>): void {
+    if (!/\.(ts|tsx|html)$/.test(filename)) return
+    if (/\.d\.ts$/.test(filename)) return
+
+    pxt.debug(`extracting strings from ${filename}`);
+    fs.readFileSync(filename, { encoding: "utf8" })
+        .split('\n').forEach((line, idx) => {
+            function err(msg: string) {
+                console.error(`${filename}(${idx}): ${msg}`);
+            }
+            while (true) {
+                const newLine = line.replace(/\blf(_va)?\s*\(\s*(.*)/, (all, a, args) => {
+                    const m = /^("([^"]|(\\"))+")\s*[\),]/.exec(args)
+                    if (m) {
+                        try {
+                            const str = JSON.parse(m[1])
+                            translationStrings[str] = str;
+                        } catch (e) {
+                            err("cannot JSON-parse " + m[1])
+                        }
+                    } else {
+                        if (!/util\.ts$/.test(filename))
+                            err("invalid format of lf() argument: " + args)
+                    }
+                    return "BLAH " + args
+                })
+                if (newLine == line) return;
+                line = newLine
+            }
+        })
+}
+
 function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boolean) {
     cfg.appTheme.id = cfg.id
     cfg.appTheme.title = cfg.title
@@ -1668,6 +1700,7 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
     if (theme.title) targetStrings[theme.title] = theme.title;
     if (theme.name) targetStrings[theme.name] = theme.name;
     if (theme.description) targetStrings[theme.description] = theme.description;
+    // extract strings from docs
     function walkDocs(docs: pxt.DocMenuEntry[]) {
         if (!docs) return;
         docs.forEach(doc => {
@@ -1692,6 +1725,12 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
             });
         }
     }
+    // extract strings from editor
+    ["editor", "fieldeditors", "cmds"]
+        .filter(d => nodeutil.existsDirSync(d))
+        .forEach(d => nodeutil.allFiles(d)
+            .forEach(f => processLf(f, targetStrings))
+        );
     let targetStringsSorted: pxt.Map<string> = {};
     Object.keys(targetStrings).sort().map(k => targetStringsSorted[k] = k);
 
