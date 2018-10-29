@@ -370,7 +370,7 @@ namespace pxt.webBluetooth {
             }
             this.device.pauseLog();
             return this.createFlashPromise(hex)
-                .finally(() => this.device.resumeLogOnNextConnection());
+                .finally(() => this.device.resumeLogOnDisconnection());
         }
 
         private createFlashPromise(hex: string): Promise<void> {
@@ -646,7 +646,7 @@ namespace pxt.webBluetooth {
         hf2Service: HF2Service; // may be undefined
         partialFlashingService: PartialFlashingService; // may be undefined
         private services: BLEService[] = [];
-        private resumeLogOnDisconnection = false;
+        private pendingResumeLogOnDisconnection = false;
 
         constructor(device: BluetoothDevice) {
             super("ble", new pxt.Util.CancellationToken());
@@ -680,8 +680,8 @@ namespace pxt.webBluetooth {
             }
         }
 
-        resumeLogOnNextConnection() {
-            this.resumeLogOnDisconnection = true;
+        resumeLogOnDisconnection() {
+            this.pendingResumeLogOnDisconnection = true;
         }
 
         private resumeLog() {
@@ -720,8 +720,8 @@ namespace pxt.webBluetooth {
         handleDisconnected(event: Event) {
             this.debug(`disconnected`)
             this.disconnect();
-            if (this.resumeLogOnDisconnection) {
-                this.resumeLogOnDisconnection = false;
+            if (this.pendingResumeLogOnDisconnection) {
+                this.pendingResumeLogOnDisconnection = false;
                 Promise.delay(500).then(() => this.resumeLog());
             }
         }
