@@ -688,10 +688,28 @@ namespace pxt.runner {
             $(e).removeClass('lang-typescript');
         });
         $('code.lang-typescript-ignore').each((i, e) => {
-            $(e).removeClass('lang-typescript-ignore')
+            $(e).removeClass('lang-typescript-ignore');
             $(e).addClass('lang-typescript');
             render(e, true);
             $(e).removeClass('lang-typescript');
+        });
+        $('code.lang-typescript-invalid').each((i, e) => {
+            $(e).removeClass('lang-typescript-invalid');
+            $(e).addClass('lang-typescript');
+            render(e, true);
+            $(e).removeClass('lang-typescript');
+            $(e).parent('div').addClass('invalid');
+            $(e).parent('div').prepend($("<i>", {"class": "icon ban"}));
+            $(e).addClass('invalid');
+        });
+        $('code.lang-typescript-valid').each((i, e) => {
+            $(e).removeClass('lang-typescript-valid');
+            $(e).addClass('lang-typescript');
+            render(e, true);
+            $(e).removeClass('lang-typescript');
+            $(e).parent('div').addClass('valid');
+            $(e).parent('div').prepend($("<i>", {"class": "icon check"}));
+            $(e).addClass('valid');
         });
     }
 
