@@ -42,6 +42,8 @@ functions, lambdas, classes).
 * `typeof` expression
 * `public`/`private` annotations on constructor arguments (syntactic sugar to make them into fields)
 * initializers for class fields
+* lambda functions with more than three arguments
+* using generic functions as values and nested generic functions
 
 The following used to be disallowed, but should be supported now,
 though they require testing:
@@ -69,12 +71,10 @@ We generally stay away from the more dynamic parts of JavaScript.  Things you ma
 * shorthand properties (`{a, b: 1}` parsed as `{a: a, b: 1}`)
 * exceptions (`throw`, `try ... catch`, `try ... finally`);
   currently all exceptions just stop the program
-* using generic functions as values and nested generic functions
 * binding with arrays or objects: `let [a, b] = ...; let { x, y } = ...`
 * `delete` statement (on object literals)
 * spread and reset operators (statically typed)
 * support of `enums` as run-time arrays
-* lambda functions with more than three arguments
 * `new` on non-class types
 * using a built-in function as a value
 
