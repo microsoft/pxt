@@ -46,6 +46,8 @@ of gallery title to gallery markdown path. You can have as many galleries as you
 }
 ```
 
+Add a direct link to the tutorial from the ``SUMMARY.md`` page to help search engine bots.
+
 ### ~ hint
 
 **A real example**
@@ -195,6 +197,18 @@ If you want to display a dialog and have it skip to the next step automatically,
 
 ## It's time to code! @unplugged
 
+```
+
+## Testing
+
+When developing your new tutorials, it is easiest to render them as a markdown documentation page until all steps look ok. Going through all the steps while developing the tutorial gets tedious.
+
+If you are running the local server, go to ``http://localhost:3232/tutorials`` to render the ``/docs/tutorials.md`` gallery.
+
+The [pxt checkdocs command](/cli/checkdocs) command will compile all the tutorial snippets automatically.
+
+```
+pxt checkdocs
 ```
 
 ## Example
