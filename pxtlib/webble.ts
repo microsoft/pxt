@@ -72,6 +72,8 @@ namespace pxt.webBluetooth {
 
     export class BLEService extends BLERemote {
         public autoReconnectDelay = 1000;
+        public disconnectOnAutoReconnect = false;
+        private reconnectPromise: Promise<void> = undefined;
 
         constructor(id: string, protected device: BLEDevice, public autoReconnect: boolean) {
             super(id, device.aliveToken);
@@ -79,7 +81,6 @@ namespace pxt.webBluetooth {
             this.device.device.addEventListener('gattserverdisconnected', this.handleDisconnected);
         }
 
-        private reconnectPromise: Promise<void> = undefined;
         handleDisconnected(event: Event) {
             this.cancelConnect();
             if (this.aliveToken.isCancelled()) return;
@@ -87,10 +88,8 @@ namespace pxt.webBluetooth {
             if (this.autoReconnect && !this.reconnectPromise)
                 this.reconnectPromise =
                     Promise.delay(this.autoReconnectDelay)
-                        .then(() => this.exponentialBackoffConnectAsync(10, 500))
-                        .catch(() => {
-                            this.reconnectPromise = undefined;
-                        });
+                        .then(() => this.exponentialBackoffConnectAsync(8, 500))
+                        .finally(() => this.reconnectPromise = undefined);
         }
 
         /* Utils */
@@ -106,7 +105,8 @@ namespace pxt.webBluetooth {
                     this.debug(`reconnect success`)
                     this.reconnectPromise = undefined;
                 })
-                .catch(_ => {
+                .catch(e => {
+                    this.debug(`reconnect error ${e.message}`);
                     this.aliveToken.throwIfCancelled();
                     if (!this.device.isPaired) {
                         this.debug(`give up, device unpaired`)
@@ -124,6 +124,8 @@ namespace pxt.webBluetooth {
                         return undefined; // give up
                     }
                     this.debug(`retry connect ${delay}ms... (${max} tries left)`);
+                    if (this.disconnectOnAutoReconnect)
+                        this.device.disconnect();
                     return Promise.delay(delay)
                         .then(() => this.exponentialBackoffConnectAsync(--max, delay * 1.8));
                 })
@@ -285,6 +287,12 @@ namespace pxt.webBluetooth {
         private flashResolve: (theResult?: void | PromiseLike<void>) => void;
         private flashReject: (e: any) => void;
 
+        constructor(protected device: BLEDevice) {
+            super("partial flashing", device, false);
+            this.disconnectOnAutoReconnect = true;
+            this.handleCharacteristic = this.handleCharacteristic.bind(this);
+        }
+
         private clearFlashData() {
             this.version = 0;
             this.mode = 0;
@@ -299,11 +307,6 @@ namespace pxt.webBluetooth {
             this.flashReject = undefined;
             this.flashResolve = undefined;
             this.flashOffset = undefined;
-        }
-
-        constructor(protected device: BLEDevice) {
-            super("partial flashing", device, false);
-            this.handleCharacteristic = this.handleCharacteristic.bind(this);
         }
 
         protected createConnectPromise(): Promise<void> {
