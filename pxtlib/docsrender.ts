@@ -251,12 +251,12 @@ namespace pxt.docs {
 
         if (currentTocEntry) {
             if (currentTocEntry.prevPath) {
-                params["prev"] = `<a href="${currentTocEntry.prevPath}" class="navigation navigation-prev " title="${currentTocEntry.prevName}">
+                params["prev"] = `<a href="${normalizeUrl(currentTocEntry.prevPath)}" class="navigation navigation-prev " title="${currentTocEntry.prevName}">
                                     <i class="icon angle left"></i>
                                 </a>`;
             }
             if (currentTocEntry.nextPath) {
-                params["next"] = `<a href="${currentTocEntry.nextPath}" class="navigation navigation-next " title="${currentTocEntry.nextName}">
+                params["next"] = `<a href="${normalizeUrl(currentTocEntry.nextPath)}" class="navigation navigation-next " title="${currentTocEntry.nextName}">
                                     <i class="icon angle right"></i>
                                 </a>`;
             }
@@ -351,6 +351,14 @@ namespace pxt.docs {
             "searchBar1",
             "searchBar2"
         ])
+
+        // Normalize any path URL with any version path in the current URL
+        function normalizeUrl(href: string) {
+            if (!href) return href;
+            const relative = href.indexOf('/') == 0;
+            if (relative && d.versionPath) href = `/${d.versionPath}${href}`;
+            return href;
+        }
     }
 
     export interface RenderOptions {

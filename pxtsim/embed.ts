@@ -18,6 +18,7 @@ namespace pxsim {
         cdnUrl?: string;
         localizedStrings?: Map<string>;
         version?: string;
+        clickTrigger?: boolean;
     }
 
     export interface SimulatorInstructionsMessage extends SimulatorMessage {

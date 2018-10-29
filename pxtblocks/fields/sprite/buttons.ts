@@ -119,19 +119,15 @@ namespace pxtblockly {
 
             // Draw the left option
             this.leftElement = this.root.group();
-            this.leftText = this.leftElement.draw("text")
-                .fill(this.props.selectedTextColor)
-                .text(this.props.leftText)
-                .setAttribute("dominant-baseline", "middle")
-                .setAttribute("dy", 0);
+            this.leftText = mkText(this.props.leftText)
+                .fill(this.props.selectedTextColor);
+            this.leftElement.appendChild(this.leftText);
 
             // Draw the right option
             this.rightElement = this.root.group();
-            this.rightText = this.rightElement.draw("text")
-                .fill(this.props.unselectedTextColor)
-                .text(this.props.rightText)
-                .setAttribute("dominant-baseline", "middle")
-                .setAttribute("dy", 0);
+            this.rightText = mkText(this.props.rightText)
+                .fill(this.props.unselectedTextColor);
+            this.rightElement.appendChild(this.rightText);
 
             this.root.onClick(() => this.toggle());
         }
@@ -162,12 +158,8 @@ namespace pxtblockly {
 
         layout() {
             const centerOffset = (TOGGLE_WIDTH - TOGGLE_BORDER_WIDTH * 2) / 4;
-
-            const lWidth = this.leftText.el.getComputedTextLength();
-            this.leftText.moveTo(centerOffset + TOGGLE_BORDER_WIDTH - lWidth / 2, TOGGLE_HEIGHT / 2);
-
-            const rWidth = this.rightText.el.getComputedTextLength();
-            this.rightText.moveTo(TOGGLE_WIDTH - TOGGLE_BORDER_WIDTH - centerOffset - rWidth / 2, TOGGLE_HEIGHT / 2)
+            this.leftText.moveTo(centerOffset + TOGGLE_BORDER_WIDTH, TOGGLE_HEIGHT / 2);
+            this.rightText.moveTo(TOGGLE_WIDTH - TOGGLE_BORDER_WIDTH - centerOffset, TOGGLE_HEIGHT / 2)
         }
 
         translate(x: number, y: number) {
@@ -187,7 +179,6 @@ namespace pxtblockly {
         cx: number;
         cy: number;
         root: svg.Group;
-        inDom = false;
         clickHandler: () => void;
 
         constructor(root: svg.Group, cx: number, cy: number) {
@@ -196,14 +187,6 @@ namespace pxtblockly {
             this.cy = cy;
             this.root.onClick(() => this.clickHandler && this.clickHandler());
             this.root.appendClass("sprite-editor-button");
-            this.root.el.addEventListener("animationstart", () => {
-                this.inDom = true;
-                this.layout();
-            });
-
-            // This animation does nothing, but the above event will fire once the
-            // node has definitely been added to the DOM
-            this.root.el.style.animation = "dom-test";
         }
 
         public getElement() {
@@ -256,21 +239,17 @@ namespace pxtblockly {
         constructor(root: svg.Group, cx: number, cy: number, text: string, className: string) {
             super(root, cx, cy);
 
-            this.textEl = this.root.draw("text")
-                .text(text)
-                .appendClass(className)
-                .setAttribute("dominant-baseline", "middle")
-                .setAttribute("dy", 2);
+            this.textEl = mkText(text)
+                .appendClass(className);
+
+            this.textEl.moveTo(this.cx, this.cy);
+
+            this.root.appendChild(this.textEl);
         }
 
         setText(text: string) {
             this.textEl.text(text);
-            if (this.inDom) this.layout();
-        }
-
-        layout() {
-            const width = this.textEl.el.getComputedTextLength();
-            this.textEl.moveTo(this.cx - width / 2, this.cy);
+            this.textEl.moveTo(this.cx, this.cy);
         }
     }
 
@@ -563,5 +542,12 @@ namespace pxtblockly {
         }
 
         return result;
+    }
+
+    export function mkText(text: string) {
+        return new svg.Text(text)
+            .anchor("middle")
+            .setAttribute("dominant-baseline", "middle")
+            .setAttribute("dy", (pxt.BrowserUtils.isIE() || pxt.BrowserUtils.isEdge()) ? "0.3em" : "0")
     }
 }

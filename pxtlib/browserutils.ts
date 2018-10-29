@@ -24,6 +24,10 @@ namespace pxt.BrowserUtils {
         return hasNavigator() && /mobi/i.test(navigator.userAgent);
     }
 
+    export function isIOS(): boolean {
+        return hasNavigator() && /iPad|iPhone|iPod/.test(navigator.userAgent);
+    }
+
     //MacIntel on modern Macs
     export function isMac(): boolean {
         return hasNavigator() && /Mac/i.test(navigator.platform);
@@ -40,7 +44,7 @@ namespace pxt.BrowserUtils {
         return hasNavigator() && /arm/i.test(navigator.platform);
     }
 
-    // Detects if we are running inside the UWP runtime (Edge)
+    // Detects if we are running inside the UWP runtime (Microsoft Edge)
     export function isUwpEdge(): boolean {
         return typeof window !== "undefined" && !!(<any>window).Windows;
     }
@@ -48,36 +52,36 @@ namespace pxt.BrowserUtils {
     /*
     Notes on browser detection
 
-    Actually:   Claims to be:
-                IE  Edge    Chrome  Safari  Firefox
-    IE          X                   X?
-    Edge            X       X       X
-    Chrome                  X       X
-    Safari                          X       X
-    Firefox                                 X
+    Actually:             Claims to be:
+                          IE  MicrosoftEdge    Chrome  Safari  Firefox
+              IE          X                           X?
+    Microsoft Edge                    X       X       X
+              Chrome                          X       X
+              Safari                                  X       X
+              Firefox                                         X
 
     I allow Opera to go about claiming to be Chrome because it might as well be
     */
 
-    //Edge lies about its user agent and claims to be Chrome, but Edge/Version
+    //Microsoft Edge lies about its user agent and claims to be Chrome, but Microsoft Edge/Version
     //is always at the end
     export function isEdge(): boolean {
         return hasNavigator() && /Edge/i.test(navigator.userAgent);
     }
 
     //IE11 also lies about its user agent, but has Trident appear somewhere in
-    //the user agent. Detecting the different between IE11 and Edge isn't
+    //the user agent. Detecting the different between IE11 and Microsoft Edge isn't
     //super-important because the UI is similar enough
     export function isIE(): boolean {
         return hasNavigator() && /Trident/i.test(navigator.userAgent);
     }
 
-    //Edge and IE11 lie about being Chrome
+    //Microsoft Edge and IE11 lie about being Chrome
     export function isChrome(): boolean {
         return !isEdge() && !isIE() && !!navigator && (/Chrome/i.test(navigator.userAgent) || /Chromium/i.test(navigator.userAgent));
     }
 
-    //Chrome and Edge lie about being Safari
+    //Chrome and Microsoft Edge lie about being Safari
     export function isSafari(): boolean {
         //Could also check isMac but I don't want to risk excluding iOS
         //Checking for iPhone, iPod or iPad as well as Safari in order to detect home screen browsers on iOS

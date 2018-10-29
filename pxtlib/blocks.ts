@@ -356,7 +356,7 @@ namespace pxt.blocks {
                 name: Util.lf("{id:block}number"),
                 url: '/blocks/math/random',
                 category: 'math',
-                tooltip: Util.lf("an whole number")
+                tooltip: Util.lf("a whole number")
             },
             'math_number_minmax': {
                 name: Util.lf("{id:block}number"),

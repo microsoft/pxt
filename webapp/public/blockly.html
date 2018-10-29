@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="@locale@" data-manifest="" data-framework="typescript">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width,height=device-height,user-scalable=no,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0">
+
+    <!-- @include appmeta.html -->
+
+    <link rel="stylesheet" data-rtl="/blb/rtlsemantic.css" href="/blb/semantic.css" type="text/css">
+</head>
+
+<body class="main">
+    <div id='loading' class="ui active dimmer">
+        <div class="ui large main loader"></div>
+    </div>
+
+    <div id='custom-content'>
+    </div>
+
+    <div id="allcontent">
+        <div id="cookiebanner"></div>
+        <div id="editorcontent">
+            <div id='content' class="ui dimmable full-abs">
+            </div>
+        </div>
+    </div>
+
+    <div id='msg' aria-live="polite">
+        <div id='errmsg' class="ui red inverted segment"></div>
+        <div id='warnmsg' class="ui orange inverted segment"></div>
+        <div id='infomsg' class="ui teal inverted segment"></div>
+        <div id='compilemsg' class="ui ignored info message"></div>
+    </div>
+
+    <script>
+        // This line gets patched up by the cloud
+        var pxtConfig = null;
+    </script>
+    <!-- @include apptrackingweb.html -->
+    <!-- @include apptracking.html -->
+    <script src="/blb/pxt-blockly/blockly_uncompressed.js"></script>
+    <script src="/blb/pxt-blockly/msg/messages.js"></script>
+    <script src="/blb/pxt-blockly/blocks/extensions.js"></script>
+    <script src="/blb/pxt-blockly/blocks/logic.js"></script>
+    <script src="/blb/pxt-blockly/blocks/loops.js"></script>
+    <script src="/blb/pxt-blockly/blocks/math.js"></script>
+    <script src="/blb/pxt-blockly/blocks/text.js"></script>
+    <script src="/blb/pxt-blockly/blocks/lists.js"></script>
+    <script src="/blb/pxt-blockly/blocks/colour.js"></script>
+    <script src="/blb/pxt-blockly/blocks/variables.js"></script>
+    <script src="/blb/pxt-blockly/blocks/variables_dynamic.js"></script>
+    <script src="/blb/pxt-blockly/blocks/procedures.js"></script>
+
+    <script type="text/javascript" src="/blb/pxtapp.js"></script>
+    <script type="text/javascript" src="/blb/pxtblocks.js"></script>
+
+    <script type="text/javascript" src="/blb/target.js"></script>
+    <script id="mainscript" type="text/javascript" src="/blb/main.js"></script>
+    <xml id="blocklyToolboxDefinitionCategory" style="display: none">
+        <!-- An empty category is required so that Blockly launches in category mode -->
+        <category name="">
+        </category>
+    </xml>
+    <xml id="blocklyToolboxDefinitionFlyout" style="display: none">
+    </xml>
+    <script>
+        // Before loading vs/editor/editor.main, define a global MonacoEnvironment that overwrites
+        // the default worker url location (used when creating WebWorkers). The problem here is that
+        // HTML5 does not (yet) allow cross-domain web workers, so we need to proxy the instantion of
+        // a web worker through a same-domain script
+        window.MonacoEnvironment = {
+            getWorkerUrl: function(workerId, label) {
+                return pxt.webConfig.monacoworkerjs;
+            }
+        };
+
+        // this get rewritten to blob URLs with SHAs while uploading to the cloud
+        // keep in sync with release.manifest
+        window.MonacoPaths = {
+            "vs/loader": "/blb/vs/loader.js",
+            "vs/base/worker/workerMain": "/blb/vs/base/worker/workerMain.js",
+            "vs/basic-languages/src/bat": "/blb/vs/basic-languages/src/bat.js",
+            "vs/basic-languages/src/cpp": "/blb/vs/basic-languages/src/cpp.js",
+            "vs/editor/editor.main.css": "/blb/vs/editor/editor.main.css",
+            "vs/editor/editor.main": "/blb/vs/editor/editor.main.js",
+            "vs/editor/editor.main.nls": "/blb/vs/editor/editor.main.nls.js",
+            "vs/language/json/jsonMode": "/blb/vs/language/json/jsonMode.js",
+            "vs/language/json/jsonWorker": "/blb/vs/language/json/jsonWorker.js",
+            "vs/language/typescript/lib/typescriptServices": "/blb/vs/language/typescript/lib/typescriptServices.js",
+            "vs/language/typescript/src/mode": "/blb/vs/language/typescript/src/mode.js",
+            "vs/language/typescript/src/worker": "/blb/vs/language/typescript/src/worker.js",
+            "lzma/lzma_worker-min.js": "/blb/lzma/lzma_worker-min.js",
+            "smoothie/smoothie_compressed.js": "/blb/smoothie/smoothie_compressed.js",
+            "blockly.css": "/blb/blockly.css",
+            "rtlblockly.css": "/blb/rtlblockly.css"
+        }
+    </script>
+</body>
+
+</html>

@@ -218,7 +218,8 @@ export function logoutAsync() {
 
 let loadGithubTokenAsyncPromise: Promise<void> = undefined;
 export function loadGithubTokenAsync(): Promise<void> {
-    if (!loadGithubTokenAsyncPromise)
+    if (!loadGithubTokenAsyncPromise) {
+        if (process.env["GITHUB_ACCESS_TOKEN"]) pxt.github.token = process.env["GITHUB_ACCESS_TOKEN"];
         loadGithubTokenAsyncPromise = pxt.github.token ? Promise.resolve() : passwordGetAsync(GITHUB_KEY)
             .then(ghtoken => {
                 if (ghtoken) {
@@ -226,6 +227,7 @@ export function loadGithubTokenAsync(): Promise<void> {
                     pxt.debug(`github token loaded`);
                 }
             });
+    }
     return loadGithubTokenAsyncPromise;
 }
 
@@ -1632,6 +1634,38 @@ function buildWebManifest(cfg: pxt.TargetBundle) {
     return webmanifest;
 }
 
+function processLf(filename: string, translationStrings: pxt.Map<string>): void {
+    if (!/\.(ts|tsx|html)$/.test(filename)) return
+    if (/\.d\.ts$/.test(filename)) return
+
+    pxt.debug(`extracting strings from ${filename}`);
+    fs.readFileSync(filename, { encoding: "utf8" })
+        .split('\n').forEach((line, idx) => {
+            function err(msg: string) {
+                console.error(`${filename}(${idx}): ${msg}`);
+            }
+            while (true) {
+                const newLine = line.replace(/\blf(_va)?\s*\(\s*(.*)/, (all, a, args) => {
+                    const m = /^("([^"]|(\\"))+")\s*[\),]/.exec(args)
+                    if (m) {
+                        try {
+                            const str = JSON.parse(m[1])
+                            translationStrings[str] = str;
+                        } catch (e) {
+                            err("cannot JSON-parse " + m[1])
+                        }
+                    } else {
+                        if (!/util\.ts$/.test(filename))
+                            err("invalid format of lf() argument: " + args)
+                    }
+                    return "BLAH " + args
+                })
+                if (newLine == line) return;
+                line = newLine
+            }
+        })
+}
+
 function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boolean) {
     cfg.appTheme.id = cfg.id
     cfg.appTheme.title = cfg.title
@@ -1666,6 +1700,7 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
     if (theme.title) targetStrings[theme.title] = theme.title;
     if (theme.name) targetStrings[theme.name] = theme.name;
     if (theme.description) targetStrings[theme.description] = theme.description;
+    // extract strings from docs
     function walkDocs(docs: pxt.DocMenuEntry[]) {
         if (!docs) return;
         docs.forEach(doc => {
@@ -1685,11 +1720,17 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
                 gallery.forEach(cards => cards.cards
                     .filter(card => card.tags)
                     .forEach(card => card.tags.forEach(tag => {
-                        targetStrings[tag.label] = tag.label;
+                        targetStrings[tag] = tag;
                     })))
             });
         }
     }
+    // extract strings from editor
+    ["editor", "fieldeditors", "cmds"]
+        .filter(d => nodeutil.existsDirSync(d))
+        .forEach(d => nodeutil.allFiles(d)
+            .forEach(f => processLf(f, targetStrings))
+        );
     let targetStringsSorted: pxt.Map<string> = {};
     Object.keys(targetStrings).sort().map(k => targetStringsSorted[k] = k);
 
@@ -4576,12 +4617,6 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
         return Promise.resolve();
     const docsRoot = nodeutil.targetDir;
     const docsTemplate = server.expandDocFileTemplate("docs.html")
-    const summaryMD = nodeutil.resolveMd(docsRoot, "SUMMARY");
-
-    if (!summaryMD) {
-        pxt.log('no SUMMARY.md file found, skipping check docs');
-        return Promise.resolve();
-    }
     pxt.log(`checking docs`);
 
     const noTOCs: string[] = [];
@@ -4662,12 +4697,19 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
             entry.subitems.forEach(checkTOCEntry);
     }
 
-    const toc = pxt.docs.buildTOC(summaryMD);
-    if (!toc) {
-        pxt.log('unable to parse SUMMARY.md');
-        return Promise.resolve();
-    }
-    toc.forEach(checkTOCEntry);
+    nodeutil.allFiles("docs", 5).filter(f => /SUMMARY\.md$/.test(f))
+        .forEach(summaryFile => {
+            const summaryPath = path.join(path.dirname(summaryFile), 'SUMMARY').replace(/^docs[\/\\]/, '');
+            pxt.log(`looking for ${summaryPath}`);
+            const summaryMD = nodeutil.resolveMd(docsRoot, summaryPath);
+            const toc = pxt.docs.buildTOC(summaryMD);
+            if (!toc) {
+                pxt.log(`invalid SUMMARY`);
+                broken++;
+            } else {
+                toc.forEach(checkTOCEntry);
+            }
+        });
 
     // push entries from pxtarget
     const theme = pxt.appTarget.appTheme;
@@ -5041,7 +5083,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
     function pxtAsync(dir: string, args: string[]) {
         return nodeutil.spawnAsync({
             cmd: "node",
-            args: [path.join(process.cwd(), "node_modules/pxt-core/pxt-cli/cli.js")].concat(args),
+            args: [path.join(process.cwd(), "node_modules", "pxt-core", "pxt-cli", "cli.js")].concat(args),
             cwd: dir
         })
     }
@@ -5106,12 +5148,12 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
             // remove dups
             fullnames = U.unique(fullnames, f => f.toLowerCase());
             pxt.log(`found ${fullnames.length} approved packages`);
-            fullnames.forEach(fn => pxt.log(`  ${fn}`));
+            pxt.log(JSON.stringify(fullnames, null, 2));
             return Promise.all(fullnames.map(fullname => pxt.github.listRefsAsync(fullname)
                 .then(tags => {
-                    const tag = tags.reverse()[0] || "master";
-                    if (tag != "master" && !/^v\d+(\.\d+(.\d+)?)?$/.test(tag)) {
-                        errors.push(`${fullname}: invalid tag #${tag || "master"}`);
+                    const tag = pxt.semver.sortLatestTags(tags)[0];
+                    if (!tag) {
+                        errors.push(`${fullname}: no valid release found`);
                         pxt.log(errors[errors.length - 1]);
                     }
                     else

@@ -32,7 +32,7 @@ function setDiagnostics(diagnostics: pxtc.KsDiagnostic[]) {
     f.numDiagnosticsOverride = diagnostics.filter(d => d.category == ts.pxtc.DiagnosticCategory.Error).length
 }
 
-let hang = new Promise<any>(() => { })
+let noOpAsync = new Promise<any>(() => { })
 
 function catchUserErrorAndSetDiags(r: any) {
     return (v: any) => {
@@ -100,7 +100,7 @@ export function compileAsync(options: CompileOptions = {}): Promise<pxtc.Compile
                     return resp
                 })
         })
-        .catch(catchUserErrorAndSetDiags(hang))
+        .catch(catchUserErrorAndSetDiags(noOpAsync))
 }
 
 function assembleCore(src: string): Promise<{ words: number[] }> {
@@ -246,7 +246,7 @@ export interface UpgradeResult {
     errorCodes?: pxt.Map<number>;
 }
 
-export function applyUpgrades(): Promise<UpgradeResult> {
+export function applyUpgradesAsync(): Promise<UpgradeResult> {
     const mainPkg = pkg.mainPkg;
     const epkg = pkg.getEditorPkg(mainPkg);
     const pkgVersion = pxt.semver.parse(epkg.header.targetVersion || "0.0.0");
@@ -305,7 +305,8 @@ function upgradeFromBlocksAsync(): Promise<UpgradeResult> {
 
     pxt.debug("Applying upgrades to blocks")
 
-    return getBlocksAsync()
+    return  pxt.BrowserUtils.loadBlocklyAsync()
+        .then(() => getBlocksAsync())
         .then(info => {
             ws = new Blockly.Workspace();
             const text = pxt.blocks.importXml(targetVersion, fileText, info, true);
@@ -433,10 +434,8 @@ export function updatePackagesAsync(packages: pkg.EditorPackage[], token?: pxt.U
                 })
         )
         .then(() => pkg.loadPkgAsync(epkg.header.id))
-        .then(() => {
-            newProject();
-            return checkPatchAsync();
-        })
+        .then(() => newProjectAsync())
+        .then(() => checkPatchAsync())
         .then(() => {
             if (token) token.throwIfCancelled();
             delete epkg.header.backupRef;
@@ -464,11 +463,11 @@ export function updatePackagesAsync(packages: pkg.EditorPackage[], token?: pxt.U
 }
 
 
-export function newProject() {
+export function newProjectAsync() {
     firstTypecheck = null;
     cachedApis = null;
     cachedBlocks = null;
-    workerOpAsync("reset", {}).done();
+    return workerOpAsync("reset", {});
 }
 
 export function getPackagesWithErrors(): pkg.EditorPackage[] {
@@ -476,8 +475,10 @@ export function getPackagesWithErrors(): pkg.EditorPackage[] {
 
     const topPkg = pkg.mainEditorPkg();
     if (topPkg) {
+        const corePkgs = pxt.Package.corePackages().map(pkg => pkg.name);
+
         topPkg.forEachFile(file => {
-            if (file.diagnostics && file.diagnostics.length && file.epkg && !file.epkg.isTopLevel() &&
+            if (file.diagnostics && file.diagnostics.length && file.epkg && corePkgs.indexOf(file.epkg.getPkgId()) === -1 && !file.epkg.isTopLevel() &&
                     file.diagnostics.some(d => d.category === ts.pxtc.DiagnosticCategory.Error)) {
                 badPackages[file.epkg.getPkgId()] = file.epkg;
             }

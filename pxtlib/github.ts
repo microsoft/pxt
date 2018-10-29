@@ -637,9 +637,29 @@ namespace pxt.github {
                 return listRefsExtAsync(scr.fullName, "tags")
                     .then(refsRes => {
                         let tags = Object.keys(refsRes.refs)
-                        tags.reverse()
-                        // only look for vxx.xx.xx tags
-                        tags = tags.filter(t => /^v\d+(\.\d+(\.\d+)?)?$/i.test(t));
+                        // only look for semver tags
+                        tags = pxt.semver.sortLatestTags(tags);
+
+                        // check if the version has been frozen for this release
+                        const targetVersion = pxt.appTarget.versions && pxt.semver.tryParse(pxt.appTarget.versions.target);
+                        if (targetVersion && config.releases && config.releases["v" + targetVersion.major]) {
+                            const release = config.releases["v" + targetVersion.major]
+                                .map(repo => pxt.github.parseRepoId(repo))
+                                .filter(repo => repo.fullName.toLowerCase() == parsed.fullName.toLowerCase())
+                                [0];
+                            if (release) {
+                                // this repo is frozen to a particular tag for this target
+                                if (tags.some(t => t == release.tag)) { // tag still exists!!!
+                                    pxt.debug(`approved release ${release.fullName}#${release.tag} for v${targetVersion.major}`)
+                                    return Promise.resolve(release.tag);
+                                } else {
+                                    // so the package was snapped to a particular tag but the tag does not exist anymore
+                                    pxt.reportError(`packages`, `approved release ${release.fullName}#${release.tag} for v${targetVersion.major} not found anymore`, { repo: scr.fullName })
+                                    // in this case, we keep going, we might be lucky and the current version of the package might still load
+                                }
+                            }
+                        }
+
                         if (tags[0])
                             return Promise.resolve(tags[0])
                         else

@@ -4,7 +4,7 @@
 
 JavaScript is generally speaking single threaded (there are web workers and other such inventions, but these are generally considered separate processes, that share no address space with the main process). If a function needs to wait for
 some input (e.g., web request), you need to supply a callback function that gets
-executed when the data is available. 
+executed when the data is available.
 ```typescript-ignore
 downloadData("https://example.com/", (err, data) => {
     if (err) { ... }
@@ -15,7 +15,6 @@ downloadData("https://example.com/", (err, data) => {
 })
 ```
 This becomes somewhat problematic when you start to nest these.
-A simple web search on "callback hell" will tell why.
 
 One way to fix this is to use promises, but the idea
 remains the same --- in the `.then()` handler you provide the function to execute
@@ -31,7 +30,7 @@ downloadDataAsync("https://example.com/")
     .then(somewhere => ...)
 ```
 
-There are proposals of introducing C#-style `async`/`await` to JavaScript. 
+There are proposals of introducing C#-style `async`/`await` to JavaScript.
 In fact TypeScript can compile `async/await` to ES6 generators (yield).
 In that case you can use `await` operator to make a call to a promise-returning
 function look sequential:

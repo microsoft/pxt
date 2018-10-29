@@ -146,6 +146,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.showBoardDialog = this.showBoardDialog.bind(this);
         this.removeProject = this.removeProject.bind(this);
         this.saveProject = this.saveProject.bind(this);
+        this.toggleCollapse = this.toggleCollapse.bind(this);
         this.showReportAbuse = this.showReportAbuse.bind(this);
         this.showLanguagePicker = this.showLanguagePicker.bind(this);
         this.toggleHighContrast = this.toggleHighContrast.bind(this);
@@ -175,7 +176,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
 
     showBoardDialog() {
         pxt.tickEvent("menu.changeboard", undefined, { interactiveConsent: true });
-        this.props.parent.showBoardDialog();
+        this.props.parent.showBoardDialogAsync().done();
     }
 
     saveProject() {
@@ -186,6 +187,11 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
     removeProject() {
         pxt.tickEvent("menu.removeproject", undefined, { interactiveConsent: true });
         this.props.parent.removeProject();
+    }
+
+    toggleCollapse() {
+        pxt.tickEvent("menu.toggleSim", undefined, { interactiveConsent: true });
+        this.props.parent.toggleSimulatorCollapse();
     }
 
     showReportAbuse() {
@@ -260,6 +266,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         const readOnly = pxt.shell.isReadOnly();
         const isController = pxt.shell.isControllerMode();
         const showSave = !readOnly && !isController && !!targetTheme.saveInMenu;
+        const showSimCollapse = !readOnly && !isController && !!targetTheme.simCollapseInMenu;
         const showGreenScreen = (targetTheme.greenScreen || /greenscreen=1/i.test(window.location.href))
             && greenscreen.isSupported();
 
@@ -270,6 +277,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             {targetTheme.print ? <sui.Item role="menuitem" icon="print" text={lf("Print...")} onClick={this.print} tabIndex={-1} /> : undefined}
             {showSave ? <sui.Item role="menuitem" icon="save" text={lf("Save Project")} onClick={this.saveProject} tabIndex={-1} /> : undefined}
             {!isController ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project")} onClick={this.removeProject} tabIndex={-1} /> : undefined}
+            {showSimCollapse ? <sui.Item role="menuitem" icon='toggle right' text={lf("Toggle the simulator")} onClick={this.toggleCollapse} tabIndex={-1} /> : undefined}
             {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={this.showReportAbuse} tabIndex={-1} /> : undefined}
             <div className="ui divider"></div>
             {targetTheme.selectLanguage ? <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} tabIndex={-1} /> : undefined}

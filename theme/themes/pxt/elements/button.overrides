@@ -5,3 +5,17 @@
 .ui.dropdown, .ui.buttons {
     margin-right: 0.25rem;
 }
+
+/* Big play button */
+#editortools .big-play-button-wrapper {
+    display: inline-flex;
+    vertical-align: bottom;
+    margin-top: -2rem;
+    margin-left: 0.5rem;
+    .ui.button.big-play-button {
+        padding: 1.45rem !important;
+        i.icon {
+            font-size: 1.5rem;
+        }
+    }
+}

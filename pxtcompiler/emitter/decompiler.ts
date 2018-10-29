@@ -38,6 +38,7 @@ namespace ts.pxtc.decompiler {
         declaredFunctions: pxt.Map<boolean>;
         declaredEnums: pxt.Map<boolean>;
         attrs: (c: pxtc.CallInfo) => pxtc.CommentAttrs;
+        compInfo: (c: pxtc.CallInfo) => pxt.blocks.BlockCompileInfo;
     }
 
     interface DecompileArgument {
@@ -348,7 +349,8 @@ namespace ts.pxtc.decompiler {
             blocks: blocksInfo,
             declaredFunctions: {},
             declaredEnums: {},
-            attrs: attrs
+            attrs: attrs,
+            compInfo: compInfo
         };
         const fileText = file.getFullText();
         let output = ""
@@ -448,12 +450,25 @@ ${output}</xml>`;
         function attrs(callInfo: pxtc.CallInfo): pxtc.CommentAttrs {
             const blockInfo = blocksInfo.apis.byQName[callInfo.qName];
             if (blockInfo) {
-                return blockInfo.attributes;
+                const attributes = blockInfo.attributes;
+
+                // Check to make sure this block wasn't filtered out (bannedCategories)
+                if (!attributes.blockId || blocksInfo.blocksById[attributes.blockId] || attributes.blockId === pxtc.PAUSE_UNTIL_TYPE) {
+                    return blockInfo.attributes;
+                }
             }
             return {
                 paramDefl: {},
                 callingConvention: ir.CallingConvention.Plain
             };
+        }
+
+        function compInfo(callInfo: pxtc.CallInfo): pxt.blocks.BlockCompileInfo {
+            const blockInfo = blocksInfo.apis.byQName[callInfo.qName];
+            if (blockInfo) {
+                return pxt.blocks.compileInfo(blockInfo);
+            }
+            return undefined;
         }
 
         function countBlock() {
@@ -921,6 +936,14 @@ ${output}</xml>`;
 
             if (attributes.enumval && parentCallInfo && attributes.useEnumVal) {
                 value = attributes.enumval;
+            }
+
+            const info = env.compInfo(callInfo);
+
+            if (blockId && info.thisParameter) {
+                const r = mkExpr(blockId);
+                r.inputs = [getValue(U.htmlEscape(info.thisParameter.definitionName), n.expression, info.thisParameter.shadowBlockId)];
+                return r;
             }
 
             let idfn = attributes.blockIdentity ? blocksInfo.apis.byQName[attributes.blockIdentity] : blocksInfo.blocksById[blockId];
@@ -2588,11 +2611,9 @@ ${output}</xml>`;
             const callInfo: pxtc.CallInfo = (n as any).callInfo;
             if (callInfo) {
                 const attributes = env.attrs(callInfo);
+                const blockInfo = env.compInfo(callInfo);
                 if (attributes.blockIdentity || attributes.blockId === "lists_length" || attributes.blockId === "text_length") {
                     return undefined;
-                }
-                else if (attributes.blockCombine) {
-                    return checkExpression(n.expression, env)
                 }
                 else if (callInfo.decl.kind === SK.EnumMember) {
                     // Check to see if this an enum with a block
@@ -2642,6 +2663,10 @@ ${output}</xml>`;
                     else if (n.parent.kind === SK.CallExpression && (n.parent as CallExpression).expression !== n) {
                         return undefined;
                     }
+                }
+                else if (attributes.blockCombine || (attributes.blockId && blockInfo && blockInfo.thisParameter)) {
+                    // block combine and getters/setters
+                    return checkExpression(n.expression, env)
                 }
             }
             return Util.lf("No call info found");

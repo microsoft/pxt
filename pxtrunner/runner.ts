@@ -186,16 +186,33 @@ namespace pxt.runner {
         console.error(msg)
     }
 
+    let previousMainPackage: pxt.MainPackage = undefined;
     function loadPackageAsync(id: string, code?: string) {
-        let host = mainPkg.host();
-        mainPkg = new pxt.MainPackage(host)
-        mainPkg._verspec = id ? /\w+:\w+/.test(id) ? id : "pub:" + id : "empty:tsprj"
+        const verspec = id ? /\w+:\w+/.test(id) ? id : "pub:" + id : "empty:tsprj";
+        let host: pxt.Host;
+        let downloadPackagePromise: Promise<void>;
+        let installPromise: Promise<void>;
+        if (previousMainPackage && previousMainPackage._verspec == verspec) {
+            mainPkg = previousMainPackage;
+            host = mainPkg.host();
+            downloadPackagePromise = Promise.resolve();
+            installPromise = Promise.resolve();
+        } else {
+            host = mainPkg.host();
+            mainPkg = new pxt.MainPackage(host)
+            mainPkg._verspec = id ? /\w+:\w+/.test(id) ? id : "pub:" + id : "empty:tsprj"
+            downloadPackagePromise = host.downloadPackageAsync(mainPkg);
+            installPromise = mainPkg.installAllAsync()
+            // cache previous package
+            previousMainPackage = mainPkg;
+        }
 
-        return host.downloadPackageAsync(mainPkg)
+
+        return downloadPackagePromise
             .then(() => host.readFile(mainPkg, pxt.CONFIG_NAME))
             .then(str => {
                 if (!str) return Promise.resolve()
-                return mainPkg.installAllAsync().then(() => {
+                return installPromise.then(() => {
                     if (code) {
                         //Set the custom code if provided for docs.
                         let epkg = getEditorPkg(mainPkg);
@@ -381,7 +398,7 @@ namespace pxt.runner {
             const msg = jobQueue.shift();
             if (!msg) return; // no more work
 
-            const options = msg.options as pxt.blocks.BlocksRenderOptions;
+            const options = (msg.options || {}) as pxt.blocks.BlocksRenderOptions;
             options.splitSvg = false; // don't split when requesting rendered images
             pxt.tickEvent("renderer.job")
             jobPromise = pxt.BrowserUtils.loadBlocklyAsync()
