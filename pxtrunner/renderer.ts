@@ -162,12 +162,11 @@ namespace pxt.runner {
         render: (container: JQuery, r: pxt.runner.DecompileResult) => void;
     }[] = [];
     function consumeRenderQueueAsync(): Promise<void> {
-        return new Promise((resolve, reject) => {
-            const job = renderQueue.shift();
-            if (!job) return Promise.resolve(); // done
+        const job = renderQueue.shift();
+        if (!job) return Promise.resolve(); // done
 
-            const { el, options, render, cls } = job;
-            return pxt.runner.decompileToBlocksAsync(el.text(), options)
+        const { el, options, render, cls } = job;
+        return pxt.runner.decompileToBlocksAsync(el.text(), options)
             .then((r) => {
                 try {
                     render(el, r);
@@ -177,9 +176,7 @@ namespace pxt.runner {
                 }
                 el.removeClass("lang-shadow");
                 return consumeRenderQueueAsync();
-            })
-        });
-
+            });
     }
 
     function renderNextSnippetAsync(cls: string,
@@ -699,7 +696,7 @@ namespace pxt.runner {
             render(e, true);
             $(e).removeClass('lang-typescript');
             $(e).parent('div').addClass('invalid');
-            $(e).parent('div').prepend($("<i>", {"class": "icon ban"}));
+            $(e).parent('div').prepend($("<i>", { "class": "icon ban" }));
             $(e).addClass('invalid');
         });
         $('code.lang-typescript-valid').each((i, e) => {
@@ -708,7 +705,7 @@ namespace pxt.runner {
             render(e, true);
             $(e).removeClass('lang-typescript');
             $(e).parent('div').addClass('valid');
-            $(e).parent('div').prepend($("<i>", {"class": "icon check"}));
+            $(e).parent('div').prepend($("<i>", { "class": "icon check" }));
             $(e).addClass('valid');
         });
     }
