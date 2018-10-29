@@ -1,40 +1,62 @@
 # Tutorials
 
-Step by step tutorials, like the "Getting Started" tutorial, are authored in markdown and automatically converted by the editor. This page describes the format for these tutorials.
+Step by step tutorials are authored in markdown and automatically converted by the editor. This page describes the format for these tutorials.
 
 ## How tutorials work
 
-Tutorials help introduce block usage and for a target. Tutorials are selected from the  **Projects** dialog, under **Tutorials**. When a tutorial is chosen from here, it is run as a user interaction inside the editor. The tutorial progresses through a sequence of steps authored in a markdown document.
+Tutorials is a sequence of steps that the user follows in a limited environment. The experience is designed to reduce the complexity of the full editor and guide the user through a precise sequence of actions. They are used as ramp up tools to learn both how the editor works and how the basic block work. An editor can have as many tutorial as needed.
 
 Each step of the tutorial has a short description, or explanation, of the activity for the step and
-possibly a block example. If the step includes a block example, the editor will restrict the selection of blocks from the toolbox to only those used in the example. The other blocks are still
-shown but their selection is disabled during the step. This helps focus the interaction to just the
-blocks being described and ensures that the step is completed correctly.
+possibly a block example. If the step includes a block example, the editor will restrict the selection of blocks from the toolbox to only those used in the example.
 
 ## Tutorial documents
 
-Tutorials are created as documents in the target's document tree, under _/docs/tutorials_. A tutorial with the title '**Light blaster**' would have a path like this: _/docs/tutorials/light-blaster.md_.
+Tutorials are simply markdown documents where each heading 2 (``##``) is a new step. The tutorials can be located anywhere under the ``/docs`` folder although they usually are in the ``/docs/projects`` folder.
 
-When a tutorial is chosen in the editor, the tutorial runner converts the content of the tutorial markdown into user interactions. If selected from the help menu, a tutorial is viewed the same as any other help document.
+A tutorial with the title '**Light blaster**' would have a path like this: _/docs/projects/light-blaster.md_.
+
+When a tutorial is chosen in the editor, the tutorial runner converts the content of the tutorial markdown into user interactions. If selected from the external documentation navigation, the tutorial is viewed the same as any other help document which allows it to be printed.
 
 ### ~ hint
 
 **A real example**
 
-Learning by examples? See the source of an actual tutorial: [**getting-started.md**](https://github.com/Microsoft/pxt-microbit/blob/master/docs/tutorials/getting-started.md)
+See the micro:bit tutorials [**flashing-heart.md**](https://github.com/Microsoft/pxt-microbit/blob/master/docs/projects/flashing-heart.md),
+[**rock-paper-scissors.md**](https://github.com/Microsoft/pxt-microbit/blob/master/docs/projects/rock-paper-scissors.md).
 
 ### ~
 
-### The 'Getting Started' tutorial
+### Listing a tutorial
 
-The 'Getting Started' tutorial is special tutorial that is linked to a **Getting Started** button shown in the **BLOCKS** view of the editor. This tutorial is written to give a simple, first time introduction to using blocks in the editor.
+To get a tutorial on the home screen, you will need to get a gallery and a gallery entry.
 
-If the editor has the **Getting Started** button (enabled in [pxtarget.json](/targets/pxtarget) with
-```"sideDoc": "tutorials/getting-started"```), the tutorial linked to it is retrieved from _/docs/tutorials/getting-started.md_.
+#### Defining galleries
 
-### Adding tutorials
+Tutorials typically appear as cards on the home screen. Each card category is a markdown file that is referenced from the ``targetconfig.json`` file. The ``galleries`` section in the configuration specifies a map
+of gallery title to gallery markdown path. You can have as many galleries as you wish to organize your tutorials.
 
-You can create other tutorials besides 'Getting Started'. The other tutorial choices show up in the tutorials dialog using an entry in _/docs/tutorials.md_. The entry has these settings:
+```
+{
+    ...
+    "galleries": {
+        "Tutorials": "project/tutorials",
+        "Games": "projects/games",
+        ...
+    }
+}
+```
+
+### ~ hint
+
+**A real example**
+
+See the micro:bit config https://github.com/Microsoft/pxt-microbit/blob/master/targetconfig.json
+
+### ~
+
+#### Authoring the gallery
+
+The gallery is defined by authoring ``codecards`` in the markdown section. Each ``codecard`` has the following field:
 
 * **name**: tutorial name
 * **imageUrl**: an optional icon image
@@ -50,14 +72,27 @@ Here's an example entry in _tutorials.md_:
 ## Fun stuff
 
 ```codecard
+[# Projects
+
+Here are some cool tutorials to get you started with your @boardname@!
+
+## Basic
+
+```codecard
 [{
-    "name": "Light Blaster",
-    "imageUrl":"/static/tutorials/light-blast.png",
-    "url": "/tutorials/light-blaster",
-    "cardType": "tutorial",
-    "description": "Flash all the lights on the pixel strip!"
-},{
-    // another tutorial...
+  "name": "Flashing Heart",
+  "url":"/projects/flashing-heart",
+  "description": "Make an animated flashing heart.",
+  "imageUrl": "/static/mb/projects/a1-display.png",
+  "cardType": "tutorial",
+  "label": "New? Start Here!",
+  "labelClass": "purple ribbon large"
+}, {
+  "name": "Name Tag",
+  "description": "Scroll your name on the screen",
+  "imageUrl": "/static/mb/projects/name-tag.png",
+  "url": "/projects/name-tag",
+  "cardType": "tutorial"
 }]
 ```
 ````
@@ -66,10 +101,18 @@ The tutorial document tree has this layout:
 
 ```
 /docs/tutorials.md
-/docs/tutorials/getting-started.md
-/docs/tutorials/light-blaster.md
+/docs/projects/flashing-heart.md
+/docs/projects/name-tag.md
 ...
 ```
+
+### ~ hint
+
+**A real example**
+
+See the micro:bit tutorial gallery https://github.com/Microsoft/pxt-microbit/blob/master/docs/tutorials.md
+
+### ~
 
 ## Format
 
@@ -143,6 +186,17 @@ Let's get real bright. We're going to make all the lights flash on your board!
 ...
 ```
 
+### Unplugged
+
+If you want to display a dialog and have it skip to the next step automatically, use ``@unplugged``. This feature is typically used for an introduction step.
+
+```markdown
+# Flash-a-rama
+
+## It's time to code! @unplugged
+
+```
+
 ## Example
 
 The following sample shows a simple 2 step tutorial.
@@ -150,7 +204,11 @@ The following sample shows a simple 2 step tutorial.
 ````markdown
 # Getting started
 
-## Step 1
+## Introduction @unplugged
+
+Let's get started!
+
+## Step 1 @fullscreen
 
 Welcome! Place the ``||basic:show string||`` block in the ``||basic:on start||`` slot to scroll your name.
 
