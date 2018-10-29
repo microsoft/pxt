@@ -74,6 +74,7 @@ namespace pxt.webBluetooth {
         public autoReconnectDelay = 1000;
         public disconnectOnAutoReconnect = false;
         private reconnectPromise: Promise<void> = undefined;
+        private failedConnectionServicesVersion = -1;
 
         constructor(id: string, protected device: BLEDevice, public autoReconnect: boolean) {
             super(id, device.aliveToken);
@@ -82,8 +83,8 @@ namespace pxt.webBluetooth {
         }
 
         handleDisconnected(event: Event) {
-            this.cancelConnect();
             if (this.aliveToken.isCancelled()) return;
+            this.disconnect();
             // give a 1sec for device to reboot
             if (this.autoReconnect && !this.reconnectPromise)
                 this.reconnectPromise =
@@ -123,7 +124,16 @@ namespace pxt.webBluetooth {
                         this.reconnectPromise = undefined;
                         return undefined; // give up
                     }
+                    // did we already try to reconnect with the current state of services?
+                    if (this.failedConnectionServicesVersion == this.device.servicesVersion) {
+                        this.debug(`services haven't changed, giving up`);
+                        this.reconnectPromise = undefined;
+                        return undefined;
+                    }
                     this.debug(`retry connect ${delay}ms... (${max} tries left)`);
+                    // record service version if connected
+                    if (this.device.connected)
+                        this.failedConnectionServicesVersion = this.device.servicesVersion;
                     if (this.disconnectOnAutoReconnect)
                         this.device.disconnect();
                     return Promise.delay(delay)
@@ -152,9 +162,9 @@ namespace pxt.webBluetooth {
                 }).then(txCharacteristic => {
                     this.debug(`tx characteristic connected`)
                     this.txCharacteristic = txCharacteristic;
+                    this.txCharacteristic.addEventListener('characteristicvaluechanged', this.handleValueChanged);
                     return this.txCharacteristic.startNotifications()
                 }).then(() => {
-                    this.txCharacteristic.addEventListener('characteristicvaluechanged', this.handleValueChanged);
                     pxt.tickEvent(`webble.${this.id}.connected`);
                 });
         }
@@ -346,6 +356,7 @@ namespace pxt.webBluetooth {
                     pxt.log(`ble: partial flash disconnect error ${e.message}`);
                 }
             }
+            this.pfCharacteristic = undefined;
         }
 
         // finds block starting with MAGIC_BLOCK
