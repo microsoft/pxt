@@ -368,9 +368,9 @@ namespace pxt.webBluetooth {
                 this.debug(`flashing already in progress`)
                 return Promise.resolve();
             }
-            this.device.pauseUART();
+            this.device.pauseLog();
             return this.createFlashPromise(hex)
-                .finally(() => this.device.resumeUART())
+                .finally(() => this.device.resumeLogOnNextConnection());
         }
 
         private createFlashPromise(hex: string): Promise<void> {
@@ -531,7 +531,8 @@ namespace pxt.webBluetooth {
                                 this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.END_OF_TRANSMISSION]))
                                     .finally(() => {
                                         // we are done!
-                                        this.flashResolve();
+                                        if (this.flashResolve)
+                                            this.flashResolve();
                                         this.clearFlashData();
                                     })
                             } else { // keep flashing
@@ -645,6 +646,7 @@ namespace pxt.webBluetooth {
         hf2Service: HF2Service; // may be undefined
         partialFlashingService: PartialFlashingService; // may be undefined
         private services: BLEService[] = [];
+        private resumeLogOnDisconnection = false;
 
         constructor(device: BluetoothDevice) {
             super("ble", new pxt.Util.CancellationToken());
@@ -667,7 +669,7 @@ namespace pxt.webBluetooth {
                 .forEach(service => service.connectAsync().catch(() => { }));
         }
 
-        pauseUART() {
+        pauseLog() {
             if (this.uartService) {
                 this.uartService.autoReconnect = false;
                 this.uartService.disconnect();
@@ -678,7 +680,11 @@ namespace pxt.webBluetooth {
             }
         }
 
-        resumeUART() {
+        resumeLogOnNextConnection() {
+            this.resumeLogOnDisconnection = true;
+        }
+
+        private resumeLog() {
             if (this.uartService) {
                 this.uartService.autoReconnect = true;
                 this.uartService.connectAsync().catch(() => { })
@@ -714,6 +720,10 @@ namespace pxt.webBluetooth {
         handleDisconnected(event: Event) {
             this.debug(`disconnected`)
             this.disconnect();
+            if (this.resumeLogOnDisconnection) {
+                this.resumeLogOnDisconnection = false;
+                Promise.delay(500).then(() => this.resumeLog());
+            }
         }
 
         disconnect() {
@@ -722,13 +732,10 @@ namespace pxt.webBluetooth {
             if (!this.connected) return;
             this.debug(`disconnect`)
             try {
-                try {
+                if (this.device.gatt && this.device.gatt.connected)
                     this.device.gatt.disconnect();
-                } catch (e) {
-                    this.debug(`gatt disconnect error ${e.message}`);
-                }
             } catch (e) {
-                pxt.log(`${this.id}: error ${e.message}`)
+                this.debug(`gatt disconnect error ${e.message}`);
             }
         }
     }
