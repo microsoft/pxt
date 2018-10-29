@@ -4,14 +4,14 @@ Step by step tutorials are authored in markdown and automatically converted by t
 
 ## How tutorials work
 
-Tutorials is a sequence of steps that the user follows in a limited environment. The experience is designed to reduce the complexity of the full editor and guide the user through a precise sequence of actions. They are used as ramp up tools to learn both how the editor works and how the basic block work. An editor can have as many tutorial as needed.
+A tutorial is a sequence of steps that the user follows in a limited environment. The experience is designed to reduce the complexity of using the full editor to simply guiding the user through a precise sequence of limited interactions. Tutorials are used as "ramp up" tools to teach both how the editor works and how the basics of blocks work. An editor can have as many tutorials as needed.
 
 Each step of the tutorial has a short description, or explanation, of the activity for the step and
 possibly a block example. If the step includes a block example, the editor will restrict the selection of blocks from the toolbox to only those used in the example.
 
 ## Tutorial documents
 
-Tutorials are simply markdown documents where each heading 2 (``##``) is a new step. The tutorials can be located anywhere under the ``/docs`` folder although they usually are in the ``/docs/projects`` folder.
+Tutorials are simply markdown documents where each level 2 heading (``##``) is a new step. The tutorials can be located anywhere under the ``/docs`` folder although they usually are in the ``/docs/projects`` folder.
 
 A tutorial with the title '**Light blaster**' would have a path like this: _/docs/projects/light-blaster.md_.
 
@@ -21,32 +21,31 @@ When a tutorial is chosen in the editor, the tutorial runner converts the conten
 
 **A real example**
 
-See the micro:bit tutorials [**flashing-heart.md**](https://github.com/Microsoft/pxt-microbit/blob/master/docs/projects/flashing-heart.md),
+See the micro:bit tutorials [**flashing-heart.md**](https://github.com/Microsoft/pxt-microbit/blob/master/docs/projects/flashing-heart.md) and 
 [**rock-paper-scissors.md**](https://github.com/Microsoft/pxt-microbit/blob/master/docs/projects/rock-paper-scissors.md).
 
 ### ~
 
-### Listing a tutorial
+## Listing on the home screen
 
-To get a tutorial on the home screen, you will need to get a gallery and a gallery entry.
+To have a tutorial appear on the home screen, you will need to create or use an existing gallery and add a tutorial entry to it.
 
-#### Defining galleries
+### Defining galleries
 
-Tutorials typically appear as cards on the [home screen](/targets/home-screen#galleries). Each card category is a markdown file that is referenced from the ``targetconfig.json`` file. The ``galleries`` section in the configuration specifies a map
-of gallery title to gallery markdown path. You can have as many galleries as you wish to organize your tutorials.
+Tutorials typically appear as cards on the [home screen](/targets/home-screen#galleries). Each card category is a markdown file that is referenced from the ``targetconfig.json`` file. The ``galleries`` section in the configuration specifies a map of gallery titles to gallery markdown file paths. You can have as many galleries as you wish to organize your tutorials.
 
 ```
 {
     ...
     "galleries": {
-        "Tutorials": "project/tutorials",
+        "Tutorials": "projects/tutorials",
         "Games": "projects/games",
         ...
     }
 }
 ```
 
-Add a direct link to the tutorial from the ``SUMMARY.md`` page to help search engine bots.
+Also, add a direct link to the tutorial in the ``SUMMARY.md`` page to help search engine bots.
 
 ### ~ hint
 
@@ -58,7 +57,9 @@ See the micro:bit config https://github.com/Microsoft/pxt-microbit/blob/master/t
 
 #### Authoring the gallery
 
-The gallery is defined by authoring ``codecards`` in the markdown section. Each ``codecard`` has the following field:
+A gallery entry for a [tutorial](/targets/home-screen#tutorial) is placed in the markdown file mapped to the category. For the example above, it's in _/projects/tutorials.md_.
+
+The gallery is defined by authoring ``codecards`` in the markdown section. Each ``codecard`` has the following fields:
 
 * **name**: tutorial name
 * **imageUrl**: an optional icon image
@@ -71,12 +72,7 @@ Here's an example entry in _tutorials.md_:
 ````markdown
 # Tutorials
 
-## Fun stuff
-
-```codecard
-[# Projects
-
-Here are some cool tutorials to get you started with your @boardname@!
+Here are some cool tutorials to get you started with your Gizmo Board!
 
 ## Basic
 
@@ -85,14 +81,14 @@ Here are some cool tutorials to get you started with your @boardname@!
   "name": "Flashing Heart",
   "url":"/projects/flashing-heart",
   "description": "Make an animated flashing heart.",
-  "imageUrl": "/static/mb/projects/a1-display.png",
+  "imageUrl": "/static/gizmo/projects/a1-display.png",
   "cardType": "tutorial",
   "label": "New? Start Here!",
   "labelClass": "purple ribbon large"
 }, {
   "name": "Name Tag",
   "description": "Scroll your name on the screen",
-  "imageUrl": "/static/mb/projects/name-tag.png",
+  "imageUrl": "/static/gizmo/projects/name-tag.png",
   "url": "/projects/name-tag",
   "cardType": "tutorial"
 }]
@@ -102,7 +98,7 @@ Here are some cool tutorials to get you started with your @boardname@!
 The tutorial document tree has this layout:
 
 ```
-/docs/tutorials.md
+/docs/projects/tutorials.md
 /docs/projects/flashing-heart.md
 /docs/projects/name-tag.md
 ...
@@ -172,7 +168,7 @@ During an interaction, the first paragraph of the step description is shown in t
 
 ### Fullscreen
 
-If you want to include a dramatic introduction or make certain that a special message is seen, you can use the ``@fullscreen`` tag. This is usually placed in the first section of the tutorial document. The section is displayed in an overlay window on top of the tutorial screen and isn't shown in the caption as part of the tutorial flow. You include it in your tutorial like this:
+If you want to include a dramatic introduction or make certain that a special message is seen, you can use the ``@fullscreen`` tag. The section is displayed in an overlay window on top of the tutorial screen and isn't shown in the caption as part of the tutorial flow. You include it in your tutorial like this:
 
 ```markdown
 # Flash-a-rama
@@ -190,7 +186,7 @@ Let's get real bright. We're going to make all the lights flash on your board!
 
 ### Unplugged
 
-If you want to display a dialog and have it skip to the next step automatically, use ``@unplugged``. This feature is typically used for an introduction step.
+If you want to display your tutorial step in a dialog and then have it skip to the next step automatically, use ``@unplugged``. This feature is typically used for introductory steps.
 
 ```markdown
 # Flash-a-rama
@@ -201,11 +197,11 @@ If you want to display a dialog and have it skip to the next step automatically,
 
 ## Testing
 
-When developing your new tutorials, it is easiest to render them as a markdown documentation page until all steps look ok. Going through all the steps while developing the tutorial gets tedious.
+When developing your new tutorials, it is easiest to first render and view them as a markdown documentation page until all steps look OK to you. Going through all the steps several times using the tutorial runner might become quite tedious while developing the tutorial.
 
-If you are running the local server, go to ``http://localhost:3232/tutorials`` to render the ``/docs/tutorials.md`` gallery.
+If you are running the local server, go to ``http://localhost:3232/tutorials`` to render the ``/docs/tutorials.md`` gallery page.
 
-The [pxt checkdocs command](/cli/checkdocs) command will compile all the tutorial snippets automatically.
+The [pxt checkdocs](/cli/checkdocs) command will compile all the tutorial snippets automatically.
 
 ```
 pxt checkdocs

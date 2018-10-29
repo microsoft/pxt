@@ -1,6 +1,6 @@
 # Home Screen
 
-The home screen is the landing place for your users in the code editor. You can control the content displayed on the screen using settings in ``pxtarget.json`` and ``targetconfig.json``.
+The home screen is the initial landing place for your users in the code editor. You can control the content displayed on the screen using settings in ``pxtarget.json`` and ``targetconfig.json``.
 
 ## Hero banner
 
