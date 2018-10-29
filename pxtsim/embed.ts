@@ -78,6 +78,12 @@ namespace pxsim {
         sim?: boolean;
         receivedTime?: number;
     }
+    export interface SimulatorBulkSerialMessage extends SimulatorMessage {
+        type: "bulkserial";
+        id: string;
+        data: { data: string, time: number }[];
+        sim?: boolean;
+    }
     export interface SimulatorCommandMessage extends SimulatorMessage {
         type: "simulator",
         command: "modal" | "restart" | "reload"
