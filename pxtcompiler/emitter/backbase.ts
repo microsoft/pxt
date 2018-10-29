@@ -633,6 +633,7 @@ ${baseLabel}:
         }
 
         private emitIfaceCall(procid: ir.ProcId, numargs: number, getset = "") {
+            U.assert(procid.ifaceIndex > 1)
             this.write(this.t.emit_int(procid.ifaceIndex, "r1"))
 
             this.emitLabelledHelper("ifacecall" + numargs + "_" + getset, () => {
@@ -662,8 +663,13 @@ ${baseLabel}:
                     `)
                 }
 
+                if (getset == "get") {
+                    this.write("movs r0, #0 ; undefined")
+                    this.write("bx lr")
+                } else
+                    this.write("b .fail2")
+
                 this.write(`
-                    b .fail2
                 .hit:
                     adds r3, r3, r2 ; r3-descriptor
                     ldr r2, [r3, #4]
@@ -820,6 +826,8 @@ ${baseLabel}:
                 this.write(`lsrs r3, r3, #16`)
                 this.write(`lsls r3, r3, #${target.vtableShift}`)
             }
+
+            this.write("; vtable in R3")
         }
 
         private emitInstanceOf(info: ClassInfo, tp: string) {
@@ -1422,6 +1430,7 @@ ${baseLabel}:
         }
 
         private lambdaCall(numargs: number) {
+            this.write("; lambda call")
             this.loadVTable()
             this.checkSubtype(this.builtInClassNo(pxt.BuiltInType.RefAction))
             // the conditional branch below saves stack space for functions that do not require closure
@@ -1471,6 +1480,8 @@ ${baseLabel}:
                 ${gcNo}mov r0, r7
                 bx r4
             `)
+
+            this.write("; end lambda call")
         }
 
         private emitStore(trg: ir.Expr, src: ir.Expr) {
