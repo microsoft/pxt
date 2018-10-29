@@ -16,7 +16,7 @@ The "Hero" banner is the top image in the editor. It is specified in the ``pxtar
 
 The hero image has a preset location in the page and requires a new release to be updated.
 
-## Galleries
+## Galleries #galleries
 
 Gallery contents are defined by entries in markdown files stored in the documentation tree. They can be updated at any time without needing to releasing a new editor. The galleries are displayed on the hero page by:
 
