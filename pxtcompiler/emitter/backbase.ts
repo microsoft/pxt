@@ -1103,7 +1103,7 @@ ${baseLabel}:
                     ${this.t.callCPP("pxt::toInt")}
                     mov r1, r0
                     pop {r0, r2}
-                .oob:
+                ${op == "set" ? ".oob:" : ""}
                     ${this.t.pushLR()}
                     ${this.t.callCPP(`Array_::${op}At`)}
                     ${this.t.popPC()}
@@ -1111,6 +1111,14 @@ ${baseLabel}:
                 .fail:
                     bl pxt::failedCast
                 `)
+
+                if (op == "get") {
+                    this.write(`
+                        .oob:
+                            movs r0, #0 ; undefined
+                            bx lr
+                    `)
+                }
             }
         }
 
