@@ -32,7 +32,7 @@ To get a tutorial on the home screen, you will need to get a gallery and a galle
 
 #### Defining galleries
 
-Tutorials typically appear as cards on the home screen. Each card category is a markdown file that is referenced from the ``targetconfig.json`` file. The ``galleries`` section in the configuration specifies a map
+Tutorials typically appear as cards on the [home screen](/targets/home-screen#galleries). Each card category is a markdown file that is referenced from the ``targetconfig.json`` file. The ``galleries`` section in the configuration specifies a map
 of gallery title to gallery markdown path. You can have as many galleries as you wish to organize your tutorials.
 
 ```
