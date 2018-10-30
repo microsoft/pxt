@@ -124,7 +124,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const showCollapsed = !tutorial && !sandbox && !targetTheme.simCollapseInMenu;
         const showProjectRename = !tutorial && !readOnly && !isController && !targetTheme.hideProjectRename;
         const showUndoRedo = !tutorial && !readOnly;
-        const showZoomControls = !tutorial;
+        const showZoomControls = true;
 
         const run = !targetTheme.bigRunButton;
         const restart = run && !simOpts.hideRestart;
