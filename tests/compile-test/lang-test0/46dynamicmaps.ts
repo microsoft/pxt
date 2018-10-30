@@ -51,10 +51,8 @@ namespace DynamicMaps {
         updI(v)
         assert(check(v) == "5/fooaaa", ".v4")
         updIP(v, "foo", "bar")
-        /*
         assert(check(v) == "6/fooaaaa", ".v6")
         assert(checkA(v) == check(v), ".z3")
-        */
     }
 
     export function run() {
@@ -74,7 +72,7 @@ namespace DynamicMaps {
         z.foo = 1
         z.bar = "foo"
 
-        //allChecks(v)
+        allChecks(v)
         allChecks(z)
     }
 }

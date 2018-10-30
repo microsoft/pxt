@@ -48,6 +48,29 @@ namespace ts.pxtc {
         "neq": true,
     }
 
+    const thumbFuns: pxt.Map<FuncInfo> = {
+        "Array_::getAt": {
+            name: "_pxt_array_get",
+            argsFmt: ["T", "T", "T"],
+            value: 0
+        },
+        "Array_::setAt": {
+            name: "_pxt_array_set",
+            argsFmt: ["T", "T", "T", "T"],
+            value: 0
+        },
+        "pxtrt::mapGetGeneric": {
+            name: "_pxt_map_get",
+            argsFmt: ["T", "T", "S"],
+            value: 0
+        },
+        "pxtrt::mapSetGeneric": {
+            name: "_pxt_map_set",
+            argsFmt: ["T", "T", "S", "T"],
+            value: 0
+        },
+    }
+
     let EK = ir.EK;
     export const SK = SyntaxKind;
 
@@ -1798,7 +1821,7 @@ ${lbl}: .short 0xffff
             markUsed(decl)
 
             if (!decl && node.kind == SK.PropertyAccessExpression) {
-                const namedNode = node as PropertyAccessExpression                
+                const namedNode = node as PropertyAccessExpression
                 decl = {
                     kind: SK.PropertySignature,
                     symbol: { isBogusSymbol: true, name: namedNode.name.getText() },
@@ -3018,19 +3041,16 @@ ${lbl}: .short 0xffff
         function rtcallMask(name: string, args: Expression[], attrs: CommentAttrs, append: Expression[] = null) {
             let fmt: string[] = []
             let inf = hex.lookupFunc(name)
-            if (inf) fmt = inf.argsFmt
 
             if (isThumb()) {
-                if (name == "Array_::getAt") {
-                    name = "_pxt_array_get"
-                    fmt = ["T", "T", "T"]
-                }
-                if (name == "Array_::setAt") {
-                    name = "_pxt_array_set"
-                    fmt = ["T", "T", "T", "T"]
+                let inf2 = U.lookup(thumbFuns, name)
+                if (inf2) {
+                    inf = inf2
+                    name = inf2.name
                 }
             }
 
+            if (inf) fmt = inf.argsFmt
             if (append) args = args.concat(append)
 
             let mask = getMask(args)

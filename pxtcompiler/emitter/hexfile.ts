@@ -834,8 +834,8 @@ ${hex.hexPrelude()}
     .short ${bin.nonPtrGlobals}
     .word _pxt_iface_member_names
     .word _pxt_lambda_trampoline@fn
-    .word _pxt_get_property@fn
-    .word _pxt_set_property@fn
+    .word 0 ; reserved
+    .word 0 ; reserved
     .word 0 ; reserved
 `
         let snippets: AssemblerSnippets = null;

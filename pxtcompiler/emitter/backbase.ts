@@ -632,61 +632,59 @@ ${baseLabel}:
             })
         }
 
-        private emitIfaceCall(numargs: number, getset = "") {
-            this.emitLabelledHelper("ifacecall" + numargs + "_" + getset, () => {
-                this.write(`ldr r0, [sp, #0] ; ld-this`)
-                this.loadVTable()
-
-                this.write(`
-                    ldr r2, [r3, #12] ; load mult
-                    movs r7, r2
-                    beq .objlit ; built-in types have mult=0
-                    muls r7, r1
-                    lsrs r7, r2
-                    lsls r7, r7, #1 ; r7 - hash offset
-                    ldr r3, [r3, #4] ; iface table
-                    adds r3, r3, r7
-                    ; r0-this, r1-method idx, r2-free, r3-hash entry, r4-num args, r7-free
-                    `)
-
-                for (let i = 0; i < vtLookups; ++i) {
-                    if (i > 0)
-                        this.write("    adds r3, #2")
-                    this.write(`
-                    ldrh r2, [r3, #0] ; r2-offset of descriptor
-                    ldrh r7, [r2, r3] ; r7-method idx
-                    cmp r7, r1
-                    beq .hit
-                    `)
-                }
-
-                if (getset == "get") {
-                    this.write("movs r0, #0 ; undefined")
-                    this.write("bx lr")
-                } else
-                    this.write("b .fail2")
-
-                this.write(`
-                .hit:
-                    adds r3, r3, r2 ; r3-descriptor
-                    ldr r2, [r3, #4]
-                    lsls r7, r2, #31
-                    beq .field
+        private ifaceCallCore(numargs: number, getset: string, noObjlit = false) {
+            this.write(`
+                ldr r2, [r3, #12] ; load mult
+                movs r7, r2
+                beq .objlit ; built-in types have mult=0
+                muls r7, r1
+                lsrs r7, r2
+                lsls r7, r7, #1 ; r7 - hash offset
+                ldr r3, [r3, #4] ; iface table
+                adds r3, r3, r7
+                ; r0-this, r1-method idx, r2-free, r3-hash entry, r4-num args, r7-free
                 `)
 
-                if (getset == "set") {
-                    this.write(`
-                        ; check for next descriptor
-                        ldrh r7, [r3, #8]
-                        cmp r7, r1
-                        bne .fail2 ; no setter!
-                        ldr r2, [r3, #12]
-                    `)
-                }
-
-                this.write(this.t.emit_int(numargs, "r4"))
+            for (let i = 0; i < vtLookups; ++i) {
+                if (i > 0)
+                    this.write("    adds r3, #2")
                 this.write(`
-                    bx r2
+                ldrh r2, [r3, #0] ; r2-offset of descriptor
+                ldrh r7, [r2, r3] ; r7-method idx
+                cmp r7, r1
+                beq .hit
+                `)
+            }
+
+            if (getset == "get") {
+                this.write("movs r0, #0 ; undefined")
+                this.write("bx lr")
+            } else
+                this.write("b .fail2")
+
+            this.write(`
+            .hit:
+                adds r3, r3, r2 ; r3-descriptor
+                ldr r2, [r3, #4]
+                lsls r7, r2, #31
+                beq .field
+            `)
+
+            if (getset == "set") {
+                this.write(`
+                    ; check for next descriptor
+                    ldrh r7, [r3, #8]
+                    cmp r7, r1
+                    bne .fail2 ; no setter!
+                    ldr r2, [r3, #12]
+                `)
+            }
+
+            this.write(this.t.emit_int(numargs, "r4"))
+            this.write("bx r2")
+
+            if (!noObjlit) {
+                this.write(`
                 .objlit:
                     ldrh r2, [r3, #8]
                     cmp r2, #${pxt.BuiltInType.RefMap}
@@ -713,77 +711,91 @@ ${baseLabel}:
                     this.write("mov lr, r4")
                     this.write("b .moveArgs")
                 }
+            }
 
-                this.write(".field:")
-                if (getset == "set") {
-                    if (target.gc) {
-                        this.write(`
-                            ldr r3, [sp, #4] ; ld-val
-                            str r3, [r0, r2] ; store field
-                            bx lr
-                        `)
-                    } else {
-                        this.write(`
-                            ldr r7, [r0, r2] ; load field
-                            ldr r3, [sp, #4] ; ld-val
-                            str r7, [sp, #4] ; save previous value - it will get decr()ed outside
-                            str r3, [r0, r2] ; store field
-                            bx lr
-                        `)
-                    }
-                } else if (getset == "get") {
-                    if (target.gc) {
-                        this.write(`
-                            ldr r0, [r0, r2] ; load field
-                            bx lr
-                        `)
-                    } else {
-                        this.write(`
-                            mov r4, lr
-                            ldr r0, [r0, r2] ; load field
-                            bl _pxt_incr
-                            bx r4
-                        `)
-                    }
+            this.write(".field:")
+            if (getset == "set") {
+                if (target.gc) {
+                    this.write(`
+                        ldr r3, [sp, #4] ; ld-val
+                        str r3, [r0, r2] ; store field
+                        bx lr
+                    `)
                 } else {
-                    if (target.gc) {
-                        this.write(`
-                            ldr r0, [r0, r2] ; load field
-                        `)
-                    } else {
-                        this.write(`
-                            mov r4, lr
-                            ldr r7, [r0, r2] ; load field
-                            bl _pxt_decr
-                            mov r0, r7
-                            bl _pxt_incr
-                            mov lr, r4
-                        `)
-                    }
+                    this.write(`
+                        ldr r7, [r0, r2] ; load field
+                        ldr r3, [sp, #4] ; ld-val
+                        str r7, [sp, #4] ; save previous value - it will get decr()ed outside
+                        str r3, [r0, r2] ; store field
+                        bx lr
+                    `)
+                }
+            } else if (getset == "get") {
+                if (target.gc) {
+                    this.write(`
+                        ldr r0, [r0, r2] ; load field
+                        bx lr
+                    `)
+                } else {
+                    this.write(`
+                        mov r4, lr
+                        ldr r0, [r0, r2] ; load field
+                        bl _pxt_incr
+                        bx r4
+                    `)
+                }
+            } else {
+                if (target.gc) {
+                    this.write(`
+                        ldr r0, [r0, r2] ; load field
+                    `)
+                } else {
+                    this.write(`
+                        mov r4, lr
+                        ldr r7, [r0, r2] ; load field
+                        bl _pxt_decr
+                        mov r0, r7
+                        bl _pxt_incr
+                        mov lr, r4
+                    `)
+                }
+            }
+
+            if (!getset) {
+                this.write(`.moveArgs:`)
+
+                for (let i = 0; i < numargs; ++i) {
+                    if (i == numargs - 1)
+                        // we keep the actual lambda value on the stack, so it gets decremented
+                        this.write(`movs r1, r0`)
+                    else
+                        this.write(`ldr r1, [sp, #4*${i + 1}]`)
+                    this.write(`str r1, [sp, #4*${i}]`)
                 }
 
-                if (!getset) {
-                    this.write(`.moveArgs:`)
+                // one argument consumed
+                this.lambdaCall(numargs - 1)
+            }
 
-                    for (let i = 0; i < numargs; ++i) {
-                        if (i == numargs - 1)
-                            // we keep the actual lambda value on the stack, so it gets decremented
-                            this.write(`movs r1, r0`)
-                        else
-                            this.write(`ldr r1, [sp, #4*${i + 1}]`)
-                        this.write(`str r1, [sp, #4*${i}]`)
-                    }
+            if (noObjlit)
+                this.write(".objlit:")
 
-                    // one argument consumed
-                    this.lambdaCall(numargs - 1)
-                }
+            this.write(`
+            .fail:
+                ${this.t.callCPP("pxt::failedCast")}
+            .fail2:
+                ${this.t.callCPP("pxt::missingProperty")}
+            `)
+        }
 
-                this.write(`
-                .fail:
-                    ${this.t.callCPP("pxt::failedCast")}
-                .fail2:
-                    ${this.t.callCPP("pxt::missingProperty")}
-                `)
+        private emitIfaceCall(procid: ir.ProcId, numargs: number, getset = "") {
+            U.assert(procid.ifaceIndex > 0)
+            this.write(this.t.emit_int(procid.ifaceIndex, "r1"))
+
+            this.emitLabelledHelper("ifacecall" + numargs + "_" + getset, () => {
+                this.write(`ldr r0, [sp, #0] ; ld-this`)
+                this.loadVTable()
+                this.ifaceCallCore(numargs, getset)
             })
         }
 
@@ -1049,7 +1061,7 @@ ${baseLabel}:
 
         private alignedCall(name: string, cmt = "", off = 0, saveStack = false) {
             let unalign = this.alignStack(off)
-            if (U.startsWith(name, "_cmp_"))
+            if (U.startsWith(name, "_cmp_") || U.startsWith(name, "_pxt_"))
                 saveStack = false
             this.write(this.t.call_lbl(name, saveStack) + cmt)
             this.write(unalign)
@@ -1114,11 +1126,81 @@ ${baseLabel}:
             for (let op of ["get", "set"]) {
                 this.write(`
                 .section code
-                _pxt_${op}_property:
-                    push {r3, r4, r5, r6, r7, lr}
+                _pxt_map_${op}:
                 `)
-                this.emitIfaceCall(op == "set" ? 2 : 1, op)
-                this.write("pop {r3, r4, r5, r6, r7, pc}")
+
+                this.loadVTable(false, "r4")
+                this.checkSubtype(this.builtInClassNo(pxt.BuiltInType.RefMap), ".notmap", "r4")
+
+                this.write(this.t.callCPPPush(op == "set" ? "pxtrt::mapSetByString" : "pxtrt::mapGetByString"))
+                this.write(".notmap:")
+
+                let numargs = op == "set" ? 2 : 1
+                let hasAlign = false
+
+                this.write("mov r4, r3 ; save VT")
+
+                if (op == "set") {
+                    if (target.stackAlign) {
+                        hasAlign = true
+                        this.write("push {lr} ; align")
+                    }
+                    if (target.gc) {
+                        this.write(`
+                            push {r0, r2, lr}
+                            mov r0, r1
+                        `)
+                    } else {
+                        this.write(`
+                            mov r7, r1
+                            push {r0, r2, lr}
+                            bl _pxt_incr
+                            ldr r0, [sp, #4]
+                            bl _pxt_incr
+                            mov r0, r7
+                        `)
+                    }
+                } else {
+                    if (target.gc) {
+                        this.write(`
+                            push {r0, lr}
+                            mov r0, r1
+                        `)
+                    } else {
+                        this.write(`
+                            mov r7, r1
+                            push {r0, lr}
+                            bl _pxt_incr
+                            mov r0, r7
+                        `)
+                    }
+                }
+
+                this.write(`
+                    bl pxtrt::lookupMapKey
+                    mov r1, r0 ; put key index in r1
+                    ldr r0, [sp, #0] ; restore obj pointer
+                    mov r3, r4 ; restore vt
+                    bl .dowork
+                `)
+
+                if (!target.gc) {
+                    this.write("mov r7, r0")
+                    for (let i = 0; i < numargs; ++i) {
+                        this.write("pop {r0}")
+                        this.write("bl _pxt_decr")
+                    }
+                    if (hasAlign)
+                        this.write(this.t.pop_locals(1))
+                    this.write("mov r0, r7")
+                } else {
+                    this.write(this.t.pop_locals(numargs + (hasAlign ? 1 : 0)))
+                }
+
+                this.write("pop {pc}")
+
+                this.write(".dowork:")
+                this.ifaceCallCore(numargs, op, true)
             }
         }
 
@@ -1405,13 +1487,9 @@ ${baseLabel}:
                     let isSet = /Set/.test(procid.mapMethod)
                     assert(isSet == (topExpr.args.length == 2))
                     assert(!isSet == (topExpr.args.length == 1))
-                    U.assert(procid.ifaceIndex > 0)
-                    this.write(this.t.emit_int(procid.ifaceIndex, "r1"))    
-                    this.emitIfaceCall(topExpr.args.length, isSet ? "set" : "get")
+                    this.emitIfaceCall(procid, topExpr.args.length, isSet ? "set" : "get")
                 } else if (procid.ifaceIndex != null) {
-                    U.assert(procid.ifaceIndex > 0)
-                    this.write(this.t.emit_int(procid.ifaceIndex, "r1"))    
-                    this.emitIfaceCall(topExpr.args.length)
+                    this.emitIfaceCall(procid, topExpr.args.length)
                 } else {
                     this.emitClassCall(procid)
                 }
