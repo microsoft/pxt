@@ -29,6 +29,7 @@ export let pxtCoreDir: string = path.join(__dirname, "..");
 
 export function setTargetDir(dir: string) {
     targetDir = dir;
+    (<any>module).paths.push(path.join(targetDir, "node_modules"));
 }
 
 export function readResAsync(g: events.EventEmitter) {
@@ -266,17 +267,24 @@ export function readPkgConfig(dir: string) {
     pxt.debug("readPkgConfig in " + dir)
     const fn = path.join(dir, pxt.CONFIG_NAME)
     const js: pxt.PackageConfig = readJson(fn)
-    if (js.additionalFilePath) {
-        let addjson = path.join(dir, js.additionalFilePath, pxt.CONFIG_NAME)
-        pxt.debug("additional pxt.json: " + addjson)
-        const js2: any = readJson(addjson)
+
+    const ap = js.additionalFilePath
+    if (ap) {
+        const adddir = path.join(dir, ap)
+        pxt.debug("additional pxt.json: " + adddir)
+        const js2 = readPkgConfig(adddir)
         for (let k of Object.keys(js2)) {
             if (!js.hasOwnProperty(k)) {
-                (js as any)[k] = js2[k]
+                (js as any)[k] = (js2 as any)[k]
             }
         }
+        js.additionalFilePaths = [ap].concat(js2.additionalFilePaths.map(d => path.join(ap, d)))
+    } else {
+        js.additionalFilePaths = []
     }
-    if (!js.targetVersions) js.targetVersions = pxt.appTarget.versions;
+    // don't inject version number
+    // as they get serialized later on
+    // if (!js.targetVersions) js.targetVersions = pxt.appTarget.versions;
     return js
 }
 
@@ -352,6 +360,14 @@ export function existsDirSync(name: string): boolean {
     }
     catch (e) {
         return false;
+    }
+}
+
+export function writeFileSync(path: string, data: any, options?: { encoding?: string | null; mode?: number | string; flag?: string; } | string | null) {
+    fs.writeFileSync(path, data, options);
+    if (pxt.options.debug) {
+        const stats = fs.statSync(path);
+        pxt.log(`  + ${path} ${stats.size > 1000000 ? (stats.size / 1000000).toFixed(2) + ' m' : stats.size > 1000 ? (stats.size / 1000).toFixed(2) + 'k' : stats.size}b`)
     }
 }
 
@@ -467,8 +483,8 @@ export function resolveMd(root: string, pathname: string): string {
         dirs.push(d)
 
         let cfg = readPkgConfig(path.join(d, ".."))
-        if (cfg.additionalFilePath)
-            dirs.push(path.join(d, "..", cfg.additionalFilePath, "docs"))
+        for (let add of cfg.additionalFilePaths)
+            dirs.push(path.join(d, "..", add, "docs"))
     }
     for (let d of dirs) {
         let template = tryRead(path.join(d, pathname))
@@ -476,6 +492,32 @@ export function resolveMd(root: string, pathname: string): string {
             return pxt.docs.augmentDocs(template, targetMd)
     }
     return undefined;
+}
+
+export function lazyDependencies(): pxt.Map<string> {
+    // find pxt-core package
+    const deps: pxt.Map<string> = {};
+    [path.join("node_modules", "pxt-core", "package.json"), "package.json"]
+        .filter(f => fs.existsSync(f))
+        .map(f => readJson(f))
+        .forEach(config => config && config.lazyDependencies && Util.jsonMergeFrom(deps, config.lazyDependencies))
+    return deps;
+}
+
+export function lazyRequire(name: string, install = false): any {
+    /* tslint:disable:non-literal-require */
+    let r: any;
+    try {
+        r = require(name);
+    } catch (e) {
+        pxt.debug(e);
+        pxt.debug((<any>require.resolve).paths(name));
+        r = undefined;
+    }
+    if (!r && install)
+        pxt.log(`package "${name}" failed to load, run "pxt npminstallnative" to install native depencencies`)
+    return r;
+    /* tslint:enable:non-literal-require */
 }
 
 init();

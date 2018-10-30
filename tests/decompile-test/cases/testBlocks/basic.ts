@@ -99,6 +99,10 @@ namespace testNamespace {
     //% block="Handler with optioinal arguments"
     export function callbackWithIgnoredArguments(cb: (c: number, d: number) => void) {}
 
+    //% blockId=test_handler_arguments3 draggableParameters=1
+    //% block="Handler with draggable arguments"
+    export function callbackWithDraggableParams(cb: (c: number, d: number) => void) {}
+
     /**
      * Enum value function
      */
@@ -201,6 +205,15 @@ namespace testNamespace {
     //% blockId=test_toStringArg block="to string %msg"
     //% msg.shadowOptions.toString=true
     export function toStringArg(msg: string) {
+
+    }
+}
+
+//% color=#0078D7 weight=100
+namespace actions {
+    //% blockId="event_with_action"
+    //% block="event with action $someNumber"
+    export function eventWithAnAction(someNumber: number, arg: Action) {
 
     }
 }

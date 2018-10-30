@@ -48,6 +48,7 @@ declare namespace pxt {
         npmDependencies?: Map<string>;
         card?: CodeCard;
         additionalFilePath?: string;
+        additionalFilePaths?: string[];
         core?: boolean;
         gistId?: string;
         extension?: PackageExtension; // describe the associated extension if any
@@ -96,7 +97,8 @@ declare namespace pxt {
         ariaLabel?: string;
         label?: string;
         labelClass?: string;
-        tabIndex?: number
+        tags?: CodeCardTag[]; // tags shown in home screen, eg: [{ "label": "Beginner", "color": "blue" }]
+        tabIndex?: number;
 
         color?: string; // one of semantic ui colors
         description?: string;
@@ -108,8 +110,10 @@ declare namespace pxt {
         youTubeId?: string;
         time?: number;
         url?: string;
+        learnMoreUrl?: string;
+        buyUrl?: string;
         responsive?: boolean;
-        cardType?: "file" | "example" | "codeExample" | "tutorial" | "side" | "template" | "package";
+        cardType?: "file" | "example" | "codeExample" | "tutorial" | "side" | "template" | "package" | "hw";
 
         header?: string;
         any?: number;
@@ -126,6 +130,11 @@ declare namespace pxt {
 
         target?: string;
         className?: string;
+    }
+
+    interface CodeCardTag {
+        label: string;
+        color?: string;
     }
 
     interface JRes {

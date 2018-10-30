@@ -3,6 +3,7 @@
 declare namespace Blockly {
 
     interface FieldCustomOptions {
+        blocksInfo: any;
         colour?: string | number;
         label?: string;
         type?: string;

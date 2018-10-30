@@ -98,6 +98,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         if (home) return <div />; // Don't render if we're in the home screen
 
         const sandbox = pxt.shell.isSandboxMode();
+        const isController = pxt.shell.isControllerMode();
         const readOnly = pxt.shell.isReadOnly();
         const tutorial = tutorialOptions ? tutorialOptions.tutorial : false;
         const collapsed = (hideEditorFloats || collapseEditorTools) && !tutorial;
@@ -105,6 +106,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         if (!isEditor) return <div />;
 
         const targetTheme = pxt.appTarget.appTheme;
+        const showSave = !readOnly && !isController && !targetTheme.saveInMenu;
         const compile = pxt.appTarget.compile;
         const compileBtn = compile.hasHex || compile.saveAsPNG;
         const simOpts = pxt.appTarget.simulator;
@@ -119,7 +121,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const hasRedo = this.props.parent.editor.hasRedo();
 
         const showCollapsed = !tutorial && !sandbox;
-        const showProjectRename = !tutorial && !readOnly;
+        const showProjectRename = !tutorial && !readOnly && !isController;
         const showUndoRedo = !tutorial && !readOnly;
         const showZoomControls = !tutorial;
 
@@ -128,7 +130,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const trace = run && !!simOpts.enableTrace;
         const tracing = this.props.parent.state.tracing;
         const traceTooltip = tracing ? lf("Disable Slow-Mo") : lf("Slow-Mo")
-        const debug = !trace && !!simOpts.debugger;
+        const debug = !trace && !!simOpts.debugger && !readOnly;
         const debugging = this.props.parent.state.debugging;
         const debugTooltip = debugging ? lf("Disable Debugging") : lf("Debugging")
         const downloadIcon = pxt.appTarget.appTheme.downloadIcon || "download";
@@ -162,7 +164,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                         <div className="right aligned column">
                             {!readOnly ?
                                 <div className="ui icon small buttons">
-                                    <EditorToolbarButton icon='save' className={`editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onButtonClick={this.saveFile} view='mobile' />
+                                    {showSave ? <EditorToolbarButton icon='save' className={`editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onButtonClick={this.saveFile} view='mobile' /> : undefined}
                                     {showUndoRedo ? <EditorToolbarButton icon='xicon undo' className={`editortools-btn undo-editortools-btn} ${!hasUndo ? 'disabled' : ''}`} ariaLabel={lf("{0}, {1}", lf("Undo"), !hasUndo ? lf("Disabled") : "")} title={lf("Undo")} onButtonClick={this.undo} view='mobile' /> : undefined}
                                 </div> : undefined}
                         </div>
@@ -232,8 +234,8 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                 </div>
                             </div>}
                         <div className="column four wide">
-                            {readOnly ? undefined :
-                                <EditorToolbarButton icon='save' className={`small editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onButtonClick={this.saveFile} view='tablet' />}
+                            {showSave ? <EditorToolbarButton icon='save' className={`small editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onButtonClick={this.saveFile} view='tablet' />
+                                : undefined}
                         </div>
                         <div className="column six wide right aligned">
                             {showUndoRedo ?
@@ -273,7 +275,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                 {showProjectRename ?
                                     <div className="row" style={compileBtn ? { paddingTop: 0 } : {}}>
                                         <div className="column">
-                                            <div className="ui item large right labeled fluid input projectname-input projectname-tablet" title={lf("Pick a name for your project")}>
+                                            <div className={`ui item large right ${showSave ? "labeled" : ""} fluid input projectname-input projectname-tablet`} title={lf("Pick a name for your project")}>
                                                 <label htmlFor="fileNameInput1" id="fileNameInputLabel1" className="accessible-hidden">{lf("Type a name for your project")}</label>
                                                 <EditorToolbarSaveInput id="fileNameInput1"
                                                     type="text"
@@ -281,7 +283,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                                     placeholder={lf("Pick a name...")}
                                                     value={projectName || ''}
                                                     onChangeValue={this.saveProjectName} view='tablet' />
-                                                <EditorToolbarButton icon='save' className={`large right attached editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onButtonClick={this.saveFile} view='tablet' />
+                                                {showSave ? <EditorToolbarButton icon='save' className={`large right attached editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onButtonClick={this.saveFile} view='tablet' /> : undefined}
                                             </div>
                                         </div>
                                     </div> : undefined}
@@ -336,7 +338,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                     </div>
                     {showProjectRename ?
                         <div className="column left aligned">
-                            <div className={`ui right labeled input projectname-input projectname-computer`} title={lf("Pick a name for your project")}>
+                            <div className={`ui right ${showSave ? "labeled" : ""} input projectname-input projectname-computer`} title={lf("Pick a name for your project")}>
                                 <label htmlFor="fileNameInput2" id="fileNameInputLabel2" className="accessible-hidden">{lf("Type a name for your project")}</label>
                                 <EditorToolbarSaveInput id="fileNameInput2" view='computer'
                                     type="text"
@@ -344,7 +346,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                     placeholder={lf("Pick a name...")}
                                     value={projectName || ''}
                                     onChangeValue={this.saveProjectName} />
-                                <EditorToolbarButton icon='save' className={`small right attached editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onButtonClick={this.saveFile} view='computer' />
+                                {showSave ? <EditorToolbarButton icon='save' className={`small right attached editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onButtonClick={this.saveFile} view='computer' /> : undefined}
                             </div>
                         </div> : undefined}
                     <div className="column right aligned">

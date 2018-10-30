@@ -71,7 +71,8 @@ namespace pxt.Cloud {
         if (!Cloud.isOnline()) // offline
             return Promise.resolve(undefined);
 
-        const url = pxt.webConfig && pxt.webConfig.isStatic ? `targetconfig.json` : `config/${pxt.appTarget.id}/targetconfig`;
+        const targetVersion = pxt.appTarget.versions && pxt.appTarget.versions.target;
+        const url = pxt.webConfig && pxt.webConfig.isStatic ? `targetconfig.json` : `config/${pxt.appTarget.id}/targetconfig${targetVersion ? `/v${targetVersion}` : ''}`;
         if (Cloud.isLocalHost())
             return localRequestAsync(url).then(r => r ? r.json : undefined)
         else
@@ -86,6 +87,7 @@ namespace pxt.Cloud {
 
     export function downloadMarkdownAsync(docid: string, locale?: string, live?: boolean): Promise<string> {
         const packaged = pxt.webConfig && pxt.webConfig.isStatic;
+        const targetVersion = pxt.appTarget.versions && pxt.appTarget.versions.target || '?';
         let url: string;
 
         if (packaged) {
@@ -99,7 +101,7 @@ namespace pxt.Cloud {
                 url = `${url}.md`;
             }
         } else {
-            url = `md/${pxt.appTarget.id}/${docid.replace(/^\//, "")}?targetVersion=${encodeURIComponent(pxt.webConfig.targetVersion)}`;
+            url = `md/${pxt.appTarget.id}/${docid.replace(/^\//, "")}?targetVersion=${encodeURIComponent(targetVersion)}`;
         }
         if (!packaged && locale != "en") {
             url += `&lang=${encodeURIComponent(Util.userLanguage())}`
@@ -158,15 +160,22 @@ namespace pxt.Cloud {
         const rx = `^((https:\/\/)?(?:${domains.join('|')})\/)?(api\/oembed\?url=.*%2F([^&]*)&.*?|([a-z0-9\-_]+))$`;
         const m = new RegExp(rx, 'i').exec(uri.trim());
         const scriptid = m && (!m[1] || domains.indexOf(Util.escapeForRegex(m[1].replace(/https:\/\//, '').replace(/\/$/, '')).toLowerCase()) >= 0) && (m[3] || m[4]) ? (m[3] ? m[3] : m[4]) : null
-        return scriptid;
+
+        if (!scriptid) return undefined;
+
+        if (scriptid[0] == "_" && scriptid.length == 13)
+            return scriptid;
+
+        if (scriptid.length == 23 && /^[0-9\-]+$/.test(scriptid))
+            return scriptid;
+
+        return undefined;
     }
 
     //
     // Interfaces used by the cloud
     //
 
-    // TODO: remove unused interfaces
-    // TODO: remove unused fields
     export interface JsonIdObject {
         kind: string;
         id: string; // id

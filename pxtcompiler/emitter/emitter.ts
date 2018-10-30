@@ -90,7 +90,7 @@ namespace ts.pxtc {
         console.log(stringKind(n))
     }
 
-    // next free error 9274
+    // next free error 9275
     function userError(code: number, msg: string, secondary = false): Error {
         let e = new Error(msg);
         (<any>e).ksEmitterUserError = true;
@@ -549,7 +549,8 @@ namespace ts.pxtc {
     function checkType(t: Type): Type {
         let ok = TypeFlags.String | TypeFlags.Number | TypeFlags.Boolean |
             TypeFlags.StringLiteral | TypeFlags.NumberLiteral | TypeFlags.BooleanLiteral |
-            TypeFlags.Void | TypeFlags.Enum | TypeFlags.EnumLiteral | TypeFlags.Null | TypeFlags.Undefined
+            TypeFlags.Void | TypeFlags.Enum | TypeFlags.EnumLiteral | TypeFlags.Null | TypeFlags.Undefined |
+            TypeFlags.Never
         if ((t.flags & ok) == 0) {
             if (isArrayType(t)) return t;
             if (isClassType(t)) return t;
@@ -715,7 +716,7 @@ namespace ts.pxtc {
                     let subPropDecl = <PropertyDeclaration>find[0].valueDeclaration
                     // TODO: record the property on which we have a mismatch
                     let [retSub, msgSub] = checkSubtype(checker.getTypeAtLocation(subPropDecl), checker.getTypeAtLocation(superPropDecl))
-                    if (ret && !retSub)[ret, msg] = [retSub, msgSub]
+                    if (ret && !retSub) [ret, msg] = [retSub, msgSub]
                 } else if (find.length == 0) {
                     if (!(superProp.flags & SymbolFlags.Optional)) {
                         // we have a cast to an interface with more properties (unsound)
@@ -781,13 +782,13 @@ namespace ts.pxtc {
                     let subParamType = checker.getTypeAtLocation(subFun.parameters[i].valueDeclaration)
                     // Check parameter types (contra-variant)
                     let [retSub, msgSub] = checkSubtype(superParamType, subParamType)
-                    if (ret && !retSub)[ret, msg] = [retSub, msgSub]
+                    if (ret && !retSub) [ret, msg] = [retSub, msgSub]
                 }
                 // check return type (co-variant)
                 let superRetType = superFun.getReturnType()
                 let subRetType = superFun.getReturnType()
                 let [retSub, msgSub] = checkSubtype(subRetType, superRetType)
-                if (ret && !retSub)[ret, msg] = [retSub, msgSub]
+                if (ret && !retSub) [ret, msg] = [retSub, msgSub]
                 return insertSubtype(key, [ret, msg])
             }
         } else if (isInterfaceType(superType)) {
@@ -978,6 +979,8 @@ namespace ts.pxtc {
 
             hex.setupFor(opts.target, opts.extinfo || emptyExtInfo(), opts.hexinfo);
             hex.setupInlineAssembly(opts);
+        } else {
+            opts.target.taggedInts = false
         }
 
         let bin = new Binary()
@@ -1070,13 +1073,21 @@ namespace ts.pxtc {
             emitSkipped: !!opts.noEmit
         }
 
-        function error(node: Node, code: number, msg: string, arg0?: any, arg1?: any, arg2?: any) {
+        function diag(category: DiagnosticCategory, node: Node, code: number, message: string, arg0?: any, arg1?: any, arg2?: any) {
             diagnostics.add(createDiagnosticForNode(node, <any>{
-                code: code,
-                message: msg,
-                key: msg.replace(/^[a-zA-Z]+/g, "_"),
-                category: DiagnosticCategory.Error,
+                code,
+                message,
+                key: message.replace(/^[a-zA-Z]+/g, "_"),
+                category,
             }, arg0, arg1, arg2));
+        }
+
+        function warning(node: Node, code: number, msg: string, arg0?: any, arg1?: any, arg2?: any) {
+            diag(DiagnosticCategory.Warning, node, code, msg, arg0, arg1, arg2);
+        }
+
+        function error(node: Node, code: number, msg: string, arg0?: any, arg1?: any, arg2?: any) {
+            diag(DiagnosticCategory.Error, node, code, msg, arg0, arg1, arg2);
         }
 
         function unhandled(n: Node, info?: string, code: number = 9202) {
@@ -1530,15 +1541,16 @@ namespace ts.pxtc {
             let w = 0;
             let h = 0;
             let lit = "";
+            let c = 0;
             s += "\n"
             for (let i = 0; i < s.length; ++i) {
                 switch (s[i]) {
                     case ".":
                     case "_":
-                    case "0": lit += "0,"; x++; break;
+                    case "0": lit += "0,"; x++; c++; break;
                     case "#":
                     case "*":
-                    case "1": lit += "1,"; x++; break;
+                    case "1": lit += "255,"; x++; c++; break;
                     case "\t":
                     case "\r":
                     case " ": break;
@@ -1558,8 +1570,10 @@ namespace ts.pxtc {
             }
 
             let lbl = "_img" + bin.lblNo++
-            if (lit.length % 4 != 0)
-                lit += "42" // pad
+
+            // Pad with a 0 if we have an odd number of pixels
+            if (c % 2 != 0)
+                lit += "0"
 
             bin.otherLiterals.push(`
 .balign 4
@@ -2015,7 +2029,7 @@ ${lbl}: .short 0xffff
                 return emitLit(undefined)
             }
 
-            if (nm == "TD_ID") {
+            if (nm == "TD_ID" || nm === "ENUM_GET") {
                 assert(args.length == 1, "args.length == 1")
                 return emitExpr(args[0])
             }
@@ -2159,6 +2173,8 @@ ${lbl}: .short 0xffff
                     let d = getDecl(e)
                     if (d && (d.kind == SK.EnumMember || d.kind == SK.VariableDeclaration))
                         return getFullName(checker, d.symbol)
+                    else if (e && e.kind == SK.StringLiteral)
+                        return (e as StringLiteral).text
                     else return "*"
                 }).join(",")
                 let fn = getFullName(checker, decl.symbol)
@@ -3196,6 +3212,11 @@ ${lbl}: .short 0xffff
                     return r
                 let f = fmt.charAt(i + 1)
                 let isNumber = isNumberLike(a)
+
+                if (!f && name.indexOf("::") < 0) {
+                    // for assembly functions, make up the format string - pass numbers as ints and everything else as is
+                    f = isNumber ? "I" : "_"
+                }
                 if (!f) {
                     throw U.userError("not enough args for " + name)
                 } else if (f == "_" || f == "T" || f == "N") {
@@ -3322,6 +3343,7 @@ ${lbl}: .short 0xffff
         }
 
         function emitBrk(node: Node) {
+            bin.numStmts++
             if (!opts.breakpoints)
                 return
             let src = getSourceFileOfNode(node)
@@ -3349,12 +3371,16 @@ ${lbl}: .short 0xffff
             proc.emit(st)
         }
 
-        function simpleInstruction(k: SyntaxKind) {
+        function simpleInstruction(node: Node, k: SyntaxKind) {
             switch (k) {
                 case SK.PlusToken: return "numops::adds";
                 case SK.MinusToken: return "numops::subs";
                 // we could expose __aeabi_idiv directly...
-                case SK.SlashToken: return "numops::div";
+                case SK.SlashToken: {
+                    if (opts.warnDiv)
+                        warning(node, 9274, "usage of / operator");
+                    return "numops::div";
+                }
                 case SK.PercentToken: return "numops::mod";
                 case SK.AsteriskToken: return "numops::muls";
                 case SK.AsteriskAsteriskToken: return "Math_::pow";
@@ -3387,8 +3413,8 @@ ${lbl}: .short 0xffff
             let lt = typeOf(node.left)
             let rt = typeOf(node.right)
 
-            if (node.operatorToken.kind == SK.PlusToken) {
-                if (isStringType(lt) || isStringType(rt)) {
+            if (node.operatorToken.kind == SK.PlusToken || node.operatorToken.kind == SK.PlusEqualsToken) {
+                if (isStringType(lt) || (isStringType(rt) && node.operatorToken.kind == SK.PlusToken)) {
                     (node as any).exprInfo = { leftType: checker.typeToString(lt), rightType: checker.typeToString(rt) } as BinaryExpressionInfo;
                 }
             }
@@ -3416,7 +3442,7 @@ ${lbl}: .short 0xffff
 
             if (isNumericalType(lt) && isNumericalType(rt)) {
                 let noEq = stripEquals(node.operatorToken.kind)
-                let shimName = simpleInstruction(noEq || node.operatorToken.kind)
+                let shimName = simpleInstruction(node, noEq || node.operatorToken.kind)
                 if (!shimName)
                     unhandled(node.operatorToken, lf("unsupported numeric operator"), 9250)
                 if (noEq)
@@ -3458,7 +3484,7 @@ ${lbl}: .short 0xffff
                     case SK.GreaterThanEqualsToken:
                     case SK.GreaterThanToken:
                         return ir.rtcallMask(
-                            mapIntOpName(simpleInstruction(node.operatorToken.kind)),
+                            mapIntOpName(simpleInstruction(node, node.operatorToken.kind)),
                             opts.target.boxDebug ? 1 : 0,
                             ir.CallingConvention.Plain,
                             [fromInt(shim("String_::compare")), emitLit(0)])
@@ -3488,14 +3514,21 @@ ${lbl}: .short 0xffff
                 return r;
             let tp = typeOf(e)
 
+            return emitAsStringCore(e, tp, r);
+        }
+
+        function emitAsStringCore(e: Expression | TemplateLiteralFragment, tp: Type, emitted: ir.Expr): ir.Expr {
             if (target.floatingPoint && (tp.flags & (TypeFlags.NumberLike | TypeFlags.Boolean | TypeFlags.BooleanLiteral)))
-                return ir.rtcallMask("numops::toString", 1, ir.CallingConvention.Plain, [r])
+                return ir.rtcallMask("numops::toString", 1, ir.CallingConvention.Plain, [emitted])
             else if (tp.flags & TypeFlags.NumberLike)
-                return ir.rtcall("Number_::toString", [r])
+                return ir.rtcall("Number_::toString", [emitted])
             else if (isBooleanType(tp))
-                return ir.rtcall("Boolean_::toString", [r])
+                return ir.rtcall("Boolean_::toString", [emitted])
             else if (isStringType(tp))
-                return r // OK
+                return emitted // OK
+            else if (isUnionOfLiterals(tp) && tp.types && tp.types.length) {
+                return emitAsStringCore(e, tp.types[0], emitted);
+            }
             else {
                 let decl = tp.symbol ? tp.symbol.valueDeclaration : null
                 if (decl && (decl.kind == SK.ClassDeclaration || decl.kind == SK.InterfaceDeclaration)) {
@@ -3583,7 +3616,7 @@ ${lbl}: .short 0xffff
                 let lt = typeOf(be.left)
                 let rt = typeOf(be.right)
                 if ((lt.flags & TypeFlags.NumberLike) && (rt.flags & TypeFlags.NumberLike)) {
-                    let mapped = U.lookup(thumbCmpMap, simpleInstruction(be.operatorToken.kind))
+                    let mapped = U.lookup(thumbCmpMap, simpleInstruction(be, be.operatorToken.kind))
                     if (mapped) {
                         return ir.rtcall(mapped, [emitExpr(be.left), emitExpr(be.right)])
                     }
@@ -4334,6 +4367,7 @@ ${lbl}: .short 0xffff
         checksumBlock: number[];
         numStmts = 1;
         commSize = 0;
+        packedSource: string;
 
         strings: pxt.Map<string> = {};
         hexlits: pxt.Map<string> = {};
@@ -4348,6 +4382,7 @@ ${lbl}: .short 0xffff
             this.strings = {}
             this.hexlits = {}
             this.doubles = {}
+            this.numStmts = 0
         }
 
         addProc(proc: ir.Procedure) {
@@ -4380,6 +4415,6 @@ ${lbl}: .short 0xffff
     }
 
     function isNumberLikeType(type: Type) {
-        return !!(type.flags & (TypeFlags.NumberLike | TypeFlags.EnumLike))
+        return !!(type.flags & (TypeFlags.NumberLike | TypeFlags.EnumLike | TypeFlags.BooleanLike))
     }
 }

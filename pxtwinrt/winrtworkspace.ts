@@ -7,202 +7,37 @@ namespace pxt.winrt.workspace {
     type Header = pxt.workspace.Header;
     type ScriptText = pxt.workspace.ScriptText;
     type WorkspaceProvider = pxt.workspace.WorkspaceProvider;
-    type InstallHeader = pxt.workspace.InstallHeader;
     import U = pxt.Util;
-    import Cloud = pxt.Cloud;
 
     let folder: Windows.Storage.StorageFolder;
-    let allScripts: HeaderWithScript[] = [];
-    let currentTarget: string;
-    let currentTargetVersion: string;
 
-    interface HeaderWithScript {
-        id: string;
-        header: Header;
-        text: ScriptText;
-        fsText: ScriptText;
-        mtime?: number;
-        textNeedsSave?: boolean;
-    }
-
-    function lookup(id: string) {
-        return allScripts.filter(x => x.id == id)[0]
-    }
-
-    function getHeaders() {
-        return allScripts.map(e => e.header)
-    }
-
-    function getHeader(id: string) {
-        let e = lookup(id)
-        if (e && !e.header.isDeleted)
-            return e.header
-        return null
-    }
-
-    function mergeFsPkg(pkg: pxt.FsPkg) {
-        let e = lookup(pkg.path)
-        if (!e) {
-            e = {
-                id: pkg.path,
-                header: null,
-                text: null,
-                fsText: null
+    export function fileApiAsync(path: string, data?: any) {
+        if (U.startsWith(path, "pkg/")) {
+            let id = path.slice(4)
+            if (data) {
+                return writePkgAsync(id, data)
+            } else {
+                return readPkgAsync(id, true)
             }
-            allScripts.push(e)
-        }
-
-        let time = pkg.files.map(f => f.mtime)
-        time.sort((a, b) => b - a)
-        let modTime = Math.round(time[0] / 1000) || U.nowSeconds()
-        let hd: Header = {
-            target: currentTarget,
-            targetVersion: e.header ? e.header.targetVersion : currentTargetVersion,
-            name: pkg.config.name,
-            meta: {},
-            editor: pxt.JAVASCRIPT_PROJECT_NAME,
-            pubId: pkg.config.installedVersion,
-            pubCurrent: false,
-            _rev: null,
-            id: pkg.path,
-            recentUse: modTime,
-            modificationTime: modTime,
-            blobId: null,
-            blobCurrent: false,
-            isDeleted: false,
-            icon: pkg.icon
-        }
-
-        if (!e.header) {
-            e.header = hd
+        } else if (path == "list") {
+            return initAsync()
+                .then(listPkgsAsync)
         } else {
-            let eh = e.header
-            eh.name = hd.name
-            eh.pubId = hd.pubId
-            eh.modificationTime = hd.modificationTime
-            eh.isDeleted = hd.isDeleted
-            eh.icon = hd.icon
+            throw throwError(404)
         }
     }
 
-    function initAsync(target: string, version: string): Promise<void> {
-        allScripts = [];
-        currentTarget = target;
-        currentTargetVersion = version;
+    function initAsync(): Promise<void> {
+        if (folder)
+            return Promise.resolve()
         const applicationData = Windows.Storage.ApplicationData.current;
         const localFolder = applicationData.localFolder;
         pxt.debug(`winrt: initializing workspace`)
-        return promisify(localFolder.createFolderAsync(currentTarget, Windows.Storage.CreationCollisionOption.openIfExists))
+        return promisify(localFolder.createFolderAsync(pxt.appTarget.id, Windows.Storage.CreationCollisionOption.openIfExists))
             .then(fd => {
                 folder = fd;
                 pxt.debug(`winrt: initialized workspace at ${folder.path}`)
-                return syncAsync();
             }).then(() => { })
-    }
-
-    function fetchTextAsync(e: HeaderWithScript): Promise<ScriptText> {
-        pxt.debug(`winrt: fetch ${e.id}`)
-        return readPkgAsync(e.id, true)
-            .then((resp: pxt.FsPkg) => {
-                if (!e.text) {
-                    // otherwise we were beaten to it
-                    e.text = {};
-                    e.mtime = 0
-                    for (const f of resp.files) {
-                        e.text[f.name] = f.content
-                        e.mtime = Math.max(e.mtime, f.mtime)
-                    }
-                    e.fsText = U.flatClone(e.text)
-                }
-                return e.text
-            })
-    }
-
-    const headerQ = new U.PromiseQueue();
-
-    function getTextAsync(id: string): Promise<ScriptText> {
-        pxt.debug(`winrt: get text ${id}`)
-        let e = lookup(id)
-        if (!e)
-            return Promise.resolve(null as ScriptText)
-        if (e.text)
-            return Promise.resolve(e.text)
-        return headerQ.enqueue(id, () => fetchTextAsync(e))
-    }
-
-    function saveCoreAsync(h: Header, text?: ScriptText) {
-        if (h.temporary) return Promise.resolve();
-
-        let e = lookup(h.id)
-
-        U.assert(e.header === h)
-
-        if (!text)
-            return Promise.resolve()
-
-        h.saveId = null
-        e.textNeedsSave = true
-        e.text = text
-
-        return headerQ.enqueue<void>(h.id, () => {
-            U.assert(!!e.fsText)
-            let pkg: pxt.FsPkg = {
-                files: [],
-                config: null,
-                path: h.id,
-            }
-            for (let fn of Object.keys(e.text)) {
-                if (e.text[fn] !== e.fsText[fn])
-                    pkg.files.push({
-                        name: fn,
-                        mtime: null,
-                        content: e.text[fn],
-                        prevContent: e.fsText[fn]
-                    })
-            }
-            let savedText = U.flatClone(e.text)
-            if (pkg.files.length == 0) return Promise.resolve()
-            return writePkgAsync(h.id, pkg)
-                .then((pkg: pxt.FsPkg) => {
-                    e.fsText = savedText
-                    mergeFsPkg(pkg)
-                    if (text) {
-                        h.saveId = null
-                    }
-                })
-        })
-    }
-
-    function saveAsync(h: Header, text: ScriptText): Promise<void> {
-        return saveCoreAsync(h, text)
-    }
-
-    function installAsync(h0: InstallHeader, text: ScriptText): Promise<Header> {
-        const h = <Header>h0
-        let path = h.name.replace(/[^a-zA-Z0-9]+/g, " ").trim().replace(/ /g, "-")
-        if (lookup(path)) {
-            let n = 2
-            while (lookup(path + "-" + n))
-                n++;
-            path += "-" + n
-            h.name += " " + n
-        }
-        h.id = path;
-        h.recentUse = U.nowSeconds()
-        h.modificationTime = h.recentUse;
-        const e: HeaderWithScript = {
-            id: h.id,
-            header: h,
-            text: text,
-            fsText: {}
-        }
-        allScripts.push(e)
-        return saveCoreAsync(h, text)
-            .then(() => h)
-    }
-
-    function saveToCloudAsync(h: Header) {
-        return Promise.resolve()
     }
 
     function pathjoin(...parts: string[]): string {
@@ -245,6 +80,8 @@ namespace pxt.winrt.workspace {
         throw err
     }
 
+    const HEADER_JSON = ".header.json"
+
     function writePkgAsync(logicalDirname: string, data: FsPkg): Promise<FsPkg> {
         pxt.debug(`winrt: writing package at ${logicalDirname}`);
         return promisify(folder.createFolderAsync(logicalDirname, Windows.Storage.CreationCollisionOption.openIfExists))
@@ -269,6 +106,7 @@ namespace pxt.winrt.workspace {
                 }, err => { })))
             // no conflict, proceed with writing
             .then(() => Promise.map(data.files, f => writeFileAsync(logicalDirname, f.name, f.content)))
+            .then(() => writeFileAsync(logicalDirname, HEADER_JSON, JSON.stringify(data.header, null, 4)))
             .then(() => readPkgAsync(logicalDirname, false));
     }
 
@@ -277,8 +115,7 @@ namespace pxt.winrt.workspace {
         return readFileAsync(pathjoin(logicalDirname, pxt.CONFIG_NAME))
             .then(text => {
                 const cfg: pxt.PackageConfig = JSON.parse(text)
-                const files = [pxt.CONFIG_NAME].concat(cfg.files || []).concat(cfg.testFiles || [])
-                return Promise.map(files, fn =>
+                return Promise.map(pxt.allPkgFiles(cfg), fn =>
                     statOptAsync(pathjoin(logicalDirname, fn))
                         .then(st => {
                             const rf: FsFile = {
@@ -295,22 +132,27 @@ namespace pxt.winrt.workspace {
                                     })
                         }))
                     .then(files => {
-                        const rs = <FsPkg>{
+                        const rs: FsPkg = {
                             path: logicalDirname,
+                            header: null,
                             config: cfg,
                             files: files
                         };
-                        return rs;
+                        return readFileAsync(pathjoin(logicalDirname, HEADER_JSON))
+                            .then(text => {
+                                if (text)
+                                    rs.header = JSON.parse(text)
+                            }, e => { })
+                            .then(() => rs)
                     })
             })
     }
 
-    function syncAsync(): Promise<pxt.editor.EditorSyncState> {
+    function listPkgsAsync(): Promise<FsPkgs> {
         return promisify(folder.getFoldersAsync())
-            .then(fds => Promise.all(fds.map(fd => readPkgAsync(fd.name, false))))
-            .then(hs => {
-                hs.forEach(mergeFsPkg);
-                return undefined;
+            .then((fds) => Promise.map(fds, (fd) => readPkgAsync(fd.name, false)))
+            .then((fsPkgs) => {
+                return Promise.resolve({ pkgs: fsPkgs });
             });
     }
 
@@ -318,25 +160,16 @@ namespace pxt.winrt.workspace {
         return promisify(folder.deleteAsync(Windows.Storage.StorageDeleteOption.default)
             .then(() => {
                 folder = undefined;
-                allScripts = [];
-                pxt.storage.clearLocal();
             }));
     }
 
-    function loadedAsync(): Promise<void> {
-        return Promise.resolve();
-    }
-
-    export const provider: pxt.workspace.WorkspaceProvider = {
-        getHeaders,
-        getHeader,
-        getTextAsync,
-        initAsync,
-        saveAsync,
-        installAsync,
-        saveToCloudAsync,
-        syncAsync,
-        resetAsync,
-        loadedAsync
+    export function getProvider(base: pxt.workspace.WorkspaceProvider) {
+        let r: WorkspaceProvider = {
+            listAsync: base.listAsync,
+            getAsync: base.getAsync,
+            setAsync: base.setAsync,
+            resetAsync,
+        }
+        return r
     }
 }

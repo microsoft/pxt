@@ -201,6 +201,18 @@ namespace pxsim {
         }
 
         export function round(n: number) { return Math.round(n) }
+        export function roundWithPrecision(x: number, digits: number): number {
+            digits = digits | 0;
+            // invalid digits input
+            if (digits <= 0) return Math.round(x);
+            if (x == 0) return 0;
+            let r = 0;
+            while (r == 0 && digits < 21) {
+                const d = Math.pow(10, digits++);
+                r = Math.round(x * d + Number.EPSILON) / d;
+            }
+            return r;
+        }
         export function ceil(n: number) { return Math.ceil(n) }
         export function floor(n: number) { return Math.floor(n) }
         export function sqrt(n: number) { return Math.sqrt(n) }
@@ -324,7 +336,7 @@ namespace pxsim {
         }
 
         export function toNumber(s: string) {
-            return parseInt(s);
+            return parseFloat(s);
         }
 
         // TODO check edge-conditions
@@ -381,6 +393,24 @@ namespace pxsim {
         export function charCodeAt(s: string, i: number) {
             pxtrt.nullCheck(s)
             return inRange(s, i) ? s.charCodeAt(i) : 0;
+        }
+
+        export function indexOf(s: string, searchValue: string, start?: number) {
+            pxtrt.nullCheck(s);
+            if (searchValue == null) return -1;
+            return s.indexOf(searchValue, start);
+        }
+
+        export function lastIndexOf(s: string, searchValue: string, start?: number) {
+            pxtrt.nullCheck(s);
+            if (searchValue == null) return -1;
+            return s.lastIndexOf(searchValue, start);
+        }
+
+        export function includes(s: string, searchValue: string, start?: number) {
+            pxtrt.nullCheck(s);
+            if (searchValue == null) return false;
+            return s.includes(searchValue, start);
         }
     }
 

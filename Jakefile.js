@@ -83,7 +83,7 @@ task('clean', function () {
                 console.log("cannot unlink:", f, e.message)
             }
         })
-        jake.rmRf(d)    
+        jake.rmRf(d)
     })
 })
 
@@ -287,7 +287,8 @@ task('wapp', [
     'built/web/icons.css',
     'built/web/blockly.css',
     'built/web/semantic.css',
-    "built/web/semantic.js"
+    "built/web/semantic.js",
+    "docs/playground.html"
 ])
 
 file("built/web/pxtlib.js", [
@@ -495,6 +496,13 @@ file('built/web/icons.css', expand(["svgicons"]), { async: true }, function () {
             classPrefix: name + ".",
             baseClass: name
         },
+        // The following icons have fixed code points because they are referenced in the code
+        codepoints: {
+            function: 0xf109,
+            bucket: 0xf102,
+            undo: 0xf118,
+            redo: 0xf111
+        },
         writeFiles: false,
     }, function (error, res) {
         if (error) {
@@ -535,3 +543,9 @@ ju.catFiles("built/web/semantic.js",
         "node_modules/semantic-ui-less/definitions/modules/transition.js",
         "node_modules/semantic-ui-less/definitions/behaviors"], ".js"),
     "")
+
+file('docs/playground.html', ['built/web/pxtworker.js', 'built/web/pxtblockly.js', 'built/web/semantic.css'], function () {
+    jake.cpR("libs/pxt-common/pxt-core.d.ts", "docs/static/playground/pxt-common/pxt-core.d.js");
+    jake.cpR("libs/pxt-common/pxt-helpers.ts", "docs/static/playground/pxt-common/pxt-helpers.js");
+    jake.cpR("webapp/public/blockly/media/", "docs/static/playground/blockly/");
+})

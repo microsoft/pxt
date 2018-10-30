@@ -63,11 +63,13 @@ export class EditorAccessibilityMenu extends data.Component<EditorAccessibilityM
     renderCore() {
         const {highContrast} = this.props.parent.state;
         const targetTheme = pxt.appTarget.appTheme;
+        const hasHome = !pxt.shell.isControllerMode();
+
         return <div className="ui accessibleMenu borderless fixed menu" role="menubar">
             <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon js" text={lf("Skip to JavaScript editor") } onClick={this.openJavaScript} />
             {targetTheme.selectLanguage ? <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="xicon globe" text={lf("Select Language") } onClick={this.showLanguagePicker} /> : undefined}
             {targetTheme.highContrast ? <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" text={highContrast ? lf("High Contrast Off") : lf("High Contrast On") } onClick={this.toggleHighContrast} /> : undefined}
-            <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="home" text={lf("Go Home") } onClick={this.goHome} />
+            {hasHome ? <sui.Item className={`${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menuitem" icon="home" text={lf("Go Home") } onClick={this.goHome} /> : undefined}
         </div>;
     }
 }

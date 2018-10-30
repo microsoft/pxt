@@ -1,5 +1,12 @@
+declare namespace Blockly {
+    interface Block {
+        moveInputBefore(nameToMove: string, refName: string): void;
+        getInput(inputName: string): Blockly.Input;
+    }
+}
+
 namespace pxt.blocks {
-    const allOperations = pxt.blocks.MATH_FUNCTIONS.unary.concat(pxt.blocks.MATH_FUNCTIONS.binary);
+    const allOperations = pxt.blocks.MATH_FUNCTIONS.unary.concat(pxt.blocks.MATH_FUNCTIONS.binary).concat(pxt.blocks.MATH_FUNCTIONS.infix);
 
     export function initMathOpBlock() {
         const mathOpId = "math_js_op";
@@ -21,18 +28,32 @@ namespace pxt.blocks {
 
                 addArgInput(b, false);
 
-                // Because the number of inputs changes, we need a mutation. Technically the op tells us
+                // Because the shape of inputs changes, we need a mutation. Technically the op tells us
                 // how many inputs we should have but we can't read its value at init time
                 appendMutation(b, {
                     mutationToDom: mutation => {
-                        mutation.setAttribute("op-type", ((b as any).getInput("ARG1", true) ? "binary" : "unary").toString());
+                        let infix: boolean;
+                        for (let i = 0; i < b.inputList.length; i++) {
+                            const input = b.inputList[i];
+                            if (input.name === "op_dropdown") {
+                                infix = false;
+                                break;
+                            }
+                            else if (input.name === "ARG0") {
+                                infix = true;
+                                break;
+                            }
+                        }
+                        mutation.setAttribute("op-type", (b.getInput("ARG1") ? (infix ? "infix" : "binary") : "unary").toString());
                         return mutation;
                     },
                     domToMutation: saved => {
                         if (saved.hasAttribute("op-type")) {
-                            if (saved.getAttribute("op-type") == "binary") {
+                            const type = saved.getAttribute("op-type");
+                            if (type != "unary") {
                                 addArgInput(b, true);
                             }
+                            changeInputOrder(b, type === "infix");
                         }
                     }
                 });
@@ -53,9 +74,11 @@ namespace pxt.blocks {
             if (isUnaryOp(op)) {
                 b.removeInput("ARG1", true);
             }
-            else if (!((b as any).getInput("ARG1"))) {
+            else if (!b.getInput("ARG1")) {
                 addArgInput(b, true);
             }
+
+            changeInputOrder(b, isInfixOp(op));
         }
 
         function addArgInput(b: Blockly.Block, second: boolean) {
@@ -66,10 +89,31 @@ namespace pxt.blocks {
                 (i.connection as any).respawnShadow_();
             }
         }
+
+        function changeInputOrder(b: Blockly.Block, infix: boolean) {
+            let hasTwoArgs = !!b.getInput("ARG1");
+
+            if (infix) {
+                if (hasTwoArgs) {
+                    b.moveInputBefore("op_dropdown", "ARG1")
+                }
+                b.moveInputBefore("ARG0", "op_dropdown");
+            }
+            else {
+                if (hasTwoArgs) {
+                    b.moveInputBefore("ARG0", "ARG1");
+                }
+                b.moveInputBefore("op_dropdown", "ARG0");
+            }
+        }
     }
 
     function isUnaryOp(op: string) {
         return pxt.blocks.MATH_FUNCTIONS.unary.indexOf(op) !== -1;
+    }
+
+    function isInfixOp(op: string) {
+        return pxt.blocks.MATH_FUNCTIONS.infix.indexOf(op) !== -1;
     }
 
     let cachedDom: Element;

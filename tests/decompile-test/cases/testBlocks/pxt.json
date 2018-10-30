@@ -3,6 +3,7 @@
     "description": "Project that defines a variety of blocks to be used in decopmiler test cases",
     "files": [
         "basic.ts",
+        "blockCombine.ts",
         "enums.ts",
         "mb.ts",
         "expandableBlocks.ts",

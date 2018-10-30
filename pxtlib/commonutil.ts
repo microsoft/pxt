@@ -1,3 +1,5 @@
+/// <reference path="./tickEvent.ts" />
+
 namespace ts.pxtc {
     export let __dummy = 42;
 }
@@ -46,6 +48,8 @@ namespace ts.pxtc.Util {
     let _localizeLang: string = "en";
     let _localizeStrings: pxt.Map<string> = {};
     let _translationsCache: pxt.Map<pxt.Map<string>> = {};
+    let _didSetlocalizations = false;
+    let _didReportLocalizationsNotSet = false;
     export let localizeLive = false;
 
     export interface ITranslationDbEntry {
@@ -112,6 +116,14 @@ namespace ts.pxtc.Util {
     }
 
     export function _localize(s: string) {
+        // Needs to be test in localhost / CLI
+        /*if (!_didSetlocalizations && !_didReportLocalizationsNotSet) {
+            _didReportLocalizationsNotSet = true;
+            pxt.tickEvent("locale.localizationsnotset");
+            // pxt.reportError can't be used here because of order of file imports
+            // Just use console.error instead, and use an Error so stacktrace is reported
+            console.error(new Error("Attempted to translate a string before localizations were set"));
+        }*/
         return _localizeStrings[s] || s;
     }
 
@@ -120,6 +132,7 @@ namespace ts.pxtc.Util {
     }
 
     export function setLocalizedStrings(strs: pxt.Map<string>) {
+        _didSetlocalizations = true;
         _localizeStrings = strs;
     }
 

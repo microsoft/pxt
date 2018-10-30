@@ -1,5 +1,26 @@
 # Microsoft MakeCode Blog
 
+## [GitHub package authoring](/blog/github-packages)
+
+August 1st, 2018 by [mmoskal](https://github.com/mmoskal)
+
+You can now create and edit MakeCode packages hosted on GitHub directly from the browser!
+**[Continue reading this blog post](/blog/github-packages)**
+
+## [MakeCode for the micro:bit update coming soon!](/blog/microbit/v1-beta)
+
+July 23th, 2018 by [Jaqster](https://github.com/jaqster)
+
+The MakeCode team has been working to provide a summer update to its micro:bit editor You can preview the update at...
+**[Continue reading this blog post](/blog/microbit/v1-beta)**
+
+## [MakeCode @ISTE 2018](/blog/iste/iste-2018)
+
+June 11th, 2018 by [Jaqster](https://github.com/jaqster)
+
+The MakeCode team is heading out to the Windy City ([Chicago](https://www.choosechicago.com/)) at the end of June, and we couldn’t be more excited. We’ve got some nice sessions lined up and would love to see you there...
+**[Continue reading this blog post](/blog/iste/iste-2018)**
+
 ## [MakeCode for LEGO MINDSTORMS](/blog/lego/05-15-2018)
 
 May 15th, 2018 by [Jaqster](https://github.com/jaqster)

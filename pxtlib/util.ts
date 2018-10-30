@@ -504,7 +504,7 @@ namespace ts.pxtc.Util {
         return res;
     }
 
-    export function uint8ArrayToString(input: Uint8Array) {
+    export function uint8ArrayToString(input: ArrayLike<number>) {
         let len = input.length;
         let res = ""
         for (let i = 0; i < len; ++i)
@@ -737,10 +737,13 @@ namespace ts.pxtc.Util {
 
     }
 
-    function normalizeLanguageCode(code: string): string {
-        if (!/^(es|pt|si|sv|zh)/i.test(code))
-            code = code.split("-")[0]
-        return code;
+    export function normalizeLanguageCode(code: string): string {
+        const langParts = /^(\w{2})-(\w{2}$)/i.exec(code);
+        if (langParts && langParts[1] && langParts[2]) {
+            return `${langParts[1].toLowerCase()}-${langParts[2].toUpperCase()}`;
+        } else {
+            return code.toLowerCase();
+        }
     }
 
     export function isLocaleEnabled(code: string): boolean {

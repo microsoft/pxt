@@ -110,6 +110,11 @@
             font-size: 0.8rem !important;
             color: @homeFooterColor !important;
         }
+        .item.copyright {
+            display: block;
+            font-size: 0.7rem !important;
+            line-height: 15px !important;
+        }
     }
     .ui.card {
         margin-right: 5px;
@@ -235,8 +240,9 @@
             transition: all 0.15s ease-out;
             opacity: 0.9;
             border-radius: 50%;
-            padding-top: 7px;
+            padding-top: 0.3rem;
             outline: none;
+            background-color: @homeDetailCloseBackground;
         }
         > .close .remove.icon:hover, > .close .remove.icon:focus {
             opacity: 1;

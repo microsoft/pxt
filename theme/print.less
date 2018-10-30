@@ -1,0 +1,93 @@
+/*******************************
+        Print only
+*******************************/
+
+@media only print {
+    *,
+    *:before,
+    *:after,
+    *:first-letter,
+    p:first-line,
+    div:first-line,
+    blockquote:first-line,
+    li:first-line {
+        background: transparent !important;
+        color: #000 !important;
+        box-shadow: none !important;
+        text-shadow: none !important;
+        overflow: visible !important;
+    }
+    .injectionDiv {
+        overflow: hidden !important;
+    }
+
+    #docs {
+        .ui.segment, .ui.centered.card, .ui.content, iframe, .nobreak, pre, code, blockquote {
+            page-break-inside: avoid;
+        }
+        h1, h2, h3, h4, h5, h6, img {
+            page-break-inside: avoid;
+            page-break-after: avoid;
+        }
+        ul, ol, dl {
+            page-break-before: avoid !important;
+        }
+        /* bigger fonts */
+        body {
+            color: #000 !important; /* explicit colors */
+            background: #fff !important;        
+            font-size: 12pt;
+            line-height: 1.3;
+        }
+        /* lists */
+        /* links */
+        a:link, a:visited {
+            color: #000;
+            font-weight: bolder;
+            text-decoration: none;
+        }    
+        a:after {
+            content:" (" attr(href) ") ";
+            font-size:0.8em;
+            font-weight:normal;
+        }
+        /* page breaks */
+        img, h2, h3 {
+            page-break-inside: avoid;
+        }
+        /* headers, footers */
+        /* messages */
+        .ui.message {
+            background: none !important;
+            color: black !important;
+            box-shadow: none !important;
+        }
+        /* images */
+        .ui.image {
+            max-width: 60%;
+        }
+    }
+
+    /* page margins */
+    @page {
+        margin-top: 2cm;
+        margin-left: 2.5cm;
+        margin-right: 2.5cm;
+        margin-bottom: 2cm;
+    }
+
+    /** blockly **/
+    .blocklyPath {
+        stroke-width: 3px !important;
+        stroke: black !important;
+        fill: white !important;
+    }
+    .blocklyBlockBackground {
+        stroke-width: 2px !important;
+        stroke: black !important;
+        fill: white !important;        
+    }
+    .blocklyText, .blocklyDropdownText {
+        fill: black !important;
+    }
+}

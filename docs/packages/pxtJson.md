@@ -85,5 +85,8 @@ The `additionalFilePath` field refers to the `node_modules` directory of the tar
 The `pxt.json` file need to only specify what's changed (in the example above `description`)
 with respect to the `pxt.json` in `additionalFilePath`.
 
+The `additionalFilePath` is recursive or multi-level - the `pxt.json` in the referenced directory
+might have another `additionalFilePath` and it will work as expected.
+
 [adafruit]: https://github.com/Microsoft/pxt-adafruit
 [common-packages]: https://github.com/Microsoft/pxt-common-packages

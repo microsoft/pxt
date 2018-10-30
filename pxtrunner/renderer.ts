@@ -161,8 +161,8 @@ namespace pxt.runner {
         let $el = $("." + cls).first();
         if (!$el[0]) return Promise.resolve();
 
-        if (!options.emPixels) options.emPixels = 14;
-        if (!options.layout) options.layout = pxt.blocks.BlockLayout.Flow;
+        if (!options.emPixels) options.emPixels = 18;
+        if (!options.layout) options.layout = pxt.blocks.BlockLayout.Align;
 
         return pxt.runner.decompileToBlocksAsync($el.text(), options)
             .then((r) => {
@@ -260,7 +260,7 @@ namespace pxt.runner {
             let $el = $("." + cls).first();
             if (!$el[0]) return Promise.resolve();
 
-            if (!options.emPixels) options.emPixels = 14;
+            if (!options.emPixels) options.emPixels = 18;
             return pxt.runner.compileBlocksAsync($el.text(), options)
                 .then((r) => {
                     try {
@@ -303,7 +303,7 @@ namespace pxt.runner {
                     nsStyleBuffer += `
                         span.docs.${ns.toLowerCase()} {
                             background-color: ${color} !important;
-                            border-color: ${pxt.toolbox.fadeColor(color, 0.2, true)} !important;
+                            border-color: ${pxt.toolbox.fadeColor(color, 0.1, false)} !important;
                         }
                     `;
                 })
@@ -315,7 +315,7 @@ namespace pxt.runner {
                     nsStyleBuffer += `
                         span.docs.${ns.toLowerCase()} {
                             background-color: ${color} !important;
-                            border-color: ${pxt.toolbox.fadeColor(color, 0.2, true)} !important;
+                            border-color: ${pxt.toolbox.fadeColor(color, 0.1, false)} !important;
                         }
                     `;
                 })
@@ -414,14 +414,15 @@ namespace pxt.runner {
             const cjs = r.compileJS;
             if (!cjs) return;
             const file = r.compileJS.ast.getSourceFile("main.ts");
-            const stmts = file.statements.slice(0).reverse();
+            const stmts = file.statements.slice(0);
             const ul = $('<div />').addClass('ui cards');
             ul.attr("role", "listbox");
             const addItem = (card: pxt.CodeCard) => {
                 if (!card) return;
                 const mC = /^\/(v\d+)/.exec(card.url);
                 const mP = /^\/(v\d+)/.exec(window.location.pathname);
-                if (card.url && !mC && mP) card.url = `/${mP[1]}/${card.url}`;
+                const inEditor = /#doc/i.test(window.location.href);
+                if (card.url && !mC && mP && !inEditor) card.url = `/${mP[1]}/${card.url}`;
                 ul.append(pxt.docs.codeCard.render(card, { hideHeader: true, shortName: true }));
             }
             stmts.forEach(stmt => {
@@ -552,10 +553,11 @@ namespace pxt.runner {
             cd.className = "ui cards";
             cd.setAttribute("role", "listbox")
             cards.forEach(card => {
-                // patch card url with version if necessary
+                // patch card url with version if necessary, we don't do this in the editor because that goes through the backend and passes the targetVersion then
                 const mC = /^\/(v\d+)/.exec(card.url);
                 const mP = /^\/(v\d+)/.exec(window.location.pathname);
-                if (card.url && !mC && mP) card.url = `/${mP[1]}${card.url}`;
+                const inEditor = /#doc/i.test(window.location.href);
+                if (card.url && !mC && mP && !inEditor) card.url = `/${mP[1]}${card.url}`;
                 const cardEl = pxt.docs.codeCard.render(card, options);
                 cd.appendChild(cardEl)
                 // automitcally display package icon for approved packages

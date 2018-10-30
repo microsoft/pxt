@@ -82,6 +82,7 @@
         // This line gets patched up by the cloud
         var pxtConfig = null;
     </script>
+    <!-- @include apptrackingweb.html -->
     <!-- @include apptracking.html -->
     <script type="text/javascript" src="/embed.js"></script>
     <script type="text/javascript">
@@ -104,9 +105,11 @@
         }
 
         function initAppCache() {
+            if (!window.applicationCache)
+                return;
             if (window.applicationCache.status === window.applicationCache.UPDATEREADY)
                     window.location.reload();
-            window.applicationCache.addEventListener('updateready', () => {
+            window.applicationCache.addEventListener('updateready', function () {
                 if (window.applicationCache.status === window.applicationCache.UPDATEREADY)
                     window.location.reload();
             });

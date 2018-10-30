@@ -1,0 +1,21 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<variables>
+<variable type="EnumOfFlags">1Q</variable>
+<variable type="EnumOfFlags">2T</variable>
+<variable type="EnumOfFlags">4R</variable>
+<variable type="EnumOfFlags">8S</variable>
+</variables>
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="variables_set">
+<field name="VAR">userDefinedTest6</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="enum_user_shim_bit_mask">
+<field name="MEMBER">R</field>
+</block>
+</value>
+</block>
+</statement>
+</block>
+</xml>

@@ -1,6 +1,6 @@
 {
   "name": "pxt-core",
-  "version": "3.16.17",
+  "version": "3.23.22",
   "description": "Microsoft MakeCode, also known as Programming Experience Toolkit (PXT), provides Blocks / JavaScript tools and editors",
   "keywords": [
     "TypeScript",
@@ -22,32 +22,9 @@
   "homepage": "https://github.com/Microsoft/pxt#readme",
   "files": [
     "README.md",
-    "built/commandparser.js",
-    "built/buildengine.js",
-    "built/hid.js",
-    "built/gdb.js",
-    "built/gitfs.js",
-    "built/serial.js",
-    "built/clidbg.js",
-    "built/pxt.js",
+    "built/*.js",
+    "built/*.d.ts",
     "built/pxt-common.json",
-    "built/blockly.d.ts",
-    "built/pxtblockly.d.ts",
-    "built/pxt.d.ts",
-    "built/pxtarget.d.ts",
-    "built/pxtpackage.d.ts",
-    "built/pxtparts.d.ts",
-    "built/pxtlib.js",
-    "built/pxtlib.d.ts",
-    "built/pxtcompiler.d.ts",
-    "built/pxtsim.d.ts",
-    "built/pxtblocks.d.ts",
-    "built/pxtrunner.d.ts",
-    "built/pxteditor.d.ts",
-    "built/typescriptServices.d.ts",
-    "built/nodeutil.js",
-    "built/server.js",
-    "built/pyconv.js",
     "built/web/fonts",
     "built/web/*.js",
     "built/web/*.css",
@@ -86,10 +63,10 @@
     "less": "2.7.3",
     "semantic-ui-less": "2.2.14"
   },
-  "optionalDependencies": {
+  "lazyDependencies": {
     "keytar": "4.2.1",
-    "node-hid": "^0.5.2",
-    "serialport": "^6.0.5"
+    "node-hid": "^0.7.2",
+    "serialport": "^6.2.0"
   },
   "devDependencies": {
     "monaco-editor": "0.10.0",
@@ -115,6 +92,7 @@
     "tslint": "^5.9.1",
     "webfonts-generator": "^0.4.0",
     "tslint-microsoft-contrib": "^5.0.3",
+    "crypto-js": "^3.1.9-1",
     "@types/react-modal": "3.1.2",
     "@types/chai": "4.0.6",
     "@types/bluebird": "2.0.33",

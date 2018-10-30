@@ -52,6 +52,19 @@ export const buildEngines: Map<BuildEngine> = {
         appPath: "source"
     },
 
+    dockeryotta: {
+        updateEngineAsync: () => runDockerAsync(["yotta", "update"]),
+        buildAsync: () => runDockerAsync(["yotta", "build"]),
+        setPlatformAsync: () =>
+            runDockerAsync(["yotta", "target", pxt.appTarget.compileService.yottaTarget]),
+        patchHexInfo: patchYottaHexInfo,
+        prepBuildDirAsync: noopAsync,
+        buildPath: "built/dockeryt",
+        moduleConfig: "module.json",
+        deployAsync: msdDeployCoreAsync,
+        appPath: "source"
+    },
+
     platformio: {
         updateEngineAsync: noopAsync,
         buildAsync: () => runPlatformioAsync(["run"]),
@@ -71,6 +84,18 @@ export const buildEngines: Map<BuildEngine> = {
         patchHexInfo: patchCodalHexInfo,
         prepBuildDirAsync: prepCodalBuildDirAsync,
         buildPath: "built/codal",
+        moduleConfig: "codal.json",
+        deployAsync: msdDeployCoreAsync,
+        appPath: "pxtapp"
+    },
+
+    dockercodal: {
+        updateEngineAsync: updateCodalBuildAsync,
+        buildAsync: () => runDockerAsync(["python", "build.py"]),
+        setPlatformAsync: noopAsync,
+        patchHexInfo: patchCodalHexInfo,
+        prepBuildDirAsync: prepCodalBuildDirAsync,
+        buildPath: "built/dockercodal",
         moduleConfig: "codal.json",
         deployAsync: msdDeployCoreAsync,
         appPath: "pxtapp"
@@ -105,11 +130,17 @@ export const buildEngines: Map<BuildEngine> = {
 export let thisBuild = buildEngines['yotta']
 
 export function setThisBuild(b: BuildEngine) {
+    if (pxt.appTarget.compileService.dockerImage && !process.env["PXT_NODOCKER"]) {
+        if (b === buildEngines["codal"])
+            b = buildEngines["dockercodal"];
+        if (b === buildEngines["yotta"])
+            b = buildEngines["dockeryotta"];
+    }
     thisBuild = b;
 }
 
 function patchYottaHexInfo(extInfo: pxtc.ExtensionInfo) {
-    let buildEngine = buildEngines['yotta']
+    let buildEngine = thisBuild
     let hexPath = buildEngine.buildPath + "/build/" + pxt.appTarget.compileService.yottaTarget
         + "/source/" + pxt.appTarget.compileService.yottaBinary;
 
@@ -203,7 +234,7 @@ export function buildHexAsync(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
             if (fs.existsSync(fn))
                 existing = fs.readFileSync(fn, "utf8")
             if (existing !== v)
-                fs.writeFileSync(fn, v)
+                nodeutil.writeFileSync(fn, v)
         })
     }
 
@@ -330,15 +361,16 @@ function updateCodalBuildAsync() {
     let cs = pxt.appTarget.compileService
     return codalGitAsync("checkout", cs.gittag)
         .then(
-        () => /^v\d+/.test(cs.gittag) ? Promise.resolve() : codalGitAsync("pull"),
-        e =>
-            codalGitAsync("checkout", "master")
-                .then(() => codalGitAsync("pull")))
+            () => /^v\d+/.test(cs.gittag) ? Promise.resolve() : codalGitAsync("pull"),
+            e =>
+                codalGitAsync("checkout", "master")
+                    .then(() => codalGitAsync("pull")))
         .then(() => codalGitAsync("checkout", cs.gittag))
 }
 
 // TODO: DAL specific code should be lifted out
-export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage, force = false) {
+export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage, rebuild = false,
+    create = false) {
     let constName = "dal.d.ts"
     let vals: Map<string> = {}
     let done: Map<string> = {}
@@ -431,8 +463,8 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
         return outp
     }
 
-    if (mainPkg && (force ||
-        (mainPkg.getFiles().indexOf(constName) >= 0 && !fs.existsSync(constName)))) {
+    if (mainPkg && (create ||
+        (mainPkg.getFiles().indexOf(constName) >= 0 && (rebuild || !fs.existsSync(constName))))) {
         pxt.log(`rebuilding ${constName}...`)
         let files: string[] = []
         let foundConfig = false
@@ -516,7 +548,8 @@ function msdDeployCoreAsync(res: ts.pxtc.CompileResult) {
     const firmware = pxt.outputName()
     const encoding = pxt.isOutputText() ? "utf8" : "base64";
 
-    if (pxt.appTarget.serial && pxt.appTarget.serial.useHF2 && !pxt.appTarget.serial.noDeploy) {
+    if (pxt.appTarget.serial && pxt.appTarget.serial.useHF2 && !pxt.appTarget.serial.noDeploy
+        && hid.isInstalled(true)) {
         let f = res.outfiles[pxtc.BINARY_UF2]
         let blocks = pxtc.UF2.parseFile(U.stringToUint8Array(atob(f)))
         return hid.initAsync()

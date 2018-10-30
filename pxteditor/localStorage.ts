@@ -54,8 +54,15 @@ namespace pxt.storage {
     }
 
     export function storageId(): string {
-        const id = pxt.appTarget ? pxt.appTarget.id : (<any>window).pxtConfig ? (<any>window).pxtConfig.targetId : '';
-        return id;
+        if (pxt.appTarget) return pxt.appTarget.id;
+
+        const cfg = (<any>window).pxtConfig;
+        if (cfg) return cfg.targetId;
+
+        const bndl = (<any>window).pxtTargetBundle;
+        if (bndl) return bndl.id;
+
+        return '';
     }
 
     let impl: IStorage;

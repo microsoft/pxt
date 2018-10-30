@@ -2,44 +2,6 @@ body#root {
     font-size: 12pt;    
 }
 
-div.listing
-{
-    color:Black;
-    border-style:none;
-    margin: 0px 0px 0px 0px;
-    font-size: 11pt;
-    font-family: Consolas, "Andale Mono WT" , "Andale Mono" , "Lucida Console" , "Lucida Sans Typewriter" , "DejaVu Sans Mono" , "Bitstream Vera Sans Mono" , "Liberation Mono" , "Nimbus Mono L" , Monaco, "Courier New" , Courier, monospace;
-    padding: 5px 5px 5px 5px;
-    background: #f8f8f8;
-    clear: both;
-    
-    white-space: pre-wrap; /* css-3 */
-    white-space: -moz-pre-wrap !important; /* Mozilla, since 1999 */
-    white-space: -pre-wrap; /* Opera 4-6 */
-    white-space: -o-pre-wrap; /* Opera 7 */
-    word-wrap: break-word; /* Internet Explorer 5.5+ */
-}
-div.listing A:link 
-{
-    color:#000020;
-    text-decoration: none;
-}
-div.listing A:visited 
-{
-    color:#000020;
-    text-decoration: none;
-}
-div.listing A:active
-{
-    color:#000080;
-    text-decoration: none;
-}
-div.listing A:hover 
-{
-    color:#000080;
-    text-decoration: underline; 
-}
-
 #docs ul {
     padding: 0rem;
 }
@@ -135,22 +97,22 @@ code.lang-namespaces,
 code.lang-codecard
 {
     background-color: rgba(0,0,0,0.04);
-    color:transparent;   
+    color:transparent;
 }
 
 /* Limit width of text so that it's readable
  */
  
 .ui.text p,
-.ui.text li {
-    max-width: 45em;
+.ui.text li,
+.ui.container.mainbody {
+    max-width: 1100px !important;
 }
 
 /* wrap cards header */
 .ui.card > .content > .header {
     word-break: break-all;
 }
-
 
 svg {
     max-width: 100%;
@@ -197,49 +159,38 @@ svg {
     background: hsla(0,0%,100%,.9)!important;
 }
 
-/* Styling the table of contents much like the Semantic UI documentation site: http://semantic-ui.com/introduction/getting-started.html */
-.pusher > .full.height {
-  display: -webkit-box;
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  display: flex;
-  -webkit-flex-direction: row;
-      -ms-flex-direction: row;
-          flex-direction: row;
+#docs {
+    position: relative;
+    width: 100%;
+    height: 100%;
 }
 
-.full.height > .toc {
-  position: relative;
-  z-index: 1;
-  width: 300px;
-  -webkit-box-flex: 0;
-  -webkit-flex: 0 0 auto;
-      -ms-flex: 0 0 auto;
-          flex: 0 0 auto;
+.pusher .article {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 300px;
+    bottom: 0;
+    overflow-y: auto;
+    -webkit-box-flex: 1;
+
+    -webkit-flex: 1 1 auto;
+        -ms-flex: 1 1 auto;
+            flex: 1 1 auto;
+    min-width: 0px;
 }
 
-.full.height > .toc .ui.menu {
-  border-radius: 0;
-  border-width: 0 1px 0 0;
-  box-shadow: none;
-  margin: 0;
-  width: inherit;
-  overflow: hidden;
-  will-change: transform;
+.pusher .article-inner {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    overflow-y: auto;
 }
 
 .ui.vertical.menu .menu .item {
     font-size: 1em;
-}
-
-.article {
-  -webkit-box-flex: 1;
-
-  -webkit-flex: 1 1 auto;
-      -ms-flex: 1 1 auto;
-          flex: 1 1 auto;
-  min-width: 0px;
-  margin-bottom: 2em;
 }
 
 #pagemenu {
@@ -273,7 +224,7 @@ svg {
 
 /* navigation */
 .navigation {
-    position: fixed;
+    position: absolute;
     top: 50px;
     bottom: 0;
     margin: 0;
@@ -301,17 +252,23 @@ svg {
 
 .navigation.navigation-next {
     right: 0;
+    margin-right: 15px;
 }
 
 .navigation.navigation-prev {
-    left: 300px;
+    left: 0;
 }
 
 .ui.menu.tocmenu {
+    position: absolute;
+    top: 0;
+    bottom: 0;
     left: 0px;
-    top: -5px;
     height: 100%;
-    overflow: visible !important
+    width: 300px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    border-radius: 0;
 }
 
 .ui.menu.tocmenu .menuContainer {
@@ -322,29 +279,67 @@ svg {
     display: none;
 }
 
-@media only screen and (max-width: 1272px) {
-    .full.height > .toc {
+/* Search */
+.toc .item.search {
+    margin: -.92857143em -1.14285714em;
+}
+
+.toc .item.search input {
+    border-radius: 0;
+}
+
+.showmobile {
+    display: none;
+}
+
+@media only screen and (max-width: 1144px) {
+    .pusher > .toc {
         width: 200px;
+        position: absolute;
+        top: 0;
+        left: -300px;
+        bottom: 0;
+        z-index: 1;
+        overflow-y: auto;
     }
     .navigation.navigation-prev {
         left: 200px;
     }
-}
-
-@media only screen and (max-width: 1144px) {
-    .full.height > .toc {
+    .pusher > .toc {
         display: none;
     }
+    .hidemobile {
+        display: none !important;
+    }
+    .showmobile {
+        display: block;
+    }
+    .pusher .article {
+        left: 0;
+    }
+    .navigation.navigation-next {
+        margin-right: 0;
+    }
+    .ui.container.mainbody {
+        margin-top: 5rem;
+        margin-left: 0!important;
+        margin-right: 0!important;
+        padding-left: 1em;
+        padding-right: 1em;
+    }
     .navigation {
-       position: static;
+        position: relative; /* IE doesn't support static */
+        position: static;
         top: auto;
-        max-width: 50%;
+        max-width: 48%;
         width: 50%;
-        display: inline-block;
-        float: left;
+        display: inline-block !important;
     }
     .navigation.navigation-prev {
         left: 0px;
+    }
+    .ui.vertical.segment.footer {
+        margin-top: 4rem;
     }
 }
 
@@ -369,70 +364,25 @@ print only stuff
 }
 
 @media only print {
-    ui.segment, .nobreak, pre, code, blockquote {
-        page-break-inside: avoid;
+    .pusher .article {
+        left: 0;
+        position: relative;
     }
-    h1, h2, h3, h4, h5, h6, img {
-        page-break-inside: avoid;
-        page-break-after: avoid;
+    .pusher .article-inner {
+        position: relative;
     }
-    ul, ol, dl {
-        page-break-before: avoid;
+    .pusher {
+        background: transparent !important;
     }
-        
     .showprint {
-        display:block !important;
+        display: block !important;
     }
     .hideprint,
     .ui.embed > .icon,
     .ui.docbutton {
         display:none !important;
     }
-    /* bigger fonts */
-    body {
-        color: #000 !important; /* explicit colors */
-        background: #fff !important;        
-        font-size: 12pt;
-        line-height: 1.3;
-    }    
     body.pushable {
         background: #fff !important;        
-    }
-    .pusher {
-        background: transparent !important;
-    }
-    /* page margins */
-    @page {
-        margin-top: 2cm;
-        margin-left: 2.5cm;
-        margin-right: 2.5cm;
-        margin-bottom: 2cm;
-    }
-    /* lists */
-    /* links */
-    a:link, a:visited {
-        color: #000;
-        font-weight: bolder;
-        text-decoration: none;
-    }    
-    a:after {
-        content:" (" attr(href) ") ";
-        font-size:0.8em;
-        font-weight:normal;
-    }
-    /* page breaks */
-    ul, ol, img, h2, h3 {
-        page-break-inside: avoid;
-    }
-    /* headers, footers */
-    /* messages */
-    .ui.message {
-        background: none !important;
-        color: black !important;
-        box-shadow: none !important;
-    }
-    /* images */
-    .ui.image {
-        max-width: 60%;
     }
 }

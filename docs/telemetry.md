@@ -1,32 +1,35 @@
 # Telemetry collected by Microsoft MakeCode
 
-This writeup documents the client side telemetry collected by Microsoft MakeCode websites such as [micro:bit](https://makecode.microbit.org), [adafruit](https://makecode.adafruit.org), [MakeCode for Minecaft](https://minecraft.makecode.com) and [MakeCode.com](https://makecode.com). Microsoft MakeCode uses Application Insights Javascript [SDK](https://github.com/Microsoft/ApplicationInsights-JS) for all the telemetry.
+Client side telemetry is collected for Microsoft MakeCode [websites](https://makecode.com).
 
-## Cookie
+Microsoft MakeCode uses the [Application Insights Javascript SDK](https://github.com/Microsoft/ApplicationInsights-JS) to collect the telemetry information.
 
- There are two types of cookies stored by Microsoft MakeCode.
-- Language selection cookie. This is used to persist the language selection  by the user across sessions (Example English, French or German).
+## Cookies
+
+There are two types of cookies stored by Microsoft MakeCode.
+
+- Language selection cookie. This is used to persist the language selection by user across sessions (Examples: English, French or German).
 - Application Insight cookie for user tracking. This is used to correlate the data across sessions.
 
-There is no authentication in MakeCode and it doesn't do authenticated user tracking or any cookie to identify the authenticated users.
+There's no authentication in MakeCode and it doesn't perform any authenticated user tracking or use cookies to identify authenticated users.
 
 ## Application Insights SDK Telemetry
 
-Following is the lifetime of the data in the application insights.
+Here's the lifetime of the data tracked by Application Insights:
 
  |Name |Purpose|	Domain|	R/W|	Expiration|	Retires|
 |-----|-------|-------|-------|-----|-------|
-|ai_session|	Session tracking|	Hosting website|	R/W	|30 minutes|	End of session|
-|ai_user|	User tracking|	Hosting website|	R/W|	365 days|	Never|
+|`ai_session`|	Session tracking|	Hosting website|	R/W	|30 minutes|	End of session|
+|`ai_user`|	User tracking|	Hosting website|	R/W|	365 days|	Never|
 
 
 ### Telemetry Details
 
-Following section contains the information that the Application SDK attempts to extract from the environment about the device, location, and user.
+The following sections contain the information that the Application Insights SDK attempts to extract from the environment about the device, location, and user.
 
- ### Device telemetry
+#### Device telemetry
 
-The device the website is running on.
+The device (workstation, laptop, mobile device, etc.) the website is running on.
 
 Property | Description
 ---|---
@@ -42,10 +45,10 @@ Property | Description
 `device.os` |  OS running on the device
 `device.osversion` |
 
-### User telemetry
+#### User telemetry
 
-Data about the current user. Users are identified by cookie, so one person can look like
-more than one user if they use different machines or browsers, or delete cookies.
+Data about the current user. Users are identified by a cookie, so a single person can look like
+more than one user in the telemetry if they use different machines or browsers, or delete cookies.
 
 Property | Description
 ---|---
@@ -57,10 +60,12 @@ Property | Description
 `user.storeRegion` |
 
 
-### User Session telemetry
+#### User Session telemetry
 
-A session represents a series of user actions. A session starts with a user action.
-It ends at the last user activity when there is no more activity for 30 minutes, or if it lasts longer than 30 minutes.
+A session represents a series of user actions. A session starts with a user action. Sessions expire when one of these conditions occurs:
+
+* 30 minutes of inactivity.
+* A session maximum duration of 24 hours, regardless of any measured activity.
 
 Property | Description
 ---|---
@@ -69,17 +74,17 @@ Property | Description
 `session.acquisitionDate` | Number. The dateTime when this session was created.
 `session.renewalDate` | Number. DateTime when telemetry was last sent with this session.
 
-### Location telemetry
+#### Location telemetry
 
-Data from which the geographical location of the user's device can be guessed. Last 8 bits of ip address are sanitized to zero by Application insights.
+The estimated geographical location of the user's device. The last 8 bits of IP address are sanitized to zero by Application insights.
 
 Property | Description
 ---|---
 `location.ip` | IP address
 
-### Operation telemetry
+#### Operation telemetry
 
-Represents the user request. Operation id is used to tie together related events in diagnostic search.
+Represents the user request. The operation id is used to correlate related events in a diagnostic search.
 
 Property | Description
 ---|---
@@ -89,11 +94,12 @@ Property | Description
 `rootId` |
 `syntheticSource` | String identifying the bot or test agent.
 
-Note: Please refer Application insights SDK documentation for further details: https://github.com/Microsoft/ApplicationInsights-JS/edit/master/API-reference.md
+<br/>
+**Note:** Refer to the [Application Insights SDK API Reference](https://github.com/Microsoft/ApplicationInsights-JS/blob/master/API-reference.md) documentation for further details.
 
 ## Microsoft MakeCode custom telemetry
 
-Microsoft MakeCode website's also send custom telemetry using AppInsights [trackEvent](https://github.com/Microsoft/ApplicationInsights-JS/blob/master/API-reference.md#trackevent). Each custom telemetry event will have additional following information:
+Microsoft MakeCode website's also sends custom telemetry using AppInsights [trackEvent](https://github.com/Microsoft/ApplicationInsights-JS/blob/master/API-reference.md#trackevent). Each custom telemetry event has the following additional information:
 
 CustomDimensions | Description
 ---|---
@@ -102,8 +108,8 @@ CustomDimensions | Description
 `stage` | beta, release or alpha
 `WindowsApp` | Event originates from Windows App for Microsoft MakeCode
 `electron` | Event originates from electron app
-
-Following are the custom telemetry events fired by MakeCode editors
+<br/>
+These are the custom telemetry events fired by MakeCode editors:
 
 Events | Description
 -------|-------
@@ -119,5 +125,5 @@ Compile | Noemit, floating point information
 locale | change of language
 Packages | github search, bundled,
 Docs | doc usage
-
-Apart from this exceptions in the editor are sent through AppInsights [trackException](https://github.com/Microsoft/ApplicationInsights-JS/blob/master/API-reference.md#trackexception).
+<br/>
+In addition to the events, exceptions in the editor are sent by AppInsights [trackException](https://github.com/Microsoft/ApplicationInsights-JS/blob/master/API-reference.md#trackexception).

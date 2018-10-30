@@ -142,7 +142,9 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
 
         this.openSettings = this.openSettings.bind(this);
         this.showPackageDialog = this.showPackageDialog.bind(this);
+        this.showBoardDialog = this.showBoardDialog.bind(this);
         this.removeProject = this.removeProject.bind(this);
+        this.saveProject = this.saveProject.bind(this);
         this.showReportAbuse = this.showReportAbuse.bind(this);
         this.showLanguagePicker = this.showLanguagePicker.bind(this);
         this.toggleHighContrast = this.toggleHighContrast.bind(this);
@@ -161,6 +163,16 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
     showPackageDialog() {
         pxt.tickEvent("menu.addpackage", undefined, { interactiveConsent: true });
         this.props.parent.showPackageDialog();
+    }
+
+    showBoardDialog() {
+        pxt.tickEvent("menu.changeboard", undefined, { interactiveConsent: true });
+        this.props.parent.showBoardDialog();
+    }
+
+    saveProject() {
+        pxt.tickEvent("menu.saveproject", undefined, { interactiveConsent: true });
+        this.props.parent.saveAndCompile();
     }
 
     removeProject() {
@@ -227,25 +239,32 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
     renderCore() {
         const { highContrast, greenScreen } = this.state;
         const targetTheme = pxt.appTarget.appTheme;
-        const packages = pxt.appTarget.cloud && pxt.appTarget.cloud.packages;
+        const packages = pxt.appTarget.cloud && !!pxt.appTarget.cloud.packages;
+        const boards = pxt.appTarget.simulator && !!pxt.appTarget.simulator.dynamicBoardDefinition;
         const reportAbuse = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;
+        const readOnly = pxt.shell.isReadOnly();
+        const isController = pxt.shell.isControllerMode();
+        const showSave = !readOnly && !isController && !!targetTheme.saveInMenu;
+        const showGreenScreen = (targetTheme.greenScreen || /greenscreen=1/.test(window.location.href))
+            && greenscreen.isSupported();
 
         return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem">
             <sui.Item role="menuitem" icon="options" text={lf("Project Settings")} onClick={this.openSettings} tabIndex={-1} />
             {packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Extensions")} onClick={this.showPackageDialog} tabIndex={-1} /> : undefined}
-            <sui.Item role="menuitem" icon="print" text={lf("Print...")} onClick={this.print} tabIndex={-1} />
-            <sui.Item role="menuitem" icon="trash" text={lf("Delete Project")} onClick={this.removeProject} tabIndex={-1} />
+            {boards ? <sui.Item role="menuitem" icon="microchip" text={lf("Change Board")} onClick={this.showBoardDialog} tabIndex={-1} /> : undefined}
+            {targetTheme.print ? <sui.Item role="menuitem" icon="print" text={lf("Print...")} onClick={this.print} tabIndex={-1} /> : undefined}
+            {showSave ? <sui.Item role="menuitem" icon="save" text={lf("Save Project")} onClick={this.saveProject} tabIndex={-1} /> : undefined}
+            {!isController ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project")} onClick={this.removeProject} tabIndex={-1} /> : undefined}
             {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={this.showReportAbuse} tabIndex={-1} /> : undefined}
             <div className="ui divider"></div>
             {targetTheme.selectLanguage ? <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} tabIndex={-1} /> : undefined}
             {targetTheme.highContrast ? <sui.Item role="menuitem" text={highContrast ? lf("High Contrast Off") : lf("High Contrast On")} onClick={this.toggleHighContrast} tabIndex={-1} /> : undefined}
-            {targetTheme.greenScreen && greenscreen.isSupported() ? <sui.Item role="menuitem" text={greenScreen ? lf("Green Screen Off") : lf("Green Screen On")} onClick={this.toggleGreenScreen} tabIndex={-1} /> : undefined}
+            {showGreenScreen ? <sui.Item role="menuitem" text={greenScreen ? lf("Green Screen Off") : lf("Green Screen On")} onClick={this.toggleGreenScreen} tabIndex={-1} /> : undefined}
             {
                 // we always need a way to clear local storage, regardless if signed in or not
             }
-            <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} tabIndex={-1} />
-            {!pxt.usb.isEnabled ? undefined :
-                <sui.Item role="menuitem" icon='usb' text={lf("Pair device")} onClick={this.pair} tabIndex={-1} />}
+            {!isController ? <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} tabIndex={-1} /> : undefined}
+            {pxt.usb.isEnabled ? <sui.Item role="menuitem" icon='usb' text={lf("Pair device")} onClick={this.pair} tabIndex={-1} /> : undefined}
             <div className="ui mobile only divider"></div>
             {renderDocItems(this.props.parent, "mobile only")}
             <div className="ui divider"></div>
@@ -275,6 +294,9 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
     }
 
     brandIconClick() {
+        const hasHome = !pxt.shell.isControllerMode();
+        if (!hasHome) return;
+
         pxt.tickEvent("menu.brand", undefined, { interactiveConsent: true });
         this.props.parent.showExitAndSaveDialog();
     }
@@ -323,7 +345,9 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         if (home) return <div />; // Don't render if we're on the home screen
 
         const targetTheme = pxt.appTarget.appTheme;
-        const sharingEnabled = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing;
+        const isController = pxt.shell.isControllerMode();
+        const homeEnabled = !isController;
+        const sharingEnabled = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && !isController;
         const sandbox = pxt.shell.isSandboxMode();
         const tutorialOptions = this.props.parent.state.tutorialOptions;
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
@@ -344,14 +368,14 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         /* tslint:disable:react-a11y-anchors */
         return <div id="mainmenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar" aria-label={lf("Main menu")}>
             {!sandbox ? <div className="left menu">
-                <a aria-label={lf("{0} Logo", targetTheme.boardName)} role="menuitem" target="blank" rel="noopener" className="ui item logo brand" tabIndex={0} onClick={this.brandIconClick} onKeyDown={sui.fireClickOnEnter}>
+                <a href={isController ? targetTheme.logoUrl : undefined} aria-label={lf("{0} Logo", targetTheme.boardName)} role="menuitem" target="blank" rel="noopener" className="ui item logo brand" tabIndex={0} onClick={this.brandIconClick} onKeyDown={sui.fireClickOnEnter}>
                     {logo || portraitLogo
                         ? <img className={`ui logo ${logo ? " portrait hide" : ''}`} src={logo || portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)} />
                         : <span className="name">{targetTheme.boardName}</span>}
                     {portraitLogo ? (<img className='ui mini image portrait only' src={portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)} />) : null}
                 </a>
                 {targetTheme.betaUrl ? <a href={`${targetTheme.betaUrl}`} className="ui red mini corner top left attached label betalabel" role="menuitem">{lf("Beta")}</a> : undefined}
-                {!inTutorial ? <sui.Item className="icon openproject" role="menuitem" textClass="landscape only" icon="home large" ariaLabel={lf("Home screen")} text={lf("Home")} onClick={this.goHome} /> : null}
+                {!inTutorial && homeEnabled ? <sui.Item className="icon openproject" role="menuitem" textClass="landscape only" icon="home large" ariaLabel={lf("Home screen")} text={lf("Home")} onClick={this.goHome} /> : null}
                 {!inTutorial && header && sharingEnabled ? <sui.Item className="icon shareproject" role="menuitem" textClass="widedesktop only" ariaLabel={lf("Share Project")} text={lf("Share")} icon="share alternate large" onClick={this.showShareDialog} /> : null}
                 {inTutorial ? <sui.Item className="tutorialname" tabIndex={-1} textClass="landscape only" text={tutorialOptions.tutorialName} /> : null}
             </div> : <div className="left menu">
@@ -425,15 +449,15 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
 
     setMarkdown(md: string) {
         const docsUrl = pxt.webConfig.docsUrl || '/--docs';
-        const mode = this.props.parent.isBlocksEditor() ? "blocks" : "js";
+        // always render blocks by default when sending custom markdown
+        // to side bar
+        const mode = "blocks" // this.props.parent.isBlocksEditor() ? "blocks" : "js";
         const url = `${docsUrl}#md:${encodeURIComponent(md)}:${mode}:${pxt.Util.localeInfo()}`;
         this.setUrl(url);
     }
 
     private setUrl(url: string) {
-        let el = document.getElementById("sidedocsframe") as HTMLIFrameElement;
-        if (el) el.src = url;
-        else this.props.parent.setState({ sideDocsLoadUrl: url, sideDocsCollapsed: false });
+        this.props.parent.setState({ sideDocsLoadUrl: url, sideDocsCollapsed: false });
     }
 
     collapse() {
