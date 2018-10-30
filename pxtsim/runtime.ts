@@ -1,6 +1,7 @@
 /// <reference path="../localtypings/pxtparts.d.ts"/>
 
 namespace pxsim {
+    const MIN_MESSAGE_WAIT_MS = 200;
     export namespace U {
         export function addClass(element: HTMLElement, classes: string) {
             if (!element) return;
@@ -108,6 +109,11 @@ namespace pxsim {
         finalCallback?: ResumeFn;
     }
 
+    interface SerialMessage {
+        data: string;
+        time: number;
+    }
+
     export let runtime: Runtime;
     export function getResume() { return runtime.getResume() }
 
@@ -124,18 +130,40 @@ namespace pxsim {
         public kill() { }
 
         protected serialOutBuffer: string = '';
-        public writeSerial(s: string) {
-            if (!s) return
 
+        private messages: SerialMessage[] = [];
+        private serialTimeout: number;
+        private lastSerialTime = 0;
+
+        public writeSerial(s: string) {
             this.serialOutBuffer += s;
             if (/\n/.test(this.serialOutBuffer) || this.serialOutBuffer.length > SERIAL_BUFFER_LENGTH) {
-                Runtime.postMessage(<SimulatorSerialMessage>{
-                    type: 'serial',
-                    data: this.serialOutBuffer,
-                    id: runtime.id,
-                    sim: true
-                })
+                this.messages.push({
+                    time: Date.now(),
+                    data: this.serialOutBuffer
+                });
+                this.debouncedPostAll();
                 this.serialOutBuffer = '';
+            }
+        }
+
+        private debouncedPostAll = () => {
+            const nowtime = Date.now();
+            if (nowtime - this.lastSerialTime > MIN_MESSAGE_WAIT_MS) {
+                clearTimeout(this.serialTimeout);
+                if (this.messages.length) {
+                    Runtime.postMessage(<any>{
+                        type: 'bulkserial',
+                        data: this.messages,
+                        id: runtime.id,
+                        sim: true
+                    })
+                    this.messages = [];
+                    this.lastSerialTime = nowtime;
+                }
+            }
+            else {
+                this.serialTimeout = setTimeout(this.debouncedPostAll, 50);
             }
         }
     }
@@ -251,7 +279,7 @@ namespace pxsim {
                     return Promise.resolve()
                 }
             })
-            // all events will be processed by above code, so 
+            // all events will be processed by above code, so
             // start afresh
             this.events = []
             return ret

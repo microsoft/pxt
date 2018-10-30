@@ -2889,6 +2889,18 @@ function runCoreAsync(res: pxtc.CompileResult) {
                         console.log("serial: ", d);
                     }
                     break;
+                case "bulkserial":
+                    {
+                        const m = <pxsim.SimulatorBulkSerialMessage>msg;
+                        let d = m.data;
+                        if (Array.isArray(d)) {
+                            d.forEach(datum => {
+                                if (typeof datum.data == "string") datum.data = datum.data.replace(/\n$/, "")
+                                console.log("serial: ", datum.data);
+                            })
+                        }
+                    }
+                    break;
                 case "i2c":
                     {
                         const m = <pxsim.SimulatorI2CMessage>msg;
