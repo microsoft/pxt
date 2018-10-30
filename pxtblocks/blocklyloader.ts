@@ -2784,7 +2784,9 @@ namespace pxt.blocks {
         }
         if (!foundIt) {
             (varField as any).initModel();
-            (varField as any).getVariable().name = newName;
+            const model = (varField as any).getVariable();
+            model.name = newName;
+            varField.setValue(model.getId());
         }
     }
 }
