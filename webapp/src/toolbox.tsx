@@ -375,7 +375,9 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         const { showAdvanced, visible, loading, selectedItem, expandedItem, hasSearch, showSearchBox, hasError } = this.state;
         if (!visible) return <div style={{ display: 'none' }} />
 
-        const hasTopBlocks = !!pxt.appTarget.appTheme.topBlocks;
+        const tutorialOptions = parent.parent.state.tutorialOptions;
+        const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial
+        const hasTopBlocks = !!pxt.appTarget.appTheme.topBlocks && !inTutorial;
 
         if (loading || hasError) return <div>
             <div className="blocklyTreeRoot">
