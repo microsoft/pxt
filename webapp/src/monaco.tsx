@@ -288,7 +288,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         const decorations: monaco.editor.IModelDeltaDecoration[] = [];
                         match.locations.forEach(location => {
                             decorations.push({
-                                range: new monaco.Range(location.line + 1, location.column, location.endLine + 1, location.endColumn),
+                                range: new monaco.Range(location.line + 1, location.column + 1, location.endLine + 1, location.endColumn + 1),
                                 options: {
                                     glyphMarginClassName: "sprite-editor"
                                 }
@@ -572,6 +572,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         registerFieldEditor(pxtblockly.spriteEditorDefinition);
         this.editor.onMouseDown((e: monaco.editor.IEditorMouseEvent) => {
             if (e.target.type !== monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) {
+                if (this.feWidget && e.target.type !== monaco.editor.MouseTargetType.CONTENT_WIDGET) {
+                    this.feWidget.close();
+                }
                 return;
             }
             const line = e.target.position.lineNumber;
@@ -1528,11 +1531,9 @@ class FieldEditorHost implements pxtblockly.MonacoFieldEditorHost, monaco.editor
 
     constructor(protected fe: pxtblockly.MonacoFieldEditor, protected range: monaco.Range, protected model: monaco.editor.IModel) {
         this.widgetDiv = document.createElement("div");
+        this.widgetDiv.className = "monaco-field-editor-frame";
 
         this.widgetDiv.style.backgroundColor = "darkgrey";
-
-        this.content = document.createElement("div");
-        this.widgetDiv.appendChild(this.content);
     }
 
     getId() {
@@ -1544,6 +1545,10 @@ class FieldEditorHost implements pxtblockly.MonacoFieldEditorHost, monaco.editor
     }
 
     contentDiv(): HTMLDivElement {
+        if (!this.content) {
+            this.content = document.createElement("div");
+            this.widgetDiv.appendChild(this.content);
+        }
         return this.content;
     }
 
@@ -1565,6 +1570,19 @@ class FieldEditorHost implements pxtblockly.MonacoFieldEditorHost, monaco.editor
                 editor.addContentWidget(this);
                 return this.fe.showEditorAsync(this.range, this);
             })
+            .then(edit => {
+                this.editor.executeEdits("", [
+                    {
+                        identifier: { major: 0, minor: 0 },
+                        range: edit.range,
+                        text: edit.replacement,
+                        forceMoveMarkers: false
+                    }
+                ]);
+            })
+            .catch(e => {
+                // TODO?
+            })
             .finally(() => {
                 this.close();
             })
@@ -1580,6 +1598,7 @@ class FieldEditorHost implements pxtblockly.MonacoFieldEditorHost, monaco.editor
 
     close(): void {
         this.editor.removeContentWidget(this);
+        this.fe.onClosed();
         this.fe.dispose();
     }
 }
@@ -1589,6 +1608,7 @@ let fieldEditors: pxtblockly.MonacoFieldEditorDefinition[];
 export function registerFieldEditor(def: pxtblockly.MonacoFieldEditorDefinition) {
     if (!fieldEditors) fieldEditors = [def];
     else fieldEditors.push(def);
+    compiler.setSymbolMatchers(fieldEditors.map(fe => fe.matcher));
 }
 
 function firstWord(s: string) {

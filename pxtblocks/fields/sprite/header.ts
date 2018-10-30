@@ -5,6 +5,7 @@ namespace pxtblockly {
     export interface SpriteHeaderHost {
         showGallery(): void;
         hideGallery(): void;
+        closeEditor(): void;
     }
 
     export class SpriteHeader {
@@ -13,6 +14,8 @@ namespace pxtblockly {
         toggle: Toggle;
         undoButton: Button;
         redoButton: Button;
+
+        closeButton: HTMLDivElement;
 
         constructor(protected host: SpriteHeaderHost) {
             this.div = document.createElement("div");
@@ -27,7 +30,13 @@ namespace pxtblockly {
                 else {
                     this.host.showGallery();
                 }
-            })
+            });
+
+            this.closeButton = makeCloseButton();
+            this.div.appendChild(this.closeButton);
+            this.closeButton.addEventListener("click", () => {
+                host.closeEditor();
+            });
         }
 
         getElement() {
@@ -40,4 +49,22 @@ namespace pxtblockly {
             this.toggle.translate((bounds.width - this.toggle.width()) / 2, (bounds.height - this.toggle.height()) / 2);
         }
     }
+}
+
+// <div role="button" class="closeIcon" tabindex="0">
+// <i class="icon close remove circle " aria-hidden="true" role="presentation"></i>
+// </div>
+function makeCloseButton() {
+    const i = document.createElement("i");
+    i.className = "icon close remove circle";
+    i.setAttribute("role", "presentation");
+    i.setAttribute("aria-hidden", "true");
+
+    const d = document.createElement("div");
+    d.className = "closeIcon";
+    d.setAttribute("tabindex", "0");
+    d.setAttribute("role", "button");
+
+    d.appendChild(i);
+    return d;
 }

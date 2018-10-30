@@ -72,6 +72,9 @@ namespace pxtblockly {
 
         private shiftDown: boolean = false;
         private mouseDown: boolean = false;
+
+        private closeHandler: () => void;
+
         constructor(bitmap: Bitmap, blocksInfo: pxtc.BlocksInfo, protected lightMode = false) {
             this.colors = pxt.appTarget.runtime.palette.slice(1);
 
@@ -290,6 +293,16 @@ namespace pxtblockly {
 
         hideGallery() {
             this.gallery.hide();
+        }
+
+        closeEditor() {
+            if (this.closeHandler) {
+                this.closeHandler();
+            }
+        }
+
+        onClose(handler: () => void) {
+            this.closeHandler = handler;
         }
 
         switchIconBack(tool: PaintTool) {

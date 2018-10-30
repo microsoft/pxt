@@ -21,6 +21,7 @@ namespace pxtblockly {
         getId(): string;
         getRangeInfo(range: monaco.Range, host: MonacoFieldEditorHost): MonacoRangeInfo;
         showEditorAsync(editrange: monaco.Range, host: MonacoFieldEditorHost): Promise<TextEdit>;
+        onClosed(): void;
         dispose(): void;
     }
 
