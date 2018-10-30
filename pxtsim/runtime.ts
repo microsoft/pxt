@@ -149,16 +149,18 @@ namespace pxsim {
 
         private debouncedPostAll = () => {
             const nowtime = Date.now();
-            if (this.messages.length && nowtime - this.lastSerialTime > MIN_MESSAGE_WAIT_MS) {
+            if (nowtime - this.lastSerialTime > MIN_MESSAGE_WAIT_MS) {
                 clearTimeout(this.serialTimeout);
-                Runtime.postMessage(<any>{
-                    type: 'bulkserial',
-                    data: this.messages,
-                    id: runtime.id,
-                    sim: true
-                })
-                this.messages = [];
-                this.lastSerialTime = nowtime;
+                if (this.messages.length) {
+                    Runtime.postMessage(<any>{
+                        type: 'bulkserial',
+                        data: this.messages,
+                        id: runtime.id,
+                        sim: true
+                    })
+                    this.messages = [];
+                    this.lastSerialTime = nowtime;
+                }
             }
             else {
                 this.serialTimeout = setTimeout(this.debouncedPostAll, 50);

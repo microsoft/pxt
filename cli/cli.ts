@@ -2856,6 +2856,7 @@ function runCoreAsync(res: pxtc.CompileResult) {
                         let d = m.data;
                         if (Array.isArray(d)) {
                             d.forEach(datum => {
+                                if (typeof datum.data == "string") datum.data = datum.data.replace(/\n$/, "")
                                 console.log("serial: ", datum.data);
                             })
                         }
