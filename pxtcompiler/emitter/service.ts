@@ -449,6 +449,8 @@ namespace ts.pxtc {
     }
 
     export function getFullName(typechecker: TypeChecker, symbol: Symbol): string {
+        if ((symbol as any).isBogusSymbol)
+            return symbol.name
         return typechecker.getFullyQualifiedName(symbol);
     }
 

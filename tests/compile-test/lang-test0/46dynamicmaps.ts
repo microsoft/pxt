@@ -37,6 +37,23 @@ namespace DynamicMaps {
         v[bar] = v[bar] + "a"
     }
 
+    function allChecks(v: V) {
+        assert(check(v) == "2/foo", ".v")
+
+        assert(checkA(v) == check(v), ".z2")
+        upd(v)
+        /*
+        assert(check(v) == "3/fooa", ".v2")
+        updA(v)
+        assert(check(v) == "4/fooaa", ".v3")
+        updI(v)
+        assert(check(v) == "5/fooaaa", ".v4")
+        updIP(v, "foo", "bar")
+        assert(check(v) == "6/fooaaaa", ".v6")
+        assert(checkA(v) == check(v), ".z3")
+        */
+    }
+
     export function run() {
         msg("dynamicMaps")
         
@@ -50,18 +67,12 @@ namespace DynamicMaps {
         z.bar = "blah"
 
         assert(check(z) == "13/blah", ".z")
-        assert(check(v) == "2/foo", ".v")
 
-        assert(checkA(v) == check(v), ".z2")
-        upd(v)
-        assert(check(v) == "3/fooa", ".v2")
-        updA(v)
-        assert(check(v) == "4/fooaa", ".v3")
-        updI(v)
-        assert(check(v) == "5/fooaaa", ".v4")
-        updIP(v, "foo", "bar")
-        assert(check(v) == "6/fooaaaa", ".v6")
-        assert(checkA(v) == check(v), ".z3")
+        z.foo = 1
+        z.bar = "foo"
+
+        //allChecks(v)
+        allChecks(z)
     }
 }
 

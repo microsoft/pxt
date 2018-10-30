@@ -1651,14 +1651,19 @@ ${lbl}: .short 0xffff
         function emitComputedPropertyName(node: ComputedPropertyName) { }
         function emitPropertyAccess(node: PropertyAccessExpression): ir.Expr {
             let decl = getDecl(node);
+
+            if (!decl) {
+                decl = {
+                    kind: SK.PropertySignature,
+                    symbol: { isBogusSymbol: true, name: node.name.getText() },
+                    isBogusFunction: true
+                } as any
+            }
+
             // we need to type check node.expression before committing code gen
-            if (!decl || (decl.kind == SK.PropertyDeclaration && !isStatic(decl))
+            if ((decl.kind == SK.PropertyDeclaration && !isStatic(decl))
                 || decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
                 emitExpr(node.expression, false)
-                if (!decl) {
-                    return ir.rtcallMask("pxtrt::mapGetByString", 0,
-                        ir.CallingConvention.Plain, [emitExpr(node.expression), emitStringLiteral(node.name.text)])
-                }
             }
             if (decl.kind == SK.GetAccessor) {
                 return emitCallCore(node, node, [], null)

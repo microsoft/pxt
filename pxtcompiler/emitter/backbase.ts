@@ -633,7 +633,7 @@ ${baseLabel}:
         }
 
         private emitIfaceCall(procid: ir.ProcId, numargs: number, getset = "") {
-            U.assert(procid.ifaceIndex > 1)
+            U.assert(procid.ifaceIndex > 0)
             this.write(this.t.emit_int(procid.ifaceIndex, "r1"))
 
             this.emitLabelledHelper("ifacecall" + numargs + "_" + getset, () => {
