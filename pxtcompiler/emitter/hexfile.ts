@@ -642,8 +642,8 @@ namespace ts.pxtc {
     }
 
     function emitStrings(snippets: AssemblerSnippets, bin: Binary) {
-        for (let s of Object.keys(bin.strings)) {
-            // string representation of DAL - 0xfffe in general for ref-counted objects means it's static and shouldn't be incr/decred
+        const keys = U.unique(bin.ifaceMembers.concat(Object.keys(bin.strings)), s => s)
+        for (let s of keys) {
             bin.otherLiterals.push(snippets.string_literal(bin.strings[s], s))
         }
 
@@ -862,9 +862,11 @@ ${hex.hexPrelude()}
         asmsource += `    .word 0\n\n`
 
         asmsource += `\n.balign 4\n_pxt_iface_member_names:\n`
+        asmsource += `    .word ${bin.ifaceMembers.length}\n`
+        let idx = 0
         for (let d of bin.ifaceMembers) {
             let lbl = bin.emitString(d)
-            asmsource += `    .word ${lbl}meta\n`
+            asmsource += `    .word ${lbl}meta  ; ${idx++} .${d}\n`
         }
         asmsource += `    .word 0\n\n`
 

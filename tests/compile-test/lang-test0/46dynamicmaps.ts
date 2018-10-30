@@ -73,6 +73,7 @@ namespace DynamicMaps {
         z.bar = "foo"
 
         allChecks(v)
+        msg("dynamic class")
         allChecks(z)
     }
 }
