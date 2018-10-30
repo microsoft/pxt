@@ -34,18 +34,18 @@ Examples of Editors built with PXT:
 
 ## Branches
 
-* `wonder_freshcoat` is the branch that we use for Code builds. JTBC, we do NOT use master.
-* ``master`` is the active development branch, currently ``v3.*`` builds
-* ``master`` is the active development branch used by MS. To update `wonder_freschoat` with the latest work from MS:
-* ``v0`` is the servicing branch for ``v0.*`` builds
-0. `git checkout master`
-0. `git pull`
-1. `git checkout wonder_freshcoat`
-1. `git pull`
-2. `git checkout -b updatePXT[date]`
-3. `git merge master`
-4. After merging, be sure to test out the editor to make sure that updating didn't break anything. See the pxt-wonder README for a bit more on this.
-5. Push up your `updatePXT[date]` branch and make a PR to `wonder_freshcoat`
+* `wonder_master` is the branch that we use for Code builds.
+* `stable(stable build)` stable branches from the upstream reopsitory
+* `wonder_stable(stable build)` stable brances with our changes merged in
+* To update PXT in pxt-wonder with a new stable branch from microsoft, follow these steps:
+0. `git fetch upstream stable(stable build)` fetch the upstream stable branch from microsoft/pxt
+1. `git checkout stable(stable branch)` check out the stable branch
+2. `git checkout -b wonder_stable(stable build)` branch off the stable branch adding the prefix `wonder_`
+3. `git merge wonder_master` merge the current state of wonder_master (containing our own changes) into the wonder_stable branch you just made
+4. `git checkout wonder_master`
+5. `git merge wonder_stable(stable build)` merge the changes from the wonder_stable branch back into wonder_master. they should now be in sync
+6. `git push origin wonder_master`
+7. Commit the new pxt submodule commit in pxt-wonder
 
 ## Running a target from localhost
 
