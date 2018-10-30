@@ -632,10 +632,7 @@ ${baseLabel}:
             })
         }
 
-        private emitIfaceCall(procid: ir.ProcId, numargs: number, getset = "") {
-            U.assert(procid.ifaceIndex > 0)
-            this.write(this.t.emit_int(procid.ifaceIndex, "r1"))
-
+        private emitIfaceCall(numargs: number, getset = "") {
             this.emitLabelledHelper("ifacecall" + numargs + "_" + getset, () => {
                 this.write(`ldr r0, [sp, #0] ; ld-this`)
                 this.loadVTable()
@@ -1114,6 +1111,15 @@ ${baseLabel}:
         }
 
         private emitFieldMethods() {
+            for (let op of ["get", "set"]) {
+                this.write(`
+                .section code
+                _pxt_${op}_property:
+                    push {r3, r4, r5, r6, r7, lr}
+                `)
+                this.emitIfaceCall(op == "set" ? 2 : 1, op)
+                this.write("pop {r3, r4, r5, r6, r7, pc}")
+            }
         }
 
         private emitArrayMethods() {
@@ -1399,9 +1405,13 @@ ${baseLabel}:
                     let isSet = /Set/.test(procid.mapMethod)
                     assert(isSet == (topExpr.args.length == 2))
                     assert(!isSet == (topExpr.args.length == 1))
-                    this.emitIfaceCall(procid, topExpr.args.length, isSet ? "set" : "get")
+                    U.assert(procid.ifaceIndex > 0)
+                    this.write(this.t.emit_int(procid.ifaceIndex, "r1"))    
+                    this.emitIfaceCall(topExpr.args.length, isSet ? "set" : "get")
                 } else if (procid.ifaceIndex != null) {
-                    this.emitIfaceCall(procid, topExpr.args.length)
+                    U.assert(procid.ifaceIndex > 0)
+                    this.write(this.t.emit_int(procid.ifaceIndex, "r1"))    
+                    this.emitIfaceCall(topExpr.args.length)
                 } else {
                     this.emitClassCall(procid)
                 }

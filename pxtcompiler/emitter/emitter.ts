@@ -1652,14 +1652,6 @@ ${lbl}: .short 0xffff
         function emitPropertyAccess(node: PropertyAccessExpression): ir.Expr {
             let decl = getDecl(node);
 
-            if (!decl) {
-                decl = {
-                    kind: SK.PropertySignature,
-                    symbol: { isBogusSymbol: true, name: node.name.getText() },
-                    isBogusFunction: true
-                } as any
-            }
-
             // we need to type check node.expression before committing code gen
             if ((decl.kind == SK.PropertyDeclaration && !isStatic(decl))
                 || decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
@@ -1804,6 +1796,17 @@ ${lbl}: .short 0xffff
                 }
             }
             markUsed(decl)
+
+            if (!decl && node.kind == SK.PropertyAccessExpression) {
+                const namedNode = node as PropertyAccessExpression                
+                decl = {
+                    kind: SK.PropertySignature,
+                    symbol: { isBogusSymbol: true, name: namedNode.name.getText() },
+                    isBogusFunction: true,
+                    name: namedNode.name,
+                } as any
+            }
+
             return decl
         }
         function isRefCountedExpr(e: Expression) {
@@ -2851,13 +2854,7 @@ ${lbl}: .short 0xffff
                     proc.emitExpr(emitCallCore(trg, trg, [src], null, decl as FunctionLikeDeclaration))
                 } else {
                     let trg2 = emitExpr(trg)
-                    if (trg2.exprKind == EK.RuntimeCall && trg2.data == "pxtrt::mapGetByString") {
-                        trg2.data = "pxtrt::mapSetByString"
-                        trg2.args.push(emitExpr(src))
-                        proc.emitExpr(trg2)
-                    } else {
-                        proc.emitExpr(ir.op(EK.Store, [trg2, emitExpr(src)]))
-                    }
+                    proc.emitExpr(ir.op(EK.Store, [trg2, emitExpr(src)]))
                 }
             } else if (trg.kind == SK.ElementAccessExpression) {
                 proc.emitExpr(emitIndexedAccess(trg as ElementAccessExpression, src))

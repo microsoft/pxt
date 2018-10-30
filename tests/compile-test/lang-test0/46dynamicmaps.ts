@@ -40,15 +40,18 @@ namespace DynamicMaps {
     function allChecks(v: V) {
         assert(check(v) == "2/foo", ".v")
 
+        msg(checkA(v))
+        msg(check(v))
+
         assert(checkA(v) == check(v), ".z2")
         upd(v)
-        /*
         assert(check(v) == "3/fooa", ".v2")
         updA(v)
         assert(check(v) == "4/fooaa", ".v3")
         updI(v)
         assert(check(v) == "5/fooaaa", ".v4")
         updIP(v, "foo", "bar")
+        /*
         assert(check(v) == "6/fooaaaa", ".v6")
         assert(checkA(v) == check(v), ".z3")
         */
