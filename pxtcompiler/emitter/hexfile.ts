@@ -792,7 +792,7 @@ ${info.id}_IfaceVT:
         for (let e of info.itable) {
             offsets[e.idx + ""] = offset
             descs += `  .short ${e.idx}, ${e.info} ; ${e.name}\n`
-            descs += `  .word ${e.proc ? e.proc.vtLabel() : e.info}\n`
+            descs += `  .word ${e.proc ? e.proc.vtLabel() + "@fn" : e.info}\n`
             offset += descSize
             if (e.setProc) {
                 descs += `  .short ${e.idx}, 0 ; set ${e.name}\n`

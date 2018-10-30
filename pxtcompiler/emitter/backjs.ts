@@ -431,7 +431,7 @@ switch (step) {
                 if (procid.mapMethod) {
                     write(`if (${frameRef}.arg0.vtable === 42) {`)
                     let args = topExpr.args.map((a, i) => `${frameRef}.arg${i}`)
-                    args.splice(1, 0, procid.mapIdx.toString())
+                    args.splice(1, 0, procid.ifaceIndex.toString())
                     write(`  s.retval = ${shimToJs(procid.mapMethod)}(${args.join(", ")});`)
                     write(`  ${frameRef}.fn = doNothing;`)
                     write(`} else {`)

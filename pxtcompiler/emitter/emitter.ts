@@ -2111,9 +2111,7 @@ ${lbl}: .short 0xffff
                         let name = getName(decl)
                         let res = mkMethodCall(null, null, getIfaceMemberId(name, true), args.map((x) => emitExpr(x)))
                         let pid = res.data as ir.ProcId
-                        pid.mapIdx = pid.ifaceIndex
                         if (args.length == 2) {
-                            pid.ifaceIndex = getIfaceMemberId("set/" + name, true)
                             pid.mapMethod = "pxtrt::mapSet"
                         } else {
                             pid.mapMethod = "pxtrt::mapGet"

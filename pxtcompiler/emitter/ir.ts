@@ -421,7 +421,6 @@ namespace ts.pxtc.ir {
         virtualIndex: number;
         ifaceIndex: number;
         mapMethod?: string;
-        mapIdx?: number;
         classInfo?: ClassInfo;
     }
 
