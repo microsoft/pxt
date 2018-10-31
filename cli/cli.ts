@@ -466,7 +466,7 @@ function travisAsync() {
 
     let pkg = readJson("package.json")
     if (pkg["name"] == "pxt-core") {
-        let p = npmPublish ? nodeutil.runNpmAsync("publish") : Promise.resolve();
+        let p = npmPublish ? nodeutil.runNpmAsync("publish", "--tag=_v0") : Promise.resolve();
         if (uploadLocs)
             p = p
                 .then(() => execCrowdinAsync("upload", "built/strings.json"))
