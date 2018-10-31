@@ -21,7 +21,7 @@ namespace ts.pxtc {
     export const taggedNaN = taggedSpecialValue(3)
     export const taggedTrue = taggedSpecialValue(16)
     function fitsTaggedInt(vn: number) {
-        if (target.boxDebug) return false
+        if (target.switches.boxDebug) return false
         return (vn | 0) == vn && -1073741824 <= vn && vn <= 1073741823
     }
 
@@ -1716,7 +1716,7 @@ ${lbl}: .short 0xffff
                 if (isStatic(decl)) {
                     return emitLocalLoad(decl as PropertyDeclaration)
                 }
-                if (target.slowClasses) {
+                if (target.switches.slowFields) {
                     // treat as interface call
                     return emitCallCore(node, node, [], null, decl as any, node.expression)
                 } else {
@@ -2012,7 +2012,7 @@ ${lbl}: .short 0xffff
                     case SK.GetAccessor:
                     case SK.SetAccessor:                    
                         isMethod = true
-                        if (target.slowClasses)
+                        if (target.switches.slowMethods)
                             isProperty = true
                         break
                     case SK.MethodDeclaration:
@@ -2124,7 +2124,7 @@ ${lbl}: .short 0xffff
                     if (info.decl.kind == SK.MethodDeclaration)
                         markFunctionUsed(info.decl)
                 }
-                if (info.virtualParent && !isSuper && !target.slowClasses) {
+                if (info.virtualParent && !isSuper && !target.switches.slowMethods) {
                     U.assert(!bin.finalPass || info.virtualIndex != null, "!bin.finalPass || info.virtualIndex != null")
                     return mkMethodCall(info.parentClassInfo, info.virtualIndex, null, args.map((x) => emitExpr(x)))
                 }
@@ -2175,7 +2175,7 @@ ${lbl}: .short 0xffff
                         args.shift()
                         callInfo.args.shift()
                     }
-                } else if (decl.kind == SK.MethodSignature || (target.slowClasses && !isStatic(decl) && !isSuper)) {
+                } else if (decl.kind == SK.MethodSignature || (target.switches.slowMethods && !isStatic(decl) && !isSuper)) {
                     let name = getName(decl)
                     return mkMethodCall(null, null, getIfaceMemberId(name, true), args.map((x) => emitExpr(x)))
                 } else {
@@ -2896,7 +2896,7 @@ ${lbl}: .short 0xffff
                         unhandled(trg, lf("setter not available"), 9253)
                     }
                     proc.emitExpr(emitCallCore(trg, trg, [src], null, decl as FunctionLikeDeclaration))
-                } else if (decl && (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment || target.slowClasses)) {
+                } else if (decl && (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment || target.switches.slowFields)) {
                     proc.emitExpr(emitCallCore(trg, trg, [src], null, decl as FunctionLikeDeclaration))
                 } else {
                     let trg2 = emitExpr(trg)
@@ -2937,14 +2937,14 @@ ${lbl}: .short 0xffff
         }
 
         function emitAsInt(e: Expression) {
-            let prev = target.boxDebug
+            let prev = target.switches.boxDebug
             let expr: ir.Expr = null
             if (prev) {
                 try {
-                    target.boxDebug = false
+                    target.switches.boxDebug = false
                     expr = emitExpr(e)
                 } finally {
-                    target.boxDebug = prev
+                    target.switches.boxDebug = prev
                 }
             } else {
                 expr = emitExpr(e)

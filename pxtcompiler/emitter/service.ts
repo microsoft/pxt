@@ -487,7 +487,7 @@ namespace ts.pxtc.service {
     let emptyOptions: CompileOptions = {
         fileSystem: {},
         sourceFiles: [],
-        target: { isNative: false, hasHex: false },
+        target: { isNative: false, hasHex: false, switches: {} },
         hexinfo: null
     }
 

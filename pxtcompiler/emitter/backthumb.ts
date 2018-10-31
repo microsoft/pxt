@@ -225,7 +225,7 @@ ${lbl}:`
 
         restoreThreadStack() {
             // TODO only for debug build!
-            if (target.gc && target.gcDebug)
+            if (target.gc && target.switches.gcDebug)
                 return "movs r7, #0\n    str r7, [r6, #4]\n"
             else
                 return ""

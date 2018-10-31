@@ -319,6 +319,14 @@ declare namespace pxt {
 }
 
 declare namespace ts.pxtc {
+    interface CompileSwitches {
+        gcDebug?: boolean;
+        boxDebug?: boolean;
+        slowMethods?: boolean;
+        slowFields?: boolean;
+        skipClassCheck?: boolean;
+    }
+
     interface CompileTarget {
         isNative: boolean; // false -> JavaScript for simulator
         nativeType?: string; // currently only "thumb"
@@ -335,9 +343,7 @@ declare namespace ts.pxtc {
         driveName?: string;
         jsRefCounting?: boolean;
         gc?: boolean;
-        gcDebug?: boolean;
-        boxDebug?: boolean;
-        slowClasses?: boolean;
+        switches: CompileSwitches;
         deployDrives?: string; // partial name of drives where the .hex file should be copied
         deployFileMarker?: string;
         shortPointers?: boolean; // set to true for 16 bit pointers

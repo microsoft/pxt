@@ -171,6 +171,7 @@ namespace pxt.cpp {
             compile = {
                 isNative: false,
                 hasHex: false,
+                switches: {}
             }
 
         const isPlatformio = !!compileService.platformioIni;
@@ -842,7 +843,7 @@ namespace pxt.cpp {
             pxt.debug(`module.json: ${res.generatedFiles["/module.json"]}`)
         }
 
-        if (compile.boxDebug) {
+        if (compile.switches.boxDebug) {
             pxtConfig += "#define PXT_BOX_DEBUG 1\n"
         }
 
@@ -850,7 +851,7 @@ namespace pxt.cpp {
             pxtConfig += "#define PXT_GC 1\n"
         }
 
-        if (compile.gcDebug) {
+        if (compile.switches.gcDebug) {
             pxtConfig += "#define PXT_GC_DEBUG 1\n"
         }
 
