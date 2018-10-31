@@ -1536,12 +1536,15 @@ export class ProjectView
 
     beforeCompile() { }
 
+    cancelCompile() {
+        if (this.state.compileToken)
+            this.state.compileToken.cancel();
+    }
+
     compile(saveOnly = false) {
         if (this.state.compileToken) {
-            // already compiling? cancel
-            pxt.tickEvent("compile.cancel");
-            pxt.debug('cancel compiling...');
-            this.state.compileToken.cancel();
+            // already compiling?
+            pxt.tickEvent("compile.double");
             return;
         }
 

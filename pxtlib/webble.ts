@@ -401,7 +401,7 @@ namespace pxt.webBluetooth {
             }
 
             this.hex = hex;
-            this.flashToken = flashToken;
+            this.flashToken = flashToken || new pxt.U.CancellationToken();
             const uf2 = ts.pxtc.UF2.newBlockFile();
             ts.pxtc.UF2.writeHex(uf2, this.hex.split(/\r?\n/));
             const flashUsableEnd = pxt.appTarget.compile.flashUsableEnd;
