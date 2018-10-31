@@ -1725,7 +1725,7 @@ export class ProjectView
         this.runToken = new pxt.Util.CancellationToken()
         this.runToken.startOperation();
         this.saveFileAsync()
-            .then(() => this.runSimulator({ debug, clickTrigger, cancellationToken: this.runToken }));
+            .then(() => this.runSimulator({ debug, clickTrigger }, this.runToken));
     }
 
     stopSimulator(unload?: boolean, dontCancel?: boolean) {
@@ -1849,7 +1849,7 @@ export class ProjectView
         return this.state.running;
     }
 
-    runSimulator(opts: compiler.CompileOptions = {}) {
+    runSimulator(opts: compiler.CompileOptions = {}, token?: pxt.Util.CancellationToken) {
         const editorId = this.editor ? this.editor.getId().replace(/Editor$/, '') : "unknown";
         if (opts.background) {
             pxt.tickActivity("autorun", "autorun." + editorId);
@@ -1863,25 +1863,26 @@ export class ProjectView
             opts.trace = true;
 
         this.stopSimulator(undefined, true);
-        if (opts.cancellationToken && opts.cancellationToken.isCancelled()) return Promise.resolve();
+        if (token && token.isCancelled()) return Promise.resolve();
 
         const state = this.editor.snapshotState()
         return compiler.compileAsync(opts)
             .then(resp => {
                 this.clearSerial();
                 this.editor.setDiagnostics(this.editorFile, state)
-                if (opts.cancellationToken && opts.cancellationToken.isCancelled()) return;
+                if (token && token.isCancelled()) return;
                 if (resp.outfiles[pxtc.BINARY_JS]) {
-                    const shouldCancel = opts.cancellationToken && opts.cancellationToken.isCancelled();
-                    if (!shouldCancel) {
+                    if (!token || !token.isCancelled()) {
                         simulator.run(pkg.mainPkg, opts.debug, resp, this.state.mute, this.state.highContrast, pxt.options.light, opts.clickTrigger)
-                        this.setState({ running: true, showParts: simulator.driver.runOptions.parts.length > 0 })
+                        if (!token || !token.isCancelled()) {
+                            this.setState({ running: true, showParts: simulator.driver.runOptions.parts.length > 0 })
+                        }
                     }
                 } else if (!opts.background) {
                     core.warningNotification(lf("Oops, we could not run this project. Please check your code for errors."))
                 }
             }).finally(() => {
-                if (opts.cancellationToken) opts.cancellationToken.resolveCancel();
+                if (token) token.resolveCancel();
             })
     }
 

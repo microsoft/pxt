@@ -54,7 +54,6 @@ export interface CompileOptions {
     forceEmit?: boolean;
     preferredEditor?: string;
     clickTrigger?: boolean;
-    cancellationToken?: pxt.Util.CancellationToken;
 }
 
 export function compileAsync(options: CompileOptions = {}): Promise<pxtc.CompileResult> {
