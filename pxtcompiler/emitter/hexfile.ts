@@ -642,6 +642,9 @@ namespace ts.pxtc {
     }
 
     function emitStrings(snippets: AssemblerSnippets, bin: Binary) {
+        // ifaceMembers are already sorted alphabetically
+        // here we make sure that the pointers to them are also sorted alphabetically
+        // by emitting them in order and before everything else
         const keys = U.unique(bin.ifaceMembers.concat(Object.keys(bin.strings)), s => s)
         for (let s of keys) {
             bin.otherLiterals.push(snippets.string_literal(bin.strings[s], s))
@@ -846,20 +849,19 @@ ${hex.hexPrelude()}
             asmsource += "\n" + p2a.getAssembly() + "\n"
         })
 
-        bin.usedClassInfos.forEach(info => {
-            asmsource += vtableToAsm(info, opts, bin)
-        })
+        asmsource += hex.asmTotalSource // user-supplied asm
+
+        asmsource += "_code_end:\n\n"
 
         U.iterMap(bin.codeHelpers, (code, lbl) => {
             asmsource += `    .section code\n${lbl}:\n${code}\n`
         })
         asmsource += snippets.arithmetic()
+        asmsource += "_helpers_end:\n\n"
 
-        asmsource += `\n.balign 4\n_pxt_config_data:\n`
-        for (let d of bin.res.configData || []) {
-            asmsource += `    .word ${d.key}, ${d.value}  ; ${d.name}=${d.value}\n`
-        }
-        asmsource += `    .word 0\n\n`
+        bin.usedClassInfos.forEach(info => {
+            asmsource += vtableToAsm(info, opts, bin)
+        })
 
         asmsource += `\n.balign 4\n_pxt_iface_member_names:\n`
         asmsource += `    .word ${bin.ifaceMembers.length}\n`
@@ -868,14 +870,18 @@ ${hex.hexPrelude()}
             let lbl = bin.emitString(d)
             asmsource += `    .word ${lbl}meta  ; ${idx++} .${d}\n`
         }
+        asmsource += `    .word 0\n`
+        asmsource += "_vtables_end:\n\n"
+
+        asmsource += `\n.balign 4\n_pxt_config_data:\n`
+        for (let d of bin.res.configData || []) {
+            asmsource += `    .word ${d.key}, ${d.value}  ; ${d.name}=${d.value}\n`
+        }
         asmsource += `    .word 0\n\n`
 
-        asmsource += hex.asmTotalSource
-
-        asmsource += "_js_end:\n"
         emitStrings(snippets, bin)
         asmsource += bin.otherLiterals.join("")
-        asmsource += "_program_end:\n"
+        asmsource += "_literals_end:\n"
 
         return asmsource
     }

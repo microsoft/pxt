@@ -907,13 +907,21 @@ namespace ts.pxtc.assembler {
 
 
         public getSource(clean: boolean, numStmts = 1, flashSize = 0) {
+            let lenPrev = 0
+            let size = (lbl: string) => {
+                let curr = this.labels[lbl] || lenPrev
+                let sz = curr - lenPrev
+                lenPrev = curr
+                return sz
+            }
             let lenTotal = this.buf ? this.location() : 0
-            let lenThumb = this.labels["_program_end"] || lenTotal;
-            let lenFrag = this.labels["_frag_start"] || 0
-            if (lenFrag) lenFrag = this.labels["_js_end"] - lenFrag
-            let lenLit = this.labels["_program_end"]
-            if (lenLit) lenLit -= this.labels["_js_end"]
+            let lenCode = size("_code_end")
+            let lenHelpers = size("_helpers_end")
+            let lenVtables = size("_vtables_end")
+            let lenLiterals = size("_literals_end")
+            let lenAllCode = lenPrev
             let totalSize = lenTotal + this.baseOffset
+
             if (flashSize && totalSize > flashSize)
                 U.userError(lf("program too big by {0} bytes!", totalSize - flashSize))
             flashSize = flashSize || 128 * 1024
@@ -922,11 +930,12 @@ namespace ts.pxtc.assembler {
                 flashSize - totalSize)
             let res =
                 // ARM-specific
-                lf("; code sizes (bytes): {0} (incl. {1} frags, and {2} lits); src size {3}\n",
-                    lenThumb, lenFrag, lenLit, lenTotal - lenThumb) +
-                lf("; assembly: {0} lines; density: {1} bytes/stmt\n",
+                lf("; generated code sizes (bytes): {0} (incl. {1} user, {2} helpers, {3} vtables, {4} lits); src size {5}\n",
+                    lenAllCode, lenCode, lenHelpers, lenVtables, lenLiterals,
+                    lenTotal - lenAllCode) +
+                lf("; assembly: {0} lines; density: {1} bytes/stmt; ({2} stmts)\n",
                     this.lines.length,
-                    Math.round(100 * (lenThumb - lenLit) / numStmts) / 100) +
+                    Math.round(100 * lenCode / numStmts) / 100, numStmts) +
                 totalInfo + "\n" +
                 this.stats + "\n\n"
 

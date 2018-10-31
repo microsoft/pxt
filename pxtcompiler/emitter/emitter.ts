@@ -2087,6 +2087,8 @@ ${lbl}: .short 0xffff
                 } else
                     unhandled(node, lf("strange method call"), 9241)
                 let info = getFunctionInfo(decl)
+                if (info.parentClassInfo)
+                    markClassUsed(info.parentClassInfo)
                 // if we call a method and it overrides then
                 // mark the virtual root class and all its overrides as used,
                 // if their classes are used
