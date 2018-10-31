@@ -108,6 +108,8 @@ export class ProjectView
     private reload: boolean;
     private shouldTryDecompile: boolean;
 
+    private runToken: pxt.Util.CancellationToken;
+
     constructor(props: IAppProps) {
         super(props);
         document.title = pxt.appTarget.title || pxt.appTarget.name;
@@ -1713,20 +1715,22 @@ export class ProjectView
         }
     }
 
-    startSimulator(debug?: boolean, clickTrigger?: boolean, cancellationToken?: pxt.Util.CancellationToken) {
+    startSimulator(debug?: boolean, clickTrigger?: boolean) {
         pxt.tickEvent('simulator.start');
         if (!this.shouldStartSimulator()) {
             pxt.log("Tried to start simulator when we shouldn't");
             return;
         }
+        if (this.runToken) this.runToken.cancel()
+        this.runToken = new pxt.Util.CancellationToken()
         this.saveFileAsync()
-            .then(() => this.runSimulator(debug ? { debug: true } : {}, clickTrigger, cancellationToken));
+            .then(() => this.runSimulator({ debug, clickTrigger, cancellationToken: this.runToken }));
     }
 
     stopSimulator(unload?: boolean) {
         pxt.tickEvent('simulator.stop')
+        if (this.runToken) this.runToken.cancel()
         simulator.stop(unload)
-        console.log("simulator stopping, setting state false");
         this.setState({ running: false })
     }
 
@@ -1844,7 +1848,7 @@ export class ProjectView
         return this.state.running;
     }
 
-    runSimulator(opts: compiler.CompileOptions = {}, clickTrigger?: boolean, cancellationToken?: pxt.Util.CancellationToken) {
+    runSimulator(opts: compiler.CompileOptions = {}) {
         const editorId = this.editor ? this.editor.getId().replace(/Editor$/, '') : "unknown";
         if (opts.background) {
             pxt.tickActivity("autorun", "autorun." + editorId);
@@ -1858,17 +1862,17 @@ export class ProjectView
             opts.trace = true;
 
         this.stopSimulator();
-        if (cancellationToken && cancellationToken.isCancelled()) return Promise.resolve();
+        if (opts.cancellationToken && opts.cancellationToken.isCancelled()) return Promise.resolve();
 
         const state = this.editor.snapshotState()
         return compiler.compileAsync(opts)
             .then(resp => {
                 this.clearSerial();
                 this.editor.setDiagnostics(this.editorFile, state)
-                if (cancellationToken && cancellationToken.isCancelled()) return;
+                if (opts.cancellationToken && opts.cancellationToken.isCancelled()) return;
                 if (resp.outfiles[pxtc.BINARY_JS]) {
-                    simulator.run(pkg.mainPkg, opts.debug, resp, this.state.mute, this.state.highContrast, pxt.options.light, clickTrigger)
-                    if (cancellationToken && cancellationToken.isCancelled()) {
+                    simulator.run(pkg.mainPkg, opts.debug, resp, this.state.mute, this.state.highContrast, pxt.options.light, opts.clickTrigger)
+                    if (opts.cancellationToken && opts.cancellationToken.isCancelled()) {
                         this.stopSimulator();
                     }
                     this.setState({ running: true, showParts: simulator.driver.runOptions.parts.length > 0 })
