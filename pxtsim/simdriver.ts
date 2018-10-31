@@ -182,7 +182,8 @@ namespace pxsim {
             }
         }
 
-        private suspend() {
+        public suspend() {
+            this.postMessage({ type: 'stop' });
             this.setState(SimulatorState.Suspended);
 
             let frames = this.container.getElementsByTagName("iframe");
