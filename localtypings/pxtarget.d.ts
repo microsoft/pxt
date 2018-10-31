@@ -337,6 +337,7 @@ declare namespace ts.pxtc {
         gc?: boolean;
         gcDebug?: boolean;
         boxDebug?: boolean;
+        slowClasses?: boolean;
         deployDrives?: string; // partial name of drives where the .hex file should be copied
         deployFileMarker?: string;
         shortPointers?: boolean; // set to true for 16 bit pointers

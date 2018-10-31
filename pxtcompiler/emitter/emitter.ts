@@ -85,7 +85,8 @@ namespace ts.pxtc {
     }
 
     type TemplateLiteralFragment = TemplateHead | TemplateMiddle | TemplateTail;
-    export type EmittableAsCall = FunctionLikeDeclaration | SignatureDeclaration | ObjectLiteralElementLike | PropertySignature | ModuleDeclaration;
+    export type EmittableAsCall = FunctionLikeDeclaration | SignatureDeclaration | ObjectLiteralElementLike | PropertySignature | ModuleDeclaration
+        | ParameterDeclaration | PropertyDeclaration;
 
     let lastNodeId = 0
     let currNodeWave = 1
@@ -1715,9 +1716,14 @@ ${lbl}: .short 0xffff
                 if (isStatic(decl)) {
                     return emitLocalLoad(decl as PropertyDeclaration)
                 }
-                let idx = fieldIndex(node)
-                callInfo.args.push(node.expression)
-                return ir.op(EK.FieldAccess, [emitExpr(node.expression)], idx)
+                if (target.slowClasses) {
+                    // treat as interface call
+                    return emitCallCore(node, node, [], null, decl as any, node.expression)
+                } else {
+                    let idx = fieldIndex(node)
+                    callInfo.args.push(node.expression)
+                    return ir.op(EK.FieldAccess, [emitExpr(node.expression)], idx)
+                }
             } else if (isClassFunction(decl) || decl.kind == SK.MethodSignature) {
                 throw userError(9211, lf("cannot use method as lambda; did you forget '()' ?"))
             } else if (decl.kind == SK.FunctionDeclaration) {
@@ -1984,18 +1990,33 @@ ${lbl}: .short 0xffff
             if (!decl)
                 decl = getDecl(funcExpr) as EmittableAsCall;
             let isMethod = false
+            let isProperty = false
             if (decl) {
                 switch (decl.kind) {
                     // we treat properties via calls
                     // so we say they are "methods"
                     case SK.PropertySignature:
                     case SK.PropertyAssignment:
+                    case SK.PropertyDeclaration:
+                        isMethod = true
+                        isProperty = true
+                        break;
+                    case SK.Parameter:
+                        if (decl.parent.kind == SK.Constructor) {
+                            isMethod = true
+                            isProperty = true
+                        }
+                        break
                     // TOTO case: case SK.ShorthandPropertyAssignment
                     // these are the real methods
+                    case SK.GetAccessor:
+                    case SK.SetAccessor:                    
+                        isMethod = true
+                        if (target.slowClasses)
+                            isProperty = true
+                        break
                     case SK.MethodDeclaration:
                     case SK.MethodSignature:
-                    case SK.GetAccessor:
-                    case SK.SetAccessor:
                         isMethod = true
                         break;
                     case SK.ModuleDeclaration:
@@ -2103,7 +2124,7 @@ ${lbl}: .short 0xffff
                     if (info.decl.kind == SK.MethodDeclaration)
                         markFunctionUsed(info.decl)
                 }
-                if (info.virtualParent && !isSuper) {
+                if (info.virtualParent && !isSuper && !target.slowClasses) {
                     U.assert(!bin.finalPass || info.virtualIndex != null, "!bin.finalPass || info.virtualIndex != null")
                     return mkMethodCall(info.parentClassInfo, info.virtualIndex, null, args.map((x) => emitExpr(x)))
                 }
@@ -2134,10 +2155,7 @@ ${lbl}: .short 0xffff
                     let tp = sig.getTypeParameters() || []
                     markFunctionUsed(decl)
                     return emitPlain();
-                } else if (decl.kind == SK.MethodSignature) {
-                    let name = getName(decl)
-                    return mkMethodCall(null, null, getIfaceMemberId(name, true), args.map((x) => emitExpr(x)))
-                } else if (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
+                } else if (isProperty) {
                     if (node == funcExpr) {
                         // in this special base case, we have property access recv.foo
                         // where recv is a map obejct
@@ -2157,6 +2175,9 @@ ${lbl}: .short 0xffff
                         args.shift()
                         callInfo.args.shift()
                     }
+                } else if (decl.kind == SK.MethodSignature || (target.slowClasses && !isStatic(decl) && !isSuper)) {
+                    let name = getName(decl)
+                    return mkMethodCall(null, null, getIfaceMemberId(name, true), args.map((x) => emitExpr(x)))
                 } else {
                     markFunctionUsed(decl)
                     return emitPlain();
@@ -2875,7 +2896,7 @@ ${lbl}: .short 0xffff
                         unhandled(trg, lf("setter not available"), 9253)
                     }
                     proc.emitExpr(emitCallCore(trg, trg, [src], null, decl as FunctionLikeDeclaration))
-                } else if (decl && (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment)) {
+                } else if (decl && (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment || target.slowClasses)) {
                     proc.emitExpr(emitCallCore(trg, trg, [src], null, decl as FunctionLikeDeclaration))
                 } else {
                     let trg2 = emitExpr(trg)
