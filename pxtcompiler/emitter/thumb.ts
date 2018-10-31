@@ -362,7 +362,7 @@ namespace ts.pxtc.thumb {
                 // RULE: beq .next; b .somewhere; .next: -> bne .somewhere
                 ln.update("bne " + lnNext.words[1])
                 lnNext.update("")
-            } else if (lnop == "push" && ln.numArgs[0] == 0x4000 && lnNext.getOp() == "push") {
+            } else if (lnop == "push" && ln.numArgs[0] == 0x4000 && lnNext.getOp() == "push" && !(lnNext.numArgs[0] & 0x4000)) {
                 // RULE: push {lr}; push {X, ...} -> push {lr, X, ...}
                 ln.update(lnNext.text.replace("{", "{lr, "))
                 lnNext.update("")
