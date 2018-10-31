@@ -79,9 +79,8 @@ export class CommandParser {
         const flags: { [index: string]: string | boolean | number } = {};
 
         const filtered = this.commands.filter(c => c.name === name || c.aliases && c.aliases.indexOf(name) !== -1);
-        if (!filtered.length) {
-            throw new Error(`Command '${name}' not found`);
-        }
+        if (!filtered.length)
+            pxt.U.userError(`Command '${name}' not found, use "pxt help all" to see available commands.`);
 
         const command = filtered[0];
 
