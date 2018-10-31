@@ -5672,8 +5672,9 @@ function loadPkgAsync() {
 
 function errorHandler(reason: any) {
     if (reason.isUserError) {
-        console.error(reason.stack)
-        console.error("USER ERROR:", reason.message)
+        if (pxt.options.debug)
+            console.error(reason.stack)
+        console.error("error:", reason.message)
         process.exit(1)
     }
 
@@ -5744,10 +5745,10 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
 
             if (!args[0]) {
                 if (pxt.commands.deployCoreAsync) {
-                    console.log("running 'pxt deploy' (run 'pxt help' for usage)")
+                    pxt.log("running 'pxt deploy' (run 'pxt help' for usage)")
                     args = ["deploy"]
                 } else {
-                    console.log("running 'pxt build' (run 'pxt help' for usage)")
+                    pxt.log("running 'pxt build' (run 'pxt help' for usage)")
                     args = ["build"]
                 }
             }
