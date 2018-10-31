@@ -1717,19 +1717,20 @@ export class ProjectView
 
     startSimulator(debug?: boolean, clickTrigger?: boolean) {
         pxt.tickEvent('simulator.start');
-        if (!this.shouldStartSimulator()) {
-            pxt.log("Tried to start simulator when we shouldn't");
+        if (!this.shouldStartSimulator() || (this.runToken && this.runToken.isRunning())) {
+            pxt.log("Ignoring call to start simulator, either already running or we shouldn't start.");
             return;
         }
         if (this.runToken) this.runToken.cancel()
         this.runToken = new pxt.Util.CancellationToken()
+        this.runToken.startOperation();
         this.saveFileAsync()
             .then(() => this.runSimulator({ debug, clickTrigger, cancellationToken: this.runToken }));
     }
 
-    stopSimulator(unload?: boolean) {
+    stopSimulator(unload?: boolean, dontCancel?: boolean) {
         pxt.tickEvent('simulator.stop')
-        if (this.runToken) this.runToken.cancel()
+        if (!dontCancel && this.runToken) this.runToken.cancel()
         simulator.stop(unload)
         this.setState({ running: false })
     }
@@ -1861,7 +1862,7 @@ export class ProjectView
         if (this.state.tracing)
             opts.trace = true;
 
-        this.stopSimulator();
+        this.stopSimulator(undefined, true);
         if (opts.cancellationToken && opts.cancellationToken.isCancelled()) return Promise.resolve();
 
         const state = this.editor.snapshotState()
@@ -1871,14 +1872,16 @@ export class ProjectView
                 this.editor.setDiagnostics(this.editorFile, state)
                 if (opts.cancellationToken && opts.cancellationToken.isCancelled()) return;
                 if (resp.outfiles[pxtc.BINARY_JS]) {
-                    simulator.run(pkg.mainPkg, opts.debug, resp, this.state.mute, this.state.highContrast, pxt.options.light, opts.clickTrigger)
-                    if (opts.cancellationToken && opts.cancellationToken.isCancelled()) {
-                        this.stopSimulator();
+                    const shouldCancel = opts.cancellationToken && opts.cancellationToken.isCancelled();
+                    if (!shouldCancel) {
+                        simulator.run(pkg.mainPkg, opts.debug, resp, this.state.mute, this.state.highContrast, pxt.options.light, opts.clickTrigger)
+                        this.setState({ running: true, showParts: simulator.driver.runOptions.parts.length > 0 })
                     }
-                    this.setState({ running: true, showParts: simulator.driver.runOptions.parts.length > 0 })
                 } else if (!opts.background) {
                     core.warningNotification(lf("Oops, we could not run this project. Please check your code for errors."))
                 }
+            }).finally(() => {
+                if (opts.cancellationToken) opts.cancellationToken.resolveCancel();
             })
     }
 
