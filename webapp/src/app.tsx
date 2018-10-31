@@ -1567,6 +1567,7 @@ export class ProjectView
         const simRestart = this.state.running;
         const compileToken = new pxt.Util.CancellationToken().startOperation();
         this.setState({ compileToken });
+        core.infoNotification(lf("Compiling..."), compileToken);
         this.clearSerial();
         this.editor.beforeCompile();
         if (simRestart) this.stopSimulator();
