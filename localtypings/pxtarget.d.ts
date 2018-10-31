@@ -284,6 +284,7 @@ declare namespace pxt {
         topBlocks?: boolean; // show a top blocks category in the editor
         pairingButton?: boolean; // display a pairing button
         tagColors?: pxt.Map<string>; // optional colors for tags
+        dontSuspendOnVisibility?: boolean; // we're inside an app, don't suspend the editor
         /**
          * Internal and temporary flags:
          * These flags may be removed without notice, please don't take a dependency on them
