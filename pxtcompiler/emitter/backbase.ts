@@ -259,7 +259,9 @@ ${baseLabel}:
             this.write(this.t.proc_setup(numlocals))
             this.baseStackSize += numlocals
 
-            if (this.proc.classInfo && this.proc.info.thisParameter) {
+            if (this.proc.classInfo && this.proc.info.thisParameter
+                && !target.switches.skipClassCheck
+                && !target.switches.noThisCheckOpt) {
                 this.write(`ldr r0, [sp, args@0]`)
                 this.emitInstanceOf(this.proc.classInfo, "validate")
             }
@@ -552,7 +554,7 @@ ${baseLabel}:
             let info = e.data as FieldAccessInfo
             let pref = store ? "st" : "ld"
             let lbl = pref + "fld_" + info.classInfo.id + "_" + info.name
-            if (info.needsCheck) {
+            if (info.needsCheck && !target.switches.skipClassCheck) {
                 this.emitInstanceOf(info.classInfo, "validateDecr")
                 lbl += "_chk"
             }
@@ -624,7 +626,8 @@ ${baseLabel}:
             this.emitLabelledHelper("classCall_" + info.id, () => {
                 this.write(`ldr r0, [sp, #0] ; ld-this`)
                 this.loadVTable()
-                this.checkSubtype(info)
+                if (!target.switches.skipClassCheck)
+                    this.checkSubtype(info)
                 this.write(`ldr r1, [r3, r1] ; ld-method`)
                 this.write(`bx r1 ; keep lr from caller`)
                 this.write(`.fail:`)
@@ -1012,7 +1015,8 @@ ${baseLabel}:
                             } else {
                                 this.write(this.loadFromExprStack("r0", a.expr, off))
                                 if (a.conv.refTag) {
-                                    this.emitInstanceOf(this.builtInClassNo(a.conv.refTag), "validate")
+                                    if (!target.switches.skipClassCheck)
+                                        this.emitInstanceOf(this.builtInClassNo(a.conv.refTag), "validate")
                                 } else {
                                     this.alignedCall(a.conv.method, "", off)
                                     if (a.conv.returnsRef)
@@ -1212,7 +1216,8 @@ ${baseLabel}:
                 `)
 
                 this.loadVTable(false, "r4")
-                this.checkSubtype(this.builtInClassNo(pxt.BuiltInType.RefCollection), ".fail", "r4")
+                if (!target.switches.skipClassCheck)
+                    this.checkSubtype(this.builtInClassNo(pxt.BuiltInType.RefCollection), ".fail", "r4")
 
                 // on linux we use 32 bits for array size
                 const ldrSize = target.stackAlign ? "ldr" : "ldrh"
@@ -1520,7 +1525,8 @@ ${baseLabel}:
         private lambdaCall(numargs: number) {
             this.write("; lambda call")
             this.loadVTable()
-            this.checkSubtype(this.builtInClassNo(pxt.BuiltInType.RefAction))
+            if (!target.switches.skipClassCheck)
+                this.checkSubtype(this.builtInClassNo(pxt.BuiltInType.RefAction))
             // the conditional branch below saves stack space for functions that do not require closure
             this.write(`
                 movs r4, #${numargs}

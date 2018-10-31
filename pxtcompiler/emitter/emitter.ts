@@ -2010,7 +2010,7 @@ ${lbl}: .short 0xffff
                     // TOTO case: case SK.ShorthandPropertyAssignment
                     // these are the real methods
                     case SK.GetAccessor:
-                    case SK.SetAccessor:                    
+                    case SK.SetAccessor:
                         isMethod = true
                         if (target.switches.slowMethods)
                             isProperty = true
@@ -2860,7 +2860,10 @@ ${lbl}: .short 0xffff
             const tp = typeOf(pacc.expression)
             if (isPossiblyGenericClassType(tp)) {
                 const info = getClassInfo(tp)
-                return fieldIndexCore(info, getFieldInfo(info, pacc.name.text), pacc.expression.kind == SK.ThisKeyword ? false : true)
+                let noCheck = pacc.expression.kind == SK.ThisKeyword
+                if (target.switches.noThisCheckOpt)
+                    noCheck = false
+                return fieldIndexCore(info, getFieldInfo(info, pacc.name.text), !noCheck)
             } else {
                 throw unhandled(pacc, lf("bad field access"), 9247)
             }
