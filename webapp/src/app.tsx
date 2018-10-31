@@ -478,6 +478,7 @@ export class ProjectView
                         if (output && !output.numDiagnosticsOverride
                             && (simulator.driver.state == pxsim.SimulatorState.Running
                                 || simulator.driver.state == pxsim.SimulatorState.Paused
+                                || simulator.driver.state == pxsim.SimulatorState.Suspended
                                 || simulator.driver.state == pxsim.SimulatorState.Unloaded)) {
                             if (this.editor == this.blocksEditor) this.autoRunBlocksSimulator();
                             else this.autoRunSimulator();
