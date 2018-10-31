@@ -482,6 +482,9 @@ export class ProjectView
                             if (this.editor == this.blocksEditor) this.autoRunBlocksSimulator();
                             else this.autoRunSimulator();
                         }
+                    } else if (this.state.running) {
+                        // Stop the simulator if it's running, since the code has been invalidated
+                        this.stopSimulator();
                     }
 
                     this.maybeShowPackageErrors();
