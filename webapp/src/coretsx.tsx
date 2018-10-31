@@ -131,7 +131,7 @@ export function renderConfirmDialogAsync(options: core.PromptOptions): Promise<v
 }
 
 export function hideDialog() {
-    if (currentDialog)  {
+    if (currentDialog) {
         currentDialog.hide();
         currentDialog = undefined;
     }
@@ -183,6 +183,7 @@ export interface NotificationOptions {
     kind?: string;
     text?: string;
     hc?: boolean;
+    cancellationToken?: pxt.U.CancellationToken;
 }
 
 export interface NotificationMessageState {
@@ -213,7 +214,7 @@ export class NotificationMessages extends React.Component<NotificationMessagePro
             that.remove(id);
         }, 3000);
 
-        this.setState({ notifications: notifications });
+        this.setState({ notifications });
     }
 
     remove(id: string) {
@@ -224,23 +225,28 @@ export class NotificationMessages extends React.Component<NotificationMessagePro
         }
     }
 
+    renderNotification(id: string, notification: NotificationOptions) {
+        const { kind, text, hc, cancellationToken } = notification;
+        let cls = 'ignored info message';
+        switch (kind) {
+            case 'err': cls = 'red inverted segment'; break;
+            case 'warn': cls = 'orange inverted segment'; break;
+            case 'info': cls = 'teal inverted segment'; break;
+            case 'compile': cls = 'ignored info message'; break;
+        }
+        return <div key={`${id}`} id={`${kind}msg`} className={`ui ${hc} ${cls}`}>
+            {text}
+            {cancellationToken ? <sui.Button
+                text={lf("Cancel")}
+                // tslint:disable-next-line:react-this-binding-issue
+                onClick={() => cancellationToken.cancel()} /> : undefined}
+        </div>
+    }
+
     render() {
         const { notifications } = this.state;
-
-        function renderNotification(id: string, notification: NotificationOptions) {
-            const { kind, text, hc } = notification;
-            let cls = 'ignored info message';
-            switch (kind) {
-                case 'err': cls = 'red inverted segment'; break;
-                case 'warn': cls = 'orange inverted segment'; break;
-                case 'info': cls = 'teal inverted segment'; break;
-                case 'compile': cls = 'ignored info message'; break;
-            }
-            return <div key={`${id}`} id={`${kind}msg`} className={`ui ${hc} ${cls}`}>{text}</div>
-        }
-
         return <div id="msg" aria-live="polite">
-            {Object.keys(notifications).map(k => renderNotification(k, notifications[k]))}
+            {Object.keys(notifications).map(k => this.renderNotification(k, notifications[k]))}
         </div>;
     }
 }
