@@ -37,10 +37,6 @@ namespace pxtblockly {
             });
         }
 
-        getRangeInfo(range: monaco.Range, host: MonacoFieldEditorHost): MonacoRangeInfo {
-            return undefined;
-        }
-
         onClosed() {
             if (this.resolver) {
                 this.resolver({
@@ -64,6 +60,8 @@ namespace pxtblockly {
 
     export const spriteEditorDefinition: MonacoFieldEditorDefinition = {
         id: fieldEditorId,
+        foldMatches: true,
+        glyphCssClass: "sprite-editor-glyph",
         matcher: {
             sourcefile: "main.ts",
             qname: "Image",

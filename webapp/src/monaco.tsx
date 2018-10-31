@@ -22,6 +22,70 @@ enum FileType {
     Markdown
 }
 
+interface OwnedRange {
+    line: number;
+    owner: string;
+    range: monaco.Range;
+}
+
+class FieldEditorManager {
+    protected fieldEditors: pxtblockly.MonacoFieldEditorDefinition[] = [];
+    protected decorations: pxt.Map<string[]> = {};
+    protected liveRanges: OwnedRange[] = [];
+
+    addFieldEditor(definition: pxtblockly.MonacoFieldEditorDefinition) {
+        this.fieldEditors.push(definition);
+        compiler.setSymbolMatchers(this.fieldEditors.map(fe => fe.matcher));
+    }
+
+    getDecorations(owner: string) {
+        return this.decorations[owner] || [];
+    }
+
+    setDecorations(owner: string, decorations: string[]) {
+        this.decorations[owner] = decorations;
+    }
+
+    clearRanges() {
+        this.liveRanges = [];
+    }
+
+    trackRange(owner: string, line: number, range: monaco.Range): boolean {
+        if (this.getInfoForLine(line)) {
+            return false;
+        }
+
+        this.liveRanges.push({ line, owner, range });
+        return true;
+    }
+
+    getFieldEditorForMatch(match: pxtc.service.SymbolMatch) {
+        for (const fe of this.fieldEditors) {
+            if (fe.matcher.qname === match.qname && fe.matcher.sourcefile === match.sourcefile) {
+                return fe;
+            }
+        }
+        return undefined;
+    }
+
+    getFieldEditorById(id: string) {
+        for (const fe of this.fieldEditors) {
+            if (fe.id === id) {
+                return fe;
+            }
+        }
+        return undefined;
+    }
+
+    getInfoForLine(line: number) {
+        for (const range of this.liveRanges) {
+            if (range.line === line) return range;
+        }
+        return undefined;
+    }
+}
+
+
 export class Editor extends toolboxeditor.ToolboxEditor {
     editor: monaco.editor.IStandaloneCodeEditor;
     currFile: pkg.File;
@@ -31,7 +95,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     loadedMonaco: boolean;
     loadingMonaco: boolean;
     giveFocusOnLoading: boolean = false;
-    fieldDecorations: pxt.Map<string[]> = {};
 
     protected feWidget: FieldEditorHost;
 
@@ -281,24 +344,28 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     handleMatches(matches: pxtc.service.SymbolMatch[]) {
-        if (matches && fieldEditors) {
+        if (matches && manager) {
+            const model = this.editor.getModel();
+            manager.clearRanges();
             matches.forEach(match => {
-                for (const fe of fieldEditors) {
-                    if (fe.matcher.qname === match.qname && fe.matcher.sourcefile === match.sourcefile) {
-                        const decorations: monaco.editor.IModelDeltaDecoration[] = [];
-                        match.locations.forEach(location => {
-                            decorations.push({
-                                range: new monaco.Range(location.line + 1, location.column + 1, location.endLine + 1, location.endColumn + 1),
-                                options: {
-                                    glyphMarginClassName: "sprite-editor"
-                                }
-                            });
-                        })
+                const fe = manager.getFieldEditorForMatch(match);
 
-                        const old = this.fieldDecorations[fe.id] || [];
-                        this.fieldDecorations[fe.id] = this.editor.deltaDecorations(old, decorations);
-                        break;
-                    }
+                if (fe) {
+                    const decorations: monaco.editor.IModelDeltaDecoration[] = [];
+                    match.locations.forEach(location => {
+                        const line = location.line + 1;
+
+                        decorations.push({
+                            range: new monaco.Range(line, model.getLineMinColumn(line), line, model.getLineMaxColumn(line)),
+                            options: {
+                                glyphMarginClassName: fe.glyphCssClass
+                            }
+                        });
+                        manager.trackRange(fe.id, line, new monaco.Range(line, location.column + 1, location.endLine + 1, location.endColumn + 1))
+                    })
+
+                    const old = manager.getDecorations(fe.id);
+                    manager.setDecorations(fe.id, this.editor.deltaDecorations(old, decorations));
                 }
             });
         }
@@ -581,25 +648,15 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             const model = this.editor.getModel();
             const decorations = model.getDecorationsInRange(new monaco.Range(line, model.getLineMinColumn(line), line, model.getLineMaxColumn(line)));
             if (decorations.length) {
-                for (const decoration of decorations) {
-                    const fe = this.getAssociatedFieldEditor(decoration);
+                const lineInfo = manager.getInfoForLine(line);
+                if (lineInfo) {
+                    const fe = manager.getFieldEditorById(lineInfo.owner);
                     if (fe) {
-                        this.showFieldEditor(decoration.range, new fe.proto());
-                        return;
+                        this.showFieldEditor(lineInfo.range, new fe.proto());
                     }
                 }
             }
-        })
-    }
-
-    private getAssociatedFieldEditor(decoration: monaco.editor.IModelDecoration) {
-        for (const fe of fieldEditors) {
-            const decorations = this.fieldDecorations[fe.id];
-            if (decorations && decorations.indexOf(decoration.id) !== -1) {
-                return fe;
-            }
-        }
-        return undefined;
+        });
     }
 
     public closeFlyout() {
@@ -1529,6 +1586,8 @@ class FieldEditorHost implements pxtblockly.MonacoFieldEditorHost, monaco.editor
     protected editor: monaco.editor.IStandaloneCodeEditor;
     protected blocks: pxtc.BlocksInfo;
 
+    suppressMouseDown = true;
+
     constructor(protected fe: pxtblockly.MonacoFieldEditor, protected range: monaco.Range, protected model: monaco.editor.IModel) {
         this.widgetDiv = document.createElement("div");
         this.widgetDiv.className = "monaco-field-editor-frame";
@@ -1603,12 +1662,13 @@ class FieldEditorHost implements pxtblockly.MonacoFieldEditorHost, monaco.editor
     }
 }
 
-let fieldEditors: pxtblockly.MonacoFieldEditorDefinition[];
+let manager: FieldEditorManager;
 
 export function registerFieldEditor(def: pxtblockly.MonacoFieldEditorDefinition) {
-    if (!fieldEditors) fieldEditors = [def];
-    else fieldEditors.push(def);
-    compiler.setSymbolMatchers(fieldEditors.map(fe => fe.matcher));
+    if (!manager) {
+        manager = new FieldEditorManager();
+    }
+    manager.addFieldEditor(def);
 }
 
 function firstWord(s: string) {

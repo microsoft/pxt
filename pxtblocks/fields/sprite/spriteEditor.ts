@@ -372,6 +372,7 @@ namespace pxtblockly {
         removeKeyListeners() {
             document.removeEventListener("keydown", this.keyDown);
             document.removeEventListener("keyup", this.keyUp);
+            this.paintSurface.removeMouseListeners();
         }
 
         private afterResize(showOverlay: boolean) {

@@ -254,6 +254,10 @@ namespace pxtblockly {
             }
         }
 
+        removeMouseListeners() {
+            this.endDrag();
+        }
+
         protected redraw() {
             for (let c = 0; c < this.image.width; c++) {
                 for (let r = 0; r < this.image.height; r++) {
@@ -293,38 +297,63 @@ namespace pxtblockly {
             if (!this.gesture) {
                 this.gesture = new GestureState();
 
-                this.paintLayer.addEventListener(pxsim.pointerEvents.move, (ev: MouseEvent) => {
-                    const [col, row] = this.clientToCell(ev.clientX, ev.clientY);
-                    if (ev.buttons & 1) {
-                        this.gesture.handle(InputEvent.Down, col, row);
-                    }
-                    this.gesture.handle(InputEvent.Move, col, row);
-                });
-
                 pxsim.pointerEvents.down.forEach(evId => {
                     this.paintLayer.addEventListener(evId, (ev: MouseEvent) => {
+                        this.startDrag();
                         const [col, row] = this.clientToCell(ev.clientX, ev.clientY);
                         this.gesture.handle(InputEvent.Down, col, row);
                     });
                 })
-
-
-                this.paintLayer.addEventListener(pxsim.pointerEvents.up, (ev: MouseEvent) => {
-                    const [col, row] = this.clientToCell(ev.clientX, ev.clientY);
-                    this.gesture.handle(InputEvent.Up, col, row);
-                });
 
                 this.paintLayer.addEventListener("click", (ev: MouseEvent) => {
                     const [col, row] = this.clientToCell(ev.clientX, ev.clientY);
                     this.gesture.handle(InputEvent.Down, col, row);
                     this.gesture.handle(InputEvent.Up, col, row);
                 });
-
-                this.paintLayer.addEventListener(pxsim.pointerEvents.leave, (ev: MouseEvent) => {
-                    const [col, row] = this.clientToCell(ev.clientX, ev.clientY);
-                    this.gesture.handle(InputEvent.Leave, col, row);
-                });
             }
+        }
+
+        private upHandler = (ev: MouseEvent) => {
+            this.endDrag();
+            const [col, row] = this.clientToCell(ev.clientX, ev.clientY);
+            this.gesture.handle(InputEvent.Up, col, row);
+
+            ev.stopPropagation();
+            ev.preventDefault();
+        }
+
+        private leaveHandler = (ev: MouseEvent) => {
+            this.endDrag();
+            const [col, row] = this.clientToCell(ev.clientX, ev.clientY);
+            this.gesture.handle(InputEvent.Leave, col, row);
+
+            ev.stopPropagation();
+            ev.preventDefault();
+        };
+
+        private moveHandler = (ev: MouseEvent) => {
+            const [col, row] = this.clientToCell(ev.clientX, ev.clientY);
+            if (col >= 0 && row >= 0 && col < this.image.width && row < this.image.height) {
+                if (ev.buttons & 1) {
+                    this.gesture.handle(InputEvent.Down, col, row);
+                }
+                this.gesture.handle(InputEvent.Move, col, row);
+            }
+
+            ev.stopPropagation();
+            ev.preventDefault();
+        }
+
+        private startDrag() {
+            document.addEventListener(pxsim.pointerEvents.move, this.moveHandler);
+            document.addEventListener(pxsim.pointerEvents.up, this.upHandler);
+            document.addEventListener(pxsim.pointerEvents.leave, this.leaveHandler);
+        }
+
+        private endDrag() {
+            document.removeEventListener(pxsim.pointerEvents.move, this.moveHandler);
+            document.removeEventListener(pxsim.pointerEvents.up, this.upHandler);
+            document.removeEventListener(pxsim.pointerEvents.leave, this.leaveHandler);
         }
 
         private layoutCanvas(canvas: HTMLCanvasElement, top: number, left: number, width: number, height: number) {

@@ -6,11 +6,6 @@ namespace pxtblockly {
         replacement: string;
     }
 
-    export interface MonacoRangeInfo {
-        icon: string;
-        fold?: boolean;
-    }
-
     export interface MonacoFieldEditorHost {
         contentDiv(): HTMLDivElement;
         getText(range: monaco.Range): string;
@@ -19,7 +14,6 @@ namespace pxtblockly {
 
     export interface MonacoFieldEditor {
         getId(): string;
-        getRangeInfo(range: monaco.Range, host: MonacoFieldEditorHost): MonacoRangeInfo;
         showEditorAsync(editrange: monaco.Range, host: MonacoFieldEditorHost): Promise<TextEdit>;
         onClosed(): void;
         dispose(): void;
@@ -28,6 +22,8 @@ namespace pxtblockly {
     export interface MonacoFieldEditorDefinition {
         id: string;
         matcher: pxtc.service.SymbolMatcher;
+        foldMatches?: boolean;
+        glyphCssClass?: string;
         proto: { new(): MonacoFieldEditor };
     }
 }
