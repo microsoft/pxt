@@ -94,7 +94,7 @@ namespace pxsim {
         private setState(state: SimulatorState) {
             if (this.state != state) {
                 this.state = state;
-                this.freeze(this.state == SimulatorState.Paused || this.state == SimulatorState.Suspended); // don't allow interaction when pause
+                this.freeze(this.state == SimulatorState.Paused); // don't allow interaction when pause
                 if (this.options.onStateChanged)
                     this.options.onStateChanged(this.state);
             }
