@@ -154,6 +154,31 @@ namespace pxt.runner {
         }
     }
 
+    let renderQueue: {
+        el: JQuery;
+        source: string;
+        options: blocks.BlocksRenderOptions;
+        cls: string;
+        render: (container: JQuery, r: pxt.runner.DecompileResult) => void;
+    }[] = [];
+    function consumeRenderQueueAsync(): Promise<void> {
+        const job = renderQueue.shift();
+        if (!job) return Promise.resolve(); // done
+
+        const { el, options, render, cls } = job;
+        return pxt.runner.decompileToBlocksAsync(el.text(), options)
+            .then((r) => {
+                try {
+                    render(el, r);
+                } catch (e) {
+                    console.error('error while rendering ' + el.html())
+                    el.append($('<div/>').addClass("ui segment warning").text(e.message));
+                }
+                el.removeClass("lang-shadow");
+                return consumeRenderQueueAsync();
+            });
+    }
+
     function renderNextSnippetAsync(cls: string,
         render: (container: JQuery, r: pxt.runner.DecompileResult) => void,
         options?: pxt.blocks.BlocksRenderOptions): Promise<void> {
@@ -166,17 +191,10 @@ namespace pxt.runner {
         if (!options.layout) options.layout = pxt.blocks.BlockLayout.Align;
         options.splitSvg = true;
 
-        return pxt.runner.decompileToBlocksAsync($el.text(), options)
-            .then((r) => {
-                try {
-                    render($el, r);
-                } catch (e) {
-                    console.error('error while rendering ' + $el.html())
-                    $el.append($('<div/>').addClass("ui segment warning").text(e.message));
-                }
-                $el.removeClass(cls);
-                return Promise.delay(1, renderNextSnippetAsync(cls, render, options));
-            })
+        renderQueue.push({ el: $el, source: $el.text(), options, render, cls });
+        $el.addClass("lang-shadow");
+        $el.removeClass(cls);
+        return renderNextSnippetAsync(cls, render, options);
     }
 
     function renderSnippetsAsync(options: ClientRenderOptions): Promise<void> {
@@ -636,6 +654,11 @@ namespace pxt.runner {
             if (options.snippetReplaceParent) $c = $c.parent();
             $c.remove();
         });
+        $('.lang-config').each((i, c) => {
+            let $c = $(c);
+            if (options.snippetReplaceParent) $c = $c.parent();
+            $c.remove();
+        })
     }
 
     function renderTypeScript(options?: ClientRenderOptions) {
@@ -662,8 +685,28 @@ namespace pxt.runner {
             $(e).removeClass('lang-typescript');
         });
         $('code.lang-typescript-ignore').each((i, e) => {
+            $(e).removeClass('lang-typescript-ignore');
+            $(e).addClass('lang-typescript');
             render(e, true);
-            $(e).removeClass('lang-typescript-ignore')
+            $(e).removeClass('lang-typescript');
+        });
+        $('code.lang-typescript-invalid').each((i, e) => {
+            $(e).removeClass('lang-typescript-invalid');
+            $(e).addClass('lang-typescript');
+            render(e, true);
+            $(e).removeClass('lang-typescript');
+            $(e).parent('div').addClass('invalid');
+            $(e).parent('div').prepend($("<i>", { "class": "icon ban" }));
+            $(e).addClass('invalid');
+        });
+        $('code.lang-typescript-valid').each((i, e) => {
+            $(e).removeClass('lang-typescript-valid');
+            $(e).addClass('lang-typescript');
+            render(e, true);
+            $(e).removeClass('lang-typescript');
+            $(e).parent('div').addClass('valid');
+            $(e).parent('div').prepend($("<i>", { "class": "icon check" }));
+            $(e).addClass('valid');
         });
     }
 
@@ -690,17 +733,19 @@ namespace pxt.runner {
             });
         }
 
+        renderQueue = [];
         renderTypeScript(options);
         return Promise.resolve()
+            .then(() => renderNextCodeCardAsync(options.codeCardClass, options))
             .then(() => renderNamespaces(options))
             .then(() => renderInlineBlocksAsync(options))
             .then(() => renderLinksAsync(options, options.linksClass, options.snippetReplaceParent, false))
             .then(() => renderLinksAsync(options, options.namespacesClass, options.snippetReplaceParent, true))
             .then(() => renderSignaturesAsync(options))
-            .then(() => renderNextCodeCardAsync(options.codeCardClass, options))
             .then(() => renderSnippetsAsync(options))
             .then(() => renderBlocksAsync(options))
             .then(() => renderBlocksXmlAsync(options))
             .then(() => renderProjectAsync(options))
+            .then(() => consumeRenderQueueAsync())
     }
 }

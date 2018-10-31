@@ -88,6 +88,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const fullscreen = run && !inTutorial && !simOpts.hideFullscreen
         const audio = run && !inTutorial && targetTheme.hasAudio;
         const isHeadless = simOpts.headless;
+        const collapse = !!targetTheme.pairingButton;
         if (isHeadless) return <div />;
 
         const runTooltip = isRunning ? lf("Stop the simulator") : lf("Start the simulator");
@@ -108,7 +109,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
                 {audio ? <sui.Button key='mutebtn' className={`mute-button ${isMuted ? 'red' : ''}`} icon={`${isMuted ? 'volume off' : 'volume up'}`} title={muteTooltip} onClick={this.toggleMute} /> : undefined}
             </div>
             <div className={`ui icon tiny buttons ${isFullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
-                {!isFullscreen ? <sui.Button key='collapsebtn' className={`collapse-button`} icon={`icon toggle left`} title={collapseTooltip} onClick={this.toggleSimulatorCollapse} /> : undefined}
+                {collapse && !isFullscreen ? <sui.Button key='collapsebtn' className={`collapse-button`} icon={`icon toggle left`} title={collapseTooltip} onClick={this.toggleSimulatorCollapse} /> : undefined}
                 {fullscreen ? <sui.Button key='fullscreenbtn' className={`fullscreen-button`} icon={`xicon ${isFullscreen ? 'fullscreencollapse' : 'fullscreen'}`} title={fullscreenTooltip} onClick={this.toggleSimulatorFullscreen} /> : undefined}
             </div>
         </aside >;

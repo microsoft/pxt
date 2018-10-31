@@ -242,24 +242,30 @@ export class Carousel extends data.Component<ICarouselProps, ICarouselState> {
 
     private dragMove(x: number) {
         this.dragOffset = x - this.dragStartX;
-        const newOffset = this.dragStartOffset + this.dragOffset;
+        const newOffset = pxt.Util.isUserLanguageRtl() ? this.dragStartOffset + this.dragOffset : this.dragStartOffset - this.dragOffset;
 
         this.setPosition(newOffset);
     }
 
     private setPosition(offset: number) {
         if (this.dragSurface) {
-            offset = Math.max(Math.min(offset, OUT_OF_BOUND_MARGIN), this.maxScrollOffset());
+            offset = Math.min(Math.max(offset, -OUT_OF_BOUND_MARGIN), this.maxScrollOffset());
             this.currentOffset = offset;
-            this.dragSurface.style.marginLeft = offset + "px";
+
+            if (pxt.Util.isUserLanguageRtl()) {
+                this.dragSurface.style.marginRight = -offset + "px";
+            }
+            else {
+                this.dragSurface.style.marginLeft = -offset + "px";
+            }
         }
     }
 
     private calculateIndex() {
         if (this.dragSurface) {
-            const bucketIndex = Math.abs(Math.floor(this.currentOffset / this.childWidth));
+            const bucketIndex = Math.round(Math.max(this.currentOffset, 0) / this.childWidth);
             let index: number;
-            if (this.currentOffset < this.dragStartOffset) {
+            if (this.currentOffset > this.dragStartOffset) {
                 index = bucketIndex;
             }
             else {
@@ -308,9 +314,9 @@ export class Carousel extends data.Component<ICarouselProps, ICarouselState> {
             return 0;
         }
         if (index === this.maxIndex()) {
-            return -1 * (this.totalLength() - this.containerWidth - OUT_OF_BOUND_MARGIN + this.arrowWidth * 2)
+            return this.totalLength() - this.containerWidth - OUT_OF_BOUND_MARGIN + this.arrowWidth * 2
         }
-        return -1 * (index * this.childWidth - this.childWidth * this.props.bleedPercent / 100);
+        return index * this.childWidth - this.childWidth * this.props.bleedPercent / 100;
     }
 
     private totalLength() {
@@ -329,7 +335,7 @@ export class Carousel extends data.Component<ICarouselProps, ICarouselState> {
     }
 
     private maxScrollOffset() {
-        return Math.min(-1 * (this.totalLength() - this.actualPageLength * this.childWidth + OUT_OF_BOUND_MARGIN), 0);
+        return Math.max(this.totalLength() - this.actualPageLength * this.childWidth + OUT_OF_BOUND_MARGIN, 0);
     }
 
     private maxIndex() {

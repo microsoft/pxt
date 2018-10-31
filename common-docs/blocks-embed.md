@@ -29,7 +29,7 @@ To render blocks in your own HTML documents or to make plugins for a document pl
 
 ### ~ hint
 
-Try this [fiddle](https://jsfiddle.net/ndyz1d57/1/) to see an embedded blocks rendering example.
+Try this [fiddle](https://jsfiddle.net/ndyz1d57/80/) to see an embedded blocks rendering example.
 
 ### ~
 
@@ -132,7 +132,7 @@ window.addEventListener("message", function (ev) {
         case "renderready":
             var snippets = document.getElementsByTagName("pre")
             for (var i = 0; i< snippets.length; i++) {
-                snippets[i].id = `snippet-` + i;
+                snippets[i].id = "snippet-" + i;
                 makeCodeRenderPre(snippets[i]);
             }
             break;
@@ -145,8 +145,8 @@ window.addEventListener("message", function (ev) {
             img.width = msg.width;
             img.height = msg.height;
             var snippet = document.getElementById(id)
-            snippet.parentElement.insertBefore(img, snippet)
-            snippet.parentElement.removeChild(snippet);
+            snippet.parentNode.insertBefore(img, snippet)
+            snippet.parentNode.removeChild(snippet);
             break;
     }
 }, false);
@@ -255,13 +255,13 @@ for (let i = 0; i < 10; i++) {
 </div>
 
 <script>
-var makecodeUrl = "@name@";
+var makecodeUrl = "@homeurl@";
 var blocksClass = "blocks";
 
 var injectRenderer = function () {
     var f = $("<iframe>", {
         id: "makecoderenderer",
-        src: `https://${makecodeUrl}/--docs?render=1&lang=${$('html').attr('lang')}`
+        src: makecodeUrl + "--docs?render=1&lang=" + ($('html').attr('lang') || "en")
     });
     f.css("position", "absolute");
     f.css("left", 0);
@@ -277,7 +277,7 @@ function makeCodeRenderPre(pre) {
         type: "renderblocks",
         id: pre.id,
         code: pre.innerText
-    }, "*");
+    }, "@homeurl@");
 }
 
 var attachBlocksListener = function () {
@@ -288,9 +288,9 @@ var attachBlocksListener = function () {
 
         switch (msg.type) {
             case "renderready":
-                $(`.${blocksClass}`).each(function () {
+                $("." + blocksClass).each(function () {
                     var snippet = $(this)[0];
-                    snippet.id = `pxt-blocks-${blockId++}`;
+                    snippet.id = "pxt-blocks-" + (blockId++);
                     makeCodeRenderPre(snippet);
                 });
                 break;
@@ -303,8 +303,8 @@ var attachBlocksListener = function () {
                 img.width = msg.width;
                 img.height = msg.height;
                 var pre = document.getElementById(id)
-                pre.parentElement.insertBefore(img, pre)
-                pre.parentElement.removeChild(pre);
+                pre.parentNode.insertBefore(img, pre)
+                pre.parentNode.removeChild(pre);
                 break;
         }
     }, false);
@@ -318,3 +318,7 @@ $(function () {
 </body>
 </html>
 ```
+
+## Laziness
+
+You can detect whether you have any snippet on your page before loading the rendering iFrame.

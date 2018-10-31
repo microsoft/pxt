@@ -6,6 +6,7 @@ namespace pxt.workspace {
         name: string;
         meta: pxt.Cloud.JsonScriptMeta;
         editor: string;
+        board?: string; // name of the package that contains the board.json info
         temporary?: boolean; // don't serialize project
         // older script might miss this
         target: string;

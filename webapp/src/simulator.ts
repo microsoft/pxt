@@ -60,7 +60,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
                 el.style.animationDuration = '';
 
                 if (pxt.BrowserUtils.isEdge() && coretsx.dialogIsShowing()) {
-                    // Workaround for an Edge bug where when a dialog is open and the simulator is
+                    // Workaround for a Microsoft Edge bug where when a dialog is open and the simulator is
                     // revealed it somehow breaks the page render. See https://github.com/Microsoft/pxt/pull/4707
                     // for more details
 
@@ -242,7 +242,10 @@ export function isDirty(): boolean { // in need of a restart?
     return dirty;
 }
 
-export function run(pkg: pxt.MainPackage, debug: boolean, res: pxtc.CompileResult, mute?: boolean, highContrast?: boolean, light?: boolean) {
+export function run(pkg: pxt.MainPackage, debug: boolean,
+    res: pxtc.CompileResult, mute?: boolean,
+    highContrast?: boolean, light?: boolean,
+    clickTrigger?: boolean) {
     makeClean();
     const js = res.outfiles[pxtc.BINARY_JS]
     const boardDefinition = pxt.appTarget.simulator.boardDefinition;
@@ -263,7 +266,8 @@ export function run(pkg: pxt.MainPackage, debug: boolean, res: pxtc.CompileResul
         cdnUrl: pxt.webConfig.commitCdnUrl,
         localizedStrings: simTranslations,
         refCountingDebug: pxt.options.debug,
-        version: pkg.version()
+        version: pkg.version(),
+        clickTrigger: clickTrigger
     }
     postSimEditorEvent("started");
 

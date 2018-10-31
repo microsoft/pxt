@@ -41,3 +41,21 @@ To update, the user has to take explicit action (currently, remove and re-add th
 
 Be aware that if you just fork an existing extension, the **fork won't show up in search**.
 You have to create a new repo.
+
+## Freezing extensions
+
+It's possible to freeze, or lock, an approved extension to a particular tag in GitHub based on editor major version. This is useful in a servicing scenario where an older (incompatible) editor is kept online in parallel with a new editor.
+The editor author can run ``pxt testghpkgs`` to generate the list of current extensions and tags and save them in the ``pxtargetconfig.json`` to freeze those versions*.
+
+```
+{
+    "packages": {
+        "releases": {
+            "v0": [
+                company/project#v0.0.1
+            ]
+        }
+}
+```
+
+\* Extensions are denoted as `packages` in the JSON.

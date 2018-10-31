@@ -71,7 +71,9 @@ namespace pxt.blocks {
             if (magic == 0xe1) {
                 return this.genMonochrome(data, w, h);
             }
-            return this.genColor(data, w, h);
+
+            const scaleFactor = ((pxt.BrowserUtils.isEdge() || pxt.BrowserUtils.isIE()) && w < 100 && h < 100) ? 3 : 1;
+            return this.genColor(data, w, h, scaleFactor);
         }
 
         genMonochrome(data: string, w: number, h: number) {
@@ -116,7 +118,11 @@ namespace pxt.blocks {
             return "data:image/bmp;base64," + btoa(U.uint8ArrayToString(bmp))
         }
 
-        genColor(data: string, w: number, h: number) {
+        genColor(data: string, width: number, height: number, intScale: number) {
+            intScale = Math.max(1, intScale | 0);
+            const w = width * intScale;
+            const h = height * intScale;
+
             let outByteW = w << 2;
             let bmpHeaderSize = 138;
             let bmpSize = bmpHeaderSize + outByteW * h
@@ -150,25 +156,37 @@ namespace pxt.blocks {
             let outP = bmpHeaderSize
 
             for (let x = 0; x < w; x++) {
+                let high = false;
                 outP = bmpHeaderSize + (x << 2)
-                for (let y = 0; y < h; y += 2) {
-                    let v = data.charCodeAt(inP++)
-                    const colorStart = (v & 0xf) << 2;
+                let columnStart = inP;
+
+                let v = data.charCodeAt(inP++);
+                let colorStart = high ? (((v >> 4) & 0xf) << 2) : ((v & 0xf) << 2);
+
+                for (let y = 0; y < h; y ++) {
                     bmp[outP] = this.palette[colorStart]
                     bmp[outP + 1] = this.palette[colorStart + 1]
                     bmp[outP + 2] = this.palette[colorStart + 2]
                     bmp[outP + 3] = this.palette[colorStart + 3]
                     outP += outByteW
-                    if (y != h - 1) {
-                        const colorStart = ((v >> 4) & 0xf) << 2;
-                        bmp[outP] = this.palette[colorStart]
-                        bmp[outP + 1] = this.palette[colorStart + 1]
-                        bmp[outP + 2] = this.palette[colorStart + 2]
-                        bmp[outP + 3] = this.palette[colorStart + 3]
-                        outP += outByteW
+
+                    if (y % intScale === intScale - 1) {
+                        if (high) {
+                            v = data.charCodeAt(inP++);
+                        }
+                        high = !high;
+
+                        colorStart = high ? (((v >> 4) & 0xf) << 2) : ((v & 0xf) << 2);
                     }
                 }
-                while (inP & 3) inP++
+
+                if (x % intScale === intScale - 1)  {
+                    if (!(height % 2)) --inP;
+                    while (inP & 3) inP++
+                }
+                else {
+                    inP = columnStart;
+                }
             }
 
             return "data:image/bmp;base64," + btoa(U.uint8ArrayToString(bmp))
@@ -1027,7 +1045,8 @@ namespace pxt.blocks {
                         "check": ['Array']
                     }
                 ],
-                "output": 'Number'
+                "output": 'Number',
+                "outputShape": Blockly.OUTPUT_SHAPE_ROUND
             });
         }
 
@@ -1525,32 +1544,6 @@ namespace pxt.blocks {
             }
         };
 
-        // TODO: look into porting this code over to pxt-blockly
-        // Fix highlighting bug in edge
-        (<any>Blockly).Flyout.prototype.addBlockListeners_ = function (root: any, block: any, rect: any) {
-            this.listeners_.push(Blockly.bindEventWithChecks_(root, 'mousedown', null,
-                this.blockMouseDown_(block)));
-            this.listeners_.push(Blockly.bindEventWithChecks_(rect, 'mousedown', null,
-                this.blockMouseDown_(block)));
-            this.listeners_.push(Blockly.bindEvent_(root, 'mouseover', block,
-                block.addSelect));
-            this.listeners_.push(Blockly.bindEvent_(root, 'mouseout', block,
-                block.removeSelect));
-            this.listeners_.push(Blockly.bindEvent_(rect, 'mouseover', block,
-                block.addSelect));
-            this.listeners_.push(Blockly.bindEvent_(rect, 'mouseout', block,
-                block.removeSelect));
-
-            const that = this;
-            function select() {
-                if (that._selectedItem && that._selectedItem.svgGroup_) {
-                    that._selectedItem.removeSelect();
-                }
-                that._selectedItem = block;
-                that._selectedItem.addSelect();
-            }
-        };
-
         // Get rid of bumping behavior
         (Blockly as any).Constants.Logic.LOGIC_COMPARE_ONCHANGE_MIXIN.onchange = function () {}
     }
@@ -1801,6 +1794,7 @@ namespace pxt.blocks {
                         }
                     ],
                     "colour": pxt.toolbox.blockColors['arrays'],
+                    "outputShape": Blockly.OUTPUT_SHAPE_ROUND,
                     "inputsInline": true
                 });
 
@@ -1876,6 +1870,7 @@ namespace pxt.blocks {
                     ],
                     "inputsInline": true,
                     "output": "Number",
+                    "outputShape": Blockly.OUTPUT_SHAPE_ROUND,
                     "colour": pxt.toolbox.getNamespaceColor('math')
                 });
 
@@ -1908,6 +1903,7 @@ namespace pxt.blocks {
                     ],
                     "inputsInline": true,
                     "output": "Number",
+                    "outputShape": Blockly.OUTPUT_SHAPE_ROUND,
                     "colour": pxt.toolbox.getNamespaceColor('math')
                 });
 
@@ -1996,10 +1992,11 @@ namespace pxt.blocks {
         };
         Blockly.Variables.flyoutCategoryBlocks = function (workspace) {
             let variableModelList = workspace.getVariablesOfType('');
-            variableModelList.sort(Blockly.VariableModel.compareByName);
 
             let xmlList: HTMLElement[] = [];
             if (variableModelList.length > 0) {
+                let mostRecentVariable = variableModelList[variableModelList.length - 1];
+                variableModelList.sort(Blockly.VariableModel.compareByName);
                 // variables getters first
                 for (let i = 0; i < variableModelList.length; i++) {
                     const variable = variableModelList[i];
@@ -2015,12 +2012,11 @@ namespace pxt.blocks {
                 }
                 xmlList[xmlList.length - 1].setAttribute('gap', '24');
 
-                let firstVariable = variableModelList[0];
                 if (Blockly.Blocks['variables_set']) {
                     let gap = Blockly.Blocks['variables_change'] ? 8 : 24;
                     let blockText = '<xml>' +
                         '<block type="variables_set" gap="' + gap + '">' +
-                        Blockly.Variables.generateVariableFieldXmlString(firstVariable) +
+                        Blockly.Variables.generateVariableFieldXmlString(mostRecentVariable) +
                         '</block>' +
                         '</xml>';
                     let block = Blockly.Xml.textToDom(blockText).firstChild as HTMLElement;
@@ -2042,7 +2038,7 @@ namespace pxt.blocks {
                     let gap = Blockly.Blocks['variables_get'] ? 20 : 8;
                     let blockText = '<xml>' +
                         '<block type="variables_change" gap="' + gap + '">' +
-                        Blockly.Variables.generateVariableFieldXmlString(firstVariable) +
+                        Blockly.Variables.generateVariableFieldXmlString(mostRecentVariable) +
                         '<value name="DELTA">' +
                         '<shadow type="math_number">' +
                         '<field name="NUM">1</field>' +
@@ -2482,7 +2478,8 @@ namespace pxt.blocks {
                         "check": ['String']
                     }
                 ],
-                "output": 'Number'
+                "output": 'Number',
+                "outputShape": Blockly.OUTPUT_SHAPE_ROUND
             });
         }
         installBuiltinHelpInfo(textLengthId);
