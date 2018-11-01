@@ -970,6 +970,7 @@ declare namespace Blockly {
         moveDrag(e: Event): goog.math.Coordinate;
         showContextMenu_(e: Event): void;
         static buildDeleteList_(topBlocks: Blockly.Block[]): Blockly.Block[];
+        getFlyout(): any; //Blockly.Flyout;
     }
 
 
