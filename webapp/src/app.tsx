@@ -1445,7 +1445,7 @@ export class ProjectView
         pxt.tickEvent("sandbox.openfulleditor");
         Util.assert(pxt.shell.isSandboxMode());
 
-        let editUrl = pxt.appTarget.appTheme.embedUrl;
+        let editUrl = pxt.appTarget.appTheme.shareUrl;
         if (!/\/$/.test(editUrl)) editUrl += '/';
 
         const mpkg = pkg.mainPkg
