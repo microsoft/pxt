@@ -33,11 +33,14 @@
             <div class="ui content">
                 @title@ 
                 <!-- @ifdef editbutton -->
-                <a href="/@versionsuff@#pub:@id@" class="ui primary button">Edit</a>
+                <a href="/#pub:@id@" class="ui primary button">Edit</a>
                 <!-- @endif -->
                 <div class='sub header humantime' data-time="@time@">@humantime@</span>
             </div>
         </h1>
+        <!-- @ifdef editbutton -->
+        <a href="/@versionsuff@#pub:@id@">Edit in the old editor</a>
+        <!-- @endif -->
         <p class="ui content description">
             @description@
         </p>
