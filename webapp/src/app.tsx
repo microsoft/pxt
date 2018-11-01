@@ -156,8 +156,8 @@ export class ProjectView
         pxt.debug(`page visibility: ${active}`)
         this.setState({ active: active })
         if (!active && (pxt.appTarget.simulator && pxt.appTarget.simulator.autoRun)) {
-            if (this.state.running) {
-                this.stopSimulator();
+            if (simulator.driver.state == pxsim.SimulatorState.Running) {
+                this.suspendSimulator();
                 this.setState({ resumeOnVisibility: true });
             }
             this.saveFileAsync().done();
@@ -167,7 +167,7 @@ export class ProjectView
                 let id = this.state.header ? this.state.header.id : '';
                 workspace.initAsync()
                     .done(() => !this.state.home && id ? this.loadHeaderAsync(workspace.getHeader(id), this.state.editorState) : Promise.resolve());
-            } else if (this.state.resumeOnVisibility && !this.state.running) {
+            } else if (this.state.resumeOnVisibility) {
                 this.setState({ resumeOnVisibility: false });
                 this.runSimulator();
             }
@@ -478,6 +478,7 @@ export class ProjectView
                         if (output && !output.numDiagnosticsOverride
                             && (simulator.driver.state == pxsim.SimulatorState.Running
                                 || simulator.driver.state == pxsim.SimulatorState.Paused
+                                || simulator.driver.state == pxsim.SimulatorState.Suspended
                                 || simulator.driver.state == pxsim.SimulatorState.Unloaded)) {
                             if (this.editor == this.blocksEditor) this.autoRunBlocksSimulator();
                             else this.autoRunSimulator();
@@ -1727,6 +1728,11 @@ export class ProjectView
         pxt.tickEvent('simulator.stop')
         simulator.stop(unload)
         this.setState({ running: false })
+    }
+
+    suspendSimulator() {
+        pxt.tickEvent('simulator.suspend')
+        simulator.suspend()
     }
 
     proxySimulatorMessage(content: string) {

@@ -18,7 +18,8 @@ namespace pxsim {
         Unloaded,
         Stopped,
         Running,
-        Paused
+        Paused,
+        Suspended
     }
 
     export enum SimulatorDebuggerCommand {
@@ -179,6 +180,18 @@ namespace pxsim {
                 }
                 this.scheduleFrameCleanup();
             }
+        }
+
+        public suspend() {
+            this.postMessage({ type: 'stop' });
+            this.setState(SimulatorState.Suspended);
+
+            let frames = this.container.getElementsByTagName("iframe");
+            for (let i = 0; i < frames.length; ++i) {
+                let frame = frames[i] as HTMLIFrameElement
+                U.addClass(frame, this.getStoppedClass());
+            }
+            this.scheduleFrameCleanup();
         }
 
         private unload() {
@@ -428,7 +441,7 @@ namespace pxsim {
                     let brk = msg as pxsim.DebuggerBreakpointMessage
                     if (this.state == SimulatorState.Running) {
                         if (brk.exceptionMessage)
-                            this.stop();
+                            this.suspend();
                         else
                             this.setState(SimulatorState.Paused);
                         if (this.options.onDebuggerBreakpoint)
