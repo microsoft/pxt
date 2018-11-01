@@ -1866,11 +1866,11 @@ export class ProjectView
             opts.trace = true;
 
         this.stopSimulator(undefined, true);
-        if (this.runToken.isCancelled()) return Promise.resolve();
 
         const state = this.editor.snapshotState()
         return compiler.compileAsync(opts)
             .then(resp => {
+                if (this.runToken.isCancelled()) return;
                 this.clearSerial();
                 this.editor.setDiagnostics(this.editorFile, state)
                 if (resp.outfiles[pxtc.BINARY_JS]) {
