@@ -1892,7 +1892,9 @@ export class ProjectView
                     core.warningNotification(lf("Oops, we could not run this project. Please check your code for errors."))
                 }
             })
-            .finally(() => this.runToken.resolveCancel());
+            .finally(() => {
+                if (!this.runToken.isCancelled()) this.runToken.resolveCancel()
+            });
     }
 
     ///////////////////////////////////////////////////////////
