@@ -209,12 +209,16 @@ namespace pxsim {
             stop();
         }
 
-        export function stop() {
+        function stopTone() {
             if (_vca) _vca.gain.value = 0;
             _frequency = 0;
             if (audio) {
                 audio.pause();
             }
+        }
+
+        export function stop() {
+            stopTone();
         }
 
         export function frequency(): number {
@@ -280,6 +284,36 @@ namespace pxsim {
                 audio.onerror = () => res();
                 audio.play();
             })
+        }
+
+        function frequencyFromMidiNoteNumber(note: number) {
+            return 440 * Math.pow(2, (note - 69) / 12);
+        }
+
+        export function sendMidiMessage(buf: RefBuffer) {
+            const data = buf.data;
+            if (!data.length) // garbage.
+                return;
+
+            // no midi access or no midi element,
+            // limited interpretation of midi commands
+            const cmd = data[0] >> 4;
+            const channel = data[0] & 0xf;
+            const noteNumber = data[1] || 0;
+            const noteFrequency = frequencyFromMidiNoteNumber(noteNumber);
+            const velocity = data[2] || 0;
+            //console.log(`midi: cmd ${cmd} channel (-1) ${channel} note ${noteNumber} f ${noteFrequency} v ${velocity}`)
+
+            // play drums regardless
+            if (cmd == 8 || ((cmd == 9) && (velocity == 0))) { // with MIDI, note on with velocity zero is the same as note off
+                // note off
+                stopTone();
+            } else if (cmd == 9) {
+                // note on -- todo handle velocity
+                tone(noteFrequency, 1);
+                if (channel == 9) // drums don't call noteOff
+                    setTimeout(() => stopTone(), 500);
+            }
         }
     }
 

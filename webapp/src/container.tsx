@@ -6,6 +6,7 @@ import * as sui from "./sui";
 import * as tutorial from "./tutorial";
 import * as container from "./container";
 import * as greenscreen from "./greenscreen";
+import * as core from "./core";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -145,14 +146,22 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         this.showBoardDialog = this.showBoardDialog.bind(this);
         this.removeProject = this.removeProject.bind(this);
         this.saveProject = this.saveProject.bind(this);
+        this.toggleCollapse = this.toggleCollapse.bind(this);
         this.showReportAbuse = this.showReportAbuse.bind(this);
         this.showLanguagePicker = this.showLanguagePicker.bind(this);
         this.toggleHighContrast = this.toggleHighContrast.bind(this);
         this.toggleGreenScreen = this.toggleGreenScreen.bind(this);
         this.showResetDialog = this.showResetDialog.bind(this);
+        this.showShareDialog = this.showShareDialog.bind(this);
         this.pair = this.pair.bind(this);
+        this.pairBluetooth = this.pairBluetooth.bind(this);
         this.showAboutDialog = this.showAboutDialog.bind(this);
         this.print = this.print.bind(this);
+    }
+
+    showShareDialog() {
+        pxt.tickEvent("menu.share", undefined, { interactiveConsent: true });
+        this.props.parent.showShareDialog();
     }
 
     openSettings() {
@@ -167,7 +176,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
 
     showBoardDialog() {
         pxt.tickEvent("menu.changeboard", undefined, { interactiveConsent: true });
-        this.props.parent.showBoardDialog();
+        this.props.parent.showBoardDialogAsync().done();
     }
 
     saveProject() {
@@ -178,6 +187,11 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
     removeProject() {
         pxt.tickEvent("menu.removeproject", undefined, { interactiveConsent: true });
         this.props.parent.removeProject();
+    }
+
+    toggleCollapse() {
+        pxt.tickEvent("menu.toggleSim", undefined, { interactiveConsent: true });
+        this.props.parent.toggleSimulatorCollapse();
     }
 
     showReportAbuse() {
@@ -209,6 +223,13 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
     pair() {
         pxt.tickEvent("menu.pair");
         this.props.parent.pair();
+    }
+
+    pairBluetooth() {
+        pxt.tickEvent("menu.pair.bluetooth")
+        core.showLoading("webblepair", lf("Pairing Bluetooth device..."))
+        pxt.webBluetooth.pairAsync()
+            .then(() => core.hideLoading("webblepair"));
     }
 
     showAboutDialog() {
@@ -245,7 +266,8 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         const readOnly = pxt.shell.isReadOnly();
         const isController = pxt.shell.isControllerMode();
         const showSave = !readOnly && !isController && !!targetTheme.saveInMenu;
-        const showGreenScreen = (targetTheme.greenScreen || /greenscreen=1/.test(window.location.href))
+        const showSimCollapse = !readOnly && !isController && !!targetTheme.simCollapseInMenu;
+        const showGreenScreen = (targetTheme.greenScreen || /greenscreen=1/i.test(window.location.href))
             && greenscreen.isSupported();
 
         return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem">
@@ -255,6 +277,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             {targetTheme.print ? <sui.Item role="menuitem" icon="print" text={lf("Print...")} onClick={this.print} tabIndex={-1} /> : undefined}
             {showSave ? <sui.Item role="menuitem" icon="save" text={lf("Save Project")} onClick={this.saveProject} tabIndex={-1} /> : undefined}
             {!isController ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project")} onClick={this.removeProject} tabIndex={-1} /> : undefined}
+            {showSimCollapse ? <sui.Item role="menuitem" icon='toggle right' text={lf("Toggle the simulator")} onClick={this.toggleCollapse} tabIndex={-1} /> : undefined}
             {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={this.showReportAbuse} tabIndex={-1} /> : undefined}
             <div className="ui divider"></div>
             {targetTheme.selectLanguage ? <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} tabIndex={-1} /> : undefined}
@@ -265,11 +288,11 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             }
             {!isController ? <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} tabIndex={-1} /> : undefined}
             {pxt.usb.isEnabled ? <sui.Item role="menuitem" icon='usb' text={lf("Pair device")} onClick={this.pair} tabIndex={-1} /> : undefined}
+            {pxt.webBluetooth.isAvailable() ? <sui.Item role="menuitem" icon='bluetooth' text={lf("Pair Bluetooth")} onClick={this.pairBluetooth} tabIndex={-1} /> : undefined}
             <div className="ui mobile only divider"></div>
             {renderDocItems(this.props.parent, "mobile only")}
             <div className="ui divider"></div>
             <sui.Item role="menuitem" text={lf("About...")} onClick={this.showAboutDialog} tabIndex={-1} />
-            {targetTheme.feedbackUrl ? <div className="ui divider"></div> : undefined}
             {targetTheme.feedbackUrl ? <a className="ui item" href={targetTheme.feedbackUrl} role="menuitem" title={lf("Give Feedback")} target="_blank" rel="noopener noreferrer" tabIndex={-1}>{lf("Give Feedback")}</a> : undefined}
         </sui.DropdownMenu>;
     }
@@ -347,17 +370,19 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         const targetTheme = pxt.appTarget.appTheme;
         const isController = pxt.shell.isControllerMode();
         const homeEnabled = !isController;
-        const sharingEnabled = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && !isController;
         const sandbox = pxt.shell.isSandboxMode();
         const tutorialOptions = this.props.parent.state.tutorialOptions;
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
         const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox && !inTutorial;
         const isRunning = this.props.parent.state.running;
         const hc = !!this.props.parent.state.highContrast;
+        const showShare = !inTutorial && header && pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && !isController;
 
         const logo = (hc ? targetTheme.highContrastLogo : undefined) || targetTheme.logo;
         const portraitLogo = (hc ? targetTheme.highContrastPortraitLogo : undefined) || targetTheme.portraitLogo;
         const rightLogo = sandbox ? targetTheme.portraitLogo : targetTheme.rightLogo;
+        const logoWide = !!targetTheme.logoWide;
+        const portraitLogoSize = logoWide ? "small" : "mini";
 
         const simActive = this.props.parent.isEmbedSimActive();
         const blockActive = this.props.parent.isBlocksActive();
@@ -368,15 +393,17 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         /* tslint:disable:react-a11y-anchors */
         return <div id="mainmenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar" aria-label={lf("Main menu")}>
             {!sandbox ? <div className="left menu">
-                <a href={isController ? targetTheme.logoUrl : undefined} aria-label={lf("{0} Logo", targetTheme.boardName)} role="menuitem" target="blank" rel="noopener" className="ui item logo brand" tabIndex={0} onClick={this.brandIconClick} onKeyDown={sui.fireClickOnEnter}>
-                    {logo || portraitLogo
-                        ? <img className={`ui logo ${logo ? " portrait hide" : ''}`} src={logo || portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)} />
-                        : <span className="name">{targetTheme.boardName}</span>}
-                    {portraitLogo ? (<img className='ui mini image portrait only' src={portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)} />) : null}
-                </a>
+                {targetTheme.hideMenubarLogo ? undefined :
+                    <a href={isController ? targetTheme.logoUrl : undefined} aria-label={lf("{0} Logo", targetTheme.boardName)} role="menuitem" target="blank" rel="noopener" className="ui item logo brand" tabIndex={0} onClick={this.brandIconClick} onKeyDown={sui.fireClickOnEnter}>
+                        {logo || portraitLogo
+                            ? <img className={`ui logo ${logo ? " portrait hide" : ''}`} src={logo || portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)} />
+                            : <span className="name">{targetTheme.boardName}</span>}
+                        {portraitLogo ? (<img className={`ui ${portraitLogoSize} image portrait only`} src={portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)} />) : null}
+                    </a>
+                }
                 {targetTheme.betaUrl ? <a href={`${targetTheme.betaUrl}`} className="ui red mini corner top left attached label betalabel" role="menuitem">{lf("Beta")}</a> : undefined}
                 {!inTutorial && homeEnabled ? <sui.Item className="icon openproject" role="menuitem" textClass="landscape only" icon="home large" ariaLabel={lf("Home screen")} text={lf("Home")} onClick={this.goHome} /> : null}
-                {!inTutorial && header && sharingEnabled ? <sui.Item className="icon shareproject" role="menuitem" textClass="widedesktop only" ariaLabel={lf("Share Project")} text={lf("Share")} icon="share alternate large" onClick={this.showShareDialog} /> : null}
+                {showShare ? <sui.Item className="icon shareproject" role="menuitem" textClass="widedesktop only" ariaLabel={lf("Share Project")} text={lf("Share")} icon="share alternate large" onClick={this.showShareDialog} /> : null}
                 {inTutorial ? <sui.Item className="tutorialname" tabIndex={-1} textClass="landscape only" text={tutorialOptions.tutorialName} /> : null}
             </div> : <div className="left menu">
                     <span id="logo" className="ui item logo">

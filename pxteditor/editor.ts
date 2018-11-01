@@ -37,6 +37,7 @@ namespace pxt.editor {
         sideDocsLoadUrl?: string; // set once to load the side docs frame
         sideDocsCollapsed?: boolean;
         projectName?: string;
+        suppressPackageWarning?: boolean;
 
         tutorialOptions?: TutorialOptions;
         lightbox?: boolean;
@@ -83,6 +84,13 @@ namespace pxt.editor {
         tsOnly?: boolean;
     }
 
+    export interface ExampleImportOptions {
+        name: string;
+        path: string;
+        loadBlocks?: boolean;
+        prj?: ProjectTemplate;
+    }
+
     export interface ProjectFilters {
         namespaces?: { [index: string]: FilterState; }; // Disabled = 2, Hidden = 0, Visible = 1
         blocks?: { [index: string]: FilterState; }; // Disabled = 2, Hidden = 0, Visible = 1
@@ -102,6 +110,17 @@ namespace pxt.editor {
         tutorialStepInfo?: pxt.tutorial.TutorialStepInfo[];
         tutorialStep?: number; // current tutorial page
         tutorialReady?: boolean; // current tutorial page
+    }
+
+    export interface ModalDialogButton {
+        label: string;
+        url?: string;
+    }
+
+    export interface ModalDialogOptions {
+        header: string;
+        body: string;
+        buttons?: ModalDialogButton[];
     }
 
     export interface IProjectView {
@@ -133,6 +152,7 @@ namespace pxt.editor {
         newEmptyProject(name?: string, documentation?: string): void;
         newProject(options?: ProjectCreationOptions): void;
         createProjectAsync(options: ProjectCreationOptions): Promise<void>;
+        importExampleAsync(options: ExampleImportOptions): Promise<void>;
         importProjectDialog(): void;
         removeProject(): void;
         editText(): void;
@@ -159,11 +179,12 @@ namespace pxt.editor {
 
         anonymousPublishAsync(): Promise<string>;
 
-        startStopSimulator(): void;
+        startStopSimulator(clickTrigger?: boolean): void;
         stopSimulator(unload?: boolean): void;
         restartSimulator(debug?: boolean): void;
         startSimulator(debug?: boolean): void;
         runSimulator(): void;
+        isSimulatorRunning(): boolean;
         expandSimulator(): void;
         collapseSimulator(): void;
         toggleSimulatorCollapse(): void;
@@ -225,9 +246,12 @@ namespace pxt.editor {
         showResetDialog(): void;
         showExitAndSaveDialog(): void;
         showChooseHwDialog(): void;
+        showExperimentsDialog(): void;
 
         showPackageDialog(): void;
-        showBoardDialog(): void;
+        showBoardDialogAsync(features?: string[]): Promise<void>;
+
+        showModalDialogAsync(options: ModalDialogOptions): Promise<void>;
     }
 
     export interface IHexFileImporter {
@@ -258,6 +282,7 @@ namespace pxt.editor {
     export interface ExtensionOptions {
         blocklyToolbox: ToolboxDefinition;
         monacoToolbox: ToolboxDefinition;
+        projectView: IProjectView;
     }
 
     export interface IToolboxOptions {

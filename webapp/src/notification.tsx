@@ -100,10 +100,17 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
         }
 
         this.handleBannerClick = this.handleBannerClick.bind(this);
+        this.clearExperiments = this.clearExperiments.bind(this);
     }
 
     handleBannerClick() {
         pxt.tickEvent("banner.linkClicked", undefined, { interactiveConsent: true });
+    }
+
+    clearExperiments() {
+        pxt.tickEvent("banner.experiments", undefined, { interactiveConsent: true });
+        pxt.editor.experiments.clear();
+        this.props.parent.reloadEditor();
     }
 
     renderCore() {
@@ -120,9 +127,30 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
         const showExperimentalBanner = !isLocalServe && isApp && isExperimentalUrlPath;
         const isWindows10 = pxt.BrowserUtils.isWindows10();
         const targetConfig = this.getData("target-config:") as pxt.TargetConfig;
+        const showExperiments = pxt.editor.experiments.someEnabled();
         const showWindowsStoreBanner = isWindows10 && Cloud.isOnline() && targetConfig && targetConfig.windowsStoreLink
             && !isApp
             && !pxt.shell.isSandboxMode();
+
+        if (showExperiments) {
+            const displayTime = 20 * 1000; // 20 seconds
+            return <GenericBanner id="experimentsbanner" parent={this.props.parent} bannerType={"negative"} displayTime={displayTime} >
+                <sui.Icon icon="information circle" />
+                <div className="header">{lf("Experiments enabled.")}</div>
+                <sui.Link className="link" ariaLabel={lf("Clear")} onClick={this.clearExperiments} >{lf("Clear")}</sui.Link>
+            </GenericBanner>
+        }
+
+        if (showExperimentalBanner) {
+            const liveUrl = pxt.appTarget.appTheme.homeUrl + location.search + location.hash;
+            return (
+                <GenericBanner id="experimental" parent={this.props.parent} bannerType={"negative"} >
+                    <sui.Icon icon="warning circle" />
+                    <div className="header">{lf("You are viewing an experimental version of the editor")}</div>
+                    <sui.Link className="link" ariaLabel={lf("Go back to live editor")} href={liveUrl}>{lf("Take me back")}</sui.Link>
+                </GenericBanner>
+            );
+        }
 
         if (showWindowsStoreBanner) {
             const delayTime = 300 * 1000; // 5 minutes
@@ -136,17 +164,6 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
                     <sui.Link className="link" target="_blank" ariaLabel={lf("View app in the Windows store")} href={targetConfig.windowsStoreLink} onClick={this.handleBannerClick}>
                         {lf("Want a faster download? Get the app!")}
                     </sui.Link>
-                </GenericBanner>
-            );
-        }
-
-        if (showExperimentalBanner) {
-            const liveUrl = pxt.appTarget.appTheme.homeUrl + location.search + location.hash;
-            return (
-                <GenericBanner id="experimental" parent={this.props.parent} bannerType={"negative"} >
-                    <sui.Icon icon="warning circle" />
-                    <div className="header">{lf("You are viewing an experimental version of the editor")}</div>
-                    <sui.Link className="link" ariaLabel={lf("Go back to live editor")} href={liveUrl}>{lf("Take me back")}</sui.Link>
                 </GenericBanner>
             );
         }

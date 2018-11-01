@@ -19,13 +19,16 @@
     .videoContainer video {
         min-width:100%;
         min-height:100%;
+        transform: scaleX(-1);
     }
 
     #maineditor, #filelist, .blocklyToolboxDiv, svg.blocklySvg,
     .monaco-editor, .monaco-editor .margin, .monaco-editor .monaco-editor-background,
     .monacoToolboxDiv {
+        background-image: none !important;
         background-color: transparent !important;
         border: none !important;
+        box-shadow: none !important;
     }
 
     .monaco-editor .lines-content, .monaco-editor .view-line, .monaco-editor .view-lines {
@@ -47,5 +50,14 @@
                 color: black;
             }
         }
+    }
+}
+
+.fullscreensim.greenscreen {
+    div#boardview {
+        background-image: none !important;
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;    
     }
 }

@@ -23,7 +23,8 @@ namespace pxt.runner {
         package?: string;
         showEdit?: boolean;
         showJavaScript?: boolean; // default is to show blocks first
-        downloadScreenshots?: boolean
+        downloadScreenshots?: boolean;
+        split?: boolean; // split in multiple divs if too big
     }
 
     export interface WidgetOptions {
@@ -59,7 +60,7 @@ namespace pxt.runner {
         let images = cdn + "images"
         let $h = $('<div class="ui bottom attached tabular icon small compact menu hideprint">'
             + ' <div class="right icon menu"></div></div>');
-        let $c = $('<div class="ui top attached segment nobreak"></div>');
+        let $c = $('<div class="ui top attached segment codewidget"></div>');
         let $menu = $h.find('.right.menu');
 
         const theme = pxt.appTarget.appTheme || {};
@@ -153,6 +154,31 @@ namespace pxt.runner {
         }
     }
 
+    let renderQueue: {
+        el: JQuery;
+        source: string;
+        options: blocks.BlocksRenderOptions;
+        cls: string;
+        render: (container: JQuery, r: pxt.runner.DecompileResult) => void;
+    }[] = [];
+    function consumeRenderQueueAsync(): Promise<void> {
+        const job = renderQueue.shift();
+        if (!job) return Promise.resolve(); // done
+
+        const { el, options, render, cls } = job;
+        return pxt.runner.decompileToBlocksAsync(el.text(), options)
+            .then((r) => {
+                try {
+                    render(el, r);
+                } catch (e) {
+                    console.error('error while rendering ' + el.html())
+                    el.append($('<div/>').addClass("ui segment warning").text(e.message));
+                }
+                el.removeClass("lang-shadow");
+                return consumeRenderQueueAsync();
+            });
+    }
+
     function renderNextSnippetAsync(cls: string,
         render: (container: JQuery, r: pxt.runner.DecompileResult) => void,
         options?: pxt.blocks.BlocksRenderOptions): Promise<void> {
@@ -163,18 +189,12 @@ namespace pxt.runner {
 
         if (!options.emPixels) options.emPixels = 18;
         if (!options.layout) options.layout = pxt.blocks.BlockLayout.Align;
+        options.splitSvg = true;
 
-        return pxt.runner.decompileToBlocksAsync($el.text(), options)
-            .then((r) => {
-                try {
-                    render($el, r);
-                } catch (e) {
-                    console.error('error while rendering ' + $el.html())
-                    $el.append($('<div/>').addClass("ui segment warning").text(e.message));
-                }
-                $el.removeClass(cls);
-                return Promise.delay(1, renderNextSnippetAsync(cls, render, options));
-            })
+        renderQueue.push({ el: $el, source: $el.text(), options, render, cls });
+        $el.addClass("lang-shadow");
+        $el.removeClass(cls);
+        return renderNextSnippetAsync(cls, render, options);
     }
 
     function renderSnippetsAsync(options: ClientRenderOptions): Promise<void> {
@@ -183,7 +203,7 @@ namespace pxt.runner {
             return renderNextSnippetAsync(options.snippetClass, (c, r) => {
                 const s = r.blocksSvg;
                 if (options.snippetReplaceParent) c = c.parent();
-                const segment = $('<div class="ui segment"/>').append(s);
+                const segment = $('<div class="ui segment codewidget"/>').append(s);
                 c.replaceWith(segment);
             }, { package: options.package, snippetMode: false, aspectRatio: options.blocksAspectRatio });
         }
@@ -233,7 +253,7 @@ namespace pxt.runner {
             let block = Blockly.Blocks[symbolInfo.attributes.blockId];
             let xml = block && block.codeCard ? block.codeCard.blocksXml : undefined;
 
-            let s = xml ? $(pxt.blocks.render(xml)) : r.compileBlocks && r.compileBlocks.success ? $(r.blocksSvg) : undefined;
+            const s = xml ? $(pxt.blocks.render(xml)) : r.compileBlocks && r.compileBlocks.success ? $(r.blocksSvg) : undefined;
             let sig = info.decl.getText().replace(/^export/, '');
             sig = sig.slice(0, sig.indexOf('{')).trim() + ';';
             let js = $('<code class="lang-typescript highlight"/>').text(sig);
@@ -246,7 +266,7 @@ namespace pxt.runner {
         return renderNextSnippetAsync(options.blocksClass, (c, r) => {
             const s = r.blocksSvg;
             if (options.snippetReplaceParent) c = c.parent();
-            const segment = $('<div class="ui segment"/>').append(s);
+            const segment = $('<div class="ui segment codewidget"/>').append(s);
             c.replaceWith(segment);
         }, { package: options.package, snippetMode: true, aspectRatio: options.blocksAspectRatio });
     }
@@ -261,6 +281,7 @@ namespace pxt.runner {
             if (!$el[0]) return Promise.resolve();
 
             if (!options.emPixels) options.emPixels = 18;
+            options.splitSvg = true;
             return pxt.runner.compileBlocksAsync($el.text(), options)
                 .then((r) => {
                     try {
@@ -277,7 +298,7 @@ namespace pxt.runner {
         return renderNextXmlAsync(cls, (c, r) => {
             const s = r.blocksSvg;
             if (opts.snippetReplaceParent) c = c.parent();
-            const segment = $('<div class="ui segment"/>').append(s);
+            const segment = $('<div class="ui segment codewidget"/>').append(s);
             c.replaceWith(segment);
         }, { package: opts.package, snippetMode: true, aspectRatio: opts.blocksAspectRatio });
     }
@@ -633,6 +654,11 @@ namespace pxt.runner {
             if (options.snippetReplaceParent) $c = $c.parent();
             $c.remove();
         });
+        $('.lang-config').each((i, c) => {
+            let $c = $(c);
+            if (options.snippetReplaceParent) $c = $c.parent();
+            $c.remove();
+        })
     }
 
     function renderTypeScript(options?: ClientRenderOptions) {
@@ -659,8 +685,28 @@ namespace pxt.runner {
             $(e).removeClass('lang-typescript');
         });
         $('code.lang-typescript-ignore').each((i, e) => {
+            $(e).removeClass('lang-typescript-ignore');
+            $(e).addClass('lang-typescript');
             render(e, true);
-            $(e).removeClass('lang-typescript-ignore')
+            $(e).removeClass('lang-typescript');
+        });
+        $('code.lang-typescript-invalid').each((i, e) => {
+            $(e).removeClass('lang-typescript-invalid');
+            $(e).addClass('lang-typescript');
+            render(e, true);
+            $(e).removeClass('lang-typescript');
+            $(e).parent('div').addClass('invalid');
+            $(e).parent('div').prepend($("<i>", { "class": "icon ban" }));
+            $(e).addClass('invalid');
+        });
+        $('code.lang-typescript-valid').each((i, e) => {
+            $(e).removeClass('lang-typescript-valid');
+            $(e).addClass('lang-typescript');
+            render(e, true);
+            $(e).removeClass('lang-typescript');
+            $(e).parent('div').addClass('valid');
+            $(e).parent('div').prepend($("<i>", { "class": "icon check" }));
+            $(e).addClass('valid');
         });
     }
 
@@ -687,17 +733,19 @@ namespace pxt.runner {
             });
         }
 
+        renderQueue = [];
         renderTypeScript(options);
         return Promise.resolve()
+            .then(() => renderNextCodeCardAsync(options.codeCardClass, options))
             .then(() => renderNamespaces(options))
             .then(() => renderInlineBlocksAsync(options))
             .then(() => renderLinksAsync(options, options.linksClass, options.snippetReplaceParent, false))
             .then(() => renderLinksAsync(options, options.namespacesClass, options.snippetReplaceParent, true))
             .then(() => renderSignaturesAsync(options))
-            .then(() => renderNextCodeCardAsync(options.codeCardClass, options))
             .then(() => renderSnippetsAsync(options))
             .then(() => renderBlocksAsync(options))
             .then(() => renderBlocksXmlAsync(options))
             .then(() => renderProjectAsync(options))
+            .then(() => consumeRenderQueueAsync())
     }
 }

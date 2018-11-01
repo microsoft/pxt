@@ -108,10 +108,12 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             && p.getKsPkg().level <= 1;
         const upd = p.getKsPkg() && p.getKsPkg().verProtocol() == "github";
         const meta: pkg.PackageMeta = this.getData("open-pkg-meta:" + p.getPkgId());
+        let version = upd ? p.getKsPkg().verArgument().split('#')[1] : undefined; // extract github tag
+        if (version && version.length > 20) version = version.substring(0, 7);
         return [<PackgeTreeItem key={"hd-" + p.getPkgId()}
             pkg={p} isActive={expandedPkg == p.getPkgId()} onItemClick={this.togglePkg}
             hasDelete={del} onItemRemove={this.removePkg}
-            hasRefresh={upd} onItemRefresh={this.updatePkg} >
+            version={version} hasRefresh={upd} onItemRefresh={this.updatePkg} >
             {!meta.numErrors ? null : <span className='ui label red'>{meta.numErrors}</span>}
             {p.getPkgId()}
             {expandedPkg == p.getPkgId() ?
@@ -307,6 +309,7 @@ interface PackageTreeItemProps {
     onItemRefresh: (p: pkg.EditorPackage) => void;
     isActive?: boolean;
     hasRefresh?: boolean;
+    version?: string;
     hasDelete?: boolean;
 }
 
@@ -339,7 +342,7 @@ class PackgeTreeItem extends sui.StatelessUIElement<PackageTreeItemProps> {
     }
 
     renderCore() {
-        const { onItemClick, onItemRemove, onItemRefresh,
+        const { onItemClick, onItemRemove, onItemRefresh, version,
             isActive, hasRefresh, hasDelete, pkg: p, ...rest } = this.props;
 
         return <div className="header link item" role="treeitem"
@@ -348,9 +351,9 @@ class PackgeTreeItem extends sui.StatelessUIElement<PackageTreeItemProps> {
             onClick={this.handleClick} tabIndex={0} onKeyDown={sui.fireClickOnEnter} {...rest}>
             <sui.Icon icon={`chevron ${isActive ? "down" : "right"} icon`} />
             {hasRefresh ? <sui.Button className="primary label" icon="refresh" title={lf("Refresh extension {0}", p.getPkgId())}
-                onClick={this.handleRefresh} onKeyDown={this.handleButtonKeydown} /> : ''}
+                onClick={this.handleRefresh} onKeyDown={this.handleButtonKeydown} text={version || ''}></sui.Button> : undefined}
             {hasDelete ? <sui.Button className="primary label" icon="trash" title={lf("Delete extension {0}", p.getPkgId())}
-                onClick={this.handleRemove} onKeyDown={this.handleButtonKeydown} /> : ''}
+                onClick={this.handleRemove} onKeyDown={this.handleButtonKeydown} /> : undefined}
 
             {this.props.children}
         </div>

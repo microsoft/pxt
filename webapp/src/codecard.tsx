@@ -96,10 +96,11 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
             {card.label || card.blocksXml || card.typeScript || imageUrl || cardType == "file" ? <div className={"ui image"}>
                 {card.label ? <label className={`ui ${card.labelClass ? card.labelClass : "orange right ribbon"} label`}>{card.label}</label> : undefined}
                 {card.typeScript ? <pre key="promots">{card.typeScript}</pre> : undefined}
-                {imageUrl ? <div className="ui imagewrapper">
+                {card.cardType != "file" && imageUrl ? <div className="ui imagewrapper">
                     <div className={`ui cardimage`} data-src={imageUrl} ref="lazyimage" />
                 </div> : undefined}
-                {card.cardType == "file" ? <div className="ui fileimage" /> : undefined}
+                {card.cardType == "file" && !imageUrl ? <div className="ui fileimage" /> : undefined}
+                {card.cardType == "file" && imageUrl ? <div className="ui fileimage" data-src={imageUrl} ref="lazyimage" /> : undefined}
             </div> : undefined}
             {card.icon || card.iconContent ?
                 <div className="ui imagewrapper"><div className={`ui button massive fluid ${card.iconColor} ${card.iconContent ? "iconcontent" : ""}`}>
@@ -114,12 +115,9 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
             {card.time ? <div className="meta">
                 {card.time ? <span key="date" className="date">{pxt.Util.timeSince(card.time)}</span> : null}
             </div> : undefined}
-            {card.extracontent || card.tags || card.learnMoreUrl || card.buyUrl ?
-                <div className="extra content">
+            {card.extracontent || card.learnMoreUrl || card.buyUrl || card.feedbackUrl ?
+                <div className="ui extra content widedesktop only">
                     {card.extracontent}
-                    {card.tags ? card.tags.map(tag =>
-                        <span key={`tag${tag.label}`} className={`ui label tiny ${tag.color}`}>{pxt.Util.rlf(tag.label)}</span>
-                    ) : undefined}
                     {card.buyUrl ?
                         <a className="learnmore left floated" href={card.buyUrl}
                             aria-label={lf("Buy")} target="_blank" rel="noopener noreferrer">
@@ -129,6 +127,11 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
                         <a className="learnmore right floated" href={card.learnMoreUrl}
                             aria-label={lf("Learn more")} target="_blank" rel="noopener noreferrer">
                             {lf("Learn more")}
+                        </a> : undefined}
+                    {card.feedbackUrl ?
+                        <a className="learnmore right floated" href={card.feedbackUrl}
+                            aria-label={lf("Feedback")} target="_blank" rel="noopener noreferrer">
+                            {lf("Feedback")}
                         </a> : undefined}
                 </div> : undefined}
         </div>;

@@ -10,7 +10,7 @@ pxt buildsprites DIRECTORY
 
 where DIRECTORY is a folder containing PNG images and a ``meta.json`` file.
 
-This needs to be run in a package directory and will generate one `.jres` and one
+This needs to run in an extension directory and will generate one `.jres` and one
 `.ts` file.
 
 Example `meta.json` file:

@@ -11,7 +11,6 @@ namespace pxtblockly {
         columns?: string;
         maxRows?: string;
         width?: string;
-        itemColour?: string;
         tooltips?: string;
         tooltipsXOffset?: string;
         tooltipsYOffset?: string;
@@ -30,30 +29,39 @@ namespace pxtblockly {
         // Number of rows to display (if there are extra rows, the picker will be scrollable)
         private maxRows_: number;
 
-        private backgroundColour_: string;
-        private itemColour_: string;
-        private borderColour_: string;
+        protected backgroundColour_: string;
+        protected borderColour_: string;
 
         private tooltipConfig_: FieldGridPickerToolTipConfig;
 
-        private tooltips_: goog.ui.Tooltip[] = [];
-        private firstItem_: goog.ui.MenuItem;
-        private menu_: goog.ui.Menu;
+        private tooltip_: HTMLElement;
+        private firstItem_: HTMLElement;
 
         private hasSearchBar_: boolean;
         private hideRect_: boolean;
 
-        protected dropDownOpen_: boolean;
+        private observer: IntersectionObserver;
+
+        private selectedItemDom: HTMLElement;
+
+        private closeModal_: boolean;
+
+        // Selected bar
+        private selectedBar_: HTMLElement;
+        private selectedImg_: HTMLImageElement;
+        private selectedBarText_: HTMLElement;
+        private selectedBarValue_: string;
+
+        private static DEFAULT_IMG = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
 
         constructor(text: string, options: FieldGridPickerOptions, validator?: Function) {
             super(options.data);
 
             this.columns_ = parseInt(options.columns) || 4;
             this.maxRows_ = parseInt(options.maxRows) || 0;
-            this.width_ = parseInt(options.width) || 400;
+            this.width_ = parseInt(options.width) || 200;
 
             this.backgroundColour_ = pxtblockly.parseColour(options.colour);
-            this.itemColour_ = options.itemColour || "rgba(255, 255, 255, 0.6)";
             this.borderColour_ = pxt.toolbox.fadeColor(this.backgroundColour_, 0.4, false);
 
             let tooltipCfg: FieldGridPickerToolTipConfig = {
@@ -72,7 +80,20 @@ namespace pxtblockly {
          */
         public dispose() {
             super.dispose();
-            this.disposeTooltips();
+            this.disposeTooltip();
+            this.disposeIntersectionObserver();
+        }
+
+        private createTooltip_() {
+            if (this.tooltip_) return;
+
+            // Create tooltip
+            this.tooltip_ = document.createElement('div');
+            this.tooltip_.className = 'goog-tooltip blocklyGridPickerTooltip';
+            this.tooltip_.style.position = 'absolute';
+            this.tooltip_.style.display = 'none';
+            this.tooltip_.style.visibility = 'hidden';
+            document.body.appendChild(this.tooltip_);
         }
 
         /**
@@ -80,81 +101,185 @@ namespace pxtblockly {
          * @param options
          * @param tableContainer
          */
-        private populateTableContainer(options: (Object | String[])[], tableContainer: goog.ui.Control) {
-            this.disposeTooltips();
-            tableContainer.removeChildren(true);
+        private populateTableContainer(options: (Object | String[])[], tableContainer: HTMLElement, scrollContainer: HTMLElement) {
+
+            pxsim.U.removeChildren(tableContainer);
             if (options.length == 0) {
                 this.firstItem_ = undefined
             }
+
             for (let i = 0; i < options.length / this.columns_; i++) {
-                let row = this.createRow(i, options);
-                tableContainer.addChild(row, true);
-            }
-            let tableContainerDom = tableContainer.getElement();
-            if (tableContainerDom) {
-                let menuItemsDom = tableContainerDom.childNodes;
-                for (let i = 0; i < menuItemsDom.length; ++i) {
-                    const elem = menuItemsDom[i] as HTMLElement;
-                    elem.className = "blocklyGridPickerRow";
-                }
+                let row = this.populateRow(i, options, tableContainer);
+                tableContainer.appendChild(row);
             }
         }
 
         /**
-         * Add the tooltips and style the items
+         * Populate a single row and add it to table container
+         * @param row
          * @param options
          * @param tableContainer
          */
-        private createTooltips(options: (Object | String[])[], tableContainer: goog.ui.Control) {
-            let needToFloatLeft = (options.length < this.columns_);
-            let tableContainerDom = tableContainer.getElement() as HTMLElement;
-            const menuItemsDom = tableContainerDom.getElementsByClassName('goog-menuitem');
-            let largestTextItem = -1;
+        private populateRow(row: number, options: (Object | string[])[], tableContainer: HTMLElement): HTMLElement {
+            const columns = this.columns_;
 
-            for (let i = 0; i < menuItemsDom.length; ++i) {
-                const elem = menuItemsDom[i] as HTMLElement;
-                elem.style.borderColor = this.backgroundColour_;
-                elem.style.backgroundColor = this.itemColour_;
-                if (needToFloatLeft) {
-                    elem.className += " floatLeft";
-                }
+            const rowContent = document.createElement('div');
+            rowContent.className = 'blocklyGridPickerRow';
 
-                const tooltipText = (options[i] as any)[0].alt;
-                if (tooltipText) {
-                    const tooltip = new goog.ui.Tooltip(elem, tooltipText);
-                    const onShowOld = tooltip.onShow;
-                    const isRTL = this.sourceBlock_.RTL;
-                    const xOffset = (isRTL ? -this.tooltipConfig_.xOffset : this.tooltipConfig_.xOffset);
-                    tooltip.onShow = () => {
-                        onShowOld.call(tooltip);
-                        const newPos = new goog.positioning.ClientPosition(tooltip.cursorPosition.x + xOffset,
-                            tooltip.cursorPosition.y + this.tooltipConfig_.yOffset);
-                        tooltip.setPosition(newPos);
-                    };
-                    tooltip.setShowDelayMs(0);
-                    tooltip.className = 'goog-tooltip blocklyGridPickerTooltip';
-                    elem.addEventListener('mousemove', (e: MouseEvent) => {
-                        const newPos = new goog.positioning.ClientPosition(e.clientX + xOffset,
-                            e.clientY + this.tooltipConfig_.yOffset);
-                        tooltip.setPosition(newPos);
-                    });
-                    this.tooltips_.push(tooltip);
-                } else {
-                    const elemWidth = goog.style.getSize(elem).width;
-                    if (elemWidth > largestTextItem) {
-                        largestTextItem = elemWidth;
+            for (let i = (columns * row); i < Math.min((columns * row) + columns, options.length); i++) {
+                let content = (options[i] as any)[0]; // Human-readable text or image.
+                const value = (options[i] as any)[1]; // Language-neutral value.
+
+                const menuItem = document.createElement('div');
+                menuItem.className = 'goog-menuitem goog-option';
+                menuItem.setAttribute('id', ':' + i); // For aria-activedescendant
+                menuItem.setAttribute('role', 'menuitem');
+                menuItem.style.userSelect = 'none';
+                menuItem.title = content['alt'] || content;
+                menuItem.setAttribute('data-value', value);
+
+                const menuItemContent = document.createElement('div');
+                menuItemContent.setAttribute('class', 'goog-menuitem-content');
+                menuItemContent.title = content['alt'] || content;
+                menuItemContent.setAttribute('data-value', value);
+
+                const hasImages = typeof content == 'object';
+
+                // Set colour
+                let backgroundColour = this.backgroundColour_;
+                if (value == this.getValue()) {
+                    // This option is selected
+                    menuItem.setAttribute('aria-selected', 'true');
+                    Blockly.utils.addClass(menuItem, 'goog-option-selected');
+                    backgroundColour = this.sourceBlock_.getColourTertiary();
+
+                    // Save so we can scroll to it later
+                    this.selectedItemDom = menuItem;
+
+                    if (hasImages && !this.shouldShowTooltips()) {
+                        this.updateSelectedBar_(content, value);
                     }
                 }
-            }
 
-            // Resize text items so they have a uniform width
-            if (largestTextItem > -1) {
-                for (let i = 0; i < menuItemsDom.length; ++i) {
-                    const elem = menuItemsDom[i] as HTMLElement;
-                    goog.style.setWidth(elem, largestTextItem);
+                menuItem.style.backgroundColor = backgroundColour;
+                menuItem.style.borderColor = this.borderColour_;
+
+
+                if (hasImages) {
+                    // An image, not text.
+                    const buttonImg = new Image(content['width'], content['height']);
+                    buttonImg.setAttribute('draggable', 'false');
+                    if (!('IntersectionObserver' in window)) {
+                        // No intersection observer support, set the image url immediately
+                        buttonImg.src = content['src'];
+                    } else {
+                        buttonImg.src = FieldGridPicker.DEFAULT_IMG;
+                        buttonImg.setAttribute('data-src', content['src']);
+                        this.observer.observe(buttonImg);
+                    }
+                    buttonImg.alt = content['alt'] || '';
+                    buttonImg.setAttribute('data-value', value);
+                    menuItemContent.appendChild(buttonImg);
+                } else {
+                    // text
+                    menuItemContent.textContent = content;
+                }
+
+                if (this.shouldShowTooltips()) {
+                    Blockly.bindEvent_(menuItem, 'click', this, this.buttonClickAndClose_);
+
+                    // Setup hover tooltips
+                    const xOffset = (this.sourceBlock_.RTL ? -this.tooltipConfig_.xOffset : this.tooltipConfig_.xOffset);
+                    const yOffset = this.tooltipConfig_.yOffset;
+
+                    Blockly.bindEvent_(menuItem, 'mousemove', this, (e: MouseEvent) => {
+                        if (hasImages) {
+                            this.tooltip_.style.top = `${e.clientY + yOffset}px`;
+                            this.tooltip_.style.left = `${e.clientX + xOffset}px`;
+                            // Set tooltip text
+                            const touchTarget = document.elementFromPoint(e.clientX, e.clientY);
+                            const title = (touchTarget as any).title || (touchTarget as any).alt;
+                            this.tooltip_.textContent = title;
+                            // Show the tooltip
+                            this.tooltip_.style.visibility = title ? 'visible' : 'hidden';
+                            this.tooltip_.style.display = title ? '' : 'none';
+                        }
+
+                        Blockly.utils.addClass(menuItem, 'goog-menuitem-highlight');
+                        tableContainer.setAttribute('aria-activedescendant', menuItem.id);
+                    });
+
+                    Blockly.bindEvent_(menuItem, 'mouseout', this, (e: MouseEvent) => {
+                        if (hasImages) {
+                            // Hide the tooltip
+                            this.tooltip_.style.visibility = 'hidden';
+                            this.tooltip_.style.display = 'none';
+                        }
+
+                        Blockly.utils.removeClass(menuItem, 'goog-menuitem-highlight');
+                        tableContainer.removeAttribute('aria-activedescendant');
+                    });
+                } else {
+                    if (hasImages) {
+                        // Show the selected bar
+                        this.selectedBar_.style.display = '';
+
+                        // Show the selected item (in the selected bar)
+                        Blockly.bindEvent_(menuItem, 'click', this, (e: MouseEvent) => {
+                            if (this.closeModal_) {
+                                this.buttonClick_(e);
+                            } else {
+                                // Clear all current hovers.
+                                const currentHovers = tableContainer.getElementsByClassName('goog-menuitem-highlight');
+                                for (let i = 0; i < currentHovers.length; i++) {
+                                    Blockly.utils.removeClass(currentHovers[i], 'goog-menuitem-highlight');
+                                }
+                                // Set hover on current item
+                                Blockly.utils.addClass(menuItem, 'goog-menuitem-highlight');
+
+                                this.updateSelectedBar_(content, value);
+                            }
+                        });
+                    } else {
+                        Blockly.bindEvent_(menuItem, 'click', this, this.buttonClickAndClose_);
+                        Blockly.bindEvent_(menuItem, 'mouseup', this, this.buttonClickAndClose_);
+                    }
+                }
+
+                menuItem.appendChild(menuItemContent);
+                rowContent.appendChild(menuItem);
+
+                if (i == 0) {
+                    this.firstItem_ = menuItem;
                 }
             }
+
+            return rowContent;
         }
+
+        /**
+         * Callback for when a button is clicked inside the drop-down.
+         * Should be bound to the FieldIconMenu.
+         * @param {Event} e DOM event for the click/touch
+         * @private
+         */
+        protected buttonClick_ = function (e: any) {
+            let value = e.target.getAttribute('data-value');
+            if (value !== null) {
+                this.setValue(value);
+
+                // Close the picker
+                if (this.closeModal_) {
+                    this.close();
+                    this.closeModal_ = false;
+                }
+            }
+        };
+
+        protected buttonClickAndClose_ = function (e: any) {
+            this.closeModal_ = true;
+            this.buttonClick_(e);
+        };
 
         /**
          * Whether or not to show a box around the dropdown menu.
@@ -163,17 +288,6 @@ namespace pxtblockly {
          */
         shouldShowRect_() {
             return !this.hideRect_ ? !this.sourceBlock_.isShadow() : false;
-        }
-
-        /**
-         * Selects menu item and closes gridpicker
-         * @param item = the item to select
-         */
-        private selectItem(item: goog.ui.MenuItem) {
-            if (this.menu_) {
-                this.onItemSelected(this.menu_, item)
-                this.close()
-            }
         }
 
         /**
@@ -188,11 +302,6 @@ namespace pxtblockly {
             if (this.sourceBlock_ && Blockly.Events.isEnabled()) {
                 Blockly.Events.fire(new Blockly.Events.BlockChange(
                     this.sourceBlock_, 'field', this.name, this.value_, newValue));
-            }
-            // Clear menu item for old value.
-            if (this.selectedItem) {
-                this.selectedItem.setChecked(false);
-                this.selectedItem = null;
             }
             this.value_ = newValue;
             // Look up and display the human-readable text.
@@ -220,16 +329,17 @@ namespace pxtblockly {
          * Closes the gridpicker.
          */
         private close() {
+            this.disposeTooltip();
+
             Blockly.WidgetDiv.hideIfOwner(this);
             Blockly.Events.setGroup(false);
-            this.disposeTooltips();
         }
 
         /**
          * Getter method
          */
         private getFirstItem() {
-            return this.firstItem_
+            return this.firstItem_;
         }
 
         /**
@@ -254,24 +364,9 @@ namespace pxtblockly {
         /**
          * Scroll menu to item that equals current value of gridpicker
          */
-        private highlightAndScrollSelected(tableContainer: goog.ui.Control, scrollContainerDom: HTMLElement) {
-            let tableContainerDom = tableContainer.getElement() as HTMLElement
-            const rowCount = tableContainer.getChildCount();
-            let selectedItemDom: any;
-            for (let row = 0; row < rowCount; ++row) {
-                for (let col = 0; col < this.columns_; ++col) {
-                    const val = (tableContainer.getChildAt(row).getChildAt(col) as goog.ui.MenuItem).getValue();
-                    if (this.value_ === val) {
-                        selectedItemDom = (tableContainerDom.children[row] as HTMLElement).children[col];
-                        break;
-                    }
-                }
-                if (selectedItemDom) {
-                    goog.style.scrollIntoContainerView(selectedItemDom, scrollContainerDom, true);
-                    break;
-                }
-            }
-
+        private highlightAndScrollSelected(tableContainerDom: HTMLElement, scrollContainerDom: HTMLElement) {
+            if (!this.selectedItemDom) return;
+            goog.style.scrollIntoContainerView(this.selectedItemDom, scrollContainerDom, true);
         }
 
         /**
@@ -279,235 +374,310 @@ namespace pxtblockly {
          * @private
          */
         public showEditor_() {
-            this.dropDownOpen_ = true;
-            Blockly.WidgetDiv.show(this, this.sourceBlock_.RTL, null);
+            Blockly.WidgetDiv.show(this, this.sourceBlock_.RTL, () => {
+                this.onClose_();
+            });
 
-            this.disposeTooltips();
+            this.setupIntersectionObserver_();
 
-            let options = this.getOptions();
+            this.createTooltip_();
+
+            const tableContainer = document.createElement("div");
+            this.positionMenu_(tableContainer);
+        }
+
+        private positionMenu_(tableContainer: HTMLElement) {
+            // Record viewport dimensions before adding the dropdown.
+            const viewportBBox = Blockly.utils.getViewportBBox();
+            const anchorBBox = this.getAnchorDimensions_();
+
+            const { paddingContainer, scrollContainer } = this.createWidget_(tableContainer);
+
+            const containerSize = {
+                width: paddingContainer.offsetWidth,
+                height: paddingContainer.offsetHeight
+            }; //goog.style.getSize(paddingContainer);
+
+            // Set width
+            const windowSize = goog.dom.getViewportSize();
+            if (this.width_ > windowSize.width) {
+                this.width_ = windowSize.width;
+            }
+            tableContainer.style.width = this.width_ + 'px';
+
+            let addedHeight = 0;
+            if (this.hasSearchBar_) addedHeight += 50; // Account for search bar
+            if (this.selectedBar_) addedHeight += 50; // Account for the selected bar
+
+            // Set height
+            if (this.maxRows_) {
+                // Calculate height
+                const firstRowDom = tableContainer.children[0] as HTMLElement;
+                const rowHeight = firstRowDom.offsetHeight;
+                // Compute maxHeight using maxRows + 0.3 to partially show next row, to hint at scrolling
+                let maxHeight = rowHeight * (this.maxRows_ + 0.3);
+                if (windowSize.height < (maxHeight + addedHeight)) {
+                    maxHeight = windowSize.height - addedHeight;
+                }
+                if (containerSize.height > maxHeight) {
+                    scrollContainer.style.overflowY = "auto";
+                    goog.style.setHeight(scrollContainer, maxHeight);
+                    containerSize.height = maxHeight;
+                }
+            }
+
+            containerSize.height += addedHeight;
+
+            if (this.sourceBlock_.RTL) {
+                (Blockly.utils as any).uiMenu.adjustBBoxesForRTL(viewportBBox, anchorBBox, containerSize);
+            }
+
+            // Position the menu.
+            Blockly.WidgetDiv.positionWithAnchor(viewportBBox, anchorBBox, containerSize,
+                this.sourceBlock_.RTL);
+
+//            (<any>scrollContainer).focus();
+
+            this.highlightAndScrollSelected(tableContainer, scrollContainer)
+        };
+
+        private shouldShowTooltips() {
+            return !pxt.BrowserUtils.isMobile();
+        }
+
+        private getAnchorDimensions_() {
+            const boundingBox = this.getScaledBBox_();
+            if (this.sourceBlock_.RTL) {
+                boundingBox.right += Blockly.FieldDropdown.CHECKMARK_OVERHANG;
+            } else {
+                boundingBox.left -= Blockly.FieldDropdown.CHECKMARK_OVERHANG;
+            }
+            return boundingBox;
+        };
+
+        private createWidget_(tableContainer: HTMLElement) {
+            const div = Blockly.WidgetDiv.DIV;
+
+            const options = this.getOptions();
 
             // Container for the menu rows
-            const tableContainer = new goog.ui.Control();
-            //const tableContainer = this.getTableContainer(options);
-            this.populateTableContainer(options, tableContainer);
+            tableContainer.setAttribute("role", "menu");
+            tableContainer.setAttribute("aria-haspopup", "true");
 
             // Container used to limit the height of the tableContainer, because the tableContainer uses
             // display: table, which ignores height and maxHeight
-            const scrollContainer = new goog.ui.Control();
+            const scrollContainer = document.createElement("div");
 
             // Needed to correctly style borders and padding around the scrollContainer, because the padding around the
             // scrollContainer is part of the scrollable area and will not be correctly shown at the top and bottom
             // when scrolling
-            const paddingContainer = new goog.ui.Control();
+            const paddingContainer = document.createElement("div");
+            paddingContainer.style.border = `solid 1px ${this.borderColour_}`;
 
-            // Record windowSize and scrollOffset before adding menu.
-            const windowSize = goog.dom.getViewportSize();
-            const scrollOffset = goog.style.getViewportPageOffset(document);
-            const xy = this.getAbsoluteXY_();
-            const borderBBox = this.getScaledBBox_();
-            const div = Blockly.WidgetDiv.DIV;
+            tableContainer.style.backgroundColor = this.backgroundColour_;
+            scrollContainer.style.backgroundColor = this.backgroundColour_;
+            paddingContainer.style.backgroundColor = this.backgroundColour_;
 
-            scrollContainer.addChild(tableContainer, true);
-            paddingContainer.addChild(scrollContainer, true);
-            paddingContainer.render(div);
+            tableContainer.className = 'blocklyGridPickerMenu';
+            scrollContainer.className = 'blocklyGridPickerScroller';
+            paddingContainer.className = 'blocklyGridPickerPadder';
 
-            const paddingContainerDom = paddingContainer.getElement() as HTMLElement;
-            const scrollContainerDom = scrollContainer.getElement() as HTMLElement;
-            const tableContainerDom = tableContainer.getElement() as HTMLElement;
+            paddingContainer.appendChild(scrollContainer);
+            scrollContainer.appendChild(tableContainer);
+            div.appendChild(paddingContainer);
 
             // Search bar
             if (this.hasSearchBar_) {
-                const searchBarDiv = document.createElement("div");
-                searchBarDiv.setAttribute("class", "ui fluid icon input");
-                const searchIcon = document.createElement("i");
-                searchIcon.setAttribute("class", "search icon");
-                const searchBar = document.createElement("input");
-                searchBar.setAttribute("type", "search");
-                searchBar.setAttribute("id", "search-bar");
-                searchBar.setAttribute("class", "blocklyGridPickerSearchBar");
-                searchBar.setAttribute("placeholder", pxt.Util.lf("Search"));
-                searchBar.addEventListener("click", () => {
-                    searchBar.focus();
-                    searchBar.setSelectionRange(0, searchBar.value.length);
-                });
-                searchBar.addEventListener("keyup", pxt.Util.debounce(() => {
-                    let text = searchBar.value;
-                    let re = new RegExp(text, "i");
-                    let filteredOptions = options.filter((block) => {
-                        const alt = (block as any)[0].alt; // Human-readable text or image.
-                        const value = (block as any)[1]; // Language-neutral value.
-                        return alt ? re.test(alt) : re.test(value);
-                    })
-                    this.populateTableContainer.bind(this)(filteredOptions, tableContainer);
-                    this.createTooltips(filteredOptions, tableContainer)
-                    if (text) {
-                        this.highlightFirstItem(tableContainerDom)
-                    } else {
-                        this.highlightAndScrollSelected(tableContainer, scrollContainerDom)
-                    }
-                }, 300, false));
-
-                searchBar.addEventListener("keyup", (e) => {
-                    if (e.keyCode == 13) {
-                        let text = searchBar.value;
-                        let firstItem = this.getFirstItem()
-                        if (text && firstItem) {
-                            this.selectItem(firstItem)
-                        }
-                    }
-                })
-                searchBarDiv.appendChild(searchBar);
-                searchBarDiv.appendChild(searchIcon);
-                paddingContainerDom.insertBefore(searchBarDiv, paddingContainerDom.childNodes[0]);
-                searchBar.focus();
+                const searchBar = this.createSearchBar_(tableContainer, scrollContainer, options);
+                paddingContainer.insertBefore(searchBar, paddingContainer.childNodes[0]);
             }
 
-            paddingContainerDom.style.border = `solid 1px ${this.borderColour_}`;
-
-            tableContainerDom.style.backgroundColor = this.backgroundColour_;
-            scrollContainerDom.style.backgroundColor = this.backgroundColour_;
-            paddingContainerDom.style.backgroundColor = this.backgroundColour_;
-            tableContainerDom.className = 'blocklyGridPickerMenu';
-            scrollContainerDom.className = 'blocklyGridPickerScroller';
-            paddingContainerDom.className = 'blocklyGridPickerPadder';
-
-            this.createTooltips(options, tableContainer);
-
-            // Resize the grid picker if width > screen width
-            if (this.width_ > windowSize.width) {
-                this.width_ = windowSize.width;
-            }
-            tableContainerDom.style.width = this.width_ + 'px';
-
-            // Record current container sizes after adding menu.
-            const paddingContainerSize = goog.style.getSize(paddingContainerDom);
-            const scrollContainerSize = goog.style.getSize(scrollContainerDom);
-
-            // Recalculate dimensions for the total content, not only box.
-            scrollContainerSize.height = scrollContainerDom.scrollHeight;
-            scrollContainerSize.width = scrollContainerDom.scrollWidth;
-            paddingContainerSize.height = paddingContainerDom.scrollHeight;
-            paddingContainerSize.width = paddingContainerDom.scrollWidth;
-
-            // Limit scroll container's height if a row limit was specified
-            if (this.maxRows_ > 0) {
-                const firstRowDom = tableContainerDom.children[0];
-                const rowSize = goog.style.getSize(firstRowDom);
-
-                // Compute maxHeight using maxRows + 0.3 to partially show next row, to hint at scrolling
-                const maxHeight = rowSize.height * (this.maxRows_ + 0.3);
-
-                // If the current height is greater than the computed max height, limit the height of the scroll
-                // container and increase its width to accomodate the scrollbar
-                if (scrollContainerSize.height > maxHeight) {
-                    scrollContainerDom.style.overflowY = "auto";
-                    goog.style.setHeight(scrollContainerDom, maxHeight);
-
-                    // Calculate total border, margin and padding width
-                    const scrollPaddings = goog.style.getPaddingBox(scrollContainerDom);
-                    const scrollPaddingWidth = scrollPaddings.left + scrollPaddings.right;
-                    const scrollMargins = goog.style.getMarginBox(scrollContainerDom);
-                    const scrollMarginWidth = scrollMargins.left + scrollMargins.right;
-                    const scrollBorders = goog.style.getBorderBox(scrollContainerDom);
-                    const scrollBorderWidth = scrollBorders.left + scrollBorders.right;
-                    const totalExtraWidth = scrollPaddingWidth + scrollMarginWidth + scrollBorderWidth;
-
-                    // Increase scroll container's width by the width of the scrollbar, so that we don't have horizontal scrolling
-                    const scrollbarWidth = scrollContainerDom.offsetWidth - scrollContainerDom.clientWidth - totalExtraWidth;
-                    goog.style.setWidth(scrollContainerDom, scrollContainerSize.width + scrollbarWidth);
-
-                    // Refresh the padding container's dimensions
-                    paddingContainerSize.height = paddingContainerDom.scrollHeight;
-                    paddingContainerSize.width = paddingContainerDom.scrollWidth;
-
-                    // Scroll the currently selected item into view
-                    this.highlightAndScrollSelected(tableContainer, scrollContainerDom);
-                }
+            // Selected bar
+            if (!this.shouldShowTooltips()) {
+                this.selectedBar_ = this.createSelectedBar_();
+                paddingContainer.appendChild(this.selectedBar_);
             }
 
-            // Position the menu.
-            // Flip menu vertically if off the bottom.
-            const borderBBoxHeight = borderBBox.bottom - xy.y;
-            const borderBBoxWidth = borderBBox.right - xy.x;
-            if (xy.y + paddingContainerSize.height + borderBBoxHeight >=
-                windowSize.height + scrollOffset.y) {
-                xy.y -= paddingContainerSize.height + 2;
-            } else {
-                xy.y += borderBBoxHeight;
-            }
+            // Render elements
+            this.populateTableContainer(options, tableContainer, scrollContainer);
 
-            if (this.sourceBlock_.RTL) {
-                xy.x -= paddingContainerSize.width / 2;
 
-                // Don't go offscreen left.
-                if (xy.x < scrollOffset.x) {
-                    xy.x = scrollOffset.x;
-                }
-            } else {
-                xy.x += borderBBoxWidth / 2 - paddingContainerSize.width / 2;
-
-                // Don't go offscreen right.
-                if (xy.x > windowSize.width + scrollOffset.x - paddingContainerSize.width) {
-                    xy.x = windowSize.width + scrollOffset.x - paddingContainerSize.width;
-                }
-            }
-
-            Blockly.WidgetDiv.position(xy.x, xy.y, windowSize, scrollOffset,
-                this.sourceBlock_.RTL);
-
-            (<any>tableContainerDom).focus();
+            return { paddingContainer, scrollContainer };
         }
 
-        private createRow(row: number, options: (Object | string[])[]): goog.ui.Menu {
-            const columns = this.columns_;
+        private createSearchBar_(tableContainer: HTMLElement, scrollContainer: HTMLElement, options: (Object | string[])[]) {
+            const searchBarDiv = document.createElement("div");
+            searchBarDiv.setAttribute("class", "ui fluid icon input");
+            const searchIcon = document.createElement("i");
+            searchIcon.setAttribute("class", "search icon");
+            const searchBar = document.createElement("input");
+            searchBar.setAttribute("type", "search");
+            searchBar.setAttribute("id", "search-bar");
+            searchBar.setAttribute("class", "blocklyGridPickerSearchBar");
+            searchBar.setAttribute("placeholder", pxt.Util.lf("Search"));
+            searchBar.addEventListener("click", () => {
+                searchBar.focus();
+                searchBar.setSelectionRange(0, searchBar.value.length);
+            });
 
-            const menu = new goog.ui.Menu();
-            menu.setRightToLeft(this.sourceBlock_.RTL);
-
-            for (let i = (columns * row); i < Math.min((columns * row) + columns, options.length); i++) {
-                let content = (options[i] as any)[0]; // Human-readable text or image.
-                const value = (options[i] as any)[1]; // Language-neutral value.
-
-                if (typeof content == 'object') {
-                    // An image, not text.
-                    const image = new Image(content['width'], content['height']);
-                    image.src = content['src'];
-                    image.alt = content['alt'] || '';
-                    content = image;
+            // Search on key change
+            searchBar.addEventListener("keyup", pxt.Util.debounce(() => {
+                let text = searchBar.value;
+                let re = new RegExp(text, "i");
+                let filteredOptions = options.filter((block) => {
+                    const alt = (block as any)[0].alt; // Human-readable text or image.
+                    const value = (block as any)[1]; // Language-neutral value.
+                    return alt ? re.test(alt) : re.test(value);
+                })
+                this.populateTableContainer.bind(this)(filteredOptions, tableContainer, scrollContainer);
+                if (text) {
+                    this.highlightFirstItem(tableContainer)
+                } else {
+                    this.highlightAndScrollSelected(tableContainer, scrollContainer)
                 }
+                // Hide the tooltip
+                this.tooltip_.style.visibility = 'hidden';
+                this.tooltip_.style.display = 'none';
+            }, 300, false));
 
-                const menuItem = new goog.ui.MenuItem(content);
-                menuItem.setRightToLeft(this.sourceBlock_.RTL);
-                menuItem.setValue(value);
-                menuItem.setCheckable(true);
-                menuItem.setChecked(value == this.value_);
-                menu.addChild(menuItem, true);
-                if (i == 0) {
-                    this.firstItem_ = menuItem;
-                }
-            }
-
-            // Listen for mouse/keyboard events.
-            goog.events.listen(menu, goog.ui.Component.EventType.ACTION, (e: any) => {
-                const menuItem = e.target;
-                if (menuItem) {
-                    this.selectItem.bind(this)(menuItem)
+            // Select the first item if the enter key is pressed
+            searchBar.addEventListener("keyup", (e: KeyboardEvent) => {
+                const code = e.which;
+                if (code == 13) { /* Enter key */
+                    // Select the first item in the list
+                    const firstRow = tableContainer.childNodes[0] as HTMLElement;
+                    if (firstRow) {
+                        const firstItem = firstRow.childNodes[0] as HTMLElement;
+                        if (firstItem) {
+                            this.closeModal_ = true;
+                            firstItem.click();
+                        }
+                    }
                 }
             });
 
-            this.menu_ = menu;
-            return menu;
+            searchBarDiv.appendChild(searchBar);
+            searchBarDiv.appendChild(searchIcon);
+
+            return searchBarDiv;
+        }
+
+        private createSelectedBar_() {
+            const selectedBar = document.createElement("div");
+            selectedBar.setAttribute("class", "blocklyGridPickerSelectedBar");
+            selectedBar.style.display = 'none';
+
+            const selectedWrapper = document.createElement("div");
+            const selectedImgWrapper = document.createElement("div");
+            selectedImgWrapper.className = 'blocklyGridPickerSelectedImage';
+            selectedWrapper.appendChild(selectedImgWrapper);
+
+            this.selectedImg_ = document.createElement("img");
+            this.selectedImg_.setAttribute('width', '30px');
+            this.selectedImg_.setAttribute('height', '30px');
+            this.selectedImg_.setAttribute('draggable', 'false');
+            this.selectedImg_.style.display = 'none';
+            this.selectedImg_.src = FieldGridPicker.DEFAULT_IMG;
+            selectedImgWrapper.appendChild(this.selectedImg_);
+
+            this.selectedBarText_ = document.createElement("span");
+            this.selectedBarText_.className = 'blocklyGridPickerTooltip';
+            selectedWrapper.appendChild(this.selectedBarText_);
+
+            const buttonsWrapper = document.createElement("div");
+            const buttonsDiv = document.createElement("div");
+            buttonsDiv.className = 'ui buttons mini';
+            buttonsWrapper.appendChild(buttonsDiv);
+
+            const selectButton = document.createElement("button");
+            selectButton.className = "ui button icon green";
+            const selectButtonIcon = document.createElement("i");
+            selectButtonIcon.className = 'icon check';
+            selectButton.appendChild(selectButtonIcon);
+
+            Blockly.bindEvent_(selectButton, 'click', this, () => {
+                this.setValue(this.selectedBarValue_);
+                this.close();
+            });
+
+            const cancelButton = document.createElement("button");
+            cancelButton.className = "ui button icon red";
+            const cancelButtonIcon = document.createElement("i");
+            cancelButtonIcon.className = 'icon cancel';
+            cancelButton.appendChild(cancelButtonIcon);
+
+            Blockly.bindEvent_(cancelButton, 'click', this, () => {
+                this.close();
+            });
+
+            buttonsDiv.appendChild(selectButton);
+            buttonsDiv.appendChild(cancelButton);
+
+            selectedBar.appendChild(selectedWrapper);
+            selectedBar.appendChild(buttonsWrapper);
+            return selectedBar;
+        }
+
+        private updateSelectedBar_(content: any, value: string) {
+            if (content['src']) {
+                this.selectedImg_.src = content['src'];
+                this.selectedImg_.style.display = '';
+            }
+            this.selectedImg_.alt = content['alt'] || content;
+            this.selectedBarText_.textContent = content['alt'] || content;
+            this.selectedBarValue_ = value;
+        }
+
+        private setupIntersectionObserver_() {
+            if (!('IntersectionObserver' in window)) return;
+
+            this.disposeIntersectionObserver();
+
+            // setup intersection observer for the image
+            const preloadImage = (el: HTMLImageElement) => {
+                const lazyImageUrl = el.getAttribute('data-src');
+                if (lazyImageUrl) {
+                    el.src = lazyImageUrl;
+                    el.removeAttribute('data-src');
+                }
+            }
+            const config = {
+                // If the image gets within 50px in the Y axis, start the download.
+                rootMargin: '20px 0px',
+                threshold: 0.01
+            };
+            const onIntersection: IntersectionObserverCallback = (entries) => {
+                entries.forEach(entry => {
+                    // Are we in viewport?
+                    if (entry.intersectionRatio > 0) {
+                        // Stop watching and load the image
+                        this.observer.unobserve(entry.target);
+                        preloadImage(entry.target as HTMLImageElement);
+                    }
+                })
+            }
+            this.observer = new IntersectionObserver(onIntersection, config);
+        }
+
+        private disposeIntersectionObserver() {
+            if (this.observer) {
+                this.observer = null;
+            }
         }
 
         /**
-         * Disposes the tooltip DOM elements.
+         * Disposes the tooltip DOM.
          * @private
          */
-        private disposeTooltips() {
-            if (this.tooltips_ && this.tooltips_.length) {
-                this.tooltips_.forEach((t) => t.dispose());
-                this.tooltips_ = [];
+        private disposeTooltip() {
+            if (this.tooltip_) {
+                pxsim.U.remove(this.tooltip_);
+                this.tooltip_ = null;
             }
+        }
+
+        private onClose_() {
+            this.disposeTooltip();
         }
 
         /**
@@ -545,7 +715,7 @@ namespace pxtblockly {
 
         /**
          * Updates the width of the field. This calls getCachedWidth which won't cache
-         * the approximated width on IE/Edge when `getComputedTextLength` fails. Once
+         * the approximated width on IE/Microsoft Edge when `getComputedTextLength` fails. Once
          * it eventually does succeed, the result will be cached.
          **/
         updateWidth() {

@@ -1,10 +1,17 @@
 # Microsoft MakeCode Blog
 
-## [GitHub package authoring](/blog/github-packages)
+## [MakeCode for the micro:bit update releases on October 26th!](/blog/microbit/v1-release-date)
+
+October 12th, 2018 by [Jaqster](https://github.com/jaqster)
+
+Mark your calendars and buy a cake. The new MakeCode for micro:bit editor will be released on Friday October 26th!
+**[Continue reading this blog post](/blog/microbit/v1-release-date)**
+
+## [GitHub package/extension authoring](/blog/github-packages)
 
 August 1st, 2018 by [mmoskal](https://github.com/mmoskal)
 
-You can now create and edit MakeCode packages hosted on GitHub directly from the browser!
+You can now create and edit MakeCode packages (extensions) hosted on GitHub directly from the browser!
 **[Continue reading this blog post](/blog/github-packages)**
 
 ## [MakeCode for the micro:bit update coming soon!](/blog/microbit/v1-beta)

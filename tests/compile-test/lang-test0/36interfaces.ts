@@ -2,6 +2,7 @@ namespace Ifaces {
     interface IFoo {
         foo(): number;
         bar(x: number): string;
+        twoArg(x: number, y: number): number;
         baz: string;
     }
 
@@ -14,6 +15,9 @@ namespace Ifaces {
         }
         bar(v: number) {
             return v.toString()
+        }
+        twoArg(x: number) {
+           return x
         }
         baz: string;
     }
@@ -31,6 +35,7 @@ namespace Ifaces {
         msg("Ifaces.run")
         let a = new A()
         assert(foo(a) + "X" == "12QA42X")
+        assert((a as IFoo).twoArg(1, 2) == 1)
         a = new B()
         assert(foo(a) + "X" == "13QA42X")
         let q = a as IFoo

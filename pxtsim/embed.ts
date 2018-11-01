@@ -18,6 +18,7 @@ namespace pxsim {
         cdnUrl?: string;
         localizedStrings?: Map<string>;
         version?: string;
+        clickTrigger?: boolean;
     }
 
     export interface SimulatorInstructionsMessage extends SimulatorMessage {
@@ -65,7 +66,7 @@ namespace pxsim {
     }
 
     export interface SimulatorEventBusMessage extends SimulatorMessage {
-        type: "event";
+        type: "eventbus";
         id: number;
         eventid: number;
         value?: number;
@@ -76,6 +77,12 @@ namespace pxsim {
         data: string;
         sim?: boolean;
         receivedTime?: number;
+    }
+    export interface SimulatorBulkSerialMessage extends SimulatorMessage {
+        type: "bulkserial";
+        id: string;
+        data: { data: string, time: number }[];
+        sim?: boolean;
     }
     export interface SimulatorCommandMessage extends SimulatorMessage {
         type: "simulator",

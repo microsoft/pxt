@@ -96,11 +96,11 @@ text.blocklyText.blocklyBoldItalicizedText {
 }
 
 .blocklyFlyoutButton:hover {
-    fill: @primaryColor !important;
+    fill: @blocklyFlyoutButtonColor !important;
 }
 
 .blocklyFlyoutButtonBackground {
-    stroke: @primaryColor !important;
+    stroke: @blocklyFlyoutButtonColor !important;
     stroke-width: 3px !important;
 }
 
@@ -223,6 +223,27 @@ text.blocklyCheckbox {
     stroke: @blocklyScrollbarColor;
 }
 
+/*******************************
+        Context menu
+*******************************/
+
+.blocklyWidgetDiv .blocklyContextMenu {
+    border: 1px solid rgba(34,36,38,.15);
+    box-shadow: 0 1px 2px 0 rgba(34,36,38,.15) !important;
+    padding: 0 !important;
+}
+
+.blocklyWidgetDiv .blocklyContextMenu .goog-menuitem {
+    margin: 0 !important;
+    padding: .92857143em 1.14285714em !important;
+    font: normal 13px @pageFont !important;
+}
+
+.blocklyWidgetDiv .blocklyContextMenu .goog-menuitem-highlight, .blocklyWidgetDiv .blocklyContextMenu .goog-menuitem-hover {
+    border: none !important;
+    padding: .92857143em 1.14285714em !important;
+    background: rgba(0,0,0,.05) !important;
+}
 
 /*******************************
         Media Adjustments

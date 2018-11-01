@@ -364,11 +364,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }
 
             // Accessibility shortcut, add a way to quickly jump to the monaco toolbox
-            const arrow = Util.isUserLanguageRtl() ? monaco.KeyCode.RightArrow : monaco.KeyCode.LeftArrow;
             this.editor.addAction({
                 id: "jumptoolbox",
                 label: lf("Jump to Toolbox"),
-                keybindings: [monaco.KeyMod.CtrlCmd | arrow],
+                keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.KEY_T],
                 keybindingContext: "!editorReadonly",
                 precondition: "!editorReadonly",
                 run: () => Promise.resolve(this.moveFocusToToolbox())
@@ -823,6 +822,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private partitionBlocks() {
         const res: pxt.Map<toolbox.BlockDefinition[]> = {};
+        this.topBlocks = [];
 
         const builtInBlocks = snippets.allBuiltinBlocksByName();
 
@@ -851,6 +851,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 setSubcategory(ns, 'more');
             } else if (subcat) {
                 setSubcategory(ns, subcat);
+            }
+
+            if (fn.attributes.topblock) {
+                this.topBlocks.push(fn);
             }
         });
 
@@ -983,6 +987,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             return;
         }
 
+        if (ns == 'topblocks') {
+            this.showTopBlocksFlyout();
+            return;
+        }
+
         if (this.abstractShowFlyout(treeRow) || (treeRow.subcategories && treeRow.subcategories.length > 0)) {
             // Hide editor floats
             this.parent.setState({ hideEditorFloats: true });
@@ -1066,6 +1075,37 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (monacoBlocks.length == 0) {
             this.addNoSearchResultsLabel();
         }
+    }
+
+    private showTopBlocksFlyout() {
+        let monacoBlocks: HTMLDivElement[] = [];
+        const topBlocks = this.getTopBlocks();
+        const monacoFlyout = this.getMonacoFlyout();
+
+        const that = this;
+        function getNamespaceColor(ns: string) {
+            const nsinfo = that.blockInfo.apis.byQName[ns];
+            const color =
+                (nsinfo ? nsinfo.attributes.color : undefined)
+                || pxt.toolbox.getNamespaceColor(ns)
+                || `255`;
+            return color;
+        }
+
+        if (topBlocks.length == 0) {
+            this.getMonacoLabel(lf("No basic results..."), 'monacoFlyoutLabel');
+        } else {
+            // Show a heading
+            this.showFlyoutHeadingLabel('topblocks', lf("{id:category}Basic"), null,
+                pxt.toolbox.getNamespaceIcon('topblocks'), pxt.toolbox.getNamespaceColor('topblocks'));
+
+            topBlocks.forEach((block) => {
+                monacoBlocks.push(this.getMonacoBlock(block, 'topblocks',
+                    getNamespaceColor(block.attributes.blockNamespace || block.namespace), false));
+            })
+        }
+
+        this.attachMonacoBlockAccessibility(monacoBlocks);
     }
 
     private addNoSearchResultsLabel() {
@@ -1170,7 +1210,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             labelIcon.setAttribute('role', 'presentation');
             labelIcon.style.display = 'inline-block';
             labelIcon.style.color = `${iconColor}`;
-            labelIcon.textContent = icon;
+            if (icon.length === 1) {
+                labelIcon.textContent = icon;
+            }
             labelDiv.appendChild(labelIcon);
         }
         labelDiv.appendChild(labelText);
@@ -1211,7 +1253,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         const comment = fn.attributes.jsDoc;
 
-        let snippetPrefix = fn.noNamespace ? "" : ns;
+        let snippetPrefix = fn.noNamespace ? "" : (fn.attributes.blockNamespace || fn.namespace);
         let isInstance = false;
         let addNamespace = false;
         let namespaceToUse = "";

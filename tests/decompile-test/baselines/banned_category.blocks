@@ -1,0 +1,9 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="typescript_statement">
+<mutation numlines="1" error="Function call not supported in the blocks" line0="banned.shouldNotDecompile&#40;&#41;&#59;" />
+</block>
+</statement>
+</block>
+</xml>

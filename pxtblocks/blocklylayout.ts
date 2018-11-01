@@ -50,6 +50,68 @@ namespace pxt.blocks.layout {
 
     declare function unescape(escapeUri: string): string;
 
+    /**
+     * Splits a blockly SVG AFTER a vertical layout. This function relies on the ordering
+     * of blocks / comments to get as getTopBlock(true)/getTopComment(true)
+     */
+    export function splitSvg(svg: SVGSVGElement, ws: Blockly.Workspace, emPixels: number = 18): Element {
+        const comments = ws.getTopComments(true);
+        const blocks = ws.getTopBlocks(true)
+        // don't split for a single block
+        if (comments.length + blocks.length < 2)
+            return svg;
+
+        const div = document.createElement("div") as HTMLDivElement;
+        div.className = "blocks-svg-list"
+
+        function extract(
+            parentClass: string,
+            otherClass: string,
+            blocki: number,
+            size: { height: number, width: number },
+            translate: { x: number, y: number }
+        ) {
+            const svgclone = svg.cloneNode(true) as SVGSVGElement;
+            // collect all blocks
+            const parentSvg = svgclone.querySelector(`g.blocklyWorkspace > g.${parentClass}`) as SVGGElement;
+            const otherSvg = svgclone.querySelector(`g.blocklyWorkspace > g.${otherClass}`) as SVGGElement;
+            const blocksSvg = Util.toArray(parentSvg.querySelectorAll(`g.blocklyWorkspace > g.${parentClass} > g`));
+            const blockSvg = blocksSvg.splice(blocki, 1)[0];
+            // remove all but the block we care about
+            blocksSvg.filter(g => g != blockSvg)
+                .forEach(g => {
+                    g.parentNode.removeChild(g);
+                });
+            // clear transform, remove other group
+            parentSvg.removeAttribute("transform");
+            otherSvg.parentNode.removeChild(otherSvg);
+            // patch size
+            blockSvg.setAttribute("transform", `translate(${translate.x}, ${translate.y})`)
+            const width = (size.width / emPixels) + "em";
+            const height = (size.height / emPixels) + "em";
+            svgclone.setAttribute("viewBox", `0 0 ${size.width} ${size.height}`)
+            svgclone.style.width = width;
+            svgclone.style.height = height;
+            svgclone.setAttribute("width", width);
+            svgclone.setAttribute("height", height);
+            div.appendChild(svgclone);
+        }
+
+        comments.forEach((comment, commenti) => extract('blocklyBubbleCanvas', 'blocklyBlockCanvas',
+            commenti, comment.getHeightWidth(), { x: 0, y: 0 }));
+        blocks.forEach((block, blocki) => {
+                const size = block.getHeightWidth();
+                const translate = { x: 0, y: 0 };
+                if (block.getStartHat()) {
+                    size.height += emPixels;
+                    translate.y += emPixels;
+                }
+                extract('blocklyBlockCanvas', 'blocklyBubbleCanvas',
+                    blocki, size, translate)
+            });
+        return div;
+    }
+
     export function verticalAlign(ws: Blockly.Workspace, emPixels: number) {
         let y = 0
         let comments = ws.getTopComments(true);
@@ -248,7 +310,7 @@ namespace pxt.blocks.layout {
     function convertIconsToPngAsync(xsg: Document): Promise<void> {
         if (!imageIconCache) imageIconCache = {};
 
-        if (!(BrowserUtils.isIE() || BrowserUtils.isEdge())) return Promise.resolve();
+        if (!BrowserUtils.isEdge()) return Promise.resolve();
 
         const images = xsg.getElementsByTagName("image") as NodeListOf<Element>;
         const p = pxt.Util.toArray(images)

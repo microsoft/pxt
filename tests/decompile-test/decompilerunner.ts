@@ -35,14 +35,14 @@ pxt.setAppTarget({
         isNative: false,
         hasHex: false,
         jsRefCounting: true,
-        floatingPoint: true
     },
     bundledpkgs: {},
     appTheme: {},
     tsprj: undefined,
     blocksprj: undefined,
     runtime: {
-        pauseUntilBlock: { category: "Loops", color: "0x0000ff" }
+        pauseUntilBlock: { category: "Loops", color: "0x0000ff" },
+        bannedCategories: ["banned"]
     },
     corepkg: undefined
 });

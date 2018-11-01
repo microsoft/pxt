@@ -26,9 +26,9 @@ export class Editor extends srceditor.Editor {
     maxBufferLength: number = 10000;
     csvHeaders: string[] = [];
 
-    lineColors = ["#f00", "#00f", "#0f0", "#ff0"]
-    hcLineColors = ["000"]
-    currentLineColors = this.lineColors
+    lineColors: string[];
+    hcLineColors: string[];
+    currentLineColors: string[];
     highContrast: boolean = false
 
     //refs
@@ -88,7 +88,9 @@ export class Editor extends srceditor.Editor {
         super(parent)
         window.addEventListener("message", this.processEvent.bind(this), false)
         const serialTheme = pxt.appTarget.serial && pxt.appTarget.serial.editorTheme;
-        this.lineColors = (serialTheme && serialTheme.lineColors) || this.lineColors;
+        this.lineColors = (serialTheme && serialTheme.lineColors) || ["#e00", "#00e", "#0e0"];
+        this.hcLineColors = ["#000"];
+        this.currentLineColors = this.lineColors;
 
         this.goBack = this.goBack.bind(this);
         this.toggleRecording = this.toggleRecording.bind(this);
@@ -118,9 +120,23 @@ export class Editor extends srceditor.Editor {
 
     processEvent(ev: MessageEvent) {
         let msg = ev.data
-        if (msg.type !== "serial") return;
-        const smsg = msg as pxsim.SimulatorSerialMessage
+        if (msg.type === "serial") {
+            this.processEventCore(msg);
+        }
+        else if (msg.type === "bulkserial") {
+            (msg as pxsim.SimulatorBulkSerialMessage).data.forEach(datum => {
+                this.processEventCore({
+                    type: "serial",
+                    data: datum.data,
+                    receivedTime: datum.time,
+                    sim: msg.sim,
+                    id: msg.id
+                } as pxsim.SimulatorSerialMessage);
+            })
+        }
+    }
 
+    processEventCore(smsg: pxsim.SimulatorSerialMessage) {
         smsg.receivedTime = smsg.receivedTime || Util.now();
         if (!this.active) {
             this.saveMessageForLater(smsg);

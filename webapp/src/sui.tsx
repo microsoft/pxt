@@ -1,6 +1,8 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as ReactModal from 'react-modal';
+import * as ReactTooltip from 'react-tooltip';
+
 import * as data from "./data";
 import * as core from "./core";
 
@@ -340,7 +342,7 @@ export class ButtonMenuItem extends UIElement<ItemProps, {}> {
 ////////////            Buttons               /////////////
 ///////////////////////////////////////////////////////////
 
-export interface ButtonProps extends UiProps {
+export interface ButtonProps extends UiProps, TooltipUIProps {
     id?: string;
     title?: string;
     ariaLabel?: string;
@@ -350,20 +352,19 @@ export interface ButtonProps extends UiProps {
     onKeyDown?: (e: React.KeyboardEvent<HTMLElement>) => void;
     labelPosition?: "left" | "right";
     color?: string;
-    size?: SIZES
+    size?: SIZES;
 }
 
 export class Button extends StatelessUIElement<ButtonProps> {
     renderCore() {
-        const { labelPosition, color, size, disabled } = this.props;
+        const { labelPosition, color, size, disabled, tooltipId, tooltip, tooltipDelayShow, tooltipPlace } = this.props;
         const classes = cx([
-            'ui button',
             color,
             size,
             disabled ? 'disabled' : '',
             genericClassName("ui button", this.props)
         ])
-        return <button className={classes}
+        const button = <button className={classes}
             id={this.props.id}
             role={this.props.role}
             title={this.props.title}
@@ -375,6 +376,8 @@ export class Button extends StatelessUIElement<ButtonProps> {
             {genericContent(this.props)}
             {this.props.children}
         </button>;
+        return tooltip ? <Tooltip id={tooltipId} content={tooltip}
+            place={tooltipPlace} delayShow={tooltipDelayShow}>{button}</Tooltip> : button;
     }
 }
 
@@ -1139,6 +1142,43 @@ export class Loader extends UIElement<LoaderProps, {}> {
         return <div
             className={classes}>
             {children}
+        </div>
+    }
+}
+
+///////////////////////////////////////////////////////////
+////////////           Tooltip                /////////////
+///////////////////////////////////////////////////////////
+
+export interface TooltipUIProps {
+    tooltip?: string;
+    tooltipId?: string;
+    tooltipDelayShow?: number;
+    tooltipPlace?: "top" | "left" | "right" | "bottom";
+}
+
+export interface TooltipProps extends ReactTooltip.Props {
+    content: string;
+}
+
+export class Tooltip extends React.Component<TooltipProps, {}> {
+
+    constructor(props: TooltipProps) {
+        super(props);
+        this.state = {
+        }
+    }
+
+    render() {
+        const { id, content, className, ...rest } = this.props;
+
+        return <div>
+            <div data-tip='tooltip' data-for={id}>
+                {this.props.children}
+            </div>
+            <ReactTooltip id={id} className={`pxt-tooltip ${className || ''}`} effect='solid' {...rest}>
+                {content}
+            </ReactTooltip>
         </div>
     }
 }

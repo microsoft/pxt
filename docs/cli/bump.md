@@ -2,7 +2,7 @@
 
 ### @description Bumps the current version number
 
-Bumps the version number of the package.
+Bumps the version number of the extension.
 
 ```
 pxt bump [--update] [--upload] 

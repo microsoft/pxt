@@ -17,7 +17,7 @@ function testStrings(): void {
     msg("ts0")
     s = "";
 
-    control.pause(3)
+    pause(3)
     for (let i = 0; i < 10; i++) {
         msg("Y")
         s = s + i;

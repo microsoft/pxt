@@ -18,11 +18,13 @@ html {
 
 body {
     height: 100%;
+    width: 100%;
     padding: 0;
     overflow: auto;
     margin: 0;
     -webkit-overflow-scrolling: touch;
     overflow-scrolling: touch;
+    position: fixed;
 }
 
 * {
@@ -106,6 +108,11 @@ body {
     background-color: @editorToolsBackground;
 }
 
+.transparentEditorTools #editortools {
+    background-color: transparent;
+    z-index: (@blocklyToolboxZIndex)-1;
+}
+
 #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #filelist {
     bottom: @editorToolsCollapsedHeight;
 }
@@ -152,6 +159,10 @@ body {
     margin-top: 0 !important;
     padding-top: 0.55rem;
     background-color: @simulatorBackground;
+}
+
+.transparentEditorTools #downloadArea {
+    background-color: transparent !important;
 }
 
 .filemenu {
@@ -923,6 +934,13 @@ p.ui.font.small {
     .hideEditorFloats #editortools .column.mobile.only {
         padding-top: 0.5rem;
         padding-bottom: 0.5rem;
+    }
+
+    .logo-wide #mainmenu {
+        .ui.logo.brand,
+        .ui.logo.organization {
+            display: none !important;
+        }
     }
 }
 

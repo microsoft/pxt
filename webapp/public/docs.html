@@ -34,6 +34,14 @@
             max-height: calc(100% - 1em);
         }
 
+        
+        div.blocks-svg-list > svg {
+            margin-right: 1rem;
+            margin-bottom: 1rem;
+            page-break-inside: avoid;
+            vertical-align: top;
+        }
+
         code {
             white-space: pre-wrap;
         }
@@ -46,7 +54,8 @@
         code.lang-sim::before,
         code.lang-cards::before,
         code.lang-namespaces::before,
-        code.lang-codecard::before {
+        code.lang-codecard::before,
+        code.lang-shadow::before {
             content: "...";
             position: absolute;
             top: calc(50% - 0.5em);
@@ -60,7 +69,8 @@
         code.lang-sim,
         code.lang-cards,
         code.lang-namespaces,
-        code.lang-codecard {
+        code.lang-codecard,
+        code.lang-shadow {
             color: transparent;
         }
     </style>
@@ -76,7 +86,7 @@
         <i class="ui icon left arrow"></i>
         <span id="back-label"></span>
     </div>
-    <div class="ui divider"></div>
+    <div id="sidedocs-back-button-divider" class="ui divider"></div>
     <div id='loading' class="ui active inverted dimmer">
         <div class="ui loader"></div>
     </div>
@@ -94,12 +104,19 @@
     <script type="text/javascript">
         (function () {
         var backButton = document.getElementById('sidedocs-back-button');
+        // don't show 'go back' for printing
+        if (/print:/.test(window.location.href)) {
+            $(backButton).remove(); backButton = undefined;
+            $('#sidedocs-back-button-divider').remove();
+        }
         var loading = document.getElementById('loading');
         var content = document.getElementById('content');
         ksRunnerReady(function() {
             pxt.BrowserUtils.initTheme();
             pxt.docs.requireMarked = function() { return marked; }
-            document.getElementById('back-label').textContent = pxt.Util.lf("Go back")
+            var backLabel = document.getElementById('back-label');
+            if (backLabel)
+                backLabel.textContent = pxt.Util.lf("Go back")
             var projectid = /projectid=([^&?]+)/i.exec(window.location.href);
             var project = /project=([^&?]+)/i.exec(window.location.href);
             var code = /code=([^&?]+)/i.exec(window.location.href);

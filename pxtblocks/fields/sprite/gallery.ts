@@ -129,17 +129,8 @@ namespace pxtblockly {
             button.style.backgroundColor = backgroundColor;
             button.style.borderColor = this.itemBorderColor;
             Blockly.bindEvent_(button, 'click', this, () => this.handleSelection(value));
-            Blockly.bindEvent_(button, 'mouseup', this, () => this.handleSelection(value));
 
             const parentDiv = this.contentDiv;
-
-            // These are applied manually instead of using the :hover pseudoclass
-            // because Android has a bad long press "helper" menu and green highlight
-            // that we must prevent with ontouchstart preventDefault
-            Blockly.bindEvent_(button, 'mousedown', button, function (e) {
-                this.setAttribute('class', 'blocklyDropDownButton blocklyDropDownButtonHover sprite-editor-card');
-                e.preventDefault();
-            });
             Blockly.bindEvent_(button, 'mouseover', button, function () {
                 this.setAttribute('class', 'blocklyDropDownButton blocklyDropDownButtonHover sprite-editor-card');
                 parentDiv.setAttribute('aria-activedescendant', this.id);
