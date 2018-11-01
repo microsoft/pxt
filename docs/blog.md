@@ -1,5 +1,12 @@
 # Microsoft MakeCode Blog
 
+## [MakeCode tutorials for CS Ed week 2018 and beyond](/blog/csed-week/csed-week-2018)
+ 
+October 23th, 2018 by [Jaqster](https://github.com/jaqster)
+ 
+With Computer Science Education week just around the corner, we’ve compiled a list of some of our favorite tutorials, guides, and projects...
+**[Continue reading this blog post](/blog/csed-week/csed-week-2018)**
+ 
 ## [MakeCode for the micro:bit update releases on October 26th!](/blog/microbit/v1-release-date)
 
 October 12th, 2018 by [Jaqster](https://github.com/jaqster)
