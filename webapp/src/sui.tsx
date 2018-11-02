@@ -454,6 +454,7 @@ export interface InputProps {
     id?: string;
     ariaLabel?: string;
     autoFocus?: boolean;
+    autoComplete?: boolean
 }
 
 export class Input extends data.Component<InputProps, { value: string }> {
@@ -532,7 +533,11 @@ export class Input extends data.Component<InputProps, { value: string }> {
                         placeholder={p.placeholder} value={value || ''}
                         readOnly={!!p.readOnly}
                         onClick={this.handleClick}
-                        onChange={this.handleChange} />
+                        onChange={this.handleChange}
+                        autoComplete={p.autoComplete ? "" : "off"}
+                        autoCorrect={p.autoComplete ? "" : "off"}
+                        autoCapitalize={p.autoComplete ? "" : "off"}
+                        spellCheck={p.autoComplete}/>
                         : <textarea
                             id={p.id}
                             className={"ui input " + (p.class || "") + (p.inputLabel ? " labelled" : "")}

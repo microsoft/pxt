@@ -425,6 +425,6 @@ class EditorToolbarSaveInput extends sui.StatelessUIElement<EditorToolbarSaveInp
 
     renderCore() {
         const { onChange, onChangeValue, view, ...rest } = this.props;
-        return <input onChange={this.handleChange} {...rest} />
+        return <input onChange={this.handleChange} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} {...rest} />
     }
 }
