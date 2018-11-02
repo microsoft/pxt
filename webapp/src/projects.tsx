@@ -535,7 +535,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             className: 'huge positive'
         }]
 
-        const isLink = (youTubeId || url);
+        const isLink = !cardType && (youTubeId || url);
         const linkHref = (youTubeId && !url) ? `https://youtu.be/${youTubeId}` :
             ((/^https:\/\//i.test(url)) || (/^\//i.test(url)) ? url : '');
 
