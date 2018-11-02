@@ -920,7 +920,7 @@ namespace ts.pxtc.assembler {
             let lenVtables = size("_vtables_end")
             let lenLiterals = size("_literals_end")
             let lenAllCode = lenPrev
-            let totalSize = lenTotal + this.baseOffset
+            let totalSize = (lenTotal + this.baseOffset) & 0xffffff
 
             if (flashSize && totalSize > flashSize)
                 U.userError(lf("program too big by {0} bytes!", totalSize - flashSize))

@@ -843,17 +843,17 @@ namespace pxt.cpp {
             pxt.debug(`module.json: ${res.generatedFiles["/module.json"]}`)
         }
 
-        if (compile.switches.boxDebug) {
+        if (compile.switches.boxDebug)
             pxtConfig += "#define PXT_BOX_DEBUG 1\n"
-        }
 
-        if (compile.gc) {
+        if (compile.gc)
             pxtConfig += "#define PXT_GC 1\n"
-        }
 
-        if (compile.switches.gcDebug) {
+        if (compile.switches.gcDebug)
             pxtConfig += "#define PXT_GC_DEBUG 1\n"
-        }
+
+        if (compile.switches.numFloat)
+            pxtConfig += "#define PXT_USE_FLOAT 1\n"
 
         if (compile.vtableShift)
             pxtConfig += `#define PXT_VTABLE_SHIFT ${compile.vtableShift}\n`

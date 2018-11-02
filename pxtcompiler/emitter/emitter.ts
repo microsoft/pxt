@@ -4083,6 +4083,12 @@ ${lbl}: .short 0xffff
         return U.toHex(new Uint8Array(a.buffer))
     }
 
+    function floatToBits(v: number) {
+        let a = new Float32Array(1)
+        a[0] = v
+        return U.toHex(new Uint8Array(a.buffer))
+    }
+
     function checkPrimitiveType(t: Type, flags: number, tp: HasLiteralType) {
         if (t.flags & flags) {
             return true;
@@ -4164,7 +4170,7 @@ ${lbl}: .short 0xffff
         }
 
         emitDouble(v: number): string {
-            return this.emitLabelled(doubleToBits(v), this.doubles, "_dbl")
+            return this.emitLabelled(target.switches.numFloat ? floatToBits(v) : doubleToBits(v), this.doubles, "_dbl")
         }
 
         emitString(s: string): string {

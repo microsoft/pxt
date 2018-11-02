@@ -326,6 +326,7 @@ declare namespace ts.pxtc {
         slowFields?: boolean;
         skipClassCheck?: boolean;
         noThisCheckOpt?: boolean;
+        numFloat?: boolean;
     }
 
     interface CompileTarget {
