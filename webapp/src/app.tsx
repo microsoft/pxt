@@ -108,7 +108,7 @@ export class ProjectView
     private reload: boolean;
     private shouldTryDecompile: boolean;
 
-    private runTokens: pxt.Util.CancellationToken[] = [];
+    private runToken: pxt.Util.CancellationToken;
 
     constructor(props: IAppProps) {
         super(props);
@@ -1843,64 +1843,63 @@ export class ProjectView
 
     stopSimulator(unload?: boolean) {
         pxt.tickEvent('simulator.stop')
-        this.runTokens.forEach(token => token.cancel())
+        if (this.runToken) this.runToken.cancel()
         simulator.stop(unload)
         this.setState({ running: false })
     }
 
     suspendSimulator() {
         pxt.tickEvent('simulator.suspend')
-        this.runTokens.forEach(token => token.cancel())
+        if (this.runToken) this.runToken.cancel()
         simulator.suspend()
     }
 
     runSimulator(opts: compiler.CompileOptions = {}) {
-        // Begin the simulator run operation
-        this.runTokens.forEach(token => token.cancel())
-        let runToken = new pxt.Util.CancellationToken()
-        this.runTokens.push(runToken);
-        runToken.startOperation()
+        if (this.runToken) this.runToken.cancel()
+        let runToken = new pxt.Util.CancellationToken();
+        this.runToken = runToken;
+        runToken.startOperation();
+        return (() => {
+            const editorId = this.editor ? this.editor.getId().replace(/Editor$/, '') : "unknown";
+            if (opts.background) {
+                pxt.tickActivity("autorun", "autorun." + editorId);
+                if (localStorage.getItem("noAutoRun"))
+                    return Promise.resolve()
+            } else pxt.tickEvent(opts.debug ? "debug" : "run", { editor: editorId });
 
-        const editorId = this.editor ? this.editor.getId().replace(/Editor$/, '') : "unknown";
-        if (opts.background) {
-            pxt.tickActivity("autorun", "autorun." + editorId);
-            if (localStorage.getItem("noAutoRun"))
-                return Promise.resolve()
-        } else pxt.tickEvent(opts.debug ? "debug" : "run", { editor: editorId });
+            if (!opts.background)
+                this.editor.beforeCompile();
+            if (this.state.tracing)
+                opts.trace = true;
 
-        if (!opts.background)
-            this.editor.beforeCompile();
-        if (this.state.tracing)
-            opts.trace = true;
+            simulator.stop();
+            this.setState({ running: false});
 
-        simulator.stop();
-        this.setState({ running: false});
-
-        const state = this.editor.snapshotState()
-        return compiler.compileAsync(opts)
-            .then(resp => {
-                if (runToken.isCancelled()) return;
-                this.clearSerial();
-                this.editor.setDiagnostics(this.editorFile, state)
-                if (resp.outfiles[pxtc.BINARY_JS]) {
-                    if (!runToken.isCancelled()) {
-                        simulator.run(pkg.mainPkg, opts.debug, resp, this.state.mute, this.state.highContrast, pxt.options.light, opts.clickTrigger)
+            const state = this.editor.snapshotState()
+            return compiler.compileAsync(opts)
+                .then(resp => {
+                    if (runToken.isCancelled()) return;
+                    this.clearSerial();
+                    this.editor.setDiagnostics(this.editorFile, state)
+                    if (resp.outfiles[pxtc.BINARY_JS]) {
                         if (!runToken.isCancelled()) {
-                            this.setState({ running: true, showParts: simulator.driver.runOptions.parts.length > 0 })
-                        } else {
-                            simulator.stop();
-                            this.setState({ running: false});
+                            simulator.run(pkg.mainPkg, opts.debug, resp, this.state.mute, this.state.highContrast, pxt.options.light, opts.clickTrigger)
+                            if (!runToken.isCancelled()) {
+                                this.setState({ running: true, showParts: simulator.driver.runOptions.parts.length > 0 })
+                            } else {
+                                simulator.stop();
+                                this.setState({ running: false});
+                            }
                         }
+                    } else if (!opts.background) {
+                        core.warningNotification(lf("Oops, we could not run this project. Please check your code for errors."))
                     }
-                } else if (!opts.background) {
-                    core.warningNotification(lf("Oops, we could not run this project. Please check your code for errors."))
-                }
-            })
-            .finally(() => {
-                if (!runToken.isCancelled()) runToken.resolveCancel()
-                const runTokenIndex = this.runTokens.indexOf(runToken)
-                if (runTokenIndex !== -1) this.runTokens.splice(runTokenIndex, 1)
-            });
+                })
+                .finally(() => {
+                    if (!runToken.isCancelled()) runToken.resolveCancel()
+                    runToken = null;
+                });
+        })();
     }
 
     ///////////////////////////////////////////////////////////
