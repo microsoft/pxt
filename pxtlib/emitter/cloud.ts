@@ -61,7 +61,9 @@ namespace pxt.Cloud {
         if (!Cloud.isOnline()) // offline
             return Promise.resolve(undefined);
 
-        const url = pxt.webConfig && pxt.webConfig.isStatic ? `targetconfig.json` : `config/${pxt.appTarget.id}/targetconfig`;
+        const targetVersion = pxt.appTarget.versions && pxt.appTarget.versions.target;
+        const url = pxt.webConfig && pxt.webConfig.isStatic ? `targetconfig.json` : `config/${pxt.appTarget.id}/targetconfig${targetVersion ? `/v${targetVersion}` : ''}`;
+
         if (Cloud.isLocalHost())
             return Util.requestAsync({
                 url: "/api/" + url,
