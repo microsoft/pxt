@@ -388,6 +388,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         return (
             <sui.Modal isOpen={this.state.visible} dimmer={true}
                 className="searchdialog" size="fullscreen"
+                hideGoBack={!!this.state.resolve}
                 onClose={this.hide}
                 closeIcon={true} header={headerText}
                 helpUrl={helpPath}

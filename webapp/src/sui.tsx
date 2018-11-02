@@ -850,6 +850,7 @@ export interface ModalProps extends ReactModal.Props {
     onClose?: () => void;
     defaultOpen?: boolean;
     closeIcon?: boolean | string;
+    hideGoBack?: boolean;
 
     size?: 'fullscreen' | 'large' | 'mini' | 'small' | 'tiny';
     className?: string;
@@ -966,9 +967,10 @@ export class Modal extends React.Component<ModalProps, ModalState> {
             onClose, closeIcon, children,
             header, headerClass, helpUrl, description,
             closeOnDimmerClick, closeOnDocumentClick, closeOnEscape,
-            shouldCloseOnEsc, shouldCloseOnOverlayClick, shouldFocusAfterRender, ...rest } = this.props;
+            shouldCloseOnEsc, shouldCloseOnOverlayClick, shouldFocusAfterRender, hideGoBack, ...rest } = this.props;
         const { marginTop, scrolling, mountClasses } = this.state;
         const isFullscreen = size == 'fullscreen';
+        const goBack = isFullscreen && !hideGoBack;
 
         const classes = cx([
             'ui',
@@ -1038,7 +1040,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
                 onClick={onClose}
                 onKeyDown={fireClickOnEnter}
             ><Icon icon="close remove circle" /> </div> : undefined}
-            {isFullscreen ?
+            {goBack ?
                 <Button text={lf("Go back")} title={lf("Go back to the editor")} className="icon circular small editorBack left labeled" ariaLabel={lf("Go back")} onClick={onClose} onKeyDown={fireClickOnEnter}>
                     <Icon icon="arrow left" />
                 </Button> : undefined}
