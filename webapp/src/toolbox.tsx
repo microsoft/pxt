@@ -493,9 +493,12 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
         this.treeRowElement.focus();
     }
 
-    handleClick() {
+    handleClick(e: React.MouseEvent<any>) {
         const { treeRow, onCategoryClick, index } = this.props;
         if (onCategoryClick) onCategoryClick(treeRow, index);
+
+        e.preventDefault();
+        e.stopPropagation();
     }
 
     handleKeyDown(e: React.KeyboardEvent<HTMLElement>) {
@@ -582,7 +585,7 @@ export interface ToolboxCategory {
 
 export interface TreeRowProps {
     treeRow: ToolboxCategory;
-    onClick?: () => void;
+    onClick?: (e: React.MouseEvent<any>) => void;
     onKeyDown?: (e: React.KeyboardEvent<any>) => void;
     selected?: boolean;
     isRtl?: boolean;
