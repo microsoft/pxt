@@ -424,11 +424,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         const blocklyToolboxDiv = this.getBlocklyToolboxDiv();
         if (!blocklyToolboxDiv) return;
-        this.parent.updateEditorLogo(blocklyToolboxDiv.offsetWidth);
+        if (this.parent.isBlocksActive()) this.parent.updateEditorLogo(blocklyToolboxDiv.offsetWidth);
 
         const blocklyOptions = this.getBlocklyOptions(this.showCategories);
-        let toolboxHeight = blocklyDiv.offsetHeight;
-        if (!(blocklyOptions as any).horizontalLayout) blocklyToolboxDiv.style.height = `${toolboxHeight}px`;
+        if (!(blocklyOptions as any).horizontalLayout) blocklyToolboxDiv.style.height = `100%`;
     }
 
     hasUndo() {

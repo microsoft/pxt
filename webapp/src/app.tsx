@@ -249,15 +249,17 @@ export class ProjectView
         }
     }
 
-    updateEditorLogo(left: number, rgba?: string) {
+    updateEditorLogo(left: number, rgba?: string): number {
         if (pxt.appTarget.appTheme.hideMenuBar) {
             const editorLogo = document.getElementById('editorlogo');
             if (editorLogo) {
                 editorLogo.style.left = `${left}px`;
                 editorLogo.style.display = 'block';
                 editorLogo.style.background = rgba || '';
+                return editorLogo.offsetHeight;
             }
         }
+        return 0;
     }
 
     saveFileAsync(): Promise<void> {
