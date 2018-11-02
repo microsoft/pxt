@@ -235,7 +235,7 @@ export function makeDirty() { // running outdated code
     dirty = true;
 
     // No need to continue running if we're dirty
-    driver.suspend();
+    if (driver.state == pxsim.SimulatorState.Running) driver.suspend();
 }
 
 export function isDirty(): boolean { // in need of a restart?
