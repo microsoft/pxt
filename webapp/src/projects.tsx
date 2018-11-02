@@ -801,7 +801,7 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
             >
                 <div className="ui form">
                     <sui.Input ref="filenameinput" autoFocus id={"projectNameInput"} label={lf("Name")}
-                        ariaLabel={lf("Type a name for your project")}
+                        ariaLabel={lf("Type a name for your project")} autoComplete={false}
                         value={projectName || ''} onChange={this.handleChange} />
                 </div>
             </sui.Modal>

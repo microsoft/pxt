@@ -403,7 +403,9 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                         <div className="ui search">
                             <div className="ui fluid action input" role="search">
                                 <div aria-live="polite" className="accessible-hidden">{lf("{0} result matching '{1}'", bundles.length + ghdata.data.length + urldata.data.length, this.state.searchFor)}</div>
-                                <input autoFocus ref="searchInput" type="text" placeholder={lf("Search or enter project URL...")} onKeyUp={this.handleSearchKeyUpdate} disabled={isSearching} />
+                                <input autoFocus ref="searchInput" type="text" placeholder={lf("Search or enter project URL...")}
+                                    onKeyUp={this.handleSearchKeyUpdate} disabled={isSearching}
+                                    autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} />
                                 <button title={lf("Search")} disabled={isSearching} className="ui right icon button" onClick={this.handleSearch}>
                                     <sui.Icon icon="search" />
                                 </button>
