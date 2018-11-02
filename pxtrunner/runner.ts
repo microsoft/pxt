@@ -315,11 +315,12 @@ namespace pxt.runner {
                 setEditorContextAsync(/\.ts$/i.test(name) ? LanguageMode.TypeScript : LanguageMode.Blocks, fm.locale).done();
                 break;
             case "popout":
-                let mp = /#(doc|md):([^&?:]+)/i.exec(window.location.href);
+                let mp = /((\/v[0-9+])\/)?[^\/]*#(doc|md):([^&?:]+)/i.exec(window.location.href);
                 if (mp) {
                     const docsUrl = pxt.webConfig.docsUrl || '/--docs';
-                    let url = mp[1] == "doc" ? `${mp[2]}` : `${docsUrl}?md=${mp[2]}`;
-                    window.open(url, "_blank");
+                    let verPrefix = mp[2] || '';
+                    let url = mp[3] == "doc" ? (pxt.webConfig.isStatic ? `/docs${mp[4]}.html` : `${mp[4]}`) : `${docsUrl}?md=${mp[4]}`;
+                    window.open(BrowserUtils.urlJoin(verPrefix, url), "_blank");
                     // notify parent iframe that we have completed the popout
                     if (window.parent)
                         window.parent.postMessage(<pxsim.SimulatorDocsReadyMessage>{
