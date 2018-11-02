@@ -151,8 +151,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
     }
 
     fetchLocal(): pxt.workspace.Header[] {
-        if (this.state.mode != ScriptSearchMode.Boards &&
-            this.state.mode != ScriptSearchMode.Extensions) return [];
+        if (this.state.mode != ScriptSearchMode.Extensions) return [];
         return workspace.getHeaders()
             .filter(h => !!h.githubId)
     }
