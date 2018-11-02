@@ -493,9 +493,12 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
         this.treeRowElement.focus();
     }
 
-    handleClick() {
+    handleClick(e: React.MouseEvent<any>) {
         const { treeRow, onCategoryClick, index } = this.props;
         if (onCategoryClick) onCategoryClick(treeRow, index);
+
+        e.preventDefault();
+        e.stopPropagation();
     }
 
     handleKeyDown(e: React.KeyboardEvent<HTMLElement>) {
@@ -582,7 +585,7 @@ export interface ToolboxCategory {
 
 export interface TreeRowProps {
     treeRow: ToolboxCategory;
-    onClick?: () => void;
+    onClick?: (e: React.MouseEvent<any>) => void;
     onKeyDown?: (e: React.KeyboardEvent<any>) => void;
     selected?: boolean;
     isRtl?: boolean;
@@ -703,7 +706,7 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
         return <div role="button" ref={this.handleTreeRowRef} className={treeRowClass}
             style={treeRowStyle} tabIndex={0}
             onMouseEnter={this.onmouseenter} onMouseLeave={this.onmouseleave}
-            onClick={onClick} onKeyDown={onKeyDown ? onKeyDown : sui.fireClickOnEnter}>
+            onClick={onClick} onContextMenu={onClick} onKeyDown={onKeyDown ? onKeyDown : sui.fireClickOnEnter}>
             <span className="blocklyTreeIcon" role="presentation"></span>
             {iconImageStyle}
             <span style={{ display: 'inline-block' }} className={`blocklyTreeIcon ${iconClass}`} role="presentation">{iconContent}</span>
