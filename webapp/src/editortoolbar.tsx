@@ -108,7 +108,8 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const isEditor = this.props.parent.isBlocksEditor() || this.props.parent.isTextEditor();
         if (!isEditor) return <div />;
 
-        const showSave = !readOnly && !isController && !targetTheme.saveInMenu && !tutorial;
+        const disableFileAccessinMaciOs = targetTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac());
+        const showSave = !readOnly && !isController && !targetTheme.saveInMenu && !tutorial && !disableFileAccessinMaciOs;
         const compile = pxt.appTarget.compile;
         const compileBtn = compile.hasHex || compile.saveAsPNG;
         const compileTooltip = lf("Download your code to the {0}", targetTheme.boardName);

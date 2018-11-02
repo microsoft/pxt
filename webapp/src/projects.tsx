@@ -639,7 +639,7 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
 
     renderCore() {
         const { visible } = this.state;
-
+        const disableFileAccessinMaciOs = pxt.appTarget.appTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac());
         /* tslint:disable:react-a11y-anchors */
         return (
             <sui.Modal isOpen={visible} className="importdialog" size="small"
@@ -648,7 +648,7 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
             >
                 <div className={pxt.github.token ? "ui three cards" : "ui two cards"}>
-                    {pxt.appTarget.compile ?
+                    {pxt.appTarget.compile && !disableFileAccessinMaciOs ?
                         <codecard.CodeCardView
                             ariaLabel={lf("Open files from your computer")}
                             role="button"
