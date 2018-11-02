@@ -234,7 +234,11 @@ export function makeDirty() { // running outdated code
     pxsim.U.addClass(driver.container, getInvalidatedClass());
     dirty = true;
 
-    // No need to continue running if we're dirty
+    // We suspend the simulator here to stop it from running without
+    // interfering with the user's stopped state. We're not doing this check
+    // in the driver because the driver should be able to switch from any state
+    // to the suspend state, but in this codepath we only want to switch to the
+    // suspended state if we're running
     if (driver.state == pxsim.SimulatorState.Running) driver.suspend();
 }
 
