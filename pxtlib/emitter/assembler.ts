@@ -327,8 +327,12 @@ namespace ts.pxtc.assembler {
             }
 
             let shm = /(.*)>>(\d+)$/.exec(s)
-            if (shm)
-                return this.parseOneInt(shm[1]) >> parseInt(shm[2])
+            if (shm) {
+                let left = this.parseOneInt(shm[1])                
+                let mask = this.baseOffset & ~0xffffff
+                left &= ~mask;
+                return left >> parseInt(shm[2])
+            }
 
             // handle hexadecimal and binary encodings
             if (s[0] == "0") {
