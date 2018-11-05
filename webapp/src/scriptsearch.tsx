@@ -79,13 +79,13 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         })
     }
 
-    showBoardsAsync(features?: string[]): Promise<void> {
+    showBoardsAsync(features?: string[], closeIcon?: boolean): Promise<void> {
         return new Promise((resolve, reject) => {
             this.setState({
                 visible: true,
                 searchFor: '',
                 mode: ScriptSearchMode.Boards,
-                closeIcon: !features, /* unfiltered */
+                closeIcon: !!closeIcon,
                 features,
                 resolve
             })

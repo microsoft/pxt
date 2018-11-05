@@ -1387,7 +1387,7 @@ export class ProjectView
         if (pxt.appTarget.appTheme.chooseBoardOnNewProject
             && pxt.appTarget.simulator
             && !!pxt.appTarget.simulator.dynamicBoardDefinition)
-            return this.showBoardDialogAsync(features);
+            return this.showBoardDialogAsync(features, false);
         return Promise.resolve();
     }
 
@@ -2160,8 +2160,8 @@ export class ProjectView
         this.scriptSearch.showExtensions();
     }
 
-    showBoardDialogAsync(features?: string[]): Promise<void> {
-        return this.scriptSearch.showBoardsAsync(features);
+    showBoardDialogAsync(features?: string[], closeIcon?: boolean): Promise<void> {
+        return this.scriptSearch.showBoardsAsync(features, closeIcon);
     }
 
     showModalDialogAsync(options: pxt.editor.ModalDialogOptions) {
