@@ -1843,22 +1843,28 @@ export class ProjectView
 
     stopSimulator(unload?: boolean) {
         pxt.tickEvent('simulator.stop')
-        if (this.runToken) this.runToken.cancel()
+        if (this.runToken) {
+            this.runToken.cancel()
+            this.runToken = null
+        }
         simulator.stop(unload)
         this.setState({ running: false })
     }
 
     suspendSimulator() {
         pxt.tickEvent('simulator.suspend')
-        if (this.runToken) this.runToken.cancel()
+        if (this.runToken) {
+            this.runToken.cancel()
+            this.runToken = null
+        }
         simulator.suspend()
     }
 
     runSimulator(opts: compiler.CompileOptions = {}) {
         if (this.runToken) this.runToken.cancel()
-        let runToken = new pxt.Util.CancellationToken();
-        this.runToken = runToken;
-        runToken.startOperation();
+        let cancellationToken = new pxt.Util.CancellationToken();
+        this.runToken = cancellationToken;
+        cancellationToken.startOperation();
         return (() => {
             const editorId = this.editor ? this.editor.getId().replace(/Editor$/, '') : "unknown";
             if (opts.background) {
@@ -1878,13 +1884,13 @@ export class ProjectView
             const state = this.editor.snapshotState()
             return compiler.compileAsync(opts)
                 .then(resp => {
-                    if (runToken.isCancelled()) return;
+                    if (cancellationToken.isCancelled()) return;
                     this.clearSerial();
                     this.editor.setDiagnostics(this.editorFile, state)
                     if (resp.outfiles[pxtc.BINARY_JS]) {
-                        if (!runToken.isCancelled()) {
+                        if (!cancellationToken.isCancelled()) {
                             simulator.run(pkg.mainPkg, opts.debug, resp, this.state.mute, this.state.highContrast, pxt.options.light, opts.clickTrigger)
-                            if (!runToken.isCancelled()) {
+                            if (!cancellationToken.isCancelled()) {
                                 this.setState({ running: true, showParts: simulator.driver.runOptions.parts.length > 0 })
                             } else {
                                 simulator.stop();
@@ -1896,8 +1902,8 @@ export class ProjectView
                     }
                 })
                 .finally(() => {
-                    if (!runToken.isCancelled()) runToken.resolveCancel()
-                    runToken = null;
+                    if (!cancellationToken.isCancelled()) cancellationToken.resolveCancel()
+                    cancellationToken = null;
                 });
         })();
     }
