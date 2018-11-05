@@ -211,8 +211,19 @@ ${lbl}: ${this.obj_header("pxt::buffer_vt")}
             let locLabel = baseLabel + "_locals"
             let endLabel = baseLabel + "_end"
             this.write(`.section code`)
+            this.write(`${baseLabel}:`)
+
+            if (this.proc.classInfo && this.proc.info.thisParameter
+                && !target.switches.skipClassCheck
+                && !target.switches.noThisCheckOpt) {
+                this.write(`mov r7, lr`)
+                this.write(`ldr r0, [sp, #4]`)
+                this.emitInstanceOf(this.proc.classInfo, "validate")
+                this.write("mov lr, r7")
+            }
+
             this.write(`
-${baseLabel}:
+${baseLabel}_nochk:
     @stackmark func
     @stackmark args
 `)
@@ -258,13 +269,6 @@ ${baseLabel}:
             let numlocals = this.proc.locals.length
             this.write(this.t.proc_setup(numlocals))
             this.baseStackSize += numlocals
-
-            if (this.proc.classInfo && this.proc.info.thisParameter
-                && !target.switches.skipClassCheck
-                && !target.switches.noThisCheckOpt) {
-                this.write(`ldr r0, [sp, args@0]`)
-                this.emitInstanceOf(this.proc.classInfo, "validate")
-            }
 
             this.write("@stackmark locals")
             this.write(`${locLabel}:`)
@@ -1502,7 +1506,7 @@ ${baseLabel}:
             } else {
                 let proc = procid.proc
                 procIdx = proc.seqNo
-                this.write(this.t.call_lbl(proc.label()))
+                this.write(this.t.call_lbl(proc.label() + (procid.isThis ? "_nochk" : "")))
                 this.write(lbl + ":")
             }
             this.calls.push({
@@ -1652,7 +1656,7 @@ ${baseLabel}:
                 return
 
             this.write(`cmp r4, #${numargs}`)
-            this.write(`bge ${this.proc.label()}`)
+            this.write(`bge ${this.proc.label()}_nochk`)
 
             let needsAlign = this.stackAlignmentNeeded(numargs + 1)
 
@@ -1678,7 +1682,7 @@ ${baseLabel}:
                 this.write(`bx lr`)
             })
 
-            this.write(`bl ${this.proc.label()}`)
+            this.write(`bl ${this.proc.label()}_nochk`)
 
             if (target.gc) {
                 let stackSize = numargs + (needsAlign ? 1 : 0)

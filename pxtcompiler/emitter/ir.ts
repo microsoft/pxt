@@ -422,6 +422,7 @@ namespace ts.pxtc.ir {
         ifaceIndex: number;
         mapMethod?: string;
         classInfo?: ClassInfo;
+        isThis?: boolean;
     }
 
     export interface ProcQuery {

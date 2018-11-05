@@ -53,7 +53,7 @@ namespace ts.pxtc {
         push_fixed(regs: string[]) { return "push {" + regs.join(", ") + "}" }
         pop_fixed(regs: string[]) { return "pop {" + regs.join(", ") + "}" }
         proc_setup(numlocals: number, main?: boolean) {
-            let r = "push {lr}\n"
+            let r = "push {lr}\n.locals:\n"
             if (numlocals > 0) {
                 r += "    movs r0, #0\n"
                 for (let i = 0; i < numlocals; ++i)

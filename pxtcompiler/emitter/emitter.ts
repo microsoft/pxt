@@ -2065,7 +2065,11 @@ ${lbl}: .short 0xffff
             }
 
             function emitPlain() {
-                return mkProcCall(decl, args.map((x) => emitExpr(x)))
+                let r = mkProcCall(decl, args.map((x) => emitExpr(x)))
+                let pp = r.data as ir.ProcId
+                if (args[0] && pp.proc && pp.proc.classInfo)
+                    pp.isThis = args[0].kind == SK.ThisKeyword
+                return r
             }
 
             scope(() => {
