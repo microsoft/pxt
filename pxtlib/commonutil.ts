@@ -439,6 +439,7 @@ namespace ts.pxtc.Util {
 
         cancel() {
             this.cancelled = true;
+            this.pending = false;
         }
 
         cancelAsync() {

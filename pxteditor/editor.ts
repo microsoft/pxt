@@ -182,7 +182,7 @@ namespace pxt.editor {
         startStopSimulator(clickTrigger?: boolean): void;
         stopSimulator(unload?: boolean): void;
         restartSimulator(debug?: boolean): void;
-        startSimulator(debug?: boolean): void;
+        startSimulator(debug?: boolean, clickTrigger?: boolean): void;
         runSimulator(): void;
         isSimulatorRunning(): boolean;
         expandSimulator(): void;

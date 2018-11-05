@@ -108,6 +108,8 @@ export class ProjectView
     private reload: boolean;
     private shouldTryDecompile: boolean;
 
+    private runToken: pxt.Util.CancellationToken;
+
     constructor(props: IAppProps) {
         super(props);
         document.title = pxt.appTarget.title || pxt.appTarget.name;
@@ -169,6 +171,7 @@ export class ProjectView
                     .done(() => !this.state.home && id ? this.loadHeaderAsync(workspace.getHeader(id), this.state.editorState) : Promise.resolve());
             } else if (this.state.resumeOnVisibility) {
                 this.setState({ resumeOnVisibility: false });
+                // We did a save when the page was hidden, no need to save again.
                 this.runSimulator();
             }
         }
@@ -1674,12 +1677,6 @@ export class ProjectView
     ////////////             Simulator            /////////////
     ///////////////////////////////////////////////////////////
 
-    shouldStartSimulator() {
-        const hasHome = !pxt.shell.isControllerMode();
-        if (!hasHome) return true;
-        return !this.state.home;
-    }
-
     startStopSimulator(clickTrigger?: boolean) {
         if (this.state.running) {
             this.stopSimulator()
@@ -1687,11 +1684,6 @@ export class ProjectView
             this.maybeShowPackageErrors(true);
             this.startSimulator(undefined, clickTrigger);
         }
-    }
-
-    restartSimulator(debug?: boolean) {
-        this.stopSimulator();
-        this.startSimulator(debug);
     }
 
     toggleTrace(intervalSpeed?: number) {
@@ -1714,27 +1706,6 @@ export class ProjectView
             simulator.setTraceInterval(intervalSpeed != undefined ? intervalSpeed : simulator.SLOW_TRACE_INTERVAL);
             this.restartSimulator();
         }
-    }
-
-    startSimulator(debug?: boolean, clickTrigger?: boolean) {
-        pxt.tickEvent('simulator.start');
-        if (!this.shouldStartSimulator()) {
-            pxt.log("Tried to start simulator when we shouldn't");
-            return;
-        }
-        this.saveFileAsync()
-            .then(() => this.runSimulator(debug ? { debug: true } : {}, clickTrigger));
-    }
-
-    stopSimulator(unload?: boolean) {
-        pxt.tickEvent('simulator.stop')
-        simulator.stop(unload)
-        this.setState({ running: false })
-    }
-
-    suspendSimulator() {
-        pxt.tickEvent('simulator.suspend')
-        simulator.suspend()
     }
 
     proxySimulatorMessage(content: string) {
@@ -1847,37 +1818,96 @@ export class ProjectView
         if (devIndicator) devIndicator.clear()
     }
 
+    shouldStartSimulator(): boolean {
+        const hasHome = !pxt.shell.isControllerMode();
+        if (!hasHome) return true;
+        return !this.state.home;
+    }
+
     isSimulatorRunning() {
         return this.state.running;
     }
 
-    runSimulator(opts: compiler.CompileOptions = {}, clickTrigger?: boolean) {
-        const editorId = this.editor ? this.editor.getId().replace(/Editor$/, '') : "unknown";
-        if (opts.background) {
-            pxt.tickActivity("autorun", "autorun." + editorId);
-            if (localStorage.getItem("noAutoRun"))
-                return Promise.resolve()
-        } else pxt.tickEvent(opts.debug ? "debug" : "run", { editor: editorId });
-
-        if (!opts.background)
-            this.editor.beforeCompile();
-        if (this.state.tracing)
-            opts.trace = true;
-
+    restartSimulator(debug?: boolean) {
         this.stopSimulator();
+        this.startSimulator(debug);
+    }
 
-        const state = this.editor.snapshotState()
-        return compiler.compileAsync(opts)
-            .then(resp => {
-                this.clearSerial();
-                this.editor.setDiagnostics(this.editorFile, state)
-                if (resp.outfiles[pxtc.BINARY_JS]) {
-                    simulator.run(pkg.mainPkg, opts.debug, resp, this.state.mute, this.state.highContrast, pxt.options.light, clickTrigger)
-                    this.setState({ running: true, showParts: simulator.driver.runOptions.parts.length > 0 })
-                } else if (!opts.background) {
-                    core.warningNotification(lf("Oops, we could not run this project. Please check your code for errors."))
-                }
-            })
+    startSimulator(debug?: boolean, clickTrigger?: boolean) {
+        pxt.tickEvent('simulator.start');
+        if (!this.shouldStartSimulator()) {
+            pxt.log("Ignoring call to start simulator, either already running or we shouldn't start.");
+            return;
+        }
+        this.saveFileAsync()
+            .then(() => this.runSimulator({ debug, clickTrigger }))
+    }
+
+    stopSimulator(unload?: boolean) {
+        pxt.tickEvent('simulator.stop')
+        if (this.runToken) {
+            this.runToken.cancel()
+            this.runToken = null
+        }
+        simulator.stop(unload)
+        this.setState({ running: false })
+    }
+
+    suspendSimulator() {
+        pxt.tickEvent('simulator.suspend')
+        if (this.runToken) {
+            this.runToken.cancel()
+            this.runToken = null
+        }
+        simulator.suspend()
+    }
+
+    runSimulator(opts: compiler.CompileOptions = {}) {
+        if (this.runToken) this.runToken.cancel()
+        let cancellationToken = new pxt.Util.CancellationToken();
+        this.runToken = cancellationToken;
+        cancellationToken.startOperation();
+        return (() => {
+            const editorId = this.editor ? this.editor.getId().replace(/Editor$/, '') : "unknown";
+            if (opts.background) {
+                pxt.tickActivity("autorun", "autorun." + editorId);
+                if (localStorage.getItem("noAutoRun"))
+                    return Promise.resolve()
+            } else pxt.tickEvent(opts.debug ? "debug" : "run", { editor: editorId });
+
+            if (!opts.background)
+                this.editor.beforeCompile();
+            if (this.state.tracing)
+                opts.trace = true;
+
+            simulator.stop();
+            this.setState({ running: false});
+
+            const state = this.editor.snapshotState()
+            return compiler.compileAsync(opts)
+                .then(resp => {
+                    if (cancellationToken.isCancelled()) return;
+                    this.clearSerial();
+                    this.editor.setDiagnostics(this.editorFile, state)
+                    if (resp.outfiles[pxtc.BINARY_JS]) {
+                        if (!cancellationToken.isCancelled()) {
+                            simulator.run(pkg.mainPkg, opts.debug, resp, this.state.mute, this.state.highContrast, pxt.options.light, opts.clickTrigger)
+                            if (!cancellationToken.isCancelled()) {
+                                this.setState({ running: true, showParts: simulator.driver.runOptions.parts.length > 0 })
+                            } else {
+                                simulator.stop();
+                                this.setState({ running: false});
+                            }
+                        }
+                    } else if (!opts.background) {
+                        core.warningNotification(lf("Oops, we could not run this project. Please check your code for errors."))
+                    }
+                })
+                .finally(() => {
+                    if (!cancellationToken.isCancelled()) cancellationToken.resolveCancel()
+                    cancellationToken = null;
+                });
+        })();
     }
 
     ///////////////////////////////////////////////////////////
