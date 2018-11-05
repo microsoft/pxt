@@ -94,7 +94,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
 
     showExperiments() {
         this.setState({
-            visible: true, searchFor: '', 
+            visible: true, searchFor: '',
             mode: ScriptSearchMode.Experiments,
             closeIcon: true,
             experimentsState: pxt.editor.experiments.state(),
@@ -395,7 +395,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             <sui.Modal isOpen={visible} dimmer={true}
                 className="searchdialog" size="fullscreen"
                 onClose={this.hide}
-                closeIcon={closeIcon} 
+                closeIcon={closeIcon}
                 header={headerText}
                 helpUrl={helpPath}
                 closeOnDimmerClick closeOnEscape
