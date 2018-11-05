@@ -85,7 +85,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                 visible: true,
                 searchFor: '',
                 mode: ScriptSearchMode.Boards,
-                closeIcon: false,
+                closeIcon: !features, /* unfiltered */
                 features,
                 resolve
             })
