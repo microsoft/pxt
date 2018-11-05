@@ -261,15 +261,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         if (monacoArea && this.editor) {
             const toolboxWidth = monacoToolboxDiv && monacoToolboxDiv.offsetWidth || 0;
-            this.editor.layout({ width: monacoArea.offsetWidth - toolboxWidth, height: monacoArea.offsetHeight });
 
             const rgba = (this.editor as any)._themeService._theme.colors['editor.background'].rgba;
-            this.parent.updateEditorLogo(toolboxWidth, `rgba(${rgba.r},${rgba.g},${rgba.b},${rgba.a})`);
+            const logoHeight = (this.parent.isJavaScriptActive()) ? this.parent.updateEditorLogo(toolboxWidth, `rgba(${rgba.r},${rgba.g},${rgba.b},${rgba.a})`) : 0;
 
-            let toolboxHeight = this.editor ? this.editor.getLayoutInfo().contentHeight : 0;
-            if (monacoToolboxDiv) {
-                monacoToolboxDiv.style.height = `${toolboxHeight}px`;
-            }
+            this.editor.layout({ width: monacoArea.offsetWidth - toolboxWidth, height: monacoArea.offsetHeight - logoHeight });
+
+            if (monacoToolboxDiv) monacoToolboxDiv.style.height = `100%`;
         }
     }
 

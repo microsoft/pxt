@@ -210,7 +210,7 @@ namespace pxt.editor {
         handleExtensionRequest(request: ExtensionRequest): void;
 
         fireResize(): void;
-        updateEditorLogo(left: number, rgba?: string): void;
+        updateEditorLogo(left: number, rgba?: string): number;
 
         loadBlocklyAsync(): Promise<void>;
         isBlocksEditor(): boolean;
