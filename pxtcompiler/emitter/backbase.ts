@@ -217,7 +217,7 @@ ${lbl}: ${this.obj_header("pxt::buffer_vt")}
                 && !target.switches.skipClassCheck
                 && !target.switches.noThisCheckOpt) {
                 this.write(`mov r7, lr`)
-                this.write(`ldr r0, [sp, #4]`)
+                this.write(`ldr r0, [sp, #0]`)
                 this.emitInstanceOf(this.proc.classInfo, "validate")
                 this.write("mov lr, r7")
             }
