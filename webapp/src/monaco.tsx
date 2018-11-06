@@ -1219,15 +1219,20 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (helpCallback) {
             // TODO: complete this part
             let labelHelpIcon = document.createElement('span');
-            labelHelpIcon.setAttribute('role', 'presentation');
             labelHelpIcon.style.display = 'inline-block';
-            const labelHelpIconImage = document.createElement('image');
-            labelHelpIconImage.setAttribute('role', 'presentation');
+            labelHelpIcon.style.cursor = 'pointer';
+            const labelHelpIconImage = document.createElement('img');
             labelHelpIconImage.setAttribute('src', (Blockly as any).FlyoutButton.HELP_IMAGE_URI);
-            labelHelpIconImage.setAttribute('height', `${fontSize}pxt`);
-            labelHelpIconImage.setAttribute('width', `${fontSize}pxt`);
+            labelHelpIconImage.style.height = `${fontSize + 5}px`;
+            labelHelpIconImage.style.width = `${fontSize + 5}px`;
+            labelHelpIconImage.style.verticalAlign = 'middle';
+            labelHelpIconImage.style.marginLeft = '10px';
             labelHelpIcon.appendChild(labelHelpIconImage);
             labelDiv.appendChild(labelHelpIcon);
+
+            labelHelpIconImage.addEventListener('click', () => {
+                this.helpButtonCallback(label);
+            });
         }
 
         monacoFlyout.appendChild(labelDiv);
@@ -1240,6 +1245,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             labelDiv.appendChild(labelLine);
         }
         return labelDiv;
+    }
+
+    protected helpButtonCallback(group?: string) {
+        pxt.debug(`${group} help icon clicked.`);
+        workspace.fireEvent(new pxt.events.UIEvent('blocks', 'groupHelpClicked', { group }));
     }
 
     private getMonacoBlock(fn: toolbox.BlockDefinition, ns: string, color: string, isDisabled?: boolean) {
