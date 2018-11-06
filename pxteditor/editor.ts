@@ -182,7 +182,7 @@ namespace pxt.editor {
         startStopSimulator(clickTrigger?: boolean): void;
         stopSimulator(unload?: boolean): void;
         restartSimulator(debug?: boolean): void;
-        startSimulator(debug?: boolean): void;
+        startSimulator(debug?: boolean, clickTrigger?: boolean): void;
         runSimulator(): void;
         isSimulatorRunning(): boolean;
         expandSimulator(): void;
@@ -210,7 +210,7 @@ namespace pxt.editor {
         handleExtensionRequest(request: ExtensionRequest): void;
 
         fireResize(): void;
-        updateEditorLogo(left: number, rgba?: string): void;
+        updateEditorLogo(left: number, rgba?: string): number;
 
         loadBlocklyAsync(): Promise<void>;
         isBlocksEditor(): boolean;
@@ -249,7 +249,7 @@ namespace pxt.editor {
         showExperimentsDialog(): void;
 
         showPackageDialog(): void;
-        showBoardDialogAsync(features?: string[]): Promise<void>;
+        showBoardDialogAsync(features?: string[], closeIcon?: boolean): Promise<void>;
 
         showModalDialogAsync(options: ModalDialogOptions): Promise<void>;
     }

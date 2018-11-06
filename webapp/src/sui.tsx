@@ -454,6 +454,7 @@ export interface InputProps {
     id?: string;
     ariaLabel?: string;
     autoFocus?: boolean;
+    autoComplete?: boolean
 }
 
 export class Input extends data.Component<InputProps, { value: string }> {
@@ -532,7 +533,11 @@ export class Input extends data.Component<InputProps, { value: string }> {
                         placeholder={p.placeholder} value={value || ''}
                         readOnly={!!p.readOnly}
                         onClick={this.handleClick}
-                        onChange={this.handleChange} />
+                        onChange={this.handleChange}
+                        autoComplete={p.autoComplete ? "" : "off"}
+                        autoCorrect={p.autoComplete ? "" : "off"}
+                        autoCapitalize={p.autoComplete ? "" : "off"}
+                        spellCheck={p.autoComplete}/>
                         : <textarea
                             id={p.id}
                             className={"ui input " + (p.class || "") + (p.inputLabel ? " labelled" : "")}
@@ -964,6 +969,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
             shouldCloseOnEsc, shouldCloseOnOverlayClick, shouldFocusAfterRender, ...rest } = this.props;
         const { marginTop, scrolling, mountClasses } = this.state;
         const isFullscreen = size == 'fullscreen';
+        const goBack = isFullscreen && !!closeIcon;
 
         const classes = cx([
             'ui',
@@ -1033,7 +1039,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
                 onClick={onClose}
                 onKeyDown={fireClickOnEnter}
             ><Icon icon="close remove circle" /> </div> : undefined}
-            {isFullscreen ?
+            {goBack ?
                 <Button text={lf("Go back")} title={lf("Go back to the editor")} className="icon circular small editorBack left labeled" ariaLabel={lf("Go back")} onClick={onClose} onKeyDown={fireClickOnEnter}>
                     <Icon icon="arrow left" />
                 </Button> : undefined}

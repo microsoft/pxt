@@ -15,6 +15,8 @@
 
 /* Code segment */
 @docsSegementBackgroundColor: #f7f7f7;
+@docsSegementBackgroundColorValid: #edf9ef;
+@docsSegementBackgroundColorInvalid: #fbf3f4;
 
 /* Card */
 @docsCardBackgroundColor: white;
@@ -68,6 +70,31 @@
         margin-bottom: 1.275em;
         box-shadow: none;
     }
+    .mainbody div.codewidget.valid, code.valid{
+        background: @docsSegementBackgroundColorValid !important;
+    }
+    .mainbody div.codewidget.invalid, code.invalid{
+        background: @docsSegementBackgroundColorInvalid !important;
+    }
+
+    .mainbody div.codewidget.valid, .mainbody div.codewidget.invalid {
+        overflow: auto;
+    }
+
+    .invalid i.icon, .valid i.icon {
+        float: right;
+        margin-top: 10px;
+        margin-right: 10px;
+        font-size: 30px;
+    }
+
+    .invalid i.icon {
+        color: #a31515;
+    }
+    .valid i.icon {
+        color: #008000;
+    }
+
     .avatar .ui.message {
         margin-left: 4em;
         margin-bottom: 1em;

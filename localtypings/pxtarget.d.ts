@@ -283,7 +283,9 @@ declare namespace pxt {
         bluetoothPartialFlashing?: boolean; // enable partial flashing over BLE
         topBlocks?: boolean; // show a top blocks category in the editor
         pairingButton?: boolean; // display a pairing button
-
+        tagColors?: pxt.Map<string>; // optional colors for tags
+        dontSuspendOnVisibility?: boolean; // we're inside an app, don't suspend the editor
+        disableFileAccessinMaciOs?:boolean; //Disable save & import of files in Mac and iOS, mainly used as embed webkit doesn't support these
         /**
          * Internal and temporary flags:
          * These flags may be removed without notice, please don't take a dependency on them
