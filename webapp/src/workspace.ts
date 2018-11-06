@@ -751,6 +751,11 @@ export function isBrowserWorkspace() {
     return impl === cloudworkspace.provider;
 }
 
+export function fireEvent(ev: pxt.events.Event) {
+    if (impl.fireEvent)
+        return impl.fireEvent(ev)
+    // otherwise, NOP
+}
 
 /*
     header:<guid>   - one header

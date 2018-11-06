@@ -10,6 +10,7 @@ import * as sui from "./sui";
 import * as data from "./data";
 import * as snippets from "./monacoSnippets"
 import * as toolbox from "./toolbox";
+import * as workspace from "./workspace";
 
 import Util = pxt.Util;
 
@@ -1006,9 +1007,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             'monacoFlyoutLabel monacoFlyoutHeading', true, icon, iconClass, color);
     }
 
-    protected showFlyoutGroupLabel(group: string, groupicon: string, labelLineWidth: string) {
+    protected showFlyoutGroupLabel(group: string, groupicon: string, labelLineWidth: string, helpCallback: string) {
         this.getMonacoLabel(pxt.Util.rlf(`{id:group}${group}`),
-            'monacoFlyoutLabel blocklyFlyoutGroup', false, undefined, undefined, undefined, true, labelLineWidth);
+            'monacoFlyoutLabel blocklyFlyoutGroup', false, undefined, undefined, undefined, true, labelLineWidth, helpCallback);
     }
 
     protected showFlyoutBlocks(ns: string, color: string, blocks: toolbox.BlockDefinition[]) {
@@ -1189,7 +1190,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private getMonacoLabel(label: string, className: string,
         hasIcon?: boolean, icon?: string, iconClass?: string, iconColor?: string,
-        hasLine?: boolean, labelLineWidth?: string) {
+        hasLine?: boolean, labelLineWidth?: string, helpCallback?: string) {
         const monacoFlyout = this.getMonacoFlyout();
         const fontSize = this.parent.settings.editorFontSize;
 
@@ -1214,6 +1215,20 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             labelDiv.appendChild(labelIcon);
         }
         labelDiv.appendChild(labelText);
+
+        if (helpCallback) {
+            // TODO: complete this part
+            let labelHelpIcon = document.createElement('span');
+            labelHelpIcon.setAttribute('role', 'presentation');
+            labelHelpIcon.style.display = 'inline-block';
+            const labelHelpIconImage = document.createElement('image');
+            labelHelpIconImage.setAttribute('role', 'presentation');
+            labelHelpIconImage.setAttribute('src', (Blockly as any).FlyoutButton.HELP_IMAGE_URI);
+            labelHelpIconImage.setAttribute('height', `${fontSize}pxt`);
+            labelHelpIconImage.setAttribute('width', `${fontSize}pxt`);
+            labelHelpIcon.appendChild(labelHelpIconImage);
+            labelDiv.appendChild(labelHelpIcon);
+        }
 
         monacoFlyout.appendChild(labelDiv);
 
@@ -1358,6 +1373,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 monacoEditor.editor.setPosition(endPos);
                 monacoEditor.editor.focus();
                 //monacoEditor.editor.setSelection(new monaco.Range(currPos.lineNumber, currPos.column, endPos.lineNumber, endPos.column));
+
+                // Fire a create event
+                workspace.fireEvent(new pxt.events.CreateEvent('js', fn.attributes.blockId));
             };
             monacoBlock.ondragstart = (e: DragEvent) => {
                 pxt.tickEvent("monaco.toolbox.itemdrag", undefined, { interactiveConsent: true });
@@ -1368,6 +1386,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 let insertText = snippetPrefix ? `${snippetPrefix}.${snippet}` : snippet;
                 insertText = addNamespace ? `${firstWord(namespaceToUse)}.${insertText}` : insertText;
                 e.dataTransfer.setData('text', insertText); // IE11 only supports text
+
+                // Fire a create event
+                workspace.fireEvent(new pxt.events.CreateEvent('js', fn.attributes.blockId));
             }
             monacoBlock.ondragend = (e: DragEvent) => {
                 monacoFlyout.style.transform = "none";
