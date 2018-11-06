@@ -1216,13 +1216,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
         labelDiv.appendChild(labelText);
 
-        if (helpCallback) {
-            // TODO: complete this part
+        if (helpCallback && pxt.editor.HELP_IMAGE_URI) {
             let labelHelpIcon = document.createElement('span');
             labelHelpIcon.style.display = 'inline-block';
             labelHelpIcon.style.cursor = 'pointer';
+            labelHelpIcon.draggable = false;
             const labelHelpIconImage = document.createElement('img');
-            labelHelpIconImage.setAttribute('src', (Blockly as any).FlyoutButton.HELP_IMAGE_URI);
+            labelHelpIconImage.setAttribute('src', pxt.editor.HELP_IMAGE_URI);
             labelHelpIconImage.style.height = `${fontSize + 5}px`;
             labelHelpIconImage.style.width = `${fontSize + 5}px`;
             labelHelpIconImage.style.verticalAlign = 'middle';

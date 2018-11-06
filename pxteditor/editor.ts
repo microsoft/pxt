@@ -434,5 +434,7 @@ namespace pxt.editor {
         download?: string;
         save?: string;
     }
+
+    export let HELP_IMAGE_URI: string = "";
 }
 
