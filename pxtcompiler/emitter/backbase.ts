@@ -627,10 +627,13 @@ ${baseLabel}_nochk:
             this.write(this.t.emit_int(effIdx * 4, "r1"))
 
             let info = procid.classInfo
-            this.emitLabelledHelper("classCall_" + info.id, () => {
+            let suff = ""
+            if (procid.isThis)
+                suff += "_this"
+            this.emitLabelledHelper("classCall_" + info.id + suff, () => {
                 this.write(`ldr r0, [sp, #0] ; ld-this`)
                 this.loadVTable()
-                if (!target.switches.skipClassCheck)
+                if (!target.switches.skipClassCheck && !procid.isThis)
                     this.checkSubtype(info)
                 this.write(`ldr r1, [r3, r1] ; ld-method`)
                 this.write(`bx r1 ; keep lr from caller`)

@@ -2130,7 +2130,10 @@ ${lbl}: .short 0xffff
                 }
                 if (info.virtualParent && !isSuper && !target.switches.slowMethods) {
                     U.assert(!bin.finalPass || info.virtualIndex != null, "!bin.finalPass || info.virtualIndex != null")
-                    return mkMethodCall(info.parentClassInfo, info.virtualIndex, null, args.map((x) => emitExpr(x)))
+                    let r = mkMethodCall(info.parentClassInfo, info.virtualIndex, null, args.map((x) => emitExpr(x)))
+                    if (args[0].kind == SK.ThisKeyword)
+                        (r.data as ir.ProcId).isThis = true
+                    return r
                 }
                 if (attrs.shim && !hasShimDummy(decl)) {
                     return emitShim(decl, node, args);
