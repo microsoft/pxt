@@ -777,7 +777,7 @@ ${info.id}_VT:
         addPtr(toStr ? toStr.vtLabel() : "0")
 
         for (let m of info.vtable) {
-            addPtr(m.label())
+            addPtr(m.label() + "_nochk")
         }
 
         // See https://makecode.microbit.org/15593-01779-41046-40599 for Thumb binary search.
