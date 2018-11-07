@@ -14,7 +14,7 @@ export interface ICarouselState {
 }
 
 const OUT_OF_BOUND_MARGIN = 300;
-const DRAG_THRESHOLD = 3;
+const DRAG_THRESHOLD = 5;
 
 enum DraggingDirection {
     None = 0,
@@ -192,13 +192,16 @@ export class Carousel extends data.Component<ICarouselProps, ICarouselState> {
         let move = (event: MouseEvent | TouchEvent | PointerEvent) => {
             if (this.isDragging) {
                 let x = getX(event);
-                let y = getY(event);
-                pxt.log(`drag x : ${Math.abs(x - this.dragStartX)}`);
-                pxt.log(`drag y : ${Math.abs(y - this.dragStartY)}`);
-                if (Math.abs(x - this.dragStartX) > DRAG_THRESHOLD) {
-                    this.definitelyDragging = DraggingDirection.X;
-                } else if (Math.abs(y - this.dragStartY) > DRAG_THRESHOLD) {
-                    this.definitelyDragging = DraggingDirection.Y;
+                if (!this.definitelyDragging) {
+                    // lock direction
+                    let y = getY(event);
+                    pxt.log(`drag x : ${Math.abs(x - this.dragStartX)}`);
+                    pxt.log(`drag y : ${Math.abs(y - this.dragStartY)}`);
+                    if (Math.abs(x - this.dragStartX) > DRAG_THRESHOLD) {
+                        this.definitelyDragging = DraggingDirection.X;
+                    } else if (Math.abs(y - this.dragStartY) > DRAG_THRESHOLD) {
+                        this.definitelyDragging = DraggingDirection.Y;
+                    }
                 }
 
                 if (this.definitelyDragging == DraggingDirection.X) {
@@ -289,7 +292,7 @@ export class Carousel extends data.Component<ICarouselProps, ICarouselState> {
                 index = bucketIndex - 1;
             }
 
-            this.setIndex(index, 100);
+            this.setIndex(index, 200);
         }
     }
 
