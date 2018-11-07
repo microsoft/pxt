@@ -14,13 +14,20 @@ export interface ICarouselState {
 }
 
 const OUT_OF_BOUND_MARGIN = 300;
+const DRAG_THRESHOLD = 5;
+
+enum DraggingDirection {
+    None = 0,
+    X = 1,
+    Y = 2
+}
 
 export class Carousel extends data.Component<ICarouselProps, ICarouselState> {
     private dragSurface: HTMLDivElement;
     private container: HTMLDivElement;
     private arrows: HTMLSpanElement[] = [];
     private isDragging = false;
-    private definitelyDragging = false;
+    private definitelyDragging = DraggingDirection.None;
 
     private childWidth: number;
     private containerWidth: number;
@@ -31,6 +38,7 @@ export class Carousel extends data.Component<ICarouselProps, ICarouselState> {
     private index = 0;
 
     private dragStartX: number;
+    private dragStartY: number;
     private dragStartOffset: number;
     private dragOffset: number;
 
@@ -161,8 +169,8 @@ export class Carousel extends data.Component<ICarouselProps, ICarouselState> {
 
     private initDragSurface() {
         let down = (event: MouseEvent | TouchEvent | PointerEvent) => {
-            this.definitelyDragging = false;
-            this.dragStart(getX(event));
+            this.definitelyDragging = DraggingDirection.None;
+            this.dragStart(getX(event), getY(event));
         };
 
         let up = (event: MouseEvent | TouchEvent | PointerEvent) => {
@@ -184,14 +192,25 @@ export class Carousel extends data.Component<ICarouselProps, ICarouselState> {
         let move = (event: MouseEvent | TouchEvent | PointerEvent) => {
             if (this.isDragging) {
                 let x = getX(event);
-                if (Math.abs(x - this.dragStartX) > 3) {
-                    this.definitelyDragging = true;
+                if (!this.definitelyDragging) {
+                    // lock direction
+                    let y = getY(event);
+                    pxt.log(`drag x : ${Math.abs(x - this.dragStartX)}`);
+                    pxt.log(`drag y : ${Math.abs(y - this.dragStartY)}`);
+                    if (Math.abs(x - this.dragStartX) > DRAG_THRESHOLD) {
+                        this.definitelyDragging = DraggingDirection.X;
+                    } else if (Math.abs(y - this.dragStartY) > DRAG_THRESHOLD) {
+                        this.definitelyDragging = DraggingDirection.Y;
+                    }
                 }
-                event.stopPropagation();
-                event.preventDefault();
-                window.requestAnimationFrame(() => {
-                    this.dragMove(x);
-                });
+
+                if (this.definitelyDragging == DraggingDirection.X) {
+                    event.stopPropagation();
+                    event.preventDefault();
+                    window.requestAnimationFrame(() => {
+                        this.dragMove(x);
+                    });
+                }
             }
         };
 
@@ -225,9 +244,10 @@ export class Carousel extends data.Component<ICarouselProps, ICarouselState> {
         }
     }
 
-    private dragStart(startX: number) {
+    private dragStart(startX: number, startY: number) {
         this.isDragging = true;
         this.dragStartX = startX;
+        this.dragStartY = startY;
         this.dragStartOffset = this.currentOffset;
         if (this.animationId) {
             window.cancelAnimationFrame(this.animationId);
@@ -272,7 +292,7 @@ export class Carousel extends data.Component<ICarouselProps, ICarouselState> {
                 index = bucketIndex - 1;
             }
 
-            this.setIndex(index, 100);
+            this.setIndex(index, 200);
         }
     }
 
@@ -386,5 +406,14 @@ function getX(event: MouseEvent | TouchEvent | PointerEvent) {
     }
     else {
         return (event as TouchEvent).changedTouches[0].screenX
+    }
+}
+
+function getY(event: MouseEvent | TouchEvent | PointerEvent) {
+    if ("screenY" in event) {
+        return (event as MouseEvent).screenX;
+    }
+    else {
+        return (event as TouchEvent).changedTouches[0].screenY
     }
 }
