@@ -152,6 +152,7 @@ namespace pxtblockly {
          */
         protected buttonClick_ = function (e: any) {
             let value = e.target.getAttribute('data-value');
+            if (!value) return;
             this.setValue(value);
             this.setText(value);
             Blockly.DropDownDiv.hide();
@@ -212,7 +213,7 @@ namespace pxtblockly {
 
         /**
          * Updates the width of the field. This calls getCachedWidth which won't cache
-         * the approximated width on IE/Edge when `getComputedTextLength` fails. Once
+         * the approximated width on IE/Microsoft Edge when `getComputedTextLength` fails. Once
          * it eventually does succeed, the result will be cached.
          **/
         updateWidth() {

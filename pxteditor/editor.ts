@@ -82,7 +82,13 @@ namespace pxt.editor {
         inTutorial?: boolean;
         dependencies?: pxt.Map<string>;
         tsOnly?: boolean;
-        changeBoardOnLoad?: boolean; // if applicable, pop up the "boards" dialog after creating the project
+    }
+
+    export interface ExampleImportOptions {
+        name: string;
+        path: string;
+        loadBlocks?: boolean;
+        prj?: ProjectTemplate;
     }
 
     export interface ProjectFilters {
@@ -146,6 +152,7 @@ namespace pxt.editor {
         newEmptyProject(name?: string, documentation?: string): void;
         newProject(options?: ProjectCreationOptions): void;
         createProjectAsync(options: ProjectCreationOptions): Promise<void>;
+        importExampleAsync(options: ExampleImportOptions): Promise<void>;
         importProjectDialog(): void;
         removeProject(): void;
         editText(): void;
@@ -172,11 +179,12 @@ namespace pxt.editor {
 
         anonymousPublishAsync(): Promise<string>;
 
-        startStopSimulator(): void;
+        startStopSimulator(clickTrigger?: boolean): void;
         stopSimulator(unload?: boolean): void;
         restartSimulator(debug?: boolean): void;
-        startSimulator(debug?: boolean): void;
+        startSimulator(debug?: boolean, clickTrigger?: boolean): void;
         runSimulator(): void;
+        isSimulatorRunning(): boolean;
         expandSimulator(): void;
         collapseSimulator(): void;
         toggleSimulatorCollapse(): void;
@@ -202,7 +210,7 @@ namespace pxt.editor {
         handleExtensionRequest(request: ExtensionRequest): void;
 
         fireResize(): void;
-        updateEditorLogo(left: number, rgba?: string): void;
+        updateEditorLogo(left: number, rgba?: string): number;
 
         loadBlocklyAsync(): Promise<void>;
         isBlocksEditor(): boolean;
@@ -241,7 +249,7 @@ namespace pxt.editor {
         showExperimentsDialog(): void;
 
         showPackageDialog(): void;
-        showBoardDialog(): void;
+        showBoardDialogAsync(features?: string[], closeIcon?: boolean): Promise<void>;
 
         showModalDialogAsync(options: ModalDialogOptions): Promise<void>;
     }
@@ -274,6 +282,7 @@ namespace pxt.editor {
     export interface ExtensionOptions {
         blocklyToolbox: ToolboxDefinition;
         monacoToolbox: ToolboxDefinition;
+        projectView: IProjectView;
     }
 
     export interface IToolboxOptions {
@@ -425,5 +434,7 @@ namespace pxt.editor {
         download?: string;
         save?: string;
     }
+
+    export let HELP_IMAGE_URI: string = "";
 }
 

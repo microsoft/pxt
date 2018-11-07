@@ -120,9 +120,23 @@ export class Editor extends srceditor.Editor {
 
     processEvent(ev: MessageEvent) {
         let msg = ev.data
-        if (msg.type !== "serial") return;
-        const smsg = msg as pxsim.SimulatorSerialMessage
+        if (msg.type === "serial") {
+            this.processEventCore(msg);
+        }
+        else if (msg.type === "bulkserial") {
+            (msg as pxsim.SimulatorBulkSerialMessage).data.forEach(datum => {
+                this.processEventCore({
+                    type: "serial",
+                    data: datum.data,
+                    receivedTime: datum.time,
+                    sim: msg.sim,
+                    id: msg.id
+                } as pxsim.SimulatorSerialMessage);
+            })
+        }
+    }
 
+    processEventCore(smsg: pxsim.SimulatorSerialMessage) {
         smsg.receivedTime = smsg.receivedTime || Util.now();
         if (!this.active) {
             this.saveMessageForLater(smsg);

@@ -4,11 +4,11 @@
 
 **Posted on June 20, 2017 by [mmoskal](https://github.com/mmoskal)**
 
-The recently released [Circuit Playground Express](https://www.adafruit.com/product/3333) 
+The recently released [Circuit Playground Express](https://www.adafruit.com/product/3333)
 (I'll call it CPX here) has an
 infrared (IR) emitter and receiver. Such setups are typically used in remotes
 for various electronic equipment (TVs, DVRs, etc.), and indeed it can
-be used for communication with such equipment. 
+be used for communication with such equipment.
 
 At the MakeCode team we thought it would be fun for users to be able to program
 one CPX talking to another. We already had a similar capability using radio
@@ -18,7 +18,7 @@ in micro:bit and it was a hit in classrooms.
 
 Historically, IR have been also used to for bi-directional communication phones
 and PDAs (remember those?) to computers using IrDA protocol.  Modern computers
-and smartphones usually don't have IrDA anymore, and anyway 
+and smartphones usually don't have IrDA anymore, and anyway
 the setup on the CPX is much more like a typical TV remote than IrDA.
 In particular, while the emitter is just a simple diode, that you can blink at
 will, the receiver is connected to demodulator that expects IR pulses at 38kHz
@@ -59,9 +59,9 @@ Of course, one should always start such an endeavor with some background
 research. Part of it is the various remote control protocols.  These seem less
 than ideal for our needs because of low throughput and small message size (8-24
 bits per message; for comparison on micro:bit we usually used 128 bits per radio
-message). 
+message).
 These are adequate for remote control, but not for general
-purpose data exchange.  
+purpose data exchange.
 In fact this is expected: as usual with various maker
 activities we're stretching the limits of what the hardware was designed to do!
 
@@ -99,7 +99,7 @@ described slightly later), than ones that just have a few bits flipped.
 For these reasons I went for a code with constant bit length.  Experimentally,
 I chose 250us (0.25ms), or around 10 pulses at 38kHz.  Shorter bit lengths
 lead to higher packet loss at larger distances, while longer don't seem to
-improve it. 
+improve it.
 
 Encoding message for transmission is performed in three steps:
 * first, a 16 bit checksum is computed and added at the end of message
@@ -118,7 +118,7 @@ While the message is being received, we store the exact lengths of gaps and
 marks and only decode them once the final mark has been detected. Next, we
 shift the recorded times, so that median start time of a mark is as close to a
 multiple of 250us as possible.  This lets us avoid problems with outsize
-influence of the beginning of the first mark to the decoding of the message. 
+influence of the beginning of the first mark to the decoding of the message.
 
 Next, we decode the message into bits (by looking at value at 125us, 375us, etc).
 Afterwards, we may shift the message by one bit in either
@@ -204,7 +204,7 @@ The congestion control counter-measures are still to be tested in a classroom.
 
 ### PWM and TCC
 
-Microcontrollers often have [PWM (pulse-width modulation)](https://en.wikipedia.org/wiki/Pulse-width_modulation) 
+Microcontrollers often have [PWM (pulse-width modulation)](https://en.wikipedia.org/wiki/Pulse-width_modulation)
 modules, which can generate a square wave -
 i.e., setting a pin to high, waiting a little bit, setting it to low,
 and again waiting a (different) little bit, and then repeating.
@@ -217,25 +217,25 @@ To transmit say `10011` we will want to generate 250us of pulses (mark), followe
 by 500us gap and 500us mark. Thus, after the first ten pulses we need to
 turn off the PWM, and then after another 500us we need to turn it on again.
 One way to do it is to set the duty cycle to 0%. Another is to shut down the
-counter (Timer Counter for Control Applications, in short TCC) controlling 
+counter (Timer Counter for Control Applications, in short TCC) controlling
 the PWM.
 
 MakeCode runtime sits on top of [Codal](https://github.com/lancaster-university/codal)
-(to be open-sourced soon; it's a new generation of [micro:bit DAL](https://github.com/lancaster-university/microbit-dal)), 
+(to be open-sourced soon; it's a new generation of [micro:bit DAL](https://github.com/lancaster-university/microbit-dal)),
 which then sits on top of [ARM mbed](https://www.mbed.com/en/).
 When setting the duty cycle mbed goes through several layers of indirection
 and performs 64 bit floating point computation simulated in software.
 While floating point operations are not usually a problem in
 regular code, here they are. The reason is that pulses occur around every ~1300
-cycles (48MHz / 38kHz). Thus, a delay of 1000 cycles (typical for software 
+cycles (48MHz / 38kHz). Thus, a delay of 1000 cycles (typical for software
 floating point) is quite significant. Thus, I ended up disabling or enabling
-the TCC every 250us by going down straight to hardware (see `setTCC0` in 
+the TCC every 250us by going down straight to hardware (see `setTCC0` in
 [infrared/samd21.cpp](https://github.com/Microsoft/pxt-common-packages/tree/master/libs/infrared/samd21.cpp#L80)).
 
 ### DMESG, EIC and IRQs
 
-One super-useful tool when debugging this stuff was a simple circular character buffer in Codal. 
-I've copied it there from my [USB bootloader](https://makecode.com/blog/one-chip-to-flash-them-all), 
+One super-useful tool when debugging this stuff was a simple circular character buffer in Codal.
+I've copied it there from my [USB bootloader](https://makecode.com/blog/one-chip-to-flash-them-all),
 while implementing USB/HID, and again it's particularly
 useful in situations where timing is critical. The idea comes from various Unix kernels, which
 have a `printk()` function to write there, and a user-space `dmesg` command to display
@@ -245,7 +245,7 @@ Both of these, however, are quite slow, so injecting any logging code
 will likely affect your timings.
 
 In any event, I was trying to understand typical profile of errors in messages. First, I logged
-the lengths of marks and gaps, in CSV format, in a such a way that they could be plotted 
+the lengths of marks and gaps, in CSV format, in a such a way that they could be plotted
 in Excel. For example, if I had lengths of mark 257, gap 274, mark 445, gap 555, I would log:
 
 ```
@@ -269,9 +269,9 @@ is that the beginnings and ends of marks align quite well with the 250us tick ma
 This observation was one reason I went from gap-length protocol to one with constant bit
 length expecting exact clock.
 
-Now, this format was too low level to track the nature of errors. 
+Now, this format was too low level to track the nature of errors.
 For that I took advantage of the multi-layer nature of the protocol -
-I was going to look for errors at the bit layer. Note that I would be 
+I was going to look for errors at the bit layer. Note that I would be
 looking at the 35 bit segments, before the Hamming correction
 kicks in.
 
@@ -368,7 +368,7 @@ the timeout triggers thousands if not millions of times before it doesn't - the 
 reveal the last execution path).
 Now, adding `DMESG()` in mbed in some places seemed to "fix" or rather mask the problem.
 In that case even `DMESG()` was enough to mess up with the timing. I changed `DMESG()` to updates
-of a single integer which I could later examine in `gdb`. 
+of a single integer which I could later examine in `gdb`.
 
 The mbed timer is implemented using Timer Counter (TC) module, number #4 (TC4). It is similar to the TCC
 module, but instead of producing waves, it can count ticks of a configured clock, and also
@@ -418,10 +418,10 @@ Thus, I configured the TC3 to trigger an interrupt every 250us. Then the overhea
 the interrupt handling (which is around 30 cycles), not an entire queue and setting new interrupts and
 counters. This seems to work quite well. It's also easy to only enable it when needed (transmitting).
 
-Also, interestingly, [Atmel documentation](http://ww1.microchip.com/downloads/en/DeviceDoc/40001882A.pdf) 
-says that TC3 works as slave to TC4, when TC4 is set in 32 bit
+Also, interestingly, [Atmel documentation](http://ww1.microchip.com/downloads/en/DeviceDoc/40001882A.pdf)
+says that TC3 works as subordinate to TC4, when TC4 is set in 32 bit
 mode (as it is by mbed). It also talks about TC5 paired with TC6 and TC7 not paired at all. However,
-the ATSAMD21G18 in CPX doesn't have TC6 and TC7, and it seems that the TC5 is the slave to TC4.
+the ATSAMD21G18 in CPX doesn't have TC6 and TC7, and it seems that the TC5 is the subordinate to TC4.
 Thus I used TC3 for my interrupt.
 
 

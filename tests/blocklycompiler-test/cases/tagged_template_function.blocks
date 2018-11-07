@@ -1,0 +1,15 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+  <variables></variables>
+  <block type="pxt-on-start" x="-130" y="-30">
+    <statement name="HANDLER">
+      <block type="procedures_callnoreturn">
+        <mutation name="img"></mutation>
+        <field name="NAME">img</field>
+      </block>
+    </statement>
+  </block>
+  <block type="procedures_defnoreturn" x="170" y="90">
+    <field name="NAME">img</field>
+    <field name="PARAMS"></field>
+  </block>
+</xml>

@@ -276,6 +276,15 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
                 impl.deleteAsync ? impl.deleteAsync(h, e.version) : impl.setAsync(h, e.version, {})))
     }
 
+    // check if we have dynamic boards, store board info for home page rendering
+    const bundledcoresvgs = pxt.appTarget.bundledcoresvgs;
+    if (text && bundledcoresvgs) {
+        const pxtjson = JSON.parse(text["pxt.json"] || "{}") as pxt.PackageConfig;
+        if (pxtjson && pxtjson.dependencies)
+            h.board = Object.keys(pxtjson.dependencies)
+                .filter(p => !!bundledcoresvgs[p])[0];
+    }
+
     return headerQ.enqueue<void>(h.id, () =>
         fixupVersionAsync(e).then(() =>
             impl.setAsync(h, e.version, text ? e.text : null)
@@ -742,6 +751,11 @@ export function isBrowserWorkspace() {
     return impl === cloudworkspace.provider;
 }
 
+export function fireEvent(ev: pxt.editor.events.Event) {
+    if (impl.fireEvent)
+        return impl.fireEvent(ev)
+    // otherwise, NOP
+}
 
 /*
     header:<guid>   - one header
