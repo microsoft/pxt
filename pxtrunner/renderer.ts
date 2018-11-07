@@ -173,7 +173,7 @@ namespace pxt.runner {
                 render(el, r);
                 el.removeClass("lang-shadow");
                 return consumeRenderQueueAsync();
-            }, e => {
+            }).catch(e => {
                 pxt.reportException(e);
                 el.append($('<div/>').addClass("ui segment warning").text(e.message));
                 el.removeClass("lang-shadow");
