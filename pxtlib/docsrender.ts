@@ -477,9 +477,10 @@ namespace pxt.docs {
         renderer.link = function (href: string, title: string, text: string) {
             const relative = href.indexOf('/') == 0;
             const target = !relative ? '_blank' : '';
+            const download = /\.(hex|csv|txt)$/.test(href); // some known file extension need the download attribute
             if (relative && d.versionPath) href = `/${d.versionPath}${href}`;
             const html = linkRenderer.call(renderer, href, title, text);
-            return html.replace(/^<a /, `<a ${target ? `target="${target}"` : ''} rel="nofollow noopener" `);
+            return html.replace(/^<a /, `<a ${target ? `target="${target}"` : ''} ${download ? "download" : ""} rel="nofollow noopener" `);
         };
         markedInstance.setOptions({
             renderer: renderer,
