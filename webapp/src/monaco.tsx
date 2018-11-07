@@ -1249,7 +1249,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     protected helpButtonCallback(group?: string) {
         pxt.debug(`${group} help icon clicked.`);
-        workspace.fireEvent(new pxt.events.UIEvent('js', 'groupHelpClicked', { group }));
+        workspace.fireEvent({ type: 'ui', editor: 'ts', action: 'groupHelpClicked', data: { group } } as pxt.events.UIEvent);
     }
 
     private getMonacoBlock(fn: toolbox.BlockDefinition, ns: string, color: string, isDisabled?: boolean) {
@@ -1385,7 +1385,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 //monacoEditor.editor.setSelection(new monaco.Range(currPos.lineNumber, currPos.column, endPos.lineNumber, endPos.column));
 
                 // Fire a create event
-                workspace.fireEvent(new pxt.events.CreateEvent('js', fn.attributes.blockId));
+                workspace.fireEvent({ type: 'create', editor: 'ts', blockId: fn.attributes.blockId } as pxt.events.CreateEvent);
             };
             monacoBlock.ondragstart = (e: DragEvent) => {
                 pxt.tickEvent("monaco.toolbox.itemdrag", undefined, { interactiveConsent: true });
@@ -1398,7 +1398,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 e.dataTransfer.setData('text', insertText); // IE11 only supports text
 
                 // Fire a create event
-                workspace.fireEvent(new pxt.events.CreateEvent('js', fn.attributes.blockId));
+                workspace.fireEvent({ type: 'create', editor: 'ts', blockId: fn.attributes.blockId } as pxt.events.CreateEvent);
             }
             monacoBlock.ondragend = (e: DragEvent) => {
                 monacoFlyout.style.transform = "none";
