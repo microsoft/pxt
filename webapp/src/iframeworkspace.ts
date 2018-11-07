@@ -59,7 +59,7 @@ function resetAsync(): Promise<void> {
         })).then(() => { })
 }
 
-function fireEvent(ev: pxt.events.PXTEvent) {
+function fireEvent(ev: pxt.editor.events.Event) {
     // Send the message up the chain
     pxt.editor.postHostMessageAsync(<pxt.editor.EditorWorkspaceEvent>{
         type: "pxthost",

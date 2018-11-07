@@ -125,7 +125,7 @@ namespace pxt.editor {
 
     export interface EditorWorkspaceEvent extends EditorMessageRequest {
         action: "workspaceevent";
-        event: pxt.events.PXTEvent;
+        event: pxt.editor.events.Event;
     }
 
     // UI properties to sync on load

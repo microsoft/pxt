@@ -751,7 +751,7 @@ export function isBrowserWorkspace() {
     return impl === cloudworkspace.provider;
 }
 
-export function fireEvent(ev: pxt.events.PXTEvent) {
+export function fireEvent(ev: pxt.editor.events.Event) {
     if (impl.fireEvent)
         return impl.fireEvent(ev)
     // otherwise, NOP
