@@ -1242,12 +1242,14 @@ namespace ts.pxtc {
 
             scope(() => {
                 for (let m of inf.methods) {
+                    bin.numMethods++
                     let minf = getFunctionInfo(m)
                     if (isToString(m)) {
                         inf.toStringMethod = lookupProc(m)
                         inf.toStringMethod.info.usedAsIface = true
                     }
                     if (minf.virtualParent) {
+                        bin.numVirtMethods++
                         let key = classFunctionKey(m)
                         let done = false
                         let proc = lookupProc(m)
@@ -4147,6 +4149,8 @@ ${lbl}: .short 0xffff
         packedSource: string;
         itEntries = 0;
         itFullEntries = 0;
+        numMethods = 0;
+        numVirtMethods = 0;
 
         ifaceMembers: string[];
         strings: pxt.Map<string> = {};

@@ -1036,7 +1036,10 @@ ${baseLabel}_nochk:
                                 this.write(this.loadFromExprStack("r" + a.idx, a.expr, off))
                         }
                     })
-                    this.emitHelper(this.t.helper_prologue() + conv + this.t.helper_epilogue(), "conv")
+                    if (target.switches.inlineConversions)
+                        this.write(conv)
+                    else
+                        this.emitHelper(this.t.helper_prologue() + conv + this.t.helper_epilogue(), "conv")
                 } else {
                     // not really worth a helper; some of this will be peep-holed away
                     for (let a of complexArgs)

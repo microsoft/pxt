@@ -328,6 +328,8 @@ declare namespace ts.pxtc {
         noThisCheckOpt?: boolean;        
         numFloat?: boolean;
         noTreeShake?: boolean;
+        inlineConversions?: boolean;
+        noPeepHole?: boolean;
     }
 
     interface CompileTarget {

@@ -914,6 +914,9 @@ ${hex.hexPrelude()}
 
         b.ei.testAssembler(); // just in case
 
+        if (target.switches.noPeepHole)
+            b.disablePeepHole = true
+
         b.lookupExternalLabel = hex.lookupFunctionAddr;
         b.normalizeExternalLabel = s => {
             let inf = hex.lookupFunc(s)
@@ -956,6 +959,7 @@ ${hex.hexPrelude()}
         b.emit(src);
 
         src = `; Interface tables: ${bin.itFullEntries}/${bin.itEntries} (${Math.round(100 * bin.itFullEntries / bin.itEntries)}%)\n` +
+            `; Virtual methods: ${bin.numVirtMethods} / ${bin.numMethods}\n` +
             b.getSource(!peepDbg, bin.numStmts, target.flashEnd);
 
         throwAssemblerErrors(b)
