@@ -72,7 +72,7 @@ namespace pxt.workspace {
         saveAssetAsync?: (id: string, filename: string, data: Uint8Array) => Promise<void>;
         listAssetsAsync?: (id: string) => Promise<Asset[]>;
 
-        fireEvent?: (ev: pxt.events.Event) => void;
+        fireEvent?: (ev: pxt.events.PXTEvent) => void;
     }
 
     export function freshHeader(name: string, modTime: number) {
