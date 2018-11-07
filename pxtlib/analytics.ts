@@ -9,6 +9,7 @@ namespace pxt {
 namespace pxt.analytics {
     const defaultProps: Map<string> = {};
     const defaultMeasures: Map<number> = {};
+    let enabled = false;
 
     export function addDefaultProperties(props: Map<string | number>) {
         Object.keys(props).forEach(k => {
@@ -21,8 +22,9 @@ namespace pxt.analytics {
     }
 
     export function enable() {
-        if (!pxt.aiTrackException || !pxt.aiTrackEvent) return;
+        if (!pxt.aiTrackException || !pxt.aiTrackEvent || enabled) return;
 
+        enabled = true;
         pxt.debug('setting up app insights')
 
         const te = pxt.tickEvent;
