@@ -1413,8 +1413,8 @@ ${baseLabel}_nochk:
 
             this.alignExprStack(topExpr.args.length)
 
-            // available registers
-            let regList = ["r1", "r2", "r3", "r4", "r7"]
+            // available registers; r7 can be used in loading globals, don't use it
+            let regList = ["r1", "r2", "r3", "r4"]
             let regExprs: ir.Expr[] = []
 
             if (complexArgs.length) {
