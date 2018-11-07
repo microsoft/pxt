@@ -379,7 +379,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (ev.xml.tagName == 'SHADOW')
                     this.cleanUpShadowBlocks();
                 this.parent.setState({ hideEditorFloats: false });
-                workspace.fireEvent({ type: 'create', editor: 'blocks', blockId } as pxt.events.CreateEvent);
+                workspace.fireEvent({ type: 'create', editor: 'blocks', blockId } as pxt.editor.events.CreateEvent);
             }
             if (ev.type == 'ui') {
                 if (ev.element == 'category') {
@@ -1154,7 +1154,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     protected helpButtonCallback(group?: string) {
         pxt.debug(`${group} help icon clicked.`);
-        workspace.fireEvent({ type: 'ui', editor: 'blocks', action: 'groupHelpClicked', data: { group } } as pxt.events.UIEvent);
+        workspace.fireEvent({ type: 'ui', editor: 'blocks', action: 'groupHelpClicked', data: { group } } as pxt.editor.events.UIEvent);
     }
 
     protected showFlyoutBlocks(ns: string, color: string, blocks: toolbox.BlockDefinition[]) {
