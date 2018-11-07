@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en" data-manifest="" data-framework="typescript">
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width,height=device-height,user-scalable=no,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0" />
+    <style>
+        @import "/blb/semantic.css";
+        #svg, #svg svg {
+            width:100%;
+            height:100%;
+        }
+        #svg svg circle:hover {
+            stroke: grey !important;
+        }
+        #svg svg .selected {
+            stroke: yellow !important;
+        }
+        textarea {
+            width:100%;
+            height:18rem;
+            font-family: monospace;
+            font-size: small;
+        }
+    </style>
+    <script type="text/javascript" src="/blb/jquery.js"></script>
+    <script>
+        let boardjson = {}
+
+        function convertCoords(elt) {
+            const bbox = elt.getBBox();
+            const x = bbox.x + (bbox.width / 2);
+            const y = bbox.y + (bbox.height / 2);
+            return { x: x, y: y };
+        }
+
+        function addElement(elt) {
+            const id = elt.getAttribute("connectorname") || elt.getAttribute("id");
+            if (boardjson.gpioPinMap[id]) {
+                for (let i = 0; i < boardjson.visual.pinBlocks.length; ++i) {
+                    if (boardjson.visual.pinBlocks[i].labels[0] == id) {
+                        boardjson.visual.pinBlocks.splice(i, 1);
+                        break;
+                    }
+                }
+                delete boardjson.gpioPinMap[id];
+                elt.classList.remove("selected")
+            } else {
+                const rect = convertCoords(elt);
+                boardjson.visual.pinBlocks.push({
+                    x: rect.x,
+                    y: rect.y,
+                    labels: [id]
+                });
+                boardjson.gpioPinMap[id] = id;
+                elt.classList.add("selected")
+            }
+            updateJSON();
+        }
+
+        function updateSvg() {
+            $('#svg').html($('#svginput').val());
+            boardjson = {
+                driveDisplayName: "",
+                visual: {
+                    image: "pkg://board.svg",
+                    outlineImage: "pkg://boardwireframe.svg",
+                    useCrocClips: true,
+                    width: 200,
+                    height: 200,
+                    pinDist: 16,
+                    pinBlocks: [
+                    ]
+                },
+                gpioPinMap: {},
+                groundPins: [
+                    "GND"
+                ],
+                threeVoltPins: [
+                ],
+                spiPins: {
+                    "MOSI": "MOSI",
+                    "MISO": "MISO",
+                    "SCK": "SCK"
+                },
+                i2cPins: {
+                    "SDA": "SDA",
+                    "SCL": "SCL"
+                },
+                onboardComponents: [
+                ],
+                marginWhenBreadboarding: [
+                    0,
+                    0,
+                    80,
+                    0
+                ]
+            }
+            const svg = document.querySelector('svg');
+            boardjson.visual.width = svg.viewBox.baseVal.width;
+            boardjson.visual.height = svg.viewBox.baseVal.height;
+            const elts = document.querySelectorAll("svg *")
+            for (let i = 0; i < elts.length; ++i) {
+                const elt = elts[i];
+                const id = elt.getAttribute("connectorname") || elt.getAttribute("id");
+                if (/^[+\.A-Z0-9_]+$/.test(id))
+                    addElement(elt);
+            }
+            $('#svg').children().click(function (el) {
+                addElement(el.target);
+            })
+        }
+
+        function updateJSON() {
+            $('#json').val(JSON.stringify(boardjson, null, 2));
+        }
+
+        $(function () {
+            $('#svginput').change(updateSvg);
+        })
+    </script>
+</head>
+
+<body>
+    <div class="ui container">
+        <h1>Board designer</h1>
+        <div class="ui segment">
+            <h2>board.svg</h2>
+            <textarea class="ui fluid" id="svginput"></textarea>
+        </div>
+        <div id="svg">
+        </div>
+        <div class="ui segment">
+            <h2>board.json</h2>
+            <textarea class="ui fluid" readonly id="json"></textarea>
+        </div>
+    </div>
+
+</body>
+
+</html>
