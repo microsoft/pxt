@@ -1249,7 +1249,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     protected helpButtonCallback(group?: string) {
         pxt.debug(`${group} help icon clicked.`);
-        workspace.fireEvent(new pxt.events.UIEvent('blocks', 'groupHelpClicked', { group }));
+        workspace.fireEvent(new pxt.events.UIEvent('js', 'groupHelpClicked', { group }));
     }
 
     private getMonacoBlock(fn: toolbox.BlockDefinition, ns: string, color: string, isDisabled?: boolean) {

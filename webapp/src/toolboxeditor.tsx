@@ -136,7 +136,7 @@ export abstract class ToolboxEditor extends srceditor.Editor {
                     icon: md.icon,
                     groups: md.groups,
                     groupIcons: md.groupIcons,
-                    groupHelpCallbacks: md.groupHelpCallbacks,
+                    groupHelp: md.groupHelp,
                     labelLineWidth: md.labelLineWidth,
                     blocks: blocks,
                     advanced: isAdvanced
@@ -183,7 +183,7 @@ export abstract class ToolboxEditor extends srceditor.Editor {
                         icon: md.icon,
                         groups: md.groups,
                         groupIcons: md.groupIcons,
-                        groupHelpCallbacks: md.groupHelpCallbacks,
+                        groupHelp: md.groupHelp,
                         labelLineWidth: md.labelLineWidth,
                         blocks: blocks,
                         subcategories: subcategories,
@@ -212,7 +212,7 @@ export abstract class ToolboxEditor extends srceditor.Editor {
     protected abstract showFlyoutBlocks(ns: string, color: string, blocks: toolbox.BlockDefinition[]): void;
 
     abstractShowFlyout(treeRow: toolbox.ToolboxCategory): boolean {
-        const { nameid: ns, name, subns, icon, color, groups, groupIcons, groupHelpCallbacks, labelLineWidth, blocks } = treeRow;
+        const { nameid: ns, name, subns, icon, color, groups, groupIcons, groupHelp, labelLineWidth, blocks } = treeRow;
 
         let fns = blocks;
         if (!fns || !fns.length) return false;
@@ -238,12 +238,12 @@ export abstract class ToolboxEditor extends srceditor.Editor {
         }
 
         // Create a dict of group help callback pairs
-        let groupHelpCallbacksDict: { [group: string]: string } = {}
-        if (groups && groupHelpCallbacks) {
-            let groupHelpCallbackList = groupHelpCallbacks;
+        let groupHelpDict: { [group: string]: string } = {}
+        if (groups && groupHelp) {
+            let groupHelpCallbackList = groupHelp;
             for (let i = 0; i < sortedGroups.length; i++) {
                 let helpCallback = groupHelpCallbackList[i];
-                groupHelpCallbacksDict[sortedGroups[i]] = helpCallback || '';
+                groupHelpDict[sortedGroups[i]] = helpCallback || '';
             }
         }
 
@@ -272,7 +272,7 @@ export abstract class ToolboxEditor extends srceditor.Editor {
 
                 // Add the group label
                 if (group != 'other') {
-                    this.showFlyoutGroupLabel(group, groupIconsDict[group], labelLineWidth, groupHelpCallbacksDict[group]);
+                    this.showFlyoutGroupLabel(group, groupIconsDict[group], labelLineWidth, groupHelpDict[group]);
                 }
 
                 // Add the blocks in that group

@@ -574,7 +574,7 @@ export interface ToolboxCategory {
 
     groups?: string[];
     groupIcons?: string[];
-    groupHelpCallbacks?: string[];
+    groupHelp?: string[];
     labelLineWidth?: string;
 
     blocks?: BlockDefinition[];

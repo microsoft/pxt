@@ -168,7 +168,7 @@ namespace ts.pxtc {
         subcategories?: string[];
         groups?: string[];
         groupIcons?: string[];
-        groupHelpCallbacks?: string[];
+        groupHelp?: string[];
         labelLineWidth?: string;
         handlerStatement?: boolean; // indicates a block with a callback that can be used as a statement
         blockHandlerKey?: string; // optional field for explicitly declaring the handler key to use to compare duplicate events
@@ -846,12 +846,12 @@ namespace ts.pxtc {
                 res.groupIcons = undefined;
             }
         }
-        if (res.groupHelpCallbacks) {
+        if (res.groupHelp) {
             try {
-                res.groupHelpCallbacks = JSON.parse(res.groupHelpCallbacks as any);
+                res.groupHelp = JSON.parse(res.groupHelp as any);
             }
             catch (e) {
-                res.groupHelpCallbacks = undefined;
+                res.groupHelp = undefined;
             }
         }
         updateBlockDef(res);
