@@ -56,6 +56,10 @@
                 boardjson.gpioPinMap[id] = id;
                 elt.classList.add("selected")
             }
+            if (/GND/.test(id) && boardjson.groundPins.indexOf(id) < 0)
+                boardjson.groundPins.push(id);
+            else if (/(\+3V3|3V|VCC|VOUT)/.test(id) && boardjson.threeVoltPins.indexOf(id) < 0)
+                boardjson.threeVoltPins.push(id);
             updateJSON();
         }
 
@@ -66,16 +70,15 @@
                 visual: {
                     image: "pkg://board.svg",
                     outlineImage: "pkg://boardwireframe.svg",
-                    useCrocClips: true,
+                    useCrocClips: false,
                     width: 200,
                     height: 200,
-                    pinDist: 16,
+                    pinDist: 15,
                     pinBlocks: [
                     ]
                 },
                 gpioPinMap: {},
                 groundPins: [
-                    "GND"
                 ],
                 threeVoltPins: [
                 ],
