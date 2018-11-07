@@ -88,7 +88,6 @@ namespace ts.pxtc {
         helper_prologue() { return "TBD(lambda_prologue)" }
         helper_epilogue() { return "TBD(lambda_epilogue)" }
         pop_clean(pops: boolean[]) { return "TBD" }
-        load_ptr(lbl: string, reg: string) { return "TBD(load_ptr)" }
         load_ptr_full(lbl: string, reg: string) { return "TBD(load_ptr_full)" }
         emit_int(v: number, reg: string) { return "TBD(emit_int)" }
 
@@ -445,10 +444,7 @@ ${baseLabel}_nochk:
                     else oops();
                     break;
                 case ir.EK.PointerLiteral:
-                    if (e.args)
-                        this.write(this.t.load_ptr_full(e.data, reg))
-                    else
-                        this.write(this.t.load_ptr(e.data, reg))
+                    this.write(this.t.load_ptr_full(e.data, reg))
                     break;
                 case ir.EK.SharedRef:
                     let arg = e.args[0]

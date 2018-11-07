@@ -800,12 +800,9 @@ namespace ts.pxtc.ir {
         return sharedCore(expr, null)
     }
 
-    export function ptrlit(lbl: string, jsInfo: string, full = false): Expr {
+    export function ptrlit(lbl: string, jsInfo: string): Expr {
         let r = op(EK.PointerLiteral, null, lbl)
         r.jsInfo = jsInfo
-        if (full) {
-            r.args = []
-        }
         return r
     }
 

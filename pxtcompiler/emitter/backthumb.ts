@@ -197,15 +197,6 @@ ${lbl}:`
 `
         }
 
-        load_ptr(lbl: string, reg: string) {
-            assert(!!lbl)
-            return `
-    movs ${reg}, ${lbl}@hi  ; ldptr
-    lsls ${reg}, ${reg}, #8
-    adds ${reg}, ${lbl}@lo
-`
-        }
-
         load_vtable(trg: string, src: string) {
             if (target.gc)
                 return `ldr ${trg}, [${src}, #0]`

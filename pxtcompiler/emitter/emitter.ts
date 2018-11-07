@@ -1359,7 +1359,10 @@ namespace ts.pxtc {
         }
 
         function isCtorField(p: ParameterDeclaration) {
-            if (!p.modifiers) return false
+            if (!p.modifiers)
+                return false
+            if (p.parent.kind != SK.Constructor)
+                return false
             for (let m of p.modifiers) {
                 if (m.kind == SK.PrivateKeyword ||
                     m.kind == SK.PublicKeyword ||
@@ -1573,7 +1576,7 @@ ${lbl}: .short 0xffff
                 r = ir.rtcall("String_::mkEmpty", [])
             } else {
                 let lbl = bin.emitString(str)
-                r = ir.ptrlit(lbl + "meta", JSON.stringify(str), true)
+                r = ir.ptrlit(lbl + "meta", JSON.stringify(str))
             }
             r.isStringLiteral = true
             return r
@@ -1783,6 +1786,8 @@ ${lbl}: .short 0xffff
 
         function isOnDemandDecl(decl: Declaration) {
             let res = isOnDemandGlobal(decl) || isTopLevelFunctionDecl(decl)
+            if (target.switches.noTreeShake)
+                return false
             if (opts.testMode && res) {
                 if (!U.startsWith(getSourceFileOfNode(decl).fileName, "pxt_modules"))
                     return false
@@ -2002,7 +2007,7 @@ ${lbl}: .short 0xffff
                         isProperty = true
                         break;
                     case SK.Parameter:
-                        if (decl.parent.kind == SK.Constructor) {
+                        if (isCtorField(decl)) {
                             isMethod = true
                             isProperty = true
                         }
@@ -2461,7 +2466,7 @@ ${lbl}: .short 0xffff
                         throw unhandled(node, lf("invalid character in hex literal '{0}'", c), 9265)
                 }
                 let lbl = bin.emitHexLiteral(res.toLowerCase())
-                return ir.ptrlit(lbl, lbl, true)
+                return ir.ptrlit(lbl, lbl)
             }
             let decl = getDecl(node.tag) as FunctionLikeDeclaration
             if (!decl)
@@ -2529,7 +2534,7 @@ ${lbl}: .short 0xffff
 
         function emitFunLitCore(node: FunctionLikeDeclaration, raw = false) {
             let lbl = getFunctionLabel(node)
-            return ir.ptrlit(lbl + "_Lit", lbl, !raw)
+            return ir.ptrlit(lbl + "_Lit", lbl)
         }
 
         function emitFuncCore(node: FunctionLikeDeclaration) {
@@ -3033,7 +3038,7 @@ ${lbl}: .short 0xffff
                         return ir.numlit(taggedNaN)
                     } else {
                         let lbl = bin.emitDouble(v as number)
-                        return ir.ptrlit(lbl, JSON.stringify(v), true)
+                        return ir.ptrlit(lbl, JSON.stringify(v))
                     }
                 } else {
                     throw U.oops("bad literal: " + v)

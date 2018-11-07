@@ -327,6 +327,7 @@ declare namespace ts.pxtc {
         skipClassCheck?: boolean;
         noThisCheckOpt?: boolean;        
         numFloat?: boolean;
+        noTreeShake?: boolean;
     }
 
     interface CompileTarget {

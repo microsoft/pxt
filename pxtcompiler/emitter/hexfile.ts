@@ -496,10 +496,12 @@ namespace ts.pxtc {
         export function patchHex(bin: Binary, buf: number[], shortForm: boolean, useuf2: boolean) {
             let myhex = hex.slice(0, bytecodeStartIdx)
 
-            assert(buf.length < 64000, "program too large, words: " + buf.length)
+            let sizeEntry = (buf.length * 2 + 7) >> 3
 
-            // store the size of the program (in 16 bit words)
-            buf[17] = buf.length
+            assert(sizeEntry < 64000, "program too large, bytes: " + buf.length * 2)
+
+            // store the size of the program (in 64 bit words)
+            buf[17] = sizeEntry
             // store commSize
             buf[20] = bin.commSize
 
@@ -831,10 +833,10 @@ ${hex.hexPrelude()}
     .hex ${hex.hexTemplateHash()} ; hex template hash
     .hex 0000000000000000 ; @SRCHASH@
     .short ${bin.globalsWords}   ; num. globals
-    .short 0 ; patched with number of words resulting from assembly
+    .short 0 ; patched with number of 64 bit words resulting from assembly
     .word _pxt_config_data
     .short 0 ; patched with comm section size
-    .short ${bin.nonPtrGlobals}
+    .short ${bin.nonPtrGlobals} ; number of globals that are not pointers (they come first)
     .word _pxt_iface_member_names
     .word _pxt_lambda_trampoline@fn
     .word 0 ; reserved
