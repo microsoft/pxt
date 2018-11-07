@@ -61,6 +61,13 @@
                 })
             }
 
+            if (/RST|RESET/.test(id) && !boardjson.visual.reset) {
+                boardjson.visual.reset = {
+                    x: rect.x,
+                    y: rect.y
+                }
+            }
+
             if (!boardjson.gpioPinMap[id]) {
                 const rect = convertCoords(elt);
                 boardjson.visual.pinBlocks.push({
@@ -120,7 +127,7 @@
             for (let i = 0; i < elts.length; ++i) {
                 const elt = elts[i];
                 const id = elt.getAttribute("connectorname") || elt.getAttribute("id");
-                if (/^[+\.A-Z0-9_]+$/.test(id))
+                if (/^[!+\.A-Z0-9_]+$/.test(id))
                     addElement(elt);
             }
             $('#svg').children().click(function (el) {
