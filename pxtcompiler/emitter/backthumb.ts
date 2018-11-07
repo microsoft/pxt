@@ -125,7 +125,13 @@ ${lbl}:`
         rt_call(name: string, r0: string, r1: string) {
             return name + " " + r0 + ", " + r1;
         }
-        call_lbl(lbl: string, saveStack?: boolean) {
+        alignedCall(lbl: string, stackAlign: number) {
+            if (stackAlign)
+                return `${this.push_locals(stackAlign)}\nbl ${lbl}\n${this.pop_locals(stackAlign)}`
+            else
+                return "bl " + lbl;
+        }
+        call_lbl(lbl: string, saveStack?: boolean, stackAlign?: number) {
             let o = U.lookup(inlineArithmetic, lbl)
             if (o) {
                 lbl = o
@@ -134,8 +140,9 @@ ${lbl}:`
             if (!saveStack && lbl.indexOf("::") > 0)
                 saveStack = true
             if (saveStack)
-                return this.callCPP(lbl)
-            return "bl " + lbl;
+                return this.callCPP(lbl, stackAlign)
+            else 
+                return this.alignedCall(lbl, stackAlign)
         }
         call_reg(reg: string) {
             return "blx " + reg;
@@ -235,8 +242,8 @@ ${lbl}:`
             return this.pushLR() + "\n" + this.callCPP(lbl) + "\n" + this.popPC() + "\n"
         }
 
-        callCPP(lbl: string) {
-            return this.saveThreadStack() + "bl " + lbl + "\n" + this.restoreThreadStack()
+        callCPP(lbl: string, stackAlign?: number) {
+            return this.saveThreadStack() + this.alignedCall(lbl, stackAlign) + "\n" + this.restoreThreadStack()
         }
 
         inline_decr(idx: number) {

@@ -181,13 +181,6 @@ ${lbl}: ${this.obj_header("pxt::buffer_vt")}
             else return npush
         }
 
-        private alignStack(offset = 0) {
-            let npush = this.stackAlignmentNeeded(offset)
-            if (!npush) return ""
-            this.write(this.t.push_locals(npush))
-            return this.t.pop_locals(npush)
-        }
-
         public getAssembly() {
             return this.resText;
         }
@@ -835,7 +828,8 @@ ${baseLabel}_nochk:
                 this.write(`lsls ${r2}, r3, #30`)
                 this.write(`beq .fail`) // C++ class - TODO remove
                 if (decr) {
-                    this.write(`bmi .inflash`)
+                    this.write(`lsls ${r2}, r3, #31`)
+                    this.write(`beq .inflash`)
                     this.write(`uxth ${r2}, r3`)
                     this.write(`subs ${r2}, #2`)
                     this.write(`blt .fail`) // ref-cnt underflow!
@@ -1071,11 +1065,9 @@ ${baseLabel}_nochk:
         }
 
         private alignedCall(name: string, cmt = "", off = 0, saveStack = false) {
-            let unalign = this.alignStack(off)
             if (U.startsWith(name, "_cmp_") || U.startsWith(name, "_pxt_"))
                 saveStack = false
-            this.write(this.t.call_lbl(name, saveStack) + cmt)
-            this.write(unalign)
+            this.write(this.t.call_lbl(name, saveStack, this.stackAlignmentNeeded(off)) + cmt)
         }
 
         private emitLabelledHelper(lbl: string, generate: () => void) {
@@ -1127,9 +1119,14 @@ ${baseLabel}_nochk:
         private alignExprStack(numargs: number) {
             let interAlign = this.stackAlignmentNeeded(numargs)
             if (interAlign) {
-                this.write(this.t.push_locals(interAlign))
-                for (let i = 0; i < interAlign; ++i)
+                if (!target.gc)
+                    this.write(this.t.push_locals(interAlign))
+                for (let i = 0; i < interAlign; ++i) {
+                    // r5 should be safe to push on gc stack
+                    if (target.gc)
+                        this.write(`push {r5} ; align`)
                     this.pushDummy()
+                }
             }
         }
 
