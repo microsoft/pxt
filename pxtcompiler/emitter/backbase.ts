@@ -314,6 +314,7 @@ ${baseLabel}_nochk:
             this.write(this.t.proc_return())
             this.write("@stackempty func");
             this.write("@stackempty args")
+            this.write("; endfun")
         }
 
         private mkLbl(root: string) {
