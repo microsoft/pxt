@@ -1024,7 +1024,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
                     : undefined}
             </div> : undefined}
             {isFullscreen && headerActions ? <div className="header-actions">{headerActions}</div> : undefined}
-            {description && !isFullscreen ? <label id={this.id + 'description'} className="accessible-hidden">{description}</label> : undefined}
+            {!isFullscreen && description ? <label id={this.id + 'description'} className="accessible-hidden">{description}</label> : undefined}
             <div id={this.id + 'desc'} className={`${longer ? 'scrolling' : ''} ${headerActions ? 'has-actions' : ''} content`}>
                 {children}
             </div>
