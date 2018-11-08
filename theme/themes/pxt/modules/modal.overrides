@@ -25,7 +25,6 @@
         Fullscreen modal
 *******************************/
 
-/* Full screen modal */
 .modals.dimmer .ui.fullscreen.modal,
 .modals.dimmer .ui.fullscreen.scrolling.modal {
     position: absolute !important;
@@ -95,7 +94,6 @@
 
     .header-actions {
         display: flex;
-        padding: 0 1rem;
         align-items: center;
         justify-content: flex-end;
         flex-direction: row;
@@ -119,6 +117,31 @@
         color: @extensionsHeaderColor !important;
         padding: 0 !important;
     }
+}
+
+@HCextensionsHeaderBackground: black;
+@HCextensionsHeaderTextColor: white;
+
+.hc {
+    .ui.fullscreen.modal {
+        .header {
+            background: @HCextensionsHeaderBackground !important;
+            color: @HCextensionsHeaderTextColor !important;
+        }
+        .header-actions {
+            background: fade(@HCextensionsHeaderBackground, 30%);
+        }
+        .ui.back-button {
+            background: none !important;
+        }
+    }
+}
+
+/* Since we add the close button at the end of the modal DOM (for accessibility)
+   this adds the rounded border to the second last item (content) */
+.ui.modal.closable:not(.fullscreen) > :nth-last-child(2) {
+    border-bottom-left-radius: @borderRadius;
+    border-bottom-right-radius: @borderRadius;
 }
 
 /* Mobile + Tablet */
@@ -166,11 +189,6 @@
     box-shadow: 0 0 0 4px rgba(0,0,0,.35);
     outline: none;
     transform: scale(1.1);
-}
-
-.ui.modal.closable > :nth-last-child(2) {
-  border-bottom-left-radius: @borderRadius;
-  border-bottom-right-radius: @borderRadius;
 }
 
 .ui.button.icon.clear {

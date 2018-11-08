@@ -1,96 +1,9 @@
 
 
 /*******************************
-        Modal Header actions
+    Script search dialog
 *******************************/
 
-/*
-.ui.fullscreen.modal > .header {
-    text-align: center;
-    
-    .header-actions {
-        position: absolute;
-        top: 0.8rem;
-        right: 1rem;
-    }
-}
-
-@media only screen and (max-width: @largestMobileScreen) {
-    .ui.fullscreen.modal > .header {
-        .header-actions {
-            top: 0.35rem;
-            right: 0.4rem;
-        }
-    }
-}
-
-*/
-
-.ui.searchdialog.modal .ui.search {
-    max-width: 50%;
-    margin: auto;
-    flex-grow: 1;
-}
-.ui.searchdialog.modal > .closeIcon .close {
-    color: white;
-}
-
-.ui.searchdialog.modal .ui.inline.loader {
-    margin-top: 4em;
-}
-.ui.searchdialog.modal .ui.inline.loader:after,
-.ui.searchdialog.modal .ui.inline.loader:before {
-    width: 4rem;
-    height: 4rem;
-}
-
-/* Mobile only */
-@media only screen and (max-width: @largestMobileScreen) {
-    .ui.searchdialog.modal .ui.search {
-        max-width: 100%;
-    }
-}
-
-/*******************************
-        Modal Back Icon
-*******************************/
-
-.ui.modal .ui.button.labeled.icon.editorBack {
-    color: white !important;
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 3.5rem;
-    outline: none !important;
-    border: none !important;
-    cursor: pointer;
-    border-radius: 10em !important;
-
-    &:focus, &:hover {
-        color: darken(white, 20%) !important;
-    }
-}
-
-@HCextensionsHeaderBackground: black;
-@HCextensionsHeaderTextColor: white;
-
-.hc {
-    .ui.searchdialog.modal > .header {
-        background: @HCextensionsHeaderBackground !important;
-        color: @HCextensionsHeaderTextColor !important;
-    }
-
-    .ui.searchdialog.modal .ui.button.labeled.icon.editorBack {
-        background: transparent !important;
-
-        &:focus, &:hover {
-            border: 0 !important;
-            outline: 0 !important;
-        }
-    }
-}
-
-/* Script search cards */
 .ui.searchdialog {
     .cards {
         overflow-y: auto;
@@ -103,8 +16,25 @@
             height: 11rem;
         }
     }
-}
+    /* Search input */
+    .ui.search {
+        margin: auto;
+        display: flex;
+        flex-grow: 1;
+        justify-content: center;
+        .input {
+            width: 20rem;
+        }
+    }
 
+    .ui.inline.loader {
+        margin-top: 4em;
+        :after, :before {
+            width: 4rem;
+            height: 4rem;
+        }
+    }
+}
 
 // reduce all card sizes
 @media only screen and (max-width: @largestMobileScreen) {
