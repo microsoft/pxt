@@ -1046,7 +1046,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
                                 {...action} />
                     )}
                 </div> : undefined}
-            {closeIcon && !isFullscreen ? <div role="button" className="closeIcon" tabIndex={0}
+            {!isFullscreen && closeIcon ? <div role="button" className="closeIcon" tabIndex={0}
                 onClick={onClose}
                 onKeyDown={fireClickOnEnter}
             ><Icon icon="close remove circle" /> </div> : undefined}
