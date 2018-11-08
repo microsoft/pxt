@@ -85,6 +85,10 @@ export class Table {
 
     setAsync(obj: any): Promise<string> {
         return this.setAsyncNoRetry(obj)
+            .then(r => {
+                pxt.BrowserUtils.scheduleStorageCleanup();
+                return r;
+            })
             .catch(e => {
                 pxt.reportException(e);
                 pxt.log(`table: set failed, cleaning translation db`)

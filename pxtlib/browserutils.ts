@@ -535,7 +535,7 @@ namespace pxt.BrowserUtils {
         else return Promise.resolve({});
     }
 
-    const scheduleStorageCleanup = ts.pxtc.Util.debounce(function () {
+    export const scheduleStorageCleanup = ts.pxtc.Util.throttle(function () {
         const MIN_QUOTA = 1000000; // 1Mb
         const MAX_USAGE = 10000000; // 10Mb
         storageEstimateAsync()
@@ -554,19 +554,18 @@ namespace pxt.BrowserUtils {
             .catch(e => {
                 pxt.reportException(e);
             })
-    }, 5000, false);
+    }, 10000, false);
 
     export function stressTranslationsAsync(): Promise<void> {
         let md = "...";
-        for (let i = 0; i < 14; ++i)
+        for (let i = 0; i < 16; ++i)
             md += md + Math.random();
         console.log(`adding entry ${md.length * 2} bytes`);
         return Promise.delay(1)
-            .then(() => pxt.BrowserUtils.storageEstimateAsync())
-            .then(estimate => estimate.quota ? console.log(`storage: ${(estimate.usage / estimate.quota * 100) >> 0}% ${estimate.usage} bytes`) : undefined)
             .then(() => translationDbAsync())
             .then(db => db.setAsync("foobar", Math.random().toString(), "", null, undefined, md))
-            .then(() => stressTranslationsAsync());
+            .then(() => pxt.BrowserUtils.storageEstimateAsync())
+            .then(estimate => estimate.usage / estimate.quota > 0.8 ? stressTranslationsAsync() : Promise.resolve());
     }
 
     // IndexedDB wrapper class
@@ -787,7 +786,7 @@ namespace pxt.BrowserUtils {
 
     export function clearTranslationDbAsync(): Promise<void> {
         const n = IndexedDbTranslationDb.dbName();
-        return ts.pxtc.Util.IDBWrapper.deleteDatabaseAsync(n)
+        return IDBWrapper.deleteDatabaseAsync(n)
             .then(() => {
                 _translationDbPromise = undefined;
             })
