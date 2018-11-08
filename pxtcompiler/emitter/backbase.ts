@@ -996,19 +996,22 @@ ${baseLabel}_nochk:
                 if (convArgs.length) {
                     const conv = this.redirectOutput(() => {
                         let off = 0
-                        if (this.t.stackAligned())
-                            off += 2
-                        else
-                            off += 1
+                        if (!target.switches.inlineConversions) {
+                            if (this.t.stackAligned())
+                                off += 2
+                            else
+                                off += 1
+                        }
                         for (let a of convArgs) {
                             if (isThumb() && a.conv.method == "pxt::toInt") {
                                 // SPEED 2.5%
                                 this.write(this.loadFromExprStack("r0", a.expr, off))
                                 this.write("asrs r0, r0, #1")
-                                this.write("bcs .isint" + off)
+                                let idx = target.switches.inlineConversions ? a.expr.getId() : off
+                                this.write("bcs .isint" + idx)
                                 this.write("lsls r0, r0, #1")
                                 this.alignedCall(a.conv.method, "", off)
-                                this.write(".isint" + off + ":")
+                                this.write(".isint" + idx + ":")
                                 this.write(this.t.push_fixed(["r0"]))
                             } else {
                                 this.write(this.loadFromExprStack("r0", a.expr, off))
