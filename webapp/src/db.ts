@@ -89,7 +89,7 @@ export class Table {
                 pxt.reportException(e);
                 pxt.log(`table: set failed, cleaning translation db`)
                 // clean up translation and try again
-                return ts.pxtc.Util.clearTranslationDbAsync()
+                return pxt.BrowserUtils.clearTranslationDbAsync()
                     .then(() => this.setAsyncNoRetry(obj))
                     .catch(e => {
                         pxt.reportException(e);

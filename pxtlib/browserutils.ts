@@ -535,6 +535,27 @@ namespace pxt.BrowserUtils {
         else return Promise.resolve({});
     }
 
+    const scheduleStorageCleanup = ts.pxtc.Util.debounce(function () {
+        const MIN_QUOTA = 1000000; // 1Mb
+        const MAX_USAGE = 10000000; // 10Mb
+        storageEstimateAsync()
+            .then(estimate => {
+                // quota > 50%
+                pxt.log(`storage estimate: ${(estimate.usage / estimate.quota * 100) >> 0}%, ${(estimate.usage / 1000000) >> 0}/${(estimate.quota / 1000000) >> 0}Mb`)
+                if (estimate.quota
+                    && estimate.usage
+                    && estimate.quota > MIN_QUOTA
+                    && estimate.usage > MAX_USAGE) {
+                    pxt.log(`quota usage exceeded, clearing translations`);
+                    return clearTranslationDbAsync();
+                }
+                return Promise.resolve();
+            })
+            .catch(e => {
+                pxt.reportException(e);
+            })
+    }, 5000, false);
+
     export function stressTranslationsAsync(): Promise<void> {
         let md = "...";
         for (let i = 0; i < 14; ++i)
@@ -543,9 +564,236 @@ namespace pxt.BrowserUtils {
         return Promise.delay(1)
             .then(() => pxt.BrowserUtils.storageEstimateAsync())
             .then(estimate => estimate.quota ? console.log(`storage: ${(estimate.usage / estimate.quota * 100) >> 0}% ${estimate.usage} bytes`) : undefined)
-            .then(() => ts.pxtc.Util.translationDbAsync())
+            .then(() => translationDbAsync())
             .then(db => db.setAsync("foobar", Math.random().toString(), "", null, undefined, md))
             .then(() => stressTranslationsAsync());
     }
-}
 
+    // IndexedDB wrapper class
+    export type IDBUpgradeHandler = (ev: IDBVersionChangeEvent, request: IDBRequest) => void;
+
+    export class IDBWrapper {
+        private _db: IDBDatabase;
+
+        constructor(
+            private name: string,
+            private version: number,
+            private upgradeHandler?: IDBUpgradeHandler,
+            private quotaExceededHandler?: () => void) {
+        }
+
+        private throwIfNotOpened(): void {
+            if (!this._db) {
+                throw new Error("Database not opened; call IDBWrapper.openAsync() first");
+            }
+        }
+
+        private errorHandler(err: Error, op: string, reject: (err: Error) => void): void {
+            console.error(new Error(`${this.name} IDBWrapper error for ${op}: ${err.message}`));
+            reject(err);
+            // special case for quota exceeded
+            if (err.name == "QuotaExceededError") {
+                // oops, we ran out of space
+                console.log(`quota exceeded...`);
+                if (this.quotaExceededHandler)
+                    this.quotaExceededHandler();
+            }
+        }
+
+        private getObjectStore(name: string, mode: "readonly" | "readwrite" = "readonly"): IDBObjectStore {
+            this.throwIfNotOpened();
+            const transaction = this._db.transaction([name], mode);
+            return transaction.objectStore(name);
+        }
+
+        static deleteDatabaseAsync(name: string): Promise<void> {
+            return new Promise((resolve, reject) => {
+                const idbFactory: IDBFactory = window.indexedDB || (<any>window).mozIndexedDB || (<any>window).webkitIndexedDB || (<any>window).msIndexedDB;
+                const request = idbFactory.deleteDatabase(name);
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        public openAsync(): Promise<void> {
+            return new Promise((resolve, reject) => {
+                const idbFactory: IDBFactory = window.indexedDB || (<any>window).mozIndexedDB || (<any>window).webkitIndexedDB || (<any>window).msIndexedDB;
+                const request = idbFactory.open(this.name, this.version);
+                request.onsuccess = () => {
+                    this._db = request.result;
+                    resolve();
+                };
+                request.onerror = () => this.errorHandler(request.error, "open", reject);
+                request.onupgradeneeded = (ev) => this.upgradeHandler(ev, request);
+            });
+        }
+
+        public getAsync<T>(storeName: string, id: string): Promise<T> {
+            return new Promise((resolve, reject) => {
+                const store = this.getObjectStore(storeName);
+                const request = store.get(id);
+                request.onsuccess = () => resolve(request.result as T);
+                request.onerror = () => this.errorHandler(request.error, "get", reject);
+            });
+        }
+
+        public getAllAsync<T>(storeName: string): Promise<T[]> {
+            return new Promise((resolve, reject) => {
+                const store = this.getObjectStore(storeName);
+                const cursor = store.openCursor();
+                const data: T[] = [];
+
+                cursor.onsuccess = () => {
+                    if (cursor.result) {
+                        data.push(cursor.result.value);
+                        cursor.result.continue();
+                    } else {
+                        resolve(data);
+                    }
+                };
+                cursor.onerror = () => this.errorHandler(cursor.error, "getAll", reject);
+            });
+        }
+
+        public setAsync(storeName: string, data: any): Promise<void> {
+            return new Promise((resolve, reject) => {
+                const store = this.getObjectStore(storeName, "readwrite");
+                let request: IDBRequest;
+
+                if (typeof data.id !== "undefined" && data.id !== null) {
+                    request = store.put(data);
+                } else {
+                    request = store.add(data);
+                }
+
+                request.onsuccess = () => resolve();
+                request.onerror = () => this.errorHandler(request.error, "set", reject);
+            });
+        }
+
+        public deleteAsync(storeName: string, id: string): Promise<void> {
+            return new Promise((resolve, reject) => {
+                const store = this.getObjectStore(storeName, "readwrite");
+                const request = store.delete(id);
+                request.onsuccess = () => resolve();
+                request.onerror = () => this.errorHandler(request.error, "delete", reject);
+            });
+        }
+
+        public deleteAllAsync(storeName: string): Promise<void> {
+            return new Promise((resolve, reject) => {
+                const store = this.getObjectStore(storeName, "readwrite");
+                const request = store.clear();
+                request.onsuccess = () => resolve();
+                request.onerror = () => this.errorHandler(request.error, "deleteAll", reject);
+            });
+        }
+    }
+
+    class IndexedDbTranslationDb implements ts.pxtc.Util.ITranslationDb {
+        static TABLE = "files";
+        static KEYPATH = "id";
+        static MAX_STORAGE_USAGE = 50; // percent
+
+        static dbName() {
+            return `__pxt_translations_${pxt.appTarget.id || ""}`;
+        }
+
+        static createAsync(): Promise<IndexedDbTranslationDb> {
+            function openAsync() {
+                const idbWrapper = new IDBWrapper(IndexedDbTranslationDb.dbName(), 2, (ev, r) => {
+                    const db = r.result as IDBDatabase;
+                    db.createObjectStore(IndexedDbTranslationDb.TABLE, { keyPath: IndexedDbTranslationDb.KEYPATH });
+                }, () => {
+                    // quota exceeeded, nuke db
+                    clearTranslationDbAsync().catch(e => { });
+                });
+                return idbWrapper.openAsync()
+                    .then(() => new IndexedDbTranslationDb(idbWrapper));
+            }
+            return openAsync()
+                .catch(e => {
+                    console.log(`db: failed to open database, try delete entire store...`)
+                    return IDBWrapper.deleteDatabaseAsync(IndexedDbTranslationDb.dbName())
+                        .then(() => openAsync());
+                })
+        }
+
+        private db: IDBWrapper;
+        private mem: ts.pxtc.Util.MemTranslationDb;
+        constructor(db: IDBWrapper) {
+            this.db = db;
+            this.mem = new ts.pxtc.Util.MemTranslationDb();
+        }
+        getAsync(lang: string, filename: string, branch: string): Promise<ts.pxtc.Util.ITranslationDbEntry> {
+            lang = (lang || "en-US").toLowerCase(); // normalize locale
+            const id = this.mem.key(lang, filename, branch);
+            const r = this.mem.get(lang, filename, branch);
+            if (r) return Promise.resolve(r);
+
+            return this.db.getAsync<ts.pxtc.Util.ITranslationDbEntry>(IndexedDbTranslationDb.TABLE, id)
+                .then((res) => {
+                    if (res) {
+                        // store in-memory so that we don't try to download again
+                        this.mem.set(lang, filename, branch, res.etag, res.strings);
+                        return Promise.resolve(res);
+                    }
+                    return Promise.resolve(undefined);
+                })
+                .catch((e) => {
+                    return Promise.resolve(undefined);
+                });
+        }
+        setAsync(lang: string, filename: string, branch: string, etag: string, strings?: pxt.Map<string>, md?: string): Promise<void> {
+            lang = (lang || "en-US").toLowerCase(); // normalize locale
+            const id = this.mem.key(lang, filename, branch);
+            this.mem.set(lang, filename, branch, etag, strings, md);
+
+            if (strings)
+                Object.keys(strings).filter(k => !strings[k]).forEach(k => delete strings[k]);
+            const entry: ts.pxtc.Util.ITranslationDbEntry = {
+                id,
+                etag,
+                time: Date.now(),
+                strings,
+                md
+            }
+            return this.db.setAsync(IndexedDbTranslationDb.TABLE, entry)
+                .finally(() => scheduleStorageCleanup()) // schedule a cleanpu
+                .catch((e) => {
+                    console.log(`db: set failed (${e.message}), recycling...`)
+                    return this.clearAsync();
+                });
+        }
+
+        clearAsync(): Promise<void> {
+            return this.db.deleteAllAsync(IndexedDbTranslationDb.TABLE)
+                .then(() => console.debug(`db: all clean`))
+                .catch(e => {
+                    console.error('db: failed to delete all');
+                })
+        }
+    }
+
+    // wired up in the app to store translations in pouchdb. MAY BE UNDEFINED!
+    let _translationDbPromise: Promise<ts.pxtc.Util.ITranslationDb>;
+    export function translationDbAsync(): Promise<ts.pxtc.Util.ITranslationDb> {
+        // try indexed db
+        if (!_translationDbPromise)
+            _translationDbPromise = IndexedDbTranslationDb.createAsync()
+                .catch(() => new ts.pxtc.Util.MemTranslationDb());
+        return _translationDbPromise;
+    }
+
+    export function clearTranslationDbAsync(): Promise<void> {
+        const n = IndexedDbTranslationDb.dbName();
+        return ts.pxtc.Util.IDBWrapper.deleteDatabaseAsync(n)
+            .then(() => {
+                _translationDbPromise = undefined;
+            })
+            .catch(e => {
+                console.log(`db: failed to delete ${n}`);
+                _translationDbPromise = undefined;
+            });
+    }
+}
