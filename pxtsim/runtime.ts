@@ -62,15 +62,18 @@ namespace pxsim {
             return Date.now();
         }
 
+        let perf: () => number
+
         // current time in microseconds
         export function perfNowUs(): number {
-            const perf = typeof performance != "undefined" ?
-                performance.now.bind(performance) ||
-                (performance as any).moznow.bind(performance) ||
-                (performance as any).msNow.bind(performance) ||
-                (performance as any).webkitNow.bind(performance) ||
-                (performance as any).oNow.bind(performance) :
-                Date.now;
+            if (!perf)
+                perf = typeof performance != "undefined" ?
+                    performance.now.bind(performance) ||
+                    (performance as any).moznow.bind(performance) ||
+                    (performance as any).msNow.bind(performance) ||
+                    (performance as any).webkitNow.bind(performance) ||
+                    (performance as any).oNow.bind(performance) :
+                    Date.now;
             return perf() * 1000;
         }
 
