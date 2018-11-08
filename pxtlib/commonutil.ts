@@ -74,6 +74,15 @@ namespace ts.pxtc.Util {
             return transaction.objectStore(name);
         }
 
+        static deleteDatabaseAsync(name: string): Promise<void> {
+            return new Promise((resolve, reject) => {
+                const idbFactory: IDBFactory = window.indexedDB || (<any>window).mozIndexedDB || (<any>window).webkitIndexedDB || (<any>window).msIndexedDB;
+                const request = idbFactory.deleteDatabase(name);
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        }
+
         public openAsync(): Promise<void> {
             return new Promise((resolve, reject) => {
                 const idbFactory: IDBFactory = window.indexedDB || (<any>window).mozIndexedDB || (<any>window).webkitIndexedDB || (<any>window).msIndexedDB;
@@ -205,13 +214,26 @@ namespace ts.pxtc.Util {
         static TABLE = "files";
         static KEYPATH = "id";
         static MAX_SIZE = 1e6; // max 1mb
+
+        static dbName() {
+            return `__pxt_translations_${pxt.appTarget.id || ""}`;
+        }
+
         static createAsync(): Promise<IndexedDbTranslationDb> {
-            const idbWrapper = new IDBWrapper(`__pxt_translations_${pxt.appTarget.id || ""}`, 2, (ev, r) => {
-                const db = r.result as IDBDatabase;
-                db.createObjectStore(IndexedDbTranslationDb.TABLE, { keyPath: IndexedDbTranslationDb.KEYPATH });
-            });
-            return idbWrapper.openAsync()
-                .then(() => new IndexedDbTranslationDb(idbWrapper));
+            function openAsync() {
+                const idbWrapper = new IDBWrapper(IndexedDbTranslationDb.dbName(), 2, (ev, r) => {
+                    const db = r.result as IDBDatabase;
+                    db.createObjectStore(IndexedDbTranslationDb.TABLE, { keyPath: IndexedDbTranslationDb.KEYPATH });
+                });
+                return idbWrapper.openAsync()
+                    .then(() => new IndexedDbTranslationDb(idbWrapper));
+            }
+            return openAsync()
+                .catch(e => {
+                    console.log(`db: failed to open database, try delete entire store...`)
+                    return IDBWrapper.deleteDatabaseAsync(IndexedDbTranslationDb.dbName())
+                        .then(() => openAsync());
+                })
         }
 
         private db: IDBWrapper;
@@ -279,9 +301,21 @@ namespace ts.pxtc.Util {
         return _translationDbPromise;
     }
 
+    export function clearTranslationDbAsync(): Promise<void> {
+        const n = IndexedDbTranslationDb.dbName();
+        return IDBWrapper.deleteDatabaseAsync(n)
+            .then(() => {
+                _translationDbPromise = undefined;
+            })
+            .catch(e => {
+                console.log(`db: failed to delete ${n}`);
+                _translationDbPromise = undefined;
+            });
+    }
+
     export function stressTranslationsAsync(): Promise<void> {
         let md = "...";
-        for (let i = 0; i < 18; ++i)
+        for (let i = 0; i < 14; ++i)
             md += md + Math.random();
         console.log(`adding entry ${md.length * 2} bytes`);
         return Promise.delay(1)

@@ -28,5 +28,10 @@ export function init(updated: () => void) {
         appCache.addEventListener('updateready', () => {
             scheduleUpdate();
         }, false);
+        appCache.addEventListener('error', function (e) {
+            // It's difficult to tell cause of this error 
+            // since there's no information associated with the callback argument
+            ts.pxtc.Util.clearTranslationDbAsync();
+        });
     }
 }
