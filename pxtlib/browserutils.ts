@@ -529,13 +529,13 @@ namespace pxt.BrowserUtils {
     }
 
     export function storageEstimateAsync(): Promise<{ quota?: number; usage?: number; }> {
-        const nav = hasNavigator() && window.navigator;
+        const nav = hasNavigator() && <any>window.navigator;
         if (nav && nav.storage && nav.storage.estimate)
             return nav.storage.estimate();
         else return Promise.resolve({});
     }
 
-    export const scheduleStorageCleanup = hasNavigator() && navigator.storage && navigator.storage.estimate // some browser don't support this
+    export const scheduleStorageCleanup = hasNavigator() && (<any>navigator).storage && (<any>navigator).storage.estimate // some browser don't support this
         ? ts.pxtc.Util.throttle(function () {
             const MIN_QUOTA = 1000000; // 1Mb
             const MAX_USAGE_BYTES = 100000000; // 100Mb

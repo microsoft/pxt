@@ -725,7 +725,7 @@ namespace ts.pxtc.Util {
         // check for cache
         return pxt.BrowserUtils.translationDbAsync()
             .then(db => db.getAsync(lang, filename, branch))
-            .then((entry: ts.pxtc.Util.ITranslationDbEntry) => {
+            .then((entry: pxt.BrowserUtils.ITranslationDbEntry) => {
                 // if cached, return immediately
                 if (entry) {
                     etag = entry.etag;
