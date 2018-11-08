@@ -168,6 +168,8 @@ namespace ts.pxtc.Util {
     export interface ITranslationDb {
         getAsync(lang: string, filename: string, branch: string): Promise<ITranslationDbEntry>;
         setAsync(lang: string, filename: string, branch: string, etag: string, strings?: pxt.Map<string>, md?: string): Promise<void>;
+        // delete older translations
+        recycleAsync(): Promise<void>;
     }
 
     class MemTranslationDb implements ITranslationDb {
@@ -193,20 +195,22 @@ namespace ts.pxtc.Util {
             this.set(lang, filename, branch, etag, strings);
             return Promise.resolve();
         }
+        recycleAsync(): Promise<void> {
+            return Promise.resolve();
+        }
     }
 
     class IndexedDbTranslationDb implements ITranslationDb {
         static TABLE = "files";
         static KEYPATH = "id";
+        static MAX_SIZE = 3000000; // max 3mb
         static createAsync(): Promise<IndexedDbTranslationDb> {
             const idbWrapper = new IDBWrapper(`__pxt_translations_${pxt.appTarget.id || ""}`, 2, (ev, r) => {
                 const db = r.result as IDBDatabase;
                 db.createObjectStore(IndexedDbTranslationDb.TABLE, { keyPath: IndexedDbTranslationDb.KEYPATH });
             });
             return idbWrapper.openAsync()
-                .then(() => {
-                    return Promise.resolve(new IndexedDbTranslationDb(idbWrapper));
-                });
+                .then(() => new IndexedDbTranslationDb(idbWrapper));
         }
 
         private db: IDBWrapper;
@@ -250,7 +254,31 @@ namespace ts.pxtc.Util {
             }
             return this.db.setAsync(IndexedDbTranslationDb.TABLE, entry)
                 .catch((e) => {
-                    // ignore set errors
+                    pxt.log(`db: set failed, recycling...`)
+                    return this.recycleAsync();
+                });
+        }
+
+        recycleAsync(): Promise<void> {
+            pxt.debug(`db: recycling...`)
+            return this.db.getAllAsync(IndexedDbTranslationDb.TABLE)
+                .then((entries: ITranslationDbEntry[]) => {
+                    entries.sort((l,r) => r.time - l.time);
+                    // find keep min size
+                    let size = 0;
+                    let keep = entries.filter(entry => size < IndexedDbTranslationDb.MAX_SIZE &&
+                        (size = size + JSON.stringify(entry).length) < IndexedDbTranslationDb.MAX_SIZE);
+                    let toclean = keep.slice(keep.length);
+                    pxt.debug(`db: recycling ${toclean.length} entries`)
+                    return Promise.each(toclean, entry => this.db.deleteAsync(IndexedDbTranslationDb.TABLE, entry.id))
+                })
+                .then(() => {
+                    pxt.debug(`db: recycling completed`)
+                })
+                .catch(e => {
+                    pxt.log(`db: selective recycling, failed. attempty to delete entire content`)
+                    return this.db.deleteAllAsync(IndexedDbTranslationDb.TABLE)
+                        .catch(e => pxt.reportException(e));
                 });
         }
     }
