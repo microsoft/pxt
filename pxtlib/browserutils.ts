@@ -537,7 +537,9 @@ namespace pxt.BrowserUtils {
 
     export const scheduleStorageCleanup = ts.pxtc.Util.throttle(function () {
         const MIN_QUOTA = 1000000; // 1Mb
-        const MAX_USAGE = 5000000; // 5Mb
+        const MAX_USAGE_BYTES = 100000000; // 100Mb
+        const MAX_USAGE_RATIO = 0.5; // max 50% 
+
         storageEstimateAsync()
             .then(estimate => {
                 // quota > 50%
@@ -545,7 +547,8 @@ namespace pxt.BrowserUtils {
                 if (estimate.quota
                     && estimate.usage
                     && estimate.quota > MIN_QUOTA
-                    && estimate.usage > MAX_USAGE) {
+                    && (estimate.usage > MAX_USAGE_BYTES ||
+                        (estimate.usage / estimate.quota) > MAX_USAGE_RATIO)) {
                     pxt.log(`quota usage exceeded, clearing translations`);
                     return clearTranslationDbAsync();
                 }
@@ -692,7 +695,6 @@ namespace pxt.BrowserUtils {
     class IndexedDbTranslationDb implements ts.pxtc.Util.ITranslationDb {
         static TABLE = "files";
         static KEYPATH = "id";
-        static MAX_STORAGE_USAGE = 50; // percent
 
         static dbName() {
             return `__pxt_translations_${pxt.appTarget.id || ""}`;
