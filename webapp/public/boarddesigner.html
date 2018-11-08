@@ -11,7 +11,8 @@
             width:100%;
             height:100%;
         }
-        #svg svg circle:hover {
+        #svg svg circle:hover,
+        #svg svg rect:hover {
             stroke: grey !important;
         }
         #svg svg .selected {
@@ -46,11 +47,9 @@
             const r = {
                 x: (matrix.a * x) + (matrix.c * y) + matrix.e - offset.left,
                 y: (matrix.b * x) + (matrix.d * y) + matrix.f - offset.top,
-                x2: (matrix.a * (x + w)) + (matrix.c * (y+h)) + matrix.e - offset.left,
-                y2: (matrix.b * (x + w)) + (matrix.d * (y+h)) + matrix.f - offset.top,
+                w: Math.abs((matrix.a * w) + (matrix.c * h)),
+                h: Math.abs((matrix.b * w) + (matrix.d * h))
             };
-            r.w = Math.abs(r.x2 - r.x);
-            r.h = Math.abs(r.y2 - r.y);
             // rescale for viewbox
             r.x *= vb.width / offset.width;
             r.y *= vb.height / offset.height;
@@ -67,6 +66,10 @@
                 .filter(n => !!n && !/^#/.test(n))[0];
             if (!id || boardjson.gpioPinMap[id]) return;
             boardjson.gpioPinMap[id] = id;
+
+            // split subpins RX_TX_A0
+            id.split('_').forEach(iid => boardjson.gpioPinMap[iid] = id);
+
             const rect = convertCoords(elt);
 
             // handle leds
@@ -166,9 +169,6 @@
                 if (/^[!+\.A-Z0-9_]+$/.test(id))
                     addElement(elt);
             }
-            $('#svg').children().click(function (el) {
-                addElement(el.target);
-            })
 
             // Get point in global SVG space
             const pt = svg.createSVGPoint();
