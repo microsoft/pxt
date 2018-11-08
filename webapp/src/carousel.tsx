@@ -195,8 +195,6 @@ export class Carousel extends data.Component<ICarouselProps, ICarouselState> {
                 if (!this.definitelyDragging) {
                     // lock direction
                     let y = getY(event);
-                    pxt.log(`drag x : ${Math.abs(x - this.dragStartX)}`);
-                    pxt.log(`drag y : ${Math.abs(y - this.dragStartY)}`);
                     if (Math.abs(x - this.dragStartX) > DRAG_THRESHOLD) {
                         this.definitelyDragging = DraggingDirection.X;
                     } else if (Math.abs(y - this.dragStartY) > DRAG_THRESHOLD) {
