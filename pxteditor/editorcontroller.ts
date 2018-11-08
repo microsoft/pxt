@@ -56,6 +56,7 @@ namespace pxt.editor {
         | "workspacereset"
         | "workspacesave" // EditorWorkspaceSaveRequest
         | "workspaceloaded"
+        | "workspaceevent" // EditorWorspaceEvent
 
         | "event"
         | "simevent"
@@ -120,6 +121,11 @@ namespace pxt.editor {
          * Synching projects from host into
          */
         action: "workspacesync" | "workspacereset" | "workspaceloaded";
+    }
+
+    export interface EditorWorkspaceEvent extends EditorMessageRequest {
+        action: "workspaceevent";
+        event: pxt.editor.events.Event;
     }
 
     // UI properties to sync on load
