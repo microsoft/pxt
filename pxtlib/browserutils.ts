@@ -571,7 +571,7 @@ namespace pxt.BrowserUtils {
             .then(() => translationDbAsync())
             .then(db => db.setAsync("foobar", Math.random().toString(), "", null, undefined, md))
             .then(() => pxt.BrowserUtils.storageEstimateAsync())
-            .then(estimate => estimate.usage / estimate.quota < 0.8 ? stressTranslationsAsync() : Promise.resolve());
+            .then(estimate => !estimate.quota && estimate.usage / estimate.quota < 0.8 ? stressTranslationsAsync() : Promise.resolve());
     }
 
     export interface ITranslationDbEntry {
