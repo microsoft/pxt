@@ -529,36 +529,38 @@ namespace pxt.BrowserUtils {
     }
 
     export function storageEstimateAsync(): Promise<{ quota?: number; usage?: number; }> {
-        const nav = hasNavigator() && <any>window.navigator;
-        if (nav.storage && nav.storage.estimate)
+        const nav = hasNavigator() && window.navigator;
+        if (nav && nav.storage && nav.storage.estimate)
             return nav.storage.estimate();
         else return Promise.resolve({});
     }
 
-    export const scheduleStorageCleanup = ts.pxtc.Util.throttle(function () {
-        const MIN_QUOTA = 1000000; // 1Mb
-        const MAX_USAGE_BYTES = 100000000; // 100Mb
-        const MAX_USAGE_RATIO = 0.5; // max 50% 
+    export const scheduleStorageCleanup = hasNavigator() && navigator.storage && navigator.storage.estimate // some browser don't support this
+        ? ts.pxtc.Util.throttle(function () {
+            const MIN_QUOTA = 1000000; // 1Mb
+            const MAX_USAGE_BYTES = 100000000; // 100Mb
+            const MAX_USAGE_RATIO = 0.5; // max 50% 
 
-        storageEstimateAsync()
-            .then(estimate => {
-                // quota > 50%
-                pxt.log(`storage estimate: ${(estimate.usage / estimate.quota * 100) >> 0}%, ${(estimate.usage / 1000000) >> 0}/${(estimate.quota / 1000000) >> 0}Mb`)
-                if (estimate.quota
-                    && estimate.usage
-                    && estimate.quota > MIN_QUOTA
-                    && (estimate.usage > MAX_USAGE_BYTES ||
-                        (estimate.usage / estimate.quota) > MAX_USAGE_RATIO)) {
-                    pxt.log(`quota usage exceeded, clearing translations`);
-                    pxt.tickEvent('storage.cleanup');
-                    return clearTranslationDbAsync();
-                }
-                return Promise.resolve();
-            })
-            .catch(e => {
-                pxt.reportException(e);
-            })
-    }, 10000, false);
+            storageEstimateAsync()
+                .then(estimate => {
+                    // quota > 50%
+                    pxt.log(`storage estimate: ${(estimate.usage / estimate.quota * 100) >> 0}%, ${(estimate.usage / 1000000) >> 0}/${(estimate.quota / 1000000) >> 0}Mb`)
+                    if (estimate.quota
+                        && estimate.usage
+                        && estimate.quota > MIN_QUOTA
+                        && (estimate.usage > MAX_USAGE_BYTES ||
+                            (estimate.usage / estimate.quota) > MAX_USAGE_RATIO)) {
+                        pxt.log(`quota usage exceeded, clearing translations`);
+                        pxt.tickEvent('storage.cleanup');
+                        return clearTranslationDbAsync();
+                    }
+                    return Promise.resolve();
+                })
+                .catch(e => {
+                    pxt.reportException(e);
+                })
+        }, 10000, false)
+        : () => { };
 
     export function stressTranslationsAsync(): Promise<void> {
         let md = "...";
