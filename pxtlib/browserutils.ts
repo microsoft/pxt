@@ -550,6 +550,7 @@ namespace pxt.BrowserUtils {
                     && (estimate.usage > MAX_USAGE_BYTES ||
                         (estimate.usage / estimate.quota) > MAX_USAGE_RATIO)) {
                     pxt.log(`quota usage exceeded, clearing translations`);
+                    pxt.tickEvent('storage.cleanup');
                     return clearTranslationDbAsync();
                 }
                 return Promise.resolve();
@@ -596,7 +597,8 @@ namespace pxt.BrowserUtils {
             // special case for quota exceeded
             if (err.name == "QuotaExceededError") {
                 // oops, we ran out of space
-                console.log(`quota exceeded...`);
+                pxt.log(`storage quota exceeded...`);
+                pxt.tickEvent('storage.quotaexceedederror');
                 if (this.quotaExceededHandler)
                     this.quotaExceededHandler();
             }
