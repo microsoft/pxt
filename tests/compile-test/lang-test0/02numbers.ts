@@ -77,6 +77,9 @@ function testNums(): void {
     assert(r == 987, "fib");
 
     msg("nums#5")
+
+    assert(1 > 0.5, "<")
+    assert(1 < 1.5, "<")
 }
 
 function fib(p: number): number {

@@ -2005,8 +2005,10 @@ ${lbl}: .short 0xffff
                     case SK.PropertySignature:
                     case SK.PropertyAssignment:
                     case SK.PropertyDeclaration:
-                        isMethod = true
-                        isProperty = true
+                        if (!isStatic(decl)) {
+                            isMethod = true
+                            isProperty = true
+                        }
                         break;
                     case SK.Parameter:
                         if (isCtorField(decl)) {
