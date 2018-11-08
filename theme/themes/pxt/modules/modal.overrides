@@ -116,10 +116,10 @@
     .ui.button.back-button, .ui.help-button {
         color: @extensionsHeaderColor !important;
         padding-left: 0 !important;
-        &:focus {
+        /* &:focus {
             border: 2px solid yellow !important;
             border-radius: 1px;
-        }
+        } */
     }
 }
 

@@ -392,19 +392,6 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         const experimentsChanged = mode == ScriptSearchMode.Experiments
             && experimentsState != pxt.editor.experiments.state();
 
-        const headerActions: JSX.Element = (mode == ScriptSearchMode.Extensions) ?
-            <div key="search" className="ui search">
-                <div className="ui fluid action input" role="search">
-                    <div aria-live="polite" className="accessible-hidden">{lf("{0} result matching '{1}'", bundles.length + ghdata.data.length + urldata.data.length, searchFor)}</div>
-                    <input autoFocus ref="searchInput" type="text" placeholder={lf("Search or enter project URL...")}
-                        onKeyUp={this.handleSearchKeyUpdate} disabled={isSearching}
-                        autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} />
-                    <button title={lf("Search")} disabled={isSearching} className="ui right icon button" onClick={this.handleSearch}>
-                        <sui.Icon icon="search" />
-                    </button>
-                </div>
-            </div> : undefined;
-
         return (
             <sui.Modal isOpen={visible} dimmer={true}
                 className="searchdialog" size="fullscreen"
@@ -412,7 +399,6 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                 closeIcon={closeIcon}
                 header={headerText}
                 helpUrl={helpPath}
-                headerActions={[headerActions]}
                 closeOnDimmerClick closeOnEscape
                 description={description}>
                 <div className="ui">
@@ -420,6 +406,18 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                         <div className="ui message">
                             <div className="header">{lf("WARNING: EXPERIMENTAL FEATURES AHEAD!")}</div>
                             {lf("Try out these features and tell us what you think!")}
+                        </div> : undefined}
+                    {mode == ScriptSearchMode.Extensions ?
+                        <div className="ui search">
+                            <div className="ui fluid action input" role="search">
+                                <div aria-live="polite" className="accessible-hidden">{lf("{0} result matching '{1}'", bundles.length + ghdata.data.length + urldata.data.length, searchFor)}</div>
+                                <input autoFocus ref="searchInput" type="text" placeholder={lf("Search or enter project URL...")}
+                                    onKeyUp={this.handleSearchKeyUpdate} disabled={isSearching}
+                                    autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} />
+                                <button title={lf("Search")} disabled={isSearching} className="ui right icon button" onClick={this.handleSearch}>
+                                    <sui.Icon icon="search" />
+                                </button>
+                            </div>
                         </div> : undefined}
                     {isSearching ?
                         <div className="ui medium active centered inline loader"></div>
