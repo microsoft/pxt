@@ -93,7 +93,7 @@ export class Table {
                 if (e.status == 409) {
                     // conflict while writing key, ignore.
                     pxt.debug(`table: set conflict (409)`);
-                    return Promise.resolve();
+                    return undefined;
                 }
                 pxt.reportException(e);
                 pxt.log(`table: set failed, cleaning translation db`)
