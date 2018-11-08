@@ -710,7 +710,7 @@ namespace ts.pxtc.Util {
                 if (resp.statusCode == 304 || resp.statusCode == 200) {
                     // store etag and translations
                     etag = resp.headers["etag"] as string || "";
-                    return translationDbAsync()
+                    return pxt.BrowserUtils.translationDbAsync()
                         .then(db => db.setAsync(lang, filename, branch, etag, resp.json || strings))
                         .then(() => resp.json || strings);
                 }
@@ -723,9 +723,9 @@ namespace ts.pxtc.Util {
         }
 
         // check for cache
-        return translationDbAsync()
+        return pxt.BrowserUtils.translationDbAsync()
             .then(db => db.getAsync(lang, filename, branch))
-            .then((entry: ts.pxtc.Util.ITranslationDbEntry) => {
+            .then((entry: pxt.BrowserUtils.ITranslationDbEntry) => {
                 // if cached, return immediately
                 if (entry) {
                     etag = entry.etag;
