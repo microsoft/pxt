@@ -49,12 +49,12 @@ namespace ts.pxtc.Util {
 
     export class IDBWrapper {
         private _db: IDBDatabase;
-        private upgradeHandler: IDBUpgradeHandler;
 
-        constructor(private name: string, private version: number, upgradeHandler?: IDBUpgradeHandler) {
-            if (upgradeHandler) {
-                this.upgradeHandler = upgradeHandler;
-            }
+        constructor(
+            private name: string,
+            private version: number,
+            private upgradeHandler?: IDBUpgradeHandler,
+            private quotaExceededHandler?: () => void) {
         }
 
         private throwIfNotOpened(): void {
@@ -66,6 +66,13 @@ namespace ts.pxtc.Util {
         private errorHandler(err: Error, op: string, reject: (err: Error) => void): void {
             console.error(new Error(`${this.name} IDBWrapper error for ${op}: ${err.message}`));
             reject(err);
+            // special case for quota exceeded
+            if (err.name == "QuotaExceededError") {
+                // oops, we ran out of space
+                console.log(`quota exceeded...`);
+                if (this.quotaExceededHandler)
+                    this.quotaExceededHandler();
+            }
         }
 
         private getObjectStore(name: string, mode: "readonly" | "readwrite" = "readonly"): IDBObjectStore {
@@ -213,7 +220,7 @@ namespace ts.pxtc.Util {
     class IndexedDbTranslationDb implements ITranslationDb {
         static TABLE = "files";
         static KEYPATH = "id";
-        static MAX_SIZE = 1e6; // max 1mb
+        static MAX_STORAGE_USAGE = 50; // percent
 
         static dbName() {
             return `__pxt_translations_${pxt.appTarget.id || ""}`;
@@ -224,6 +231,9 @@ namespace ts.pxtc.Util {
                 const idbWrapper = new IDBWrapper(IndexedDbTranslationDb.dbName(), 2, (ev, r) => {
                     const db = r.result as IDBDatabase;
                     db.createObjectStore(IndexedDbTranslationDb.TABLE, { keyPath: IndexedDbTranslationDb.KEYPATH });
+                }, () => {
+                    // quota exceeeded, nuke db
+                    clearTranslationDbAsync().catch(e => { });
                 });
                 return idbWrapper.openAsync()
                     .then(() => new IndexedDbTranslationDb(idbWrapper));
@@ -311,17 +321,6 @@ namespace ts.pxtc.Util {
                 console.log(`db: failed to delete ${n}`);
                 _translationDbPromise = undefined;
             });
-    }
-
-    export function stressTranslationsAsync(): Promise<void> {
-        let md = "...";
-        for (let i = 0; i < 14; ++i)
-            md += md + Math.random();
-        console.log(`adding entry ${md.length * 2} bytes`);
-        return Promise.delay(1)
-            .then(() => translationDbAsync())
-            .then(db => db.setAsync("foobar", Math.random().toString(), "", null, undefined, md))
-            .then(() => stressTranslationsAsync());
     }
 
     /**

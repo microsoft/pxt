@@ -527,4 +527,25 @@ namespace pxt.BrowserUtils {
         }
         return result;
     }
+
+    export function storageEstimateAsync(): Promise<{ quota?: number; usage?: number; }> {
+        const nav = hasNavigator() && <any>window.navigator;
+        if (nav.storage && nav.storage.estimate)
+            return nav.storage.estimate();
+        else return Promise.resolve({});
+    }
+
+    export function stressTranslationsAsync(): Promise<void> {
+        let md = "...";
+        for (let i = 0; i < 14; ++i)
+            md += md + Math.random();
+        console.log(`adding entry ${md.length * 2} bytes`);
+        return Promise.delay(1)
+            .then(() => pxt.BrowserUtils.storageEstimateAsync())
+            .then(estimate => estimate.quota ? console.log(`storage: ${(estimate.usage / estimate.quota * 100) >> 0}% ${estimate.usage} bytes`) : undefined)
+            .then(() => ts.pxtc.Util.translationDbAsync())
+            .then(db => db.setAsync("foobar", Math.random().toString(), "", null, undefined, md))
+            .then(() => stressTranslationsAsync());
+    }
 }
+
