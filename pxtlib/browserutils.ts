@@ -537,7 +537,7 @@ namespace pxt.BrowserUtils {
 
     export const scheduleStorageCleanup = ts.pxtc.Util.throttle(function () {
         const MIN_QUOTA = 1000000; // 1Mb
-        const MAX_USAGE = 10000000; // 10Mb
+        const MAX_USAGE = 5000000; // 5Mb
         storageEstimateAsync()
             .then(estimate => {
                 // quota > 50%
@@ -565,7 +565,7 @@ namespace pxt.BrowserUtils {
             .then(() => translationDbAsync())
             .then(db => db.setAsync("foobar", Math.random().toString(), "", null, undefined, md))
             .then(() => pxt.BrowserUtils.storageEstimateAsync())
-            .then(estimate => estimate.usage / estimate.quota > 0.8 ? stressTranslationsAsync() : Promise.resolve());
+            .then(estimate => estimate.usage / estimate.quota < 0.8 ? stressTranslationsAsync() : Promise.resolve());
     }
 
     // IndexedDB wrapper class
@@ -785,14 +785,22 @@ namespace pxt.BrowserUtils {
     }
 
     export function clearTranslationDbAsync(): Promise<void> {
-        const n = IndexedDbTranslationDb.dbName();
-        return IDBWrapper.deleteDatabaseAsync(n)
-            .then(() => {
-                _translationDbPromise = undefined;
-            })
-            .catch(e => {
-                console.log(`db: failed to delete ${n}`);
-                _translationDbPromise = undefined;
-            });
+        function deleteDbAsync() {
+            const n = IndexedDbTranslationDb.dbName();
+            return IDBWrapper.deleteDatabaseAsync(n)
+                .then(() => {
+                    _translationDbPromise = undefined;
+                })
+                .catch(e => {
+                    pxt.log(`db: failed to delete ${n}`);
+                    _translationDbPromise = undefined;
+                });
+        }
+
+        if (!_translationDbPromise)
+            return deleteDbAsync();
+        return _translationDbPromise
+            .then(db => db.clearAsync())
+            .catch(e => deleteDbAsync().done());
     }
 }
