@@ -168,8 +168,8 @@ namespace ts.pxtc.Util {
     export interface ITranslationDb {
         getAsync(lang: string, filename: string, branch: string): Promise<ITranslationDbEntry>;
         setAsync(lang: string, filename: string, branch: string, etag: string, strings?: pxt.Map<string>, md?: string): Promise<void>;
-        // delete older translations
-        recycleAsync(): Promise<void>;
+        // delete all
+        clearAsync(): Promise<void>;
     }
 
     class MemTranslationDb implements ITranslationDb {
@@ -195,7 +195,8 @@ namespace ts.pxtc.Util {
             this.set(lang, filename, branch, etag, strings);
             return Promise.resolve();
         }
-        recycleAsync(): Promise<void> {
+        clearAsync() {
+            this.translations = {};
             return Promise.resolve();
         }
     }
@@ -255,31 +256,16 @@ namespace ts.pxtc.Util {
             return this.db.setAsync(IndexedDbTranslationDb.TABLE, entry)
                 .catch((e) => {
                     console.log(`db: set failed (${e.message}), recycling...`)
-                    return this.recycleAsync();
+                    return this.clearAsync();
                 });
         }
 
-        recycleAsync(): Promise<void> {
-            console.debug(`db: recycling...`)
-            return this.db.getAllAsync(IndexedDbTranslationDb.TABLE)
-                .then((entries: ITranslationDbEntry[]) => {
-                    entries.sort((l, r) => l.time - r.time);
-                    // find keep min size
-                    let size = 0;
-                    let keep = entries.filter(entry => size < IndexedDbTranslationDb.MAX_SIZE &&
-                        (size = size + JSON.stringify(entry).length) < IndexedDbTranslationDb.MAX_SIZE);
-                    let toclean = entries.slice(keep.length);
-                    console.debug(`db: recycling ${toclean.length} entries`)
-                    return Promise.each(toclean, entry => this.db.deleteAsync(IndexedDbTranslationDb.TABLE, entry.id))
-                })
-                .then(() => {
-                    console.debug(`db: recycling completed`)
-                })
+        clearAsync(): Promise<void> {
+            return this.db.deleteAllAsync(IndexedDbTranslationDb.TABLE)
+                .then(() => console.debug(`db: all clean`))
                 .catch(e => {
-                    console.log(`db: selective recycling, failed. attempty to delete entire content`)
-                    return this.db.deleteAllAsync(IndexedDbTranslationDb.TABLE)
-                        .catch(e => console.debug(`db: delete all failed, ${e.message}`));
-                });
+                    console.error('db: failed to delete all');
+                })
         }
     }
 
@@ -294,10 +280,10 @@ namespace ts.pxtc.Util {
     }
 
     export function stressTranslationsAsync(): Promise<void> {
-        console.log(`adding entry`)
         let md = "...";
-        for (let i = 0; i < 14; ++i)
-            md += md;
+        for (let i = 0; i < 18; ++i)
+            md += md + Math.random();
+        console.log(`adding entry ${md.length * 2} bytes`);
         return Promise.delay(1)
             .then(() => translationDbAsync())
             .then(db => db.setAsync("foobar", Math.random().toString(), "", null, undefined, md))

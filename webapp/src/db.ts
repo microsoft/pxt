@@ -84,6 +84,24 @@ export class Table {
     }
 
     setAsync(obj: any): Promise<string> {
+        return this.setAsyncNoRetry(obj)
+            .catch(e => {
+                pxt.reportException(e);
+                pxt.log(`table: set failed, cleaning translation db`)
+                // clean up translation and try again
+                let tdb: ts.pxtc.Util.ITranslationDb;
+                return ts.pxtc.Util.translationDbAsync()
+                    .then(db => db.clearAsync())
+                    .then(() => this.setAsyncNoRetry(obj))
+                    .catch(e => {
+                        pxt.reportException(e);
+                        pxt.log(`table: we are out of space...`)
+                        return undefined;
+                    })
+            })
+    }
+
+    private setAsyncNoRetry(obj: any): Promise<string> {
         if (obj.id && !obj._id)
             obj._id = this.name + "--" + obj.id
         return getDbAsync().then(db => db.put(obj)).then((resp: any) => resp.rev)
