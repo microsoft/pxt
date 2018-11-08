@@ -185,14 +185,9 @@ ${lbl}: ${this.obj_header("pxt::buffer_vt")}
         }
 
         private work() {
-            let name = this.proc.getName()
-            if (assembler.debug && this.proc.action) {
-                let info = ts.pxtc.nodeLocationInfo(this.proc.action)
-                name += " " + info.fileName + ":" + (info.line + 1)
-            }
             this.write(`
 ;
-; Function ${name}
+; Function ${this.proc.getFullName()}
 ;
 `)
 
@@ -259,6 +254,14 @@ ${baseLabel}_nochk:
             }
             this.baseStackSize = 1 // push {lr}
             let numlocals = this.proc.locals.length
+            
+            this.write("push {lr}")
+            this.write(".locals:\n")
+            if (this.proc.perfCounterNo) {
+                this.write(this.t.emit_int(this.proc.perfCounterNo, "r0"))
+                this.write("bl pxt::startPerfCounter")
+            }
+
             this.write(this.t.proc_setup(numlocals))
             this.baseStackSize += numlocals
 
@@ -310,6 +313,14 @@ ${baseLabel}_nochk:
             assert(0 <= numlocals && numlocals < 127);
             if (numlocals > 0)
                 this.write(this.t.pop_locals(numlocals))
+
+            if (this.proc.perfCounterNo) {
+                this.write("mov r4, r0")
+                this.write(this.t.emit_int(this.proc.perfCounterNo, "r0"))
+                this.write("bl pxt::stopPerfCounter")
+                this.write("mov r0, r4")
+            }
+
             this.write(`${endLabel}:`)
             this.write(this.t.proc_return())
             this.write("@stackempty func");

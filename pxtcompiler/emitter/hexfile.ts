@@ -825,6 +825,10 @@ ${info.id}_IfaceVT:
         return s
     }
 
+    const systemPerfCounters = [
+        "GC"
+    ]
+
 
     function serialize(bin: Binary, opts: CompileOptions) {
         let asmsource = `; start
@@ -839,14 +843,21 @@ ${hex.hexPrelude()}
     .short ${bin.nonPtrGlobals} ; number of globals that are not pointers (they come first)
     .word _pxt_iface_member_names
     .word _pxt_lambda_trampoline@fn
-    .word 0 ; reserved
+    .word _pxt_perf_counters
     .word 0 ; reserved
     .word 0 ; reserved
 `
         let snippets: AssemblerSnippets = null;
         snippets = new ThumbSnippets()
 
+        const perfCounters = target.switches.profile ? systemPerfCounters.slice() : []
+
         bin.procs.forEach(p => {
+            if (p.perfCounterName) {
+                U.assert(target.switches.profile)
+                p.perfCounterNo = perfCounters.length
+                perfCounters.push(p.perfCounterName)
+            }
             let p2a = new ProctoAssembler(snippets, bin, p)
             asmsource += "\n" + p2a.getAssembly() + "\n"
         })
@@ -883,6 +894,17 @@ ${hex.hexPrelude()}
 
         emitStrings(snippets, bin)
         asmsource += bin.otherLiterals.join("")
+
+        asmsource += `\n.balign 4\n.section code\n_pxt_perf_counters:\n`
+        asmsource += `    .word ${perfCounters.length}\n`
+        let strs = ""
+        for (let i = 0; i < perfCounters.length; ++i) {
+            let lbl = ".perf" + i
+            asmsource += `    .word ${lbl}\n`
+            strs += `${lbl}: .string ${JSON.stringify(perfCounters[i])}\n`
+        }
+        asmsource += strs
+
         asmsource += "_literals_end:\n"
 
         return asmsource

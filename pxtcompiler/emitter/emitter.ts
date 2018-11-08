@@ -1902,6 +1902,12 @@ ${lbl}: .short 0xffff
 
             if (nm == "TD_NOOP") {
                 assert(!hasRet, "!hasRet")
+                if (target.switches.profile && attrs.shimArgument == "perfCounter") {
+                    if (args[0] && args[0].kind == SK.StringLiteral)
+                        proc.perfCounterName = (args[0] as StringLiteral).text
+                    if (!proc.perfCounterName)
+                        proc.perfCounterName = proc.getFullName()                         
+                }
                 return emitLit(undefined)
             }
 

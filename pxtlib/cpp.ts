@@ -849,6 +849,9 @@ namespace pxt.cpp {
         if (compile.gc)
             pxtConfig += "#define PXT_GC 1\n"
 
+        if (compile.switches.profile)
+            pxtConfig += "#define PXT_PROFILE 1\n"
+
         if (compile.switches.gcDebug)
             pxtConfig += "#define PXT_GC_DEBUG 1\n"
 

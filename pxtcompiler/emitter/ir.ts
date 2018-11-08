@@ -463,6 +463,8 @@ namespace ts.pxtc.ir {
         debugInfo: ProcDebugInfo;
         fillDebugInfo: (th: assembler.File) => void;
         classInfo: ClassInfo;
+        perfCounterName: string;
+        perfCounterNo = 0;
 
         body: Stmt[] = [];
         lblNo = 0;
@@ -514,6 +516,15 @@ namespace ts.pxtc.ir {
             lbl.lblName = lblName
             lbl.lbl = lbl
             this.emit(lbl)
+        }
+
+        getFullName() {
+            let name = this.getName()
+            if (this.action) {
+                let info = ts.pxtc.nodeLocationInfo(this.action)
+                name += " " + info.fileName.replace("pxt_modules/", "") + ":" + (info.line + 1)
+            }
+            return name
         }
 
         getName() {

@@ -320,6 +320,7 @@ declare namespace pxt {
 
 declare namespace ts.pxtc {
     interface CompileSwitches {
+        profile?: boolean;
         gcDebug?: boolean;
         boxDebug?: boolean;
         slowMethods?: boolean;
@@ -329,7 +330,7 @@ declare namespace ts.pxtc {
         numFloat?: boolean;
         noTreeShake?: boolean;
         inlineConversions?: boolean;
-        noPeepHole?: boolean;
+        noPeepHole?: boolean;        
     }
 
     interface CompileTarget {
