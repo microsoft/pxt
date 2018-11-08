@@ -37,19 +37,13 @@
             const svg = document.querySelector('svg');
             const vb = svg.viewBox.baseVal;
             const offset = svg.getBoundingClientRect();
-            const matrix = elt.getScreenCTM();
-            const bbox = elt.getBBox();
-            const x = bbox.x;// + (bbox.width / 2);
-            const y = bbox.y;// + (bbox.height / 2);
-            const w = bbox.width;
-            const h = bbox.height;
-
+            const eoffset = elt.getBoundingClientRect();
             const r = {
-                x: (matrix.a * x) + (matrix.c * y) + matrix.e - offset.left,
-                y: (matrix.b * x) + (matrix.d * y) + matrix.f - offset.top,
-                w: Math.abs((matrix.a * w) + (matrix.c * h)),
-                h: Math.abs((matrix.b * w) + (matrix.d * h))
-            };
+                x: eoffset.x - offset.left,
+                y: eoffset.y - offset.top,
+                w: eoffset.width,
+                h: eoffset.height
+            }
             // rescale for viewbox
             r.x *= vb.width / offset.width;
             r.y *= vb.height / offset.height;
@@ -112,7 +106,7 @@
 
             if (!visuals) {
                 if (Math.abs(rect.w - 15) > 2 || Math.abs(rect.h - 15) > 2) {
-                    log(`pin ${id}: size ${rect.w >> 0}x${rect.h >> 0}`)
+                    log(`pin ${id}: ${rect.x >> 0}, ${rect.y >> 0} - ${rect.w >> 0}x${rect.h >> 0}`)
                 }
                 boardjson.visual.pinBlocks.push({
                     x: rect.x,
