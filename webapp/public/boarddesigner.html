@@ -48,44 +48,54 @@
         }
 
         function addElement(elt) {
-            const id = elt.getAttribute("connectorname") || elt.getAttribute("inkscape:label") || elt.getAttribute("id");
+            const id = [
+                elt.getAttribute("connectorname"),
+                elt.getAttribute("inkscape:label"),
+                elt.getAttribute("id")]
+                .filter(n => !!n && !/^#/.test(n))[0];
+            if (!id || boardjson.gpioPinMap[id]) return;
+            boardjson.gpioPinMap[id] = id;
             const rect = convertCoords(elt);
 
             // handle leds
-            if (/^LED/.test(id)) {
+            let visuals = false;
+            if (/(RX|TX)?LED/.test(id)) {
                 boardjson.visual.leds.push({
                     x: rect.x,
                     y: rect.y,
                     color: '#ff0000',
                     label: id
                 })
-                updateJSON();
-                return;
+                visuals = true;
             }
-
-            if (/RST|RESET/.test(id) && !boardjson.visual.reset) {
+            else if (/^NEOPIXEL$/.test(id)) {
+                boardjson.visual.leds.push({
+                    x: rect.x,
+                    y: rect.y,
+                    color: 'neopixel',
+                    label: "NEOPIXEL"
+                })
+                visuals = true;
+            }
+            else if (/RST|RESET/.test(id) && !boardjson.visual.reset) {
                 boardjson.visual.reset = {
                     x: rect.x,
                     y: rect.y
                 }
-                updateJSON();
-                return;
+                visuals = true;
             }
+            else if (/GND/.test(id) && boardjson.groundPins.indexOf(id) < 0)
+                boardjson.groundPins.push(id);
+            else if (/(\+3V3|3V|VCC|VOUT)/.test(id) && boardjson.threeVoltPins.indexOf(id) < 0)
+                boardjson.threeVoltPins.push(id);
 
-            if (!boardjson.gpioPinMap[id]) {
-                const rect = convertCoords(elt);
+            if (!visuals)
                 boardjson.visual.pinBlocks.push({
                     x: rect.x,
                     y: rect.y,
                     labels: [id]
                 });
-                boardjson.gpioPinMap[id] = id;
-                if (/GND/.test(id) && boardjson.groundPins.indexOf(id) < 0)
-                    boardjson.groundPins.push(id);
-                else if (/(\+3V3|3V|VCC|VOUT)/.test(id) && boardjson.threeVoltPins.indexOf(id) < 0)
-                    boardjson.threeVoltPins.push(id);
-                elt.classList.add("selected")
-            }
+            elt.classList.add("selected")
             updateJSON();
         }
 
@@ -166,6 +176,27 @@
 <body>
     <div class="ui container">
         <h1>Board designer</h1>
+        <h2>preparing board.svg</h2>
+        <ul class="ui small">
+            <li>
+                grab the "breadboard" svg of Fritzing board image
+            </li>
+            <li>
+                resize your image (in Inkscape or other) so that a header is precisely 15px
+            </li>
+            <li>
+                (optional) remove extra components to simplify image
+            </li>
+            <li>
+                LEDs: set the id of the svg element to LED...
+            </li>
+            <li>
+                Reset button: set the id of the svg to RESET
+            </li>
+            <li>
+                Pins: set the id of the svg for headers to the pin names (should be done already)
+            </li>
+        </ul>
         <div class="ui segment">
             <h2>board.svg</h2>
             <textarea class="ui fluid" id="svginput"></textarea>
