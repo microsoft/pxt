@@ -970,7 +970,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
             shouldCloseOnEsc, shouldCloseOnOverlayClick, shouldFocusAfterRender, ...rest } = this.props;
         const { marginTop, scrolling, mountClasses } = this.state;
         const isFullscreen = size == 'fullscreen';
-        const goBack = isFullscreen && !!closeIcon;
+        const showBack = isFullscreen && !!closeIcon;
 
         const classes = cx([
             'ui',
@@ -1007,9 +1007,9 @@ export class Modal extends React.Component<ModalProps, ModalState> {
             className={classes}
             style={customStyles}
             aria={aria} {...rest}>
-            {header || goBack ? <div id={this.id + 'title'} className={"header " + (headerClass || "")}>
-                <span className="header-title" style={{margin: `0 ${helpUrl ? '-20rem' : '0'} 0 ${goBack ? '-20rem' : '0'}`}}>{header}</span>
-                {goBack ? <div className="header-close">
+            {header || showBack || helpUrl ? <div id={this.id + 'title'} className={"header " + (headerClass || "")}>
+                <span className="header-title" style={{margin: `0 ${helpUrl ? '-20rem' : '0'} 0 ${showBack ? '-20rem' : '0'}`}}>{header}</span>
+                {showBack ? <div className="header-close">
                     <Button className="back-button large" title={lf("Go back")} onClick={onClose} tabIndex={0} onKeyDown={fireClickOnEnter}>
                         <Icon icon="arrow left" />
                         <span className="ui text landscape only">{lf("Go back")}</span>
@@ -1023,8 +1023,8 @@ export class Modal extends React.Component<ModalProps, ModalState> {
                     </div>
                     : undefined}
             </div> : undefined}
-            {description && !isFullscreen ? <label id={this.id + 'description'} className="accessible-hidden">{description}</label> : undefined}
             {isFullscreen && headerActions ? <div className="header-actions">{headerActions}</div> : undefined}
+            {description && !isFullscreen ? <label id={this.id + 'description'} className="accessible-hidden">{description}</label> : undefined}
             <div id={this.id + 'desc'} className={`${longer ? 'scrolling' : ''} ${headerActions ? 'has-actions' : ''} content`}>
                 {children}
             </div>
