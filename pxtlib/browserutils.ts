@@ -574,6 +574,50 @@ namespace pxt.BrowserUtils {
             .then(estimate => estimate.usage / estimate.quota < 0.8 ? stressTranslationsAsync() : Promise.resolve());
     }
 
+    export interface ITranslationDbEntry {
+        id?: string;
+        etag: string;
+        time: number;
+        strings?: pxt.Map<string>; // UI string translations
+        md?: string; // markdown content
+    }
+
+    export interface ITranslationDb {
+        getAsync(lang: string, filename: string, branch: string): Promise<ITranslationDbEntry>;
+        setAsync(lang: string, filename: string, branch: string, etag: string, strings?: pxt.Map<string>, md?: string): Promise<void>;
+        // delete all
+        clearAsync(): Promise<void>;
+    }
+
+    class MemTranslationDb implements ITranslationDb {
+        translations: pxt.Map<ITranslationDbEntry> = {};
+        key(lang: string, filename: string, branch: string) {
+            return `${lang}|${filename}|${branch || "master"}`;
+        }
+        get(lang: string, filename: string, branch: string): ITranslationDbEntry {
+            return this.translations[this.key(lang, filename, branch)];
+        }
+        getAsync(lang: string, filename: string, branch: string): Promise<ITranslationDbEntry> {
+            return Promise.resolve(this.get(lang, filename, branch));
+        }
+        set(lang: string, filename: string, branch: string, etag: string, strings?: pxt.Map<string>, md?: string) {
+            this.translations[this.key(lang, filename, branch)] = {
+                etag,
+                time: Date.now() + 24 * 60 * 60 * 1000, // in-memory expiration is 24h
+                strings,
+                md
+            }
+        }
+        setAsync(lang: string, filename: string, branch: string, etag: string, strings?: pxt.Map<string>, md?: string): Promise<void> {
+            this.set(lang, filename, branch, etag, strings);
+            return Promise.resolve();
+        }
+        clearAsync() {
+            this.translations = {};
+            return Promise.resolve();
+        }
+    }
+
     // IndexedDB wrapper class
     export type IDBUpgradeHandler = (ev: IDBVersionChangeEvent, request: IDBRequest) => void;
 
@@ -696,7 +740,7 @@ namespace pxt.BrowserUtils {
         }
     }
 
-    class IndexedDbTranslationDb implements ts.pxtc.Util.ITranslationDb {
+    class IndexedDbTranslationDb implements ITranslationDb {
         static TABLE = "files";
         static KEYPATH = "id";
 
@@ -725,18 +769,18 @@ namespace pxt.BrowserUtils {
         }
 
         private db: IDBWrapper;
-        private mem: ts.pxtc.Util.MemTranslationDb;
+        private mem: MemTranslationDb;
         constructor(db: IDBWrapper) {
             this.db = db;
-            this.mem = new ts.pxtc.Util.MemTranslationDb();
+            this.mem = new MemTranslationDb();
         }
-        getAsync(lang: string, filename: string, branch: string): Promise<ts.pxtc.Util.ITranslationDbEntry> {
+        getAsync(lang: string, filename: string, branch: string): Promise<ITranslationDbEntry> {
             lang = (lang || "en-US").toLowerCase(); // normalize locale
             const id = this.mem.key(lang, filename, branch);
             const r = this.mem.get(lang, filename, branch);
             if (r) return Promise.resolve(r);
 
-            return this.db.getAsync<ts.pxtc.Util.ITranslationDbEntry>(IndexedDbTranslationDb.TABLE, id)
+            return this.db.getAsync<ITranslationDbEntry>(IndexedDbTranslationDb.TABLE, id)
                 .then((res) => {
                     if (res) {
                         // store in-memory so that we don't try to download again
@@ -756,7 +800,7 @@ namespace pxt.BrowserUtils {
 
             if (strings)
                 Object.keys(strings).filter(k => !strings[k]).forEach(k => delete strings[k]);
-            const entry: ts.pxtc.Util.ITranslationDbEntry = {
+            const entry: ITranslationDbEntry = {
                 id,
                 etag,
                 time: Date.now(),
@@ -781,12 +825,12 @@ namespace pxt.BrowserUtils {
     }
 
     // wired up in the app to store translations in pouchdb. MAY BE UNDEFINED!
-    let _translationDbPromise: Promise<ts.pxtc.Util.ITranslationDb>;
-    export function translationDbAsync(): Promise<ts.pxtc.Util.ITranslationDb> {
+    let _translationDbPromise: Promise<ITranslationDb>;
+    export function translationDbAsync(): Promise<ITranslationDb> {
         // try indexed db
         if (!_translationDbPromise)
             _translationDbPromise = IndexedDbTranslationDb.createAsync()
-                .catch(() => new ts.pxtc.Util.MemTranslationDb());
+                .catch(() => new MemTranslationDb());
         return _translationDbPromise;
     }
 

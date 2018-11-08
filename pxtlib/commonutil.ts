@@ -53,50 +53,6 @@ namespace ts.pxtc.Util {
     let _didReportLocalizationsNotSet = false;
     export let localizeLive = false;
 
-    export interface ITranslationDbEntry {
-        id?: string;
-        etag: string;
-        time: number;
-        strings?: pxt.Map<string>; // UI string translations
-        md?: string; // markdown content
-    }
-
-    export interface ITranslationDb {
-        getAsync(lang: string, filename: string, branch: string): Promise<ITranslationDbEntry>;
-        setAsync(lang: string, filename: string, branch: string, etag: string, strings?: pxt.Map<string>, md?: string): Promise<void>;
-        // delete all
-        clearAsync(): Promise<void>;
-    }
-
-    export class MemTranslationDb implements ITranslationDb {
-        translations: pxt.Map<ITranslationDbEntry> = {};
-        key(lang: string, filename: string, branch: string) {
-            return `${lang}|${filename}|${branch || "master"}`;
-        }
-        get(lang: string, filename: string, branch: string): ITranslationDbEntry {
-            return this.translations[this.key(lang, filename, branch)];
-        }
-        getAsync(lang: string, filename: string, branch: string): Promise<ITranslationDbEntry> {
-            return Promise.resolve(this.get(lang, filename, branch));
-        }
-        set(lang: string, filename: string, branch: string, etag: string, strings?: pxt.Map<string>, md?: string) {
-            this.translations[this.key(lang, filename, branch)] = {
-                etag,
-                time: Date.now() + 24 * 60 * 60 * 1000, // in-memory expiration is 24h
-                strings,
-                md
-            }
-        }
-        setAsync(lang: string, filename: string, branch: string, etag: string, strings?: pxt.Map<string>, md?: string): Promise<void> {
-            this.set(lang, filename, branch, etag, strings);
-            return Promise.resolve();
-        }
-        clearAsync() {
-            this.translations = {};
-            return Promise.resolve();
-        }
-    }
-
     /**
      * Returns the current user language, prepended by "live-" if in live mode
      */
