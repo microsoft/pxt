@@ -391,6 +391,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
 
         const experimentsChanged = mode == ScriptSearchMode.Experiments
             && experimentsState != pxt.editor.experiments.state();
+
         return (
             <sui.Modal isOpen={visible} dimmer={true}
                 className="searchdialog" size="fullscreen"
