@@ -79,7 +79,7 @@ namespace ts.pxtc {
             JSON.stringify(cfgKey, null, 1) + ");\n"
         jssource += "pxsim.pxtrt.mapKeyNames = " + JSON.stringify(bin.ifaceMembers, null, 1) + ";\n"
 
-        const perfCounters = bin.setPerfCounters(["Zero"])
+        const perfCounters = bin.setPerfCounters(["SysScreen"])
         jssource += "__this.setupPerfCounters(" + JSON.stringify(perfCounters, null, 1) + ");\n"
 
         bin.procs.forEach(p => {

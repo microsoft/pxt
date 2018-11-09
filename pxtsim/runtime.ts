@@ -355,7 +355,7 @@ namespace pxsim {
         perfCounters: PerfCounter[]
         perfOffset = 0
         perfElapsed = 0
-    
+
         public refCountingDebug = false;
         public refCounting = true;
         private refObjId = 1;
@@ -832,31 +832,35 @@ namespace pxsim {
                 return
             this.perfCounters = names.map(s => new PerfCounter(s))
         }
-    
+
         private perfStartRuntime() {
             if (this.perfOffset !== 0)
                 U.userError("bad time start")
             this.perfOffset = U.perfNowUs() - this.perfElapsed
         }
-    
+
         private perfStopRuntime() {
             this.perfElapsed = this.perfNow()
             this.perfOffset = 0
         }
-    
+
         public perfNow() {
             if (this.perfOffset === 0)
                 U.userError("bad time now")
             return (U.perfNowUs() - this.perfOffset) | 0
         }
-    
+
         public startPerfCounter(n: number) {
+            if (!this.perfCounters)
+                return
             const c = this.perfCounters[n]
             if (c.start) U.userError("startPerf")
             c.start = this.perfNow()
         }
-    
+
         public stopPerfCounter(n: number) {
+            if (!this.perfCounters)
+                return
             const c = this.perfCounters[n]
             if (!c.start) U.userError("stopPerf")
             c.value += this.perfNow() - c.start;
