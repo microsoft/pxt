@@ -42,6 +42,15 @@ namespace pxt {
         }
     }
 
+    export function setCompileSwitches(names: string) {
+        if (!names)
+            return
+        for (let s of names.split(/[\s,;:]+/)) {
+            if (s)
+                setCompileSwitch(s, true)
+        }
+    }
+
     function patchAppTarget() {
         // patch-up the target
         let comp = appTarget.compile
