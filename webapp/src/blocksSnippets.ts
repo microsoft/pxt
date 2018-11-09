@@ -691,7 +691,7 @@ export function allBuiltinBlocks() {
         noNamespace: true
     };
     // Add pause until built in block
-    const pauseUntil = this.getPauseUntil();
+    const pauseUntil = getPauseUntil();
     if (pauseUntil) {
         builtinBlockCache[pxtc.PAUSE_UNTIL_TYPE] = pauseUntil;
     }

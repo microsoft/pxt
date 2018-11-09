@@ -509,6 +509,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private setupToolbox(editorElement: HTMLElement) {
         // Monaco flyout widget
         let flyoutWidget = {
+            domNode: null as HTMLElement,
             getId: function (): string {
                 return 'pxt.flyout.widget';
             },

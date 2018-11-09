@@ -2760,7 +2760,7 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
     switch (hash.cmd) {
         case "doc":
             pxt.tickEvent("hash.doc")
-            editor.setSideDoc(hash.arg, editor == this.blockEditor);
+            editor.setSideDoc(hash.arg, editor.editor === editor.blocksEditor);
             break;
         case "follow":
             pxt.tickEvent("hash.follow")
