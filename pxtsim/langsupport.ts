@@ -183,7 +183,13 @@ namespace pxsim {
         }
 
         export function dumpPerfCounters() {
-            // TODO
+            if (!runtime || !runtime.perfCounters)
+                return
+            let csv = "calls,us,name\n"
+            for (let p of runtime.perfCounters) {
+                csv += `${p.numstops},${p.value},${p.name}\n`
+            }
+            console.log(csv)
         }
     }
 

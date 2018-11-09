@@ -78,6 +78,10 @@ namespace ts.pxtc {
             JSON.stringify(cfg, null, 1) + ", " +
             JSON.stringify(cfgKey, null, 1) + ");\n"
         jssource += "pxsim.pxtrt.mapKeyNames = " + JSON.stringify(bin.ifaceMembers, null, 1) + ";\n"
+
+        const perfCounters = bin.setPerfCounters(["Zero"])
+        jssource += "runtime.setupPerfCounters(" + JSON.stringify(perfCounters, null, 1) + ");\n"
+
         bin.procs.forEach(p => {
             jssource += "\n" + irToJS(bin, p) + "\n"
         })
@@ -103,6 +107,11 @@ namespace ts.pxtc {
 var ${proc.label()} ${bin.procs[0] == proc ? "= entryPoint" : ""} = function (s) {
 var r0 = s.r0, step = s.pc;
 s.pc = -1;
+`)
+        if (proc.perfCounterNo) {
+            writeRaw(`runtime.startPerfCounter(${proc.perfCounterNo});\n`)
+        }
+        writeRaw(`
 while (true) {
 if (yieldSteps-- < 0 && maybeYield(s, step, r0)) return null;
 switch (step) {
@@ -174,6 +183,9 @@ switch (step) {
             }
         }
 
+        if (proc.perfCounterNo) {
+            writeRaw(`runtime.stopPerfCounter(${proc.perfCounterNo});\n`)
+        }
         write(`return leave(s, r0)`)
 
         writeRaw(`  default: oops()`)

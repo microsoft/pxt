@@ -850,14 +850,9 @@ ${hex.hexPrelude()}
         let snippets: AssemblerSnippets = null;
         snippets = new ThumbSnippets()
 
-        const perfCounters = target.switches.profile ? systemPerfCounters.slice() : []
+        const perfCounters = bin.setPerfCounters(systemPerfCounters)
 
         bin.procs.forEach(p => {
-            if (p.perfCounterName) {
-                U.assert(target.switches.profile)
-                p.perfCounterNo = perfCounters.length
-                perfCounters.push(p.perfCounterName)
-            }
             let p2a = new ProctoAssembler(snippets, bin, p)
             asmsource += "\n" + p2a.getAssembly() + "\n"
         })

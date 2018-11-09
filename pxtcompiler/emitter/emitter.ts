@@ -1906,7 +1906,7 @@ ${lbl}: .short 0xffff
                     if (args[0] && args[0].kind == SK.StringLiteral)
                         proc.perfCounterName = (args[0] as StringLiteral).text
                     if (!proc.perfCounterName)
-                        proc.perfCounterName = proc.getFullName()                         
+                        proc.perfCounterName = proc.getFullName()
                 }
                 return emitLit(undefined)
             }
@@ -4203,6 +4203,20 @@ ${lbl}: .short 0xffff
 
         emitHexLiteral(s: string): string {
             return this.emitLabelled(s, this.hexlits, "_hexlit")
+        }
+
+        setPerfCounters(systemPerfCounters: string[]) {
+            if (!target.switches.profile)
+                return []
+            const perfCounters = systemPerfCounters.slice()
+            this.procs.forEach(p => {
+                if (p.perfCounterName) {
+                    U.assert(target.switches.profile)
+                    p.perfCounterNo = perfCounters.length
+                    perfCounters.push(p.perfCounterName)
+                }
+            })
+            return perfCounters
         }
     }
 

@@ -352,6 +352,10 @@ namespace pxsim {
         loopLock: Object = null;
         loopLockWaitList: (() => void)[] = [];
 
+        perfCounters: PerfCounter[]
+        perfOffset = 0
+        perfElapsed = 0
+    
         public refCountingDebug = false;
         public refCounting = true;
         private refObjId = 1;
@@ -653,6 +657,7 @@ namespace pxsim {
                     return
                 }
                 U.assert(!__this.loopLock)
+                __this.perfStartRuntime()
                 try {
                     runtime = __this
                     while (!!p) {
@@ -664,7 +669,9 @@ namespace pxsim {
                         if (__this.currFrame.overwrittenPC)
                             p = __this.currFrame
                     }
+                    __this.perfStopRuntime()
                 } catch (e) {
+                    __this.perfStopRuntime()
                     if (__this.errorHandler)
                         __this.errorHandler(e)
                     else {
@@ -819,5 +826,53 @@ namespace pxsim {
 
             initCurrentRuntime(msg);
         }
+
+        public setupPerfCounters(names: string[]) {
+            if (!names || !names.length)
+                return
+            this.perfCounters = names.map(s => new PerfCounter(s))
+        }
+    
+        private perfStartRuntime() {
+            if (this.perfOffset !== 0)
+                U.userError("bad time start")
+            this.perfOffset = U.perfNowUs() - this.perfElapsed
+        }
+    
+        private perfStopRuntime() {
+            this.perfElapsed = this.perfNow()
+            this.perfOffset = 0
+        }
+    
+        public perfNow() {
+            if (this.perfOffset === 0)
+                U.userError("bad time now")
+            return U.perfNowUs() - this.perfOffset
+        }
+    
+        public startPerfCounter(n: number) {
+            const c = this.perfCounters[n]
+            if (c.start) U.userError("startPerf")
+            c.start = this.perfNow()
+        }
+    
+        public stopPerfCounter(n: number) {
+            const c = this.perfCounters[n]
+            if (c.start) U.userError("stopPerf")
+            c.value += this.perfNow() - c.start;
+            c.start = 0;
+            c.numstops++;
+        }
     }
+
+
+    export class PerfCounter {
+        start = 0;
+        numstops = 0;
+        value = 0;
+        constructor(public name: string) { }
+    }
+
+
+
 }
