@@ -80,7 +80,7 @@ namespace ts.pxtc {
         jssource += "pxsim.pxtrt.mapKeyNames = " + JSON.stringify(bin.ifaceMembers, null, 1) + ";\n"
 
         const perfCounters = bin.setPerfCounters(["Zero"])
-        jssource += "runtime.setupPerfCounters(" + JSON.stringify(perfCounters, null, 1) + ");\n"
+        jssource += "__this.setupPerfCounters(" + JSON.stringify(perfCounters, null, 1) + ");\n"
 
         bin.procs.forEach(p => {
             jssource += "\n" + irToJS(bin, p) + "\n"
@@ -109,7 +109,7 @@ var r0 = s.r0, step = s.pc;
 s.pc = -1;
 `)
         if (proc.perfCounterNo) {
-            writeRaw(`runtime.startPerfCounter(${proc.perfCounterNo});\n`)
+            writeRaw(`if (step == 0) __this.startPerfCounter(${proc.perfCounterNo});\n`)
         }
         writeRaw(`
 while (true) {
@@ -184,7 +184,7 @@ switch (step) {
         }
 
         if (proc.perfCounterNo) {
-            writeRaw(`runtime.stopPerfCounter(${proc.perfCounterNo});\n`)
+            writeRaw(`__this.stopPerfCounter(${proc.perfCounterNo});\n`)
         }
         write(`return leave(s, r0)`)
 

@@ -847,7 +847,7 @@ namespace pxsim {
         public perfNow() {
             if (this.perfOffset === 0)
                 U.userError("bad time now")
-            return U.perfNowUs() - this.perfOffset
+            return (U.perfNowUs() - this.perfOffset) | 0
         }
     
         public startPerfCounter(n: number) {
@@ -858,7 +858,7 @@ namespace pxsim {
     
         public stopPerfCounter(n: number) {
             const c = this.perfCounters[n]
-            if (c.start) U.userError("stopPerf")
+            if (!c.start) U.userError("stopPerf")
             c.value += this.perfNow() - c.start;
             c.start = 0;
             c.numstops++;
