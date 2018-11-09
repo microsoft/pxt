@@ -181,6 +181,10 @@ namespace pxsim {
                 cb(new FnWrapper(<any>a, null, args, null))
             }
         }
+
+        export function dumpPerfCounters() {
+            // TODO
+        }
     }
 
     export class RefRefLocal extends RefObject {
