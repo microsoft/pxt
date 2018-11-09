@@ -6,6 +6,7 @@ namespace pxt.workspace {
         name: string;
         meta: pxt.Cloud.JsonScriptMeta;
         editor: string;
+        board?: string; // name of the package that contains the board.json info
         temporary?: boolean; // don't serialize project
         // older script might miss this
         target: string;
@@ -70,6 +71,8 @@ namespace pxt.workspace {
         // optional asset (large binary file) support
         saveAssetAsync?: (id: string, filename: string, data: Uint8Array) => Promise<void>;
         listAssetsAsync?: (id: string) => Promise<Asset[]>;
+
+        fireEvent?: (ev: pxt.editor.events.Event) => void;
     }
 
     export function freshHeader(name: string, modTime: number) {

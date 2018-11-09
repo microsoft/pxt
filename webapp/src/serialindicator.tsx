@@ -30,7 +30,7 @@ export class SerialIndicator extends data.Component<SerialIndicatorProps, Serial
 
     setActive(ev: MessageEvent) {
         let msg = ev.data
-        if (!this.state.active && msg.type === "serial") {
+        if (!this.state.active && (msg.type === "serial" || msg.type === "bulkserial")) {
             const sim = !!msg.sim
             if (sim === this.props.isSim) {
                 this.setState({ active: true })

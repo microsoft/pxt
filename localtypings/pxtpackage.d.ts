@@ -50,12 +50,15 @@ declare namespace pxt {
         additionalFilePath?: string;
         additionalFilePaths?: string[];
         core?: boolean;
+        // used for sorting for core packages
+        weight?: number;
         gistId?: string;
         extension?: PackageExtension; // describe the associated extension if any
         dalDTS?: {
             includeDirs: string[];
             excludePrefix?: string[];
         };
+        features?: string[];
     }
 
     interface PackageExtension {
@@ -97,7 +100,7 @@ declare namespace pxt {
         ariaLabel?: string;
         label?: string;
         labelClass?: string;
-        tags?: CodeCardTag[]; // tags shown in home screen, eg: [{ "label": "Beginner", "color": "blue" }]
+        tags?: string[]; // tags shown in home screen, colors specified in theme
         tabIndex?: number;
 
         color?: string; // one of semantic ui colors
@@ -131,11 +134,6 @@ declare namespace pxt {
 
         target?: string;
         className?: string;
-    }
-
-    interface CodeCardTag {
-        label: string;
-        color?: string;
     }
 
     interface JRes {

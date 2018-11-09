@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en" data-manifest="" data-framework="typescript">
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width,height=device-height,user-scalable=no,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0" />
+    <style>
+        @import "/blb/semantic.css";
+        #svg, #svg svg {
+            width:100%;
+            height:100%;
+        }
+        #svg svg circle:hover,
+        #svg svg rect:hover {
+            stroke: grey !important;
+        }
+        #svg svg .selected {
+            stroke: yellow !important;
+        }
+        textarea {
+            width:100%;
+            height:18rem;
+            font-family: monospace;
+            font-size: small;
+        }
+    </style>
+    <script type="text/javascript" src="/blb/jquery.js"></script>
+    <script>
+        let boardjson = {}
+
+        function log(text) {
+            $('#log').append(text + '\r\n');
+        }
+
+        function convertCoords(elt) {
+            const svg = document.querySelector('svg');
+            const vb = svg.viewBox.baseVal;
+            const offset = svg.getBoundingClientRect();
+            const eoffset = elt.getBoundingClientRect();
+            const r = {
+                x: eoffset.x - offset.left,
+                y: eoffset.y - offset.top,
+                w: eoffset.width,
+                h: eoffset.height
+            }
+            // rescale for viewbox
+            r.x *= vb.width / offset.width;
+            r.y *= vb.height / offset.height;
+            r.w *= vb.width / offset.width;
+            r.h *= vb.height / offset.height;
+            return r;
+        }
+
+        function addElement(elt) {
+            const id = [
+                elt.getAttribute("connectorname"),
+                elt.getAttribute("inkscape:label"),
+                elt.getAttribute("id")]
+                .filter(n => !!n && !/^#/.test(n))[0];
+            if (!id || boardjson.gpioPinMap[id]) return;
+            boardjson.gpioPinMap[id] = id;
+
+            // split subpins RX_TX_A0
+            id.split('_').forEach(iid => boardjson.gpioPinMap[iid] = id);
+
+            const rect = convertCoords(elt);
+
+            // handle leds
+            let visuals = false;
+            if (/(RX|TX)?LED/.test(id)) {
+                boardjson.visual.leds.push({
+                    x: rect.x,
+                    y: rect.y,
+                    w: rect.w,
+                    h: rect.h,
+                    color: '#ff0000',
+                    label: id
+                })
+                visuals = true;
+            }
+            else if (/^NEOPIXEL$/.test(id)) {
+                boardjson.visual.leds.push({
+                    x: rect.x,
+                    y: rect.y,
+                    w: rect.w,
+                    h: rect.h,
+                    color: 'neopixel',
+                    label: "NEOPIXEL"
+                })
+                visuals = true;
+            }
+            else if (/RST|RESET/.test(id) && !boardjson.visual.reset) {
+                boardjson.visual.reset = {
+                    x: rect.x,
+                    y: rect.y,
+                    w: rect.w,
+                    h: rect.h
+                }
+                visuals = true;
+            }
+            else if (/GND/.test(id) && boardjson.groundPins.indexOf(id) < 0)
+                boardjson.groundPins.push(id);
+            else if (/(\+3V3|3V|VCC|VOUT)/.test(id) && boardjson.threeVoltPins.indexOf(id) < 0)
+                boardjson.threeVoltPins.push(id);
+
+            if (!visuals) {
+                if (Math.abs(rect.w - 15) > 2 || Math.abs(rect.h - 15) > 2) {
+                    log(`pin ${id}: ${rect.x >> 0}, ${rect.y >> 0} - ${rect.w >> 0}x${rect.h >> 0}`)
+                }
+                boardjson.visual.pinBlocks.push({
+                    x: rect.x,
+                    y: rect.y,
+                    labels: [id]
+                });
+            }
+            elt.classList.add("selected")
+            updateJSON();
+        }
+
+        function updateSvg() {
+            $('#svg').html($('#svginput').val());
+            $('#log').text("");
+            boardjson = {
+                driveDisplayName: "",
+                visual: {
+                    image: "pkg://board.svg",
+                    outlineImage: "pkg://boardwireframe.svg",
+                    useCrocClips: false,
+                    width: 200,
+                    height: 200,
+                    pinDist: 15,
+                    pinBlocks: [],
+                    leds: []
+                },
+                gpioPinMap: {},
+                groundPins: [],
+                threeVoltPins: [],
+                spiPins: {
+                    "MOSI": "MOSI",
+                    "MISO": "MISO",
+                    "SCK": "SCK"
+                },
+                i2cPins: {
+                    "SDA": "SDA",
+                    "SCL": "SCL"
+                },
+                onboardComponents: [],
+                marginWhenBreadboarding: [
+                    0,
+                    0,
+                    80,
+                    0
+                ]
+            }
+            const svg = document.querySelector('svg');
+            boardjson.visual.width = svg.viewBox.baseVal.width;
+            boardjson.visual.height = svg.viewBox.baseVal.height;
+            const elts = document.querySelectorAll("svg *")
+            for (let i = 0; i < elts.length; ++i) {
+                const elt = elts[i];
+                const id = elt.getAttribute("connectorname") || elt.getAttribute("id");
+                if (/^[!+\.A-Z0-9_]+$/.test(id))
+                    addElement(elt);
+            }
+
+            // Get point in global SVG space
+            const pt = svg.createSVGPoint();
+            function cursorPoint(evt) {
+                pt.x = evt.clientX;
+                pt.y = evt.clientY;
+                return pt.matrixTransform(svg.getScreenCTM().inverse());
+            }
+            svg.addEventListener('mousemove', function (evt) {
+                const loc = cursorPoint(evt);
+                $('#pos').text(`${loc.x >> 0}, ${loc.y >> 0}`);
+            }, false);
+
+            updateJSON();
+        }
+
+        function updateJSON() {
+            $('#json').val(JSON.stringify(boardjson, null, 2));
+        }
+
+        $(function () {
+            $('#svginput').change(updateSvg);
+        })
+    </script>
+</head>
+
+<body>
+    <div class="ui container">
+        <h1>Board designer</h1>
+        <h2>preparing board.svg</h2>
+        <ul class="ui small">
+            <li>
+                grab the "breadboard" svg of Fritzing board image
+            </li>
+            <li>
+                resize your image (in Inkscape or other) so that a header is precisely 15px
+            </li>
+            <li>
+                (optional) remove extra components to simplify image
+            </li>
+            <li>
+                LEDs: set the id of the svg element to LED...
+            </li>
+            <li>
+                Reset button: set the id of the svg to RESET
+            </li>
+            <li>
+                Pins: set the id of the svg for headers to the pin names (should be done already)
+            </li>
+        </ul>
+        <div class="ui segment">
+            <h2>board.svg</h2>
+            <textarea class="ui fluid" id="svginput"></textarea>
+        </div>
+        <div id="svg">
+        </div>
+        <div class="ui smaller" id="pos"></div>
+        <pre class="ui smaller" id="log"></pre>
+        <div class="ui segment">
+            <h2>board.json</h2>
+            <textarea class="ui fluid" readonly id="json"></textarea>
+        </div>
+    </div>
+
+</body>
+
+</html>

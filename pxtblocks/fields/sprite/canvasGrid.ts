@@ -293,7 +293,7 @@ namespace pxtblockly {
             if (!this.gesture) {
                 this.gesture = new GestureState();
 
-                this.paintLayer.addEventListener("pointermove", (ev: MouseEvent) => {
+                this.paintLayer.addEventListener(pxsim.pointerEvents.move, (ev: MouseEvent) => {
                     const [col, row] = this.clientToCell(ev.clientX, ev.clientY);
                     if (ev.buttons & 1) {
                         this.gesture.handle(InputEvent.Down, col, row);
@@ -301,23 +301,26 @@ namespace pxtblockly {
                     this.gesture.handle(InputEvent.Move, col, row);
                 });
 
-                this.paintLayer.addEventListener("pointerdown", (ev: MouseEvent) => {
-                    const [col, row] = this.clientToCell(ev.clientX, ev.clientY);
-                    this.gesture.handle(InputEvent.Down, col, row);
-                });
+                pxsim.pointerEvents.down.forEach(evId => {
+                    this.paintLayer.addEventListener(evId, (ev: MouseEvent) => {
+                        const [col, row] = this.clientToCell(ev.clientX, ev.clientY);
+                        this.gesture.handle(InputEvent.Down, col, row);
+                    });
+                })
 
-                this.paintLayer.addEventListener("pointerup", (ev: MouseEvent) => {
+
+                this.paintLayer.addEventListener(pxsim.pointerEvents.up, (ev: MouseEvent) => {
                     const [col, row] = this.clientToCell(ev.clientX, ev.clientY);
                     this.gesture.handle(InputEvent.Up, col, row);
                 });
 
-                this.paintLayer.addEventListener("pointerclick", (ev: MouseEvent) => {
+                this.paintLayer.addEventListener("click", (ev: MouseEvent) => {
                     const [col, row] = this.clientToCell(ev.clientX, ev.clientY);
                     this.gesture.handle(InputEvent.Down, col, row);
                     this.gesture.handle(InputEvent.Up, col, row);
                 });
 
-                this.paintLayer.addEventListener("pointerleave", ev => {
+                this.paintLayer.addEventListener(pxsim.pointerEvents.leave, (ev: MouseEvent) => {
                     const [col, row] = this.clientToCell(ev.clientX, ev.clientY);
                     this.gesture.handle(InputEvent.Leave, col, row);
                 });

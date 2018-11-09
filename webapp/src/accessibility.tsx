@@ -98,7 +98,7 @@ export class HomeAccessibilityMenu extends data.Component<HomeAccessibilityMenuP
 
     newProject() {
         pxt.tickEvent("accmenu.home.new", undefined, { interactiveConsent: true });
-        this.props.parent.newProject({ changeBoardOnLoad: true });
+        this.props.parent.newProject();
     }
 
     importProjectDialog() {

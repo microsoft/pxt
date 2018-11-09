@@ -120,9 +120,11 @@ namespace pxtblockly {
                 goog.style.setWidth(contentDiv, null);
                 goog.style.setStyle(contentDiv, "overflow", null);
                 goog.style.setStyle(contentDiv, "max-height", null);
-                (goog.dom.classlist as any).remove(contentDiv.parentElement, "sprite-editor-dropdown")
+                (goog.dom.classlist as any).remove(contentDiv.parentElement, "sprite-editor-dropdown");
+                this.editor.removeKeyListeners();
             });
 
+            this.editor.addKeyListeners();
             this.editor.layout();
         }
 

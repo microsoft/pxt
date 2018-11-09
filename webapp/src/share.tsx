@@ -163,7 +163,7 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
                         : undefined}
                     {url && ready ? <div>
                         <p>{lf("Your project is ready! Use the address below to share your projects.")}</p>
-                        <sui.Input id="projectUri" class="mini" readOnly={true} lines={1} value={url} copy={true} selectOnClick={true} aria-describedby="projectUriLabel" />
+                        <sui.Input id="projectUri" class="mini" readOnly={true} lines={1} value={url} copy={true} selectOnClick={true} aria-describedby="projectUriLabel" autoComplete={false} />
                         <label htmlFor="projectUri" id="projectUriLabel" className="accessible-hidden">{lf("This is the read-only internet address of your project.")}</label>
                         {showSocialIcons ? <div className="social-icons">
                             <SocialButton url={url} ariaLabel="Facebook" type='facebook' heading={lf("Share on Facebook")} />
@@ -181,7 +181,7 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
                             </sui.Menu> : undefined}
                         {advancedMenu ?
                             <sui.Field>
-                                <sui.Input id="embedCode" class="mini" readOnly={true} lines={4} value={embed} copy={ready} disabled={!ready} selectOnClick={true} />
+                                <sui.Input id="embedCode" class="mini" readOnly={true} lines={4} value={embed} copy={ready} disabled={!ready} selectOnClick={true} autoComplete={false} />
                                 <label htmlFor="embedCode" id="embedCodeLabel" className="accessible-hidden">{lf("This is the read-only code for the selected tab.")}</label>
                             </sui.Field> : null}
                     </div> : undefined}

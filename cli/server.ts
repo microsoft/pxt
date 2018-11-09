@@ -825,6 +825,31 @@ function readMd(pathname: string): string {
     return `# Not found ${pathname}\nChecked:\n` + [docsDir].concat(dirs).concat(nodeutil.lastResolveMdDirs).map(s => "* ``" + s + "``\n").join("")
 }
 
+function resolveTOC(pathname: string): pxt.TOCMenuEntry[] {
+    // find summary.md
+    let summarydir = pathname.replace(/^\//, '');
+    let presummarydir = "";
+    while (summarydir !== presummarydir) {
+        const summaryf = path.join(summarydir, "SUMMARY");
+        // find "closest summary"
+        const summaryMd = nodeutil.resolveMd(root, summaryf)
+        if (summaryMd) {
+            try {
+                return pxt.docs.buildTOC(summaryMd);
+            } catch (e) {
+                pxt.log(`invalid ${summaryf} format - ${e.message}`)
+                pxt.log(e.stack);
+            }
+            break;
+        }
+        presummarydir = summarydir;
+        summarydir = path.dirname(summarydir);
+    }
+    // not found
+    pxt.log(`SUMMARY.md not found`)
+    return undefined;
+}
+
 export function serveAsync(options: ServeOptions) {
     serveOptions = options;
     if (!serveOptions.port) serveOptions.port = 3232;
@@ -1029,13 +1054,15 @@ export function serveAsync(options: ServeOptions) {
         } else {
             const m = /^\/(v\d+)(.*)/.exec(pathname);
             if (m) pathname = m[2];
-            let md = readMd(pathname)
-            let html = pxt.docs.renderMarkdown({
+            const md = readMd(pathname);
+            const mdopts = <pxt.docs.RenderOptions>{
                 template: expandDocFileTemplate("docs.html"),
                 markdown: md,
                 theme: pxt.appTarget.appTheme,
-                filepath: pathname
-            })
+                filepath: pathname,
+                TOC: resolveTOC(pathname)
+            };
+            let html = pxt.docs.renderMarkdown(mdopts)
             sendHtml(html, U.startsWith(md, "# Not found") ? 404 : 200)
         }
 

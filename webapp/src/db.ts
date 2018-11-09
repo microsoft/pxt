@@ -84,6 +84,31 @@ export class Table {
     }
 
     setAsync(obj: any): Promise<string> {
+        return this.setAsyncNoRetry(obj)
+            .then(r => {
+                pxt.BrowserUtils.scheduleStorageCleanup();
+                return r;
+            })
+            .catch(e => {
+                if (e.status == 409) {
+                    // conflict while writing key, ignore.
+                    pxt.debug(`table: set conflict (409)`);
+                    return undefined;
+                }
+                pxt.reportException(e);
+                pxt.log(`table: set failed, cleaning translation db`)
+                // clean up translation and try again
+                return pxt.BrowserUtils.clearTranslationDbAsync()
+                    .then(() => this.setAsyncNoRetry(obj))
+                    .catch(e => {
+                        pxt.reportException(e);
+                        pxt.log(`table: we are out of space...`)
+                        return undefined;
+                    })
+            })
+    }
+
+    private setAsyncNoRetry(obj: any): Promise<string> {
         if (obj.id && !obj._id)
             obj._id = this.name + "--" + obj.id
         return getDbAsync().then(db => db.put(obj)).then((resp: any) => resp.rev)

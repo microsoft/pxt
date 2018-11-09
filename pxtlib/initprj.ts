@@ -61,6 +61,7 @@ yotta_targets
 pxt_modules
 *.db
 *.tgz
+.header.json
 `,
         ".vscode/settings.json":
             `{
@@ -93,7 +94,7 @@ script:
     - "npm install -g pxt"
     - "pxt target @TARGET@"
     - "pxt install"
-    - "pxt build --cloud"
+    - "pxt build"
 sudo: false
 cache:
     directories:

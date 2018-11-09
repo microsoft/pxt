@@ -20,7 +20,8 @@ declare namespace pxt {
 
     interface PackagesConfig {
         approvedOrgs?: string[];
-        approvedRepos?: string[];
+        approvedRepos?: string[]; // list of company/project
+        releases?: pxt.Map<string[]>;  // per major version list of approved company/project#tag
         bannedOrgs?: string[];
         bannedRepos?: string[];
         allowUnapproved?: boolean;
@@ -46,6 +47,7 @@ declare namespace pxt {
         compileService?: TargetCompileService;
         ignoreDocsErrors?: boolean;
         variants?: Map<AppTarget>; // patches on top of the current AppTarget for different chip variants
+        queryVariants?: Map<AppTarget>; // patches on top of the current AppTarget using query url regex
     }
 
     interface ProjectTemplate {
@@ -280,6 +282,18 @@ declare namespace pxt {
         bluetoothUartFilters?: { name?: string; namePrefix?: string; }[]; // device name prefix -- required
         bluetoothPartialFlashing?: boolean; // enable partial flashing over BLE
         topBlocks?: boolean; // show a top blocks category in the editor
+        pairingButton?: boolean; // display a pairing button
+        tagColors?: pxt.Map<string>; // optional colors for tags
+        dontSuspendOnVisibility?: boolean; // we're inside an app, don't suspend the editor
+        disableFileAccessinMaciOs?:boolean; //Disable save & import of files in Mac and iOS, mainly used as embed webkit doesn't support these
+        /**
+         * Internal and temporary flags:
+         * These flags may be removed without notice, please don't take a dependency on them
+         */
+        simCollapseInMenu?: boolean; // don't show any of the collapse / uncollapse buttons down the bottom, instead show it in the menu
+        bigRunButton?: boolean; // show the run button as a big button on the right
+        transparentEditorToolbar?: boolean; // make the editor toolbar float with a transparent background
+        hideProjectRename?: boolean; // Temporary flag until we figure out a better way to show the name
     }
 
     interface SocialOptions {
@@ -313,6 +327,7 @@ declare namespace pxt {
 
     interface TargetBundle extends AppTarget {
         bundledpkgs: Map<Map<string>>;   // @internal use only (cache)
+        bundledcoresvgs?: Map<string>;   // @internal use only (cache)
         bundleddirs: string[];
         versions: TargetVersions;        // @derived
     }

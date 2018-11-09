@@ -4,7 +4,7 @@ High contrast is used to help locate and distinguish between visual elements. He
 
 ## High contrast mode
 
-High contrast mode is configured and managed automatically on Windows, Mac, and Linux (in some distributions). But, it is not supported by some web browsers. Chrome in Windows, for example, doesn't change the color of the web page in high contrast mode, while Edge turns the white backgrounds to black.
+High contrast mode is configured and managed automatically on Windows, Mac, and Linux (in some distributions). But, it is not supported by some web browsers. Chrome in Windows, for example, doesn't change the color of the web page in high contrast mode, while Microsoft Edge turns the white backgrounds to black.
 
 Because of this, we implemented a high contrast mode that is turned on manually in PXT thanks to help from a JavaScript implementation in ``app.tsx``.
 
