@@ -11,6 +11,7 @@ import * as memoryworkspace from "./memoryworkspace"
 import * as iframeworkspace from "./iframeworkspace"
 import * as cloudsync from "./cloudsync"
 import * as indexedDBWorkspace from "./idbworkspace";
+import * as compiler from "./compiler"
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
@@ -768,6 +769,24 @@ data.mountVirtualApi("header", {
         if (p == "*") return getHeaders()
         return getHeader(p)
     },
+})
+
+/*
+    headers:SEARCH   - search headers
+*/
+
+data.mountVirtualApi("headers", {
+    getAsync: p => {
+        p = data.stripProtocol(p)
+        const headers = getHeaders()
+        if (!p) return Promise.resolve(headers)
+        return compiler.projectSearchAsync({ term: p, headers })
+            .then((searchResults: pxtc.service.ProjectSearchInfo[]) => searchResults)
+            .then(searchResults => {
+                return searchResults;
+            });
+    },
+    expirationTime: p => 5 * 1000,
 })
 
 /*

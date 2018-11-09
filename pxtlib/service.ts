@@ -1484,6 +1484,7 @@ namespace ts.pxtc.service {
         search?: SearchOptions;
         format?: FormatOptions;
         blocks?: BlocksOptions;
+        projectSearch?: ProjectSearchOptions;
     }
 
     export interface SearchOptions {
@@ -1508,6 +1509,15 @@ namespace ts.pxtc.service {
         field?: [string, string];
         localizedCategory?: string;
         builtinBlock?: boolean;
+    }
+
+    export interface ProjectSearchOptions {
+        term: string;
+        headers: ProjectSearchInfo[];
+    }
+
+    export interface ProjectSearchInfo {
+        name: string;
     }
 
     export interface BlocksOptions {

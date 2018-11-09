@@ -153,6 +153,7 @@ namespace pxt.editor {
         newProject(options?: ProjectCreationOptions): void;
         createProjectAsync(options: ProjectCreationOptions): Promise<void>;
         importExampleAsync(options: ExampleImportOptions): Promise<void>;
+        showScriptManager(): void;
         importProjectDialog(): void;
         removeProject(): void;
         editText(): void;
