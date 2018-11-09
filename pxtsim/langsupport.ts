@@ -495,8 +495,18 @@ namespace pxsim {
             decr(map)
         }
 
+        export function keysOf(v: RefMap) {
+            let r = new RefCollection()
+            if (v instanceof RefMap)
+                for (let k of v.data) {
+                    r.push(k.key)
+                }
+            return r
+        }
+
         // these are never used in simulator; silence the warnings
         export let getGlobalsPtr: any;
+        export let lookupMapKey: any;
     }
 
 
@@ -526,6 +536,20 @@ namespace pxsim {
         export let valType: any;
         export let typeOf: any;
         export let lookupPin: any;
+        export let deleteRefObject: any;
+        export let popThreadContext: any;
+        export let pushThreadContext: any;
+        export let failedCast: any;
+        export let missingProperty: any;
+        export let string_vt: any;
+        export let buffer_vt: any;
+        export let number_vt: any;
+        export let RefAction_vtable: any;
+        export let RefRecord_scan: any;
+        export let RefRecord_gcsize: any;
+        export let startPerfCounter: any;
+        export let stopPerfCounter: any;
+
     }
 
     // these can only be used from assembly - silence warnings
