@@ -974,6 +974,15 @@ namespace pxt.blocks {
         initDrag();
         initDebugger();
         initComments();
+
+        // PXT is in charge of disabling, don't trigger events when we disable
+        (Blockly.Block as any).prototype.setDisabled = function(disabled: boolean) {
+            if (this.disabled != disabled) {
+                // Blockly.Events.fire(new Blockly.Events.BlockChange(
+                //     this, 'disabled', null, this.disabled, disabled));
+                this.disabled = disabled;
+            }
+        };
     }
 
     function setBuiltinHelpInfo(block: any, id: string) {
