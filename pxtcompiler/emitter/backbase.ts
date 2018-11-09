@@ -146,13 +146,14 @@ ${lbl}: ${this.obj_header("pxt::buffer_vt")}
             this.t = t as any; // TODO in future, figure out if we follow the "Snippets" architecture
             this.bin = bin;
             this.proc = proc;
-            this.work();
-            // emit the trampoline once, happen to be after the root function
-            if (this.proc.isRoot) {
-                this.emitLambdaTrampoline()
-                this.emitArrayMethods()
-                this.emitFieldMethods()
-            }
+            if (this.proc)
+                this.work();
+        }
+
+        public emitHelpers() {
+            this.emitLambdaTrampoline()
+            this.emitArrayMethods()
+            this.emitFieldMethods()
         }
 
         private write = (s: string) => { this.resText += asmline(s); }
@@ -254,7 +255,7 @@ ${baseLabel}_nochk:
             }
             this.baseStackSize = 1 // push {lr}
             let numlocals = this.proc.locals.length
-            
+
             this.write("push {lr}")
             this.write(".locals:\n")
             if (this.proc.perfCounterNo) {

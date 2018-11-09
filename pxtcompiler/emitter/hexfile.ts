@@ -862,6 +862,10 @@ ${hex.hexPrelude()}
             asmsource += "\n" + p2a.getAssembly() + "\n"
         })
 
+        let helpers = new ProctoAssembler(snippets, bin, null)
+        helpers.emitHelpers()
+        asmsource += "\n" + helpers.getAssembly() + "\n"
+
         asmsource += hex.asmTotalSource // user-supplied asm
 
         asmsource += "_code_end:\n\n"
