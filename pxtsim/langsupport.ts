@@ -113,24 +113,19 @@ namespace pxsim {
     }
 
     export class RefRecord extends RefObject {
-        fields: any[] = [];
+        fields: any = {};
         vtable: VTable;
 
         destroy() {
-            for (let i = 0; i < this.fields.length; ++i)
-                decr(this.fields[i])
+            for (let k of Object.keys(this.fields))
+                decr(this.fields[k])
             this.fields = null
             this.vtable = null
         }
 
-        isRef(idx: number) {
-            check(0 <= idx && idx < this.fields.length)
-            return true
-        }
-
         print() {
             if (runtime && runtime.refCountingDebug)
-                console.log(`RefRecord id:${this.id} (${this.vtable.name}) len:${this.fields.length}`)
+                console.log(`RefRecord id:${this.id} (${this.vtable.name})`)
         }
     }
 
@@ -413,37 +408,6 @@ namespace pxsim {
             return s
         }
 
-        export function ldfld(r: RefRecord, idx: number) {
-            nullCheck(r)
-            check(!r.isRef(idx))
-            let v = num(r.fields[idx])
-            decr(r)
-            return v;
-        }
-
-        export function stfld(r: RefRecord, idx: number, v: any) {
-            nullCheck(r)
-            check(!r.isRef(idx))
-            r.fields[idx] = v;
-            decr(r)
-        }
-
-        export function ldfldRef(r: RefRecord, idx: number) {
-            nullCheck(r)
-            check(r.isRef(idx))
-            let v = incr(ref(r.fields[idx]))
-            decr(r)
-            return v
-        }
-
-        export function stfldRef(r: RefRecord, idx: number, v: any) {
-            nullCheck(r)
-            check(r.isRef(idx))
-            decr(r.fields[idx])
-            r.fields[idx] = v
-            decr(r)
-        }
-
         export function ldlocRef(r: RefRefLocal) {
             return incr(r.v)
         }
@@ -485,6 +449,10 @@ namespace pxsim {
         }
 
         export function mapGetByString(map: RefMap, key: string) {
+            if (map instanceof RefRecord) {
+                let r = map as RefRecord
+                return r.fields[key]
+            }
             let i = map.findIdx(key);
             if (i < 0) {
                 decr(map);
@@ -499,6 +467,11 @@ namespace pxsim {
         export const mapGetGeneric = mapGetByString
 
         export function mapSetByString(map: RefMap, key: string, val: any) {
+            if (map instanceof RefRecord) {
+                let r = map as RefRecord
+                r.fields[key] = val
+                return
+            }
             let i = map.findIdx(key);
             if (i < 0) {
                 map.data.push({
@@ -522,9 +495,6 @@ namespace pxsim {
             check(!!vtable.methods)
             let r = new RefRecord()
             r.vtable = vtable
-            let len = vtable.numFields
-            for (let i = 0; i < len; ++i)
-                r.fields.push(undefined)
             return r
         }
 

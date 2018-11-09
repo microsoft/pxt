@@ -50,9 +50,11 @@ namespace ts.pxtc {
         s += "  ],\n"
         s += "  iface: {\n"
         for (let m of info.itable) {
-            s += `    "${m.name}": ${m.proc ? m.proc.label() : "getField"},\n`
+            s += `    "${m.name}": ${m.proc ? m.proc.label() : "13"},\n`
             if (m.setProc)
                 s += `    "set/${m.name}": ${m.setProc.label()},\n`
+            else if (!m.proc)
+                s += `    "set/${m.name}": 13,\n`
         }
         s += "  },\n"
         if (info.toStringMethod)
@@ -269,13 +271,6 @@ switch (step) {
             }
         }
 
-        function fieldShimName(info: FieldAccessInfo) {
-            if (info.shimName) return info.shimName
-            if (!refCounting)
-                return `.${info.name}___${info.idx}`
-            return null
-        }
-
         // result in R0
         function emitExpr(e: ir.Expr): void {
             //console.log(`EMITEXPR ${e.sharingInfo()} E: ${e.toString()}`)
@@ -299,15 +294,16 @@ switch (step) {
                     break;
                 case EK.FieldAccess:
                     let info = e.data as FieldAccessInfo
-                    let shimName = fieldShimName(info)
+                    let shimName = info.shimName
                     if (shimName) {
                         assert(!refCounting)
                         emitExpr(e.args[0])
                         write(`r0 = r0${shimName};`)
                         return
                     }
-                    // it does the decr itself, no mask
-                    return emitExpr(ir.rtcall(withRef("pxtrt::ldfld", info.isRef), [e.args[0], ir.numlit(info.idx)]))
+                    emitExpr(e.args[0]);
+                    write(`r0 = r0.fields["${info.name}"];`)
+                    return
                 case EK.Store:
                     return emitStore(e.args[0], e.args[1])
                 case EK.RuntimeCall:
@@ -382,7 +378,7 @@ switch (step) {
                 let loc = ++lblIdx
                 asyncContinuations.push(loc)
                 if (name == "String_::stringConv") {
-                    write(`if ((${args[0]}).vtable) {`)
+                    write(`if ((${args[0]}) && (${args[0]}).vtable) {`)
                 }
                 if (topExpr.callingConvention == ir.CallingConvention.Promise) {
                     write(`(function(cb) { ${text}.done(cb) })(buildResume(s, ${loc}));`)
@@ -428,6 +424,7 @@ switch (step) {
 
             write(`s.pc = ${lblId};`)
             if (procid.ifaceIndex != null) {
+                let isSet = false
                 if (procid.mapMethod) {
                     write(`if (${frameRef}.arg0.vtable === 42) {`)
                     let args = topExpr.args.map((a, i) => `${frameRef}.arg${i}`)
@@ -435,9 +432,19 @@ switch (step) {
                     write(`  s.retval = ${shimToJs(procid.mapMethod)}(${args.join(", ")});`)
                     write(`  ${frameRef}.fn = doNothing;`)
                     write(`} else {`)
+                    if (/Set/.test(procid.mapMethod))
+                        isSet = true
                 }
-                write(`pxsim.check(typeof ${frameRef}.arg0  != "number", "Can't access property of null/undefined.")`)
-                write(`${frameRef}.fn = ${frameRef}.arg0.vtable.iface[${procid.ifaceIndex}];`)
+                write(`${frameRef}.fn = ${frameRef}.arg0.vtable.iface["${isSet ? "set/" : ""}${bin.ifaceMembers[procid.ifaceIndex]}"];`)
+                write(`if (${frameRef}.fn === 13) {`)
+                let fld = `${frameRef}.arg0.fields["${bin.ifaceMembers[procid.ifaceIndex]}"]`
+                if (isSet) {
+                    write(`  ${fld} = ${frameRef}.arg1;`)
+                } else {
+                    write(`  s.retval = ${fld};`)
+                }
+                write(`  ${frameRef}.fn = doNothing;`)
+                write(`}`)
                 if (procid.mapMethod) {
                     write(`}`)
                 }
@@ -478,13 +485,10 @@ switch (step) {
                     break;
                 case EK.FieldAccess:
                     let info = trg.data as FieldAccessInfo
-                    let shimName = fieldShimName(info)
-                    if (shimName) {
-                        emitExpr(ir.rtcall("=" + shimName, [trg.args[0], src]))
-                    } else {
-                        // it does the decr itself, no mask
-                        emitExpr(ir.rtcall(withRef("pxtrt::stfld", info.isRef), [trg.args[0], ir.numlit(info.idx), src]))
-                    }
+                    let shimName = info.shimName
+                    if (!shimName)
+                        shimName = `.fields["${info.name}"]`
+                    emitExpr(ir.rtcall("=" + shimName, [trg.args[0], src]))
                     break;
                 default: oops();
             }
