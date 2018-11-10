@@ -828,6 +828,9 @@ export class ToolboxSearch extends data.Component<ToolboxSearchProps, ToolboxSea
 
                 const newState: ToolboxState = {};
                 newState.hasSearch = hasSearch;
+                blocks = blocks.filter( (block) => {
+                    return block.id !== "pxt-on-start";
+                });
                 newState.searchBlocks = blocks;
                 newState.focusSearch = true;
                 if (hasSearch) newState.selectedItem = 'search';

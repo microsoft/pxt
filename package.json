@@ -1,6 +1,10 @@
 {
   "name": "pxt-core",
+<<<<<<< HEAD
   "version": "4.5.3",
+=======
+  "version": "4.2.14",
+>>>>>>> origin/wonder_master
   "description": "Microsoft MakeCode, also known as Programming Experience Toolkit (PXT), provides Blocks / JavaScript tools and editors",
   "keywords": [
     "TypeScript",
