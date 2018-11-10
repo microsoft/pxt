@@ -545,6 +545,7 @@ function travisAsync() {
         pxt.log("target build");
         return internalBuildTargetAsync()
             .then(() => internalCheckDocsAsync(true))
+            .then(() => blockTestsAsync())
             .then(() => npmPublishAsync())
             .then(() => {
                 if (!process.env["PXT_ACCESS_TOKEN"]) {
@@ -5199,7 +5200,7 @@ function blockTestsAsync() {
     const karma = karmaPath();
     if (!karma) {
         console.error("Karma not found, did you run npm install?");
-        process.exit(1);
+        return Promise.reject(new Error("Karma not found"));
     }
     return writeBlockTestJSONAsync()
         .then(() => nodeutil.spawnAsync({
