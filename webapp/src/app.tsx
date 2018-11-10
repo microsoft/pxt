@@ -1881,7 +1881,7 @@ export class ProjectView
                 opts.trace = true;
 
             simulator.stop();
-            this.setState({ running: false});
+            this.setState({ running: false });
 
             const state = this.editor.snapshotState()
             return compiler.compileAsync(opts)
@@ -1896,7 +1896,7 @@ export class ProjectView
                                 this.setState({ running: true, showParts: simulator.driver.runOptions.parts.length > 0 })
                             } else {
                                 simulator.stop();
-                                this.setState({ running: false});
+                                this.setState({ running: false });
                             }
                         }
                     } else if (!opts.background) {
@@ -3020,7 +3020,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (query["hw"])
         pxt.setHwVariant(query["hw"])
-    
+
     pxt.setCompileSwitches(query["compiler"] || query["compile"])
 
     pxt.github.token = pxt.storage.getLocal("githubtoken");

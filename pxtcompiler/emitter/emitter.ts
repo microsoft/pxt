@@ -2298,10 +2298,10 @@ ${lbl}: .short 0xffff
             }
 
             let classNo = pxt.BuiltInType.User0
-            const number = (i: ClassInfo) => {
+            const numberClasses = (i: ClassInfo) => {
                 U.assert(!i.classNo)
                 i.classNo = classNo++
-                i.derivedClasses.forEach(number)
+                i.derivedClasses.forEach(numberClasses)
                 i.lastSubtypeNo = classNo - 1
             }
             for (let info of bin.usedClassInfos) {
@@ -2309,7 +2309,7 @@ ${lbl}: .short 0xffff
                 while (par.baseClassInfo)
                     par = par.baseClassInfo
                 if (!par.classNo)
-                    number(par)
+                    numberClasses(par)
             }
         }
 

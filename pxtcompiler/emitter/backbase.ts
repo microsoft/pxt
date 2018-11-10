@@ -1551,7 +1551,7 @@ ${baseLabel}_nochk:
                 movs r4, #${numargs}
                 ldrh r1, [r0, #4]
                 cmp r1, #0
-                bne .pushR5 
+                bne .pushR5
                 ldr r1, [r0, #8]
                 bx r1 ; keep lr from the caller
             .pushR5:

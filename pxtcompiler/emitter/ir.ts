@@ -239,7 +239,7 @@ namespace ts.pxtc.ir {
 
                     case EK.Sequence:
                         return "(" + e.args.map(str).join("; ") + ")"
-                    
+
                     case EK.InstanceOf:
                         return "(" + str(e.args[0]) + " instanceof " + (e.data as ClassInfo).id + ")"
 

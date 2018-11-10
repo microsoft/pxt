@@ -141,7 +141,7 @@ ${lbl}:`
                 saveStack = true
             if (saveStack)
                 return this.callCPP(lbl, stackAlign)
-            else 
+            else
                 return this.alignedCall(lbl, stackAlign)
         }
         call_reg(reg: string) {
@@ -263,8 +263,8 @@ ${lbl}:`
                 else
                     r += `
                     push {r4, lr}
-                    push {r0, r1}  
-                    ${op}  
+                    push {r0, r1}
+                    ${op}
                     movs r4, r0
                     pop {r0}
                     bl _pxt_decr
