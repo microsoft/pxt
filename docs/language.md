@@ -228,32 +228,12 @@ There are following differences currently, which should be fixed soon.
 They are mostly missing bridges between static, nominally typed classes,
 and dynamic maps.
 
-* the `+` operator, as well as comparison operators (`<`, `>=`, etc.) are currently
-  selected based on static type of operands (strings or numbers);
-  this will be changed to be dynamic
-* similarly, indexers for arrays, strings, buffers, or map objects are also
-  selected statically, which needs to be fixed
-* calling an implemented interface method with not enough arguments will crash;
-  need to add two entry points for methods - static for regular `bl` call
-  which validates type of `this`,
-  and dynamic which checks if there is enough arguments and if not,
-  pushes some zeroes - the dynamic one would be also used for lambdas,
-  so we can drop the 3-arg limitation
-* when calling interface methods, we need to check for the right type and null entries in the table
-* types of `Buffer`, `Image` and other built-in types arg currently not validated
-
 * default parameters are resolved at call site; they should be resolved in the
   called method so eg. virtual methods can have different defaults
 * `x.foo`, where `x` is class and `foo` is method cannot be currently used as a value;
   we could make it equivalent to JavaScript's `x.foo.bind(x)`
 * `Object.keys()` is currently not implemented for classes; when it will be
   the order of fields will be static declaration order
-* the map indexer `foo[someExpression]`, where `foo` is a class doesn't currently work
-* this is particularly true, for `foo.sometMethod()`, where `foo : any`
 * the `delete` statement is currently disallowed; it can be implemented
   rather easily, though on classes it will just assign `undefined`
 * how to validate types of C++ classes (Pin mostly)?
-
-### Done
-
-* the dynamic type of `x` in `x.f` needs to be validated; no need to check for `x == this` 

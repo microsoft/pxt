@@ -328,7 +328,7 @@ namespace ts.pxtc.assembler {
 
             let shm = /(.*)>>(\d+)$/.exec(s)
             if (shm) {
-                let left = this.parseOneInt(shm[1])                
+                let left = this.parseOneInt(shm[1])
                 let mask = this.baseOffset & ~0xffffff
                 left &= ~mask;
                 return left >> parseInt(shm[2])
