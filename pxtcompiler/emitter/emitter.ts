@@ -1672,7 +1672,7 @@ ${lbl}: .short 0xffff
             if (node.initializer) {
                 let info = getClassInfo(typeOf(node.parent))
                 if (bin.finalPass && !info.ctor)
-                    userError(9209, lf("class field initializers require an explicit constructor"))
+                    userError(9209, lf("class field initializers currently require an explicit constructor"))
             }
             // do nothing
         }
