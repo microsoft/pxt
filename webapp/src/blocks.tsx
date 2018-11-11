@@ -1143,9 +1143,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     protected showFlyoutGroupLabel(group: string, groupicon: string, labelLineWidth: string, helpCallback: string) {
         let groupLabel = pxt.blocks.createFlyoutGroupLabel(pxt.Util.rlf(`{id:group}${group}`),
-            groupicon, labelLineWidth, helpCallback ? `GROUP_HELP_${helpCallback}` : undefined);
+            groupicon, labelLineWidth, helpCallback ? `GROUP_HELP_${group}` : undefined);
         if (helpCallback) {
-            this.editor.registerButtonCallback(`GROUP_HELP_${helpCallback}`, (/*btn*/) => {
+            this.editor.registerButtonCallback(`GROUP_HELP_${group}`, (/*btn*/) => {
                 this.helpButtonCallback(group);
             })
         }
