@@ -1208,7 +1208,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             labelIcon.className = `monacoFlyoutHeadingIcon blocklyTreeIcon ${iconClass}`;
             labelIcon.setAttribute('role', 'presentation');
             labelIcon.style.display = 'inline-block';
-            labelIcon.style.color = `${iconColor}`;
+            labelIcon.style.color = `${pxt.toolbox.convertColor(iconColor)}`;
             if (icon.length === 1) {
                 labelIcon.textContent = icon;
             }
@@ -1345,6 +1345,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             .replace(/(?:\{\{)|(?:\}\})/g, '');
 
         monacoBlock.title = comment;
+
+        color = pxt.toolbox.convertColor(color);
 
         if (!isDisabled) {
             monacoBlock.draggable = true;
