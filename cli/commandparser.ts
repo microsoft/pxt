@@ -101,9 +101,8 @@ export class CommandParser {
             }
 
             if (match[1]) {
-                if (currentFlag) {
-                    throw new Error(`Expected value to follow flag '${currentFlag}'`);
-                }
+                if (currentFlag)
+                    pxt.U.userError(`Expected value to follow flag '${currentFlag}'`);
 
                 const flagName = command._aliasMap[match[2]];
                 const debugFlag = flagName || match[2];
@@ -115,7 +114,7 @@ export class CommandParser {
                         continue;
                 }
                 if (!flagName)
-                    throw new Error(`Unrecognized flag '${match[2]}' for command '${command.name}'`)
+                    pxt.U.userError(`Unrecognized flag '${match[2]}' for command '${command.name}'`)
 
                 const flagDefinition = command.flags[flagName];
 
@@ -129,7 +128,7 @@ export class CommandParser {
             }
             else if (currentFlag) {
                 if (currentFlagDef.possibleValues && currentFlagDef.possibleValues.length && currentFlagDef.possibleValues.indexOf(match[2]) === -1) {
-                    throw new Error(`Unknown value for flag '${currentFlag}', '${match[2]}'`);
+                    pxt.U.userError(`Unknown value for flag '${currentFlag}', '${match[2]}'`);
                 }
 
                 if (!currentFlagDef.type || currentFlagDef.type === "string") {
@@ -156,13 +155,13 @@ export class CommandParser {
         }
 
         if (currentFlag) {
-            throw new Error(`Expected value to follow flag '${currentFlag}'`)
+            pxt.U.userError(`Expected value to follow flag '${currentFlag}'`)
         }
         else if (!command.argString && parsedArgs.length) {
-            throw new Error(`Command '${command.name}' expected exactly 0 argument(s) but received ${parsedArgs.length}`);
+            pxt.U.userError(`Command '${command.name}' expected exactly 0 argument(s) but received ${parsedArgs.length}`);
         }
         else if (command.numArgs && parsedArgs.length !== command.numArgs) {
-            throw new Error(`Command '${command.name}' expected exactly ${command.numArgs} argument(s) but received ${parsedArgs.length}`);
+            pxt.U.userError(`Command '${command.name}' expected exactly ${command.numArgs} argument(s) but received ${parsedArgs.length}`);
         }
 
         return command._callback({
