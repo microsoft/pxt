@@ -5705,6 +5705,8 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
     let trg = nodeutil.getPxtTarget()
     pxt.setAppTarget(trg)
 
+    pxt.setCompileSwitches(process.env["PXT_COMPILE_SWITCHES"])
+
     let compileId = "none"
     if (trg.compileService) {
         compileId = trg.compileService.buildEngine || "yotta"

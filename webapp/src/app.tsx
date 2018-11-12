@@ -1881,7 +1881,7 @@ export class ProjectView
                 opts.trace = true;
 
             simulator.stop();
-            this.setState({ running: false});
+            this.setState({ running: false });
 
             const state = this.editor.snapshotState()
             return compiler.compileAsync(opts)
@@ -1896,7 +1896,7 @@ export class ProjectView
                                 this.setState({ running: true, showParts: simulator.driver.runOptions.parts.length > 0 })
                             } else {
                                 simulator.stop();
-                                this.setState({ running: false});
+                                this.setState({ running: false });
                             }
                         }
                     } else if (!opts.background) {
@@ -2760,7 +2760,7 @@ function handleHash(hash: { cmd: string; arg: string }, loading: boolean): boole
     switch (hash.cmd) {
         case "doc":
             pxt.tickEvent("hash.doc")
-            editor.setSideDoc(hash.arg, editor == this.blockEditor);
+            editor.setSideDoc(hash.arg, editor.editor === editor.blocksEditor);
             break;
         case "follow":
             pxt.tickEvent("hash.follow")
@@ -3016,16 +3016,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const hm = /^(https:\/\/[^/]+)/.exec(window.location.href)
     if (hm) Cloud.apiRoot = hm[1] + "/api/"
 
-    const hw = /[&?]hw=([\w-]+)/.exec(window.location.href)
-    if (hw)
-        pxt.setHwVariant(hw[1])
+    const query = core.parseQueryString(window.location.href)
+
+    if (query["hw"])
+        pxt.setHwVariant(query["hw"])
+
+    pxt.setCompileSwitches(query["compiler"] || query["compile"])
 
     pxt.github.token = pxt.storage.getLocal("githubtoken");
 
-    const ws = /ws=(\w+)/.exec(window.location.href)
     const isSandbox = pxt.shell.isSandboxMode() || pxt.shell.isReadOnly();
     const isController = pxt.shell.isControllerMode();
-    if (ws) workspace.setupWorkspace(ws[1]);
+    if (query["ws"]) workspace.setupWorkspace(query["ws"]);
     else if ((pxt.appTarget.appTheme.allowParentController || isController) && pxt.BrowserUtils.isIFrame()) workspace.setupWorkspace("iframe");
     else if (isSandbox) workspace.setupWorkspace("mem");
     else if (pxt.winrt.isWinRT()) workspace.setupWorkspace("uwp");
