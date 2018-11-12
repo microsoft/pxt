@@ -544,7 +544,7 @@ namespace pxt.BrowserUtils {
             storageEstimateAsync()
                 .then(estimate => {
                     // quota > 50%
-                    pxt.log(`storage estimate: ${(estimate.usage / estimate.quota * 100) >> 0}%, ${(estimate.usage / 1000000) >> 0}/${(estimate.quota / 1000000) >> 0}Mb`)
+                    pxt.debug(`storage estimate: ${(estimate.usage / estimate.quota * 100) >> 0}%, ${(estimate.usage / 1000000) >> 0}/${(estimate.quota / 1000000) >> 0}Mb`)
                     if (estimate.quota
                         && estimate.usage
                         && estimate.quota > MIN_QUOTA
