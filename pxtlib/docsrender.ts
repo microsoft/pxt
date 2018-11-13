@@ -381,7 +381,7 @@ namespace pxt.docs {
             if (title) {
                 out += ' title="' + title + '"';
             }
-            out += this.options.xhtml ? '/>' : '>';
+            out += (this as any).options.xhtml ? '/>' : '>';
             return out;
         }
         renderer.listitem = function (text: string): string {
@@ -401,8 +401,8 @@ namespace pxt.docs {
             // remove tutorial macros
             if (text)
                 text = text.replace(/@(fullscreen|unplugged)/g, '');
-            return `<h${level} id="${this.options.headerPrefix}${id}">${text}</h${level}>`
-        } as any
+            return `<h${level} id="${(this as any).options.headerPrefix}${id}">${text}</h${level}>`
+        }
     }
 
     export function renderMarkdown(opts: RenderOptions): string {

@@ -120,6 +120,10 @@ namespace pxsim {
             return new RefCollection();
         }
 
+        export function isArray(c: any) {
+            return c instanceof RefCollection
+        }
+
         export function length(c: RefCollection) {
             pxtrt.nullCheck(c)
             return c.getLength();

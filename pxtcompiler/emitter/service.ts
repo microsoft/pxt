@@ -449,6 +449,8 @@ namespace ts.pxtc {
     }
 
     export function getFullName(typechecker: TypeChecker, symbol: Symbol): string {
+        if ((symbol as any).isBogusSymbol)
+            return symbol.name
         return typechecker.getFullyQualifiedName(symbol);
     }
 
@@ -485,7 +487,7 @@ namespace ts.pxtc.service {
     let emptyOptions: CompileOptions = {
         fileSystem: {},
         sourceFiles: [],
-        target: { isNative: false, hasHex: false },
+        target: { isNative: false, hasHex: false, switches: {} },
         hexinfo: null
     }
 

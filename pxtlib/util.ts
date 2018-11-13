@@ -328,7 +328,7 @@ namespace ts.pxtc.Util {
     // leading edge, instead of the trailing.
     export function debounce(func: (...args: any[]) => any, wait: number, immediate?: boolean): any {
         let timeout: any;
-        return function () {
+        return function (this: any) {
             let context = this
             let args = arguments;
             let later = function () {
@@ -347,7 +347,7 @@ namespace ts.pxtc.Util {
     // function on the leading edge, instead of the trailing.
     export function throttle(func: (...args: any[]) => any, wait: number, immediate?: boolean): any {
         let timeout: any;
-        return function () {
+        return function (this: any) {
             let context = this;
             let args = arguments;
             let later = function () {

@@ -1,0 +1,2 @@
+clean()
+msg("test OK!")
