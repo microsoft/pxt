@@ -530,11 +530,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.editor.pushUndoStop();
                 this.editor.executeEdits("", [
                     {
-                        identifier: { major: 0, minor: 0 },
                         range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column),
                         text: insertText,
-                        forceMoveMarkers: true,
-                        isAutoWhitespaceEdit: true
+                        forceMoveMarkers: true
                     }
                 ]);
                 this.beforeCompile();
@@ -897,7 +895,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             for (let d of file.diagnostics) {
                 const addErrorMessage = (message: string) => {
                     monacoErrors.push({
-                        severity: monaco.Severity.Error,
+                        severity: monaco.MarkerSeverity.Error,
                         message: message,
                         startLineNumber: d.line + 1,
                         startColumn: d.column,
@@ -1475,7 +1473,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 monacoEditor.editor.pushUndoStop();
                 monacoEditor.editor.executeEdits("", [
                     {
-                        identifier: { major: 0, minor: 0 },
                         range: new monaco.Range(currPos.lineNumber, currPos.column, currPos.lineNumber, currPos.column),
                         text: insertText,
                         forceMoveMarkers: false
@@ -1632,7 +1629,6 @@ class FieldEditorHost implements pxtblockly.MonacoFieldEditorHost, monaco.editor
             .then(edit => {
                 this.editor.executeEdits("", [
                     {
-                        identifier: { major: 0, minor: 0 },
                         range: edit.range,
                         text: edit.replacement,
                         forceMoveMarkers: false

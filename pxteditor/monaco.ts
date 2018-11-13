@@ -111,7 +111,7 @@ namespace pxt.vs {
         });
 
         // maximum idle time
-        monaco.languages.typescript.typescriptDefaults.setMaximunWorkerIdleTime(20 * 60 * 1000);
+        monaco.languages.typescript.typescriptDefaults.setMaximumWorkerIdleTime(20 * 60 * 1000);
     }
 
     export function createEditor(element: HTMLElement): monaco.editor.IStandaloneCodeEditor {
