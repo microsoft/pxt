@@ -317,9 +317,22 @@ namespace pxsim {
 
             const scaleVol = (n: number) => (n / 1024) * 2
 
+            const finish = () => {
+                if (gen) {
+                    (gen as OscillatorNode).stop();
+                    gen.disconnect()
+                    gain.disconnect()
+                    gain = null
+                    gen = null
+                }
+                timeOff = 0
+                currWave = -1
+                currFreq = -1
+            }
+
             const loopAsync = (): Promise<void> => {
                 if (idx >= b.data.length || !b.data[idx])
-                    return Promise.delay(timeOff)
+                    return Promise.delay(timeOff).then(finish)
 
                 const soundWaveIdx = b.data[idx]
                 const flags = b.data[idx + 1]
@@ -335,10 +348,7 @@ namespace pxsim {
                     if (gen) {
                         return Promise.delay(timeOff)
                             .then(() => {
-                                timeOff = 0
-                                gen = null
-                                currWave = -1
-                                currFreq = -1
+                                finish()
                                 return loopAsync()
                             })
                     }
