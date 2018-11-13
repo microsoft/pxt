@@ -114,12 +114,12 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 if (m) this.props.parent.startTutorial(m[1]);
                 else {
                     if (scr.youTubeId && !scr.url) // Youtube video
-                        window.open('https://youtu.be/' + scr.youTubeId, 'yt');
+                        return; // Handled by href
                     else if (/^https:\/\//i.test(scr.url)) // External video
-                        window.open(scr.url, '_blank');
+                        return; // Handled by href
                     else if (scr.url) // Docs url, open in new tab
                         if (/^\//i.test(scr.url))
-                            window.open(scr.url, '_blank');
+                            return; // Handled by href
                         else
                             core.errorNotification(lf("Sorry, the project url looks invalid."));
                     else
@@ -515,7 +515,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
     }
 
     renderCore() {
-        const { name, description, imageUrl, largeImageUrl, youTubeId, cardType, tags } = this.props;
+        const { name, description, imageUrl, largeImageUrl, youTubeId, url, cardType, tags } = this.props;
 
         const image = largeImageUrl || imageUrl || (youTubeId ? `https://img.youtube.com/vi/${youTubeId}/0.jpg` : undefined);
         const tagColors: pxt.Map<string> = pxt.appTarget.appTheme.tagColors || {};
@@ -535,6 +535,10 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             className: 'huge positive'
         }]
 
+        const isLink = !cardType && (youTubeId || url);
+        const linkHref = (youTubeId && !url) ? `https://youtu.be/${youTubeId}` :
+            ((/^https:\/\//i.test(url)) || (/^\//i.test(url)) ? url : '');
+
         return <div className="ui grid stackable padded">
             {image ? <div className="imagewrapper"><div className="image" style={{ backgroundImage: `url("${image}")` }} /></div> : undefined}
             <div className="column eight wide">
@@ -548,13 +552,23 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                     </p>
                     <div className="actions">
                         {actions.map(action =>
-                            <sui.Button
-                                key={`action_${action.label}`}
-                                icon={action.icon}
-                                text={action.label}
-                                className={`approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''}`}
-                                onClick={action.onClick}
-                                onKeyDown={sui.fireClickOnEnter} />
+                            isLink && linkHref ?
+                                <sui.Link
+                                    key={`action_${action.label}`}
+                                    href={linkHref} target={'_blank'}
+                                    icon={action.icon}
+                                    text={action.label}
+                                    className={`ui button approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''}`}
+                                    onClick={action.onClick}
+                                    onKeyDown={sui.fireClickOnEnter}
+                                />
+                                : <sui.Button
+                                    key={`action_${action.label}`}
+                                    icon={action.icon}
+                                    text={action.label}
+                                    className={`approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''}`}
+                                    onClick={action.onClick}
+                                    onKeyDown={sui.fireClickOnEnter} />
                         )}
                     </div>
                 </div>
@@ -625,7 +639,7 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
 
     renderCore() {
         const { visible } = this.state;
-
+        const disableFileAccessinMaciOs = pxt.appTarget.appTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac());
         /* tslint:disable:react-a11y-anchors */
         return (
             <sui.Modal isOpen={visible} className="importdialog" size="small"
@@ -634,7 +648,7 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
             >
                 <div className={pxt.github.token ? "ui three cards" : "ui two cards"}>
-                    {pxt.appTarget.compile ?
+                    {pxt.appTarget.compile && !disableFileAccessinMaciOs ?
                         <codecard.CodeCardView
                             ariaLabel={lf("Open files from your computer")}
                             role="button"
@@ -787,7 +801,7 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
             >
                 <div className="ui form">
                     <sui.Input ref="filenameinput" autoFocus id={"projectNameInput"} label={lf("Name")}
-                        ariaLabel={lf("Type a name for your project")}
+                        ariaLabel={lf("Type a name for your project")} autoComplete={false}
                         value={projectName || ''} onChange={this.handleChange} />
                 </div>
             </sui.Modal>

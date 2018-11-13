@@ -71,6 +71,8 @@ namespace pxt.workspace {
         // optional asset (large binary file) support
         saveAssetAsync?: (id: string, filename: string, data: Uint8Array) => Promise<void>;
         listAssetsAsync?: (id: string) => Promise<Asset[]>;
+
+        fireEvent?: (ev: pxt.editor.events.Event) => void;
     }
 
     export function freshHeader(name: string, modTime: number) {

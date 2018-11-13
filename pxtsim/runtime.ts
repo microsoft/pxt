@@ -1,6 +1,7 @@
 /// <reference path="../localtypings/pxtparts.d.ts"/>
 
 namespace pxsim {
+    const MIN_MESSAGE_WAIT_MS = 200;
     export namespace U {
         export function addClass(element: HTMLElement, classes: string) {
             if (!element) return;
@@ -62,15 +63,18 @@ namespace pxsim {
             return Date.now();
         }
 
+        let perf: () => number
+
         // current time in microseconds
         export function perfNowUs(): number {
-            const perf = typeof performance != "undefined" ?
-                performance.now.bind(performance) ||
-                (performance as any).moznow.bind(performance) ||
-                (performance as any).msNow.bind(performance) ||
-                (performance as any).webkitNow.bind(performance) ||
-                (performance as any).oNow.bind(performance) :
-                Date.now;
+            if (!perf)
+                perf = typeof performance != "undefined" ?
+                    performance.now.bind(performance) ||
+                    (performance as any).moznow.bind(performance) ||
+                    (performance as any).msNow.bind(performance) ||
+                    (performance as any).webkitNow.bind(performance) ||
+                    (performance as any).oNow.bind(performance) :
+                    Date.now;
             return perf() * 1000;
         }
 
@@ -108,6 +112,11 @@ namespace pxsim {
         finalCallback?: ResumeFn;
     }
 
+    interface SerialMessage {
+        data: string;
+        time: number;
+    }
+
     export let runtime: Runtime;
     export function getResume() { return runtime.getResume() }
 
@@ -124,18 +133,40 @@ namespace pxsim {
         public kill() { }
 
         protected serialOutBuffer: string = '';
-        public writeSerial(s: string) {
-            if (!s) return
 
+        private messages: SerialMessage[] = [];
+        private serialTimeout: number;
+        private lastSerialTime = 0;
+
+        public writeSerial(s: string) {
             this.serialOutBuffer += s;
             if (/\n/.test(this.serialOutBuffer) || this.serialOutBuffer.length > SERIAL_BUFFER_LENGTH) {
-                Runtime.postMessage(<SimulatorSerialMessage>{
-                    type: 'serial',
-                    data: this.serialOutBuffer,
-                    id: runtime.id,
-                    sim: true
-                })
+                this.messages.push({
+                    time: Date.now(),
+                    data: this.serialOutBuffer
+                });
+                this.debouncedPostAll();
                 this.serialOutBuffer = '';
+            }
+        }
+
+        private debouncedPostAll = () => {
+            const nowtime = Date.now();
+            if (nowtime - this.lastSerialTime > MIN_MESSAGE_WAIT_MS) {
+                clearTimeout(this.serialTimeout);
+                if (this.messages.length) {
+                    Runtime.postMessage(<any>{
+                        type: 'bulkserial',
+                        data: this.messages,
+                        id: runtime.id,
+                        sim: true
+                    })
+                    this.messages = [];
+                    this.lastSerialTime = nowtime;
+                }
+            }
+            else {
+                this.serialTimeout = setTimeout(this.debouncedPostAll, 50);
             }
         }
     }
@@ -246,7 +277,7 @@ namespace pxsim {
             // all events will be processed by concurrent promisified code below, so start afresh
             this.events = []
             // in order semantics for events and handlers
-            let ret = Promise.each(events, (value) => {
+            return Promise.each(events, (value) => {
                 return Promise.each(this.handlers, (handler) => {
                     return this.runtime.runFiberAsync(handler, ...(this.valueToArgs ? this.valueToArgs(value) : [value]))
                 })
@@ -266,7 +297,6 @@ namespace pxsim {
                     return Promise.resolve()
                 }
             })
-            return ret
         }
 
         get handlers() {
@@ -327,7 +357,7 @@ namespace pxsim {
 
     // wraps simulator code as STS code - useful for default event handlers
     export function syntheticRefAction(f: (s: StackFrame) => any) {
-        return pxtcore.mkAction(0, 0, s => _leave(s, f(s)))
+        return pxtcore.mkAction(0, s => _leave(s, f(s)))
     }
 
     export class Runtime {
@@ -347,6 +377,10 @@ namespace pxsim {
         entry: LabelFn;
         loopLock: Object = null;
         loopLockWaitList: (() => void)[] = [];
+
+        perfCounters: PerfCounter[]
+        perfOffset = 0
+        perfElapsed = 0
 
         public refCountingDebug = false;
         public refCounting = true;
@@ -386,7 +420,7 @@ namespace pxsim {
                 U.nextTick(() => {
                     runtime = this;
                     this.setupTop(resolve)
-                    pxtcore.runAction3(a, arg0, arg1, arg2)
+                    pxtcore.runAction(a, [arg0, arg1, arg2])
                     decr(a) // if it's still running, action.run() has taken care of incrementing the counter
                 }))
         }
@@ -649,6 +683,7 @@ namespace pxsim {
                     return
                 }
                 U.assert(!__this.loopLock)
+                __this.perfStartRuntime()
                 try {
                     runtime = __this
                     while (!!p) {
@@ -660,7 +695,9 @@ namespace pxsim {
                         if (__this.currFrame.overwrittenPC)
                             p = __this.currFrame
                     }
+                    __this.perfStopRuntime()
                 } catch (e) {
+                    __this.perfStopRuntime()
                     if (__this.errorHandler)
                         __this.errorHandler(e)
                     else {
@@ -729,6 +766,24 @@ namespace pxsim {
                 currResume = buildResume(s, retPC)
             }
 
+            function setupLambda(s: StackFrame, a: RefAction | LabelFn) {
+                if (a instanceof RefAction) {
+                    s.fn = a.func
+                    s.caps = a.fields
+                } else {
+                    s.fn = a
+                }
+            }
+
+            function checkSubtype(v: RefRecord, low: number, high: number) {
+                return v && v.vtable && low <= v.vtable.classNo && v.vtable.classNo <= high;
+            }
+
+            function failedCast(v: any) {
+                // TODO generate the right panic codes
+                oops("failed cast on " + v)
+            }
+
             function buildResume(s: StackFrame, retPC: number) {
                 if (currResume) oops("already has resume")
                 s.pc = retPC;
@@ -749,7 +804,7 @@ namespace pxsim {
                         let frame: StackFrame = {
                             parent: s,
                             fn: w.func,
-                            lambdaArgs: [w.a0, w.a1, w.a2],
+                            lambdaArgs: w.args,
                             pc: 0,
                             caps: w.caps,
                             depth: s.depth + 1,
@@ -797,5 +852,57 @@ namespace pxsim {
 
             initCurrentRuntime(msg);
         }
+
+        public setupPerfCounters(names: string[]) {
+            if (!names || !names.length)
+                return
+            this.perfCounters = names.map(s => new PerfCounter(s))
+        }
+
+        private perfStartRuntime() {
+            if (this.perfOffset !== 0)
+                U.userError("bad time start")
+            this.perfOffset = U.perfNowUs() - this.perfElapsed
+        }
+
+        private perfStopRuntime() {
+            this.perfElapsed = this.perfNow()
+            this.perfOffset = 0
+        }
+
+        public perfNow() {
+            if (this.perfOffset === 0)
+                U.userError("bad time now")
+            return (U.perfNowUs() - this.perfOffset) | 0
+        }
+
+        public startPerfCounter(n: number) {
+            if (!this.perfCounters)
+                return
+            const c = this.perfCounters[n]
+            if (c.start) U.userError("startPerf")
+            c.start = this.perfNow()
+        }
+
+        public stopPerfCounter(n: number) {
+            if (!this.perfCounters)
+                return
+            const c = this.perfCounters[n]
+            if (!c.start) U.userError("stopPerf")
+            c.value += this.perfNow() - c.start;
+            c.start = 0;
+            c.numstops++;
+        }
     }
+
+
+    export class PerfCounter {
+        start = 0;
+        numstops = 0;
+        value = 0;
+        constructor(public name: string) { }
+    }
+
+
+
 }

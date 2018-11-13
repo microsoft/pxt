@@ -53,6 +53,7 @@ export interface CompileOptions {
     background?: boolean; // not explicitly requested by user (hint for simulator)
     forceEmit?: boolean;
     preferredEditor?: string;
+    clickTrigger?: boolean;
 }
 
 export function compileAsync(options: CompileOptions = {}): Promise<pxtc.CompileResult> {

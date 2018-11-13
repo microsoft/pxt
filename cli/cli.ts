@@ -33,7 +33,16 @@ let forceCloudBuild = process.env["KS_FORCE_CLOUD"] !== "no";
 let forceLocalBuild = process.env["PXT_FORCE_LOCAL"] === "yes"
 
 function parseBuildInfo(parsed?: commandParser.ParsedCommand) {
-    if (parsed && parsed.flags["localbuild"]) {
+    const cloud = parsed && parsed.flags["cloudbuild"];
+    const local = parsed && parsed.flags["localbuild"];
+    if (cloud && local)
+        U.userError("cannot specify local-build and cloud-build together");
+
+    if (cloud) {
+        forceCloudBuild = true;
+        forceLocalBuild = false;
+    }
+    if (local) {
         forceCloudBuild = false;
         forceLocalBuild = true;
     }
@@ -518,7 +527,7 @@ function travisAsync() {
 
     function npmPublishAsync() {
         if (!npmPublish) return Promise.resolve();
-        return nodeutil.runNpmAsync("publish", "--tag=dev");
+        return nodeutil.runNpmAsync("publish");
     }
 
     let pkg = readJson("package.json")
@@ -2889,6 +2898,18 @@ function runCoreAsync(res: pxtc.CompileResult) {
                         console.log("serial: ", d);
                     }
                     break;
+                case "bulkserial":
+                    {
+                        const m = <pxsim.SimulatorBulkSerialMessage>msg;
+                        let d = m.data;
+                        if (Array.isArray(d)) {
+                            d.forEach(datum => {
+                                if (typeof datum.data == "string") datum.data = datum.data.replace(/\n$/, "")
+                                console.log("serial: ", datum.data);
+                            })
+                        }
+                    }
+                    break;
                 case "i2c":
                     {
                         const m = <pxsim.SimulatorI2CMessage>msg;
@@ -5050,7 +5071,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
         pxt.log(`targetconfig.json not found`);
         return Promise.resolve();
     }
-    const localBuild = !!parsed.flags["cloud"];
+    parseBuildInfo(parsed);
     const warnDiv = !!parsed.flags["warndiv"];
     const clean = !!parsed.flags["clean"];
     const targetConfig = nodeutil.readJson("targetconfig.json") as pxt.TargetConfig;
@@ -5103,7 +5124,7 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
         // clone or sync package
         const buildArgs = ["build", "--ignoreTests"];
         if (warnDiv) buildArgs.push("--warndiv");
-        if (localBuild) buildArgs.push("--localbuild");
+        if (forceLocalBuild) buildArgs.push("--localbuild");
         const pkgdir = path.join(pkgsroot, pkgpgh);
         return (
             !nodeutil.existsDirSync(pkgdir)
@@ -5181,10 +5202,14 @@ function initCommands() {
         help: "build and deploy current package",
         flags: {
             "console": { description: "start console monitor after deployment", aliases: ["serial"] },
+            cloudbuild: {
+                description: "(deprecated) forces build to happen in the cloud",
+                aliases: ["cloud", "cloud-build", "cb"]
+            },
             localbuild: {
                 description: "Build native image using local toolchains",
-                aliases: ["local", "l", "local-build"]
-            },
+                aliases: ["local", "l", "local-build", "lb"]
+            }
         },
         onlineHelp: true
     }, deployAsync)
@@ -5229,10 +5254,13 @@ function initCommands() {
         help: "builds current package",
         onlineHelp: true,
         flags: {
-            cloud: { description: "(deprecated) forces build to happen in the cloud" },
+            cloudbuild: {
+                description: "(deprecated) forces build to happen in the cloud",
+                aliases: ["cloud", "cloud-build", "cb"]
+            },
             localbuild: {
                 description: "Build native image using local toolchains",
-                aliases: ["local", "l", "local-build"]
+                aliases: ["local", "l", "local-build", "lb"]
             },
             debug: { description: "Emit debug information with build" },
             warndiv: { description: "Warns about division operators" },
@@ -5271,8 +5299,13 @@ function initCommands() {
             "bump": {
                 description: "bump version number prior to package"
             },
-            "cloud": {
-                description: "Force build to happen in the cloud"
+            cloudbuild: {
+                description: "(deprecated) forces build to happen in the cloud",
+                aliases: ["cloud", "cloud-build", "cb"]
+            },
+            localbuild: {
+                description: "Build native image using local toolchains",
+                aliases: ["local", "l", "local-build", "lb"]
             },
             "no-appcache": {
                 description: "Disables application cache"
@@ -5315,10 +5348,13 @@ function initCommands() {
                 aliases: ["include-source-maps"]
             },
             pkg: { description: "serve packaged" },
-            cloud: { description: "(deprecated) forces build to happen in the cloud" },
+            cloudbuild: {
+                description: "(deprecated) forces build to happen in the cloud",
+                aliases: ["cloud", "cloud-build", "cb"]
+            },
             localbuild: {
                 description: "Build native image using local toolchains",
-                aliases: ["local", "l", "local-build"]
+                aliases: ["local", "l", "local-build", "lb"]
             },
             just: { description: "just serve without building" },
             hostname: {
@@ -5383,10 +5419,13 @@ function initCommands() {
         advanced: true,
         help: "Builds the current target",
         flags: {
-            cloud: { description: "(deprecated) forces build to happen in the cloud" },
+            cloudbuild: {
+                description: "(deprecated) forces build to happen in the cloud",
+                aliases: ["cloud", "cloud-build", "cb"]
+            },
             localbuild: {
                 description: "Build native image using local toolchains",
-                aliases: ["local", "l", "local-build"]
+                aliases: ["local", "l", "local-build", "lb"]
             },
             skipCore: {
                 description: "skip native build of core packages",
@@ -5401,10 +5440,13 @@ function initCommands() {
         argString: "<label>",
         advanced: true,
         flags: {
-            cloud: { description: "(deprecated) forces build to happen in the cloud" },
+            cloudbuild: {
+                description: "(deprecated) forces build to happen in the cloud",
+                aliases: ["cloud", "cloud-build", "cb"]
+            },
             localbuild: {
                 description: "Build native image using local toolchains",
-                aliases: ["local", "l", "local-build"]
+                aliases: ["local", "l", "local-build", "lb"]
             }
         }
     }, uploadTargetReleaseAsync);
@@ -5570,7 +5612,14 @@ function initCommands() {
         help: "Download and build approved github packages",
         flags: {
             warndiv: { description: "Warns about division operators" },
-            localBuild: { description: "use local C++ compiler", aliases: ["localbuild", "lb"] },
+            cloudbuild: {
+                description: "(deprecated) forces build to happen in the cloud",
+                aliases: ["cloud", "cloud-build", "cb"]
+            },
+            localbuild: {
+                description: "Build native image using local toolchains",
+                aliases: ["local", "l", "local-build", "lb"]
+            },
             clean: { description: "delete all previous repos" }
         }
     }, testGithubPackagesAsync);
@@ -5623,8 +5672,9 @@ function loadPkgAsync() {
 
 function errorHandler(reason: any) {
     if (reason.isUserError) {
-        console.error(reason.stack)
-        console.error("USER ERROR:", reason.message)
+        if (pxt.options.debug)
+            console.error(reason.stack)
+        console.error("error:", reason.message)
         process.exit(1)
     }
 
@@ -5654,6 +5704,8 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
 
     let trg = nodeutil.getPxtTarget()
     pxt.setAppTarget(trg)
+
+    pxt.setCompileSwitches(process.env["PXT_COMPILE_SWITCHES"])
 
     let compileId = "none"
     if (trg.compileService) {
@@ -5695,10 +5747,10 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
 
             if (!args[0]) {
                 if (pxt.commands.deployCoreAsync) {
-                    console.log("running 'pxt deploy' (run 'pxt help' for usage)")
+                    pxt.log("running 'pxt deploy' (run 'pxt help' for usage)")
                     args = ["deploy"]
                 } else {
-                    console.log("running 'pxt build' (run 'pxt help' for usage)")
+                    pxt.log("running 'pxt build' (run 'pxt help' for usage)")
                     args = ["build"]
                 }
             }

@@ -93,7 +93,7 @@ namespace pxt.Cloud {
     const MARKDOWN_EXPIRATION = 1 * 60 * 60 * 1000;
     export function markdownAsync(docid: string, locale?: string, live?: boolean): Promise<string> {
         const branch = "";
-        return ts.pxtc.Util.translationDbAsync()
+        return pxt.BrowserUtils.translationDbAsync()
             .then(db => db.getAsync(locale, docid, "")
                 .then(entry => {
                     if (entry && Date.now() - entry.time > MARKDOWN_EXPIRATION)

@@ -318,7 +318,8 @@ export function findChild(c: React.Component<any, any>, selector: string): Eleme
 
 export function parseQueryString(qs: string) {
     let r: pxt.Map<string> = {}
-    qs.replace(/\+/g, " ").replace(/([^&=]+)=?([^&]*)/g, (f: string, k: string, v: string) => {
+
+    qs.replace(/\+/g, " ").replace(/([^#?&=]+)=([^#?&=]*)/g, (f: string, k: string, v: string) => {
         r[decodeURIComponent(k)] = decodeURIComponent(v)
         return ""
     })

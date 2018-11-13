@@ -362,7 +362,7 @@ namespace ts.pxtc.thumb {
                 // RULE: beq .next; b .somewhere; .next: -> bne .somewhere
                 ln.update("bne " + lnNext.words[1])
                 lnNext.update("")
-            } else if (lnop == "push" && ln.numArgs[0] == 0x4000 && lnNext.getOp() == "push") {
+            } else if (lnop == "push" && ln.numArgs[0] == 0x4000 && lnNext.getOp() == "push" && !(lnNext.numArgs[0] & 0x4000)) {
                 // RULE: push {lr}; push {X, ...} -> push {lr, X, ...}
                 ln.update(lnNext.text.replace("{", "{lr, "))
                 lnNext.update("")
@@ -402,7 +402,7 @@ namespace ts.pxtc.thumb {
                 ln.update("bl " + ln.words[1] + "_pushR0")
                 lnNext.update("@dummystack 1")
             } else if (lnop == "ldr" && ln.getOpExt() == "ldr $r5, [sp, $i1]" && lnNext.getOp() == "bl" &&
-                /^_pxt_(incr|decr)(_pushR0)?$/.test(lnNext.words[1]) && ln.numArgs[0] == 0 && ln.numArgs[1] <= 56
+                /^_pxt_(incr|decr)(_pushR0)?$/.test(lnNext.words[1]) && ln.numArgs[0] == 0 && ln.numArgs[1] <= 32
                 && lnNext2 && lnNext2.getOp() != "push") {
                 ln.update("bl " + lnNext.words[1] + "_" + ln.numArgs[1])
                 lnNext.update("")

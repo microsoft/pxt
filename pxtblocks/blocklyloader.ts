@@ -327,16 +327,20 @@ namespace pxt.blocks {
     }
 
     export function createFlyoutHeadingLabel(name: string, color?: string, icon?: string, iconClass?: string) {
-        const headingLabel = createFlyoutLabel(name, color, icon, iconClass);
+        const headingLabel = createFlyoutLabel(name, pxt.toolbox.convertColor(color), icon, iconClass);
         headingLabel.setAttribute('web-class', 'blocklyFlyoutHeading');
         return headingLabel;
     }
 
-    export function createFlyoutGroupLabel(name: string, icon?: string, labelLineWidth?: string) {
+    export function createFlyoutGroupLabel(name: string, icon?: string, labelLineWidth?: string, helpCallback?: string) {
         const groupLabel = createFlyoutLabel(name, undefined, icon);
         groupLabel.setAttribute('web-class', 'blocklyFlyoutGroup');
         groupLabel.setAttribute('web-line', '1.5');
         if (labelLineWidth) groupLabel.setAttribute('web-line-width', labelLineWidth);
+        if (helpCallback) {
+            groupLabel.setAttribute('web-help-button', 'true');
+            groupLabel.setAttribute('callbackkey', helpCallback);
+        }
         return groupLabel;
     }
 
@@ -345,7 +349,7 @@ namespace pxt.blocks {
         let headingLabel = goog.dom.createDom('label') as HTMLElement;
         headingLabel.setAttribute('text', name);
         if (color) {
-            headingLabel.setAttribute('web-icon-color', color);
+            headingLabel.setAttribute('web-icon-color', pxt.toolbox.convertColor(color));
         }
         if (icon) {
             if (icon.length === 1) {
@@ -970,6 +974,18 @@ namespace pxt.blocks {
         initDrag();
         initDebugger();
         initComments();
+
+        // PXT is in charge of disabling, don't record undo for disabled events
+        (Blockly.Block as any).prototype.setDisabled = function(disabled: any) {
+            if (this.disabled != disabled) {
+                let oldRecordUndo = (Blockly as any).Events.recordUndo;
+                (Blockly as any).Events.recordUndo = false;
+                Blockly.Events.fire(new Blockly.Events.BlockChange(
+                    this, 'disabled', null, this.disabled, disabled));
+                (Blockly as any).Events.recordUndo = oldRecordUndo;
+                this.disabled = disabled;
+            }
+        };
     }
 
     function setBuiltinHelpInfo(block: any, id: string) {
@@ -2784,7 +2800,9 @@ namespace pxt.blocks {
         }
         if (!foundIt) {
             (varField as any).initModel();
-            (varField as any).getVariable().name = newName;
+            const model = (varField as any).getVariable();
+            model.name = newName;
+            varField.setValue(model.getId());
         }
     }
 }

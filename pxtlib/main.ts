@@ -22,6 +22,8 @@ namespace pxt {
     export let mkTCPSocket: (host: string, port: number) => TCPIO;
 
     let savedAppTarget: TargetBundle;
+    let savedSwitches: pxtc.CompileSwitches = {}
+
     export function setAppTarget(trg: TargetBundle) {
         appTarget = trg || <TargetBundle>{};
         patchAppTarget();
@@ -32,15 +34,35 @@ namespace pxt {
         return savedAppTarget ? savedAppTarget.appTheme : undefined;
     }
 
+    export function setCompileSwitch(name: string, value: boolean) {
+        (savedSwitches as any)[name] = value
+        if (appTarget) {
+            U.jsonCopyFrom(appTarget.compile.switches, savedSwitches)
+            U.jsonCopyFrom(savedAppTarget.compile.switches, savedSwitches)
+        }
+    }
+
+    export function setCompileSwitches(names: string) {
+        if (!names)
+            return
+        for (let s of names.split(/[\s,;:]+/)) {
+            if (s)
+                setCompileSwitch(s, true)
+        }
+    }
+
     function patchAppTarget() {
         // patch-up the target
         let comp = appTarget.compile
         if (!comp)
-            comp = appTarget.compile = { isNative: false, hasHex: false }
+            comp = appTarget.compile = { isNative: false, hasHex: false, switches: {} }
         if (comp.hasHex) {
             if (!comp.nativeType)
                 comp.nativeType = pxtc.NATIVE_TYPE_THUMB
         }
+        if (!comp.switches)
+            comp.switches = {}
+        U.jsonCopyFrom(comp.switches, savedSwitches)
         // JS ref counting currently not supported
         comp.jsRefCounting = false
         if (!comp.vtableShift)

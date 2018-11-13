@@ -3,25 +3,9 @@
 *******************************/
 
 
-/* Full screen modal */
-.modals.dimmer .ui.fullscreen.modal,
-.modals.dimmer .ui.fullscreen.scrolling.modal {
-    position: absolute !important;
-    top: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-    height: 100%;
-    width: 100%;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: 'touch';
-    user-select: none;
-}
-
 /* Fix for a semantic hover issue when hovering over the modal's search box */
 .ui.search .action:hover {
-    background: white !important;
+    background: none !important;
 }
 
 /*******************************
@@ -37,6 +21,146 @@
 }
 .setModalContentColor();
 
+/*******************************
+        Fullscreen modal
+*******************************/
+
+.modals.dimmer .ui.fullscreen.modal,
+.modals.dimmer .ui.fullscreen.scrolling.modal {
+    position: absolute !important;
+    top: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    display: flex !important;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: 'touch';
+    user-select: none;
+}
+
+/* Back button */
+.ui.button.back-button {
+    background: none !important;
+    border: none !important;
+}
+
+.ui.fullscreen.modal,
+.ui.fullscreen.modal > .content {
+    background: @extensionsBackground;
+}
+.ui.fullscreen.modal {
+    > .header {
+        background: @extensionsHeaderBackground;
+        color: @extensionsHeaderColor;
+        border-radius: 0;
+        display: flex;
+        height: @mainMenuHeight;
+        align-items: center;
+        padding: 0 !important;
+
+        .header-title {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2rem;
+            height: 100%;
+        }
+        .header-close {
+            flex-basis: 20rem;
+            padding: 1rem;
+            order: -1;
+            z-index: 1;
+            .back-button {
+                display: flex;
+                align-items: center;
+                font-weight: normal;
+            }
+        }
+        .header-help {
+            flex-basis: 20rem;
+            padding: 1rem;
+            display: flex;
+            justify-content: flex-end;
+            .help-button .icon {
+                margin: 0;
+            }
+        }
+    }
+
+    .header-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        flex-direction: row;
+        height: @mainMenuHeight;
+        background: @extensionsSecondaryBackground;
+    }
+
+    > .content {
+        padding: 1rem;
+        flex: 1;
+        overflow-y: auto;
+        height: calc(100% - @mainMenuHeight);
+        -webkit-overflow-scrolling: touch;
+        border: 0;
+    }
+
+    .has-actions .content {
+        height: calc(100% - (2 * @mainMenuHeight));
+    }
+    .ui.button.back-button, .ui.help-button {
+        color: @extensionsHeaderColor !important;
+        padding-left: 0 !important;
+        /* &:focus {
+            border: 2px solid yellow !important;
+            border-radius: 1px;
+        } */
+    }
+}
+
+@HCextensionsHeaderBackground: black;
+@HCextensionsHeaderTextColor: white;
+
+.hc {
+    .ui.fullscreen.modal {
+        .header {
+            background: @HCextensionsHeaderBackground !important;
+            color: @HCextensionsHeaderTextColor !important;
+        }
+        .header-actions {
+            background: fade(@HCextensionsHeaderBackground, 30%);
+        }
+        .ui.back-button {
+            background: none !important;
+        }
+    }
+}
+
+/* Since we add the close button at the end of the modal DOM (for accessibility)
+   this adds the rounded border to the second last item (content) */
+.ui.modal.closable:not(.fullscreen) > :nth-last-child(2) {
+    border-bottom-left-radius: @borderRadius;
+    border-bottom-right-radius: @borderRadius;
+}
+
+/* Mobile + Tablet */
+@media only screen and (max-width: @largestTabletScreen) {
+
+    .ui.fullscreen.modal {
+        > .header {
+            height: @mobileMenuHeight;
+        }
+        .has-actions .content {
+            height: calc(100% - @mobileMenuHeight - @mainMenuHeight);
+        }
+    }
+    
+}
 
 /*******************************
         Modal Close Icon
@@ -69,11 +193,6 @@
     box-shadow: 0 0 0 4px rgba(0,0,0,.35);
     outline: none;
     transform: scale(1.1);
-}
-
-.ui.modal.closable > :nth-last-child(2) {
-  border-bottom-left-radius: @borderRadius;
-  border-bottom-right-radius: @borderRadius;
 }
 
 .ui.button.icon.clear {

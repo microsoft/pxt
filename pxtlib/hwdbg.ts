@@ -1,12 +1,3 @@
-namespace pxt {
-    // keep in sync with RefCounted.h in Codal
-    export const REF_TAG_STRING = 1
-    export const REF_TAG_BUFFER = 2
-    export const REF_TAG_IMAGE = 3
-    export const REF_TAG_NUMBER = 32
-    export const REF_TAG_ACTION = 33
-}
-
 namespace pxt.HWDBG {
     import Cloud = pxt.Cloud;
     import U = pxt.Util;
@@ -118,13 +109,12 @@ namespace pxt.HWDBG {
             // 56 bytes of data fit in one HID packet (with 5 bytes of header and 3 bytes of padding)
             return readMemAsync(v.ptr, 56)
                 .then(buf => {
+                    // TODO this is wrong, with the new vtable format
                     tag = H.read16(buf, 2)
                     let neededLength = buf.length
-                    if (tag == REF_TAG_STRING || tag == REF_TAG_BUFFER) {
+                    if (tag == pxt.BuiltInType.BoxedString || tag == pxt.BuiltInType.BoxedBuffer) {
                         neededLength = H.read16(buf, 4) + 6
-                    } else if (tag == REF_TAG_IMAGE) {
-                        neededLength = H.read16(buf, 4) * H.read16(buf, 8) + 8
-                    } else if (tag == REF_TAG_NUMBER) {
+                    } else if (tag == pxt.BuiltInType.BoxedNumber) {
                         neededLength = 8 + 4
                     } else {
                         // TODO
@@ -139,18 +129,11 @@ namespace pxt.HWDBG {
                     }
                 })
                 .then<any>(buf => {
-                    if (tag == REF_TAG_STRING)
+                    if (tag == pxt.BuiltInType.BoxedString)
                         return U.uint8ArrayToString(buf.slice(6))
-                    else if (tag == REF_TAG_STRING)
+                    else if (tag == pxt.BuiltInType.BoxedBuffer)
                         return { type: "buffer", data: buf.slice(6) }
-                    else if (tag == REF_TAG_IMAGE)
-                        return {
-                            type: "image",
-                            data: buf.slice(8),
-                            width: H.read16(buf, 4),
-                            height: H.read16(buf, 8),
-                        }
-                    else if (tag == REF_TAG_NUMBER)
+                    else if (tag == pxt.BuiltInType.BoxedNumber)
                         return new Float64Array(buf.buffer.slice(4))[0]
                     else
                         return {
