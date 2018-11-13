@@ -7,14 +7,14 @@ Banned extensions are not allowed to load.
 
 ## Checklist
 
-Whenever you are submitting a package for approval, please check that you have completed the following task.
+Whenever you are submitting an extension for approval, please check that you have completed the following tasks:
 
-* A release has been created in GitHub. You can create a release when syncing in the MakeCode editor or using the **pxt bump** cli command.
-* An icon image **icon.png** is available on the root folder. It should be 300x200 and **less than 100kb**.
-* Descriptive GitHub description added to help with package search.
-* A test file, ``test.ts``, is present and compiles when running **pxt deploy**.
-* The ``README.md`` file contains API documentation for the package blocks. 
+* A release has been created in GitHub. You can create a release of the extension when syncing in the MakeCode editor or using the **pxt bump** cli command.
+* An icon image **icon.png** is available in the root folder. It should be 300x200 pixels and **less than 100kb** in size.
+* Descriptive GitHub description added to help with extension search.
+* A test file, called ``test.ts``, is present and compiles when running **pxt deploy**.
+* The ``README.md`` file contains API documentation for the extension blocks. 
 
-### #checklist
+### #custom-checklist
 
 ## #approval
