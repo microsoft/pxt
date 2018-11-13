@@ -228,9 +228,9 @@ namespace pxsim {
             return _frequency;
         }
 
-        const waveForms = ["", "triangle", "sawtooth", "sine"]
+        const waveForms: OscillatorType[] = [null, "triangle", "sawtooth", "sine"]
         let noiseBuffer: AudioBuffer
-        let squareBuffer: AudioBuffer[]
+        let squareBuffer: AudioBuffer[] = []
 
         function getNoiseBuffer() {
             if (!noiseBuffer) {
@@ -284,7 +284,8 @@ namespace pxsim {
         function getGenerator(waveFormIdx: number, hz: number): AudioNode {
             let form = waveForms[waveFormIdx]
             if (form) {
-                let src = context().createOscillator()
+                let src = context().createOscillator()                
+                src.type = form
                 src.frequency.value = hz
                 return src
             }
