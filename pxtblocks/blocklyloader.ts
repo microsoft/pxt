@@ -327,7 +327,7 @@ namespace pxt.blocks {
     }
 
     export function createFlyoutHeadingLabel(name: string, color?: string, icon?: string, iconClass?: string) {
-        const headingLabel = createFlyoutLabel(name, color, icon, iconClass);
+        const headingLabel = createFlyoutLabel(name, pxt.toolbox.convertColor(color), icon, iconClass);
         headingLabel.setAttribute('web-class', 'blocklyFlyoutHeading');
         return headingLabel;
     }
@@ -349,7 +349,7 @@ namespace pxt.blocks {
         let headingLabel = goog.dom.createDom('label') as HTMLElement;
         headingLabel.setAttribute('text', name);
         if (color) {
-            headingLabel.setAttribute('web-icon-color', color);
+            headingLabel.setAttribute('web-icon-color', pxt.toolbox.convertColor(color));
         }
         if (icon) {
             if (icon.length === 1) {
