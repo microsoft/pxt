@@ -202,17 +202,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (metaData.color && blocks) {
                     let hexcolor = fixColor(metaData.color);
                     blocks.forEach((fn) => {
-                        rules.push({ token: `identifier.ts ${fn.name}`, foreground: hexcolor });
+                        rules.push({ token: `identifier.${fn.name}.ts`, foreground: hexcolor });
                     });
-                    rules.push({ token: `identifier.ts ${ns}`, foreground: hexcolor });
+                    rules.push({ token: `identifier.${ns}.ts`, foreground: hexcolor });
                     colors[ns] = metaData.color;
                 }
             })
-
-            rules.push({ token: `identifier.ts if`, foreground: '5B80A5', });
-            rules.push({ token: `identifier.ts else`, foreground: '5B80A5', });
-            rules.push({ token: `identifier.ts while`, foreground: '5BA55B', });
-            rules.push({ token: `identifier.ts for`, foreground: '5BA55B', });
 
             const pauseUntil = pxt.appTarget.runtime && pxt.appTarget.runtime.pauseUntilBlock;
             if (pauseUntil) {
@@ -220,7 +215,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 const color = pauseUntil.color || colors[pauseUntil.category];
 
                 if (color) {
-                    rules.push({ token: `identifier.ts ${call}`, foreground: fixColor(color) });
+                    rules.push({ token: `identifier.${call}.ts`, foreground: fixColor(color) });
                 }
             }
         }
@@ -250,9 +245,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     isIncomplete() {
-        return this.editor && (this.editor as any)._view ?
-            (this.editor as any)._view.contentWidgets._widgets["editor.widget.suggestWidget"].isVisible :
-            false;
+        if (this.editor && (this.editor as any).contentWidgets) {
+            const widget = (this.editor as any).contentWidgets["editor.widget.suggestWidget"];
+            return widget && widget.isVisible;
+        }
+        return false;
     }
 
     resize(e?: Event) {
