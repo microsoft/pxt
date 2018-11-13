@@ -11,7 +11,7 @@ Whenever you are submitting an extension for approval, please check that you hav
 
 * A release has been created in GitHub. You can create a release of the extension when syncing in the MakeCode editor or using the **pxt bump** cli command.
 * An icon image **icon.png** is available in the root folder. It should be 300x200 pixels and **less than 100kb** in size.
-* Descriptive GitHub description added to help with extension search.
+* A GitHub repo description added that's descriptive enough to help with extension search.
 * A test file, called ``test.ts``, is present and compiles when running **pxt deploy**.
 * The ``README.md`` file contains API documentation for the extension blocks. 
 
