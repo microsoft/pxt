@@ -91,8 +91,6 @@ namespace pxt.toolbox {
         const hue = parseInt(colour);
         if (!isNaN(hue)) {
             return hueToRgb(hue);
-        } else {
-            return colour;
         }
         return colour;
     }
@@ -125,36 +123,36 @@ namespace pxt.toolbox {
             let val3 = brightness * (1 - (s * (1 - remainder)));
             switch (sextant) {
                 case 1:
-                red = val2;
-                green = brightness;
-                blue = val1;
-                break;
+                    red = val2;
+                    green = brightness;
+                    blue = val1;
+                    break;
                 case 2:
-                red = val1;
-                green = brightness;
-                blue = val3;
-                break;
+                    red = val1;
+                    green = brightness;
+                    blue = val3;
+                    break;
                 case 3:
-                red = val1;
-                green = val2;
-                blue = brightness;
-                break;
+                    red = val1;
+                    green = val2;
+                    blue = brightness;
+                    break;
                 case 4:
-                red = val3;
-                green = val1;
-                blue = brightness;
-                break;
+                    red = val3;
+                    green = val1;
+                    blue = brightness;
+                    break;
                 case 5:
-                red = brightness;
-                green = val1;
-                blue = val2;
-                break;
+                    red = brightness;
+                    green = val1;
+                    blue = val2;
+                    break;
                 case 6:
                 case 0:
-                red = brightness;
-                green = val3;
-                blue = val1;
-                break;
+                    red = brightness;
+                    green = val3;
+                    blue = val1;
+                    break;
             }
         }
         return [Math.floor(red), Math.floor(green), Math.floor(blue)];
