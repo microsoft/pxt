@@ -181,18 +181,21 @@ namespace pxsim {
 
     export namespace AudioContextManager {
         let _frequency = 0;
-        let _context: any; // AudioContext
-        let _vco: any; // OscillatorNode;
-        let _vca: any; // GainNode;
+        let _context: AudioContext;
+        let _vco: OscillatorNode;
+        let _vca: GainNode;
 
         let _mute = false; //mute audio
 
-        function context(): any {
+        // for playing WAV
+        let audio: HTMLAudioElement;
+
+        function context(): AudioContext {
             if (!_context) _context = freshContext();
             return _context;
         }
 
-        function freshContext(): any {
+        function freshContext(): AudioContext {
             (<any>window).AudioContext = (<any>window).AudioContext || (<any>window).webkitAudioContext;
             if ((<any>window).AudioContext) {
                 try {
@@ -223,6 +226,149 @@ namespace pxsim {
 
         export function frequency(): number {
             return _frequency;
+        }
+
+        const waveForms = ["", "triangle", "sawtooth", "sine"]
+        let noiseBuffer: AudioBuffer
+        let squareBuffer: AudioBuffer[]
+
+        function getNoiseBuffer() {
+            if (!noiseBuffer) {
+                // normalized to 100Hz
+                const bufferSize = 1024;
+                noiseBuffer = context().createBuffer(1, bufferSize, 100 * bufferSize);
+                const output = noiseBuffer.getChannelData(0);
+
+                for (let i = 0; i < bufferSize; i++) {
+                    output[i] = (((i * 7919) & 1023) / 512.0) - 1.0;
+                }
+            }
+            return noiseBuffer
+        }
+
+        function getSquareBuffer(param: number) {
+            if (!squareBuffer[param]) {
+                // normalized to 100Hz
+                const bufferSize = 100;
+                const buf = context().createBuffer(1, bufferSize, 100 * bufferSize);
+                const output = buf.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    output[i] = i < param ? 1 : -1;
+                }
+                squareBuffer[param] = buf
+            }
+            return squareBuffer[param]
+        }
+
+        /*
+        #define SW_TRIANGLE 1
+        #define SW_SAWTOOTH 2
+        #define SW_SINE 3 // TODO remove it? it takes space
+        #define SW_NOISE 4
+        #define SW_SQUARE_10 11
+        #define SW_SQUARE_50 15
+        */
+
+
+        /*        
+         struct SoundInstruction {
+             uint8_t soundWave;
+             uint8_t flags;
+             uint16_t frequency;
+             uint16_t duration;
+             uint16_t startVolume;
+             uint16_t endVolume;
+         };
+         */
+
+        function getGenerator(waveFormIdx: number, hz: number): AudioNode {
+            let form = waveForms[waveFormIdx]
+            if (form) {
+                let src = context().createOscillator()
+                src.frequency.value = hz
+                return src
+            }
+
+            let buffer: AudioBuffer
+            if (waveFormIdx == 4)
+                buffer = getNoiseBuffer()
+            else if (11 <= waveFormIdx && waveFormIdx <= 15)
+                buffer = getSquareBuffer((waveFormIdx - 10) * 10)
+            else
+                return null
+
+            let node = context().createBufferSource();
+            node.buffer = buffer;
+            node.loop = true;
+            node.playbackRate.value = hz / 100;
+
+            return node
+        }
+
+        export function playInstructionsAsync(b: RefBuffer) {
+            let ctx = context();
+
+            let idx = 0
+            let gen: AudioNode
+            let gain: GainNode
+            let currWave = -1
+            let currFreq = -1
+            let timeOff = 0
+
+            const scaleVol = (n: number) => (n / 1024) * 2
+
+            const loopAsync = (): Promise<void> => {
+                if (idx >= b.data.length || !b.data[idx])
+                    return Promise.delay(timeOff)
+
+                const soundWaveIdx = b.data[idx]
+                const flags = b.data[idx + 1]
+                const freq = BufferMethods.getNumber(b, BufferMethods.NumberFormat.UInt16LE, idx + 2)
+                const duration = BufferMethods.getNumber(b, BufferMethods.NumberFormat.UInt16LE, idx + 4)
+                const startVol = BufferMethods.getNumber(b, BufferMethods.NumberFormat.UInt16LE, idx + 6)
+                const endVol = BufferMethods.getNumber(b, BufferMethods.NumberFormat.UInt16LE, idx + 8)
+
+                if (!ctx)
+                    return Promise.delay(duration)
+
+                if (currWave != soundWaveIdx || currFreq != freq) {
+                    if (gen) {
+                        return Promise.delay(timeOff)
+                            .then(() => {
+                                timeOff = 0
+                                gen = null
+                                currWave = -1
+                                currFreq = -1
+                                return loopAsync()
+                            })
+                    }
+
+                    gen = _mute ? null : getGenerator(soundWaveIdx, freq)
+
+                    if (!gen)
+                        return Promise.delay(duration)
+
+                    currWave = soundWaveIdx
+                    currFreq = freq
+                    gain = ctx.createGain()
+                    gain.gain.value = scaleVol(startVol)
+
+                    gen.connect(gain)
+                    gain.connect(ctx.destination);
+
+                    (gen as OscillatorNode).start();
+                }
+
+                idx += 10
+
+                gain.gain.setValueAtTime(scaleVol(startVol), ctx.currentTime + timeOff)
+                timeOff += duration
+                gain.gain.linearRampToValueAtTime(scaleVol(endVol), ctx.currentTime + timeOff)
+
+                return loopAsync()
+            }
+
+            return loopAsync()
         }
 
         export function tone(frequency: number, gain: number) {
@@ -266,7 +412,6 @@ namespace pxsim {
             return res;
         }
 
-        let audio: HTMLAudioElement;
         export function playBufferAsync(buf: RefBuffer) {
             if (!buf) return Promise.resolve();
 
