@@ -59,7 +59,7 @@ namespace pxtblockly {
 
             this.columns_ = parseInt(options.columns) || 4;
             this.maxRows_ = parseInt(options.maxRows) || 0;
-            this.width_ = parseInt(options.width) || 400;
+            this.width_ = parseInt(options.width) || 200;
 
             this.backgroundColour_ = pxtblockly.parseColour(options.colour);
             this.borderColour_ = pxt.toolbox.fadeColor(this.backgroundColour_, 0.4, false);

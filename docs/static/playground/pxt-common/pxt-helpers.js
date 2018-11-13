@@ -163,6 +163,24 @@ namespace helpers {
         }
         return res;
     }
+
+    export function stringSlice(s: string, start: number, end?: number): string {
+        const len = s.length;
+
+        if (start < 0) {
+            start = Math.max(len + start, 0);
+        }
+
+        if (end == null) {
+            end = len;
+        }
+
+        if (end < 0) {
+            end = len + end;
+        }
+
+        return s.substr(start, end - start);
+    }
 }
 
 namespace Math {

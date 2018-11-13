@@ -54,6 +54,7 @@ export interface CompileOptions {
     background?: boolean; // not explicitly requested by user (hint for simulator)
     forceEmit?: boolean;
     preferredEditor?: string;
+    clickTrigger?: boolean;
 }
 
 export function compileAsync(options: CompileOptions = {}): Promise<pxtc.CompileResult> {
@@ -476,8 +477,10 @@ export function getPackagesWithErrors(): pkg.EditorPackage[] {
 
     const topPkg = pkg.mainEditorPkg();
     if (topPkg) {
+        const corePkgs = pxt.Package.corePackages().map(pkg => pkg.name);
+
         topPkg.forEachFile(file => {
-            if (file.diagnostics && file.diagnostics.length && file.epkg && !file.epkg.isTopLevel() &&
+            if (file.diagnostics && file.diagnostics.length && file.epkg && corePkgs.indexOf(file.epkg.getPkgId()) === -1 && !file.epkg.isTopLevel() &&
                     file.diagnostics.some(d => d.category === ts.pxtc.DiagnosticCategory.Error)) {
                 badPackages[file.epkg.getPkgId()] = file.epkg;
             }

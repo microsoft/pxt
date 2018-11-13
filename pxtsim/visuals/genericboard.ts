@@ -248,7 +248,7 @@ namespace pxsim.visuals {
             }
             this.allLabels = this.allPins.map((p, pIdx) => {
                 let blk = pinToBlockDef[pIdx];
-                return mkLabel(p.cx, p.cy, p.col, blk.labelPosition);
+                return mkLabel(p.cx, p.cy, p.col, blk.labelPosition || "above");
             });
             //catalog labels
             this.allPins.forEach((pin, pinIdx) => {

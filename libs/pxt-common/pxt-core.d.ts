@@ -229,6 +229,14 @@ declare interface String {
     //% blockId="string_substr" block="substring of %this=text|from %start|of length %length" blockNamespace="text"
     substr(start: number, length?: number): string;
 
+    /**
+     * Return a substring of the current string.
+     * @param start first character index; can be negative from counting from the end, eg:0
+     * @param end one-past-last character index
+     */
+    //% helper=stringSlice
+    slice(start: number, end?: number): string;
+
     // This block is currently disabled, as it does not compile in some targets
     // Add % sign back to the block annotation to re-enable
     /** Returns a value indicating if the string is empty */
@@ -321,6 +329,19 @@ declare interface Number {
 */
 //% blockNamespace="Arrays"
 declare namespace Array {
+    /**
+     * Check if a given object is an array.
+     */
+    //% shim=Array_::isArray
+    function isArray(obj: any): boolean;
+}
+
+declare namespace Object {
+    /**
+     * Return the field names in an object.
+     */
+    //% shim=pxtrt::keysOf
+    function keys(obj: any): string[];
 }
 
 /**

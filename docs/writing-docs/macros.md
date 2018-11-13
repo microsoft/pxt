@@ -160,6 +160,26 @@ Renders one or more codecards as JSON into cards
 Append `-ignore` to any of the above to ignore a snippet in automated testing:
 
     ```typescript-ignore
+    // You can include illegal TS in here, e.g. to showcase concepts/psuedocode 
+    for (initialization; check; update) {
+        ...
+    }
+    ```
+
+### invalid
+
+You can use `typescript-invalid` to showcase typescript that is **incorrect**:
+
+    ```typescript-invalid
     // You can include illegal TS in here, e.g. to document syntax errors
     callFunction(;
+    ```
+
+### valid
+
+You can use `typescript-valid` to showcase typescript that is **correct**:
+
+    ```typescript-valid
+    // You can include any TS in here, e.g. to showcase correct syntax
+    callFunction();
     ```

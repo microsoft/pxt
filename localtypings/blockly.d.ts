@@ -933,7 +933,7 @@ declare namespace Blockly {
         scrollCenter(): void;
         setScale(scale: number): void;
         highlightBlock(id: string): void;
-        centerOnBlock(id: string): void;
+        centerOnBlock(id: string, animate?: boolean): void;
         glowBlock(id: string, state: boolean): void;
         glowStack(id: string, state: boolean): void;
         undo(redo?: boolean): void;
@@ -970,6 +970,7 @@ declare namespace Blockly {
         moveDrag(e: Event): goog.math.Coordinate;
         showContextMenu_(e: Event): void;
         static buildDeleteList_(topBlocks: Blockly.Block[]): Blockly.Block[];
+        getFlyout(): any; //Blockly.Flyout;
     }
 
 

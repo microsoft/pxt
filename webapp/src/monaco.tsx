@@ -10,6 +10,7 @@ import * as sui from "./sui";
 import * as data from "./data";
 import * as snippets from "./monacoSnippets"
 import * as toolbox from "./toolbox";
+import * as workspace from "./workspace";
 
 import Util = pxt.Util;
 
@@ -327,15 +328,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         if (monacoArea && this.editor) {
             const toolboxWidth = monacoToolboxDiv && monacoToolboxDiv.offsetWidth || 0;
-            this.editor.layout({ width: monacoArea.offsetWidth - toolboxWidth, height: monacoArea.offsetHeight });
 
             const rgba = (this.editor as any)._themeService._theme.colors['editor.background'].rgba;
-            this.parent.updateEditorLogo(toolboxWidth, `rgba(${rgba.r},${rgba.g},${rgba.b},${rgba.a})`);
+            const logoHeight = (this.parent.isJavaScriptActive()) ? this.parent.updateEditorLogo(toolboxWidth, `rgba(${rgba.r},${rgba.g},${rgba.b},${rgba.a})`) : 0;
 
-            let toolboxHeight = this.editor ? this.editor.getLayoutInfo().contentHeight : 0;
-            if (monacoToolboxDiv) {
-                monacoToolboxDiv.style.height = `${toolboxHeight}px`;
-            }
+            this.editor.layout({ width: monacoArea.offsetWidth - toolboxWidth, height: monacoArea.offsetHeight - logoHeight });
+
+            if (monacoToolboxDiv) monacoToolboxDiv.style.height = `100%`;
         }
     }
 
@@ -611,6 +610,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private setupToolbox(editorElement: HTMLElement) {
         // Monaco flyout widget
         let flyoutWidget = {
+            domNode: null as HTMLElement,
             getId: function (): string {
                 return 'pxt.flyout.widget';
             },
@@ -1133,9 +1133,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             'monacoFlyoutLabel monacoFlyoutHeading', true, icon, iconClass, color);
     }
 
-    protected showFlyoutGroupLabel(group: string, groupicon: string, labelLineWidth: string) {
+    protected showFlyoutGroupLabel(group: string, groupicon: string, labelLineWidth: string, helpCallback: string) {
         this.getMonacoLabel(pxt.Util.rlf(`{id:group}${group}`),
-            'monacoFlyoutLabel blocklyFlyoutGroup', false, undefined, undefined, undefined, true, labelLineWidth);
+            'monacoFlyoutLabel blocklyFlyoutGroup', false, undefined, undefined, undefined, true, labelLineWidth, helpCallback);
     }
 
     protected showFlyoutBlocks(ns: string, color: string, blocks: toolbox.BlockDefinition[]) {
@@ -1316,7 +1316,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private getMonacoLabel(label: string, className: string,
         hasIcon?: boolean, icon?: string, iconClass?: string, iconColor?: string,
-        hasLine?: boolean, labelLineWidth?: string) {
+        hasLine?: boolean, labelLineWidth?: string, helpCallback?: string) {
         const monacoFlyout = this.getMonacoFlyout();
         const fontSize = this.parent.settings.editorFontSize;
 
@@ -1342,6 +1342,25 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
         labelDiv.appendChild(labelText);
 
+        if (helpCallback && pxt.editor.HELP_IMAGE_URI) {
+            let labelHelpIcon = document.createElement('span');
+            labelHelpIcon.style.display = 'inline-block';
+            labelHelpIcon.style.cursor = 'pointer';
+            labelHelpIcon.draggable = false;
+            const labelHelpIconImage = document.createElement('img');
+            labelHelpIconImage.setAttribute('src', pxt.editor.HELP_IMAGE_URI);
+            labelHelpIconImage.style.height = `${fontSize + 5}px`;
+            labelHelpIconImage.style.width = `${fontSize + 5}px`;
+            labelHelpIconImage.style.verticalAlign = 'middle';
+            labelHelpIconImage.style.marginLeft = '10px';
+            labelHelpIcon.appendChild(labelHelpIconImage);
+            labelDiv.appendChild(labelHelpIcon);
+
+            labelHelpIconImage.addEventListener('click', () => {
+                this.helpButtonCallback(label);
+            });
+        }
+
         monacoFlyout.appendChild(labelDiv);
 
         if (hasLine) {
@@ -1352,6 +1371,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             labelDiv.appendChild(labelLine);
         }
         return labelDiv;
+    }
+
+    protected helpButtonCallback(group?: string) {
+        pxt.debug(`${group} help icon clicked.`);
+        workspace.fireEvent({ type: 'ui', editor: 'ts', action: 'groupHelpClicked', data: { group } } as pxt.editor.events.UIEvent);
     }
 
     private getMonacoBlock(fn: toolbox.BlockDefinition, ns: string, color: string, isDisabled?: boolean) {
@@ -1378,7 +1402,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         const comment = fn.attributes.jsDoc;
 
-        let snippetPrefix = fn.noNamespace ? "" : ns;
+        let snippetPrefix = fn.noNamespace ? "" : (fn.attributes.blockNamespace || fn.namespace);
         let isInstance = false;
         let addNamespace = false;
         let namespaceToUse = "";
@@ -1484,6 +1508,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 monacoEditor.editor.setPosition(endPos);
                 monacoEditor.editor.focus();
                 //monacoEditor.editor.setSelection(new monaco.Range(currPos.lineNumber, currPos.column, endPos.lineNumber, endPos.column));
+
+                // Fire a create event
+                workspace.fireEvent({ type: 'create', editor: 'ts', blockId: fn.attributes.blockId } as pxt.editor.events.CreateEvent);
             };
             monacoBlock.ondragstart = (e: DragEvent) => {
                 pxt.tickEvent("monaco.toolbox.itemdrag", undefined, { interactiveConsent: true });
@@ -1494,6 +1521,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 let insertText = snippetPrefix ? `${snippetPrefix}.${snippet}` : snippet;
                 insertText = addNamespace ? `${firstWord(namespaceToUse)}.${insertText}` : insertText;
                 e.dataTransfer.setData('text', insertText); // IE11 only supports text
+
+                // Fire a create event
+                workspace.fireEvent({ type: 'create', editor: 'ts', blockId: fn.attributes.blockId } as pxt.editor.events.CreateEvent);
             }
             monacoBlock.ondragend = (e: DragEvent) => {
                 monacoFlyout.style.transform = "none";
