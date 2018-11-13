@@ -106,12 +106,12 @@ function testMaps() {
     let r = new MyMap<number, string>()
 
     mapSet(q, "one", "foo" + "bar")
-    assert(mapGet(q, "one").length == 6, "")
+    assert(mapGet(q, "one").length == 6, "m0")
 
     mapSet(q, "one", "foo2" + "bar")
-    assert(mapGet(q, "one").length == 7, "")
+    assert(mapGet(q, "one").length == 7, "m1")
     q.setElt("two", "x" + "y")
-    assert(q.getElt("two").length == 2, "")
+    assert(q.getElt("two").length == 2, "m2")
     q.setElt("two", "x" + "yz")
     assert(q.getElt("two").length == 3, "thr")
 

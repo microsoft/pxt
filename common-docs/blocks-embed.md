@@ -132,7 +132,7 @@ window.addEventListener("message", function (ev) {
         case "renderready":
             var snippets = document.getElementsByTagName("pre")
             for (var i = 0; i< snippets.length; i++) {
-                snippets[i].id = `snippet-` + i;
+                snippets[i].id = "snippet-" + i;
                 makeCodeRenderPre(snippets[i]);
             }
             break;
@@ -261,7 +261,7 @@ var blocksClass = "blocks";
 var injectRenderer = function () {
     var f = $("<iframe>", {
         id: "makecoderenderer",
-        src: `${makecodeUrl}--docs?render=1&lang=${$('html').attr('lang')}`
+        src: makecodeUrl + "--docs?render=1&lang=" + ($('html').attr('lang') || "en")
     });
     f.css("position", "absolute");
     f.css("left", 0);
@@ -288,9 +288,9 @@ var attachBlocksListener = function () {
 
         switch (msg.type) {
             case "renderready":
-                $(`.${blocksClass}`).each(function () {
+                $("." + blocksClass).each(function () {
                     var snippet = $(this)[0];
-                    snippet.id = `pxt-blocks-${blockId++}`;
+                    snippet.id = "pxt-blocks-" + (blockId++);
                     makeCodeRenderPre(snippet);
                 });
                 break;

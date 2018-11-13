@@ -3,6 +3,7 @@
         "target": "es5",
         "noImplicitAny": true,
         "noImplicitReturns": true,
+        "noImplicitThis": true,
         "declaration": true,
         "out": "../built/pxtsim.js",
         "newLine": "LF",

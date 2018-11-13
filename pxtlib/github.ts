@@ -637,9 +637,8 @@ namespace pxt.github {
                 return listRefsExtAsync(scr.fullName, "tags")
                     .then(refsRes => {
                         let tags = Object.keys(refsRes.refs)
-                        tags.reverse()
-                        // only look for vxx.xx.xx tags
-                        tags = tags.filter(t => /^v\d+(\.\d+(\.\d+)?)?$/i.test(t));
+                        // only look for semver tags
+                        tags = pxt.semver.sortLatestTags(tags);
 
                         // check if the version has been frozen for this release
                         const targetVersion = pxt.appTarget.versions && pxt.semver.tryParse(pxt.appTarget.versions.target);

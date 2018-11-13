@@ -9,6 +9,7 @@ import * as compiler from "./compiler"
 import * as debug from "./debugger";
 import * as toolbox from "./toolbox";
 import * as snippets from "./blocksSnippets";
+import * as workspace from "./workspace";
 
 import Util = pxt.Util;
 
@@ -378,6 +379,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (ev.xml.tagName == 'SHADOW')
                     this.cleanUpShadowBlocks();
                 this.parent.setState({ hideEditorFloats: false });
+                workspace.fireEvent({ type: 'create', editor: 'blocks', blockId } as pxt.editor.events.CreateEvent);
             }
             if (ev.type == 'ui') {
                 if (ev.element == 'category') {
@@ -424,11 +426,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         const blocklyToolboxDiv = this.getBlocklyToolboxDiv();
         if (!blocklyToolboxDiv) return;
-        this.parent.updateEditorLogo(blocklyToolboxDiv.offsetWidth);
+        if (this.parent.isBlocksActive()) this.parent.updateEditorLogo(blocklyToolboxDiv.offsetWidth);
 
         const blocklyOptions = this.getBlocklyOptions(this.showCategories);
-        let toolboxHeight = blocklyDiv.offsetHeight;
-        if (!(blocklyOptions as any).horizontalLayout) blocklyToolboxDiv.style.height = `${toolboxHeight}px`;
+        if (!(blocklyOptions as any).horizontalLayout) blocklyToolboxDiv.style.height = `100%`;
     }
 
     hasUndo() {
@@ -1140,10 +1141,20 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.flyoutXmlList.push(headingLabel);
     }
 
-    protected showFlyoutGroupLabel(group: string, groupicon: string, labelLineWidth: string) {
+    protected showFlyoutGroupLabel(group: string, groupicon: string, labelLineWidth: string, helpCallback: string) {
         let groupLabel = pxt.blocks.createFlyoutGroupLabel(pxt.Util.rlf(`{id:group}${group}`),
-            groupicon, labelLineWidth);
+            groupicon, labelLineWidth, helpCallback ? `GROUP_HELP_${helpCallback}` : undefined);
+        if (helpCallback) {
+            this.editor.registerButtonCallback(`GROUP_HELP_${helpCallback}`, (/*btn*/) => {
+                this.helpButtonCallback(group);
+            })
+        }
         this.flyoutXmlList.push(groupLabel);
+    }
+
+    protected helpButtonCallback(group?: string) {
+        pxt.debug(`${group} help icon clicked.`);
+        workspace.fireEvent({ type: 'ui', editor: 'blocks', action: 'groupHelpClicked', data: { group } } as pxt.editor.events.UIEvent);
     }
 
     protected showFlyoutBlocks(ns: string, color: string, blocks: toolbox.BlockDefinition[]) {

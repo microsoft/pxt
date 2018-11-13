@@ -112,6 +112,7 @@ namespace ts.pxtc {
     export interface CommentAttrs {
         debug?: boolean; // requires ?dbg=1
         shim?: string;
+        shimArgument?: string;
         enumval?: string;
         helper?: string;
         help?: string;
@@ -168,6 +169,7 @@ namespace ts.pxtc {
         subcategories?: string[];
         groups?: string[];
         groupIcons?: string[];
+        groupHelp?: string[];
         labelLineWidth?: string;
         handlerStatement?: boolean; // indicates a block with a callback that can be used as a statement
         blockHandlerKey?: string; // optional field for explicitly declaring the handler key to use to compare duplicate events
@@ -843,6 +845,14 @@ namespace ts.pxtc {
             }
             catch (e) {
                 res.groupIcons = undefined;
+            }
+        }
+        if (res.groupHelp) {
+            try {
+                res.groupHelp = JSON.parse(res.groupHelp as any);
+            }
+            catch (e) {
+                res.groupHelp = undefined;
             }
         }
         updateBlockDef(res);

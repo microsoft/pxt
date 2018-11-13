@@ -33,8 +33,7 @@
     background: @invertedBackground;
 }
 
-
-#root .menubar .menu > .ui.item:hover .icon {
+#mainmenu > .menu > .ui.item:hover > .icon {
     transform: scale(1.2);
 }
 

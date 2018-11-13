@@ -307,6 +307,7 @@ file("built/web/pxtlib.js", [
 
     jake.cpR("built/pxtlib.js", "built/web/")
     jake.cpR("built/pxtcompiler.js", "built/web/")
+    jake.cpR("built/pxtblocks.js", "built/web/")
     jake.cpR("built/pxtblockly.js", "built/web/")
     jake.cpR("built/pxtsim.js", "built/web/")
     jake.cpR("built/pxtrunner.js", "built/web/")

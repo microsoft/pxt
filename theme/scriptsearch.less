@@ -1,73 +1,54 @@
 
-/* Extensions */
-.ui.searchdialog.modal,
-.ui.searchdialog.modal > .content {
-    background: @extensionsBackground;
-}
-.ui.searchdialog.modal > .header {
-    background: @extensionsHeaderBackground;
-    padding: 1rem;
-    color: white;
-    border-radius: 0;
-    text-align: center;
-}
-.ui.searchdialog.modal .ui.search {
-    max-width: 50%;
-    margin: auto;
-}
-.ui.searchdialog.modal > .closeIcon .close {
-    color: white;
-}
-
-.ui.searchdialog.modal .ui.inline.loader {
-    margin-top: 4em;
-}
-.ui.searchdialog.modal .ui.inline.loader:after,
-.ui.searchdialog.modal .ui.inline.loader:before {
-    width: 4rem;
-    height: 4rem;
-}
 
 /*******************************
-        Modal Back Icon
+    Script search dialog
 *******************************/
 
-.ui.modal .ui.button.labeled.icon.editorBack {
-    color: white !important;
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 3.5rem;
-    outline: none !important;
-    border: none !important;
-    cursor: pointer;
-    border-radius: 10em !important;
+.ui.searchdialog {
+    .cards {
+        overflow-y: auto;
+        overflow-x: hidden;
+        margin-top: 0.5rem;
+    }    
+    .ui.card {
+        height: 20rem;
+        .ui.cardimage {
+            height: 11rem;
+        }
+    }
+    /* Search input */
+    .ui.search {
+        max-width: 50%;
+        margin: auto;
+    }
 
-    &:focus, &:hover {
-        color: darken(white, 20%) !important;
+    .ui.inline.loader {
+        margin-top: 4em;
+        :after, :before {
+            width: 4rem;
+            height: 4rem;
+        }
     }
 }
 
-.ui.modal > .header .helpIcon {
-    float: right;
-    color: white;
-}
-
-@HCextensionsHeaderBackground: black;
-@HCextensionsHeaderTextColor: white;
-
-.hc {
-    .ui.searchdialog.modal > .header {
-        background: @HCextensionsHeaderBackground !important;
-        color: @HCextensionsHeaderTextColor !important;
-    }
-
-    .ui.searchdialog.modal .ui.button.labeled.icon.editorBack {
-        background: transparent !important;
-
-        &:focus, &:hover {
-            border: 0 !important;
-            outline: 0 !important;
+// reduce all card sizes
+@media only screen and (max-width: @largestMobileScreen) {
+    .ui.searchdialog {
+        .ui.card, .ui.cards>.card {
+            width: 9rem;
+            height: 9rem;
+        }
+        .ui.card {
+            .content .description {
+                display: none;
+            }
+            .content .header {
+                font-size: 80%;
+                font-weight: normal;
+            }
+            .ui.cardimage {
+                height: 5rem;
+            }
         }
     }
 }

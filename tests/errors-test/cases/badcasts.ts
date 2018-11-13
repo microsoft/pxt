@@ -19,7 +19,7 @@ class Blap {
     bar(a: BazParent) { }
 }
 
-class Blap2 extends Blap {   // TS9263
+class Blap2 extends Blap {
     bar(a: UnrelatedToBaz) { }
 }
 
@@ -32,22 +32,14 @@ let v = new BazParent()
 let z: Baz = new Baz()
 let x: Foo = { a: 1, b: 2 }
 
-// Static TypeScript (STS) doesn't permit cast of Interface to Class
-let y: Baz = x // TS9263
-
-y = x  // TS9263
-
-// STS doesn't permit downcasts
-z = v  // TS9263
-
+let y: Baz = x
+y = x
+z = v
 v = z // this is OK
 
-// STS doesn't permit casts between unrelated classes
-let z2 : UnrelatedToBaz = v // TS9263
+let z2 : UnrelatedToBaz = v
 
-// can't cast primitive to objects (yet)
-
-let z3: Object = 3 // TS9263
+let z3: Object = 3
 
 interface Foo2 {
     b: Baz;
@@ -60,7 +52,7 @@ interface Foo3 {
 let x2 : Foo2 = null
 let x3 : Foo3 = null
 
-x3 = x2 // TS9263
+x3 = x2
 
 interface Opt extends Baz { // TS9262
     b?: string
