@@ -411,7 +411,6 @@ file('built/web/vs/editor/editor.main.js', ['node_modules/pxt-monaco-typescript/
     jake.mkdirP("webapp/public/vs/basic-languages/src")
     jake.cpR("node_modules/monaco-editor/dev/vs/basic-languages/bat/", "webapp/public/vs/basic-languages/")
     jake.cpR("node_modules/monaco-editor/dev/vs/basic-languages/cpp/", "webapp/public/vs/basic-languages/")
-    jake.cpR("node_modules/monaco-editor/dev/vs/basic-languages/typescript/", "webapp/public/vs/basic-languages/")
     jake.cpR("node_modules/monaco-editor/dev/vs/basic-languages/_.contribution.js", "webapp/public/vs/basic-languages/")
     jake.mkdirP("webapp/public/vs/language/json")
     jake.cpR("node_modules/monaco-editor/dev/vs/language/json/", "webapp/public/vs/language/")
