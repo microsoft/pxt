@@ -559,7 +559,7 @@ declare namespace Blockly {
         updateEditable(): void;
         dispose(): void;
         render_(): void;
-        showEditor_(): void;
+        showEditor_(e?: Event): void;
         getAbsoluteXY_(): goog.math.Coordinate;
         getScaledBBox_(): {top: number, bottom: number, left: number, right: number};
         setValue(newValue: string | number): void;
