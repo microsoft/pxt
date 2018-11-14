@@ -209,8 +209,7 @@ export function loginAsync(parsed: commandParser.ParsedCommand): Promise<void> {
     }
 
     if (service === "pxt") {
-        console.log("'pxt login pxt' is deprecated. Pass your token via the PXT_ACCESS_TOKEN environment variable instead");
-
+        return fatal("'pxt login pxt' is deprecated. Pass your token via the PXT_ACCESS_TOKEN environment variable instead")
     }
 
     if (!service || LOGIN_PROVIDERS.indexOf(service) < 0)
