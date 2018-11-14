@@ -130,8 +130,8 @@
         opacity: 0.3;
     }
 
-    .button {
-        background-color: white !important;
+    .ui.button:not(.red) {
+        background-color: @white;
     }
 }
 

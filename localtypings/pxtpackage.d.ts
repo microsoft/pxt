@@ -99,6 +99,7 @@ declare namespace pxt {
         role?: string;
         ariaLabel?: string;
         label?: string;
+        labelIcon?: string;
         labelClass?: string;
         tags?: string[]; // tags shown in home screen, colors specified in theme
         tabIndex?: number;

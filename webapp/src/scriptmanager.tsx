@@ -14,6 +14,7 @@ type ISettingsProps = pxt.editor.ISettingsProps;
 export interface ScriptManagerDialogState {
     visible?: boolean;
     selected?: pxt.Map<number>;
+    markedNew?: pxt.Map<number>;
     multiSelect?: boolean;
     multiSelectStart?: number;
     view: 'list' | 'grid';
@@ -103,14 +104,19 @@ export class ScriptManagerDialog extends data.Component<ISettingsProps, ScriptMa
     handleDelete() {
         let { selected } = this.state;
         const headers = this.fetchLocalData();
-        headers.forEach((header, index) => {
-            if (selected[index]) {
-                // Delete each selected project
-                header.isDeleted = true;
-                workspace.saveAsync(header, {});
-            }
+        const selectedLength = Object.keys(selected).length;
+        core.confirmDelete(selectedLength == 1 ? headers[selected[Object.keys(selected)[0]]].name : lf("{0} files", selectedLength), () => {
+            const promises: Promise<void>[] = [];
+            headers.forEach((header, index) => {
+                if (selected[index]) {
+                    // Delete each selected project
+                    header.isDeleted = true;
+                    promises.push(workspace.saveAsync(header, {}));
+                }
+            })
+            this.setState({ selected: {} })
+            return Promise.all(promises).then(() => { });
         })
-        this.setState({ selected: {} })
     }
 
     handleExport() {
@@ -135,7 +141,16 @@ export class ScriptManagerDialog extends data.Component<ISettingsProps, ScriptMa
 
     handleDuplicate() {
         const header = this.getSelectedHeader();
-        // TODO: implementing duplicating project without opening a project
+        const clonedHeader = pxt.U.clone(header);
+        workspace.getTextAsync(header.id)
+            .then(files => workspace.installAsync(clonedHeader, files))
+            .then(() => {
+                data.clearCache();
+                this.setState({ selected: {}, markedNew: { '0': 1 } });
+                setTimeout(() => {
+                    this.setState({ markedNew: {} });
+                }, 1000);
+            })
     }
 
     handleSwitchView() {
@@ -144,7 +159,7 @@ export class ScriptManagerDialog extends data.Component<ISettingsProps, ScriptMa
     }
 
     handleSearch(inputValue: string) {
-        this.setState({ searchFor: inputValue });
+        this.setState({ searchFor: inputValue, selected: {} }); // Clear selected list when searching
     }
 
     private getSelectedHeader() {
@@ -157,7 +172,7 @@ export class ScriptManagerDialog extends data.Component<ISettingsProps, ScriptMa
     }
 
     renderCore() {
-        const { visible, selected, view, searchFor } = this.state;
+        const { visible, selected, markedNew, view, searchFor } = this.state;
         if (!visible) return <div></div>;
 
         let headers = this.fetchLocalData() || [];
@@ -178,9 +193,9 @@ export class ScriptManagerDialog extends data.Component<ISettingsProps, ScriptMa
                 headerActions.push(<sui.Button key="edit" icon="edit outline" className="circular icon" title={lf("Edit Project")} onClick={this.handleOpen} />);
                 //headerActions.push(<sui.Button key="rename" icon="font" className="circular icon" title={lf("Rename Project")} onClick={this.handleRename} />);
                 headerActions.push(<sui.Button key="clone" icon="clone outline" className="circular icon" title={lf("Clone Project")} onClick={this.handleDuplicate} />);
-                headerActions.push(<sui.Button key="export" icon="download" className="circular icon" title={lf("Save Project")} onClick={this.handleExport} />);
+                //headerActions.push(<sui.Button key="export" icon="download" className="circular icon" title={lf("Save Project")} onClick={this.handleExport} />);
             }
-            headerActions.push(<sui.Button key="delete" icon="trash" className="circular icon" title={lf("Delete Project")} onClick={this.handleDelete} />);
+            headerActions.push(<sui.Button key="delete" icon="trash" className="circular icon red" title={lf("Delete Project")} onClick={this.handleDelete} />);
             headerActions.push(<div key="divider" className="divider"></div>);
         }
         headerActions.push(<sui.Button key="view" icon={view == 'grid' ? 'th list' : 'grid layout'} className="circular icon" title={`${view == 'grid' ? lf("List view") : lf("Grid view")}`} onClick={this.handleSwitchView} />)
@@ -203,13 +218,14 @@ export class ScriptManagerDialog extends data.Component<ISettingsProps, ScriptMa
                                 time={scr.recentUse}
                                 url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}
                                 scr={scr} index={index}
-                                label={selected[index] ? 'Selected' : undefined}
+                                labelIcon={selected[index] ? 'check' : undefined}
+                                labelClass={'right corner label green'}
                                 onCardClick={this.handleCardClick}
                             />
                         )}
                     </div> : undefined}
                 {view == 'list' ?
-                    <table className="ui compact definition unstackable table">
+                    <table className="ui definition unstackable table">
                         <thead className="full-width">
                             <tr>
                                 <th></th>
@@ -220,7 +236,7 @@ export class ScriptManagerDialog extends data.Component<ISettingsProps, ScriptMa
                         <tbody>
                             {headers.map((scr, index) =>
                                 <ProjectsCodeRow key={'local' + scr.id + scr.recentUse} selected={!!selected[index]}
-                                    onRowClicked={this.handleCardClick} index={index} scr={scr}>
+                                    onRowClicked={this.handleCardClick} index={index} scr={scr} markedNew={!!markedNew[index]}>
                                     <td>{scr.name}</td>
                                     <td>{pxt.Util.timeSince(scr.recentUse)}</td>
                                 </ProjectsCodeRow>
@@ -238,6 +254,7 @@ interface ProjectsCodeRowProps extends pxt.CodeCard {
     scr: any;
     index?: number;
     selected?: boolean;
+    markedNew?: boolean;
     onRowClicked: (e: any, scr: any, index?: number, force?: boolean) => void;
 }
 
@@ -248,7 +265,6 @@ class ProjectsCodeRow extends sui.StatelessUIElement<ProjectsCodeRowProps> {
 
         this.handleClick = this.handleClick.bind(this);
         this.handleCheckboxClick = this.handleCheckboxClick.bind(this);
-        this.handleCheckboxChange = this.handleCheckboxChange.bind(this);
     }
 
     handleClick(e: any) {
@@ -261,50 +277,14 @@ class ProjectsCodeRow extends sui.StatelessUIElement<ProjectsCodeRowProps> {
         e.stopPropagation();
     }
 
-    handleCheckboxChange(e: any) {
-
-    }
 
     renderCore() {
-        const { scr, onRowClicked, onClick, selected, children, ...rest } = this.props;
-        return <tr {...rest} onClick={this.handleClick} style={{ cursor: 'pointer' }} className={`${selected ? 'active' : ''}`}>
+        const { scr, onRowClicked, onClick, selected, markedNew, children, ...rest } = this.props;
+        return <tr {...rest} onClick={this.handleClick} style={{ cursor: 'pointer' }} className={`${markedNew ? 'warning' : selected ? 'positive' : ''}`}>
             <td className="collapsing" onClick={this.handleCheckboxClick}>
-                <PlainCheckbox onChange={this.handleCheckboxChange} defaultChecked={selected}/>
+                <sui.Icon icon={`square outline large ${selected ? 'check' : ''}`} />
             </td>
             {children}
         </tr>
-    }
-}
-
-
-interface PlainCheckboxProps {
-    label?: string;
-    onChange: (v: boolean) => void;
-    defaultChecked?: boolean;
-}
-
-interface PlainCheckboxState {
-    isChecked: boolean;
-}
-
-class PlainCheckbox extends data.Component<PlainCheckboxProps, PlainCheckboxState> {
-    constructor(props: PlainCheckboxProps) {
-        super(props);
-        this.state = {
-            isChecked: props.defaultChecked
-        }
-        this.setCheckedBit = this.setCheckedBit.bind(this);
-    }
-
-    setCheckedBit() {
-        let val = !this.state.isChecked
-        this.props.onChange(val)
-        this.setState({ isChecked: val })
-    }
-
-    renderCore() {
-        return <div className={`ui fitted ${this.state.isChecked ? 'checked' : ''} checkbox`}>
-            <input type="checkbox" onChange={this.setCheckedBit} checked={this.state.isChecked} aria-checked={this.state.isChecked} /> <label>{this.props.label}</label>
-        </div>
     }
 }
