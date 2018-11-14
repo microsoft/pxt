@@ -284,7 +284,7 @@ namespace pxsim {
         function getGenerator(waveFormIdx: number, hz: number): AudioNode {
             let form = waveForms[waveFormIdx]
             if (form) {
-                let src = context().createOscillator()                
+                let src = context().createOscillator()
                 src.type = form
                 src.frequency.value = hz
                 return src
