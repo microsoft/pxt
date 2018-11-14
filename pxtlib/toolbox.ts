@@ -90,10 +90,77 @@ namespace pxt.toolbox {
     export function convertColor(colour: string): string {
         const hue = parseInt(colour);
         if (!isNaN(hue)) {
-            console.error('hue style color not supported anymore, use #rrggbb')
+            return hueToRgb(hue);
         }
-        // TODO: HSV support
         return colour;
+    }
+
+    export function hueToRgb(hue: number) {
+        const HSV_SATURATION = 0.45;
+        const HSV_VALUE = 0.65 * 255;
+        const rgbArray = hsvToRgb(hue, HSV_SATURATION, HSV_VALUE);
+        return `#${componentToHex(rgbArray[0])}${componentToHex(rgbArray[1])}${componentToHex(rgbArray[2])}`;
+    }
+
+    /**
+     * Converts an HSV triplet to an RGB array.  V is brightness because b is
+     *   reserved for blue in RGB.
+     * Closure's HSV to RGB function: https://github.com/google/closure-library/blob/master/closure/goog/color/color.js#L613
+     */
+    function hsvToRgb(h: number, s: number, brightness: number) {
+        let red = 0;
+        let green = 0;
+        let blue = 0;
+        if (s == 0) {
+            red = brightness;
+            green = brightness;
+            blue = brightness;
+        } else {
+            let sextant = Math.floor(h / 60);
+            let remainder = (h / 60) - sextant;
+            let val1 = brightness * (1 - s);
+            let val2 = brightness * (1 - (s * remainder));
+            let val3 = brightness * (1 - (s * (1 - remainder)));
+            switch (sextant) {
+                case 1:
+                    red = val2;
+                    green = brightness;
+                    blue = val1;
+                    break;
+                case 2:
+                    red = val1;
+                    green = brightness;
+                    blue = val3;
+                    break;
+                case 3:
+                    red = val1;
+                    green = val2;
+                    blue = brightness;
+                    break;
+                case 4:
+                    red = val3;
+                    green = val1;
+                    blue = brightness;
+                    break;
+                case 5:
+                    red = brightness;
+                    green = val1;
+                    blue = val2;
+                    break;
+                case 6:
+                case 0:
+                    red = brightness;
+                    green = val3;
+                    blue = val1;
+                    break;
+            }
+        }
+        return [Math.floor(red), Math.floor(green), Math.floor(blue)];
+    }
+
+    function componentToHex(c: number) {
+        const hex = c.toString(16);
+        return hex.length == 1 ? "0" + hex : hex;
     }
 
     export function fadeColor(hex: string, luminosity: number, lighten: boolean): string {
