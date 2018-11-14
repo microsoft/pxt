@@ -168,7 +168,7 @@ interface KeyTar {
 }
 
 function requireKeyTar(install = false): Promise<KeyTar> {
-    return Promise.resolve(nodeutil.lazyRequire("keytar", install) as KeyTar);
+    return Promise.resolve(undefined); //resolve(nodeutil.lazyRequire("keytar", install) as KeyTar);
 }
 
 function passwordGetAsync(account: string): Promise<string> {
