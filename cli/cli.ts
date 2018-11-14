@@ -5196,19 +5196,26 @@ interface BlockTestCase {
     testFiles: { testName: string, contents: string }[];
 }
 
-function blockTestsAsync() {
+function blockTestsAsync(parsed?: commandParser.ParsedCommand) {
     const karma = karmaPath();
     if (!karma) {
         console.error("Karma not found, did you run npm install?");
         return Promise.reject(new Error("Karma not found"));
     }
+
+    let extraArgs: string[] = []
+
+    if (parsed && parsed.flags["debug"]) {
+        extraArgs.push("--no-single-run");
+    }
+
     return writeBlockTestJSONAsync()
         .then(() => nodeutil.spawnAsync({
             cmd: karma,
             envOverrides: {
                 "KARMA_TARGET_DIRECTORY": process.cwd()
             },
-            args: ["start", path.resolve("node_modules/pxt-core/tests/blocks-test/karma.conf.js")]
+            args: ["start", path.resolve("node_modules/pxt-core/tests/blocks-test/karma.conf.js")].concat(extraArgs)
         }), (e: Error) => console.log("Skipping blocks tests: " + e.message))
 
     function getBlocksFilesAsync(libsDirectory: string): Promise<BlockTestCase[]> {
@@ -5708,7 +5715,15 @@ function initCommands() {
         }
     }, testGithubPackagesAsync);
 
-    advancedCommand("testblocks", "test blocks files in target and common libs in a browser", blockTestsAsync);
+    p.defineCommand({
+        name: "testblocks",
+        help: "Test blocks files in target and common libs in a browser. See https://makecode.com/develop/blockstests",
+        advanced: true,
+        flags: {
+            debug: { description: "Keeps the browser open to debug tests" }
+        }
+    }, blockTestsAsync);
+
 
     function simpleCmd(name: string, help: string, callback: (c?: commandParser.ParsedCommand) => Promise<void>, argString?: string, onlineHelp?: boolean): void {
         p.defineCommand({ name, help, onlineHelp, argString }, callback);

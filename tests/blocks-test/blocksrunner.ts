@@ -268,7 +268,8 @@ function encode(testcase: string) {
 }
 
 if (testJSON.libsTests && testJSON.libsTests.length) {
-    describe("block tests in target", () => {
+    describe("block tests in target", function() {
+        this.timeout(5000);
         for (const test of testJSON.libsTests) {
             describe("for package " + test.packageName, () => {
                 for (const testFile of test.testFiles) {
@@ -279,7 +280,8 @@ if (testJSON.libsTests && testJSON.libsTests.length) {
     });
 }
 if (testJSON.commonTests && testJSON.commonTests.length) {
-    describe("block tests in common-packages", () => {
+    describe("block tests in common-packages", function() {
+        this.timeout(5000);
         for (const test of testJSON.commonTests) {
             describe("for package " + test.packageName, () => {
                 for (const testFile of test.testFiles) {
