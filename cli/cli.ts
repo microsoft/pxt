@@ -192,7 +192,7 @@ function passwordUpdateAsync(account: string, password: string): Promise<void> {
 const PXT_KEY = "pxt";
 const GITHUB_KEY = "github";
 const CROWDIN_KEY = "crowdin";
-const LOGIN_PROVIDERS = [PXT_KEY, GITHUB_KEY, CROWDIN_KEY];
+const LOGIN_PROVIDERS = [GITHUB_KEY, CROWDIN_KEY];
 export function loginAsync(parsed: commandParser.ParsedCommand): Promise<void> {
     const service = parsed.args[0] as string;
     const token = parsed.args[1] as string;
@@ -202,11 +202,15 @@ export function loginAsync(parsed: commandParser.ParsedCommand): Promise<void> {
         console.log(msg);
         console.log("USAGE:")
         console.log(`  pxt login <service> <token>`)
-        console.log(`where service can be github, crowdin or pxt; and <token> is obtained from`)
+        console.log(`where service can be github or crowdin; and <token> is obtained from`)
         console.log(`* github: go to https://github.com/settings/tokens/new .`);
         console.log(`* crowdin: go to https://crowdin.com/project/kindscript/settings#api.`);
-        console.log(`* pxt: go to ${root}oauth/gettoken.`)
         return fatal("Bad usage")
+    }
+
+    if (service === "pxt") {
+        console.log("'pxt login pxt' is deprecated. Pass your token via the PXT_ACCESS_TOKEN environment variable instead");
+
     }
 
     if (!service || LOGIN_PROVIDERS.indexOf(service) < 0)
