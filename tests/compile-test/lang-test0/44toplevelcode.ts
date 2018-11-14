@@ -27,6 +27,3 @@ let unusedInit = incrXyz();
 
 assert(xyz == 13, "init2")
 xyz = 0
-
-clean()
-msg("test OK!")

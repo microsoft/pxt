@@ -242,7 +242,7 @@ namespace pxtblockly {
                     else if (thisField.minNote_ >= 28 && thisField.maxNote_ <= 63) {
                         name = Notes[i].altPrefixedName || name;
                     }
-                    thisField.noteName_.push(name);
+                    thisField.noteName_.push(ts.pxtc.Util.rlf(name));
                     thisField.noteFreq_.push(Notes[i].freq);
                 }
 

@@ -332,11 +332,15 @@ namespace pxt.blocks {
         return headingLabel;
     }
 
-    export function createFlyoutGroupLabel(name: string, icon?: string, labelLineWidth?: string) {
+    export function createFlyoutGroupLabel(name: string, icon?: string, labelLineWidth?: string, helpCallback?: string) {
         const groupLabel = createFlyoutLabel(name, undefined, icon);
         groupLabel.setAttribute('web-class', 'blocklyFlyoutGroup');
         groupLabel.setAttribute('web-line', '1.5');
         if (labelLineWidth) groupLabel.setAttribute('web-line-width', labelLineWidth);
+        if (helpCallback) {
+            groupLabel.setAttribute('web-help-button', 'true');
+            groupLabel.setAttribute('callbackkey', helpCallback);
+        }
         return groupLabel;
     }
 
@@ -970,6 +974,18 @@ namespace pxt.blocks {
         initDrag();
         initDebugger();
         initComments();
+
+        // PXT is in charge of disabling, don't record undo for disabled events
+        (Blockly.Block as any).prototype.setDisabled = function(disabled: any) {
+            if (this.disabled != disabled) {
+                let oldRecordUndo = (Blockly as any).Events.recordUndo;
+                (Blockly as any).Events.recordUndo = false;
+                Blockly.Events.fire(new Blockly.Events.BlockChange(
+                    this, 'disabled', null, this.disabled, disabled));
+                (Blockly as any).Events.recordUndo = oldRecordUndo;
+                this.disabled = disabled;
+            }
+        };
     }
 
     function setBuiltinHelpInfo(block: any, id: string) {

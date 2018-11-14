@@ -63,15 +63,18 @@ namespace pxsim {
             return Date.now();
         }
 
+        let perf: () => number
+
         // current time in microseconds
         export function perfNowUs(): number {
-            const perf = typeof performance != "undefined" ?
-                performance.now.bind(performance) ||
-                (performance as any).moznow.bind(performance) ||
-                (performance as any).msNow.bind(performance) ||
-                (performance as any).webkitNow.bind(performance) ||
-                (performance as any).oNow.bind(performance) :
-                Date.now;
+            if (!perf)
+                perf = typeof performance != "undefined" ?
+                    performance.now.bind(performance) ||
+                    (performance as any).moznow.bind(performance) ||
+                    (performance as any).msNow.bind(performance) ||
+                    (performance as any).webkitNow.bind(performance) ||
+                    (performance as any).oNow.bind(performance) :
+                    Date.now;
             return perf() * 1000;
         }
 
@@ -328,7 +331,7 @@ namespace pxsim {
 
     // wraps simulator code as STS code - useful for default event handlers
     export function syntheticRefAction(f: (s: StackFrame) => any) {
-        return pxtcore.mkAction(0, 0, s => _leave(s, f(s)))
+        return pxtcore.mkAction(0, s => _leave(s, f(s)))
     }
 
     export class Runtime {
@@ -348,6 +351,10 @@ namespace pxsim {
         entry: LabelFn;
         loopLock: Object = null;
         loopLockWaitList: (() => void)[] = [];
+
+        perfCounters: PerfCounter[]
+        perfOffset = 0
+        perfElapsed = 0
 
         public refCountingDebug = false;
         public refCounting = true;
@@ -387,7 +394,7 @@ namespace pxsim {
                 U.nextTick(() => {
                     runtime = this;
                     this.setupTop(resolve)
-                    pxtcore.runAction3(a, arg0, arg1, arg2)
+                    pxtcore.runAction(a, [arg0, arg1, arg2])
                     decr(a) // if it's still running, action.run() has taken care of incrementing the counter
                 }))
         }
@@ -650,6 +657,7 @@ namespace pxsim {
                     return
                 }
                 U.assert(!__this.loopLock)
+                __this.perfStartRuntime()
                 try {
                     runtime = __this
                     while (!!p) {
@@ -661,7 +669,9 @@ namespace pxsim {
                         if (__this.currFrame.overwrittenPC)
                             p = __this.currFrame
                     }
+                    __this.perfStopRuntime()
                 } catch (e) {
+                    __this.perfStopRuntime()
                     if (__this.errorHandler)
                         __this.errorHandler(e)
                     else {
@@ -730,6 +740,24 @@ namespace pxsim {
                 currResume = buildResume(s, retPC)
             }
 
+            function setupLambda(s: StackFrame, a: RefAction | LabelFn) {
+                if (a instanceof RefAction) {
+                    s.fn = a.func
+                    s.caps = a.fields
+                } else {
+                    s.fn = a
+                }
+            }
+
+            function checkSubtype(v: RefRecord, low: number, high: number) {
+                return v && v.vtable && low <= v.vtable.classNo && v.vtable.classNo <= high;
+            }
+
+            function failedCast(v: any) {
+                // TODO generate the right panic codes
+                oops("failed cast on " + v)
+            }
+
             function buildResume(s: StackFrame, retPC: number) {
                 if (currResume) oops("already has resume")
                 s.pc = retPC;
@@ -750,7 +778,7 @@ namespace pxsim {
                         let frame: StackFrame = {
                             parent: s,
                             fn: w.func,
-                            lambdaArgs: [w.a0, w.a1, w.a2],
+                            lambdaArgs: w.args,
                             pc: 0,
                             caps: w.caps,
                             depth: s.depth + 1,
@@ -798,5 +826,57 @@ namespace pxsim {
 
             initCurrentRuntime(msg);
         }
+
+        public setupPerfCounters(names: string[]) {
+            if (!names || !names.length)
+                return
+            this.perfCounters = names.map(s => new PerfCounter(s))
+        }
+
+        private perfStartRuntime() {
+            if (this.perfOffset !== 0)
+                U.userError("bad time start")
+            this.perfOffset = U.perfNowUs() - this.perfElapsed
+        }
+
+        private perfStopRuntime() {
+            this.perfElapsed = this.perfNow()
+            this.perfOffset = 0
+        }
+
+        public perfNow() {
+            if (this.perfOffset === 0)
+                U.userError("bad time now")
+            return (U.perfNowUs() - this.perfOffset) | 0
+        }
+
+        public startPerfCounter(n: number) {
+            if (!this.perfCounters)
+                return
+            const c = this.perfCounters[n]
+            if (c.start) U.userError("startPerf")
+            c.start = this.perfNow()
+        }
+
+        public stopPerfCounter(n: number) {
+            if (!this.perfCounters)
+                return
+            const c = this.perfCounters[n]
+            if (!c.start) U.userError("stopPerf")
+            c.value += this.perfNow() - c.start;
+            c.start = 0;
+            c.numstops++;
+        }
     }
+
+
+    export class PerfCounter {
+        start = 0;
+        numstops = 0;
+        value = 0;
+        constructor(public name: string) { }
+    }
+
+
+
 }

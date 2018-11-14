@@ -21,6 +21,7 @@ namespace ts.pxtc.ir {
         Sequence,
         JmpValue,
         Nop,
+        InstanceOf,
     }
 
     let currExprId = 0
@@ -39,6 +40,7 @@ namespace ts.pxtc.ir {
         argIdx: number;
         method: string;
         returnsRef?: boolean;
+        refTag?: pxt.BuiltInType;
     }
 
     export interface MaskInfo {
@@ -130,6 +132,7 @@ namespace ts.pxtc.ir {
                 case EK.Incr:
                 case EK.Decr:
                 case EK.FieldAccess:
+                case EK.InstanceOf:
                     return this.args[0].canUpdateCells()
 
                 case EK.RuntimeCall:
@@ -236,6 +239,9 @@ namespace ts.pxtc.ir {
 
                     case EK.Sequence:
                         return "(" + e.args.map(str).join("; ") + ")"
+
+                    case EK.InstanceOf:
+                        return "(" + str(e.args[0]) + " instanceof " + (e.data as ClassInfo).id + ")"
 
                     case EK.Store:
                         return `{ ${str(e.args[0])} := ${str(e.args[1])} }`
@@ -415,7 +421,8 @@ namespace ts.pxtc.ir {
         virtualIndex: number;
         ifaceIndex: number;
         mapMethod?: string;
-        mapIdx?: number;
+        classInfo?: ClassInfo;
+        isThis?: boolean;
     }
 
     export interface ProcQuery {
@@ -456,6 +463,8 @@ namespace ts.pxtc.ir {
         debugInfo: ProcDebugInfo;
         fillDebugInfo: (th: assembler.File) => void;
         classInfo: ClassInfo;
+        perfCounterName: string;
+        perfCounterNo = 0;
 
         body: Stmt[] = [];
         lblNo = 0;
@@ -467,6 +476,10 @@ namespace ts.pxtc.ir {
             this.locals = []
             this.captured = []
             this.args = []
+        }
+
+        vtLabel() {
+            return this.label() + "_args"
         }
 
         label() {
@@ -503,6 +516,15 @@ namespace ts.pxtc.ir {
             lbl.lblName = lblName
             lbl.lbl = lbl
             this.emit(lbl)
+        }
+
+        getFullName() {
+            let name = this.getName()
+            if (this.action) {
+                let info = ts.pxtc.nodeLocationInfo(this.action)
+                name += " " + info.fileName.replace("pxt_modules/", "") + ":" + (info.line + 1)
+            }
+            return name
         }
 
         getName() {
@@ -757,6 +779,8 @@ namespace ts.pxtc.ir {
     }
 
     export function op(kind: EK, args: Expr[], data?: any): Expr {
+        if (target.gc && (kind == EK.Incr || kind == EK.Decr))
+            return args[0]
         return new Expr(kind, args, data)
     }
 
@@ -787,12 +811,9 @@ namespace ts.pxtc.ir {
         return sharedCore(expr, null)
     }
 
-    export function ptrlit(lbl: string, jsInfo: string, full = false): Expr {
+    export function ptrlit(lbl: string, jsInfo: string): Expr {
         let r = op(EK.PointerLiteral, null, lbl)
         r.jsInfo = jsInfo
-        if (full) {
-            r.args = []
-        }
         return r
     }
 

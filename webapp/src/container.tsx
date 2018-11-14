@@ -176,7 +176,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
 
     showBoardDialog() {
         pxt.tickEvent("menu.changeboard", undefined, { interactiveConsent: true });
-        this.props.parent.showBoardDialogAsync().done();
+        this.props.parent.showBoardDialogAsync(undefined, true).done();
     }
 
     saveProject() {
@@ -265,7 +265,8 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         const reportAbuse = pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing;
         const readOnly = pxt.shell.isReadOnly();
         const isController = pxt.shell.isControllerMode();
-        const showSave = !readOnly && !isController && !!targetTheme.saveInMenu;
+        const disableFileAccessinMaciOs = targetTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac())
+        const showSave = !readOnly && !isController && !!targetTheme.saveInMenu && !disableFileAccessinMaciOs;
         const showSimCollapse = !readOnly && !isController && !!targetTheme.simCollapseInMenu;
         const showGreenScreen = (targetTheme.greenScreen || /greenscreen=1/i.test(window.location.href))
             && greenscreen.isSupported();

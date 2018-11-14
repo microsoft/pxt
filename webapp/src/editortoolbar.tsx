@@ -102,20 +102,21 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const isController = pxt.shell.isControllerMode();
         const readOnly = pxt.shell.isReadOnly();
         const tutorial = tutorialOptions ? tutorialOptions.tutorial : false;
-        const collapsed = (hideEditorFloats || collapseEditorTools) && !tutorial;
+        const simOpts = pxt.appTarget.simulator;
+        const headless = simOpts.headless;
+        const collapsed = (hideEditorFloats || collapseEditorTools) && (!tutorial || headless);
         const isEditor = this.props.parent.isBlocksEditor() || this.props.parent.isTextEditor();
         if (!isEditor) return <div />;
 
-        const showSave = !readOnly && !isController && !targetTheme.saveInMenu;
+        const disableFileAccessinMaciOs = targetTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac());
+        const showSave = !readOnly && !isController && !targetTheme.saveInMenu && !tutorial && !disableFileAccessinMaciOs;
         const compile = pxt.appTarget.compile;
         const compileBtn = compile.hasHex || compile.saveAsPNG;
-        const simOpts = pxt.appTarget.simulator;
         const compileTooltip = lf("Download your code to the {0}", targetTheme.boardName);
         const compileLoading = !!compiling;
         const runTooltip = running ? lf("Stop the simulator") : lf("Start the simulator");
         const restartTooltip = lf("Restart the simulator");
         const collapseTooltip = collapsed ? lf("Show the simulator") : lf("Hide the simulator");
-        const headless = simOpts.headless;
         const pairingButton = !!targetTheme.pairingButton;
 
         const hasUndo = this.props.parent.editor.hasUndo();
@@ -425,6 +426,6 @@ class EditorToolbarSaveInput extends sui.StatelessUIElement<EditorToolbarSaveInp
 
     renderCore() {
         const { onChange, onChangeValue, view, ...rest } = this.props;
-        return <input onChange={this.handleChange} {...rest} />
+        return <input onChange={this.handleChange} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} {...rest} />
     }
 }

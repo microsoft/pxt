@@ -284,6 +284,8 @@ declare namespace pxt {
         topBlocks?: boolean; // show a top blocks category in the editor
         pairingButton?: boolean; // display a pairing button
         tagColors?: pxt.Map<string>; // optional colors for tags
+        dontSuspendOnVisibility?: boolean; // we're inside an app, don't suspend the editor
+        disableFileAccessinMaciOs?:boolean; //Disable save & import of files in Mac and iOS, mainly used as embed webkit doesn't support these
         /**
          * Internal and temporary flags:
          * These flags may be removed without notice, please don't take a dependency on them
@@ -332,6 +334,20 @@ declare namespace pxt {
 }
 
 declare namespace ts.pxtc {
+    interface CompileSwitches {
+        profile?: boolean;
+        gcDebug?: boolean;
+        boxDebug?: boolean;
+        slowMethods?: boolean;
+        slowFields?: boolean;
+        skipClassCheck?: boolean;
+        noThisCheckOpt?: boolean;        
+        numFloat?: boolean;
+        noTreeShake?: boolean;
+        inlineConversions?: boolean;
+        noPeepHole?: boolean;        
+    }
+
     interface CompileTarget {
         isNative: boolean; // false -> JavaScript for simulator
         nativeType?: string; // currently only "thumb"
@@ -347,7 +363,8 @@ declare namespace ts.pxtc {
         hexMimeType?: string;
         driveName?: string;
         jsRefCounting?: boolean;
-        boxDebug?: boolean;
+        gc?: boolean;
+        switches: CompileSwitches;
         deployDrives?: string; // partial name of drives where the .hex file should be copied
         deployFileMarker?: string;
         shortPointers?: boolean; // set to true for 16 bit pointers
@@ -355,6 +372,7 @@ declare namespace ts.pxtc {
         flashEnd?: number;
         flashUsableEnd?: number;
         flashChecksumAddr?: number;
+        ramSize?: number;
         patches?: pxt.Map<UpgradePolicy[]>; // semver range -> upgrade policies
         openocdScript?: string;
         onStartText?: boolean;
@@ -400,7 +418,7 @@ declare namespace ts.pxtc {
 
     interface FuncInfo {
         name: string;
-        argsFmt: string;
+        argsFmt: string[];
         value: number;
     }
 

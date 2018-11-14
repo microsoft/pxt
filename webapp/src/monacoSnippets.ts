@@ -589,9 +589,9 @@ function cacheBuiltInBlocks() {
 export function allBuiltinBlocks() {
     cacheBuiltInBlocks();
     // Add pause until built in block
-    const pauseUntil = this.getPauseUntil();
+    const pauseUntil = getPauseUntil();
     if (pauseUntil) {
-        builtinBlockCacheById[pxtc.PAUSE_UNTIL_TYPE] = pauseUntil;
+        builtinBlockCacheById[pxtc.PAUSE_UNTIL_TYPE] = [pauseUntil, "pause_until"];
     }
     return builtinBlockCacheById;
 }
@@ -599,9 +599,9 @@ export function allBuiltinBlocks() {
 export function allBuiltinBlocksByName() {
     cacheBuiltInBlocks();
     // Add pause until built in block
-    const pauseUntil = this.getPauseUntil();
+    const pauseUntil = getPauseUntil();
     if (pauseUntil) {
-        builtinBlockCacheByName[pxtc.PAUSE_UNTIL_TYPE] = pauseUntil;
+        builtinBlockCacheByName[pxtc.PAUSE_UNTIL_TYPE] = [pauseUntil, "pause_until"];
     }
     return builtinBlockCacheByName;
 }
