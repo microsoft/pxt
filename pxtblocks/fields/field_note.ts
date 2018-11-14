@@ -415,7 +415,7 @@ namespace pxtblockly {
         /**
          * Create a piano under the note field.
          */
-        showEditor_(opt_quietInput?: boolean): void {
+        showEditor_(e: Event): void {
             this.updateColor();
 
             // If there is an existing drop-down someone else owns, hide it immediately and clear it.
@@ -427,7 +427,10 @@ namespace pxtblockly {
             //  change Note name to number frequency
             Blockly.FieldNumber.prototype.setText.call(this, this.getText());
 
-            FieldNote.superClass_.showEditor_.call(this, true);
+            const quietInput = (goog.userAgent.MOBILE || goog.userAgent.ANDROID ||
+                goog.userAgent.IPAD);
+            const readOnly = quietInput;
+            FieldNote.superClass_.showEditor_.call(this, e, false, readOnly);
 
             let pianoWidth: number;
             let pianoHeight: number;
@@ -460,7 +463,6 @@ namespace pxtblockly {
                 pianoHeight = keyHeight + labelHeight + prevNextHeight;
             }
             //  Check if Mobile, pagination -> true
-            let quietInput = opt_quietInput || false;
             if (!quietInput && (goog.userAgent.MOBILE || goog.userAgent.ANDROID)) {
                 pagination = true;
                 mobile = true;
