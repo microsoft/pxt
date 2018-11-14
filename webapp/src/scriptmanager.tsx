@@ -32,6 +32,7 @@ export class ScriptManagerDialog extends data.Component<ISettingsProps, ScriptMa
 
         this.close = this.close.bind(this);
         this.handleCardClick = this.handleCardClick.bind(this);
+        this.handleCheckboxClick = this.handleCheckboxClick.bind(this);
         this.handleDelete = this.handleDelete.bind(this);
         this.handleExport = this.handleExport.bind(this);
         this.handleOpen = this.handleOpen.bind(this);
@@ -58,9 +59,9 @@ export class ScriptManagerDialog extends data.Component<ISettingsProps, ScriptMa
         return headers;
     }
 
-    handleCardClick(e: any, scr: any, index?: number) {
+    handleCardClick(e: any, scr: any, index?: number, force?: boolean) {
         const shifted = e.shiftKey;
-        const ctrlCmd = e.metaKey;
+        const ctrlCmd = force || e.metaKey;
         let { selected, multiSelect, multiSelectStart } = this.state;
         if (shifted && ctrlCmd) return;
         if (ctrlCmd) {
@@ -79,7 +80,10 @@ export class ScriptManagerDialog extends data.Component<ISettingsProps, ScriptMa
             multiSelect = false;
         }
         if (!shifted && !ctrlCmd) {
-            if (selected[index]) delete selected[index];
+            if (Object.keys(selected).length == 1 && selected[index]) {
+                // Deselect the currently selected card if we click on it again
+                delete selected[index];
+            }
             else {
                 selected = {};
                 selected[index] = 1;
@@ -88,6 +92,12 @@ export class ScriptManagerDialog extends data.Component<ISettingsProps, ScriptMa
             }
         }
         this.setState({ selected, multiSelect, multiSelectStart });
+    }
+
+    handleCheckboxClick() {
+        let { selected } = this.state;
+
+        this.setState({ selected });
     }
 
     handleDelete() {
@@ -160,9 +170,9 @@ export class ScriptManagerDialog extends data.Component<ISettingsProps, ScriptMa
             placeholder={lf("Search...")} className="mobile hide"
             searchHandler={this.handleSearch}
             disabled={isSearching}
-            style={{flexGrow: 1}}
+            style={{ flexGrow: 1 }}
             searchOnChange={true}
-            />);
+        />);
         if (Object.keys(selected).length > 0) {
             if (Object.keys(selected).length == 1) {
                 headerActions.push(<sui.Button key="edit" icon="edit outline" className="circular icon" title={lf("Edit Project")} onClick={this.handleOpen} />);
@@ -199,9 +209,10 @@ export class ScriptManagerDialog extends data.Component<ISettingsProps, ScriptMa
                         )}
                     </div> : undefined}
                 {view == 'list' ?
-                    <table className="ui striped table">
-                        <thead>
+                    <table className="ui compact definition unstackable table">
+                        <thead className="full-width">
                             <tr>
+                                <th></th>
                                 <th>Name</th>
                                 <th>Updated</th>
                             </tr>
@@ -211,7 +222,7 @@ export class ScriptManagerDialog extends data.Component<ISettingsProps, ScriptMa
                                 <ProjectsCodeRow key={'local' + scr.id + scr.recentUse} selected={!!selected[index]}
                                     onRowClicked={this.handleCardClick} index={index} scr={scr}>
                                     <td>{scr.name}</td>
-                                    <td>{scr.recentUse}</td>
+                                    <td>{pxt.Util.timeSince(scr.recentUse)}</td>
                                 </ProjectsCodeRow>
                             )}
                         </tbody>
@@ -227,7 +238,7 @@ interface ProjectsCodeRowProps extends pxt.CodeCard {
     scr: any;
     index?: number;
     selected?: boolean;
-    onRowClicked: (e: any, scr: any, index?: number) => void;
+    onRowClicked: (e: any, scr: any, index?: number, force?: boolean) => void;
 }
 
 class ProjectsCodeRow extends sui.StatelessUIElement<ProjectsCodeRowProps> {
@@ -236,14 +247,64 @@ class ProjectsCodeRow extends sui.StatelessUIElement<ProjectsCodeRowProps> {
         super(props);
 
         this.handleClick = this.handleClick.bind(this);
+        this.handleCheckboxClick = this.handleCheckboxClick.bind(this);
+        this.handleCheckboxChange = this.handleCheckboxChange.bind(this);
     }
 
     handleClick(e: any) {
         this.props.onRowClicked(e, this.props.scr, this.props.index);
     }
 
+    handleCheckboxClick(e: any) {
+        this.props.onRowClicked(e, this.props.scr, this.props.index, true);
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    handleCheckboxChange(e: any) {
+
+    }
+
     renderCore() {
-        const { scr, onRowClicked, onClick, selected, ...rest } = this.props;
-        return <tr {...rest} onClick={this.handleClick} style={{ cursor: 'pointer' }} className={`${selected ? 'warning' : ''}`} />
+        const { scr, onRowClicked, onClick, selected, children, ...rest } = this.props;
+        return <tr {...rest} onClick={this.handleClick} style={{ cursor: 'pointer' }} className={`${selected ? 'active' : ''}`}>
+            <td className="collapsing" onClick={this.handleCheckboxClick}>
+                <PlainCheckbox onChange={this.handleCheckboxChange} defaultChecked={selected}/>
+            </td>
+            {children}
+        </tr>
+    }
+}
+
+
+interface PlainCheckboxProps {
+    label?: string;
+    onChange: (v: boolean) => void;
+    defaultChecked?: boolean;
+}
+
+interface PlainCheckboxState {
+    isChecked: boolean;
+}
+
+class PlainCheckbox extends data.Component<PlainCheckboxProps, PlainCheckboxState> {
+    constructor(props: PlainCheckboxProps) {
+        super(props);
+        this.state = {
+            isChecked: props.defaultChecked
+        }
+        this.setCheckedBit = this.setCheckedBit.bind(this);
+    }
+
+    setCheckedBit() {
+        let val = !this.state.isChecked
+        this.props.onChange(val)
+        this.setState({ isChecked: val })
+    }
+
+    renderCore() {
+        return <div className={`ui fitted ${this.state.isChecked ? 'checked' : ''} checkbox`}>
+            <input type="checkbox" onChange={this.setCheckedBit} checked={this.state.isChecked} aria-checked={this.state.isChecked} /> <label>{this.props.label}</label>
+        </div>
     }
 }
