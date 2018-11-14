@@ -27,12 +27,12 @@ module.exports = function(config) {
       'node_modules/pxt-core/built/pxteditor.js',
       'built/target.js',
       'built/fieldeditors.js',
-      'built/block-tests.js',
-      'node_modules/pxt-core/built/tests/blocksrunner.js',
 
-      // test assets
-      { pattern: 'libs/*/test.blocks', watched: false, included: false, served: true, nocache: false },
-      { pattern: 'node_modules/pxt-common-packages/libs/*/test.blocks', watched: false, included: false, served: true, nocache: false },
+      // This gets built by 'pxt testblocks'
+      'built/block-tests.js',
+
+      // Test runner
+      'node_modules/pxt-core/built/tests/blocksrunner.js',
 
       // Needed by webworker
       { pattern: 'node_modules/pxt-core/built/web/*.js', watched: false, included: false, served: true, nocache: false },

@@ -141,7 +141,17 @@ function testXmlAsync(blocksfile: string) {
             const workspace = new Blockly.Workspace();
             (Blockly as any).mainWorkspace = workspace;
             const xml = Blockly.Xml.textToDom(blocksfile);
-            Blockly.Xml.domToWorkspace(xml, workspace);
+
+            try {
+                Blockly.Xml.domToWorkspace(xml, workspace);
+            }
+            catch (e) {
+                if (e.message && e.message.indexOf("isConnected") !== -1) {
+                    fail("Could not build workspace, this usually means a blockId (aka blockly 'type') changed")
+                }
+                fail(e.message);
+            }
+
             const err = compareBlocklyTrees(xml, Blockly.Xml.workspaceToDom(workspace));
             if (err) {
                 fail(`XML mismatch (${err.reason}) ${err.chain} \n See https://makecode.com/develop/blockstests for more info`);

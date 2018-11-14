@@ -5214,12 +5214,12 @@ function blockTestsAsync() {
     function getBlocksFilesAsync(libsDirectory: string): Promise<BlockTestCase[]> {
         return readDirAsync(libsDirectory)
             .then(dirs => Promise.map(dirs, dir => {
-                const dirPath = path.resolve(libsDirectory, dir);
-                const configPath = path.resolve(dirPath, "pxt.json");
+                const dirPath = path.resolve(libsDirectory, dir, "blocks-test");
+                const configPath = path.resolve(libsDirectory, dir, "pxt.json");
                 let packageName: string;
                 let testFiles: { testName: string, contents: string }[] = [];
 
-                if (fs.existsSync(path.resolve(configPath))) {
+                if (fs.existsSync(path.resolve(configPath)) && nodeutil.existsDirSync(dirPath)) {
                     return readFileAsync(configPath, "utf8")
                         .then((configText: string) => {
                             packageName = (JSON.parse(configText) as pxt.PackageConfig).name;
