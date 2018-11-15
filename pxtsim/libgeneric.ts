@@ -291,7 +291,7 @@ namespace pxsim {
         export function adds(x: number, y: number) { return (x + y) | 0; }
         export function subs(x: number, y: number) { return (x - y) | 0; }
         export function divs(x: number, y: number) { return Math.floor(x / y) | 0; }
-        export function muls(x: number, y: number) { return intMult(x, y); }
+        export function muls(x: number, y: number) { return Math_.imul(x, y); }
         export function ands(x: number, y: number) { return x & y; }
         export function orrs(x: number, y: number) { return x | y; }
         export function eors(x: number, y: number) { return x ^ y; }
@@ -310,7 +310,7 @@ namespace pxsim {
         export function adds(x: number, y: number) { return toInt(x + y); }
         export function subs(x: number, y: number) { return toInt(x - y); }
         export function divs(x: number, y: number) { return toInt(Math.floor(x / y)); }
-        export function muls(x: number, y: number) { return toInt(intMult(x, y)); }
+        export function muls(x: number, y: number) { return toInt(Math_.imul(x, y)); }
         export function ands(x: number, y: number) { return toInt(x & y); }
         export function orrs(x: number, y: number) { return toInt(x | y); }
         export function eors(x: number, y: number) { return toInt(x ^ y); }
