@@ -196,9 +196,18 @@ namespace pxsim {
     }
 
     export namespace Math_ {
-        export function imul(x: number, y: number) {
-            return intMult(x, y)
-        }
+        // for explanations see:
+        // http://stackoverflow.com/questions/3428136/javascript-integer-math-incorrect-results (second answer)
+        // (but the code below doesn't come from there; I wrote it myself)
+        export const imul = Math.imul || function (a: number, b: number) {
+            const ah = (a >>> 16) & 0xffff;
+            const al = a & 0xffff;
+            const bh = (b >>> 16) & 0xffff;
+            const bl = b & 0xffff;
+            // the shift by 0 fixes the sign on the high part
+            // the final |0 converts the unsigned value into a signed value
+            return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0) | 0);
+        };
 
         export function idiv(x: number, y: number) {
             return (x / y) >> 0
@@ -257,20 +266,6 @@ namespace pxsim {
         }
     }
 
-    // for explanations see:
-    // http://stackoverflow.com/questions/3428136/javascript-integer-math-incorrect-results (second answer)
-    // (but the code below doesn't come from there; I wrote it myself)
-    // TODO use Math.imul if available
-    function intMult(a: number, b: number) {
-        const ah = (a >>> 16) & 0xffff;
-        const al = a & 0xffff;
-        const bh = (b >>> 16) & 0xffff;
-        const bl = b & 0xffff;
-        // the shift by 0 fixes the sign on the high part
-        // the final |0 converts the unsigned value into a signed value
-        return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0) | 0);
-    }
-
     export namespace Number_ {
         export function lt(x: number, y: number) { return x < y; }
         export function le(x: number, y: number) { return x <= y; }
@@ -296,7 +291,7 @@ namespace pxsim {
         export function adds(x: number, y: number) { return (x + y) | 0; }
         export function subs(x: number, y: number) { return (x - y) | 0; }
         export function divs(x: number, y: number) { return Math.floor(x / y) | 0; }
-        export function muls(x: number, y: number) { return intMult(x, y); }
+        export function muls(x: number, y: number) { return Math_.imul(x, y); }
         export function ands(x: number, y: number) { return x & y; }
         export function orrs(x: number, y: number) { return x | y; }
         export function eors(x: number, y: number) { return x ^ y; }
@@ -315,7 +310,7 @@ namespace pxsim {
         export function adds(x: number, y: number) { return toInt(x + y); }
         export function subs(x: number, y: number) { return toInt(x - y); }
         export function divs(x: number, y: number) { return toInt(Math.floor(x / y)); }
-        export function muls(x: number, y: number) { return toInt(intMult(x, y)); }
+        export function muls(x: number, y: number) { return toInt(Math_.imul(x, y)); }
         export function ands(x: number, y: number) { return toInt(x & y); }
         export function orrs(x: number, y: number) { return toInt(x | y); }
         export function eors(x: number, y: number) { return toInt(x ^ y); }
