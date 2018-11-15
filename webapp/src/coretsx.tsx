@@ -3,7 +3,12 @@ import * as ReactDOM from "react-dom";
 import * as sui from "./sui";
 import * as core from "./core";
 
-export class CoreDialog extends React.Component<core.PromptOptions, {}> {
+interface CoreDialogState {
+    visible?: boolean;
+    inputValue?: string;
+}
+
+export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogState> {
 
     public promise: Promise<any>;
 
@@ -13,10 +18,12 @@ export class CoreDialog extends React.Component<core.PromptOptions, {}> {
     constructor(props: core.PromptOptions) {
         super(props);
         this.state = {
+            inputValue: props.initialValue
         }
 
         this.hide = this.hide.bind(this);
         this.modalDidOpen = this.modalDidOpen.bind(this);
+        this.handleInputChange = this.handleInputChange.bind(this);
     }
 
     hide() {
@@ -59,19 +66,30 @@ export class CoreDialog extends React.Component<core.PromptOptions, {}> {
         }
     }
 
+    handleInputChange(v: React.ChangeEvent<any>) {
+        const options = this.props;
+        if (options.onInputChanged) {
+            options.onInputChanged(v.target.value);
+        }
+        this.setState({ inputValue: v.target.value });
+    }
+
     render() {
         const options = this.props;
+        const { inputValue } = this.state;
         const size: any = options.size || 'small';
 
         const buttons = options.buttons ? options.buttons.filter(b => !!b) : [];
-
+        let okButton: sui.ModalButton;
         buttons.forEach(btn => {
             const onclick = btn.onclick;
             btn.onclick = () => {
                 this.close(onclick ? onclick() : 0);
             }
             if (!btn.className) btn.className = "approve positive";
+            if (btn.approveButton) okButton = btn;
         })
+        if (options.type == 'prompt' && okButton) okButton.disabled = !inputValue;
 
         const classes = sui.cx([
             'coredialog',
@@ -91,7 +109,7 @@ export class CoreDialog extends React.Component<core.PromptOptions, {}> {
                 modalDidOpen={this.modalDidOpen}
             >
                 {options.type == 'prompt' ? <div className="ui fluid icon input">
-                    <input autoFocus type="text" id="promptDialogInput" placeholder={options.defaultValue} />
+                    <input autoFocus type="text" id="promptDialogInput" onChange={this.handleInputChange} value={inputValue} placeholder={options.placeholder} />
                 </div> : undefined}
                 {options.jsx}
                 {options.body ? <p>{options.body}</p> : undefined}
@@ -131,7 +149,7 @@ export function renderConfirmDialogAsync(options: core.PromptOptions): Promise<v
 }
 
 export function hideDialog() {
-    if (currentDialog)  {
+    if (currentDialog) {
         currentDialog.hide();
         currentDialog = undefined;
     }

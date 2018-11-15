@@ -127,11 +127,21 @@
         border: 0.5px solid @extensionsHeaderBackground;
         height: 70%;
         margin: 0.5rem;
+        margin-right: 0.75rem;
         opacity: 0.3;
     }
 
-    .ui.button:not(.red) {
+    .ui.button {
         background-color: @white;
+        color: @blue;
+        border: 1px solid @white;
+    }
+    .ui.button:focus, .ui.button:hover {
+        background-color: @white;
+        border-color: darken(@white, 30%);
+    }
+    .ui.button.red {
+        color: @red;
     }
 }
 

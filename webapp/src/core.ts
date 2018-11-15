@@ -138,7 +138,9 @@ export interface ConfirmOptions extends DialogOptions {
 }
 
 export interface PromptOptions extends ConfirmOptions {
-    defaultValue: string;
+    initialValue?: string;
+    placeholder?: string;
+    onInputChanged?: (newValue?: string) => void;
 }
 
 export interface DialogOptions {
@@ -190,6 +192,7 @@ export function confirmAsync(options: ConfirmOptions): Promise<number> {
             label: options.agreeLbl || lf("Go ahead!"),
             className: options.agreeClass,
             icon: options.agreeIcon || "checkmark",
+            approveButton: true,
             onclick: () => {
                 result = 1;
             }
@@ -237,6 +240,7 @@ export function promptAsync(options: PromptOptions): Promise<string> {
             label: options.agreeLbl || lf("Go ahead!"),
             className: options.agreeClass,
             icon: options.agreeIcon || "checkmark",
+            approveButton: true,
             onclick: () => {
                 let dialogInput = document.getElementById('promptDialogInput') as HTMLInputElement;
                 result = dialogInput.value;
@@ -261,12 +265,14 @@ export function promptAsync(options: PromptOptions): Promise<string> {
         let dialogInput = document.getElementById('promptDialogInput') as HTMLInputElement;
         if (dialogInput) {
             dialogInput.setSelectionRange(0, 9999);
-            dialogInput.onkeyup = (e: KeyboardEvent) => {
+            dialogInput.onkeydown = (e: KeyboardEvent) => {
                 const charCode = keyCodeFromEvent(e);
                 if (charCode === ENTER_KEY) {
-                    e.preventDefault();
                     const firstButton = ref.getElementsByClassName("approve positive").item(0) as HTMLElement;
-                    if (firstButton) firstButton.click();
+                    if (firstButton && dialogInput.value) {
+                        firstButton.click();
+                        e.preventDefault();
+                    }
                 }
             }
         }

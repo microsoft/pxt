@@ -28,12 +28,12 @@ export class ScriptManagerDialog extends data.Component<ISettingsProps, ScriptMa
         this.state = {
             visible: false,
             selected: {},
+            markedNew: {},
             view: 'grid'
         }
 
         this.close = this.close.bind(this);
         this.handleCardClick = this.handleCardClick.bind(this);
-        this.handleCheckboxClick = this.handleCheckboxClick.bind(this);
         this.handleDelete = this.handleDelete.bind(this);
         this.handleExport = this.handleExport.bind(this);
         this.handleOpen = this.handleOpen.bind(this);
@@ -62,7 +62,7 @@ export class ScriptManagerDialog extends data.Component<ISettingsProps, ScriptMa
 
     handleCardClick(e: any, scr: any, index?: number, force?: boolean) {
         const shifted = e.shiftKey;
-        const ctrlCmd = force || e.metaKey;
+        const ctrlCmd = force || (pxt.BrowserUtils.isMac() ? e.metaKey : e.ctrlKey);
         let { selected, multiSelect, multiSelectStart } = this.state;
         if (shifted && ctrlCmd) return;
         if (ctrlCmd) {
@@ -93,12 +93,9 @@ export class ScriptManagerDialog extends data.Component<ISettingsProps, ScriptMa
             }
         }
         this.setState({ selected, multiSelect, multiSelectStart });
-    }
 
-    handleCheckboxClick() {
-        let { selected } = this.state;
-
-        this.setState({ selected });
+        e.stopPropagation();
+        e.preventDefault();
     }
 
     handleDelete() {
@@ -141,16 +138,48 @@ export class ScriptManagerDialog extends data.Component<ISettingsProps, ScriptMa
 
     handleDuplicate() {
         const header = this.getSelectedHeader();
-        const clonedHeader = pxt.U.clone(header);
-        workspace.getTextAsync(header.id)
-            .then(files => workspace.installAsync(clonedHeader, files))
-            .then(() => {
-                data.clearCache();
-                this.setState({ selected: {}, markedNew: { '0': 1 } });
-                setTimeout(() => {
-                    this.setState({ markedNew: {} });
-                }, 1000);
-            })
+        // Ask for the new project name
+        const opts: core.PromptOptions = {
+            header: lf("Choose a new name for your project"),
+            agreeLbl: lf("Clone"),
+            agreeClass: "green approve positive",
+            agreeIcon: "clone",
+            initialValue: this.createDuplicateName(header.name),
+            placeholder: lf("Enter your project name here")
+        };
+        return core.promptAsync(opts).then(res => {
+            if (res === null) return Promise.resolve(false); // null means cancelled, empty string means ok (but no value entered)
+            // Clone the existing header
+            const clonedHeader = pxt.U.clone(header);
+            // Clear some fields
+            clonedHeader.id = undefined;
+            clonedHeader.meta = {};
+            clonedHeader.pubId = "";
+            clonedHeader.pubCurrent = false;
+            return workspace.getTextAsync(header.id)
+                .then(files => {
+                    // Update the name in the header
+                    clonedHeader.name = res;
+                    // Update the name in the pxt.json (config)
+                    let config = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+                    config.name = clonedHeader.name;
+                    files[pxt.CONFIG_NAME] = JSON.stringify(config, null, 4) + "\n";
+                    return workspace.installAsync(clonedHeader, files);
+                })
+                .then(() => workspace.saveAsync(clonedHeader))
+                .then(() => {
+                    data.clearCache();
+                    this.setState({ selected: {}, markedNew: { '0': 1 } });
+                    setTimeout(() => {
+                        this.setState({ markedNew: {} });
+                    }, 5 * 1000);
+                    return true;
+                })
+        });
+    }
+
+    private createDuplicateName(initialName: string) {
+        return initialName;
     }
 
     handleSwitchView() {
@@ -160,6 +189,36 @@ export class ScriptManagerDialog extends data.Component<ISettingsProps, ScriptMa
 
     handleSearch(inputValue: string) {
         this.setState({ searchFor: inputValue, selected: {} }); // Clear selected list when searching
+    }
+
+    handleKeyDown = (e: React.KeyboardEvent<any>) => {
+        const charCode = core.keyCodeFromEvent(e);
+        const ctrlCmd = pxt.BrowserUtils.isMac() ? e.metaKey : e.ctrlKey;
+        if (ctrlCmd && charCode === 65 /* a */) {
+            this.handleSelectAll(e);
+        }
+    }
+
+    handleAreaClick = () => {
+        this.setState({ selected: {} });
+    }
+
+    handleSelectAll = (event: any) => {
+        let { selected } = this.state;
+        const headers = this.fetchLocalData();
+        const selectedAll = headers.length > 0 && headers.length == Object.keys(selected).length;
+        if (selectedAll) {
+            // Deselect all if selected
+            selected = {};
+        } else {
+            // Select all
+            headers.forEach((header, index) => {
+                selected[index] = 1;
+            })
+        }
+        this.setState({ selected });
+        event.stopPropagation();
+        event.preventDefault();
     }
 
     private getSelectedHeader() {
@@ -179,6 +238,8 @@ export class ScriptManagerDialog extends data.Component<ISettingsProps, ScriptMa
         headers = headers.filter(h => !h.isDeleted);
         const isSearching = false;
 
+        const selectedAll = headers.length > 0 && headers.length == Object.keys(selected).length;
+
         let headerActions: JSX.Element[] = [];
         headerActions.push(<SearchInput key="search"
             ariaMessage={lf("{0} result matching '{1}'", headers.length, searchFor)}
@@ -190,15 +251,19 @@ export class ScriptManagerDialog extends data.Component<ISettingsProps, ScriptMa
         />);
         if (Object.keys(selected).length > 0) {
             if (Object.keys(selected).length == 1) {
-                headerActions.push(<sui.Button key="edit" icon="edit outline" className="circular icon" title={lf("Edit Project")} onClick={this.handleOpen} />);
+                headerActions.push(<sui.Button key="edit" icon="edit outline" className="icon"
+                    title={lf("Edit Project")} onClick={this.handleOpen} tooltipId={"scriptmgr-actions-edit"} />);
                 //headerActions.push(<sui.Button key="rename" icon="font" className="circular icon" title={lf("Rename Project")} onClick={this.handleRename} />);
-                headerActions.push(<sui.Button key="clone" icon="clone outline" className="circular icon" title={lf("Clone Project")} onClick={this.handleDuplicate} />);
+                headerActions.push(<sui.Button key="clone" icon="clone outline" className="icon"
+                    title={lf("Clone Project")} onClick={this.handleDuplicate} tooltipId={"scriptmgr-actions-clone"} />);
                 //headerActions.push(<sui.Button key="export" icon="download" className="circular icon" title={lf("Save Project")} onClick={this.handleExport} />);
             }
-            headerActions.push(<sui.Button key="delete" icon="trash" className="circular icon red" title={lf("Delete Project")} onClick={this.handleDelete} />);
+            headerActions.push(<sui.Button key="delete" icon="trash" className="icon red"
+                title={lf("Delete Project")} onClick={this.handleDelete} tooltipId={"scriptmgr-actions-delete"} />);
             headerActions.push(<div key="divider" className="divider"></div>);
         }
-        headerActions.push(<sui.Button key="view" icon={view == 'grid' ? 'th list' : 'grid layout'} className="circular icon" title={`${view == 'grid' ? lf("List view") : lf("Grid view")}`} onClick={this.handleSwitchView} />)
+        headerActions.push(<sui.Button key="view" icon={view == 'grid' ? 'th list' : 'grid layout'} className="icon"
+            title={`${view == 'grid' ? lf("List view") : lf("Grid view")}`} onClick={this.handleSwitchView} tooltipId={"scriptmgr-actions-switchview"} />)
 
         /* tslint:disable:react-a11y-anchors */
         return (
@@ -208,41 +273,63 @@ export class ScriptManagerDialog extends data.Component<ISettingsProps, ScriptMa
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
             >
                 {view == 'grid' ?
-                    <div className={"ui cards"}>
-                        {headers.map((scr, index) =>
-                            <ProjectsCodeCard
-                                key={'local' + scr.id + scr.recentUse}
-                                cardType="file"
-                                className={scr.githubId ? "file github" : "file"}
-                                name={scr.name}
-                                time={scr.recentUse}
-                                url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}
-                                scr={scr} index={index}
-                                labelIcon={selected[index] ? 'check' : undefined}
-                                labelClass={'right corner label green'}
-                                onCardClick={this.handleCardClick}
-                            />
-                        )}
+                    <div role="grid" className="ui container fluid" style={{ height: "100%" }} onClick={this.handleAreaClick} onKeyDown={this.handleKeyDown}>
+                        <div className={"ui cards"}>
+                            {headers.map((scr, index) => {
+                                const isMarkedNew = !!markedNew[index];
+                                const isSelected = !!selected[index];
+                                const showMarkedNew = isMarkedNew && !isSelected;
+
+                                let labelIcon = `circle outline ${isSelected ? 'check' : ''} ${isSelected ? 'green' : 'grey'}`;
+                                if (showMarkedNew) labelIcon = undefined;
+                                const labelClass = showMarkedNew ? 'orange right ribbon label' :
+                                    `right corner label large selected-label`;
+                                const label = showMarkedNew ? lf("New") : undefined;
+
+                                return <ProjectsCodeCard
+                                    key={'local' + scr.id + scr.recentUse}
+                                    cardType="file"
+                                    className={`file ${isMarkedNew ? 'warning' : isSelected ? 'positive' : ''}`}
+                                    name={scr.name}
+                                    time={scr.recentUse}
+                                    url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}
+                                    scr={scr} index={index}
+                                    labelIcon={labelIcon}
+                                    labelClass={labelClass}
+                                    label={label}
+                                    onCardClick={this.handleCardClick}
+                                />
+                            })}
+                        </div>
                     </div> : undefined}
                 {view == 'list' ?
-                    <table className="ui definition unstackable table">
-                        <thead className="full-width">
-                            <tr>
-                                <th></th>
-                                <th>Name</th>
-                                <th>Updated</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {headers.map((scr, index) =>
-                                <ProjectsCodeRow key={'local' + scr.id + scr.recentUse} selected={!!selected[index]}
-                                    onRowClicked={this.handleCardClick} index={index} scr={scr} markedNew={!!markedNew[index]}>
-                                    <td>{scr.name}</td>
-                                    <td>{pxt.Util.timeSince(scr.recentUse)}</td>
-                                </ProjectsCodeRow>
-                            )}
-                        </tbody>
-                    </table>
+                    <div role="table" className="ui container" style={{ height: "100%" }} onClick={this.handleAreaClick} onKeyDown={this.handleKeyDown}>
+                        <table className="ui definition unstackable table">
+                            <thead className="full-width">
+                                <tr>
+                                    <th onClick={this.handleSelectAll} tabIndex={0} onKeyDown={sui.fireClickOnEnter}>
+                                        <sui.Icon icon={`circle outline large ${selectedAll ? 'check' : ''}`} />
+                                    </th>
+                                    <th>Name</th>
+                                    <th>Updated</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {headers.map((scr, index) => {
+                                    const isMarkedNew = !!markedNew[index];
+                                    const isSelected = !!selected[index];
+                                    const showMarkedNew = isMarkedNew && !isSelected;
+
+                                    return <ProjectsCodeRow key={'local' + scr.id + scr.recentUse} selected={isSelected}
+                                        onRowClicked={this.handleCardClick} index={index}
+                                        scr={scr} markedNew={showMarkedNew}>
+                                        <td>{scr.name}</td>
+                                        <td>{pxt.Util.timeSince(scr.recentUse)}</td>
+                                    </ProjectsCodeRow>
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
                     : undefined}
             </sui.Modal>
         )
@@ -280,9 +367,9 @@ class ProjectsCodeRow extends sui.StatelessUIElement<ProjectsCodeRowProps> {
 
     renderCore() {
         const { scr, onRowClicked, onClick, selected, markedNew, children, ...rest } = this.props;
-        return <tr {...rest} onClick={this.handleClick} style={{ cursor: 'pointer' }} className={`${markedNew ? 'warning' : selected ? 'positive' : ''}`}>
+        return <tr tabIndex={0} {...rest} onKeyDown={sui.fireClickOnEnter} onClick={this.handleClick} style={{ cursor: 'pointer' }} className={`${markedNew ? 'warning' : selected ? 'positive' : ''}`}>
             <td className="collapsing" onClick={this.handleCheckboxClick}>
-                <sui.Icon icon={`square outline large ${selected ? 'check' : ''}`} />
+                <sui.Icon icon={`circle outline large ${selected ? 'check' : ''}`} />
             </td>
             {children}
         </tr>
