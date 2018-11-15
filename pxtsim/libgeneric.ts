@@ -196,9 +196,18 @@ namespace pxsim {
     }
 
     export namespace Math_ {
-        export function imul(x: number, y: number) {
-            return intMult(x, y)
-        }
+        // for explanations see:
+        // http://stackoverflow.com/questions/3428136/javascript-integer-math-incorrect-results (second answer)
+        // (but the code below doesn't come from there; I wrote it myself)
+        export const imul = Math.imul || function (a: number, b: number) {
+            const ah = (a >>> 16) & 0xffff;
+            const al = a & 0xffff;
+            const bh = (b >>> 16) & 0xffff;
+            const bl = b & 0xffff;
+            // the shift by 0 fixes the sign on the high part
+            // the final |0 converts the unsigned value into a signed value
+            return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0) | 0);
+        };
 
         export function idiv(x: number, y: number) {
             return (x / y) >> 0
@@ -255,20 +264,6 @@ namespace pxsim {
             else
                 return min + Math.random() * (max - min);
         }
-    }
-
-    // for explanations see:
-    // http://stackoverflow.com/questions/3428136/javascript-integer-math-incorrect-results (second answer)
-    // (but the code below doesn't come from there; I wrote it myself)
-    // TODO use Math.imul if available
-    function intMult(a: number, b: number) {
-        const ah = (a >>> 16) & 0xffff;
-        const al = a & 0xffff;
-        const bh = (b >>> 16) & 0xffff;
-        const bl = b & 0xffff;
-        // the shift by 0 fixes the sign on the high part
-        // the final |0 converts the unsigned value into a signed value
-        return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0) | 0);
     }
 
     export namespace Number_ {
