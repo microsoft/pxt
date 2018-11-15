@@ -209,7 +209,7 @@ namespace pxsim {
 
         export function mute(mute: boolean) {
             _mute = mute;
-            stop();
+            stopAll();
         }
 
         function stopTone() {
@@ -218,6 +218,11 @@ namespace pxsim {
             if (audio) {
                 audio.pause();
             }
+        }
+
+        export function stopAll() {
+            stopTone();
+            muteAllChannels();
         }
 
         export function stop() {
@@ -281,7 +286,7 @@ namespace pxsim {
          };
          */
 
-        function getGenerator(waveFormIdx: number, hz: number): AudioNode {
+        function getGenerator(waveFormIdx: number, hz: number): OscillatorNode | AudioBufferSourceNode {
             let form = waveForms[waveFormIdx]
             if (form) {
                 let src = context().createOscillator()
@@ -306,26 +311,49 @@ namespace pxsim {
             return node
         }
 
+        const channels: Channel[] = []
+        class Channel {
+            generator: OscillatorNode | AudioBufferSourceNode;
+            gain: GainNode
+            mute() {
+                if (this.generator) {
+                    this.generator.stop()
+                    this.generator.disconnect()
+                }
+                if (this.gain)
+                    this.gain.disconnect()
+                this.gain = null
+                this.generator = null
+            }
+            remove() {
+                const idx = channels.indexOf(this)
+                if (idx >= 0) channels.splice(idx, 1)
+                this.mute()
+            }
+        }
+
+        function muteAllChannels() {
+            while (channels.length)
+                channels[0].remove()
+        }
+
         export function playInstructionsAsync(b: RefBuffer) {
             let ctx = context();
 
             let idx = 0
-            let gen: AudioNode
-            let gain: GainNode
+            let ch = new Channel()
             let currWave = -1
             let currFreq = -1
             let timeOff = 0
 
+            if (channels.length > 5)
+                channels[0].remove()
+            channels.push(ch)
+
             const scaleVol = (n: number) => (n / 1024) * 2
 
             const finish = () => {
-                if (gen) {
-                    (gen as OscillatorNode).stop();
-                    gen.disconnect()
-                    gain.disconnect()
-                    gain = null
-                    gen = null
-                }
+                ch.mute()
                 timeOff = 0
                 currWave = -1
                 currFreq = -1
@@ -346,7 +374,7 @@ namespace pxsim {
                     return Promise.delay(duration)
 
                 if (currWave != soundWaveIdx || currFreq != freq) {
-                    if (gen) {
+                    if (ch.generator) {
                         return Promise.delay(timeOff)
                             .then(() => {
                                 finish()
@@ -354,32 +382,32 @@ namespace pxsim {
                             })
                     }
 
-                    gen = _mute ? null : getGenerator(soundWaveIdx, freq)
+                    ch.generator = _mute ? null : getGenerator(soundWaveIdx, freq)
 
-                    if (!gen)
+                    if (!ch.generator)
                         return Promise.delay(duration)
 
                     currWave = soundWaveIdx
                     currFreq = freq
-                    gain = ctx.createGain()
-                    gain.gain.value = scaleVol(startVol)
+                    ch.gain = ctx.createGain()
+                    ch.gain.gain.value = scaleVol(startVol)
 
-                    gen.connect(gain)
-                    gain.connect(ctx.destination);
-
-                    (gen as OscillatorNode).start();
+                    ch.generator.connect(ch.gain)
+                    ch.gain.connect(ctx.destination);
+                    ch.generator.start();
                 }
 
                 idx += 10
 
-                gain.gain.setValueAtTime(scaleVol(startVol), ctx.currentTime + timeOff)
+                ch.gain.gain.setValueAtTime(scaleVol(startVol), ctx.currentTime + timeOff)
                 timeOff += duration
-                gain.gain.linearRampToValueAtTime(scaleVol(endVol), ctx.currentTime + timeOff)
+                ch.gain.gain.linearRampToValueAtTime(scaleVol(endVol), ctx.currentTime + timeOff)
 
                 return loopAsync()
             }
 
             return loopAsync()
+                .then(() => ch.remove())
         }
 
         export function tone(frequency: number, gain: number) {

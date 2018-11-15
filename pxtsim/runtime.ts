@@ -203,7 +203,7 @@ namespace pxsim {
 
         kill() {
             super.kill();
-            AudioContextManager.stop();
+            AudioContextManager.stopAll();
         }
     }
 
