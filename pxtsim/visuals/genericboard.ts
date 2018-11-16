@@ -158,6 +158,25 @@ namespace pxsim.visuals {
             //this.g.appendChild(backgroundCover);
 
             // ----- pins
+            const mkRoundPin = (): SVGElAndSize => {
+                let el = svg.elt("circle");
+                let width = SQUARE_PIN_WIDTH;
+                svg.hydrate(el, {
+                    class: "sim-board-pin",
+                    r: width / 2,
+                });
+                return { el: el, w: width, h: width, x: 0, y: 0 };
+            }
+            const mkRoundHoverPin = (): SVGElAndSize => {
+                let el = svg.elt("circle");
+                let width = SQUARE_PIN_HOVER_WIDTH;
+                svg.hydrate(el, {
+                    class: "sim-board-pin-hover",
+                    r: width / 2
+                });
+                return { el: el, w: width, h: width, x: 0, y: 0 };
+            }
+
             const mkSquarePin = (): SVGElAndSize => {
                 let el = svg.elt("rect");
                 let width = SQUARE_PIN_WIDTH;
@@ -192,8 +211,8 @@ namespace pxsim.visuals {
                     rowCount: rowCount,
                     colCount: colCount,
                     pinDist: PIN_DIST,
-                    mkPin: mkSquarePin,
-                    mkHoverPin: mkSquareHoverPin,
+                    mkPin: visDef.useCrocClips ? mkRoundPin : mkSquarePin,
+                    mkHoverPin: visDef.useCrocClips ? mkRoundHoverPin : mkSquareHoverPin,
                     getRowName: getRowName,
                     getColName: getColName,
                     getGroupName: getGroupName,
