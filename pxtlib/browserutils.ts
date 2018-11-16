@@ -538,8 +538,7 @@ namespace pxt.BrowserUtils {
     export const scheduleStorageCleanup = hasNavigator() && (<any>navigator).storage && (<any>navigator).storage.estimate // some browser don't support this
         ? ts.pxtc.Util.throttle(function () {
             const MIN_QUOTA = 1000000; // 1Mb
-            const MAX_USAGE_BYTES = 100000000; // 100Mb
-            const MAX_USAGE_RATIO = 0.5; // max 50% 
+            const MAX_USAGE_RATIO = 0.9; // max 90% 
 
             storageEstimateAsync()
                 .then(estimate => {
@@ -548,8 +547,7 @@ namespace pxt.BrowserUtils {
                     if (estimate.quota
                         && estimate.usage
                         && estimate.quota > MIN_QUOTA
-                        && (estimate.usage > MAX_USAGE_BYTES ||
-                            (estimate.usage / estimate.quota) > MAX_USAGE_RATIO)) {
+                        && (estimate.usage / estimate.quota) > MAX_USAGE_RATIO) {
                         pxt.log(`quota usage exceeded, clearing translations`);
                         pxt.tickEvent('storage.cleanup');
                         return clearTranslationDbAsync();
