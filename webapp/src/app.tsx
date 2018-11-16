@@ -851,7 +851,13 @@ export class ProjectView
         this.stopSimulator(true);
         this.clearSerial()
 
-        Util.jsonMergeFrom(editorState || {}, this.state.editorState || {});
+        // Merge current and new state but only if the new state members are undefined
+        let oldEditorState = this.state.editorState;
+        if (oldEditorState) {
+            if (editorState.filters === undefined) editorState.filters = oldEditorState.filters;
+            if (editorState.hasCategories === undefined) editorState.hasCategories = oldEditorState.hasCategories;
+            if (editorState.searchBar === undefined) editorState.searchBar = oldEditorState.searchBar;
+        }
 
         return (h.backupRef ? workspace.restoreFromBackupAsync(h) : Promise.resolve())
             .then(() => pkg.loadPkgAsync(h.id))
