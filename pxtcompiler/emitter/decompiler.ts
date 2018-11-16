@@ -48,6 +48,7 @@ namespace ts.pxtc.decompiler {
     }
 
     const numberType = "math_number";
+    const minmaxNumberType = "math_number_minmax";
     const integerNumberType = "math_integer";
     const wholeNumberType = "math_whole_number";
     const stringType = "text";
@@ -122,6 +123,7 @@ namespace ts.pxtc.decompiler {
         name: string;
         value: OutputNode;
         shadowType?: string;
+        shadowMutation?: pxt.Map<string>;
     }
 
     interface BlockNode extends BlocklyNode {
@@ -496,13 +498,18 @@ ${output}</xml>`;
             };
         }
 
-        function mkValue(name: string, value: ExpressionNode | TextNode, shadowType?: string): ValueNode {
+        function mkValue(name: string, value: ExpressionNode | TextNode, shadowType?: string, shadowMutation?: pxt.Map<string>): ValueNode {
             if (shadowType && value.kind === "expr" && (value as ExpressionNode).type !== shadowType) {
                 // Count the shadow block that will be emitted
                 countBlock();
             }
 
-            return { kind: "value", name, value, shadowType };
+            if ((!shadowType || shadowType === numberType) && shadowMutation && shadowMutation['min'] && shadowMutation['max']) {
+                // Convert a number to a number with a slider (math_number_minmax) if min and max shadow options are defined
+                shadowType = minmaxNumberType;
+            }
+
+            return { kind: "value", name, value, shadowType, shadowMutation };
         }
 
         function isEventExpression(expr: ts.ExpressionStatement): boolean {
@@ -548,13 +555,19 @@ ${output}</xml>`;
             closeBlockTag();
         }
 
+        function emitMutation(mMap: pxt.Map<string>) {
+            write("<mutation ", "");
+            for (const key in mMap) {
+                if (mMap[key] !== undefined) {
+                    write(`${key}="${mMap[key]}" `, "");
+                }
+            }
+            write("/>");
+        }
+
         function emitBlockNodeCore(n: BlockNode) {
             if (n.mutation) {
-                write("<mutation ", "");
-                for (const key in n.mutation) {
-                    write(`${key}="${n.mutation[key]}" `, "");
-                }
-                write("/>");
+                emitMutation(n.mutation);
             }
 
             if (n.fields) {
@@ -573,10 +586,16 @@ ${output}</xml>`;
 
             if (n.value.kind === "expr") {
                 const value = n.value as ExpressionNode;
+                if (value.type === numberType && n.shadowType === minmaxNumberType) {
+                    value.type = minmaxNumberType;
+                    value.fields[0].name = 'SLIDER';
+                    value.mutation = n.shadowMutation;
+                }
                 emitShadowOnly = value.type === n.shadowType;
                 if (!emitShadowOnly) {
                     switch (value.type) {
                         case "math_number":
+                        case "math_number_minmax":
                         case "math_integer":
                         case "math_whole_number":
                         case "logic_boolean":
@@ -599,11 +618,18 @@ ${output}</xml>`;
                         case wholeNumberType:
                             write(`<shadow type="${n.shadowType}"><field name="NUM">0</field></shadow>`)
                             break;
+                        case minmaxNumberType:
+                            write(`<shadow type="${minmaxNumberType}">`);
+                            if (n.shadowMutation) {
+                                emitMutation(n.shadowMutation);
+                            }
+                            write(`<field name="SLIDER">0</field></shadow>`);
+                            break;
                         case booleanType:
-                            write(`<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>`)
+                            write(`<shadow type="${booleanType}"><field name="BOOL">TRUE</field></shadow>`)
                             break;
                         case stringType:
-                            write(`<shadow type="text"><field name="TEXT"></field></shadow>`)
+                            write(`<shadow type="${stringType}"><field name="TEXT"></field></shadow>`)
                             break;
                         default:
                             write(`<shadow type="${n.shadowType}"/>`)
@@ -797,7 +823,7 @@ ${output}</xml>`;
             return result;
         }
 
-        function getValue(name: string, contents: boolean | number | string | Node, shadowType?: string): ValueNode {
+        function getValue(name: string, contents: boolean | number | string | Node, shadowType?: string, shadowMutation?: pxt.Map<string>): ValueNode {
             let value: OutputNode;
 
             if (typeof contents === "number") {
@@ -820,7 +846,7 @@ ${output}</xml>`;
                     (value as ExpressionNode).type = "math_whole_number";
             }
 
-            return mkValue(name, value, shadowType);
+            return mkValue(name, value, shadowType, shadowMutation);
         }
 
         function getIdentifier(identifier: Identifier): ExpressionNode {
@@ -1521,8 +1547,18 @@ ${output}</xml>`;
             let optionalCount = 0;
             args.forEach((arg, i) => {
                 let e = arg.value;
+                let shadowMutation: pxt.Map<string>;
                 const param = arg.param;
                 const paramInfo = arg.info;
+
+                const paramComp = comp.parameters[comp.thisParameter ? i - 1 : i];
+                const paramRange = paramComp && paramComp.range;
+                if (paramRange) {
+                    const min = paramRange['min'];
+                    const max = paramRange['max'];
+                    shadowMutation = { 'min': min.toString(), 'max': max.toString() };
+                }
+
                 if (i === 0 && attributes.defaultInstance) {
                     if (e.getText() === attributes.defaultInstance) {
                         return;
@@ -1607,13 +1643,13 @@ ${output}</xml>`;
                         const argAttrs = attrs(callInfo);
 
                         if (shadowBlockInfo && shadowBlockInfo.attributes.shim === "TD_ID") {
-                            addInput(mkValue(aName, getPropertyAccessExpression(e as PropertyAccessExpression, false, param.shadowBlockId), param.shadowBlockId));
+                            addInput(mkValue(aName, getPropertyAccessExpression(e as PropertyAccessExpression, false, param.shadowBlockId), param.shadowBlockId, shadowMutation));
                         }
                         else if (paramInfo && paramInfo.isEnum || callInfo && (argAttrs.fixedInstance || argAttrs.blockIdentity === info.qName)) {
                             addField(getField(aName, (getPropertyAccessExpression(e as PropertyAccessExpression, true) as TextNode).value))
                         }
                         else {
-                            addInput(getValue(aName, e, param.shadowBlockId))
+                            addInput(getValue(aName, e, param.shadowBlockId, shadowMutation))
                         }
                         break;
                     case SK.BinaryExpression:
@@ -1624,7 +1660,7 @@ ${output}</xml>`;
                                 break;
                             }
                         }
-                        addInput(getValue(U.htmlEscape(param.definitionName), e, param.shadowBlockId))
+                        addInput(getValue(U.htmlEscape(param.definitionName), e, param.shadowBlockId, shadowMutation))
                         break;
                     default:
                         let v: ValueNode;
@@ -1632,7 +1668,7 @@ ${output}</xml>`;
                         let defaultV = true;
 
                         if (info.qName == "Math.random") {
-                            v = mkValue(vName, getMathRandomArgumentExpresion(e), numberType);
+                            v = mkValue(vName, getMathRandomArgumentExpresion(e), numberType, shadowMutation);
                             defaultV = false;
                         } else if (isLiteralNode(e)) {
                             // Remove quotes on strings
@@ -1650,7 +1686,7 @@ ${output}</xml>`;
                                     if (param.shadowOptions) {
                                         fieldBlock.mutation = { "customfield": Util.htmlEscape(JSON.stringify(param.shadowOptions)) };
                                     }
-                                    v = mkValue(vName, fieldBlock, param.shadowBlockId);
+                                    v = mkValue(vName, fieldBlock, param.shadowBlockId, shadowMutation);
                                     defaultV = false;
                                 }
                             }
@@ -1660,7 +1696,7 @@ ${output}</xml>`;
                             return;
                         }
                         if (defaultV) {
-                            v = getValue(vName, e, param.shadowBlockId);
+                            v = getValue(vName, e, param.shadowBlockId, shadowMutation);
                         }
 
                         addInput(v);
@@ -2871,6 +2907,7 @@ ${output}</xml>`;
     function isLiteralBlockType(type: string) {
         switch (type) {
             case numberType:
+            case minmaxNumberType:
             case integerNumberType:
             case wholeNumberType:
             case stringType:
