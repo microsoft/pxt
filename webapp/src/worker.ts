@@ -8,6 +8,22 @@ importScripts("/blb/pxtworker.js");
 
 let pm: any = postMessage;
 
+if (!Math.imul) {
+    // for explanations see:
+    // http://stackoverflow.com/questions/3428136/javascript-integer-math-incorrect-results (second answer)
+    // (but the code below doesn't come from there; I wrote it myself)
+    // TODO use Math.imul if available
+    Math.imul = function (a: number, b: number): number {
+        const ah = (a >>> 16) & 0xffff;
+        const al = a & 0xffff;
+        const bh = (b >>> 16) & 0xffff;
+        const bl = b & 0xffff;
+        // the shift by 0 fixes the sign on the high part
+        // the final |0 converts the unsigned value into a signed value
+        return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0) | 0);
+    }
+}
+
 // work around safari not providing bta
 if (typeof btoa === "undefined") {
     // http://www.rise4fun.com/Bek/base64encode
@@ -217,7 +233,7 @@ if (!Array.prototype.find) {
     Object.defineProperty(Array.prototype, 'find', {
         writable: true,
         enumerable: true,
-        value: function(predicate: (value: any, index: number, obj: any[] ) => boolean) {
+        value: function (predicate: (value: any, index: number, obj: any[]) => boolean) {
             // 1. Let O be ? ToObject(this value).
             if (this == null) {
                 throw new TypeError('"this" is null or not defined');

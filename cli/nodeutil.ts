@@ -21,6 +21,7 @@ export interface SpawnOptions {
     pipe?: boolean;
     input?: string;
     silent?: boolean;
+    envOverrides?: pxt.Map<string>;
 }
 
 //This should be correct at startup when running from command line
@@ -62,7 +63,7 @@ export function spawnWithPipeAsync(opts: SpawnOptions) {
     return new Promise<Buffer>((resolve, reject) => {
         let ch = child_process.spawn(opts.cmd, opts.args, {
             cwd: opts.cwd,
-            env: process.env,
+            env: opts.envOverrides ? extendEnv(process.env, opts.envOverrides) : process.env,
             stdio: opts.pipe ? [opts.input == null ? process.stdin : "pipe", "pipe", process.stderr] : "inherit",
             shell: opts.shell || false
         } as any)
@@ -82,6 +83,13 @@ export function spawnWithPipeAsync(opts: SpawnOptions) {
         if (opts.input != null)
             ch.stdin.end(opts.input, "utf8")
     })
+}
+
+function extendEnv(base: any, overrides: any) {
+    let res: any = {};
+    Object.keys(base).forEach(key => res[key] = base[key])
+    Object.keys(overrides).forEach(key => res[key] = overrides[key])
+    return res;
 }
 
 export function addCmd(name: string) {

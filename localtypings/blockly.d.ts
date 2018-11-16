@@ -559,7 +559,7 @@ declare namespace Blockly {
         updateEditable(): void;
         dispose(): void;
         render_(): void;
-        showEditor_(): void;
+        showEditor_(e?: Event): void;
         getAbsoluteXY_(): goog.math.Coordinate;
         getScaledBBox_(): {top: number, bottom: number, left: number, right: number};
         setValue(newValue: string | number): void;
@@ -639,7 +639,6 @@ declare namespace Blockly {
     class FieldNumber extends FieldTextInput {
         constructor(value: string | number, opt_min?: any, opt_max?: any, opt_precision?: any, opt_validator?: Function);
         setConstraints(min: any, max: any, precision?: any): void;
-        position_(): void;
     }
 
     class FieldLabel extends Field {
@@ -1176,6 +1175,7 @@ declare namespace Blockly {
         function hideIfOwner(owner: any): void;
         function hideWithoutAnimation(): void;
         function showPositionedByBlock(owner: any, block: Blockly.Block, opt_onHide?: Function, opt_secondaryYOffset?: number): void;
+        function showPositionedByField(field: Blockly.Field, opt_onHide?: Function, opt_secondaryYOffset?: number): void;
         function clearContent(): void;
         function getContentDiv(): HTMLElement;
         function setColour(backgroundColour: string, borderColour: string): void;

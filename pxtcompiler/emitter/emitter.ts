@@ -2621,6 +2621,12 @@ ${lbl}: .short 0xffff
                 else
                     proc.classInfo = classInfo
                 if (node.kind == SK.Constructor) {
+                    if (classInfo.baseClassInfo) {
+                        for (let m of classInfo.baseClassInfo.decl.members) {
+                            if (m.kind == SK.Constructor)
+                                markFunctionUsed(m as ConstructorDeclaration)
+                        }
+                    }
                     if (classInfo.ctor)
                         assert(classInfo.ctor == proc, "classInfo.ctor == proc")
                     else
