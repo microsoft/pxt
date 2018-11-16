@@ -138,11 +138,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
 
         this.typeScriptSaveable = false;
-        this.editor.clear();
+        pxt.blocks.clearWithoutEvents(this.editor);
         try {
             const text = s || `<block type="${ts.pxtc.ON_START_TYPE}"></block>`;
             const xml = Blockly.Xml.textToDom(text);
-            Blockly.Xml.domToWorkspace(xml, this.editor);
+            pxt.blocks.domToWorkspaceNoEvents(xml, this.editor);
 
             this.initLayout();
             this.editor.clearUndo();
@@ -151,7 +151,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.typeScriptSaveable = true;
         } catch (e) {
             pxt.log(e);
-            this.editor.clear();
+            pxt.blocks.clearWithoutEvents(this.editor);
             this.switchToTypeScript();
             this.changeCallback();
             return false;
@@ -623,8 +623,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.typeScriptSaveable = false;
                 this.setDiagnostics(file)
                 this.delayLoadXml = file.content;
-                this.editor.clear();
-                this.editor.clearUndo();
+                pxt.blocks.clearWithoutEvents(this.editor);
                 this.closeFlyout();
 
                 if (this.currFile && this.currFile != file) {
