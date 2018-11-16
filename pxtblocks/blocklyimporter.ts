@@ -2,6 +2,22 @@
 /// <reference path="../built/pxtlib.d.ts" />
 
 namespace pxt.blocks {
+
+    /**
+     * Converts a DOM into workspace without triggering any Blockly event
+     * @param dom 
+     * @param workspace 
+     */
+    export function domToWorkspaceNoEvents(dom: Element, workspace: Blockly.Workspace): string[] {
+        pxt.tickEvent(`blocks.domtow`)
+        try {
+            Blockly.Events.disable();
+            return Blockly.Xml.domToWorkspace(dom, workspace);
+        } finally {
+            Blockly.Events.enable();
+        }
+    }
+
     export function saveWorkspaceXml(ws: Blockly.Workspace): string {
         let xml = Blockly.Xml.workspaceToDom(ws, true);
         let text = Blockly.Xml.domToPrettyText(xml);
@@ -39,7 +55,7 @@ namespace pxt.blocks {
         const workspace = new Blockly.Workspace();
         try {
             const dom = Blockly.Xml.textToDom(xml);
-            Blockly.Xml.domToWorkspace(dom, workspace);
+            pxt.blocks.domToWorkspaceNoEvents(dom, workspace);
             return workspace;
         } catch (e) {
             if (!skipReport)
