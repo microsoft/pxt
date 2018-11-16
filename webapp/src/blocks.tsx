@@ -142,7 +142,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         try {
             const text = s || `<block type="${ts.pxtc.ON_START_TYPE}"></block>`;
             const xml = Blockly.Xml.textToDom(text);
+            Blockly.Events.disable();
             Blockly.Xml.domToWorkspace(xml, this.editor);
+            Blockly.Events.enable();
 
             this.initLayout();
             this.editor.clearUndo();

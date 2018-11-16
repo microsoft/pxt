@@ -38,8 +38,10 @@ namespace pxt.blocks {
     export function loadWorkspaceXml(xml: string, skipReport = false) {
         const workspace = new Blockly.Workspace();
         try {
+            Blockly.Events.disable();
             const dom = Blockly.Xml.textToDom(xml);
             Blockly.Xml.domToWorkspace(dom, workspace);
+            Blockly.Events.enable();
             return workspace;
         } catch (e) {
             if (!skipReport)

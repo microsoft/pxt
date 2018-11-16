@@ -313,7 +313,9 @@ function upgradeFromBlocksAsync(): Promise<UpgradeResult> {
             const text = pxt.blocks.importXml(targetVersion, fileText, info, true);
 
             const xml = Blockly.Xml.textToDom(text);
+            Blockly.Events.disable();
             Blockly.Xml.domToWorkspace(xml, ws);
+            Blockly.Events.enable();
             patchedFiles["main.blocks"] = text;
             return pxt.blocks.compileAsync(ws, info)
         })
