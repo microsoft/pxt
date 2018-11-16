@@ -156,8 +156,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
     private addTypeScriptFile() {
         core.promptAsync({
             header: lf("Add new file?"),
-            body: lf("Please provide a name for your new file. The .ts extension will be added automatically. Don't use spaces or special characters."),
-            defaultValue: ""
+            body: lf("Please provide a name for your new file. The .ts extension will be added automatically. Don't use spaces or special characters.")
         }).then(str => {
             str = str || ""
             str = str.trim()

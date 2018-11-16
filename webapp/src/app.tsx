@@ -2231,7 +2231,7 @@ export class ProjectView
             header: lf("Rename your project"),
             agreeLbl: lf("Save"),
             agreeClass: "green",
-            defaultValue: lf("Enter your project name here")
+            placeholder: lf("Enter your project name here")
         };
         return core.promptAsync(opts).then(res => {
             if (res === null) return Promise.resolve(false); // null means cancelled, empty string means ok (but no value entered)
