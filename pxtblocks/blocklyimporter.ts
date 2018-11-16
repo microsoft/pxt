@@ -18,6 +18,18 @@ namespace pxt.blocks {
         }
     }
 
+    export function clearWithoutEvents(workspace: Blockly.Workspace) {
+        pxt.tickEvent(`blocks.clear`)
+        if (!workspace) return;
+        try {
+            Blockly.Events.disable();
+            workspace.clear();
+            workspace.clearUndo();
+        } finally {
+            Blockly.Events.enable();
+        }
+    }
+
     export function saveWorkspaceXml(ws: Blockly.Workspace): string {
         let xml = Blockly.Xml.workspaceToDom(ws, true);
         let text = Blockly.Xml.domToPrettyText(xml);

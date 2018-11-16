@@ -42,7 +42,7 @@ namespace pxt.blocks {
             });
         }
 
-        workspace.clear();
+        pxt.blocks.clearWithoutEvents(workspace);
         try {
             let text = blocksXml || `<xml xmlns="http://www.w3.org/1999/xhtml"></xml>`;
             let xml = Blockly.Xml.textToDom(text);
