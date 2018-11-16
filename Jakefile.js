@@ -70,7 +70,7 @@ function runKarma(that, flags) {
     cmdIn(that, "node_modules/.bin", command);
 }
 
-task('default', ['updatestrings', 'built/pxt.js', 'built/pxt.d.ts', 'built/pxtrunner.js', 'built/backendutils.js', 'built/target.js', 'wapp', 'monaco-editor', 'built/web/pxtweb.js'], { parallelLimit: 10 })
+task('default', ['updatestrings', 'built/pxt.js', 'built/pxt.d.ts', 'built/pxtrunner.js', 'built/backendutils.js', 'built/target.js', 'wapp', 'monaco-editor', 'built/web/pxtweb.js', 'built/tests/blocksrunner.js'], { parallelLimit: 10 })
 
 task('test', ['default', 'testfmt', 'testerr', 'testdecompiler', 'testlang', 'karma'])
 
@@ -156,9 +156,13 @@ task("blocklycompilertest", ["default"], { async: true }, function () {
     cmdIn(this, "tests/blocklycompiler-test", "node ../../node_modules/typescript/bin/tsc")
 })
 
+file("built/tests/blocksrunner.js", ["built/pxtlib.js", "built/pxtcompiler.js", "built/pxtblocks.js", "built/pxteditor.js"], { async: true }, function () {
+    cmdIn(this, "tests/blocks-test", "node ../../node_modules/typescript/bin/tsc")
+})
+
 task("travis", ["lint", "test", "upload"])
 
-task('upload', ["wapp", "built/pxt.js"], { async: true }, function () {
+task('upload', ["wapp", "built/pxt.js", "built/tests/blocksrunner.js"], { async: true }, function () {
     jake.exec([
         "node built/pxt.js travis",
         "node built/pxt.js buildtarget"

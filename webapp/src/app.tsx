@@ -1225,6 +1225,10 @@ export class ProjectView
 
     saveProjectToFileAsync(): Promise<void> {
         const mpkg = pkg.mainPkg;
+        if (saveAsBlocks()) {
+            pxt.BrowserUtils.browserDownloadText(pkg.mainPkg.readFile("main.blocks"), pkg.genFileName(".blocks"), 'application/xml');
+            return Promise.resolve();;
+        }
         if (pxt.commands.saveProjectAsync) {
             core.infoNotification(lf("Saving..."))
             return pkg.mainPkg.saveToJsonAsync(this.getPreferredEditor())
@@ -1522,7 +1526,7 @@ export class ProjectView
                 return this.saveProjectNameAsync()
                     .then(() => this.saveFileAsync())
                     .then(() => {
-                        if (!pxt.appTarget.compile.hasHex || pxt.appTarget.compile.useMkcd || pxt.appTarget.compile.saveAsPNG) {
+                        if (!pxt.appTarget.compile.hasHex || pxt.appTarget.compile.useMkcd || pxt.appTarget.compile.saveAsPNG || saveAsBlocks()) {
                             this.saveProjectToFileAsync()
                                 .finally(() => {
                                     this.setState({ isSaving: false });
@@ -2897,6 +2901,12 @@ function initHashchange() {
 
 function clearHashChange() {
     window.removeEventListener("hashchange", handleHashChange)
+}
+
+function saveAsBlocks(): boolean {
+    try {
+        return /saveblocks=1/.test(window.location.href) && !!pkg.mainPkg.readFile("main.blocks")
+    } catch (e) { return false; }
 }
 
 function initExtensionsAsync(): Promise<void> {
