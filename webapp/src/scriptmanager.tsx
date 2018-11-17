@@ -11,6 +11,10 @@ import { ProjectsCodeCard } from "./projects";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
+export interface ScriptManagerDialogProps extends ISettingsProps {
+    onClose?: () => void;
+}
+
 export interface ScriptManagerDialogState {
     visible?: boolean;
     selected?: pxt.Map<number>;
@@ -22,8 +26,8 @@ export interface ScriptManagerDialogState {
     results?: string;
 }
 
-export class ScriptManagerDialog extends data.Component<ISettingsProps, ScriptManagerDialogState> {
-    constructor(props: ISettingsProps) {
+export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps, ScriptManagerDialogState> {
+    constructor(props: ScriptManagerDialogProps) {
         super(props);
         this.state = {
             visible: false,
@@ -49,6 +53,7 @@ export class ScriptManagerDialog extends data.Component<ISettingsProps, ScriptMa
 
     close() {
         this.setState({ visible: false, searchFor: undefined });
+        if (this.props.onClose) this.props.onClose();
     }
 
     show() {
@@ -102,7 +107,7 @@ export class ScriptManagerDialog extends data.Component<ISettingsProps, ScriptMa
         let { selected } = this.state;
         const headers = this.fetchLocalData();
         const selectedLength = Object.keys(selected).length;
-        core.confirmDelete(selectedLength == 1 ? headers[selected[Object.keys(selected)[0]]].name : lf("{0} files", selectedLength), () => {
+        core.confirmDelete(selectedLength == 1 ? headers[parseInt(Object.keys(selected)[0])].name : lf("{0} files", selectedLength), () => {
             const promises: Promise<void>[] = [];
             headers.forEach((header, index) => {
                 if (selected[index]) {
@@ -112,8 +117,11 @@ export class ScriptManagerDialog extends data.Component<ISettingsProps, ScriptMa
                 }
             })
             this.setState({ selected: {} })
-            return Promise.all(promises).then(() => { });
-        })
+            return Promise.all(promises)
+                .then(() => {
+                    data.clearCache();
+                });
+        });
     }
 
     handleExport() {
@@ -174,7 +182,7 @@ export class ScriptManagerDialog extends data.Component<ISettingsProps, ScriptMa
                         this.setState({ markedNew: {} });
                     }, 5 * 1000);
                     return true;
-                })
+                });
         });
     }
 
@@ -234,45 +242,57 @@ export class ScriptManagerDialog extends data.Component<ISettingsProps, ScriptMa
         const { visible, selected, markedNew, view, searchFor } = this.state;
         if (!visible) return <div></div>;
 
+        const darkTheme = pxt.appTarget.appTheme.baseTheme == 'dark';
+
         let headers = this.fetchLocalData() || [];
         headers = headers.filter(h => !h.isDeleted);
         const isSearching = false;
-
+        const hasHeaders = !searchFor ? headers.length > 0 : true;
         const selectedAll = headers.length > 0 && headers.length == Object.keys(selected).length;
 
-        let headerActions: JSX.Element[] = [];
-        headerActions.push(<SearchInput key="search"
-            ariaMessage={lf("{0} result matching '{1}'", headers.length, searchFor)}
-            placeholder={lf("Search...")} className="mobile hide"
-            searchHandler={this.handleSearch}
-            disabled={isSearching}
-            style={{ flexGrow: 1 }}
-            searchOnChange={true}
-        />);
-        if (Object.keys(selected).length > 0) {
-            if (Object.keys(selected).length == 1) {
-                headerActions.push(<sui.Button key="edit" icon="edit outline" className="icon"
-                    title={lf("Edit Project")} onClick={this.handleOpen} tooltipId={"scriptmgr-actions-edit"} />);
-                //headerActions.push(<sui.Button key="rename" icon="font" className="circular icon" title={lf("Rename Project")} onClick={this.handleRename} />);
-                headerActions.push(<sui.Button key="clone" icon="clone outline" className="icon"
-                    title={lf("Clone Project")} onClick={this.handleDuplicate} tooltipId={"scriptmgr-actions-clone"} />);
-                //headerActions.push(<sui.Button key="export" icon="download" className="circular icon" title={lf("Save Project")} onClick={this.handleExport} />);
+        let headerActions: JSX.Element[];
+        if (hasHeaders) {
+            headerActions = [];
+            headerActions.push(<SearchInput key="search"
+                ariaMessage={lf("{0} result matching '{1}'", headers.length, searchFor)}
+                placeholder={lf("Search...")} className="mobile hide"
+                searchHandler={this.handleSearch}
+                disabled={isSearching}
+                style={{ flexGrow: 1 }}
+                searchOnChange={true}
+            />);
+            if (Object.keys(selected).length > 0) {
+                if (Object.keys(selected).length == 1) {
+                    headerActions.push(<sui.Button key="edit" icon="edit outline" className="icon"
+                        title={lf("Edit Project")} onClick={this.handleOpen} tooltipId={"scriptmgr-actions-edit"} />);
+                    //headerActions.push(<sui.Button key="rename" icon="font" className="circular icon" title={lf("Rename Project")} onClick={this.handleRename} />);
+                    headerActions.push(<sui.Button key="clone" icon="clone outline" className="icon"
+                        title={lf("Clone Project")} onClick={this.handleDuplicate} tooltipId={"scriptmgr-actions-clone"} />);
+                    //headerActions.push(<sui.Button key="export" icon="download" className="circular icon" title={lf("Save Project")} onClick={this.handleExport} />);
+                }
+                headerActions.push(<sui.Button key="delete" icon="trash" className="icon red"
+                    title={lf("Delete Project")} onClick={this.handleDelete} tooltipId={"scriptmgr-actions-delete"} />);
+                headerActions.push(<div key="divider" className="divider"></div>);
             }
-            headerActions.push(<sui.Button key="delete" icon="trash" className="icon red"
-                title={lf("Delete Project")} onClick={this.handleDelete} tooltipId={"scriptmgr-actions-delete"} />);
-            headerActions.push(<div key="divider" className="divider"></div>);
+            headerActions.push(<sui.Button key="view" icon={view == 'grid' ? 'th list' : 'grid layout'} className="icon"
+                title={`${view == 'grid' ? lf("List view") : lf("Grid view")}`} onClick={this.handleSwitchView} tooltipId={"scriptmgr-actions-switchview"} />)
         }
-        headerActions.push(<sui.Button key="view" icon={view == 'grid' ? 'th list' : 'grid layout'} className="icon"
-            title={`${view == 'grid' ? lf("List view") : lf("Grid view")}`} onClick={this.handleSwitchView} tooltipId={"scriptmgr-actions-switchview"} />)
-
         /* tslint:disable:react-a11y-anchors */
         return (
-            <sui.Modal isOpen={visible} className="scriptmanagerdialog" size="fullscreen"
+            <sui.Modal isOpen={visible} className="scriptmanager" size="fullscreen"
                 onClose={this.close} dimmer={true} header={lf("My Projects")}
                 closeIcon={true} headerActions={headerActions}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
             >
-                {view == 'grid' ?
+                {!hasHeaders ? <div className="empty-content">
+                    <h2 className="ui center aligned header">
+                        <div className="content">
+                            {lf("It's empty in here")}
+                            <div className="sub header">{lf("Go back to create a new project")}</div>
+                        </div>
+                    </h2>
+                </div> : undefined}
+                {hasHeaders && view == 'grid' ?
                     <div role="grid" className="ui container fluid" style={{ height: "100%" }} onClick={this.handleAreaClick} onKeyDown={this.handleKeyDown}>
                         <div className={"ui cards"}>
                             {headers.map((scr, index) => {
@@ -302,9 +322,9 @@ export class ScriptManagerDialog extends data.Component<ISettingsProps, ScriptMa
                             })}
                         </div>
                     </div> : undefined}
-                {view == 'list' ?
+                {hasHeaders && view == 'list' ?
                     <div role="table" className="ui container" style={{ height: "100%" }} onClick={this.handleAreaClick} onKeyDown={this.handleKeyDown}>
-                        <table className="ui definition unstackable table">
+                        <table className={`ui definition unstackable table ${darkTheme ? 'inverted' : ''}`}>
                             <thead className="full-width">
                                 <tr>
                                     <th onClick={this.handleSelectAll} tabIndex={0} onKeyDown={sui.fireClickOnEnter}>

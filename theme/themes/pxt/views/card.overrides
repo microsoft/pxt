@@ -96,8 +96,7 @@ a.ui.card:focus,
 
 /* New project card */
 
-.ui.card.link.newprojectcard {
-    background: fade(@primaryColor, 90%) !important;
+.ui.card.link.buttoncard {
     border: @borderWidth solid @solidBorderColor;
     text-align: center;
     color: @white;
@@ -112,8 +111,12 @@ a.ui.card:focus,
     }
 }
 
-.ui.card.newprojectcard:hover {
+.ui.card.buttoncard:hover {
     border: @linkHoverBorder;
+}
+
+.ui.card.link.newprojectcard {
+    background: fade(@primaryColor, 90%) !important;
 }
 
 

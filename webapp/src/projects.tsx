@@ -138,13 +138,13 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
     }
 
     showScriptManager() {
-        pxt.tickEvent("projects.scriptmanager", undefined, { interactiveConsent: true });
+        pxt.tickEvent("projects.showall.header", undefined, { interactiveConsent: true });
         this.props.parent.showScriptManager();
     }
 
     cloudSignIn() {
         pxt.tickEvent("projects.signin", undefined, { interactiveConsent: true });
-        showCloudSignInDialog();
+        this.props.parent.cloudSignInDialog();
     }
 
     renderCore() {
@@ -184,11 +184,16 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 <div className="ui segment getting-started-segment" style={{ backgroundImage: `url(${encodeURI(targetTheme.homeScreenHero)})` }} /> : undefined}
             <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment mystuff-segment">
                 <div className="ui grid equal width padded heading">
-                    <div className="column">
-                        <h2 className="ui header">{lf("My Projects")} </h2>
+                    <div className="column" style={{ zIndex: 1 }}>
+                        <h2 role="button" className="ui header myproject-header" title={lf("See all projects")} tabIndex={0}
+                                onClick={this.showScriptManager} onKeyDown={sui.fireClickOnEnter}>
+                            {lf("My Projects")}
+                            <span className="ui grid-dialog-btn">
+                                <sui.Icon icon="angle right" />
+                            </span>
+                        </h2>
                     </div>
                     <div className="column right aligned" style={{ zIndex: 1 }}>
-                        <sui.Button key="grid" icon="grid layout" className="grid-dialog-btn" title={lf("View all projects")} onClick={this.showScriptManager} />
                         {pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing) ?
                             <sui.Button key="import" icon="upload" className="import-dialog-btn" textClass="landscape only" text={lf("Import")} title={lf("Import a project")} onClick={this.importProject} /> : undefined}
                     </div>
@@ -282,7 +287,9 @@ interface ProjectsCarouselState {
 export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, ProjectsCarouselState> {
     private prevGalleries: pxt.CodeCard[] = [];
     private hasFetchErrors = false;
-    private latestProject: codecard.CodeCardView
+    private latestProject: codecard.CodeCardView;
+
+    private static NUM_PROJECTS_HOMESCREEN = 10;
 
     constructor(props: ProjectsCarouselProps) {
         super(props)
@@ -293,6 +300,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         this.closeDetailOnEscape = this.closeDetailOnEscape.bind(this);
         this.reload = this.reload.bind(this);
         this.newProject = this.newProject.bind(this);
+        this.allProjects = this.allProjects.bind(this);
         this.handleCardClick = this.handleCardClick.bind(this);
     }
 
@@ -324,6 +332,11 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
     newProject() {
         pxt.tickEvent("projects.new", undefined, { interactiveConsent: true });
         this.props.parent.newProject();
+    }
+
+    allProjects() {
+        pxt.tickEvent("projects.showall.more", undefined, { interactiveConsent: true });
+        this.props.parent.showScriptManager();
     }
 
     closeDetail() {
@@ -430,18 +443,19 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                 </div>
             }
         } else {
-            const headers = this.fetchLocalData();
+            const headers = this.fetchLocalData()
             const showNewProject = pxt.appTarget.appTheme && !pxt.appTarget.appTheme.hideNewProjectButton;
+            const showAllProjects = headers.length > ProjectsCarousel.NUM_PROJECTS_HOMESCREEN;
             const bundledcoresvgs = pxt.appTarget.bundledcoresvgs;
             return <carousel.Carousel bleedPercent={20}>
-                {showNewProject ? <div role="button" className="ui card link newprojectcard" title={lf("Creates a new empty project")}
+                {showNewProject ? <div role="button" className="ui card link buttoncard newprojectcard" title={lf("Creates a new empty project")}
                     onClick={this.newProject} onKeyDown={sui.fireClickOnEnter} >
                     <div className="content">
                         <sui.Icon icon="huge add circle" />
                         <span className="header">{lf("New Project")}</span>
                     </div>
                 </div> : undefined}
-                {headers.map((scr, index) => {
+                {headers.slice(0, ProjectsCarousel.NUM_PROJECTS_HOMESCREEN).map((scr, index) => {
                     const boardsvg = scr.board && bundledcoresvgs && bundledcoresvgs[scr.board];
                     return <ProjectsCodeCard
                         key={'local' + scr.id + scr.recentUse}
@@ -456,6 +470,13 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                         onCardClick={this.handleCardClick}
                     />;
                 })}
+                {showAllProjects ? <div role="button" className="ui card link buttoncard" title={lf("See all projects")}
+                    onClick={this.allProjects} onKeyDown={sui.fireClickOnEnter} >
+                    <div className="content">
+                        <sui.Icon icon="huge right angle" />
+                        <span className="header">{lf("See all projects")}</span>
+                    </div>
+                </div> : undefined}
             </carousel.Carousel>
         }
     }

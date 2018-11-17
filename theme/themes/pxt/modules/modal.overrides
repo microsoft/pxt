@@ -46,6 +46,7 @@
 .ui.button.back-button {
     background: none !important;
     border: none !important;
+    box-shadow: none !important;
 }
 
 .ui.fullscreen.modal,
@@ -101,8 +102,9 @@
         border: 0;
     }
 
-    .has-actions .content {
+    .has-actions.content {
         height: calc(100% - (2 * @mainMenuHeight));
+        padding: 1.2rem;
     }
     .ui.button.back-button, .ui.help-button {
         color: @extensionsHeaderColor !important;
@@ -177,7 +179,7 @@
         > .header {
             height: @mobileMenuHeight;
         }
-        .has-actions .content {
+        .has-actions.content {
             height: calc(100% - @mobileMenuHeight - @mainMenuHeight);
         }
     }
