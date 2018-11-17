@@ -470,7 +470,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                         onCardClick={this.handleCardClick}
                     />;
                 })}
-                {showAllProjects ? <div role="button" className="ui card link buttoncard" title={lf("See all projects")}
+                {showAllProjects ? <div role="button" className="ui card link buttoncard allprojectscard" title={lf("See all projects")}
                     onClick={this.allProjects} onKeyDown={sui.fireClickOnEnter} >
                     <div className="content">
                         <sui.Icon icon="huge right angle" />

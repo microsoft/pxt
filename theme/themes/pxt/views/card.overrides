@@ -118,6 +118,9 @@ a.ui.card:focus,
 .ui.card.link.newprojectcard {
     background: fade(@primaryColor, 90%) !important;
 }
+.ui.card.link.allprojectscard {
+    background: fade(@secondaryColor, 90%) !important;
+}
 
 
 /* Example card */
