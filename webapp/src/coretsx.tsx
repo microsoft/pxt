@@ -15,6 +15,8 @@ export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogSt
     private resolve: any;
     private reject: any;
 
+    private okButton: sui.ModalButton;
+
     constructor(props: core.PromptOptions) {
         super(props);
         this.state = {
@@ -61,6 +63,18 @@ export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogSt
 
     modalDidOpen(ref: HTMLElement) {
         const options = this.props;
+        const dialogInput = this.refs['promptInput'] as HTMLInputElement;
+        if (dialogInput) {
+            dialogInput.setSelectionRange(0, 9999);
+            const that = this;
+            dialogInput.onkeydown = (e: KeyboardEvent) => {
+                const charCode = core.keyCodeFromEvent(e);
+                if (charCode === core.ENTER_KEY && that.okButton && dialogInput.value) {
+                    that.okButton.onclick();
+                    e.preventDefault();
+                }
+            }
+        }
         if (options.onLoaded) {
             options.onLoaded(ref);
         }
@@ -80,16 +94,15 @@ export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogSt
         const size: any = options.size || 'small';
 
         const buttons = options.buttons ? options.buttons.filter(b => !!b) : [];
-        let okButton: sui.ModalButton;
         buttons.forEach(btn => {
             const onclick = btn.onclick;
             btn.onclick = () => {
                 this.close(onclick ? onclick() : 0);
             }
             if (!btn.className) btn.className = "approve positive";
-            if (btn.approveButton) okButton = btn;
+            if (btn.approveButton) this.okButton = btn;
         })
-        if (options.type == 'prompt' && okButton) okButton.disabled = !inputValue;
+        if (options.type == 'prompt' && this.okButton) this.okButton.disabled = !inputValue;
 
         const classes = sui.cx([
             'coredialog',
@@ -109,7 +122,7 @@ export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogSt
                 modalDidOpen={this.modalDidOpen}
             >
                 {options.type == 'prompt' ? <div className="ui fluid icon input">
-                    <input autoFocus type="text" id="promptDialogInput" onChange={this.handleInputChange} value={inputValue} placeholder={options.placeholder} />
+                    <input autoFocus type="text" ref="promptInput" id="promptDialogInput" onChange={this.handleInputChange} value={inputValue} placeholder={options.placeholder} />
                 </div> : undefined}
                 {options.jsx}
                 {options.body ? <p>{options.body}</p> : undefined}

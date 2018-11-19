@@ -232,19 +232,17 @@ export function promptAsync(options: PromptOptions): Promise<string> {
     options.type = 'prompt';
     if (!options.buttons) options.buttons = []
 
-    let result = "";
+    let result = options.initialValue || "";
     let cancelled: boolean = false;
+
+    options.onInputChanged = (v: string) => { result = v };
 
     if (!options.hideAgree) {
         options.buttons.push({
             label: options.agreeLbl || lf("Go ahead!"),
             className: options.agreeClass,
             icon: options.agreeIcon || "checkmark",
-            approveButton: true,
-            onclick: () => {
-                let dialogInput = document.getElementById('promptDialogInput') as HTMLInputElement;
-                result = dialogInput.value;
-            }
+            approveButton: true
         })
     }
 
@@ -260,23 +258,6 @@ export function promptAsync(options: PromptOptions): Promise<string> {
         });
         options.hideCancel = true;
     }
-
-    options.onLoaded = (ref: HTMLElement) => {
-        let dialogInput = document.getElementById('promptDialogInput') as HTMLInputElement;
-        if (dialogInput) {
-            dialogInput.setSelectionRange(0, 9999);
-            dialogInput.onkeydown = (e: KeyboardEvent) => {
-                const charCode = keyCodeFromEvent(e);
-                if (charCode === ENTER_KEY) {
-                    const firstButton = ref.getElementsByClassName("approve positive").item(0) as HTMLElement;
-                    if (firstButton && dialogInput.value) {
-                        firstButton.click();
-                        e.preventDefault();
-                    }
-                }
-            }
-        }
-    };
 
     return dialogAsync(options)
         .then(() => cancelled ? null : result);

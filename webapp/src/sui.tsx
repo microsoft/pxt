@@ -841,8 +841,8 @@ export interface ModalButton {
     url?: string;
     fileName?: string;
     loading?: boolean;
-    approveButton?: boolean;
     disabled?: boolean;
+    approveButton?: boolean;
 }
 
 export interface ModalProps extends ReactModal.Props {
@@ -1068,7 +1068,8 @@ class ModalButtonElement extends data.PureComponent<ModalButton, {}> {
     }
 
     handleClick() {
-        this.props.onclick();
+        if (!this.props.disabled)
+            this.props.onclick();
     }
 
     renderCore() {

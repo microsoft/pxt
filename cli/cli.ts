@@ -2145,7 +2145,7 @@ function buildFailed(msg: string, e: any) {
     console.log("")
 }
 
-function buildAndWatchTargetAsync(includeSourceMaps = false) {
+function buildAndWatchTargetAsync(includeSourceMaps: boolean, rebundle: boolean) {
     if (!(fs.existsSync(path.join("sim", "tsconfig.json")) || nodeutil.existsDirSync("sim/public"))) {
         console.log("No sim/tsconfig.json nor sim/public/; assuming npm installed package")
         return Promise.resolve()
@@ -2162,9 +2162,8 @@ function buildAndWatchTargetAsync(includeSourceMaps = false) {
 
     return buildAndWatchAsync(() => buildPxtAsync(includeSourceMaps)
         .then(buildCommonSimAsync, e => buildFailed("common sim build failed: " + e.message, e))
-        .then(() => internalBuildTargetAsync({ localDir: true }).then(r => { }, e => {
-            buildFailed("target build failed: " + e.message, e)
-        }))
+        .then(() => rebundle ? rebundleAsync() : internalBuildTargetAsync({ localDir: true }))
+        .catch(e => buildFailed("target build failed: " + e.message, e))
         .then(() => {
             let toWatch = [path.resolve("node_modules/pxt-core")].concat(dirsToWatch)
             if (hasCommonPackages) {
@@ -2250,7 +2249,6 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
     let justServe = false
     let packaged = false
     let includeSourceMaps = false;
-    let browser: string = parsed.flags["browser"] as string;
 
     if (parsed.flags["just"]) {
         justServe = true
@@ -2258,6 +2256,7 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
         justServe = true
         packaged = true
     }
+    const rebundle = !!parsed.flags["rebundle"];
     if (parsed.flags["noBrowser"]) {
         globalConfig.noAutoStart = true
     }
@@ -2286,7 +2285,7 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
             }
         }
     }
-    return (justServe ? Promise.resolve() : buildAndWatchTargetAsync(includeSourceMaps))
+    return (justServe ? Promise.resolve() : buildAndWatchTargetAsync(includeSourceMaps, rebundle))
         .then(() => server.serveAsync({
             autoStart: !globalConfig.noAutoStart,
             localToken,
@@ -5451,6 +5450,7 @@ function initCommands() {
                 aliases: ["local", "l", "local-build", "lb"]
             },
             just: { description: "just serve without building" },
+            rebundle: { description: "rebundle when change is detected", aliases: ["rb"] },
             hostname: {
                 description: "hostname to run serve, default localhost",
                 aliases: ["h"],
