@@ -157,7 +157,7 @@ let received = false;
 while (!received) {
     message = ports.readString();
     if (message != undefined)
-        recieved = true;
+        received = true;
     } else {
         pause(1000);
     }
