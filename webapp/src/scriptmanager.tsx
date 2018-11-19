@@ -154,7 +154,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         // Ask for the new project name
         const opts: core.PromptOptions = {
             header: lf("Choose a new name for your project"),
-            agreeLbl: lf("Clone"),
+            agreeLbl: lf("Duplicate"),
             agreeClass: "green approve positive",
             agreeIcon: "clone",
             initialValue: this.createDuplicateName(header.name),
@@ -307,7 +307,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                         title={lf("Edit Project")} onClick={this.handleOpen} tooltipId={"scriptmgr-actions-edit"} />);
                     //headerActions.push(<sui.Button key="rename" icon="font" className="circular icon" title={lf("Rename Project")} onClick={this.handleRename} />);
                     headerActions.push(<sui.Button key="clone" icon="clone outline" className="icon"
-                        title={lf("Clone Project")} onClick={this.handleDuplicate} tooltipId={"scriptmgr-actions-clone"} />);
+                        title={lf("Duplicate Project")} onClick={this.handleDuplicate} tooltipId={"scriptmgr-actions-clone"} />);
                     //headerActions.push(<sui.Button key="export" icon="download" className="circular icon" title={lf("Save Project")} onClick={this.handleExport} />);
                 }
                 headerActions.push(<sui.Button key="delete" icon="trash" className="icon red"
