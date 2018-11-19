@@ -191,7 +191,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                             <span className="ui grid-dialog-btn">
                                 <sui.Icon icon="angle right" />
                             </span>
-                        </h2> : <h2>{lf("My Projects")}</h2>}
+                        </h2> : <h2 className="ui header">{lf("My Projects")}</h2>}
                     </div>
                     <div className="column right aligned" style={{ zIndex: 1 }}>
                         {pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing) ?
