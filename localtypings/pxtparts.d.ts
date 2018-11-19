@@ -25,6 +25,7 @@ declare namespace pxsim {
         pinBlocks: PinBlockDefinition[],
         leds?: LEDDefinition[];
         reset?: BoxDefinition;
+        useCrocClips?: boolean;
     }
     interface BoardDefinition {
         id?: string, // optional board id (set to the package id, multiboard only)

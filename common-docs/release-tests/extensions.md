@@ -13,10 +13,10 @@ pxt testghpkgs
 
 If you get throttled:
 
-* Login with your PXT token from https://makecode.com/oauth/get-token:
+* Login with your PXT token from https://makecode.com/oauth/get-token by setting the following environment variable:
 
 ```
-pxt login pxt TOKEN
+set PXT_ACCESS_TOKEN=<token>
 ```
 
 * Login with a GitHub token:

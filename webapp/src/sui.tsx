@@ -840,6 +840,8 @@ export interface ModalButton {
     url?: string;
     fileName?: string;
     loading?: boolean;
+    disabled?: boolean;
+    approveButton?: boolean;
 }
 
 export interface ModalProps extends ReactModal.Props {
@@ -1036,7 +1038,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
                                 key={`action_${action.label}`}
                                 icon={action.icon}
                                 text={action.label}
-                                className={`ui button approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''} ${action.loading ? "loading disabled" : ""}`}
+                                className={`ui button approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''} ${action.loading ? "loading disabled" : ""} ${action.disabled ? "disabled" : ""}`}
                                 href={action.url}
                                 target={!action.fileName ? '_blank' : undefined}
                                 download={action.fileName ? pxt.Util.htmlEscape(action.fileName) : undefined}
@@ -1064,7 +1066,8 @@ class ModalButtonElement extends data.PureComponent<ModalButton, {}> {
     }
 
     handleClick() {
-        this.props.onclick();
+        if (!this.props.disabled)
+            this.props.onclick();
     }
 
     renderCore() {
@@ -1072,7 +1075,7 @@ class ModalButtonElement extends data.PureComponent<ModalButton, {}> {
         return <Button
             icon={action.icon}
             text={action.label}
-            className={`approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''} ${action.loading ? "loading disabled" : ""}`}
+            className={`approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''} ${action.loading ? "loading disabled" : ""} ${action.disabled ? "disabled" : ""}`}
             onClick={this.handleClick}
             onKeyDown={fireClickOnEnter} />
     }

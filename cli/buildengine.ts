@@ -519,7 +519,7 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
         for (let fn of files) {
             let v = extractConstants(fn, fc[fn], true)
             if (v) {
-                consts += "    // " + fn.replace(/\\/g, "/") + "\n"
+                consts += "    // " + fn.replace(/\\/g, "/").replace(buildEngine.buildPath, "") + "\n"
                 consts += v
             }
         }

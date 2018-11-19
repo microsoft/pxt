@@ -42,14 +42,11 @@ namespace pxt.blocks {
             });
         }
 
-        workspace.clear();
+        pxt.blocks.clearWithoutEvents(workspace);
         try {
             let text = blocksXml || `<xml xmlns="http://www.w3.org/1999/xhtml"></xml>`;
             let xml = Blockly.Xml.textToDom(text);
-            Blockly.Events.disable();
-            Blockly.Xml.domToWorkspace(xml, workspace);
-            Blockly.Events.enable();
-
+            pxt.blocks.domToWorkspaceNoEvents(xml, workspace);
             const layout = options.splitSvg ? BlockLayout.Align : options.layout;
             switch (layout) {
                 case BlockLayout.Align:

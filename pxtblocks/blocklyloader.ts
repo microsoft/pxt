@@ -446,21 +446,6 @@ namespace pxt.blocks {
         return block;
     }
 
-    function createCategoryElement(name: string, nameid: string, weight: number, colour?: string, iconClass?: string): Element {
-        const result = document.createElement("category");
-        result.setAttribute("name", name);
-        result.setAttribute("nameid", nameid.toLowerCase());
-        result.setAttribute("weight", weight.toString());
-        if (colour) {
-            result.setAttribute("colour", colour);
-        }
-        if (iconClass) {
-            result.setAttribute("iconclass", iconClass);
-            result.setAttribute("expandedclass", iconClass);
-        }
-        return result;
-    }
-
     export function injectBlocks(blockInfo: pxtc.BlocksInfo): pxtc.SymbolInfo[] {
         // inject Blockly with all block definitions
         return blockInfo.blocks
@@ -2251,7 +2236,7 @@ namespace pxt.blocks {
                         field.appendChild(document.createTextNode(this.getProcedureCall()));
                         block.appendChild(field);
                         xml.appendChild(block);
-                        Blockly.Xml.domToWorkspace(xml, this.workspace);
+                        pxt.blocks.domToWorkspaceNoEvents(xml, this.workspace);
                         Blockly.Events.setGroup(false);
                     }
                 } else if (event.type == Blockly.Events.DELETE) {
@@ -2342,7 +2327,7 @@ namespace pxt.blocks {
                 field.appendChild(document.createTextNode(name));
                 block.appendChild(field);
                 xml.appendChild(block);
-                let newBlockIds = Blockly.Xml.domToWorkspace(xml, workspace);
+                let newBlockIds = pxt.blocks.domToWorkspaceNoEvents(xml, workspace);
                 // Close flyout and highlight block
                 Blockly.hideChaff();
                 let newBlock = workspace.getBlockById(newBlockIds[0]);
