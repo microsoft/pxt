@@ -24,6 +24,9 @@ export interface ScriptManagerDialogState {
     view: 'list' | 'grid';
     searchFor?: string;
     results?: string;
+
+    sortedBy?: string;
+    sortedAsc?: boolean;
 }
 
 export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps, ScriptManagerDialogState> {
@@ -33,7 +36,9 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
             visible: false,
             selected: {},
             markedNew: {},
-            view: 'grid'
+            view: 'grid',
+            sortedBy: 'time',
+            sortedAsc: false
         }
 
         this.close = this.close.bind(this);
@@ -129,6 +134,11 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         // Possibly handle saving multiple files (.zip?)
     }
 
+    handleRename() {
+        const header = this.getSelectedHeader();
+        // TODO: implement renaming without opening project
+    }
+
     handleOpen() {
         const header = this.getSelectedHeader();
 
@@ -137,11 +147,6 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
             .done(() => {
                 core.hideLoading("changeheader");
             })
-    }
-
-    handleRename() {
-        const header = this.getSelectedHeader();
-        // TODO: implement renaming without opening project
     }
 
     handleDuplicate() {
@@ -177,7 +182,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                 .then(() => workspace.saveAsync(clonedHeader))
                 .then(() => {
                     data.clearCache();
-                    this.setState({ selected: {}, markedNew: { '0': 1 } });
+                    this.setState({ selected: {}, markedNew: { '0': 1 }, sortedBy: 'time', sortedAsc: false });
                     setTimeout(() => {
                         this.setState({ markedNew: {} });
                     }, 5 * 1000);
@@ -229,6 +234,41 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         event.preventDefault();
     }
 
+    toggleSortName = (force?: boolean) => {
+        let { sortedBy, sortedAsc } = this.state;
+        if (sortedBy == 'name' && !force) sortedAsc = !sortedAsc
+        else sortedAsc = true; // Default asc
+        this.setState({ sortedBy: 'name', sortedAsc, markedNew: {}, selected: {} });
+    }
+
+    toggleSortTime = (force?: boolean) => {
+        let { sortedAsc, sortedBy } = this.state;
+        if (sortedBy == 'time' && !force) sortedAsc = !sortedAsc
+        else sortedAsc = false; // Default desc
+        this.setState({ sortedBy: 'time', sortedAsc, markedNew: {}, selected: {} });
+    }
+
+    handleSortName = () => {
+        this.toggleSortName(true);
+    }
+
+    handleSortTime = () => {
+        this.toggleSortTime(true);
+    }
+
+    handleToggleSortName = () => {
+        this.toggleSortName(false);
+    }
+
+    handleToggleSortTime = () => {
+        this.toggleSortTime(false);
+    }
+
+    handleSwitchSortDirection = () => {
+        const { sortedAsc } = this.state;
+        this.setState({ sortedAsc: !sortedAsc });
+    }
+
     private getSelectedHeader() {
         const { selected } = this.state;
         const indexes = Object.keys(selected);
@@ -239,7 +279,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
     }
 
     renderCore() {
-        const { visible, selected, markedNew, view, searchFor } = this.state;
+        const { visible, selected, markedNew, view, searchFor, sortedBy, sortedAsc } = this.state;
         if (!visible) return <div></div>;
 
         const darkTheme = pxt.appTarget.appTheme.baseTheme == 'dark';
@@ -277,7 +317,16 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
             headerActions.push(<sui.Button key="view" icon={view == 'grid' ? 'th list' : 'grid layout'} className="icon"
                 title={`${view == 'grid' ? lf("List view") : lf("Grid view")}`} onClick={this.handleSwitchView} tooltipId={"scriptmgr-actions-switchview"} />)
         }
-        /* tslint:disable:react-a11y-anchors */
+        const sortingFunction = (a: pxt.workspace.Header, b: pxt.workspace.Header) => {
+            if (sortedBy === 'time') {
+                return sortedAsc ?
+                    a.modificationTime - b.modificationTime :
+                    b.modificationTime - a.modificationTime;
+            }
+            return sortedAsc ?
+                a.name.localeCompare(b.name) :
+                b.name.localeCompare(a.name);
+        };
         return (
             <sui.Modal isOpen={visible} className="scriptmanager" size="fullscreen"
                 onClose={this.close} dimmer={true} header={lf("My Projects")}
@@ -294,13 +343,22 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                 </div> : undefined}
                 {hasHeaders && view == 'grid' ?
                     <div role="grid" className="ui container fluid" style={{ height: "100%" }} onClick={this.handleAreaClick} onKeyDown={this.handleKeyDown}>
+                        <div className="sort-by">
+                            <div className="ui compact buttons">
+                                <sui.DropdownMenu role="menuitem" text={sortedBy == 'time' ? lf("Last Modified") : lf("Name")} title={lf("Sort by")} className={`inline button ${darkTheme ? 'inverted' : ''}`}>
+                                    <sui.Item role="menuitem" icon={sortedBy == 'name' ? 'check' : undefined} className={sortedBy != 'name' ? 'no-icon' : ''} text={lf("Name")} tabIndex={-1} onClick={this.handleSortName} />
+                                    <sui.Item role="menuitem" icon={sortedBy == 'time' ? 'check' : undefined} className={sortedBy != 'time' ? 'no-icon' : ''} text={lf("Last Modified")} tabIndex={-1} onClick={this.handleSortTime} />
+                                </sui.DropdownMenu>
+                                <sui.Button icon={`arrow ${sortedAsc ? 'up' : 'down'}`} className={`${darkTheme ? 'inverted' : ''}`} onClick={this.handleSwitchSortDirection} />
+                            </div>
+                        </div>
                         <div className={"ui cards"}>
-                            {headers.map((scr, index) => {
+                            {headers.sort(sortingFunction).map((scr, index) => {
                                 const isMarkedNew = !!markedNew[index];
                                 const isSelected = !!selected[index];
                                 const showMarkedNew = isMarkedNew && !isSelected;
 
-                                let labelIcon = `circle outline ${isSelected ? 'check' : ''} ${isSelected ? 'green' : 'grey'}`;
+                                let labelIcon = `circle outline ${isSelected ? 'check' : ''} ${isSelected ? 'green' : 'grey'} ${darkTheme ? 'inverted' : ''}`;
                                 if (showMarkedNew) labelIcon = undefined;
                                 const labelClass = showMarkedNew ? 'orange right ribbon label' :
                                     `right corner label large selected-label`;
@@ -322,7 +380,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                             })}
                         </div>
                     </div> : undefined}
-                {hasHeaders && view == 'list' ?
+                {hasHeaders && view == 'list' && headers.length > 0 ?
                     <div role="table" className="ui container" style={{ height: "100%" }} onClick={this.handleAreaClick} onKeyDown={this.handleKeyDown}>
                         <table className={`ui definition unstackable table ${darkTheme ? 'inverted' : ''}`}>
                             <thead className="full-width">
@@ -330,12 +388,16 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                                     <th onClick={this.handleSelectAll} tabIndex={0} onKeyDown={sui.fireClickOnEnter}>
                                         <sui.Icon icon={`circle outline large ${selectedAll ? 'check' : ''}`} />
                                     </th>
-                                    <th>Name</th>
-                                    <th>Updated</th>
+                                    <th onClick={this.handleToggleSortName} tabIndex={0} onKeyDown={sui.fireClickOnEnter}>
+                                        {lf("Name")} {sortedBy == 'name' ? <sui.Icon icon={`arrow ${sortedAsc ? 'up' : 'down'}`} /> : undefined}
+                                    </th>
+                                    <th onClick={this.handleToggleSortTime} tabIndex={0} onKeyDown={sui.fireClickOnEnter}>
+                                        {lf("Last Modified")} {sortedBy == 'time' ? <sui.Icon icon={`arrow ${sortedAsc ? 'up' : 'down'}`} /> : undefined}
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {headers.map((scr, index) => {
+                                {headers.sort(sortingFunction).map((scr, index) => {
                                     const isMarkedNew = !!markedNew[index];
                                     const isSelected = !!selected[index];
                                     const showMarkedNew = isMarkedNew && !isSelected;
@@ -384,12 +446,11 @@ class ProjectsCodeRow extends sui.StatelessUIElement<ProjectsCodeRowProps> {
         e.stopPropagation();
     }
 
-
     renderCore() {
         const { scr, onRowClicked, onClick, selected, markedNew, children, ...rest } = this.props;
         return <tr tabIndex={0} {...rest} onKeyDown={sui.fireClickOnEnter} onClick={this.handleClick} style={{ cursor: 'pointer' }} className={`${markedNew ? 'warning' : selected ? 'positive' : ''}`}>
             <td className="collapsing" onClick={this.handleCheckboxClick}>
-                <sui.Icon icon={`circle outline large ${selected ? 'check' : ''}`} />
+                <sui.Icon icon={`circle outline large ${selected ? `check green` : ''}`} />
             </td>
             {children}
         </tr>

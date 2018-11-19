@@ -144,7 +144,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
 
     cloudSignIn() {
         pxt.tickEvent("projects.signin", undefined, { interactiveConsent: true });
-        this.props.parent.cloudSignInDialog();
+        showCloudSignInDialog();
     }
 
     renderCore() {

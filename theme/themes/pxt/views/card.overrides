@@ -58,10 +58,12 @@
 
 .ui.card.file .selected-label {
     border-color: transparent !important;
-    font-size: 1.2rem !important;
     cursor: pointer;
     i.icon {
         cursor: pointer;
+        font-size: 2rem;
+        left: 0;
+        top: 1rem;
     }
 }
 
