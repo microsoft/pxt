@@ -185,13 +185,13 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment mystuff-segment">
                 <div className="ui grid equal width padded heading">
                     <div className="column" style={{ zIndex: 1 }}>
-                        <h2 role="button" className="ui header myproject-header" title={lf("See all projects")} tabIndex={0}
-                                onClick={this.showScriptManager} onKeyDown={sui.fireClickOnEnter}>
+                        {targetTheme.scriptManager ? <h2 role="button" className="ui header myproject-header" title={lf("See all projects")} tabIndex={0}
+                            onClick={this.showScriptManager} onKeyDown={sui.fireClickOnEnter}>
                             {lf("My Projects")}
                             <span className="ui grid-dialog-btn">
                                 <sui.Icon icon="angle right" />
                             </span>
-                        </h2>
+                        </h2> : <h2>{lf("My Projects")}</h2>}
                     </div>
                     <div className="column right aligned" style={{ zIndex: 1 }}>
                         {pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing) ?
@@ -387,6 +387,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
 
     renderCore() {
         const { name, path, selectedIndex } = this.props;
+        const targetTheme = pxt.appTarget.appTheme;
 
         if (path) {
             // Fetch the gallery
@@ -445,7 +446,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         } else {
             const headers = this.fetchLocalData()
             const showNewProject = pxt.appTarget.appTheme && !pxt.appTarget.appTheme.hideNewProjectButton;
-            const showAllProjects = headers.length > ProjectsCarousel.NUM_PROJECTS_HOMESCREEN;
+            const showAllProjects = targetTheme.scriptManager && headers.length > ProjectsCarousel.NUM_PROJECTS_HOMESCREEN;
             const bundledcoresvgs = pxt.appTarget.bundledcoresvgs;
             return <carousel.Carousel bleedPercent={20}>
                 {showNewProject ? <div role="button" className="ui card link buttoncard newprojectcard" title={lf("Creates a new empty project")}
