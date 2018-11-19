@@ -380,7 +380,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                             })}
                         </div>
                     </div> : undefined}
-                {hasHeaders && view == 'list' && headers.length > 0 ?
+                {hasHeaders && view == 'list' ?
                     <div role="table" className="ui container" style={{ height: "100%" }} onClick={this.handleAreaClick} onKeyDown={this.handleKeyDown}>
                         <table className={`ui definition unstackable table ${darkTheme ? 'inverted' : ''}`}>
                             <thead className="full-width">
