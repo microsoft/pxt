@@ -214,9 +214,11 @@ export function confirmAsync(options: ConfirmOptions): Promise<number> {
         .then(() => result)
 }
 
-export function confirmDelete(what: string, cb: () => Promise<void>) {
+export function confirmDelete(what: string, cb: () => Promise<void>, multiDelete?: boolean) {
     confirmAsync({
-        header: lf("Would you like to delete '{0}'?", what),
+        header: multiDelete ?
+            lf("Would you like to delete {0} projects?", what) :
+            lf("Would you like to delete '{0}'?", what),
         body: lf("It will be deleted for good. No undo."),
         agreeLbl: lf("Delete"),
         agreeClass: "red",

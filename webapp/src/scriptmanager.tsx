@@ -110,7 +110,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         let { selected } = this.state;
         const headers = this.fetchLocalData();
         const selectedLength = Object.keys(selected).length;
-        core.confirmDelete(selectedLength == 1 ? headers[parseInt(Object.keys(selected)[0])].name : lf("{0} files", selectedLength), () => {
+        core.confirmDelete(selectedLength == 1 ? headers[parseInt(Object.keys(selected)[0])].name : selectedLength.toString(), () => {
             const promises: Promise<void>[] = [];
             headers.forEach((header, index) => {
                 if (selected[index]) {
