@@ -162,24 +162,22 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         };
         return core.promptAsync(opts).then(res => {
             if (res === null) return Promise.resolve(false); // null means cancelled, empty string means ok (but no value entered)
-            // Clone the existing header
-            const clonedHeader = pxt.U.clone(header);
-            // Clear some fields
-            clonedHeader.id = undefined;
-            clonedHeader.meta = {};
-            clonedHeader.pubId = "";
-            clonedHeader.pubCurrent = false;
+            let files: pxt.Map<string>;
             return workspace.getTextAsync(header.id)
-                .then(files => {
+                .then(text => {
+                    files = text;
+                    return workspace.duplicateAsync(header, text);
+                })
+                .then((clonedHeader) => {
                     // Update the name in the header
                     clonedHeader.name = res;
                     // Update the name in the pxt.json (config)
-                    let config = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
-                    config.name = clonedHeader.name;
-                    files[pxt.CONFIG_NAME] = JSON.stringify(config, null, 4) + "\n";
-                    return workspace.installAsync(clonedHeader, files);
+                    let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig
+                    cfg.name = clonedHeader.name
+                    files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4);
+                    return clonedHeader;
                 })
-                .then(() => workspace.saveAsync(clonedHeader))
+                .then((clonedHeader) => workspace.saveAsync(clonedHeader, files))
                 .then(() => {
                     data.clearCache();
                     this.setState({ selected: {}, markedNew: { '0': 1 }, sortedBy: 'time', sortedAsc: false });
@@ -385,13 +383,13 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                         <table className={`ui definition unstackable table ${darkTheme ? 'inverted' : ''}`}>
                             <thead className="full-width">
                                 <tr>
-                                    <th onClick={this.handleSelectAll} tabIndex={0} onKeyDown={sui.fireClickOnEnter} title={selectedAll ? lf("De-select all projects") : lf("Select all projects")}>
+                                    <th onClick={this.handleSelectAll} tabIndex={0} onKeyDown={sui.fireClickOnEnter} title={selectedAll ? lf("De-select all projects") : lf("Select all projects")} style={{ cursor: 'pointer' }}>
                                         <sui.Icon icon={`circle outline large ${selectedAll ? 'check' : ''}`} />
                                     </th>
-                                    <th onClick={this.handleToggleSortName} tabIndex={0} onKeyDown={sui.fireClickOnEnter} title={lf("Sort by Name {0}", sortedAsc ? lf("ascending") : lf("descending"))}>
+                                    <th onClick={this.handleToggleSortName} tabIndex={0} onKeyDown={sui.fireClickOnEnter} title={lf("Sort by Name {0}", sortedAsc ? lf("ascending") : lf("descending"))} style={{ cursor: 'pointer' }}>
                                         {lf("Name")} {sortedBy == 'name' ? <sui.Icon icon={`arrow ${sortedAsc ? 'up' : 'down'}`} /> : undefined}
                                     </th>
-                                    <th onClick={this.handleToggleSortTime} tabIndex={0} onKeyDown={sui.fireClickOnEnter} title={lf("Sort by Last Modified {0}", sortedAsc ? lf("ascending") : lf("descending"))}>
+                                    <th onClick={this.handleToggleSortTime} tabIndex={0} onKeyDown={sui.fireClickOnEnter} title={lf("Sort by Last Modified {0}", sortedAsc ? lf("ascending") : lf("descending"))} style={{ cursor: 'pointer' }}>
                                         {lf("Last Modified")} {sortedBy == 'time' ? <sui.Icon icon={`arrow ${sortedAsc ? 'up' : 'down'}`} /> : undefined}
                                     </th>
                                 </tr>

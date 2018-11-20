@@ -341,21 +341,23 @@ export function installAsync(h0: InstallHeader, text: ScriptText) {
         .then(() => h)
 }
 
-export function duplicateAsync(h: Header, text: ScriptText): Promise<Header> {
+export function duplicateAsync(h: Header, text: ScriptText, rename?: boolean): Promise<Header> {
     let e = lookup(h.id)
     U.assert(e.header === h)
     let h2 = U.flatClone(h)
     e.header = h2
 
     h.id = U.guidGen()
-    let names = U.toDictionary(allScripts, e => e.header.name)
-    let n = 2
-    while (names.hasOwnProperty(h.name + " #" + n))
-        n++
-    h.name += " #" + n
-    let cfg = JSON.parse(text[pxt.CONFIG_NAME]) as pxt.PackageConfig
-    cfg.name = h.name
-    text[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4)
+    if (rename) {
+        let names = U.toDictionary(allScripts, e => e.header.name)
+        let n = 2
+        while (names.hasOwnProperty(h.name + " #" + n))
+            n++
+        h.name += " #" + n
+        let cfg = JSON.parse(text[pxt.CONFIG_NAME]) as pxt.PackageConfig
+        cfg.name = h.name
+        text[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4)
+    }
     delete h._rev
     delete (h as any)._id
     return importAsync(h, text)
