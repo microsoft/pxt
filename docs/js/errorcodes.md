@@ -24,6 +24,7 @@ type of `x`.
 * **910** - memory limit exceeded (only on Linux targets)
 * **907** - a required configuration setting (in `config` namespace) is missing
 * **908** - a required pin was not defined (also in `config` namespace)
+* **913** - TypeScript code was called from interrupt service routine
 
 ## Codal codes
 
@@ -47,4 +48,6 @@ You should not see these.
     PANIC_SCREEN_ERROR = 911,
 ```
 
-The error codes in the `800-899` are even more internal.
+The error codes in the `800-899` are even more internal:
+
+* **84X** - garbage collector errors
