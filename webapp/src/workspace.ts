@@ -349,11 +349,7 @@ export function duplicateAsync(h: Header, text: ScriptText, rename?: boolean): P
 
     h.id = U.guidGen()
     if (rename) {
-        let names = U.toDictionary(allScripts, e => e.header.name)
-        let n = 2
-        while (names.hasOwnProperty(h.name + " #" + n))
-            n++
-        h.name += " #" + n
+        h.name = createDuplicateName(h);
         let cfg = JSON.parse(text[pxt.CONFIG_NAME]) as pxt.PackageConfig
         cfg.name = h.name
         text[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4)
@@ -362,6 +358,14 @@ export function duplicateAsync(h: Header, text: ScriptText, rename?: boolean): P
     delete (h as any)._id
     return importAsync(h, text)
         .then(() => h2)
+}
+
+export function createDuplicateName(h: Header) {
+    let names = U.toDictionary(allScripts, e => e.header.name)
+    let n = 2
+    while (names.hasOwnProperty(h.name + " #" + n))
+        n++
+    return h.name + " #" + n;
 }
 
 export function saveScreenshotAsync(h: Header, data: string, icon: string) {

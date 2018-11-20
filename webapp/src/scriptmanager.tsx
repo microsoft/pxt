@@ -145,7 +145,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
             agreeLbl: lf("Duplicate"),
             agreeClass: "green approve positive",
             agreeIcon: "clone",
-            initialValue: this.createDuplicateName(header.name),
+            initialValue: workspace.createDuplicateName(header),
             placeholder: lf("Enter your project name here")
         };
         return core.promptAsync(opts).then(res => {
@@ -176,10 +176,6 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                     return true;
                 });
         });
-    }
-
-    private createDuplicateName(initialName: string) {
-        return initialName;
     }
 
     handleSwitchView() {
