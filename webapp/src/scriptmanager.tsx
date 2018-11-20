@@ -124,7 +124,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                 .then(() => {
                     data.clearCache();
                 });
-        });
+        }, selectedLength > 1);
     }
 
     handleOpen() {
