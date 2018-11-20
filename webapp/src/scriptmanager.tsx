@@ -291,14 +291,12 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
             if (Object.keys(selected).length > 0) {
                 if (Object.keys(selected).length == 1) {
                     headerActions.push(<sui.Button key="edit" icon="edit outline" className="icon"
-                        title={lf("Edit Project")} onClick={this.handleOpen} tooltipId={"scriptmgr-actions-edit"} />);
-                    //headerActions.push(<sui.Button key="rename" icon="font" className="icon" title={lf("Rename Project")} onClick={this.handleRename} />);
+                        text={lf("Open")} textClass="landscape only" title={lf("Open Project")} onClick={this.handleOpen} />);
                     headerActions.push(<sui.Button key="clone" icon="clone outline" className="icon"
-                        title={lf("Duplicate Project")} onClick={this.handleDuplicate} tooltipId={"scriptmgr-actions-clone"} />);
-                    //headerActions.push(<sui.Button key="export" icon="download" className="icon" title={lf("Save Project")} onClick={this.handleExport} />);
+                        text={lf("Duplicate")} textClass="landscape only" title={lf("Duplicate Project")} onClick={this.handleDuplicate} />);
                 }
                 headerActions.push(<sui.Button key="delete" icon="trash" className="icon red"
-                    title={lf("Delete Project")} onClick={this.handleDelete} tooltipId={"scriptmgr-actions-delete"} />);
+                    text={lf("Delete")} textClass="landscape only" title={lf("Delete Project")} onClick={this.handleDelete}/>);
                 headerActions.push(<div key="divider" className="divider"></div>);
             }
             headerActions.push(<sui.Button key="view" icon={view == 'grid' ? 'th list' : 'grid layout'} className="icon"
