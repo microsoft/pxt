@@ -1,11 +1,9 @@
-/// <reference path="../../built/pxtlib.d.ts" />
-
 import * as React from "react";
 import * as data from "./data";
 import * as sui from "./sui";
 import * as core from "./core";
 import * as workspace from "./workspace";
-import * as compiler from "./compiler";
+
 import { SearchInput } from "./components/searchInput";
 import { ProjectsCodeCard } from "./projects";
 
@@ -44,9 +42,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         this.close = this.close.bind(this);
         this.handleCardClick = this.handleCardClick.bind(this);
         this.handleDelete = this.handleDelete.bind(this);
-        this.handleExport = this.handleExport.bind(this);
         this.handleOpen = this.handleOpen.bind(this);
-        this.handleRename = this.handleRename.bind(this);
         this.handleDuplicate = this.handleDuplicate.bind(this);
         this.handleSwitchView = this.handleSwitchView.bind(this);
         this.handleSearch = this.handleSearch.bind(this);
@@ -75,18 +71,20 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         const ctrlCmd = force || (pxt.BrowserUtils.isMac() ? e.metaKey : e.ctrlKey);
         let { selected, multiSelect, multiSelectStart } = this.state;
         if (shifted && ctrlCmd) return;
+        // If ctrl/cmd is down, toggle from the list
         if (ctrlCmd) {
             selected[index] = selected[index] ? 0 : 1;
             if (selected[index]) multiSelectStart = index;
         }
         else if (shifted) {
             selected = {};
-            // Use the start position to select all the projects in between
+            // Shift is down, use the start position to select all the projects in between
             for (let i = Math.min(index, multiSelectStart); i <= Math.max(index, multiSelectStart); i++) {
                 selected[i] = 1;
             }
             multiSelect = true;
         } else if (multiSelect) {
+            // Clear multi select state
             selected = {};
             multiSelect = false;
         }
@@ -98,7 +96,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
             else {
                 selected = {};
                 selected[index] = 1;
-                // Use this as a previous indicator
+                // Use this as an indicator for any future multi-select clicks
                 multiSelectStart = index;
             }
         }
@@ -129,16 +127,6 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         });
     }
 
-    handleExport() {
-        // TODO: handle saving to file
-        // Possibly handle saving multiple files (.zip?)
-    }
-
-    handleRename() {
-        const header = this.getSelectedHeader();
-        // TODO: implement renaming without opening project
-    }
-
     handleOpen() {
         const header = this.getSelectedHeader();
 
@@ -151,7 +139,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
 
     handleDuplicate() {
         const header = this.getSelectedHeader();
-        // Ask for the new project name
+        // Prompt for the new project name
         const opts: core.PromptOptions = {
             header: lf("Choose a new name for your project"),
             agreeLbl: lf("Duplicate"),
@@ -166,12 +154,13 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
             return workspace.getTextAsync(header.id)
                 .then(text => {
                     files = text;
-                    return workspace.duplicateAsync(header, text);
+                    // Duplicate the existing header
+                    return workspace.duplicateAsync(header, text, false);
                 })
                 .then((clonedHeader) => {
-                    // Update the name in the header
+                    // Update the name of the new header
                     clonedHeader.name = res;
-                    // Update the name in the pxt.json (config)
+                    // Set the name in the pxt.json (config)
                     let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig
                     cfg.name = clonedHeader.name
                     files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4);
@@ -303,10 +292,10 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                 if (Object.keys(selected).length == 1) {
                     headerActions.push(<sui.Button key="edit" icon="edit outline" className="icon"
                         title={lf("Edit Project")} onClick={this.handleOpen} tooltipId={"scriptmgr-actions-edit"} />);
-                    //headerActions.push(<sui.Button key="rename" icon="font" className="circular icon" title={lf("Rename Project")} onClick={this.handleRename} />);
+                    //headerActions.push(<sui.Button key="rename" icon="font" className="icon" title={lf("Rename Project")} onClick={this.handleRename} />);
                     headerActions.push(<sui.Button key="clone" icon="clone outline" className="icon"
                         title={lf("Duplicate Project")} onClick={this.handleDuplicate} tooltipId={"scriptmgr-actions-clone"} />);
-                    //headerActions.push(<sui.Button key="export" icon="download" className="circular icon" title={lf("Save Project")} onClick={this.handleExport} />);
+                    //headerActions.push(<sui.Button key="export" icon="download" className="icon" title={lf("Save Project")} onClick={this.handleExport} />);
                 }
                 headerActions.push(<sui.Button key="delete" icon="trash" className="icon red"
                     title={lf("Delete Project")} onClick={this.handleDelete} tooltipId={"scriptmgr-actions-delete"} />);
@@ -416,7 +405,6 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
     }
 }
 
-
 interface ProjectsCodeRowProps extends pxt.CodeCard {
     scr: any;
     index?: number;
@@ -448,7 +436,7 @@ class ProjectsCodeRow extends sui.StatelessUIElement<ProjectsCodeRowProps> {
         const { scr, onRowClicked, onClick, selected, markedNew, children, ...rest } = this.props;
         return <tr tabIndex={0} {...rest} onKeyDown={sui.fireClickOnEnter} onClick={this.handleClick} style={{ cursor: 'pointer' }} className={`${markedNew ? 'warning' : selected ? 'positive' : ''}`}>
             <td className="collapsing" onClick={this.handleCheckboxClick}>
-                <sui.Icon icon={`circle outline large ${selected ? `check green` : ''}`} />
+                <sui.Icon icon={`circle outline large ${selected ? `check green` : markedNew ? 'black' : ''}`} />
             </td>
             {children}
         </tr>
