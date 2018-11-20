@@ -253,7 +253,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
 
     handleSwitchSortDirection = () => {
         const { sortedAsc } = this.state;
-        this.setState({ sortedAsc: !sortedAsc });
+        this.setState({ sortedAsc: !sortedAsc, markedNew: {}, selected: {} });
     }
 
     private getSelectedHeader() {
