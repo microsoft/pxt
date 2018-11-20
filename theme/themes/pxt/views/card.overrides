@@ -120,7 +120,7 @@ a.ui.card:focus,
 .ui.card.link.newprojectcard {
     background: fade(@primaryColor, 90%) !important;
 }
-.ui.card.link.allprojectscard {
+.ui.card.link.scriptmanagercard {
     background: fade(@secondaryColor, 90%) !important;
 }
 

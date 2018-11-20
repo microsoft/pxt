@@ -122,7 +122,7 @@ export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogSt
                 modalDidOpen={this.modalDidOpen}
             >
                 {options.type == 'prompt' ? <div className="ui fluid icon input">
-                    <input autoFocus type="text" ref="promptInput" id="promptDialogInput" onChange={this.handleInputChange} value={inputValue} placeholder={options.placeholder} />
+                    <input autoFocus type="text" ref="promptInput" onChange={this.handleInputChange} value={inputValue} placeholder={options.placeholder} />
                 </div> : undefined}
                 {options.jsx}
                 {options.body ? <p>{options.body}</p> : undefined}

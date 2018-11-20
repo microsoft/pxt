@@ -300,7 +300,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         this.closeDetailOnEscape = this.closeDetailOnEscape.bind(this);
         this.reload = this.reload.bind(this);
         this.newProject = this.newProject.bind(this);
-        this.allProjects = this.allProjects.bind(this);
+        this.showScriptManager = this.showScriptManager.bind(this);
         this.handleCardClick = this.handleCardClick.bind(this);
     }
 
@@ -334,8 +334,8 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         this.props.parent.newProject();
     }
 
-    allProjects() {
-        pxt.tickEvent("projects.showall.more", undefined, { interactiveConsent: true });
+    showScriptManager() {
+        pxt.tickEvent("projects.showscriptmanager", undefined, { interactiveConsent: true });
         this.props.parent.showScriptManager();
     }
 
@@ -446,7 +446,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         } else {
             const headers = this.fetchLocalData()
             const showNewProject = pxt.appTarget.appTheme && !pxt.appTarget.appTheme.hideNewProjectButton;
-            const showAllProjects = targetTheme.scriptManager && headers.length > ProjectsCarousel.NUM_PROJECTS_HOMESCREEN;
+            const showScriptManagerCard = targetTheme.scriptManager && headers.length > ProjectsCarousel.NUM_PROJECTS_HOMESCREEN;
             const bundledcoresvgs = pxt.appTarget.bundledcoresvgs;
             return <carousel.Carousel bleedPercent={20}>
                 {showNewProject ? <div role="button" className="ui card link buttoncard newprojectcard" title={lf("Creates a new empty project")}
@@ -471,8 +471,8 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                         onCardClick={this.handleCardClick}
                     />;
                 })}
-                {showAllProjects ? <div role="button" className="ui card link buttoncard allprojectscard" title={lf("See all projects")}
-                    onClick={this.allProjects} onKeyDown={sui.fireClickOnEnter} >
+                {showScriptManagerCard ? <div role="button" className="ui card link buttoncard scriptmanagercard" title={lf("See all projects")}
+                    onClick={this.showScriptManager} onKeyDown={sui.fireClickOnEnter} >
                     <div className="content">
                         <sui.Icon icon="huge right angle" />
                         <span className="header">{lf("See all projects")}</span>
