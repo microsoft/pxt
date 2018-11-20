@@ -23,7 +23,6 @@
     .content {
         margin-left: 4rem;
         min-width: 5rem;
-        padding-left: 1.5rem;
         height: 8rem;
         .header {
             word-wrap: break-word;
