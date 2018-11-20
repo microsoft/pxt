@@ -5641,9 +5641,10 @@ function initCommands() {
     }, gdbAsync);
 
     p.defineCommand({
-        name: "dumplog",
-        help: "attempt to dump log using openocd",
+        name: "dmesg",
+        help: "attempt to dump DMESG log using openocd",
         argString: "",
+        aliases: ["dumplog"],
         advanced: true,
     }, dumplogAsync);
 
