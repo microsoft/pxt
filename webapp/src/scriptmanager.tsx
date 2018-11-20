@@ -336,7 +336,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                                     <sui.Item role="menuitem" icon={sortedBy == 'name' ? 'check' : undefined} className={sortedBy != 'name' ? 'no-icon' : ''} text={lf("Name")} tabIndex={-1} onClick={this.handleSortName} />
                                     <sui.Item role="menuitem" icon={sortedBy == 'time' ? 'check' : undefined} className={sortedBy != 'time' ? 'no-icon' : ''} text={lf("Last Modified")} tabIndex={-1} onClick={this.handleSortTime} />
                                 </sui.DropdownMenu>
-                                <sui.Button icon={`arrow ${sortedAsc ? 'up' : 'down'}`} className={`${darkTheme ? 'inverted' : ''}`} onClick={this.handleSwitchSortDirection} title={lf("Switch sort order")} />
+                                <sui.Button icon={`arrow ${sortedAsc ? 'up' : 'down'}`} className={`${darkTheme ? 'inverted' : ''}`} onClick={this.handleSwitchSortDirection} title={lf("Switch sort order to {0}", !sortedAsc ? lf("ascending") : lf("descending"))} />
                             </div>
                         </div>
                         <div className={"ui cards"}>
