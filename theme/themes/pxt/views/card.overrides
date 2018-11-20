@@ -27,6 +27,9 @@
         height: 8rem;
         .header {
             word-wrap: break-word;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
         }
     }
     .meta {

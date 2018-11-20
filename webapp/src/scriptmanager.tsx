@@ -304,7 +304,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                 headerActions.push(<div key="divider" className="divider"></div>);
             }
             headerActions.push(<sui.Button key="view" icon={view == 'grid' ? 'th list' : 'grid layout'} className="icon"
-                title={`${view == 'grid' ? lf("List view") : lf("Grid view")}`} onClick={this.handleSwitchView} tooltipId={"scriptmgr-actions-switchview"} />)
+                title={`${view == 'grid' ? lf("List view") : lf("Grid view")}`} onClick={this.handleSwitchView} />)
         }
         const sortingFunction = (a: pxt.workspace.Header, b: pxt.workspace.Header) => {
             if (sortedBy === 'time') {
