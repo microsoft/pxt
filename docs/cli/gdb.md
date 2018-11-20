@@ -13,7 +13,7 @@ pxt gdb [ARGUMENTS ...]
 
 The `pxt gdb` command will look for OpenOCD and GDB in Arduino IDE
 packages directory. You can get them by installing support for
-NRF52 boards in Arduino IDE.
+``NRF52 boards`` in Arduino IDE.
 
 If you don't have Arduino IDE take a look at the last section of this document.
 
@@ -28,8 +28,11 @@ Then run:
 pxt gdb
 ```
 
-**Note that you need to build locally for that to work.** Building with `--cloud` will
-not work.
+### ~ hint
+
+Note that you need to build locally for that to work. Use `--local` to build or deploy.
+
+### ~
 
 # GDB debugging 
 
@@ -83,7 +86,7 @@ connect IBDAP.
 ## Running GDB #runninggdb
 
 Now, go to the directory where you want to debug. It can be a library with a test TypeScript file.
-Run `pxt` to build the native image. Make sure it uses a local build (``yotta`` or ``CODAL``). It should start running on the board.
+Run `pxt deploy --local` to build the native image. Make sure it uses a local build (``yotta`` or ``CODAL``). It should start running on the board.
 
 Run `pxt gdb` or `pxt gdb -tui`. You should see the target in halted state. You can set breakpoints
 with `b` command and re-start the program using `r`. You can also look at the stack with `bt`.

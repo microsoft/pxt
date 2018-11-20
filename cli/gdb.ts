@@ -31,6 +31,7 @@ function getOpenOcdPath(cmds = "") {
     let dirs = [
         process.env["HOME"] + "/Library/Arduino",
         process.env["USERPROFILE"] + "/AppData/Local/Arduino",
+        process.env["USERPROFILE"] + "/AppData/Local/Arduino15",
         process.env["HOME"] + "/.arduino",
     ]
 
