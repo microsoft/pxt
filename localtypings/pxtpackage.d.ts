@@ -132,6 +132,7 @@ declare namespace pxt {
         iconColor?: string;
 
         onClick?: (e: any) => void; // React event
+        onLabelClicked?: (e: any) => void;
 
         target?: string;
         className?: string;

@@ -487,6 +487,7 @@ interface ProjectsCodeCardProps extends pxt.CodeCard {
     scr: any;
     index?: number;
     onCardClick: (e: any, scr: any, index?: number) => void;
+    onLabelClick?: (e: any, scr: any, index?: number) => void;
 }
 
 export class ProjectsCodeCard extends sui.StatelessUIElement<ProjectsCodeCardProps> {
@@ -495,15 +496,21 @@ export class ProjectsCodeCard extends sui.StatelessUIElement<ProjectsCodeCardPro
         super(props);
 
         this.handleClick = this.handleClick.bind(this);
+        this.handleLabelClick = this.handleLabelClick.bind(this);
     }
 
     handleClick(e: any) {
         this.props.onCardClick(e, this.props.scr, this.props.index);
     }
 
+    handleLabelClick(e: any) {
+        this.props.onLabelClick(e, this.props.scr, this.props.index);
+    }
+
     renderCore() {
-        const { scr, onCardClick, onClick, ...rest } = this.props;
-        return <codecard.CodeCardView {...rest} onClick={this.handleClick} />
+        const { scr, onCardClick, onLabelClick, onClick, ...rest } = this.props;
+        return <codecard.CodeCardView {...rest} onClick={this.handleClick}
+            onLabelClicked={onLabelClick ? this.handleLabelClick : undefined} />
     }
 }
 

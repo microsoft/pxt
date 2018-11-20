@@ -46,6 +46,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         this.handleDuplicate = this.handleDuplicate.bind(this);
         this.handleSwitchView = this.handleSwitchView.bind(this);
         this.handleSearch = this.handleSearch.bind(this);
+        this.handleCheckboxClick = this.handleCheckboxClick.bind(this);
     }
 
     hide() {
@@ -104,6 +105,12 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
 
         e.stopPropagation();
         e.preventDefault();
+    }
+
+    handleCheckboxClick(e: any, scr: any, index?: number) {
+        this.handleCardClick(e, scr, index, true);
+        e.preventDefault();
+        e.stopPropagation();
     }
 
     handleDelete() {
@@ -357,6 +364,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                                     labelClass={labelClass}
                                     label={label}
                                     onCardClick={this.handleCardClick}
+                                    onLabelClick={this.handleCheckboxClick}
                                 />
                             })}
                         </div>

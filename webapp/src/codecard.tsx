@@ -94,7 +94,9 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
                     {card.header}
                 </div> : null}
             {card.label || card.labelIcon || card.blocksXml || card.typeScript || imageUrl || cardType == "file" ? <div className={"ui image"}>
-                {card.label || card.labelIcon ? <label className={`ui ${card.labelClass ? card.labelClass : "orange right ribbon"} label`}>
+                {card.label || card.labelIcon ?
+                    <label role={card.onLabelClicked ? 'button' : ''} onClick={card.onLabelClicked}
+                        className={`ui ${card.labelClass ? card.labelClass : "orange right ribbon"} label`}>
                     {card.labelIcon ? <sui.Icon icon={card.labelIcon} /> : card.label}</label> : undefined}
                 {card.typeScript ? <pre key="promots">{card.typeScript}</pre> : undefined}
                 {card.cardType != "file" && imageUrl ? <div className="ui imagewrapper">
