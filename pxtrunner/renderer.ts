@@ -334,7 +334,7 @@ namespace pxt.runner {
             })
             .then((nsStyleBuffer) => {
                 Object.keys(pxt.toolbox.blockColors).forEach((ns) => {
-                    const color = pxt.toolbox.blockColors[ns] as string;
+                    const color = pxt.toolbox.getNamespaceColor(ns);
                     nsStyleBuffer += `
                         span.docs.${ns.toLowerCase()} {
                             background-color: ${color} !important;

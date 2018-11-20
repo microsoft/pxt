@@ -3,7 +3,6 @@ namespace pxt.toolbox {
         loops: '#107c10',
         logic: '#006970',
         math: '#712672',
-        images: '#5C2D91',
         variables: '#A80000',
         functions: '#005a9e',
         text: '#996600',
