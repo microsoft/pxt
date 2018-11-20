@@ -69,7 +69,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
 
     handleCardClick(e: any, scr: any, index?: number, force?: boolean) {
         const shifted = e.shiftKey;
-        const ctrlCmd = force || (pxt.BrowserUtils.isMac() ? e.metaKey : e.ctrlKey);
+        const ctrlCmd = (force && !shifted) || (pxt.BrowserUtils.isMac() ? e.metaKey : e.ctrlKey);
         let { selected, multiSelect, multiSelectStart } = this.state;
         if (shifted && ctrlCmd) return;
         // If ctrl/cmd is down, toggle from the list
