@@ -74,7 +74,8 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         if (shifted && ctrlCmd) return;
         // If ctrl/cmd is down, toggle from the list
         if (ctrlCmd) {
-            selected[index] = selected[index] ? 0 : 1;
+            if (selected[index]) delete selected[index];
+            else selected[index] = 1;
             if (selected[index]) multiSelectStart = index;
         }
         else if (shifted) {
