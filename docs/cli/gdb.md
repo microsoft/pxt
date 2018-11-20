@@ -40,6 +40,12 @@ interface chip (Arduino Zero or the micro:bit) or with an external programmer li
 
 Currently, you will only be able to debug the C++ code, and not TypeScript code.
 
+### ~ hint
+
+Use ``pxt dmesg`` to read the DMESG buffer without going into gdb.
+
+### ~
+
 ## Connecting IBDAP #ibdap
 
 IBDAP is a cheap programmer that happens to work. Another one that we found to work,
@@ -87,13 +93,18 @@ connect IBDAP.
 Now, go to the directory where you want to debug. It can be a library with a test TypeScript file.
 Run `pxt deploy --local` to build the native image. Make sure it uses a local build (``yotta`` or ``CODAL``). It should start running on the board.
 
-Run `pxt gdb` or `pxt gdb -tui`. You should see the target in halted state. You can set breakpoints
-with `b` command and re-start the program using `r`. You can also look at the stack with `bt`.
+Run `pxt gdb` or `pxt gdb -tui`. You should see the target in halted state. 
+
+* use `b` to set breakpoints command 
+* re-start the program using `rst`
+* look at the stack with `bt`.
+* `boot` to restart in bootloader mode. 
+* `log` to see ``DMESG``
 
 Unfortunately, restarting only works if the target is not locked up handling a hard fault.
 If you find that to be the case, you can add a delay at the start of your program.
 
-## Running gdb manually
+## Running ``gdb`` manually
 
 If you don't have Arduino or just want to run everything manually instead of using
 `pxt gdb`, then you need to have `openocd` and `gdb` in your path, and then run
