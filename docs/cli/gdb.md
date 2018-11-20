@@ -11,9 +11,8 @@ pxt gdb [ARGUMENTS ...]
 
 ## Installation #installation
 
-The `pxt gdb` command will look for OpenOCD and GDB in Arduino IDE
-packages directory. You can get them by installing support for
-``NRF52 boards`` in Arduino IDE.
+* Installing support for ``NRF52 boards`` in Arduino **desktop** IDE. The `pxt gdb` command will look for OpenOCD and GDB in Arduino IDE packages directory.
+* On Windows, use [zadig](https://zadig.akeo.ie/) to install USB drivers.
 
 If you don't have Arduino IDE take a look at the last section of this document.
 
