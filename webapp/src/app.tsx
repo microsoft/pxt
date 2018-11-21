@@ -31,6 +31,7 @@ import * as filelist from "./filelist";
 import * as container from "./container";
 import * as scriptsearch from "./scriptsearch";
 import * as projects from "./projects";
+import * as scriptmanager from "./scriptmanager";
 import * as extensions from "./extensions";
 import * as sounds from "./sounds";
 import * as make from "./make";
@@ -98,6 +99,7 @@ export class ProjectView
     extensions: extensions.Extensions;
     shareEditor: share.ShareEditor;
     languagePicker: lang.LanguagePicker;
+    scriptManagerDialog: scriptmanager.ScriptManagerDialog;
     importDialog: projects.ImportDialog;
     exitAndSaveDialog: projects.ExitAndSaveDialog;
     chooseHwDialog: projects.ChooseHwDialog;
@@ -1980,6 +1982,10 @@ export class ProjectView
         }
     }
 
+    showScriptManager() {
+        this.scriptManagerDialog.show();
+    }
+
     importProjectDialog() {
         this.importDialog.show();
     }
@@ -2415,6 +2421,15 @@ export class ProjectView
     }
 
     ///////////////////////////////////////////////////////////
+    ////////////         Script Manager           /////////////
+    ///////////////////////////////////////////////////////////
+
+    private handleScriptManagerDialogClose = () => {
+        // When the script manager dialog closes, we want to refresh our projects list in case anything has changed
+        this.home.forceUpdate();
+    }
+
+    ///////////////////////////////////////////////////////////
     ////////////             REFS                 /////////////
     ///////////////////////////////////////////////////////////
 
@@ -2428,6 +2443,10 @@ export class ProjectView
 
     private handleExtensionRef = (c: extensions.Extensions) => {
         this.extensions = c;
+    }
+
+    private handleScriptManagerDialogRef = (c: scriptmanager.ScriptManagerDialog) => {
+        this.scriptManagerDialog = c;
     }
 
     private handleImportDialogRef = (c: projects.ImportDialog) => {
@@ -2568,6 +2587,7 @@ export class ProjectView
                 {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={this.handleScriptSearchRef} />}
                 {sandbox ? undefined : <extensions.Extensions parent={this} ref={this.handleExtensionRef} />}
                 {inHome ? <projects.ImportDialog parent={this} ref={this.handleImportDialogRef} /> : undefined}
+                {inHome && targetTheme.scriptManager ? <scriptmanager.ScriptManagerDialog parent={this} ref={this.handleScriptManagerDialogRef} onClose={this.handleScriptManagerDialogClose} /> : undefined}
                 {sandbox ? undefined : <projects.ExitAndSaveDialog parent={this} ref={this.handleExitAndSaveDialogRef} />}
                 <projects.ChooseHwDialog parent={this} ref={this.handleChooseHwDialogRef} />
                 {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={this.handleShareEditorRef} />}

@@ -357,7 +357,7 @@ export interface ButtonProps extends UiProps, TooltipUIProps {
 
 export class Button extends StatelessUIElement<ButtonProps> {
     renderCore() {
-        const { labelPosition, color, size, disabled, tooltipId, tooltip, tooltipDelayShow, tooltipPlace } = this.props;
+        const { labelPosition, color, size, disabled } = this.props;
         const classes = cx([
             color,
             size,
@@ -376,8 +376,9 @@ export class Button extends StatelessUIElement<ButtonProps> {
             {genericContent(this.props)}
             {this.props.children}
         </button>;
-        return tooltip ? <Tooltip id={tooltipId} content={tooltip}
-            place={tooltipPlace} delayShow={tooltipDelayShow}>{button}</Tooltip> : button;
+        // Tooltips don't work great on IOS, disabling them
+        return this.props.tooltipId && !pxt.BrowserUtils.isIOS() ? <Tooltip id={this.props.tooltipId} content={this.props.tooltip || this.props.title}
+            place={this.props.tooltipPlace} delayShow={this.props.tooltipDelayShow}>{button}</Tooltip> : button;
     }
 }
 
@@ -850,6 +851,7 @@ export interface ModalProps extends ReactModal.Props {
     closeOnEscape?: boolean;
 
     onClose?: () => void;
+    onKeyDown?: (ev: React.KeyboardEvent<any>) => void;
     defaultOpen?: boolean;
     closeIcon?: boolean | string;
 
@@ -966,7 +968,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
 
     render() {
         const { isOpen, size, longer, basic, className,
-            onClose, closeIcon, children,
+            onClose, closeIcon, children, onKeyDown,
             header, headerClass, headerActions, helpUrl, description,
             closeOnDimmerClick, closeOnDocumentClick, closeOnEscape,
             shouldCloseOnEsc, shouldCloseOnOverlayClick, shouldFocusAfterRender, ...rest } = this.props;

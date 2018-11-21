@@ -10,6 +10,7 @@ import * as codecard from "./codecard";
 import * as electron from "./electron";
 import * as workspace from "./workspace";
 import * as dialogs from "./dialogs";
+import { SearchInput } from "./components/searchInput";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -43,7 +44,6 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         }
 
         this.hide = this.hide.bind(this);
-        this.handleSearchKeyUpdate = this.handleSearchKeyUpdate.bind(this);
         this.handleSearch = this.handleSearch.bind(this);
         this.addUrl = this.addUrl.bind(this);
         this.addBundle = this.addBundle.bind(this);
@@ -197,14 +197,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         }
     }
 
-    handleSearchKeyUpdate(ev: React.KeyboardEvent<HTMLElement>) {
-        if (ev.keyCode == 13) this.handleSearch();
-
-    }
-
-    handleSearch() {
-        let str = (ReactDOM.findDOMNode(this.refs["searchInput"]) as HTMLInputElement).value
-
+    handleSearch(str: string) {
         // Hidden navigation, used to test /beta or other versions inside released UWP apps
         // Secret prefix is /@, e.g.: /@beta
         const urlPathExec = /^\/@(.*)$/.exec(str);
@@ -408,17 +401,11 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                             {lf("Try out these features and tell us what you think!")}
                         </div> : undefined}
                     {mode == ScriptSearchMode.Extensions ?
-                        <div className="ui search">
-                            <div className="ui fluid action input" role="search">
-                                <div aria-live="polite" className="accessible-hidden">{lf("{0} result matching '{1}'", bundles.length + ghdata.data.length + urldata.data.length, searchFor)}</div>
-                                <input autoFocus ref="searchInput" type="text" placeholder={lf("Search or enter project URL...")}
-                                    onKeyUp={this.handleSearchKeyUpdate} disabled={isSearching}
-                                    autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} />
-                                <button title={lf("Search")} disabled={isSearching} className="ui right icon button" onClick={this.handleSearch}>
-                                    <sui.Icon icon="search" />
-                                </button>
-                            </div>
-                        </div> : undefined}
+                        <SearchInput key="search"
+                            ariaMessage={lf("{0} result matching '{1}'", bundles.length + ghdata.data.length + urldata.data.length, searchFor)}
+                            placeholder={lf("Search or enter project URL...")}
+                            searchHandler={this.handleSearch} inputClassName="fluid" autoFocus={true}
+                            disabled={isSearching} /> : undefined}
                     {isSearching ?
                         <div className="ui medium active centered inline loader"></div>
                         :

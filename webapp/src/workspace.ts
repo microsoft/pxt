@@ -11,6 +11,7 @@ import * as memoryworkspace from "./memoryworkspace"
 import * as iframeworkspace from "./iframeworkspace"
 import * as cloudsync from "./cloudsync"
 import * as indexedDBWorkspace from "./idbworkspace";
+import * as compiler from "./compiler"
 
 import U = pxt.Util;
 import Cloud = pxt.Cloud;
@@ -340,25 +341,31 @@ export function installAsync(h0: InstallHeader, text: ScriptText) {
         .then(() => h)
 }
 
-export function duplicateAsync(h: Header, text: ScriptText): Promise<Header> {
+export function duplicateAsync(h: Header, text: ScriptText, rename?: boolean): Promise<Header> {
     let e = lookup(h.id)
     U.assert(e.header === h)
     let h2 = U.flatClone(h)
     e.header = h2
 
     h.id = U.guidGen()
-    let names = U.toDictionary(allScripts, e => e.header.name)
-    let n = 2
-    while (names.hasOwnProperty(h.name + " #" + n))
-        n++
-    h.name += " #" + n
-    let cfg = JSON.parse(text[pxt.CONFIG_NAME]) as pxt.PackageConfig
-    cfg.name = h.name
-    text[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4)
+    if (rename) {
+        h.name = createDuplicateName(h);
+        let cfg = JSON.parse(text[pxt.CONFIG_NAME]) as pxt.PackageConfig
+        cfg.name = h.name
+        text[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4)
+    }
     delete h._rev
     delete (h as any)._id
     return importAsync(h, text)
         .then(() => h2)
+}
+
+export function createDuplicateName(h: Header) {
+    let names = U.toDictionary(allScripts, e => e.header.name)
+    let n = 2
+    while (names.hasOwnProperty(h.name + " #" + n))
+        n++
+    return h.name + " #" + n;
 }
 
 export function saveScreenshotAsync(h: Header, data: string, icon: string) {
@@ -768,6 +775,24 @@ data.mountVirtualApi("header", {
         if (p == "*") return getHeaders()
         return getHeader(p)
     },
+})
+
+/*
+    headers:SEARCH   - search headers
+*/
+
+data.mountVirtualApi("headers", {
+    getAsync: p => {
+        p = data.stripProtocol(p)
+        const headers = getHeaders()
+        if (!p) return Promise.resolve(headers)
+        return compiler.projectSearchAsync({ term: p, headers })
+            .then((searchResults: pxtc.service.ProjectSearchInfo[]) => searchResults)
+            .then(searchResults => {
+                return searchResults;
+            });
+    },
+    expirationTime: p => 5 * 1000,
 })
 
 /*

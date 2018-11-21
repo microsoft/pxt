@@ -208,6 +208,13 @@ export function apiSearchAsync(searchFor: pxtc.service.SearchOptions) {
         });
 }
 
+export function projectSearchAsync(searchFor: pxtc.service.ProjectSearchOptions) {
+    return ensureApisInfoAsync()
+        .then(() => {
+            return workerOpAsync("projectSearch", { projectSearch: searchFor });
+        });
+}
+
 export function formatAsync(input: string, pos: number) {
     return workerOpAsync("format", { format: { input: input, pos: pos } });
 }

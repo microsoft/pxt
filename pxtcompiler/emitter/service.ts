@@ -556,6 +556,7 @@ namespace ts.pxtc.service {
     let lastBlocksInfo: BlocksInfo;
     let lastLocBlocksInfo: BlocksInfo;
     let lastFuse: Fuse<SearchInfo>;
+    let lastProjectFuse: Fuse<ProjectSearchInfo>;
     let builtinItems: SearchInfo[];
     let blockDefinitions: pxt.Map<pxt.blocks.BlockDefinition>;
     let tbSubset: pxt.Map<boolean | string>;
@@ -817,6 +818,29 @@ namespace ts.pxtc.service {
             }
             const fns = lastFuse.search(search.term);
             return fns.slice(0, SEARCH_RESULT_COUNT);
+        },
+        projectSearch: v => {
+            const search = v.projectSearch;
+            const searchSet = search.headers;
+
+            if (!lastProjectFuse) {
+                const fuseOptions = {
+                    shouldSort: true,
+                    threshold: 0.6,
+                    location: 0,
+                    distance: 100,
+                    maxPatternLength: 16,
+                    minMatchCharLength: 2,
+                    findAllMatches: false,
+                    caseSensitive: false,
+                    keys: [
+                        { name: 'name', weight: 0.3 }
+                    ]
+                };
+                lastProjectFuse = new Fuse(searchSet, fuseOptions);
+            }
+            const fns = lastProjectFuse.search(search.term);
+            return fns;
         }
     }
 
