@@ -3165,14 +3165,7 @@ document.addEventListener("DOMContentLoaded", () => {
             pxsim.U.remove(document.getElementById('loading'));
             return workspace.loadedAsync();
         })
-        .done(() => {
-            // preload delay loaded resources
-            if ((window as any).requestIdleCallback) {
-                (window as any).requestIdleCallback(() => {
-                    if (theEditor) theEditor.loadBlocklyAsync().done();
-                })
-            }
-        })
+        .done()
 
     document.addEventListener("visibilitychange", ev => {
         if (theEditor)
