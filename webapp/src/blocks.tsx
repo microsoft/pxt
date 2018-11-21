@@ -348,7 +348,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private markIncomplete = false;
     isIncomplete() {
-        const incomplete = this.editor ? this.editor.isDragging()
+        const incomplete = this.editor ?
+            ((this.editor as any).currentGesture_ != null && (this.editor as any).currentGesture_.isDraggingBlock_)
             || (Blockly as any).WidgetDiv.isVisible()
             || (Blockly as any).DropDownDiv.isVisible() : false;
         if (incomplete) this.markIncomplete = true;
