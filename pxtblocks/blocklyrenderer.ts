@@ -47,7 +47,7 @@ namespace pxt.blocks {
             let text = blocksXml || `<xml xmlns="http://www.w3.org/1999/xhtml"></xml>`;
             let xml = Blockly.Xml.textToDom(text);
             pxt.blocks.domToWorkspaceNoEvents(xml, workspace);
-            const layout = options.splitSvg ? BlockLayout.Align : options.layout;
+            const layout = options.splitSvg ? BlockLayout.Align : (options.layout || BlockLayout.Flow);
             switch (layout) {
                 case BlockLayout.Align:
                     pxt.blocks.layout.verticalAlign(workspace, options.emPixels || 18); break;

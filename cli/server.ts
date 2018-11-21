@@ -981,12 +981,13 @@ export function serveAsync(options: ServeOptions) {
             return
         }
 
-        if (pathname == "/--docs") {
+        if (/\/[-]*docs.*$/.test(pathname)) {
             sendFile(path.join(publicDir, 'docs.html'));
             return
         }
 
         if (pathname == "/--codeembed") {
+            // http://localhost:3232/--codeembed#pub:20467-26471-70207-51013
             sendFile(path.join(publicDir, 'codeembed.html'));
             return
         }

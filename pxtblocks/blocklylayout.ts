@@ -166,14 +166,6 @@ namespace pxt.blocks.layout {
             });
     }
 
-    export function svgToPngAsync(svg: SVGElement, x: number, y: number, width: number, height: number, pixelDensity: number): Promise<string> {
-        return blocklyToSvgAsync(svg, x, y, width, height)
-            .then(sg => {
-                if (!sg) return Promise.resolve<string>(undefined);
-                return toPngAsyncInternal(sg.width, sg.height, pixelDensity, sg.xml);
-            });
-    }
-
     const MAX_SCREENSHOT_SIZE = 1e6; // max 1Mb
     function toPngAsyncInternal(width: number, height: number, pixelDensity: number, data: string): Promise<string> {
         return new Promise<string>((resolve, reject) => {
