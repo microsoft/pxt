@@ -28,6 +28,7 @@
     * [Extension localization](/extensions/localization)
     * [Extension approval](/extensions/approval)
     * [Extension extensions](/extensions/extensions)
+    * [GitHub Extension Authoring](/extensions/github-authoring)
 * [Writing Docs](/writing-docs)
     * [Macros](/writing-docs/macros)
     * [Anchors](/writing-docs/anchors)
