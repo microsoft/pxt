@@ -32,13 +32,13 @@ When describing changes, you are also given an option to bump the version number
 
 ![Repo commit dialog](/static/extensions/repo-commit.png)
 
-There's really distinguishing between a commit, push, and pull - it all happens at once in the sync operation.
+There's really no distinguishing between a commit, push, and pull - it all happens at once in the sync operation.
 
 You can view a history of changes by following the version number link on the **Project Settings** page.
 
 ![Repo view link in project settings](/static/extensions/repo-view.png)
 
-There is also another button next to the GitHub sync - you can use it to add new files to the project. This is mostly to help keep the project organized. For the TypeScript compiler it doesn't matter if you use one big file or a bunch of smaller ones.
+There's also another button next to the GitHub sync - you can use it to add new files to the project. This is mostly to help keep the project organized. For the TypeScript compiler it doesn't matter if you use one big file or a bunch of smaller ones.
 
 ### Conflicts
 
