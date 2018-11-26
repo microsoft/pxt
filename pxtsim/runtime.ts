@@ -135,7 +135,7 @@ namespace pxsim {
             for(const listener of this.messageListeners)
                 listener(msg)
         }
-        addMessageListener(listener: MessageListener) {
+        public addMessageListener(listener: MessageListener) {
             this.messageListeners.push(listener);
         }
 
