@@ -156,10 +156,11 @@ declare namespace pxt {
         platformioIni?: string[];
 
         codalTarget?: string | {
-            name: string; // "codal-arduino-uno",
-            url: string; // "https://github.com/lancaster-university/codal-arduino-uno",
-            branch: string; // "master",
+            name: string; // "codal-arduino-uno"
+            url: string; // "https://github.com/lancaster-university/codal-arduino-uno"
+            branch: string; // "master"
             type: string; // "git"
+            branches?: pxt.Map<string>; // overrides repo url -> commit sha
         };
         codalBinary?: string;
         codalDefinitions?: any;
