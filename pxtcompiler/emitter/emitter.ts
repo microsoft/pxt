@@ -3441,13 +3441,9 @@ ${lbl}: .short 0xffff
         function emitCondition(expr: Expression, inner: ir.Expr = null) {
             if (!inner && isThumb() && expr.kind == SK.BinaryExpression) {
                 let be = expr as BinaryExpression
-                let lt = typeOf(be.left)
-                let rt = typeOf(be.right)
-                if ((lt.flags & TypeFlags.NumberLike) && (rt.flags & TypeFlags.NumberLike)) {
-                    let mapped = U.lookup(thumbCmpMap, simpleInstruction(be, be.operatorToken.kind))
-                    if (mapped) {
-                        return ir.rtcall(mapped, [emitExpr(be.left), emitExpr(be.right)])
-                    }
+                let mapped = U.lookup(thumbCmpMap, simpleInstruction(be, be.operatorToken.kind))
+                if (mapped) {
+                    return ir.rtcall(mapped, [emitExpr(be.left), emitExpr(be.right)])
                 }
             }
             if (!inner)
