@@ -128,11 +128,11 @@ namespace pxsim {
         public messageListeners: MessageListener[] = [];
 
         public updateView() { }
-        public receiveMessage(msg: SimulatorMessage) { 
+        public receiveMessage(msg: SimulatorMessage) {
             this.dispatchMessage(msg);
         }
         private dispatchMessage(msg: SimulatorMessage) {
-            for(const listener of this.messageListeners)
+            for (const listener of this.messageListeners)
                 listener(msg)
         }
         public addMessageListener(listener: MessageListener) {
