@@ -238,10 +238,14 @@ namespace pxt.blocks.layout {
             .forEach(el => el.removeAttribute('transform'));
 
         // In order to get the Blockly comment's text area to serialize properly they have to have names
-        /* tslint:disable:no-inner-html */
+        const parser = new DOMParser;
         pxt.U.toArray(svg.querySelectorAll('.blocklyCommentTextarea'))
-            .forEach(el => (el as any).innerHTML = (el as any).value);
-        /* tslint:enable:no-inner-html */
+            .forEach(el => {
+                const dom = parser.parseFromString(
+                    '<!doctype html><body>' + pxt.docs.html2Quote((el as any).value),
+                    'text/html');
+                (el as any).textContent = dom.body.textContent;
+            });
 
         return svg;
     }
