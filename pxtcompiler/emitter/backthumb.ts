@@ -255,9 +255,11 @@ ${lbl}:`
                 if (target.gc)
                     r += `
                     ${this.pushLR()}
+                    push {r0, r1}
                     ${this.saveThreadStack()}
                     ${op}
                     ${this.restoreThreadStack()}
+                    add sp, #8
                     ${this.popPC()}
                 `
                 else
@@ -417,7 +419,13 @@ _cmp_${op}:
     movs r0, #1
     bx lr
 `
-                r += boxedOp(`bl numops::${op}\n    bl numops::toBoolDecr`)
+                // the cmp isn't really needed, given how toBoolDecr() is compiled,
+                // but better not rely on it
+                // Also, cmp isn't needed when ref-counting (it ends with movs r0, r4)
+                r += boxedOp(`
+                        bl numops::${op}
+                        bl numops::toBoolDecr
+                        cmp r0, #0`)
             }
 
             return r

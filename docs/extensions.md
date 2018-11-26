@@ -24,6 +24,7 @@ In this scenario, PXT dynamically loads the neopixel extensions directly from Gi
 * [Extension versioning](/extensions/versioning)
 * [Extension localization](/extensions/localization)
 * [Extension approval](/extensions/approval)
+* [GitHub Extension Authoring](/extensions/github-authoring)
 
 ## [Editor extensions](/extensions/extensions)
 
