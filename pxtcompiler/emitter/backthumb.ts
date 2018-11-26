@@ -425,7 +425,7 @@ _cmp_${op}:
                 r += boxedOp(`
                         bl numops::${op}
                         bl numops::toBoolDecr
-                        cmp r0, #0`) 
+                        cmp r0, #0`)
             }
 
             return r
