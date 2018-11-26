@@ -981,7 +981,7 @@ export function serveAsync(options: ServeOptions) {
             return
         }
 
-        if (/\/[-]*docs.*$/.test(pathname)) {
+        if (/\/-[-]*docs.*$/.test(pathname)) {
             sendFile(path.join(publicDir, 'docs.html'));
             return
         }

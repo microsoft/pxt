@@ -219,6 +219,33 @@ function setupBlocklyAsync() {
     return promise;
 }
 
+function renderSnippets() {
+    var path = window.location.href.split('/').pop().split(/[?#]/)[0];
+    ksRunnerReady(function () {
+        setupSidebar();
+        setupSemantic();
+        setupBlocklyAsync()
+            .then(function () {
+                return pxt.runner.renderAsync({
+                    snippetClass: 'lang-blocks',
+                    signatureClass: 'lang-sig',
+                    blocksClass: 'lang-block',
+                    shuffleClass: 'lang-shuffle',
+                    simulatorClass: 'lang-sim',
+                    linksClass: 'lang-cards',
+                    namespacesClass: 'lang-namespaces',
+                    codeCardClass: 'lang-codecard',
+                    packageClass: 'lang-package',
+                    projectClass: 'lang-project',
+                    snippetReplaceParent: true,
+                    simulator: true,
+                    hex: true,
+                    hexName: path
+                });
+            }).done();
+    });
+}
+
 $(document).ready(function () {
-    // ready
+    renderSnippets();
 });

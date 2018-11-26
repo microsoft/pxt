@@ -61,17 +61,13 @@ namespace pxt.blocks {
 
             let metrics = workspace.getMetrics();
 
-            let svg = blocklyDiv.querySelectorAll('svg')[0].cloneNode(true) as SVGSVGElement;
-            Blockly.utils.removeClass(svg as Element, "blocklySvg");
-            Blockly.utils.addClass(svg as Element, "blocklyPreview");
+            const svg = blocklyDiv.querySelectorAll('svg')[0].cloneNode(true) as SVGSVGElement;
+            pxt.blocks.layout.cleanUpBlocklySvg(svg);
 
             pxt.U.toArray(svg.querySelectorAll('.blocklyBlockCanvas,.blocklyBubbleCanvas'))
                 .forEach(el => el.setAttribute('transform', `translate(${-metrics.contentLeft}, ${-metrics.contentTop}) scale(1)`));
-            const blocklyMainBackground = svg.querySelectorAll('.blocklyMainBackground')[0];
-            blocklyMainBackground.parentNode.removeChild(blocklyMainBackground);
+
             svg.setAttribute('viewBox', `0 0 ${metrics.contentWidth} ${metrics.contentHeight}`)
-            svg.removeAttribute('width');
-            svg.removeAttribute('height');
 
             if (options.emPixels) {
                 svg.style.width = (metrics.contentWidth / options.emPixels) + 'em';

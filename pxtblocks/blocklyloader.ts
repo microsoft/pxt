@@ -1360,7 +1360,8 @@ namespace pxt.blocks {
                 return;
             }
             let menuOptions: Blockly.ContextMenu.MenuItem[] = [];
-            let topBlocks = this.getTopBlocks(true);
+            let topBlocks = this.getTopBlocks();
+            let topComments = this.getTopComments();
             let eventGroup = Blockly.utils.genUid();
             let ws = this;
 
@@ -1369,58 +1370,8 @@ namespace pxt.blocks {
                 menuOptions.push((Blockly.ContextMenu as any).workspaceCommentOption(ws, e));
             }
 
-            // Add a little animation to collapsing and expanding.
+            // Add a little animation to deleting.
             const DELAY = 10;
-            if (this.options.collapse) {
-                let hasCollapsedBlocks = false;
-                let hasExpandedBlocks = false;
-                for (let i = 0; i < topBlocks.length; i++) {
-                    let block = topBlocks[i];
-                    while (block) {
-                        if (block.isCollapsed()) {
-                            hasCollapsedBlocks = true;
-                        } else {
-                            hasExpandedBlocks = true;
-                        }
-                        block = block.getNextBlock();
-                    }
-                }
-
-                /**
-                 * Option to collapse or expand top blocks.
-                 * @param {boolean} shouldCollapse Whether a block should collapse.
-                 * @private
-                 */
-                const toggleOption = function (shouldCollapse: boolean) {
-                    let ms = 0;
-                    for (let i = 0; i < topBlocks.length; i++) {
-                        let block = topBlocks[i];
-                        while (block) {
-                            setTimeout(block.setCollapsed.bind(block, shouldCollapse), ms);
-                            block = block.getNextBlock();
-                            ms += DELAY;
-                        }
-                    }
-                };
-
-                // Option to collapse top blocks.
-                const collapseOption: any = { enabled: hasExpandedBlocks };
-                collapseOption.text = lf("Collapse Block");
-                collapseOption.callback = function () {
-                    pxt.tickEvent("blocks.context.collapse")
-                    toggleOption(true);
-                };
-                menuOptions.push(collapseOption);
-
-                // Option to expand top blocks.
-                const expandOption: any = { enabled: hasCollapsedBlocks };
-                expandOption.text = lf("Expand Block");
-                expandOption.callback = function () {
-                    pxt.tickEvent("blocks.context.expand")
-                    toggleOption(false);
-                };
-                menuOptions.push(expandOption);
-            }
 
             // Option to delete all blocks.
             // Count the number of blocks that are deletable.
@@ -1477,7 +1428,7 @@ namespace pxt.blocks {
             if (pxt.blocks.layout.screenshotEnabled()) {
                 const screenshotOption = {
                     text: lf("Download Screenshot"),
-                    enabled: topBlocks.length > 0,
+                    enabled: topBlocks.length > 0 || topComments.length > 0,
                     callback: () => {
                         pxt.tickEvent("blocks.context.screenshot", undefined, { interactiveConsent: true });
                         pxt.blocks.layout.screenshotAsync(this)
