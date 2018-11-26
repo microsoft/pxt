@@ -65,7 +65,7 @@ namespace pxsim {
         state: string;
     }
     export interface SimulatorBroadcastMessage extends SimulatorMessage {
-        broadcast?: boolean;
+        broadcast: boolean;
     }
     export interface SimulatorEventBusMessage extends SimulatorBroadcastMessage {
         type: "eventbus";
