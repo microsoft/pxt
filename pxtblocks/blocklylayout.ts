@@ -238,7 +238,7 @@ namespace pxt.blocks.layout {
             .forEach(el => el.removeAttribute('transform'));
 
         // In order to get the Blockly comment's text area to serialize properly they have to have names
-        const parser = new DOMParser;
+        const parser = new DOMParser();
         pxt.U.toArray(svg.querySelectorAll('.blocklyCommentTextarea'))
             .forEach(el => {
                 const dom = parser.parseFromString(
