@@ -120,12 +120,25 @@ namespace pxsim {
     export let runtime: Runtime;
     export function getResume() { return runtime.getResume() }
 
+    export type MessageListener = (msg: SimulatorMessage) => void;
+
     const SERIAL_BUFFER_LENGTH = 16;
     export class BaseBoard {
         public runOptions: SimulatorRunMessage;
+        public messageListeners: MessageListener[] = [];
 
         public updateView() { }
-        public receiveMessage(msg: SimulatorMessage) { }
+        public receiveMessage(msg: SimulatorMessage) {
+            this.dispatchMessage(msg);
+        }
+        private dispatchMessage(msg: SimulatorMessage) {
+            for (const listener of this.messageListeners)
+                listener(msg)
+        }
+        public addMessageListener(listener: MessageListener) {
+            this.messageListeners.push(listener);
+        }
+
         public initAsync(msg: SimulatorRunMessage): Promise<void> {
             this.runOptions = msg;
             return Promise.resolve()
@@ -133,7 +146,6 @@ namespace pxsim {
         public kill() { }
 
         protected serialOutBuffer: string = '';
-
         private messages: SerialMessage[] = [];
         private serialTimeout: number;
         private lastSerialTime = 0;
