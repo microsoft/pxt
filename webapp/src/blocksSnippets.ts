@@ -496,6 +496,16 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                         </value>
                     </block>`
                 }, {
+                    name: "lists_create_with",
+                    attributes: {
+                        blockId: "lists_create_with",
+                        weight: 5
+                    },
+                    blockXml: `<block type="lists_create_with">
+                        <mutation items="0"></mutation>
+                    </block>`
+                },
+                {
                     name: "lists_index_get",
                     attributes: {
                         blockId: "lists_index_get",
