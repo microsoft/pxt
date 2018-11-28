@@ -55,6 +55,7 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
         // called by app when a serial entry is read
         exts.forEach(n => {
             this.send(n, {
+                target: pxt.appTarget.id,
                 type: "pxtpkgext",
                 event: "extconsole",
                 body: {
@@ -76,7 +77,7 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
         core.showLoading("reloadproject", lf("loading..."));
         this.props.parent.reloadHeaderAsync()
             .done(() => {
-                this.send(this.state.extension, { type: "pxtpkgext", event: "exthidden" } as pxt.editor.HiddenEvent);
+                this.send(this.state.extension, { target: pxt.appTarget.id, type: "pxtpkgext", event: "exthidden" } as pxt.editor.HiddenEvent);
                 core.hideLoading("reloadproject");
             });
     }
@@ -84,7 +85,7 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
     showExtension(extension: string, url: string, consentRequired: boolean) {
         let consent = consentRequired ? this.manager.hasConsent(this.manager.getExtId(extension)) : true;
         this.setState({ visible: true, extension: extension, url: url, consent: consent }, () => {
-            this.send(extension, { type: "pxtpkgext", event: "extshown" } as pxt.editor.ShownEvent);
+            this.send(extension, { target: pxt.appTarget.id, type: "pxtpkgext", event: "extshown" } as pxt.editor.ShownEvent);
         })
     }
 
@@ -99,6 +100,9 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
         frame.style.display = 'block';
         if (!frame.src) {
             frame.src = this.state.url + "#" + this.manager.getExtId(this.state.extension);
+            frame.onload = () => {
+                this.send(this.state.extension, { target: pxt.appTarget.id, type: "pxtpkgext", event: "extloaded" } as pxt.editor.LoadedEvent);
+            }
         }
     }
 
