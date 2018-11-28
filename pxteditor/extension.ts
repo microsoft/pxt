@@ -42,6 +42,7 @@ namespace pxt.editor {
      */
     export interface ExtensionEvent extends ExtensionMessage {
         event: string;
+        target: string;
     }
 
     /**
