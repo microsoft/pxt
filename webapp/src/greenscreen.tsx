@@ -114,7 +114,7 @@ export class WebCam extends data.Component<WebCamProps, WebCamState> {
         // playsInline required for iOS
         const { hasPrompt, devices, userFacing } = this.state;
         return <div className="videoContainer">
-            <video className={userFacing ? "flipx" : ""} playsInline ref={this.handleVideoRef} />
+            <video className={userFacing ? "flipx" : ""} autoPlay playsInline ref={this.handleVideoRef} />
             {hasPrompt ?
                 <sui.Modal isOpen={hasPrompt} onClose={this.handleClose} closeIcon={true}
                     dimmer={true} header={lf("Choose a camera")}>
