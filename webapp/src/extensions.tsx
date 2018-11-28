@@ -100,6 +100,9 @@ export class Extensions extends data.Component<ISettingsProps, ExtensionsState> 
         frame.style.display = 'block';
         if (!frame.src) {
             frame.src = this.state.url + "#" + this.manager.getExtId(this.state.extension);
+            frame.onload = () => {
+                this.send(this.state.extension, { target: pxt.appTarget.id, type: "pxtpkgext", event: "extloaded" } as pxt.editor.LoadedEvent);
+            }
         }
     }
 
