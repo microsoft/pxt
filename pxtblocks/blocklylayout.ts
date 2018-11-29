@@ -77,6 +77,11 @@ namespace pxt.blocks.layout {
             const otherSvg = svgclone.querySelector(`g.blocklyWorkspace > g.${otherClass}`) as SVGGElement;
             const blocksSvg = Util.toArray(parentSvg.querySelectorAll(`g.blocklyWorkspace > g.${parentClass} > g`));
             const blockSvg = blocksSvg.splice(blocki, 1)[0];
+            if (!blockSvg) {
+                // seems like no blocks were generated
+                pxt.log(`missing block, did block failed to load?`)
+                return;
+            }
             // remove all but the block we care about
             blocksSvg.filter(g => g != blockSvg)
                 .forEach(g => {
