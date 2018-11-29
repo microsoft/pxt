@@ -327,7 +327,11 @@ namespace pxt.editor {
                                     const rendermsg = data as EditorMessageRenderBlocksRequest;
                                     return Promise.resolve()
                                         .then(() => projectView.renderBlocksAsync(rendermsg))
-                                        .then((r: any) => { resp = r.xml; });
+                                        .then((r: any) => {
+                                            return r.xml.then((svg: any) => {
+                                                resp = svg.xml;
+                                            })
+                                        });
                                 }
                                 case "toggletrace": {
                                     const togglemsg = data as EditorMessageToggleTraceRequest;
