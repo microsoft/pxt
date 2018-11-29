@@ -595,17 +595,15 @@ ${files[f]}
                 }
             });
 
-        if (cfg && cfg.dependencies && Util.values(cfg.dependencies).some(v => v != '*')) {
+        const deps = cfg && cfg.dependencies && Object.keys(cfg.dependencies).filter(k => k != pxt.appTarget.corepkg);
+        if (deps && deps.length) {
             md += `
-## ${lf("Extensions")}
+## ${lf("Extensions")} #extensions
 
-${Object.keys(cfg.dependencies)
-                    .filter(k => k != pxt.appTarget.corepkg)
-                    .map(k => `* ${k}, ${cfg.dependencies[k]}`)
-                    .join('\n')}
+${deps.map(k => `* ${k}, ${cfg.dependencies[k]}`).join('\n')}
 
 \`\`\`package
-${Object.keys(cfg.dependencies).map(k => `${k}=${cfg.dependencies[k]}`).join('\n')}
+${deps.map(k => `${k}=${cfg.dependencies[k]}`).join('\n')}
 \`\`\`
 `;
         }
@@ -621,6 +619,7 @@ ${linkString}
 
 `;
         }
+        console.debug(`print md: ${md}`);
         const options: RenderMarkdownOptions = {
             print: true
         }
