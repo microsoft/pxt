@@ -699,7 +699,7 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
                             icon="cloud download"
                             iconColor="secondary"
                             name={lf("Import URL...")}
-                            description={lf("Open a shared project URL or GithHub repo")}
+                            description={lf("Open a shared project URL or GitHub repo")}
                             onClick={this.importUrl}
                         /> : undefined}
 
