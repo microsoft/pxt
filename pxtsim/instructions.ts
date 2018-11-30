@@ -123,9 +123,10 @@ namespace pxsim.instructions {
         crocClips?: boolean
     };
 
-    function mkBoardImgSvg(def: string | BoardImageDefinition): visuals.SVGElAndSize {
+    function mkBoardImgSvg(def: BoardDefinition): visuals.SVGElAndSize {
         const boardView = pxsim.visuals.mkBoardView({
-            visual: def
+            visual: def.visual,
+            boardDef: def
         });
         return boardView.getView();
     }
@@ -428,7 +429,7 @@ namespace pxsim.instructions {
         let panel = mkPanel();
 
         // board and breadboard
-        let boardImg = mkBoardImgSvg(props.boardDef.visual);
+        let boardImg = mkBoardImgSvg(props.boardDef);
         let board = wrapSvg(boardImg, { left: QUANT_LBL(1), leftSize: QUANT_LBL_SIZE, cmpScale: PARTS_BOARD_SCALE });
         panel.appendChild(board);
         let bbRaw = mkBBSvg();

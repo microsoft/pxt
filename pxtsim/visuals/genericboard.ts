@@ -95,6 +95,7 @@ namespace pxsim.visuals {
 
     export interface GenericBoardProps {
         visualDef: BoardImageDefinition;
+        boardDef: BoardDefinition;
         wireframe?: boolean;
     }
 
@@ -287,7 +288,7 @@ namespace pxsim.visuals {
         }
 
         public getCoord(pinNm: string): Coord {
-            let pin = this.pinNmToPin[pinNm];
+            const pin = this.pinNmToPin[this.props.boardDef.gpioPinMap[pinNm] || pinNm];
             if (!pin)
                 return null;
             return [pin.cx, pin.cy];
