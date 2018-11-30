@@ -381,7 +381,7 @@ export function initCommandsAsync(): Promise<void> {
         pxt.commands.electronDeployAsync = electron.driveDeployAsync;
     } else if (hidbridge.shouldUse() && !pxt.appTarget.serial.noDeploy && !forceHexDownload) {
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
-    } else if (Cloud.isLocalHost() && Cloud.localToken && !forceHexDownload) { // local node.js
+    } else if (pxt.BrowserUtils.isLocalHost() && Cloud.localToken && !forceHexDownload) { // local node.js
         pxt.commands.deployCoreAsync = localhostDeployCoreAsync;
     } else { // in browser
         pxt.commands.deployCoreAsync = browserDownloadDeployCoreAsync;

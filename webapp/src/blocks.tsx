@@ -905,8 +905,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             .then((config) => {
                 const repoStatus = pxt.github.repoStatus(parsedRepo, config);
                 const repoName = parsedRepo.fullName.substr(parsedRepo.fullName.indexOf(`/`) + 1);
-                const localDebug = pxt.Cloud.isLocalHost() && /^file:/.test(extension.installedVersion) && extension.extension.localUrl;
-                const debug = pxt.Cloud.isLocalHost() && /debugExtensions/i.test(window.location.href);
+                const localDebug = pxt.BrowserUtils.isLocalHost() && /^file:/.test(extension.installedVersion) && extension.extension.localUrl;
+                const debug = pxt.BrowserUtils.isLocalHost() && /debugExtensions/i.test(window.location.href);
                 /* tslint:disable:no-http-string */
                 const url = debug ? "http://localhost:3232/extension.html"
                     : localDebug ? extension.extension.localUrl : `https://${parsedRepo.owner}.github.io/${repoName}/`;

@@ -1201,7 +1201,7 @@ namespace pxt.hex {
                 });
         }
 
-        if (!Cloud.localToken || !window || !Cloud.isLocalHost()) {
+        if (!Cloud.localToken || !window || !pxt.BrowserUtils.isLocalHost()) {
             return Promise.resolve(undefined);
         }
 

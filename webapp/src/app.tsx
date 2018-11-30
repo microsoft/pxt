@@ -2640,7 +2640,7 @@ function initLogin() {
 
 function initSerial() {
     const isHF2WinRTSerial = pxt.appTarget.serial && pxt.appTarget.serial.useHF2 && pxt.winrt.isWinRT();
-    const isValidLocalhostSerial = pxt.appTarget.serial && Cloud.isLocalHost() && !!Cloud.localToken;
+    const isValidLocalhostSerial = pxt.appTarget.serial && pxt.BrowserUtils.isLocalHost() && !!Cloud.localToken;
 
     if (!isHF2WinRTSerial && !isValidLocalhostSerial)
         return;
@@ -3068,7 +3068,7 @@ document.addEventListener("DOMContentLoaded", () => {
     else if (isSandbox) workspace.setupWorkspace("mem");
     else if (pxt.winrt.isWinRT()) workspace.setupWorkspace("uwp");
     else if (pxt.BrowserUtils.isIpcRenderer() && pxt.BrowserUtils.isSafari()) workspace.setupWorkspace("idb");
-    else if (Cloud.isLocalHost() || pxt.BrowserUtils.isPxtElectron()) workspace.setupWorkspace("fs");
+    else if (pxt.BrowserUtils.isLocalHost() || pxt.BrowserUtils.isPxtElectron()) workspace.setupWorkspace("fs");
     Promise.resolve()
         .then(() => {
             const mlang = /(live)?(force)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
@@ -3221,7 +3221,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 theEditor.handleMessage(m);
             return;
         }
-        if (m.type === "sidedocready" && Cloud.isLocalHost() && Cloud.localToken) {
+        if (m.type === "sidedocready" && pxt.BrowserUtils.isLocalHost() && Cloud.localToken) {
             container.SideDocs.notify({
                 type: "localtoken",
                 localToken: Cloud.localToken

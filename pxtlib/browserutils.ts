@@ -126,6 +126,18 @@ namespace pxt.BrowserUtils {
         return isPxtElectron() || isIpcRenderer();
     }
 
+    export function isLocalHost(): boolean {
+        try {
+            return /^http:\/\/(localhost|127\.0\.0\.1):\d+\//.test(window.location.href)
+                && !/nolocalhost=1/.test(window.location.href)
+                && !(pxt.webConfig && pxt.webConfig.isStatic);
+        } catch (e) { return false; }
+    }
+
+    export function isLocalHostDev(): boolean {
+        return isLocalHost() && !isElectron();
+    }
+
     export function hasPointerEvents(): boolean {
         return typeof window != "undefined" && !!(window as any).PointerEvent;
     }
