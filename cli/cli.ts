@@ -3624,6 +3624,12 @@ function dumplogAsync(c: commandParser.ParsedCommand) {
         .then(() => gdb.dumplogAsync())
 }
 
+function dumpheapAsync(c: commandParser.ParsedCommand) {
+    ensurePkgDir()
+    return mainPkg.loadAsync()
+        .then(() => gdb.dumpheapAsync())
+}
+
 function buildDalDTSAsync() {
     ensurePkgDir()
     return mainPkg.loadAsync()
@@ -5647,6 +5653,14 @@ function initCommands() {
         aliases: ["dumplog"],
         advanced: true,
     }, dumplogAsync);
+
+    p.defineCommand({
+        name: "heap",
+        help: "attempt to dump GC and codal heap log using openocd",
+        argString: "",
+        aliases: ["dumpheap"],
+        advanced: true,
+    }, dumpheapAsync);
 
     p.defineCommand({
         name: "builddaldts",
