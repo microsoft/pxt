@@ -4,14 +4,11 @@ import * as core from "./core";
 import { ProjectView } from "./srceditor";
 
 const pxtElectron: pxt.electron.PxtElectron = (window as any).pxtElectron;
-export const isPxtElectron = () => !!pxtElectron;
-export const isIpcRenderer = () => !!(window as any).ipcRenderer;
-export const isElectron = () => isPxtElectron() || isIpcRenderer();
 
 const downloadingUpdateLoadingName = "pxtelectron-downloadingupdate";
 
 export function initElectron(projectView: ProjectView): void {
-    if (!isPxtElectron()) {
+    if (!pxt.BrowserUtils.isPxtElectron()) {
         return;
     }
 
@@ -113,7 +110,7 @@ export function initElectron(projectView: ProjectView): void {
 
 let deployingDeferred: Promise.Resolver<void> = null;
 export function driveDeployAsync(compileResult: pxtc.CompileResult): Promise<void> {
-    if (!isPxtElectron()) {
+    if (!pxt.BrowserUtils.isPxtElectron()) {
         return cmds.browserDownloadDeployCoreAsync(compileResult);
     }
 

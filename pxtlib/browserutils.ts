@@ -115,6 +115,17 @@ namespace pxt.BrowserUtils {
                 || navigator.maxTouchPoints > 0);       // works on IE10/11 and Surface);
     }
 
+    export function isPxtElectron(): boolean {
+        return !!(window as any).pxtElectron;
+    }
+
+    export function isIpcRenderer(): boolean {
+        return !!(window as any).ipcRenderer;
+    }
+    export function isElectron() {
+        return isPxtElectron() || isIpcRenderer();
+    }
+
     export function hasPointerEvents(): boolean {
         return typeof window != "undefined" && !!(window as any).PointerEvent;
     }

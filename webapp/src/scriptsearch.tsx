@@ -203,7 +203,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         const urlPathExec = /^\/@(.*)$/.exec(str);
         let urlPath = urlPathExec && urlPathExec[1];
         if (urlPath) {
-            if (urlPath === "devtools" && electron.isPxtElectron()) {
+            if (urlPath === "devtools" && pxt.BrowserUtils.isPxtElectron()) {
                 electron.openDevTools();
                 this.hide();
                 this.afterHide();

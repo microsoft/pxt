@@ -125,7 +125,7 @@ export class ProjectView
         this.state = {
             showFiles: false,
             home: shouldShowHomeScreen,
-            active: document.visibilityState == 'visible' || electron.isElectron() || pxt.winrt.isWinRT() || pxt.appTarget.appTheme.dontSuspendOnVisibility,
+            active: document.visibilityState == 'visible' || pxt.BrowserUtils.isElectron() || pxt.winrt.isWinRT() || pxt.appTarget.appTheme.dontSuspendOnVisibility,
             collapseEditorTools: pxt.appTarget.simulator.headless || (!isSandbox && pxt.BrowserUtils.isMobile()),
             highContrast: isHighContrast
         };
@@ -152,7 +152,7 @@ export class ProjectView
     }
 
     updateVisibility() {
-        if (electron.isElectron() || pxt.winrt.isWinRT() || pxt.appTarget.appTheme.dontSuspendOnVisibility) {
+        if (pxt.BrowserUtils.isElectron() || pxt.winrt.isWinRT() || pxt.appTarget.appTheme.dontSuspendOnVisibility) {
             // Don't suspend when inside apps
             return;
         }
@@ -2501,7 +2501,7 @@ export class ProjectView
         const shouldCollapseEditorTools = this.state.collapseEditorTools && (!inTutorial || isHeadless);
         const logoWide = !!targetTheme.logoWide;
 
-        const isApp = cmds.isNativeHost() || pxt.winrt.isWinRT() || electron.isElectron();
+        const isApp = cmds.isNativeHost() || pxt.winrt.isWinRT() || pxt.BrowserUtils.isElectron();
 
         let rootClassList = [
             "ui",
@@ -3067,8 +3067,8 @@ document.addEventListener("DOMContentLoaded", () => {
     else if ((pxt.appTarget.appTheme.allowParentController || isController) && pxt.BrowserUtils.isIFrame()) workspace.setupWorkspace("iframe");
     else if (isSandbox) workspace.setupWorkspace("mem");
     else if (pxt.winrt.isWinRT()) workspace.setupWorkspace("uwp");
-    else if (electron.isIpcRenderer() && pxt.BrowserUtils.isSafari()) workspace.setupWorkspace("idb");
-    else if (Cloud.isLocalHost() || electron.isPxtElectron()) workspace.setupWorkspace("fs");
+    else if (pxt.BrowserUtils.isIpcRenderer() && pxt.BrowserUtils.isSafari()) workspace.setupWorkspace("idb");
+    else if (Cloud.isLocalHost() || pxt.BrowserUtils.isPxtElectron()) workspace.setupWorkspace("fs");
     Promise.resolve()
         .then(() => {
             const mlang = /(live)?(force)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
