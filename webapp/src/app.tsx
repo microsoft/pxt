@@ -2001,13 +2001,10 @@ export class ProjectView
                 }) as SVGSVGElement;
                 // TODO: what if svg is undefined? handle that scenario
                 const viewBox = svg.getAttribute("viewBox").split(/\s+/).map(d => parseInt(d));
-                return pxt.blocks.layout.blocklyToSvgAsync(svg, viewBox[0], viewBox[1], viewBox[2], viewBox[3])
-                    .then(resp => {
-                        return {
-                            svg: resp.svg,
-                            xml: resp.xml
-                        }
-                    })
+                return {
+                    svg: svg,
+                    xml: pxt.blocks.layout.blocklyToSvgAsync(svg, viewBox[0], viewBox[1], viewBox[2], viewBox[3])
+                }
             });
     }
 
