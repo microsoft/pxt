@@ -89,8 +89,9 @@ namespace pxt.Cloud {
         })
     }
 
+    const isElectron = !!(window as any).pxtElectron || !!(window as any).ipcRenderer;
     // 1h check on markdown content
-    const MARKDOWN_EXPIRATION = Cloud.isLocalHost() && !(window as any).pxtElectron ? 1 : 1 * 60 * 60 * 1000;
+    const MARKDOWN_EXPIRATION = Cloud.isLocalHost() && !isElectron ? 1 : 1 * 60 * 60 * 1000;
     export function markdownAsync(docid: string, locale?: string, live?: boolean): Promise<string> {
         const branch = "";
         return pxt.BrowserUtils.translationDbAsync()
