@@ -90,7 +90,7 @@ namespace pxt.Cloud {
     }
 
     // 1h check on markdown content
-    const MARKDOWN_EXPIRATION = 1 * 60 * 60 * 1000;
+    const MARKDOWN_EXPIRATION = Cloud.isLocalHost() ? 1 : 1 * 60 * 60 * 1000;
     export function markdownAsync(docid: string, locale?: string, live?: boolean): Promise<string> {
         const branch = "";
         return pxt.BrowserUtils.translationDbAsync()
