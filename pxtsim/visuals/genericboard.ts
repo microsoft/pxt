@@ -288,7 +288,12 @@ namespace pxsim.visuals {
         }
 
         public getCoord(pinNm: string): Coord {
-            const pin = this.pinNmToPin[this.props.boardDef.gpioPinMap[pinNm] || pinNm];
+            let pin = this.pinNmToPin[pinNm];
+            if (!pin && this.props.boardDef.gpioPinMap) {
+                pinNm = this.props.boardDef.gpioPinMap[pinNm];
+                if (pinNm)
+                    pin = this.pinNmToPin[pinNm];
+            }
             if (!pin)
                 return null;
             return [pin.cx, pin.cy];
