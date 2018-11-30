@@ -116,11 +116,11 @@ namespace pxt.BrowserUtils {
     }
 
     export function isPxtElectron(): boolean {
-        return !!(window as any).pxtElectron;
+        return typeof window != "undefined" && !!(window as any).pxtElectron;
     }
 
     export function isIpcRenderer(): boolean {
-        return !!(window as any).ipcRenderer;
+        return typeof window != "undefined" && !!(window as any).ipcRenderer;
     }
     export function isElectron() {
         return isPxtElectron() || isIpcRenderer();
