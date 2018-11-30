@@ -164,6 +164,20 @@ function hex(n: number) {
     return "0x" + n.toString(16)
 }
 
+type HeapRef = string | number
+interface HeapObj {
+    addr: string;
+    tag: string;
+    size: number;
+    incoming?: HeapRef[];
+    fields: pxt.Map<HeapRef>;
+}
+
+interface ClassInfo {
+    name: string;
+    fields: string[];
+}
+
 export async function dumpheapAsync() {
     let memStart = findAddr("_sdata")
     let memEnd = findAddr("_estack")
@@ -219,16 +233,38 @@ export async function dumpheapAsync() {
     let uf2 = pxtc.UF2.parseFile(new Uint8Array(fs.readFileSync("built/binary.uf2")))
 
     let currClass = ""
-    let classMap: pxt.Map<string> = {}
+    let classMap: pxt.Map<ClassInfo> = {}
+    let inIface = false
+    let classInfo: ClassInfo
     for (let line of fs.readFileSync("built/binary.asm", "utf8").split(/\n/)) {
         let m = /(\w+)__C\d+_VT:/.exec(line)
         if (m) currClass = m[1]
+        m = /\w+__C\d+_IfaceVT:/.exec(line)
+        if (m) inIface = true
         m = /(\d+)\s+;\s+class-id/.exec(line)
         if (currClass && m) {
-            classMap[m[1]] = currClass
+            classInfo = {
+                name: currClass,
+                fields: []
+            }
+            classMap[m[1]] = classInfo
             currClass = ""
         }
+
+        if (inIface) {
+            m = /\.short \d+, (\d+) ; (.*)/.exec(line)
+            if (m) {
+                if (m[2] == "the end") {
+                    inIface = false
+                } else if (m[1] != "0") {
+                    classInfo.fields.push(m[2])
+                }
+            }
+        }
+
     }
+
+    let objects: pxt.Map<HeapObj> = {}
 
     let byCategory: pxt.Map<number> = {}
     let numByCategory: pxt.Map<number> = {}
@@ -247,11 +283,14 @@ export async function dumpheapAsync() {
         console.log(`*** GC heap ${hex(gcHeap)} size=${heapSize}`)
         let objPtr = gcHeap + 8
         let heapEnd = objPtr + heapSize
+        let fields: pxt.Map<HeapRef>
+
         while (objPtr < heapEnd) {
             let vtable = read32(objPtr)
             let numbytes = 0
             let category = ""
             let addWords = 0
+            fields = {}
             if (vtable & 2) {
                 category = "free"
                 numbytes = (vtable >> 2) << 2
@@ -267,6 +306,8 @@ export async function dumpheapAsync() {
                 let classNoEtc = read32(vtable + 8)
                 let classNo = classNoEtc & 0xffff
                 let word0 = read32(objPtr + 4)
+                let tmp = 0
+                let len = 0
                 switch (classNo) {
                     case pxt.BuiltInType.BoxedString:
                         category = "string"
@@ -278,7 +319,11 @@ export async function dumpheapAsync() {
                         break
                     case pxt.BuiltInType.RefAction:
                         category = "action"
-                        numbytes += (word0 & 0xffff) * 4
+                        len = word0 & 0xffff
+                        for (let i = 0; i < len; ++i) {
+                            fields["" + i] = readRef(objPtr + (i + 3) * 4)
+                        }
+                        numbytes += len * 4
                         break
                     case pxt.BuiltInType.RefImage:
                         category = "image"
@@ -290,19 +335,48 @@ export async function dumpheapAsync() {
                         category = "number"
                         break
                     case pxt.BuiltInType.RefCollection:
-                        addWords = read32(objPtr + 8) >>> 16
+                        len = read32(objPtr + 8)
+                        addWords = len >>> 16
                         category = "array sz=" + addWords
+                        len &= 0xffff
+                        fields["length"] = len
+                        for (let i = 0; i < len; ++i) {
+                            fields["" + i] = readRef(word0 + i * 4)
+                        }
                         break
                     case pxt.BuiltInType.RefRefLocal:
                         category = "reflocal"
+                        fields["value"] = readRef(objPtr + 4)
                         break
                     case pxt.BuiltInType.RefMap:
-                        addWords = read32(objPtr + 8) >>> 16
+                        len = read32(objPtr + 8)
+                        addWords = len >>> 16
                         category = "refmap sz=" + addWords
                         addWords <<= 1
+                        len &= 0xffff
+                        fields["length"] = len
+                        tmp = read32(objPtr + 12)
+                        for (let i = 0; i < len; ++i) {
+                            fields["k" + i] = readRef(word0 + i * 4)
+                            fields["v" + i] = readRef(tmp + i * 4)
+                        }
                         break
                     default:
-                        category = classMap[classNo + ""] || ("C_" + classNo)
+                        if (classMap[classNo + ""]) {
+                            let cinfo = classMap[classNo + ""]
+                            category = cinfo.name
+                            len = (numbytes - 4) >> 2
+                            if (len != cinfo.fields.length)
+                                fields["$error"] = "fieldMismatch"
+                            for (let i = 0; i < len; ++i)
+                                fields[cinfo.fields[i] || ".f" + i] = readRef(objPtr + (i + 1) * 4)
+                        } else {
+                            category = ("C_" + classNo)
+                            len = (numbytes - 4) >> 2
+                            for (let i = 0; i < len; ++i)
+                                fields[".f" + i] = readRef(objPtr + (i + 1) * 4)
+
+                        }
                         break
                 }
             }
@@ -312,6 +386,13 @@ export async function dumpheapAsync() {
                 numByCategory[category] = 0
             }
             let numwords = (numbytes + 3) >> 2
+            let obj: HeapObj = {
+                addr: hex(objPtr),
+                tag: category,
+                size: (addWords + numwords) * 4,
+                fields: fields
+            }
+            objects[obj.addr] = obj
             byCategory[category] += (addWords + numwords) * 4
             numByCategory[category]++
             objPtr += numwords * 4
@@ -327,6 +408,96 @@ export async function dumpheapAsync() {
         console.log(`${byCategory[c]}\t${numByCategory[c]}\t${c}`)
     }
 
+    let dmesg = getDmesg()
+    let roots: pxt.Map<HeapRef[]> = {}
+
+    dmesg
+        .replace(/.*--MARK/, "")
+        .replace(/^R(.*):0x([\da-f]+)\/(\d+)/img, (f, id, ptr, len) => {
+            roots[id] = getRoots(parseInt(ptr, 16), parseInt(len), id == "P")
+            return ""
+        })
+
+    for (let rootId of Object.keys(roots)) {
+        for (let f of roots[rootId])
+            mark(rootId, f)
+    }
+
+    let unreachable: string[] = []
+
+    for (let o of U.values(objects)) {
+        if (!o.incoming) {
+            if (o.tag != "free")
+                unreachable.push(o.addr)
+        }
+    }
+
+    fs.writeFileSync("dump.json", JSON.stringify({
+        unreachable,
+        roots,
+        dmesg,
+        objects
+    }, null, 1))
+
+    function mark(src: HeapRef, r: HeapRef) {
+        if (typeof r == "string" && U.startsWith(r, "0x2")) {
+            let o = objects[r]
+            if (o) {
+                if (!o.incoming) {
+                    o.incoming = [src]
+                    for (let f of U.values(o.fields))
+                        mark(r, f)
+                } else {
+                    o.incoming.push(src)
+                }
+            } else {
+                objects[r] = {
+                    addr: r,
+                    size: -1,
+                    tag: "missing",
+                    incoming: [src],
+                    fields: {}
+                }
+            }
+        }
+    }
+
+    function getRoots(start: number, len: number, encoded = false) {
+        let refs: HeapRef[] = []
+        for (let i = 0; i < len; ++i) {
+            let addr = start + i * 4
+            if (encoded) {
+                let v = read32(addr)
+                if (v & 1)
+                    addr = v & ~1
+            }
+            refs.push(readRef(addr))
+        }
+        return refs
+    }
+
+    function readRef(addr: number): HeapRef {
+        let v = read32(addr)
+        if (!v) return "undefined"
+        if (v & 1) {
+            if (0x8000000 <= v && v <= 0x80f0000)
+                return hex(v)
+            return v >> 1
+        }
+        if (v & 2) {
+            if (v == pxtc.taggedFalse)
+                return "false"
+            if (v == pxtc.taggedTrue)
+                return "true"
+            if (v == pxtc.taggedNaN)
+                return "NaN"
+            if (v == pxtc.taggedNull)
+                return "null"
+            return "tagged_" + v
+        }
+        return hex(v)
+    }
+
     function read32(addr: number) {
         if (addr >= memStart)
             return pxt.HF2.read32(mem, addr - memStart)
@@ -335,6 +506,16 @@ export async function dumpheapAsync() {
             return pxt.HF2.read32(r, 0)
         U.userError(`can't read memory at ${addr}`)
         return 0
+    }
+
+    function getDmesg() {
+        let addr = findAddr("codalLogStore")
+        let start = addr + 4 - memStart
+        for (let i = 0; i < 1024; ++i) {
+            if (i == 1023 || mem[start + i] == 0)
+                return mem.slice(start, start + i).toString("utf8")
+        }
+        return ""
     }
 }
 
