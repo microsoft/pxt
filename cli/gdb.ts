@@ -439,6 +439,30 @@ export async function dumpheapAsync() {
         objects
     }, null, 1))
 
+    // dgml output
+    let dgml = `<DirectedGraph xmlns="http://schemas.microsoft.com/vs/2009/dgml">\n`;
+    dgml += `<Nodes>\n`
+    for (const addr of Object.keys(objects)) {
+        const obj = objects[addr];
+        dgml += `<Node Id="${addr}" Label="${obj.tag}" Size="${obj.size}" />\n`
+    }
+    dgml += `</Nodes>\n`
+    dgml += `<Links>\n`
+    for (const addr of Object.keys(objects)) {
+        const obj = objects[addr];
+        for (const fieldaddr of Object.keys(obj.fields)) {
+            const field = obj.fields[fieldaddr];
+            dgml += `<Link Source="${addr}" Target="${field}" Label="${fieldaddr}" />\n`
+        }
+    }
+    dgml += `</Links>\n`
+    dgml += `<Properties>
+    <Property Id="Size" Label="Size" DataType="System.Int32" />
+</Properties>\n`
+    dgml += `</DirectedGraph>`;
+    fs.writeFileSync("dump.dgml", dgml, { encoding: "utf8" });
+    console.log(`written dump.dgml`);
+
     function mark(src: HeapRef, r: HeapRef) {
         if (typeof r == "string" && U.startsWith(r, "0x2")) {
             let o = objects[r]
