@@ -355,6 +355,7 @@ namespace pxsim.instructions {
         };
         let boardHost = new visuals.BoardHost(pxsim.visuals.mkBoardView({
             visual: opts.boardDef.visual,
+            boardDef: opts.boardDef,
             wireframe: opts.wireframe
         }), opts);
         let view = boardHost.getView();
