@@ -2159,7 +2159,7 @@ namespace pxt.blocks {
                 let nameField = new pxtblockly.FieldProcedure('');
                 nameField.setSourceBlock(this);
                 this.appendDummyInput('TOPROW')
-                    .appendField(proceduresCallDef.block['PROCEDURES_CALLNORETURN_TITLE'])
+                    .appendField(proceduresCallDef.block['PROCEDURES_CALLNORETURN_TITLE']) // TODO GUJEN move this to a blockly message
                     .appendField(nameField, 'NAME');
                 this.setPreviousStatement(true);
                 this.setNextStatement(true);
@@ -2335,41 +2335,41 @@ namespace pxt.blocks {
                 workspace.centerOnBlock(newBlock.id);
             }
 
-            workspace.registerButtonCallback('CREATE_FUNCTION', function (button) {
-                let promptAndCheckWithAlert = (defaultName: string) => {
-                    Blockly.prompt(newFunctionTitle, defaultName, function (newFunc) {
-                        // Merge runs of whitespace.  Strip leading and trailing whitespace.
-                        // Beyond this, all names are legal.
-                        if (newFunc) {
-                            newFunc = newFunc.replace(/[\s\xa0]+/g, ' ').replace(/^ | $/g, '');
-                            if (newFunc == newFunction) {
-                                // Ok, not ALL names are legal...
-                                newFunc = null;
-                            }
-                        }
-                        if (newFunc) {
-                            if (workspace.getVariable(newFunc)) {
-                                Blockly.alert((Blockly as any).Msg.VARIABLE_ALREADY_EXISTS.replace('%1',
-                                    newFunc.toLowerCase()),
-                                    function () {
-                                        promptAndCheckWithAlert(newFunc);  // Recurse
-                                    });
-                            }
-                            else if (!Blockly.Procedures.isLegalName_(newFunc, workspace)) {
-                                Blockly.alert((Blockly as any).Msg.PROCEDURE_ALREADY_EXISTS.replace('%1',
-                                    newFunc.toLowerCase()),
-                                    function () {
-                                        promptAndCheckWithAlert(newFunc);  // Recurse
-                                    });
-                            }
-                            else {
-                                createFunction(newFunc);
-                            }
-                        }
-                    });
-                };
-                promptAndCheckWithAlert('doSomething');
-            });
+            // workspace.registerButtonCallback('CREATE_FUNCTION', function (button) {
+            //     let promptAndCheckWithAlert = (defaultName: string) => {
+            //         Blockly.prompt(newFunctionTitle, defaultName, function (newFunc) {
+            //             // Merge runs of whitespace.  Strip leading and trailing whitespace.
+            //             // Beyond this, all names are legal.
+            //             if (newFunc) {
+            //                 newFunc = newFunc.replace(/[\s\xa0]+/g, ' ').replace(/^ | $/g, '');
+            //                 if (newFunc == newFunction) {
+            //                     // Ok, not ALL names are legal...
+            //                     newFunc = null;
+            //                 }
+            //             }
+            //             if (newFunc) {
+            //                 if (workspace.getVariable(newFunc)) {
+            //                     Blockly.alert((Blockly as any).Msg.VARIABLE_ALREADY_EXISTS.replace('%1',
+            //                         newFunc.toLowerCase()),
+            //                         function () {
+            //                             promptAndCheckWithAlert(newFunc);  // Recurse
+            //                         });
+            //                 }
+            //                 else if (!Blockly.Procedures.isLegalName_(newFunc, workspace)) {
+            //                     Blockly.alert((Blockly as any).Msg.PROCEDURE_ALREADY_EXISTS.replace('%1',
+            //                         newFunc.toLowerCase()),
+            //                         function () {
+            //                             promptAndCheckWithAlert(newFunc);  // Recurse
+            //                         });
+            //                 }
+            //                 else {
+            //                     createFunction(newFunc);
+            //                 }
+            //             }
+            //         });
+            //     };
+            //     promptAndCheckWithAlert('doSomething');
+            // });
             xmlList.push(button as HTMLElement);
 
             function populateProcedures(procedureList: any, templateName: any) {
