@@ -81,7 +81,7 @@ namespace pxt.Cloud {
         })
     }
 
-    // 1h check on markdown content
+    // 1h check on markdown content if not on development server
     const MARKDOWN_EXPIRATION = pxt.BrowserUtils.isLocalHostDev() ? 1 : 1 * 60 * 60 * 1000;
     export function markdownAsync(docid: string, locale?: string, live?: boolean): Promise<string> {
         const branch = "";
