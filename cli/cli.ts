@@ -3631,9 +3631,23 @@ function dumpheapAsync(c: commandParser.ParsedCommand) {
 }
 
 function buildDalDTSAsync() {
-    ensurePkgDir()
-    return mainPkg.loadAsync()
-        .then(() => build.buildDalConst(build.thisBuild, mainPkg, true, true))
+    if (fs.existsSync("pxtarget.json")) {
+        pxt.log(`generating dal.d.ts for packages`)
+        return forEachBundledPkgAsync((f, dir) => {
+            return f.loadAsync()
+                .then(() => {
+                    if (f.config.dalDTS && f.config.dalDTS.corePackage) {
+                        console.log(`  ${dir}`)
+                        return build.buildDalConst(build.thisBuild, f, true, true);
+                    }
+                    return Promise.resolve();
+                })
+        })
+    } else {
+        ensurePkgDir()
+        return mainPkg.loadAsync()
+            .then(() => build.buildDalConst(build.thisBuild, mainPkg, true, true))
+    }
 }
 
 function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult> {
@@ -5239,9 +5253,9 @@ function blockTestsAsync(parsed?: commandParser.ParsedCommand) {
                         .then((configText: string) => {
                             packageName = (JSON.parse(configText) as pxt.PackageConfig).name;
                             return readDirAsync(dirPath)
-                            .then(files => Promise.map(files.filter(f => U.endsWith(f, ".blocks") && f != "main.blocks"), fn =>
-                                readFileAsync(path.join(dirPath, fn), "utf8")
-                                .then((contents: string) => testFiles.push({ testName: fn, contents}))))
+                                .then(files => Promise.map(files.filter(f => U.endsWith(f, ".blocks") && f != "main.blocks"), fn =>
+                                    readFileAsync(path.join(dirPath, fn), "utf8")
+                                        .then((contents: string) => testFiles.push({ testName: fn, contents }))))
                         })
                         .then(() => { return ({ packageName, testFiles } as BlockTestCase) })
                 }

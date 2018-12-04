@@ -371,11 +371,12 @@ function updateCodalBuildAsync() {
 // TODO: DAL specific code should be lifted out
 export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage, rebuild = false,
     create = false) {
-    let constName = "dal.d.ts"
-    const config = mainPkg.config;
-    const corePackage = config.dalDTS && config.dalDTS.corePackage;
+    const constName = "dal.d.ts";
+    let constPath = constName;
+    const config = mainPkg && mainPkg.config;
+    const corePackage = config && config.dalDTS && config.dalDTS.corePackage;
     if (corePackage)
-        constName = path.join(corePackage, constName);
+        constPath = path.join(corePackage, constName);
     let vals: Map<string> = {}
     let done: Map<string> = {}
     let excludeSyms: string[] = []
@@ -465,7 +466,7 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
 
     if (mainPkg && (create ||
         (mainPkg.getFiles().indexOf(constName) >= 0 && (rebuild || !fs.existsSync(constName))))) {
-        pxt.log(`rebuilding ${constName}...`)
+        pxt.log(`rebuilding ${constName} into ${constPath}...`)
         let files: string[] = []
         let foundConfig = false
 
@@ -525,7 +526,7 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
             }
         }
         consts += "}\n"
-        fs.writeFileSync(constName, consts)
+        fs.writeFileSync(constPath, consts)
     }
 }
 
