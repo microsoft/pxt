@@ -55,7 +55,8 @@ declare namespace pxt {
         gistId?: string;
         extension?: PackageExtension; // describe the associated extension if any
         dalDTS?: {
-            includeDirs: string[];
+            corePackage?: string;
+            includeDirs?: string[];
             excludePrefix?: string[];
         };
         features?: string[];

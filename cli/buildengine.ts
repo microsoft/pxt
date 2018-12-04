@@ -372,6 +372,10 @@ function updateCodalBuildAsync() {
 export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage, rebuild = false,
     create = false) {
     let constName = "dal.d.ts"
+    const config = mainPkg.config;
+    const corePackage = config.dalDTS && config.dalDTS.corePackage;
+    if (corePackage)
+        constName = path.join(corePackage, constName);
     let vals: Map<string> = {}
     let done: Map<string> = {}
     let excludeSyms: string[] = []
@@ -394,10 +398,6 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
         let pp = parseCppInt(s)
         if (pp != null) return pp
         return null
-    }
-
-    function isValidInt(v: string) {
-        return /^-?(\d+|0[xX][0-9a-fA-F]+)$/.test(v)
     }
 
     function extractConstants(fileName: string, src: string, dogenerate = false): string {
@@ -471,14 +471,15 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
 
         for (let d of mainPkg.sortedDeps()) {
             if (d.config.dalDTS) {
-                for (let dn of d.config.dalDTS.includeDirs) {
-                    dn = buildEngine.buildPath + "/" + dn
-                    if (U.endsWith(dn, ".h")) files.push(dn)
-                    else {
-                        let here = nodeutil.allFiles(dn, 20).filter(fn => U.endsWith(fn, ".h"))
-                        U.pushRange(files, here)
+                if (d.config.dalDTS.includeDirs)
+                    for (let dn of d.config.dalDTS.includeDirs) {
+                        dn = buildEngine.buildPath + "/" + dn
+                        if (U.endsWith(dn, ".h")) files.push(dn)
+                        else {
+                            let here = nodeutil.allFiles(dn, 20).filter(fn => U.endsWith(fn, ".h"))
+                            U.pushRange(files, here)
+                        }
                     }
-                }
                 excludeSyms = d.config.dalDTS.excludePrefix || excludeSyms
                 foundConfig = true
             }
