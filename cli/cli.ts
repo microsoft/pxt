@@ -5679,7 +5679,8 @@ function initCommands() {
     p.defineCommand({
         name: "builddaldts",
         help: "build dal.d.ts in current directory (might be generated in a separate folder)",
-        advanced: true
+        advanced: true,
+        aliases: ["daldts"]
     }, buildDalDTSAsync);
 
     p.defineCommand({
