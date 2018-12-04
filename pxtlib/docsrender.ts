@@ -475,7 +475,7 @@ namespace pxt.docs {
         setupRenderer(renderer);
         const linkRenderer = renderer.link;
         renderer.link = function (href: string, title: string, text: string) {
-            const relative = href.indexOf('/') == 0;
+            const relative = href.charAt(0) === '/' || href.charAt(0) === '#';
             const target = !relative ? '_blank' : '';
             if (relative && d.versionPath) href = `/${d.versionPath}${href}`;
             const html = linkRenderer.call(renderer, href, title, text);
