@@ -187,7 +187,19 @@ export async function dumpheapAsync() {
     let m = /\.bss\.heap\s+0x000000[a-f0-9]+\s+0x([a-f0-9]+)/.exec(getMap())
     let heapSz = 8
     let heapNum = parseInt(m[1], 16) / heapSz
+    let vtablePtrs: pxt.Map<string> = {}
+
+    getMap().replace(/0x0000000([0-9a-f]+)\s+vtable for (.*)/g, (f, a, cl) => {
+        let n = parseInt(a, 16)
+        vtablePtrs[hex(n)] = cl
+        vtablePtrs[hex(n + 4)] = cl
+        vtablePtrs[hex(n + 8)] = cl
+        vtablePtrs[hex(n + 16)] = cl
+        vtablePtrs[hex(n + 20)] = cl
+        return ""
+    })
     console.log(`heaps at ${hex(heapDesc)}, num=${heapNum}`)
+    let cnts: pxt.Map<number> = {}
     for (let i = 0; i < heapNum; ++i) {
         let heapStart = read32(heapDesc + i * heapSz)
         let heapEnd = read32(heapDesc + i * heapSz + 4)
@@ -197,27 +209,16 @@ export async function dumpheapAsync() {
 
         let totalFreeBlock = 0
         let totalUsedBlock = 0
-        let prevFree = true
-        let prevSize = 0
-        let prevCnt = 0
-        const flush = () => {
-            if (!prevCnt) return
-            console.log(`[${prevFree ? "F" : "U"}${prevCnt == 1 ? "" : "*"}:${prevSize * 4}]`)
-            prevCnt = 0
-            prevSize = 0
-            prevFree = null
-        }
         while (block < heapEnd) {
             let bp = read32(block)
             let blockSize = bp & 0x7fffffff;
             let isFree = (bp & 0x80000000) != 0
-            if (isFree !== prevFree || blockSize > 20)
-                flush()
-            prevFree = isFree
-            prevSize += blockSize
-            prevCnt++
-            if (blockSize > 20)
-                flush()
+
+            let hx = hex(read32(block + 4))
+            let mark = `[${isFree ? "F" : "U"}:${blockSize * 4} / ${hx} / ${vtablePtrs[hx]}]`
+            if (!cnts[mark])
+                cnts[mark] = 0
+            cnts[mark] += blockSize * 4
 
             if (isFree)
                 totalFreeBlock += blockSize;
@@ -226,8 +227,15 @@ export async function dumpheapAsync() {
 
             block += blockSize * 4;
         }
-        flush()
         console.log(`free: ${totalFreeBlock * 4}`)
+    }
+
+    {
+        let keys = Object.keys(cnts)
+        keys.sort((a, b) => cnts[b] - cnts[a])
+        for (let k of keys) {
+            console.log(`${cnts[k]}\t${k}`)
+        }
     }
 
     let uf2 = pxtc.UF2.parseFile(new Uint8Array(fs.readFileSync("built/binary.uf2")))
@@ -294,6 +302,9 @@ export async function dumpheapAsync() {
             if (vtable & 2) {
                 category = "free"
                 numbytes = (vtable >> 2) << 2
+            } else if (vtable & 0x80000000) {
+                numbytes = ((vtable << 1) >>> 3) << 2
+                category = "arraybuffer sz=" + (numbytes >> 2)
             } else {
                 vtable &= ~3
                 let vt0 = read32(vtable)
@@ -336,10 +347,10 @@ export async function dumpheapAsync() {
                         break
                     case pxt.BuiltInType.RefCollection:
                         len = read32(objPtr + 8)
-                        addWords = len >>> 16
-                        category = "array sz=" + addWords
+                        category = "array sz=" + (len >>> 16)
                         len &= 0xffff
                         fields["length"] = len
+                        fields[".data"] = hex(word0 - 4)
                         for (let i = 0; i < len; ++i) {
                             fields["" + i] = readRef(word0 + i * 4)
                         }
@@ -350,12 +361,12 @@ export async function dumpheapAsync() {
                         break
                     case pxt.BuiltInType.RefMap:
                         len = read32(objPtr + 8)
-                        addWords = len >>> 16
-                        category = "refmap sz=" + addWords
-                        addWords <<= 1
+                        category = "refmap sz=" + (len >>> 16)
                         len &= 0xffff
-                        fields["length"] = len
                         tmp = read32(objPtr + 12)
+                        fields["length"] = len
+                        fields[".keys"] = hex(word0 - 4)
+                        fields[".values"] = hex(tmp - 4)
                         for (let i = 0; i < len; ++i) {
                             fields["k" + i] = readRef(word0 + i * 4)
                             fields["v" + i] = readRef(tmp + i * 4)
