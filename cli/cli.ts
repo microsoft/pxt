@@ -3630,7 +3630,20 @@ function dumpheapAsync(c: commandParser.ParsedCommand) {
         .then(() => gdb.dumpheapAsync())
 }
 
-function buildDalDTSAsync() {
+function buildDalDTSAsync(c: commandParser.ParsedCommand) {
+    forceLocalBuild = true;
+    forceCloudBuild = false;
+    const clean = !!c.flags["clean"];
+
+    function prepAsync() {
+        let p = Promise.resolve();
+        if (clean)
+            return p.then(() => cleanAsync())
+                .then(() => buildCoreAsync({ mode: BuildOption.JustBuild }))
+                .then(() => { });
+        return Promise.resolve();
+    }
+
     if (fs.existsSync("pxtarget.json")) {
         pxt.log(`generating dal.d.ts for packages`)
         return forEachBundledPkgAsync((f, dir) => {
@@ -3638,14 +3651,16 @@ function buildDalDTSAsync() {
                 .then(() => {
                     if (f.config.dalDTS && f.config.dalDTS.corePackage) {
                         console.log(`  ${dir}`)
-                        return build.buildDalConst(build.thisBuild, f, true, true);
+                        return prepAsync()
+                            .then(() => build.buildDalConst(build.thisBuild, f, true, true));
                     }
                     return Promise.resolve();
                 })
         })
     } else {
         ensurePkgDir()
-        return mainPkg.loadAsync()
+        return prepAsync()
+            .then(() => mainPkg.loadAsync())
             .then(() => build.buildDalConst(build.thisBuild, mainPkg, true, true))
     }
 }
@@ -4007,7 +4022,7 @@ function internalStaticPkgAsync(builtPackaged: string, label: string, minify: bo
     }).then(() => renderDocs(builtPackaged, localDir))
 }
 
-export function cleanAsync(parsed: commandParser.ParsedCommand) {
+export function cleanAsync(parsed?: commandParser.ParsedCommand) {
     pxt.log('cleaning built folders')
     return rimrafAsync("built", {})
         .then(() => rimrafAsync("temp", {}))
@@ -5678,9 +5693,12 @@ function initCommands() {
 
     p.defineCommand({
         name: "builddaldts",
-        help: "build dal.d.ts in current directory (might be generated in a separate folder)",
+        help: "build dal.d.ts in current directory or target (might be generated in a separate folder)",
         advanced: true,
-        aliases: ["daldts"]
+        aliases: ["daldts"],
+        flags: {
+            clean: { description: "clean and build" }
+        }
     }, buildDalDTSAsync);
 
     p.defineCommand({
