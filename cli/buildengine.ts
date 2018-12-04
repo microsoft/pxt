@@ -371,7 +371,12 @@ function updateCodalBuildAsync() {
 // TODO: DAL specific code should be lifted out
 export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage, rebuild = false,
     create = false) {
-    let constName = "dal.d.ts"
+    const constName = "dal.d.ts";
+    let constPath = constName;
+    const config = mainPkg && mainPkg.config;
+    const corePackage = config && config.dalDTS && config.dalDTS.corePackage;
+    if (corePackage)
+        constPath = path.join(corePackage, constName);
     let vals: Map<string> = {}
     let done: Map<string> = {}
     let excludeSyms: string[] = []
@@ -394,10 +399,6 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
         let pp = parseCppInt(s)
         if (pp != null) return pp
         return null
-    }
-
-    function isValidInt(v: string) {
-        return /^-?(\d+|0[xX][0-9a-fA-F]+)$/.test(v)
     }
 
     function extractConstants(fileName: string, src: string, dogenerate = false): string {
@@ -465,20 +466,21 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
 
     if (mainPkg && (create ||
         (mainPkg.getFiles().indexOf(constName) >= 0 && (rebuild || !fs.existsSync(constName))))) {
-        pxt.log(`rebuilding ${constName}...`)
+        pxt.log(`rebuilding ${constName} into ${constPath}...`)
         let files: string[] = []
         let foundConfig = false
 
         for (let d of mainPkg.sortedDeps()) {
             if (d.config.dalDTS) {
-                for (let dn of d.config.dalDTS.includeDirs) {
-                    dn = buildEngine.buildPath + "/" + dn
-                    if (U.endsWith(dn, ".h")) files.push(dn)
-                    else {
-                        let here = nodeutil.allFiles(dn, 20).filter(fn => U.endsWith(fn, ".h"))
-                        U.pushRange(files, here)
+                if (d.config.dalDTS.includeDirs)
+                    for (let dn of d.config.dalDTS.includeDirs) {
+                        dn = buildEngine.buildPath + "/" + dn
+                        if (U.endsWith(dn, ".h")) files.push(dn)
+                        else {
+                            let here = nodeutil.allFiles(dn, 20).filter(fn => U.endsWith(fn, ".h"))
+                            U.pushRange(files, here)
+                        }
                     }
-                }
                 excludeSyms = d.config.dalDTS.excludePrefix || excludeSyms
                 foundConfig = true
             }
@@ -524,7 +526,7 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
             }
         }
         consts += "}\n"
-        fs.writeFileSync(constName, consts)
+        fs.writeFileSync(constPath, consts)
     }
 }
 
