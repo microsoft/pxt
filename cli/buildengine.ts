@@ -371,7 +371,12 @@ function updateCodalBuildAsync() {
 // TODO: DAL specific code should be lifted out
 export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage, rebuild = false,
     create = false) {
-    let constName = "dal.d.ts"
+    const constName = "dal.d.ts";
+    let constPath = constName;
+    const config = mainPkg && mainPkg.config;
+    const corePackage = config && config.dalDTS && config.dalDTS.corePackage;
+    if (corePackage)
+        constPath = path.join(corePackage, constName);
     let vals: Map<string> = {}
     let done: Map<string> = {}
     let excludeSyms: string[] = []
@@ -396,10 +401,6 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
         return null
     }
 
-    function isValidInt(v: string) {
-        return /^-?(\d+|0[xX][0-9a-fA-F]+)$/.test(v)
-    }
-
     function extractConstants(fileName: string, src: string, dogenerate = false): string {
         let lineNo = 0
         // let err = (s: string) => U.userError(`${fileName}(${lineNo}): ${s}\n`)
@@ -422,7 +423,7 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
                 } else {
                     vals[n] = "?"
                     // TODO: DAL-specific code
-                    if (dogenerate && !/^MICROBIT_DISPLAY_(ROW|COLUMN)_COUNT$/.test(n))
+                    if (dogenerate && !/^MICROBIT_DISPLAY_(ROW|COLUMN)_COUNT|PXT_VTABLE_SHIFT$/.test(n))
                         pxt.log(`${fileName}(${lineNo}): #define conflict, ${n}`)
                 }
             }
@@ -465,20 +466,21 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
 
     if (mainPkg && (create ||
         (mainPkg.getFiles().indexOf(constName) >= 0 && (rebuild || !fs.existsSync(constName))))) {
-        pxt.log(`rebuilding ${constName}...`)
+        pxt.log(`rebuilding ${constName} into ${constPath}...`)
         let files: string[] = []
         let foundConfig = false
 
         for (let d of mainPkg.sortedDeps()) {
             if (d.config.dalDTS) {
-                for (let dn of d.config.dalDTS.includeDirs) {
-                    dn = buildEngine.buildPath + "/" + dn
-                    if (U.endsWith(dn, ".h")) files.push(dn)
-                    else {
-                        let here = nodeutil.allFiles(dn, 20).filter(fn => U.endsWith(fn, ".h"))
-                        U.pushRange(files, here)
+                if (d.config.dalDTS.includeDirs)
+                    for (let dn of d.config.dalDTS.includeDirs) {
+                        dn = buildEngine.buildPath + "/" + dn
+                        if (U.endsWith(dn, ".h")) files.push(dn)
+                        else {
+                            let here = nodeutil.allFiles(dn, 20).filter(fn => U.endsWith(fn, ".h"))
+                            U.pushRange(files, here)
+                        }
                     }
-                }
                 excludeSyms = d.config.dalDTS.excludePrefix || excludeSyms
                 foundConfig = true
             }
@@ -519,12 +521,12 @@ export function buildDalConst(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
         for (let fn of files) {
             let v = extractConstants(fn, fc[fn], true)
             if (v) {
-                consts += "    // " + fn.replace(/\\/g, "/") + "\n"
+                consts += "    // " + fn.replace(/\\/g, "/").replace(buildEngine.buildPath, "") + "\n"
                 consts += v
             }
         }
         consts += "}\n"
-        fs.writeFileSync(constName, consts)
+        fs.writeFileSync(constPath, consts)
     }
 }
 

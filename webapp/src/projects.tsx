@@ -5,7 +5,6 @@ import * as ReactDOM from "react-dom";
 import * as data from "./data";
 import * as sui from "./sui";
 import * as core from "./core";
-import * as compiler from "./compiler";
 
 import * as codecard from "./codecard"
 import * as carousel from "./carousel";
@@ -35,6 +34,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         this.chgGallery = this.chgGallery.bind(this);
         this.chgCode = this.chgCode.bind(this);
         this.importProject = this.importProject.bind(this);
+        this.showScriptManager = this.showScriptManager.bind(this);
         this.cloudSignIn = this.cloudSignIn.bind(this);
         this.setSelected = this.setSelected.bind(this);
     }
@@ -137,6 +137,11 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         this.props.parent.importProjectDialog();
     }
 
+    showScriptManager() {
+        pxt.tickEvent("projects.showall.header", undefined, { interactiveConsent: true });
+        this.props.parent.showScriptManager();
+    }
+
     cloudSignIn() {
         pxt.tickEvent("projects.signin", undefined, { interactiveConsent: true });
         showCloudSignInDialog();
@@ -179,15 +184,18 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 <div className="ui segment getting-started-segment" style={{ backgroundImage: `url(${encodeURI(targetTheme.homeScreenHero)})` }} /> : undefined}
             <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment mystuff-segment">
                 <div className="ui grid equal width padded heading">
-                    <div className="column">
-                        <h2 className="ui header">{lf("My Projects")} </h2>
+                    <div className="column" style={{ zIndex: 1 }}>
+                        {targetTheme.scriptManager ? <h2 role="button" className="ui header myproject-header" title={lf("See all projects")} tabIndex={0}
+                            onClick={this.showScriptManager} onKeyDown={sui.fireClickOnEnter}>
+                            {lf("My Projects")}
+                            <span className="ui grid-dialog-btn">
+                                <sui.Icon icon="angle right" />
+                            </span>
+                        </h2> : <h2 className="ui header">{lf("My Projects")}</h2>}
                     </div>
-                    <div className="column right aligned">
+                    <div className="column right aligned" style={{ zIndex: 1 }}>
                         {pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing) ?
-                            <sui.Button key="import" icon="upload" className="mini import-dialog-btn" textClass="landscape only" text={lf("Import")} title={lf("Import a project")} onClick={this.importProject} /> : undefined}
-                        {signIn ?
-                            <sui.Button key="signin" icon={signInIcon} className="mini import-dialog-btn" textClass="landscape only" text={signIn} title={lf("Sign in to sync your projects")} onClick={this.cloudSignIn} />
-                            : undefined}
+                            <sui.Button key="import" icon="upload" className="import-dialog-btn" textClass="landscape only" text={lf("Import")} title={lf("Import a project")} onClick={this.importProject} /> : undefined}
                     </div>
                 </div>
                 <div className="content">
@@ -279,7 +287,9 @@ interface ProjectsCarouselState {
 export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, ProjectsCarouselState> {
     private prevGalleries: pxt.CodeCard[] = [];
     private hasFetchErrors = false;
-    private latestProject: codecard.CodeCardView
+    private latestProject: codecard.CodeCardView;
+
+    private static NUM_PROJECTS_HOMESCREEN = 10;
 
     constructor(props: ProjectsCarouselProps) {
         super(props)
@@ -290,6 +300,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         this.closeDetailOnEscape = this.closeDetailOnEscape.bind(this);
         this.reload = this.reload.bind(this);
         this.newProject = this.newProject.bind(this);
+        this.showScriptManager = this.showScriptManager.bind(this);
         this.handleCardClick = this.handleCardClick.bind(this);
     }
 
@@ -321,6 +332,11 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
     newProject() {
         pxt.tickEvent("projects.new", undefined, { interactiveConsent: true });
         this.props.parent.newProject();
+    }
+
+    showScriptManager() {
+        pxt.tickEvent("projects.showscriptmanager", undefined, { interactiveConsent: true });
+        this.props.parent.showScriptManager();
     }
 
     closeDetail() {
@@ -358,7 +374,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         this.setState({})
     }
 
-    handleCardClick(scr: any, index?: number) {
+    handleCardClick(e: any, scr: any, index?: number) {
         const { name } = this.props;
         if (this.props.setSelected) {
             // Set this item as selected
@@ -371,6 +387,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
 
     renderCore() {
         const { name, path, selectedIndex } = this.props;
+        const targetTheme = pxt.appTarget.appTheme;
 
         if (path) {
             // Fetch the gallery
@@ -427,18 +444,19 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                 </div>
             }
         } else {
-            const headers = this.fetchLocalData();
+            const headers = this.fetchLocalData()
             const showNewProject = pxt.appTarget.appTheme && !pxt.appTarget.appTheme.hideNewProjectButton;
+            const showScriptManagerCard = targetTheme.scriptManager && headers.length > ProjectsCarousel.NUM_PROJECTS_HOMESCREEN;
             const bundledcoresvgs = pxt.appTarget.bundledcoresvgs;
             return <carousel.Carousel bleedPercent={20}>
-                {showNewProject ? <div role="button" className="ui card link newprojectcard" title={lf("Creates a new empty project")}
+                {showNewProject ? <div role="button" className="ui card link buttoncard newprojectcard" title={lf("Creates a new empty project")}
                     onClick={this.newProject} onKeyDown={sui.fireClickOnEnter} >
                     <div className="content">
                         <sui.Icon icon="huge add circle" />
                         <span className="header">{lf("New Project")}</span>
                     </div>
                 </div> : undefined}
-                {headers.map((scr, index) => {
+                {headers.slice(0, ProjectsCarousel.NUM_PROJECTS_HOMESCREEN).map((scr, index) => {
                     const boardsvg = scr.board && bundledcoresvgs && bundledcoresvgs[scr.board];
                     return <ProjectsCodeCard
                         key={'local' + scr.id + scr.recentUse}
@@ -449,10 +467,17 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                         name={scr.name}
                         time={scr.recentUse}
                         url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}
-                        scr={scr}
+                        scr={scr} index={index}
                         onCardClick={this.handleCardClick}
                     />;
                 })}
+                {showScriptManagerCard ? <div role="button" className="ui card link buttoncard scriptmanagercard" title={lf("See all projects")}
+                    onClick={this.showScriptManager} onKeyDown={sui.fireClickOnEnter} >
+                    <div className="content">
+                        <sui.Icon icon="huge right angle" />
+                        <span className="header">{lf("See all projects")}</span>
+                    </div>
+                </div> : undefined}
             </carousel.Carousel>
         }
     }
@@ -461,24 +486,31 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
 interface ProjectsCodeCardProps extends pxt.CodeCard {
     scr: any;
     index?: number;
-    onCardClick: (scr: any, index?: number) => void;
+    onCardClick: (e: any, scr: any, index?: number) => void;
+    onLabelClick?: (e: any, scr: any, index?: number) => void;
 }
 
-class ProjectsCodeCard extends sui.StatelessUIElement<ProjectsCodeCardProps> {
+export class ProjectsCodeCard extends sui.StatelessUIElement<ProjectsCodeCardProps> {
 
     constructor(props: ProjectsCodeCardProps) {
         super(props);
 
         this.handleClick = this.handleClick.bind(this);
+        this.handleLabelClick = this.handleLabelClick.bind(this);
     }
 
-    handleClick() {
-        this.props.onCardClick(this.props.scr, this.props.index);
+    handleClick(e: any) {
+        this.props.onCardClick(e, this.props.scr, this.props.index);
+    }
+
+    handleLabelClick(e: any) {
+        this.props.onLabelClick(e, this.props.scr, this.props.index);
     }
 
     renderCore() {
-        const { scr, onCardClick, onClick, ...rest } = this.props;
-        return <codecard.CodeCardView {...rest} onClick={this.handleClick} />
+        const { scr, onCardClick, onLabelClick, onClick, ...rest } = this.props;
+        return <codecard.CodeCardView {...rest} onClick={this.handleClick}
+            onLabelClicked={onLabelClick ? this.handleLabelClick : undefined} />
     }
 }
 
@@ -667,7 +699,7 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
                             icon="cloud download"
                             iconColor="secondary"
                             name={lf("Import URL...")}
-                            description={lf("Open a shared project URL or GithHub repo")}
+                            description={lf("Open a shared project URL or GitHub repo")}
                             onClick={this.importUrl}
                         /> : undefined}
 
@@ -693,7 +725,6 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
         )
     }
 }
-
 
 export interface ExitAndSaveDialogState {
     visible?: boolean;

@@ -64,9 +64,12 @@ namespace pxsim {
         runtimeid?: string;
         state: string;
     }
-
-    export interface SimulatorEventBusMessage extends SimulatorMessage {
+    export interface SimulatorBroadcastMessage extends SimulatorMessage {
+        broadcast: boolean;
+    }
+    export interface SimulatorEventBusMessage extends SimulatorBroadcastMessage {
         type: "eventbus";
+        broadcast: true;
         id: number;
         eventid: number;
         value?: number;
@@ -95,24 +98,25 @@ namespace pxsim {
         displayOnceId?: string; // An id for the modal command, if the sim wants the modal to be displayed only once in the session
         modalContext?: string; // Modal context of where to show the modal
     }
-    export interface SimulatorRadioPacketMessage extends SimulatorMessage {
+    export interface SimulatorRadioPacketMessage extends SimulatorBroadcastMessage {
         type: "radiopacket";
+        broadcast: true;
         rssi: number;
         serial: number;
         time: number;
 
         payload: SimulatorRadioPacketPayload;
     }
-    export interface SimulatorInfraredPacketMessage extends SimulatorMessage {
+    export interface SimulatorInfraredPacketMessage extends SimulatorBroadcastMessage {
         type: "irpacket";
+        broadcast: true;
         packet: Uint8Array; // base64 encoded
     }
-
-    export interface SimulatorBLEPacketMessage extends SimulatorMessage {
+    export interface SimulatorBLEPacketMessage extends SimulatorBroadcastMessage {
         type: "blepacket";
+        broadcast: true;
         packet: Uint8Array;
     }
-
     export interface SimulatorI2CMessage extends SimulatorMessage {
         type: "i2c";
         data: Uint8Array;

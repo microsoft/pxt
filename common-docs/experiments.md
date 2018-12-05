@@ -4,7 +4,7 @@ Experiments are new features that may become part of the editor in the future or
 
 ## Enable Experiments
 
-You can see which experiments are available by going to the **Settings** menu and clicking on **About...**. In the **About** dialog, press the **Experiments** button. A selection of available experiments is displayed and you can enable them by clicking on them. If you click on one, the label for the experiment will change from **Disabled** to **Enabled**. The experimental feature is then ready for you to use. When you go back to the editor, a message at the top will appear briefly telling you that experments are enabled. Later, you can go back to the experiments selection and click again on the ones you want to set back to disabled.
+You can see which experiments are available by going to the **Settings** menu and clicking on **About...**. In the **About** dialog, press the **Experiments** button. A selection of available experiments is displayed and you can enable them by clicking on them. If you click on one, the label for the experiment will change from **Disabled** to **Enabled**. The experimental feature is then ready for you to use. When you go back to the editor, a message at the top will appear briefly telling you that experiments are enabled. Later, you can go back to the experiments selection and click again on the ones you want to set back to disabled.
 
 ## Using an Experimental Feature
 

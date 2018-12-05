@@ -1,5 +1,12 @@
 # Microsoft MakeCode Blog
 
+## [MakeCode for Minecraft update](/blog/minecraft/11-07-2018)
+ 
+November 7th, 2018 by [Jaqster](https://github.com/jaqster)
+
+Another month, another release! The MakeCode team is very excited to release this update to the coding experience for Minecraft.
+**[Continue reading this blog post](/blog/minecraft/11-07-2018)**
+
 ## [MakeCode tutorials for CS Ed week 2018 and beyond](/blog/csed-week/csed-week-2018)
  
 October 23th, 2018 by [Jaqster](https://github.com/jaqster)

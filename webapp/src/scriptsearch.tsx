@@ -10,6 +10,7 @@ import * as codecard from "./codecard";
 import * as electron from "./electron";
 import * as workspace from "./workspace";
 import * as dialogs from "./dialogs";
+import { SearchInput } from "./components/searchInput";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -28,6 +29,7 @@ interface ScriptSearchState {
     mode?: ScriptSearchMode;
     experimentsState?: string;
     features?: string[];
+    closeIcon?: boolean;
     resolve?: () => void;
 }
 
@@ -37,11 +39,11 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         this.state = {
             searchFor: '',
             visible: false,
-            mode: ScriptSearchMode.Extensions
+            mode: ScriptSearchMode.Extensions,
+            closeIcon: true
         }
 
         this.hide = this.hide.bind(this);
-        this.handleSearchKeyUpdate = this.handleSearchKeyUpdate.bind(this);
         this.handleSearch = this.handleSearch.bind(this);
         this.addUrl = this.addUrl.bind(this);
         this.addBundle = this.addBundle.bind(this);
@@ -71,17 +73,19 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             visible: true,
             searchFor: '',
             mode: ScriptSearchMode.Extensions,
+            closeIcon: true,
             features: undefined,
             resolve: undefined
         })
     }
 
-    showBoardsAsync(features?: string[]): Promise<void> {
+    showBoardsAsync(features?: string[], closeIcon?: boolean): Promise<void> {
         return new Promise((resolve, reject) => {
             this.setState({
                 visible: true,
                 searchFor: '',
                 mode: ScriptSearchMode.Boards,
+                closeIcon: !!closeIcon,
                 features,
                 resolve
             })
@@ -90,7 +94,9 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
 
     showExperiments() {
         this.setState({
-            visible: true, searchFor: '', mode: ScriptSearchMode.Experiments,
+            visible: true, searchFor: '',
+            mode: ScriptSearchMode.Experiments,
+            closeIcon: true,
             experimentsState: pxt.editor.experiments.state(),
             features: undefined,
             resolve: undefined
@@ -191,14 +197,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         }
     }
 
-    handleSearchKeyUpdate(ev: React.KeyboardEvent<HTMLElement>) {
-        if (ev.keyCode == 13) this.handleSearch();
-
-    }
-
-    handleSearch() {
-        let str = (ReactDOM.findDOMNode(this.refs["searchInput"]) as HTMLInputElement).value
-
+    handleSearch(str: string) {
         // Hidden navigation, used to test /beta or other versions inside released UWP apps
         // Secret prefix is /@, e.g.: /@beta
         const urlPathExec = /^\/@(.*)$/.exec(str);
@@ -336,15 +335,15 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
     }
 
     renderCore() {
-        if (!this.state.visible) return <div></div>;
+        const { mode, closeIcon, visible, searchFor, experimentsState } = this.state;
 
-        const mode = this.state.mode;
+        if (!visible) return <div></div>;
         const bundles = this.fetchBundled();
         const ghdata = this.fetchGhData();
         const urldata = this.fetchUrlData();
         const local = this.fetchLocal();
         const experiments = this.fetchExperiments();
-        const isSearching = this.state.searchFor && (ghdata.status === data.FetchStatus.Pending || urldata.status === data.FetchStatus.Pending);
+        const isSearching = searchFor && (ghdata.status === data.FetchStatus.Pending || urldata.status === data.FetchStatus.Pending);
 
         const compareConfig = (a: pxt.PackageConfig, b: pxt.PackageConfig) => {
             // core first
@@ -367,7 +366,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
 
         bundles.sort(compareConfig)
         const isEmpty = () => {
-            if (!this.state.searchFor || isSearching) {
+            if (!searchFor || isSearching) {
                 return false;
             }
             return bundles.length + ghdata.data.length + urldata.data.length === 0;
@@ -384,12 +383,14 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                 : "/extensions";
 
         const experimentsChanged = mode == ScriptSearchMode.Experiments
-            && this.state.experimentsState != pxt.editor.experiments.state();
+            && experimentsState != pxt.editor.experiments.state();
+
         return (
-            <sui.Modal isOpen={this.state.visible} dimmer={true}
+            <sui.Modal isOpen={visible} dimmer={true}
                 className="searchdialog" size="fullscreen"
                 onClose={this.hide}
-                closeIcon={!this.state.resolve} header={headerText}
+                closeIcon={closeIcon}
+                header={headerText}
                 helpUrl={helpPath}
                 closeOnDimmerClick closeOnEscape
                 description={description}>
@@ -400,17 +401,11 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                             {lf("Try out these features and tell us what you think!")}
                         </div> : undefined}
                     {mode == ScriptSearchMode.Extensions ?
-                        <div className="ui search">
-                            <div className="ui fluid action input" role="search">
-                                <div aria-live="polite" className="accessible-hidden">{lf("{0} result matching '{1}'", bundles.length + ghdata.data.length + urldata.data.length, this.state.searchFor)}</div>
-                                <input autoFocus ref="searchInput" type="text" placeholder={lf("Search or enter project URL...")}
-                                    onKeyUp={this.handleSearchKeyUpdate} disabled={isSearching}
-                                    autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} />
-                                <button title={lf("Search")} disabled={isSearching} className="ui right icon button" onClick={this.handleSearch}>
-                                    <sui.Icon icon="search" />
-                                </button>
-                            </div>
-                        </div> : undefined}
+                        <SearchInput key="search"
+                            ariaMessage={lf("{0} result matching '{1}'", bundles.length + ghdata.data.length + urldata.data.length, searchFor)}
+                            placeholder={lf("Search or enter project URL...")}
+                            searchHandler={this.handleSearch} inputClassName="fluid" autoFocus={true}
+                            disabled={isSearching} /> : undefined}
                     {isSearching ?
                         <div className="ui medium active centered inline loader"></div>
                         :
@@ -500,7 +495,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                     {isEmpty() ?
                         <div className="ui items">
                             <div className="ui item">
-                                {lf("We couldn't find any extensions matching '{0}'", this.state.searchFor)}
+                                {lf("We couldn't find any extensions matching '{0}'", searchFor)}
                             </div>
                         </div>
                         : undefined}

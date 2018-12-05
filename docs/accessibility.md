@@ -1,6 +1,6 @@
 # Accessibility
 
-**Microsoft MakeCode** includes some core features which promote greater accessibilty for everyone. The menus, the JavaScript editor and the documentation are accessible with the keyboard, assistive technologies, and a high contrast color mode. These improve the visibility of the UI elements and the navigation between them. The block editor is not accessible yet, so, accessible coding is done using just the [JavaScript editor](#javascript-editor).
+**Microsoft MakeCode** includes some core features which promote greater accessibility for everyone. The menus, the JavaScript editor and the documentation are accessible with the keyboard, assistive technologies, and a high contrast color mode. These improve the visibility of the UI elements and the navigation between them. The block editor is not accessible yet, so, accessible coding is done using just the [JavaScript editor](#javascript-editor).
 
 Here are the accessible features and how to enable and use them.
 

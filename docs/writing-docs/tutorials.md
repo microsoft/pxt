@@ -142,7 +142,7 @@ Instructions for step 2 here...
 Instructions for step 3 here...
 ```
 
-The text in the heading is shown only when the turtorial is viewed as a help page. It's ok to have additional text in the heading. The word 'Step' can even be left out since the tutorial runner will build the list of steps only from the content under the heading tag, ``##``. These are valid headings:
+The text in the heading is shown only when the tutorial is viewed as a help page. It's ok to have additional text in the heading. The word 'Step' can even be left out since the tutorial runner will build the list of steps only from the content under the heading tag, ``##``. These are valid headings:
 
 ```markdown
 ### Step 3: Make a new variable

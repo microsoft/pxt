@@ -9,6 +9,7 @@ import * as compiler from "./compiler"
 import * as debug from "./debugger";
 import * as toolbox from "./toolbox";
 import * as snippets from "./blocksSnippets";
+import * as workspace from "./workspace";
 import { CreateFunctionDialog, CreateFunctionDialogState } from "./createFunction";
 
 import Util = pxt.Util;
@@ -139,11 +140,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
 
         this.typeScriptSaveable = false;
-        this.editor.clear();
+        pxt.blocks.clearWithoutEvents(this.editor);
         try {
             const text = s || `<block type="${ts.pxtc.ON_START_TYPE}"></block>`;
             const xml = Blockly.Xml.textToDom(text);
-            Blockly.Xml.domToWorkspace(xml, this.editor);
+            pxt.blocks.domToWorkspaceNoEvents(xml, this.editor);
 
             this.initLayout();
             this.editor.clearUndo();
@@ -152,7 +153,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.typeScriptSaveable = true;
         } catch (e) {
             pxt.log(e);
-            this.editor.clear();
+            pxt.blocks.clearWithoutEvents(this.editor);
             this.switchToTypeScript();
             this.changeCallback();
             return false;
@@ -267,7 +268,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         Blockly.prompt = function (message, defaultValue, callback) {
             return core.promptAsync({
                 header: message,
-                defaultValue: defaultValue,
+                initialValue: defaultValue,
                 agreeLbl: lf("Ok"),
                 disagreeLbl: lf("Cancel"),
                 size: "tiny"
@@ -349,7 +350,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private markIncomplete = false;
     isIncomplete() {
-        const incomplete = this.editor ? this.editor.isDragging()
+        const incomplete = this.editor ?
+            ((this.editor as any).currentGesture_ != null && (this.editor as any).currentGesture_.isDraggingBlock_)
             || (Blockly as any).WidgetDiv.isVisible()
             || (Blockly as any).DropDownDiv.isVisible() : false;
         if (incomplete) this.markIncomplete = true;
@@ -381,6 +383,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (ev.xml.tagName == 'SHADOW')
                     this.cleanUpShadowBlocks();
                 this.parent.setState({ hideEditorFloats: false });
+                workspace.fireEvent({ type: 'create', editor: 'blocks', blockId } as pxt.editor.events.CreateEvent);
             }
             if (ev.type == 'ui') {
                 if (ev.element == 'category') {
@@ -427,11 +430,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         const blocklyToolboxDiv = this.getBlocklyToolboxDiv();
         if (!blocklyToolboxDiv) return;
-        this.parent.updateEditorLogo(blocklyToolboxDiv.offsetWidth);
+        if (this.parent.isBlocksActive()) this.parent.updateEditorLogo(blocklyToolboxDiv.offsetWidth);
 
         const blocklyOptions = this.getBlocklyOptions(this.showCategories);
-        let toolboxHeight = blocklyDiv.offsetHeight;
-        if (!(blocklyOptions as any).horizontalLayout) blocklyToolboxDiv.style.height = `${toolboxHeight}px`;
+        if (!(blocklyOptions as any).horizontalLayout) blocklyToolboxDiv.style.height = `100%`;
     }
 
     hasUndo() {
@@ -625,8 +627,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.typeScriptSaveable = false;
                 this.setDiagnostics(file)
                 this.delayLoadXml = file.content;
-                this.editor.clear();
-                this.editor.clearUndo();
+                pxt.blocks.clearWithoutEvents(this.editor);
                 this.closeFlyout();
 
                 if (this.currFile && this.currFile != file) {
@@ -1158,10 +1159,20 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.flyoutXmlList.push(headingLabel);
     }
 
-    protected showFlyoutGroupLabel(group: string, groupicon: string, labelLineWidth: string) {
+    protected showFlyoutGroupLabel(group: string, groupicon: string, labelLineWidth: string, helpCallback: string) {
         let groupLabel = pxt.blocks.createFlyoutGroupLabel(pxt.Util.rlf(`{id:group}${group}`),
-            groupicon, labelLineWidth);
+            groupicon, labelLineWidth, helpCallback ? `GROUP_HELP_${group}` : undefined);
+        if (helpCallback) {
+            this.editor.registerButtonCallback(`GROUP_HELP_${group}`, (/*btn*/) => {
+                this.helpButtonCallback(group);
+            })
+        }
         this.flyoutXmlList.push(groupLabel);
+    }
+
+    protected helpButtonCallback(group?: string) {
+        pxt.debug(`${group} help icon clicked.`);
+        workspace.fireEvent({ type: 'ui', editor: 'blocks', action: 'groupHelpClicked', data: { group } } as pxt.editor.events.UIEvent);
     }
 
     protected showFlyoutBlocks(ns: string, color: string, blocks: toolbox.BlockDefinition[]) {

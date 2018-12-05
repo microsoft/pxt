@@ -39,6 +39,7 @@ function testIter() {
 }
 
 function testAction(p: number): void {
+    msg("testActionStart")
     let s = "hello" + "1";
     let coll = [] as number[];
     let p2 = p * 2;
@@ -51,6 +52,7 @@ function testAction(p: number): void {
     assert(x == 42 + p * 6, "run2");
     assert(coll.length == 2, "run2");
     x = 0
+    msg("testActionDone")
 }
 
 function add7() {
@@ -95,7 +97,9 @@ function saveGlobalAction(): void {
 
 function testActionSave(): void {
     saveGlobalAction();
+    msg("saveAct")
     runTwice(action);
+    msg("saveActDONE")
     msg(tot);
     assert(tot == "foo42foo42", "");
     tot = "";

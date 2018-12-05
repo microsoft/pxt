@@ -17,4 +17,4 @@ These files contain the JavaScript source code, the attributes and positions of 
 
 ## Storage location and persistance
 
-The project files are actually stored as data in the browser's indexed data store. The project data is keyed from an identfier associated with the project and the [MakeCode](@homeurl@) web site URL. The data store doesn't keep the project data forever. It's subject to removal by a user when they decide to clear the browser's cache and temporary files. Rules for how browsers clear should their cache and data store are specified by [W3C Clear Site Data](https://www.w3.org/TR/clear-site-data/) policy.
+The project files are actually stored as data in the browser's indexed data store. The project data is keyed from an identifier associated with the project and the [MakeCode](@homeurl@) web site URL. The data store doesn't keep the project data forever. It's subject to removal by a user when they decide to clear the browser's cache and temporary files. Rules for how browsers clear should their cache and data store are specified by [W3C Clear Site Data](https://www.w3.org/TR/clear-site-data/) policy.

@@ -192,7 +192,7 @@ function passwordUpdateAsync(account: string, password: string): Promise<void> {
 const PXT_KEY = "pxt";
 const GITHUB_KEY = "github";
 const CROWDIN_KEY = "crowdin";
-const LOGIN_PROVIDERS = [PXT_KEY, GITHUB_KEY, CROWDIN_KEY];
+const LOGIN_PROVIDERS = [GITHUB_KEY, CROWDIN_KEY];
 export function loginAsync(parsed: commandParser.ParsedCommand): Promise<void> {
     const service = parsed.args[0] as string;
     const token = parsed.args[1] as string;
@@ -202,11 +202,14 @@ export function loginAsync(parsed: commandParser.ParsedCommand): Promise<void> {
         console.log(msg);
         console.log("USAGE:")
         console.log(`  pxt login <service> <token>`)
-        console.log(`where service can be github, crowdin or pxt; and <token> is obtained from`)
+        console.log(`where service can be github or crowdin; and <token> is obtained from`)
         console.log(`* github: go to https://github.com/settings/tokens/new .`);
         console.log(`* crowdin: go to https://crowdin.com/project/kindscript/settings#api.`);
-        console.log(`* pxt: go to ${root}oauth/gettoken.`)
         return fatal("Bad usage")
+    }
+
+    if (service === "pxt") {
+        return fatal("'pxt login pxt' is deprecated. Pass your token via the PXT_ACCESS_TOKEN environment variable instead")
     }
 
     if (!service || LOGIN_PROVIDERS.indexOf(service) < 0)
@@ -545,6 +548,7 @@ function travisAsync() {
         pxt.log("target build");
         return internalBuildTargetAsync()
             .then(() => internalCheckDocsAsync(true))
+            .then(() => blockTestsAsync())
             .then(() => npmPublishAsync())
             .then(() => {
                 if (!process.env["PXT_ACCESS_TOKEN"]) {
@@ -2141,7 +2145,7 @@ function buildFailed(msg: string, e: any) {
     console.log("")
 }
 
-function buildAndWatchTargetAsync(includeSourceMaps = false) {
+function buildAndWatchTargetAsync(includeSourceMaps: boolean, rebundle: boolean) {
     if (!(fs.existsSync(path.join("sim", "tsconfig.json")) || nodeutil.existsDirSync("sim/public"))) {
         console.log("No sim/tsconfig.json nor sim/public/; assuming npm installed package")
         return Promise.resolve()
@@ -2158,9 +2162,8 @@ function buildAndWatchTargetAsync(includeSourceMaps = false) {
 
     return buildAndWatchAsync(() => buildPxtAsync(includeSourceMaps)
         .then(buildCommonSimAsync, e => buildFailed("common sim build failed: " + e.message, e))
-        .then(() => internalBuildTargetAsync({ localDir: true }).then(r => { }, e => {
-            buildFailed("target build failed: " + e.message, e)
-        }))
+        .then(() => rebundle ? rebundleAsync() : internalBuildTargetAsync({ localDir: true }))
+        .catch(e => buildFailed("target build failed: " + e.message, e))
         .then(() => {
             let toWatch = [path.resolve("node_modules/pxt-core")].concat(dirsToWatch)
             if (hasCommonPackages) {
@@ -2246,7 +2249,6 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
     let justServe = false
     let packaged = false
     let includeSourceMaps = false;
-    let browser: string = parsed.flags["browser"] as string;
 
     if (parsed.flags["just"]) {
         justServe = true
@@ -2254,6 +2256,7 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
         justServe = true
         packaged = true
     }
+    const rebundle = !!parsed.flags["rebundle"];
     if (parsed.flags["noBrowser"]) {
         globalConfig.noAutoStart = true
     }
@@ -2282,7 +2285,7 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
             }
         }
     }
-    return (justServe ? Promise.resolve() : buildAndWatchTargetAsync(includeSourceMaps))
+    return (justServe ? Promise.resolve() : buildAndWatchTargetAsync(includeSourceMaps, rebundle))
         .then(() => server.serveAsync({
             autoStart: !globalConfig.noAutoStart,
             localToken,
@@ -3621,10 +3624,45 @@ function dumplogAsync(c: commandParser.ParsedCommand) {
         .then(() => gdb.dumplogAsync())
 }
 
-function buildDalDTSAsync() {
+function dumpheapAsync(c: commandParser.ParsedCommand) {
     ensurePkgDir()
     return mainPkg.loadAsync()
-        .then(() => build.buildDalConst(build.thisBuild, mainPkg, true, true))
+        .then(() => gdb.dumpheapAsync())
+}
+
+function buildDalDTSAsync(c: commandParser.ParsedCommand) {
+    forceLocalBuild = true;
+    forceCloudBuild = false;
+    const clean = !!c.flags["clean"];
+
+    function prepAsync() {
+        let p = Promise.resolve();
+        if (clean)
+            return p.then(() => cleanAsync())
+                .then(() => buildCoreAsync({ mode: BuildOption.JustBuild }))
+                .then(() => { });
+        return Promise.resolve();
+    }
+
+    if (fs.existsSync("pxtarget.json")) {
+        pxt.log(`generating dal.d.ts for packages`)
+        return forEachBundledPkgAsync((f, dir) => {
+            return f.loadAsync()
+                .then(() => {
+                    if (f.config.dalDTS && f.config.dalDTS.corePackage) {
+                        console.log(`  ${dir}`)
+                        return prepAsync()
+                            .then(() => build.buildDalConst(build.thisBuild, f, true, true));
+                    }
+                    return Promise.resolve();
+                })
+        })
+    } else {
+        ensurePkgDir()
+        return prepAsync()
+            .then(() => mainPkg.loadAsync())
+            .then(() => build.buildDalConst(build.thisBuild, mainPkg, true, true))
+    }
 }
 
 function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult> {
@@ -3984,7 +4022,7 @@ function internalStaticPkgAsync(builtPackaged: string, label: string, minify: bo
     }).then(() => renderDocs(builtPackaged, localDir))
 }
 
-export function cleanAsync(parsed: commandParser.ParsedCommand) {
+export function cleanAsync(parsed?: commandParser.ParsedCommand) {
     pxt.log('cleaning built folders')
     return rimrafAsync("built", {})
         .then(() => rimrafAsync("temp", {}))
@@ -5190,6 +5228,96 @@ function testGithubPackagesAsync(parsed: commandParser.ParsedCommand): Promise<v
         });
 }
 
+interface BlockTestCase {
+    packageName: string;
+    testFiles: { testName: string, contents: string }[];
+}
+
+function blockTestsAsync(parsed?: commandParser.ParsedCommand) {
+    const karma = karmaPath();
+    if (!karma) {
+        console.error("Karma not found, did you run npm install?");
+        return Promise.reject(new Error("Karma not found"));
+    }
+
+    let extraArgs: string[] = []
+
+    if (parsed && parsed.flags["debug"]) {
+        extraArgs.push("--no-single-run");
+    }
+
+    return writeBlockTestJSONAsync()
+        .then(() => nodeutil.spawnAsync({
+            cmd: karma,
+            envOverrides: {
+                "KARMA_TARGET_DIRECTORY": process.cwd()
+            },
+            args: ["start", path.resolve("node_modules/pxt-core/tests/blocks-test/karma.conf.js")].concat(extraArgs)
+        }), (e: Error) => console.log("Skipping blocks tests: " + e.message))
+
+    function getBlocksFilesAsync(libsDirectory: string): Promise<BlockTestCase[]> {
+        return readDirAsync(libsDirectory)
+            .then(dirs => Promise.map(dirs, dir => {
+                const dirPath = path.resolve(libsDirectory, dir, "blocks-test");
+                const configPath = path.resolve(libsDirectory, dir, "pxt.json");
+                let packageName: string;
+                let testFiles: { testName: string, contents: string }[] = [];
+
+                if (fs.existsSync(path.resolve(configPath)) && nodeutil.existsDirSync(dirPath)) {
+                    return readFileAsync(configPath, "utf8")
+                        .then((configText: string) => {
+                            packageName = (JSON.parse(configText) as pxt.PackageConfig).name;
+                            return readDirAsync(dirPath)
+                                .then(files => Promise.map(files.filter(f => U.endsWith(f, ".blocks") && f != "main.blocks"), fn =>
+                                    readFileAsync(path.join(dirPath, fn), "utf8")
+                                        .then((contents: string) => testFiles.push({ testName: fn, contents }))))
+                        })
+                        .then(() => { return ({ packageName, testFiles } as BlockTestCase) })
+                }
+                return Promise.resolve(undefined);
+            }))
+            .then((allCases: BlockTestCase[]) => allCases.filter(f => !!f && f.testFiles.length && f.packageName));
+    }
+
+    function writeBlockTestJSONAsync() {
+        let libsTests: BlockTestCase[];
+        let commonTests: BlockTestCase[];
+        return getBlocksFilesAsync(path.resolve("libs"))
+            .then(files => {
+                libsTests = files;
+                const commonLibs = path.resolve("node_modules/pxt-common-packages/libs");
+                if (nodeutil.existsDirSync(commonLibs))
+                    return getBlocksFilesAsync(commonLibs)
+                else {
+                    return Promise.resolve([]);
+                }
+            })
+            .then(files => {
+                commonTests = files;
+
+                if (!commonTests.length && !libsTests.length) return Promise.reject(new Error("No test cases found"));
+
+                return writeFileAsync(path.resolve("built/block-tests.js"), "var testJSON = " + JSON.stringify({
+                    libsTests, commonTests
+                }), "utf8")
+            })
+    }
+
+    function karmaPath() {
+        const karmaCommand = os.platform() === "win32" ? "karma.cmd" : "karma";
+        const localModule = path.resolve("node_modules", ".bin", karmaCommand);
+        const coreModule = path.resolve("node_modules", "pxt-core", "node_modules", ".bin", karmaCommand);
+
+        if (fs.existsSync(localModule)) {
+            return localModule;
+        }
+        else if (fs.existsSync(coreModule)) {
+            return coreModule;
+        }
+        return undefined;
+    }
+}
+
 function initCommands() {
     // Top level commands
     simpleCmd("help", "display this message or info about a command", pc => {
@@ -5357,6 +5485,7 @@ function initCommands() {
                 aliases: ["local", "l", "local-build", "lb"]
             },
             just: { description: "just serve without building" },
+            rebundle: { description: "rebundle when change is detected", aliases: ["rb"] },
             hostname: {
                 description: "hostname to run serve, default localhost",
                 aliases: ["h"],
@@ -5547,16 +5676,29 @@ function initCommands() {
     }, gdbAsync);
 
     p.defineCommand({
-        name: "dumplog",
-        help: "attempt to dump log using openocd",
+        name: "dmesg",
+        help: "attempt to dump DMESG log using openocd",
         argString: "",
+        aliases: ["dumplog"],
         advanced: true,
     }, dumplogAsync);
 
     p.defineCommand({
+        name: "heap",
+        help: "attempt to dump GC and codal heap log using openocd",
+        argString: "",
+        aliases: ["dumpheap"],
+        advanced: true,
+    }, dumpheapAsync);
+
+    p.defineCommand({
         name: "builddaldts",
-        help: "build dal.d.ts in current directory (might need to move)",
-        advanced: true
+        help: "build dal.d.ts in current directory or target (might be generated in a separate folder)",
+        advanced: true,
+        aliases: ["daldts"],
+        flags: {
+            clean: { description: "clean and build" }
+        }
     }, buildDalDTSAsync);
 
     p.defineCommand({
@@ -5623,6 +5765,16 @@ function initCommands() {
             clean: { description: "delete all previous repos" }
         }
     }, testGithubPackagesAsync);
+
+    p.defineCommand({
+        name: "testblocks",
+        help: "Test blocks files in target and common libs in a browser. See https://makecode.com/develop/blockstests",
+        advanced: true,
+        flags: {
+            debug: { description: "Keeps the browser open to debug tests" }
+        }
+    }, blockTestsAsync);
+
 
     function simpleCmd(name: string, help: string, callback: (c?: commandParser.ParsedCommand) => Promise<void>, argString?: string, onlineHelp?: boolean): void {
         p.defineCommand({ name, help, onlineHelp, argString }, callback);
@@ -5704,6 +5856,8 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
 
     let trg = nodeutil.getPxtTarget()
     pxt.setAppTarget(trg)
+
+    pxt.setCompileSwitches(process.env["PXT_COMPILE_SWITCHES"])
 
     let compileId = "none"
     if (trg.compileService) {

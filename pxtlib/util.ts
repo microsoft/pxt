@@ -292,6 +292,7 @@ namespace ts.pxtc.Util {
             return a;
         }
         let r: T[] = []
+        if (!a) return r;
         for (let i = 0; i < a.length; ++i)
             r.push(a[i])
         return r
@@ -328,7 +329,7 @@ namespace ts.pxtc.Util {
     // leading edge, instead of the trailing.
     export function debounce(func: (...args: any[]) => any, wait: number, immediate?: boolean): any {
         let timeout: any;
-        return function () {
+        return function (this: any) {
             let context = this
             let args = arguments;
             let later = function () {
@@ -347,7 +348,7 @@ namespace ts.pxtc.Util {
     // function on the leading edge, instead of the trailing.
     export function throttle(func: (...args: any[]) => any, wait: number, immediate?: boolean): any {
         let timeout: any;
-        return function () {
+        return function (this: any) {
             let context = this;
             let args = arguments;
             let later = function () {
@@ -710,7 +711,7 @@ namespace ts.pxtc.Util {
                 if (resp.statusCode == 304 || resp.statusCode == 200) {
                     // store etag and translations
                     etag = resp.headers["etag"] as string || "";
-                    return translationDbAsync()
+                    return pxt.BrowserUtils.translationDbAsync()
                         .then(db => db.setAsync(lang, filename, branch, etag, resp.json || strings))
                         .then(() => resp.json || strings);
                 }
@@ -723,9 +724,9 @@ namespace ts.pxtc.Util {
         }
 
         // check for cache
-        return translationDbAsync()
+        return pxt.BrowserUtils.translationDbAsync()
             .then(db => db.getAsync(lang, filename, branch))
-            .then((entry: ts.pxtc.Util.ITranslationDbEntry) => {
+            .then((entry: pxt.BrowserUtils.ITranslationDbEntry) => {
                 // if cached, return immediately
                 if (entry) {
                     etag = entry.etag;

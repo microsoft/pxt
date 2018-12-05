@@ -55,7 +55,8 @@ declare namespace pxt {
         gistId?: string;
         extension?: PackageExtension; // describe the associated extension if any
         dalDTS?: {
-            includeDirs: string[];
+            corePackage?: string;
+            includeDirs?: string[];
             excludePrefix?: string[];
         };
         features?: string[];
@@ -99,6 +100,7 @@ declare namespace pxt {
         role?: string;
         ariaLabel?: string;
         label?: string;
+        labelIcon?: string;
         labelClass?: string;
         tags?: string[]; // tags shown in home screen, colors specified in theme
         tabIndex?: number;
@@ -131,6 +133,7 @@ declare namespace pxt {
         iconColor?: string;
 
         onClick?: (e: any) => void; // React event
+        onLabelClicked?: (e: any) => void;
 
         target?: string;
         className?: string;

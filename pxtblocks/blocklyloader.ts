@@ -327,16 +327,20 @@ namespace pxt.blocks {
     }
 
     export function createFlyoutHeadingLabel(name: string, color?: string, icon?: string, iconClass?: string) {
-        const headingLabel = createFlyoutLabel(name, color, icon, iconClass);
+        const headingLabel = createFlyoutLabel(name, pxt.toolbox.convertColor(color), icon, iconClass);
         headingLabel.setAttribute('web-class', 'blocklyFlyoutHeading');
         return headingLabel;
     }
 
-    export function createFlyoutGroupLabel(name: string, icon?: string, labelLineWidth?: string) {
+    export function createFlyoutGroupLabel(name: string, icon?: string, labelLineWidth?: string, helpCallback?: string) {
         const groupLabel = createFlyoutLabel(name, undefined, icon);
         groupLabel.setAttribute('web-class', 'blocklyFlyoutGroup');
         groupLabel.setAttribute('web-line', '1.5');
         if (labelLineWidth) groupLabel.setAttribute('web-line-width', labelLineWidth);
+        if (helpCallback) {
+            groupLabel.setAttribute('web-help-button', 'true');
+            groupLabel.setAttribute('callbackkey', helpCallback);
+        }
         return groupLabel;
     }
 
@@ -345,7 +349,7 @@ namespace pxt.blocks {
         let headingLabel = goog.dom.createDom('label') as HTMLElement;
         headingLabel.setAttribute('text', name);
         if (color) {
-            headingLabel.setAttribute('web-icon-color', color);
+            headingLabel.setAttribute('web-icon-color', pxt.toolbox.convertColor(color));
         }
         if (icon) {
             if (icon.length === 1) {
@@ -440,21 +444,6 @@ namespace pxt.blocks {
             }
         }
         return block;
-    }
-
-    function createCategoryElement(name: string, nameid: string, weight: number, colour?: string, iconClass?: string): Element {
-        const result = document.createElement("category");
-        result.setAttribute("name", name);
-        result.setAttribute("nameid", nameid.toLowerCase());
-        result.setAttribute("weight", weight.toString());
-        if (colour) {
-            result.setAttribute("colour", colour);
-        }
-        if (iconClass) {
-            result.setAttribute("iconclass", iconClass);
-            result.setAttribute("expandedclass", iconClass);
-        }
-        return result;
     }
 
     export function injectBlocks(blockInfo: pxtc.BlocksInfo): pxtc.SymbolInfo[] {
@@ -970,6 +959,18 @@ namespace pxt.blocks {
         initDrag();
         initDebugger();
         initComments();
+
+        // PXT is in charge of disabling, don't record undo for disabled events
+        (Blockly.Block as any).prototype.setDisabled = function(disabled: any) {
+            if (this.disabled != disabled) {
+                let oldRecordUndo = (Blockly as any).Events.recordUndo;
+                (Blockly as any).Events.recordUndo = false;
+                Blockly.Events.fire(new Blockly.Events.BlockChange(
+                    this, 'disabled', null, this.disabled, disabled));
+                (Blockly as any).Events.recordUndo = oldRecordUndo;
+                this.disabled = disabled;
+            }
+        };
     }
 
     function setBuiltinHelpInfo(block: any, id: string) {
@@ -1359,7 +1360,8 @@ namespace pxt.blocks {
                 return;
             }
             let menuOptions: Blockly.ContextMenu.MenuItem[] = [];
-            let topBlocks = this.getTopBlocks(true);
+            let topBlocks = this.getTopBlocks();
+            let topComments = this.getTopComments();
             let eventGroup = Blockly.utils.genUid();
             let ws = this;
 
@@ -1368,58 +1370,8 @@ namespace pxt.blocks {
                 menuOptions.push((Blockly.ContextMenu as any).workspaceCommentOption(ws, e));
             }
 
-            // Add a little animation to collapsing and expanding.
+            // Add a little animation to deleting.
             const DELAY = 10;
-            if (this.options.collapse) {
-                let hasCollapsedBlocks = false;
-                let hasExpandedBlocks = false;
-                for (let i = 0; i < topBlocks.length; i++) {
-                    let block = topBlocks[i];
-                    while (block) {
-                        if (block.isCollapsed()) {
-                            hasCollapsedBlocks = true;
-                        } else {
-                            hasExpandedBlocks = true;
-                        }
-                        block = block.getNextBlock();
-                    }
-                }
-
-                /**
-                 * Option to collapse or expand top blocks.
-                 * @param {boolean} shouldCollapse Whether a block should collapse.
-                 * @private
-                 */
-                const toggleOption = function (shouldCollapse: boolean) {
-                    let ms = 0;
-                    for (let i = 0; i < topBlocks.length; i++) {
-                        let block = topBlocks[i];
-                        while (block) {
-                            setTimeout(block.setCollapsed.bind(block, shouldCollapse), ms);
-                            block = block.getNextBlock();
-                            ms += DELAY;
-                        }
-                    }
-                };
-
-                // Option to collapse top blocks.
-                const collapseOption: any = { enabled: hasExpandedBlocks };
-                collapseOption.text = lf("Collapse Block");
-                collapseOption.callback = function () {
-                    pxt.tickEvent("blocks.context.collapse")
-                    toggleOption(true);
-                };
-                menuOptions.push(collapseOption);
-
-                // Option to expand top blocks.
-                const expandOption: any = { enabled: hasCollapsedBlocks };
-                expandOption.text = lf("Expand Block");
-                expandOption.callback = function () {
-                    pxt.tickEvent("blocks.context.expand")
-                    toggleOption(false);
-                };
-                menuOptions.push(expandOption);
-            }
 
             // Option to delete all blocks.
             // Count the number of blocks that are deletable.
@@ -1476,7 +1428,7 @@ namespace pxt.blocks {
             if (pxt.blocks.layout.screenshotEnabled()) {
                 const screenshotOption = {
                     text: lf("Download Screenshot"),
-                    enabled: topBlocks.length > 0,
+                    enabled: topBlocks.length > 0 || topComments.length > 0,
                     callback: () => {
                         pxt.tickEvent("blocks.context.screenshot", undefined, { interactiveConsent: true });
                         pxt.blocks.layout.screenshotAsync(this)
@@ -2235,7 +2187,7 @@ namespace pxt.blocks {
                         field.appendChild(document.createTextNode(this.getProcedureCall()));
                         block.appendChild(field);
                         xml.appendChild(block);
-                        Blockly.Xml.domToWorkspace(xml, this.workspace);
+                        pxt.blocks.domToWorkspaceNoEvents(xml, this.workspace);
                         Blockly.Events.setGroup(false);
                     }
                 } else if (event.type == Blockly.Events.DELETE) {
@@ -2326,7 +2278,7 @@ namespace pxt.blocks {
                 field.appendChild(document.createTextNode(name));
                 block.appendChild(field);
                 xml.appendChild(block);
-                let newBlockIds = Blockly.Xml.domToWorkspace(xml, workspace);
+                let newBlockIds = pxt.blocks.domToWorkspaceNoEvents(xml, workspace);
                 // Close flyout and highlight block
                 Blockly.hideChaff();
                 let newBlock = workspace.getBlockById(newBlockIds[0]);

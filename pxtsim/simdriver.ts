@@ -128,7 +128,8 @@ namespace pxsim {
             }
             // dispatch to all iframe besides self
             let frames = this.container.getElementsByTagName("iframe");
-            if (source && (msg.type === 'eventbus' || msg.type == 'radiopacket' || msg.type == 'irpacket' || msg.type == 'blepacket')) {
+            const broadcastmsg = msg as pxsim.SimulatorBroadcastMessage;
+            if (source && broadcastmsg && !!broadcastmsg.broadcast) {
                 if (frames.length < 2) {
                     this.container.appendChild(this.createFrame());
                     frames = this.container.getElementsByTagName("iframe");
@@ -446,6 +447,12 @@ namespace pxsim {
                             this.setState(SimulatorState.Paused);
                         if (this.options.onDebuggerBreakpoint)
                             this.options.onDebuggerBreakpoint(brk);
+                        let stackTrace = brk.exceptionMessage + "\n"
+                        for (let s of brk.stackframes) {
+                            let fi = s.funcInfo
+                            stackTrace += `   at ${fi.functionName} (${fi.fileName}:${fi.line + 1}:${fi.column + 1})\n`
+                        }
+                        console.error(stackTrace)
                     } else {
                         console.error("debugger: trying to pause from " + this.state);
                     }

@@ -53,6 +53,7 @@ export interface CompileOptions {
     background?: boolean; // not explicitly requested by user (hint for simulator)
     forceEmit?: boolean;
     preferredEditor?: string;
+    clickTrigger?: boolean;
 }
 
 export function compileAsync(options: CompileOptions = {}): Promise<pxtc.CompileResult> {
@@ -207,6 +208,13 @@ export function apiSearchAsync(searchFor: pxtc.service.SearchOptions) {
         });
 }
 
+export function projectSearchAsync(searchFor: pxtc.service.ProjectSearchOptions) {
+    return ensureApisInfoAsync()
+        .then(() => {
+            return workerOpAsync("projectSearch", { projectSearch: searchFor });
+        });
+}
+
 export function formatAsync(input: string, pos: number) {
     return workerOpAsync("format", { format: { input: input, pos: pos } });
 }
@@ -312,7 +320,7 @@ function upgradeFromBlocksAsync(): Promise<UpgradeResult> {
             const text = pxt.blocks.importXml(targetVersion, fileText, info, true);
 
             const xml = Blockly.Xml.textToDom(text);
-            Blockly.Xml.domToWorkspace(xml, ws);
+            pxt.blocks.domToWorkspaceNoEvents(xml, ws);
             patchedFiles["main.blocks"] = text;
             return pxt.blocks.compileAsync(ws, info)
         })

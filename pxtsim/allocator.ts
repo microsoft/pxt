@@ -644,8 +644,6 @@ namespace pxsim {
                 .map(partName => { return { name: partName, def: this.opts.partDefs[partName] } })
                 .filter(d => !!d.def);
             if (partNmAndDefs.length > 0) {
-                let partNmsList = partNmAndDefs.map(p => p.name);
-                let partDefsList = partNmAndDefs.map(p => p.def);
                 let dimensions = partNmAndDefs.map(nmAndPart => this.computePartDimensions(nmAndPart.def, nmAndPart.name));
                 let partIRs: PartIR[] = [];
                 partNmAndDefs.forEach((nmAndDef, idx) => {
@@ -653,7 +651,6 @@ namespace pxsim {
                     let irs = this.allocPartIRs(nmAndDef.def, nmAndDef.name, dims);
                     partIRs = partIRs.concat(irs);
                 })
-                // TODO filter parts that are not representable now
                 const partPlacements = this.placeParts(partIRs);
                 const partsAndWireIRs = partPlacements.map(p => this.allocWireIRs(p));
                 const allWireIRs = partsAndWireIRs.map(p => p.wires).reduce((p, n) => p.concat(n), []);
@@ -681,8 +678,8 @@ namespace pxsim {
                         assembly: assembly
                     }
                 }).filter(p => !!p);
-                let all = [basicWires].concat(partsAndWires);
-
+                const all = [basicWires].concat(partsAndWires)
+                    .filter(pw => pw.assembly && pw.assembly.length); // only keep steps with something to do
                 // hide breadboard if not used
                 const requiresBreadboard = all.some(r =>
                     (r.part && r.part.breadboardConnections && r.part.breadboardConnections.length > 0)

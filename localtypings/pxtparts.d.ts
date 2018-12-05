@@ -3,14 +3,16 @@ declare namespace pxsim {
     interface PinBlockDefinition {
         x: number,
         y: number,
-        labelPosition: "above" | "below";
+        labelPosition?: "above" | "below";
         labels: string[]
     }
-    interface LEDDefinition {
+    interface BoxDefinition {
         x: number;
         y: number;
         w?: number;
         h?: number;
+    }
+    interface LEDDefinition extends BoxDefinition {
         color: string;
         label: string;
     }
@@ -21,7 +23,9 @@ declare namespace pxsim {
         height: number,
         pinDist: number,
         pinBlocks: PinBlockDefinition[],
-        leds?: LEDDefinition[]
+        leds?: LEDDefinition[];
+        reset?: BoxDefinition;
+        useCrocClips?: boolean;
     }
     interface BoardDefinition {
         id?: string, // optional board id (set to the package id, multiboard only)
@@ -80,7 +84,7 @@ declare namespace pxsim {
         // the exact centers of each pin; must have as many locations as the "numberOfPins" property
         pinLocations: XY[],
     }
-    export type XY = {x: number, y: number}
+    export type XY = { x: number, y: number }
     export interface PartPinDefinition {
         target: UninstantiatedPinTarget, // e.g.: "ground", "MISO", etc.; see PinType
         style: PinStyle, // e.g.: "male", "female", "solder"; see PinStyle

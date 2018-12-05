@@ -357,7 +357,7 @@ export interface ButtonProps extends UiProps, TooltipUIProps {
 
 export class Button extends StatelessUIElement<ButtonProps> {
     renderCore() {
-        const { labelPosition, color, size, disabled, tooltipId, tooltip, tooltipDelayShow, tooltipPlace } = this.props;
+        const { labelPosition, color, size, disabled } = this.props;
         const classes = cx([
             color,
             size,
@@ -376,8 +376,9 @@ export class Button extends StatelessUIElement<ButtonProps> {
             {genericContent(this.props)}
             {this.props.children}
         </button>;
-        return tooltip ? <Tooltip id={tooltipId} content={tooltip}
-            place={tooltipPlace} delayShow={tooltipDelayShow}>{button}</Tooltip> : button;
+        // Tooltips don't work great on IOS, disabling them
+        return this.props.tooltipId && !pxt.BrowserUtils.isIOS() ? <Tooltip id={this.props.tooltipId} content={this.props.tooltip || this.props.title}
+            place={this.props.tooltipPlace} delayShow={this.props.tooltipDelayShow}>{button}</Tooltip> : button;
     }
 }
 
@@ -840,6 +841,8 @@ export interface ModalButton {
     url?: string;
     fileName?: string;
     loading?: boolean;
+    disabled?: boolean;
+    approveButton?: boolean;
 }
 
 export interface ModalProps extends ReactModal.Props {
@@ -848,6 +851,7 @@ export interface ModalProps extends ReactModal.Props {
     closeOnEscape?: boolean;
 
     onClose?: () => void;
+    onKeyDown?: (ev: React.KeyboardEvent<any>) => void;
     defaultOpen?: boolean;
     closeIcon?: boolean | string;
 
@@ -864,6 +868,7 @@ export interface ModalProps extends ReactModal.Props {
     dimmerClassName?: string;
 
     helpUrl?: string;
+    headerActions?: JSX.Element[];
     buttons?: ModalButton[];
     onPositionChanged?: Function;
     allowResetFocus?: boolean;
@@ -963,13 +968,13 @@ export class Modal extends React.Component<ModalProps, ModalState> {
 
     render() {
         const { isOpen, size, longer, basic, className,
-            onClose, closeIcon, children,
-            header, headerClass, helpUrl, description,
+            onClose, closeIcon, children, onKeyDown,
+            header, headerClass, headerActions, helpUrl, description,
             closeOnDimmerClick, closeOnDocumentClick, closeOnEscape,
             shouldCloseOnEsc, shouldCloseOnOverlayClick, shouldFocusAfterRender, ...rest } = this.props;
         const { marginTop, scrolling, mountClasses } = this.state;
         const isFullscreen = size == 'fullscreen';
-        const goBack = isFullscreen && !!closeIcon;
+        const showBack = isFullscreen && !!closeIcon;
 
         const classes = cx([
             'ui',
@@ -995,6 +1000,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
                 marginTop: marginTop
             }
         }
+
         return <ReactModal isOpen={isOpen} ref="modal" appElement={appElement}
             onRequestClose={this.onRequestClose} onAfterOpen={this.afterOpen}
             shouldReturnFocusAfterClose={true} shouldFocusAfterRender={shouldFocusAfterRender}
@@ -1005,19 +1011,28 @@ export class Modal extends React.Component<ModalProps, ModalState> {
             className={classes}
             style={customStyles}
             aria={aria} {...rest}>
-            {header ? <div id={this.id + 'title'} className={"header " + (headerClass || "")}>
-                {header}
+            {header || showBack || helpUrl ? <div id={this.id + 'title'} className={"header " + (headerClass || "")}>
+                <span className="header-title" style={{margin: `0 ${helpUrl ? '-20rem' : '0'} 0 ${showBack ? '-20rem' : '0'}`}}>{header}</span>
+                {showBack ? <div className="header-close">
+                    <Button className="back-button large" title={lf("Go back")} onClick={onClose} tabIndex={0} onKeyDown={fireClickOnEnter}>
+                        <Icon icon="arrow left" />
+                        <span className="ui text landscape only">{lf("Go back")}</span>
+                    </Button>
+                </div> : undefined}
                 {helpUrl ?
-                    <a className={`ui huge icon clear helpIcon`} href={helpUrl} target="_docs" role="button" aria-label={lf("Help on {0} dialog", header)}>
-                        <Icon icon="help" />
-                    </a>
+                    <div className="header-help">
+                        <a className={`ui icon help-button`} href={helpUrl} target="_docs" role="button" aria-label={lf("Help on {0} dialog", header)}>
+                            <Icon icon="help" />
+                        </a>
+                    </div>
                     : undefined}
             </div> : undefined}
-            {description ? <label id={this.id + 'description'} className="accessible-hidden">{description}</label> : undefined}
-            <div id={this.id + 'desc'} className={`${longer ? 'scrolling' : ''} content`}>
+            {isFullscreen && headerActions ? <div className="header-actions">{headerActions}</div> : undefined}
+            {!isFullscreen && description ? <label id={this.id + 'description'} className="accessible-hidden">{description}</label> : undefined}
+            <div id={this.id + 'desc'} className={`${longer ? 'scrolling' : ''} ${headerActions ? 'has-actions' : ''} content`}>
                 {children}
             </div>
-            {this.props.buttons && this.props.buttons.length > 0 ?
+            {!isFullscreen && this.props.buttons && this.props.buttons.length > 0 ?
                 <div className="actions">
                     {this.props.buttons.map(action =>
                         action.url ?
@@ -1025,7 +1040,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
                                 key={`action_${action.label}`}
                                 icon={action.icon}
                                 text={action.label}
-                                className={`ui button approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''} ${action.loading ? "loading disabled" : ""}`}
+                                className={`ui button approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''} ${action.loading ? "loading disabled" : ""} ${action.disabled ? "disabled" : ""}`}
                                 href={action.url}
                                 target={!action.fileName ? '_blank' : undefined}
                                 download={action.fileName ? pxt.Util.htmlEscape(action.fileName) : undefined}
@@ -1035,14 +1050,10 @@ export class Modal extends React.Component<ModalProps, ModalState> {
                                 {...action} />
                     )}
                 </div> : undefined}
-            {closeIcon && !isFullscreen ? <div role="button" className="closeIcon" tabIndex={0}
+            {!isFullscreen && closeIcon ? <div role="button" className="closeIcon" tabIndex={0}
                 onClick={onClose}
                 onKeyDown={fireClickOnEnter}
             ><Icon icon="close remove circle" /> </div> : undefined}
-            {goBack ?
-                <Button text={lf("Go back")} title={lf("Go back to the editor")} className="icon circular small editorBack left labeled" ariaLabel={lf("Go back")} onClick={onClose} onKeyDown={fireClickOnEnter}>
-                    <Icon icon="arrow left" />
-                </Button> : undefined}
         </ReactModal>
     }
 }
@@ -1057,7 +1068,8 @@ class ModalButtonElement extends data.PureComponent<ModalButton, {}> {
     }
 
     handleClick() {
-        this.props.onclick();
+        if (!this.props.disabled)
+            this.props.onclick();
     }
 
     renderCore() {
@@ -1065,7 +1077,7 @@ class ModalButtonElement extends data.PureComponent<ModalButton, {}> {
         return <Button
             icon={action.icon}
             text={action.label}
-            className={`approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''} ${action.loading ? "loading disabled" : ""}`}
+            className={`approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''} ${action.loading ? "loading disabled" : ""} ${action.disabled ? "disabled" : ""}`}
             onClick={this.handleClick}
             onKeyDown={fireClickOnEnter} />
     }

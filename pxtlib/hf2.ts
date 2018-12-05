@@ -1,3 +1,21 @@
+namespace pxt {
+    // keep all of these in sync with pxtbase.h
+    export const REFCNT_FLASH = "0xfffe"
+    export const VTABLE_MAGIC = 0xF9
+    export const ValTypeObject = 4
+    export enum BuiltInType {
+        BoxedString = 1,
+        BoxedNumber = 2,
+        BoxedBuffer = 3,
+        RefAction = 4,
+        RefImage = 5,
+        RefCollection = 6,
+        RefRefLocal = 7,
+        RefMap = 8,
+        User0 = 16,
+    }
+}
+
 namespace pxt.HF2 {
     export interface MutableArrayLike<T> {
         readonly length: number;

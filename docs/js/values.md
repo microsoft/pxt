@@ -79,3 +79,40 @@ The following operations have the integer fast-path implemented in assembly for 
 It's particularly important for `adds` and `subs` since they otherwise always
 use doubles (for easier overflow checking in C++). In the other cases it just saves a few
 cycles.
+
+## Strings
+
+This is in planning state.
+
+There are multiple representations of JS strings. This is to support fast concatenation,
+as well as 16-bit characters, and constant time character lookup, while maintaining
+low memory usage.
+
+The following types are defined:
+
+* inline ASCII strings
+* inline UTF8 strings
+* cons tree strings
+* skip-list strings
+* long strings
+
+Let _header_ be 16 bit reference count followed by 16 bit vtable pointer (or 
+rather object tag). This header is common for all object types, not only strings.
+
+Inline strings layout is: header, followed by 16 bit length, data (which is inline, hence the name).
+Inline ASCII strings are to be interpreted as Latin1, whereas UTF8 ones as UTF8.
+
+Instead of long (say over 64 characters) inline UTF8 strings, the compiler is to generate skip-list strings.
+
+Cons tree strings consist of header, followed by pointers to two strings.
+They are made by `+` operation, and are turned into skip-list strings (or long
+strings) when they are used (eg., `charAt` or `length` are called).
+
+Skip-list strings consist of header, followed by 32 bit length (of which only 16 bits are used),
+followed by pointer to the data.
+Data consists of the skip list, followed by the actual UTF8 character data.
+Skip list `s` gives 16 bit indices into the UTF8 character data.
+`s[i]` points to character number `i * 16` (TODO maybe 32?).
+
+Long strings are like skip-list strings, except that skip list indices are 32 bit.
+Long strings are not compiled in on targets with small memory.

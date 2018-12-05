@@ -23,7 +23,6 @@ namespace pxt.runner {
         package?: string;
         showEdit?: boolean;
         showJavaScript?: boolean; // default is to show blocks first
-        downloadScreenshots?: boolean;
         split?: boolean; // split in multiple divs if too big
     }
 
@@ -136,44 +135,30 @@ namespace pxt.runner {
 
         // inject container
         $container.replaceWith(r as any);
-
-        // download screenshots
-        if (options.downloadScreenshots && woptions.hexname) {
-            pxt.debug("Downloading screenshot for: " + woptions.hexname);
-            let filename = woptions.hexname.substr(0, woptions.hexname.lastIndexOf('.'));
-            let fontSize = window.getComputedStyle($svg.get(0).getElementsByClassName("blocklyText").item(0)).getPropertyValue("font-size");
-            let svgElement = $svg.get(0) as any;
-            let bbox = $svg.get(0).getBoundingClientRect();
-            pxt.blocks.layout.svgToPngAsync(svgElement, 0, 0, bbox.width, bbox.height, 4)
-                .done(uri => {
-                    if (uri)
-                        BrowserUtils.browserDownloadDataUri(
-                            uri,
-                            (name || `${pxt.appTarget.nickname || pxt.appTarget.id}-${filename}`) + ".png");
-                });
-        }
     }
 
     let renderQueue: {
         el: JQuery;
         source: string;
         options: blocks.BlocksRenderOptions;
-        cls: string;
         render: (container: JQuery, r: pxt.runner.DecompileResult) => void;
     }[] = [];
     function consumeRenderQueueAsync(): Promise<void> {
         const job = renderQueue.shift();
         if (!job) return Promise.resolve(); // done
 
-        const { el, options, render, cls } = job;
+        const { el, options, render } = job;
         return pxt.runner.decompileToBlocksAsync(el.text(), options)
             .then((r) => {
-                try {
-                    render(el, r);
-                } catch (e) {
-                    console.error('error while rendering ' + el.html())
-                    el.append($('<div/>').addClass("ui segment warning").text(e.message));
-                }
+                const errors = r.compileJS && r.compileJS.diagnostics && r.compileJS.diagnostics.filter(d => d.category == pxtc.DiagnosticCategory.Error);
+                if (errors && errors.length)
+                    errors.forEach(diag => pxt.reportError("docs.decompile", "" + diag.messageText, { "code": diag.code + "" }));
+                render(el, r);
+                el.removeClass("lang-shadow");
+                return consumeRenderQueueAsync();
+            }).catch(e => {
+                pxt.reportException(e);
+                el.append($('<div/>').addClass("ui segment warning").text(e.message));
                 el.removeClass("lang-shadow");
                 return consumeRenderQueueAsync();
             });
@@ -191,7 +176,7 @@ namespace pxt.runner {
         if (!options.layout) options.layout = pxt.blocks.BlockLayout.Align;
         options.splitSvg = true;
 
-        renderQueue.push({ el: $el, source: $el.text(), options, render, cls });
+        renderQueue.push({ el: $el, source: $el.text(), options, render });
         $el.addClass("lang-shadow");
         $el.removeClass(cls);
         return renderNextSnippetAsync(cls, render, options);
@@ -287,7 +272,7 @@ namespace pxt.runner {
                     try {
                         render($el, r);
                     } catch (e) {
-                        console.error('error while rendering ' + $el.html())
+                        pxt.reportException(e)
                         $el.append($('<div/>').addClass("ui segment warning").text(e.message));
                     }
                     $el.removeClass(cls);
@@ -332,7 +317,7 @@ namespace pxt.runner {
             })
             .then((nsStyleBuffer) => {
                 Object.keys(pxt.toolbox.blockColors).forEach((ns) => {
-                    const color = pxt.toolbox.blockColors[ns] as string;
+                    const color = pxt.toolbox.getNamespaceColor(ns);
                     nsStyleBuffer += `
                         span.docs.${ns.toLowerCase()} {
                             background-color: ${color} !important;
@@ -602,6 +587,7 @@ namespace pxt.runner {
                             })
                             .catch(e => {
                                 // swallow
+                                pxt.reportException(e);
                                 pxt.debug(`failed to load repo ${card.url}`)
                             })
                     }
@@ -626,7 +612,7 @@ namespace pxt.runner {
             if (!Array.isArray(js)) js = [js];
             cards = js as pxt.CodeCard[];
         } catch (e) {
-            console.error('error while rendering ' + $el.html())
+            pxt.reportException(e);
             $el.append($('<div/>').addClass("ui segment warning").text(e.messageText));
         }
 
@@ -711,6 +697,7 @@ namespace pxt.runner {
     }
 
     export function renderAsync(options?: ClientRenderOptions): Promise<void> {
+        pxt.analytics.enable();
         if (!options) options = {}
         if (options.pxtUrl) options.pxtUrl = options.pxtUrl.replace(/\/$/, '');
         if (options.showEdit) options.showEdit = !pxt.BrowserUtils.isIFrame();
