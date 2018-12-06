@@ -834,13 +834,13 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
                 modalDidOpen={this.modalDidOpen}
             >
-                <div className={`ui form`}>
+                <div>
                     <p>{lf("Give your project a name.")}</p>
-                    <p>
+                    <div className="ui form">
                         <sui.Input ref="filenameinput" autoFocus={!pxt.BrowserUtils.isMobile()} id={"projectNameInput"}
                             ariaLabel={lf("Type a name for your project")} autoComplete={false}
                             value={projectName || ''} onChange={this.handleChange} />
-                    </p>
+                    </div>
                 </div>
             </sui.Modal>
         )

@@ -70,6 +70,10 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
 
     handleProjectNameChange(name: string) {
         this.setState({ projectName: name });
+        // save project name if valid change
+        if (name && this.props.parent.state.projectName != name) {
+            this.props.parent.updateHeaderNameAsync(name);
+        }
     }
 
     renderCore() {
@@ -169,11 +173,11 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
                             {shouldNameProject ?
                                 <div>
                                     <p>{lf("Give your project a name before sharing.")}</p>
-                                    <p>
+                                    <div>
                                         <sui.Input ref="filenameinput" autoFocus={!pxt.BrowserUtils.isMobile()} id={"projectNameInput"}
                                             ariaLabel={lf("Type a name for your project")} autoComplete={false}
                                             value={projectName || ''} onChange={this.handleProjectNameChange} />
-                                    </p>
+                                    </div>
                                 </div> : undefined}
                             <p className="ui message info">{lf("You need to publish your project to share it or embed it in other web pages.") + " " +
                                 lf("You acknowledge having consent to publish this project.")}</p>
