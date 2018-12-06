@@ -765,7 +765,7 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
         // Save on enter typed
         let dialogInput = document.getElementById('projectNameInput') as HTMLInputElement;
         if (dialogInput) {
-            dialogInput.setSelectionRange(0, 9999);
+            if (!pxt.BrowserUtils.isMobile()) dialogInput.setSelectionRange(0, 9999);
             dialogInput.onkeydown = (e: KeyboardEvent) => {
                 const charCode = core.keyCodeFromEvent(e);
                 if (charCode === core.ENTER_KEY) {
