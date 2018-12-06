@@ -1,18 +1,24 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as React from "react";
-import * as ReactDOM from "react-dom";
 import * as data from "./data";
 import * as sui from "./sui";
-import * as core from "./core";
+import * as codecard from "./codecard"
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
+// TODO GUJEN missing delete icon
+// TODO GUJEN can't drag function call with variable ("var already exists with different ID")
+// TODO GUJEN TypeError: a.getAttribute is not a function when loading MakeCode editor
+// TODO GUJEN can't highlight text in arg editors
+
 export interface CreateFunctionDialogState {
     visible?: boolean;
-    workspace?: Blockly.Workspace;
-    isEdit?: boolean;
-    block?: Blockly.Block;
+    functionEditorWorkspace?: Blockly.Workspace;
+    functionCallback?: Blockly.Functions.ConfirmEditCallback;
+    initialMutation?: Element;
+    functionBeingEdited?: Blockly.FunctionDeclarationBlock;
+    mainWorkspace?: Blockly.Workspace;
 }
 
 export class CreateFunctionDialog extends data.Component<ISettingsProps, CreateFunctionDialogState> {
@@ -22,9 +28,11 @@ export class CreateFunctionDialog extends data.Component<ISettingsProps, CreateF
         super(props);
         this.state = {
             visible: false,
-            workspace: null,
-            block: null
-        }
+            functionEditorWorkspace: null,
+            functionCallback: null,
+            initialMutation: null,
+            functionBeingEdited: null
+        };
 
         this.hide = this.hide.bind(this);
         this.modalDidOpen = this.modalDidOpen.bind(this);
@@ -33,42 +41,66 @@ export class CreateFunctionDialog extends data.Component<ISettingsProps, CreateF
     }
 
     hide() {
-        this.setState({ visible: false });
+        Blockly.WidgetDiv.DIV.classList.remove("functioneditor");
+        let { functionEditorWorkspace, mainWorkspace } = this.state;
+        functionEditorWorkspace.clear();
+        functionEditorWorkspace.dispose();
+        (mainWorkspace as any).refreshToolboxSelection();
+        this.setState({
+            visible: false, functionEditorWorkspace: null,
+            functionCallback: null,
+            initialMutation: null,
+            functionBeingEdited: null
+        });
     }
 
-    show(isEdit: boolean = false) {
-        // TODO distinguish between create and edit
-        pxt.tickEvent('createfunction.show', undefined, { interactiveConsent: false });
+    show(initialMutation: Element, cb: Blockly.Functions.ConfirmEditCallback, mainWorkspace: Blockly.Workspace) {
+        pxt.tickEvent('createfunction.show', null, { interactiveConsent: false });
         this.setState({
             visible: true,
-            isEdit
+            functionCallback: cb,
+            initialMutation,
+            mainWorkspace
         });
     }
 
     modalDidOpen(ref: HTMLElement) {
         const workspaceDiv = document.getElementById('functionEditorWorkspace');
-        let { workspace } = this.state;
+        let { functionEditorWorkspace, initialMutation } = this.state;
 
         if (!workspaceDiv) {
             return;
         }
 
+        // Adjust the WidgetDiv classname so that it can show up above the dimmer
         Blockly.hideChaff();
+        Blockly.WidgetDiv.DIV.classList.add("functioneditor");
 
-        // Create the Blockly workspace if needed and inject it
-        // TODO Figure out how to reuse previous workspace (right now it persists but doesn't get re-rendered unless we inject Blockly again, which creates a new workspace)
-        workspace = Blockly.inject(workspaceDiv, {
+        // Create the function editor workspace
+        functionEditorWorkspace = Blockly.inject(workspaceDiv, {
             trashcan: false,
             scrollbars: true
         });
-        workspace.newBlock("");
-        this.setState({ workspace });
 
-        // Add the default function block
-        // TODO use function, not number
+        functionEditorWorkspace.clear();
+        let functionBeingEdited = functionEditorWorkspace.newBlock('function_declaration') as Blockly.FunctionDeclarationBlock;
+        (functionBeingEdited as any).domToMutation(initialMutation);
+        functionBeingEdited.initSvg();
+        functionBeingEdited.render(false);
+        functionEditorWorkspace.centerOnBlock(functionBeingEdited.id);
 
-        // Resize
-        Blockly.svgResize(workspace);
+        functionEditorWorkspace.addChangeListener(() => {
+            let { functionBeingEdited } = this.state;
+            if (functionBeingEdited) {
+                functionBeingEdited.updateFunctionSignature();
+            }
+        });
+
+        this.setState({
+            functionEditorWorkspace,
+            functionBeingEdited
+        });
+        Blockly.svgResize(functionEditorWorkspace);
     }
 
     cancel() {
@@ -77,22 +109,30 @@ export class CreateFunctionDialog extends data.Component<ISettingsProps, CreateF
     }
 
     confirm() {
-        // TODO Add the function to the workspace
-        this.hide();
+        let { functionBeingEdited, mainWorkspace, functionCallback } = this.state;
+        var mutation = (functionBeingEdited as any).mutationToDom();
+        if (Blockly.Functions.validateFunctionExternal(mutation, mainWorkspace)) {
+            functionCallback(mutation);
+            this.hide();
+        }
     }
 
-
-    // TEMP
-    sendToWorkspace() {
-        const { workspace } = this.state;
-        workspace.
-    }
-
-    // TEMP
-    readFromWorkspace() {
-        const { workspace } = this.state;
-        const block = workspace.getTopBlocks(true)[0];
-        this.setState({ block });
+    addArgument(typeName: string) {
+        let { functionBeingEdited } = this.state;
+        switch (typeName) {
+            case "boolean":
+                functionBeingEdited.addBooleanExternal();
+                break;
+            case "string":
+                functionBeingEdited.addStringExternal();
+                break;
+            case "number":
+                functionBeingEdited.addNumberExternal();
+                break;
+            default:
+                functionBeingEdited.addCustomExternal(typeName);
+                break;
+        }
     }
 
     renderCore() {
@@ -105,7 +145,7 @@ export class CreateFunctionDialog extends data.Component<ISettingsProps, CreateF
         }];
 
         this.prepareDefaultTypes();
-        const types = CreateFunctionDialog.defaultTypes;
+        const types = CreateFunctionDialog.defaultTypes.slice();
 
         if (pxt.appTarget.runtime &&
             pxt.appTarget.runtime.extraFunctionTypes &&
@@ -118,17 +158,25 @@ export class CreateFunctionDialog extends data.Component<ISettingsProps, CreateF
         return (
             <sui.Modal isOpen={visible} className="createfunction" size="large"
                 onClose={this.hide} dimmer={true} buttons={actions}
-                closeIcon={true} header={this.state.isEdit ? lf("Edit function") : lf("Create a function")}
+                closeIcon={true} header={lf("Edit function")}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
                 modalDidOpen={this.modalDidOpen}
             >
                 <div>
                     <div id="functionEditorWorkspace"></div>
-
-                    {/* TEMP */}
-                    <textarea id="xmlExporterImporter"></textarea>
-                    <button id="sendToWorkspace" onClick={this.}>Send to workspace</button>
-                    <button id="readFromWorkspace">Read from workspace</button>
+                    <div className="group">
+                        <div className="ui cards centered" role="listbox">
+                            {types.map(t =>
+                                <codecard.CodeCardView
+                                    key={t.typeName}
+                                    name={t.label || t.typeName}
+                                    ariaLabel={t.label || t.typeName}
+                                    description={lf("Add argument")}
+                                    onClick={() => this.addArgument(t.typeName)}
+                                />
+                            )}
+                        </div>
+                    </div>
                 </div>
             </sui.Modal>
         )
@@ -139,15 +187,15 @@ export class CreateFunctionDialog extends data.Component<ISettingsProps, CreateF
             CreateFunctionDialog.defaultTypes = [
                 {
                     label: lf("Text"),
-                    type: "string"
+                    typeName: "string"
                 },
                 {
                     label: lf("Boolean"),
-                    type: "boolean"
+                    typeName: "boolean"
                 },
                 {
                     label: lf("Number"),
-                    type: "number"
+                    typeName: "number"
                 },
             ];
         }

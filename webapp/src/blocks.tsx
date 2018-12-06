@@ -536,7 +536,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     showFunctionsFlyout() {
-        this.showFlyoutInternal_(Blockly.Procedures.flyoutCategory(this.editor));
+        // this.showFlyoutInternal_(Blockly.Procedures.flyoutCategory(this.editor));
+        this.showFlyoutInternal_(Blockly.Functions.flyoutCategory(this.editor));
     }
 
     getViewState() {
@@ -662,8 +663,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     .filter(config => !!config && !!config.extension && /^(file:|github:)/.test(config.installedVersion));
 
                 // Initialize the "Make a function" button
-                this.editor.registerButtonCallback("CREATE_FUNCTION", (button) => {
-                    // TODO potentially check pxtarget flags to see if params are enabled, and show a different dialog?
+                Blockly.Functions.editFunctionExternalHandler = (mutation: Element, cb: Blockly.Functions.ConfirmEditCallback) => {
                     Promise.resolve()
                         .delay(10)
                         .then(() => {
@@ -672,9 +672,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                                 this.functionsDialog = ReactDOM.render(React.createElement(CreateFunctionDialog), wrapper) as CreateFunctionDialog;
                             }
 
-                            this.functionsDialog.show();
+                            this.functionsDialog.show(mutation, cb, this.editor);
                         });
-                });
+                }
             })
     }
 

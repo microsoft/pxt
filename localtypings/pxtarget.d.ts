@@ -74,7 +74,7 @@ declare namespace pxt {
     }
 
     interface FunctionEditorTypeInfo {
-        type?: string; // The actual type that gets emitted to ts
+        typeName?: string; // The actual type that gets emitted to ts
         label?: string; // A user-friendly label for the type, e.g. "text" for the string type
         svgImg?: string; // The SVG content for the image to be put on the button // TODO Investigate if this is the best way
     }
@@ -351,11 +351,11 @@ declare namespace ts.pxtc {
         slowMethods?: boolean;
         slowFields?: boolean;
         skipClassCheck?: boolean;
-        noThisCheckOpt?: boolean;        
+        noThisCheckOpt?: boolean;
         numFloat?: boolean;
         noTreeShake?: boolean;
         inlineConversions?: boolean;
-        noPeepHole?: boolean;        
+        noPeepHole?: boolean;
     }
 
     interface CompileTarget {

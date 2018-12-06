@@ -561,7 +561,7 @@ declare namespace Blockly {
         render_(): void;
         showEditor_(e?: Event): void;
         getAbsoluteXY_(): goog.math.Coordinate;
-        getScaledBBox_(): {top: number, bottom: number, left: number, right: number};
+        getScaledBBox_(): { top: number, bottom: number, left: number, right: number };
         setValue(newValue: string | number): void;
         getValue(): string;
         isCurrentlyEditable(): boolean;
@@ -766,12 +766,20 @@ declare namespace Blockly {
         isInsertionMarker(): boolean;
         isShadow(): boolean;
 
-        render(): void;
+        render(opt_bubble?: boolean): void;
         bumpNeighbours_(): void;
         select(): void;
         getRelativeToSurfaceXY(): goog.math.Coordinate;
         getOutputShape(): number;
         getSvgRoot(): Element;
+    }
+
+    class FunctionDeclarationBlock extends Block {
+        updateFunctionSignature: () => void;
+        addBooleanExternal(): void;
+        addStringExternal(): void;
+        addNumberExternal(): void;
+        addCustomExternal(typeName: string): void;
     }
 
     class WorkspaceComment {
@@ -1200,5 +1208,12 @@ declare namespace Blockly {
 
     class PXTUtils {
         static fadeColour(hex: string, luminosity: number, lighten: boolean): string;
+    }
+
+    namespace Functions {
+        type ConfirmEditCallback = (mutation: Element) => void;
+        let editFunctionExternalHandler: (mutation: Element, cb: ConfirmEditCallback) => void;
+        function validateFunctionExternal(mutation: Element, targetWorkspace: Blockly.Workspace): boolean;
+        function flyoutCategory(workspace: Blockly.Workspace): HTMLElement[];
     }
 }

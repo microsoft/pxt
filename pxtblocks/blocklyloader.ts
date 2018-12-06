@@ -163,7 +163,7 @@ namespace pxt.blocks {
                 let v = data.charCodeAt(inP++);
                 let colorStart = high ? (((v >> 4) & 0xf) << 2) : ((v & 0xf) << 2);
 
-                for (let y = 0; y < h; y ++) {
+                for (let y = 0; y < h; y++) {
                     bmp[outP] = this.palette[colorStart]
                     bmp[outP + 1] = this.palette[colorStart + 1]
                     bmp[outP + 2] = this.palette[colorStart + 2]
@@ -180,8 +180,8 @@ namespace pxt.blocks {
                     }
                 }
 
-                if (x % intScale === intScale - 1)  {
-                    if (!(height % 2)) --inP;
+                if (x % intScale === intScale - 1) {
+                    if (!(height % 2))--inP;
                     while (inP & 3) inP++
                 }
                 else {
@@ -961,7 +961,7 @@ namespace pxt.blocks {
         initComments();
 
         // PXT is in charge of disabling, don't record undo for disabled events
-        (Blockly.Block as any).prototype.setDisabled = function(disabled: any) {
+        (Blockly.Block as any).prototype.setDisabled = function (disabled: any) {
             if (this.disabled != disabled) {
                 let oldRecordUndo = (Blockly as any).Events.recordUndo;
                 (Blockly as any).Events.recordUndo = false;
@@ -1378,9 +1378,9 @@ namespace pxt.blocks {
             let deleteList = Blockly.WorkspaceSvg.buildDeleteList_(topBlocks);
             let deleteCount = 0;
             for (let i = 0; i < deleteList.length; i++) {
-              if (!deleteList[i].isShadow()) {
-                deleteCount++;
-              }
+                if (!deleteList[i].isShadow()) {
+                    deleteCount++;
+                }
             }
 
             function deleteNext() {
@@ -1497,7 +1497,7 @@ namespace pxt.blocks {
         };
 
         // Get rid of bumping behavior
-        (Blockly as any).Constants.Logic.LOGIC_COMPARE_ONCHANGE_MIXIN.onchange = function () {}
+        (Blockly as any).Constants.Logic.LOGIC_COMPARE_ONCHANGE_MIXIN.onchange = function () { }
     }
 
     function initOnStart() {
@@ -2076,6 +2076,17 @@ namespace pxt.blocks {
     function initFunctions() {
         const msg: any = Blockly.Msg;
 
+        // New functions implementation messages
+        msg.FUNCTION_CREATE_NEW = lf("Make a Function...");
+        msg.FUNCTION_WARNING_DUPLICATE_ARG = lf("Functions cannot use the same argument name more than once.");
+        msg.FUNCTION_WARNING_ARG_NAME_IS_FUNCTION_NAME = lf("Argument names must not be the same as the function name.");
+        msg.FUNCTIONS_DEFAULT_FUNCTION_NAME = lf("do_something");
+        msg.FUNCTIONS_DEFAULT_BOOLEAN_ARG_NAME = lf("bool");
+        msg.FUNCTIONS_DEFAULT_STRING_ARG_NAME = lf("text");
+        msg.FUNCTIONS_DEFAULT_NUMBER_ARG_NAME = lf("num");
+        msg.FUNCTIONS_DEFAULT_CUSTOM_ARG_NAME = lf("arg");
+        msg.PROCEDURES_HUE = pxt.toolbox.getNamespaceColor("functions");
+
         // builtin procedures_defnoreturn
         const proceduresDefId = "procedures_defnoreturn";
         const proceduresDef = pxt.blocks.getBlockDefinition(proceduresDefId);
@@ -2111,7 +2122,7 @@ namespace pxt.blocks {
                 let nameField = new pxtblockly.FieldProcedure('');
                 nameField.setSourceBlock(this);
                 this.appendDummyInput('TOPROW')
-                    .appendField(proceduresCallDef.block['PROCEDURES_CALLNORETURN_TITLE']) // TODO GUJEN move this to a blockly message
+                    .appendField(proceduresCallDef.block['PROCEDURES_CALLNORETURN_TITLE'])
                     .appendField(nameField, 'NAME');
                 this.setPreviousStatement(true);
                 this.setNextStatement(true);
@@ -2232,6 +2243,20 @@ namespace pxt.blocks {
         }
         installBuiltinHelpInfo(proceduresCallId);
 
+        // New functions implementation function_definition
+        const functionDefinitionId = "function_definition";
+        const functionDefinition = pxt.blocks.getBlockDefinition(functionDefinitionId);
+
+        msg.FUNCTIONS_EDIT_OPTION = functionDefinition.block["FUNCTIONS_EDIT_OPTION"];
+        installBuiltinHelpInfo(functionDefinitionId);
+
+        // New functions implementation function_call
+        const functionCallId = "function_call";
+        const functionCall = pxt.blocks.getBlockDefinition(functionCallId);
+
+        msg.FUNCTIONS_CALL_TITLE = functionCall.block["FUNCTIONS_CALL_TITLE"];
+        installBuiltinHelpInfo(functionCallId);
+
         Blockly.Procedures.flyoutCategory = function (workspace: Blockly.Workspace) {
             let xmlList: HTMLElement[] = [];
 
@@ -2287,41 +2312,41 @@ namespace pxt.blocks {
                 workspace.centerOnBlock(newBlock.id);
             }
 
-            // workspace.registerButtonCallback('CREATE_FUNCTION', function (button) {
-            //     let promptAndCheckWithAlert = (defaultName: string) => {
-            //         Blockly.prompt(newFunctionTitle, defaultName, function (newFunc) {
-            //             // Merge runs of whitespace.  Strip leading and trailing whitespace.
-            //             // Beyond this, all names are legal.
-            //             if (newFunc) {
-            //                 newFunc = newFunc.replace(/[\s\xa0]+/g, ' ').replace(/^ | $/g, '');
-            //                 if (newFunc == newFunction) {
-            //                     // Ok, not ALL names are legal...
-            //                     newFunc = null;
-            //                 }
-            //             }
-            //             if (newFunc) {
-            //                 if (workspace.getVariable(newFunc)) {
-            //                     Blockly.alert((Blockly as any).Msg.VARIABLE_ALREADY_EXISTS.replace('%1',
-            //                         newFunc.toLowerCase()),
-            //                         function () {
-            //                             promptAndCheckWithAlert(newFunc);  // Recurse
-            //                         });
-            //                 }
-            //                 else if (!Blockly.Procedures.isLegalName_(newFunc, workspace)) {
-            //                     Blockly.alert((Blockly as any).Msg.PROCEDURE_ALREADY_EXISTS.replace('%1',
-            //                         newFunc.toLowerCase()),
-            //                         function () {
-            //                             promptAndCheckWithAlert(newFunc);  // Recurse
-            //                         });
-            //                 }
-            //                 else {
-            //                     createFunction(newFunc);
-            //                 }
-            //             }
-            //         });
-            //     };
-            //     promptAndCheckWithAlert('doSomething');
-            // });
+            workspace.registerButtonCallback('CREATE_FUNCTION', function (button) {
+                let promptAndCheckWithAlert = (defaultName: string) => {
+                    Blockly.prompt(newFunctionTitle, defaultName, function (newFunc) {
+                        // Merge runs of whitespace.  Strip leading and trailing whitespace.
+                        // Beyond this, all names are legal.
+                        if (newFunc) {
+                            newFunc = newFunc.replace(/[\s\xa0]+/g, ' ').replace(/^ | $/g, '');
+                            if (newFunc == newFunction) {
+                                // Ok, not ALL names are legal...
+                                newFunc = null;
+                            }
+                        }
+                        if (newFunc) {
+                            if (workspace.getVariable(newFunc)) {
+                                Blockly.alert((Blockly as any).Msg.VARIABLE_ALREADY_EXISTS.replace('%1',
+                                    newFunc.toLowerCase()),
+                                    function () {
+                                        promptAndCheckWithAlert(newFunc);  // Recurse
+                                    });
+                            }
+                            else if (!Blockly.Procedures.isLegalName_(newFunc, workspace)) {
+                                Blockly.alert((Blockly as any).Msg.PROCEDURE_ALREADY_EXISTS.replace('%1',
+                                    newFunc.toLowerCase()),
+                                    function () {
+                                        promptAndCheckWithAlert(newFunc);  // Recurse
+                                    });
+                            }
+                            else {
+                                createFunction(newFunc);
+                            }
+                        }
+                    });
+                };
+                promptAndCheckWithAlert('doSomething');
+            });
             xmlList.push(button as HTMLElement);
 
             function populateProcedures(procedureList: any, templateName: any) {
