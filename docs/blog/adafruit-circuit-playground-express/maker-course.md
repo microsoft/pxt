@@ -6,7 +6,7 @@ We are so excited to partner with [Rob Morrill](https://twitter.com/morrill_rob)
 
 ## What's in the course?
 
-Well, The course is divided into 2 parts...
+Well, the course is divided into 2 parts...
 
 ### General Reference
 
