@@ -201,6 +201,16 @@ interface ClassInfo {
     fields: string[];
 }
 
+const FREE_MASK = 0x80000000
+const ARRAY_MASK = 0x40000000
+const PERMA_MASK = 0x20000000
+const MARKED_MASK = 0x00000001
+const ANY_MARKED_MASK = 0x00000003
+
+function VAR_BLOCK_WORDS(vt: number) {
+    return (((vt) << 12) >> (12 + 2))
+}
+
 export async function dumpheapAsync() {
     let memStart = findAddr("_sdata")
     let memEnd = findAddr("_estack")
@@ -267,6 +277,8 @@ export async function dumpheapAsync() {
             let bp = read32(block)
             let blockSize = bp & 0x7fffffff;
             let isFree = (bp & 0x80000000) != 0
+
+            // console.log(`${hex(block)} -> ${hex(bp)} ${blockSize * 4}`)
 
             let w0 = read32(block + 4)
             let w1 = read32(block + 8)
@@ -372,14 +384,18 @@ export async function dumpheapAsync() {
             let category = ""
             let addWords = 0
             fields = {}
-            if (vtable & 2) {
+            if (vtable & FREE_MASK) {
                 category = "free"
-                numbytes = (vtable >> 2) << 2
-            } else if (vtable & 0x80000000) {
-                numbytes = ((vtable << 1) >>> 3) << 2
+                numbytes = VAR_BLOCK_WORDS(vtable) << 2
+            } else if (vtable & ARRAY_MASK) {
+                numbytes = VAR_BLOCK_WORDS(vtable) << 2
                 category = "arraybuffer sz=" + (numbytes >> 2)
+                if (vtable & PERMA_MASK)
+                    category = "app_alloc sz=" + numbytes
+                else
+                    category = "arraybuffer sz=" + (numbytes >> 2)
             } else {
-                vtable &= ~3
+                vtable &= ~ANY_MARKED_MASK
                 let vt0 = read32(vtable)
                 if ((vt0 >>> 24) != pxt.VTABLE_MAGIC) {
                     console.log(`Invalid vtable: ${hex(vt0)}`)
@@ -464,7 +480,7 @@ export async function dumpheapAsync() {
                         break
                 }
             }
-            // console.log(`${hex(objPtr)} ${category} bytes=${numbytes}`)
+            // console.log(`${hex(objPtr)} vt=${hex(vtable)} ${category} bytes=${numbytes}`)
             if (!byCategory[category]) {
                 byCategory[category] = 0
                 numByCategory[category] = 0
