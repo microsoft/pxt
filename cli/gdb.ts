@@ -279,23 +279,7 @@ export async function dumpheapAsync() {
             let isFree = (bp & 0x80000000) != 0
 
             // console.log(`${hex(block)} -> ${hex(bp)} ${blockSize * 4}`)
-
-            let w0 = read32(block + 4)
-            let w1 = read32(block + 8)
-            let hx = hex(w0)
-            let classification = pointerClassification[hex(block + 4)]
-            if (!classification)
-                classification = vtablePtrs[hx]
-            if (!classification) {
-                if (blockSize == 1312 / 4)
-                    classification = "ST7735WorkBuffer"
-                else if (blockSize == 1184 / 4)
-                    classification = "ZPWM_buffer"
-                else if (w0 & 1 && (w0 >> 16) == 2)
-                    classification = "codal::BufferData"
-                else
-                    classification = "?" // hx
-            }
+            let classification = classifyCPP(block, blockSize)
             if (U.startsWith(classification, "Fiber/"))
                 fiberSize += blockSize * 4
             let mark = `[${isFree ? "F" : "U"}:${blockSize * 4} / ${classification}]`
@@ -320,8 +304,6 @@ export async function dumpheapAsync() {
             console.log(`${cnts[k]}\t${k}`)
         }
     }
-
-    console.log(`fibers: ${fiberSize} bytes, ${numFibers} fibers; ${numListeners} listeners`)
 
     let uf2 = pxtc.UF2.parseFile(new Uint8Array(fs.readFileSync("built/binary.uf2")))
 
@@ -361,6 +343,7 @@ export async function dumpheapAsync() {
 
     let byCategory: pxt.Map<number> = {}
     let numByCategory: pxt.Map<number> = {}
+    let maxFree = 0
 
     /*
     struct VTable {
@@ -387,12 +370,18 @@ export async function dumpheapAsync() {
             if (vtable & FREE_MASK) {
                 category = "free"
                 numbytes = VAR_BLOCK_WORDS(vtable) << 2
+                maxFree = Math.max(numbytes, maxFree)
             } else if (vtable & ARRAY_MASK) {
                 numbytes = VAR_BLOCK_WORDS(vtable) << 2
                 category = "arraybuffer sz=" + (numbytes >> 2)
-                if (vtable & PERMA_MASK)
+                if (vtable & PERMA_MASK) {
                     category = "app_alloc sz=" + numbytes
-                else
+                    let classification = classifyCPP(objPtr, numbytes >> 2)
+                    if (classification != "?")
+                        category = classification
+                    if (U.startsWith(classification, "Fiber/"))
+                        fiberSize += numbytes
+                } else
                     category = "arraybuffer sz=" + (numbytes >> 2)
             } else {
                 vtable &= ~ANY_MARKED_MASK
@@ -507,6 +496,9 @@ export async function dumpheapAsync() {
     for (let c of cats) {
         console.log(`${byCategory[c]}\t${numByCategory[c]}\t${c}`)
     }
+
+    console.log(`max. free block: ${maxFree} bytes`)
+    console.log(`fibers: ${fiberSize} bytes, ${numFibers} fibers; ${numListeners} listeners`)
 
     let dmesg = getDmesg()
     let roots: pxt.Map<HeapRef[]> = {}
@@ -640,6 +632,26 @@ export async function dumpheapAsync() {
                 return mem.slice(start, start + i).toString("utf8")
         }
         return ""
+    }
+
+    function classifyCPP(block: number, blockSize: number) {
+        let w0 = read32(block + 4)
+        let w1 = read32(block + 8)
+        let hx = hex(w0)
+        let classification = pointerClassification[hex(block + 4)]
+        if (!classification)
+            classification = vtablePtrs[hx]
+        if (!classification) {
+            if (blockSize == 1312 / 4)
+                classification = "ST7735WorkBuffer"
+            else if (blockSize == 1184 / 4)
+                classification = "ZPWM_buffer"
+            else if (w0 & 1 && (w0 >> 16) == 2)
+                classification = "codal::BufferData"
+            else
+                classification = "?" // hx
+        }
+        return classification
     }
 }
 
