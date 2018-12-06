@@ -178,7 +178,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
     }
 
     private addCustomBlocksFile() {
-        if (this.props.parent.state.header.githubId) {
+        if (this.props.parent.state.header.githubId || pxt.appTarget.appTheme.addNewTypeScriptFile) {
             this.addTypeScriptFile()
             return
         }
