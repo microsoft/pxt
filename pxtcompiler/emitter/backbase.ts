@@ -1329,9 +1329,10 @@ ${baseLabel}_nochk:
             this.emitInstanceOf(this.builtInClassNo(pxt.BuiltInType.RefAction), "validate")
             this.write(`
                 ${rfNo}mov r0, sp
+                push {r4, r5, r6, r7} ; push args and the lambda
+                ${rfNo}mov r1, sp
                 ${rfNo}bl pxt::pushThreadContext
                 ${gcNo}bl pxtrt::getGlobalsPtr
-                push {r4, r5, r6, r7} ; push args and the lambda
                 mov r6, r0          ; save ctx or globals
                 mov r5, r7          ; save lambda for closure
                 ${gcNo}mov r0, r7
