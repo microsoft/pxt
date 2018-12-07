@@ -18,6 +18,13 @@ interface Array<T> {
     push(item: T): void;
 
     /**
+      * Concatenates the values with another array.
+      * @param arr The other array that is being concatenated with
+      */
+    //% helper=arrayConcat weight=40
+    concat(arr: T[]): T[];
+
+    /**
       * Remove the last element from an array and return it.
       */
     //% help=arrays/pop
