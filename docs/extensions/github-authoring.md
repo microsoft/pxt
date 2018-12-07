@@ -69,10 +69,10 @@ Currently, any GitHub project will show up in your **Extensions** dialog though.
 
 The web app will not let you create extensions with C++. This you still need to do from command line, after installing all required compilers or Docker (depending on target). The good news is that very few extensions contain C++ (mostly because TypeScript is easier to write, test, and in most cases sufficient). The main reason seen so far for needing C++ extensions is the lack of floating point support on the micro:bit (this is now fixed with the [v1 release](https://makecode.com/blog/microbit/v1-beta)).
 
-## Random notes
+## Additional notes
 
-You can use a non-`master` branch by going to **Import URL** and saying something like `https://github.com/jrandomhacker/pxt-mypkg#mybranch`. User note, this hasn't been extensively tested yet.
+* You can use a non-`master` branch by going to **Import URL** and saying something like `https://github.com/jrandomhacker/pxt-mypkg#mybranch`. User note, this hasn't been extensively tested yet.
 
-MakeCode will generally only download files listed in `pxt.json`. Files in GitHub but not in `pxt.json` will be ignored and left alone.
+* MakeCode will generally only download files listed in `pxt.json`. Files in GitHub but not in `pxt.json` will be ignored and left alone.
 
-The GitHub authoring feature is now available in all MakeCode editors.
+* The GitHub authoring feature is now available in all MakeCode editors.
