@@ -40,7 +40,8 @@ namespace pxt.analytics {
                 const measures: Map<number> = defaultMeasures || {};
                 Object.keys(data).forEach(k => {
                     if (typeof data[k] == "string") props[k] = <string>data[k];
-                    else measures[k] = <number>data[k];
+                    else if (typeof data[k] == "number") measures[k] = <number>data[k];
+                    else props[k] = JSON.stringify(data[k] || '');
                 });
                 pxt.aiTrackEvent(id, props, measures);
             }
