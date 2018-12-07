@@ -29,6 +29,22 @@ interface OwnedRange {
     range: monaco.Range;
 }
 
+/**
+ * These are internal APIs that will likely need to be changed if the Monaco
+ * version changes. Monaco now supports language service based folding, so
+ * this should probably be removed in favor of that.
+ */
+interface FoldingController extends monaco.editor.IEditorContribution {
+    onModelChanged(): void;
+    unfold(levels: number): void;
+    fold(levels: number, up: boolean): void;
+    foldAll(): void;
+    unfoldAll(): void;
+    foldLevel(foldLevel: number, selectedLineNumbers: number[]): void;
+    foldUnfoldRecursively(isFold: boolean): void;
+}
+
+
 class FieldEditorManager {
     protected fieldEditors: pxtblockly.MonacoFieldEditorDefinition[] = [];
     protected decorations: pxt.Map<string[]> = {};
@@ -41,6 +57,12 @@ class FieldEditorManager {
 
     getDecorations(owner: string) {
         return this.decorations[owner] || [];
+    }
+
+    allDecorations() {
+        const res: string[] = [];
+        Object.keys(this.decorations).forEach(owner => res.push(...this.getDecorations(owner)));
+        return res;
     }
 
     setDecorations(owner: string, decorations: string[]) {
@@ -97,7 +119,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     loadingMonaco: boolean;
     giveFocusOnLoading: boolean = false;
 
-    protected feWidget: FieldEditorHost;
+    protected feWidget: FieldEditorHost | ViewZoneEditorHost;
+    protected feMatches: pxtc.service.SymbolMatch[];
+    protected foldMatches = true;
 
     hasBlocks() {
         if (!this.currFile) return true
@@ -343,7 +367,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     handleMatches(matches: pxtc.service.SymbolMatch[]) {
-        if (matches && manager) {
+        this.feMatches = matches;
+        if (matches && manager && this.isVisible) {
             const model = this.editor.getModel();
             manager.clearRanges();
             matches.forEach(match => {
@@ -360,6 +385,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                                 glyphMarginClassName: fe.glyphCssClass
                             }
                         });
+
+                        decorations.push({
+                            range: new monaco.Range(line, location.column + 1, location.endLine + 1, location.endColumn + 1),
+                            options: {}
+                        });
                         manager.trackRange(fe.id, line, new monaco.Range(line, location.column + 1, location.endLine + 1, location.endColumn + 1))
                     })
 
@@ -367,6 +397,28 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     manager.setDecorations(fe.id, this.editor.deltaDecorations(old, decorations));
                 }
             });
+
+            if (this.foldMatches) {
+                this.foldMatches = false;
+                const selection = this.editor.getSelection();
+                let selections: monaco.Selection[];
+                Promise.mapSeries(
+                    manager.allDecorations()
+                        .map(id => model.getDecorationRange(id))
+                        .filter(range => range.startLineNumber != range.endLineNumber),
+                        range => this.indentRangeAsync(range))
+                    .then(ranges => {
+                        selections = ranges.map(rangeToSelection);
+                        this.editor.setSelections(selections);
+                        const folder = this.getFoldingController();
+
+                        // The folding controller has a delay before it updates its model,
+                        // so we need to force it
+                        folder.onModelChanged();
+                        folder.foldUnfoldRecursively(true);
+                    })
+                    .then(() => this.editor.setSelection(selection));
+            }
         }
     }
 
@@ -374,8 +426,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (this.feWidget) {
             this.feWidget.close();
         }
-        this.feWidget = new FieldEditorHost(fe, range, this.editor.getModel());
-        this.feWidget.showAsync(this.editor);
+        this.feWidget = new ViewZoneEditorHost(fe, range, this.editor.getModel());
+        this.feWidget.showAsync(this.editor)
+            .then(edit => {
+                if (edit) {
+                    this.editModelAsync(edit.range, edit.replacement)
+                        .then(newRange => this.indentRangeAsync(newRange));
+                }
+            })
     }
 
     public loadMonacoAsync(): Promise<void> {
@@ -640,7 +698,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.editor.onMouseDown((e: monaco.editor.IEditorMouseEvent) => {
             if (e.target.type !== monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) {
                 if (this.feWidget && e.target.type !== monaco.editor.MouseTargetType.CONTENT_WIDGET) {
-                    this.feWidget.close();
+                    // this.feWidget.close();
                 }
                 return;
             }
@@ -695,6 +753,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             })
     }
 
+    private getFoldingController(): FoldingController {
+        return this.editor.getContribution("editor.contrib.folding") as FoldingController
+    }
+
     getId() {
         return "monacoEditor"
     }
@@ -729,6 +791,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let editorArea = document.getElementById("monacoEditorArea");
         let editorDiv = document.getElementById("monacoEditorInner");
         editorArea.insertBefore(loading, editorDiv);
+
+        this.foldMatches = true;
 
         return this.loadMonacoAsync()
             .then(() => {
@@ -806,6 +870,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         }
                         this.updateDiagnostics();
                         this.changeCallback();
+                        if (this.feMatches) {
+                            this.handleMatches(this.feMatches);
+                        }
                     });
                 }
 
@@ -1608,6 +1675,52 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
         return monacoBlock;
     }
+
+    private indentRangeAsync(range: monaco.IRange): Promise<monaco.IRange> {
+        const model = this.editor.getModel();
+
+        const minIndent = model.getLineFirstNonWhitespaceColumn(range.startLineNumber) - 1;
+        const innerIndent = createIndent(model.getOneIndent().length + minIndent);
+        const lines = model.getValueInRange(range).split(/\n/);
+
+        const newText = lines.map((line, index) => {
+            if (index === 0) {
+                return line;
+            }
+            else if (index === lines.length - 1) {
+                return line.replace(/^\s*/, createIndent(minIndent));
+            }
+            else {
+                return line.replace(/^\s*/, innerIndent);
+            }
+        }).join(model.getEOL());
+
+        return this.editModelAsync(range, newText);
+    }
+
+    private editModelAsync(range: monaco.IRange, newText: string): Promise<monaco.IRange> {
+        return new Promise(resolve => {
+            const model = this.editor.getModel();
+
+            const disposable = this.editor.onDidChangeModelContent(e => {
+                disposable.dispose();
+                this.editor.setSelection(e.changes[0].range);
+                resolve(e.changes[0].range);
+            });
+
+            model.pushEditOperations(this.editor.getSelections(), [{
+                identifier: { major: 0, minor: 0 },
+                range: model.validateRange(range),
+                text: newText,
+                forceMoveMarkers: true,
+                isAutoWhitespaceEdit: true
+            }], inverseOp => [rangeToSelection(inverseOp[0].range)]);
+        });
+    }
+}
+
+function rangeToSelection(range: monaco.IRange): monaco.Selection {
+    return new monaco.Selection(range.startLineNumber, range.startColumn, range.endLineNumber, range.endColumn);
 }
 
 class FieldEditorHost implements pxtblockly.MonacoFieldEditorHost, monaco.editor.IContentWidget {
@@ -1659,19 +1772,6 @@ class FieldEditorHost implements pxtblockly.MonacoFieldEditorHost, monaco.editor
                 editor.addContentWidget(this);
                 return this.fe.showEditorAsync(this.range, this);
             })
-            .then(edit => {
-                this.editor.executeEdits("", [
-                    {
-                        identifier: { major: 0, minor: 0 },
-                        range: edit.range,
-                        text: edit.replacement,
-                        forceMoveMarkers: false
-                    }
-                ]);
-            })
-            .catch(e => {
-                // TODO?
-            })
             .finally(() => {
                 this.close();
             })
@@ -1692,6 +1792,100 @@ class FieldEditorHost implements pxtblockly.MonacoFieldEditorHost, monaco.editor
     }
 }
 
+
+class ViewZoneEditorHost implements pxtblockly.MonacoFieldEditorHost, monaco.editor.IViewZone {
+    domNode: HTMLDivElement;
+    afterLineNumber: number;
+    heightInPx = 500;
+
+    protected content: HTMLDivElement;
+    protected editor: monaco.editor.IStandaloneCodeEditor;
+    protected blocks: pxtc.BlocksInfo;
+    protected id: number;
+    protected _deferredShow: () => void;
+
+    suppressMouseDown = true;
+
+    constructor(protected fe: pxtblockly.MonacoFieldEditor, protected range: monaco.Range, protected model: monaco.editor.IModel) {
+        this.afterLineNumber = range.endLineNumber;
+        this.domNode = document.createElement("div");
+        this.domNode.className = "monaco-field-editor-frame";
+
+        this.domNode.style.backgroundColor = "darkgrey";
+    }
+
+    getId() {
+        return "pxt-monaco-field-editor";
+    }
+
+    contentDiv(): HTMLDivElement {
+        if (!this.content) {
+            this.content = document.createElement("div");
+            this.domNode.appendChild(this.content);
+        }
+        return this.content;
+    }
+
+    showAsync(editor: monaco.editor.IStandaloneCodeEditor) {
+        this.editor = editor;
+        return compiler.getBlocksAsync()
+            .then(bi => {
+                this.blocks = bi;
+                return this.showViewZoneAsync();
+            })
+            .then(() => this.fe.showEditorAsync(this.range, this))
+            .finally(() => {
+                this.close();
+            })
+    }
+
+    onComputedHeight(height: number) {
+        this.contentDiv().style.height = height + "px";
+    }
+
+    onDomNodeTop(top: number) {
+        if (this._deferredShow) {
+            this._deferredShow();
+            this._deferredShow = undefined;
+        }
+    }
+
+    protected showViewZoneAsync(): Promise<void> {
+        if (this._deferredShow) return Promise.resolve();
+        return new Promise(resolve => {
+            this._deferredShow = resolve;
+            this.editor.changeViewZones(accessor => {
+                this.id = accessor.addZone(this);
+            });
+        });
+    }
+
+    protected resizeViewZoneAsync(): Promise<void> {
+        if (!this.id) return Promise.resolve();
+        return new Promise(resolve => {
+            this.editor.changeViewZones(accessor => {
+                accessor.layoutZone(this.id);
+            });
+        });
+    }
+
+    getText(range: monaco.Range): string {
+        return this.model.getValueInRange(range);
+    }
+
+    blocksInfo(): pxtc.BlocksInfo {
+        return this.blocks;
+    }
+
+    close(): void {
+        this.fe.onClosed();
+        this.fe.dispose();
+        this.editor.changeViewZones(accessor => {
+            accessor.removeZone(this.id);
+        });
+    }
+}
+
 let manager: FieldEditorManager;
 
 export function registerFieldEditor(def: pxtblockly.MonacoFieldEditorDefinition) {
@@ -1703,4 +1897,10 @@ export function registerFieldEditor(def: pxtblockly.MonacoFieldEditorDefinition)
 
 function firstWord(s: string) {
     return /[^\.]+/.exec(s)[0]
+}
+
+function createIndent(length: number) {
+    let res = '';
+    for (let i = 0; i < length; i++) res += " ";
+    return res;
 }

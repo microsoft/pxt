@@ -127,6 +127,7 @@ namespace pxt.vs {
             wordBasedSuggestions: true,
             lineNumbersMinChars: 3,
             formatOnPaste: true,
+            folding: true,
             minimap: {
                 enabled: false
             },
