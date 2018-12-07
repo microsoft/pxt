@@ -319,13 +319,6 @@ declare namespace pxt {
         name: string;
         path?: string;
         subitems?: TOCMenuEntry[];
-
-        prevName?: string;
-        prevPath?: string;
-
-        nextName?: string;
-        nextPath?: string;
-
         markdown?: string;
     }
 

@@ -249,19 +249,6 @@ namespace pxt.docs {
 
         params["breadcrumb"] = breadcrumbHtml;
 
-        if (currentTocEntry) {
-            if (currentTocEntry.prevPath) {
-                params["prev"] = `<a href="${normalizeUrl(currentTocEntry.prevPath)}" class="navigation navigation-prev " title="${currentTocEntry.prevName}">
-                                    <i class="icon angle left"></i>
-                                </a>`;
-            }
-            if (currentTocEntry.nextPath) {
-                params["next"] = `<a href="${normalizeUrl(currentTocEntry.nextPath)}" class="navigation navigation-next " title="${currentTocEntry.nextName}">
-                                    <i class="icon angle right"></i>
-                                </a>`;
-            }
-        }
-
         if (theme.boardName)
             params["boardname"] = html2Quote(theme.boardName);
         if (theme.boardNickname)
@@ -857,13 +844,6 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
         let previousNode: pxt.TOCMenuEntry;
         // Scan tree and build next / prev paths
         let buildPrevNext = (node: pxt.TOCMenuEntry) => {
-            if (previousNode) {
-                node.prevName = previousNode.name;
-                node.prevPath = previousNode.path;
-
-                previousNode.nextName = node.name;
-                previousNode.nextPath = node.path;
-            }
             if (node.path) {
                 previousNode = node;
             }
