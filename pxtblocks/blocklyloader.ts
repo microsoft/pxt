@@ -2080,6 +2080,7 @@ namespace pxt.blocks {
         msg.FUNCTION_CREATE_NEW = lf("Make a Function...");
         msg.FUNCTION_WARNING_DUPLICATE_ARG = lf("Functions cannot use the same argument name more than once.");
         msg.FUNCTION_WARNING_ARG_NAME_IS_FUNCTION_NAME = lf("Argument names must not be the same as the function name.");
+        msg.FUNCTION_WARNING_EMPTY_NAME = lf("Function and argument names cannot be empty.");
         msg.FUNCTIONS_DEFAULT_FUNCTION_NAME = lf("do_something");
         msg.FUNCTIONS_DEFAULT_BOOLEAN_ARG_NAME = lf("bool");
         msg.FUNCTIONS_DEFAULT_STRING_ARG_NAME = lf("text");

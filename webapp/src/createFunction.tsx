@@ -7,10 +7,10 @@ import * as codecard from "./codecard"
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
-// TODO GUJEN missing delete icon
 // TODO GUJEN can't drag function call with variable ("var already exists with different ID")
 // TODO GUJEN TypeError: a.getAttribute is not a function when loading MakeCode editor
-// TODO GUJEN can't highlight text in arg editors
+// TODO GUJEN pass validators for function and parameter names
+// TODO GUJEN add function flyout category label
 
 export interface CreateFunctionDialogState {
     visible?: boolean;
@@ -73,7 +73,6 @@ export class CreateFunctionDialog extends data.Component<ISettingsProps, CreateF
         }
 
         // Adjust the WidgetDiv classname so that it can show up above the dimmer
-        Blockly.hideChaff();
         Blockly.WidgetDiv.DIV.classList.add("functioneditor");
 
         // Create the function editor workspace
@@ -81,8 +80,9 @@ export class CreateFunctionDialog extends data.Component<ISettingsProps, CreateF
             trashcan: false,
             scrollbars: true
         });
-
+        (functionEditorWorkspace as any).showContextMenu_ = () => {}; // Disable the context menu
         functionEditorWorkspace.clear();
+
         let functionBeingEdited = functionEditorWorkspace.newBlock('function_declaration') as Blockly.FunctionDeclarationBlock;
         (functionBeingEdited as any).domToMutation(initialMutation);
         functionBeingEdited.initSvg();
