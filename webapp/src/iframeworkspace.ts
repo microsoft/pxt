@@ -25,7 +25,7 @@ function listAsync() {
         lastSyncState = msg.editor
 
         // controllerId is a unique identifier of the controller source
-        pxt.tickEvent("pxt.controller", { controllerId: msg.controllerId });
+        pxt.tickEvent("pxt.controller", { controllerId: msg.controllerId || "" });
 
         return mem.provider.listAsync()
     })
