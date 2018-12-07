@@ -41,7 +41,7 @@ namespace pxt.analytics {
                 Object.keys(data).forEach(k => {
                     if (typeof data[k] == "string") props[k] = <string>data[k];
                     else if (typeof data[k] == "number") measures[k] = <number>data[k];
-                    else props[k] = JSON.stringify(data[k]) || '';
+                    else props[k] = JSON.stringify(data[k] || '');
                 });
                 pxt.aiTrackEvent(id, props, measures);
             }
