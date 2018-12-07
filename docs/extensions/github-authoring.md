@@ -75,13 +75,4 @@ You can use a non-`master` branch by going to **Import URL** and saying somethin
 
 MakeCode will generally only download files listed in `pxt.json`. Files in GitHub but not in `pxt.json` will be ignored and left alone.
 
-## Roll-out
-
-The GitHub authoring feature is currently available in:
-
-* `/beta` version of [micro:bit editor](https://makecode.microbit.org/beta), see [blog post](https://makecode.com/blog/microbit/v1-beta)
-* `/beta` version of [Adafruit Circuit Playground Express](https://makecode.adafruit.com/beta)
-* The [Maker Editor](https://maker.makecode.com)
-* The [BrainPad editor](https://makecode.brainpad.com)
-
-Other editors will follow.
+The GitHub authoring feature is now available in all MakeCode editors.
