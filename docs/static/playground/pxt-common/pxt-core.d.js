@@ -17,7 +17,6 @@ interface Array<T> {
     //% blockId="array_push" block="%list| add value %value| to end" blockNamespace="arrays"
     push(item: T): void;
 
-
     /**
       * Concatenates the values with another array.
       * @param arr The other array that is being concatenated with
