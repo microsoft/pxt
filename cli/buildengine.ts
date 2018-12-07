@@ -207,7 +207,7 @@ export function buildHexAsync(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
         buildCache = nodeutil.readJson(buildCachePath)
     }
 
-    if (buildCache.sha == extInfo.sha) {
+    if (buildCache.sha == extInfo.sha && !process.env["PXT_RUNTIME_DEV"]) {
         pxt.debug("Skipping C++ build.")
         return tasks
     }

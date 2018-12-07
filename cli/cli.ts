@@ -30,7 +30,7 @@ import * as gitfs from './gitfs';
 const rimraf: (f: string, opts: any, cb: (err: any, res: any) => void) => void = require('rimraf');
 
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] !== "no";
-let forceLocalBuild = process.env["PXT_FORCE_LOCAL"] === "yes"
+let forceLocalBuild = !!process.env["PXT_FORCE_LOCAL"]
 
 function parseBuildInfo(parsed?: commandParser.ParsedCommand) {
     const cloud = parsed && parsed.flags["cloudbuild"];
@@ -5322,6 +5322,21 @@ function initCommands() {
     // Top level commands
     simpleCmd("help", "display this message or info about a command", pc => {
         p.printHelp(pc.args, console.log)
+        console.log(`
+The following environment variables modify the behavior of the CLI when set to
+non-empty string:
+
+PXT_DEBUG        - display extensive logging info
+
+These apply to the C++ runtime builds:
+
+PXT_FORCE_LOCAL  - compile C++ on the local machine, not the cloud service
+PXT_NODOCKER     - don't use Docker image, and instead use host's
+                   arm-none-eabi-gcc (doesn't apply to Linux targets)
+PXT_RUNTIME_DEV  - always rebuild the C++ runtime, allowing for modification
+                   in the lower level runtime if any
+PXT_ASMDEBUG     - embed additional information in generated binary.asm file
+`)
         return Promise.resolve();
     }, "[all|command]");
 
