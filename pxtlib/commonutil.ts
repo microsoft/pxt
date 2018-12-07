@@ -262,7 +262,7 @@ namespace ts.pxtc.Util {
         }
     }
 
-    export function hash32(s: string): number {
+    export function codalHash16(s: string): number {
         // same hashing as https://github.com/lancaster-university/codal-core/blob/c1fe7a4c619683a50d47cb0c19d15b8ff3bd16a1/source/drivers/PearsonHash.cpp#L26
         const hashTable = [
             251, 175, 119, 215, 81, 14, 79, 191, 103, 49, 181, 143, 186, 157, 0,
@@ -294,17 +294,17 @@ namespace ts.pxtc.Util {
             return hash;
         }
         function hashN(s: string, byteCount: number): number {
+            // this hash is used by enum.isHash. So any modification should be considered a breaking change.
             let hash;
-            const buffer = new Uint8Array(s.length * 2);
+            const buffer = new Uint8Array(s.length); // TODO unicode
             for (let i = 0; i < s.length; ++i) {
                 const c = s.charCodeAt(i);
-                buffer[2 * i] = c & 0xff;
-                buffer[2 * i + 1] = (c >> 8) & 0xff;
+                buffer[i] = c & 0xff;
             }
             let res = 0;
             for (let i = 0; i < byteCount; ++i) {
                 hash = eightBitHash(buffer);
-                res |= (hash << i);
+                res |= hash << (8 * i);
                 buffer[0] = (buffer[0] + 1) % 255;
             }
             return res;
@@ -312,7 +312,7 @@ namespace ts.pxtc.Util {
 
 
         if (!s) return 0;
-        return hashN(s, 4);
+        return hashN(s, 2);
     }
 }
 

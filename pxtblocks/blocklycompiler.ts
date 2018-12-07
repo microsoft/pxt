@@ -1646,7 +1646,7 @@ namespace pxt.blocks {
                                 newNode = H.mkAssign(mkText(name), H.mkSimpleCall("<<", [H.mkNumberLiteral(1), H.mkNumberLiteral(shift)]));
                             }
                         } else if (info.isHash) {
-                            const hash = ts.pxtc.Util.hash32(name);
+                            const hash = ts.pxtc.Util.codalHash16(name.toLowerCase());
                             newNode = H.mkAssign(mkText(name), H.mkNumberLiteral(hash))
                         }
                         if (!newNode) {
