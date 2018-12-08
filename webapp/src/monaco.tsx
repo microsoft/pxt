@@ -7,7 +7,6 @@ import * as core from "./core";
 import * as toolboxeditor from "./toolboxeditor"
 import * as compiler from "./compiler"
 import * as sui from "./sui";
-import * as data from "./data";
 import * as snippets from "./monacoSnippets"
 import * as toolbox from "./toolbox";
 import * as workspace from "./workspace";
@@ -27,6 +26,7 @@ interface OwnedRange {
     line: number;
     owner: string;
     range: monaco.Range;
+    id: number;
 }
 
 /**
@@ -50,6 +50,8 @@ class FieldEditorManager {
     protected decorations: pxt.Map<string[]> = {};
     protected liveRanges: OwnedRange[] = [];
 
+    private rangeID = 0;
+
     addFieldEditor(definition: pxtblockly.MonacoFieldEditorDefinition) {
         this.fieldEditors.push(definition);
         compiler.setSymbolMatchers(this.fieldEditors.map(fe => fe.matcher));
@@ -71,6 +73,7 @@ class FieldEditorManager {
 
     clearRanges() {
         this.liveRanges = [];
+        this.rangeID = 0;
     }
 
     trackRange(owner: string, line: number, range: monaco.Range): boolean {
@@ -78,7 +81,7 @@ class FieldEditorManager {
             return false;
         }
 
-        this.liveRanges.push({ line, owner, range });
+        this.liveRanges.push({ line, owner, range, id: this.rangeID++ });
         return true;
     }
 
@@ -122,6 +125,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     protected feWidget: FieldEditorHost | ViewZoneEditorHost;
     protected feMatches: pxtc.service.SymbolMatch[];
     protected foldMatches = true;
+    protected activeRangeID: number;
 
     hasBlocks() {
         if (!this.currFile) return true
@@ -370,6 +374,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.feMatches = matches;
         if (matches && manager && this.isVisible) {
             const model = this.editor.getModel();
+            this.activeRangeID = null;
             manager.clearRanges();
             matches.forEach(match => {
                 const fe = manager.getFieldEditorForMatch(match);
@@ -708,6 +713,15 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             if (decorations.length) {
                 const lineInfo = manager.getInfoForLine(line);
                 if (lineInfo) {
+                    if (this.feWidget && this.activeRangeID != null && lineInfo.id === this.activeRangeID) {
+                        this.feWidget.close();
+                        this.activeRangeID = null;
+                        return;
+                    }
+                    else {
+                        this.activeRangeID = lineInfo.id;
+                    }
+
                     const fe = manager.getFieldEditorById(lineInfo.owner);
                     if (fe) {
                         this.showFieldEditor(lineInfo.range, new fe.proto());
@@ -1687,9 +1701,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             if (index === 0) {
                 return line;
             }
-            else if (index === lines.length - 1) {
-                return line.replace(/^\s*/, createIndent(minIndent));
-            }
             else {
                 return line.replace(/^\s*/, innerIndent);
             }
@@ -1804,7 +1815,7 @@ class ViewZoneEditorHost implements pxtblockly.MonacoFieldEditorHost, monaco.edi
     protected id: number;
     protected _deferredShow: () => void;
 
-    suppressMouseDown = true;
+    suppressMouseDown = false;
 
     constructor(protected fe: pxtblockly.MonacoFieldEditor, protected range: monaco.Range, protected model: monaco.editor.IModel) {
         this.afterLineNumber = range.endLineNumber;

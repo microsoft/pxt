@@ -84,6 +84,7 @@ namespace pxtblockly {
             this.state = bitmap.copy()
 
             this.root = new svg.SVG();
+            this.root.setClass("sprite-canvas-controls");
             this.group = this.root.group();
             this.createDefs();
 
