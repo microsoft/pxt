@@ -220,7 +220,6 @@ function setupBlocklyAsync() {
 }
 
 function renderSnippets() {
-    var downloadScreenshots = /screenshots=1/i.test(window.location.href);
     var path = window.location.href.split('/').pop().split(/[?#]/)[0];
     ksRunnerReady(function () {
         setupSidebar();
@@ -241,8 +240,7 @@ function renderSnippets() {
                     snippetReplaceParent: true,
                     simulator: true,
                     hex: true,
-                    hexName: path,
-                    downloadScreenshots: downloadScreenshots
+                    hexName: path
                 });
             }).done();
     });

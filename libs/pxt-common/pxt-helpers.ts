@@ -140,6 +140,17 @@ namespace helpers {
         return initialValue
     }
 
+    export function arrayConcat<T>(arr: T[], otherArr: T[]): T[]{
+        let out: T[] = [];
+        for (let value of arr) {
+            out.push(value);
+        }
+        for (let value of otherArr) {
+            out.push(value);
+        }
+        return out;
+    }
+
     export function arraySlice<T>(arr: T[], start: number, end: number): T[] {
         const res: T[] = [];
         const len = arr.length;

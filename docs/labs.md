@@ -8,7 +8,7 @@ A collection of experimental MakeCode Editors created by the community.
 
 Experimental Editors are not supported by the Microsoft MakeCode team.
 To be listed on this page, your editor must be open source on GitHub,
-preferrably under the MIT License. 
+preferably under the MIT License. 
 
 ## ~
 

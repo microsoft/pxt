@@ -169,6 +169,10 @@ namespace testNamespace {
      * Field Editors
      */
 
+    //% blockId=test_sliderFieldEditor block="%value"
+    //% value.min=0 value.max=500
+    export function sliderFieldEditor(value: number): void {  }
+
     //% blockId=test_customFieldEditor block="%value=test_customShadowField"
     export function customFieldEditor(value: number): void {  }
 

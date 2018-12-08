@@ -23,7 +23,6 @@ namespace pxt.runner {
         package?: string;
         showEdit?: boolean;
         showJavaScript?: boolean; // default is to show blocks first
-        downloadScreenshots?: boolean;
         split?: boolean; // split in multiple divs if too big
     }
 
@@ -136,22 +135,6 @@ namespace pxt.runner {
 
         // inject container
         $container.replaceWith(r as any);
-
-        // download screenshots
-        if (options.downloadScreenshots && woptions.hexname) {
-            pxt.debug("Downloading screenshot for: " + woptions.hexname);
-            let filename = woptions.hexname.substr(0, woptions.hexname.lastIndexOf('.'));
-            let fontSize = window.getComputedStyle($svg.get(0).getElementsByClassName("blocklyText").item(0)).getPropertyValue("font-size");
-            let svgElement = $svg.get(0) as any;
-            let bbox = $svg.get(0).getBoundingClientRect();
-            pxt.blocks.layout.svgToPngAsync(svgElement, 0, 0, bbox.width, bbox.height, 4)
-                .done(uri => {
-                    if (uri)
-                        BrowserUtils.browserDownloadDataUri(
-                            uri,
-                            (name || `${pxt.appTarget.nickname || pxt.appTarget.id}-${filename}`) + ".png");
-                });
-        }
     }
 
     let renderQueue: {
@@ -334,7 +317,7 @@ namespace pxt.runner {
             })
             .then((nsStyleBuffer) => {
                 Object.keys(pxt.toolbox.blockColors).forEach((ns) => {
-                    const color = pxt.toolbox.blockColors[ns] as string;
+                    const color = pxt.toolbox.getNamespaceColor(ns);
                     nsStyleBuffer += `
                         span.docs.${ns.toLowerCase()} {
                             background-color: ${color} !important;

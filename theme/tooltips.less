@@ -1,0 +1,36 @@
+
+
+@tooltipBackground: @primaryColor;
+@tooltipBorder: darken(@tooltipBackground, 10%);
+
+.pxt-tooltip {
+    color: @white;
+    background-color: @tooltipBackground !important;
+    border: 1px solid @tooltipBorder !important;
+    padding: .75rem 1rem !important;
+    font-size: 1rem !important;
+    line-height: 1.25rem !important;
+}
+
+.pxt-tooltip {
+    &.place-top {
+        &:after {
+            border-top-color: @tooltipBorder !important;
+        }
+    }
+    &.place-bottom {
+        &:after {
+            border-bottom-color: @tooltipBorder !important;
+        }
+    }
+    &.place-left {
+        &:after {
+            border-left-color: @tooltipBorder !important;
+        }
+    }
+    &.place-right {
+        &:after {
+            border-right-color: @tooltipBorder !important;
+        }
+    }
+}

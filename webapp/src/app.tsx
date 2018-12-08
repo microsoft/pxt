@@ -31,6 +31,7 @@ import * as filelist from "./filelist";
 import * as container from "./container";
 import * as scriptsearch from "./scriptsearch";
 import * as projects from "./projects";
+import * as scriptmanager from "./scriptmanager";
 import * as extensions from "./extensions";
 import * as sounds from "./sounds";
 import * as make from "./make";
@@ -98,6 +99,7 @@ export class ProjectView
     extensions: extensions.Extensions;
     shareEditor: share.ShareEditor;
     languagePicker: lang.LanguagePicker;
+    scriptManagerDialog: scriptmanager.ScriptManagerDialog;
     importDialog: projects.ImportDialog;
     exitAndSaveDialog: projects.ExitAndSaveDialog;
     chooseHwDialog: projects.ChooseHwDialog;
@@ -852,7 +854,13 @@ export class ProjectView
         this.stopSimulator(true);
         this.clearSerial()
 
-        Util.jsonMergeFrom(editorState || {}, this.state.editorState || {});
+        // Merge current and new state but only if the new state members are undefined
+        let oldEditorState = this.state.editorState;
+        if (oldEditorState) {
+            if (editorState.filters === undefined) editorState.filters = oldEditorState.filters;
+            if (editorState.hasCategories === undefined) editorState.hasCategories = oldEditorState.hasCategories;
+            if (editorState.searchBar === undefined) editorState.searchBar = oldEditorState.searchBar;
+        }
 
         return (h.backupRef ? workspace.restoreFromBackupAsync(h) : Promise.resolve())
             .then(() => pkg.loadPkgAsync(h.id))
@@ -1220,6 +1228,10 @@ export class ProjectView
 
     saveProjectToFileAsync(): Promise<void> {
         const mpkg = pkg.mainPkg;
+        if (saveAsBlocks()) {
+            pxt.BrowserUtils.browserDownloadText(pkg.mainPkg.readFile("main.blocks"), pkg.genFileName(".blocks"), 'application/xml');
+            return Promise.resolve();;
+        }
         if (pxt.commands.saveProjectAsync) {
             core.infoNotification(lf("Saving..."))
             return pkg.mainPkg.saveToJsonAsync(this.getPreferredEditor())
@@ -1517,7 +1529,7 @@ export class ProjectView
                 return this.saveProjectNameAsync()
                     .then(() => this.saveFileAsync())
                     .then(() => {
-                        if (!pxt.appTarget.compile.hasHex || pxt.appTarget.compile.useMkcd || pxt.appTarget.compile.saveAsPNG) {
+                        if (!pxt.appTarget.compile.hasHex || pxt.appTarget.compile.useMkcd || pxt.appTarget.compile.saveAsPNG || saveAsBlocks()) {
                             this.saveProjectToFileAsync()
                                 .finally(() => {
                                     this.setState({ isSaving: false });
@@ -1975,6 +1987,10 @@ export class ProjectView
         }
     }
 
+    showScriptManager() {
+        this.scriptManagerDialog.show();
+    }
+
     importProjectDialog() {
         this.importDialog.show();
     }
@@ -2226,7 +2242,7 @@ export class ProjectView
             header: lf("Rename your project"),
             agreeLbl: lf("Save"),
             agreeClass: "green",
-            defaultValue: lf("Enter your project name here")
+            placeholder: lf("Enter your project name here")
         };
         return core.promptAsync(opts).then(res => {
             if (res === null) return Promise.resolve(false); // null means cancelled, empty string means ok (but no value entered)
@@ -2416,6 +2432,15 @@ export class ProjectView
     }
 
     ///////////////////////////////////////////////////////////
+    ////////////         Script Manager           /////////////
+    ///////////////////////////////////////////////////////////
+
+    private handleScriptManagerDialogClose = () => {
+        // When the script manager dialog closes, we want to refresh our projects list in case anything has changed
+        this.home.forceUpdate();
+    }
+
+    ///////////////////////////////////////////////////////////
     ////////////             REFS                 /////////////
     ///////////////////////////////////////////////////////////
 
@@ -2429,6 +2454,10 @@ export class ProjectView
 
     private handleExtensionRef = (c: extensions.Extensions) => {
         this.extensions = c;
+    }
+
+    private handleScriptManagerDialogRef = (c: scriptmanager.ScriptManagerDialog) => {
+        this.scriptManagerDialog = c;
     }
 
     private handleImportDialogRef = (c: projects.ImportDialog) => {
@@ -2569,6 +2598,7 @@ export class ProjectView
                 {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={this.handleScriptSearchRef} />}
                 {sandbox ? undefined : <extensions.Extensions parent={this} ref={this.handleExtensionRef} />}
                 {inHome ? <projects.ImportDialog parent={this} ref={this.handleImportDialogRef} /> : undefined}
+                {inHome && targetTheme.scriptManager ? <scriptmanager.ScriptManagerDialog parent={this} ref={this.handleScriptManagerDialogRef} onClose={this.handleScriptManagerDialogClose} /> : undefined}
                 {sandbox ? undefined : <projects.ExitAndSaveDialog parent={this} ref={this.handleExitAndSaveDialogRef} />}
                 <projects.ChooseHwDialog parent={this} ref={this.handleChooseHwDialogRef} />
                 {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={this.handleShareEditorRef} />}
@@ -2904,6 +2934,12 @@ function clearHashChange() {
     window.removeEventListener("hashchange", handleHashChange)
 }
 
+function saveAsBlocks(): boolean {
+    try {
+        return /saveblocks=1/.test(window.location.href) && !!pkg.mainPkg.readFile("main.blocks")
+    } catch (e) { return false; }
+}
+
 function initExtensionsAsync(): Promise<void> {
     if (!pxt.appTarget.appTheme || !pxt.appTarget.appTheme.extendEditor) return Promise.resolve();
 
@@ -3140,14 +3176,7 @@ document.addEventListener("DOMContentLoaded", () => {
             pxsim.U.remove(document.getElementById('loading'));
             return workspace.loadedAsync();
         })
-        .done(() => {
-            // preload delay loaded resources
-            if ((window as any).requestIdleCallback) {
-                (window as any).requestIdleCallback(() => {
-                    if (theEditor) theEditor.loadBlocklyAsync().done();
-                })
-            }
-        })
+        .done()
 
     document.addEventListener("visibilitychange", ev => {
         if (theEditor)

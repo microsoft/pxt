@@ -138,11 +138,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
 
         this.typeScriptSaveable = false;
-        this.editor.clear();
+        pxt.blocks.clearWithoutEvents(this.editor);
         try {
             const text = s || `<block type="${ts.pxtc.ON_START_TYPE}"></block>`;
             const xml = Blockly.Xml.textToDom(text);
-            Blockly.Xml.domToWorkspace(xml, this.editor);
+            pxt.blocks.domToWorkspaceNoEvents(xml, this.editor);
 
             this.initLayout();
             this.editor.clearUndo();
@@ -151,7 +151,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.typeScriptSaveable = true;
         } catch (e) {
             pxt.log(e);
-            this.editor.clear();
+            pxt.blocks.clearWithoutEvents(this.editor);
             this.switchToTypeScript();
             this.changeCallback();
             return false;
@@ -266,7 +266,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         Blockly.prompt = function (message, defaultValue, callback) {
             return core.promptAsync({
                 header: message,
-                defaultValue: defaultValue,
+                initialValue: defaultValue,
                 agreeLbl: lf("Ok"),
                 disagreeLbl: lf("Cancel"),
                 size: "tiny"
@@ -348,7 +348,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private markIncomplete = false;
     isIncomplete() {
-        const incomplete = this.editor ? this.editor.isDragging()
+        const incomplete = this.editor ?
+            ((this.editor as any).currentGesture_ != null && (this.editor as any).currentGesture_.isDraggingBlock_)
             || (Blockly as any).WidgetDiv.isVisible()
             || (Blockly as any).DropDownDiv.isVisible() : false;
         if (incomplete) this.markIncomplete = true;
@@ -623,8 +624,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.typeScriptSaveable = false;
                 this.setDiagnostics(file)
                 this.delayLoadXml = file.content;
-                this.editor.clear();
-                this.editor.clearUndo();
+                pxt.blocks.clearWithoutEvents(this.editor);
                 this.closeFlyout();
 
                 if (this.currFile && this.currFile != file) {
@@ -1143,9 +1143,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     protected showFlyoutGroupLabel(group: string, groupicon: string, labelLineWidth: string, helpCallback: string) {
         let groupLabel = pxt.blocks.createFlyoutGroupLabel(pxt.Util.rlf(`{id:group}${group}`),
-            groupicon, labelLineWidth, helpCallback ? `GROUP_HELP_${helpCallback}` : undefined);
+            groupicon, labelLineWidth, helpCallback ? `GROUP_HELP_${group}` : undefined);
         if (helpCallback) {
-            this.editor.registerButtonCallback(`GROUP_HELP_${helpCallback}`, (/*btn*/) => {
+            this.editor.registerButtonCallback(`GROUP_HELP_${group}`, (/*btn*/) => {
                 this.helpButtonCallback(group);
             })
         }

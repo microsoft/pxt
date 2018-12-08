@@ -2,6 +2,12 @@
 
 **Posted on August 1, 2018 by [mmoskal](https://github.com/mmoskal)**
 
+## ~ hint
+
+**Update**: This feature is now documented in [GitHub extension authoring](/extensions/github-authoring).
+
+## ~
+
 MakeCode is a platform with an easy level of entry, even for middle-schoolers, but allowing nearly unlimited creativity and complexity available to advanced users for writing programs in [TypeScript](https://www.typescriptlang.org/). Our [subset of TypeScript](https://makecode.com/language) supports most of the regular language features of TypeScript, but can be efficiently compiled to run on extremely resource constrained devices like the micro:bit (your phone literally has a _million times_ more available memory than a micro:bit!). In fact, most of the runtime libraries in our editors are implemented in Static TypeScript including all of the defined blocks. We also pack a [full-featured Monaco text editor](https://makecode.com/js/editor) into our web app.
 
 From the very beginning, we allowed extensions to our editor with [user-provided packages](/extensions/getting-started) hosted on GitHub. These packages can even introduce [their own user interface](/extensions/extensions) in the editor. Packages first need [approval](/extensions/approval) to surface in search but, unless they are banned, can be loaded without approval by providing an exact URL.

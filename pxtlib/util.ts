@@ -292,6 +292,7 @@ namespace ts.pxtc.Util {
             return a;
         }
         let r: T[] = []
+        if (!a) return r;
         for (let i = 0; i < a.length; ++i)
             r.push(a[i])
         return r

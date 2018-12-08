@@ -21,16 +21,20 @@ type of `x`.
 
 ## Other codes
 
-* **910** - memory limit exceeded (only on Linux targets)
 * **907** - a required configuration setting (in `config` namespace) is missing
 * **908** - a required pin was not defined (also in `config` namespace)
+* **910** - memory limit exceeded (only on Linux targets)
+* **914** - TypeScript code was called from interrupt service routine
+* **915** - heap dumped - the code is waiting for debugger to load the heap
 
 ## Codal codes
 
-* **020** - out of memory
+* **020** - out of memory in Codal heap - too many events or fibers
+* **021** - out of memory in GC heap - too many objects
 * **030** - heap error (memory corruption)
 * **040** - null dereference
 * **050** - USB error
+* **090** - hardware configuration error - likely using wrong pin for SPI/I2C/PWM/etc
 
 ## Internal error codes
 
@@ -47,4 +51,6 @@ You should not see these.
     PANIC_SCREEN_ERROR = 911,
 ```
 
-The error codes in the `800-899` are even more internal.
+The error codes in the `800-899` are even more internal:
+
+* **84X** - garbage collector errors

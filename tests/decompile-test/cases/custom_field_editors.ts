@@ -1,5 +1,7 @@
 /// <reference path="./testBlocks/basic.ts" />
 
+testNamespace.sliderFieldEditor(10);
+
 testNamespace.customFieldEditor(100);
 
 testNamespace.customFieldEditorWithMutation(100);

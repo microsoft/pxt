@@ -6,7 +6,7 @@ Store a value in an array at some index.
 [""][0] = "item";
 ```
 
-When an item exists in the array at the index you've chosen, it is replaced with a new value. If you use and index that is past the length of the array, the array is expanded to put the value at the location you want. All locations between the previous last item and the new last item have values of `0`.
+When an item exists in the array at the index you've chosen, it is replaced with a new value. If you use an index that is past the length of the array, the array is expanded to put the value at the location you want. All locations between the previous last item and the new last item have values of `0`.
 
 ## Parameters
 

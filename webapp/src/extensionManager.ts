@@ -303,6 +303,7 @@ function handleWriteCodeRequestAsync(name: string, resp: e.ExtensionResponse, fi
 
 function mkEvent(event: string): e.ExtensionEvent {
     return {
+        target: pxt.appTarget.id,
         type: "pxtpkgext",
         event
     };

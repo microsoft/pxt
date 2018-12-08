@@ -173,8 +173,8 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                 </div> : undefined}
                             {showZoomControls ?
                                 <div className="ui icon small buttons">
-                                    <EditorToolbarButton icon='plus circle' className="editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onButtonClick={this.zoomIn} view='mobile' />
                                     <EditorToolbarButton icon='minus circle' className="editortools-btn zoomout-editortools-btn" title={lf("Zoom Out")} onButtonClick={this.zoomOut} view='mobile' />
+                                    <EditorToolbarButton icon='plus circle' className="editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onButtonClick={this.zoomIn} view='mobile' />
                                 </div> : undefined}
                             {targetTheme.bigRunButton ?
                                 <div className="big-play-button-wrapper">
@@ -251,8 +251,8 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                 </div> : undefined}
                             {showZoomControls ?
                                 <div className="ui icon small buttons">
-                                    <EditorToolbarButton icon='plus circle' className="editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onButtonClick={this.zoomIn} view='tablet' />
                                     <EditorToolbarButton icon='minus circle' className="editortools-btn zoomout-editortools-btn" title={lf("Zoom Out")} onButtonClick={this.zoomOut} view='tablet' />
+                                    <EditorToolbarButton icon='plus circle' className="editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onButtonClick={this.zoomIn} view='tablet' />
                                 </div> : undefined}
                             {targetTheme.bigRunButton ?
                                 <div className="big-play-button-wrapper">
@@ -311,8 +311,8 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                                 </div> : undefined}
                                             {showZoomControls ?
                                                 <div className="ui icon large buttons">
-                                                    <EditorToolbarButton icon='plus circle' className="editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onButtonClick={this.zoomIn} view='tablet' />
                                                     <EditorToolbarButton icon='minus circle' className="editortools-btn zoomout-editortools-btn" title={lf("Zoom Out")} onButtonClick={this.zoomOut} view='tablet' />
+                                                    <EditorToolbarButton icon='plus circle' className="editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onButtonClick={this.zoomIn} view='tablet' />
                                                 </div> : undefined}
                                         </div>
                                     </div> : undefined}
@@ -367,8 +367,8 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                             </div> : undefined}
                         {showZoomControls ?
                             <div className="ui icon small buttons">
-                                <EditorToolbarButton icon='plus circle' className="editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onButtonClick={this.zoomIn} view='computer' />
                                 <EditorToolbarButton icon='minus circle' className="editortools-btn zoomout-editortools-btn" title={lf("Zoom Out")} onButtonClick={this.zoomOut} view='computer' />
+                                <EditorToolbarButton icon='plus circle' className="editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onButtonClick={this.zoomIn} view='computer' />
                             </div> : undefined}
                         {targetTheme.bigRunButton ?
                             <div className="big-play-button-wrapper">
