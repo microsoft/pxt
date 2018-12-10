@@ -665,7 +665,7 @@ namespace ts.pxtc {
                 else if (fn.attributes.block && locBlock) {
                     const ps = pxt.blocks.compileInfo(fn);
                     const oldBlock = fn.attributes.block;
-                    fn.attributes.block = pxt.blocks.normalizeBlock(locBlock, err => data[`${fn}.${lang}`] = err);
+                    fn.attributes.block = pxt.blocks.normalizeBlock(locBlock, err => errors[`${fn}.${lang}`] = err);
                     fn.attributes._untranslatedBlock = oldBlock;
                     if (oldBlock != fn.attributes.block) {
                         const locps = pxt.blocks.compileInfo(fn);
