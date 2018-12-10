@@ -629,7 +629,7 @@ namespace ts.pxtc {
         const lang = pxtc.Util.userLanguage();
         if (pxtc.Util.userLanguage() == "en") return Promise.resolve(apis);
 
-        const errors: pxt.Map<string> = {};
+        const errors: pxt.Map<number> = {};
         return mainPkg.localizationStringsAsync(lang)
             .then(loc => Util.values(apis.byQName).forEach(fn => {
                 const jsDoc = loc[fn.qName]
@@ -665,7 +665,7 @@ namespace ts.pxtc {
                 else if (fn.attributes.block && locBlock) {
                     const ps = pxt.blocks.compileInfo(fn);
                     const oldBlock = fn.attributes.block;
-                    fn.attributes.block = pxt.blocks.normalizeBlock(locBlock, err => errors[`${fn}.${lang}`] = err);
+                    fn.attributes.block = pxt.blocks.normalizeBlock(locBlock, err => errors[`${fn}.${lang}`] = 1);
                     fn.attributes._untranslatedBlock = oldBlock;
                     if (oldBlock != fn.attributes.block) {
                         const locps = pxt.blocks.compileInfo(fn);

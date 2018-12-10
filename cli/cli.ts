@@ -3896,7 +3896,7 @@ function uploadBundledTranslationsAsync(crowdinDir: string, branch: string, prj:
 }
 
 export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedCommand) {
-    const errors: pxt.Map<string> = {};
+    const errors: pxt.Map<number> = {};
     return crowdinCredentialsAsync()
         .then(cred => {
             if (!cred) return Promise.resolve();
@@ -3946,9 +3946,7 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
                                     // block definitions
                                     Object.keys(dataLang).forEach(id => {
                                         const tr = dataLang[id];
-                                        pxt.blocks.normalizeBlock(tr, err => {
-                                            errors[`${fn}.${lang}`] = err;
-                                        });
+                                        pxt.blocks.normalizeBlock(tr, err => errors[`${fn}.${lang}`] = 1);
                                     });
                                 }
 
