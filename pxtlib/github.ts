@@ -668,42 +668,6 @@ namespace pxt.github {
             });
     }
 
-    export function publishGistAsync(token: string, forceNew: boolean, files: any, name: string, currentGistId: string): Promise<any> {
-        // Github gist API: https://developer.github.com/v3/gists/
-        const data = {
-            "description": name,
-            "public": false, /* there is no API to make a gist public or private, so it's easier/safer to always make it private and let the user make it public from the UI */
-            "files": files
-        };
-        const headers: Map<string> = {};
-        let method: string, url: string = "https://api.github.com/gists";
-        if (token) headers['Authorization'] = `token ${token}`;
-        if (currentGistId && token && !forceNew) {
-            // Patch existing gist
-            method = 'PATCH';
-            url += `/${currentGistId}`;
-        } else {
-            // Create new gist
-            method = 'POST';
-        }
-        return U.requestAsync({
-            url: url,
-            allowHttpErrors: true,
-            headers: headers,
-            method: method,
-            data: data || {}
-        })
-            .then((resp) => {
-                if ((resp.statusCode == 200 || resp.statusCode == 201) && resp.json.id) {
-                    return Promise.resolve<string>(resp.json.id);
-                } else if (resp.statusCode == 404 && method == 'PATCH') {
-                    return Promise.reject(resp.statusCode);
-                } else if (resp.statusCode == 404) {
-                    return Promise.reject("Make sure to add the ``gist`` scope to your token. " + resp.text);
-                } return Promise.reject(resp.text);
-            });
-    }
-
     export interface GitJson {
         repo: string;
         commit: pxt.github.Commit;

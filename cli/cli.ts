@@ -4888,74 +4888,6 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
     })
 }
 
-function publishGistCoreAsync(forceNewGist: boolean = false): Promise<void> {
-    return passwordGetAsync(GITHUB_KEY)
-        .then(token => {
-            if (!token) {
-                fatal("GitHub token not found, please use 'pxt login' to login with your GitHub account to push gists.");
-                return Promise.resolve();
-            }
-            return mainPkg.loadAsync()
-                .then(() => {
-                    const pxtConfig = U.clone(mainPkg.config);
-                    if (pxtConfig.gistId && !token && !forceNewGist) {
-                        console.warn("You are trying to update an existing project but no GitHub token was provided, publishing a new anonymous project instead.")
-                        forceNewGist = true;
-                    }
-                    const gistId = pxtConfig.gistId;
-                    const files: string[] = mainPkg.getFiles()
-                    const filesMap: Map<{ content: string; }> = {};
-
-                    files.forEach((fn) => {
-                        let fileContent = fs.readFileSync(fn, "utf8");
-                        if (fileContent) {
-                            filesMap[fn] = {
-                                "content": fileContent
-                            }
-                        } else {
-                            // Cannot publish empty files, go through and remove empty file references from pxt.json
-                            if (pxtConfig.files && pxtConfig.files.indexOf(fn) > -1) {
-                                pxtConfig.files.splice(pxtConfig.files.indexOf(fn), 1);
-                            } else if (pxtConfig.testFiles && pxtConfig.testFiles.indexOf(fn) > -1) {
-                                pxtConfig.testFiles.splice(pxtConfig.testFiles.indexOf(fn), 1);
-                            }
-                        }
-                    })
-                    // Strip gist fields from config
-                    delete pxtConfig.gistId;
-                    // Add pxt.json
-                    filesMap['pxt.json'] = {
-                        "content": JSON.stringify(pxtConfig, null, 4)
-                    }
-                    pxt.log("Uploading....")
-                    return pxt.github.publishGistAsync(token, forceNewGist, filesMap, pxtConfig.name, gistId)
-                })
-                .then((published_id) => {
-                    pxt.log(`Success, view your gist at`);
-                    pxt.log(``)
-                    pxt.log(`    https://gist.github.com/${published_id}`);
-                    pxt.log(``)
-                    pxt.log(`To share your project, go to ${pxt.appTarget.appTheme.embedUrl}#pub:gh/gists/${published_id}`)
-                    if (!token) pxt.log(`Hint: Use "pxt login" with a GitHub token to publish gists under your GitHub account`);
-
-                    // Save gist id to pxt.json
-                    if (token) mainPkg.config.gistId = published_id;
-                    mainPkg.saveConfig();
-                })
-                .catch((e) => {
-                    if (e == '404') {
-                        console.error("Unable to access the existing project. --new to publish a new gist.")
-                    } else {
-                        console.error(e);
-                    }
-                });
-        });
-}
-
-export function publishGistAsync(parsed: commandParser.ParsedCommand) {
-    return publishGistCoreAsync(!!parsed.flags["new"]);
-}
-
 export interface SnippetInfo {
     type: string;
     code: string;
@@ -5533,14 +5465,6 @@ PXT_ASMDEBUG     - embed additional information in generated binary.asm file
         help: "collects sprites into a .jres file",
         argString: "<directory>",
     }, buildJResSpritesAsync);
-
-    p.defineCommand({
-        name: "gist",
-        help: "publish current package to a gist",
-        flags: {
-            new: { description: "force the creation of a new gist" },
-        }
-    }, publishGistAsync)
 
     p.defineCommand({
         name: "init",
