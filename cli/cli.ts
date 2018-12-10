@@ -2114,7 +2114,7 @@ function buildAndWatchAsync(f: () => Promise<string[]>): Promise<void> {
     return f()
         .then(dirs => {
             if (globalConfig.noAutoBuild) return
-            console.log('watching ' + dirs.join(', ') + '...');
+            pxt.debug('watching ' + dirs.join(', ') + '...');
             let loop = () => {
                 Promise.delay(1000)
                     .then(() => maxMTimeAsync(dirs))
@@ -3897,7 +3897,7 @@ function uploadBundledTranslationsAsync(crowdinDir: string, branch: string, prj:
 }
 
 export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedCommand) {
-    const errors: string[] = [];
+    const errors: pxt.Map<number> = {};
     return crowdinCredentialsAsync()
         .then(cred => {
             if (!cred) return Promise.resolve();
@@ -3920,7 +3920,8 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
                 if (!f) {
                     if (errors.length) {
                         pxt.log(`${errors.length} errors in translated blocks`);
-                        errors.forEach(error => `error: ${pxt.log(error)}`);
+                        Object.keys(errors).forEach(blockid => pxt.log(`error ${blockid}: ${errors[blockid]}`));
+                        pxt.reportError("loc.errors", "invalid translation", errors);
                     }
                     return Promise.resolve();
                 }
@@ -3946,7 +3947,7 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
                                     // block definitions
                                     Object.keys(dataLang).forEach(id => {
                                         const tr = dataLang[id];
-                                        pxt.blocks.normalizeBlock(tr, err => errors.push(`${fn} ${lang} ${id}: ${err}`));
+                                        pxt.blocks.normalizeBlock(tr, err => errors[`${fn}.${lang}`] = 1);
                                     });
                                 }
 

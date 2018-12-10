@@ -392,7 +392,7 @@ namespace pxt.editor {
         };
 
         const re = pxt.reportError;
-        pxt.reportError = function (cat: string, msg: string, data?: pxt.Map<string>): void {
+        pxt.reportError = function (cat: string, msg: string, data?: pxt.Map<string | number>): void {
             if (re) re(cat, msg, data);
             postHostMessageAsync(<EditorMessageEventRequest>{
                 type: 'pxthost',
