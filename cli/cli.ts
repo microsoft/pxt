@@ -3646,17 +3646,18 @@ function buildDalDTSAsync(c: commandParser.ParsedCommand) {
 
     if (fs.existsSync("pxtarget.json")) {
         pxt.log(`generating dal.d.ts for packages`)
-        return forEachBundledPkgAsync((f, dir) => {
-            return f.loadAsync()
-                .then(() => {
-                    if (f.config.dalDTS && f.config.dalDTS.corePackage) {
-                        console.log(`  ${dir}`)
-                        return prepAsync()
-                            .then(() => build.buildDalConst(build.thisBuild, f, true, true));
-                    }
-                    return Promise.resolve();
-                })
-        })
+        return rebundleAsync()
+            .then(() => forEachBundledPkgAsync((f, dir) => {
+                return f.loadAsync()
+                    .then(() => {
+                        if (f.config.dalDTS && f.config.dalDTS.corePackage) {
+                            console.log(`  ${dir}`)
+                            return prepAsync()
+                                .then(() => build.buildDalConst(build.thisBuild, f, true, true));
+                        }
+                        return Promise.resolve();
+                    })
+            }));
     } else {
         ensurePkgDir()
         return prepAsync()
@@ -4331,12 +4332,13 @@ export function buildJResAsync(parsed: commandParser.ParsedCommand) {
 export function buildAsync(parsed: commandParser.ParsedCommand) {
     parseBuildInfo(parsed);
     let mode = BuildOption.JustBuild;
-    if (parsed.flags["debug"]) {
+    if (parsed.flags["debug"])
         mode = BuildOption.DebugSim;
-    }
+    const clean = parsed.flags["clean"];
     const warnDiv = !!parsed.flags["warndiv"];
     const ignoreTests = !!parsed.flags["ignoreTests"];
-    return buildCoreAsync({ mode, warnDiv, ignoreTests })
+    return (clean ? cleanAsync() : Promise.resolve())
+        .then(() => buildCoreAsync({ mode, warnDiv, ignoreTests }))
         .then((compileOpts) => { });
 }
 
@@ -5339,7 +5341,8 @@ PXT_ASMDEBUG     - embed additional information in generated binary.asm file
             },
             debug: { description: "Emit debug information with build" },
             warndiv: { description: "Warns about division operators" },
-            ignoreTests: { description: "Ignores tests in compilation", aliases: ["ignore-tests", "ignoretests", "it"] }
+            ignoreTests: { description: "Ignores tests in compilation", aliases: ["ignore-tests", "ignoretests", "it"] },
+            clean: { description: "Clean before build" }
         }
     }, buildAsync);
 
