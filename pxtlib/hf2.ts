@@ -506,6 +506,7 @@ namespace pxt.HF2 {
                 })
                 .then(buf => {
                     this.infoRaw = U.fromUTF8(U.uint8ArrayToString(buf));
+                    pxt.debug("Info: " + this.infoRaw)
                     let info = {} as any
                     ("Header: " + this.infoRaw).replace(/^([\w\-]+):\s*([^\n\r]*)/mg,
                         (f, n, v) => {
@@ -513,11 +514,17 @@ namespace pxt.HF2 {
                             return ""
                         })
                     this.info = info
-                    let m = /v(\d\S+)\s+(\S+)/.exec(this.info.Header)
-                    this.info.Parsed = {
-                        Version: m[1],
-                        Features: m[2],
-                    }
+                    let m = /v(\d\S+)(\s+(\S+))?/.exec(this.info.Header)
+                    if (m)
+                        this.info.Parsed = {
+                            Version: m[1],
+                            Features: m[3] || "",
+                        }
+                    else
+                        this.info.Parsed = {
+                            Version: "?",
+                            Features: "",
+                        }
                     log(`Board-ID: ${this.info.BoardID} v${this.info.Parsed.Version} f${this.info.Parsed.Features}`)
                 })
                 .then(() => {
