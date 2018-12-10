@@ -2114,7 +2114,7 @@ function buildAndWatchAsync(f: () => Promise<string[]>): Promise<void> {
     return f()
         .then(dirs => {
             if (globalConfig.noAutoBuild) return
-            console.log('watching ' + dirs.join(', ') + '...');
+            pxt.debug('watching ' + dirs.join(', ') + '...');
             let loop = () => {
                 Promise.delay(1000)
                     .then(() => maxMTimeAsync(dirs))
