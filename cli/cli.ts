@@ -3919,7 +3919,7 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
                 if (!f) {
                     if (errors.length) {
                         pxt.log(`${errors.length} errors in translated blocks`);
-                        Object.keys(errors).forEach(blockid => `error: ${pxt.log(errors[blockid])}`);
+                        Object.keys(errors).forEach(blockid => pxt.log(`error ${blockid}: ${errors[blockid]}`));
                         pxt.reportError("loc.errors", "invalid translation", errors);
                     }
                     return Promise.resolve();
@@ -3946,10 +3946,7 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
                                     // block definitions
                                     Object.keys(dataLang).forEach(id => {
                                         const tr = dataLang[id];
-                                        pxt.blocks.normalizeBlock(tr, err => {
-                                            errors[`${fn}.${lang}`] = 1;
-                                            pxt.log(`  error ${fn}.${lang}: ${err}`);
-                                        })
+                                        pxt.blocks.normalizeBlock(tr, err => errors[`${fn}.${lang}`] = 1);
                                     });
                                 }
 
