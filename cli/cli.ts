@@ -3946,7 +3946,10 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
                                     // block definitions
                                     Object.keys(dataLang).forEach(id => {
                                         const tr = dataLang[id];
-                                        pxt.blocks.normalizeBlock(tr, err => errors[`${fn}.${lang}`] = 1);
+                                        pxt.blocks.normalizeBlock(tr, err => {
+                                            errors[`${fn}.${lang}`] = 1;
+                                            pxt.log(`  error ${fn}.${lang}: ${err}`);
+                                        })
                                     });
                                 }
 
