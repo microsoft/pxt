@@ -1,4 +1,4 @@
-namespace pxtblockly {
+namespace pxtsprite {
     // These are the characters used to output literals (but we support aliases for some of these)
     const hexChars = [".", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f"];
 
@@ -149,7 +149,7 @@ namespace pxtblockly {
 
         const spriteHeight = sprite.length;
 
-        const result = new pxtblockly.Bitmap(spriteWidth, spriteHeight)
+        const result = new pxtsprite.Bitmap(spriteWidth, spriteHeight)
 
         for (let r = 0; r < spriteHeight; r++) {
             const row = sprite[r];

@@ -5,7 +5,7 @@
 /// <reference path="./gallery.ts" />
 /// <reference path="./header.ts" />
 
-namespace pxtblockly {
+namespace pxtsprite {
     import svg = pxt.svgUtil;
     import lf = pxt.Util.lf;
 

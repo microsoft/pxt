@@ -1,5 +1,5 @@
 /// <reference path="./buttons.ts" />
-namespace pxtblockly {
+namespace pxtsprite {
     import svg = pxt.svgUtil;
 
     export interface SpriteHeaderHost {
@@ -56,7 +56,7 @@ namespace pxtblockly {
 // </div>
 function makeCloseButton() {
     const i = document.createElement("i");
-    i.className = "icon close remove circle";
+    i.className = "icon close remove circle sprite-focus-hover";
     i.setAttribute("role", "presentation");
     i.setAttribute("aria-hidden", "true");
 

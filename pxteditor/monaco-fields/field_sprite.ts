@@ -1,11 +1,11 @@
-namespace pxtblockly {
+namespace pxt.editor {
     const fieldEditorId = "image-editor";
 
     export class MonacoSpriteEditor implements MonacoFieldEditor {
         private resolver: (edit: TextEdit) => void;
         private rejecter: (err?: any) => void;
 
-        protected editor: SpriteEditor;
+        protected editor: pxtsprite.SpriteEditor;
         protected editrange: monaco.Range;
 
         getId() {
@@ -15,18 +15,18 @@ namespace pxtblockly {
         showEditorAsync(editrange: monaco.Range, host: MonacoFieldEditorHost): Promise<TextEdit> {
             this.editrange = editrange;
             const contentDiv = host.contentDiv();
-            const state = imageLiteralToBitmap(host.getText(editrange));
+            const state = pxtsprite.imageLiteralToBitmap(host.getText(editrange));
 
-            this.editor = new SpriteEditor(state, host.blocksInfo(), false);
+            this.editor = new pxtsprite.SpriteEditor(state, host.blocksInfo(), false);
             this.editor.render(contentDiv);
             this.editor.rePaint();
             this.editor.setActiveColor(1, true);
 
-            goog.style.setHeight(contentDiv, this.editor.outerHeight() + 1);
-            goog.style.setWidth(contentDiv, this.editor.outerWidth() + 1);
-            goog.style.setStyle(contentDiv, "overflow", "hidden");
-            goog.style.setStyle(contentDiv, "max-height", "500px");
-            goog.dom.classlist.add(contentDiv.parentElement, "sprite-editor-dropdown")
+            contentDiv.style.height = (this.editor.outerHeight() + 1) + "px";
+            contentDiv.style.width = (this.editor.outerWidth() + 1) + "px";
+            contentDiv.style.overflow = "hidden";
+            contentDiv.style.maxHeight = "500px";
+            addClass(contentDiv.parentElement, "sprite-editor-dropdown");
 
             this.editor.addKeyListeners();
             this.editor.onClose(() => this.onClosed());
@@ -41,7 +41,7 @@ namespace pxtblockly {
             if (this.resolver) {
                 this.resolver({
                     range: this.editrange,
-                    replacement: bitmapToImageLiteral(this.editor.bitmap())
+                    replacement: pxtsprite.bitmapToImageLiteral(this.editor.bitmap())
                 });
 
                 this.editor.removeKeyListeners();
@@ -61,7 +61,7 @@ namespace pxtblockly {
     export const spriteEditorDefinition: MonacoFieldEditorDefinition = {
         id: fieldEditorId,
         foldMatches: true,
-        glyphCssClass: "sprite-editor-glyph",
+        glyphCssClass: "sprite-editor-glyph sprite-focus-hover",
         matcher: {
             sourcefile: "main.ts",
             qname: "Image",
@@ -69,4 +69,9 @@ namespace pxtblockly {
         },
         proto: MonacoSpriteEditor
     };
+
+    function addClass(el: Element, className: string) {
+        if (el.hasAttribute("class")) el.setAttribute("class", el.getAttribute("class") + " " + className);
+        else el.setAttribute("class", className);
+    }
 }

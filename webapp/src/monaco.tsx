@@ -46,13 +46,13 @@ interface FoldingController extends monaco.editor.IEditorContribution {
 
 
 class FieldEditorManager {
-    protected fieldEditors: pxtblockly.MonacoFieldEditorDefinition[] = [];
+    protected fieldEditors: pxt.editor.MonacoFieldEditorDefinition[] = [];
     protected decorations: pxt.Map<string[]> = {};
     protected liveRanges: OwnedRange[] = [];
 
     private rangeID = 0;
 
-    addFieldEditor(definition: pxtblockly.MonacoFieldEditorDefinition) {
+    addFieldEditor(definition: pxt.editor.MonacoFieldEditorDefinition) {
         this.fieldEditors.push(definition);
         compiler.setSymbolMatchers(this.fieldEditors.map(fe => fe.matcher));
     }
@@ -427,7 +427,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
-    showFieldEditor(range: monaco.Range, fe: pxtblockly.MonacoFieldEditor) {
+    showFieldEditor(range: monaco.Range, fe: pxt.editor.MonacoFieldEditor) {
         if (this.feWidget) {
             this.feWidget.close();
         }
@@ -699,12 +699,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private setupFieldEditors() {
-        registerFieldEditor(pxtblockly.spriteEditorDefinition);
+        registerFieldEditor(pxt.editor.spriteEditorDefinition);
         this.editor.onMouseDown((e: monaco.editor.IEditorMouseEvent) => {
             if (e.target.type !== monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) {
-                if (this.feWidget && e.target.type !== monaco.editor.MouseTargetType.CONTENT_WIDGET) {
-                    // this.feWidget.close();
-                }
                 return;
             }
             const line = e.target.position.lineNumber;
@@ -1736,7 +1733,7 @@ function rangeToSelection(range: monaco.IRange): monaco.Selection {
     return new monaco.Selection(range.startLineNumber, range.startColumn, range.endLineNumber, range.endColumn);
 }
 
-class FieldEditorHost implements pxtblockly.MonacoFieldEditorHost, monaco.editor.IContentWidget {
+class FieldEditorHost implements pxt.editor.MonacoFieldEditorHost, monaco.editor.IContentWidget {
     protected widgetDiv: HTMLDivElement;
     protected content: HTMLDivElement;
     protected editor: monaco.editor.IStandaloneCodeEditor;
@@ -1744,7 +1741,7 @@ class FieldEditorHost implements pxtblockly.MonacoFieldEditorHost, monaco.editor
 
     suppressMouseDown = true;
 
-    constructor(protected fe: pxtblockly.MonacoFieldEditor, protected range: monaco.Range, protected model: monaco.editor.IModel) {
+    constructor(protected fe: pxt.editor.MonacoFieldEditor, protected range: monaco.Range, protected model: monaco.editor.IModel) {
         this.widgetDiv = document.createElement("div");
         this.widgetDiv.className = "monaco-field-editor-frame";
 
@@ -1806,7 +1803,7 @@ class FieldEditorHost implements pxtblockly.MonacoFieldEditorHost, monaco.editor
 }
 
 
-class ViewZoneEditorHost implements pxtblockly.MonacoFieldEditorHost, monaco.editor.IViewZone {
+class ViewZoneEditorHost implements pxt.editor.MonacoFieldEditorHost, monaco.editor.IViewZone {
     domNode: HTMLDivElement;
     afterLineNumber: number;
     heightInPx = 500;
@@ -1819,7 +1816,7 @@ class ViewZoneEditorHost implements pxtblockly.MonacoFieldEditorHost, monaco.edi
 
     suppressMouseDown = false;
 
-    constructor(protected fe: pxtblockly.MonacoFieldEditor, protected range: monaco.Range, protected model: monaco.editor.IModel) {
+    constructor(protected fe: pxt.editor.MonacoFieldEditor, protected range: monaco.Range, protected model: monaco.editor.IModel) {
         this.afterLineNumber = range.endLineNumber;
         this.domNode = document.createElement("div");
         this.domNode.className = "monaco-field-editor-frame";
@@ -1901,7 +1898,7 @@ class ViewZoneEditorHost implements pxtblockly.MonacoFieldEditorHost, monaco.edi
 
 let manager: FieldEditorManager;
 
-export function registerFieldEditor(def: pxtblockly.MonacoFieldEditorDefinition) {
+export function registerFieldEditor(def: pxt.editor.MonacoFieldEditorDefinition) {
     if (!manager) {
         manager = new FieldEditorManager();
     }

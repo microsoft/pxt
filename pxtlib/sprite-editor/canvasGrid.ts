@@ -1,4 +1,4 @@
-namespace pxtblockly {
+namespace pxtsprite {
     const alphaCellWidth = 5;
     const dropdownPaddding = 4;
     const lightModeBackground = "#dedede";
@@ -297,7 +297,7 @@ namespace pxtblockly {
             if (!this.gesture) {
                 this.gesture = new GestureState();
 
-                pxsim.pointerEvents.down.forEach(evId => {
+                pxt.BrowserUtils.pointerEvents.down.forEach(evId => {
                     this.paintLayer.addEventListener(evId, (ev: MouseEvent) => {
                         this.startDrag();
                         const [col, row] = this.clientToCell(ev.clientX, ev.clientY);
@@ -345,15 +345,15 @@ namespace pxtblockly {
         }
 
         private startDrag() {
-            document.addEventListener(pxsim.pointerEvents.move, this.moveHandler);
-            document.addEventListener(pxsim.pointerEvents.up, this.upHandler);
-            document.addEventListener(pxsim.pointerEvents.leave, this.leaveHandler);
+            document.addEventListener(pxt.BrowserUtils.pointerEvents.move, this.moveHandler);
+            document.addEventListener(pxt.BrowserUtils.pointerEvents.up, this.upHandler);
+            document.addEventListener(pxt.BrowserUtils.pointerEvents.leave, this.leaveHandler);
         }
 
         private endDrag() {
-            document.removeEventListener(pxsim.pointerEvents.move, this.moveHandler);
-            document.removeEventListener(pxsim.pointerEvents.up, this.upHandler);
-            document.removeEventListener(pxsim.pointerEvents.leave, this.leaveHandler);
+            document.removeEventListener(pxt.BrowserUtils.pointerEvents.move, this.moveHandler);
+            document.removeEventListener(pxt.BrowserUtils.pointerEvents.up, this.upHandler);
+            document.removeEventListener(pxt.BrowserUtils.pointerEvents.leave, this.leaveHandler);
         }
 
         private layoutCanvas(canvas: HTMLCanvasElement, top: number, left: number, width: number, height: number) {

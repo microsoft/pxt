@@ -1,5 +1,4 @@
-/// <reference path="./spriteEditor.ts" />
-/// <reference path="../../../built/pxtlib.d.ts" />
+/// <reference path="../../built/pxtlib.d.ts" />
 
 
 namespace pxtblockly {
@@ -36,8 +35,8 @@ namespace pxtblockly {
 
         private params: ParsedSpriteEditorOptions;
         private blocksInfo: pxtc.BlocksInfo;
-        private editor: SpriteEditor;
-        private state: Bitmap;
+        private editor: pxtsprite.SpriteEditor;
+        private state: pxtsprite.Bitmap;
         private lightMode: boolean;
 
         constructor(text: string, params: any, validator?: Function) {
@@ -48,7 +47,7 @@ namespace pxtblockly {
             this.blocksInfo = params.blocksInfo;
 
             if (!this.state) {
-                this.state = new Bitmap(this.params.initWidth, this.params.initHeight);
+                this.state = new pxtsprite.Bitmap(this.params.initWidth, this.params.initHeight);
             }
         }
 
@@ -64,7 +63,7 @@ namespace pxtblockly {
             }
 
             if (!this.state) {
-                this.state = new Bitmap(this.params.initWidth, this.params.initHeight);
+                this.state = new pxtsprite.Bitmap(this.params.initWidth, this.params.initHeight);
             }
 
             this.redrawPreview();
@@ -91,7 +90,7 @@ namespace pxtblockly {
 
             let contentDiv = Blockly.DropDownDiv.getContentDiv() as HTMLDivElement;
 
-            this.editor = new SpriteEditor(this.state, this.blocksInfo, this.lightMode);
+            this.editor = new pxtsprite.SpriteEditor(this.state, this.blocksInfo, this.lightMode);
             this.editor.render(contentDiv);
             this.editor.rePaint();
 
@@ -139,7 +138,7 @@ namespace pxtblockly {
             if (!this.state) {
                 return "img``";
             }
-            return bitmapToImageLiteral(this.state);
+            return pxtsprite.bitmapToImageLiteral(this.state);
         }
 
         setText(newText: string) {
@@ -176,7 +175,7 @@ namespace pxtblockly {
         }
 
         private parseBitmap(newText: string) {
-            this.state = imageLiteralToBitmap(newText);
+            this.state = pxtsprite.imageLiteralToBitmap(newText);
         }
 
         /**

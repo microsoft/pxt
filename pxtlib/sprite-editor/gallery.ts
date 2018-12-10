@@ -1,4 +1,4 @@
-namespace pxtblockly {
+namespace pxtsprite {
     export interface GalleryItem {
         qName: string;
         src: string;
@@ -72,7 +72,7 @@ namespace pxtblockly {
         }
 
         protected buildDom() {
-            pxsim.U.clear(this.contentDiv);
+            while (this.contentDiv.firstChild) this.contentDiv.removeChild(this.contentDiv.firstChild);
             const totalWidth = this.containerDiv.clientWidth - 17;
             const buttonWidth = (Math.floor(totalWidth / COLUMNS) - 8) + "px";
             this.getGalleryItems("Image").forEach((item, i) => this.mkButton(item.src, item.alt, item.qName, i, buttonWidth));
@@ -132,11 +132,11 @@ namespace pxtblockly {
 
             const parentDiv = this.contentDiv;
             Blockly.bindEvent_(button, 'mouseover', button, function () {
-                this.setAttribute('class', 'blocklyDropDownButton blocklyDropDownButtonHover sprite-editor-card');
-                parentDiv.setAttribute('aria-activedescendant', this.id);
+                button.setAttribute('class', 'blocklyDropDownButton blocklyDropDownButtonHover sprite-editor-card');
+                parentDiv.setAttribute('aria-activedescendant', button.id);
             });
             Blockly.bindEvent_(button, 'mouseout', button, function () {
-                this.setAttribute('class', 'blocklyDropDownButton sprite-editor-card');
+                button.setAttribute('class', 'blocklyDropDownButton sprite-editor-card');
                 parentDiv.removeAttribute('aria-activedescendant');
             });
 
@@ -213,8 +213,8 @@ namespace pxtblockly {
 
 
         protected getGalleryItems(qName: string): GalleryItem[] {
-            const syms = pxt.blocks.getFixedInstanceDropdownValues(this.info.apis, qName);
-            pxt.blocks.generateIcons(syms);
+            const syms = getFixedInstanceDropdownValues(this.info.apis, qName);
+            generateIcons(syms);
 
             return syms.map(sym => {
                 return {
@@ -224,5 +224,28 @@ namespace pxtblockly {
                 };
             });
         }
+    }
+
+    function getFixedInstanceDropdownValues(apis: pxtc.ApisInfo, qName: string) {
+        return pxt.Util.values(apis.byQName).filter(sym => sym.kind === pxtc.SymbolKind.Variable
+            && sym.attributes.fixedInstance
+            && isSubtype(apis, sym.retType, qName));
+    }
+
+    function isSubtype(apis: pxtc.ApisInfo, specific: string, general: string) {
+        if (specific == general) return true
+        let inf = apis.byQName[specific]
+        if (inf && inf.extendsTypes)
+            return inf.extendsTypes.indexOf(general) >= 0
+        return false
+    }
+
+    function generateIcons(instanceSymbols: pxtc.SymbolInfo[]) {
+        const imgConv = new pxt.ImageConverter();
+        instanceSymbols.forEach(v => {
+            if (v.attributes.jresURL && !v.attributes.iconURL && v.attributes.jresURL.indexOf("data:image/x-mkcd-f") == 0) {
+                v.attributes.iconURL = imgConv.convert(v.attributes.jresURL)
+            }
+        });
     }
 }

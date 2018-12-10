@@ -1,6 +1,6 @@
-/// <reference path="../localtypings/monaco.d.ts" />
+/// <reference path="../../localtypings/monaco.d.ts" />
 
-namespace pxtblockly {
+namespace pxt.editor {
     export interface TextEdit {
         range: monaco.Range;
         replacement: string;
