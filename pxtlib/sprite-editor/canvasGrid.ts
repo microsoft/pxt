@@ -9,7 +9,6 @@ namespace pxtsprite {
 
         private gesture: GestureState;
         private context: CanvasRenderingContext2D;
-        private bounds: ClientRect;
         private fadeAnimation: Fade;
 
         protected backgroundLayer: HTMLCanvasElement;
@@ -238,8 +237,6 @@ namespace pxtsprite {
 
             this.redraw();
             this.drawBackground();
-
-            this.bounds = undefined;
         }
 
         render(parent: HTMLDivElement) {
@@ -284,12 +281,15 @@ namespace pxtsprite {
             }
         }
 
+        /**
+         * This calls getBoundingClientRect() so don't call it in a loop!
+         */
         protected clientToCell(clientX: number, clientY: number) {
-            if (!this.bounds) this.bounds = this.paintLayer.getBoundingClientRect();
+            const bounds = this.paintLayer.getBoundingClientRect();
 
             return [
-                Math.floor((clientX - this.bounds.left) / this.cellWidth),
-                Math.floor((clientY - this.bounds.top) / this.cellHeight)
+                Math.floor((clientX - bounds.left) / this.cellWidth),
+                Math.floor((clientY - bounds.top) / this.cellHeight)
             ];
         }
 

@@ -298,6 +298,7 @@ declare namespace pxt {
         transparentEditorToolbar?: boolean; // make the editor toolbar float with a transparent background
         hideProjectRename?: boolean; // Temporary flag until we figure out a better way to show the name
         addNewTypeScriptFile?: boolean; // when enabled, the [+] explorer button asks for file name, instead of using "custom.ts"
+        monacoFieldEditors?: string[]; // A list of field editors to show in monaco. Currently only "image-editor" is supported
     }
 
     interface SocialOptions {
@@ -338,11 +339,11 @@ declare namespace ts.pxtc {
         slowMethods?: boolean;
         slowFields?: boolean;
         skipClassCheck?: boolean;
-        noThisCheckOpt?: boolean;        
+        noThisCheckOpt?: boolean;
         numFloat?: boolean;
         noTreeShake?: boolean;
         inlineConversions?: boolean;
-        noPeepHole?: boolean;        
+        noPeepHole?: boolean;
     }
 
     interface CompileTarget {

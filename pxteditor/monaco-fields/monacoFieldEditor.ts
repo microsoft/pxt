@@ -33,4 +33,14 @@ namespace pxt.editor {
         matchWholeWord: boolean;
         matchCase: boolean;
     }
+
+    const definitions: pxt.Map<MonacoFieldEditorDefinition> = {};
+
+    export function registerMonacoFieldEditor(name: string, definition: MonacoFieldEditorDefinition) {
+        definitions[name] = definition;
+    }
+
+    export function getMonacoFieldEditor(name: string) {
+        return definitions[name];
+    }
 }

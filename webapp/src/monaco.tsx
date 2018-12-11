@@ -53,6 +53,9 @@ class FieldEditorManager {
     private rangeID = 0;
 
     addFieldEditor(definition: pxt.editor.MonacoFieldEditorDefinition) {
+        for (const f of this.fieldEditors) {
+            if (f.id === definition.id) return;
+        }
         this.fieldEditors.push(definition);
     }
 
@@ -127,9 +130,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     loadingMonaco: boolean;
     giveFocusOnLoading: boolean = false;
 
+    protected fieldEditors: FieldEditorManager;
     protected feWidget: FieldEditorHost | ViewZoneEditorHost;
     protected foldFieldEditorRanges = true;
     protected activeRangeID: number;
+    protected hasFieldEditors = !!(pxt.appTarget.appTheme.monacoFieldEditors && pxt.appTarget.appTheme.monacoFieldEditors.length);
 
     hasBlocks() {
         if (!this.currFile) return true
@@ -387,7 +392,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.loadingMonaco = false;
             this.loadedMonaco = true;
 
-            this.editor.updateOptions({ glyphMargin: true, fontSize: this.parent.settings.editorFontSize });
+            this.editor.updateOptions({ fontSize: this.parent.settings.editorFontSize });
 
             this.editor.addAction({
                 id: "save",
@@ -632,7 +637,19 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private setupFieldEditors() {
-        registerFieldEditor(pxt.editor.spriteEditorDefinition);
+        if (!this.hasFieldEditors) return;
+        if (!this.fieldEditors) this.fieldEditors = new FieldEditorManager();
+
+        pxt.appTarget.appTheme.monacoFieldEditors.forEach(name => {
+            const editor = pxt.editor.getMonacoFieldEditor(name);
+            if (editor) {
+                this.fieldEditors.addFieldEditor(editor);
+            }
+            else {
+                pxt.debug("Skipping unknown monaco field editor '" + name + "'");
+            }
+        })
+
         this.editor.onMouseDown((e: monaco.editor.IEditorMouseEvent) => {
             if (e.target.type !== monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) {
                 return;
@@ -641,7 +658,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             const model = this.editor.getModel();
             const decorations = model.getDecorationsInRange(new monaco.Range(line, model.getLineMinColumn(line), line, model.getLineMaxColumn(line)));
             if (decorations.length) {
-                const lineInfo = manager.getInfoForLine(line);
+                const lineInfo = this.fieldEditors.getInfoForLine(line);
                 if (lineInfo) {
                     if (this.feWidget && this.activeRangeID != null && lineInfo.id === this.activeRangeID) {
                         this.feWidget.close();
@@ -652,7 +669,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         this.activeRangeID = lineInfo.id;
                     }
 
-                    const fe = manager.getFieldEditorById(lineInfo.owner);
+                    const fe = this.fieldEditors.getFieldEditorById(lineInfo.owner);
                     if (fe) {
                         this.showFieldEditor(lineInfo.range, new fe.proto());
                     }
@@ -945,10 +962,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     protected updateFieldEditors = pxt.Util.debounce(() => {
+        if (!this.hasFieldEditors) return;
         const model = this.editor.getModel();
-        manager.clearRanges(this.editor);
+        this.fieldEditors.clearRanges(this.editor);
 
-        manager.allFieldEditors().forEach(fe => {
+        this.fieldEditors.allFieldEditors().forEach(fe => {
             const matcher = fe.matcher;
             const matches = model.findMatches(matcher.searchString,
                 true,
@@ -969,10 +987,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     }
                 });
 
-                manager.trackRange(fe.id, line, match.range);
+                this.fieldEditors.trackRange(fe.id, line, match.range);
 
             });
-            manager.setDecorations(fe.id, this.editor.deltaDecorations([], decorations));
+            this.fieldEditors.setDecorations(fe.id, this.editor.deltaDecorations([], decorations));
         });
 
         if (this.foldFieldEditorRanges) {
@@ -985,7 +1003,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.foldFieldEditorRanges = false;
             const selection = this.editor.getSelection();
             let selections: monaco.Selection[];
-            return Promise.mapSeries(manager.allRanges(), range => this.indentRangeAsync(range.range))
+            return Promise.mapSeries(this.fieldEditors.allRanges(), range => this.indentRangeAsync(range.range))
                 .then(ranges => {
                     selections = ranges.map(rangeToSelection);
 
@@ -1725,7 +1743,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.editor.setSelection(afterRange);
 
                 // Clear ranges because the model changed
-                manager.clearRanges(this.editor);
+                this.fieldEditors.clearRanges(this.editor);
                 resolve(afterRange);
             });
 
@@ -1912,15 +1930,6 @@ class ViewZoneEditorHost implements pxt.editor.MonacoFieldEditorHost, monaco.edi
             accessor.removeZone(this.id);
         });
     }
-}
-
-let manager: FieldEditorManager;
-
-export function registerFieldEditor(def: pxt.editor.MonacoFieldEditorDefinition) {
-    if (!manager) {
-        manager = new FieldEditorManager();
-    }
-    manager.addFieldEditor(def);
 }
 
 function firstWord(s: string) {

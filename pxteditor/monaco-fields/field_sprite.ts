@@ -1,3 +1,5 @@
+/// <reference path="./monacoFieldEditor.ts" />
+
 namespace pxt.editor {
     const fieldEditorId = "image-editor";
 
@@ -81,4 +83,6 @@ namespace pxt.editor {
         if (el.hasAttribute("class")) el.setAttribute("class", el.getAttribute("class") + " " + className);
         else el.setAttribute("class", className);
     }
+
+    registerMonacoFieldEditor(fieldEditorId, spriteEditorDefinition);
 }
