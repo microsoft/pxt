@@ -94,6 +94,10 @@ namespace pxtblockly {
             this.editor.render(contentDiv);
             this.editor.rePaint();
 
+            this.editor.onClose(() => {
+                Blockly.DropDownDiv.hideIfOwner(this);
+            });
+
             this.editor.setActiveColor(this.params.initColor, true);
             this.editor.setSizePresets(this.params.sizes);
 

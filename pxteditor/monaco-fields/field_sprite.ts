@@ -21,6 +21,12 @@ namespace pxt.editor {
             this.editor.render(contentDiv);
             this.editor.rePaint();
             this.editor.setActiveColor(1, true);
+            this.editor.setSizePresets([
+                [8, 8],
+                [16, 16],
+                [32, 32],
+                [10, 8]
+            ]);
 
             contentDiv.style.height = (this.editor.outerHeight() + 3) + "px";
             contentDiv.style.width = (this.editor.outerWidth() + 3) + "px";

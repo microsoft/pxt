@@ -310,6 +310,8 @@ namespace pxtsprite {
                     this.gesture.handle(InputEvent.Down, col, row);
                     this.gesture.handle(InputEvent.Up, col, row);
                 });
+
+                this.paintLayer.addEventListener(pxt.BrowserUtils.pointerEvents.move, this.hoverHandler);
             }
         }
 
@@ -344,13 +346,22 @@ namespace pxtsprite {
             ev.preventDefault();
         }
 
+        private hoverHandler = (ev: MouseEvent) => {
+            const [col, row] = this.clientToCell(ev.clientX, ev.clientY);
+            if (col >= 0 && row >= 0 && col < this.image.width && row < this.image.height) {
+                this.gesture.handle(InputEvent.Move, col, row);
+            }
+        }
+
         private startDrag() {
+            this.paintLayer.removeEventListener(pxt.BrowserUtils.pointerEvents.move, this.hoverHandler);
             document.addEventListener(pxt.BrowserUtils.pointerEvents.move, this.moveHandler);
             document.addEventListener(pxt.BrowserUtils.pointerEvents.up, this.upHandler);
             document.addEventListener(pxt.BrowserUtils.pointerEvents.leave, this.leaveHandler);
         }
 
         private endDrag() {
+            this.paintLayer.addEventListener(pxt.BrowserUtils.pointerEvents.move, this.hoverHandler);
             document.removeEventListener(pxt.BrowserUtils.pointerEvents.move, this.moveHandler);
             document.removeEventListener(pxt.BrowserUtils.pointerEvents.up, this.upHandler);
             document.removeEventListener(pxt.BrowserUtils.pointerEvents.leave, this.leaveHandler);
