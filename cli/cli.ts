@@ -3971,9 +3971,10 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
                             nodeutil.writeFileSync(pxtJsonf, JSON.stringify(local, null, 4), { encoding: "utf8" });
                         }
 
-                        pxt.log(`${errors.length} errors`);
-                        if (errors.length) {
-                            Object.keys(errors).forEach(blockid => pxt.log(`error in ${blockid}`));
+                        const errorIds = Object.keys(errors);
+                        pxt.log(`${errorIds.length} errors`);
+                        if (errorIds.length) {
+                            errorIds.forEach(blockid => pxt.log(`error in ${blockid}`));
                             pxt.reportError("loc.errors", "invalid translation", errors);
                         }
 
