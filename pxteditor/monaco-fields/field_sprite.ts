@@ -70,6 +70,7 @@ namespace pxt.editor {
         id: fieldEditorId,
         foldMatches: true,
         glyphCssClass: "sprite-editor-glyph sprite-focus-hover",
+        heightInPixels: 510,
         matcher: {
             searchString: "img`(?:[ a-fA-F0-9\\.]|\\n)+`",
             isRegex: true,

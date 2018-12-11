@@ -131,7 +131,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     giveFocusOnLoading: boolean = false;
 
     protected fieldEditors: FieldEditorManager;
-    protected feWidget: FieldEditorHost | ViewZoneEditorHost;
+    protected feWidget: ViewZoneEditorHost;
     protected foldFieldEditorRanges = true;
     protected activeRangeID: number;
     protected hasFieldEditors = !!(pxt.appTarget.appTheme.monacoFieldEditors && pxt.appTarget.appTheme.monacoFieldEditors.length);
@@ -671,7 +671,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
                     const fe = this.fieldEditors.getFieldEditorById(lineInfo.owner);
                     if (fe) {
-                        this.showFieldEditor(lineInfo.range, new fe.proto());
+                        this.showFieldEditor(lineInfo.range, new fe.proto(), fe.heightInPixels || 500);
                     }
                 }
             }
@@ -947,11 +947,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
-    showFieldEditor(range: monaco.Range, fe: pxt.editor.MonacoFieldEditor) {
+    showFieldEditor(range: monaco.Range, fe: pxt.editor.MonacoFieldEditor, viewZoneHeight: number) {
         if (this.feWidget) {
             this.feWidget.close();
         }
         this.feWidget = new ViewZoneEditorHost(fe, range, this.editor.getModel());
+        this.feWidget.heightInPx = viewZoneHeight;
         this.feWidget.showAsync(this.editor)
             .then(edit => {
                 if (edit) {
@@ -1762,76 +1763,6 @@ function rangeToSelection(range: monaco.IRange): monaco.Selection {
     return new monaco.Selection(range.startLineNumber, range.startColumn, range.endLineNumber, range.endColumn);
 }
 
-class FieldEditorHost implements pxt.editor.MonacoFieldEditorHost, monaco.editor.IContentWidget {
-    protected widgetDiv: HTMLDivElement;
-    protected content: HTMLDivElement;
-    protected editor: monaco.editor.IStandaloneCodeEditor;
-    protected blocks: pxtc.BlocksInfo;
-
-    suppressMouseDown = true;
-
-    constructor(protected fe: pxt.editor.MonacoFieldEditor, protected range: monaco.Range, protected model: monaco.editor.IModel) {
-        this.widgetDiv = document.createElement("div");
-        this.widgetDiv.className = "monaco-field-editor-frame";
-
-        this.widgetDiv.style.backgroundColor = "darkgrey";
-    }
-
-    getId() {
-        return "pxt-monaco-field-editor";
-    }
-
-    getDomNode() {
-        return this.widgetDiv;
-    }
-
-    contentDiv(): HTMLDivElement {
-        if (!this.content) {
-            this.content = document.createElement("div");
-            this.widgetDiv.appendChild(this.content);
-        }
-        return this.content;
-    }
-
-    getPosition(): monaco.editor.IContentWidgetPosition {
-        return {
-			position: {
-				lineNumber: this.range.startLineNumber,
-				column: this.range.startColumn
-			},
-			preference: [monaco.editor.ContentWidgetPositionPreference.BELOW, monaco.editor.ContentWidgetPositionPreference.ABOVE]
-		};
-    }
-
-    showAsync(editor: monaco.editor.IStandaloneCodeEditor) {
-        this.editor = editor;
-        return compiler.getBlocksAsync()
-            .then(bi => {
-                this.blocks = bi;
-                editor.addContentWidget(this);
-                return this.fe.showEditorAsync(this.range, this);
-            })
-            .finally(() => {
-                this.close();
-            })
-    }
-
-    getText(range: monaco.Range): string {
-        return this.model.getValueInRange(range);
-    }
-
-    blocksInfo(): pxtc.BlocksInfo {
-        return this.blocks;
-    }
-
-    close(): void {
-        this.editor.removeContentWidget(this);
-        this.fe.onClosed();
-        this.fe.dispose();
-    }
-}
-
-
 class ViewZoneEditorHost implements pxt.editor.MonacoFieldEditorHost, monaco.editor.IViewZone {
     domNode: HTMLDivElement;
     afterLineNumber: number;
@@ -1872,7 +1803,7 @@ class ViewZoneEditorHost implements pxt.editor.MonacoFieldEditorHost, monaco.edi
         return this.content;
     }
 
-    showAsync(editor: monaco.editor.IStandaloneCodeEditor) {
+    showAsync(editor: monaco.editor.IStandaloneCodeEditor): Promise<pxt.editor.TextEdit> {
         this.editor = editor;
         return compiler.getBlocksAsync()
             .then(bi => {

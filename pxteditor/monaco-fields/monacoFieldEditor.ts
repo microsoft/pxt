@@ -25,6 +25,7 @@ namespace pxt.editor {
         foldMatches?: boolean;
         glyphCssClass?: string;
         proto: { new(): MonacoFieldEditor };
+        heightInPixels?: number;
     }
 
     export interface MonacoFindArguments {
