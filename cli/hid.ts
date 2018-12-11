@@ -2,8 +2,12 @@ import HF2 = pxt.HF2
 import U = pxt.U
 import * as nodeutil from './nodeutil';
 
+let webUSB = true
+
 let HID: any = undefined;
 function requireHID(install?: boolean): any {
+    if (webUSB)
+        return true
     if (HID) return HID;
     return HID = nodeutil.lazyRequire("node-hid", install);
 }
@@ -76,7 +80,31 @@ export function getHF2DevicesAsync(): Promise<HidDevice[]> {
     return Promise.resolve(getHF2Devices());
 }
 
+function handleDevicesFound(devices: any, selectFn: any) {
+    devices.forEach((device: any) => {
+        console.log(`DEV: ${device.productName || device.serialNumber}`);
+    });
+    selectFn(devices[0])
+}
+
 export function hf2ConnectAsync(path: string, raw = false) {
+    if (webUSB) {
+        const g = global as any
+        if (!g.navigator)
+            g.navigator = {}
+        if (!g.navigator.usb) {
+            const USB = require("webusb").USB
+            g.navigator.usb = new USB({
+                devicesFound: handleDevicesFound
+            })
+        }
+
+        return pxt.usb.pairAsync()
+            .then(() => pxt.usb.mkPacketIOAsync())
+            .then(io => new HF2.Wrapper(io))
+    }
+
+
     if (!requireHID(true)) return Promise.resolve(undefined);
     // in .then() to make sure we catch errors
     let h = new HF2.Wrapper(new HidIO(path))
@@ -85,6 +113,8 @@ export function hf2ConnectAsync(path: string, raw = false) {
 }
 
 export function mkPacketIOAsync() {
+    if (webUSB)
+        return hf2ConnectAsync("")
     return Promise.resolve()
         .then(() => {
             // in .then() to make sure we catch errors

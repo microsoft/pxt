@@ -34,9 +34,18 @@ namespace pxt.usb {
     export let filters: USBDeviceFilter[] = [{
         classCode: 255,
         subclassCode: 42,
-    }]
+    },
+    {
+        classCode: 0xff,
+        subclassCode: 0x45,
+        protocolCode: 0xaf,
+    }
+    ]
+
+    let isHF2 = true
 
     export function setFilters(f: USBDeviceFilter[]) {
+        isHF2 = false
         filters = f
     }
 
@@ -178,7 +187,7 @@ namespace pxt.usb {
                 }, pkt).then(res => {
                     if (res.status != "ok")
                         this.error("USB CTRL OUT transfer failed")
-                    else
+                    else if (!isHF2)
                         this.recvOne()
                 })
             }
@@ -205,8 +214,13 @@ namespace pxt.usb {
                 else
                     this.recvPacketAsync()
                         .then(buf => {
-                            this.onData(buf)
-                            loop()
+                            if (buf[0]) {
+                                this.onData(buf)
+                                loop()
+                            } else {
+                                // throttle down if no data coming
+                                Promise.delay(500).then(loop)
+                            }
                         }, err => {
                             this.onError(err)
                             Promise.delay(300).then(loop)
@@ -225,7 +239,7 @@ namespace pxt.usb {
                 return arr
             }
 
-            if (!this.epIn)
+            if (!this.epIn) {
                 return this.dev.controlTransferIn({
                     requestType: "class",
                     recipient: "interface",
@@ -233,6 +247,7 @@ namespace pxt.usb {
                     value: controlTransferInReport,
                     index: this.iface.interfaceNumber
                 }, 64).then(final)
+            }
 
             return this.dev.transferIn(this.epIn.endpointNumber, 64)
                 .then(final)
@@ -283,7 +298,7 @@ namespace pxt.usb {
                 .then(() => {
                     this.log("device ready")
                     this.ready = true
-                    if (this.epIn)
+                    if (this.epIn || isHF2)
                         this.readLoop()
                 })
         }
