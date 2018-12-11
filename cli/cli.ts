@@ -3897,7 +3897,6 @@ function uploadBundledTranslationsAsync(crowdinDir: string, branch: string, prj:
 }
 
 export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedCommand) {
-    const errors: pxt.Map<number> = {};
     return crowdinCredentialsAsync()
         .then(cred => {
             if (!cred) return Promise.resolve();
@@ -3918,14 +3917,10 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
             const nextFileAsync = (): Promise<void> => {
                 const f = todo.pop();
                 if (!f) {
-                    if (errors.length) {
-                        pxt.log(`${errors.length} errors in translated blocks`);
-                        Object.keys(errors).forEach(blockid => pxt.log(`error ${blockid}: ${errors[blockid]}`));
-                        pxt.reportError("loc.errors", "invalid translation", errors);
-                    }
                     return Promise.resolve();
                 }
 
+                const errors: pxt.Map<number> = {};
                 const fn = path.basename(f);
                 const crowdf = path.join(crowdinDir, fn);
                 const locdir = path.dirname(f);
@@ -3947,7 +3942,11 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
                                     // block definitions
                                     Object.keys(dataLang).forEach(id => {
                                         const tr = dataLang[id];
-                                        pxt.blocks.normalizeBlock(tr, err => errors[`${fn}.${lang}`] = 1);
+                                        pxt.blocks.normalizeBlock(tr, err => {
+                                            const errid = `${fn}.${lang}`;
+                                            errors[`${fn}.${lang}`] = 1
+                                            pxt.log(`error ${errid}: ${err}`)
+                                        });
                                     });
                                 }
 
@@ -3971,6 +3970,13 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
                             pxt.log(`writing ${pxtJsonf}`);
                             nodeutil.writeFileSync(pxtJsonf, JSON.stringify(local, null, 4), { encoding: "utf8" });
                         }
+
+                        pxt.log(`${errors.length} errors`);
+                        if (errors.length) {
+                            Object.keys(errors).forEach(blockid => pxt.log(`error in ${blockid}`));
+                            pxt.reportError("loc.errors", "invalid translation", errors);
+                        }
+
                         return nextFileAsync()
                     });
             }
