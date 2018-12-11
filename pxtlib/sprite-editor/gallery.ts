@@ -120,7 +120,7 @@ namespace pxtsprite {
             let button = document.createElement('button');
             button.setAttribute('id', ':' + i); // For aria-activedescendant
             button.setAttribute('role', 'menuitem');
-            button.setAttribute('class', 'blocklyDropDownButton sprite-editor-card');
+            button.setAttribute('class', 'sprite-gallery-button sprite-editor-card');
             button.title = alt;
             button.style.width = width;
             button.style.height = width;
@@ -128,15 +128,16 @@ namespace pxtsprite {
 
             button.style.backgroundColor = backgroundColor;
             button.style.borderColor = this.itemBorderColor;
-            Blockly.bindEvent_(button, 'click', this, () => this.handleSelection(value));
 
             const parentDiv = this.contentDiv;
-            Blockly.bindEvent_(button, 'mouseover', button, function () {
-                button.setAttribute('class', 'blocklyDropDownButton blocklyDropDownButtonHover sprite-editor-card');
+
+            button.addEventListener("click", () => this.handleSelection(value));
+            button.addEventListener(pxt.BrowserUtils.pointerEvents.move, () => {
+                button.setAttribute('class', 'sprite-gallery-button sprite-gallery-button-hover sprite-editor-card');
                 parentDiv.setAttribute('aria-activedescendant', button.id);
             });
-            Blockly.bindEvent_(button, 'mouseout', button, function () {
-                button.setAttribute('class', 'blocklyDropDownButton sprite-editor-card');
+            button.addEventListener(pxt.BrowserUtils.pointerEvents.leave, () => {
+                button.setAttribute('class', 'sprite-gallery-button sprite-editor-card');
                 parentDiv.removeAttribute('aria-activedescendant');
             });
 

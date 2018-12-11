@@ -1489,7 +1489,6 @@ namespace ts.pxtc.service {
         search?: SearchOptions;
         format?: FormatOptions;
         blocks?: BlocksOptions;
-        symbolMatchers?: SymbolMatcher[];
         projectSearch?: ProjectSearchOptions;
     }
 
@@ -1528,18 +1527,6 @@ namespace ts.pxtc.service {
 
     export interface BlocksOptions {
         bannedCategories?: string[];
-    }
-
-    export interface SymbolMatcher {
-        nodeKind: ts.SyntaxKind;
-        qname: string;
-        sourcefile: string;
-    }
-
-    export interface SymbolMatch {
-        locations: LocationInfo[];
-        qname: string;
-        sourcefile: string;
     }
 }
 

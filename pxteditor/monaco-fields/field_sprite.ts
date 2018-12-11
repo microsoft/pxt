@@ -22,10 +22,10 @@ namespace pxt.editor {
             this.editor.rePaint();
             this.editor.setActiveColor(1, true);
 
-            contentDiv.style.height = (this.editor.outerHeight() + 1) + "px";
-            contentDiv.style.width = (this.editor.outerWidth() + 1) + "px";
+            contentDiv.style.height = (this.editor.outerHeight() + 3) + "px";
+            contentDiv.style.width = (this.editor.outerWidth() + 3) + "px";
             contentDiv.style.overflow = "hidden";
-            contentDiv.style.maxHeight = "500px";
+            addClass(contentDiv, "sprite-editor-dropdown-bg");
             addClass(contentDiv.parentElement, "sprite-editor-dropdown");
 
             this.editor.addKeyListeners();
@@ -63,9 +63,10 @@ namespace pxt.editor {
         foldMatches: true,
         glyphCssClass: "sprite-editor-glyph sprite-focus-hover",
         matcher: {
-            sourcefile: "main.ts",
-            qname: "Image",
-            nodeKind: 183
+            searchString: "img`(?:[ a-fA-F0-9\\.]|\\n)+`",
+            isRegex: true,
+            matchCase: true,
+            matchWholeWord: false
         },
         proto: MonacoSpriteEditor
     };

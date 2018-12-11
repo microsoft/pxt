@@ -21,9 +21,16 @@ namespace pxt.editor {
 
     export interface MonacoFieldEditorDefinition {
         id: string;
-        matcher: pxtc.service.SymbolMatcher;
+        matcher: MonacoFindArguments;
         foldMatches?: boolean;
         glyphCssClass?: string;
         proto: { new(): MonacoFieldEditor };
+    }
+
+    export interface MonacoFindArguments {
+        searchString: string;
+        isRegex: boolean;
+        matchWholeWord: boolean;
+        matchCase: boolean;
     }
 }

@@ -479,7 +479,6 @@ export class ProjectView
                         pxt.options.light = true;
                     }
                     this.editor.setDiagnostics(this.editorFile, state);
-                    this.handleMatches(resp);
                     data.invalidate("open-pkg-meta:" + pkg.mainEditorPkg().getPkgId());
                     if (pxt.appTarget.simulator && pxt.appTarget.simulator.autoRun) {
                         let output = pkg.mainEditorPkg().outputPkg.files["output.txt"];
@@ -1586,7 +1585,6 @@ export class ProjectView
         compiler.compileAsync({ native: true, forceEmit: true, preferredEditor: this.getPreferredEditor() })
             .then<pxtc.CompileResult>(resp => {
                 this.editor.setDiagnostics(this.editorFile, state)
-                this.handleMatches(resp);
 
                 let fn = pxt.outputName()
                 if (!resp.outfiles[fn]) {
@@ -1904,7 +1902,6 @@ export class ProjectView
                     if (cancellationToken.isCancelled()) return;
                     this.clearSerial();
                     this.editor.setDiagnostics(this.editorFile, state)
-                    this.handleMatches(resp);
 
                     if (resp.outfiles[pxtc.BINARY_JS]) {
                         if (!cancellationToken.isCancelled()) {
@@ -2383,12 +2380,6 @@ export class ProjectView
         th.showHint();
         const options = this.state.tutorialOptions;
         pxt.tickEvent(`tutorial.showhint`, { tutorial: options.tutorial, step: options.tutorialStep });
-    }
-
-    private handleMatches(resp: pxtc.CompileResult) {
-        if (this.textEditor) {
-            (this.textEditor as monaco.Editor).handleMatches(resp ? resp.symbolMatches : undefined);
-        }
     }
 
     ///////////////////////////////////////////////////////////

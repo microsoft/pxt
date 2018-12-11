@@ -12,7 +12,6 @@ namespace ts.pxtc {
     export interface CompileResult {
         // Extend the CompileResult interface with ts specific fields
         ast?: Program;
-        symbolMatches?: service.SymbolMatch[];
     }
 
     export function getTsCompilerOptions(opts: CompileOptions) {
@@ -86,7 +85,7 @@ namespace ts.pxtc {
         })
     }
 
-    export function compile(opts: CompileOptions, matchers?: pxtc.service.SymbolMatcher[]) {
+    export function compile(opts: CompileOptions) {
         let startTime = Date.now()
         let res: CompileResult = {
             outfiles: {},
@@ -187,11 +186,6 @@ namespace ts.pxtc {
             res.ast = program
         }
 
-        if (matchers && matchers.length) {
-            const matches = matchers.map(matcher => matchSymbols(program, matcher)).filter(match => !!match);
-            if (matches.length) res.symbolMatches = matches;
-        }
-
         if (opts.ast || opts.forceEmit || res.diagnostics.length == 0) {
             const binOutput = compileBinary(program, host, opts, res, entryPoint);
             res.times["compilebinary"] = U.now() - emitStart
@@ -220,37 +214,6 @@ namespace ts.pxtc {
         const blocksInfo = pxtc.getBlocksInfo(apis, bannedCategories);
         const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, { snippetMode: false, alwaysEmitOnStart: opts.alwaysDecompileOnStart, includeGreyBlockMessages }, pxtc.decompiler.buildRenameMap(resp.ast, file))
         return bresp;
-    }
-
-    function matchSymbols(program: Program, matcher: pxtc.service.SymbolMatcher): pxtc.service.SymbolMatch {
-        const source = program.getSourceFile(matcher.sourcefile);
-        const checker = program.getTypeChecker();
-        const matches: LocationInfo[] = [];
-
-        if (source) {
-            matchCore(source);
-        }
-
-        return matches.length ? {
-            qname: matcher.qname,
-            sourcefile: matcher.sourcefile,
-            locations: matches
-        } : undefined;
-
-
-        function matchCore(node: ts.Node) {
-            ts.forEachChild(node, child => {
-                if (child.kind === matcher.nodeKind) {
-                    const type = checker.getTypeAtLocation(child);
-                    if (type.symbol) {
-                        if (checker.getFullyQualifiedName(type.symbol) === matcher.qname) {
-                            matches.push(nodeLocationInfo(child));
-                        }
-                    }
-                }
-                matchCore(child);
-            });
-        }
     }
 
     function normalizePath(path: string): string {
