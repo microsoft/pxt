@@ -528,7 +528,7 @@ namespace ts.pxtc {
             for (let i = 0; i < 4; ++i)
                 hd.push(parseInt(swapBytes(tmp.slice(i * 4, i * 4 + 4)), 16))
 
-            let uf2 = useuf2 ? UF2.newBlockFile() : null
+            let uf2 = useuf2 ? UF2.newBlockFile(target.uf2Family) : null
 
             if (elfInfo) {
                 let prog = new Uint8Array(buf.length * 2)

@@ -372,6 +372,7 @@ declare namespace ts.pxtc {
         ramSize?: number;
         patches?: pxt.Map<UpgradePolicy[]>; // semver range -> upgrade policies
         openocdScript?: string;
+        uf2Family?: string;
         onStartText?: boolean;
         stackAlign?: number; // 1 word (default), or 2
         hidSelectors?: HidSelector[];
