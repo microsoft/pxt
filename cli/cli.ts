@@ -2114,7 +2114,7 @@ function buildAndWatchAsync(f: () => Promise<string[]>): Promise<void> {
     return f()
         .then(dirs => {
             if (globalConfig.noAutoBuild) return
-            console.log('watching ' + dirs.join(', ') + '...');
+            pxt.debug('watching ' + dirs.join(', ') + '...');
             let loop = () => {
                 Promise.delay(1000)
                     .then(() => maxMTimeAsync(dirs))
@@ -3897,7 +3897,6 @@ function uploadBundledTranslationsAsync(crowdinDir: string, branch: string, prj:
 }
 
 export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedCommand) {
-    const errors: string[] = [];
     return crowdinCredentialsAsync()
         .then(cred => {
             if (!cred) return Promise.resolve();
@@ -3918,13 +3917,10 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
             const nextFileAsync = (): Promise<void> => {
                 const f = todo.pop();
                 if (!f) {
-                    if (errors.length) {
-                        pxt.log(`${errors.length} errors in translated blocks`);
-                        errors.forEach(error => `error: ${pxt.log(error)}`);
-                    }
                     return Promise.resolve();
                 }
 
+                const errors: pxt.Map<number> = {};
                 const fn = path.basename(f);
                 const crowdf = path.join(crowdinDir, fn);
                 const locdir = path.dirname(f);
@@ -3946,7 +3942,11 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
                                     // block definitions
                                     Object.keys(dataLang).forEach(id => {
                                         const tr = dataLang[id];
-                                        pxt.blocks.normalizeBlock(tr, err => errors.push(`${fn} ${lang} ${id}: ${err}`));
+                                        pxt.blocks.normalizeBlock(tr, err => {
+                                            const errid = `${fn}.${lang}`;
+                                            errors[`${fn}.${lang}`] = 1
+                                            pxt.log(`error ${errid}: ${err}`)
+                                        });
                                     });
                                 }
 
@@ -3970,6 +3970,14 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
                             pxt.log(`writing ${pxtJsonf}`);
                             nodeutil.writeFileSync(pxtJsonf, JSON.stringify(local, null, 4), { encoding: "utf8" });
                         }
+
+                        const errorIds = Object.keys(errors);
+                        pxt.log(`${errorIds.length} errors`);
+                        if (errorIds.length) {
+                            errorIds.forEach(blockid => pxt.log(`error in ${blockid}`));
+                            pxt.reportError("loc.errors", "invalid translation", errors);
+                        }
+
                         return nextFileAsync()
                     });
             }

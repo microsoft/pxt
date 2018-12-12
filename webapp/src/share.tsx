@@ -257,7 +257,7 @@ class SocialButton extends data.Component<SocialButtonProps, {}> {
             case "facebook": url = fbUrl; break;
             case "twitter": url = twitterUrl; break;
         }
-        sui.popupWindow(url, heading, 600, 600);
+        pxt.BrowserUtils.popupWindow(url, heading, 600, 600);
         e.preventDefault();
     }
 
