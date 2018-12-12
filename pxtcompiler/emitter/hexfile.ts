@@ -886,7 +886,9 @@ ${hex.hexPrelude()}
         asmsource += "_vtables_end:\n\n"
 
         asmsource += `\n.balign 4\n_pxt_config_data:\n`
-        for (let d of bin.res.configData || []) {
+        const cfg = bin.res.configData || []
+        // asmsource += `    .word ${cfg.length}, 0 ; num. entries`
+        for (let d of cfg) {
             asmsource += `    .word ${d.key}, ${d.value}  ; ${d.name}=${d.value}\n`
         }
         asmsource += `    .word 0\n\n`
@@ -1082,6 +1084,20 @@ __flash_checksums:
             bin.commSize = res.thumbFile.commPtr - hex.commBase
         if (res.src)
             bin.writeFile(pxtc.BINARY_ASM, res.src)
+
+        const cfg = cres.configData || []
+
+        if (cfg.some(e => e.name == "BOOTLOADER_BOARD_ID")) {
+            let c = `const uint32_t configData[] = {\n`
+            c += `    0x1e9e10f1, 0x20227a79, // magic\n`
+            c += `    ${cfg.length}, 0, // num. entries; reserved\n`
+            for (let e of cfg) {
+                c += `    ${e.key}, 0x${e.value.toString(16)}, // ${e.name}\n`
+            }
+            c += "    0, 0\n};\n"
+            bin.writeFile("config.c", c)
+        }
+
         if (res.buf) {
             if (opts.target.flashChecksumAddr) {
                 let pos = res.thumbFile.lookupLabel("__flash_checksums") / 2
