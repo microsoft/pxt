@@ -314,7 +314,7 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
     }
 
     renderCore() {
-        const { disabled, title, role, icon, className, children, avatarImage, avatarInitials } = this.props;
+        const { disabled, title, role, icon, className, children } = this.props;
         const { open } = this.state;
 
         const aria = {
