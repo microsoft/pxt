@@ -47,6 +47,7 @@ export function serialAsync() {
 }
 
 export function dmesgAsync() {
+    HF2.enableLog()
     return initAsync()
         .then(d => d.talkAsync(pxt.HF2.HF2_CMD_DMESG)
             .then(resp => {
@@ -102,6 +103,7 @@ export function hf2ConnectAsync(path: string, raw = false) {
         return pxt.usb.pairAsync()
             .then(() => pxt.usb.mkPacketIOAsync())
             .then(io => new HF2.Wrapper(io))
+            .then(d => d.reconnectAsync().then(() => d))
     }
 
 
