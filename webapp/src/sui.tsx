@@ -45,11 +45,6 @@ function genericContent(props: UiProps) {
     return retVal;
 }
 
-export function popupWindow(url: string, title: string, width: number, height: number) {
-    return window.open(url, title, `resizable=no, copyhistory=no, ` +
-        `width=${width}, height=${height}, top=${(screen.height / 2) - (height / 2)}, left=${(screen.width / 2) - (width / 2)}`);
-}
-
 function removeClass(el: HTMLElement, cls: string) {
     if (el.classList) el.classList.remove(cls);
     else if (el.className.indexOf(cls) >= 0) el.className.replace(new RegExp(`(?:^|\\s)${cls}(?:\\s|$)`), ' ');
