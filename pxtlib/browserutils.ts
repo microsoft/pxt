@@ -854,21 +854,23 @@ namespace pxt.BrowserUtils {
 
     export function popupWindow(url: string, title: string, popUpWidth: number, popUpHeight: number) {
         try {
-          const winLeft = window.screenLeft ? window.screenLeft : window.screenX;
-          const winTop = window.screenTop ? window.screenTop : window.screenY;
-          const width = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
-          const height = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
-          const left = ((width / 2) - (popUpWidth / 2)) + winLeft;
-          const top = ((height / 2) - (popUpHeight / 2)) + winTop;
+            const winLeft = window.screenLeft ? window.screenLeft : window.screenX;
+            const winTop = window.screenTop ? window.screenTop : window.screenY;
+            const width = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+            const height = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+            const left = ((width / 2) - (popUpWidth / 2)) + winLeft;
+            const top = ((height / 2) - (popUpHeight / 2)) + winTop;
 
-          const popupWindow = window.open(url, title, "width=" + popUpWidth + ", height=" + popUpHeight + ", top=" + top + ", left=" + left);
-          if (popupWindow.focus) {
-            popupWindow.focus();
-          }
+            const popupWindow = window.open(url, title, "width=" + popUpWidth + ", height=" + popUpHeight + ", top=" + top + ", left=" + left);
+            if (popupWindow.focus) {
+                popupWindow.focus();
+            }
 
-          return popupWindow;
+            return popupWindow;
         } catch (e) {
-          return null;
+            // Error opening popup
+            pxt.tickEvent('pxt.popupError', { url: url, msg: e.message });
+            return null;
         }
-      }
+    }
 }
