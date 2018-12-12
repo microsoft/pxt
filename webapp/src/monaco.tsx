@@ -1722,10 +1722,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         const newText = lines.map((line, index) => {
             if (index === 0) {
-                return line;
+                return line.trim();
             }
             else {
-                return line.replace(/^\s*/, innerIndent);
+                return innerIndent + line.trim();
             }
         }).join(model.getEOL());
 
