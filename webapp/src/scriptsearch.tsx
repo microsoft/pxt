@@ -108,7 +108,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             data: [],
             status: data.FetchStatus.Complete
         };
-        if (!this.state.searchFor || this.state.mode != ScriptSearchMode.Extensions) 
+        if (!this.state.searchFor || this.state.mode != ScriptSearchMode.Extensions)
             return emptyResult;
 
         const scriptid = pxt.Cloud.parseScriptId(this.state.searchFor)
