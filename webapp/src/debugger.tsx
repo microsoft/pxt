@@ -277,7 +277,8 @@ export class DebuggerToolbar extends data.Component<DebuggerToolbarProps, Debugg
         const parentState = this.props.parent.state;
         const simOpts = pxt.appTarget.simulator;
 
-        const isRunning = parentState.running;
+        const simState = parentState.simState;
+        const isRunning = simState == pxt.editor.SimState.Running;
         const isDebugging = parentState.debugging;
         if (!isDebugging) return <div />;
 
@@ -288,7 +289,6 @@ export class DebuggerToolbar extends data.Component<DebuggerToolbarProps, Debugg
         if (!isValidDebugFile) return <div />;
 
         const restartTooltip = lf("Restart debugging");
-        const debugTooltip = parentState.debugging ? lf("Stop") : lf("Start Debugging");
         const dbgPauseResumeTooltip = isRunning ? lf("Pause execution") : lf("Continue execution");
         const dbgStepIntoTooltip = lf("Step into");
         const dbgStepOverTooltip = lf("Step over");

@@ -74,7 +74,9 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const sandbox = pxt.shell.isSandboxMode();
         const make = !sandbox && parentState.showParts && targetTheme.instructions;
 
-        const isRunning = parentState.running;
+        const simState = parentState.simState;
+        const isRunning = simState == pxt.editor.SimState.Running;
+        const isStarting = simState == pxt.editor.SimState.Starting;
         const isFullscreen = parentState.fullscreen;
         const isMuted = parentState.mute;
         const inTutorial = !!parentState.tutorialOptions && !!parentState.tutorialOptions.tutorial;
@@ -91,7 +93,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const collapse = !!targetTheme.pairingButton;
         if (isHeadless) return <div />;
 
-        const runTooltip = isRunning ? lf("Stop the simulator") : lf("Start the simulator");
+        const runTooltip = [lf("Stop the simulator"), lf("Starting the simulator"), lf("Start the simulator")][simState];
         const makeTooltip = lf("Open assembly instructions");
         const restartTooltip = lf("Restart the simulator");
         const fullscreenTooltip = isFullscreen ? lf("Exit fullscreen mode") : lf("Launch in fullscreen");
@@ -101,8 +103,8 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         return <aside className="ui item grid centered portrait hide simtoolbar" role="complementary" aria-label={lf("Simulator toolbar")}>
             <div className={`ui icon tiny buttons ${isFullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
                 {make ? <sui.Button disabled={debugging} icon='configure' className="secondary" title={makeTooltip} onClick={this.openInstructions} /> : undefined}
-                {run ? <sui.Button disabled={debugging} key='runbtn' className={`play-button ${isRunning ? "stop" : "play"}`} icon={isRunning ? "stop" : "play green"} title={runTooltip} onClick={this.startStopSimulator} /> : undefined}
-                {restart ? <sui.Button disabled={debugging} key='restartbtn' className={`restart-button`} icon="refresh" title={restartTooltip} onClick={this.restartSimulator} /> : undefined}
+                {run ? <sui.Button disabled={debugging || isStarting} key='runbtn' className={`play-button ${isRunning ? "stop" : "play"}`} icon={isRunning ? "stop" : "play green"} title={runTooltip} onClick={this.startStopSimulator} /> : undefined}
+                {restart ? <sui.Button disabled={debugging || isStarting} key='restartbtn' className={`restart-button`} icon="refresh" title={restartTooltip} onClick={this.restartSimulator} /> : undefined}
                 {trace ? <sui.Button key='trace' className={`trace-button ${tracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onClick={this.toggleTrace} /> : undefined}
             </div>
             <div className={`ui icon tiny buttons ${isFullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>

@@ -1,5 +1,9 @@
 namespace pxt.editor {
-
+    export enum SimState {
+        Stopped,
+        Starting,
+        Running
+    }
     export interface IEditor {
         undo(): void;
         redo(): void;
@@ -42,7 +46,7 @@ namespace pxt.editor {
         tutorialOptions?: TutorialOptions;
         lightbox?: boolean;
 
-        running?: boolean;
+        simState?: SimState;
         resumeOnVisibility?: boolean;
         compiling?: boolean;
         isSaving?: boolean;
