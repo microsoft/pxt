@@ -138,6 +138,18 @@ namespace pxt.usb {
         onEvent = (v: Uint8Array) => { };
 
         constructor(public dev: USBDevice) {
+            (navigator as any).usb.addEventListener('disconnect', (event: any) => {
+                if (event.device == this.dev) {
+                    this.log("Device disconnected")
+                    this.clearDev()
+                }
+            });
+        }
+
+        private clearDev() {
+            this.dev = null
+            this.epIn = null
+            this.epOut = null
         }
 
         error(msg: string) {
@@ -159,7 +171,7 @@ namespace pxt.usb {
                     // just ignore errors closing, most likely device just disconnected
                 })
                 .then(() => {
-                    this.dev = null
+                    this.clearDev()
                     return Promise.delay(500)
                 })
         }
@@ -176,6 +188,8 @@ namespace pxt.usb {
         }
 
         sendPacketAsync(pkt: Uint8Array) {
+            if (!this.dev)
+                return Promise.reject(new Error("Disconnected"))
             Util.assert(pkt.length <= 64)
             if (!this.epOut) {
                 return this.dev.controlTransferOut({
@@ -222,7 +236,8 @@ namespace pxt.usb {
                                 Promise.delay(500).then(loop)
                             }
                         }, err => {
-                            this.onError(err)
+                            if (this.dev)
+                                this.onError(err)
                             Promise.delay(300).then(loop)
                         })
             }
@@ -239,6 +254,9 @@ namespace pxt.usb {
                 return arr
             }
 
+            if (!this.dev)
+                return Promise.reject(new Error("Disconnected"))
+
             if (!this.epIn) {
                 return this.dev.controlTransferIn({
                     requestType: "class",
@@ -254,6 +272,8 @@ namespace pxt.usb {
         }
 
         initAsync() {
+            if (!this.dev)
+                return Promise.reject(new Error("Disconnected"))
             let dev = this.dev
             this.log("open device")
             return dev.open()
@@ -355,18 +375,22 @@ namespace pxt.usb {
 
         return getDeviceAsync()
             .then((dev) => {
-                return Promise.resolve(true);
+                return true;
             })
             .catch(() => {
-                return Promise.resolve(false);
+                return false;
             });
     }
 
     function getDeviceAsync(): Promise<USBDevice> {
         return ((navigator as any).usb.getDevices() as Promise<USBDevice[]>)
             .then<USBDevice>((devs: USBDevice[]) => {
-                if (!devs || !devs.length)
-                    U.userError(U.lf("No USB device selected or connected; try pairing!"))
+                if (!devs || !devs.length) {
+                    let err: any = new Error(U.lf("No USB device selected or connected; try pairing!"))
+                    err.isUserError = true
+                    err.type = "devicenotfound"
+                    throw err;
+                }
                 return devs[0]
             })
     }
@@ -396,6 +420,7 @@ namespace pxt.usb {
     }
 
     export function isAvailable() {
+        // TODO disable on Win7/Chrome?
         return !!(navigator as any).usb
     }
 }

@@ -861,6 +861,9 @@ namespace pxt.cpp {
         if (compile.vtableShift)
             pxtConfig += `#define PXT_VTABLE_SHIFT ${compile.vtableShift}\n`
 
+        if (compile.uf2Family)
+            pxtConfig += `#define PXT_UF2_FAMILY ${compile.uf2Family}\n`
+
         res.generatedFiles[sourcePath + "pointers.cpp"] = includesInc + protos.finish() + abiInc + pointersInc + "\nPXT_SHIMS_END\n"
         res.generatedFiles[sourcePath + "pxtconfig.h"] = pxtConfig
         pxt.debug(`pxtconfig.h: ${res.generatedFiles[sourcePath + "pxtconfig.h"]}`)

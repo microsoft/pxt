@@ -1542,12 +1542,44 @@ export class ProjectView
             });
     }
 
+    private checkWebUSBVariant = true
     checkForHwVariant() {
         if (pxt.hwVariant)
             return false // already set
         let variants = pxt.getHwVariants()
         if (variants.length == 0)
             return false
+        let pairAsync = () => cmds.showWebUSBPairingInstructionsAsync(null)
+            .then(() => {
+                this.checkForHwVariant()
+            }, err => {
+                this.checkWebUSBVariant = false
+                this.checkForHwVariant()
+            })
+        if (pxt.usb.isEnabled && this.checkWebUSBVariant) {
+            hidbridge.initAsync(true)
+                .then(wr => {
+                    if (wr.familyID) {
+                        for (let v of variants) {
+                            let compile = pxt.U.clone(pxt.appTarget.compile)
+                            if (v.compileServiceVariant) {
+                                let c2 = pxt.appTarget.variants[v.compileServiceVariant]
+                                if (c2.compile)
+                                    pxt.U.jsonCopyFrom(compile, c2.compile)
+                            }
+                            if (parseInt(compile.uf2Family) === wr.familyID) {
+                                pxt.setHwVariant(v.name)
+                                this.reloadHeaderAsync()
+                                    .then(() => this.compile())
+                                return
+                            }
+                        }
+                    }
+                    this.checkWebUSBVariant = false
+                    this.checkForHwVariant()
+                }, pairAsync)
+            return true
+        }
         this.showChooseHwDialog()
         return true
     }

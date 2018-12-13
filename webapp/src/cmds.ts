@@ -149,6 +149,10 @@ function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.DeployOpt
         .then(dev => dev.reflashAsync(blocks))
         .catch((e) => {
             const troubleshootDoc = pxt.appTarget && pxt.appTarget.appTheme && pxt.appTarget.appTheme.appFlashingTroubleshoot;
+            if (e.type === "repairbootloader") {
+                return pairBootloaderAsync()
+                    .then(() => hidDeployCoreAsync(resp))
+            }
             if (e.type === "devicenotfound" && d.reportDeviceNotFoundAsync && !!troubleshootDoc) {
                 pxt.tickEvent("hid.flash.devicenotfound");
                 return d.reportDeviceNotFoundAsync(troubleshootDoc, resp);
@@ -178,10 +182,20 @@ ${lf("You will get instant downloads and data logging.")}</p>
     }).then(r => r ? showFirmwareUpdateInstructionsAsync(resp) : browserDownloadDeployCoreAsync(resp));
 }
 
+function pairBootloaderAsync(): Promise<void> {
+    return core.confirmAsync({
+        header: lf("Just one more time..."),
+        body: lf("You need to pair the board again, now in bootloader mode. We know..."),
+        agreeLbl: lf("Ok, pair!")
+    }).then(r => pxt.usb.pairAsync())
+}
+
 function showFirmwareUpdateInstructionsAsync(resp: pxtc.CompileResult): Promise<void> {
     return pxt.targetConfigAsync()
         .then(config => {
-            const firmwareUrl = (config.firmwareUrls || {})[pxt.appTarget.simulator.boardDefinition.id];
+            const firmwareUrl = (config.firmwareUrls || {})[
+                pxt.appTarget.simulator.boardDefinition ? pxt.appTarget.simulator.boardDefinition.id
+                    : ""];
             if (!firmwareUrl) // skip firmware update
                 return showWebUSBPairingInstructionsAsync(resp)
             pxt.tickEvent(`webusb.upgradefirmware`);
@@ -234,7 +248,7 @@ function showFirmwareUpdateInstructionsAsync(resp: pxtc.CompileResult): Promise<
         });
 }
 
-function showWebUSBPairingInstructionsAsync(resp: pxtc.CompileResult): Promise<void> {
+export function showWebUSBPairingInstructionsAsync(resp: pxtc.CompileResult): Promise<void> {
     pxt.tickEvent(`webusb.pair`);
     const boardName = pxt.appTarget.appTheme.boardName || lf("device");
     const htmlBody = `
@@ -277,7 +291,15 @@ function showWebUSBPairingInstructionsAsync(resp: pxtc.CompileResult): Promise<v
         agreeLbl: lf("Let's pair it!"),
         htmlBody,
     }).then(r => {
-        pxt.usb.pairAsync()
+        if (!r) {
+            if (resp)
+                return browserDownloadDeployCoreAsync(resp)
+            else
+                pxt.U.userError(pxt.U.lf("Device not paired"))
+        }
+        if (!resp)
+            return pxt.usb.pairAsync()
+        return pxt.usb.pairAsync()
             .then(() => {
                 pxt.tickEvent(`webusb.pair.success`);
                 return hidDeployCoreAsync(resp)

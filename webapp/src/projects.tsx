@@ -878,7 +878,7 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
         pxt.tickEvent("projects.choosehwvariant", { hwid: cfg.name }, { interactiveConsent: true });
         this.hide()
 
-        pxt.setHwVariant(cfg.name.replace(/.*---/, ""))
+        pxt.setHwVariant(cfg.name)
         let editor = this.props.parent
         editor.reloadHeaderAsync()
             .then(() => editor.compile())

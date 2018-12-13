@@ -165,6 +165,7 @@ namespace pxt {
     // This is controlled by ?hw=variant or by configuration created by dragging `config.bin`
     // into editor.
     export function setHwVariant(variant: string) {
+        variant = variant.replace(/.*---/, "")
         if (/^[\w\-]+$/.test(variant))
             hwVariant = variant
         else
