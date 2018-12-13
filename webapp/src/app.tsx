@@ -301,6 +301,8 @@ export class ProjectView
     }
 
     openJavaScript(giveFocusOnLoading = true) {
+        if (this.updatingEditorFile) return; // already transitioning
+
         if (this.isJavaScriptActive()) {
             if (this.state.embedSimView) {
                 this.setState({ embedSimView: false });
@@ -320,6 +322,8 @@ export class ProjectView
     }
 
     openBlocks() {
+        if (this.updatingEditorFile) return; // already transitioning
+
         if (this.isBlocksActive()) {
             if (this.state.embedSimView) this.setState({ embedSimView: false });
             return;
@@ -611,6 +615,8 @@ export class ProjectView
         if (this.updatingEditorFile)
             return undefined;
         this.updatingEditorFile = true;
+        const simRunning = !!this.state.running;
+        this.stopSimulator();
         this.saveSettings();
 
         const hc = this.state.highContrast;
@@ -644,6 +650,8 @@ export class ProjectView
             }).finally(() => {
                 this.forceUpdate();
                 this.updatingEditorFile = false;
+                if (simRunning)
+                    this.startSimulator();
             })
     }
 
@@ -1598,6 +1606,7 @@ export class ProjectView
         compiler.compileAsync({ native: true, forceEmit: true, preferredEditor: this.getPreferredEditor() })
             .then<pxtc.CompileResult>(resp => {
                 this.editor.setDiagnostics(this.editorFile, state)
+
                 let fn = pxt.outputName()
                 if (!resp.outfiles[fn]) {
                     pxt.tickEvent("compile.noemit")
@@ -1923,6 +1932,7 @@ export class ProjectView
                     if (cancellationToken.isCancelled()) return;
                     this.clearSerial();
                     this.editor.setDiagnostics(this.editorFile, state)
+
                     if (resp.outfiles[pxtc.BINARY_JS]) {
                         if (!cancellationToken.isCancelled()) {
                             simulator.run(pkg.mainPkg, opts.debug, resp, this.state.mute, this.state.highContrast, pxt.options.light, opts.clickTrigger)

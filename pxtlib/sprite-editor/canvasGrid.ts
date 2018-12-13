@@ -1,4 +1,4 @@
-namespace pxtblockly {
+namespace pxtsprite {
     const alphaCellWidth = 5;
     const dropdownPaddding = 4;
     const lightModeBackground = "#dedede";
@@ -9,7 +9,6 @@ namespace pxtblockly {
 
         private gesture: GestureState;
         private context: CanvasRenderingContext2D;
-        private bounds: ClientRect;
         private fadeAnimation: Fade;
 
         protected backgroundLayer: HTMLCanvasElement;
@@ -238,8 +237,6 @@ namespace pxtblockly {
 
             this.redraw();
             this.drawBackground();
-
-            this.bounds = undefined;
         }
 
         render(parent: HTMLDivElement) {
@@ -252,6 +249,10 @@ namespace pxtblockly {
             if (!this.lightMode) {
                 parent.appendChild(this.overlayLayer);
             }
+        }
+
+        removeMouseListeners() {
+            this.endDrag();
         }
 
         protected redraw() {
@@ -280,12 +281,15 @@ namespace pxtblockly {
             }
         }
 
+        /**
+         * This calls getBoundingClientRect() so don't call it in a loop!
+         */
         protected clientToCell(clientX: number, clientY: number) {
-            if (!this.bounds) this.bounds = this.paintLayer.getBoundingClientRect();
+            const bounds = this.paintLayer.getBoundingClientRect();
 
             return [
-                Math.floor((clientX - this.bounds.left) / this.cellWidth),
-                Math.floor((clientY - this.bounds.top) / this.cellHeight)
+                Math.floor((clientX - bounds.left) / this.cellWidth),
+                Math.floor((clientY - bounds.top) / this.cellHeight)
             ];
         }
 
@@ -293,26 +297,13 @@ namespace pxtblockly {
             if (!this.gesture) {
                 this.gesture = new GestureState();
 
-                this.paintLayer.addEventListener(pxsim.pointerEvents.move, (ev: MouseEvent) => {
-                    const [col, row] = this.clientToCell(ev.clientX, ev.clientY);
-                    if (ev.buttons & 1) {
-                        this.gesture.handle(InputEvent.Down, col, row);
-                    }
-                    this.gesture.handle(InputEvent.Move, col, row);
-                });
-
-                pxsim.pointerEvents.down.forEach(evId => {
+                pxt.BrowserUtils.pointerEvents.down.forEach(evId => {
                     this.paintLayer.addEventListener(evId, (ev: MouseEvent) => {
+                        this.startDrag();
                         const [col, row] = this.clientToCell(ev.clientX, ev.clientY);
                         this.gesture.handle(InputEvent.Down, col, row);
                     });
                 })
-
-
-                this.paintLayer.addEventListener(pxsim.pointerEvents.up, (ev: MouseEvent) => {
-                    const [col, row] = this.clientToCell(ev.clientX, ev.clientY);
-                    this.gesture.handle(InputEvent.Up, col, row);
-                });
 
                 this.paintLayer.addEventListener("click", (ev: MouseEvent) => {
                     const [col, row] = this.clientToCell(ev.clientX, ev.clientY);
@@ -320,11 +311,60 @@ namespace pxtblockly {
                     this.gesture.handle(InputEvent.Up, col, row);
                 });
 
-                this.paintLayer.addEventListener(pxsim.pointerEvents.leave, (ev: MouseEvent) => {
-                    const [col, row] = this.clientToCell(ev.clientX, ev.clientY);
-                    this.gesture.handle(InputEvent.Leave, col, row);
-                });
+                this.paintLayer.addEventListener(pxt.BrowserUtils.pointerEvents.move, this.hoverHandler);
             }
+        }
+
+        private upHandler = (ev: MouseEvent) => {
+            this.endDrag();
+            const [col, row] = this.clientToCell(ev.clientX, ev.clientY);
+            this.gesture.handle(InputEvent.Up, col, row);
+
+            ev.stopPropagation();
+            ev.preventDefault();
+        }
+
+        private leaveHandler = (ev: MouseEvent) => {
+            this.endDrag();
+            const [col, row] = this.clientToCell(ev.clientX, ev.clientY);
+            this.gesture.handle(InputEvent.Leave, col, row);
+
+            ev.stopPropagation();
+            ev.preventDefault();
+        };
+
+        private moveHandler = (ev: MouseEvent) => {
+            const [col, row] = this.clientToCell(ev.clientX, ev.clientY);
+            if (col >= 0 && row >= 0 && col < this.image.width && row < this.image.height) {
+                if (ev.buttons & 1) {
+                    this.gesture.handle(InputEvent.Down, col, row);
+                }
+                this.gesture.handle(InputEvent.Move, col, row);
+            }
+
+            ev.stopPropagation();
+            ev.preventDefault();
+        }
+
+        private hoverHandler = (ev: MouseEvent) => {
+            const [col, row] = this.clientToCell(ev.clientX, ev.clientY);
+            if (col >= 0 && row >= 0 && col < this.image.width && row < this.image.height) {
+                this.gesture.handle(InputEvent.Move, col, row);
+            }
+        }
+
+        private startDrag() {
+            this.paintLayer.removeEventListener(pxt.BrowserUtils.pointerEvents.move, this.hoverHandler);
+            document.addEventListener(pxt.BrowserUtils.pointerEvents.move, this.moveHandler);
+            document.addEventListener(pxt.BrowserUtils.pointerEvents.up, this.upHandler);
+            document.addEventListener(pxt.BrowserUtils.pointerEvents.leave, this.leaveHandler);
+        }
+
+        private endDrag() {
+            this.paintLayer.addEventListener(pxt.BrowserUtils.pointerEvents.move, this.hoverHandler);
+            document.removeEventListener(pxt.BrowserUtils.pointerEvents.move, this.moveHandler);
+            document.removeEventListener(pxt.BrowserUtils.pointerEvents.up, this.upHandler);
+            document.removeEventListener(pxt.BrowserUtils.pointerEvents.leave, this.leaveHandler);
         }
 
         private layoutCanvas(canvas: HTMLCanvasElement, top: number, left: number, width: number, height: number) {

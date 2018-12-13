@@ -1,4 +1,4 @@
-namespace pxtblockly {
+namespace pxtsprite {
     import svg = pxt.svgUtil;
 
     interface ButtonGroup {
