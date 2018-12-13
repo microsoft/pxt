@@ -615,7 +615,7 @@ export class ProjectView
         if (this.updatingEditorFile)
             return undefined;
         this.updatingEditorFile = true;
-        const simRunning = !!this.state.running;
+        const simRunning = this.state.simState != pxt.editor.SimState.Stopped;
         this.stopSimulator();
         this.saveSettings();
 
