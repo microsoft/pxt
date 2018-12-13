@@ -2677,7 +2677,7 @@ function initSerial() {
     if (!isHF2WinRTSerial && !isValidLocalhostSerial)
         return;
 
-    if (hidbridge.shouldUse()) {
+    if (hidbridge.shouldUse() || pxt.usb.isEnabled) {
         hidbridge.configureHidSerial((buf, isErr) => {
             let data = Util.fromUTF8(Util.uint8ArrayToString(buf))
             //pxt.debug('serial: ' + data)
