@@ -300,6 +300,8 @@ export class ProjectView
     }
 
     openJavaScript(giveFocusOnLoading = true) {
+        if (this.updatingEditorFile) return; // already transitioning
+
         if (this.isJavaScriptActive()) {
             if (this.state.embedSimView) {
                 this.setState({ embedSimView: false });
@@ -319,6 +321,8 @@ export class ProjectView
     }
 
     openBlocks() {
+        if (this.updatingEditorFile) return; // already transitioning
+
         if (this.isBlocksActive()) {
             if (this.state.embedSimView) this.setState({ embedSimView: false });
             return;
@@ -598,6 +602,8 @@ export class ProjectView
         if (this.updatingEditorFile)
             return undefined;
         this.updatingEditorFile = true;
+        const simRunning = !!this.state.running;
+        this.stopSimulator();
         this.saveSettings();
 
         const hc = this.state.highContrast;
@@ -631,6 +637,8 @@ export class ProjectView
             }).finally(() => {
                 this.forceUpdate();
                 this.updatingEditorFile = false;
+                if (simRunning)
+                    this.startSimulator();
             })
     }
 
