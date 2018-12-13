@@ -127,7 +127,8 @@ export class ProjectView
             home: shouldShowHomeScreen,
             active: document.visibilityState == 'visible' || electron.isElectron() || pxt.winrt.isWinRT() || pxt.appTarget.appTheme.dontSuspendOnVisibility,
             collapseEditorTools: pxt.appTarget.simulator.headless || (!isSandbox && pxt.BrowserUtils.isMobile()),
-            highContrast: isHighContrast
+            highContrast: isHighContrast,
+            simState: pxt.editor.SimState.Stopped
         };
         if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 19;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
@@ -520,7 +521,7 @@ export class ProjectView
                 this.editorFile.markDirty();
             }
             this.lastChangeTime = Util.now();
-            if (this.state.running
+            if (this.state.simState != pxt.editor.SimState.Stopped
                 && pxt.appTarget.simulator && pxt.appTarget.simulator.stopOnChange)
                 this.stopSimulator();
             this.editorChangeHandler();
@@ -559,9 +560,9 @@ export class ProjectView
             },
             onStateChanged: (state) => {
                 if (state == pxsim.SimulatorState.Paused) {
-                    this.setState({ running: false });
+                    this.setState({ simState: pxt.editor.SimState.Stopped });
                 } else if (state == pxsim.SimulatorState.Running) {
-                    this.setState({ running: true });
+                    this.setState({ simState: pxt.editor.SimState.Running });
                 }
             },
             editor: this.state.header ? this.state.header.editor : ''
@@ -1582,7 +1583,7 @@ export class ProjectView
             return;
         }
 
-        const simRestart = this.state.running;
+        const simRestart = this.state.simState != pxt.editor.SimState.Stopped;
         this.setState({ compiling: true });
         this.clearSerial();
         this.editor.beforeCompile();
@@ -1696,11 +1697,17 @@ export class ProjectView
     ///////////////////////////////////////////////////////////
 
     startStopSimulator(clickTrigger?: boolean) {
-        if (this.state.running) {
-            this.stopSimulator()
-        } else {
-            this.maybeShowPackageErrors(true);
-            this.startSimulator(undefined, clickTrigger);
+        switch (this.state.simState) {
+            case pxt.editor.SimState.Starting:
+                // button smashing, do nothing
+                break;
+            case pxt.editor.SimState.Running:
+                this.stopSimulator()
+                break;
+            default:
+                this.maybeShowPackageErrors(true);
+                this.startSimulator(undefined, clickTrigger);
+                break;
         }
     }
 
@@ -1735,7 +1742,7 @@ export class ProjectView
 
     toggleSimulatorCollapse() {
         const state = this.state;
-        if (!state.running && state.collapseEditorTools)
+        if (state.simState == pxt.editor.SimState.Stopped && state.collapseEditorTools)
             this.startStopSimulator();
 
         if (state.collapseEditorTools) {
@@ -1791,7 +1798,7 @@ export class ProjectView
     }
 
     openInstructions() {
-        const running = this.state.running;
+        const running = this.state.simState != pxt.editor.SimState.Stopped;
         if (running) this.stopSimulator();
         make.makeAsync()
             .finally(() => {
@@ -1842,8 +1849,8 @@ export class ProjectView
         return !this.state.home;
     }
 
-    isSimulatorRunning() {
-        return this.state.running;
+    isSimulatorRunning(): boolean {
+        return this.state.simState == pxt.editor.SimState.Running;
     }
 
     restartSimulator(debug?: boolean) {
@@ -1870,7 +1877,7 @@ export class ProjectView
             this.runToken = null
         }
         simulator.stop(unload)
-        this.setState({ running: false })
+        this.setState({ simState: pxt.editor.SimState.Stopped })
     }
 
     suspendSimulator() {
@@ -1902,7 +1909,7 @@ export class ProjectView
                 opts.trace = true;
 
             simulator.stop();
-            this.setState({ running: false });
+            this.setState({ simState: pxt.editor.SimState.Starting });
 
             const state = this.editor.snapshotState()
             return compiler.compileAsync(opts)
@@ -1914,10 +1921,11 @@ export class ProjectView
                         if (!cancellationToken.isCancelled()) {
                             simulator.run(pkg.mainPkg, opts.debug, resp, this.state.mute, this.state.highContrast, pxt.options.light, opts.clickTrigger)
                             if (!cancellationToken.isCancelled()) {
-                                this.setState({ running: true, showParts: simulator.driver.runOptions.parts.length > 0 })
+                                // running state is set by the simulator once the iframe is loaded
+                                this.setState({ showParts: simulator.driver.runOptions.parts.length > 0 })
                             } else {
                                 simulator.stop();
-                                this.setState({ running: false });
+                                this.setState({ simState: pxt.editor.SimState.Stopped });
                             }
                         }
                     } else if (!opts.background) {
@@ -1944,7 +1952,7 @@ export class ProjectView
     hwDebug() {
         pxt.tickEvent("menu.debug.hw")
         let start = Promise.resolve()
-        if (!this.state.running || !simulator.driver.runOptions.debug)
+        if (this.state.simState != pxt.editor.SimState.Running || !simulator.driver.runOptions.debug)
             start = this.runSimulator({ debug: true })
         return start.then(() => {
             simulator.driver.setHwDebugger({
