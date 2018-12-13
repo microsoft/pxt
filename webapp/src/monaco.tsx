@@ -29,8 +29,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     fileType: FileType = FileType.Unknown;
     extraLibs: pxt.Map<monaco.IDisposable>;
     public nsMap: pxt.Map<toolbox.BlockDefinition[]>;
-    loadedMonaco: boolean;
-    loadingMonaco: boolean;
+    private _loadMonacoPromise: Promise<void>;
     giveFocusOnLoading: boolean = false;
 
     hasBlocks() {
@@ -241,7 +240,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     setHighContrast(hc: boolean) {
-        if (this.loadedMonaco) this.defineEditorTheme(hc, true);
+        if (this._loadMonacoPromise) this.defineEditorTheme(hc, true);
     }
 
     beforeCompile() {
@@ -277,17 +276,18 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     public loadMonacoAsync(): Promise<void> {
-        if (this.editor || this.loadingMonaco) return Promise.resolve();
-        this.loadingMonaco = true;
-        this.extraLibs = Object.create(null);
+        if (!this._loadMonacoPromise)
+            this._loadMonacoPromise = this.createLoadMonacoPromise();
+        return this._loadMonacoPromise;
+    }
 
+    private createLoadMonacoPromise(): Promise<void> {
+        this.extraLibs = Object.create(null);
         let editorArea = document.getElementById("monacoEditorArea");
         let editorElement = document.getElementById("monacoEditorInner");
 
         return pxt.vs.initMonacoAsync(editorElement).then((editor) => {
             this.editor = editor;
-            this.loadingMonaco = false;
-            this.loadedMonaco = true;
 
             this.editor.updateOptions({ fontSize: this.parent.settings.editorFontSize });
 
