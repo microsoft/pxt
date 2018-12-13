@@ -559,10 +559,16 @@ export class ProjectView
                 }
             },
             onStateChanged: (state) => {
-                if (state == pxsim.SimulatorState.Paused) {
-                    this.setState({ simState: pxt.editor.SimState.Stopped });
-                } else if (state == pxsim.SimulatorState.Running) {
-                    this.setState({ simState: pxt.editor.SimState.Running });
+                switch (state) {
+                    case pxsim.SimulatorState.Paused:
+                    case pxsim.SimulatorState.Unloaded:
+                    case pxsim.SimulatorState.Suspended:
+                    case pxsim.SimulatorState.Stopped:
+                        this.setState({ simState: pxt.editor.SimState.Stopped });
+                        break;
+                    case pxsim.SimulatorState.Running:
+                        this.setState({ simState: pxt.editor.SimState.Running });
+                        break;
                 }
             },
             editor: this.state.header ? this.state.header.editor : ''
