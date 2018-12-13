@@ -1,5 +1,5 @@
 /// <reference path="./buttons.ts" />
-namespace pxtblockly {
+namespace pxtsprite {
     import svg = pxt.svgUtil;
     import lf = pxt.Util.lf;
 

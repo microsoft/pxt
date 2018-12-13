@@ -1593,6 +1593,7 @@ export class ProjectView
         compiler.compileAsync({ native: true, forceEmit: true, preferredEditor: this.getPreferredEditor() })
             .then<pxtc.CompileResult>(resp => {
                 this.editor.setDiagnostics(this.editorFile, state)
+
                 let fn = pxt.outputName()
                 if (!resp.outfiles[fn]) {
                     pxt.tickEvent("compile.noemit")
@@ -1909,6 +1910,7 @@ export class ProjectView
                     if (cancellationToken.isCancelled()) return;
                     this.clearSerial();
                     this.editor.setDiagnostics(this.editorFile, state)
+
                     if (resp.outfiles[pxtc.BINARY_JS]) {
                         if (!cancellationToken.isCancelled()) {
                             simulator.run(pkg.mainPkg, opts.debug, resp, this.state.mute, this.state.highContrast, pxt.options.light, opts.clickTrigger)
