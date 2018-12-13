@@ -537,6 +537,7 @@ export class ProjectView
 
     public componentDidMount() {
         this.allEditors.forEach(e => e.prepare())
+        let restartingSim = false;
         simulator.init(document.getElementById("boardview"), {
             orphanException: brk => {
                 // TODO: start debugging session
@@ -548,8 +549,13 @@ export class ProjectView
                 return false;
             },
             restartSimulator: () => {
-                core.hideDialog();
-                this.runSimulator();
+                if (!restartingSim) { // prevent button smashing
+                    restartingSim = true;
+                    core.hideDialog();
+                    this.runSimulator()
+                        .delay(1000) // 1 second debounce
+                        .finally(() => restartingSim = false);
+                }
             },
             onStateChanged: (state) => {
                 if (state == pxsim.SimulatorState.Paused) {
@@ -1842,21 +1848,23 @@ export class ProjectView
 
     restartSimulator(debug?: boolean) {
         this.stopSimulator();
-        this.startSimulator(debug);
+        return this.startSimulator(debug);
     }
 
     startSimulator(debug?: boolean, clickTrigger?: boolean) {
         pxt.tickEvent('simulator.start');
+        console.log(`start sim`)
         if (!this.shouldStartSimulator()) {
             pxt.log("Ignoring call to start simulator, either already running or we shouldn't start.");
-            return;
+            return Promise.resolve();
         }
-        this.saveFileAsync()
+        return this.saveFileAsync()
             .then(() => this.runSimulator({ debug, clickTrigger }))
     }
 
     stopSimulator(unload?: boolean) {
         pxt.tickEvent('simulator.stop')
+        console.log(`stop sim`)
         if (this.runToken) {
             this.runToken.cancel()
             this.runToken = null
@@ -1874,7 +1882,8 @@ export class ProjectView
         simulator.suspend()
     }
 
-    runSimulator(opts: compiler.CompileOptions = {}) {
+    runSimulator(opts: compiler.CompileOptions = {}): Promise<void> {
+        console.log(`run sim`)
         if (this.runToken) this.runToken.cancel()
         let cancellationToken = new pxt.Util.CancellationToken();
         this.runToken = cancellationToken;
