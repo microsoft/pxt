@@ -118,9 +118,8 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
 
         const res = this.getDataWithStatus(`cloud-search:${scriptid}`);
 
-        if (res.data && res.data.statusCode === 404)
+        if (!res.data || (res.data && res.data.statusCode === 404))
             res.data = []; // No shared project with that URL exists
-
         return res;
     }
 
