@@ -7,7 +7,6 @@ import * as core from "./core";
 import * as toolboxeditor from "./toolboxeditor"
 import * as compiler from "./compiler"
 import * as sui from "./sui";
-import * as data from "./data";
 import * as snippets from "./monacoSnippets"
 import * as toolbox from "./toolbox";
 import * as workspace from "./workspace";
