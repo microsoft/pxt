@@ -1,7 +1,7 @@
 {
 	"@metadata": {
 		"author": "Ellen Spertus <ellen.spertus@gmail.com>",
-		"lastupdated": "2018-12-05 15:36:10.363000",
+		"lastupdated": "2018-12-13 16:39:15.749000",
 		"locale": "en",
 		"messagedocumentation" : "qqq"
 	},
@@ -396,10 +396,11 @@
 	"PROCEDURES_HIGHLIGHT_DEF": "Highlight function definition",
 	"PROCEDURES_CREATE_DO": "Create '%1'",
 	"FUNCTIONS_EDIT_OPTION": "Edit",
-	"FUNCTIONS_CALL_TITLE": "call function",
+	"FUNCTIONS_CALL_TITLE": "call",
 	"FUNCTION_CREATE_NEW": "Create a Function",
 	"FUNCTION_CALL_TOOLTIP": "Call a function that was previously defined.",
 	"FUNCTION_WARNING_DUPLICATE_ARG": "Functions cannot use the same argument name more than once.",
+	"FUNCTION_WARNING_EMPTY_NAME": "Function and argument names cannot be empty.",
 	"FUNCTION_WARNING_ARG_NAME_IS_FUNCTION_NAME": "Argument names must not be the same as the function name.",
 	"FUNCTIONS_DEFAULT_FUNCTION_NAME": "do_something",
 	"FUNCTIONS_DEFAULT_BOOLEAN_ARG_NAME": "bool",

@@ -85,7 +85,7 @@ declare namespace pxt {
         listsBlocks?: boolean;
         variablesBlocks?: boolean;
         functionBlocks?: boolean;
-        extraFunctionTypes?: FunctionEditorTypeInfo[];
+        extraFunctionEditorTypes?: FunctionEditorTypeInfo[];
         logicBlocks?: boolean;
         loopsBlocks?: boolean;
         onStartNamespace?: string; // default = loops

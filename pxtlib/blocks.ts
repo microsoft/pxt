@@ -653,7 +653,7 @@ namespace pxt.blocks {
                 url: 'types/function/call',
                 category: 'functions',
                 block: {
-                    FUNCTIONS_CALL_TITLE: Util.lf("call function")
+                    FUNCTIONS_CALL_TITLE: Util.lf("call")
                 }
             }
         };

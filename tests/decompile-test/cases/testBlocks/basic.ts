@@ -99,6 +99,8 @@ namespace testNamespace {
     //% block="Handler with optioinal arguments"
     export function callbackWithIgnoredArguments(cb: (c: number, d: number) => void) {}
 
+    // TODO GUJEN fix test
+
     //% blockId=test_handler_arguments3 draggableParameters=1
     //% block="Handler with draggable arguments"
     export function callbackWithDraggableParams(cb: (c: number, d: number) => void) {}

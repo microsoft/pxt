@@ -7,10 +7,17 @@ import * as codecard from "./codecard"
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
-// TODO GUJEN can't drag function call with variable ("var already exists with different ID")
-// TODO GUJEN TypeError: a.getAttribute is not a function when loading MakeCode editor
-// TODO GUJEN pass validators for function and parameter names
-// TODO GUJEN add function flyout category label
+// TODO GUJEN Investigate exception "TypeError: a.getAttribute is not a function" when loading MakeCode editor
+// TODO GUJEN Add function flyout category label
+// TODO GUJEN Add icons for the cards
+// TODO GUJEN Ensure function names with spaces work
+
+// SPRITES
+// TODO GUJEN Support reporters with space + name clash
+
+// TESTS
+// TODO GUJEN Test += on reporters
+// TODO GUJEN Test name clashes (space + rename)
 
 export interface CreateFunctionDialogState {
     visible?: boolean;
@@ -148,9 +155,9 @@ export class CreateFunctionDialog extends data.Component<ISettingsProps, CreateF
         const types = CreateFunctionDialog.defaultTypes.slice();
 
         if (pxt.appTarget.runtime &&
-            pxt.appTarget.runtime.extraFunctionTypes &&
-            Array.isArray(pxt.appTarget.runtime.extraFunctionTypes)) {
-            pxt.appTarget.runtime.extraFunctionTypes.forEach(t => {
+            pxt.appTarget.runtime.extraFunctionEditorTypes &&
+            Array.isArray(pxt.appTarget.runtime.extraFunctionEditorTypes)) {
+            pxt.appTarget.runtime.extraFunctionEditorTypes.forEach(t => {
                 types.push(t);
             });
         }
@@ -169,9 +176,8 @@ export class CreateFunctionDialog extends data.Component<ISettingsProps, CreateF
                             {types.map(t =>
                                 <codecard.CodeCardView
                                     key={t.typeName}
-                                    name={t.label || t.typeName}
-                                    ariaLabel={t.label || t.typeName}
-                                    description={lf("Add argument")}
+                                    name={lf("Add {0}", t.label || t.typeName)}
+                                    ariaLabel={lf("Add {0}", t.label || t.typeName)}
                                     onClick={() => this.addArgument(t.typeName)}
                                 />
                             )}

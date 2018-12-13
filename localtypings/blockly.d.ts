@@ -782,6 +782,10 @@ declare namespace Blockly {
         addCustomExternal(typeName: string): void;
     }
 
+    class FunctionDefinitionBlock extends Block {
+        getArguments: () => Functions.ArgumentInfo[];
+    }
+
     class WorkspaceComment {
         getContent(): string;
 
@@ -1211,9 +1215,21 @@ declare namespace Blockly {
     }
 
     namespace Functions {
+        interface ArgumentInfo {
+            type: string;
+            name: string;
+            id: string;
+        }
         type ConfirmEditCallback = (mutation: Element) => void;
         let editFunctionExternalHandler: (mutation: Element, cb: ConfirmEditCallback) => void;
         function validateFunctionExternal(mutation: Element, targetWorkspace: Blockly.Workspace): boolean;
         function flyoutCategory(workspace: Blockly.Workspace): HTMLElement[];
+        function isFunctionArgumentReporter(block: Blockly.Block): boolean;
+    }
+
+    namespace PXTBlockly {
+        namespace FunctionUtils {
+            function createCustomArgumentReporter(typeName: string, ws: Blockly.Workspace): Blockly.Block;
+        }
     }
 }

@@ -688,9 +688,32 @@ namespace pxt.blocks {
         ];
     }
 
+    function compileFunctionDefinition(e: Environment, b: Blockly.Block, comments: string[]): JsNode[] {
+        const name = escapeVarName(b.getFieldValue("function_name"), e, true);
+        const stmts = getInputTargetBlock(b, "STACK");
+        const argsDeclaration = (b as Blockly.FunctionDefinitionBlock).getArguments().map(a => {
+            return `${escapeVarName(a.name, e)}: ${a.type}`;
+        });
+        return [
+            mkText(`function ${name} (${argsDeclaration.join(", ")})`),
+            compileStatements(e, stmts)
+        ];
+    }
+
     function compileProcedureCall(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
         const name = escapeVarName(b.getFieldValue("NAME"), e, true);
         return mkStmt(mkText(name + "()"));
+    }
+
+    function compileFunctionCall(e: Environment, b: Blockly.Block, comments: string[]): JsNode[] {
+        // TODO GUJEN
+        const name = escapeVarName(b.getFieldValue("function_name"), e, true);
+        return [mkStmt(mkText(name + "()"))];
+    }
+
+    function compileArgumentReporter(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
+        const name = escapeVarName(b.getFieldValue("VALUE"), e);
+        return mkText(name);
     }
 
     function compileWorkspaceComment(c: Blockly.WorkspaceComment): JsNode {
@@ -785,6 +808,11 @@ namespace pxt.blocks {
                 expr = compileMathJsOp(e, b, comments); break;
             case pxtc.TS_OUTPUT_TYPE:
                 expr = extractTsExpression(e, b, comments); break;
+            case "argument_reporter_boolean":
+            case "argument_reporter_number":
+            case "argument_reporter_string":
+            case "argument_reporter_custom":
+                expr = compileArgumentReporter(e, b, comments); break;
             default:
                 let call = e.stdCallTable[b.type];
                 if (call) {
@@ -1303,9 +1331,16 @@ namespace pxt.blocks {
             case 'procedures_defnoreturn':
                 r = compileProcedure(e, b, comments);
                 break;
+            case 'function_definition':
+                r = compileFunctionDefinition(e, b, comments);
+                break
             case 'procedures_callnoreturn':
                 r = [compileProcedureCall(e, b, comments)];
                 break;
+            // case 'function_call':
+            //     // TODO GUJEN
+            //     r = compileFunctionCall(e, b, comments);
+            //     break;
             case ts.pxtc.ON_START_TYPE:
                 r = compileStartEvent(e, b).children;
                 break;
@@ -1480,6 +1515,8 @@ namespace pxt.blocks {
                 && escapeVarName(getLoopVariableField(b).getField("VAR").getText(), e) == name)
                 return true;
             else if (isMutatingBlock(b) && b.mutation.isDeclaredByMutation(name))
+                return true;
+            else if (Blockly.Functions.isFunctionArgumentReporter(b))
                 return true;
 
             let stdFunc = e.stdCallTable[b.type];
@@ -1913,8 +1950,15 @@ namespace pxt.blocks {
         if (stdfun.attrs.draggableParameters) {
             for (let i = 0; i < stdfun.comp.handlerArgs.length; i++) {
                 const arg = stdfun.comp.handlerArgs[i];
+                let varName: string;
                 const varBlock = getInputTargetBlock(b, "HANDLER_DRAG_PARAM_" + arg.name) as Blockly.Block;
-                const varName = varBlock && varBlock.getField("VAR").getText();
+
+                if (stdfun.attrs.draggableParameters === "reporter") {
+                    varName = varBlock && varBlock.getFieldValue("VALUE");
+                } else {
+                    varName = varBlock && varBlock.getField("VAR").getText();
+                }
+
                 if (varName !== null) {
                     handlerArgs.push(escapeVarName(varName, e));
                 }
