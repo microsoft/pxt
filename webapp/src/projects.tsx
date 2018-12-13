@@ -523,7 +523,7 @@ export interface ProjectsDetailProps extends ISettingsProps {
     url?: string;
     scr?: any;
     onClick: (scr: any) => void;
-    cardType: string;
+    cardType: pxt.CodeCardType;
     tags?: string[];
 }
 
@@ -567,7 +567,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             className: 'huge positive'
         }]
 
-        const isLink = (!cardType || cardType == "lesson") && (youTubeId || url);
+        const isLink = !cardType && (youTubeId || url);
         const linkHref = (youTubeId && !url) ? `https://youtu.be/${youTubeId}` :
             ((/^https:\/\//i.test(url)) || (/^\//i.test(url)) ? url : '');
 
