@@ -649,7 +649,9 @@ export class ProjectView
             }).finally(() => {
                 this.forceUpdate();
                 this.updatingEditorFile = false;
-                if (simRunning)
+                // if auto-run is not enable, restart the sim
+                // otherwise, autorun will launch it again
+                if (simRunning && !this.state.autoRun)
                     this.startSimulator();
             })
     }
