@@ -75,6 +75,9 @@ namespace pxtblockly {
             canvasOverlayDiv.style.width = width + 'px';
 
             const setPos = (x: number, y: number) => {
+                x = Math.round(Math.max(0, Math.min(width, x)));
+                y = Math.round(Math.max(0, Math.min(height, y)));
+
                 crossX.style.top = y + 'px';
                 crossY.style.left = x + 'px';
                 label.style.left = (x + 4) + 'px';
@@ -87,15 +90,10 @@ namespace pxtblockly {
             }
 
             // Position initial crossX and crossY
-            let initialY = height / 2;
-            let initialX = width / 2;
             const { currentX, currentY } = this.getXY();
-            if (currentX && currentX > 0 && currentX <= this.params.screenWidth
-                && currentY && currentY > 0 && currentY <= this.params.screenHeight) {
-                initialY = currentY / this.params.screenHeight * height;
-                initialX = currentX / this.params.screenWidth * width;
-            }
-            setPos(initialX, initialY);
+            setPos(
+                currentX / this.params.screenWidth * width,
+                currentY / this.params.screenHeight * height);
 
             Blockly.bindEvent_(lightboxDiv, 'mouseup', this, () => {
                 this.close();
