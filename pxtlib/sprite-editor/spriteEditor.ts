@@ -5,7 +5,7 @@
 /// <reference path="./gallery.ts" />
 /// <reference path="./header.ts" />
 
-namespace pxtblockly {
+namespace pxtsprite {
     import svg = pxt.svgUtil;
     import lf = pxt.Util.lf;
 
@@ -72,6 +72,9 @@ namespace pxtblockly {
 
         private shiftDown: boolean = false;
         private mouseDown: boolean = false;
+
+        private closeHandler: () => void;
+
         constructor(bitmap: Bitmap, blocksInfo: pxtc.BlocksInfo, protected lightMode = false) {
             this.colors = pxt.appTarget.runtime.palette.slice(1);
 
@@ -81,6 +84,7 @@ namespace pxtblockly {
             this.state = bitmap.copy()
 
             this.root = new svg.SVG();
+            this.root.setClass("sprite-canvas-controls");
             this.group = this.root.group();
             this.createDefs();
 
@@ -292,6 +296,16 @@ namespace pxtblockly {
             this.gallery.hide();
         }
 
+        closeEditor() {
+            if (this.closeHandler) {
+                this.closeHandler();
+            }
+        }
+
+        onClose(handler: () => void) {
+            this.closeHandler = handler;
+        }
+
         switchIconBack(tool: PaintTool) {
             let btn = (this.sidebar.getButtonForTool(tool) as TextButton);
             if (tool == PaintTool.Rectangle) {
@@ -359,6 +373,7 @@ namespace pxtblockly {
         removeKeyListeners() {
             document.removeEventListener("keydown", this.keyDown);
             document.removeEventListener("keyup", this.keyUp);
+            this.paintSurface.removeMouseListeners();
         }
 
         private afterResize(showOverlay: boolean) {

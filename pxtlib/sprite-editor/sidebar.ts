@@ -1,5 +1,5 @@
 /// <reference path="./buttons.ts" />
-namespace pxtblockly {
+namespace pxtsprite {
     import svg = pxt.svgUtil;
     import lf = pxt.Util.lf;
 
@@ -167,6 +167,7 @@ namespace pxtblockly {
                     .fill(this.palette[i])
                     .clipPath("url(#sprite-editor-selected-color)")
                     .onClick(() => this.setColor(i));
+                swatch.title(`${i}`)
 
                 this.colorSwatches.push(swatch);
             }

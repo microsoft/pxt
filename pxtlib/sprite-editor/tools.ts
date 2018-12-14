@@ -1,6 +1,6 @@
 /// <reference path="./bitmap.ts" />
 
-namespace pxtblockly {
+namespace pxtsprite {
     export enum PaintTool {
         Normal = 0,
         Rectangle = 1,

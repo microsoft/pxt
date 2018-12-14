@@ -111,8 +111,8 @@ namespace pxt.BrowserUtils {
 
     export function isTouchEnabled(): boolean {
         return typeof window !== "undefined" &&
-            ('ontouchstart' in window               // works on most browsers
-                || navigator.maxTouchPoints > 0);       // works on IE10/11 and Surface);
+            ('ontouchstart' in window                              // works on most browsers
+                || (navigator && navigator.maxTouchPoints > 0));       // works on IE10/11 and Surface);
     }
 
     export function hasPointerEvents(): boolean {
@@ -538,7 +538,7 @@ namespace pxt.BrowserUtils {
     export const scheduleStorageCleanup = hasNavigator() && (<any>navigator).storage && (<any>navigator).storage.estimate // some browser don't support this
         ? ts.pxtc.Util.throttle(function () {
             const MIN_QUOTA = 1000000; // 1Mb
-            const MAX_USAGE_RATIO = 0.9; // max 90% 
+            const MAX_USAGE_RATIO = 0.9; // max 90%
 
             storageEstimateAsync()
                 .then(estimate => {
@@ -852,6 +852,35 @@ namespace pxt.BrowserUtils {
             .catch(e => deleteDbAsync().done());
     }
 
+    export interface IPointerEvents {
+        up: string,
+        down: string[],
+        move: string,
+        enter: string,
+        leave: string
+    }
+
+    export const pointerEvents: IPointerEvents = hasPointerEvents() ? {
+        up: "pointerup",
+        down: ["pointerdown"],
+        move: "pointermove",
+        enter: "pointerenter",
+        leave: "pointerleave"
+    } : isTouchEnabled() ?
+            {
+                up: "mouseup",
+                down: ["mousedown", "touchstart"],
+                move: "touchmove",
+                enter: "touchenter",
+                leave: "touchend"
+            } :
+            {
+                up: "mouseup",
+                down: ["mousedown"],
+                move: "mousemove",
+                enter: "mouseenter",
+                leave: "mouseleave"
+            };
     export function popupWindow(url: string, title: string, popUpWidth: number, popUpHeight: number) {
         try {
             const winLeft = window.screenLeft ? window.screenLeft : window.screenX;

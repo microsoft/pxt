@@ -523,7 +523,7 @@ export interface ProjectsDetailProps extends ISettingsProps {
     url?: string;
     scr?: any;
     onClick: (scr: any) => void;
-    cardType: string;
+    cardType: pxt.CodeCardType;
     tags?: string[];
 }
 
