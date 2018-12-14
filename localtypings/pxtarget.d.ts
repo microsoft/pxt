@@ -73,19 +73,12 @@ declare namespace pxt {
         callName?: string;      // name of the block's function if changed in target
     }
 
-    interface FunctionEditorTypeInfo {
-        typeName?: string; // The actual type that gets emitted to ts
-        label?: string; // A user-friendly label for the type, e.g. "text" for the string type
-        svgImg?: string; // The SVG content for the image to be put on the button // TODO Investigate if this is the best way
-    }
-
     interface RuntimeOptions {
         mathBlocks?: boolean;
         textBlocks?: boolean;
         listsBlocks?: boolean;
         variablesBlocks?: boolean;
         functionBlocks?: boolean;
-        extraFunctionEditorTypes?: FunctionEditorTypeInfo[];
         logicBlocks?: boolean;
         loopsBlocks?: boolean;
         onStartNamespace?: string; // default = loops
@@ -351,11 +344,11 @@ declare namespace ts.pxtc {
         slowMethods?: boolean;
         slowFields?: boolean;
         skipClassCheck?: boolean;
-        noThisCheckOpt?: boolean;
+        noThisCheckOpt?: boolean;        
         numFloat?: boolean;
         noTreeShake?: boolean;
         inlineConversions?: boolean;
-        noPeepHole?: boolean;
+        noPeepHole?: boolean;        
     }
 
     interface CompileTarget {

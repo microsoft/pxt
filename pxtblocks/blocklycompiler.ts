@@ -688,26 +688,8 @@ namespace pxt.blocks {
         ];
     }
 
-    function compileFunctionDefinition(e: Environment, b: Blockly.Block, comments: string[]): JsNode[] {
-        const name = escapeVarName(b.getFieldValue("function_name"), e, true);
-        const stmts = getInputTargetBlock(b, "STACK");
-        const argsDeclaration = (b as Blockly.FunctionDefinitionBlock).getArguments().map(a => {
-            return `${escapeVarName(a.name, e)}: ${a.type}`;
-        });
-        return [
-            mkText(`function ${name} (${argsDeclaration.join(", ")})`),
-            compileStatements(e, stmts)
-        ];
-    }
-
     function compileProcedureCall(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
         const name = escapeVarName(b.getFieldValue("NAME"), e, true);
-        return mkStmt(mkText(name + "()"));
-    }
-
-    function compileFunctionCall(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
-        // TODO GUJEN
-        const name = escapeVarName(b.getFieldValue("function_name"), e, true);
         return mkStmt(mkText(name + "()"));
     }
 
@@ -1331,14 +1313,8 @@ namespace pxt.blocks {
             case 'procedures_defnoreturn':
                 r = compileProcedure(e, b, comments);
                 break;
-            case 'function_definition':
-                r = compileFunctionDefinition(e, b, comments);
-                break
             case 'procedures_callnoreturn':
                 r = [compileProcedureCall(e, b, comments)];
-                break;
-            case 'function_call':
-                r = [compileFunctionCall(e, b, comments)];
                 break;
             case ts.pxtc.ON_START_TYPE:
                 r = compileStartEvent(e, b).children;
@@ -1788,7 +1764,7 @@ namespace pxt.blocks {
             // multiple calls allowed
             if (b.type == ts.pxtc.ON_START_TYPE)
                 flagDuplicate(ts.pxtc.ON_START_TYPE, b);
-            else if (b.type === "procedures_defnoreturn" || b.type === "function_definition" || call && call.attrs.blockAllowMultiple && !call.attrs.handlerStatement) return;
+            else if (b.type === "procedures_defnoreturn" || call && call.attrs.blockAllowMultiple && !call.attrs.handlerStatement) return;
             // is this an event?
             else if (call && call.hasHandler && !call.attrs.handlerStatement) {
                 // compute key that identifies event call
