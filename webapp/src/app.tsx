@@ -1874,7 +1874,7 @@ export class ProjectView
 
     startSimulator(debug?: boolean, clickTrigger?: boolean) {
         pxt.tickEvent('simulator.start');
-        console.log(`start sim`)
+        pxt.log(`start sim (autorun ${this.state.autoRun})`)
         if (!this.shouldStartSimulator()) {
             pxt.log("Ignoring call to start simulator, either already running or we shouldn't start.");
             return Promise.resolve();
@@ -1885,13 +1885,13 @@ export class ProjectView
 
     stopSimulator(unload?: boolean, clickTrigger?: boolean) {
         pxt.tickEvent('simulator.stop')
-        console.log(`stop sim`)
+        pxt.log(`stop sim (autorun ${this.state.autoRun})`)
         if (this.runToken) {
             this.runToken.cancel()
             this.runToken = null
         }
         simulator.stop(unload);
-        const autoRun = !clickTrigger && pxt.appTarget.simulator.autoRun;
+        const autoRun = this.state.autoRun && !clickTrigger; // if user pressed stop, don't restart
         this.setState({ simState: pxt.editor.SimState.Stopped, autoRun: autoRun })
     }
 
@@ -1905,7 +1905,7 @@ export class ProjectView
     }
 
     runSimulator(opts: compiler.CompileOptions = {}): Promise<void> {
-        console.log(`run sim`)
+        pxt.log(`run sim (autorun ${this.state.autoRun})`)
 
         if (this.runToken) this.runToken.cancel()
         let cancellationToken = new pxt.Util.CancellationToken();
@@ -1925,8 +1925,8 @@ export class ProjectView
                 opts.trace = true;
 
             simulator.stop();
-            const autoRun = opts.clickTrigger && pxt.appTarget.simulator.autoRun;
-            this.setState({ simState: pxt.editor.SimState.Starting, autoRun });
+            const autoRun = this.state.autoRun || !!opts.clickTrigger && !!pxt.appTarget.simulator.autoRun;
+            this.setState({ simState: pxt.editor.SimState.Starting, autoRun: autoRun });
 
             const state = this.editor.snapshotState()
             return compiler.compileAsync(opts)
