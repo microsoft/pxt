@@ -61,7 +61,7 @@ namespace pxtblockly {
             this.reporter = pxsim.svg.child(this.speedSVG, "text", {
                 'x': 100, 'y': 80,
                 'text-anchor': 'middle', 'dominant-baseline': 'middle',
-                'style': `font-size: ${Math.max(14, 68 - 3 * (2 + this.params.format.length))}px`,
+                'style': `font-size: ${Math.max(14, 50 - 5 * (this.params.format.length - 4))}px`,
                 'class': 'sim-text inverted number'
             }) as SVGTextElement;
 
