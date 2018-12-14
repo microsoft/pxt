@@ -233,3 +233,33 @@
     display: inline-block;
     vertical-align: middle;
 }
+
+
+////// position picker ////////
+#custom-content .blocklyLightboxDiv {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(0, 0, 0, 0.55);
+    z-index: 993;
+}
+ #custom-content .blocklyCanvasOverlayDiv {
+    position: absolute;
+    cursor: none;
+    background-color: rgba(255, 255, 255, 0.8);
+    z-index: 10000;
+     .cross-x, .cross-y {
+        background-color: #fff;
+        position: absolute;
+    }
+     .cross-x {
+        width: 100%;
+        height: 2px;
+        z-index: 10;
+    }
+    
+    .cross-y {
+        width: 2px;
+        height: 100%;
+        z-index: 10;
+    }
+}
