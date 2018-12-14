@@ -30,6 +30,18 @@ namespace pxtblockly {
             const simFrame = this.getSimFrame();
             if (!simFrame) return;
 
+            // compute position and make sure we have something to show
+            const bBox = simFrame.getBoundingClientRect();
+            const paddingX = 20;
+            const paddingY = 20;
+            const simAspectRatio = 0.75;
+            const left = bBox.left + paddingX;
+            const top = bBox.top + paddingY;
+            const width = (bBox.width - 2 * paddingX);
+            const height = width * simAspectRatio;
+            if (width < 0 || height < 0)
+                return;
+
             // dimiss if window is resized
             this.resizeHandler = this.resizeHandler.bind(this);
             window.addEventListener("resize", this.resizeHandler, false);
@@ -57,18 +69,8 @@ namespace pxtblockly {
             canvasOverlayDiv.appendChild(label);
 
             // Position overlay div
-            const bBox = simFrame.getBoundingClientRect();
-            const paddingX = 20;
-            const paddingY = 20;
-            const simAspectRatio = 0.75;
-            const left = bBox.left + paddingX;
-            const top = bBox.top + paddingY;
             canvasOverlayDiv.style.top = top + 'px';
             canvasOverlayDiv.style.left = left + 'px';
-            const width = (bBox.width - 2 * paddingX);
-            const height = width * simAspectRatio;
-            if (width < 0 || height < 0)
-                return;
             canvasOverlayDiv.style.height = height + 'px';
             canvasOverlayDiv.style.width = width + 'px';
 
