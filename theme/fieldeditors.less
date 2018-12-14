@@ -245,10 +245,10 @@
  #custom-content .blocklyCanvasOverlayDiv {
     position: absolute;
     cursor: none;
-    background-color: rgba(255, 255, 255, 0.8);
+    background-color: rgba(255, 255, 255, 0.9);
     z-index: 10000;
      .cross-x, .cross-y {
-        background-color: #fff;
+        background-color: #575E75;
         position: absolute;
     }
      .cross-x {
@@ -264,7 +264,22 @@
     }
     .label {
         position: absolute;
-        color: white;
+        color: #575E75;
         font-size: 100%;
     }
+}
+
+.positionEyedropper {
+    background: none;
+    outline: none;
+    border: none;
+    width: 100%;
+    text-align: center;
+    border-top: 1px solid #ddd;
+    padding-top: 5px;
+    cursor: pointer;
+}
+
+.positionEyedropper:hover {
+    background: #eee;
 }
