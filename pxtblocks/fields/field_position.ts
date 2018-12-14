@@ -1,5 +1,7 @@
+/// <reference path="../../localtypings/blockly.d.ts"/>
+/// <reference path="../../built/pxtsim.d.ts"/>
 
-namespace pxt.editor {
+namespace pxtblockly {
 
     export interface FieldPositionOptions extends Blockly.FieldCustomOptions {
         screenWidth?: number;
