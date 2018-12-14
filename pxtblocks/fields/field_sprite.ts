@@ -179,7 +179,12 @@ namespace pxtblockly {
         }
 
         private parseBitmap(newText: string) {
-            this.state = pxtsprite.imageLiteralToBitmap(newText);
+            const bmp = pxtsprite.imageLiteralToBitmap(newText);
+
+            // Ignore invalid bitmaps
+            if (bmp && bmp.width && bmp.height) {
+                this.state = bmp;
+            }
         }
 
         /**
