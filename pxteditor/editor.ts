@@ -47,6 +47,7 @@ namespace pxt.editor {
         lightbox?: boolean;
 
         simState?: SimState;
+        autoRun?: boolean;
         resumeOnVisibility?: boolean;
         compiling?: boolean;
         isSaving?: boolean;

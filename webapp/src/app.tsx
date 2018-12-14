@@ -122,13 +122,15 @@ export class ProjectView
         const isHighContrast = /hc=(\w+)/.test(window.location.href);
         if (isHighContrast) core.setHighContrast(true);
 
+        const simcfg = pxt.appTarget.simulator;
         this.state = {
             showFiles: false,
             home: shouldShowHomeScreen,
             active: document.visibilityState == 'visible' || electron.isElectron() || pxt.winrt.isWinRT() || pxt.appTarget.appTheme.dontSuspendOnVisibility,
-            collapseEditorTools: pxt.appTarget.simulator.headless || (!isSandbox && pxt.BrowserUtils.isMobile()),
+            collapseEditorTools: simcfg.headless || (!isSandbox && pxt.BrowserUtils.isMobile()),
             highContrast: isHighContrast,
-            simState: pxt.editor.SimState.Stopped
+            simState: pxt.editor.SimState.Stopped,
+            autoRun: !!simcfg.autoRun
         };
         if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 19;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
@@ -486,12 +488,9 @@ export class ProjectView
                     this.editor.setDiagnostics(this.editorFile, state);
                     data.invalidate("open-pkg-meta:" + pkg.mainEditorPkg().getPkgId());
                     if (pxt.appTarget.simulator && pxt.appTarget.simulator.autoRun) {
-                        let output = pkg.mainEditorPkg().outputPkg.files["output.txt"];
+                        const output = pkg.mainEditorPkg().outputPkg.files["output.txt"];
                         if (output && !output.numDiagnosticsOverride
-                            && (simulator.driver.state == pxsim.SimulatorState.Running
-                                || simulator.driver.state == pxsim.SimulatorState.Paused
-                                || simulator.driver.state == pxsim.SimulatorState.Suspended
-                                || simulator.driver.state == pxsim.SimulatorState.Unloaded)) {
+                            && this.state.autoRun) {
                             if (this.editor == this.blocksEditor) this.autoRunBlocksSimulator();
                             else this.autoRunSimulator();
                         }
@@ -1717,7 +1716,7 @@ export class ProjectView
                 // button smashing, do nothing
                 break;
             case pxt.editor.SimState.Running:
-                this.stopSimulator()
+                this.stopSimulator(false, clickTrigger);
                 break;
             default:
                 this.maybeShowPackageErrors(true);
@@ -1884,15 +1883,16 @@ export class ProjectView
             .then(() => this.runSimulator({ debug, clickTrigger }))
     }
 
-    stopSimulator(unload?: boolean) {
+    stopSimulator(unload?: boolean, clickTrigger?: boolean) {
         pxt.tickEvent('simulator.stop')
         console.log(`stop sim`)
         if (this.runToken) {
             this.runToken.cancel()
             this.runToken = null
         }
-        simulator.stop(unload)
-        this.setState({ simState: pxt.editor.SimState.Stopped })
+        simulator.stop(unload);
+        const autoRun = !clickTrigger && pxt.appTarget.simulator.autoRun;
+        this.setState({ simState: pxt.editor.SimState.Stopped, autoRun: autoRun })
     }
 
     suspendSimulator() {
@@ -1906,6 +1906,7 @@ export class ProjectView
 
     runSimulator(opts: compiler.CompileOptions = {}): Promise<void> {
         console.log(`run sim`)
+
         if (this.runToken) this.runToken.cancel()
         let cancellationToken = new pxt.Util.CancellationToken();
         this.runToken = cancellationToken;
@@ -1924,7 +1925,8 @@ export class ProjectView
                 opts.trace = true;
 
             simulator.stop();
-            this.setState({ simState: pxt.editor.SimState.Starting });
+            const autoRun = opts.clickTrigger && pxt.appTarget.simulator.autoRun;
+            this.setState({ simState: pxt.editor.SimState.Starting, autoRun });
 
             const state = this.editor.snapshotState()
             return compiler.compileAsync(opts)
