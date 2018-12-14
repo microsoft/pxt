@@ -66,6 +66,16 @@ namespace pxtblockly {
             canvasOverlayDiv.style.height = height + 'px';
             canvasOverlayDiv.style.width = width + 'px';
 
+            const setPos = (x: number, y: number) => {
+                x = Math.max(0, Math.min(this.params.screenWidth, x >> 0));
+                y = Math.max(0, Math.min(this.params.screenHeight, y >> 0));
+                crossX.style.top = y + 'px';
+                crossY.style.left = x + 'px';
+                label.textContent = `${this.params.xInputName}=${x}, ${this.params.yInputName}=${y}`;
+                label.style.left = (x + 4) + 'px';
+                label.style.top = (y + 2) + 'px';
+            }
+
             // Position initial crossX and crossY
             let initialX = height / 2;
             let initialY = width / 2;
@@ -76,27 +86,6 @@ namespace pxtblockly {
                 initialY = currentX / this.params.screenWidth * width;
             }
             setPos(initialX, initialY);
-
-            setPos = (x: number, y: number) => {
-                crossX.style.top = y + 'px';
-                crossY.style.left = x + 'px';
-                label.textContent = `${this.params.xInputName}=${x}, ${this.params.yInputName}=${y}`;
-                if (x < this.params.screenWidth / 2) {
-                    label.style.left = x + 'px';
-                    label.style.right = 'unset';
-                }
-                else {
-                    label.style.right = x + 'px';
-                    label.style.left = 'unset';
-                }
-                if (y < this.params.screenHeight / 2) {
-                    label.style.top = (y + 2) + 'px';
-                    label.style.bottom = 'unset';
-                } else {
-                    label.style.bottom = (y + 2) + 'px';
-                    label.style.top = 'unset';
-                }
-            }
 
             Blockly.bindEvent_(lightboxDiv, 'mouseup', this, () => {
                 this.close();
@@ -125,6 +114,14 @@ namespace pxtblockly {
             this.selectorDiv_.style.top = '0px';
             this.selectorDiv_.style.height = '100%';
             this.selectorDiv_.style.width = '100%';
+
+            // dimiss if window is resized
+            this.resizeHandler = this.resizeHandler.bind(this);
+            window.addEventListener("resize", this.resizeHandler, false);
+        }
+
+        private resizeHandler() {
+            this.close();
         }
 
         private setXY(x: number, y: number) {
@@ -192,6 +189,9 @@ namespace pxtblockly {
 
         private close(skipWidget?: boolean) {
             if (!skipWidget) Blockly.WidgetDiv.hideIfOwner(this);
+
+            // remove resize listener
+            window.removeEventListener("resize", this.resizeHandler);
 
             // Destroy the selector div
             if (!this.selectorDiv_) return;
