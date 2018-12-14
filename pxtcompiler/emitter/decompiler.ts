@@ -264,7 +264,6 @@ namespace ts.pxtc.decompiler {
         return undefined;
 
         function collectNameCollisions(): void {
-            // TODO GUJEN handle local reporters
             const takenNames: pxt.Map<boolean> = {};
 
             checkChildren(s);

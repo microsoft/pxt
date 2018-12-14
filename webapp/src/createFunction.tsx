@@ -12,12 +12,8 @@ type ISettingsProps = pxt.editor.ISettingsProps;
 // TODO GUJEN Add icons for the cards
 // TODO GUJEN Ensure function names with spaces work
 
-// SPRITES
-// TODO GUJEN Support reporters with space + name clash
-
 // TESTS
 // TODO GUJEN Test += on reporters
-// TODO GUJEN Test name clashes (space + rename)
 
 export interface CreateFunctionDialogState {
     visible?: boolean;

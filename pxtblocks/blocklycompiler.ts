@@ -705,10 +705,10 @@ namespace pxt.blocks {
         return mkStmt(mkText(name + "()"));
     }
 
-    function compileFunctionCall(e: Environment, b: Blockly.Block, comments: string[]): JsNode[] {
+    function compileFunctionCall(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
         // TODO GUJEN
         const name = escapeVarName(b.getFieldValue("function_name"), e, true);
-        return [mkStmt(mkText(name + "()"))];
+        return mkStmt(mkText(name + "()"));
     }
 
     function compileArgumentReporter(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
@@ -1337,10 +1337,9 @@ namespace pxt.blocks {
             case 'procedures_callnoreturn':
                 r = [compileProcedureCall(e, b, comments)];
                 break;
-            // case 'function_call':
-            //     // TODO GUJEN
-            //     r = compileFunctionCall(e, b, comments);
-            //     break;
+            case 'function_call':
+                r = [compileFunctionCall(e, b, comments)];
+                break;
             case ts.pxtc.ON_START_TYPE:
                 r = compileStartEvent(e, b).children;
                 break;
