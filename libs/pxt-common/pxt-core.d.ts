@@ -124,6 +124,13 @@ interface Array<T> {
       */
     //% helper=arrayFilter weight=40
     filter(callbackfn: (value: T, index: number) => boolean): T[];
+    
+    /**
+     * Returns the value of the first element in the array that satisfies the provided testing function. Otherwise undefined is returned.
+     * @param callbackfn 
+     */
+    //% helper=arrayFind weight=40
+    find(callbackfn: (value: T, index: number) => boolean): T;
 
     /**
       * Call the specified callback function for all the elements in an array. The return value of the callback function is the accumulated result, and is provided as an argument in the next call to the callback function.
