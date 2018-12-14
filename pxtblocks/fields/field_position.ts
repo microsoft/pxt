@@ -30,6 +30,10 @@ namespace pxtblockly {
             const simFrame = this.getSimFrame();
             if (!simFrame) return;
 
+            // dimiss if window is resized
+            this.resizeHandler = this.resizeHandler.bind(this);
+            window.addEventListener("resize", this.resizeHandler, false);
+
             const customContent = document.getElementById('custom-content');
             this.selectorDiv_ = document.createElement('div');
             customContent.appendChild(this.selectorDiv_);
@@ -63,27 +67,31 @@ namespace pxtblockly {
             canvasOverlayDiv.style.left = left + 'px';
             const width = (bBox.width - 2 * paddingX);
             const height = width * simAspectRatio;
+            if (width < 0 || height < 0)
+                return;
             canvasOverlayDiv.style.height = height + 'px';
             canvasOverlayDiv.style.width = width + 'px';
 
             const setPos = (x: number, y: number) => {
-                x = Math.max(0, Math.min(this.params.screenWidth, x >> 0));
-                y = Math.max(0, Math.min(this.params.screenHeight, y >> 0));
                 crossX.style.top = y + 'px';
                 crossY.style.left = x + 'px';
-                label.textContent = `${this.params.xInputName}=${x}, ${this.params.yInputName}=${y}`;
                 label.style.left = (x + 4) + 'px';
                 label.style.top = (y + 2) + 'px';
+
+                x = Math.round(Math.max(0, Math.min(this.params.screenWidth, x / width * this.params.screenWidth)));
+                y = Math.round(Math.max(0, Math.min(this.params.screenHeight, y / height * this.params.screenHeight)));
+
+                label.textContent = `${this.params.xInputName}=${x}, ${this.params.yInputName}=${y}`;
             }
 
             // Position initial crossX and crossY
-            let initialX = height / 2;
-            let initialY = width / 2;
+            let initialY = height / 2;
+            let initialX = width / 2;
             const { currentX, currentY } = this.getXY();
             if (currentX && currentX > 0 && currentX <= this.params.screenWidth
                 && currentY && currentY > 0 && currentY <= this.params.screenHeight) {
-                initialX = currentY / this.params.screenHeight * height;
-                initialY = currentX / this.params.screenWidth * width;
+                initialY = currentY / this.params.screenHeight * height;
+                initialX = currentX / this.params.screenWidth * width;
             }
             setPos(initialX, initialY);
 
@@ -114,10 +122,6 @@ namespace pxtblockly {
             this.selectorDiv_.style.top = '0px';
             this.selectorDiv_.style.height = '100%';
             this.selectorDiv_.style.width = '100%';
-
-            // dimiss if window is resized
-            this.resizeHandler = this.resizeHandler.bind(this);
-            window.addEventListener("resize", this.resizeHandler, false);
         }
 
         private resizeHandler() {
