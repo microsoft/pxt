@@ -48,6 +48,9 @@ namespace pxtblockly {
             const crossY = document.createElement('div');
             crossY.className = 'cross-y';
             canvasOverlayDiv.appendChild(crossY);
+            const label = document.createElement('div');
+            label.className = 'label'
+            canvasOverlayDiv.appendChild(label);
 
             // Position overlay div
             const bBox = simFrame.getBoundingClientRect();
@@ -72,8 +75,28 @@ namespace pxtblockly {
                 initialX = currentY / this.params.screenHeight * height;
                 initialY = currentX / this.params.screenWidth * width;
             }
-            crossX.style.top = initialX + 'px';
-            crossY.style.left = initialY + 'px';
+            setPos(initialX, initialY);
+
+            setPos = (x: number, y: number) => {
+                crossX.style.top = y + 'px';
+                crossY.style.left = x + 'px';
+                label.textContent = `${this.params.xInputName}=${x}, ${this.params.yInputName}=${y}`;
+                if (x < this.params.screenWidth / 2) {
+                    label.style.left = x + 'px';
+                    label.style.right = 'unset';
+                }
+                else {
+                    label.style.right = x + 'px';
+                    label.style.left = 'unset';
+                }
+                if (y < this.params.screenHeight / 2) {
+                    label.style.top = (y + 2) + 'px';
+                    label.style.bottom = 'unset';
+                } else {
+                    label.style.bottom = (y + 2) + 'px';
+                    label.style.top = 'unset';
+                }
+            }
 
             Blockly.bindEvent_(lightboxDiv, 'mouseup', this, () => {
                 this.close();
@@ -83,8 +106,7 @@ namespace pxtblockly {
                 const x = e.clientX - left;
                 const y = e.clientY - top;
 
-                crossX.style.top = y + 'px';
-                crossY.style.left = x + 'px';
+                setPos(x, y);
             });
 
             Blockly.bindEvent_(canvasOverlayDiv, 'mouseup', this, (e: MouseEvent) => {
