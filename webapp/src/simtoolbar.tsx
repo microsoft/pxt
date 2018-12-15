@@ -87,7 +87,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const tracing = this.props.parent.state.tracing;
         const traceTooltip = tracing ? lf("Disable Slow-Mo") : lf("Slow-Mo")
         const debugging = parentState.debugging;
-        const fullscreen = run && !inTutorial && !simOpts.hideFullscreen
+        const fullscreen = run && !inTutorial && !simOpts.hideFullscreen && !sandbox;
         const audio = run && !inTutorial && targetTheme.hasAudio;
         const isHeadless = simOpts.headless;
         const collapse = !!targetTheme.pairingButton;
@@ -100,7 +100,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const muteTooltip = isMuted ? lf("Unmute audio") : lf("Mute audio");
         const collapseTooltip = lf("Hide the simulator");
 
-        return <aside className="ui item grid centered portrait hide simtoolbar" role="complementary" aria-label={lf("Simulator toolbar")}>
+        return <aside className={"ui item grid centered simtoolbar" + (sandbox ? "" : " portrait hide")} role="complementary" aria-label={lf("Simulator toolbar")}>
             <div className={`ui icon tiny buttons ${isFullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
                 {make ? <sui.Button disabled={debugging} icon='configure' className="secondary" title={makeTooltip} onClick={this.openInstructions} /> : undefined}
                 {run ? <sui.Button disabled={debugging || isStarting} key='runbtn' className={`play-button ${isRunning ? "stop" : "play"}`} icon={isRunning ? "stop" : "play green"} title={runTooltip} onClick={this.startStopSimulator} /> : undefined}
