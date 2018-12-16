@@ -4,9 +4,10 @@
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "declaration": true,
-        "out": "../built/backendutils.js",
+        "module": "commonjs",
+        "outDir": "../../built/tests/webapp-test/",
         "newLine": "LF",
-        "sourceMap": false,
-        "types": ["bluebird", "marked"]
+        "types": ["chai", "mocha", "bluebird", "webdriverio"],
+        "sourceMap": false
     }
 }

@@ -74,9 +74,29 @@ function runKarma(that, flags) {
     cmdIn(that, "node_modules/.bin", command);
 }
 
+function runWDIO(that, flags) {
+    var command;
+    var conf = "../../tests/webapp-test/browserstack.conf.js" + (flags ? " " + flags : "");
+    if (os.platform() === 'win32') {
+        command = "wdio.cmd " + conf;
+    }
+    else {
+        command = "./wdio " + conf;
+    }
+    cmdIn(that, "node_modules/.bin", command);
+}
+
+task("testwebapp", [], {async: true}, function () {
+    tscIn(this, "tests/webapp-test", "built");
+});
+
+task("browserstack", ['testwebapp'], function (param) {
+    runWDIO(this, param ? '--suite ' + param : undefined);
+});
+
 task('default', ['updatestrings', 'built/pxt.js', 'built/pxt.d.ts', 'built/pxtrunner.js', 'built/backendutils.js', 'built/target.js', 'wapp', 'monaco-editor', 'built/web/pxtweb.js', 'built/tests/blocksrunner.js'], { parallelLimit: 10 })
 
-task('test', ['default', 'testfmt', 'testerr', 'testdecompiler', 'testlang', 'karma'])
+task('test', ['default', 'testwebapp', 'testfmt', 'testerr', 'testdecompiler', 'testlang', 'karma', 'browserstack'])
 
 task('clean', function () {
     ["built", "temp"].forEach(d => {
