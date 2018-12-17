@@ -171,7 +171,7 @@ namespace pxtblockly {
         private setXY(x: number, y: number) {
             const xField = this.getFieldByName(this.params.xInputName);
             if (xField) xField.setValue(x);
-            const yField = this.getFieldByName(this.params.xInputName);
+            const yField = this.getFieldByName(this.params.yInputName);
             if (yField) yField.setValue(y);
         }
 
