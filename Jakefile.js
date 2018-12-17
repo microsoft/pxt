@@ -12,6 +12,10 @@ function tscIn(task, dir, builtDir) {
     let command = 'node ' + path.relative(dir, './node_modules/typescript/bin/tsc')
     if (process.env.sourceMaps === 'true') {
         command += ' --sourceMap --mapRoot file:///' + path.resolve(builtDir)
+        if (process.env.PXT_ENV != 'production') {
+            // In development, dump the sources inline
+            command += ' --inlineSourceMap --inlineSources'
+        }
     }
     cmdIn(task, dir, command)
 }
@@ -438,7 +442,7 @@ file('built/web/main.js', ["built/web/pxtapp.js", "built/webapp/src/app.js"], { 
         cmdIn(this, ".", 'node node_modules/browserify/bin/cmd ./built/webapp/src/app.js -g ' +
             '[ envify --NODE_ENV production ] -g uglifyify -o ./built/web/main.js')
     } else {
-        cmdIn(this, ".", 'node node_modules/browserify/bin/cmd built/webapp/src/app.js -o built/web/main.js')
+        cmdIn(this, ".", 'node node_modules/browserify/bin/cmd built/webapp/src/app.js -o built/web/main.js --debug')
     }
 })
 

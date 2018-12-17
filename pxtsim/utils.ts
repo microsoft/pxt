@@ -140,6 +140,28 @@ namespace pxsim.util {
                 enumerable: true
             });
         }
+        // https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.fill
+        if (!Uint8Array.prototype.reverse) {
+            Object.defineProperty(Uint8Array.prototype, 'reverse', {
+                value: Array.prototype.reverse,
+                writable: true,
+                enumerable: true
+            });
+        }
+        if (!Uint16Array.prototype.reverse) {
+            Object.defineProperty(Uint16Array.prototype, 'reverse', {
+                value: Array.prototype.reverse,
+                writable: true,
+                enumerable: true
+            });
+        }
+        if (!Uint32Array.prototype.reverse) {
+            Object.defineProperty(Uint32Array.prototype, 'reverse', {
+                value: Array.prototype.reverse,
+                writable: true,
+                enumerable: true
+            });
+        }
         // Inject Math imul polyfill
         if (!Math.imul) {
             // for explanations see:

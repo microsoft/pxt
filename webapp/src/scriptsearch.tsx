@@ -108,19 +108,20 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             data: [],
             status: data.FetchStatus.Complete
         };
-        if (!this.state.searchFor || this.state.mode != ScriptSearchMode.Extensions) return emptyResult;
+        if (!this.state.searchFor || this.state.mode != ScriptSearchMode.Extensions)
+            return emptyResult;
 
-        let scriptid = pxt.Cloud.parseScriptId(this.state.searchFor)
-
+        const scriptid = pxt.Cloud.parseScriptId(this.state.searchFor)
         if (!scriptid) {
             return emptyResult;
         }
 
         const res = this.getDataWithStatus(`cloud-search:${scriptid}`);
-
-        if (res.data && res.data.statusCode === 404)
+        if (!res.data || (res.data && res.data.statusCode === 404))
             res.data = []; // No shared project with that URL exists
-
+        // cloud may return single result, wrapping in array
+        if (!Array.isArray(res.data))
+            res.data = [res.data];
         return res;
     }
 

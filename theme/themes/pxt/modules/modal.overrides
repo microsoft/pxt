@@ -206,7 +206,8 @@
     right: @innerCloseRight;
     color: @innerCloseColor;
     border-radius: 50%;
-    font-size: 34px;
+    font-size: 2.15rem;
+    line-height: 2.15rem;
     transition: all .15s ease-out;
     height: 2.15rem;
     width: 2.15rem;
@@ -214,7 +215,7 @@
 }
 .ui.modal > .closeIcon:focus .close,
 .ui.modal > .closeIcon:hover  .close {
-    box-shadow: 0 0 0 4px rgba(0,0,0,.35);
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.35);
     outline: none;
     transform: scale(1.1);
 }

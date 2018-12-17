@@ -523,7 +523,7 @@ export interface ProjectsDetailProps extends ISettingsProps {
     url?: string;
     scr?: any;
     onClick: (scr: any) => void;
-    cardType: string;
+    cardType: pxt.CodeCardType;
     tags?: string[];
 }
 
@@ -744,8 +744,8 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
         this.hide = this.hide.bind(this);
         this.modalDidOpen = this.modalDidOpen.bind(this);
         this.handleChange = this.handleChange.bind(this);
-        this.cancel = this.cancel.bind(this);
         this.save = this.save.bind(this);
+        this.skip = this.skip.bind(this);
     }
 
     componentWillReceiveProps(newProps: ISettingsProps) {
@@ -765,7 +765,7 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
         // Save on enter typed
         let dialogInput = document.getElementById('projectNameInput') as HTMLInputElement;
         if (dialogInput) {
-            dialogInput.setSelectionRange(0, 9999);
+            if (!pxt.BrowserUtils.isMobile()) dialogInput.setSelectionRange(0, 9999);
             dialogInput.onkeydown = (e: KeyboardEvent) => {
                 const charCode = core.keyCodeFromEvent(e);
                 if (charCode === core.ENTER_KEY) {
@@ -794,9 +794,10 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
         }
     }
 
-    cancel() {
-        pxt.tickEvent("exitandsave.cancel", undefined, { interactiveConsent: true });
+    skip() {
+        pxt.tickEvent("exitandsave.skip", undefined, { interactiveConsent: true });
         this.hide();
+        this.props.parent.openHome();
     }
 
     save() {
@@ -817,10 +818,13 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
         const { visible, emoji, projectName } = this.state;
 
         const actions: sui.ModalButton[] = [{
-            label: lf("Done"),
+            label: lf("Save"),
             onclick: this.save,
             icon: 'check',
             className: 'approve positive'
+        }, {
+            label: lf("Skip"),
+            onclick: this.skip
         }]
 
         return (
@@ -830,10 +834,13 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
                 modalDidOpen={this.modalDidOpen}
             >
-                <div className="ui form">
-                    <sui.Input ref="filenameinput" autoFocus id={"projectNameInput"} label={lf("Name")}
-                        ariaLabel={lf("Type a name for your project")} autoComplete={false}
-                        value={projectName || ''} onChange={this.handleChange} />
+                <div>
+                    <p>{lf("Give your project a name.")}</p>
+                    <div className="ui form">
+                        <sui.Input ref="filenameinput" autoFocus={!pxt.BrowserUtils.isMobile()} id={"projectNameInput"}
+                            ariaLabel={lf("Type a name for your project")} autoComplete={false}
+                            value={projectName || ''} onChange={this.handleChange} />
+                    </div>
                 </div>
             </sui.Modal>
         )

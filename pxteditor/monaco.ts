@@ -116,6 +116,7 @@ namespace pxt.vs {
 
     export function createEditor(element: HTMLElement): monaco.editor.IStandaloneCodeEditor {
         const inverted = pxt.appTarget.appTheme.invertedMonaco;
+        const hasFieldEditors = !!(pxt.appTarget.appTheme.monacoFieldEditors && pxt.appTarget.appTheme.monacoFieldEditors.length);
 
         let editor = monaco.editor.create(element, {
             model: null,
@@ -127,6 +128,8 @@ namespace pxt.vs {
             wordBasedSuggestions: true,
             lineNumbersMinChars: 3,
             formatOnPaste: true,
+            folding: hasFieldEditors,
+            glyphMargin: hasFieldEditors,
             minimap: {
                 enabled: false
             },

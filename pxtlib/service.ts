@@ -90,6 +90,7 @@ namespace ts.pxtc {
         memberName: string;
         blockId: string;
         isBitMask: boolean;
+        isHash: boolean;
         firstValue?: number;
         initialMembers: string[];
         promptHint: string;
@@ -195,6 +196,7 @@ namespace ts.pxtc {
         enumMemberName?: string; // If the name of the enum was "Colors", this would be "color"
         enumStartValue?: number; // The lowest value to emit when going from blocks to TS
         enumIsBitMask?: boolean; // If true then values will be emitted in the form "1 << n"
+        enumIsHash?: boolean; // if true, the name of the enum is normalized, then hashed to generate the value
         enumPromptHint?: string; // The hint that will be displayed in the member creation prompt
         enumInitialMembers?: string[]; // The initial enum values which will be given the lowest values available
 
@@ -545,6 +547,7 @@ namespace ts.pxtc {
                     memberName: s.attributes.enumMemberName,
                     firstValue: isNaN(firstValue) ? undefined : firstValue,
                     isBitMask: s.attributes.enumIsBitMask,
+                    isHash: s.attributes.enumIsHash,
                     initialMembers: s.attributes.enumInitialMembers,
                     promptHint: s.attributes.enumPromptHint
                 };
@@ -626,6 +629,7 @@ namespace ts.pxtc {
         const lang = pxtc.Util.userLanguage();
         if (pxtc.Util.userLanguage() == "en") return Promise.resolve(apis);
 
+        const errors: pxt.Map<number> = {};
         return mainPkg.localizationStringsAsync(lang)
             .then(loc => Util.values(apis.byQName).forEach(fn => {
                 const jsDoc = loc[fn.qName]
@@ -661,7 +665,7 @@ namespace ts.pxtc {
                 else if (fn.attributes.block && locBlock) {
                     const ps = pxt.blocks.compileInfo(fn);
                     const oldBlock = fn.attributes.block;
-                    fn.attributes.block = pxt.blocks.normalizeBlock(locBlock);
+                    fn.attributes.block = pxt.blocks.normalizeBlock(locBlock, err => errors[`${fn}.${lang}`] = 1);
                     fn.attributes._untranslatedBlock = oldBlock;
                     if (oldBlock != fn.attributes.block) {
                         const locps = pxt.blocks.compileInfo(fn);
@@ -673,7 +677,11 @@ namespace ts.pxtc {
                 }
                 updateBlockDef(fn.attributes);
             }))
-            .then(() => apis);
+            .then(() => apis)
+            .finally(() => {
+                if (Object.keys(errors))
+                    pxt.reportError(`loc.errors`, `invalid translation`, errors);
+            })
     }
 
     export function emptyExtInfo(): ExtensionInfo {
@@ -707,6 +715,7 @@ namespace ts.pxtc {
         "constantShim",
         "blockCombine",
         "enumIsBitMask",
+        "enumIsHash",
         "decompileIndirectFixedInstances",
         "topblock"
     ];

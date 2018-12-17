@@ -18,6 +18,13 @@ interface Array<T> {
     push(item: T): void;
 
     /**
+      * Concatenates the values with another array.
+      * @param arr The other array that is being concatenated with
+      */
+    //% helper=arrayConcat weight=40
+    concat(arr: T[]): T[];
+
+    /**
       * Remove the last element from an array and return it.
       */
     //% help=arrays/pop
@@ -117,6 +124,13 @@ interface Array<T> {
       */
     //% helper=arrayFilter weight=40
     filter(callbackfn: (value: T, index: number) => boolean): T[];
+    
+    /**
+     * Returns the value of the first element in the array that satisfies the provided testing function. Otherwise undefined is returned.
+     * @param callbackfn 
+     */
+    //% helper=arrayFind weight=40
+    find(callbackfn: (value: T, index: number) => boolean): T;
 
     /**
       * Call the specified callback function for all the elements in an array. The return value of the callback function is the accumulated result, and is provided as an argument in the next call to the callback function.

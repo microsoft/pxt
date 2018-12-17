@@ -289,6 +289,7 @@ declare namespace pxt {
         disableFileAccessinMaciOs?:boolean; //Disable save & import of files in Mac and iOS, mainly used as embed webkit doesn't support these
         baseTheme?: string; // Use this to determine whether to show a light or dark theme, default is 'light', options are 'light', 'dark', or 'hc'
         scriptManager?: boolean; // Whether or not to enable the script manager. default: false
+        monacoFieldEditors?: string[]; // A list of field editors to show in monaco. Currently only "image-editor" is supported
         /**
          * Internal and temporary flags:
          * These flags may be removed without notice, please don't take a dependency on them
@@ -297,6 +298,7 @@ declare namespace pxt {
         bigRunButton?: boolean; // show the run button as a big button on the right
         transparentEditorToolbar?: boolean; // make the editor toolbar float with a transparent background
         hideProjectRename?: boolean; // Temporary flag until we figure out a better way to show the name
+        addNewTypeScriptFile?: boolean; // when enabled, the [+] explorer button asks for file name, instead of using "custom.ts"
     }
 
     interface SocialOptions {
@@ -318,13 +320,6 @@ declare namespace pxt {
         name: string;
         path?: string;
         subitems?: TOCMenuEntry[];
-
-        prevName?: string;
-        prevPath?: string;
-
-        nextName?: string;
-        nextPath?: string;
-
         markdown?: string;
     }
 
@@ -344,11 +339,11 @@ declare namespace ts.pxtc {
         slowMethods?: boolean;
         slowFields?: boolean;
         skipClassCheck?: boolean;
-        noThisCheckOpt?: boolean;        
+        noThisCheckOpt?: boolean;
         numFloat?: boolean;
         noTreeShake?: boolean;
         inlineConversions?: boolean;
-        noPeepHole?: boolean;        
+        noPeepHole?: boolean;
     }
 
     interface CompileTarget {

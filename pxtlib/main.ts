@@ -196,7 +196,7 @@ namespace pxt {
             console.log(msg);
         } : () => { };
 
-    export let reportException: (err: any, data?: Map<string>) => void = function (e, d) {
+    export let reportException: (err: any, data?: Map<string | number>) => void = function (e, d) {
         if (console) {
             console.error(e);
             if (d) {
@@ -208,7 +208,7 @@ namespace pxt {
             }
         }
     }
-    export let reportError: (cat: string, msg: string, data?: Map<string>) => void = function (cat, msg, data) {
+    export let reportError: (cat: string, msg: string, data?: Map<string | number>) => void = function (cat, msg, data) {
         if (console) {
             console.error(`${cat}: ${msg}`);
             if (data) {
