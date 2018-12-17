@@ -172,7 +172,7 @@ namespace pxtblockly {
             const xField = this.getFieldByName(this.params.xInputName);
             if (xField) xField.setValue(x);
             const yField = this.getFieldByName(this.params.xInputName);
-            if (yField) yField.setValue(x);
+            if (yField) yField.setValue(y);
         }
 
         private getFieldByName(name: string) {
@@ -190,20 +190,10 @@ namespace pxtblockly {
         private getXY() {
             let currentX: string;
             let currentY: string;
-            const parentBlock = this.sourceBlock_.parentBlock_;
-            if (!parentBlock) return null; // warn
-            for (let i = 0; i < parentBlock.inputList.length; i++) {
-                const input = parentBlock.inputList[i];
-                if (input.name === this.params.xInputName) {
-                    const targetField = this.getTargetField(input);
-                    if (!targetField) continue;
-                    currentX = targetField.getValue();
-                } else if (input.name === this.params.yInputName) {
-                    const targetField = this.getTargetField(input);
-                    if (!targetField) continue;
-                    currentY = targetField.getValue();
-                }
-            }
+            const xField = this.getFieldByName(this.params.xInputName);
+            if (xField) currentX = xField.getValue();
+            const yField = this.getFieldByName(this.params.xInputName);
+            if (yField) currentX = yField.getValue();
 
             return { currentX: parseInt(currentX), currentY: parseInt(currentY) };
         }
