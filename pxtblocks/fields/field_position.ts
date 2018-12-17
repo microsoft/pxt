@@ -192,7 +192,7 @@ namespace pxtblockly {
             let currentY: string;
             const xField = this.getFieldByName(this.params.xInputName);
             if (xField) currentX = xField.getValue();
-            const yField = this.getFieldByName(this.params.xInputName);
+            const yField = this.getFieldByName(this.params.yInputName);
             if (yField) currentX = yField.getValue();
 
             return { currentX: parseInt(currentX), currentY: parseInt(currentY) };
