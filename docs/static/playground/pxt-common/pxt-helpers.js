@@ -132,6 +132,15 @@ namespace helpers {
         return res
     }
 
+    export function arrayFind<T>(arr: T[], callbackfn: (value: T, index: number) => boolean): T {
+        let len = arr.length
+        for (let i = 0; i < len; ++i) {
+            let v = arr[i] // need to cache
+            if (callbackfn(v, i)) return v;
+        }
+        return undefined;
+    }
+
     export function arrayReduce<T, U>(arr: T[], callbackfn: (previousValue: U, currentValue: T, currentIndex: number) => U, initialValue: U): U {
         let len = arr.length
         for (let i = 0; i < len; ++i) {
