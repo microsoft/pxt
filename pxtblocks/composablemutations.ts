@@ -181,6 +181,7 @@ namespace pxt.blocks {
             const newValue = addDelta(delta);
             if (!force && !skipRender && newValue === visibleOptions) return;
 
+            Blockly.Events.fire(new Blockly.Events.BlockChange(b, "mutation", attributeName, visibleOptions + "", newValue + ""));
             visibleOptions = newValue;
 
             if (!inputsInitialized && visibleOptions > 0) {
@@ -269,6 +270,10 @@ namespace pxt.blocks {
         }
 
         function initOptionalInputs() {
+            if (!inputsInitialized) {
+                Blockly.Events.fire(new Blockly.Events.BlockChange(b, "mutation", inputsAttributeName, "false", "true"));
+            }
+
             inputsInitialized = true;
             addInputs();
             updateButtons();
