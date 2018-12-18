@@ -925,6 +925,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             let selections: monaco.Selection[];
             return Promise.mapSeries(this.fieldEditors.allRanges(), range => this.indentRangeAsync(range.range))
                 .then(ranges => {
+                    if (!ranges || !ranges.length) return;
                     selections = ranges.map(rangeToSelection);
 
                     // This is only safe because indentRangeAsync doesn't change the number of lines and
