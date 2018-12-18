@@ -99,11 +99,13 @@ namespace testNamespace {
     //% block="Handler with optioinal arguments"
     export function callbackWithIgnoredArguments(cb: (c: number, d: number) => void) {}
 
-    // TODO GUJEN fix test
-
     //% blockId=test_handler_arguments3 draggableParameters=1
     //% block="Handler with draggable arguments"
     export function callbackWithDraggableParams(cb: (c: number, d: number) => void) {}
+
+    //% blockId=test_handler_arguments4 draggableParameters="reporter"
+    //% block="Handler with draggable reporters"
+    export function callbackWithDraggableParamsReporters(cb: (c: string, d: number, e: boolean, f: TestClass) => void) {}
 
     /**
      * Enum value function
