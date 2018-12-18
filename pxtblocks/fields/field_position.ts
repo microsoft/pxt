@@ -227,7 +227,7 @@ namespace pxtblockly {
             super.dispose();
 
             if (FieldPosition.eyedropperEventKey_) {
-                goog.events.unlistenByKey(FieldPosition.eyedropperEventKey_);
+                Blockly.unbindEvent_(FieldPosition.eyedropperEventKey_);
             }
         }
 
