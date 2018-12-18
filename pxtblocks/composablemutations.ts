@@ -1,3 +1,9 @@
+/// <reference path="../localtypings/blockly.d.ts" />
+
+declare namespace Blockly.Xml {
+    function domToBlock(xml: Element, workspace: Blockly.Workspace): Blockly.Block;
+}
+
 namespace pxt.blocks {
     export interface ComposableMutation {
         // Set to save mutations. Should return an XML element
@@ -101,7 +107,7 @@ namespace pxt.blocks {
         }
     }
 
-    export function initExpandableBlock(b: Blockly.Block, def: pxtc.ParsedBlockDef, comp: BlockCompileInfo, toggle: boolean, addInputs: () => void) {
+    export function initExpandableBlock(info: pxtc.BlocksInfo, b: Blockly.Block, def: pxtc.ParsedBlockDef, comp: BlockCompileInfo, toggle: boolean, addInputs: () => void) {
         // Add numbers before input names to prevent clashes with the ones added
         // by BlocklyLoader. The number makes it an invalid JS identifier
         const buttonAddName = "0_add_button";
@@ -197,19 +203,17 @@ namespace pxt.blocks {
                     const visible = optIndex < visibleOptions;
                     setInputVisible(input, visible);
                     if (visible && input.connection && !(input.connection as any).isConnected() && !b.isInsertionMarker()) {
-                        // FIXME: Could probably be smarter here, right now this does not respect
-                        // any options passed to the child block. Need to factor that out of BlocklyLoader
                         const param = comp.definitionNameToParam[def.parameters[optIndex].name];
-                        const shadowId = param.shadowBlockId || shadowBlockForType(param.type);
-                        if (shadowId) {
-                            const nb = b.workspace.newBlock(shadowId);
-                            nb.setShadow(true);
+                        let shadow = createShadowValue(info, param);
 
-                            // Because this function is sometimes called before the block is
-                            // rendered, we need to guard these calls to initSvg and render
-                            if (nb.initSvg) nb.initSvg();
+                        if (shadow.tagName.toLowerCase() === "value") {
+                            // Unwrap the block
+                            shadow = shadow.firstElementChild;
+                        }
+
+                        const nb = Blockly.Xml.domToBlock(shadow, b.workspace);
+                        if (nb) {
                             input.connection.connect(nb.outputConnection);
-                            if (nb.render) nb.render();
                         }
                     }
                     ++optIndex;
@@ -281,19 +285,5 @@ namespace pxt.blocks {
                 input.setVisible(visible);
             }
         }
-    }
-
-    function shadowBlockForType(type: string) {
-        switch (type) {
-            case "number": return "math_number";
-            case "boolean": return "logic_boolean"
-            case "string": return "text";
-        }
-
-        if (isArrayType(type)) {
-            return "lists_create_with";
-        }
-
-        return undefined;
     }
 }

@@ -77,7 +77,7 @@ namespace pxt.blocks {
         return b ? b.fn : undefined;
     }
 
-    function createShadowValue(info: pxtc.BlocksInfo, p: pxt.blocks.BlockParameter, shadowId?: string, defaultV?: string): Element {
+    export function createShadowValue(info: pxtc.BlocksInfo, p: pxt.blocks.BlockParameter, shadowId?: string, defaultV?: string): Element {
         defaultV = defaultV || p.defaultValue;
         shadowId = shadowId || p.shadowBlockId;
         let defaultValue: any;
@@ -418,7 +418,7 @@ namespace pxt.blocks {
         }
         else if (fn.attributes._expandedDef && fn.attributes.expandableArgumentMode !== "disabled") {
             const shouldToggle = fn.attributes.expandableArgumentMode === "toggle";
-            initExpandableBlock(block, fn.attributes._expandedDef, comp, shouldToggle, () => buildBlockFromDef(fn.attributes._expandedDef, true));
+            initExpandableBlock(info, block, fn.attributes._expandedDef, comp, shouldToggle, () => buildBlockFromDef(fn.attributes._expandedDef, true));
         }
         else if (comp.handlerArgs.length) {
             /**
