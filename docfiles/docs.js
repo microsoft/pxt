@@ -53,6 +53,15 @@ function searchSubmit(form) {
     if (pxt && pxt.tickEvent) pxt.tickEvent("docs.search", { 'source': form.id }, { interactiveConsent: true })
 }
 
+function scrollActiveHeaderIntoView() {
+    var activeHeaders = document.getElementsByClassName("header active");
+    for (var i = 0; i < activeHeaders.length; ++i) {
+        var activeHeader = activeHeaders.item(i);
+        if (activeHeader.scrollIntoView)
+            activeHeader.scrollIntoView()
+    }
+}
+
 function setupSidebar() {
     $('#togglesidebar').on('keydown', handleEnterKey);
 
@@ -62,6 +71,7 @@ function setupSidebar() {
             onShow: function () {
                 togglesidebar.setAttribute("aria-expanded", "true");
                 document.getElementsByClassName("sidebar").item(0).getElementsByClassName("focused").item(0).focus();
+                scrollActiveHeaderIntoView();
             },
             onHidden: function () {
                 togglesidebar.setAttribute("aria-expanded", "false");
@@ -112,6 +122,8 @@ function setupSidebar() {
     for (var i = 0; i < searchIcons.length; i++) {
         searchIcons.item(i).onkeydown = handleEnterKey;
     }
+
+    scrollActiveHeaderIntoView();
 }
 
 function setupSemantic() {
