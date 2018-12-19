@@ -111,7 +111,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const disableFileAccessinMaciOs = targetTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac());
         const showSave = !readOnly && !isController && !targetTheme.saveInMenu && !tutorial && !disableFileAccessinMaciOs;
         const compile = pxt.appTarget.compile;
-        const compileBtn = compile.hasHex || compile.saveAsPNG;
+        const compileBtn = compile.hasHex || compile.saveAsPNG || compile.useUF2;
         const compileTooltip = lf("Download your code to the {0}", targetTheme.boardName);
         const compileLoading = !!compiling;
         const running = simState == pxt.editor.SimState.Running;
