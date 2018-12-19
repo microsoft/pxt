@@ -39,6 +39,7 @@ namespace ts.pxtc.decompiler {
         declaredEnums: pxt.Map<boolean>;
         attrs: (c: pxtc.CallInfo) => pxtc.CommentAttrs;
         compInfo: (c: pxtc.CallInfo) => pxt.blocks.BlockCompileInfo;
+        localReporters: PropertyDesc[][]; // A stack of groups of locally scoped argument declarations, to determine whether an argument should decompile as a reporter or a variable
     }
 
     interface DecompileArgument {
@@ -352,7 +353,8 @@ namespace ts.pxtc.decompiler {
             declaredFunctions: {},
             declaredEnums: {},
             attrs: attrs,
-            compInfo: compInfo
+            compInfo: compInfo,
+            localReporters: []
         };
         const fileText = file.getFullText();
         let output = ""
@@ -851,8 +853,24 @@ ${output}</xml>`;
 
         function getIdentifier(identifier: Identifier): ExpressionNode {
             const name = getVariableName(identifier);
-            trackVariableUsage(name, ReferenceType.InBlocksOnly);
-            return getFieldBlock("variables_get", "VAR", name);
+            const oldName = identifier.text;
+            let localReporterArg: PropertyDesc = null;
+            env.localReporters.some(scope => {
+                for (let i = 0; i < scope.length; ++i) {
+                    if (scope[i].name === oldName) {
+                        localReporterArg = scope[i];
+                        return true;
+                    }
+                }
+                return false;
+            });
+
+            if (localReporterArg) {
+                return getDraggableReporterBlock(name, localReporterArg.type, false);
+            } else {
+                trackVariableUsage(name, ReferenceType.InBlocksOnly);
+                return getFieldBlock("variables_get", "VAR", name);
+            }
         }
 
         function getNumericLiteral(value: string): ExpressionNode {
@@ -877,6 +895,23 @@ ${output}</xml>`;
         function getDraggableVariableBlock(valueName: string, varName: string) {
             return mkValue(valueName,
                 getFieldBlock("variables_get_reporter", "VAR", varName, true), "variables_get_reporter");
+        }
+
+        function mkDraggableReporterValue(valueName: string, varName: string, varType: string) {
+            const reporterType = pxt.blocks.reporterTypeForArgType(varType);
+            const reporterShadowBlock = getDraggableReporterBlock(varName, varType, true);
+            return mkValue(valueName, reporterShadowBlock, reporterType);
+        }
+
+        function getDraggableReporterBlock(varName: string, varType: string, shadow: boolean) {
+            const reporterType = pxt.blocks.reporterTypeForArgType(varType);
+            const reporterShadowBlock = getFieldBlock(reporterType, "VALUE", varName, shadow);
+
+            if (reporterType === "argument_reporter_custom") {
+                reporterShadowBlock.mutation = { typename: varType };
+            }
+
+            return reporterShadowBlock;
         }
 
         function getField(name: string, value: string): FieldNode {
@@ -1597,6 +1632,7 @@ ${output}</xml>`;
                     case SK.FunctionExpression:
                     case SK.ArrowFunction:
                         const m = getDestructuringMutation(e as ArrowFunction);
+                        let mustPopLocalScope = false;
                         if (m) {
                             r.mutation = m;
                         }
@@ -1604,6 +1640,13 @@ ${output}</xml>`;
                             let arrow = e as ArrowFunction;
                             const sym = blocksInfo.blocksById[attributes.blockId];
                             const paramDesc = sym.parameters[comp.thisParameter ? i - 1 : i];
+                            const addDraggableInput = (arg: PropertyDesc, varName: string) => {
+                                if (attributes.draggableParameters === "reporter") {
+                                    addInput(mkDraggableReporterValue("HANDLER_DRAG_PARAM_" + arg.name, varName, arg.type));
+                                } else {
+                                    addInput(getDraggableVariableBlock("HANDLER_DRAG_PARAM_" + arg.name, varName));
+                                }
+                            };
                             if (arrow.parameters.length) {
                                 if (attributes.optionalVariableArgs) {
                                     r.mutation = {
@@ -1617,7 +1660,7 @@ ${output}</xml>`;
                                     arrow.parameters.forEach((parameter, i) => {
                                         const arg = paramDesc.handlerParameters[i];
                                         if (attributes.draggableParameters) {
-                                            addInput(getDraggableVariableBlock("HANDLER_DRAG_PARAM_" + arg.name, (parameter.name as ts.Identifier).text));
+                                            addDraggableInput(arg, (parameter.name as ts.Identifier).text);
                                         }
                                         else {
                                             addField(getField("HANDLER_" + arg.name, (parameter.name as ts.Identifier).text));
@@ -1630,12 +1673,22 @@ ${output}</xml>`;
                                 if (arrow.parameters.length < paramDesc.handlerParameters.length) {
                                     for (let i = arrow.parameters.length; i < paramDesc.handlerParameters.length; i++) {
                                         const arg = paramDesc.handlerParameters[i];
-                                        addInput(getDraggableVariableBlock("HANDLER_DRAG_PARAM_" + arg.name, arg.name));
+                                        addDraggableInput(arg, arg.name);
                                     }
+                                }
+                                if (attributes.draggableParameters === "reporter") {
+                                    // Push the parameter descriptions onto the local scope stack
+                                    // so the getStatementBlock() below knows that these parameters
+                                    // should be decompiled as reporters instead of variables.
+                                    env.localReporters.push(paramDesc.handlerParameters);
+                                    mustPopLocalScope = true;
                                 }
                             }
                         }
                         (r.handlers || (r.handlers = [])).push({ name: "HANDLER", statement: getStatementBlock(e) });
+                        if (mustPopLocalScope) {
+                            env.localReporters.pop();
+                        }
                         break;
                     case SK.PropertyAccessExpression:
                         const callInfo = (e as any).callInfo as pxtc.CallInfo;

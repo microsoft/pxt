@@ -247,19 +247,37 @@ namespace pxt.blocks {
                 })
             if (fn.attributes.draggableParameters) {
                 comp.handlerArgs.forEach(arg => {
+                    // draggableParameters="variable":
                     // <value name="HANDLER_DRAG_PARAM_arg">
                     // <shadow type="variables_get_reporter">
                     //     <field name="VAR">defaultName</field>
                     // </shadow>
                     // </value>
+
+                    // draggableParameters="reporter"
+                    // <value name="HANDLER_DRAG_PARAM_arg">
+                    //     <shadow type="argument_reporter_custom">
+                    //         <mutation typename="Sprite"></mutation>
+                    //         <field name="VALUE">mySprite</field>
+                    //     </shadow>
+                    // </value>
+                    const useReporter = fn.attributes.draggableParameters === "reporter";
+
                     const value = document.createElement("value");
                     value.setAttribute("name", "HANDLER_DRAG_PARAM_" + arg.name);
 
+                    const blockType = useReporter ? pxt.blocks.reporterTypeForArgType(arg.type) : "variables_get_reporter";
                     const shadow = document.createElement("shadow");
-                    shadow.setAttribute("type", "variables_get_reporter");
+                    shadow.setAttribute("type", blockType);
+
+                    if (useReporter && blockType === "argument_reporter_custom") {
+                        const mutation = document.createElement("mutation");
+                        mutation.setAttribute("typename", arg.type);
+                        shadow.appendChild(mutation);
+                    }
 
                     const field = document.createElement("field");
-                    field.setAttribute("name", "VAR");
+                    field.setAttribute("name", useReporter ? "VALUE" : "VAR");
                     field.textContent = Util.htmlEscape(arg.name);
 
                     shadow.appendChild(field);
@@ -422,9 +440,9 @@ namespace pxt.blocks {
         }
         else if (comp.handlerArgs.length) {
             /**
-             * We support three modes for handler parameters: variable dropdowns,
+             * We support four modes for handler parameters: variable dropdowns,
              * expandable variable dropdowns with +/- buttons (used for chat commands),
-             * and as draggable variable blocks
+             * draggable variable blocks, and draggable reporter blocks.
              */
             hasHandler = true;
             if (fn.attributes.optionalVariableArgs) {
@@ -433,7 +451,11 @@ namespace pxt.blocks {
             else if (fn.attributes.draggableParameters) {
                 comp.handlerArgs.filter(a => !a.inBlockDef).forEach(arg => {
                     const i = block.appendValueInput("HANDLER_DRAG_PARAM_" + arg.name);
-                    i.setCheck("Variable");
+                    if (fn.attributes.draggableParameters == "reporter") {
+                        i.setCheck(arg.type);
+                    } else {
+                        i.setCheck("Variable");
+                    }
                 });
             }
             else {
@@ -565,7 +587,7 @@ namespace pxt.blocks {
 
                         if (isHandlerArg(pr)) {
                             inputName = "HANDLER_DRAG_PARAM_" + pr.name;
-                            inputCheck = "Variable";
+                            inputCheck = fn.attributes.draggableParameters === "reporter" ? pr.type : "Variable";
                             return;
                         }
 
@@ -794,7 +816,7 @@ namespace pxt.blocks {
         initComments();
 
         // PXT is in charge of disabling, don't record undo for disabled events
-        (Blockly.Block as any).prototype.setDisabled = function(disabled: any) {
+        (Blockly.Block as any).prototype.setDisabled = function (disabled: any) {
             if (this.disabled != disabled) {
                 let oldRecordUndo = (Blockly as any).Events.recordUndo;
                 (Blockly as any).Events.recordUndo = false;
@@ -1211,9 +1233,9 @@ namespace pxt.blocks {
             let deleteList = Blockly.WorkspaceSvg.buildDeleteList_(topBlocks);
             let deleteCount = 0;
             for (let i = 0; i < deleteList.length; i++) {
-              if (!deleteList[i].isShadow()) {
-                deleteCount++;
-              }
+                if (!deleteList[i].isShadow()) {
+                    deleteCount++;
+                }
             }
 
             function deleteNext() {
@@ -1330,7 +1352,7 @@ namespace pxt.blocks {
         };
 
         // Get rid of bumping behavior
-        (Blockly as any).Constants.Logic.LOGIC_COMPARE_ONCHANGE_MIXIN.onchange = function () {}
+        (Blockly as any).Constants.Logic.LOGIC_COMPARE_ONCHANGE_MIXIN.onchange = function () { }
     }
 
     function initOnStart() {

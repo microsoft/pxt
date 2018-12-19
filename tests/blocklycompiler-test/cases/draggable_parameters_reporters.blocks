@@ -1,0 +1,103 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="test_handler_arguments4">
+<value name="HANDLER_DRAG_PARAM_c">
+<shadow type="argument_reporter_string">
+<field name="VALUE">hello</field>
+</shadow>
+</value>
+<value name="HANDLER_DRAG_PARAM_d">
+<shadow type="argument_reporter_number">
+<field name="VALUE">goodbye</field>
+</shadow>
+</value>
+<value name="HANDLER_DRAG_PARAM_e">
+<shadow type="argument_reporter_boolean">
+<field name="VALUE">e</field>
+</shadow>
+</value>
+<value name="HANDLER_DRAG_PARAM_f">
+<shadow type="argument_reporter_custom">
+<mutation typename="TestClass" />
+<field name="VALUE">f</field>
+</shadow>
+</value>
+<statement name="HANDLER">
+</statement>
+<comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;basic.ts&#34; &#47;&#62;</comment>
+</block>
+<block type="test_handler_arguments4">
+<value name="HANDLER_DRAG_PARAM_c">
+<shadow type="argument_reporter_string">
+<field name="VALUE">what</field>
+</shadow>
+</value>
+<value name="HANDLER_DRAG_PARAM_d">
+<shadow type="argument_reporter_number">
+<field name="VALUE">are</field>
+</shadow>
+</value>
+<value name="HANDLER_DRAG_PARAM_e">
+<shadow type="argument_reporter_boolean">
+<field name="VALUE">you</field>
+</shadow>
+</value>
+<value name="HANDLER_DRAG_PARAM_f">
+<shadow type="argument_reporter_custom">
+<mutation typename="TestClass" />
+<field name="VALUE">doing</field>
+</shadow>
+</value>
+<statement name="HANDLER">
+</statement>
+</block>
+<block type="test_handler_arguments4">
+<value name="HANDLER_DRAG_PARAM_c">
+<shadow type="argument_reporter_string">
+<field name="VALUE">stahp</field>
+</shadow>
+</value>
+<value name="HANDLER_DRAG_PARAM_d">
+<shadow type="argument_reporter_number">
+<field name="VALUE">d</field>
+</shadow>
+</value>
+<value name="HANDLER_DRAG_PARAM_e">
+<shadow type="argument_reporter_boolean">
+<field name="VALUE">e</field>
+</shadow>
+</value>
+<value name="HANDLER_DRAG_PARAM_f">
+<shadow type="argument_reporter_custom">
+<mutation typename="TestClass" />
+<field name="VALUE">f</field>
+</shadow>
+</value>
+<statement name="HANDLER">
+</statement>
+</block>
+<block type="test_handler_arguments4">
+<value name="HANDLER_DRAG_PARAM_c">
+<shadow type="argument_reporter_string">
+<field name="VALUE">c</field>
+</shadow>
+</value>
+<value name="HANDLER_DRAG_PARAM_d">
+<shadow type="argument_reporter_number">
+<field name="VALUE">d</field>
+</shadow>
+</value>
+<value name="HANDLER_DRAG_PARAM_e">
+<shadow type="argument_reporter_boolean">
+<field name="VALUE">e</field>
+</shadow>
+</value>
+<value name="HANDLER_DRAG_PARAM_f">
+<shadow type="argument_reporter_custom">
+<mutation typename="TestClass" />
+<field name="VALUE">f</field>
+</shadow>
+</value>
+<statement name="HANDLER">
+</statement>
+</block>
+</xml>
