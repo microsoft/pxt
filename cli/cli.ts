@@ -1436,7 +1436,9 @@ export function buildTargetAsync(parsed?: commandParser.ParsedCommand): Promise<
     const opts: BuildTargetOptions = {};
     if (parsed && parsed.flags["skipCore"])
         opts.skipCore = true;
-    return internalBuildTargetAsync(opts);
+    const clean = parsed && parsed.flags["clean"];
+    return (clean ? cleanAsync() : Promise.resolve())
+        .then(() => internalBuildTargetAsync(opts));
 }
 
 export function internalBuildTargetAsync(options: BuildTargetOptions = {}): Promise<void> {
@@ -5509,6 +5511,9 @@ PXT_ASMDEBUG     - embed additional information in generated binary.asm file
             skipCore: {
                 description: "skip native build of core packages",
                 aliases: ["skip-core", "skipcore", "sc"]
+            },
+            clean: {
+                description: "clean build before building"
             }
         }
     }, buildTargetAsync);
