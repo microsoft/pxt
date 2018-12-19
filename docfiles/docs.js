@@ -63,8 +63,8 @@ function scrollActiveHeaderIntoView() {
 }
 
 function setupSidebar() {
+    // do not use pxt.appTarget in this function
     $('#togglesidebar').on('keydown', handleEnterKey);
-
     $('.ui.sidebar')
         .sidebar({
             dimPage: false,
@@ -127,6 +127,7 @@ function setupSidebar() {
 }
 
 function setupSemantic() {
+    // do not use pxt.appTarget in this function
     // don't show related videos
     $.fn.embed.settings.sources.youtube.url = '//www.youtube.com/embed/{id}?rel=0'
 
@@ -234,8 +235,6 @@ function setupBlocklyAsync() {
 function renderSnippets() {
     var path = window.location.href.split('/').pop().split(/[?#]/)[0];
     ksRunnerReady(function () {
-        setupSidebar();
-        setupSemantic();
         setupBlocklyAsync()
             .then(function () {
                 return pxt.runner.renderAsync({
@@ -259,5 +258,7 @@ function renderSnippets() {
 }
 
 $(document).ready(function () {
+    setupSidebar();
+    setupSemantic();
     renderSnippets();
 });
