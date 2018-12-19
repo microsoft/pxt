@@ -265,16 +265,8 @@ namespace pxt.blocks {
 
                     const value = document.createElement("value");
                     value.setAttribute("name", "HANDLER_DRAG_PARAM_" + arg.name);
-                    let blockType = "variables_get_reporter";
 
-                    if (useReporter) {
-                        let reporterType = "custom";
-                        if (arg.type === "boolean" || arg.type === "number" || arg.type === "string") {
-                            reporterType = arg.type;
-                        }
-                        blockType = `argument_reporter_${reporterType}`;
-                    }
-
+                    const blockType = useReporter ? pxt.blocks.reporterTypeForArgType(arg.type) : "variables_get_reporter";
                     const shadow = document.createElement("shadow");
                     shadow.setAttribute("type", blockType);
 

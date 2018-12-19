@@ -898,23 +898,13 @@ ${output}</xml>`;
         }
 
         function mkDraggableReporterValue(valueName: string, varName: string, varType: string) {
-            const reporterType = reporterTypeForArgType(varType);
+            const reporterType = pxt.blocks.reporterTypeForArgType(varType);
             const reporterShadowBlock = getDraggableReporterBlock(varName, varType, true);
             return mkValue(valueName, reporterShadowBlock, reporterType);
         }
 
-        function reporterTypeForArgType(varType: string) {
-            let reporterType = "argument_reporter_custom";
-
-            if (varType === "boolean" || varType === "number" || varType === "string") {
-                reporterType = `argument_reporter_${varType}`;
-            }
-
-            return reporterType;
-        }
-
         function getDraggableReporterBlock(varName: string, varType: string, shadow: boolean) {
-            const reporterType = reporterTypeForArgType(varType);
+            const reporterType = pxt.blocks.reporterTypeForArgType(varType);
             const reporterShadowBlock = getFieldBlock(reporterType, "VALUE", varName, shadow);
 
             if (reporterType === "argument_reporter_custom") {
@@ -1650,6 +1640,13 @@ ${output}</xml>`;
                             let arrow = e as ArrowFunction;
                             const sym = blocksInfo.blocksById[attributes.blockId];
                             const paramDesc = sym.parameters[comp.thisParameter ? i - 1 : i];
+                            const addDraggableInput = (arg: PropertyDesc, varName: string) => {
+                                if (attributes.draggableParameters === "reporter") {
+                                    addInput(mkDraggableReporterValue("HANDLER_DRAG_PARAM_" + arg.name, varName, arg.type));
+                                } else {
+                                    addInput(getDraggableVariableBlock("HANDLER_DRAG_PARAM_" + arg.name, varName));
+                                }
+                            };
                             if (arrow.parameters.length) {
                                 if (attributes.optionalVariableArgs) {
                                     r.mutation = {
@@ -1663,11 +1660,7 @@ ${output}</xml>`;
                                     arrow.parameters.forEach((parameter, i) => {
                                         const arg = paramDesc.handlerParameters[i];
                                         if (attributes.draggableParameters) {
-                                            if (attributes.draggableParameters === "reporter") {
-                                                addInput(mkDraggableReporterValue("HANDLER_DRAG_PARAM_" + arg.name, (parameter.name as ts.Identifier).text, arg.type));
-                                            } else {
-                                                addInput(getDraggableVariableBlock("HANDLER_DRAG_PARAM_" + arg.name, (parameter.name as ts.Identifier).text));
-                                            }
+                                            addDraggableInput(arg, (parameter.name as ts.Identifier).text);
                                         }
                                         else {
                                             addField(getField("HANDLER_" + arg.name, (parameter.name as ts.Identifier).text));
@@ -1680,14 +1673,13 @@ ${output}</xml>`;
                                 if (arrow.parameters.length < paramDesc.handlerParameters.length) {
                                     for (let i = arrow.parameters.length; i < paramDesc.handlerParameters.length; i++) {
                                         const arg = paramDesc.handlerParameters[i];
-                                        if (attributes.draggableParameters === "reporter") {
-                                            addInput(mkDraggableReporterValue("HANDLER_DRAG_PARAM_" + arg.name, arg.name, arg.type));
-                                        } else {
-                                            addInput(getDraggableVariableBlock("HANDLER_DRAG_PARAM_" + arg.name, arg.name));
-                                        }
+                                        addDraggableInput(arg, arg.name);
                                     }
                                 }
                                 if (attributes.draggableParameters === "reporter") {
+                                    // Push the parameter descriptions onto the local scope stack
+                                    // so the getStatementBlock() below knows that these parameters
+                                    // should be decompiled as reporters instead of variables.
                                     env.localReporters.push(paramDesc.handlerParameters);
                                     mustPopLocalScope = true;
                                 }
