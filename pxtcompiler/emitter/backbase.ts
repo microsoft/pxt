@@ -98,12 +98,38 @@ namespace ts.pxtc {
                 return `.short ${pxt.REFCNT_FLASH}, ${vt}>>${target.vtableShift}`
         }
 
-        string_literal(lbl: string, s: string) {
+        string_literal(lbl: string, strLit: string) {
+            const SKIP_INCR = 16
+            let vt = "pxt::string_inline_ascii_vt"
+            let utfLit = target.utf8 ? U.toUTF8(strLit) : strLit
+            if (utfLit !== strLit) {
+                if (utfLit.length > SKIP_INCR * 3) {
+                    vt = "pxt::string_skiplist16_vt"
+                    let skipList: number[] = []
+                    let off = 0
+                    for (let i = 0; i + SKIP_INCR <= strLit.length; i += SKIP_INCR) {
+                        off += U.toUTF8(strLit.slice(i, i + SKIP_INCR)).length
+                        skipList.push(off)
+                    }
+                    return `
+.balign 4
+${lbl}meta: ${this.obj_header(vt)}
+        .short ${utfLit.length}, ${strLit.length}
+        .word ${lbl}data
+${lbl}data:
+        .short ${skipList.map(s => s.toString()).join(", ")}
+${lbl}: .string ${asmStringLiteral(utfLit)}
+`
+                } else {
+                    vt = "pxt::string_inline_utf8_vt"
+                }
+            }
+
             return `
 .balign 4
-${lbl}meta: ${this.obj_header("pxt::string_inline_ascii_vt")}
-        .short ${s.length}
-${lbl}: .string ${asmStringLiteral(s)}
+${lbl}meta: ${this.obj_header(vt)}
+        .short ${utfLit.length}
+${lbl}: .string ${asmStringLiteral(utfLit)}
 `
         }
 
