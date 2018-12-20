@@ -126,7 +126,7 @@ export class ProjectView
         this.state = {
             showFiles: false,
             home: shouldShowHomeScreen,
-            active: document.visibilityState == 'visible' || electron.isElectron() || pxt.winrt.isWinRT() || pxt.appTarget.appTheme.dontSuspendOnVisibility,
+            active: document.visibilityState == 'visible' || pxt.BrowserUtils.isElectron() || pxt.winrt.isWinRT() || pxt.appTarget.appTheme.dontSuspendOnVisibility,
             collapseEditorTools: simcfg.headless || (!isSandbox && pxt.BrowserUtils.isMobile()),
             highContrast: isHighContrast,
             simState: pxt.editor.SimState.Stopped,
@@ -155,7 +155,7 @@ export class ProjectView
     }
 
     updateVisibility() {
-        if (electron.isElectron() || pxt.winrt.isWinRT() || pxt.appTarget.appTheme.dontSuspendOnVisibility) {
+        if (pxt.BrowserUtils.isElectron() || pxt.winrt.isWinRT() || pxt.appTarget.appTheme.dontSuspendOnVisibility) {
             // Don't suspend when inside apps
             return;
         }
@@ -2538,7 +2538,7 @@ export class ProjectView
         const shouldCollapseEditorTools = this.state.collapseEditorTools && (!inTutorial || isHeadless);
         const logoWide = !!targetTheme.logoWide;
 
-        const isApp = cmds.isNativeHost() || pxt.winrt.isWinRT() || electron.isElectron();
+        const isApp = cmds.isNativeHost() || pxt.winrt.isWinRT() || pxt.BrowserUtils.isElectron();
 
         let rootClassList = [
             "ui",
@@ -2677,7 +2677,7 @@ function initLogin() {
 
 function initSerial() {
     const isHF2WinRTSerial = pxt.appTarget.serial && pxt.appTarget.serial.useHF2 && pxt.winrt.isWinRT();
-    const isValidLocalhostSerial = pxt.appTarget.serial && Cloud.isLocalHost() && !!Cloud.localToken;
+    const isValidLocalhostSerial = pxt.appTarget.serial && pxt.BrowserUtils.isLocalHost() && !!Cloud.localToken;
 
     if (!isHF2WinRTSerial && !isValidLocalhostSerial)
         return;
@@ -3104,8 +3104,8 @@ document.addEventListener("DOMContentLoaded", () => {
     else if ((pxt.appTarget.appTheme.allowParentController || isController) && pxt.BrowserUtils.isIFrame()) workspace.setupWorkspace("iframe");
     else if (isSandbox) workspace.setupWorkspace("mem");
     else if (pxt.winrt.isWinRT()) workspace.setupWorkspace("uwp");
-    else if (electron.isIpcRenderer() && pxt.BrowserUtils.isSafari()) workspace.setupWorkspace("idb");
-    else if (Cloud.isLocalHost() || electron.isPxtElectron()) workspace.setupWorkspace("fs");
+    else if (pxt.BrowserUtils.isIpcRenderer() && pxt.BrowserUtils.isSafari()) workspace.setupWorkspace("idb");
+    else if (pxt.BrowserUtils.isLocalHost() || pxt.BrowserUtils.isPxtElectron()) workspace.setupWorkspace("fs");
     Promise.resolve()
         .then(() => {
             const mlang = /(live)?(force)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
@@ -3258,7 +3258,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 theEditor.handleMessage(m);
             return;
         }
-        if (m.type === "sidedocready" && Cloud.isLocalHost() && Cloud.localToken) {
+        if (m.type === "sidedocready" && pxt.BrowserUtils.isLocalHost() && Cloud.localToken) {
             container.SideDocs.notify({
                 type: "localtoken",
                 localToken: Cloud.localToken
