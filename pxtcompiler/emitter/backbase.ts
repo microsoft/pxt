@@ -101,7 +101,7 @@ namespace ts.pxtc {
         string_literal(lbl: string, s: string) {
             return `
 .balign 4
-${lbl}meta: ${this.obj_header("pxt::string_vt")}
+${lbl}meta: ${this.obj_header("pxt::string_inline_ascii_vt")}
         .short ${s.length}
 ${lbl}: .string ${asmStringLiteral(s)}
 `

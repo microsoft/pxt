@@ -96,8 +96,7 @@ The following types are defined:
 * skip-list strings
 * long strings
 
-Let _header_ be 16 bit reference count followed by 16 bit vtable pointer (or 
-rather object tag). This header is common for all object types, not only strings.
+Let _header_ be 32 bit vtable pointer. This header is common for all object types, not only strings.
 
 Inline strings layout is: header, followed by 16 bit length, data (which is inline, hence the name).
 Inline ASCII strings are to be interpreted as Latin1, whereas UTF8 ones as UTF8.
