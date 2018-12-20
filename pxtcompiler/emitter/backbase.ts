@@ -103,7 +103,7 @@ namespace ts.pxtc {
             let vt = "pxt::string_inline_ascii_vt"
             let utfLit = target.utf8 ? U.toUTF8(strLit) : strLit
             if (utfLit !== strLit) {
-                if (utfLit.length > SKIP_INCR * 3) {
+                if (utfLit.length > SKIP_INCR) {
                     vt = "pxt::string_skiplist16_vt"
                     let skipList: number[] = []
                     let off = 0
