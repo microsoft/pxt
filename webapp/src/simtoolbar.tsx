@@ -32,7 +32,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
 
     startStopSimulator() {
         pxt.tickEvent('simulator.startstop', undefined, { interactiveConsent: true });
-        this.props.parent.startStopSimulator();
+        this.props.parent.startStopSimulator(true);
     }
 
     restartSimulator() {
@@ -74,7 +74,9 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const sandbox = pxt.shell.isSandboxMode();
         const make = !sandbox && parentState.showParts && targetTheme.instructions;
 
-        const isRunning = parentState.running;
+        const simState = parentState.simState;
+        const isRunning = simState == pxt.editor.SimState.Running;
+        const isStarting = simState == pxt.editor.SimState.Starting;
         const isFullscreen = parentState.fullscreen;
         const isMuted = parentState.mute;
         const inTutorial = !!parentState.tutorialOptions && !!parentState.tutorialOptions.tutorial;
@@ -85,24 +87,24 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const tracing = this.props.parent.state.tracing;
         const traceTooltip = tracing ? lf("Disable Slow-Mo") : lf("Slow-Mo")
         const debugging = parentState.debugging;
-        const fullscreen = run && !inTutorial && !simOpts.hideFullscreen
+        const fullscreen = run && !inTutorial && !simOpts.hideFullscreen && !sandbox;
         const audio = run && !inTutorial && targetTheme.hasAudio;
         const isHeadless = simOpts.headless;
         const collapse = !!targetTheme.pairingButton;
         if (isHeadless) return <div />;
 
-        const runTooltip = isRunning ? lf("Stop the simulator") : lf("Start the simulator");
+        const runTooltip = [lf("Stop the simulator"), lf("Starting the simulator"), lf("Start the simulator")][simState];
         const makeTooltip = lf("Open assembly instructions");
         const restartTooltip = lf("Restart the simulator");
         const fullscreenTooltip = isFullscreen ? lf("Exit fullscreen mode") : lf("Launch in fullscreen");
         const muteTooltip = isMuted ? lf("Unmute audio") : lf("Mute audio");
         const collapseTooltip = lf("Hide the simulator");
 
-        return <aside className="ui item grid centered portrait hide simtoolbar" role="complementary" aria-label={lf("Simulator toolbar")}>
+        return <aside className={"ui item grid centered simtoolbar" + (sandbox ? "" : " portrait hide")} role="complementary" aria-label={lf("Simulator toolbar")}>
             <div className={`ui icon tiny buttons ${isFullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>
                 {make ? <sui.Button disabled={debugging} icon='configure' className="secondary" title={makeTooltip} onClick={this.openInstructions} /> : undefined}
-                {run ? <sui.Button disabled={debugging} key='runbtn' className={`play-button ${isRunning ? "stop" : "play"}`} icon={isRunning ? "stop" : "play green"} title={runTooltip} onClick={this.startStopSimulator} /> : undefined}
-                {restart ? <sui.Button disabled={debugging} key='restartbtn' className={`restart-button`} icon="refresh" title={restartTooltip} onClick={this.restartSimulator} /> : undefined}
+                {run ? <sui.Button disabled={debugging || isStarting} key='runbtn' className={`play-button ${isRunning ? "stop" : "play"}`} icon={isRunning ? "stop" : "play green"} title={runTooltip} onClick={this.startStopSimulator} /> : undefined}
+                {restart ? <sui.Button disabled={debugging || isStarting} key='restartbtn' className={`restart-button`} icon="refresh" title={restartTooltip} onClick={this.restartSimulator} /> : undefined}
                 {trace ? <sui.Button key='trace' className={`trace-button ${tracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onClick={this.toggleTrace} /> : undefined}
             </div>
             <div className={`ui icon tiny buttons ${isFullscreen ? 'massive' : ''}`} style={{ padding: "0" }}>

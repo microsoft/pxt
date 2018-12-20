@@ -95,6 +95,7 @@ namespace pxsim.visuals {
 
     export interface GenericBoardProps {
         visualDef: BoardImageDefinition;
+        boardDef: BoardDefinition;
         wireframe?: boolean;
     }
 
@@ -286,8 +287,28 @@ namespace pxsim.visuals {
             });
         }
 
-        public getCoord(pinNm: string): Coord {
+        private findPin(pinNm: string): GridPin {
             let pin = this.pinNmToPin[pinNm];
+            if (!pin && this.props.boardDef.gpioPinMap) {
+                pinNm = this.props.boardDef.gpioPinMap[pinNm];
+                if (pinNm)
+                    pin = this.pinNmToPin[pinNm];
+            }
+            return pin;
+        }
+
+        private findPinLabel(pinNm: string): GridLabel {
+            let pin = this.pinNmToLbl[pinNm];
+            if (!pin && this.props.boardDef.gpioPinMap) {
+                pinNm = this.props.boardDef.gpioPinMap[pinNm];
+                if (pinNm)
+                    pin = this.pinNmToLbl[pinNm];
+            }
+            return pin;
+        }
+
+        public getCoord(pinNm: string): Coord {
+            let pin = this.findPin(pinNm);
             if (!pin)
                 return null;
             return [pin.cx, pin.cy];
@@ -309,8 +330,8 @@ namespace pxsim.visuals {
         }
 
         public highlightPin(pinNm: string) {
-            let lbl = this.pinNmToLbl[pinNm];
-            let pin = this.pinNmToPin[pinNm];
+            let lbl = this.findPinLabel(pinNm);
+            let pin = this.findPin(pinNm);
             if (lbl && pin) {
                 svg.addClass(lbl.el, "highlight");
                 svg.addClass(lbl.hoverEl, "highlight");

@@ -30,7 +30,7 @@ import * as gitfs from './gitfs';
 const rimraf: (f: string, opts: any, cb: (err: any, res: any) => void) => void = require('rimraf');
 
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] !== "no";
-let forceLocalBuild = process.env["PXT_FORCE_LOCAL"] === "yes"
+let forceLocalBuild = !!process.env["PXT_FORCE_LOCAL"]
 
 function parseBuildInfo(parsed?: commandParser.ParsedCommand) {
     const cloud = parsed && parsed.flags["cloudbuild"];
@@ -1436,7 +1436,9 @@ export function buildTargetAsync(parsed?: commandParser.ParsedCommand): Promise<
     const opts: BuildTargetOptions = {};
     if (parsed && parsed.flags["skipCore"])
         opts.skipCore = true;
-    return internalBuildTargetAsync(opts);
+    const clean = parsed && parsed.flags["clean"];
+    return (clean ? cleanAsync() : Promise.resolve())
+        .then(() => internalBuildTargetAsync(opts));
 }
 
 export function internalBuildTargetAsync(options: BuildTargetOptions = {}): Promise<void> {
@@ -2114,7 +2116,7 @@ function buildAndWatchAsync(f: () => Promise<string[]>): Promise<void> {
     return f()
         .then(dirs => {
             if (globalConfig.noAutoBuild) return
-            console.log('watching ' + dirs.join(', ') + '...');
+            pxt.debug('watching ' + dirs.join(', ') + '...');
             let loop = () => {
                 Promise.delay(1000)
                     .then(() => maxMTimeAsync(dirs))
@@ -3624,10 +3626,46 @@ function dumplogAsync(c: commandParser.ParsedCommand) {
         .then(() => gdb.dumplogAsync())
 }
 
-function buildDalDTSAsync() {
+function dumpheapAsync(c: commandParser.ParsedCommand) {
     ensurePkgDir()
     return mainPkg.loadAsync()
-        .then(() => build.buildDalConst(build.thisBuild, mainPkg, true, true))
+        .then(() => gdb.dumpheapAsync())
+}
+
+function buildDalDTSAsync(c: commandParser.ParsedCommand) {
+    forceLocalBuild = true;
+    forceCloudBuild = false;
+    const clean = !!c.flags["clean"];
+
+    function prepAsync() {
+        let p = Promise.resolve();
+        if (clean)
+            return p.then(() => cleanAsync())
+                .then(() => buildCoreAsync({ mode: BuildOption.JustBuild }))
+                .then(() => { });
+        return Promise.resolve();
+    }
+
+    if (fs.existsSync("pxtarget.json")) {
+        pxt.log(`generating dal.d.ts for packages`)
+        return rebundleAsync()
+            .then(() => forEachBundledPkgAsync((f, dir) => {
+                return f.loadAsync()
+                    .then(() => {
+                        if (f.config.dalDTS && f.config.dalDTS.corePackage) {
+                            console.log(`  ${dir}`)
+                            return prepAsync()
+                                .then(() => build.buildDalConst(build.thisBuild, f, true, true));
+                        }
+                        return Promise.resolve();
+                    })
+            }));
+    } else {
+        ensurePkgDir()
+        return prepAsync()
+            .then(() => mainPkg.loadAsync())
+            .then(() => build.buildDalConst(build.thisBuild, mainPkg, true, true))
+    }
 }
 
 function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult> {
@@ -3861,7 +3899,6 @@ function uploadBundledTranslationsAsync(crowdinDir: string, branch: string, prj:
 }
 
 export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedCommand) {
-    const errors: string[] = [];
     return crowdinCredentialsAsync()
         .then(cred => {
             if (!cred) return Promise.resolve();
@@ -3882,13 +3919,10 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
             const nextFileAsync = (): Promise<void> => {
                 const f = todo.pop();
                 if (!f) {
-                    if (errors.length) {
-                        pxt.log(`${errors.length} errors in translated blocks`);
-                        errors.forEach(error => `error: ${pxt.log(error)}`);
-                    }
                     return Promise.resolve();
                 }
 
+                const errors: pxt.Map<number> = {};
                 const fn = path.basename(f);
                 const crowdf = path.join(crowdinDir, fn);
                 const locdir = path.dirname(f);
@@ -3910,7 +3944,11 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
                                     // block definitions
                                     Object.keys(dataLang).forEach(id => {
                                         const tr = dataLang[id];
-                                        pxt.blocks.normalizeBlock(tr, err => errors.push(`${fn} ${lang} ${id}: ${err}`));
+                                        pxt.blocks.normalizeBlock(tr, err => {
+                                            const errid = `${fn}.${lang}`;
+                                            errors[`${fn}.${lang}`] = 1
+                                            pxt.log(`error ${errid}: ${err}`)
+                                        });
                                     });
                                 }
 
@@ -3934,6 +3972,14 @@ export function downloadTargetTranslationsAsync(parsed: commandParser.ParsedComm
                             pxt.log(`writing ${pxtJsonf}`);
                             nodeutil.writeFileSync(pxtJsonf, JSON.stringify(local, null, 4), { encoding: "utf8" });
                         }
+
+                        const errorIds = Object.keys(errors);
+                        pxt.log(`${errorIds.length} errors`);
+                        if (errorIds.length) {
+                            errorIds.forEach(blockid => pxt.log(`error in ${blockid}`));
+                            pxt.reportError("loc.errors", "invalid translation", errors);
+                        }
+
                         return nextFileAsync()
                     });
             }
@@ -3987,7 +4033,7 @@ function internalStaticPkgAsync(builtPackaged: string, label: string, minify: bo
     }).then(() => renderDocs(builtPackaged, localDir))
 }
 
-export function cleanAsync(parsed: commandParser.ParsedCommand) {
+export function cleanAsync(parsed?: commandParser.ParsedCommand) {
     pxt.log('cleaning built folders')
     return rimrafAsync("built", {})
         .then(() => rimrafAsync("temp", {}))
@@ -4296,12 +4342,13 @@ export function buildJResAsync(parsed: commandParser.ParsedCommand) {
 export function buildAsync(parsed: commandParser.ParsedCommand) {
     parseBuildInfo(parsed);
     let mode = BuildOption.JustBuild;
-    if (parsed.flags["debug"]) {
+    if (parsed.flags["debug"])
         mode = BuildOption.DebugSim;
-    }
+    const clean = parsed.flags["clean"];
     const warnDiv = !!parsed.flags["warndiv"];
     const ignoreTests = !!parsed.flags["ignoreTests"];
-    return buildCoreAsync({ mode, warnDiv, ignoreTests })
+    return (clean ? cleanAsync() : Promise.resolve())
+        .then(() => buildCoreAsync({ mode, warnDiv, ignoreTests }))
         .then((compileOpts) => { });
 }
 
@@ -4853,74 +4900,6 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
     })
 }
 
-function publishGistCoreAsync(forceNewGist: boolean = false): Promise<void> {
-    return passwordGetAsync(GITHUB_KEY)
-        .then(token => {
-            if (!token) {
-                fatal("GitHub token not found, please use 'pxt login' to login with your GitHub account to push gists.");
-                return Promise.resolve();
-            }
-            return mainPkg.loadAsync()
-                .then(() => {
-                    const pxtConfig = U.clone(mainPkg.config);
-                    if (pxtConfig.gistId && !token && !forceNewGist) {
-                        console.warn("You are trying to update an existing project but no GitHub token was provided, publishing a new anonymous project instead.")
-                        forceNewGist = true;
-                    }
-                    const gistId = pxtConfig.gistId;
-                    const files: string[] = mainPkg.getFiles()
-                    const filesMap: Map<{ content: string; }> = {};
-
-                    files.forEach((fn) => {
-                        let fileContent = fs.readFileSync(fn, "utf8");
-                        if (fileContent) {
-                            filesMap[fn] = {
-                                "content": fileContent
-                            }
-                        } else {
-                            // Cannot publish empty files, go through and remove empty file references from pxt.json
-                            if (pxtConfig.files && pxtConfig.files.indexOf(fn) > -1) {
-                                pxtConfig.files.splice(pxtConfig.files.indexOf(fn), 1);
-                            } else if (pxtConfig.testFiles && pxtConfig.testFiles.indexOf(fn) > -1) {
-                                pxtConfig.testFiles.splice(pxtConfig.testFiles.indexOf(fn), 1);
-                            }
-                        }
-                    })
-                    // Strip gist fields from config
-                    delete pxtConfig.gistId;
-                    // Add pxt.json
-                    filesMap['pxt.json'] = {
-                        "content": JSON.stringify(pxtConfig, null, 4)
-                    }
-                    pxt.log("Uploading....")
-                    return pxt.github.publishGistAsync(token, forceNewGist, filesMap, pxtConfig.name, gistId)
-                })
-                .then((published_id) => {
-                    pxt.log(`Success, view your gist at`);
-                    pxt.log(``)
-                    pxt.log(`    https://gist.github.com/${published_id}`);
-                    pxt.log(``)
-                    pxt.log(`To share your project, go to ${pxt.appTarget.appTheme.embedUrl}#pub:gh/gists/${published_id}`)
-                    if (!token) pxt.log(`Hint: Use "pxt login" with a GitHub token to publish gists under your GitHub account`);
-
-                    // Save gist id to pxt.json
-                    if (token) mainPkg.config.gistId = published_id;
-                    mainPkg.saveConfig();
-                })
-                .catch((e) => {
-                    if (e == '404') {
-                        console.error("Unable to access the existing project. --new to publish a new gist.")
-                    } else {
-                        console.error(e);
-                    }
-                });
-        });
-}
-
-export function publishGistAsync(parsed: commandParser.ParsedCommand) {
-    return publishGistCoreAsync(!!parsed.flags["new"]);
-}
-
 export interface SnippetInfo {
     type: string;
     code: string;
@@ -5233,9 +5212,9 @@ function blockTestsAsync(parsed?: commandParser.ParsedCommand) {
                         .then((configText: string) => {
                             packageName = (JSON.parse(configText) as pxt.PackageConfig).name;
                             return readDirAsync(dirPath)
-                            .then(files => Promise.map(files.filter(f => U.endsWith(f, ".blocks") && f != "main.blocks"), fn =>
-                                readFileAsync(path.join(dirPath, fn), "utf8")
-                                .then((contents: string) => testFiles.push({ testName: fn, contents}))))
+                                .then(files => Promise.map(files.filter(f => U.endsWith(f, ".blocks") && f != "main.blocks"), fn =>
+                                    readFileAsync(path.join(dirPath, fn), "utf8")
+                                        .then((contents: string) => testFiles.push({ testName: fn, contents }))))
                         })
                         .then(() => { return ({ packageName, testFiles } as BlockTestCase) })
                 }
@@ -5287,6 +5266,21 @@ function initCommands() {
     // Top level commands
     simpleCmd("help", "display this message or info about a command", pc => {
         p.printHelp(pc.args, console.log)
+        console.log(`
+The following environment variables modify the behavior of the CLI when set to
+non-empty string:
+
+PXT_DEBUG        - display extensive logging info
+
+These apply to the C++ runtime builds:
+
+PXT_FORCE_LOCAL  - compile C++ on the local machine, not the cloud service
+PXT_NODOCKER     - don't use Docker image, and instead use host's
+                   arm-none-eabi-gcc (doesn't apply to Linux targets)
+PXT_RUNTIME_DEV  - always rebuild the C++ runtime, allowing for modification
+                   in the lower level runtime if any
+PXT_ASMDEBUG     - embed additional information in generated binary.asm file
+`)
         return Promise.resolve();
     }, "[all|command]");
 
@@ -5357,7 +5351,8 @@ function initCommands() {
             },
             debug: { description: "Emit debug information with build" },
             warndiv: { description: "Warns about division operators" },
-            ignoreTests: { description: "Ignores tests in compilation", aliases: ["ignore-tests", "ignoretests", "it"] }
+            ignoreTests: { description: "Ignores tests in compilation", aliases: ["ignore-tests", "ignoretests", "it"] },
+            clean: { description: "Clean before build" }
         }
     }, buildAsync);
 
@@ -5485,14 +5480,6 @@ function initCommands() {
     }, buildJResSpritesAsync);
 
     p.defineCommand({
-        name: "gist",
-        help: "publish current package to a gist",
-        flags: {
-            new: { description: "force the creation of a new gist" },
-        }
-    }, publishGistAsync)
-
-    p.defineCommand({
         name: "init",
         help: "start new package (library) in current directory",
         flags: {
@@ -5524,6 +5511,9 @@ function initCommands() {
             skipCore: {
                 description: "skip native build of core packages",
                 aliases: ["skip-core", "skipcore", "sc"]
+            },
+            clean: {
+                description: "clean build before building"
             }
         }
     }, buildTargetAsync);
@@ -5649,9 +5639,21 @@ function initCommands() {
     }, dumplogAsync);
 
     p.defineCommand({
+        name: "heap",
+        help: "attempt to dump GC and codal heap log using openocd",
+        argString: "",
+        aliases: ["dumpheap"],
+        advanced: true,
+    }, dumpheapAsync);
+
+    p.defineCommand({
         name: "builddaldts",
-        help: "build dal.d.ts in current directory (might need to move)",
-        advanced: true
+        help: "build dal.d.ts in current directory or target (might be generated in a separate folder)",
+        advanced: true,
+        aliases: ["daldts"],
+        flags: {
+            clean: { description: "clean and build" }
+        }
     }, buildDalDTSAsync);
 
     p.defineCommand({

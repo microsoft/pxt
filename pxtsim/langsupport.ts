@@ -319,10 +319,6 @@ namespace pxsim {
             dumpLivePointers();
         }
 
-        export function allocate() {
-            U.userError("allocate() called in simulator")
-        }
-
         export function templateHash() {
             return 0;
         }

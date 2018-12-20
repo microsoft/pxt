@@ -348,10 +348,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private markIncomplete = false;
     isIncomplete() {
-        const incomplete = this.editor ?
-            ((this.editor as any).currentGesture_ != null && (this.editor as any).currentGesture_.isDraggingBlock_)
-            || (Blockly as any).WidgetDiv.isVisible()
-            || (Blockly as any).DropDownDiv.isVisible() : false;
+        const incomplete = this.editor && ((this.editor as any).currentGesture_ && (this.editor as any).currentGesture_.isDraggingBlock_);
         if (incomplete) this.markIncomplete = true;
         return incomplete;
     }
@@ -382,7 +379,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.parent.setState({ hideEditorFloats: false });
                 workspace.fireEvent({ type: 'create', editor: 'blocks', blockId } as pxt.editor.events.CreateEvent);
             }
-            if (ev.type == 'ui') {
+            else if (ev.type == 'var_create') {
+                // a new variable was created,
+                // clear the toolbox caches as some blocks may need to be recomputed
+                this.clearFlyoutCaches();
+            }
+            else if (ev.type == 'ui') {
                 if (ev.element == 'category') {
                     let toolboxVisible = !!ev.newValue;
                     if (toolboxVisible) {
@@ -964,8 +966,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     protected clearCaches() {
         super.clearCaches();
-        this.flyoutBlockXmlCache = {};
+        this.clearFlyoutCaches();
         snippets.clearBuiltinBlockCache();
+    }
+
+    clearFlyoutCaches() {
+        this.flyoutBlockXmlCache = {};
     }
 
     shouldShowSearch() {
@@ -1159,7 +1165,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     protected showFlyoutBlocks(ns: string, color: string, blocks: toolbox.BlockDefinition[]) {
         const filters = this.parent.state.editorState ? this.parent.state.editorState.filters : undefined;
-        const categoryState = filters ? (filters.namespaces && filters.namespaces[ns] != undefined ? filters.namespaces[ns] : filters.defaultState) : undefined;
         blocks.sort((f1, f2) => {
             // Sort the blocks
             return (f2.attributes.weight != undefined ? f2.attributes.weight : 50)
@@ -1326,6 +1331,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     else {
                         varName = Util.htmlEscape(rawName);
                     }
+                    // since we are creating variable, generate a new name that does not
+                    // clash with existing variable names
+                    const variables = this.editor.getVariablesOfType("");
+                    let varNameUnique = varName;
+                    let index = 2;
+                    while (variables.some(v => v.name == varNameUnique)) {
+                        varNameUnique = varName + index++;
+                    }
+                    varName = varNameUnique;
+
                     const setblock = Blockly.Xml.textToDom(`
 <block type="variables_set" gap="${Util.htmlEscape((fn.attributes.blockGap || 8) + "")}">
 <field name="VAR" variabletype="">${varName}</field>

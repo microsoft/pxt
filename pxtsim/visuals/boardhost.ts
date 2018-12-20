@@ -1,6 +1,7 @@
 namespace pxsim.visuals {
     export interface BoardViewOptions {
         visual: string | BoardImageDefinition,
+        boardDef: BoardDefinition,
         wireframe?: boolean,
         highContrast?: boolean,
         light?: boolean
@@ -25,6 +26,7 @@ namespace pxsim.visuals {
         const boardVis = opts.visual as BoardImageDefinition;
         return new visuals.GenericBoardSvg({
             visualDef: boardVis,
+            boardDef: opts.boardDef,
             wireframe: opts.wireframe,
         });
     }

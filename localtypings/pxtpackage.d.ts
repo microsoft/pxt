@@ -1,4 +1,7 @@
 declare namespace pxt {
+
+    type CodeCardType = "file" | "example" | "codeExample" | "tutorial" | "side" | "template" | "package" | "hw";
+
     interface Map<T> {
         [index: string]: T;
     }
@@ -55,7 +58,8 @@ declare namespace pxt {
         gistId?: string;
         extension?: PackageExtension; // describe the associated extension if any
         dalDTS?: {
-            includeDirs: string[];
+            corePackage?: string;
+            includeDirs?: string[];
             excludePrefix?: string[];
         };
         features?: string[];
@@ -118,7 +122,7 @@ declare namespace pxt {
         buyUrl?: string;
         feedbackUrl?: string;
         responsive?: boolean;
-        cardType?: "file" | "example" | "codeExample" | "tutorial" | "side" | "template" | "package" | "hw";
+        cardType?: CodeCardType;
 
         header?: string;
         any?: number;
