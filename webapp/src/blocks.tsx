@@ -10,6 +10,7 @@ import * as debug from "./debugger";
 import * as toolbox from "./toolbox";
 import * as snippets from "./blocksSnippets";
 import * as workspace from "./workspace";
+import { CreateFunctionDialog, CreateFunctionDialogState } from "./createFunction";
 
 import Util = pxt.Util;
 
@@ -22,6 +23,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     loadingXmlPromise: Promise<any>;
     compilationResult: pxt.blocks.BlockCompilationResult;
     isFirstBlocklyLoad = true;
+    functionsDialog: CreateFunctionDialog = null;
 
     showCategories: boolean = true;
     filters: pxt.editor.ProjectFilters;
@@ -535,7 +537,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     showFunctionsFlyout() {
-        this.showFlyoutInternal_(Blockly.Procedures.flyoutCategory(this.editor));
+        if (pxt.appTarget.runtime &&
+            pxt.appTarget.runtime.functionsOptions &&
+            pxt.appTarget.runtime.functionsOptions.useNewFunctions) {
+            this.showFlyoutInternal_(Blockly.Functions.flyoutCategory(this.editor));
+        } else {
+            this.showFlyoutInternal_(Blockly.Procedures.flyoutCategory(this.editor));
+        }
     }
 
     getViewState() {

@@ -1932,13 +1932,24 @@ namespace pxt.blocks {
     function initFunctions() {
         const msg: any = Blockly.Msg;
 
+        // New functions implementation messages
+        msg.FUNCTION_CREATE_NEW = lf("Make a Function...");
+        msg.FUNCTION_WARNING_DUPLICATE_ARG = lf("Functions cannot use the same argument name more than once.");
+        msg.FUNCTION_WARNING_ARG_NAME_IS_FUNCTION_NAME = lf("Argument names must not be the same as the function name.");
+        msg.FUNCTION_WARNING_EMPTY_NAME = lf("Function and argument names cannot be empty.");
+        msg.FUNCTIONS_DEFAULT_FUNCTION_NAME = lf("do something");
+        msg.FUNCTIONS_DEFAULT_BOOLEAN_ARG_NAME = lf("bool");
+        msg.FUNCTIONS_DEFAULT_STRING_ARG_NAME = lf("text");
+        msg.FUNCTIONS_DEFAULT_NUMBER_ARG_NAME = lf("num");
+        msg.FUNCTIONS_DEFAULT_CUSTOM_ARG_NAME = lf("arg");
+        msg.PROCEDURES_HUE = pxt.toolbox.getNamespaceColor("functions");
+
         // builtin procedures_defnoreturn
         const proceduresDefId = "procedures_defnoreturn";
         const proceduresDef = pxt.blocks.getBlockDefinition(proceduresDefId);
 
         msg.PROCEDURES_DEFNORETURN_TITLE = proceduresDef.block["PROCEDURES_DEFNORETURN_TITLE"];
         msg.PROCEDURE_ALREADY_EXISTS = proceduresDef.block["PROCEDURE_ALREADY_EXISTS"];
-        msg.PROCEDURES_HUE = pxt.toolbox.getNamespaceColor("functions");
 
         Blockly.Blocks['procedures_defnoreturn'].init = function () {
             let nameField = new Blockly.FieldTextInput('',
@@ -2089,6 +2100,20 @@ namespace pxt.blocks {
         }
         installBuiltinHelpInfo(proceduresCallId);
 
+        // New functions implementation function_definition
+        const functionDefinitionId = "function_definition";
+        const functionDefinition = pxt.blocks.getBlockDefinition(functionDefinitionId);
+
+        msg.FUNCTIONS_EDIT_OPTION = functionDefinition.block["FUNCTIONS_EDIT_OPTION"];
+        installBuiltinHelpInfo(functionDefinitionId);
+
+        // New functions implementation function_call
+        const functionCallId = "function_call";
+        const functionCall = pxt.blocks.getBlockDefinition(functionCallId);
+
+        msg.FUNCTIONS_CALL_TITLE = functionCall.block["FUNCTIONS_CALL_TITLE"];
+        installBuiltinHelpInfo(functionCallId);
+
         Blockly.Procedures.flyoutCategory = function (workspace: Blockly.Workspace) {
             let xmlList: HTMLElement[] = [];
 
@@ -2203,6 +2228,22 @@ namespace pxt.blocks {
             populateProcedures(tuple[0], 'procedures_callnoreturn');
 
             return xmlList;
+        }
+
+        // Patch new functions flyout to add the heading
+        if (pxt.appTarget.runtime &&
+            pxt.appTarget.runtime.functionsOptions &&
+            pxt.appTarget.runtime.functionsOptions.useNewFunctions) {
+            const oldFlyout = Blockly.Functions.flyoutCategory;
+            Blockly.Functions.flyoutCategory = (workspace) => {
+                const elems = oldFlyout(workspace);
+                const headingLabel = createFlyoutHeadingLabel(lf("Functions"),
+                    pxt.toolbox.getNamespaceColor('functions'),
+                    pxt.toolbox.getNamespaceIcon('functions'),
+                    'blocklyFlyoutIconfunctions');
+                elems.unshift(headingLabel);
+                return elems;
+            };
         }
     }
 
