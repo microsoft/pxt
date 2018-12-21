@@ -1938,7 +1938,7 @@ namespace pxt.blocks {
 
         msg.PROCEDURES_DEFNORETURN_TITLE = proceduresDef.block["PROCEDURES_DEFNORETURN_TITLE"];
         msg.PROCEDURE_ALREADY_EXISTS = proceduresDef.block["PROCEDURE_ALREADY_EXISTS"];
-        msg.PROCEDURES_HUE = pxt.toolbox.getNamespaceColor("functions");
+        msg.PROCEDURES_HUE = pxt.toolbox.getNamespaceColor("variables");
 
         Blockly.Blocks['procedures_defnoreturn'].init = function () {
             let nameField = new Blockly.FieldTextInput('',
