@@ -5,8 +5,8 @@ namespace pxt.blocks {
 
     /**
      * Converts a DOM into workspace without triggering any Blockly event
-     * @param dom 
-     * @param workspace 
+     * @param dom
+     * @param workspace
      */
     export function domToWorkspaceNoEvents(dom: Element, workspace: Blockly.Workspace): string[] {
         pxt.tickEvent(`blocks.domtow`)
@@ -131,13 +131,17 @@ namespace pxt.blocks {
     }
 
     /**
-     * This callback is populated from the editor extension result. 
+     * This callback is populated from the editor extension result.
      * Allows a target to provide version specific blockly updates
      */
     export let extensionBlocklyPatch: (pkgTargetVersion: string, dom: Element) => void;
 
     export function importXml(pkgTargetVersion: string, xml: string, info: pxtc.BlocksInfo, skipReport = false): string {
         try {
+            // If it's the first project we're importing in the session, Blockly is not initialized
+            // and blocks haven't been injected yet
+            pxt.blocks.initializeAndInject(info);
+
             const parser = new DOMParser();
             const doc = parser.parseFromString(xml, "application/xml");
 
