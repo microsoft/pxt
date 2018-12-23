@@ -56,7 +56,7 @@
                           <shadow id="f][0TO-)l7j5#bznFxdF" type="text">
                             <field name="TEXT"></field>
                           </shadow>
-                          <block id="i,.Sg8HTIHw;FJ4e:vzj" type="string_get">
+                          <block id="i,.Sg8HTIHw;FJ4e:vzj" type="string_charat">
                             <value name="this">
                               <shadow id=")|_G6LOk9D{OFlPRNox}" type="text">
                                 <field name="TEXT">2</field>
