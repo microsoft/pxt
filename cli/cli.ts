@@ -1758,8 +1758,8 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
                     }))
             });
 
-            nodeutil.writeFileSync(path.join(docsRoot, "projects/SUMMARY.md"), tocmd, { encoding: "utf8" });
-            nodeutil.writeFileSync(path.join(docsRoot, "projects.md"),
+            nodeutil.writeFileSync(path.join(docsRoot, "docs/projects/SUMMARY.md"), tocmd, { encoding: "utf8" });
+            nodeutil.writeFileSync(path.join(docsRoot, "docs/projects.md"),
                 `# Projects
 
 \`\`\`codecard
