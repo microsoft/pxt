@@ -132,12 +132,32 @@ namespace helpers {
         return res
     }
 
+    export function arrayFind<T>(arr: T[], callbackfn: (value: T, index: number) => boolean): T {
+        let len = arr.length
+        for (let i = 0; i < len; ++i) {
+            let v = arr[i] // need to cache
+            if (callbackfn(v, i)) return v;
+        }
+        return undefined;
+    }
+
     export function arrayReduce<T, U>(arr: T[], callbackfn: (previousValue: U, currentValue: T, currentIndex: number) => U, initialValue: U): U {
         let len = arr.length
         for (let i = 0; i < len; ++i) {
             initialValue = callbackfn(initialValue, arr[i], i)
         }
         return initialValue
+    }
+
+    export function arrayConcat<T>(arr: T[], otherArr: T[]): T[]{
+        let out: T[] = [];
+        for (let value of arr) {
+            out.push(value);
+        }
+        for (let value of otherArr) {
+            out.push(value);
+        }
+        return out;
     }
 
     export function arraySlice<T>(arr: T[], start: number, end: number): T[] {
@@ -162,6 +182,24 @@ namespace helpers {
             res.push(arr[index]);
         }
         return res;
+    }
+
+    export function stringSlice(s: string, start: number, end?: number): string {
+        const len = s.length;
+
+        if (start < 0) {
+            start = Math.max(len + start, 0);
+        }
+
+        if (end == null) {
+            end = len;
+        }
+
+        if (end < 0) {
+            end = len + end;
+        }
+
+        return s.substr(start, end - start);
     }
 }
 

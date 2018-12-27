@@ -19,6 +19,7 @@ export interface ShareEditorState {
     pubCurrent?: boolean;
     visible?: boolean;
     sharingError?: boolean;
+    projectName?: string;
 }
 
 export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState> {
@@ -34,6 +35,7 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
         this.hide = this.hide.bind(this);
         this.toggleAdvancedMenu = this.toggleAdvancedMenu.bind(this);
         this.setAdvancedMode = this.setAdvancedMode.bind(this);
+        this.handleProjectNameChange = this.handleProjectNameChange.bind(this);
     }
 
     hide() {
@@ -42,6 +44,10 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
 
     show(header: pxt.workspace.Header) {
         this.setState({ visible: true, mode: ShareMode.Code, pubCurrent: header.pubCurrent, sharingError: false });
+    }
+
+    componentWillReceiveProps(newProps: ISettingsProps) {
+        this.handleProjectNameChange(newProps.parent.state.projectName);
     }
 
     shouldComponentUpdate(nextProps: ISettingsProps, nextState: ShareEditorState, nextContext: any): boolean {
@@ -62,8 +68,16 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
         this.setState({ mode: mode });
     }
 
+    handleProjectNameChange(name: string) {
+        this.setState({ projectName: name });
+        // save project name if valid change
+        if (name && this.props.parent.state.projectName != name) {
+            this.props.parent.updateHeaderNameAsync(name);
+        }
+    }
+
     renderCore() {
-        const { visible } = this.state;
+        const { visible, projectName } = this.state;
         const targetTheme = pxt.appTarget.appTheme;
         const header = this.props.parent.state.header;
         const advancedMenu = !!this.state.advancedMenu;
@@ -143,6 +157,8 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
             })
         }
 
+        const shouldNameProject = projectName == lf("Untitled");
+
         return (
             <sui.Modal isOpen={visible} className="sharedialog" size="small"
                 onClose={this.hide}
@@ -154,7 +170,16 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
                 <div className={`ui form`}>
                     {action ?
                         <div>
-                            <p>{lf("You need to publish your project to share it or embed it in other web pages.") + " " +
+                            {shouldNameProject ?
+                                <div>
+                                    <p>{lf("Give your project a name before sharing.")}</p>
+                                    <div>
+                                        <sui.Input ref="filenameinput" autoFocus={!pxt.BrowserUtils.isMobile()} id={"projectNameInput"}
+                                            ariaLabel={lf("Type a name for your project")} autoComplete={false}
+                                            value={projectName || ''} onChange={this.handleProjectNameChange} />
+                                    </div>
+                                </div> : undefined}
+                            <p className="ui message info">{lf("You need to publish your project to share it or embed it in other web pages.") + " " +
                                 lf("You acknowledge having consent to publish this project.")}</p>
                             {this.state.sharingError ?
                                 <p className="ui red inverted segment">{lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.")}</p>
@@ -163,7 +188,7 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
                         : undefined}
                     {url && ready ? <div>
                         <p>{lf("Your project is ready! Use the address below to share your projects.")}</p>
-                        <sui.Input id="projectUri" class="mini" readOnly={true} lines={1} value={url} copy={true} selectOnClick={true} aria-describedby="projectUriLabel" />
+                        <sui.Input id="projectUri" class="mini" readOnly={true} lines={1} value={url} copy={true} selectOnClick={true} aria-describedby="projectUriLabel" autoComplete={false} />
                         <label htmlFor="projectUri" id="projectUriLabel" className="accessible-hidden">{lf("This is the read-only internet address of your project.")}</label>
                         {showSocialIcons ? <div className="social-icons">
                             <SocialButton url={url} ariaLabel="Facebook" type='facebook' heading={lf("Share on Facebook")} />
@@ -181,7 +206,7 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
                             </sui.Menu> : undefined}
                         {advancedMenu ?
                             <sui.Field>
-                                <sui.Input id="embedCode" class="mini" readOnly={true} lines={4} value={embed} copy={ready} disabled={!ready} selectOnClick={true} />
+                                <sui.Input id="embedCode" class="mini" readOnly={true} lines={4} value={embed} copy={ready} disabled={!ready} selectOnClick={true} autoComplete={false} />
                                 <label htmlFor="embedCode" id="embedCodeLabel" className="accessible-hidden">{lf("This is the read-only code for the selected tab.")}</label>
                             </sui.Field> : null}
                     </div> : undefined}
@@ -232,7 +257,7 @@ class SocialButton extends data.Component<SocialButtonProps, {}> {
             case "facebook": url = fbUrl; break;
             case "twitter": url = twitterUrl; break;
         }
-        sui.popupWindow(url, heading, 600, 600);
+        pxt.BrowserUtils.popupWindow(url, heading, 600, 600);
         e.preventDefault();
     }
 

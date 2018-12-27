@@ -38,6 +38,8 @@ namespace ts.pxtc.decompiler {
         declaredFunctions: pxt.Map<boolean>;
         declaredEnums: pxt.Map<boolean>;
         attrs: (c: pxtc.CallInfo) => pxtc.CommentAttrs;
+        compInfo: (c: pxtc.CallInfo) => pxt.blocks.BlockCompileInfo;
+        localReporters: PropertyDesc[][]; // A stack of groups of locally scoped argument declarations, to determine whether an argument should decompile as a reporter or a variable
     }
 
     interface DecompileArgument {
@@ -47,6 +49,7 @@ namespace ts.pxtc.decompiler {
     }
 
     const numberType = "math_number";
+    const minmaxNumberType = "math_number_minmax";
     const integerNumberType = "math_integer";
     const wholeNumberType = "math_whole_number";
     const stringType = "text";
@@ -121,6 +124,7 @@ namespace ts.pxtc.decompiler {
         name: string;
         value: OutputNode;
         shadowType?: string;
+        shadowMutation?: pxt.Map<string>;
     }
 
     interface BlockNode extends BlocklyNode {
@@ -348,7 +352,9 @@ namespace ts.pxtc.decompiler {
             blocks: blocksInfo,
             declaredFunctions: {},
             declaredEnums: {},
-            attrs: attrs
+            attrs: attrs,
+            compInfo: compInfo,
+            localReporters: []
         };
         const fileText = file.getFullText();
         let output = ""
@@ -448,12 +454,25 @@ ${output}</xml>`;
         function attrs(callInfo: pxtc.CallInfo): pxtc.CommentAttrs {
             const blockInfo = blocksInfo.apis.byQName[callInfo.qName];
             if (blockInfo) {
-                return blockInfo.attributes;
+                const attributes = blockInfo.attributes;
+
+                // Check to make sure this block wasn't filtered out (bannedCategories)
+                if (!attributes.blockId || blocksInfo.blocksById[attributes.blockId] || attributes.blockId === pxtc.PAUSE_UNTIL_TYPE) {
+                    return blockInfo.attributes;
+                }
             }
             return {
                 paramDefl: {},
                 callingConvention: ir.CallingConvention.Plain
             };
+        }
+
+        function compInfo(callInfo: pxtc.CallInfo): pxt.blocks.BlockCompileInfo {
+            const blockInfo = blocksInfo.apis.byQName[callInfo.qName];
+            if (blockInfo) {
+                return pxt.blocks.compileInfo(blockInfo);
+            }
+            return undefined;
         }
 
         function countBlock() {
@@ -481,13 +500,18 @@ ${output}</xml>`;
             };
         }
 
-        function mkValue(name: string, value: ExpressionNode | TextNode, shadowType?: string): ValueNode {
+        function mkValue(name: string, value: ExpressionNode | TextNode, shadowType?: string, shadowMutation?: pxt.Map<string>): ValueNode {
             if (shadowType && value.kind === "expr" && (value as ExpressionNode).type !== shadowType) {
                 // Count the shadow block that will be emitted
                 countBlock();
             }
 
-            return { kind: "value", name, value, shadowType };
+            if ((!shadowType || shadowType === numberType) && shadowMutation && shadowMutation['min'] && shadowMutation['max']) {
+                // Convert a number to a number with a slider (math_number_minmax) if min and max shadow options are defined
+                shadowType = minmaxNumberType;
+            }
+
+            return { kind: "value", name, value, shadowType, shadowMutation };
         }
 
         function isEventExpression(expr: ts.ExpressionStatement): boolean {
@@ -533,13 +557,19 @@ ${output}</xml>`;
             closeBlockTag();
         }
 
+        function emitMutation(mMap: pxt.Map<string>) {
+            write("<mutation ", "");
+            for (const key in mMap) {
+                if (mMap[key] !== undefined) {
+                    write(`${key}="${mMap[key]}" `, "");
+                }
+            }
+            write("/>");
+        }
+
         function emitBlockNodeCore(n: BlockNode) {
             if (n.mutation) {
-                write("<mutation ", "");
-                for (const key in n.mutation) {
-                    write(`${key}="${n.mutation[key]}" `, "");
-                }
-                write("/>");
+                emitMutation(n.mutation);
             }
 
             if (n.fields) {
@@ -558,10 +588,16 @@ ${output}</xml>`;
 
             if (n.value.kind === "expr") {
                 const value = n.value as ExpressionNode;
+                if (value.type === numberType && n.shadowType === minmaxNumberType) {
+                    value.type = minmaxNumberType;
+                    value.fields[0].name = 'SLIDER';
+                    value.mutation = n.shadowMutation;
+                }
                 emitShadowOnly = value.type === n.shadowType;
                 if (!emitShadowOnly) {
                     switch (value.type) {
                         case "math_number":
+                        case "math_number_minmax":
                         case "math_integer":
                         case "math_whole_number":
                         case "logic_boolean":
@@ -584,11 +620,18 @@ ${output}</xml>`;
                         case wholeNumberType:
                             write(`<shadow type="${n.shadowType}"><field name="NUM">0</field></shadow>`)
                             break;
+                        case minmaxNumberType:
+                            write(`<shadow type="${minmaxNumberType}">`);
+                            if (n.shadowMutation) {
+                                emitMutation(n.shadowMutation);
+                            }
+                            write(`<field name="SLIDER">0</field></shadow>`);
+                            break;
                         case booleanType:
-                            write(`<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>`)
+                            write(`<shadow type="${booleanType}"><field name="BOOL">TRUE</field></shadow>`)
                             break;
                         case stringType:
-                            write(`<shadow type="text"><field name="TEXT"></field></shadow>`)
+                            write(`<shadow type="${stringType}"><field name="TEXT"></field></shadow>`)
                             break;
                         default:
                             write(`<shadow type="${n.shadowType}"/>`)
@@ -782,7 +825,7 @@ ${output}</xml>`;
             return result;
         }
 
-        function getValue(name: string, contents: boolean | number | string | Node, shadowType?: string): ValueNode {
+        function getValue(name: string, contents: boolean | number | string | Node, shadowType?: string, shadowMutation?: pxt.Map<string>): ValueNode {
             let value: OutputNode;
 
             if (typeof contents === "number") {
@@ -805,13 +848,29 @@ ${output}</xml>`;
                     (value as ExpressionNode).type = "math_whole_number";
             }
 
-            return mkValue(name, value, shadowType);
+            return mkValue(name, value, shadowType, shadowMutation);
         }
 
         function getIdentifier(identifier: Identifier): ExpressionNode {
             const name = getVariableName(identifier);
-            trackVariableUsage(name, ReferenceType.InBlocksOnly);
-            return getFieldBlock("variables_get", "VAR", name);
+            const oldName = identifier.text;
+            let localReporterArg: PropertyDesc = null;
+            env.localReporters.some(scope => {
+                for (let i = 0; i < scope.length; ++i) {
+                    if (scope[i].name === oldName) {
+                        localReporterArg = scope[i];
+                        return true;
+                    }
+                }
+                return false;
+            });
+
+            if (localReporterArg) {
+                return getDraggableReporterBlock(name, localReporterArg.type, false);
+            } else {
+                trackVariableUsage(name, ReferenceType.InBlocksOnly);
+                return getFieldBlock("variables_get", "VAR", name);
+            }
         }
 
         function getNumericLiteral(value: string): ExpressionNode {
@@ -836,6 +895,23 @@ ${output}</xml>`;
         function getDraggableVariableBlock(valueName: string, varName: string) {
             return mkValue(valueName,
                 getFieldBlock("variables_get_reporter", "VAR", varName, true), "variables_get_reporter");
+        }
+
+        function mkDraggableReporterValue(valueName: string, varName: string, varType: string) {
+            const reporterType = pxt.blocks.reporterTypeForArgType(varType);
+            const reporterShadowBlock = getDraggableReporterBlock(varName, varType, true);
+            return mkValue(valueName, reporterShadowBlock, reporterType);
+        }
+
+        function getDraggableReporterBlock(varName: string, varType: string, shadow: boolean) {
+            const reporterType = pxt.blocks.reporterTypeForArgType(varType);
+            const reporterShadowBlock = getFieldBlock(reporterType, "VALUE", varName, shadow);
+
+            if (reporterType === "argument_reporter_custom") {
+                reporterShadowBlock.mutation = { typename: varType };
+            }
+
+            return reporterShadowBlock;
         }
 
         function getField(name: string, value: string): FieldNode {
@@ -921,6 +997,14 @@ ${output}</xml>`;
 
             if (attributes.enumval && parentCallInfo && attributes.useEnumVal) {
                 value = attributes.enumval;
+            }
+
+            const info = env.compInfo(callInfo);
+
+            if (blockId && info.thisParameter) {
+                const r = mkExpr(blockId);
+                r.inputs = [getValue(U.htmlEscape(info.thisParameter.definitionName), n.expression, info.thisParameter.shadowBlockId)];
+                return r;
             }
 
             let idfn = attributes.blockIdentity ? blocksInfo.apis.byQName[attributes.blockIdentity] : blocksInfo.blocksById[blockId];
@@ -1498,8 +1582,18 @@ ${output}</xml>`;
             let optionalCount = 0;
             args.forEach((arg, i) => {
                 let e = arg.value;
+                let shadowMutation: pxt.Map<string>;
                 const param = arg.param;
                 const paramInfo = arg.info;
+
+                const paramComp = comp.parameters[comp.thisParameter ? i - 1 : i];
+                const paramRange = paramComp && paramComp.range;
+                if (paramRange) {
+                    const min = paramRange['min'];
+                    const max = paramRange['max'];
+                    shadowMutation = { 'min': min.toString(), 'max': max.toString() };
+                }
+
                 if (i === 0 && attributes.defaultInstance) {
                     if (e.getText() === attributes.defaultInstance) {
                         return;
@@ -1538,6 +1632,7 @@ ${output}</xml>`;
                     case SK.FunctionExpression:
                     case SK.ArrowFunction:
                         const m = getDestructuringMutation(e as ArrowFunction);
+                        let mustPopLocalScope = false;
                         if (m) {
                             r.mutation = m;
                         }
@@ -1545,6 +1640,13 @@ ${output}</xml>`;
                             let arrow = e as ArrowFunction;
                             const sym = blocksInfo.blocksById[attributes.blockId];
                             const paramDesc = sym.parameters[comp.thisParameter ? i - 1 : i];
+                            const addDraggableInput = (arg: PropertyDesc, varName: string) => {
+                                if (attributes.draggableParameters === "reporter") {
+                                    addInput(mkDraggableReporterValue("HANDLER_DRAG_PARAM_" + arg.name, varName, arg.type));
+                                } else {
+                                    addInput(getDraggableVariableBlock("HANDLER_DRAG_PARAM_" + arg.name, varName));
+                                }
+                            };
                             if (arrow.parameters.length) {
                                 if (attributes.optionalVariableArgs) {
                                     r.mutation = {
@@ -1558,7 +1660,7 @@ ${output}</xml>`;
                                     arrow.parameters.forEach((parameter, i) => {
                                         const arg = paramDesc.handlerParameters[i];
                                         if (attributes.draggableParameters) {
-                                            addInput(getDraggableVariableBlock("HANDLER_DRAG_PARAM_" + arg.name, (parameter.name as ts.Identifier).text));
+                                            addDraggableInput(arg, (parameter.name as ts.Identifier).text);
                                         }
                                         else {
                                             addField(getField("HANDLER_" + arg.name, (parameter.name as ts.Identifier).text));
@@ -1571,12 +1673,22 @@ ${output}</xml>`;
                                 if (arrow.parameters.length < paramDesc.handlerParameters.length) {
                                     for (let i = arrow.parameters.length; i < paramDesc.handlerParameters.length; i++) {
                                         const arg = paramDesc.handlerParameters[i];
-                                        addInput(getDraggableVariableBlock("HANDLER_DRAG_PARAM_" + arg.name, arg.name));
+                                        addDraggableInput(arg, arg.name);
                                     }
+                                }
+                                if (attributes.draggableParameters === "reporter") {
+                                    // Push the parameter descriptions onto the local scope stack
+                                    // so the getStatementBlock() below knows that these parameters
+                                    // should be decompiled as reporters instead of variables.
+                                    env.localReporters.push(paramDesc.handlerParameters);
+                                    mustPopLocalScope = true;
                                 }
                             }
                         }
                         (r.handlers || (r.handlers = [])).push({ name: "HANDLER", statement: getStatementBlock(e) });
+                        if (mustPopLocalScope) {
+                            env.localReporters.pop();
+                        }
                         break;
                     case SK.PropertyAccessExpression:
                         const callInfo = (e as any).callInfo as pxtc.CallInfo;
@@ -1584,13 +1696,13 @@ ${output}</xml>`;
                         const argAttrs = attrs(callInfo);
 
                         if (shadowBlockInfo && shadowBlockInfo.attributes.shim === "TD_ID") {
-                            addInput(mkValue(aName, getPropertyAccessExpression(e as PropertyAccessExpression, false, param.shadowBlockId), param.shadowBlockId));
+                            addInput(mkValue(aName, getPropertyAccessExpression(e as PropertyAccessExpression, false, param.shadowBlockId), param.shadowBlockId, shadowMutation));
                         }
                         else if (paramInfo && paramInfo.isEnum || callInfo && (argAttrs.fixedInstance || argAttrs.blockIdentity === info.qName)) {
                             addField(getField(aName, (getPropertyAccessExpression(e as PropertyAccessExpression, true) as TextNode).value))
                         }
                         else {
-                            addInput(getValue(aName, e, param.shadowBlockId))
+                            addInput(getValue(aName, e, param.shadowBlockId, shadowMutation))
                         }
                         break;
                     case SK.BinaryExpression:
@@ -1601,7 +1713,7 @@ ${output}</xml>`;
                                 break;
                             }
                         }
-                        addInput(getValue(U.htmlEscape(param.definitionName), e, param.shadowBlockId))
+                        addInput(getValue(U.htmlEscape(param.definitionName), e, param.shadowBlockId, shadowMutation))
                         break;
                     default:
                         let v: ValueNode;
@@ -1609,7 +1721,7 @@ ${output}</xml>`;
                         let defaultV = true;
 
                         if (info.qName == "Math.random") {
-                            v = mkValue(vName, getMathRandomArgumentExpresion(e), numberType);
+                            v = mkValue(vName, getMathRandomArgumentExpresion(e), numberType, shadowMutation);
                             defaultV = false;
                         } else if (isLiteralNode(e)) {
                             // Remove quotes on strings
@@ -1627,7 +1739,7 @@ ${output}</xml>`;
                                     if (param.shadowOptions) {
                                         fieldBlock.mutation = { "customfield": Util.htmlEscape(JSON.stringify(param.shadowOptions)) };
                                     }
-                                    v = mkValue(vName, fieldBlock, param.shadowBlockId);
+                                    v = mkValue(vName, fieldBlock, param.shadowBlockId, shadowMutation);
                                     defaultV = false;
                                 }
                             }
@@ -1637,7 +1749,7 @@ ${output}</xml>`;
                             return;
                         }
                         if (defaultV) {
-                            v = getValue(vName, e, param.shadowBlockId);
+                            v = getValue(vName, e, param.shadowBlockId, shadowMutation);
                         }
 
                         addInput(v);
@@ -2588,11 +2700,9 @@ ${output}</xml>`;
             const callInfo: pxtc.CallInfo = (n as any).callInfo;
             if (callInfo) {
                 const attributes = env.attrs(callInfo);
+                const blockInfo = env.compInfo(callInfo);
                 if (attributes.blockIdentity || attributes.blockId === "lists_length" || attributes.blockId === "text_length") {
                     return undefined;
-                }
-                else if (attributes.blockCombine) {
-                    return checkExpression(n.expression, env)
                 }
                 else if (callInfo.decl.kind === SK.EnumMember) {
                     // Check to see if this an enum with a block
@@ -2642,6 +2752,10 @@ ${output}</xml>`;
                     else if (n.parent.kind === SK.CallExpression && (n.parent as CallExpression).expression !== n) {
                         return undefined;
                     }
+                }
+                else if (attributes.blockCombine || (attributes.blockId && blockInfo && blockInfo.thisParameter)) {
+                    // block combine and getters/setters
+                    return checkExpression(n.expression, env)
                 }
             }
             return Util.lf("No call info found");
@@ -2846,6 +2960,7 @@ ${output}</xml>`;
     function isLiteralBlockType(type: string) {
         switch (type) {
             case numberType:
+            case minmaxNumberType:
             case integerNumberType:
             case wholeNumberType:
             case stringType:

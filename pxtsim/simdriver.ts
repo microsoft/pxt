@@ -18,7 +18,8 @@ namespace pxsim {
         Unloaded,
         Stopped,
         Running,
-        Paused
+        Paused,
+        Suspended
     }
 
     export enum SimulatorDebuggerCommand {
@@ -43,6 +44,7 @@ namespace pxsim {
         localizedStrings?: pxsim.Map<string>;
         refCountingDebug?: boolean;
         version?: string;
+        clickTrigger?: boolean;
     }
 
     export interface HwDebugger {
@@ -126,7 +128,8 @@ namespace pxsim {
             }
             // dispatch to all iframe besides self
             let frames = this.container.getElementsByTagName("iframe");
-            if (source && (msg.type === 'eventbus' || msg.type == 'radiopacket' || msg.type == 'irpacket' || msg.type == 'blepacket')) {
+            const broadcastmsg = msg as pxsim.SimulatorBroadcastMessage;
+            if (source && broadcastmsg && !!broadcastmsg.broadcast) {
                 if (frames.length < 2) {
                     this.container.appendChild(this.createFrame());
                     frames = this.container.getElementsByTagName("iframe");
@@ -178,6 +181,18 @@ namespace pxsim {
                 }
                 this.scheduleFrameCleanup();
             }
+        }
+
+        public suspend() {
+            this.postMessage({ type: 'stop' });
+            this.setState(SimulatorState.Suspended);
+
+            let frames = this.container.getElementsByTagName("iframe");
+            for (let i = 0; i < frames.length; ++i) {
+                let frame = frames[i] as HTMLIFrameElement
+                U.addClass(frame, this.getStoppedClass());
+            }
+            this.scheduleFrameCleanup();
         }
 
         private unload() {
@@ -268,7 +283,8 @@ namespace pxsim {
                 cdnUrl: opts.cdnUrl,
                 localizedStrings: opts.localizedStrings,
                 refCountingDebug: opts.refCountingDebug,
-                version: opts.version
+                version: opts.version,
+                clickTrigger: opts.clickTrigger
             }
 
             this.applyAspectRatio();
@@ -426,11 +442,17 @@ namespace pxsim {
                     let brk = msg as pxsim.DebuggerBreakpointMessage
                     if (this.state == SimulatorState.Running) {
                         if (brk.exceptionMessage)
-                            this.stop();
+                            this.suspend();
                         else
                             this.setState(SimulatorState.Paused);
                         if (this.options.onDebuggerBreakpoint)
                             this.options.onDebuggerBreakpoint(brk);
+                        let stackTrace = brk.exceptionMessage + "\n"
+                        for (let s of brk.stackframes) {
+                            let fi = s.funcInfo
+                            stackTrace += `   at ${fi.functionName} (${fi.fileName}:${fi.line + 1}:${fi.column + 1})\n`
+                        }
+                        console.error(stackTrace)
                     } else {
                         console.error("debugger: trying to pause from " + this.state);
                     }

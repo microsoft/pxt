@@ -1,5 +1,26 @@
 # Microsoft MakeCode Blog
 
+## [New Maker Course for the Adafruit Circuit Playground Express!](/blog/adafruit-circuit-playground-express/maker-course)
+ 
+December 6th, 2018 by [Jaqster](https://github.com/jaqster)
+
+We are so excited to partner with Rob Morrill on this new curriculum for the Adafruit Circuit Playground Express...
+**[Continue reading this blog post](/blog/adafruit-circuit-playground-express/maker-course)**
+
+## [MakeCode for Minecraft update](/blog/minecraft/11-07-2018)
+ 
+November 7th, 2018 by [Jaqster](https://github.com/jaqster)
+
+Another month, another release! The MakeCode team is very excited to release this update to the coding experience for Minecraft.
+**[Continue reading this blog post](/blog/minecraft/11-07-2018)**
+
+## [MakeCode tutorials for CS Ed week 2018 and beyond](/blog/csed-week/csed-week-2018)
+ 
+October 23th, 2018 by [Jaqster](https://github.com/jaqster)
+ 
+With Computer Science Education week just around the corner, we’ve compiled a list of some of our favorite tutorials, guides, and projects...
+**[Continue reading this blog post](/blog/csed-week/csed-week-2018)**
+ 
 ## [MakeCode for the micro:bit update releases on October 26th!](/blog/microbit/v1-release-date)
 
 October 12th, 2018 by [Jaqster](https://github.com/jaqster)

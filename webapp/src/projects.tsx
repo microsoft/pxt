@@ -5,7 +5,6 @@ import * as ReactDOM from "react-dom";
 import * as data from "./data";
 import * as sui from "./sui";
 import * as core from "./core";
-import * as compiler from "./compiler";
 
 import * as codecard from "./codecard"
 import * as carousel from "./carousel";
@@ -35,6 +34,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         this.chgGallery = this.chgGallery.bind(this);
         this.chgCode = this.chgCode.bind(this);
         this.importProject = this.importProject.bind(this);
+        this.showScriptManager = this.showScriptManager.bind(this);
         this.cloudSignIn = this.cloudSignIn.bind(this);
         this.setSelected = this.setSelected.bind(this);
     }
@@ -114,12 +114,12 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 if (m) this.props.parent.startTutorial(m[1]);
                 else {
                     if (scr.youTubeId && !scr.url) // Youtube video
-                        window.open('https://youtu.be/' + scr.youTubeId, 'yt');
+                        return; // Handled by href
                     else if (/^https:\/\//i.test(scr.url)) // External video
-                        window.open(scr.url, '_blank');
+                        return; // Handled by href
                     else if (scr.url) // Docs url, open in new tab
                         if (/^\//i.test(scr.url))
-                            window.open(scr.url, '_blank');
+                            return; // Handled by href
                         else
                             core.errorNotification(lf("Sorry, the project url looks invalid."));
                     else
@@ -129,40 +129,17 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
     }
 
     chgCode(scr: pxt.CodeCard, loadBlocks: boolean, prj?: pxt.ProjectTemplate) {
-        core.showLoading("changingcode", lf("loading..."));
-        pxt.gallery.loadExampleAsync(scr.name.toLowerCase(), scr.url)
-            .done((opts: pxt.editor.ProjectCreationOptions) => {
-                if (opts) {
-                    if (prj) opts.prj = prj;
-                    if (loadBlocks) {
-                        return this.props.parent.createProjectAsync(opts)
-                            .then(() => {
-                                return compiler.getBlocksAsync()
-                                    .then(blocksInfo => compiler.decompileAsync("main.ts", blocksInfo))
-                                    .then(resp => {
-                                        pxt.debug(`example decompilation: ${resp.success}`)
-                                        if (resp.success) {
-                                            this.props.parent.overrideBlocksFile(resp.outfiles["main.blocks"])
-                                        }
-                                    })
-                            })
-                            .done(() => {
-                                core.hideLoading("changingcode");
-                            })
-                    } else {
-                        opts.tsOnly = true
-                        return this.props.parent.createProjectAsync(opts)
-                            .then(() => Promise.delay(500))
-                            .done(() => core.hideLoading("changingcode"));
-                    }
-                }
-                core.hideLoading("changingcode");
-            });
+        return this.props.parent.importExampleAsync({ name: scr.name, path: scr.url, loadBlocks, prj });
     }
 
     importProject() {
         pxt.tickEvent("projects.importdialog", undefined, { interactiveConsent: true });
         this.props.parent.importProjectDialog();
+    }
+
+    showScriptManager() {
+        pxt.tickEvent("projects.showall.header", undefined, { interactiveConsent: true });
+        this.props.parent.showScriptManager();
     }
 
     cloudSignIn() {
@@ -207,15 +184,18 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 <div className="ui segment getting-started-segment" style={{ backgroundImage: `url(${encodeURI(targetTheme.homeScreenHero)})` }} /> : undefined}
             <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment mystuff-segment">
                 <div className="ui grid equal width padded heading">
-                    <div className="column">
-                        <h2 className="ui header">{lf("My Projects")} </h2>
+                    <div className="column" style={{ zIndex: 1 }}>
+                        {targetTheme.scriptManager ? <h2 role="button" className="ui header myproject-header" title={lf("See all projects")} tabIndex={0}
+                            onClick={this.showScriptManager} onKeyDown={sui.fireClickOnEnter}>
+                            {lf("My Projects")}
+                            <span className="ui grid-dialog-btn">
+                                <sui.Icon icon="angle right" />
+                            </span>
+                        </h2> : <h2 className="ui header">{lf("My Projects")}</h2>}
                     </div>
-                    <div className="column right aligned">
+                    <div className="column right aligned" style={{ zIndex: 1 }}>
                         {pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing) ?
-                            <sui.Button key="import" icon="upload" className="mini import-dialog-btn" textClass="landscape only" text={lf("Import")} title={lf("Import a project")} onClick={this.importProject} /> : undefined}
-                        {signIn ?
-                            <sui.Button key="signin" icon={signInIcon} className="mini import-dialog-btn" textClass="landscape only" text={signIn} title={lf("Sign in to sync your projects")} onClick={this.cloudSignIn} />
-                            : undefined}
+                            <sui.Button key="import" icon="upload" className="import-dialog-btn" textClass="landscape only" text={lf("Import")} title={lf("Import a project")} onClick={this.importProject} /> : undefined}
                     </div>
                 </div>
                 <div className="content">
@@ -307,7 +287,9 @@ interface ProjectsCarouselState {
 export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, ProjectsCarouselState> {
     private prevGalleries: pxt.CodeCard[] = [];
     private hasFetchErrors = false;
-    private latestProject: codecard.CodeCardView
+    private latestProject: codecard.CodeCardView;
+
+    private static NUM_PROJECTS_HOMESCREEN = 10;
 
     constructor(props: ProjectsCarouselProps) {
         super(props)
@@ -318,6 +300,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         this.closeDetailOnEscape = this.closeDetailOnEscape.bind(this);
         this.reload = this.reload.bind(this);
         this.newProject = this.newProject.bind(this);
+        this.showScriptManager = this.showScriptManager.bind(this);
         this.handleCardClick = this.handleCardClick.bind(this);
     }
 
@@ -342,13 +325,18 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
     }
 
     fetchLocalData(): pxt.workspace.Header[] {
-        let headers: pxt.workspace.Header[] = this.getData("header:*")
+        const headers: pxt.workspace.Header[] = this.getData("header:*")
         return headers;
     }
 
     newProject() {
         pxt.tickEvent("projects.new", undefined, { interactiveConsent: true });
-        this.props.parent.newProject({ changeBoardOnLoad: true });
+        this.props.parent.newProject();
+    }
+
+    showScriptManager() {
+        pxt.tickEvent("projects.showscriptmanager", undefined, { interactiveConsent: true });
+        this.props.parent.showScriptManager();
     }
 
     closeDetail() {
@@ -386,7 +374,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         this.setState({})
     }
 
-    handleCardClick(scr: any, index?: number) {
+    handleCardClick(e: any, scr: any, index?: number) {
         const { name } = this.props;
         if (this.props.setSelected) {
             // Set this item as selected
@@ -399,6 +387,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
 
     renderCore() {
         const { name, path, selectedIndex } = this.props;
+        const targetTheme = pxt.appTarget.appTheme;
 
         if (path) {
             // Fetch the gallery
@@ -427,6 +416,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                                 tags={scr.tags}
                                 scr={scr} index={index}
                                 onCardClick={this.handleCardClick}
+                                cardType={scr.cardType}
                             />
                         )}
                     </carousel.Carousel>
@@ -447,35 +437,47 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                                 scr={scr}
                                 onClick={this.props.onClick}
                                 cardType={scr.cardType}
+                                tags={scr.tags}
                             />
                         )}
                     </div>
                 </div>
             }
         } else {
-            const headers = this.fetchLocalData();
+            const headers = this.fetchLocalData()
             const showNewProject = pxt.appTarget.appTheme && !pxt.appTarget.appTheme.hideNewProjectButton;
+            const showScriptManagerCard = targetTheme.scriptManager && headers.length > ProjectsCarousel.NUM_PROJECTS_HOMESCREEN;
+            const bundledcoresvgs = pxt.appTarget.bundledcoresvgs;
             return <carousel.Carousel bleedPercent={20}>
-                {showNewProject ? <div role="button" className="ui card link newprojectcard" title={lf("Creates a new empty project")}
+                {showNewProject ? <div role="button" className="ui card link buttoncard newprojectcard" title={lf("Creates a new empty project")}
                     onClick={this.newProject} onKeyDown={sui.fireClickOnEnter} >
                     <div className="content">
                         <sui.Icon icon="huge add circle" />
                         <span className="header">{lf("New Project")}</span>
                     </div>
                 </div> : undefined}
-                {headers.map((scr, index) =>
-                    <ProjectsCodeCard
+                {headers.slice(0, ProjectsCarousel.NUM_PROJECTS_HOMESCREEN).map((scr, index) => {
+                    const boardsvg = scr.board && bundledcoresvgs && bundledcoresvgs[scr.board];
+                    return <ProjectsCodeCard
                         key={'local' + scr.id + scr.recentUse}
                         // ref={(view) => { if (index === 1) this.latestProject = view }}
                         cardType="file"
-                        className={scr.githubId ? "file github" : "file"}
+                        className={boardsvg && scr.board ? "file board" : scr.githubId ? "file github" : "file"}
+                        imageUrl={boardsvg}
                         name={scr.name}
                         time={scr.recentUse}
                         url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}
-                        scr={scr}
+                        scr={scr} index={index}
                         onCardClick={this.handleCardClick}
-                    />
-                )}
+                    />;
+                })}
+                {showScriptManagerCard ? <div role="button" className="ui card link buttoncard scriptmanagercard" title={lf("See all projects")}
+                    onClick={this.showScriptManager} onKeyDown={sui.fireClickOnEnter} >
+                    <div className="content">
+                        <sui.Icon icon="huge right angle" />
+                        <span className="header">{lf("See all projects")}</span>
+                    </div>
+                </div> : undefined}
             </carousel.Carousel>
         }
     }
@@ -484,24 +486,31 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
 interface ProjectsCodeCardProps extends pxt.CodeCard {
     scr: any;
     index?: number;
-    onCardClick: (scr: any, index?: number) => void;
+    onCardClick: (e: any, scr: any, index?: number) => void;
+    onLabelClick?: (e: any, scr: any, index?: number) => void;
 }
 
-class ProjectsCodeCard extends sui.StatelessUIElement<ProjectsCodeCardProps> {
+export class ProjectsCodeCard extends sui.StatelessUIElement<ProjectsCodeCardProps> {
 
     constructor(props: ProjectsCodeCardProps) {
         super(props);
 
         this.handleClick = this.handleClick.bind(this);
+        this.handleLabelClick = this.handleLabelClick.bind(this);
     }
 
-    handleClick() {
-        this.props.onCardClick(this.props.scr, this.props.index);
+    handleClick(e: any) {
+        this.props.onCardClick(e, this.props.scr, this.props.index);
+    }
+
+    handleLabelClick(e: any) {
+        this.props.onLabelClick(e, this.props.scr, this.props.index);
     }
 
     renderCore() {
-        const { scr, onCardClick, onClick, ...rest } = this.props;
-        return <codecard.CodeCardView {...rest} onClick={this.handleClick} />
+        const { scr, onCardClick, onLabelClick, onClick, ...rest } = this.props;
+        return <codecard.CodeCardView {...rest} onClick={this.handleClick}
+            onLabelClicked={onLabelClick ? this.handleLabelClick : undefined} />
     }
 }
 
@@ -514,7 +523,8 @@ export interface ProjectsDetailProps extends ISettingsProps {
     url?: string;
     scr?: any;
     onClick: (scr: any) => void;
-    cardType: string;
+    cardType: pxt.CodeCardType;
+    tags?: string[];
 }
 
 export interface ProjectsDetailState {
@@ -537,12 +547,15 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
     }
 
     renderCore() {
-        const { name, description, imageUrl, largeImageUrl, youTubeId, cardType } = this.props;
+        const { name, description, imageUrl, largeImageUrl, youTubeId, url, cardType, tags } = this.props;
 
         const image = largeImageUrl || imageUrl || (youTubeId ? `https://img.youtube.com/vi/${youTubeId}/0.jpg` : undefined);
+        const tagColors: pxt.Map<string> = pxt.appTarget.appTheme.tagColors || {};
 
         let clickLabel = lf("Show Instructions");
-        if (cardType == "tutorial") clickLabel = lf("Start Tutorial");
+        if (cardType == "tutorial") {
+            clickLabel = lf("Start Tutorial");
+        }
         else if (cardType == "codeExample" || cardType == "example") clickLabel = lf("Open Example");
         else if (cardType == "template") clickLabel = lf("New Project");
         else if (youTubeId) clickLabel = lf("Play Video");
@@ -554,23 +567,40 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             className: 'huge positive'
         }]
 
+        const isLink = !cardType && (youTubeId || url);
+        const linkHref = (youTubeId && !url) ? `https://youtu.be/${youTubeId}` :
+            ((/^https:\/\//i.test(url)) || (/^\//i.test(url)) ? url : '');
+
         return <div className="ui grid stackable padded">
             {image ? <div className="imagewrapper"><div className="image" style={{ backgroundImage: `url("${image}")` }} /></div> : undefined}
             <div className="column eight wide">
                 <div className="segment">
                     <div className="header"> {name} </div>
+                    {tags ? <div className="ui labels">
+                        {tags.map(tag => <div className={`ui ${tagColors[tag] || ''} label`}>{pxt.Util.rlf(tag)}
+                        </div>)}</div> : undefined}
                     <p className="detail">
                         {description}
                     </p>
                     <div className="actions">
                         {actions.map(action =>
-                            <sui.Button
-                                key={`action_${action.label}`}
-                                icon={action.icon}
-                                text={action.label}
-                                className={`approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''}`}
-                                onClick={action.onClick}
-                                onKeyDown={sui.fireClickOnEnter} />
+                            isLink && linkHref ?
+                                <sui.Link
+                                    key={`action_${action.label}`}
+                                    href={linkHref} target={'_blank'}
+                                    icon={action.icon}
+                                    text={action.label}
+                                    className={`ui button approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''}`}
+                                    onClick={action.onClick}
+                                    onKeyDown={sui.fireClickOnEnter}
+                                />
+                                : <sui.Button
+                                    key={`action_${action.label}`}
+                                    icon={action.icon}
+                                    text={action.label}
+                                    className={`approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''}`}
+                                    onClick={action.onClick}
+                                    onKeyDown={sui.fireClickOnEnter} />
                         )}
                     </div>
                 </div>
@@ -641,7 +671,7 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
 
     renderCore() {
         const { visible } = this.state;
-
+        const disableFileAccessinMaciOs = pxt.appTarget.appTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac());
         /* tslint:disable:react-a11y-anchors */
         return (
             <sui.Modal isOpen={visible} className="importdialog" size="small"
@@ -650,7 +680,7 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
             >
                 <div className={pxt.github.token ? "ui three cards" : "ui two cards"}>
-                    {pxt.appTarget.compile ?
+                    {pxt.appTarget.compile && !disableFileAccessinMaciOs ?
                         <codecard.CodeCardView
                             ariaLabel={lf("Open files from your computer")}
                             role="button"
@@ -669,7 +699,7 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
                             icon="cloud download"
                             iconColor="secondary"
                             name={lf("Import URL...")}
-                            description={lf("Open a shared project URL or GithHub repo")}
+                            description={lf("Open a shared project URL or GitHub repo")}
                             onClick={this.importUrl}
                         /> : undefined}
 
@@ -696,9 +726,9 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
     }
 }
 
-
 export interface ExitAndSaveDialogState {
     visible?: boolean;
+    emoji?: string;
     projectName?: string;
 }
 
@@ -707,18 +737,19 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
     constructor(props: ISettingsProps) {
         super(props);
         this.state = {
-            visible: false
+            visible: false,
+            emoji: ""
         }
 
         this.hide = this.hide.bind(this);
         this.modalDidOpen = this.modalDidOpen.bind(this);
         this.handleChange = this.handleChange.bind(this);
-        this.cancel = this.cancel.bind(this);
         this.save = this.save.bind(this);
+        this.skip = this.skip.bind(this);
     }
 
     componentWillReceiveProps(newProps: ISettingsProps) {
-        this.setState({ projectName: newProps.parent.state.projectName })
+        this.handleChange(newProps.parent.state.projectName);
     }
 
     hide() {
@@ -726,6 +757,7 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
     }
 
     show() {
+        pxt.tickEvent('exitandsave.show', undefined, { interactiveConsent: false });
         this.setState({ visible: true });
     }
 
@@ -733,7 +765,7 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
         // Save on enter typed
         let dialogInput = document.getElementById('projectNameInput') as HTMLInputElement;
         if (dialogInput) {
-            dialogInput.setSelectionRange(0, 9999);
+            if (!pxt.BrowserUtils.isMobile()) dialogInput.setSelectionRange(0, 9999);
             dialogInput.onkeydown = (e: KeyboardEvent) => {
                 const charCode = core.keyCodeFromEvent(e);
                 if (charCode === core.ENTER_KEY) {
@@ -747,11 +779,25 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
 
     handleChange(name: string) {
         this.setState({ projectName: name });
+        const untitled = lf("Untitled");
+        name = name || ""; // gard against null/undefined
+        if (!name || pxt.Util.toArray(untitled).some((c, i) => untitled.substr(0, i + 1) == name)) {
+            this.setState({ emoji: "😞" });
+        } else {
+            const emojis = ["😌", "😄", "😃", "😍"];
+            let emoji = emojis[Math.min(name.length, emojis.length) - 1];
+            const n = name.length >> 1;
+            if (n > emojis.length)
+                for (let i = 0; i < Math.min(2, n - emojis.length); ++i)
+                    emoji += emojis[emojis.length - 1];
+            this.setState({ emoji })
+        }
     }
 
-    cancel() {
-        pxt.tickEvent("exitandsave.cancel", undefined, { interactiveConsent: true });
+    skip() {
+        pxt.tickEvent("exitandsave.skip", undefined, { interactiveConsent: true });
         this.hide();
+        this.props.parent.openHome();
     }
 
     save() {
@@ -760,7 +806,7 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
         let p = Promise.resolve();
         // save project name if valid change
         if (newName && this.props.parent.state.projectName != newName) {
-            pxt.tickEvent("exitandsave.projectrename", undefined, { interactiveConsent: true });
+            pxt.tickEvent("exitandsave.projectrename", { length: newName && newName.length }, { interactiveConsent: true });
             p = p.then(() => this.props.parent.updateHeaderNameAsync(newName));
         }
         p.done(() => {
@@ -769,26 +815,32 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
     }
 
     renderCore() {
-        const { visible, projectName } = this.state;
+        const { visible, emoji, projectName } = this.state;
 
         const actions: sui.ModalButton[] = [{
-            label: lf("Done"),
+            label: lf("Save"),
             onclick: this.save,
             icon: 'check',
             className: 'approve positive'
+        }, {
+            label: lf("Skip"),
+            onclick: this.skip
         }]
 
         return (
             <sui.Modal isOpen={visible} className="exitandsave" size="tiny"
                 onClose={this.hide} dimmer={true} buttons={actions}
-                closeIcon={true} header={lf("Project has no name {0}", "😞")}
+                closeIcon={true} header={lf("Project has no name {0}", emoji)}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
                 modalDidOpen={this.modalDidOpen}
             >
-                <div className="ui form">
-                    <sui.Input ref="filenameinput" autoFocus id={"projectNameInput"} label={lf("Name")}
-                        ariaLabel={lf("Type a name for your project")}
-                        value={projectName || ''} onChange={this.handleChange} />
+                <div>
+                    <p>{lf("Give your project a name.")}</p>
+                    <div className="ui form">
+                        <sui.Input ref="filenameinput" autoFocus={!pxt.BrowserUtils.isMobile()} id={"projectNameInput"}
+                            ariaLabel={lf("Type a name for your project")} autoComplete={false}
+                            value={projectName || ''} onChange={this.handleChange} />
+                    </div>
                 </div>
             </sui.Modal>
         )

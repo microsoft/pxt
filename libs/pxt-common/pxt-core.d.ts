@@ -18,6 +18,13 @@ interface Array<T> {
     push(item: T): void;
 
     /**
+      * Concatenates the values with another array.
+      * @param arr The other array that is being concatenated with
+      */
+    //% helper=arrayConcat weight=40
+    concat(arr: T[]): T[];
+
+    /**
       * Remove the last element from an array and return it.
       */
     //% help=arrays/pop
@@ -117,6 +124,13 @@ interface Array<T> {
       */
     //% helper=arrayFilter weight=40
     filter(callbackfn: (value: T, index: number) => boolean): T[];
+    
+    /**
+     * Returns the value of the first element in the array that satisfies the provided testing function. Otherwise undefined is returned.
+     * @param callbackfn 
+     */
+    //% helper=arrayFind weight=40
+    find(callbackfn: (value: T, index: number) => boolean): T;
 
     /**
       * Call the specified callback function for all the elements in an array. The return value of the callback function is the accumulated result, and is provided as an argument in the next call to the callback function.
@@ -229,6 +243,14 @@ declare interface String {
     //% blockId="string_substr" block="substring of %this=text|from %start|of length %length" blockNamespace="text"
     substr(start: number, length?: number): string;
 
+    /**
+     * Return a substring of the current string.
+     * @param start first character index; can be negative from counting from the end, eg:0
+     * @param end one-past-last character index
+     */
+    //% helper=stringSlice
+    slice(start: number, end?: number): string;
+
     // This block is currently disabled, as it does not compile in some targets
     // Add % sign back to the block annotation to re-enable
     /** Returns a value indicating if the string is empty */
@@ -321,6 +343,19 @@ declare interface Number {
 */
 //% blockNamespace="Arrays"
 declare namespace Array {
+    /**
+     * Check if a given object is an array.
+     */
+    //% shim=Array_::isArray
+    function isArray(obj: any): boolean;
+}
+
+declare namespace Object {
+    /**
+     * Return the field names in an object.
+     */
+    //% shim=pxtrt::keysOf
+    function keys(obj: any): string[];
 }
 
 /**

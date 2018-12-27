@@ -844,4 +844,8 @@ namespace pxt {
     export function allPkgFiles(cfg: PackageConfig) {
         return [pxt.CONFIG_NAME].concat(cfg.files || []).concat(cfg.testFiles || [])
     }
+
+    export function isPkgBeta(cfg: { description?: string; }): boolean {
+        return cfg && /\bbeta\b/.test(cfg.description);
+    }
 }

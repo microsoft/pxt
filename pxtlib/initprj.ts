@@ -61,6 +61,7 @@ yotta_targets
 pxt_modules
 *.db
 *.tgz
+.header.json
 `,
         ".vscode/settings.json":
             `{
@@ -93,7 +94,7 @@ script:
     - "npm install -g pxt"
     - "pxt target @TARGET@"
     - "pxt install"
-    - "pxt build --cloud"
+    - "pxt build"
 sudo: false
 cache:
     directories:
@@ -107,14 +108,20 @@ cache:
     "tasks": [{
         "label": "pxt deploy",
         "type": "shell",
-        "command": "pxt deploy",
+        "command": "pxt deploy --local",
         "group": "build",
         "problemMatcher": [ "$tsc" ]
     }, {
         "label": "pxt build",
         "type": "shell",
-        "command": "pxt build",
-        "group": "test",
+        "command": "pxt build --local",
+        "group": "build",
+        "problemMatcher": [ "$tsc" ]
+    }, {
+        "label": "pxt install",
+        "type": "shell",
+        "command": "pxt install",
+        "group": "build",
         "problemMatcher": [ "$tsc" ]
     }, {
         "label": "pxt clean",

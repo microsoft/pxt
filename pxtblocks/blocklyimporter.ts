@@ -2,6 +2,34 @@
 /// <reference path="../built/pxtlib.d.ts" />
 
 namespace pxt.blocks {
+
+    /**
+     * Converts a DOM into workspace without triggering any Blockly event
+     * @param dom
+     * @param workspace
+     */
+    export function domToWorkspaceNoEvents(dom: Element, workspace: Blockly.Workspace): string[] {
+        pxt.tickEvent(`blocks.domtow`)
+        try {
+            Blockly.Events.disable();
+            return Blockly.Xml.domToWorkspace(dom, workspace);
+        } finally {
+            Blockly.Events.enable();
+        }
+    }
+
+    export function clearWithoutEvents(workspace: Blockly.Workspace) {
+        pxt.tickEvent(`blocks.clear`)
+        if (!workspace) return;
+        try {
+            Blockly.Events.disable();
+            workspace.clear();
+            workspace.clearUndo();
+        } finally {
+            Blockly.Events.enable();
+        }
+    }
+
     export function saveWorkspaceXml(ws: Blockly.Workspace): string {
         let xml = Blockly.Xml.workspaceToDom(ws, true);
         let text = Blockly.Xml.domToPrettyText(xml);
@@ -39,7 +67,7 @@ namespace pxt.blocks {
         const workspace = new Blockly.Workspace();
         try {
             const dom = Blockly.Xml.textToDom(xml);
-            Blockly.Xml.domToWorkspace(dom, workspace);
+            pxt.blocks.domToWorkspaceNoEvents(dom, workspace);
             return workspace;
         } catch (e) {
             if (!skipReport)
@@ -103,13 +131,17 @@ namespace pxt.blocks {
     }
 
     /**
-     * This callback is populated from the editor extension result. 
+     * This callback is populated from the editor extension result.
      * Allows a target to provide version specific blockly updates
      */
     export let extensionBlocklyPatch: (pkgTargetVersion: string, dom: Element) => void;
 
     export function importXml(pkgTargetVersion: string, xml: string, info: pxtc.BlocksInfo, skipReport = false): string {
         try {
+            // If it's the first project we're importing in the session, Blockly is not initialized
+            // and blocks haven't been injected yet
+            pxt.blocks.initializeAndInject(info);
+
             const parser = new DOMParser();
             const doc = parser.parseFromString(xml, "application/xml");
 

@@ -171,6 +171,7 @@ namespace pxt.cpp {
             compile = {
                 isNative: false,
                 hasHex: false,
+                switches: {}
             }
 
         const isPlatformio = !!compileService.platformioIni;
@@ -488,7 +489,7 @@ namespace pxt.cpp {
                     default:
                         if (U.lookup(knownEnums, tp))
                             return "I"
-                        return "_";
+                        return "_" + tp.replace(/[\*_]+$/, "");
                 }
             }
 
@@ -549,7 +550,7 @@ namespace pxt.cpp {
                     abiInc += `extern "C" void ${m[1]}();\n`
                     res.functions.push({
                         name: m[1],
-                        argsFmt: "",
+                        argsFmt: [],
                         value: 0
                     })
                 }
@@ -569,10 +570,10 @@ namespace pxt.cpp {
                     let funName = m[3]
                     let origArgs = m[4]
                     currAttrs = currAttrs.trim().replace(/ \w+\.defl=\w+/g, "")
-                    let argsFmt = mapRunTimeType(retTp)
+                    let argsFmt = [mapRunTimeType(retTp)]
                     let args = origArgs.split(/,/).filter(s => !!s).map(s => {
                         let r = parseArg(parsedAttrs, s)
-                        argsFmt += mapRunTimeType(r.type)
+                        argsFmt.push(mapRunTimeType(r.type))
                         return `${r.name}: ${mapType(r.type)}`
                     })
                     let numArgs = args.length
@@ -617,6 +618,19 @@ namespace pxt.cpp {
                         pointersInc += "(uint32_t)(void*)::" + fi.name + ",\n"
                     else
                         pointersInc += "PXT_FNPTR(::" + fi.name + "),\n"
+                    return;
+                }
+
+                m = /^\s*extern const (\w+) (\w+);/.exec(ln)
+                if (currAttrs && m) {
+                    let fi: pxtc.FuncInfo = {
+                        name: currNs + "::" + m[2],
+                        argsFmt: [],
+                        value: null
+                    }
+                    res.functions.push(fi)
+                    pointersInc += "PXT_FNPTR(&::" + fi.name + "),\n"
+                    currAttrs = ""
                     return;
                 }
 
@@ -829,9 +843,20 @@ namespace pxt.cpp {
             pxt.debug(`module.json: ${res.generatedFiles["/module.json"]}`)
         }
 
-        if (compile.boxDebug) {
+        if (compile.switches.boxDebug)
             pxtConfig += "#define PXT_BOX_DEBUG 1\n"
-        }
+
+        if (compile.gc)
+            pxtConfig += "#define PXT_GC 1\n"
+
+        if (compile.switches.profile)
+            pxtConfig += "#define PXT_PROFILE 1\n"
+
+        if (compile.switches.gcDebug)
+            pxtConfig += "#define PXT_GC_DEBUG 1\n"
+
+        if (compile.switches.numFloat)
+            pxtConfig += "#define PXT_USE_FLOAT 1\n"
 
         if (compile.vtableShift)
             pxtConfig += `#define PXT_VTABLE_SHIFT ${compile.vtableShift}\n`
@@ -1176,7 +1201,7 @@ namespace pxt.hex {
                 });
         }
 
-        if (!Cloud.localToken || !window || !Cloud.isLocalHost()) {
+        if (!Cloud.localToken || !window || !pxt.BrowserUtils.isLocalHost()) {
             return Promise.resolve(undefined);
         }
 

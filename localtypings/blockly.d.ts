@@ -559,9 +559,9 @@ declare namespace Blockly {
         updateEditable(): void;
         dispose(): void;
         render_(): void;
-        showEditor_(): void;
+        showEditor_(e?: Event): void;
         getAbsoluteXY_(): goog.math.Coordinate;
-        getScaledBBox_(): {top: number, bottom: number, left: number, right: number};
+        getScaledBBox_(): { top: number, bottom: number, left: number, right: number };
         setValue(newValue: string | number): void;
         getValue(): string;
         isCurrentlyEditable(): boolean;
@@ -639,7 +639,6 @@ declare namespace Blockly {
     class FieldNumber extends FieldTextInput {
         constructor(value: string | number, opt_min?: any, opt_max?: any, opt_precision?: any, opt_validator?: Function);
         setConstraints(min: any, max: any, precision?: any): void;
-        position_(): void;
     }
 
     class FieldLabel extends Field {
@@ -767,7 +766,7 @@ declare namespace Blockly {
         isInsertionMarker(): boolean;
         isShadow(): boolean;
 
-        render(): void;
+        render(opt_bubble?: boolean): void;
         bumpNeighbours_(): void;
         select(): void;
         getRelativeToSurfaceXY(): goog.math.Coordinate;
@@ -933,7 +932,7 @@ declare namespace Blockly {
         scrollCenter(): void;
         setScale(scale: number): void;
         highlightBlock(id: string): void;
-        centerOnBlock(id: string): void;
+        centerOnBlock(id: string, animate?: boolean): void;
         glowBlock(id: string, state: boolean): void;
         glowStack(id: string, state: boolean): void;
         undo(redo?: boolean): void;
@@ -970,6 +969,7 @@ declare namespace Blockly {
         moveDrag(e: Event): goog.math.Coordinate;
         showContextMenu_(e: Event): void;
         static buildDeleteList_(topBlocks: Blockly.Block[]): Blockly.Block[];
+        getFlyout(): any; //Blockly.Flyout;
     }
 
 
@@ -1175,6 +1175,7 @@ declare namespace Blockly {
         function hideIfOwner(owner: any): void;
         function hideWithoutAnimation(): void;
         function showPositionedByBlock(owner: any, block: Blockly.Block, opt_onHide?: Function, opt_secondaryYOffset?: number): void;
+        function showPositionedByField(field: Blockly.Field, opt_onHide?: Function, opt_secondaryYOffset?: number): void;
         function clearContent(): void;
         function getContentDiv(): HTMLElement;
         function setColour(backgroundColour: string, borderColour: string): void;
@@ -1199,5 +1200,15 @@ declare namespace Blockly {
 
     class PXTUtils {
         static fadeColour(hex: string, luminosity: number, lighten: boolean): string;
+    }
+
+    namespace Functions {
+        function isFunctionArgumentReporter(block: Blockly.Block): boolean;
+    }
+
+    namespace PXTBlockly {
+        namespace FunctionUtils {
+            function createCustomArgumentReporter(typeName: string, ws: Blockly.Workspace): Blockly.Block;
+        }
     }
 }

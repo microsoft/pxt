@@ -693,6 +693,11 @@ namespace pxt.blocks {
         return mkStmt(mkText(name + "()"));
     }
 
+    function compileArgumentReporter(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
+        const name = escapeVarName(b.getFieldValue("VALUE"), e);
+        return mkText(name);
+    }
+
     function compileWorkspaceComment(c: Blockly.WorkspaceComment): JsNode {
         const content = c.getContent();
         return Helpers.mkMultiComment(content.trim());
@@ -785,6 +790,11 @@ namespace pxt.blocks {
                 expr = compileMathJsOp(e, b, comments); break;
             case pxtc.TS_OUTPUT_TYPE:
                 expr = extractTsExpression(e, b, comments); break;
+            case "argument_reporter_boolean":
+            case "argument_reporter_number":
+            case "argument_reporter_string":
+            case "argument_reporter_custom":
+                expr = compileArgumentReporter(e, b, comments); break;
             default:
                 let call = e.stdCallTable[b.type];
                 if (call) {
@@ -1431,11 +1441,11 @@ namespace pxt.blocks {
 
         // append functions in stdcalltable
         if (blockInfo) {
-            // Enums are not enclosed in namespaces, so add them to the taken names
-            // to avoid collision
+            // Enums, tagged templates, and namespaces are not enclosed in namespaces,
+            // so add them to the taken names to avoid collision
             Object.keys(blockInfo.apis.byQName).forEach(name => {
                 const info = blockInfo.apis.byQName[name];
-                if (info.kind === pxtc.SymbolKind.Enum) {
+                if (info.kind === pxtc.SymbolKind.Enum || info.kind === pxtc.SymbolKind.Function || info.kind === pxtc.SymbolKind.Module) {
                     e.renames.takenNames[info.qName] = true;
                 }
             });
@@ -1480,6 +1490,8 @@ namespace pxt.blocks {
                 && escapeVarName(getLoopVariableField(b).getField("VAR").getText(), e) == name)
                 return true;
             else if (isMutatingBlock(b) && b.mutation.isDeclaredByMutation(name))
+                return true;
+            else if (Blockly.Functions.isFunctionArgumentReporter(b))
                 return true;
 
             let stdFunc = e.stdCallTable[b.type];
@@ -1645,6 +1657,9 @@ namespace pxt.blocks {
                             if (shift >= 0 && Math.floor(shift) === shift) {
                                 newNode = H.mkAssign(mkText(name), H.mkSimpleCall("<<", [H.mkNumberLiteral(1), H.mkNumberLiteral(shift)]));
                             }
+                        } else if (info.isHash) {
+                            const hash = ts.pxtc.Util.codalHash16(name.toLowerCase());
+                            newNode = H.mkAssign(mkText(name), H.mkNumberLiteral(hash))
                         }
                         if (!newNode) {
                             if (value === lastValue + 1) {
@@ -1913,8 +1928,15 @@ namespace pxt.blocks {
         if (stdfun.attrs.draggableParameters) {
             for (let i = 0; i < stdfun.comp.handlerArgs.length; i++) {
                 const arg = stdfun.comp.handlerArgs[i];
+                let varName: string;
                 const varBlock = getInputTargetBlock(b, "HANDLER_DRAG_PARAM_" + arg.name) as Blockly.Block;
-                const varName = varBlock && varBlock.getField("VAR").getText();
+
+                if (stdfun.attrs.draggableParameters === "reporter") {
+                    varName = varBlock && varBlock.getFieldValue("VALUE");
+                } else {
+                    varName = varBlock && varBlock.getField("VAR").getText();
+                }
+
                 if (varName !== null) {
                     handlerArgs.push(escapeVarName(varName, e));
                 }

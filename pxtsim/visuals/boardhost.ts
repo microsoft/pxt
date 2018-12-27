@@ -1,6 +1,7 @@
 namespace pxsim.visuals {
     export interface BoardViewOptions {
         visual: string | BoardImageDefinition,
+        boardDef: BoardDefinition,
         wireframe?: boolean,
         highContrast?: boolean,
         light?: boolean
@@ -25,6 +26,7 @@ namespace pxsim.visuals {
         const boardVis = opts.visual as BoardImageDefinition;
         return new visuals.GenericBoardSvg({
             visualDef: boardVis,
+            boardDef: opts.boardDef,
             wireframe: opts.wireframe,
         });
     }
@@ -52,13 +54,13 @@ namespace pxsim.visuals {
             this.state = opts.state;
             let activeComponents = opts.partsList;
 
-            let useBreadboard = 0 < activeComponents.length || opts.forceBreadboardLayout;
-            if (useBreadboard) {
+            let useBreadboardView = 0 < activeComponents.length || opts.forceBreadboardLayout;
+            if (useBreadboardView) {
                 this.breadboard = new Breadboard({
                     wireframe: opts.wireframe,
                 });
-                let bMarg = opts.boardDef.marginWhenBreadboarding || [0, 0, 40, 0];
-                let composition = composeSVG({
+                const bMarg = opts.boardDef.marginWhenBreadboarding || [0, 0, 40, 0];
+                const composition = composeSVG({
                     el1: this.boardView.getView(),
                     scaleUnit1: this.boardView.getPinDist(),
                     el2: this.breadboard.getSVGAndSize(),
@@ -68,35 +70,52 @@ namespace pxsim.visuals {
                     maxWidth: opts.maxWidth,
                     maxHeight: opts.maxHeight,
                 });
-                let under = composition.under;
-                let over = composition.over;
+                const under = composition.under;
+                const over = composition.over;
                 this.view = composition.host;
-                let edges = composition.edges;
+                const edges = composition.edges;
                 this.fromMBCoord = composition.toHostCoord1;
                 this.fromBBCoord = composition.toHostCoord2;
-                let pinDist = composition.scaleUnit;
                 this.partGroup = over;
                 this.partOverGroup = <SVGGElement>svg.child(this.view, "g");
 
                 this.style = <SVGStyleElement>svg.child(this.view, "style", {});
                 this.defs = <SVGDefsElement>svg.child(this.view, "defs", {});
 
-                this.wireFactory = new WireFactory(under, over, edges, this.style, this.getLocCoord.bind(this), this.getPinStyle.bind(this));
+                this.wireFactory = new WireFactory(under, over, edges, this.style,
+                    this.getLocCoord.bind(this), this.getPinStyle.bind(this));
 
-                let allocRes = allocateDefinitions({
+                const allocRes = allocateDefinitions({
                     boardDef: opts.boardDef,
                     partDefs: opts.partDefs,
                     fnArgs: opts.fnArgs,
                     getBBCoord: this.breadboard.getCoord.bind(this.breadboard),
                     partsList: activeComponents,
                 });
+                if (!allocRes.partsAndWires.length) {
+                    // nothing got allocated, so we rollback the changes.
+                    useBreadboardView = false;
+                }
+                else {
+                    this.addAll(allocRes);
+                    if (!allocRes.requiresBreadboard && !opts.forceBreadboardRender)
+                        this.breadboard.hide();
+                }
+            }
 
-                this.addAll(allocRes);
+            if (!useBreadboardView) {
+                // delete any kind of left over
+                delete this.breadboard;
+                delete this.wireFactory;
+                delete this.partOverGroup;
+                delete this.partGroup;
+                delete this.style;
+                delete this.defs;
+                delete this.fromBBCoord;
+                delete this.fromMBCoord;
 
-                if (!allocRes.requiresBreadboard && !opts.forceBreadboardRender)
-                    this.breadboard.hide();
-            } else {
-                let el = this.boardView.getView().el;
+                // allocate view
+                const el = this.boardView.getView().el;
                 this.view = el;
                 this.partGroup = <SVGGElement>svg.child(this.view, "g");
                 this.partOverGroup = <SVGGElement>svg.child(this.view, "g");

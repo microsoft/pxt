@@ -140,6 +140,44 @@ namespace pxsim.util {
                 enumerable: true
             });
         }
+        // https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.fill
+        if (!Uint8Array.prototype.reverse) {
+            Object.defineProperty(Uint8Array.prototype, 'reverse', {
+                value: Array.prototype.reverse,
+                writable: true,
+                enumerable: true
+            });
+        }
+        if (!Uint16Array.prototype.reverse) {
+            Object.defineProperty(Uint16Array.prototype, 'reverse', {
+                value: Array.prototype.reverse,
+                writable: true,
+                enumerable: true
+            });
+        }
+        if (!Uint32Array.prototype.reverse) {
+            Object.defineProperty(Uint32Array.prototype, 'reverse', {
+                value: Array.prototype.reverse,
+                writable: true,
+                enumerable: true
+            });
+        }
+        // Inject Math imul polyfill
+        if (!Math.imul) {
+            // for explanations see:
+            // http://stackoverflow.com/questions/3428136/javascript-integer-math-incorrect-results (second answer)
+            // (but the code below doesn't come from there; I wrote it myself)
+            // TODO use Math.imul if available
+            Math.imul = function (a: number, b: number): number {
+                const ah = (a >>> 16) & 0xffff;
+                const al = a & 0xffff;
+                const bh = (b >>> 16) & 0xffff;
+                const bl = b & 0xffff;
+                // the shift by 0 fixes the sign on the high part
+                // the final |0 converts the unsigned value into a signed value
+                return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0) | 0);
+            }
+        }
     }
 
     export class Lazy<T> {

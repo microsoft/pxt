@@ -1,4 +1,7 @@
 declare namespace pxt {
+
+    type CodeCardType = "file" | "example" | "codeExample" | "tutorial" | "side" | "template" | "package" | "hw";
+
     interface Map<T> {
         [index: string]: T;
     }
@@ -50,12 +53,16 @@ declare namespace pxt {
         additionalFilePath?: string;
         additionalFilePaths?: string[];
         core?: boolean;
+        // used for sorting for core packages
+        weight?: number;
         gistId?: string;
         extension?: PackageExtension; // describe the associated extension if any
         dalDTS?: {
-            includeDirs: string[];
+            corePackage?: string;
+            includeDirs?: string[];
             excludePrefix?: string[];
         };
+        features?: string[];
     }
 
     interface PackageExtension {
@@ -96,8 +103,9 @@ declare namespace pxt {
         role?: string;
         ariaLabel?: string;
         label?: string;
+        labelIcon?: string;
         labelClass?: string;
-        tags?: CodeCardTag[]; // tags shown in home screen, eg: [{ "label": "Beginner", "color": "blue" }]
+        tags?: string[]; // tags shown in home screen, colors specified in theme
         tabIndex?: number;
 
         color?: string; // one of semantic ui colors
@@ -114,7 +122,7 @@ declare namespace pxt {
         buyUrl?: string;
         feedbackUrl?: string;
         responsive?: boolean;
-        cardType?: "file" | "example" | "codeExample" | "tutorial" | "side" | "template" | "package" | "hw";
+        cardType?: CodeCardType;
 
         header?: string;
         any?: number;
@@ -128,14 +136,10 @@ declare namespace pxt {
         iconColor?: string;
 
         onClick?: (e: any) => void; // React event
+        onLabelClicked?: (e: any) => void;
 
         target?: string;
         className?: string;
-    }
-
-    interface CodeCardTag {
-        label: string;
-        color?: string;
     }
 
     interface JRes {

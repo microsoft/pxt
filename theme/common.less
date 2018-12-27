@@ -108,6 +108,11 @@ body {
     background-color: @editorToolsBackground;
 }
 
+.transparentEditorTools #editortools {
+    background-color: transparent;
+    z-index: (@blocklyFlyoutZIndex)-1;
+}
+
 #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #filelist {
     bottom: @editorToolsCollapsedHeight;
 }
@@ -154,6 +159,10 @@ body {
     margin-top: 0 !important;
     padding-top: 0.55rem;
     background-color: @simulatorBackground;
+}
+
+.transparentEditorTools #downloadArea {
+    background-color: transparent !important;
 }
 
 .filemenu {
@@ -610,6 +619,26 @@ p.ui.font.small {
 
 /* Mobile + Tablet */
 @media only screen and (max-width: @largestTabletScreen) {
+    #root.sandbox .active.item.sim-menuitem ~ .toggle {
+        margin-left: 0 !important;
+        box-shadow: 2px 0px 0px rgba(0,0,0,0.1) !important;
+        background: @editorToggleColor !important;
+    }
+    #root.sandbox .active.item.blocks-menuitem ~ .toggle {
+        margin-left: 40px !important;
+        box-shadow: 2px 0px 0px rgba(0,0,0,0.1), -2px 0px 0px rgba(0,0,0,0.1) !important;
+        background: @editorToggleColor !important;
+    }
+    #root.sandbox .active.item.javascript-menuitem ~ .toggle {
+        margin-left: 80px !important;
+        box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
+        background: @editorToggleColor !important;
+    }
+
+    .simView #boardview {
+        padding-top: @sandboxMobileMenuHeight;
+    }
+
     .ui.portrait.only {
         display:inherit !important;
     }
@@ -935,118 +964,139 @@ p.ui.font.small {
     }
 }
 
-/* Mobile, Tablet AND thin screen */
-@media only screen and (max-width: @largestTabletScreen) and (max-height: @thinEditorBreakpoint) {
-    /* Mobile embedded view */
-    .sandbox #simulators{
-        display: none;
-    }
-    .sandbox #maineditor {
-        overflow: hidden;
-    }
-    .sandbox #blocksArea,
-        .sandbox #monacoEditor,
-        .sandbox #pxtJsonEditor,
-        .sandbox #serialEditor,
-        .sandbox #editortools,
-        .sandbox #msg {
-        bottom: 1.5rem !important;
-    }
-    .sandbox #editortools {
-        display: none;
-    }
-    .simView #simulators {
-        display: inherit;
-    }
-    .simView #filelist {
-        position: fixed;
-        z-index: @fullscreenZIndex;
-        top:0 !important;
-        left:0 !important;
-        bottom:0 !important;
-        right:0 !important;
-        padding: 0;
-        margin: 0;
-        max-width: 100%;
-        min-width: 100%;
-        height:100%;
-    }
-    .simView #boardview {
-        position: relative;
-        height:100%;
-        background-color: white;
-        padding-top: @sandboxMobileMenuHeight;
-        padding-left: 2em;
-        padding-right: 2em;
-        padding-bottom: 2em;
-
-        background-color: @fullscreenBackgroundGradientStart;
-        background: @fullscreenBackgroundGradientStart; /* For browsers that do not support gradients */
-        background: -webkit-linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* For Safari 5.1 to 6.0 */
-        background: -o-linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* For Opera 11.1 to 12.0 */
-        background: -moz-linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* For Firefox 3.6 to 15 */
-        background: linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* Standard syntax */
-    }
-    .simView #simulator .ui.item,
-        .simView #maineditor {
-        display: none !important;
-        z-index: -10 !important;
-    }
-    .sandboxfooter {
-        left: 0.5em !important;
-        right: 0.5em !important;
-        margin: 0rem !important;
-        right: auto;
-        text-align: center;
-    }
-    .sandboxfooter .item{
-        font-size: 0.7rem !important;
-    }
-    .simView .sandboxfooter {
-        z-index: @sandboxFooterZIndex;
-    }
-    .simView .ui.menu {
-        background: transparent !important;
-    }
-    .simView #simulators {
-        position: relative;
-        width: 100%;
-        height: 100%;
-    }
-    .simView div.simframe {
-        position:relative;
-        width: 50%;
-        height: 100%;
-        float: left;
-        padding-bottom: 0 !important;
-    }
-    .simView div.simframe > iframe {
-        position:relative;
-        max-width: 90%;
-    }
-    .simView div.simframe:only-child {
-        width: 100%;
-    }
-    .simView div.simframe:only-child > iframe {
-        max-width: 100%;
-    }
+.simView #filelist {
+    position: fixed;
+    z-index: @fullscreenZIndex;
+    top:0 !important;
+    left:0 !important;
+    bottom:0 !important;
+    right:0 !important;
+    padding: 0;
+    margin: 0;
+    max-width: 100%;
+    min-width: 100%;
+    height:100%;
 }
 
-@media only screen and (max-height: @thinEditorBreakpoint) and (max-width: @computerBreakpoint){
-    /* sim-menuitem visible in this view (in sandbox mode), adjust toggle margins */
-    #root.sandbox .active.item.sim-menuitem ~ .toggle {
+.simView #boardview {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow-y: hidden;
+
+    background-color: white;
+    padding-left: 2em;
+    padding-right: 2em;
+    padding-bottom: 2em;
+    padding-top: @mainMenuHeight;
+
+    background-color: @fullscreenBackgroundGradientStart;
+    background: @fullscreenBackgroundGradientStart; /* For browsers that do not support gradients */
+    background: -webkit-linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* For Safari 5.1 to 6.0 */
+    background: -o-linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* For Opera 11.1 to 12.0 */
+    background: -moz-linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* For Firefox 3.6 to 15 */
+    background: linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* Standard syntax */
+}
+
+.simView #maineditor {
+    display: none !important;
+    z-index: -10 !important;
+}
+
+.sandboxfooter {
+    left: 0.5em !important;
+    right: 0.5em !important;
+    margin: 0rem !important;
+    right: auto;
+    text-align: center;
+}
+
+.sandboxfooter .item{
+    font-size: 0.7rem !important;
+}
+
+.simView .sandboxfooter {
+    z-index: @sandboxFooterZIndex;
+}
+
+.simView .ui.menu {
+    background: transparent !important;
+}
+
+.simView #simulators {
+    position: absolute;
+    top: @mainMenuHeight;
+    bottom: 4rem;
+    left: 0;
+    right: 0;
+}
+
+.simView div.simframe {
+    position:relative;
+    width: 50%;
+    height: 100%;
+    float: left;
+    padding-bottom: 0 !important;
+}
+
+.simView div.simframe > iframe {
+    position:relative;
+    max-width: 90%;
+}
+
+.simView div.simframe:only-child {
+    width: 100%;
+}
+
+.simView div.simframe:only-child > iframe {
+    max-width: 100%;
+}
+
+.sandbox {
+    #simulators, #simulator, #editortools {
+        display: none;
+    }
+
+    #maineditor {
+        overflow: hidden;
+        left: 0;
+    }
+
+    #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #editortools, #msg {
+        bottom: 1.5rem !important;
+    }
+
+    .active.item.sim-menuitem ~ .toggle {
         margin-left: 0 !important;
         box-shadow: 2px 0px 0px rgba(0,0,0,0.1) !important;
         background: @editorToggleColor !important;
     }
-    #root.sandbox .active.item.blocks-menuitem ~ .toggle {
-        margin-left: 40px !important;
-        box-shadow: 2px 0px 0px rgba(0,0,0,0.1), -2px 0px 0px rgba(0,0,0,0.1) !important;
+    .active.item.blocks-menuitem ~ .toggle {
+        margin-left: 140px !important;
+        box-shadow: 2px 0px 0px rgba(0,0,0,0.1) !important;
         background: @editorToggleColor !important;
     }
-    #root.sandbox .active.item.javascript-menuitem ~ .toggle {
-        margin-left: 80px !important;
+    .active.item.javascript-menuitem ~ .toggle {
+        margin-left: 280px !important;
         box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
         background: @editorToggleColor !important;
+    }
+}
+
+.sandbox.simView {
+    #simulators, #simulator, #editortools {
+        display: inherit;
+    }
+
+    #filelist .simtoolbar {
+        position: fixed;
+        bottom: 0.25em;
+        left: auto;
+        right: auto;
+
+        flex-direction: row !important;
+        margin-bottom: 1em !important;
     }
 }

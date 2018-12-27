@@ -375,7 +375,9 @@ export class Toolbox extends data.Component<ToolboxProps, ToolboxState> {
         const { showAdvanced, visible, loading, selectedItem, expandedItem, hasSearch, showSearchBox, hasError } = this.state;
         if (!visible) return <div style={{ display: 'none' }} />
 
-        const hasTopBlocks = !!pxt.appTarget.appTheme.topBlocks;
+        const tutorialOptions = parent.parent.state.tutorialOptions;
+        const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial
+        const hasTopBlocks = !!pxt.appTarget.appTheme.topBlocks && !inTutorial;
 
         if (loading || hasError) return <div>
             <div className="blocklyTreeRoot">
@@ -491,9 +493,12 @@ export class CategoryItem extends data.Component<CategoryItemProps, CategoryItem
         this.treeRowElement.focus();
     }
 
-    handleClick() {
+    handleClick(e: React.MouseEvent<any>) {
         const { treeRow, onCategoryClick, index } = this.props;
         if (onCategoryClick) onCategoryClick(treeRow, index);
+
+        e.preventDefault();
+        e.stopPropagation();
     }
 
     handleKeyDown(e: React.KeyboardEvent<HTMLElement>) {
@@ -569,6 +574,7 @@ export interface ToolboxCategory {
 
     groups?: string[];
     groupIcons?: string[];
+    groupHelp?: string[];
     labelLineWidth?: string;
 
     blocks?: BlockDefinition[];
@@ -580,7 +586,7 @@ export interface ToolboxCategory {
 
 export interface TreeRowProps {
     treeRow: ToolboxCategory;
-    onClick?: () => void;
+    onClick?: (e: React.MouseEvent<any>) => void;
     onKeyDown?: (e: React.KeyboardEvent<any>) => void;
     selected?: boolean;
     isRtl?: boolean;
@@ -639,7 +645,7 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
 
     renderCore() {
         const { selected, onClick, onKeyDown, isRtl } = this.props;
-        const { nameid, subns, name, icon, color } = this.props.treeRow;
+        const { nameid, subns, name, icon } = this.props.treeRow;
         const appTheme = pxt.appTarget.appTheme;
         const metaColor = this.getMetaColor();
 
@@ -672,7 +678,7 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
         if (selected) {
             treeRowClass += ' blocklyTreeSelected';
             if (appTheme.invertedToolbox) {
-                treeRowStyle.backgroundColor = `${pxt.toolbox.fadeColor(color, invertedMultipler, false)}`;
+                treeRowStyle.backgroundColor = `${pxt.toolbox.fadeColor(metaColor, invertedMultipler, false)}`;
             } else {
                 treeRowStyle.backgroundColor = (metaColor || '#ddd');
             }
@@ -701,7 +707,7 @@ export class TreeRow extends data.Component<TreeRowProps, {}> {
         return <div role="button" ref={this.handleTreeRowRef} className={treeRowClass}
             style={treeRowStyle} tabIndex={0}
             onMouseEnter={this.onmouseenter} onMouseLeave={this.onmouseleave}
-            onClick={onClick} onKeyDown={onKeyDown ? onKeyDown : sui.fireClickOnEnter}>
+            onClick={onClick} onContextMenu={onClick} onKeyDown={onKeyDown ? onKeyDown : sui.fireClickOnEnter}>
             <span className="blocklyTreeIcon" role="presentation"></span>
             {iconImageStyle}
             <span style={{ display: 'inline-block' }} className={`blocklyTreeIcon ${iconClass}`} role="presentation">{iconContent}</span>
@@ -835,9 +841,10 @@ export class ToolboxSearch extends data.Component<ToolboxSearchProps, ToolboxSea
         const { searchAccessibilityLabel } = this.state;
         return <div id="blocklySearchArea">
             <div id="blocklySearchInput" className="ui fluid icon input" role="search">
-                <input ref="searchInput" type="text" placeholder={lf("Search...")} autoComplete="off"
+                <input ref="searchInput" type="text" placeholder={lf("Search...")}
                     onFocus={this.searchImmediate} onKeyDown={this.handleKeyDown} onChange={this.handleChange}
-                    id="blocklySearchInputField" className="blocklySearchInputField" />
+                    id="blocklySearchInputField" className="blocklySearchInputField"
+                    autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} />
                 <i className="search icon" role="presentation" aria-hidden="true"></i>
                 <div className="accessible-hidden" id="blocklySearchLabel" aria-live="polite"> {searchAccessibilityLabel} </div>
             </div>

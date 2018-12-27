@@ -218,6 +218,21 @@ namespace pxt.blocks {
         }
     }
 
+    /**
+     * Returns which Blockly block type to use for an argument reporter based
+     * on the specified TypeScript type.
+     * @param varType The variable's TypeScript type
+     * @return The Blockly block type of the reporter to be used
+     */
+    export function reporterTypeForArgType(varType: string) {
+        let reporterType = "argument_reporter_custom";
+
+        if (varType === "boolean" || varType === "number" || varType === "string") {
+            reporterType = `argument_reporter_${varType}`;
+        }
+
+        return reporterType;
+    }
 
     export interface FieldDescription {
         n: string;
@@ -356,7 +371,7 @@ namespace pxt.blocks {
                 name: Util.lf("{id:block}number"),
                 url: '/blocks/math/random',
                 category: 'math',
-                tooltip: Util.lf("an whole number")
+                tooltip: Util.lf("a whole number")
             },
             'math_number_minmax': {
                 name: Util.lf("{id:block}number"),

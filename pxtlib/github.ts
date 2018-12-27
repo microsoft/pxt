@@ -637,50 +637,34 @@ namespace pxt.github {
                 return listRefsExtAsync(scr.fullName, "tags")
                     .then(refsRes => {
                         let tags = Object.keys(refsRes.refs)
-                        tags.reverse()
-                        // only look for vxx.xx.xx tags
-                        tags = tags.filter(t => /^v\d+(\.\d+(\.\d+)?)?$/i.test(t));
+                        // only look for semver tags
+                        tags = pxt.semver.sortLatestTags(tags);
+
+                        // check if the version has been frozen for this release
+                        const targetVersion = pxt.appTarget.versions && pxt.semver.tryParse(pxt.appTarget.versions.target);
+                        if (targetVersion && config.releases && config.releases["v" + targetVersion.major]) {
+                            const release = config.releases["v" + targetVersion.major]
+                                .map(repo => pxt.github.parseRepoId(repo))
+                                .filter(repo => repo.fullName.toLowerCase() == parsed.fullName.toLowerCase())
+                                [0];
+                            if (release) {
+                                // this repo is frozen to a particular tag for this target
+                                if (tags.some(t => t == release.tag)) { // tag still exists!!!
+                                    pxt.debug(`approved release ${release.fullName}#${release.tag} for v${targetVersion.major}`)
+                                    return Promise.resolve(release.tag);
+                                } else {
+                                    // so the package was snapped to a particular tag but the tag does not exist anymore
+                                    pxt.reportError(`packages`, `approved release ${release.fullName}#${release.tag} for v${targetVersion.major} not found anymore`, { repo: scr.fullName })
+                                    // in this case, we keep going, we might be lucky and the current version of the package might still load
+                                }
+                            }
+                        }
+
                         if (tags[0])
                             return Promise.resolve(tags[0])
                         else
                             return refsRes.head || tagToShaAsync(scr.fullName, scr.defaultBranch)
                     })
-            });
-    }
-
-    export function publishGistAsync(token: string, forceNew: boolean, files: any, name: string, currentGistId: string): Promise<any> {
-        // Github gist API: https://developer.github.com/v3/gists/
-        const data = {
-            "description": name,
-            "public": false, /* there is no API to make a gist public or private, so it's easier/safer to always make it private and let the user make it public from the UI */
-            "files": files
-        };
-        const headers: Map<string> = {};
-        let method: string, url: string = "https://api.github.com/gists";
-        if (token) headers['Authorization'] = `token ${token}`;
-        if (currentGistId && token && !forceNew) {
-            // Patch existing gist
-            method = 'PATCH';
-            url += `/${currentGistId}`;
-        } else {
-            // Create new gist
-            method = 'POST';
-        }
-        return U.requestAsync({
-            url: url,
-            allowHttpErrors: true,
-            headers: headers,
-            method: method,
-            data: data || {}
-        })
-            .then((resp) => {
-                if ((resp.statusCode == 200 || resp.statusCode == 201) && resp.json.id) {
-                    return Promise.resolve<string>(resp.json.id);
-                } else if (resp.statusCode == 404 && method == 'PATCH') {
-                    return Promise.reject(resp.statusCode);
-                } else if (resp.statusCode == 404) {
-                    return Promise.reject("Make sure to add the ``gist`` scope to your token. " + resp.text);
-                } return Promise.reject(resp.text);
             });
     }
 

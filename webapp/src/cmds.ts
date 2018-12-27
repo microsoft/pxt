@@ -376,12 +376,12 @@ export function initCommandsAsync(): Promise<void> {
                 })
                 .catch((e) => core.errorNotification(lf("saving file failed...")));
         };
-    } else if (electron.isPxtElectron()) {
+    } else if (pxt.BrowserUtils.isPxtElectron()) {
         pxt.commands.deployCoreAsync = electron.driveDeployAsync;
         pxt.commands.electronDeployAsync = electron.driveDeployAsync;
     } else if (hidbridge.shouldUse() && !pxt.appTarget.serial.noDeploy && !forceHexDownload) {
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
-    } else if (Cloud.isLocalHost() && Cloud.localToken && !forceHexDownload) { // local node.js
+    } else if (pxt.BrowserUtils.isLocalHost() && Cloud.localToken && !forceHexDownload) { // local node.js
         pxt.commands.deployCoreAsync = localhostDeployCoreAsync;
     } else { // in browser
         pxt.commands.deployCoreAsync = browserDownloadDeployCoreAsync;

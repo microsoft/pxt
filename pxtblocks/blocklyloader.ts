@@ -26,155 +26,6 @@ namespace pxt.blocks {
         }
     }
 
-    // this keeps a bit of state for perf reasons
-    class ImageConverter {
-        private palette: Uint8Array
-        private start: number
-
-        logTime() {
-            if (this.start) {
-                let d = Date.now() - this.start
-                pxt.debug("Icon cration: " + d + "ms")
-            }
-        }
-
-        convert(jresURL: string): string {
-            if (!this.start)
-                this.start = Date.now()
-            const data = atob(jresURL.slice(jresURL.indexOf(",") + 1))
-            const magic = data.charCodeAt(0)
-            const w = data.charCodeAt(1)
-            const h = data.charCodeAt(2)
-            if (magic != 0xe1 && magic != 0xe4)
-                return null
-
-            function htmlColorToBytes(hexColor: string) {
-                const v = parseInt(hexColor.replace(/#/, ""), 16)
-                return [(v >> 0) & 0xff, (v >> 8) & 0xff, (v >> 16) & 0xff, 0xff]
-            }
-
-
-            if (!this.palette) {
-                let arrs = pxt.appTarget.runtime.palette.map(htmlColorToBytes);
-
-                // Set the alpha for transparency at index 0
-                arrs[0][3] = 0;
-                this.palette = new Uint8Array(arrs.length * 4)
-                for (let i = 0; i < arrs.length; ++i) {
-                    this.palette[i * 4 + 0] = arrs[i][0]
-                    this.palette[i * 4 + 1] = arrs[i][1]
-                    this.palette[i * 4 + 2] = arrs[i][2]
-                    this.palette[i * 4 + 3] = arrs[i][3]
-                }
-            }
-
-            if (magic == 0xe1) {
-                return this.genMonochrome(data, w, h);
-            }
-            return this.genColor(data, w, h);
-        }
-
-        genMonochrome(data: string, w: number, h: number) {
-            let outByteW = (w + 3) & ~3
-
-            let bmpHeaderSize = 14 + 40 + this.palette.length
-            let bmpSize = bmpHeaderSize + outByteW * h
-            let bmp = new Uint8Array(bmpSize)
-
-            bmp[0] = 66
-            bmp[1] = 77
-            HF2.write32(bmp, 2, bmpSize)
-            HF2.write32(bmp, 10, bmpHeaderSize)
-            HF2.write32(bmp, 14, 40) // size of this header
-            HF2.write32(bmp, 18, w)
-            HF2.write32(bmp, 22, -h) // not upside down
-            HF2.write16(bmp, 26, 1) // 1 color plane
-            HF2.write16(bmp, 28, 8) // 8bpp
-            HF2.write32(bmp, 38, 2835) // 72dpi
-            HF2.write32(bmp, 42, 2835)
-            HF2.write32(bmp, 46, this.palette.length >> 2)
-
-            bmp.set(this.palette, 54)
-
-            let inP = 4
-            let outP = bmpHeaderSize
-            let mask = 0x01
-            let v = data.charCodeAt(inP++)
-            for (let x = 0; x < w; ++x) {
-                outP = bmpHeaderSize + x
-                for (let y = 0; y < h; ++y) {
-                    bmp[outP] = (v & mask) ? 1 : 0
-                    outP += outByteW
-                    mask <<= 1
-                    if (mask == 0x100) {
-                        mask = 0x01
-                        v = data.charCodeAt(inP++)
-                    }
-                }
-            }
-
-            return "data:image/bmp;base64," + btoa(U.uint8ArrayToString(bmp))
-        }
-
-        genColor(data: string, w: number, h: number) {
-            let outByteW = w << 2;
-            let bmpHeaderSize = 138;
-            let bmpSize = bmpHeaderSize + outByteW * h
-            let bmp = new Uint8Array(bmpSize)
-
-            bmp[0] = 66
-            bmp[1] = 77
-            HF2.write32(bmp, 2, bmpSize)
-            HF2.write32(bmp, 10, bmpHeaderSize)
-            HF2.write32(bmp, 14, 124) // size of this header
-            HF2.write32(bmp, 18, w)
-            HF2.write32(bmp, 22, -h) // not upside down
-            HF2.write16(bmp, 26, 1) // 1 color plane
-            HF2.write16(bmp, 28, 32) // 32bpp
-            HF2.write16(bmp, 30, 3) // magic?
-            HF2.write32(bmp, 38, 2835) // 72dpi
-            HF2.write32(bmp, 42, 2835)
-
-            HF2.write32(bmp, 54, 0xff0000) // Red bitmask
-            HF2.write32(bmp, 58, 0xff00) // Green bitmask
-            HF2.write32(bmp, 62, 0xff) // Blue bitmask
-            HF2.write32(bmp, 66, 0xff000000) // Alpha bitmask
-
-            // Color space (sRGB)
-            bmp[70] = 0x42; // B
-            bmp[71] = 0x47; // G
-            bmp[72] = 0x52; // R
-            bmp[73] = 0x73; // s
-
-            let inP = 4
-            let outP = bmpHeaderSize
-
-            for (let x = 0; x < w; x++) {
-                outP = bmpHeaderSize + (x << 2)
-                for (let y = 0; y < h; y += 2) {
-                    let v = data.charCodeAt(inP++)
-                    const colorStart = (v & 0xf) << 2;
-                    bmp[outP] = this.palette[colorStart]
-                    bmp[outP + 1] = this.palette[colorStart + 1]
-                    bmp[outP + 2] = this.palette[colorStart + 2]
-                    bmp[outP + 3] = this.palette[colorStart + 3]
-                    outP += outByteW
-                    if (y != h - 1) {
-                        const colorStart = ((v >> 4) & 0xf) << 2;
-                        bmp[outP] = this.palette[colorStart]
-                        bmp[outP + 1] = this.palette[colorStart + 1]
-                        bmp[outP + 2] = this.palette[colorStart + 2]
-                        bmp[outP + 3] = this.palette[colorStart + 3]
-                        outP += outByteW
-                    }
-                }
-                while (inP & 3) inP++
-            }
-
-            return "data:image/bmp;base64," + btoa(U.uint8ArrayToString(bmp))
-        }
-    }
-
     // Add numbers before input names to prevent clashes with the ones added by BlocklyLoader
     export const optionalDummyInputPrefix = "0_optional_dummy";
     export const optionalInputWithFieldPrefix = "0_optional_field";
@@ -226,9 +77,10 @@ namespace pxt.blocks {
         return b ? b.fn : undefined;
     }
 
-    function createShadowValue(info: pxtc.BlocksInfo, p: pxt.blocks.BlockParameter, shadowId?: string, defaultV?: string): Element {
+    export function createShadowValue(info: pxtc.BlocksInfo, p: pxt.blocks.BlockParameter, shadowId?: string, defaultV?: string): Element {
         defaultV = defaultV || p.defaultValue;
         shadowId = shadowId || p.shadowBlockId;
+        if (!shadowId && p.range) shadowId = "math_number_minmax";
         let defaultValue: any;
 
         if (defaultV && defaultV.slice(0, 1) == "\"")
@@ -305,20 +157,46 @@ namespace pxt.blocks {
             }
         }
 
+        let mut: HTMLElement;
+        if (p.range) {
+            mut = document.createElement('mutation');
+            mut.setAttribute('min', p.range.min.toString());
+            mut.setAttribute('max', p.range.max.toString());
+            mut.setAttribute('label', p.actualName.charAt(0).toUpperCase() + p.actualName.slice(1));
+            if (p.fieldOptions) {
+                if (p.fieldOptions['step']) mut.setAttribute('step', p.fieldOptions['step']);
+                if (p.fieldOptions['color']) mut.setAttribute('color', p.fieldOptions['color']);
+                if (p.fieldOptions['precision']) mut.setAttribute('precision', p.fieldOptions['precision']);
+            }
+        }
+
+        if (p.fieldOptions) {
+            if (!mut) mut = document.createElement('mutation');
+            mut.setAttribute(`customfield`, JSON.stringify(p.fieldOptions));
+        }
+
+        if (mut) {
+            shadow.appendChild(mut);
+        }
+
         return value;
     }
 
     export function createFlyoutHeadingLabel(name: string, color?: string, icon?: string, iconClass?: string) {
-        const headingLabel = createFlyoutLabel(name, color, icon, iconClass);
+        const headingLabel = createFlyoutLabel(name, pxt.toolbox.convertColor(color), icon, iconClass);
         headingLabel.setAttribute('web-class', 'blocklyFlyoutHeading');
         return headingLabel;
     }
 
-    export function createFlyoutGroupLabel(name: string, icon?: string, labelLineWidth?: string) {
+    export function createFlyoutGroupLabel(name: string, icon?: string, labelLineWidth?: string, helpCallback?: string) {
         const groupLabel = createFlyoutLabel(name, undefined, icon);
         groupLabel.setAttribute('web-class', 'blocklyFlyoutGroup');
         groupLabel.setAttribute('web-line', '1.5');
         if (labelLineWidth) groupLabel.setAttribute('web-line-width', labelLineWidth);
+        if (helpCallback) {
+            groupLabel.setAttribute('web-help-button', 'true');
+            groupLabel.setAttribute('callbackkey', helpCallback);
+        }
         return groupLabel;
     }
 
@@ -327,7 +205,7 @@ namespace pxt.blocks {
         let headingLabel = goog.dom.createDom('label') as HTMLElement;
         headingLabel.setAttribute('text', name);
         if (color) {
-            headingLabel.setAttribute('web-icon-color', color);
+            headingLabel.setAttribute('web-icon-color', pxt.toolbox.convertColor(color));
         }
         if (icon) {
             if (icon.length === 1) {
@@ -366,45 +244,41 @@ namespace pxt.blocks {
             comp.parameters.filter(pr => !pr.isOptional &&
                 (/^(string|number|boolean)$/.test(pr.type) || pr.shadowBlockId || pr.defaultValue))
                 .forEach(pr => {
-                    let shadowValue: Element;
-                    let container: HTMLElement;
-                    if (pr.range) {
-                        shadowValue = createShadowValue(info, pr, "math_number_minmax");
-                        container = document.createElement('mutation');
-                        container.setAttribute('min', pr.range.min.toString());
-                        container.setAttribute('max', pr.range.max.toString());
-                        container.setAttribute('label', pr.actualName.charAt(0).toUpperCase() + pr.actualName.slice(1));
-                        if (pr.fieldOptions) {
-                            if (pr.fieldOptions['step']) container.setAttribute('step', pr.fieldOptions['step']);
-                            if (pr.fieldOptions['color']) container.setAttribute('color', pr.fieldOptions['color']);
-                            if (pr.fieldOptions['precision']) container.setAttribute('precision', pr.fieldOptions['precision']);
-                        }
-                    } else {
-                        shadowValue = createShadowValue(info, pr);
-                    }
-                    if (pr.fieldOptions) {
-                        if (!container) container = document.createElement('mutation');
-                        container.setAttribute(`customfield`, JSON.stringify(pr.fieldOptions));
-                    }
-                    if (shadowValue && container)
-                        shadowValue.firstChild.appendChild(container);
-                    block.appendChild(shadowValue);
+                    block.appendChild(createShadowValue(info, pr));
                 })
             if (fn.attributes.draggableParameters) {
                 comp.handlerArgs.forEach(arg => {
+                    // draggableParameters="variable":
                     // <value name="HANDLER_DRAG_PARAM_arg">
                     // <shadow type="variables_get_reporter">
                     //     <field name="VAR">defaultName</field>
                     // </shadow>
                     // </value>
+
+                    // draggableParameters="reporter"
+                    // <value name="HANDLER_DRAG_PARAM_arg">
+                    //     <shadow type="argument_reporter_custom">
+                    //         <mutation typename="Sprite"></mutation>
+                    //         <field name="VALUE">mySprite</field>
+                    //     </shadow>
+                    // </value>
+                    const useReporter = fn.attributes.draggableParameters === "reporter";
+
                     const value = document.createElement("value");
                     value.setAttribute("name", "HANDLER_DRAG_PARAM_" + arg.name);
 
+                    const blockType = useReporter ? pxt.blocks.reporterTypeForArgType(arg.type) : "variables_get_reporter";
                     const shadow = document.createElement("shadow");
-                    shadow.setAttribute("type", "variables_get_reporter");
+                    shadow.setAttribute("type", blockType);
+
+                    if (useReporter && blockType === "argument_reporter_custom") {
+                        const mutation = document.createElement("mutation");
+                        mutation.setAttribute("typename", arg.type);
+                        shadow.appendChild(mutation);
+                    }
 
                     const field = document.createElement("field");
-                    field.setAttribute("name", "VAR");
+                    field.setAttribute("name", useReporter ? "VALUE" : "VAR");
                     field.textContent = Util.htmlEscape(arg.name);
 
                     shadow.appendChild(field);
@@ -422,21 +296,6 @@ namespace pxt.blocks {
             }
         }
         return block;
-    }
-
-    function createCategoryElement(name: string, nameid: string, weight: number, colour?: string, iconClass?: string): Element {
-        const result = document.createElement("category");
-        result.setAttribute("name", name);
-        result.setAttribute("nameid", nameid.toLowerCase());
-        result.setAttribute("weight", weight.toString());
-        if (colour) {
-            result.setAttribute("colour", colour);
-        }
-        if (iconClass) {
-            result.setAttribute("iconclass", iconClass);
-            result.setAttribute("expandedclass", iconClass);
-        }
-        return result;
     }
 
     export function injectBlocks(blockInfo: pxtc.BlocksInfo): pxtc.SymbolInfo[] {
@@ -578,13 +437,13 @@ namespace pxt.blocks {
         }
         else if (fn.attributes._expandedDef && fn.attributes.expandableArgumentMode !== "disabled") {
             const shouldToggle = fn.attributes.expandableArgumentMode === "toggle";
-            initExpandableBlock(block, fn.attributes._expandedDef, comp, shouldToggle, () => buildBlockFromDef(fn.attributes._expandedDef, true));
+            initExpandableBlock(info, block, fn.attributes._expandedDef, comp, shouldToggle, () => buildBlockFromDef(fn.attributes._expandedDef, true));
         }
         else if (comp.handlerArgs.length) {
             /**
-             * We support three modes for handler parameters: variable dropdowns,
+             * We support four modes for handler parameters: variable dropdowns,
              * expandable variable dropdowns with +/- buttons (used for chat commands),
-             * and as draggable variable blocks
+             * draggable variable blocks, and draggable reporter blocks.
              */
             hasHandler = true;
             if (fn.attributes.optionalVariableArgs) {
@@ -593,7 +452,11 @@ namespace pxt.blocks {
             else if (fn.attributes.draggableParameters) {
                 comp.handlerArgs.filter(a => !a.inBlockDef).forEach(arg => {
                     const i = block.appendValueInput("HANDLER_DRAG_PARAM_" + arg.name);
-                    i.setCheck("Variable");
+                    if (fn.attributes.draggableParameters == "reporter") {
+                        i.setCheck(arg.type);
+                    } else {
+                        i.setCheck("Variable");
+                    }
                 });
             }
             else {
@@ -725,7 +588,7 @@ namespace pxt.blocks {
 
                         if (isHandlerArg(pr)) {
                             inputName = "HANDLER_DRAG_PARAM_" + pr.name;
-                            inputCheck = "Variable";
+                            inputCheck = fn.attributes.draggableParameters === "reporter" ? pr.type : "Variable";
                             return;
                         }
 
@@ -952,6 +815,18 @@ namespace pxt.blocks {
         initDrag();
         initDebugger();
         initComments();
+
+        // PXT is in charge of disabling, don't record undo for disabled events
+        (Blockly.Block as any).prototype.setDisabled = function (disabled: any) {
+            if (this.disabled != disabled) {
+                let oldRecordUndo = (Blockly as any).Events.recordUndo;
+                (Blockly as any).Events.recordUndo = false;
+                Blockly.Events.fire(new Blockly.Events.BlockChange(
+                    this, 'disabled', null, this.disabled, disabled));
+                (Blockly as any).Events.recordUndo = oldRecordUndo;
+                this.disabled = disabled;
+            }
+        };
     }
 
     function setBuiltinHelpInfo(block: any, id: string) {
@@ -1027,7 +902,8 @@ namespace pxt.blocks {
                         "check": ['Array']
                     }
                 ],
-                "output": 'Number'
+                "output": 'Number',
+                "outputShape": Blockly.OUTPUT_SHAPE_ROUND
             });
         }
 
@@ -1340,7 +1216,8 @@ namespace pxt.blocks {
                 return;
             }
             let menuOptions: Blockly.ContextMenu.MenuItem[] = [];
-            let topBlocks = this.getTopBlocks(true);
+            let topBlocks = this.getTopBlocks();
+            let topComments = this.getTopComments();
             let eventGroup = Blockly.utils.genUid();
             let ws = this;
 
@@ -1349,67 +1226,17 @@ namespace pxt.blocks {
                 menuOptions.push((Blockly.ContextMenu as any).workspaceCommentOption(ws, e));
             }
 
-            // Add a little animation to collapsing and expanding.
+            // Add a little animation to deleting.
             const DELAY = 10;
-            if (this.options.collapse) {
-                let hasCollapsedBlocks = false;
-                let hasExpandedBlocks = false;
-                for (let i = 0; i < topBlocks.length; i++) {
-                    let block = topBlocks[i];
-                    while (block) {
-                        if (block.isCollapsed()) {
-                            hasCollapsedBlocks = true;
-                        } else {
-                            hasExpandedBlocks = true;
-                        }
-                        block = block.getNextBlock();
-                    }
-                }
-
-                /**
-                 * Option to collapse or expand top blocks.
-                 * @param {boolean} shouldCollapse Whether a block should collapse.
-                 * @private
-                 */
-                const toggleOption = function (shouldCollapse: boolean) {
-                    let ms = 0;
-                    for (let i = 0; i < topBlocks.length; i++) {
-                        let block = topBlocks[i];
-                        while (block) {
-                            setTimeout(block.setCollapsed.bind(block, shouldCollapse), ms);
-                            block = block.getNextBlock();
-                            ms += DELAY;
-                        }
-                    }
-                };
-
-                // Option to collapse top blocks.
-                const collapseOption: any = { enabled: hasExpandedBlocks };
-                collapseOption.text = lf("Collapse Block");
-                collapseOption.callback = function () {
-                    pxt.tickEvent("blocks.context.collapse")
-                    toggleOption(true);
-                };
-                menuOptions.push(collapseOption);
-
-                // Option to expand top blocks.
-                const expandOption: any = { enabled: hasCollapsedBlocks };
-                expandOption.text = lf("Expand Block");
-                expandOption.callback = function () {
-                    pxt.tickEvent("blocks.context.expand")
-                    toggleOption(false);
-                };
-                menuOptions.push(expandOption);
-            }
 
             // Option to delete all blocks.
             // Count the number of blocks that are deletable.
             let deleteList = Blockly.WorkspaceSvg.buildDeleteList_(topBlocks);
             let deleteCount = 0;
             for (let i = 0; i < deleteList.length; i++) {
-              if (!deleteList[i].isShadow()) {
-                deleteCount++;
-              }
+                if (!deleteList[i].isShadow()) {
+                    deleteCount++;
+                }
             }
 
             function deleteNext() {
@@ -1457,7 +1284,7 @@ namespace pxt.blocks {
             if (pxt.blocks.layout.screenshotEnabled()) {
                 const screenshotOption = {
                     text: lf("Download Screenshot"),
-                    enabled: topBlocks.length > 0,
+                    enabled: topBlocks.length > 0 || topComments.length > 0,
                     callback: () => {
                         pxt.tickEvent("blocks.context.screenshot", undefined, { interactiveConsent: true });
                         pxt.blocks.layout.screenshotAsync(this)
@@ -1526,7 +1353,7 @@ namespace pxt.blocks {
         };
 
         // Get rid of bumping behavior
-        (Blockly as any).Constants.Logic.LOGIC_COMPARE_ONCHANGE_MIXIN.onchange = function () {}
+        (Blockly as any).Constants.Logic.LOGIC_COMPARE_ONCHANGE_MIXIN.onchange = function () { }
     }
 
     function initOnStart() {
@@ -1775,6 +1602,7 @@ namespace pxt.blocks {
                         }
                     ],
                     "colour": pxt.toolbox.blockColors['arrays'],
+                    "outputShape": Blockly.OUTPUT_SHAPE_ROUND,
                     "inputsInline": true
                 });
 
@@ -1850,6 +1678,7 @@ namespace pxt.blocks {
                     ],
                     "inputsInline": true,
                     "output": "Number",
+                    "outputShape": Blockly.OUTPUT_SHAPE_ROUND,
                     "colour": pxt.toolbox.getNamespaceColor('math')
                 });
 
@@ -1882,6 +1711,7 @@ namespace pxt.blocks {
                     ],
                     "inputsInline": true,
                     "output": "Number",
+                    "outputShape": Blockly.OUTPUT_SHAPE_ROUND,
                     "colour": pxt.toolbox.getNamespaceColor('math')
                 });
 
@@ -1970,10 +1800,11 @@ namespace pxt.blocks {
         };
         Blockly.Variables.flyoutCategoryBlocks = function (workspace) {
             let variableModelList = workspace.getVariablesOfType('');
-            variableModelList.sort(Blockly.VariableModel.compareByName);
 
             let xmlList: HTMLElement[] = [];
             if (variableModelList.length > 0) {
+                let mostRecentVariable = variableModelList[variableModelList.length - 1];
+                variableModelList.sort(Blockly.VariableModel.compareByName);
                 // variables getters first
                 for (let i = 0; i < variableModelList.length; i++) {
                     const variable = variableModelList[i];
@@ -1989,12 +1820,11 @@ namespace pxt.blocks {
                 }
                 xmlList[xmlList.length - 1].setAttribute('gap', '24');
 
-                let firstVariable = variableModelList[0];
                 if (Blockly.Blocks['variables_set']) {
                     let gap = Blockly.Blocks['variables_change'] ? 8 : 24;
                     let blockText = '<xml>' +
                         '<block type="variables_set" gap="' + gap + '">' +
-                        Blockly.Variables.generateVariableFieldXmlString(firstVariable) +
+                        Blockly.Variables.generateVariableFieldXmlString(mostRecentVariable) +
                         '</block>' +
                         '</xml>';
                     let block = Blockly.Xml.textToDom(blockText).firstChild as HTMLElement;
@@ -2016,7 +1846,7 @@ namespace pxt.blocks {
                     let gap = Blockly.Blocks['variables_get'] ? 20 : 8;
                     let blockText = '<xml>' +
                         '<block type="variables_change" gap="' + gap + '">' +
-                        Blockly.Variables.generateVariableFieldXmlString(firstVariable) +
+                        Blockly.Variables.generateVariableFieldXmlString(mostRecentVariable) +
                         '<value name="DELTA">' +
                         '<shadow type="math_number">' +
                         '<field name="NUM">1</field>' +
@@ -2108,6 +1938,7 @@ namespace pxt.blocks {
 
         msg.PROCEDURES_DEFNORETURN_TITLE = proceduresDef.block["PROCEDURES_DEFNORETURN_TITLE"];
         msg.PROCEDURE_ALREADY_EXISTS = proceduresDef.block["PROCEDURE_ALREADY_EXISTS"];
+        msg.PROCEDURES_HUE = pxt.toolbox.getNamespaceColor("variables");
 
         Blockly.Blocks['procedures_defnoreturn'].init = function () {
             let nameField = new Blockly.FieldTextInput('',
@@ -2213,7 +2044,7 @@ namespace pxt.blocks {
                         field.appendChild(document.createTextNode(this.getProcedureCall()));
                         block.appendChild(field);
                         xml.appendChild(block);
-                        Blockly.Xml.domToWorkspace(xml, this.workspace);
+                        pxt.blocks.domToWorkspaceNoEvents(xml, this.workspace);
                         Blockly.Events.setGroup(false);
                     }
                 } else if (event.type == Blockly.Events.DELETE) {
@@ -2304,7 +2135,7 @@ namespace pxt.blocks {
                 field.appendChild(document.createTextNode(name));
                 block.appendChild(field);
                 xml.appendChild(block);
-                let newBlockIds = Blockly.Xml.domToWorkspace(xml, workspace);
+                let newBlockIds = pxt.blocks.domToWorkspaceNoEvents(xml, workspace);
                 // Close flyout and highlight block
                 Blockly.hideChaff();
                 let newBlock = workspace.getBlockById(newBlockIds[0]);
@@ -2456,7 +2287,8 @@ namespace pxt.blocks {
                         "check": ['String']
                     }
                 ],
-                "output": 'Number'
+                "output": 'Number',
+                "outputShape": Blockly.OUTPUT_SHAPE_ROUND
             });
         }
         installBuiltinHelpInfo(textLengthId);
@@ -2761,7 +2593,9 @@ namespace pxt.blocks {
         }
         if (!foundIt) {
             (varField as any).initModel();
-            (varField as any).getVariable().name = newName;
+            const model = (varField as any).getVariable();
+            model.name = newName;
+            varField.setValue(model.getId());
         }
     }
 }

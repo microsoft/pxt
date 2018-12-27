@@ -86,7 +86,8 @@ code.lang-block::before,
 code.lang-sim::before,
 code.lang-cards::before,
 code.lang-namespaces::before,
-code.lang-codecard::before
+code.lang-codecard::before,
+code.lang-shadow::before
 {
     content:"...";
     position: absolute;
@@ -101,7 +102,8 @@ code.lang-block,
 code.lang-sim,
 code.lang-cards,
 code.lang-namespaces,
-code.lang-codecard
+code.lang-codecard,
+code.lang-shadow
 {
     background-color: rgba(0,0,0,0.04);
     color:transparent;
@@ -349,8 +351,8 @@ svg {
     .mainbody {
         margin-top: 2em;
         margin-bottom: 2em;
-        padding-left: 6rem;
-        padding-right: 6rem;
+        padding-left: 2em;
+        padding-right: 2em;
     }
 }
 

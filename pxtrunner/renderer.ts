@@ -23,7 +23,6 @@ namespace pxt.runner {
         package?: string;
         showEdit?: boolean;
         showJavaScript?: boolean; // default is to show blocks first
-        downloadScreenshots?: boolean;
         split?: boolean; // split in multiple divs if too big
     }
 
@@ -136,22 +135,33 @@ namespace pxt.runner {
 
         // inject container
         $container.replaceWith(r as any);
+    }
 
-        // download screenshots
-        if (options.downloadScreenshots && woptions.hexname) {
-            pxt.debug("Downloading screenshot for: " + woptions.hexname);
-            let filename = woptions.hexname.substr(0, woptions.hexname.lastIndexOf('.'));
-            let fontSize = window.getComputedStyle($svg.get(0).getElementsByClassName("blocklyText").item(0)).getPropertyValue("font-size");
-            let svgElement = $svg.get(0) as any;
-            let bbox = $svg.get(0).getBoundingClientRect();
-            pxt.blocks.layout.svgToPngAsync(svgElement, 0, 0, bbox.width, bbox.height, 4)
-                .done(uri => {
-                    if (uri)
-                        BrowserUtils.browserDownloadDataUri(
-                            uri,
-                            (name || `${pxt.appTarget.nickname || pxt.appTarget.id}-${filename}`) + ".png");
-                });
-        }
+    let renderQueue: {
+        el: JQuery;
+        source: string;
+        options: blocks.BlocksRenderOptions;
+        render: (container: JQuery, r: pxt.runner.DecompileResult) => void;
+    }[] = [];
+    function consumeRenderQueueAsync(): Promise<void> {
+        const job = renderQueue.shift();
+        if (!job) return Promise.resolve(); // done
+
+        const { el, options, render } = job;
+        return pxt.runner.decompileToBlocksAsync(el.text(), options)
+            .then((r) => {
+                const errors = r.compileJS && r.compileJS.diagnostics && r.compileJS.diagnostics.filter(d => d.category == pxtc.DiagnosticCategory.Error);
+                if (errors && errors.length)
+                    errors.forEach(diag => pxt.reportError("docs.decompile", "" + diag.messageText, { "code": diag.code + "" }));
+                render(el, r);
+                el.removeClass("lang-shadow");
+                return consumeRenderQueueAsync();
+            }).catch(e => {
+                pxt.reportException(e);
+                el.append($('<div/>').addClass("ui segment warning").text(e.message));
+                el.removeClass("lang-shadow");
+                return consumeRenderQueueAsync();
+            });
     }
 
     function renderNextSnippetAsync(cls: string,
@@ -166,17 +176,10 @@ namespace pxt.runner {
         if (!options.layout) options.layout = pxt.blocks.BlockLayout.Align;
         options.splitSvg = true;
 
-        return pxt.runner.decompileToBlocksAsync($el.text(), options)
-            .then((r) => {
-                try {
-                    render($el, r);
-                } catch (e) {
-                    console.error('error while rendering ' + $el.html())
-                    $el.append($('<div/>').addClass("ui segment warning").text(e.message));
-                }
-                $el.removeClass(cls);
-                return Promise.delay(1, renderNextSnippetAsync(cls, render, options));
-            })
+        renderQueue.push({ el: $el, source: $el.text(), options, render });
+        $el.addClass("lang-shadow");
+        $el.removeClass(cls);
+        return renderNextSnippetAsync(cls, render, options);
     }
 
     function renderSnippetsAsync(options: ClientRenderOptions): Promise<void> {
@@ -269,7 +272,7 @@ namespace pxt.runner {
                     try {
                         render($el, r);
                     } catch (e) {
-                        console.error('error while rendering ' + $el.html())
+                        pxt.reportException(e)
                         $el.append($('<div/>').addClass("ui segment warning").text(e.message));
                     }
                     $el.removeClass(cls);
@@ -314,7 +317,7 @@ namespace pxt.runner {
             })
             .then((nsStyleBuffer) => {
                 Object.keys(pxt.toolbox.blockColors).forEach((ns) => {
-                    const color = pxt.toolbox.blockColors[ns] as string;
+                    const color = pxt.toolbox.getNamespaceColor(ns);
                     nsStyleBuffer += `
                         span.docs.${ns.toLowerCase()} {
                             background-color: ${color} !important;
@@ -584,6 +587,7 @@ namespace pxt.runner {
                             })
                             .catch(e => {
                                 // swallow
+                                pxt.reportException(e);
                                 pxt.debug(`failed to load repo ${card.url}`)
                             })
                     }
@@ -608,7 +612,7 @@ namespace pxt.runner {
             if (!Array.isArray(js)) js = [js];
             cards = js as pxt.CodeCard[];
         } catch (e) {
-            console.error('error while rendering ' + $el.html())
+            pxt.reportException(e);
             $el.append($('<div/>').addClass("ui segment warning").text(e.messageText));
         }
 
@@ -636,6 +640,11 @@ namespace pxt.runner {
             if (options.snippetReplaceParent) $c = $c.parent();
             $c.remove();
         });
+        $('.lang-config').each((i, c) => {
+            let $c = $(c);
+            if (options.snippetReplaceParent) $c = $c.parent();
+            $c.remove();
+        })
     }
 
     function renderTypeScript(options?: ClientRenderOptions) {
@@ -662,14 +671,33 @@ namespace pxt.runner {
             $(e).removeClass('lang-typescript');
         });
         $('code.lang-typescript-ignore').each((i, e) => {
-            $(e).removeClass('lang-typescript-ignore')
+            $(e).removeClass('lang-typescript-ignore');
             $(e).addClass('lang-typescript');
             render(e, true);
             $(e).removeClass('lang-typescript');
         });
+        $('code.lang-typescript-invalid').each((i, e) => {
+            $(e).removeClass('lang-typescript-invalid');
+            $(e).addClass('lang-typescript');
+            render(e, true);
+            $(e).removeClass('lang-typescript');
+            $(e).parent('div').addClass('invalid');
+            $(e).parent('div').prepend($("<i>", { "class": "icon ban" }));
+            $(e).addClass('invalid');
+        });
+        $('code.lang-typescript-valid').each((i, e) => {
+            $(e).removeClass('lang-typescript-valid');
+            $(e).addClass('lang-typescript');
+            render(e, true);
+            $(e).removeClass('lang-typescript');
+            $(e).parent('div').addClass('valid');
+            $(e).parent('div').prepend($("<i>", { "class": "icon check" }));
+            $(e).addClass('valid');
+        });
     }
 
     export function renderAsync(options?: ClientRenderOptions): Promise<void> {
+        pxt.analytics.enable();
         if (!options) options = {}
         if (options.pxtUrl) options.pxtUrl = options.pxtUrl.replace(/\/$/, '');
         if (options.showEdit) options.showEdit = !pxt.BrowserUtils.isIFrame();
@@ -692,17 +720,19 @@ namespace pxt.runner {
             });
         }
 
+        renderQueue = [];
         renderTypeScript(options);
         return Promise.resolve()
+            .then(() => renderNextCodeCardAsync(options.codeCardClass, options))
             .then(() => renderNamespaces(options))
             .then(() => renderInlineBlocksAsync(options))
             .then(() => renderLinksAsync(options, options.linksClass, options.snippetReplaceParent, false))
             .then(() => renderLinksAsync(options, options.namespacesClass, options.snippetReplaceParent, true))
             .then(() => renderSignaturesAsync(options))
-            .then(() => renderNextCodeCardAsync(options.codeCardClass, options))
             .then(() => renderSnippetsAsync(options))
             .then(() => renderBlocksAsync(options))
             .then(() => renderBlocksXmlAsync(options))
             .then(() => renderProjectAsync(options))
+            .then(() => consumeRenderQueueAsync())
     }
 }

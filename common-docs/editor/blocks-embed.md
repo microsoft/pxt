@@ -107,7 +107,7 @@ When the ``renderready`` response is received, the document can begin collecting
 
 #### Responding to ``renderblocks``
 
-The ``renderblocks`` message is received as a response to a previous ``renderblocks`` request sent by the document. The message contains an image of the rendered blocks if compilation of the code snippet sent was successful. The image can be inserted into the DOM by matching the ``id`` of the original snippet element with the ``id`` in the message. The image is provided as both SVG and ``img`` data. The implentation can decide which form it wants to use. Depending on how the blocks are to be displayed, the original snippet elements are replaced by the blocks image or the blocks are added to the DOM next to them.
+The ``renderblocks`` message is received as a response to a previous ``renderblocks`` request sent by the document. The message contains an image of the rendered blocks if compilation of the code snippet sent was successful. The image can be inserted into the DOM by matching the ``id`` of the original snippet element with the ``id`` in the message. The image is provided as both SVG and ``img`` data. The implementation can decide which form it wants to use. Depending on how the blocks are to be displayed, the original snippet elements are replaced by the blocks image or the blocks are added to the DOM next to them.
 
 #### Handler example
 
@@ -132,7 +132,7 @@ window.addEventListener("message", function (ev) {
         case "renderready":
             var snippets = document.getElementsByTagName("pre")
             for (var i = 0; i< snippets.length; i++) {
-                snippets[i].id = `snippet-` + i;
+                snippets[i].id = "snippet-" + i;
                 makeCodeRenderPre(snippets[i]);
             }
             break;
@@ -145,8 +145,8 @@ window.addEventListener("message", function (ev) {
             img.width = msg.width;
             img.height = msg.height;
             var snippet = document.getElementById(id)
-            snippet.parentElement.insertBefore(img, snippet)
-            snippet.parentElement.removeChild(snippet);
+            snippet.parentNode.insertBefore(img, snippet)
+            snippet.parentNode.removeChild(snippet);
             break;
     }
 }, false);
@@ -192,7 +192,7 @@ Once this ``iframe`` loads, it sends the ``renderready`` message to the register
 
 ### Putting it together #example
 
-This HTML document example contains three ``pre`` elements with code snippets. Only two are sent to the renderer since they're filtered on their class as ``blocks``. Each element sent is given an identifier to match up with the rendered block that is returned. JQuery is used in this example but another framework or stadard DOM mehtods could be used too.
+This HTML document example contains three ``pre`` elements with code snippets. Only two are sent to the renderer since they're filtered on their class as ``blocks``. Each element sent is given an identifier to match up with the rendered block that is returned. JQuery is used in this example but another framework or standard DOM methods could be used too.
 
 ```
 <html lang="en">
@@ -261,7 +261,7 @@ var blocksClass = "blocks";
 var injectRenderer = function () {
     var f = $("<iframe>", {
         id: "makecoderenderer",
-        src: `${makecodeUrl}--docs?render=1&lang=${$('html').attr('lang')}`
+        src: makecodeUrl + "--docs?render=1&lang=" + ($('html').attr('lang') || "en")
     });
     f.css("position", "absolute");
     f.css("left", 0);
@@ -288,9 +288,9 @@ var attachBlocksListener = function () {
 
         switch (msg.type) {
             case "renderready":
-                $(`.${blocksClass}`).each(function () {
+                $("." + blocksClass).each(function () {
                     var snippet = $(this)[0];
-                    snippet.id = `pxt-blocks-${blockId++}`;
+                    snippet.id = "pxt-blocks-" + (blockId++);
                     makeCodeRenderPre(snippet);
                 });
                 break;
@@ -303,8 +303,8 @@ var attachBlocksListener = function () {
                 img.width = msg.width;
                 img.height = msg.height;
                 var pre = document.getElementById(id)
-                pre.parentElement.insertBefore(img, pre)
-                pre.parentElement.removeChild(pre);
+                pre.parentNode.insertBefore(img, pre)
+                pre.parentNode.removeChild(pre);
                 break;
         }
     }, false);

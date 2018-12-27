@@ -28,10 +28,12 @@ pxt.setAppTarget({
     versions: undefined,
     description: "A toolkit to build JavaScript Blocks editors.",
     bundleddirs: [],
+    bundledcoresvgs: {},
     compile: {
         isNative: false,
         hasHex: false,
         jsRefCounting: true,
+        switches: {}
     },
     bundledpkgs: {},
     appTheme: {},

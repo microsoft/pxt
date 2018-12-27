@@ -5,6 +5,17 @@ const enum Direction {
     Right
 }
 
+interface Image {
+
+}
+
+/**
+ * Tagged image literal converter
+ */
+//% shim=@f4
+//% groups=["0.","1#","2T","3t","4N","5n","6G","7g","8","9","aAR","bBP","cCp","dDO","eEY","fFW"]
+function img(lits: any, ...args: any[]): Image { return null }
+
 namespace exp {
     //% fixedInstances
     export class Fixed {
@@ -42,4 +53,8 @@ namespace testNamespace {
     //% blockId=test_handler_arguments3 draggableParameters=1 blockAllowMultiple=1
     //% block="Handler with draggable arguments"
     export function callbackWithDraggableParams(cb: (c: number, d: number) => void) {}
+
+    //% blockId=test_handler_arguments4 draggableParameters="reporter" blockAllowMultiple=1
+    //% block="Handler with draggable arguments"
+    export function callbackWithDraggableParamsReporters(cb: (c: string, d: number, e: boolean, f: Image) => void) {}
 }

@@ -56,7 +56,7 @@
             }
         }
         var lastSaved;
-        var filter = true;
+        var filter = false;
 
         function toggleFilters() {
             filter = !filter;
@@ -78,7 +78,7 @@
             if(action == 'importproject') {
                 var prj = JSON.parse(JSON.stringify(projects[0]));
                 msg.project = prj;
-                if (filter) msg.filters = JSON.parse(JSON.stringify(filters));
+                msg.filters = filter ? JSON.parse(JSON.stringify(filters)) : {};
                 msg.response = true;
             } else if (action == 'renderblocks') {
                 msg.response = true;

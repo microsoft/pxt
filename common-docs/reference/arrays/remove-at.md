@@ -7,7 +7,7 @@ Remove an element from an array at some position.
 ```
 
 The size of the array shrinks by one. The element is removed from the array at the position you want. All the other elements after it are moved (shifted) to down to the next lower position. So, an array that has the numbers
-`4, 5, 9, 3, 2` will be `4, 5, 2, 3` if `9` is removed at position 2. It looks like this in blocks:
+`4, 5, 9, 3, 2` will be `4, 5, 3, 2` if `9` is removed at position 2. It looks like this in blocks:
 
 ```block
 let myNumbers = [4, 5, 9, 3, 2];

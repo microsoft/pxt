@@ -6,7 +6,7 @@ See how two text strings compare based on which characters are first.
 "".compare("");
 ```
 Two strings are compared based on the order of their characters. If string `A` has `"111"` it will
-be less than a string with `"512"`. A string with `"Everthing"` is less than `"Nothing"` because
+be less than a string with `"512"`. A string with `"Everything"` is less than `"Nothing"` because
 `'N'` comes after `'E'` in the alphabet.
 
 The string `"abcdefg"` is greater than `"abcdefa"`. They are almost the same but the last letter of the second string is less than the last letter of the first one. This makes the whole second string compare as less. In blocks, the comparison of these strings looks like:
