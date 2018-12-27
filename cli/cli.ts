@@ -1727,6 +1727,7 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
     if (nodeutil.fileExistsSync("targetconfig.json")) {
         const targetConfig = nodeutil.readJson("targetconfig.json") as pxt.TargetConfig;
         if (targetConfig && targetConfig.galleries) {
+            const docsRoot = nodeutil.targetDir;
             let gcards: pxt.CodeCard[] = [];
             let tocmd: string =
                 `# Projects
@@ -1734,7 +1735,6 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
 `;
             Object.keys(targetConfig.galleries).forEach(k => {
                 targetStrings[k] = k;
-                const docsRoot = nodeutil.targetDir;
                 const gallerymd = nodeutil.resolveMd(docsRoot, targetConfig.galleries[k]);
                 const gallery = pxt.gallery.parseGalleryMardown(gallerymd);
                 tocmd +=
@@ -1758,8 +1758,8 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
                     }))
             });
 
-            nodeutil.writeFileSync("docs/projects/SUMMARY.md", tocmd, { encoding: "utf8" });
-            nodeutil.writeFileSync("docs/projects.md",
+            nodeutil.writeFileSync(path.join(docsRoot, "projects/SUMMARY.md"), tocmd, { encoding: "utf8" });
+            nodeutil.writeFileSync(path.join(docsRoot, "projects.md"),
                 `# Projects
 
 \`\`\`codecard
