@@ -1727,17 +1727,28 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
     if (nodeutil.fileExistsSync("targetconfig.json")) {
         const targetConfig = nodeutil.readJson("targetconfig.json") as pxt.TargetConfig;
         if (targetConfig && targetConfig.galleries) {
+            let md: string =
+                `# Projects
+
+`;
             Object.keys(targetConfig.galleries).forEach(k => {
                 targetStrings[k] = k;
                 const docsRoot = nodeutil.targetDir;
                 const gallerymd = nodeutil.resolveMd(docsRoot, targetConfig.galleries[k]);
                 const gallery = pxt.gallery.parseGalleryMardown(gallerymd);
+                md +=
+                    `* [${k}](${targetConfig.galleries[k]})
+`;
                 gallery.forEach(cards => cards.cards
-                    .filter(card => card.tags)
-                    .forEach(card => card.tags.forEach(tag => {
-                        targetStrings[tag] = tag;
-                    })))
+                    .forEach(card => {
+                        md += `  * [${card.name || card.title}](${card.url})
+`;
+                        if (card.tags)
+                            card.tags.forEach(tag => targetStrings[tag] = tag);
+                    }))
             });
+
+            nodeutil.writeFileSync("docs/projects/SUMMARY.md", md, { encoding: "utf8" });
         }
     }
     // extract strings from editor
