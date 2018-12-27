@@ -278,12 +278,11 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
     }
 
     // check if we have dynamic boards, store board info for home page rendering
-    const bundledcoresvgs = pxt.appTarget.bundledcoresvgs;
-    if (text && bundledcoresvgs) {
+    if (text && pxt.appTarget.simulator && pxt.appTarget.simulator.dynamicBoardDefinition) {
         const pxtjson = JSON.parse(text["pxt.json"] || "{}") as pxt.PackageConfig;
         if (pxtjson && pxtjson.dependencies)
             h.board = Object.keys(pxtjson.dependencies)
-                .filter(p => !!bundledcoresvgs[p])[0];
+                .filter(p => !!pxt.bundledSvg(p))[0];
     }
 
     return headerQ.enqueue<void>(h.id, () =>
