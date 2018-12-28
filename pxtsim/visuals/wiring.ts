@@ -460,7 +460,11 @@ namespace pxsim.visuals {
         public addWire(start: Loc, end: Loc, color: string): Wire {
             let startLoc = this.getLocCoord(start);
             let endLoc = this.getLocCoord(end);
-            let startStyle = this.getPinStyle(start);
+            if (!startLoc || !endLoc) {
+                console.debug(`unable to allocate wire for ${start} or ${end}`);
+                return undefined;
+            }
+            //let startStyle = this.getPinStyle(start);
             let endStyle = this.getPinStyle(end);
             let wireEls: Wire;
             if (end.type == "dalboard" && endStyle == "croc") {
