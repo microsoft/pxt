@@ -99,7 +99,7 @@ namespace pxtblockly {
             });
 
             this.editor.setActiveColor(this.params.initColor, true);
-            if (!this.params.sizes.some(s => s[0] == this.state.width && s[1] == this.state.height)) {
+            if (!this.params.sizes.some(s => s[0] === this.state.width && s[1] === this.state.height)) {
                 this.params.sizes.push([this.state.width, this.state.height]);
             }
             this.editor.setSizePresets(this.params.sizes);
