@@ -1464,7 +1464,7 @@ export function internalBuildTargetAsync(options: BuildTargetOptions = {}): Prom
     return initPromise
         .then(() => { copyCommonSim(); return simshimAsync() })
         .then(() => buildTargetCoreAsync(options))
-        .then(() => buildFolderAsync('sim', true, pxt.appTarget.id === 'common' ? 'common-sim' : 'sim'))
+        .then(() => buildSimAsync())
         .then(() => buildFolderAsync('cmds', true))
         .then(() => buildSemanticUIAsync())
         .then(() => {
@@ -2006,6 +2006,11 @@ function updateTOC(cfg: pxt.TargetBundle) {
 
 function rebundleAsync() {
     return buildTargetCoreAsync({ quick: true })
+        .then(() => buildSimAsync());
+}
+
+function buildSimAsync() {
+    return buildFolderAsync('sim', true, pxt.appTarget.id === 'common' ? 'common-sim' : 'sim');
 }
 
 function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
