@@ -40,6 +40,7 @@ declare namespace pxsim {
         onboardComponents?: string[],
         pinStyles?: { [pin: string]: PinStyle },
         marginWhenBreadboarding?: [number, number, number, number],
+        touchPins?: string[],
         spiPins?: {
             MOSI: string,
             MISO: string,
