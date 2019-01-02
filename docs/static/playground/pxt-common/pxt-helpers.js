@@ -14,6 +14,37 @@ function parseInt(text: string): number {
 }
 
 namespace helpers {
+    export function arrayFill<T>(O: T[], value: T, start?: number, end?: number) {
+        // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/fill
+        // Steps 3-5.
+        const len = O.length >>> 0;
+
+        // Steps 6-7.
+        const relativeStart = start === undefined ? 0 : start >> 0;
+
+        // Step 8.
+        let k = relativeStart < 0 ?
+            Math.max(len + relativeStart, 0) :
+            Math.min(relativeStart, len);
+
+        // Steps 9-10.
+        const relativeEnd = end === undefined ? len : end >> 0;
+
+        // Step 11.
+        const final = relativeEnd < 0 ?
+            Math.max(len + relativeEnd, 0) :
+            Math.min(relativeEnd, len);
+
+        // Step 12.
+        while (k < final) {
+            O[k] = value;
+            k++;
+        }
+
+        // Step 13.
+        return O;
+    }
+
     export function arraySplice<T>(arr: T[], start: number, len: number) {
         if (start < 0) {
             return;
