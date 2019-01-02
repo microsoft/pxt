@@ -207,7 +207,7 @@ namespace helpers {
         const A: string[] = [];
         let lim = 0;
         if (limit === undefined)
-            lim = (1 << 30) - 1; // spec says 1 << 53
+            lim = (1 << 29) - 1; // spec says 1 << 53, leaving it at 29 for constant folding
         else if (limit < 0)
             lim = 0;
         else
