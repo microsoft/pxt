@@ -279,6 +279,16 @@ declare interface String {
     //% blockId="string_includes" blockNamespace="text"
     includes(searchValue: string, start?: number): boolean;
 
+    /**
+     * Splits the string according to the separators
+     * @param separator 
+     * @param limit 
+     */
+    //% helper=stringSplit
+    //% help=text/split
+    //% blockId="string_split" blockNamespace="text"
+    split(separator?: string, limit?: number): string[];
+
     [index: number]: string;
 }
 
