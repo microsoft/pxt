@@ -20,7 +20,8 @@ declare namespace pxsim {
         label: string; // pin name
     }
     interface ButtonDefinition extends BoxDefinition {
-        label: string; // pin name
+        index?: number; // by button index
+        label?: string; // pin name
     }
     interface BoardImageDefinition {
         image: string,
