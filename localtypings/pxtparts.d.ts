@@ -16,6 +16,9 @@ declare namespace pxsim {
         color: string;
         label: string;
     }
+    interface TouchPadDefinition extends BoxDefinition {
+        label: string; // pin name
+    }
     interface BoardImageDefinition {
         image: string,
         outlineImage?: string,
@@ -23,6 +26,7 @@ declare namespace pxsim {
         height: number,
         pinDist: number,
         pinBlocks: PinBlockDefinition[],
+        touchPads?: TouchPadDefinition[];
         leds?: LEDDefinition[];
         reset?: BoxDefinition;
         useCrocClips?: boolean;

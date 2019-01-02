@@ -1041,7 +1041,7 @@ export function serveAsync(options: ServeOptions) {
             const redir = nodeutil.readJson(redirectFile);
             res.writeHead(301, { location: redir["redirect"] })
             res.end()
-            return ;
+            return;
         }
 
         let webFile = path.join(docsDir, pathname)

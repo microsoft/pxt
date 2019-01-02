@@ -325,7 +325,6 @@ declare namespace pxt {
 
     interface TargetBundle extends AppTarget {
         bundledpkgs: Map<Map<string>>;   // @internal use only (cache)
-        bundledcoresvgs?: Map<string>;   // @internal use only (cache)
         bundleddirs: string[];
         versions: TargetVersions;        // @derived
     }
