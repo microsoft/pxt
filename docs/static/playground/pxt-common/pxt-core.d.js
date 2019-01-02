@@ -124,6 +124,12 @@ interface Array<T> {
       */
     //% helper=arrayFilter weight=40
     filter(callbackfn: (value: T, index: number) => boolean): T[];
+
+    /**
+      * Fills all the elements of an array from a start index to an end index with a static value. The end index is not included.
+      */
+    //% helper=arrayFill weight=39
+    fill(value: T, start?: number, end?: number): T[];
     
     /**
      * Returns the value of the first element in the array that satisfies the provided testing function. Otherwise undefined is returned.
