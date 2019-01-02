@@ -284,7 +284,7 @@ declare interface String {
      * @param separator 
      * @param limit 
      */
-    //% shim=String_::split
+    //% helper=stringSplit
     //% help=text/split
     //% blockId="string_split" blockNamespace="text"
     split(separator?: string, limit?: number): string[];
