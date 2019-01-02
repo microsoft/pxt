@@ -149,7 +149,7 @@ namespace helpers {
         return initialValue
     }
 
-    export function arrayConcat<T>(arr: T[], otherArr: T[]): T[]{
+    export function arrayConcat<T>(arr: T[], otherArr: T[]): T[] {
         let out: T[] = [];
         for (let value of arr) {
             out.push(value);
@@ -200,6 +200,63 @@ namespace helpers {
         }
 
         return s.substr(start, end - start);
+    }
+
+    export function stringSplit(S: string, separator?: string, limit?: number): string[] {
+        // https://www.ecma-international.org/ecma-262/6.0/#sec-string.prototype.split
+        const A: string[] = [];
+        let lim = 0;
+        if (limit === undefined)
+            lim = (1 << 30) - 1; // spec says 1 << 53
+        else if (limit < 0)
+            lim = 0;
+        else
+            lim = limit | 0;
+        const s = S.length;
+        let p = 0;
+        const R = separator;
+        if (lim == 0)
+            return A;
+        if (separator === undefined) {
+            A[0] = S;
+            return A;
+        }
+        if (s == 0) {
+            let z = splitMatch(S, 0, R);
+            if (z > -1) return A;
+            A[0] = S;
+            return A;
+        }
+        let T: string;
+        let q = p;
+        while (q != s) {
+            let e = splitMatch(S, q, R);
+            if (e < 0) q++;
+            else {
+                if (e == p) q++;
+                else {
+                    T = stringSlice(S, p, q);
+                    A.push(T);
+                    if (A.length == lim) return A;
+                    p = e;
+                    q = p;
+                }
+            }
+        }
+        T = stringSlice(S, p, q);
+        A.push(T);
+        return A;
+    }
+
+    function splitMatch(S: string, q: number, R: string): number {
+        const r = R.length;
+        const s = S.length;
+        if (q + r > s) return -1;
+        for (let i = 0; i < r; ++i) {
+            if (S[q + i] != R[i])
+                return -1;
+        }
+        return q + r;
     }
 }
 
