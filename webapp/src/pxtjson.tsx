@@ -26,7 +26,7 @@ export class Editor extends srceditor.Editor {
     }
 
     goBack() {
-        pxt.tickEvent("serial.backButton", undefined, { interactiveConsent: true })
+        pxt.tickEvent("pxtjson.backButton", undefined, { interactiveConsent: true })
         this.parent.openPreviousEditor()
     }
 
