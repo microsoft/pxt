@@ -245,6 +245,7 @@ namespace pxtblockly {
             // Destroy the selector div
             if (!this.selectorDiv_) return;
             goog.dom.removeNode(this.selectorDiv_);
+            this.selectorDiv_ = undefined;
         }
     }
 
