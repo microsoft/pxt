@@ -14,6 +14,37 @@ function parseInt(text: string): number {
 }
 
 namespace helpers {
+    export function arrayFill<T>(O: T[], value: T, start?: number, end?: number) {
+        // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/fill
+        // Steps 3-5.
+        const len = O.length >>> 0;
+
+        // Steps 6-7.
+        const relativeStart = start === undefined ? 0 : start >> 0;
+
+        // Step 8.
+        let k = relativeStart < 0 ?
+            Math.max(len + relativeStart, 0) :
+            Math.min(relativeStart, len);
+
+        // Steps 9-10.
+        const relativeEnd = end === undefined ? len : end >> 0;
+
+        // Step 11.
+        const final = relativeEnd < 0 ?
+            Math.max(len + relativeEnd, 0) :
+            Math.min(relativeEnd, len);
+
+        // Step 12.
+        while (k < final) {
+            O[k] = value;
+            k++;
+        }
+
+        // Step 13.
+        return O;
+    }
+
     export function arraySplice<T>(arr: T[], start: number, len: number) {
         if (start < 0) {
             return;
@@ -149,7 +180,7 @@ namespace helpers {
         return initialValue
     }
 
-    export function arrayConcat<T>(arr: T[], otherArr: T[]): T[]{
+    export function arrayConcat<T>(arr: T[], otherArr: T[]): T[] {
         let out: T[] = [];
         for (let value of arr) {
             out.push(value);
@@ -200,6 +231,63 @@ namespace helpers {
         }
 
         return s.substr(start, end - start);
+    }
+
+    export function stringSplit(S: string, separator?: string, limit?: number): string[] {
+        // https://www.ecma-international.org/ecma-262/6.0/#sec-string.prototype.split
+        const A: string[] = [];
+        let lim = 0;
+        if (limit === undefined)
+            lim = (1 << 29) - 1; // spec says 1 << 53, leaving it at 29 for constant folding
+        else if (limit < 0)
+            lim = 0;
+        else
+            lim = limit | 0;
+        const s = S.length;
+        let p = 0;
+        const R = separator;
+        if (lim == 0)
+            return A;
+        if (separator === undefined) {
+            A[0] = S;
+            return A;
+        }
+        if (s == 0) {
+            let z = splitMatch(S, 0, R);
+            if (z > -1) return A;
+            A[0] = S;
+            return A;
+        }
+        let T: string;
+        let q = p;
+        while (q != s) {
+            let e = splitMatch(S, q, R);
+            if (e < 0) q++;
+            else {
+                if (e == p) q++;
+                else {
+                    T = stringSlice(S, p, q);
+                    A.push(T);
+                    if (A.length == lim) return A;
+                    p = e;
+                    q = p;
+                }
+            }
+        }
+        T = stringSlice(S, p, q);
+        A.push(T);
+        return A;
+    }
+
+    function splitMatch(S: string, q: number, R: string): number {
+        const r = R.length;
+        const s = S.length;
+        if (q + r > s) return -1;
+        for (let i = 0; i < r; ++i) {
+            if (S[q + i] != R[i])
+                return -1;
+        }
+        return q + r;
     }
 }
 

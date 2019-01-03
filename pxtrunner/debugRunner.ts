@@ -84,7 +84,7 @@ namespace pxt.runner {
         }
 
         private initializeWebsocket() {
-            if (!Cloud.isLocalHost() || !Cloud.localToken)
+            if (!pxt.BrowserUtils.isLocalHost() || !Cloud.localToken)
             return;
 
             pxt.debug('initializing debug pipe');

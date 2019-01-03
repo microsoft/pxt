@@ -231,7 +231,7 @@ namespace pxsim.visuals {
                 let colIdx = j + colIdxOffset;
                 const addEl = (pin: SVGElAndSize) => {
                     svg.hydrate(pin.el, pin.el.tagName == "circle"
-                        ? { cx: cx + pin.w * 0.5, cy: cy + pin.h * 0.5 }
+                        ? { cx, cy }
                         : { x: cx - pin.w * 0.5, y: cy - pin.h * 0.5 });
                     grid.appendChild(pin.el);
                     return pin.el;

@@ -77,9 +77,10 @@ namespace pxt.blocks {
         return b ? b.fn : undefined;
     }
 
-    function createShadowValue(info: pxtc.BlocksInfo, p: pxt.blocks.BlockParameter, shadowId?: string, defaultV?: string): Element {
+    export function createShadowValue(info: pxtc.BlocksInfo, p: pxt.blocks.BlockParameter, shadowId?: string, defaultV?: string): Element {
         defaultV = defaultV || p.defaultValue;
         shadowId = shadowId || p.shadowBlockId;
+        if (!shadowId && p.range) shadowId = "math_number_minmax";
         let defaultValue: any;
 
         if (defaultV && defaultV.slice(0, 1) == "\"")
@@ -156,6 +157,28 @@ namespace pxt.blocks {
             }
         }
 
+        let mut: HTMLElement;
+        if (p.range) {
+            mut = document.createElement('mutation');
+            mut.setAttribute('min', p.range.min.toString());
+            mut.setAttribute('max', p.range.max.toString());
+            mut.setAttribute('label', p.actualName.charAt(0).toUpperCase() + p.actualName.slice(1));
+            if (p.fieldOptions) {
+                if (p.fieldOptions['step']) mut.setAttribute('step', p.fieldOptions['step']);
+                if (p.fieldOptions['color']) mut.setAttribute('color', p.fieldOptions['color']);
+                if (p.fieldOptions['precision']) mut.setAttribute('precision', p.fieldOptions['precision']);
+            }
+        }
+
+        if (p.fieldOptions) {
+            if (!mut) mut = document.createElement('mutation');
+            mut.setAttribute(`customfield`, JSON.stringify(p.fieldOptions));
+        }
+
+        if (mut) {
+            shadow.appendChild(mut);
+        }
+
         return value;
     }
 
@@ -221,29 +244,7 @@ namespace pxt.blocks {
             comp.parameters.filter(pr => !pr.isOptional &&
                 (/^(string|number|boolean)$/.test(pr.type) || pr.shadowBlockId || pr.defaultValue))
                 .forEach(pr => {
-                    let shadowValue: Element;
-                    let container: HTMLElement;
-                    if (pr.range) {
-                        shadowValue = createShadowValue(info, pr, "math_number_minmax");
-                        container = document.createElement('mutation');
-                        container.setAttribute('min', pr.range.min.toString());
-                        container.setAttribute('max', pr.range.max.toString());
-                        container.setAttribute('label', pr.actualName.charAt(0).toUpperCase() + pr.actualName.slice(1));
-                        if (pr.fieldOptions) {
-                            if (pr.fieldOptions['step']) container.setAttribute('step', pr.fieldOptions['step']);
-                            if (pr.fieldOptions['color']) container.setAttribute('color', pr.fieldOptions['color']);
-                            if (pr.fieldOptions['precision']) container.setAttribute('precision', pr.fieldOptions['precision']);
-                        }
-                    } else {
-                        shadowValue = createShadowValue(info, pr);
-                    }
-                    if (pr.fieldOptions) {
-                        if (!container) container = document.createElement('mutation');
-                        container.setAttribute(`customfield`, JSON.stringify(pr.fieldOptions));
-                    }
-                    if (shadowValue && container)
-                        shadowValue.firstChild.appendChild(container);
-                    block.appendChild(shadowValue);
+                    block.appendChild(createShadowValue(info, pr));
                 })
             if (fn.attributes.draggableParameters) {
                 comp.handlerArgs.forEach(arg => {
@@ -436,7 +437,7 @@ namespace pxt.blocks {
         }
         else if (fn.attributes._expandedDef && fn.attributes.expandableArgumentMode !== "disabled") {
             const shouldToggle = fn.attributes.expandableArgumentMode === "toggle";
-            initExpandableBlock(block, fn.attributes._expandedDef, comp, shouldToggle, () => buildBlockFromDef(fn.attributes._expandedDef, true));
+            initExpandableBlock(info, block, fn.attributes._expandedDef, comp, shouldToggle, () => buildBlockFromDef(fn.attributes._expandedDef, true));
         }
         else if (comp.handlerArgs.length) {
             /**
@@ -1937,6 +1938,7 @@ namespace pxt.blocks {
 
         msg.PROCEDURES_DEFNORETURN_TITLE = proceduresDef.block["PROCEDURES_DEFNORETURN_TITLE"];
         msg.PROCEDURE_ALREADY_EXISTS = proceduresDef.block["PROCEDURE_ALREADY_EXISTS"];
+        msg.PROCEDURES_HUE = pxt.toolbox.getNamespaceColor("variables");
 
         Blockly.Blocks['procedures_defnoreturn'].init = function () {
             let nameField = new Blockly.FieldTextInput('',
