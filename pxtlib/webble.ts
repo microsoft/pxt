@@ -316,7 +316,7 @@ namespace pxt.webBluetooth {
 
     // see https://github.com/thegecko/web-bluetooth-dfu
     export class DFUService extends BLEFlashingService {
-        static SERVICE_UUID = 0xFE59;
+        static SERVICE_UUID = 'e95d93b0-251d-470a-a062-fa1922dfa9a8';
         static CONTROL_UUID = '8ec90001-f315-4f60-9fb8-838830daea50';
         static PACKET_UUID = '8ec90002-f315-4f60-9fb8-838830daea50';
         static LITTLE_ENDIAN = true;
