@@ -11,6 +11,10 @@ export enum ShareMode {
     Simulator
 }
 
+export interface ShareEditorProps extends ISettingsProps {
+    loading?: boolean;
+}
+
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 export interface ShareEditorState {
     advancedMenu?: boolean;
@@ -19,11 +23,12 @@ export interface ShareEditorState {
     pubCurrent?: boolean;
     visible?: boolean;
     sharingError?: boolean;
+    loading?: boolean;
     projectName?: string;
 }
 
-export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState> {
-    constructor(props: ISettingsProps) {
+export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorState> {
+    constructor(props: ShareEditorProps) {
         super(props);
         this.state = {
             currentPubId: undefined,
@@ -46,17 +51,22 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
         this.setState({ visible: true, mode: ShareMode.Code, pubCurrent: header.pubCurrent, sharingError: false });
     }
 
-    componentWillReceiveProps(newProps: ISettingsProps) {
+    componentWillReceiveProps(newProps: ShareEditorProps) {
         this.handleProjectNameChange(newProps.parent.state.projectName);
+        if (newProps.loading != this.state.loading) {
+            this.setState({ loading: newProps.loading });
+        }
     }
 
-    shouldComponentUpdate(nextProps: ISettingsProps, nextState: ShareEditorState, nextContext: any): boolean {
+    shouldComponentUpdate(nextProps: ShareEditorProps, nextState: ShareEditorState, nextContext: any): boolean {
         return this.state.visible != nextState.visible
             || this.state.advancedMenu != nextState.advancedMenu
             || this.state.mode != nextState.mode
             || this.state.pubCurrent != nextState.pubCurrent
             || this.state.currentPubId != nextState.currentPubId
-            || this.state.sharingError != nextState.sharingError;
+            || this.state.sharingError != nextState.sharingError
+            || this.state.projectName != nextState.projectName
+            || this.state.loading != nextState.loading;
     }
 
     private toggleAdvancedMenu() {
@@ -70,14 +80,11 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
 
     handleProjectNameChange(name: string) {
         this.setState({ projectName: name });
-        // save project name if valid change
-        if (name && this.props.parent.state.projectName != name) {
-            this.props.parent.updateHeaderNameAsync(name);
-        }
     }
 
     renderCore() {
-        const { visible, projectName } = this.state;
+        const { visible, projectName: newProjectName, loading } = this.state;
+        const { projectName } = this.props.parent.state;
         const targetTheme = pxt.appTarget.appTheme;
         const header = this.props.parent.state.header;
         const advancedMenu = !!this.state.advancedMenu;
@@ -124,8 +131,13 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
         }
         const publish = () => {
             pxt.tickEvent("menu.embed.publish", undefined, { interactiveConsent: true });
-            this.setState({ sharingError: false });
-            this.props.parent.anonymousPublishAsync()
+            this.setState({ sharingError: false, loading: true });
+            let p = Promise.resolve();
+            if (newProjectName && this.props.parent.state.projectName != newProjectName) {
+                // save project name if we've made a change change
+                p = this.props.parent.updateHeaderNameAsync(newProjectName);
+            }
+            p.then(() => this.props.parent.anonymousPublishAsync())
                 .catch((e) => {
                     this.setState({ sharingError: true });
                 })
@@ -143,7 +155,7 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
         ];
 
         const action = !ready ? lf("Publish project") : undefined;
-        const actionLoading = this.props.parent.state.publishing && !this.state.sharingError;
+        const actionLoading = loading && !this.state.sharingError;
 
 
         let actions: sui.ModalButton[] = [];
@@ -176,7 +188,7 @@ export class ShareEditor extends data.Component<ISettingsProps, ShareEditorState
                                     <div>
                                         <sui.Input ref="filenameinput" autoFocus={!pxt.BrowserUtils.isMobile()} id={"projectNameInput"}
                                             ariaLabel={lf("Type a name for your project")} autoComplete={false}
-                                            value={projectName || ''} onChange={this.handleProjectNameChange} />
+                                            value={newProjectName || ''} onChange={this.handleProjectNameChange} />
                                     </div>
                                 </div> : undefined}
                             <p className="ui message info">{lf("You need to publish your project to share it or embed it in other web pages.") + " " +
