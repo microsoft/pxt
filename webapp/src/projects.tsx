@@ -179,10 +179,10 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             signIn = this.getData("sync:username") || lf("Sign in")
         }
 
-        return <div ref="homeContainer" className={tabClasses}>
+        return <div ref="homeContainer" className={tabClasses} role="main">
             {showHeroBanner ?
                 <div className="ui segment getting-started-segment" style={{ backgroundImage: `url(${encodeURI(targetTheme.homeScreenHero)})` }} /> : undefined}
-            <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment mystuff-segment">
+            <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment mystuff-segment" role="region" aria-label={lf("My Projects")}>
                 <div className="ui grid equal width padded heading">
                     <div className="column" style={{ zIndex: 1 }}>
                         {targetTheme.scriptManager ? <h2 role="button" className="ui header myproject-header" title={lf("See all projects")} tabIndex={0}
@@ -203,7 +203,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 </div>
             </div>
             {Object.keys(galleries).map(galleryName =>
-                <div key={`${galleryName}_gallerysegment`} className="ui segment gallerysegment">
+                <div key={`${galleryName}_gallerysegment`} className="ui segment gallerysegment" role="region" aria-label={pxt.Util.rlf(galleryName)}>
                     <h2 className="ui header heading">{pxt.Util.rlf(galleryName)} </h2>
                     <div className="content">
                         <ProjectsCarousel ref={`${selectedCategory == galleryName ? 'activeCarousel' : ''}`} key={`${galleryName}_carousel`} parent={this.props.parent} name={galleryName} path={galleries[galleryName]}
