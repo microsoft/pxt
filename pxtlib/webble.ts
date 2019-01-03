@@ -587,23 +587,15 @@ namespace pxt.webBluetooth {
                 });
         }
 
-        /**
-     * Updates a device
-     * @param device The device to switch mode
-     * @param init The initialisation packet to send
-     * @param firmware The firmware to update
-     * @returns Promise containing the device
-     */
-        public update(init: ArrayBuffer, firmware: ArrayBuffer): Promise<void> {
-            return this.transferInitAsync(init)
-                .then(() => this.transferFirmwareAsync(firmware));
-        }
-
         flashAsync(hex: string): Promise<void> {
             if (this.hex) {
                 this.debug(`flashing already in progress`)
                 return Promise.resolve();
             }
+            this.setFlashData(this.hex);
+            // todo: generate init 
+            return this.transferInitAsync(init)
+                .then(() => this.transferFirmwareAsync(this.bin));
         }
     }
 
@@ -657,7 +649,7 @@ namespace pxt.webBluetooth {
             this.handleCharacteristic = this.handleCharacteristic.bind(this);
         }
 
-        private clearFlashData() {
+        protected clearFlashData() {
             super.clearFlashData();
 
             this.version = 0;
