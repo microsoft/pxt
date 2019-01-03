@@ -1429,6 +1429,7 @@ export interface BuildTargetOptions {
     packaged?: boolean;
     skipCore?: boolean;
     quick?: boolean;
+    rebundle?: boolean;
 }
 
 export function buildTargetAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
@@ -1463,37 +1464,29 @@ export function internalBuildTargetAsync(options: BuildTargetOptions = {}): Prom
 
     return initPromise
         .then(() => { copyCommonSim(); return simshimAsync() })
-        .then(() => buildTargetCoreAsync(options))
+        .then(() => options.rebundle ? buildTargetCoreAsync({ quick: true }) : buildTargetCoreAsync(options))
         .then(() => buildSimAsync())
         .then(() => buildFolderAsync('cmds', true))
         .then(() => buildSemanticUIAsync())
-        .then(() => {
-            if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor &&
-                fs.existsSync(path.join("editor", "tsconfig.json"))) {
-                const tsConfig = JSON.parse(fs.readFileSync(path.join("editor", "tsconfig.json"), "utf8"));
-                if (tsConfig.compilerOptions.module)
-                    return buildFolderAndBrowserifyAsync('editor', true, 'editor');
-                else
-                    return buildFolderAsync('editor', true, 'editor');
-            }
-            return Promise.resolve();
-        })
-        .then(() => {
-            if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendFieldEditors &&
-                fs.existsSync(path.join("fieldeditors", "tsconfig.json"))) {
-                const tsConfig = JSON.parse(fs.readFileSync(path.join("fieldeditors", "tsconfig.json"), "utf8"));
-                if (tsConfig.compilerOptions.module)
-                    return buildFolderAndBrowserifyAsync('fieldeditors', true, 'fieldeditors');
-                else
-                    return buildFolderAsync('fieldeditors', true, 'fieldeditors');
-            }
-            return Promise.resolve();
-        })
+        .then(() => buildEditorExtensionAsync("editor", "extendEditor"))
+        .then(() => buildEditorExtensionAsync("fieldeditors", "extendFieldEditors"))
         .then(() => buildFolderAsync('server', true, 'server'))
 
     function inCommonPkg(p: string) {
         return fs.existsSync(path.join(commonPackageDir, p));
     }
+}
+
+function buildEditorExtensionAsync(dirname: string, optionName: string) {
+    if (pxt.appTarget.appTheme && (pxt.appTarget.appTheme as any)[optionName] &&
+        fs.existsSync(path.join(dirname, "tsconfig.json"))) {
+        const tsConfig = JSON.parse(fs.readFileSync(path.join(dirname, "tsconfig.json"), "utf8"));
+        if (tsConfig.compilerOptions.module)
+            return buildFolderAndBrowserifyAsync(dirname, true, dirname);
+        else
+            return buildFolderAsync(dirname, true, dirname);
+    }
+    return Promise.resolve();
 }
 
 function buildFolderAsync(p: string, optional?: boolean, outputName?: string): Promise<void> {
@@ -2202,7 +2195,7 @@ function buildAndWatchTargetAsync(includeSourceMaps: boolean, rebundle: boolean)
 
     return buildAndWatchAsync(() => buildPxtAsync(includeSourceMaps)
         .then(buildCommonSimAsync, e => buildFailed("common sim build failed: " + e.message, e))
-        .then(() => rebundle ? rebundleAsync() : internalBuildTargetAsync({ localDir: true }))
+        .then(() => internalBuildTargetAsync({ localDir: true, rebundle }))
         .catch(e => buildFailed("target build failed: " + e.message, e))
         .then(() => {
             let toWatch = [path.resolve("node_modules/pxt-core")].concat(dirsToWatch)
