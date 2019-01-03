@@ -229,6 +229,31 @@ namespace pxt.cpp {
             }
         }
 
+        let hash_if_options = ["0", "false", "PXT_UTF8"]
+
+        let cpp_options: pxt.Map<number> = {}
+        if (compile.switches.boxDebug)
+            cpp_options["PXT_BOX_DEBUG"] = 1
+
+        if (compile.gc)
+            cpp_options["PXT_GC"] = 1
+
+        if (compile.utf8)
+            cpp_options["PXT_UTF8"] = 1
+
+        if (compile.switches.profile)
+            cpp_options["PXT_PROFILE"] = 1
+
+        if (compile.switches.gcDebug)
+            cpp_options["PXT_GC_DEBUG"] = 1
+
+        if (compile.switches.numFloat)
+            cpp_options["PXT_USE_FLOAT"] = 1
+
+        if (compile.vtableShift)
+            cpp_options["PXT_VTABLE_SHIFT"] = compile.vtableShift
+
+
         function stripComments(ln: string) {
             return ln.replace(/\/\/.*/, "").replace(/\/\*/, "")
         }
@@ -393,7 +418,10 @@ namespace pxt.cpp {
             let indexedInstanceIdx = -1
 
             // replace #if 0 .... #endif with newlines
-            src = src.replace(/^\s*#\s*if\s+0\s*$[^]*?^\s*#\s*endif\s*$/mg, f => f.replace(/[^\n]/g, ""))
+            src = src.replace(/^(\s*#\s*if\s+(\w+)\s*$)([^]*?)(^\s*#\s*(elif|else|endif)\s*$)/mg,
+                (f, _if, arg, middle, _endif) =>
+                    hash_if_options.indexOf(arg) >= 0 && !cpp_options[arg] ?
+                        _if + middle.replace(/[^\n]/g, "") + _endif : f)
 
             // special handling of C++ namespace that ends with Methods (e.g. FooMethods)
             // such a namespace will be converted into a TypeScript interface
@@ -843,23 +871,9 @@ namespace pxt.cpp {
             pxt.debug(`module.json: ${res.generatedFiles["/module.json"]}`)
         }
 
-        if (compile.switches.boxDebug)
-            pxtConfig += "#define PXT_BOX_DEBUG 1\n"
-
-        if (compile.gc)
-            pxtConfig += "#define PXT_GC 1\n"
-
-        if (compile.switches.profile)
-            pxtConfig += "#define PXT_PROFILE 1\n"
-
-        if (compile.switches.gcDebug)
-            pxtConfig += "#define PXT_GC_DEBUG 1\n"
-
-        if (compile.switches.numFloat)
-            pxtConfig += "#define PXT_USE_FLOAT 1\n"
-
-        if (compile.vtableShift)
-            pxtConfig += `#define PXT_VTABLE_SHIFT ${compile.vtableShift}\n`
+        for (let k of Object.keys(cpp_options)) {
+            pxtConfig += `#define ${k} ${cpp_options[k]}\n`
+        }
 
         res.generatedFiles[sourcePath + "pointers.cpp"] = includesInc + protos.finish() + abiInc + pointersInc + "\nPXT_SHIMS_END\n"
         res.generatedFiles[sourcePath + "pxtconfig.h"] = pxtConfig

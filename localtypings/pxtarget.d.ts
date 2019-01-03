@@ -361,6 +361,7 @@ declare namespace ts.pxtc {
         driveName?: string;
         jsRefCounting?: boolean;
         gc?: boolean;
+        utf8?: boolean;
         switches: CompileSwitches;
         deployDrives?: string; // partial name of drives where the .hex file should be copied
         deployFileMarker?: string;

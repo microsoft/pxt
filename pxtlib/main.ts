@@ -103,6 +103,8 @@ namespace pxt {
             comp.vtableShift = 2
         if (!comp.useUF2 && !comp.useELF && comp.noSourceInFlash == undefined)
             comp.noSourceInFlash = true // no point putting sources in hex to be flashed
+        if (comp.utf8 === undefined)
+            comp.utf8 = true
         if (!appTarget.appTheme) appTarget.appTheme = {}
         if (!appTarget.appTheme.embedUrl)
             appTarget.appTheme.embedUrl = appTarget.appTheme.homeUrl
