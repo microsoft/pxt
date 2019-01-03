@@ -85,7 +85,7 @@ export class Carousel extends data.Component<ICarouselProps, ICarouselState> {
         const { rightDisabled, leftDisabled } = this.state;
 
         return <div className="ui carouselouter">
-            <span role="button" className={"carouselarrow left aligned" + (leftDisabled ? " arrowdisabled" : "")}
+            <span role="button" className={"carouselarrow left aligned" + (leftDisabled ? " arrowdisabled" : "")} aria-label={lf("See previous")}
                 tabIndex={leftDisabled ? -1 : 0} onClick={this.onLeftArrowClick} onKeyDown={sui.fireClickOnEnter} ref={this.handleArrowRefs}>
                 <sui.Icon icon="circle angle left" />
             </span>
@@ -99,7 +99,7 @@ export class Carousel extends data.Component<ICarouselProps, ICarouselState> {
                     }
                 </div>
             </div>
-            <span role="button" className={"carouselarrow right aligned" + (rightDisabled ? " arrowdisabled" : "")}
+            <span role="button" className={"carouselarrow right aligned" + (rightDisabled ? " arrowdisabled" : "")} aria-label={lf("See more")}
                 tabIndex={rightDisabled ? -1 : 0} onClick={this.onRightArrowClick} onKeyDown={sui.fireClickOnEnter} ref={this.handleArrowRefs}>
                 <sui.Icon icon="circle angle right" />
             </span>
