@@ -53,11 +53,15 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
 
     componentWillReceiveProps(newProps: ShareEditorProps) {
         const newState: ShareEditorState = {}
-        newState.projectName = newProps.parent.state.projectName;
+        if (newProps.parent.state.projectName != this.state.projectName) {
+            newState.projectName = newProps.parent.state.projectName;
+        }
         if (newProps.loading != this.state.loading) {
             newState.loading = newProps.loading;
         }
-        this.setState(newState);
+        if (Object.keys(newState).length > 0) {
+            this.setState(newState);
+        }
     }
 
     shouldComponentUpdate(nextProps: ShareEditorProps, nextState: ShareEditorState, nextContext: any): boolean {
