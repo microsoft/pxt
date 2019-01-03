@@ -101,14 +101,14 @@ namespace ts.pxtc {
         string_literal(lbl: string, strLit: string) {
             const SKIP_INCR = 16
             let vt = "pxt::string_inline_ascii_vt"
-            let utfLit = target.utf8 ? U.toUTF8(strLit) : strLit
+            let utfLit = target.utf8 ? U.toUTF8(strLit, true) : strLit
             if (utfLit !== strLit) {
                 if (utfLit.length > SKIP_INCR) {
                     vt = "pxt::string_skiplist16_vt"
                     let skipList: number[] = []
                     let off = 0
                     for (let i = 0; i + SKIP_INCR <= strLit.length; i += SKIP_INCR) {
-                        off += U.toUTF8(strLit.slice(i, i + SKIP_INCR)).length
+                        off += U.toUTF8(strLit.slice(i, i + SKIP_INCR), true).length
                         skipList.push(off)
                     }
                     return `

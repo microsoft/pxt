@@ -14,14 +14,14 @@ Take one down
 Pass it around
 `
         let longUTF = `
-99 Bottles of beer on the wall!
+99 Bottlęs of beer on the wall! 💺
 Take one down
 Pass it around
-98 Bottles of beer on the wall!
+98 Bottłeś of beer on the wall! 💃
 Take one down
 Pass it around
-97 Bottles of beer on the wall!
-Take one down
+97 Bottles of beer on the wall! 😂
+Take óne down
 Pasś it around
 `
 
