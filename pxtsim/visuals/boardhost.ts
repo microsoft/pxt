@@ -92,7 +92,7 @@ namespace pxsim.visuals {
                     getBBCoord: this.breadboard.getCoord.bind(this.breadboard),
                     partsList: activeComponents,
                 });
-                if (!allocRes.partsAndWires.length) {
+                if (!allocRes.partsAndWires.length && !opts.forceBreadboardLayout) {
                     // nothing got allocated, so we rollback the changes.
                     useBreadboardView = false;
                 }
