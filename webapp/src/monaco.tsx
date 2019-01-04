@@ -1644,6 +1644,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             if (index === 0) {
                 return line.trim();
             }
+            else if (index === lines.length - 1) {
+                return createIndent(minIndent) + line.trim();
+            }
             else {
                 return innerIndent + line.trim();
             }
