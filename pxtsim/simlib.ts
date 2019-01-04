@@ -275,7 +275,7 @@ namespace pxsim {
         */
 
 
-        /*        
+        /*
          struct SoundInstruction {
              uint8_t soundWave;
              uint8_t flags;
@@ -399,9 +399,9 @@ namespace pxsim {
 
                 idx += 10
 
-                ch.gain.gain.setValueAtTime(scaleVol(startVol), ctx.currentTime + timeOff)
+                ch.gain.gain.setValueAtTime(scaleVol(startVol), ctx.currentTime + (timeOff / 1000))
                 timeOff += duration
-                ch.gain.gain.linearRampToValueAtTime(scaleVol(endVol), ctx.currentTime + timeOff)
+                ch.gain.gain.linearRampToValueAtTime(scaleVol(endVol), ctx.currentTime + (timeOff / 1000))
 
                 return loopAsync()
             }
