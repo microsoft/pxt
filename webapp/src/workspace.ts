@@ -794,6 +794,9 @@ data.mountVirtualApi("headers", {
             });
     },
     expirationTime: p => 5 * 1000,
+    onInvalidated: () => {
+        compiler.projectSearchClear();
+    }
 })
 
 /*

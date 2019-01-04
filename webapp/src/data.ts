@@ -250,6 +250,7 @@ export interface VirtualApi {
     isSync?: boolean;
     expirationTime?(path: string): number; // in milliseconds
     isOffline?: () => boolean;
+    onInvalidated?: () => void;
 }
 
 export function mountVirtualApi(protocol: string, handler: VirtualApi) {
@@ -273,6 +274,8 @@ export function invalidate(prefix: string) {
             ce.lastRefresh = 0;
             if (ce.components.length > 0)
                 queue(lookup(ce.path))
+            if (ce.api.onInvalidated)
+                ce.api.onInvalidated();
         }
     })
 }
