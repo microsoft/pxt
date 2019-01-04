@@ -234,18 +234,36 @@ namespace pxsim {
         }
 
         const waveForms: OscillatorType[] = [null, "triangle", "sawtooth", "sine"]
+        let metallicBuffer: AudioBuffer
         let noiseBuffer: AudioBuffer
         let squareBuffer: AudioBuffer[] = []
 
-        function getNoiseBuffer() {
-            if (!noiseBuffer) {
+        function getMetallicBuffer() {
+            if (!metallicBuffer) {
                 // normalized to 100Hz
                 const bufferSize = 1024;
-                noiseBuffer = context().createBuffer(1, bufferSize, 100 * bufferSize);
-                const output = noiseBuffer.getChannelData(0);
+                metallicBuffer = context().createBuffer(1, bufferSize, 100 * bufferSize);
+                const output = metallicBuffer.getChannelData(0);
 
                 for (let i = 0; i < bufferSize; i++) {
                     output[i] = (((i * 7919) & 1023) / 512.0) - 1.0;
+                }
+            }
+            return metallicBuffer
+        }
+
+        function getNoiseBuffer() {
+            if (!noiseBuffer) {
+                const bufferSize = 100000;
+                noiseBuffer = context().createBuffer(1, bufferSize, 44100);
+                const output = noiseBuffer.getChannelData(0);
+
+                let x = 0xf01ba80;
+                for (let i = 0; i < bufferSize; i++) {
+                    x ^= x << 13;
+                    x ^= x >> 17;
+                    x ^= x << 5;
+                    output[i] = ((x & 1023) / 512.0) - 1.0;
                 }
             }
             return noiseBuffer
@@ -270,6 +288,7 @@ namespace pxsim {
         #define SW_SAWTOOTH 2
         #define SW_SINE 3 // TODO remove it? it takes space
         #define SW_NOISE 4
+        #define SW_REAL_NOISE 5
         #define SW_SQUARE_10 11
         #define SW_SQUARE_50 15
         */
@@ -297,8 +316,10 @@ namespace pxsim {
 
             let buffer: AudioBuffer
             if (waveFormIdx == 4)
+                buffer = getMetallicBuffer()
+            else if (waveFormIdx == 5)
                 buffer = getNoiseBuffer()
-            else if (11 <= waveFormIdx && waveFormIdx <= 15)
+                else if (11 <= waveFormIdx && waveFormIdx <= 15)
                 buffer = getSquareBuffer((waveFormIdx - 10) * 10)
             else
                 return null
