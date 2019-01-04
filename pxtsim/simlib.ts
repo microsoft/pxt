@@ -319,7 +319,7 @@ namespace pxsim {
                 buffer = getMetallicBuffer()
             else if (waveFormIdx == 5)
                 buffer = getNoiseBuffer()
-                else if (11 <= waveFormIdx && waveFormIdx <= 15)
+            else if (11 <= waveFormIdx && waveFormIdx <= 15)
                 buffer = getSquareBuffer((waveFormIdx - 10) * 10)
             else
                 return null
