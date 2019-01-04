@@ -356,11 +356,11 @@ export function duplicateAsync(h: Header, text: ScriptText, rename?: boolean): P
     delete h._rev
     delete (h as any)._id
     return importAsync(h, text)
-        .then(() => h2)
+        .then(() => h)
 }
 
 export function createDuplicateName(h: Header) {
-    let names = U.toDictionary(allScripts, e => e.header.name)
+    let names = U.toDictionary(allScripts.filter(e => !e.header.isDeleted), e => e.header.name)
     let n = 2
     while (names.hasOwnProperty(h.name + " #" + n))
         n++

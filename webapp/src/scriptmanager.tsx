@@ -116,7 +116,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
 
     handleDelete() {
         let { selected } = this.state;
-        const headers = this.fetchLocalData();
+        const headers = this.getSortedHeaders();
         const selectedLength = Object.keys(selected).length;
         core.confirmDelete(selectedLength == 1 ? headers[parseInt(Object.keys(selected)[0])].name : selectedLength.toString(), () => {
             const promises: Promise<void>[] = [];
@@ -209,7 +209,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
 
     handleSelectAll = (event: any) => {
         let { selected } = this.state;
-        const headers = this.fetchLocalData();
+        const headers = this.getSortedHeaders();
         const selectedAll = headers.length > 0 && headers.length == Object.keys(selected).length;
         if (selectedAll) {
             // Deselect all if selected
@@ -265,8 +265,28 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         const indexes = Object.keys(selected);
         if (indexes.length !== 1) return null; // Sanity check
         const index = parseInt(indexes[0]);
-        const headers = this.fetchLocalData();
+        const headers = this.getSortedHeaders();
         return headers[index];
+    }
+
+    private getSortedHeaders() {
+        const { sortedBy, sortedAsc } = this.state;
+        const headers = this.fetchLocalData() || [];
+        return headers.sort(this.getSortingFunction(sortedBy, sortedAsc))
+    }
+
+    private getSortingFunction(sortedBy: string, sortedAsc: boolean) {
+        const sortingFunction = (a: pxt.workspace.Header, b: pxt.workspace.Header) => {
+            if (sortedBy === 'time') {
+                return sortedAsc ?
+                    a.modificationTime - b.modificationTime :
+                    b.modificationTime - a.modificationTime;
+            }
+            return sortedAsc ?
+                a.name.localeCompare(b.name) :
+                b.name.localeCompare(a.name);
+        };
+        return sortingFunction;
     }
 
     renderCore() {
@@ -275,7 +295,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
 
         const darkTheme = pxt.appTarget.appTheme.baseTheme == 'dark';
 
-        let headers = this.fetchLocalData() || [];
+        let headers = this.getSortedHeaders() || [];
         headers = headers.filter(h => !h.isDeleted);
         const isSearching = false;
         const hasHeaders = !searchFor ? headers.length > 0 : true;
@@ -300,22 +320,12 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                         text={lf("Duplicate")} textClass="landscape only" title={lf("Duplicate Project")} onClick={this.handleDuplicate} />);
                 }
                 headerActions.push(<sui.Button key="delete" icon="trash" className="icon red"
-                    text={lf("Delete")} textClass="landscape only" title={lf("Delete Project")} onClick={this.handleDelete}/>);
+                    text={lf("Delete")} textClass="landscape only" title={lf("Delete Project")} onClick={this.handleDelete} />);
                 headerActions.push(<div key="divider" className="divider"></div>);
             }
             headerActions.push(<sui.Button key="view" icon={view == 'grid' ? 'th list' : 'grid layout'} className="icon"
                 title={`${view == 'grid' ? lf("List view") : lf("Grid view")}`} onClick={this.handleSwitchView} />)
         }
-        const sortingFunction = (a: pxt.workspace.Header, b: pxt.workspace.Header) => {
-            if (sortedBy === 'time') {
-                return sortedAsc ?
-                    a.modificationTime - b.modificationTime :
-                    b.modificationTime - a.modificationTime;
-            }
-            return sortedAsc ?
-                a.name.localeCompare(b.name) :
-                b.name.localeCompare(a.name);
-        };
         return (
             <sui.Modal isOpen={visible} className="scriptmanager" size="fullscreen"
                 onClose={this.close} dimmer={true} header={lf("My Projects")}
@@ -342,7 +352,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                             </div>
                         </div>
                         <div className={"ui cards"}>
-                            {headers.sort(sortingFunction).map((scr, index) => {
+                            {headers.sort(this.getSortingFunction(sortedBy, sortedAsc)).map((scr, index) => {
                                 const isMarkedNew = !!markedNew[index];
                                 const isSelected = !!selected[index];
                                 const showMarkedNew = isMarkedNew && !isSelected;
@@ -387,7 +397,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                                 </tr>
                             </thead>
                             <tbody>
-                                {headers.sort(sortingFunction).map((scr, index) => {
+                                {headers.sort(this.getSortingFunction(sortedBy, sortedAsc)).map((scr, index) => {
                                     const isMarkedNew = !!markedNew[index];
                                     const isSelected = !!selected[index];
                                     const showMarkedNew = isMarkedNew && !isSelected;
