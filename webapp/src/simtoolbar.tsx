@@ -93,7 +93,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const collapse = !!targetTheme.pairingButton;
         if (isHeadless) return <div />;
 
-        const runTooltip = [lf("Stop the simulator"), lf("Starting the simulator"), lf("Start the simulator")][simState];
+        const runTooltip = [lf("Start the simulator"), lf("Starting the simulator"), lf("Stop the simulator")][simState];
         const makeTooltip = lf("Open assembly instructions");
         const restartTooltip = lf("Restart the simulator");
         const fullscreenTooltip = isFullscreen ? lf("Exit fullscreen mode") : lf("Launch in fullscreen");
