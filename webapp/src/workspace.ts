@@ -360,11 +360,13 @@ export function duplicateAsync(h: Header, text: ScriptText, rename?: boolean): P
 }
 
 export function createDuplicateName(h: Header) {
+    let reducedName = h.name.indexOf("#") > -1 ?
+        h.name.substring(0, h.name.lastIndexOf('#')).trim() : h.name;
     let names = U.toDictionary(allScripts.filter(e => !e.header.isDeleted), e => e.header.name)
     let n = 2
-    while (names.hasOwnProperty(h.name + " #" + n))
+    while (names.hasOwnProperty(reducedName + " #" + n))
         n++
-    return h.name + " #" + n;
+    return reducedName + " #" + n;
 }
 
 export function saveScreenshotAsync(h: Header, data: string, icon: string) {
