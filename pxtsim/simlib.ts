@@ -240,9 +240,8 @@ namespace pxsim {
 
         function getMetallicBuffer() {
             if (!metallicBuffer) {
-                // normalized to 100Hz
                 const bufferSize = 1024;
-                metallicBuffer = context().createBuffer(1, bufferSize, 100 * bufferSize);
+                metallicBuffer = context().createBuffer(1, bufferSize, context().sampleRate);
                 const output = metallicBuffer.getChannelData(0);
 
                 for (let i = 0; i < bufferSize; i++) {
@@ -255,7 +254,7 @@ namespace pxsim {
         function getNoiseBuffer() {
             if (!noiseBuffer) {
                 const bufferSize = 100000;
-                noiseBuffer = context().createBuffer(1, bufferSize, 44100);
+                noiseBuffer = context().createBuffer(1, bufferSize, context().sampleRate);
                 const output = noiseBuffer.getChannelData(0);
 
                 let x = 0xf01ba80;
@@ -271,12 +270,11 @@ namespace pxsim {
 
         function getSquareBuffer(param: number) {
             if (!squareBuffer[param]) {
-                // normalized to 100Hz
-                const bufferSize = 100;
-                const buf = context().createBuffer(1, bufferSize, 100 * bufferSize);
+                const bufferSize = 1024;
+                const buf = context().createBuffer(1, bufferSize, context().sampleRate);
                 const output = buf.getChannelData(0);
                 for (let i = 0; i < bufferSize; i++) {
-                    output[i] = i < param ? 1 : -1;
+                    output[i] = i < (param / 100 * bufferSize) ? 1 : -1;
                 }
                 squareBuffer[param] = buf
             }
@@ -327,7 +325,8 @@ namespace pxsim {
             let node = context().createBufferSource();
             node.buffer = buffer;
             node.loop = true;
-            node.playbackRate.value = hz / 100;
+            if (waveFormIdx != 5)
+                node.playbackRate.value = hz / (context().sampleRate / 1024);
 
             return node
         }
