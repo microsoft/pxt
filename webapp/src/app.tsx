@@ -2711,7 +2711,7 @@ function initSerial() {
     const isHF2WinRTSerial = pxt.appTarget.serial && pxt.appTarget.serial.useHF2 && pxt.winrt.isWinRT();
     const isValidLocalhostSerial = pxt.appTarget.serial && Cloud.isLocalHost() && !!Cloud.localToken;
 
-    if (!isHF2WinRTSerial && !isValidLocalhostSerial)
+    if (!isHF2WinRTSerial && !isValidLocalhostSerial && !pxt.usb.isEnabled)
         return;
 
     if (hidbridge.shouldUse() || pxt.usb.isEnabled) {
