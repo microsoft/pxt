@@ -81,8 +81,14 @@ export function getHF2DevicesAsync(): Promise<HidDevice[]> {
     return Promise.resolve(getHF2Devices());
 }
 
-function handleDevicesFound(devices: any, selectFn: any) {
+function handleDevicesFound(devices: any[], selectFn: any) {
+    if (devices.length > 1) {
+        let d2 = devices.filter(d => d.deviceVersionMajor == 42)
+        if (d2.length > 0)
+            devices = d2
+    }
     devices.forEach((device: any) => {
+        console.log(device)
         console.log(`DEV: ${device.productName || device.serialNumber}`);
     });
     selectFn(devices[0])
@@ -94,7 +100,15 @@ export function hf2ConnectAsync(path: string, raw = false) {
         if (!g.navigator)
             g.navigator = {}
         if (!g.navigator.usb) {
-            const USB = require("webusb").USB
+            const webusb = require("webusb")
+            const load = webusb.USBAdapter.prototype.loadDevice;
+            webusb.USBAdapter.prototype.loadDevice = function (device: any) {
+                // skip class 9 - USB HUB, as it causes SEGV on Windows
+                if (device.deviceDescriptor.bDeviceClass == 9)
+                    return Promise.resolve(null)
+                return load.apply(this, arguments)
+            }
+            const USB = webusb.USB
             g.navigator.usb = new USB({
                 devicesFound: handleDevicesFound
             })
