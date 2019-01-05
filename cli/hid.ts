@@ -2,18 +2,20 @@ import HF2 = pxt.HF2
 import U = pxt.U
 import * as nodeutil from './nodeutil';
 
-let webUSB = true
+function useWebUSB() {
+    return !!pxt.appTarget.compile.webUSB
+}
 
 let HID: any = undefined;
 function requireHID(install?: boolean): any {
-    if (webUSB)
+    if (useWebUSB())
         return true
     if (HID) return HID;
     return HID = nodeutil.lazyRequire("node-hid", install);
 }
 
-export function isInstalled(info?: boolean): boolean {
-    return !!requireHID(!!info);
+export function isInstalled(install?: boolean): boolean {
+    return !!requireHID(!!install);
 }
 
 export interface HidDevice {
@@ -65,9 +67,9 @@ export function deviceInfo(h: HidDevice) {
 }
 
 function getHF2Devices(): HidDevice[] {
-    const hid = requireHID(false);
-    if (!hid) return [];
-    let devices = hid.devices() as HidDevice[]
+    if (!requireHID(false))
+        return [];
+    let devices = HID.devices() as HidDevice[]
     for (let d of devices) {
         pxt.debug(JSON.stringify(d))
     }
@@ -89,7 +91,7 @@ function handleDevicesFound(devices: any, selectFn: any) {
 }
 
 export function hf2ConnectAsync(path: string, raw = false) {
-    if (webUSB) {
+    if (useWebUSB()) {
         const g = global as any
         if (!g.navigator)
             g.navigator = {}
@@ -115,7 +117,7 @@ export function hf2ConnectAsync(path: string, raw = false) {
 }
 
 export function mkPacketIOAsync() {
-    if (webUSB)
+    if (useWebUSB())
         return hf2ConnectAsync("")
     return Promise.resolve()
         .then(() => {
