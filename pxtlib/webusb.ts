@@ -421,7 +421,14 @@ namespace pxt.usb {
     }
 
     export function isAvailable() {
-        // TODO disable on Win7/Chrome?
-        return !!(navigator as any).usb
+        if (!!(navigator as any).usb) {
+            // If on Windows, and Windows is older than 10, don't enable WebUSB,
+            // as it requires signed INF files.
+            let m = /Windows NT (\d+)/.exec(navigator.userAgent)
+            if (m && parseInt(m[1]) < 10)
+                return false
+            return true
+        }
+        return false
     }
 }
