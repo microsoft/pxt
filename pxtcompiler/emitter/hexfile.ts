@@ -1087,6 +1087,8 @@ __flash_checksums:
 
         const cfg = cres.configData || []
 
+        // When BOOTLOADER_BOARD_ID is present in project, it means it's meant as configuration
+        // for bootloader. Spit out config.c file in that case, so it can be included in bootloader.
         if (cfg.some(e => e.name == "BOOTLOADER_BOARD_ID")) {
             let c = `const uint32_t configData[] = {\n`
             c += `    0x1e9e10f1, 0x20227a79, // magic\n`
