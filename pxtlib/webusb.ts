@@ -34,11 +34,6 @@ namespace pxt.usb {
     export let filters: USBDeviceFilter[] = [{
         classCode: 255,
         subclassCode: 42,
-    },
-    {
-        classCode: 0xff,
-        subclassCode: 0x45,
-        protocolCode: 0xaf,
     }
     ]
 
