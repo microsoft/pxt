@@ -101,7 +101,7 @@ export function hf2ConnectAsync(path: string, raw = false) {
         if (!g.navigator)
             g.navigator = {}
         if (!g.navigator.usb) {
-            const webusb = require("webusb")
+            const webusb = nodeutil.lazyRequire("webusb", true)
             const load = webusb.USBAdapter.prototype.loadDevice;
             webusb.USBAdapter.prototype.loadDevice = function (device: any) {
                 // skip class 9 - USB HUB, as it causes SEGV on Windows
