@@ -840,22 +840,6 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
 
         let TOC = dummy.subitems
         if (!TOC || TOC.length == 0) return null
-
-        let previousNode: pxt.TOCMenuEntry;
-        // Scan tree and build next / prev paths
-        let buildPrevNext = (node: pxt.TOCMenuEntry) => {
-            if (node.path) {
-                previousNode = node;
-            }
-            node.subitems.forEach((tocItem, tocIndex) => {
-                buildPrevNext(tocItem);
-            })
-        }
-
-        TOC.forEach((tocItem, tocIndex) => {
-            buildPrevNext(tocItem)
-        })
-
         return TOC
     }
 

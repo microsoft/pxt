@@ -1429,6 +1429,7 @@ export interface BuildTargetOptions {
     packaged?: boolean;
     skipCore?: boolean;
     quick?: boolean;
+    rebundle?: boolean;
 }
 
 export function buildTargetAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
@@ -1436,7 +1437,9 @@ export function buildTargetAsync(parsed?: commandParser.ParsedCommand): Promise<
     const opts: BuildTargetOptions = {};
     if (parsed && parsed.flags["skipCore"])
         opts.skipCore = true;
-    return internalBuildTargetAsync(opts);
+    const clean = parsed && parsed.flags["clean"];
+    return (clean ? cleanAsync() : Promise.resolve())
+        .then(() => internalBuildTargetAsync(opts));
 }
 
 export function internalBuildTargetAsync(options: BuildTargetOptions = {}): Promise<void> {
@@ -1461,37 +1464,29 @@ export function internalBuildTargetAsync(options: BuildTargetOptions = {}): Prom
 
     return initPromise
         .then(() => { copyCommonSim(); return simshimAsync() })
-        .then(() => buildTargetCoreAsync(options))
-        .then(() => buildFolderAsync('sim', true, pxt.appTarget.id === 'common' ? 'common-sim' : 'sim'))
+        .then(() => options.rebundle ? buildTargetCoreAsync({ quick: true }) : buildTargetCoreAsync(options))
+        .then(() => buildSimAsync())
         .then(() => buildFolderAsync('cmds', true))
         .then(() => buildSemanticUIAsync())
-        .then(() => {
-            if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendEditor &&
-                fs.existsSync(path.join("editor", "tsconfig.json"))) {
-                const tsConfig = JSON.parse(fs.readFileSync(path.join("editor", "tsconfig.json"), "utf8"));
-                if (tsConfig.compilerOptions.module)
-                    return buildFolderAndBrowserifyAsync('editor', true, 'editor');
-                else
-                    return buildFolderAsync('editor', true, 'editor');
-            }
-            return Promise.resolve();
-        })
-        .then(() => {
-            if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendFieldEditors &&
-                fs.existsSync(path.join("fieldeditors", "tsconfig.json"))) {
-                const tsConfig = JSON.parse(fs.readFileSync(path.join("fieldeditors", "tsconfig.json"), "utf8"));
-                if (tsConfig.compilerOptions.module)
-                    return buildFolderAndBrowserifyAsync('fieldeditors', true, 'fieldeditors');
-                else
-                    return buildFolderAsync('fieldeditors', true, 'fieldeditors');
-            }
-            return Promise.resolve();
-        })
+        .then(() => buildEditorExtensionAsync("editor", "extendEditor"))
+        .then(() => buildEditorExtensionAsync("fieldeditors", "extendFieldEditors"))
         .then(() => buildFolderAsync('server', true, 'server'))
 
     function inCommonPkg(p: string) {
         return fs.existsSync(path.join(commonPackageDir, p));
     }
+}
+
+function buildEditorExtensionAsync(dirname: string, optionName: string) {
+    if (pxt.appTarget.appTheme && (pxt.appTarget.appTheme as any)[optionName] &&
+        fs.existsSync(path.join(dirname, "tsconfig.json"))) {
+        const tsConfig = JSON.parse(fs.readFileSync(path.join(dirname, "tsconfig.json"), "utf8"));
+        if (tsConfig.compilerOptions.module)
+            return buildFolderAndBrowserifyAsync(dirname, true, dirname);
+        else
+            return buildFolderAsync(dirname, true, dirname);
+    }
+    return Promise.resolve();
 }
 
 function buildFolderAsync(p: string, optional?: boolean, outputName?: string): Promise<void> {
@@ -1725,17 +1720,50 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
     if (nodeutil.fileExistsSync("targetconfig.json")) {
         const targetConfig = nodeutil.readJson("targetconfig.json") as pxt.TargetConfig;
         if (targetConfig && targetConfig.galleries) {
+            const docsRoot = nodeutil.targetDir;
+            let gcards: pxt.CodeCard[] = [];
+            let tocmd: string =
+                `# Projects
+
+`;
             Object.keys(targetConfig.galleries).forEach(k => {
                 targetStrings[k] = k;
-                const docsRoot = nodeutil.targetDir;
                 const gallerymd = nodeutil.resolveMd(docsRoot, targetConfig.galleries[k]);
                 const gallery = pxt.gallery.parseGalleryMardown(gallerymd);
+                tocmd +=
+                    `* [${k}](${targetConfig.galleries[k]})
+`;
+                const gcard: pxt.CodeCard = {
+                    name: k,
+                    url: targetConfig.galleries[k]
+                };
+                gcards.push(gcard)
                 gallery.forEach(cards => cards.cards
-                    .filter(card => card.tags)
-                    .forEach(card => card.tags.forEach(tag => {
-                        targetStrings[tag] = tag;
-                    })))
+                    .forEach(card => {
+                        if (card.imageUrl && !gcard.imageUrl)
+                            gcard.imageUrl = card.imageUrl;
+                        if (card.largeImageUrl && !gcard.largeImageUrl)
+                            gcard.largeImageUrl = card.largeImageUrl;
+                        tocmd += `  * [${card.name || card.title}](${card.url})
+`;
+                        if (card.tags)
+                            card.tags.forEach(tag => targetStrings[tag] = tag);
+                    }))
             });
+
+            nodeutil.writeFileSync(path.join(docsRoot, "docs/projects/SUMMARY.md"), tocmd, { encoding: "utf8" });
+            nodeutil.writeFileSync(path.join(docsRoot, "docs/projects.md"),
+                `# Projects
+
+\`\`\`codecard
+${JSON.stringify(gcards, null, 4)}
+\`\`\`
+
+## See Also
+
+${gcards.map(gcard => `[${gcard.name}](${gcard.url})`).join(',\n')}
+
+`, { encoding: "utf8" });
         }
     }
     // extract strings from editor
@@ -1971,6 +1999,11 @@ function updateTOC(cfg: pxt.TargetBundle) {
 
 function rebundleAsync() {
     return buildTargetCoreAsync({ quick: true })
+        .then(() => buildSimAsync());
+}
+
+function buildSimAsync() {
+    return buildFolderAsync('sim', true, pxt.appTarget.id === 'common' ? 'common-sim' : 'sim');
 }
 
 function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
@@ -2162,7 +2195,7 @@ function buildAndWatchTargetAsync(includeSourceMaps: boolean, rebundle: boolean)
 
     return buildAndWatchAsync(() => buildPxtAsync(includeSourceMaps)
         .then(buildCommonSimAsync, e => buildFailed("common sim build failed: " + e.message, e))
-        .then(() => rebundle ? rebundleAsync() : internalBuildTargetAsync({ localDir: true }))
+        .then(() => internalBuildTargetAsync({ localDir: true, rebundle }))
         .catch(e => buildFailed("target build failed: " + e.message, e))
         .then(() => {
             let toWatch = [path.resolve("node_modules/pxt-core")].concat(dirsToWatch)
@@ -5509,6 +5542,9 @@ PXT_ASMDEBUG     - embed additional information in generated binary.asm file
             skipCore: {
                 description: "skip native build of core packages",
                 aliases: ["skip-core", "skipcore", "sc"]
+            },
+            clean: {
+                description: "clean build before building"
             }
         }
     }, buildTargetAsync);

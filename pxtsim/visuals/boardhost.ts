@@ -92,7 +92,7 @@ namespace pxsim.visuals {
                     getBBCoord: this.breadboard.getCoord.bind(this.breadboard),
                     partsList: activeComponents,
                 });
-                if (!allocRes.partsAndWires.length) {
+                if (!allocRes.partsAndWires.length && !opts.forceBreadboardLayout) {
                     // nothing got allocated, so we rollback the changes.
                     useBreadboardView = false;
                 }
@@ -162,7 +162,10 @@ namespace pxsim.visuals {
         }
         private getPinCoord(pin: string) {
             let boardCoord = this.boardView.getCoord(pin);
-            U.assert(!!boardCoord, `Unable to find coord for pin: ${pin}`);
+            if (!boardCoord) {
+                console.error(`Unable to find coord for pin: ${pin}`);
+                return undefined;
+            }
             return this.fromMBCoord(boardCoord);
         }
         public getLocCoord(loc: Loc): Coord {
@@ -174,10 +177,8 @@ namespace pxsim.visuals {
                 let pinNm = (<BoardLoc>loc).pin;
                 coord = this.getPinCoord(pinNm);
             }
-            if (!coord) {
-                console.error("Unknown location: " + name)
-                return [0, 0];
-            }
+            if (!coord)
+                console.debug("Unknown location: " + name)
             return coord;
         }
         public getPinStyle(loc: Loc): PinStyle {
@@ -188,7 +189,6 @@ namespace pxsim.visuals {
 
         public addPart(partInst: PartInst): IBoardPart<any> {
             let part: IBoardPart<any> = null;
-            let colOffset = 0;
             if (partInst.simulationBehavior) {
                 //TODO: seperate simulation behavior from builtin visual
                 let builtinBehavior = partInst.simulationBehavior;

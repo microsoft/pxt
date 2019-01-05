@@ -2,10 +2,9 @@
 
 * [About](/about)
 * [FAQ](/faq)
+* [Projects](/projects)
 
 ## #support
-
-## #projects
 
 ## #examples
 

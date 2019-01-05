@@ -561,7 +561,7 @@ declare namespace Blockly {
         render_(): void;
         showEditor_(e?: Event): void;
         getAbsoluteXY_(): goog.math.Coordinate;
-        getScaledBBox_(): {top: number, bottom: number, left: number, right: number};
+        getScaledBBox_(): { top: number, bottom: number, left: number, right: number };
         setValue(newValue: string | number): void;
         getValue(): string;
         isCurrentlyEditable(): boolean;
@@ -766,7 +766,7 @@ declare namespace Blockly {
         isInsertionMarker(): boolean;
         isShadow(): boolean;
 
-        render(): void;
+        render(opt_bubble?: boolean): void;
         bumpNeighbours_(): void;
         select(): void;
         getRelativeToSurfaceXY(): goog.math.Coordinate;
@@ -1200,5 +1200,15 @@ declare namespace Blockly {
 
     class PXTUtils {
         static fadeColour(hex: string, luminosity: number, lighten: boolean): string;
+    }
+
+    namespace Functions {
+        function isFunctionArgumentReporter(block: Blockly.Block): boolean;
+    }
+
+    namespace PXTBlockly {
+        namespace FunctionUtils {
+            function createCustomArgumentReporter(typeName: string, ws: Blockly.Workspace): Blockly.Block;
+        }
     }
 }

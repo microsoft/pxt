@@ -556,7 +556,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private setupFieldEditors() {
-        if (!this.hasFieldEditors) return;
+        if (!this.hasFieldEditors || pxt.shell.isReadOnly()) return;
         if (!this.fieldEditors) this.fieldEditors = new FieldEditorManager();
 
         pxt.appTarget.appTheme.monacoFieldEditors.forEach(name => {
@@ -882,7 +882,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     protected updateFieldEditors = pxt.Util.debounce(() => {
-        if (!this.hasFieldEditors) return;
+        if (!this.hasFieldEditors || pxt.shell.isReadOnly()) return;
         const model = this.editor.getModel();
         this.fieldEditors.clearRanges(this.editor);
 
@@ -925,6 +925,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             let selections: monaco.Selection[];
             return Promise.mapSeries(this.fieldEditors.allRanges(), range => this.indentRangeAsync(range.range))
                 .then(ranges => {
+                    if (!ranges || !ranges.length) return;
                     selections = ranges.map(rangeToSelection);
 
                     // This is only safe because indentRangeAsync doesn't change the number of lines and
@@ -1642,6 +1643,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const newText = lines.map((line, index) => {
             if (index === 0) {
                 return line.trim();
+            }
+            else if (index === lines.length - 1) {
+                return createIndent(minIndent) + line.trim();
             }
             else {
                 return innerIndent + line.trim();

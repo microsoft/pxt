@@ -325,7 +325,6 @@ declare namespace pxt {
 
     interface TargetBundle extends AppTarget {
         bundledpkgs: Map<Map<string>>;   // @internal use only (cache)
-        bundledcoresvgs?: Map<string>;   // @internal use only (cache)
         bundleddirs: string[];
         versions: TargetVersions;        // @derived
     }
@@ -362,6 +361,7 @@ declare namespace ts.pxtc {
         driveName?: string;
         jsRefCounting?: boolean;
         gc?: boolean;
+        utf8?: boolean;
         switches: CompileSwitches;
         deployDrives?: string; // partial name of drives where the .hex file should be copied
         deployFileMarker?: string;

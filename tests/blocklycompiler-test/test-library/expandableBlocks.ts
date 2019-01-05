@@ -53,4 +53,8 @@ namespace testNamespace {
     //% blockId=test_handler_arguments3 draggableParameters=1 blockAllowMultiple=1
     //% block="Handler with draggable arguments"
     export function callbackWithDraggableParams(cb: (c: number, d: number) => void) {}
+
+    //% blockId=test_handler_arguments4 draggableParameters="reporter" blockAllowMultiple=1
+    //% block="Handler with draggable arguments"
+    export function callbackWithDraggableParamsReporters(cb: (c: string, d: number, e: boolean, f: Image) => void) {}
 }

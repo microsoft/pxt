@@ -713,8 +713,12 @@ define log
   set width 0
   printf "%s", codalLogStore.buffer
 end
+define bpanic
+  b target_panic
+end
 echo \\nUse 'rst' command to re-run program from start (set your breakpoints first!).\\n
-echo Use 'boot' to go into bootloader, 'log' to dump DMESG, and 'exn' to display exception info.\\n\\n
+echo Use 'boot' to go into bootloader, 'log' to dump DMESG, and 'exn' to display exception info.\\n
+echo Use 'bpanic' to break in target_panic, 'bt' for stacktrace\\n\\n
 `)
 
     pxt.log("starting openocd: " + oargs.join(" "))

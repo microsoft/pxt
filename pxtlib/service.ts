@@ -187,7 +187,7 @@ namespace ts.pxtc {
         mutatePropertyEnum?: string;
         inlineInputMode?: string; // can be inline, external, or auto
         expandableArgumentMode?: string; // can be disabled, enabled, or toggle
-        draggableParameters?: boolean;
+        draggableParameters?: string; // can be reporter or variable; defaults to variable
 
 
         /* start enum-only attributes (i.e. a block with shim=ENUM_GET) */
@@ -717,7 +717,6 @@ namespace ts.pxtc {
         "enumIsBitMask",
         "enumIsHash",
         "decompileIndirectFixedInstances",
-        "draggableParameters",
         "topblock"
     ];
 

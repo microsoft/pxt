@@ -77,9 +77,10 @@ namespace pxt.blocks {
         return b ? b.fn : undefined;
     }
 
-    function createShadowValue(info: pxtc.BlocksInfo, p: pxt.blocks.BlockParameter, shadowId?: string, defaultV?: string): Element {
+    export function createShadowValue(info: pxtc.BlocksInfo, p: pxt.blocks.BlockParameter, shadowId?: string, defaultV?: string): Element {
         defaultV = defaultV || p.defaultValue;
         shadowId = shadowId || p.shadowBlockId;
+        if (!shadowId && p.range) shadowId = "math_number_minmax";
         let defaultValue: any;
 
         if (defaultV && defaultV.slice(0, 1) == "\"")
@@ -156,6 +157,28 @@ namespace pxt.blocks {
             }
         }
 
+        let mut: HTMLElement;
+        if (p.range) {
+            mut = document.createElement('mutation');
+            mut.setAttribute('min', p.range.min.toString());
+            mut.setAttribute('max', p.range.max.toString());
+            mut.setAttribute('label', p.actualName.charAt(0).toUpperCase() + p.actualName.slice(1));
+            if (p.fieldOptions) {
+                if (p.fieldOptions['step']) mut.setAttribute('step', p.fieldOptions['step']);
+                if (p.fieldOptions['color']) mut.setAttribute('color', p.fieldOptions['color']);
+                if (p.fieldOptions['precision']) mut.setAttribute('precision', p.fieldOptions['precision']);
+            }
+        }
+
+        if (p.fieldOptions) {
+            if (!mut) mut = document.createElement('mutation');
+            mut.setAttribute(`customfield`, JSON.stringify(p.fieldOptions));
+        }
+
+        if (mut) {
+            shadow.appendChild(mut);
+        }
+
         return value;
     }
 
@@ -221,45 +244,41 @@ namespace pxt.blocks {
             comp.parameters.filter(pr => !pr.isOptional &&
                 (/^(string|number|boolean)$/.test(pr.type) || pr.shadowBlockId || pr.defaultValue))
                 .forEach(pr => {
-                    let shadowValue: Element;
-                    let container: HTMLElement;
-                    if (pr.range) {
-                        shadowValue = createShadowValue(info, pr, "math_number_minmax");
-                        container = document.createElement('mutation');
-                        container.setAttribute('min', pr.range.min.toString());
-                        container.setAttribute('max', pr.range.max.toString());
-                        container.setAttribute('label', pr.actualName.charAt(0).toUpperCase() + pr.actualName.slice(1));
-                        if (pr.fieldOptions) {
-                            if (pr.fieldOptions['step']) container.setAttribute('step', pr.fieldOptions['step']);
-                            if (pr.fieldOptions['color']) container.setAttribute('color', pr.fieldOptions['color']);
-                            if (pr.fieldOptions['precision']) container.setAttribute('precision', pr.fieldOptions['precision']);
-                        }
-                    } else {
-                        shadowValue = createShadowValue(info, pr);
-                    }
-                    if (pr.fieldOptions) {
-                        if (!container) container = document.createElement('mutation');
-                        container.setAttribute(`customfield`, JSON.stringify(pr.fieldOptions));
-                    }
-                    if (shadowValue && container)
-                        shadowValue.firstChild.appendChild(container);
-                    block.appendChild(shadowValue);
+                    block.appendChild(createShadowValue(info, pr));
                 })
             if (fn.attributes.draggableParameters) {
                 comp.handlerArgs.forEach(arg => {
+                    // draggableParameters="variable":
                     // <value name="HANDLER_DRAG_PARAM_arg">
                     // <shadow type="variables_get_reporter">
                     //     <field name="VAR">defaultName</field>
                     // </shadow>
                     // </value>
+
+                    // draggableParameters="reporter"
+                    // <value name="HANDLER_DRAG_PARAM_arg">
+                    //     <shadow type="argument_reporter_custom">
+                    //         <mutation typename="Sprite"></mutation>
+                    //         <field name="VALUE">mySprite</field>
+                    //     </shadow>
+                    // </value>
+                    const useReporter = fn.attributes.draggableParameters === "reporter";
+
                     const value = document.createElement("value");
                     value.setAttribute("name", "HANDLER_DRAG_PARAM_" + arg.name);
 
+                    const blockType = useReporter ? pxt.blocks.reporterTypeForArgType(arg.type) : "variables_get_reporter";
                     const shadow = document.createElement("shadow");
-                    shadow.setAttribute("type", "variables_get_reporter");
+                    shadow.setAttribute("type", blockType);
+
+                    if (useReporter && blockType === "argument_reporter_custom") {
+                        const mutation = document.createElement("mutation");
+                        mutation.setAttribute("typename", arg.type);
+                        shadow.appendChild(mutation);
+                    }
 
                     const field = document.createElement("field");
-                    field.setAttribute("name", "VAR");
+                    field.setAttribute("name", useReporter ? "VALUE" : "VAR");
                     field.textContent = Util.htmlEscape(arg.name);
 
                     shadow.appendChild(field);
@@ -418,13 +437,13 @@ namespace pxt.blocks {
         }
         else if (fn.attributes._expandedDef && fn.attributes.expandableArgumentMode !== "disabled") {
             const shouldToggle = fn.attributes.expandableArgumentMode === "toggle";
-            initExpandableBlock(block, fn.attributes._expandedDef, comp, shouldToggle, () => buildBlockFromDef(fn.attributes._expandedDef, true));
+            initExpandableBlock(info, block, fn.attributes._expandedDef, comp, shouldToggle, () => buildBlockFromDef(fn.attributes._expandedDef, true));
         }
         else if (comp.handlerArgs.length) {
             /**
-             * We support three modes for handler parameters: variable dropdowns,
+             * We support four modes for handler parameters: variable dropdowns,
              * expandable variable dropdowns with +/- buttons (used for chat commands),
-             * and as draggable variable blocks
+             * draggable variable blocks, and draggable reporter blocks.
              */
             hasHandler = true;
             if (fn.attributes.optionalVariableArgs) {
@@ -433,7 +452,11 @@ namespace pxt.blocks {
             else if (fn.attributes.draggableParameters) {
                 comp.handlerArgs.filter(a => !a.inBlockDef).forEach(arg => {
                     const i = block.appendValueInput("HANDLER_DRAG_PARAM_" + arg.name);
-                    i.setCheck("Variable");
+                    if (fn.attributes.draggableParameters == "reporter") {
+                        i.setCheck(arg.type);
+                    } else {
+                        i.setCheck("Variable");
+                    }
                 });
             }
             else {
@@ -565,7 +588,7 @@ namespace pxt.blocks {
 
                         if (isHandlerArg(pr)) {
                             inputName = "HANDLER_DRAG_PARAM_" + pr.name;
-                            inputCheck = "Variable";
+                            inputCheck = fn.attributes.draggableParameters === "reporter" ? pr.type : "Variable";
                             return;
                         }
 
@@ -794,7 +817,7 @@ namespace pxt.blocks {
         initComments();
 
         // PXT is in charge of disabling, don't record undo for disabled events
-        (Blockly.Block as any).prototype.setDisabled = function(disabled: any) {
+        (Blockly.Block as any).prototype.setDisabled = function (disabled: any) {
             if (this.disabled != disabled) {
                 let oldRecordUndo = (Blockly as any).Events.recordUndo;
                 (Blockly as any).Events.recordUndo = false;
@@ -1211,9 +1234,9 @@ namespace pxt.blocks {
             let deleteList = Blockly.WorkspaceSvg.buildDeleteList_(topBlocks);
             let deleteCount = 0;
             for (let i = 0; i < deleteList.length; i++) {
-              if (!deleteList[i].isShadow()) {
-                deleteCount++;
-              }
+                if (!deleteList[i].isShadow()) {
+                    deleteCount++;
+                }
             }
 
             function deleteNext() {
@@ -1330,7 +1353,7 @@ namespace pxt.blocks {
         };
 
         // Get rid of bumping behavior
-        (Blockly as any).Constants.Logic.LOGIC_COMPARE_ONCHANGE_MIXIN.onchange = function () {}
+        (Blockly as any).Constants.Logic.LOGIC_COMPARE_ONCHANGE_MIXIN.onchange = function () { }
     }
 
     function initOnStart() {
@@ -1915,6 +1938,7 @@ namespace pxt.blocks {
 
         msg.PROCEDURES_DEFNORETURN_TITLE = proceduresDef.block["PROCEDURES_DEFNORETURN_TITLE"];
         msg.PROCEDURE_ALREADY_EXISTS = proceduresDef.block["PROCEDURE_ALREADY_EXISTS"];
+        msg.PROCEDURES_HUE = pxt.toolbox.getNamespaceColor("variables");
 
         Blockly.Blocks['procedures_defnoreturn'].init = function () {
             let nameField = new Blockly.FieldTextInput('',

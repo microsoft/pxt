@@ -398,7 +398,8 @@ namespace pxsim.instructions {
             let wires = props.stepToWires[i];
             if (wires) {
                 wires.forEach(w => {
-                    let wire = board.addWire(w)
+                    let wire = board.addWire(w);
+                    if (!wire) return;
                     //last step
                     if (i === step) {
                         //location highlights
@@ -408,7 +409,7 @@ namespace pxsim.instructions {
                             board.highlightBoardPin((<BoardLoc>w.start).pin);
                         }
                         if (w.end.type == "breadboard") {
-                            let lbls = board.highlightBreadboardPin((<BBLoc>w.end));
+                            board.highlightBreadboardPin((<BBLoc>w.end));
                         } else {
                             board.highlightBoardPin((<BoardLoc>w.end).pin);
                         }

@@ -45,7 +45,7 @@ function onOOB(v: OOB) {
 
 function init() {
     if (!iface) {
-        if (!Cloud.isLocalHost() || !Cloud.localToken)
+        if (!pxt.BrowserUtils.isLocalHost() || !Cloud.localToken)
             return;
         pxt.debug('initializing hid pipe');
         iface = pxt.worker.makeWebSocket(
@@ -55,7 +55,7 @@ function init() {
 
 export function shouldUse() {
     let serial = pxt.appTarget.serial
-    return serial && serial.useHF2 && (Cloud.isLocalHost() && !!Cloud.localToken || pxt.winrt.isWinRT());
+    return serial && serial.useHF2 && (pxt.BrowserUtils.isLocalHost() && !!Cloud.localToken || pxt.winrt.isWinRT());
 }
 
 function mkBridgeAsync(): Promise<pxt.HF2.PacketIO> {

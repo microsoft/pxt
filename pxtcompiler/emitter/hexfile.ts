@@ -384,7 +384,7 @@ namespace ts.pxtc {
                 else if (bytes[4] == 0x23) isBuffer = true
                 else return null
 
-                let vt = lookupFunctionAddr(isString ? "pxt::string_vt" : "pxt::buffer_vt")
+                let vt = lookupFunctionAddr(isString ? "pxt::string_inline_ascii_vt" : "pxt::buffer_vt")
                 let headerBytes = new Uint8Array(6)
 
                 if (!vt) oops("missing vt: " + isString)

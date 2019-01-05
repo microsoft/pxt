@@ -16,6 +16,122 @@ namespace ts.pxtc {
 }
 
 namespace ts.pxtc.Util {
+
+    export class CancellationToken {
+        private pending = false;
+        private cancelled = false;
+        private resolve: () => void;
+        private deferred: Promise<void>;
+        private progressHandler: (completed: number, total: number) => void;
+
+        startOperation() {
+            this.pending = true;
+        }
+
+        isRunning() {
+            return this.pending;
+        }
+
+        onProgress(progressHandler: (completed: number, total: number) => void) {
+            this.progressHandler = progressHandler;
+        }
+
+        reportProgress(completed: number, total: number) {
+            if (this.progressHandler) {
+                this.progressHandler(completed, total);
+            }
+        }
+
+        cancel() {
+            this.cancelled = true;
+            this.pending = false;
+        }
+
+        cancelAsync() {
+            if (this.cancelled || !this.pending) {
+                this.cancelled = true;
+                this.pending = false;
+                return Promise.resolve();
+            }
+            this.cancelled = true;
+            this.deferred = new Promise(resolve => {
+                this.resolve = resolve;
+            });
+
+            return this.deferred;
+        }
+
+        isCancelled() {
+            return this.cancelled;
+        }
+
+        throwIfCancelled() {
+            if (this.isCancelled()) throw new Error();
+        }
+
+        resolveCancel() {
+            this.pending = false;
+            if (this.deferred) {
+                this.resolve();
+                this.deferred = undefined;
+                this.resolve = undefined;
+            }
+        }
+    }
+
+    export function codalHash16(s: string): number {
+        // same hashing as https://github.com/lancaster-university/codal-core/blob/c1fe7a4c619683a50d47cb0c19d15b8ff3bd16a1/source/drivers/PearsonHash.cpp#L26
+        const hashTable = [
+            251, 175, 119, 215, 81, 14, 79, 191, 103, 49, 181, 143, 186, 157, 0,
+            232, 31, 32, 55, 60, 152, 58, 17, 237, 174, 70, 160, 144, 220, 90, 57,
+            223, 59, 3, 18, 140, 111, 166, 203, 196, 134, 243, 124, 95, 222, 179,
+            197, 65, 180, 48, 36, 15, 107, 46, 233, 130, 165, 30, 123, 161, 209, 23,
+            97, 16, 40, 91, 219, 61, 100, 10, 210, 109, 250, 127, 22, 138, 29, 108,
+            244, 67, 207, 9, 178, 204, 74, 98, 126, 249, 167, 116, 34, 77, 193,
+            200, 121, 5, 20, 113, 71, 35, 128, 13, 182, 94, 25, 226, 227, 199, 75,
+            27, 41, 245, 230, 224, 43, 225, 177, 26, 155, 150, 212, 142, 218, 115,
+            241, 73, 88, 105, 39, 114, 62, 255, 192, 201, 145, 214, 168, 158, 221,
+            148, 154, 122, 12, 84, 82, 163, 44, 139, 228, 236, 205, 242, 217, 11,
+            187, 146, 159, 64, 86, 239, 195, 42, 106, 198, 118, 112, 184, 172, 87,
+            2, 173, 117, 176, 229, 247, 253, 137, 185, 99, 164, 102, 147, 45, 66,
+            231, 52, 141, 211, 194, 206, 246, 238, 56, 110, 78, 248, 63, 240, 189,
+            93, 92, 51, 53, 183, 19, 171, 72, 50, 33, 104, 101, 69, 8, 252, 83, 120,
+            76, 135, 85, 54, 202, 125, 188, 213, 96, 235, 136, 208, 162, 129, 190,
+            132, 156, 38, 47, 1, 7, 254, 24, 4, 216, 131, 89, 21, 28, 133, 37, 153,
+            149, 80, 170, 68, 6, 169, 234, 151
+        ]
+
+        // REF: https://en.wikipedia.org/wiki/Pearson_hashing
+        function eightBitHash(s: Uint8Array): number {
+            let hash = 0;
+            for (let i = 0; i < s.length; i++) {
+                let c = s[i];
+                hash = hashTable[hash ^ c];
+            }
+            return hash;
+        }
+        function hashN(s: string, byteCount: number): number {
+            // this hash is used by enum.isHash. So any modification should be considered a breaking change.
+            let hash;
+            const buffer = new Uint8Array(s.length); // TODO unicode
+            for (let i = 0; i < s.length; ++i) {
+                const c = s.charCodeAt(i);
+                buffer[i] = c & 0xff;
+            }
+            let res = 0;
+            for (let i = 0; i < byteCount; ++i) {
+                hash = eightBitHash(buffer);
+                res |= hash << (8 * i);
+                buffer[0] = (buffer[0] + 1) % 255;
+            }
+            return res;
+        }
+
+
+        if (!s) return 0;
+        return hashN(s, 2);
+    }
+
     export function bufferSerial(buffers: pxt.Map<string>, data: string = "", source: string = "?", maxBufLen: number = 255) {
         for (let i = 0; i < data.length; ++i) {
             const char = data[i]
@@ -533,7 +649,7 @@ namespace ts.pxtc.Util {
         return decodeURIComponent(escaped)
     }
 
-    export function toUTF8(str: string) {
+    export function toUTF8(str: string, cesu8?: boolean) {
         let res = "";
         if (!str) return res;
         for (let i = 0; i < str.length; ++i) {
@@ -542,7 +658,7 @@ namespace ts.pxtc.Util {
             else if (code <= 0x7ff) {
                 res += String.fromCharCode(0xc0 | (code >> 6), 0x80 | (code & 0x3f));
             } else {
-                if (0xd800 <= code && code <= 0xdbff) {
+                if (!cesu8 && 0xd800 <= code && code <= 0xdbff) {
                     let next = str.charCodeAt(++i);
                     if (!isNaN(next))
                         code = 0x10000 + ((code - 0xd800) << 10) + (next - 0xdc00);
@@ -702,7 +818,7 @@ namespace ts.pxtc.Util {
         function downloadFromCloudAsync(strings?: pxt.Map<string>) {
             pxt.debug(`downloading translations for ${lang} ${filename} ${branch || ""}`);
             // https://pxt.io/api/translations?filename=strings.json&lang=pl&approved=true&branch=v0
-            let url = `${pxt.Cloud.isLocalHost() || pxt.webConfig.isStatic ? "https://makecode.com" : ""}/api/translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}&approved=true`;
+            let url = `${pxt.BrowserUtils.isLocalHost() || pxt.webConfig.isStatic ? "https://makecode.com" : ""}/api/translations?lang=${encodeURIComponent(lang)}&filename=${encodeURIComponent(filename)}&approved=true`;
             if (branch) url += '&branch=' + encodeURIComponent(branch);
             const headers: pxt.Map<string> = {};
             if (etag) headers["If-None-Match"] = etag;
