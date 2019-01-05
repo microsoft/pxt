@@ -133,6 +133,7 @@ namespace pxt.usb {
         altIface: USBAlternateInterface;
         epIn: USBEndpoint;
         epOut: USBEndpoint;
+        readLoopStarted = false;
         onData = (v: Uint8Array) => { };
         onError = (e: Error) => { };
         onEvent = (v: Uint8Array) => { };
@@ -222,6 +223,10 @@ namespace pxt.usb {
         }
 
         private readLoop() {
+            if (this.readLoopStarted)
+                return
+            this.readLoopStarted = true
+            this.log("start read loop")
             let loop = (): void => {
                 if (!this.ready)
                     Promise.delay(300).then(loop)
@@ -229,6 +234,7 @@ namespace pxt.usb {
                     this.recvPacketAsync()
                         .then(buf => {
                             if (buf[0]) {
+                                // we've got data; retry reading immedietly after processing it
                                 this.onData(buf)
                                 loop()
                             } else {
