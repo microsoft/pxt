@@ -83,12 +83,11 @@ export function getHF2DevicesAsync(): Promise<HidDevice[]> {
 
 function handleDevicesFound(devices: any[], selectFn: any) {
     if (devices.length > 1) {
-        let d2 = devices.filter(d => d.deviceVersionMajor == 42)
-        if (d2.length > 0)
-            devices = d2
+        let d42 = devices.filter(d => d.deviceVersionMajor == 42)
+        if (d42.length > 0)
+            devices = d42
     }
     devices.forEach((device: any) => {
-        console.log(device)
         console.log(`DEV: ${device.productName || device.serialNumber}`);
     });
     selectFn(devices[0])
