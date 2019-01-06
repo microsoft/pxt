@@ -422,10 +422,12 @@ namespace pxt.usb {
 
     export function isAvailable() {
         if (!!(navigator as any).usb) {
-            // If on Windows, and Windows is older than 10, don't enable WebUSB,
+            // Windows versions:
+            // 5.1 - XP, 6.0 - Vista, 6.1 - Win7, 6.2 - Win8, 6.3 - Win8.1, 10.0 - Win10
+            // If on Windows, and Windows is older 8.1, don't enable WebUSB,
             // as it requires signed INF files.
-            let m = /Windows NT (\d+)/.exec(navigator.userAgent)
-            if (m && parseInt(m[1]) < 10)
+            let m = /Windows NT (\d+\.\d+)/.exec(navigator.userAgent)
+            if (m && parseFloat(m[1]) < 6.3)
                 return false
             return true
         }
