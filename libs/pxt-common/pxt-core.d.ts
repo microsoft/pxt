@@ -295,6 +295,13 @@ declare interface String {
     //% blockId="string_split" blockNamespace="text"
     split(separator?: string, limit?: number): string[];
 
+    /**
+     * Return a substring of the current string with whitespace removed from both ends
+     */
+    //% helper=stringTrim
+    //% blockId="string_trim" blockNamespace="text"
+    trim(): string;
+
     [index: number]: string;
 }
 

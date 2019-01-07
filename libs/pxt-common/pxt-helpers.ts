@@ -3,14 +3,59 @@ type Action = () => void;
 
 /**
   * Convert a string to an integer.
-  * @param s A string to convert into an integral number. eg: 123
+  * @param text A string to convert into an integral number. eg: "123"
+  * @param radix optional A value between 2 and 36 that specifies the base of the number in text.
+  * If this argument is not supplied, strings with a prefix of '0x' are considered hexadecimal.
+  * All other strings are considered decimal.
   */
 //% help=text/parse-int
 //% blockId="string_parseint" block="parse to integer %text" blockNamespace="text"
 //% text.defl="123"
 //% blockHidden=1
-function parseInt(text: string): number {
-    return parseFloat(text) >> 0;
+function parseInt(text: string, radix?: number): number {
+    if (!text) return 0;
+
+    let start = 0;
+    while (start < text.length && helpers.isWhitespace(text.charAt(start)))
+        ++start
+
+    if (start === text.length || radix < 2 || radix > 36) return 0;
+    const numberOffset = '0'.charCodeAt(0);
+    const letterOffset = 'a'.charCodeAt(0);
+    const lowerCaseMask = 0x20;
+    let output = 0;
+
+    let sign = 1;
+    switch (text.charAt(start)) {
+        case "-":
+            sign = -1;
+        case "+":
+            ++start;
+    }
+
+    const prefix = text.slice(start, start + 2);
+    if ((!radix || radix == 16) && (prefix === "0x" || prefix === "0X")) {
+        radix = 16;
+        start += 2;
+    } else if (!radix) {
+        radix = 10;
+    }
+
+    for (let i = start; i < text.length; ++i) {
+        const code = text.charCodeAt(i) | lowerCaseMask;
+        let val: number = undefined;
+
+        if (code >= numberOffset && code < numberOffset + 10)
+            val = code - numberOffset;
+        else if (code >= letterOffset && code < letterOffset + 26)
+            val = 10 + code - letterOffset;
+
+        if (val == undefined || val >= radix)
+            break;
+        output = output * radix + val;
+    }
+
+    return sign * output;
 }
 
 namespace helpers {
@@ -288,6 +333,39 @@ namespace helpers {
                 return -1;
         }
         return q + r;
+    }
+
+    export function stringTrim(s: string): string {
+        let start = 0;
+        let end = s.length - 1;
+
+        while (start <= end && isWhitespace(s.charAt(start)))
+            ++start;
+
+        while (end > start && isWhitespace(s.charAt(end)))
+            --end;
+
+        return s.substr(start, end - start + 1);
+
+    }
+
+    export function isWhitespace(c: string): boolean {
+        // https://www.ecma-international.org/ecma-262/6.0/#sec-white-space
+        switch (c) {
+            case "\u0009":  // character tab
+            case "\u000B":  // line tab
+            case "\u000C":  // form feed
+            case "\u0020":  // space
+            case "\u00A0":  // no-break space
+            case "\uFEFF":  // zero width no break space
+            case "\u000A":  // line feed
+            case "\u000D":  // carriage return
+            case "\u2028":  // line separator
+            case "\u2029":  // paragraph separator
+                return true;
+            default:
+                return false;
+        }
     }
 }
 
