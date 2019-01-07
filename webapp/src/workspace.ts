@@ -278,12 +278,11 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
     }
 
     // check if we have dynamic boards, store board info for home page rendering
-    const bundledcoresvgs = pxt.appTarget.bundledcoresvgs;
-    if (text && bundledcoresvgs) {
+    if (text && pxt.appTarget.simulator && pxt.appTarget.simulator.dynamicBoardDefinition) {
         const pxtjson = JSON.parse(text["pxt.json"] || "{}") as pxt.PackageConfig;
         if (pxtjson && pxtjson.dependencies)
             h.board = Object.keys(pxtjson.dependencies)
-                .filter(p => !!bundledcoresvgs[p])[0];
+                .filter(p => !!pxt.bundledSvg(p))[0];
     }
 
     return headerQ.enqueue<void>(h.id, () =>
@@ -357,15 +356,17 @@ export function duplicateAsync(h: Header, text: ScriptText, rename?: boolean): P
     delete h._rev
     delete (h as any)._id
     return importAsync(h, text)
-        .then(() => h2)
+        .then(() => h)
 }
 
 export function createDuplicateName(h: Header) {
-    let names = U.toDictionary(allScripts, e => e.header.name)
+    let reducedName = h.name.indexOf("#") > -1 ?
+        h.name.substring(0, h.name.lastIndexOf('#')).trim() : h.name;
+    let names = U.toDictionary(allScripts.filter(e => !e.header.isDeleted), e => e.header.name)
     let n = 2
-    while (names.hasOwnProperty(h.name + " #" + n))
+    while (names.hasOwnProperty(reducedName + " #" + n))
         n++
-    return h.name + " #" + n;
+    return reducedName + " #" + n;
 }
 
 export function saveScreenshotAsync(h: Header, data: string, icon: string) {
@@ -793,6 +794,9 @@ data.mountVirtualApi("headers", {
             });
     },
     expirationTime: p => 5 * 1000,
+    onInvalidated: () => {
+        compiler.projectSearchClear();
+    }
 })
 
 /*

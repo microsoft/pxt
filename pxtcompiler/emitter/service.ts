@@ -841,6 +841,9 @@ namespace ts.pxtc.service {
             }
             const fns = lastProjectFuse.search(search.term);
             return fns;
+        },
+        projectSearchClear: () => {
+            lastProjectFuse = undefined;
         }
     }
 

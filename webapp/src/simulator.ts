@@ -273,8 +273,8 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
         version: pkg.version(),
         clickTrigger: clickTrigger
     }
-    if (pxt.options.debug)
-        pxt.debug(JSON.stringify(opts, null, 2))
+    //if (pxt.options.debug)
+    //    pxt.debug(JSON.stringify(opts, null, 2))
     postSimEditorEvent("started");
 
     driver.run(js, opts);

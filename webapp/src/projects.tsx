@@ -179,10 +179,10 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             signIn = this.getData("sync:username") || lf("Sign in")
         }
 
-        return <div ref="homeContainer" className={tabClasses}>
+        return <div ref="homeContainer" className={tabClasses} role="main">
             {showHeroBanner ?
                 <div className="ui segment getting-started-segment" style={{ backgroundImage: `url(${encodeURI(targetTheme.homeScreenHero)})` }} /> : undefined}
-            <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment mystuff-segment">
+            <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment mystuff-segment" role="region" aria-label={lf("My Projects")}>
                 <div className="ui grid equal width padded heading">
                     <div className="column" style={{ zIndex: 1 }}>
                         {targetTheme.scriptManager ? <h2 role="button" className="ui header myproject-header" title={lf("See all projects")} tabIndex={0}
@@ -203,7 +203,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 </div>
             </div>
             {Object.keys(galleries).map(galleryName =>
-                <div key={`${galleryName}_gallerysegment`} className="ui segment gallerysegment">
+                <div key={`${galleryName}_gallerysegment`} className="ui segment gallerysegment" role="region" aria-label={pxt.Util.rlf(galleryName)}>
                     <h2 className="ui header heading">{pxt.Util.rlf(galleryName)} </h2>
                     <div className="content">
                         <ProjectsCarousel ref={`${selectedCategory == galleryName ? 'activeCarousel' : ''}`} key={`${galleryName}_carousel`} parent={this.props.parent} name={galleryName} path={galleries[galleryName]}
@@ -447,7 +447,6 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
             const headers = this.fetchLocalData()
             const showNewProject = pxt.appTarget.appTheme && !pxt.appTarget.appTheme.hideNewProjectButton;
             const showScriptManagerCard = targetTheme.scriptManager && headers.length > ProjectsCarousel.NUM_PROJECTS_HOMESCREEN;
-            const bundledcoresvgs = pxt.appTarget.bundledcoresvgs;
             return <carousel.Carousel bleedPercent={20}>
                 {showNewProject ? <div role="button" className="ui card link buttoncard newprojectcard" title={lf("Creates a new empty project")}
                     onClick={this.newProject} onKeyDown={sui.fireClickOnEnter} >
@@ -457,7 +456,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                     </div>
                 </div> : undefined}
                 {headers.slice(0, ProjectsCarousel.NUM_PROJECTS_HOMESCREEN).map((scr, index) => {
-                    const boardsvg = scr.board && bundledcoresvgs && bundledcoresvgs[scr.board];
+                    const boardsvg = pxt.bundledSvg(scr.board);
                     return <ProjectsCodeCard
                         key={'local' + scr.id + scr.recentUse}
                         // ref={(view) => { if (index === 1) this.latestProject = view }}

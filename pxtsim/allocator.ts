@@ -494,9 +494,11 @@ namespace pxsim {
                 //it must be a MicrobitPin
                 U.assert(typeof location === "string", "Unknown location type: " + location);
                 let mbPin = <MicrobitPin>location;
-                let boardPin = this.opts.boardDef.gpioPinMap[mbPin];
-                if (!boardPin) // this pin is internal
+                let boardPin = this.opts.boardDef.gpioPinMap[mbPin] || mbPin;
+                if (!boardPin) { // this pin is internal
+                    console.debug(`unknown pin location for ${mbPin}`)
                     return undefined;
+                }
                 return { type: "dalboard", pin: boardPin };
             }
         }

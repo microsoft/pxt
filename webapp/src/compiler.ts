@@ -215,6 +215,13 @@ export function projectSearchAsync(searchFor: pxtc.service.ProjectSearchOptions)
         });
 }
 
+export function projectSearchClear() {
+    return ensureApisInfoAsync()
+        .then(() => {
+            return workerOpAsync("projectSearchClear", { });
+        });
+}
+
 export function formatAsync(input: string, pos: number) {
     return workerOpAsync("format", { format: { input: input, pos: pos } });
 }

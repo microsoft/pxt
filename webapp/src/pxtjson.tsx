@@ -22,6 +22,12 @@ export class Editor extends srceditor.Editor {
         this.setFileName = this.setFileName.bind(this);
         this.isUserConfigActive = this.isUserConfigActive.bind(this);
         this.applyUserConfig = this.applyUserConfig.bind(this);
+        this.goBack = this.goBack.bind(this);
+    }
+
+    goBack() {
+        pxt.tickEvent("pxtjson.backButton", undefined, { interactiveConsent: true })
+        this.parent.openPreviousEditor()
     }
 
     prepare() {
@@ -131,7 +137,10 @@ export class Editor extends srceditor.Editor {
             <div className="ui content">
                 <h3 className="ui small header">
                     <div className="content">
-                        {lf("Project Settings")}
+                        <sui.Button title={lf("Go back")} tabIndex={0} onClick={this.goBack} onKeyDown={sui.fireClickOnEnter}>
+                            <sui.Icon icon="arrow left" />
+                            <span className="ui text landscape only">{lf("Go back")}</span>
+                        </sui.Button>
                     </div>
                 </h3>
                 <div className="ui segment form text">
