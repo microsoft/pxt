@@ -877,7 +877,7 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
         pxt.tickEvent("projects.choosehwvariant", { hwid: cfg.name }, { interactiveConsent: true });
         this.hide()
 
-        pxt.setHwVariant(cfg.name.replace(/.*---/, ""))
+        pxt.setHwVariant(cfg.name)
         let editor = this.props.parent
         editor.reloadHeaderAsync()
             .then(() => editor.compile())
@@ -899,7 +899,7 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
 
         /* tslint:disable:react-a11y-anchors */
         return (
-            <sui.Modal isOpen={visible} className="importdialog" size="small"
+            <sui.Modal isOpen={visible} className="hardwaredialog" size="small"
                 onClose={this.close} dimmer={true}
                 closeIcon={true} header={lf("Choose your hardware")}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
@@ -912,8 +912,9 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
                                 name={cfg.card.name}
                                 ariaLabel={cfg.card.name}
                                 description={cfg.card.description}
-                                learnMoreUrl={cfg.card.learnMoreUrl}
-                                buyUrl={cfg.card.buyUrl}
+                                imageUrl={cfg.card.imageUrl}
+                                //learnMoreUrl={cfg.card.learnMoreUrl}
+                                //buyUrl={cfg.card.buyUrl}
                                 onClick={cfg.card.onClick}
                             />
                         )}

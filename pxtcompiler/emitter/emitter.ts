@@ -975,6 +975,7 @@ namespace ts.pxtc {
                     value: configEntries[k].value
                 })
             }
+            res.configData.sort((a, b) => a.key - b.key)
 
             catchErrors(rootFunction, finalEmit)
         }
