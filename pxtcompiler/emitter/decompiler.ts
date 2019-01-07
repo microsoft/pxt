@@ -1058,6 +1058,7 @@ ${output}</xml>`;
                 stmt = getTypeScriptStatementBlock(node, undefined, err);
             }
             else {
+                const useNewFunctions = pxt.appTarget.runtime.functionsOptions.useNewFunctions;
                 switch (node.kind) {
                     case SK.Block:
                         return codeBlock((node as ts.Block).statements, next, topLevel);
@@ -1105,7 +1106,11 @@ ${output}</xml>`;
                         stmt = getForOfStatement(node as ts.ForOfStatement);
                         break;
                     case SK.FunctionDeclaration:
-                        stmt = getFunctionDeclaration(node as ts.FunctionDeclaration);
+                        if (useNewFunctions) {
+                            stmt = getNewFunctionDeclaration(node as ts.FunctionDeclaration);
+                        } else {
+                            stmt = getFunctionDeclaration(node as ts.FunctionDeclaration);
+                        }
                         break;
                     case SK.CallExpression:
                         stmt = getCallStatement(node as ts.CallExpression, asExpression) as StatementNode;
@@ -1469,6 +1474,20 @@ ${output}</xml>`;
             const name = getVariableName(n.name);
             const statements = getStatementBlock(n.body);
             const r = mkStmt("procedures_defnoreturn");
+            r.fields = [getField("NAME", name)];
+            r.handlers = [{ name: "STACK", statement: statements }];
+            return r;
+        }
+
+        function getNewFunctionDeclaration(n: ts.FunctionDeclaration): StatementNode {
+            const name = getVariableName(n.name);
+            const statements = getStatementBlock(n.body);
+            const r = mkStmt("function_declaration");
+            r.mutation = {
+                name,
+                functionId: Blockly.utils.genUid()
+            };
+            // TODO GUJEN
             r.fields = [getField("NAME", name)];
             r.handlers = [{ name: "STACK", statement: statements }];
             return r;

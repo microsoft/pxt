@@ -441,6 +441,7 @@ Blockly.Msg["LISTS_HUE"] = "260";
 Blockly.Msg["LOGIC_HUE"] = "210";
 Blockly.Msg["VARIABLES_HUE"] = "330";
 Blockly.Msg["TEXTS_HUE"] = "160";
+Blockly.Msg["REPORTERS_HUE"] = "290";
 Blockly.Msg["PROCEDURES_HUE"] = "290";
 Blockly.Msg["COLOUR_HUE"] = "20";
 Blockly.Msg["VARIABLES_DYNAMIC_HUE"] = "310";

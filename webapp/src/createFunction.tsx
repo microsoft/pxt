@@ -14,10 +14,6 @@ type ISettingsProps = pxt.editor.ISettingsProps;
 // pxt-blockly:
 // TODO GUJEN Change function name inline
 // TODO GUJEN Arg type icon in function editor
-// TODO GUJEN Single call block with dropdown
-
-// Tests:
-// TODO GUJEN Test += on reporters
 
 export interface CreateFunctionDialogState {
     visible?: boolean;

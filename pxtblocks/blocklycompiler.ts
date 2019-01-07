@@ -708,11 +708,17 @@ namespace pxt.blocks {
     function compileFunctionCall(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
         const name = escapeVarName(b.getFieldValue("function_name"), e, true);
         // TODO GUJEN
-        // const externalInputs = !b.getInputsInline();
-        // const args = [];
-        // const compiledArgs = args.map(a => compileArgument(e, b, a, comments));
-        // return H.stdCall(name, compiledArgs, externalInputs);
-        return mkStmt(mkText(name + "()"));
+        const externalInputs = !b.getInputsInline();
+        const args: BlockParameter[] = (b as Blockly.FunctionCallBlock).getArguments().map(a => {
+            return {
+                actualName: a.name,
+                definitionName: a .id
+            };
+        });
+
+        const compiledArgs = args.map(a => compileArgument(e, b, a, comments));
+        return H.stdCall(name, compiledArgs, externalInputs);
+        // return mkStmt(mkText(name + "()"));
     }
 
     function compileArgumentReporter(e: Environment, b: Blockly.Block, comments: string[]): JsNode {

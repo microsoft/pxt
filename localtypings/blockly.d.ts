@@ -774,7 +774,11 @@ declare namespace Blockly {
         getSvgRoot(): Element;
     }
 
-    class FunctionDeclarationBlock extends Block {
+    class FunctionBlockAbstract extends Block {
+        getArguments: () => Functions.ArgumentInfo[];
+    }
+
+    class FunctionDeclarationBlock extends FunctionBlockAbstract {
         updateFunctionSignature: () => void;
         addBooleanExternal(): void;
         addStringExternal(): void;
@@ -782,9 +786,8 @@ declare namespace Blockly {
         addCustomExternal(typeName: string): void;
     }
 
-     class FunctionDefinitionBlock extends Block {
-        getArguments: () => Functions.ArgumentInfo[];
-    }
+    class FunctionDefinitionBlock extends FunctionBlockAbstract { }
+    class FunctionCallBlock extends FunctionBlockAbstract { }
 
     class WorkspaceComment {
         getContent(): string;
