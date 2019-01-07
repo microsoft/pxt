@@ -876,8 +876,8 @@ export class ProjectView
         this.clearSerial()
 
         // Merge current and new state but only if the new state members are undefined
-        let oldEditorState = this.state.editorState;
-        if (oldEditorState) {
+        const oldEditorState = this.state.editorState;
+        if (oldEditorState && editorState) {
             if (editorState.filters === undefined) editorState.filters = oldEditorState.filters;
             if (editorState.hasCategories === undefined) editorState.hasCategories = oldEditorState.hasCategories;
             if (editorState.searchBar === undefined) editorState.searchBar = oldEditorState.searchBar;
