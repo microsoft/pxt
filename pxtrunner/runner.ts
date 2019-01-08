@@ -800,6 +800,8 @@ ${linkString}
         blocksSvg?: Element;
     }
 
+    let programCache: ts.Program;
+
     export function decompileToBlocksAsync(code: string, options?: blocks.BlocksRenderOptions): Promise<DecompileResult> {
         // code may be undefined or empty!!!
         const packageid = options && options.packageId ? "pub:" + options.packageId :
@@ -813,7 +815,8 @@ ${linkString}
                     opts.fileSystem["main.ts"] = code;
                 opts.ast = true
 
-                const program = pxtc.getTSProgram(opts);
+                const program = pxtc.getTSProgram(opts, programCache);
+                programCache = program;
 
                 // decompile to blocks
                 let apis = pxtc.getApiInfo(opts, program);

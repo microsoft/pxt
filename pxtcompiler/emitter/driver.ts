@@ -291,7 +291,7 @@ namespace ts.pxtc {
         return bresp;
     }
 
-    export function getTSProgram(opts: CompileOptions) {
+    export function getTSProgram(opts: CompileOptions, old?: ts.Program) {
         let outfiles: pxt.Map<string> = {};
 
         let fileText: { [index: string]: string } = {};
@@ -350,7 +350,7 @@ namespace ts.pxtc {
             hasMain = true;
         }
         // TODO: ensure that main.ts is last???
-        const program = createProgram(tsFiles, options, host);
+        const program = createProgram(tsFiles, options, host, old);
         annotate(program, "main.ts");
         return program;
     }
