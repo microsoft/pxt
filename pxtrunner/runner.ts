@@ -812,31 +812,28 @@ ${linkString}
                 if (code)
                     opts.fileSystem["main.ts"] = code;
                 opts.ast = true
-                let resp = pxtc.compile(opts)
-                if (resp.diagnostics && resp.diagnostics.length > 0)
-                    resp.diagnostics.forEach(diag => console.error(diag.messageText));
-                if (!resp.success)
-                    return Promise.resolve<DecompileResult>({ package: mainPkg, compileJS: resp });
+
+                const program = pxtc.getTSProgram(opts);
 
                 // decompile to blocks
-                let apis = pxtc.getApiInfo(opts, resp.ast);
+                let apis = pxtc.getApiInfo(opts, program);
                 return ts.pxtc.localizeApisAsync(apis, mainPkg)
                     .then(() => {
                         let blocksInfo = pxtc.getBlocksInfo(apis);
                         pxt.blocks.initializeAndInject(blocksInfo);
                         let bresp = pxtc.decompiler.decompileToBlocks(
                             blocksInfo,
-                            resp.ast.getSourceFile("main.ts"),
+                            program.getSourceFile("main.ts"),
                             { snippetMode: options && options.snippetMode })
                         if (bresp.diagnostics && bresp.diagnostics.length > 0)
                             bresp.diagnostics.forEach(diag => console.error(diag.messageText));
                         if (!bresp.success)
-                            return <DecompileResult>{ package: mainPkg, compileJS: resp, compileBlocks: bresp, apiInfo: apis };
+                            return <DecompileResult>{ package: mainPkg, compileJS: null, compileBlocks: bresp, apiInfo: apis };
                         pxt.debug(bresp.outfiles["main.blocks"])
                         const blocksSvg = pxt.blocks.render(bresp.outfiles["main.blocks"], options);
                         return <DecompileResult>{
                             package: mainPkg,
-                            compileJS: resp,
+                            compileJS: null,
                             compileBlocks: bresp,
                             apiInfo: apis,
                             blocksSvg

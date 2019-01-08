@@ -634,7 +634,7 @@ namespace ts.pxtc.service {
         },
         decompile: v => {
             const bannedCategories = v.blocks ? v.blocks.bannedCategories : undefined;
-            return decompile(v.options, v.fileName, false, bannedCategories);
+            return decompileLite(v.options, v.fileName, false, bannedCategories);
         },
         assemble: v => {
             return {
