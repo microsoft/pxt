@@ -35,12 +35,15 @@ namespace ts.pxtc.decompiler {
 
     interface DecompilerEnv {
         blocks: BlocksInfo;
-        declaredFunctions: pxt.Map<boolean>;
+        declaredFunctions: pxt.Map<ts.FunctionDeclaration>;
+        functionParamIds: pxt.Map<pxt.Map<string>>; // Maps a function name to a map of paramName => paramId
         declaredEnums: pxt.Map<boolean>;
         attrs: (c: pxtc.CallInfo) => pxtc.CommentAttrs;
         compInfo: (c: pxtc.CallInfo) => pxt.blocks.BlockCompileInfo;
         localReporters: PropertyDesc[][]; // A stack of groups of locally scoped argument declarations, to determine whether an argument should decompile as a reporter or a variable
     }
+
+    // TODO GUJEN correctly decompile params to local reporters inside function bodies
 
     interface DecompileArgument {
         value: Expression;
@@ -359,6 +362,7 @@ namespace ts.pxtc.decompiler {
             blocks: blocksInfo,
             declaredFunctions: {},
             declaredEnums: {},
+            functionParamIds: {},
             attrs: attrs,
             compInfo: compInfo,
             localReporters: []
@@ -375,7 +379,7 @@ namespace ts.pxtc.decompiler {
 
         const checkTopNode = (topLevelNode: Node) => {
             if (topLevelNode.kind === SK.FunctionDeclaration && !checkStatement(topLevelNode, env, false, true, useNewFunctions)) {
-                env.declaredFunctions[getVariableName((topLevelNode as ts.FunctionDeclaration).name)] = true;
+                env.declaredFunctions[getVariableName((topLevelNode as ts.FunctionDeclaration).name)] = topLevelNode as ts.FunctionDeclaration;
             }
             else if (topLevelNode.kind === SK.EnumDeclaration && !checkStatement(topLevelNode, env, false, true, useNewFunctions)) {
                 const enumName = (topLevelNode as EnumDeclaration).name.text;
@@ -396,6 +400,18 @@ namespace ts.pxtc.decompiler {
         };
 
         ts.forEachChild(file, checkTopNode);
+
+        if (useNewFunctions) {
+            // Generate fresh param IDs for all user-declared functions, needed when decompiling
+            // function definition and calls. IDs don't need to be crypto secure.
+            const genId = () => (Math.PI * Math.random()).toString(36).slice(2);
+            for (const funcName in env.declaredFunctions) {
+                env.functionParamIds[funcName] = {};
+                env.declaredFunctions[funcName].parameters.forEach(p => {
+                    env.functionParamIds[funcName][p.name.getText()] = genId() + genId();
+                });
+            }
+        }
 
         if (enumMembers.length) {
             write("<variables>")
@@ -1124,14 +1140,10 @@ ${output}</xml>`;
                         stmt = getForOfStatement(node as ts.ForOfStatement);
                         break;
                     case SK.FunctionDeclaration:
-                        if (useNewFunctions) {
-                            stmt = getNewFunctionDeclaration(node as ts.FunctionDeclaration);
-                        } else {
-                            stmt = getFunctionDeclaration(node as ts.FunctionDeclaration);
-                        }
+                        stmt = getFunctionDeclaration(node as ts.FunctionDeclaration, useNewFunctions);
                         break;
                     case SK.CallExpression:
-                        stmt = getCallStatement(node as ts.CallExpression, asExpression) as StatementNode;
+                        stmt = getCallStatement(node as ts.CallExpression, asExpression, useNewFunctions) as StatementNode;
                         break;
                     case SK.DebuggerStatement:
                         stmt = getDebuggerStatementBlock(node);
@@ -1488,39 +1500,40 @@ ${output}</xml>`;
             return getVariableSetOrChangeBlock(node.operand as ts.Identifier, isPlusPlus ? 1 : -1, true);
         }
 
-        function getFunctionDeclaration(n: ts.FunctionDeclaration): StatementNode {
+        function getFunctionDeclaration(n: ts.FunctionDeclaration, useNewFunctions = false): StatementNode {
             const name = getVariableName(n.name);
             const statements = getStatementBlock(n.body);
-            const r = mkStmt("procedures_defnoreturn");
-            r.fields = [getField("NAME", name)];
-            r.handlers = [{ name: "STACK", statement: statements }];
-            return r;
-        }
+            let r: StatementNode;
 
-        function getNewFunctionDeclaration(n: ts.FunctionDeclaration): StatementNode {
-            const name = getVariableName(n.name);
-            const statements = getStatementBlock(n.body);
-            const r = mkStmt("function_definition");
-            r.mutation = {
-                name
-            };
-            if (n.parameters) {
-                r.mutationChildren = [];
-                n.parameters.forEach(p => {
-                    r.mutationChildren.push({
-                        nodeName: "arg",
-                        attributes: {
-                            name: p.name.getText(),
-                            type: p.type.getText()
-                        }
+            if (useNewFunctions) {
+                r = mkStmt("function_definition");
+                r.mutation = {
+                    name
+                };
+                if (n.parameters) {
+                    r.mutationChildren = [];
+                    n.parameters.forEach(p => {
+                        const paramName = p.name.getText();
+                        r.mutationChildren.push({
+                            nodeName: "arg",
+                            attributes: {
+                                name: paramName,
+                                type: p.type.getText(),
+                                id: env.functionParamIds[name][paramName]
+                            }
+                        });
                     });
-                });
+                }
+            } else {
+                r = mkStmt("procedures_defnoreturn");
+                r.fields = [getField("NAME", name)];
             }
+
             r.handlers = [{ name: "STACK", statement: statements }];
             return r;
         }
 
-        function getCallStatement(node: ts.CallExpression, asExpression: boolean): StatementNode | ExpressionNode {
+        function getCallStatement(node: ts.CallExpression, asExpression: boolean, useNewFunctions = false): StatementNode | ExpressionNode {
             const info: pxtc.CallInfo = (node as any).callInfo
             const attributes = attrs(info);
 
@@ -1580,8 +1593,31 @@ ${output}</xml>`;
                 if (!builtin) {
                     const name = getVariableName(node.expression as ts.Identifier);
                     if (env.declaredFunctions[name]) {
-                        const r = mkStmt("procedures_callnoreturn");
-                        r.mutation = { "name": name };
+                        if (env.declaredFunctions[name].parameters.length !== info.args.length) {
+                            return getTypeScriptStatementBlock(node);
+                        }
+                        let r: StatementNode;
+                        if (useNewFunctions) {
+                            r = mkStmt("function_call");
+                            if (info.args.length) {
+                                r.mutationChildren = [];
+                                env.declaredFunctions[name].parameters.forEach(p => {
+                                    const paramName = p.name.getText();
+                                    r.mutationChildren.push({
+                                        nodeName: "arg",
+                                        attributes: {
+                                            name: paramName,
+                                            type: p.type.getText(),
+                                            id: env.functionParamIds[name][paramName]
+                                        }
+                                    });
+                                });
+                            }
+                            // TODO GUJEN create & populate the value inputs
+                        } else {
+                            r = mkStmt("procedures_callnoreturn");
+                        }
+                        r.mutation = { name };
                         return r;
                     }
                     else {
@@ -1602,7 +1638,6 @@ ${output}</xml>`;
                 //     return;
                 // }
             }
-
 
             const args = paramList(info, env.blocks);
             const api = env.blocks.apis.byQName[info.qName];
@@ -2091,7 +2126,7 @@ ${output}</xml>`;
             case SK.VariableStatement:
                 return checkVariableStatement(node as ts.VariableStatement, env);
             case SK.CallExpression:
-                return checkCall(node as ts.CallExpression, env, asExpression, topLevel);
+                return checkCall(node as ts.CallExpression, env, asExpression, topLevel, useNewFunctions);
             case SK.VariableDeclaration:
                 return checkVariableDeclaration(node as ts.VariableDeclaration, env);
             case SK.PostfixUnaryExpression:
@@ -2267,7 +2302,6 @@ ${output}</xml>`;
         }
 
         function checkCall(n: ts.CallExpression, env: DecompilerEnv, asExpression = false, topLevel = false, useNewFunctions = false) {
-            // TODO GUJEN decompile function calls with arguments
             const info: pxtc.CallInfo = (n as any).callInfo;
             if (!info) {
                 return Util.lf("Function call not supported in the blocks");
@@ -2306,7 +2340,8 @@ ${output}</xml>`;
             if (!attributes.blockId || !attributes.block) {
                 const builtin = pxt.blocks.builtinFunctionInfo[info.qName];
                 if (!builtin) {
-                    if (n.arguments.length === 0 && n.expression.kind === SK.Identifier) {
+                    const argsOk = n.arguments.length === 0 || useNewFunctions;
+                    if (argsOk && n.expression.kind === SK.Identifier) {
                         if (!env.declaredFunctions[(n.expression as ts.Identifier).text]) {
                             return Util.lf("Call statements must have a valid declared function");
                         }
