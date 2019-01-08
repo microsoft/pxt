@@ -50,7 +50,7 @@ Did you create the most epic mod ever?  Share with your friends via an anonymous
 
 ###	Tutorials & Examples 
 
-Getting Started [tutorials](https://minecraft/makecode.com/tutorials) give step-by-step guidance to students new to programming, and [examples](https://minecraft.makecode.com/examples) helps students come up with ideas for their programs.
+Getting Started [tutorials](https://minecraft.makecode.com/tutorials) give step-by-step guidance to students new to programming, and [examples](https://minecraft.makecode.com/examples) helps students come up with ideas for their programs.
 
 ![Getting Started](/static/blog/minecraft/gettingstarted.png)
 
