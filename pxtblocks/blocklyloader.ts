@@ -1943,7 +1943,7 @@ namespace pxt.blocks {
         msg.FUNCTIONS_DEFAULT_NUMBER_ARG_NAME = lf("num");
         msg.FUNCTIONS_DEFAULT_CUSTOM_ARG_NAME = lf("arg");
         msg.PROCEDURES_HUE = pxt.toolbox.getNamespaceColor("functions");
-        msg.REPORTER_HUE = pxt.toolbox.getNamespaceColor("variables");
+        msg.REPORTERS_HUE = pxt.toolbox.getNamespaceColor("variables");
 
         // builtin procedures_defnoreturn
         const proceduresDefId = "procedures_defnoreturn";

@@ -127,11 +127,17 @@ namespace ts.pxtc.decompiler {
         shadowMutation?: pxt.Map<string>;
     }
 
+    interface MutationChild {
+        attributes: pxt.Map<string>;
+        nodeName: string;
+    }
+
     interface BlockNode extends BlocklyNode {
         type: string;
         inputs?: ValueNode[];
         fields?: FieldNode[]
         mutation?: pxt.Map<string>;
+        mutationChildren?: MutationChild[]; // Mutation child tags
     }
 
     interface ExpressionNode extends BlockNode {
@@ -342,6 +348,7 @@ namespace ts.pxtc.decompiler {
     }
 
     export function decompileToBlocks(blocksInfo: pxtc.BlocksInfo, file: ts.SourceFile, options: DecompileBlocksOptions, renameMap?: RenameMap): pxtc.CompileResult {
+        let useNewFunctions = true; // TODO GUJEN get this info passed to the function
         let emittedBlocks = 0;
         let stmts: NodeArray<ts.Statement> = file.statements;
         let result: pxtc.CompileResult = {
@@ -367,10 +374,10 @@ namespace ts.pxtc.decompiler {
         const getCommentRef = (() => { let currentCommentId = 0; return () => `${currentCommentId++}` })();
 
         const checkTopNode = (topLevelNode: Node) => {
-            if (topLevelNode.kind === SK.FunctionDeclaration && !checkStatement(topLevelNode, env, false, true)) {
+            if (topLevelNode.kind === SK.FunctionDeclaration && !checkStatement(topLevelNode, env, false, true, useNewFunctions)) {
                 env.declaredFunctions[getVariableName((topLevelNode as ts.FunctionDeclaration).name)] = true;
             }
-            else if (topLevelNode.kind === SK.EnumDeclaration && !checkStatement(topLevelNode, env, false, true)) {
+            else if (topLevelNode.kind === SK.EnumDeclaration && !checkStatement(topLevelNode, env, false, true, useNewFunctions)) {
                 const enumName = (topLevelNode as EnumDeclaration).name.text;
                 env.declaredEnums[enumName] = true;
                 getEnumMembers(topLevelNode as EnumDeclaration).forEach(([name, value]) => {
@@ -557,19 +564,31 @@ ${output}</xml>`;
             closeBlockTag();
         }
 
-        function emitMutation(mMap: pxt.Map<string>) {
+        function emitMutation(mMap: pxt.Map<string>, mChildren?: MutationChild[]) {
             write("<mutation ", "");
             for (const key in mMap) {
                 if (mMap[key] !== undefined) {
                     write(`${key}="${mMap[key]}" `, "");
                 }
             }
-            write("/>");
+            if (mChildren) {
+                write(">");
+                mChildren.forEach(c => {
+                    write(`<${c.nodeName} `, "");
+                    for (const attrName in c.attributes) {
+                        write(`${attrName}="${c.attributes[attrName]}" `, "");
+                    }
+                    write("/>");
+                });
+                write("</mutation>");
+            } else {
+                write("/>");
+            }
         }
 
         function emitBlockNodeCore(n: BlockNode) {
             if (n.mutation) {
-                emitMutation(n.mutation);
+                emitMutation(n.mutation, n.mutationChildren);
             }
 
             if (n.fields) {
@@ -691,7 +710,7 @@ ${output}</xml>`;
         }
 
         function getOutputBlock(n: ts.Node): OutputNode {
-            if (checkExpression(n, env)) {
+            if (checkExpression(n, env, useNewFunctions)) {
                 return getTypeScriptExpressionBlock(n);
             }
             else {
@@ -1053,12 +1072,11 @@ ${output}</xml>`;
             let stmt: StatementNode;
             let skipComments = false;
 
-            const err = checkStatement(node, env, asExpression, topLevel);
+            const err = checkStatement(node, env, asExpression, topLevel, useNewFunctions);
             if (err) {
                 stmt = getTypeScriptStatementBlock(node, undefined, err);
             }
             else {
-                const useNewFunctions = pxt.appTarget.runtime.functionsOptions.useNewFunctions;
                 switch (node.kind) {
                     case SK.Block:
                         return codeBlock((node as ts.Block).statements, next, topLevel);
@@ -1482,13 +1500,22 @@ ${output}</xml>`;
         function getNewFunctionDeclaration(n: ts.FunctionDeclaration): StatementNode {
             const name = getVariableName(n.name);
             const statements = getStatementBlock(n.body);
-            const r = mkStmt("function_declaration");
+            const r = mkStmt("function_definition");
             r.mutation = {
-                name,
-                functionId: Blockly.utils.genUid()
+                name
             };
-            // TODO GUJEN
-            r.fields = [getField("NAME", name)];
+            if (n.parameters) {
+                r.mutationChildren = [];
+                n.parameters.forEach(p => {
+                    r.mutationChildren.push({
+                        nodeName: "arg",
+                        attributes: {
+                            name: p.name.getText(),
+                            type: p.type.getText()
+                        }
+                    });
+                });
+            }
             r.handlers = [{ name: "STACK", statement: statements }];
             return r;
         }
@@ -1870,7 +1897,7 @@ ${output}</xml>`;
                 const statement = statements[i];
                 if ((statement.kind === SK.FunctionDeclaration ||
                     (statement.kind == SK.ExpressionStatement && isEventExpression(statement as ts.ExpressionStatement))) &&
-                    !checkStatement(statement, env, false, topLevel)) {
+                    !checkStatement(statement, env, false, topLevel, useNewFunctions)) {
                     eventStatements.unshift(statement)
                 }
                 else {
@@ -2053,14 +2080,14 @@ ${output}</xml>`;
         }
     }
 
-    function checkStatement(node: ts.Node, env: DecompilerEnv, asExpression = false, topLevel = false): string {
+    function checkStatement(node: ts.Node, env: DecompilerEnv, asExpression = false, topLevel = false, useNewFunctions = false): string {
         switch (node.kind) {
             case SK.WhileStatement:
             case SK.IfStatement:
             case SK.Block:
                 return undefined;
             case SK.ExpressionStatement:
-                return checkStatement((node as ts.ExpressionStatement).expression, env, asExpression, topLevel);
+                return checkStatement((node as ts.ExpressionStatement).expression, env, asExpression, topLevel, useNewFunctions);
             case SK.VariableStatement:
                 return checkVariableStatement(node as ts.VariableStatement, env);
             case SK.CallExpression:
@@ -2080,7 +2107,7 @@ ${output}</xml>`;
             case SK.ForOfStatement:
                 return checkForOfStatement(node as ts.ForOfStatement);
             case SK.FunctionDeclaration:
-                return checkFunctionDeclaration(node as ts.FunctionDeclaration, topLevel);
+                return checkFunctionDeclaration(node as ts.FunctionDeclaration, topLevel, useNewFunctions);
             case SK.EnumDeclaration:
                 return checkEnumDeclaration(node as ts.EnumDeclaration, topLevel);
             case SK.DebuggerStatement:
@@ -2167,7 +2194,7 @@ ${output}</xml>`;
             else if (n.left.kind === SK.Identifier) {
                 switch (n.operatorToken.kind) {
                     case SK.EqualsToken:
-                        return checkExpression(n.right, env);
+                        return checkExpression(n.right, env, useNewFunctions);
                     case SK.PlusEqualsToken:
                     case SK.MinusEqualsToken:
                         return undefined;
@@ -2223,7 +2250,7 @@ ${output}</xml>`;
                 check = Util.lf("Variable declarations must have an initializer");
             }
             else if (!isAutoDeclaration(n)) {
-                check = checkExpression(n.initializer, env);
+                check = checkExpression(n.initializer, env, useNewFunctions);
             }
 
             return check;
@@ -2239,7 +2266,8 @@ ${output}</xml>`;
             return undefined;
         }
 
-        function checkCall(n: ts.CallExpression, env: DecompilerEnv, asExpression = false, topLevel = false) {
+        function checkCall(n: ts.CallExpression, env: DecompilerEnv, asExpression = false, topLevel = false, useNewFunctions = false) {
+            // TODO GUJEN decompile function calls with arguments
             const info: pxtc.CallInfo = (n as any).callInfo;
             if (!info) {
                 return Util.lf("Function call not supported in the blocks");
@@ -2536,12 +2564,12 @@ ${output}</xml>`;
             }
         }
 
-        function checkFunctionDeclaration(n: ts.FunctionDeclaration, topLevel: boolean) {
+        function checkFunctionDeclaration(n: ts.FunctionDeclaration, topLevel: boolean, useNewFunctions = false) {
             if (!topLevel) {
                 return Util.lf("Function declarations must be top level");
             }
 
-            if (n.parameters.length > 0) {
+            if (!useNewFunctions && n.parameters.length > 0) {
                 return Util.lf("Functions with parameters not supported in blocks");
             }
 
@@ -2676,7 +2704,7 @@ ${output}</xml>`;
         }
     }
 
-    function checkExpression(n: ts.Node, env: DecompilerEnv): string {
+    function checkExpression(n: ts.Node, env: DecompilerEnv, useNewFunctions = false): string {
         switch (n.kind) {
             case SK.NumericLiteral:
             case SK.TrueKeyword:
@@ -2686,7 +2714,7 @@ ${output}</xml>`;
             case SK.ElementAccessExpression:
                 return undefined;
             case SK.ParenthesizedExpression:
-                return checkExpression((n as ts.ParenthesizedExpression).expression, env);
+                return checkExpression((n as ts.ParenthesizedExpression).expression, env, useNewFunctions);
             case SK.StringLiteral:
             case SK.FirstTemplateToken:
             case SK.NoSubstitutionTemplateLiteral:
@@ -2703,7 +2731,7 @@ ${output}</xml>`;
             case SK.PropertyAccessExpression:
                 return checkPropertyAccessExpression(n as ts.PropertyAccessExpression, env);
             case SK.CallExpression:
-                return checkStatement(n, env, true);
+                return checkStatement(n, env, true, undefined, useNewFunctions);
             case SK.TaggedTemplateExpression:
                 return checkTaggedTemplateExpression(n as ts.TaggedTemplateExpression, env);
 
@@ -2774,7 +2802,7 @@ ${output}</xml>`;
                 }
                 else if (attributes.blockCombine || (attributes.blockId && blockInfo && blockInfo.thisParameter)) {
                     // block combine and getters/setters
-                    return checkExpression(n.expression, env)
+                    return checkExpression(n.expression, env, useNewFunctions)
                 }
             }
             return Util.lf("No call info found");
