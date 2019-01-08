@@ -29,7 +29,7 @@ other block.
 
 The easiest way to write code that will convert cleanly back to blocks
 is to write the code using blocks and convert it to JavaScript. Many blocks
-have a very specifc structure to their JavaScript that must be
+have a very specific structure to their JavaScript that must be
 followed in order to have them convert properly. If you have a
 piece of your code that does not convert, try looking at the block
 you were expecting and the JavaScript it produces.
