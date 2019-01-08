@@ -22,6 +22,8 @@ namespace pxt.svgUtil {
         percent
     }
 
+    const XLINK_NAMESPACE = "http://www.w3.org/1999/xlink";
+
     export class BaseElement<T extends SVGElement> {
         el: T;
         protected titleElement: SVGTitleElement;
@@ -37,6 +39,11 @@ namespace pxt.svgUtil {
 
         setAttribute(name: string, value: string | number | boolean): this {
             this.el.setAttribute(name, value.toString());
+            return this;
+        }
+
+        setAttributeNS(ns: string, name: string, value: string | number | boolean): this {
+            this.el.setAttributeNS(ns, name, value.toString());
             return this;
         }
 
@@ -470,7 +477,7 @@ namespace pxt.svgUtil {
         constructor() { super("image") }
 
         src(url: string) {
-            return this.setAttribute("href", url);
+            return this.setAttributeNS(XLINK_NAMESPACE, "href", url);
         }
 
         width(width: number, unit = LengthUnit.px): this {
