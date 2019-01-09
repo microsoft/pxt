@@ -1247,7 +1247,7 @@ export class ProjectView
                 resolve(this.exportProjectToFileAsync()
                     .then(blob => screenshot.encodeBlobAsync(img, blob))
                     .then(img => {
-                        const fn = pkg.genFileName(".png");
+                        const fn = pkg.genFileName("-cart.png");
                         pxt.BrowserUtils.browserDownloadDataUri(img, fn);
                     }))
             }
