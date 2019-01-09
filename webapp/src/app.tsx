@@ -876,8 +876,8 @@ export class ProjectView
         this.clearSerial()
 
         // Merge current and new state but only if the new state members are undefined
-        let oldEditorState = this.state.editorState;
-        if (oldEditorState) {
+        const oldEditorState = this.state.editorState;
+        if (oldEditorState && editorState) {
             if (editorState.filters === undefined) editorState.filters = oldEditorState.filters;
             if (editorState.hasCategories === undefined) editorState.hasCategories = oldEditorState.hasCategories;
             if (editorState.searchBar === undefined) editorState.searchBar = oldEditorState.searchBar;
@@ -1564,12 +1564,44 @@ export class ProjectView
             });
     }
 
+    private checkWebUSBVariant = true
     checkForHwVariant() {
         if (pxt.hwVariant)
             return false // already set
         let variants = pxt.getHwVariants()
         if (variants.length == 0)
             return false
+        let pairAsync = () => cmds.showWebUSBPairingInstructionsAsync(null)
+            .then(() => {
+                this.checkForHwVariant()
+            }, err => {
+                this.checkWebUSBVariant = false
+                this.checkForHwVariant()
+            })
+        if (pxt.usb.isEnabled && this.checkWebUSBVariant) {
+            hidbridge.initAsync(true)
+                .then(wr => {
+                    if (wr.familyID) {
+                        for (let v of variants) {
+                            let compile = pxt.U.clone(pxt.appTarget.compile)
+                            if (v.compileServiceVariant) {
+                                let c2 = pxt.appTarget.variants[v.compileServiceVariant]
+                                if (c2.compile)
+                                    pxt.U.jsonCopyFrom(compile, c2.compile)
+                            }
+                            if (parseInt(compile.uf2Family) === wr.familyID) {
+                                pxt.setHwVariant(v.name)
+                                this.reloadHeaderAsync()
+                                    .then(() => this.compile())
+                                return
+                            }
+                        }
+                    }
+                    this.checkWebUSBVariant = false
+                    this.checkForHwVariant()
+                }, pairAsync)
+            return true
+        }
         this.showChooseHwDialog()
         return true
     }
@@ -2678,10 +2710,10 @@ function initSerial() {
     const isHF2WinRTSerial = pxt.appTarget.serial && pxt.appTarget.serial.useHF2 && pxt.winrt.isWinRT();
     const isValidLocalhostSerial = pxt.appTarget.serial && pxt.BrowserUtils.isLocalHost() && !!Cloud.localToken;
 
-    if (!isHF2WinRTSerial && !isValidLocalhostSerial)
+    if (!isHF2WinRTSerial && !isValidLocalhostSerial && !pxt.usb.isEnabled)
         return;
 
-    if (hidbridge.shouldUse()) {
+    if (hidbridge.shouldUse() || pxt.usb.isEnabled) {
         hidbridge.configureHidSerial((buf, isErr) => {
             let data = Util.fromUTF8(Util.uint8ArrayToString(buf))
             //pxt.debug('serial: ' + data)

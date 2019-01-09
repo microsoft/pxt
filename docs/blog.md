@@ -1,5 +1,12 @@
 # Microsoft MakeCode Blog
 
+## [Cartoon Network Projects for the Adafruit Circuit Playground Express!](/blog/adafruit-circuit-playground-express/cn-projects)
+ 
+January 7th, 2019 by [Jaqster](https://github.com/jaqster)
+
+Happy New Year! And what better way to start 2019 than with a series of brand-new projects for Circuit Playground Express inspired by Cartoon Network!
+**[Continue reading this blog post](/blog/adafruit-circuit-playground-express/cn-projects)**
+
 ## [New Maker Course for the Adafruit Circuit Playground Express!](/blog/adafruit-circuit-playground-express/maker-course)
  
 December 6th, 2018 by [Jaqster](https://github.com/jaqster)

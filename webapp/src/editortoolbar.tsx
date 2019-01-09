@@ -116,7 +116,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const compileLoading = !!compiling;
         const running = simState == pxt.editor.SimState.Running;
         const starting = simState == pxt.editor.SimState.Starting;
-        const runTooltip = [lf("Stop the simulator"), lf("Starting the simulator"), lf("Start the simulator")][simState || 0];
+        const runTooltip = [lf("Start the simulator"), lf("Starting the simulator"), lf("Stop the simulator")][simState || 0];
         const restartTooltip = lf("Restart the simulator");
         const collapseTooltip = collapsed ? lf("Show the simulator") : lf("Hide the simulator");
         const pairingButton = !!targetTheme.pairingButton;

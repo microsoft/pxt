@@ -1021,10 +1021,6 @@ p.ui.font.small {
     z-index: @sandboxFooterZIndex;
 }
 
-.simView .ui.menu {
-    background: transparent !important;
-}
-
 .simView #simulators {
     position: absolute;
     top: @mainMenuHeight;
@@ -1083,6 +1079,17 @@ p.ui.font.small {
         box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
         background: @editorToggleColor !important;
     }
+}
+
+/* Hardware selection dialog */
+.hardwaredialog .ui.cardimage {
+    background-position: top;
+    image-rendering: optimizeSpeed;
+	image-rendering: -moz-crisp-edges;
+	image-rendering: -webkit-optimize-contrast;
+	image-rendering: optimize-contrast;
+	image-rendering: pixelated;
+    -ms-interpolation-mode: nearest-neighbor;
 }
 
 .sandbox.simView {

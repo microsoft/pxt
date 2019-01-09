@@ -875,6 +875,9 @@ namespace pxt.cpp {
             pxtConfig += `#define ${k} ${cpp_options[k]}\n`
         }
 
+        if (compile.uf2Family)
+            pxtConfig += `#define PXT_UF2_FAMILY ${compile.uf2Family}\n`
+
         res.generatedFiles[sourcePath + "pointers.cpp"] = includesInc + protos.finish() + abiInc + pointersInc + "\nPXT_SHIMS_END\n"
         res.generatedFiles[sourcePath + "pxtconfig.h"] = pxtConfig
         pxt.debug(`pxtconfig.h: ${res.generatedFiles[sourcePath + "pxtconfig.h"]}`)

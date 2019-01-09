@@ -1,6 +1,6 @@
 {
   "name": "pxt-core",
-  "version": "5.2.40",
+  "version": "5.3.3",
   "description": "Microsoft MakeCode, also known as Programming Experience Toolkit (PXT), provides Blocks / JavaScript tools and editors",
   "keywords": [
     "TypeScript",
@@ -74,7 +74,8 @@
   "lazyDependencies": {
     "keytar": "4.2.1",
     "node-hid": "^0.7.2",
-    "serialport": "^6.2.0"
+    "serialport": "^6.2.0",
+    "webusb": "^1.0.14"
   },
   "devDependencies": {
     "monaco-editor": "0.10.0",
