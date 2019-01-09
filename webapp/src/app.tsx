@@ -1237,6 +1237,9 @@ export class ProjectView
     }
 
     private saveProjectAsPNGAsync(): Promise<void> {
+        // in porgress
+        if (this.screenshotHandler) return Promise.resolve();
+
         simulator.driver.postMessage({ type: "screenshot", title: this.state.header.name } as pxsim.SimulatorScreenshotMessage);
         return new Promise<void>((resolve, reject) => {
             this.screenshotHandler = (img) => {
