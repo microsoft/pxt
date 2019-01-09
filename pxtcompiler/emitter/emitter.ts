@@ -252,7 +252,7 @@ namespace ts.pxtc {
         return isStringLiteral(e) && (e as LiteralExpression).text == ""
     }
 
-    function isStatic(node: Declaration) {
+    export function isStatic(node: Declaration) {
         return node.modifiers && node.modifiers.some(m => m.kind == SK.StaticKeyword)
     }
 
@@ -507,7 +507,7 @@ namespace ts.pxtc {
         return !!(g && g.typeParameters && g.typeParameters.length);
     }
 
-    function checkType(t: Type): Type {
+    export function checkType(t: Type): Type {
         let ok = TypeFlags.String | TypeFlags.Number | TypeFlags.Boolean |
             TypeFlags.StringLiteral | TypeFlags.NumberLiteral | TypeFlags.BooleanLiteral |
             TypeFlags.Void | TypeFlags.Enum | TypeFlags.EnumLiteral | TypeFlags.Null | TypeFlags.Undefined |
@@ -975,8 +975,13 @@ namespace ts.pxtc {
                     value: configEntries[k].value
                 })
             }
+            res.configData.sort((a, b) => a.key - b.key)
 
             catchErrors(rootFunction, finalEmit)
+        }
+
+        if (opts.ast) {
+            annotate(program, entryPoint, target);
         }
 
         return {
@@ -1360,20 +1365,6 @@ namespace ts.pxtc {
             }
         }
 
-        function isCtorField(p: ParameterDeclaration) {
-            if (!p.modifiers)
-                return false
-            if (p.parent.kind != SK.Constructor)
-                return false
-            for (let m of p.modifiers) {
-                if (m.kind == SK.PrivateKeyword ||
-                    m.kind == SK.PublicKeyword ||
-                    m.kind == SK.ProtectedKeyword)
-                    return true
-            }
-            return false
-        }
-
         function getClassInfo(t: Type, decl: ClassDeclaration = null) {
             if (!decl)
                 decl = <ClassDeclaration>t.symbol.valueDeclaration
@@ -1690,13 +1681,6 @@ ${lbl}: .short 0xffff
                 return emitCallCore(node, node, [], null)
             }
             let attrs = parseComments(decl);
-            let callInfo: CallInfo = {
-                decl,
-                qName: getFullName(checker, decl.symbol),
-                args: [],
-                isExpression: true
-            };
-            (node as any).callInfo = callInfo;
             if (decl.kind == SK.EnumMember) {
                 let ev = attrs.enumval
                 if (!ev) {
@@ -1726,7 +1710,6 @@ ${lbl}: .short 0xffff
                     return emitCallCore(node, node, [], null, decl as any, node.expression)
                 } else {
                     let idx = fieldIndex(node)
-                    callInfo.args.push(node.expression)
                     return ir.op(EK.FieldAccess, [emitExpr(node.expression)], idx)
                 }
             } else if (isClassFunction(decl) || decl.kind == SK.MethodSignature) {
@@ -2046,19 +2029,9 @@ ${lbl}: .short 0xffff
             let attrs = parseComments(decl)
             let hasRet = !(typeOf(node).flags & TypeFlags.Void)
             let args = callArgs.slice(0)
-            let callInfo: CallInfo = {
-                decl,
-                qName: decl ? getFullName(checker, decl.symbol) : "?",
-                args: args.slice(0),
-                isExpression: hasRet
-            };
-            (node as any).callInfo = callInfo
 
             if (isMethod && !recv && !isStatic(decl) && funcExpr.kind == SK.PropertyAccessExpression)
                 recv = (<PropertyAccessExpression>funcExpr).expression
-
-            if (callInfo.args.length == 0 && U.lookup(autoCreateFunctions, callInfo.qName))
-                callInfo.isAutoCreate = true
 
             if (res.usedArguments && attrs.trackArgs) {
                 let targs = recv ? [recv].concat(args) : args
@@ -2123,7 +2096,6 @@ ${lbl}: .short 0xffff
                         isSuper = true
                     }
                     args.unshift(recv)
-                    callInfo.args.unshift(recv)
                 } else
                     unhandled(node, lf("strange method call"), 9241)
                 let info = getFunctionInfo(decl)
@@ -2195,7 +2167,6 @@ ${lbl}: .short 0xffff
                         // so the receiver is not needed, as we have already done
                         // the property lookup to get the lambda
                         args.shift()
-                        callInfo.args.shift()
                     }
                 } else if (decl.kind == SK.MethodSignature || (target.switches.slowMethods && !isStatic(decl) && !isSuper)) {
                     let name = getName(decl)
@@ -2215,7 +2186,6 @@ ${lbl}: .short 0xffff
 
             // here's where we will recurse to generate funcExpr
             args.unshift(funcExpr)
-            callInfo.args.unshift(funcExpr)
 
             return mkMethodCall(null, -1, null, args.map(x => emitExpr(x)))
         }
@@ -4121,7 +4091,7 @@ ${lbl}: .short 0xffff
     }
 
 
-    function isStringType(t: Type) {
+    export function isStringType(t: Type) {
         return checkPrimitiveType(t, TypeFlags.String | TypeFlags.StringLiteral, HasLiteralType.String);
     }
 
@@ -4220,6 +4190,20 @@ ${lbl}: .short 0xffff
             })
             return perfCounters
         }
+    }
+
+    export function isCtorField(p: ParameterDeclaration) {
+        if (!p.modifiers)
+            return false
+        if (p.parent.kind != SK.Constructor)
+            return false
+        for (let m of p.modifiers) {
+            if (m.kind == SK.PrivateKeyword ||
+                m.kind == SK.PublicKeyword ||
+                m.kind == SK.ProtectedKeyword)
+                return true
+        }
+        return false
     }
 
     function isNumberLikeType(type: Type) {
