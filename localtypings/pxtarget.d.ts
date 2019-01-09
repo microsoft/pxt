@@ -411,6 +411,7 @@ declare namespace ts.pxtc {
         warnDiv?: boolean; // warn when emitting division operator
 
         alwaysDecompileOnStart?: boolean; // decompiler only
+        useNewFunctions?: boolean; // decompiler only; whether to decompile functions using the new functions implementation (functions with parameters)
 
         embedMeta?: string;
         embedBlob?: string; // base64

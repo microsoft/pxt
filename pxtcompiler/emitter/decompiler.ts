@@ -336,6 +336,7 @@ namespace ts.pxtc.decompiler {
         snippetMode?: boolean; // do not emit "on start"
         alwaysEmitOnStart?: boolean; // emit "on start" even if empty
         errorOnGreyBlocks?: boolean; // fail on grey blocks (usefull when testing docs)
+        useNewFunctions?: boolean; // whether to decompile functions using the new functions implementation (functions with parameters)
 
         /*@internal*/
         includeGreyBlockMessages?: boolean; // adds error attributes to the mutations in typescript_statement blocks (for debug pruposes)
@@ -351,7 +352,7 @@ namespace ts.pxtc.decompiler {
     }
 
     export function decompileToBlocks(blocksInfo: pxtc.BlocksInfo, file: ts.SourceFile, options: DecompileBlocksOptions, renameMap?: RenameMap): pxtc.CompileResult {
-        let useNewFunctions = true; // TODO GUJEN get this info passed to the function
+        const useNewFunctions = options.useNewFunctions;
         let emittedBlocks = 0;
         let stmts: NodeArray<ts.Statement> = file.statements;
         let result: pxtc.CompileResult = {

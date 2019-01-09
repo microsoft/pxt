@@ -169,6 +169,9 @@ export function decompileSnippetAsync(code: string, blockInfo?: ts.pxtc.BlocksIn
 }
 
 function decompileCoreAsync(opts: pxtc.CompileOptions, fileName: string): Promise<pxtc.CompileResult> {
+    if (pxt.appTarget.runtime && pxt.appTarget.runtime.functionsOptions && pxt.appTarget.runtime.functionsOptions.useNewFunctions) {
+        opts.useNewFunctions = true;
+    }
     return workerOpAsync("decompile", { options: opts, fileName: fileName, blocks: blocksOptions() })
 }
 
