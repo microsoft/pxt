@@ -43,8 +43,6 @@ namespace ts.pxtc.decompiler {
         localReporters: PropertyDesc[][]; // A stack of groups of locally scoped argument declarations, to determine whether an argument should decompile as a reporter or a variable
     }
 
-    // TODO GUJEN correctly decompile params to local reporters inside function bodies
-
     interface DecompileArgument {
         value: Expression;
         param: pxt.blocks.BlockParameter;

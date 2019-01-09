@@ -7,14 +7,6 @@ import * as codecard from "./codecard"
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
-// MakeCode:
-// TODO GUJEN Investigate exception "TypeError: a.getAttribute is not a function" when loading MakeCode editor
-// TODO GUJEN Add icons for the cards
-
-// pxt-blockly:
-// TODO GUJEN Change function name inline
-// TODO GUJEN Arg type icon in function editor
-
 export interface CreateFunctionDialogState {
     visible?: boolean;
     functionEditorWorkspace?: Blockly.Workspace;
