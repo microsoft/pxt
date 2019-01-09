@@ -69,6 +69,8 @@ namespace pxt.editor {
 
         home?: boolean;
         hasError?: boolean;
+
+        screenshoting?: boolean;
     }
 
     export interface EditorState {
