@@ -306,7 +306,10 @@ namespace pxt.blocks.layout {
 
         const images = xsg.getElementsByTagName("image") as NodeListOf<Element>;
         const p = pxt.Util.toArray(images)
-            .filter(image => !/^data:/.test(image.getAttributeNS(XLINK_NAMESPACE, "href")))
+            .filter(image => {
+                const href = image.getAttributeNS(XLINK_NAMESPACE, "href");
+                return href && !/^data:/.test(href);
+            })
             .map((image: HTMLImageElement) => {
                 const href = image.getAttributeNS(XLINK_NAMESPACE, "href");
                 let dataUri = imageXLinkCache[href];
