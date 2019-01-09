@@ -238,14 +238,14 @@ namespace pxsim {
                 case "mute": mute((<SimulatorMuteMessage>data).mute); break;
                 case "print": print(); break;
                 case "custom":
-                    if (handleCustomMessage) handleCustomMessage((<SimulatorCustomMessage>data));
+                    if (handleCustomMessage) 
+                        handleCustomMessage((<SimulatorCustomMessage>data));
                     break;
                 case 'pxteditor':
                     break; //handled elsewhere
                 case 'debugger':
-                    if (runtime) {
+                    if (runtime)
                         runtime.handleDebuggerMsg(data as DebuggerMessage);
-                    }
                     break;
                 default: queue(data); break;
             }
