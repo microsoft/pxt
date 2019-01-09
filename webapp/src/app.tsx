@@ -1232,7 +1232,11 @@ export class ProjectView
             });
     }
 
-    private saveProjectAsPNG(): Promise<void> {
+    downloadScreenshotAsync(): Promise<void> {
+        return this.saveProjectAsPNGAsync();
+    }
+
+    private saveProjectAsPNGAsync(): Promise<void> {
         simulator.driver.postMessage({ type: "screenshot", title: this.state.header.name } as pxsim.SimulatorScreenshotMessage);
         return new Promise<void>((resolve, reject) => {
             this.screenshotHandler = (img) => {
@@ -1258,7 +1262,7 @@ export class ProjectView
             return pkg.mainPkg.saveToJsonAsync(this.getPreferredEditor())
                 .then(project => pxt.commands.saveProjectAsync(project));
         }
-        if (pxt.appTarget.compile.saveAsPNG) return this.saveProjectAsPNG();
+        if (pxt.appTarget.compile.saveAsPNG) return this.saveProjectAsPNGAsync();
         else return this.exportProjectToFileAsync()
             .then((buf: Uint8Array) => {
                 const fn = pkg.genFileName(".mkcd");
@@ -1799,10 +1803,6 @@ export class ProjectView
         else {
             this.collapseSimulator();
         }
-    }
-
-    downloadScreenshotAsync(): Promise<void> {
-        return Promise.resolve();
     }
 
     expandSimulator() {
