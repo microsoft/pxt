@@ -1,7 +1,3 @@
-
-
-
-
 namespace ts.pxtc {
 
     /**
