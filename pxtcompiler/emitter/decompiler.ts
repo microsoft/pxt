@@ -1502,7 +1502,18 @@ ${output}</xml>`;
 
         function getFunctionDeclaration(n: ts.FunctionDeclaration, useNewFunctions = false): StatementNode {
             const name = getVariableName(n.name);
+            if (useNewFunctions) {
+                env.localReporters.push(n.parameters.map(p => {
+                    return {
+                        name: p.name.getText(),
+                        type: p.type.getText()
+                    } as PropertyDesc;
+                }));
+            }
             const statements = getStatementBlock(n.body);
+            if (useNewFunctions) {
+                env.localReporters.pop();
+            }
             let r: StatementNode;
 
             if (useNewFunctions) {
@@ -1601,19 +1612,23 @@ ${output}</xml>`;
                             r = mkStmt("function_call");
                             if (info.args.length) {
                                 r.mutationChildren = [];
-                                env.declaredFunctions[name].parameters.forEach(p => {
+                                r.inputs = [];
+                                env.declaredFunctions[name].parameters.forEach((p, i) => {
                                     const paramName = p.name.getText();
+                                    const argId = env.functionParamIds[name][paramName];
                                     r.mutationChildren.push({
                                         nodeName: "arg",
                                         attributes: {
                                             name: paramName,
                                             type: p.type.getText(),
-                                            id: env.functionParamIds[name][paramName]
+                                            id: argId
                                         }
                                     });
+                                    const argBlock = getOutputBlock(info.args[i]);
+                                    const value = mkValue(argId, argBlock);
+                                    r.inputs.push(value);
                                 });
                             }
-                            // TODO GUJEN create & populate the value inputs
                         } else {
                             r = mkStmt("procedures_callnoreturn");
                         }
