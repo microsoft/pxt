@@ -1233,17 +1233,17 @@ export class ProjectView
     }
 
     downloadScreenshotAsync(): Promise<void> {
-        return this.saveProjectAsPNGAsync();
+        return this.saveProjectAsPNGAsync(true);
     }
 
-    private saveProjectAsPNGAsync(): Promise<void> {
+    private saveProjectAsPNGAsync(force?: boolean): Promise<void> {
         // in porgress
         if (this.screenshotHandler) return Promise.resolve();
 
-        simulator.driver.postMessage({ type: "screenshot", title: this.state.header.name } as pxsim.SimulatorScreenshotMessage);
+        this.setState({ screenshoting: true });
+        simulator.driver.postMessage({ type: "screenshot", title: this.state.header.name, force } as pxsim.SimulatorScreenshotMessage);
         return new Promise<void>((resolve, reject) => {
             this.screenshotHandler = (img) => {
-                this.screenshotHandler = null
                 resolve(this.exportProjectToFileAsync()
                     .then(blob => screenshot.encodeBlobAsync(img, blob))
                     .then(img => {
@@ -1251,6 +1251,9 @@ export class ProjectView
                         pxt.BrowserUtils.browserDownloadDataUri(img, fn);
                     }))
             }
+        }).finally(() => {
+            this.screenshotHandler = null
+            this.setState({ screenshoting: false });
         })
     }
 
