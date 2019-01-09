@@ -1801,6 +1801,10 @@ export class ProjectView
         }
     }
 
+    downloadScreenshotAsync(): Promise<void> {
+        return Promise.resolve();
+    }
+
     expandSimulator() {
         if (pxt.appTarget.simulator.headless) {
             simulator.unhide();

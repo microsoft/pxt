@@ -202,6 +202,7 @@ namespace pxt.editor {
         openInstructions(): void;
         closeFlyout(): void;
         printCode(): void;
+        downloadScreenshotAsync(): Promise<void>;
 
         toggleDebugging(): void;
         dbgPauseResume(): void;

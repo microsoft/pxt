@@ -432,10 +432,10 @@ namespace pxt.BrowserUtils {
         return new Promise<void>((resolve, reject) => {
             const script = document.createElement('script');
             script.type = 'text/javascript';
-            script.src = url;
-            script.async = true;
             script.addEventListener('load', () => resolve());
             script.addEventListener('error', (e) => reject(e));
+            script.src = url;
+            script.async = true;
             document.body.appendChild(script);
         });
     }
