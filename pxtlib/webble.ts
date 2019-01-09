@@ -264,6 +264,23 @@ namespace pxt.webBluetooth {
             super(id, device, autoReconnect);
         }
 
+
+        flashAsync(hex: string): Promise<void> {
+            if (this.hex) {
+                this.debug(`flashing already in progress`)
+                return Promise.resolve();
+            }
+            this.device.pauseLog();
+            this.clearFlashData();
+            this.setFlashData(hex);
+            return this.createFlashPromise()
+                .finally(() => this.device.resumeLogOnDisconnection());
+        }
+
+        protected createFlashPromise(): Promise<void> {
+            return Promise.resolve();
+        }
+
         // finds block starting with MAGIC_BLOCK
         private findMarker(offset: number, marker: Uint8Array): number {
             if (!this.bin) return -1;
@@ -282,7 +299,7 @@ namespace pxt.webBluetooth {
             return -1;
         }
 
-        protected setFlashData(hex: string) {
+        private setFlashData(hex: string) {
             this.hex = hex;
             const uf2 = ts.pxtc.UF2.newBlockFile();
             ts.pxtc.UF2.writeHex(uf2, this.hex.split(/\r?\n/));
@@ -311,17 +328,35 @@ namespace pxt.webBluetooth {
             this.magicOffset = undefined;
             this.dalHash = undefined;
             this.makeCodeHash = undefined;
+            this.autoReconnect = false;
         }
+    }
+
+    export enum DFUServiceState {
+        Idle = 1 << 0,
+        RequestDFU = 1 << 2,
+        DFU = 1 << 4
     }
 
     // see https://github.com/thegecko/web-bluetooth-dfu
     export class DFUService extends BLEFlashingService {
-        static SERVICE_UUID = 'e95d93b0-251d-470a-a062-fa1922dfa9a8';
-        static CONTROL_UUID = '8ec90001-f315-4f60-9fb8-838830daea50';
-        static PACKET_UUID = '8ec90002-f315-4f60-9fb8-838830daea50';
-        static LITTLE_ENDIAN = true;
-        static PACKET_SIZE = 20;
-        static OPERATIONS = {
+        static UUIDS = {
+            control: {
+                name: "dfu control",
+                service: 'e95d93b0-251d-470a-a062-fa1922dfa9a8',
+                control: '8ec90001-f315-4f60-9fb8-838830daea50',
+                packet: '8ec90002-f315-4f60-9fb8-838830daea50'
+            },
+            dfu: {
+                name: "dfu",
+                service: 'e95d93b0-251d-470a-a062-fa1922dfa9a8',
+                control: '8ec90001-f315-4f60-9fb8-838830daea50',
+                packet: '8ec90002-f315-4f60-9fb8-838830daea50'
+            }
+        };
+        static DFU_LITTLE_ENDIAN = true;
+        static DFU_PACKET_SIZE = 20;
+        static DFU_OPERATIONS = {
             BUTTON_COMMAND: [0x01],
             CREATE_COMMAND: [0x01, 0x01],
             CREATE_DATA: [0x01, 0x02],
@@ -332,7 +367,7 @@ namespace pxt.webBluetooth {
             SELECT_DATA: [0x06, 0x02],
             RESPONSE: [0x60, 0x20]
         };
-        static RESPONSE: pxt.Map<string> = {
+        static DFU_RESPONSE: pxt.Map<string> = {
             // Invalid code
             0x00: "Invalid opcode",
             // Success
@@ -354,7 +389,7 @@ namespace pxt.webBluetooth {
             // Extended error
             0x0B: "Extended error"
         };
-        static EXTENDED_ERROR: pxt.Map<string> = {
+        static DFU_EXTENDED_ERROR: pxt.Map<string> = {
             // No error
             0x00: "No extended error code has been set. This error indicates an implementation problem",
             // Invalid error code
@@ -385,6 +420,7 @@ namespace pxt.webBluetooth {
             0x0D: "The available space on the device is insufficient to hold the firmware"
         };
 
+        state = DFUServiceState.Idle;
         private service: BluetoothRemoteGATTService;
         private chunkDelay: number;
         private controlCharacteristic: BluetoothRemoteGATTCharacteristic;
@@ -402,24 +438,32 @@ namespace pxt.webBluetooth {
         }
 
         protected createConnectPromise(): Promise<void> {
-            this.debug(`connecting to dfu`);
+            const uuids = this.state == DFUServiceState.RequestDFU
+                ? DFUService.UUIDS.control : DFUService.UUIDS.dfu;
+            this.debug(`connecting to ${uuids.name}`);
             return this.device.connectAsync()
-                .then(() => this.alivePromise(this.device.gatt.getPrimaryService(DFUService.SERVICE_UUID)))
+                .then(() => this.alivePromise(this.device.gatt.getPrimaryService(uuids.service)))
                 .then(service => {
                     this.service = service;
                     this.debug(`connecting to control characteristic`)
-                    return this.alivePromise(this.service.getCharacteristic(DFUService.CONTROL_UUID));
+                    return this.alivePromise(this.service.getCharacteristic(uuids.control));
                 }).then(controlCharacteristic => {
                     this.controlCharacteristic = controlCharacteristic;
                     this.debug(`connecting to packet characteristic`)
-                    return this.alivePromise(this.service.getCharacteristic(DFUService.PACKET_UUID));
+                    return this.alivePromise(this.service.getCharacteristic(uuids.packet));
                 }).then(packetCharacteristic => {
                     this.packetCharacteristic = packetCharacteristic;
-
                     this.debug(`starting notifications`)
                     return this.controlCharacteristic.startNotifications()
                 }).then(() => {
                     this.controlCharacteristic.addEventListener('characteristicvaluechanged', this.handleCharacteristic);
+
+                    // so we requested the DFU and we got it
+                    if (this.state == DFUServiceState.RequestDFU) {
+                        this.debug(`checking pairing mode`)
+                        this.autoReconnect = false;
+                        return this.dfuTransferBinAsync();
+                    }
                     return Promise.resolve();
                 });
         }
@@ -453,7 +497,20 @@ namespace pxt.webBluetooth {
                 // done
                 return;
             }
+            switch (this.state) {
+                case DFUServiceState.Idle:
+                    // rogue request
+                    break;
+                case DFUServiceState.RequestDFU:
+                    this.debug(`dfu control responded`);
+                    break;
+                case DFUServiceState.DFU:
+                    //case DFUServiceState.DFU:
+                    this.handleDFUCharacteristic(ev);
+            }
+        }
 
+        private handleDFUCharacteristic(ev: Event) {
             const dataView: DataView = (<any>event.target).value;
             const cmd = dataView.getUint8(0);
             const operation = dataView.getUint8(1);
@@ -461,7 +518,7 @@ namespace pxt.webBluetooth {
 
             this.debug(`${cmd.toString(16)}> ${operation.toString(16)}> ${result.toString(16)}`);
 
-            if (DFUService.OPERATIONS.RESPONSE.indexOf(cmd) < 0) {
+            if (DFUService.DFU_OPERATIONS.RESPONSE.indexOf(cmd) < 0) {
                 throw new Error("Unrecognised control characteristic response notification");
             }
 
@@ -473,9 +530,9 @@ namespace pxt.webBluetooth {
                     this.notifyFns[operation].resolve(data);
                 } else if (result === 0x0B) {
                     const code = dataView.getUint8(3);
-                    error = `Error: ${DFUService.EXTENDED_ERROR[code]}`;
+                    error = `Error: ${DFUService.DFU_EXTENDED_ERROR[code]}`;
                 } else {
-                    error = `Error: ${DFUService.RESPONSE[result]}`;
+                    error = `Error: ${DFUService.DFU_RESPONSE[result]}`;
                 }
 
                 if (error) {
@@ -486,7 +543,7 @@ namespace pxt.webBluetooth {
             }
         }
 
-        private sendControlAsync(operation: Array<number>, buffer?: ArrayBuffer): Promise<DataView> {
+        private sendNordicControlAsync(operation: Array<number>, buffer?: ArrayBuffer): Promise<DataView> {
             return new Promise((resolve, reject) => {
                 let size = operation.length;
                 if (buffer) size += buffer.byteLength;
@@ -504,25 +561,33 @@ namespace pxt.webBluetooth {
                 };
 
                 this.debug(`send ctrl ${operation[0].toString(16)}`)
-                this.controlCharacteristic.writeValue(value);
+                this.controlCharacteristic.writeValue(value).done();
             });
         }
 
-        private transferInitAsync(buffer: ArrayBuffer): Promise<void> {
-            return this.transferAsync(buffer, "init", DFUService.OPERATIONS.SELECT_COMMAND, DFUService.OPERATIONS.CREATE_COMMAND);
+        private dfuTransferBinAsync() {
+            // the microbit init packet is ignored by the bootloader
+            const init = new ArrayBuffer(0);
+            return this.dfuTransferInitAsync(init)
+                .then(() => this.dfuTransferFirmwareAsync(this.bin));
         }
 
-        private transferFirmwareAsync(buffer: ArrayBuffer): Promise<void> {
-            return this.transferAsync(buffer, "firmware", DFUService.OPERATIONS.SELECT_DATA, DFUService.OPERATIONS.CREATE_DATA);
+        private dfuTransferInitAsync(buffer: ArrayBuffer): Promise<void> {
+            return this.dfuTransferAsync(buffer, "init", DFUService.DFU_OPERATIONS.SELECT_COMMAND, DFUService.DFU_OPERATIONS.CREATE_COMMAND);
         }
 
-        private transferAsync(buffer: ArrayBuffer, type: string, selectType: Array<number>, createType: Array<number>): Promise<void> {
+        private dfuTransferFirmwareAsync(buffer: ArrayBuffer): Promise<void> {
+            this.debug(`dfu transfer ${buffer.byteLength >> 10} kb`);
+            return this.dfuTransferAsync(buffer, "firmware", DFUService.DFU_OPERATIONS.SELECT_DATA, DFUService.DFU_OPERATIONS.CREATE_DATA);
+        }
+
+        private dfuTransferAsync(buffer: ArrayBuffer, type: string, selectType: Array<number>, createType: Array<number>): Promise<void> {
             this.debug(`transfer ${type}`);
-            return this.sendControlAsync(selectType)
+            return this.sendNordicControlAsync(selectType)
                 .then(response => {
-                    const maxSize = response.getUint32(0, DFUService.LITTLE_ENDIAN);
-                    const offset = response.getUint32(4, DFUService.LITTLE_ENDIAN);
-                    const crc = response.getInt32(8, DFUService.LITTLE_ENDIAN);
+                    const maxSize = response.getUint32(0, DFUService.DFU_LITTLE_ENDIAN);
+                    const offset = response.getUint32(4, DFUService.DFU_LITTLE_ENDIAN);
+                    const crc = response.getInt32(8, DFUService.DFU_LITTLE_ENDIAN);
 
                     // TODO crc check
                     if (type === "init" && offset === buffer.byteLength) {
@@ -531,38 +596,38 @@ namespace pxt.webBluetooth {
                     }
 
                     // TODO this.progress(0);
-                    return this.transferObjectAsync(buffer, createType, maxSize, offset);
+                    return this.dfuTransferObjectAsync(buffer, createType, maxSize, offset);
                 });
         }
 
-        private transferObjectAsync(buffer: ArrayBuffer, createType: Array<number>, maxSize: number, offset: number): Promise<void> {
+        private dfuTransferObjectAsync(buffer: ArrayBuffer, createType: Array<number>, maxSize: number, offset: number): Promise<void> {
             const start = offset - offset % maxSize;
             const end = Math.min(start + maxSize, buffer.byteLength);
 
             const view = new DataView(new ArrayBuffer(4));
-            view.setUint32(0, end - start, DFUService.LITTLE_ENDIAN);
+            view.setUint32(0, end - start, DFUService.DFU_LITTLE_ENDIAN);
 
-            return this.sendControlAsync(createType, view.buffer)
+            return this.sendNordicControlAsync(createType, view.buffer)
                 .then(() => {
                     const data = buffer.slice(start, end);
-                    return this.transferDataAsync(data, start);
+                    return this.dfuTransferDataAsync(data, start);
                 })
                 .then(() => {
-                    return this.sendControlAsync(DFUService.OPERATIONS.CACULATE_CHECKSUM);
+                    return this.sendNordicControlAsync(DFUService.DFU_OPERATIONS.CACULATE_CHECKSUM);
                 })
                 .then(response => {
-                    const crc = response.getInt32(4, DFUService.LITTLE_ENDIAN);
-                    const transferred = response.getUint32(0, DFUService.LITTLE_ENDIAN);
+                    const crc = response.getInt32(4, DFUService.DFU_LITTLE_ENDIAN);
+                    const transferred = response.getUint32(0, DFUService.DFU_LITTLE_ENDIAN);
                     const data = buffer.slice(0, transferred);
 
                     // TODO: CRC
                     this.debug(`written ${transferred} bytes`);
                     offset = transferred;
-                    return this.sendControlAsync(DFUService.OPERATIONS.EXECUTE);
+                    return this.sendNordicControlAsync(DFUService.DFU_OPERATIONS.EXECUTE);
                 })
                 .then(() => {
                     if (end < buffer.byteLength) {
-                        return this.transferObjectAsync(buffer, createType, maxSize, offset);
+                        return this.dfuTransferObjectAsync(buffer, createType, maxSize, offset);
                     } else {
                         this.debug("transfer complete");
                         return Promise.resolve();
@@ -570,9 +635,9 @@ namespace pxt.webBluetooth {
                 });
         }
 
-        private transferDataAsync(data: ArrayBuffer, offset: number, start?: number): Promise<void> {
+        private dfuTransferDataAsync(data: ArrayBuffer, offset: number, start?: number): Promise<void> {
             start = start || 0;
-            const end = Math.min(start + DFUService.PACKET_SIZE, data.byteLength);
+            const end = Math.min(start + DFUService.DFU_PACKET_SIZE, data.byteLength);
             const packet = data.slice(start, end);
 
             return this.packetCharacteristic.writeValue(packet)
@@ -580,26 +645,25 @@ namespace pxt.webBluetooth {
                 .then(() => {
                     // this.progress(offset + end);
                     if (end < data.byteLength) {
-                        return this.transferDataAsync(data, offset, end);
+                        return this.dfuTransferDataAsync(data, offset, end);
                     }
 
                     return Promise.resolve();
                 });
         }
 
-        flashAsync(hex: string): Promise<void> {
-            if (this.hex) {
-                this.debug(`flashing already in progress`)
-                return Promise.resolve();
-            }
-            this.setFlashData(this.hex);
-            // todo: generate init 
-            return this.transferInitAsync(init)
-                .then(() => this.transferFirmwareAsync(this.bin));
+        protected createFlashPromise(): Promise<void> {
+            // request device to enter bootloader mode
+            this.debug(`dfu: request bootloader mode`);
+            this.autoReconnect = true;
+            this.state = DFUServiceState.RequestDFU;
+            const msg = new Uint8Array(1);
+            msg[0] = 0x01;
+            return this.controlCharacteristic.writeValue(msg);
         }
     }
 
-    enum PartialFlashingState {
+    export enum PartialFlashingState {
         Idle = 1 << 0,
         StatusRequested = 1 << 1,
         PairingModeRequested = 1 << 2,
@@ -630,7 +694,7 @@ namespace pxt.webBluetooth {
         static CHUNK_MAX_DELAY = 75;
 
         private pfCharacteristic: BluetoothRemoteGATTCharacteristic;
-        private state = PartialFlashingState.Idle;
+        state = PartialFlashingState.Idle;
         private chunkDelay: number;
         private version: number;
         private mode: number;
@@ -703,24 +767,7 @@ namespace pxt.webBluetooth {
             this.pfCharacteristic = undefined;
         }
 
-        flashAsync(hex: string): Promise<void> {
-            if (this.hex) {
-                this.debug(`flashing already in progress`)
-                return Promise.resolve();
-            }
-            this.device.pauseLog();
-            return this.createFlashPromise(hex)
-                .finally(() => this.device.resumeLogOnDisconnection());
-        }
-
-        private createFlashPromise(hex: string): Promise<void> {
-            if (this.hex) {
-                this.debug(`flashing already in progress`)
-                return Promise.resolve();
-            }
-
-            this.clearFlashData();
-            this.setFlashData(hex);
+        protected createFlashPromise(): Promise<void> {
             return this.connectAsync()
                 .then(() => new Promise<void>((resolve, reject) => {
                     this._flashResolve = resolve;
@@ -784,10 +831,11 @@ namespace pxt.webBluetooth {
                     if (packet[1] == PartialFlashingService.REGION_DAL) {
                         if (region.hash != this.dalHash) {
                             pxt.tickEvent("webble.flash.DALrequired");
-                            this.debug(`DAL hash does not match, partial flashing not possible`)
+                            this.debug(`DAL hash does not match, DFU flashing required`)
                             this.state = PartialFlashingState.USBFlashRequired;
-                            if (this._flashReject)
-                                this._flashReject(new Error("USB flashing required"));
+                            // stop here and the DFU service will handle things
+                            if (this._flashResolve)
+                                this._flashResolve();
                             this.clearFlashData();
                             return;
                         }
@@ -966,9 +1014,11 @@ namespace pxt.webBluetooth {
 
     export class BLEDevice extends BLERemote {
         device: BluetoothDevice = undefined;
-        uartService: UARTService; // may be undefined
-        hf2Service: HF2Service; // may be undefined
-        partialFlashingService: PartialFlashingService; // may be undefined
+        _uartService: UARTService; // may be undefined
+        _hf2Service: HF2Service; // may be undefined
+        _partialFlashingService: PartialFlashingService; // may be undefined
+        _dfuControlService: DFUControlService; // may be undefined
+
         private services: BLEService[] = [];
         private pendingResumeLogOnDisconnection = false;
         public servicesVersion = 0;
@@ -987,12 +1037,13 @@ namespace pxt.webBluetooth {
             this.device.addEventListener('serviceremoved', this.handleServiceRemoved);
 
             if (hasConsole()) {
-                this.services.push(this.uartService = new UARTService(this));
-                this.services.push(this.hf2Service = new HF2Service(this));
+                this.services.push(this._uartService = new UARTService(this));
+                this.services.push(this._hf2Service = new HF2Service(this));
             }
-            if (hasPartialFlash())
-                this.services.push(this.partialFlashingService = new PartialFlashingService(this));
-
+            if (hasPartialFlash()) {
+                this.services.push(this._dfuControlService = new DFUControlService(this));
+                this.services.push(this._partialFlashingService = new PartialFlashingService(this));
+            }
             this.aliveToken.startOperation();
         }
 
@@ -1002,13 +1053,13 @@ namespace pxt.webBluetooth {
         }
 
         pauseLog() {
-            if (this.uartService) {
-                this.uartService.autoReconnect = false;
-                this.uartService.disconnect();
+            if (this._uartService) {
+                this._uartService.autoReconnect = false;
+                this._uartService.disconnect();
             }
-            if (this.hf2Service) {
-                this.hf2Service.autoReconnect = false;
-                this.hf2Service.disconnect();
+            if (this._hf2Service) {
+                this._hf2Service.autoReconnect = false;
+                this._hf2Service.disconnect();
             }
         }
 
@@ -1017,13 +1068,13 @@ namespace pxt.webBluetooth {
         }
 
         private resumeLog() {
-            if (this.uartService) {
-                this.uartService.autoReconnect = true;
-                this.uartService.connectAsync().catch(() => { })
+            if (this._uartService) {
+                this._uartService.autoReconnect = true;
+                this._uartService.connectAsync().catch(() => { })
             }
-            if (this.hf2Service) {
-                this.hf2Service.autoReconnect = true;
-                this.hf2Service.connectAsync().catch(() => { })
+            if (this._hf2Service) {
+                this._hf2Service.autoReconnect = true;
+                this._hf2Service.connectAsync().catch(() => { })
             }
         }
 
@@ -1131,8 +1182,16 @@ namespace pxt.webBluetooth {
         pxt.tickEvent("webble.flash");
         const hex = resp.outfiles[ts.pxtc.BINARY_HEX];
         return connectAsync()
-            .then(() => bleDevice.partialFlashingService.flashAsync(hex))
-            .then(() => pxt.tickEvent("webble.flash.success"))
+            .then(() => bleDevice._partialFlashingService.flashAsync(hex))
+            .then(() => {
+                if (bleDevice._partialFlashingService.state == PartialFlashingState.USBFlashRequired) {
+                    return bleDevice._dfuControlService.flashAsync(hex);
+                }
+                return Promise.resolve();
+            })
+            .then(() => {
+                pxt.tickEvent("webble.flash.success");
+            })
             .catch(e => {
                 pxt.tickEvent("webble.fail.fail", { "message": e.message });
                 throw e;
