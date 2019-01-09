@@ -1360,20 +1360,6 @@ namespace ts.pxtc {
             }
         }
 
-        function isCtorField(p: ParameterDeclaration) {
-            if (!p.modifiers)
-                return false
-            if (p.parent.kind != SK.Constructor)
-                return false
-            for (let m of p.modifiers) {
-                if (m.kind == SK.PrivateKeyword ||
-                    m.kind == SK.PublicKeyword ||
-                    m.kind == SK.ProtectedKeyword)
-                    return true
-            }
-            return false
-        }
-
         function getClassInfo(t: Type, decl: ClassDeclaration = null) {
             if (!decl)
                 decl = <ClassDeclaration>t.symbol.valueDeclaration
@@ -4220,6 +4206,20 @@ ${lbl}: .short 0xffff
             })
             return perfCounters
         }
+    }
+
+    export function isCtorField(p: ParameterDeclaration) {
+        if (!p.modifiers)
+            return false
+        if (p.parent.kind != SK.Constructor)
+            return false
+        for (let m of p.modifiers) {
+            if (m.kind == SK.PrivateKeyword ||
+                m.kind == SK.PublicKeyword ||
+                m.kind == SK.ProtectedKeyword)
+                return true
+        }
+        return false
     }
 
     function isNumberLikeType(type: Type) {

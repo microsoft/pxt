@@ -101,7 +101,7 @@ function decompileTestAsync(filename: string) {
                     fs.writeFileSync(outFile, decompiled)
                     fail(`${basename} did not match baseline, output written to ${outFile}`);
                 }
-            }, error => fail("Could not decompile: " +  error))
+            }, error => fail("Could not decompile: " +  error.stack))
             .then(() => resolve(), reject)
     });
 }

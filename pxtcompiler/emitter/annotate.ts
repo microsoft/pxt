@@ -4,14 +4,28 @@
 
 namespace ts.pxtc {
 
+    /**
+     * Traverses the AST and injects information about function calls into the expression
+     * nodes. The decompiler consumes this information later
+     *
+     * @param program The TypeScript Program representing the code to compile
+     * @param entryPoint The name of the source file to annotate the AST of
+     * @param compileTarget The compilation of the target
+     */
     export function annotate(
         program: Program,
-        entryPoint: string) {
+        entryPoint: string,
+        compileTarget: CompileTarget) {
+
+        const oldTarget = pxtc.target;
+        pxtc.target = compileTarget;
 
         let src = program.getSourceFiles().filter(f => Util.endsWith(f.fileName, entryPoint))[0];
         let checker = program.getTypeChecker();
 
         recurse(src);
+
+        pxtc.target = oldTarget;
 
         function recurse(parent: ts.Node) {
             ts.forEachChild(parent, child => {
@@ -58,7 +72,7 @@ namespace ts.pxtc {
                         if (decl && decl.kind == SK.GetAccessor) {
                             decl = getDeclarationOfKind(decl.symbol, SK.SetAccessor)
                             mkCallInfo(trg, [expr], false, decl);
-                        } else if (decl && (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment || target.switches.slowFields)) {
+                        } else if (decl && (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment || (target && target.switches.slowFields))) {
                             mkCallInfo(trg, [expr]);
                         }
                     }
@@ -160,32 +174,13 @@ namespace ts.pxtc {
             if (isExpression(node))
                 r = checker.getContextualType(<Expression>node)
             if (!r) {
-                try {
-                    r = checker.getTypeAtLocation(node);
-                }
-                catch (e) {
-                    return undefined;
-                }
+                r = checker.getTypeAtLocation(node);
             }
             if (!r)
                 return r
             if (isStringLiteral(node))
                 return r // skip checkType() - type is any for literal fragments
             return checkType(r)
-        }
-
-        function isCtorField(p: ParameterDeclaration) {
-            if (!p.modifiers)
-                return false
-            if (p.parent.kind != SK.Constructor)
-                return false
-            for (let m of p.modifiers) {
-                if (m.kind == SK.PrivateKeyword ||
-                    m.kind == SK.PublicKeyword ||
-                    m.kind == SK.ProtectedKeyword)
-                    return true
-            }
-            return false
         }
     }
 }
