@@ -334,7 +334,7 @@ namespace pxt.webBluetooth {
 
     export enum DFUServiceState {
         Idle = 1 << 0,
-        RequestDFU = 1 << 2,
+        DFURequested = 1 << 2,
         DFU = 1 << 4
     }
 
@@ -438,7 +438,7 @@ namespace pxt.webBluetooth {
         }
 
         protected createConnectPromise(): Promise<void> {
-            const uuids = this.state == DFUServiceState.RequestDFU
+            const uuids = this.state == DFUServiceState.DFURequested
                 ? DFUService.UUIDS.control : DFUService.UUIDS.dfu;
             this.debug(`connecting to ${uuids.name}`);
             return this.device.connectAsync()
@@ -459,8 +459,9 @@ namespace pxt.webBluetooth {
                     this.controlCharacteristic.addEventListener('characteristicvaluechanged', this.handleCharacteristic);
 
                     // so we requested the DFU and we got it
-                    if (this.state == DFUServiceState.RequestDFU) {
-                        this.debug(`checking pairing mode`)
+                    if (this.state == DFUServiceState.DFURequested) {
+                        this.debug(`dfu mode`)
+                        this.state = DFUServiceState.DFU;
                         this.autoReconnect = false;
                         return this.dfuTransferBinAsync();
                     }
@@ -501,7 +502,7 @@ namespace pxt.webBluetooth {
                 case DFUServiceState.Idle:
                     // rogue request
                     break;
-                case DFUServiceState.RequestDFU:
+                case DFUServiceState.DFURequested:
                     this.debug(`dfu control responded`);
                     break;
                 case DFUServiceState.DFU:
@@ -543,7 +544,7 @@ namespace pxt.webBluetooth {
             }
         }
 
-        private sendNordicControlAsync(operation: Array<number>, buffer?: ArrayBuffer): Promise<DataView> {
+        private sendDFUControlAsync(operation: Array<number>, buffer?: ArrayBuffer): Promise<DataView> {
             return new Promise((resolve, reject) => {
                 let size = operation.length;
                 if (buffer) size += buffer.byteLength;
@@ -582,8 +583,8 @@ namespace pxt.webBluetooth {
         }
 
         private dfuTransferAsync(buffer: ArrayBuffer, type: string, selectType: Array<number>, createType: Array<number>): Promise<void> {
-            this.debug(`transfer ${type}`);
-            return this.sendNordicControlAsync(selectType)
+            this.debug(`transfer ${type} ${buffer.byteLength >> 10}kb`);
+            return this.sendDFUControlAsync(selectType)
                 .then(response => {
                     const maxSize = response.getUint32(0, DFUService.DFU_LITTLE_ENDIAN);
                     const offset = response.getUint32(4, DFUService.DFU_LITTLE_ENDIAN);
@@ -607,13 +608,13 @@ namespace pxt.webBluetooth {
             const view = new DataView(new ArrayBuffer(4));
             view.setUint32(0, end - start, DFUService.DFU_LITTLE_ENDIAN);
 
-            return this.sendNordicControlAsync(createType, view.buffer)
+            return this.sendDFUControlAsync(createType, view.buffer)
                 .then(() => {
                     const data = buffer.slice(start, end);
                     return this.dfuTransferDataAsync(data, start);
                 })
                 .then(() => {
-                    return this.sendNordicControlAsync(DFUService.DFU_OPERATIONS.CACULATE_CHECKSUM);
+                    return this.sendDFUControlAsync(DFUService.DFU_OPERATIONS.CACULATE_CHECKSUM);
                 })
                 .then(response => {
                     const crc = response.getInt32(4, DFUService.DFU_LITTLE_ENDIAN);
@@ -623,7 +624,7 @@ namespace pxt.webBluetooth {
                     // TODO: CRC
                     this.debug(`written ${transferred} bytes`);
                     offset = transferred;
-                    return this.sendNordicControlAsync(DFUService.DFU_OPERATIONS.EXECUTE);
+                    return this.sendDFUControlAsync(DFUService.DFU_OPERATIONS.EXECUTE);
                 })
                 .then(() => {
                     if (end < buffer.byteLength) {
@@ -656,7 +657,7 @@ namespace pxt.webBluetooth {
             // request device to enter bootloader mode
             this.debug(`dfu: request bootloader mode`);
             this.autoReconnect = true;
-            this.state = DFUServiceState.RequestDFU;
+            this.state = DFUServiceState.DFURequested;
             const msg = new Uint8Array(1);
             msg[0] = 0x01;
             return this.controlCharacteristic.writeValue(msg);
