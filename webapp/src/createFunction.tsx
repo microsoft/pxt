@@ -37,7 +37,7 @@ export class CreateFunctionDialog extends data.Component<ISettingsProps, CreateF
 
     hide() {
         Blockly.WidgetDiv.DIV.classList.remove("functioneditor");
-        let { functionEditorWorkspace, mainWorkspace } = this.state;
+        const { functionEditorWorkspace, mainWorkspace } = this.state;
         functionEditorWorkspace.clear();
         functionEditorWorkspace.dispose();
         (mainWorkspace as any).refreshToolboxSelection();
@@ -78,14 +78,14 @@ export class CreateFunctionDialog extends data.Component<ISettingsProps, CreateF
         (functionEditorWorkspace as any).showContextMenu_ = () => { }; // Disable the context menu
         functionEditorWorkspace.clear();
 
-        let functionBeingEdited = functionEditorWorkspace.newBlock('function_declaration') as Blockly.FunctionDeclarationBlock;
+        const functionBeingEdited = functionEditorWorkspace.newBlock('function_declaration') as Blockly.FunctionDeclarationBlock;
         (functionBeingEdited as any).domToMutation(initialMutation);
         functionBeingEdited.initSvg();
         functionBeingEdited.render(false);
         functionEditorWorkspace.centerOnBlock(functionBeingEdited.id);
 
         functionEditorWorkspace.addChangeListener(() => {
-            let { functionBeingEdited } = this.state;
+            const { functionBeingEdited } = this.state;
             if (functionBeingEdited) {
                 functionBeingEdited.updateFunctionSignature();
             }
@@ -104,16 +104,22 @@ export class CreateFunctionDialog extends data.Component<ISettingsProps, CreateF
     }
 
     confirm() {
-        let { functionBeingEdited, mainWorkspace, functionCallback } = this.state;
-        var mutation = (functionBeingEdited as any).mutationToDom();
+        const { functionBeingEdited, mainWorkspace, functionCallback } = this.state;
+        const mutation = (functionBeingEdited as any).mutationToDom();
         if (Blockly.Functions.validateFunctionExternal(mutation, mainWorkspace)) {
             functionCallback(mutation);
             this.hide();
         }
     }
 
+    addArgumentFactory(typeName: string) {
+        // const self = this;
+        // return () => self.addArgument(typeName);
+        return () => this.addArgument(typeName);
+    }
+
     addArgument(typeName: string) {
-        let { functionBeingEdited } = this.state;
+        const { functionBeingEdited } = this.state;
         switch (typeName) {
             case "boolean":
                 functionBeingEdited.addBooleanExternal();
@@ -167,7 +173,7 @@ export class CreateFunctionDialog extends data.Component<ISettingsProps, CreateF
                                     key={t.typeName}
                                     name={lf("Add {0}", t.label || t.typeName)}
                                     ariaLabel={lf("Add {0}", t.label || t.typeName)}
-                                    onClick={() => this.addArgument(t.typeName)}
+                                    onClick={this.addArgumentFactory(t.typeName)}
                                 />
                             )}
                         </div>
