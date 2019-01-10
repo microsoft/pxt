@@ -242,10 +242,11 @@ export function encodeBlobAsync(title: string, dataURL: string, blob: Uint8Array
         })
 }
 
+/*
 export function testBlobEncodeAsync(dataURL: string, sz = 10000) {
     let blob = new Uint8Array(sz)
     pxt.Util.getRandomBuf(blob)
-    return encodeBlobAsync(dataURL, blob)
+    return encodeBlobAsync("test", dataURL, blob)
         .then(url => {
             let img = document.createElement("img")
             img.src = url
@@ -259,3 +260,4 @@ export function testBlobEncodeAsync(dataURL: string, sz = 10000) {
             }
         })
 }
+*/

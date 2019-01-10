@@ -1243,7 +1243,7 @@ export class ProjectView
 
         // make sure simulator is ready
         this.setState({ screenshoting: true });
-        simulator.driver.postMessage({ type: "screenshot", title: this.state.header.name, force } as pxsim.SimulatorScreenshotMessage);
+        simulator.driver.postMessage({ type: "screenshot", force } as pxsim.SimulatorScreenshotMessage);
         return this.requestScreenshotPromise = new Promise<string>((resolve, reject) => {
             if (this.screenshotHandler) reject(new Error("screenshot in progress")); // this should not happend
             this.screenshotHandler = (img) => resolve(img);
@@ -1265,7 +1265,7 @@ export class ProjectView
             .then(img_ => {
                 img = img_;
                 return this.exportProjectToFileAsync();
-            }).then(blob => screenshot.encodeBlobAsync(pkg.mainEditorPkg().header.name, img, blob))
+            }).then(blob => screenshot.encodeBlobAsync(this.state.header.name, img, blob))
             .then(img => {
                 const fn = pkg.genFileName(".png");
                 pxt.BrowserUtils.browserDownloadDataUri(img, fn);
