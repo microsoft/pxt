@@ -117,23 +117,24 @@ namespace pxt.webBluetooth {
                     this.aliveToken.throwIfCancelled();
                     if (!this.device.isPaired) {
                         this.debug(`give up, device unpaired`)
-                        this.reconnectPromise = undefined;
+                        this.reconnectCancelled();
                         return undefined;
                     }
                     if (!this.autoReconnect) {
                         this.debug(`autoreconnect disabled`)
-                        this.reconnectPromise = undefined;
+                        this.reconnectCancelled();
                         return undefined;
                     }
                     if (max == 0) {
                         this.debug(`give up, max tries`)
                         this.reconnectPromise = undefined;
+                        this.reconnectCancelled();
                         return undefined; // give up
                     }
                     // did we already try to reconnect with the current state of services?
                     if (this.failedConnectionServicesVersion == this.device.servicesVersion) {
                         this.debug(`services haven't changed, giving up`);
-                        this.reconnectPromise = undefined;
+                        this.reconnectCancelled();
                         return undefined;
                     }
                     this.debug(`retry connect ${delay}ms... (${max} tries left)`);
@@ -145,6 +146,10 @@ namespace pxt.webBluetooth {
                     return Promise.delay(delay)
                         .then(() => this.exponentialBackoffConnectAsync(--max, delay * 1.8));
                 })
+        }
+
+        protected reconnectCancelled() {
+            this.reconnectPromise = undefined;
         }
     }
 
@@ -277,6 +282,11 @@ namespace pxt.webBluetooth {
             return this.connectAsync()
                 .then(() => this.createFlashPromise())
                 .finally(() => this.device.resumeLogOnDisconnection());
+        }
+
+        protected reconnectCancelled() {
+            super.reconnectCancelled();
+            this.clearFlashData();
         }
 
         protected createFlashPromise(): Promise<void> {
@@ -1169,7 +1179,7 @@ namespace pxt.webBluetooth {
             optionalServices.push(DFUService.UUIDS.DFU.SERVICE);
             optionalServices.push(PartialFlashingService.SERVICE_UUID)
         }
-        this.debug(`optional services: ${optionalServices.join(', ')}`);
+        pxt.debug(`optional services: ${optionalServices.join('\n')}`);
         return navigator.bluetooth.requestDevice({
             filters: pxt.appTarget.appTheme.bluetoothUartFilters,
             optionalServices
