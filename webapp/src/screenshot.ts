@@ -102,12 +102,13 @@ function chromifyAsync(canvas: HTMLCanvasElement, title: string): HTMLCanvasElem
     const w = canvas.width;
     const h = canvas.height;
     const work = document.createElement("canvas")
-    const vborder = 16;
+    const topBorder = 16;
+    const bottomBorder = 16;
     const leftBorder = 16;
     const rightBorder = 16;
     const bottom = 32;
     work.width = w + leftBorder + rightBorder;
-    work.height = h + vborder * 2 + bottom;
+    work.height = h + topBorder + bottomBorder + bottom;
     const ctx = work.getContext("2d")
     ctx.imageSmoothingEnabled = false
     // white background
@@ -121,23 +122,34 @@ function chromifyAsync(canvas: HTMLCanvasElement, title: string): HTMLCanvasElem
     }
 
     // draw image
-    ctx.drawImage(canvas, leftBorder, vborder);
+    ctx.drawImage(canvas, leftBorder, topBorder);
 
     // header
     const header = pxt.appTarget.thumbnailName || pxt.appTarget.name;
     if (header) {
-        const lblTop = 2 * vborder + h + 4
-        ctx.fillStyle = 'grey'
-        ctx.font = '8px monospace'
-        ctx.fillText(header, leftBorder, lblTop, w);
+        const lblTop = 12
+        ctx.fillStyle = 'black'
+        ctx.font = '10px monospace'
+        ctx.fillText(header, leftBorder, lblTop, w - leftBorder);
     }
 
     // title
     if (title) {
-        const lblTop = 2 * vborder + h + 4
+        const lblTop = topBorder + bottomBorder + h + 4;
         ctx.fillStyle = 'black'
         ctx.font = '13px monospace'
-        ctx.fillText(title, leftBorder, lblTop, w);
+        ctx.fillText(title, leftBorder, lblTop, w - leftBorder);
+    }
+
+    // domain
+    {
+        const lblTop = topBorder + bottomBorder + h + 4 + 16
+        ctx.fillStyle = '#444'
+        ctx.font = '10px monospace'
+        const url = pxt.appTarget.appTheme.homeUrl
+            .replace(/^https:\/\//, '')
+            .replace(/\/$/, '');
+        ctx.fillText(url, leftBorder, lblTop, w);
     }
 
     return work;
