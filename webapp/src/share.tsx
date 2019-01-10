@@ -202,25 +202,30 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                 closeOnEscape>
                 <div className={`ui form`}>
                     {action ?
-                        <div>
-                            {screenshotUri ? <div className="ui">
-                                <img className="ui small image" src={screenshotUri} alt={lf("Screenshot")} />
-                            </div> : undefined}
-                            {shouldNameProject ?
-                                <div>
-                                    <p>{lf("Give your project a name before sharing.")}</p>
-                                    <div>
-                                        <sui.Input ref="filenameinput" autoFocus={!pxt.BrowserUtils.isMobile()} id={"projectNameInput"}
-                                            ariaLabel={lf("Type a name for your project")} autoComplete={false}
-                                            value={newProjectName || ''} onChange={this.handleProjectNameChange} />
-                                    </div>
-                                </div> : undefined}
-                            <p className="ui message info">{lf("You need to publish your project to share it or embed it in other web pages.") + " " +
-                                lf("You acknowledge having consent to publish this project.")}</p>
-                            {this.state.sharingError ?
-                                <p className="ui red inverted segment">{lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.")}</p>
+                        <div className="ui items"><div className="item">
+                            {screenshotUri
+                                ? <img className="ui small image" src={screenshotUri} alt={lf("Screenshot")} />
                                 : undefined}
-                        </div>
+                            <div className="content">
+                                {shouldNameProject ?
+                                    <div>
+                                        <p>{lf("Give your project a name before sharing.")}</p>
+                                        <div>
+                                            <sui.Input ref="filenameinput" autoFocus={!pxt.BrowserUtils.isMobile()} id={"projectNameInput"}
+                                                ariaLabel={lf("Type a name for your project")} autoComplete={false}
+                                                value={newProjectName || ''} onChange={this.handleProjectNameChange} />
+                                        </div>
+                                    </div> : undefined}
+                                <p className="ui message info">{
+                                    lf("You need to publish your project to share it or embed it in other web pages.") + " " +
+                                    lf("You acknowledge having consent to publish this project.")}
+                                    {screenshotUri ? lf("The screenshot will be published with your project.") : undefined}
+                                </p>
+                                {this.state.sharingError ?
+                                    <p className="ui red inverted segment">{lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.")}</p>
+                                    : undefined}
+                            </div>
+                        </div></div>
                         : undefined}
                     {url && ready ? <div>
                         <p>{lf("Your project is ready! Use the address below to share your projects.")}</p>
