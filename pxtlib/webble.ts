@@ -442,9 +442,9 @@ namespace pxt.webBluetooth {
         }
 
         protected createConnectPromise(): Promise<void> {
-            const uuids = this.state == DFUServiceState.DFURequested
-                ? DFUService.UUIDS.CONTROL : DFUService.UUIDS.DFU;
-            this.debug(`connecting to ${uuids.NAME}`);
+            const uuids = this.state == DFUServiceState.DFU
+                ? DFUService.UUIDS.DFU : DFUService.UUIDS.CONTROL;
+            this.debug(`connecting to ${uuids.NAME} (${uuids.SERVICE})`);
             return this.device.connectAsync()
                 .then(() => this.alivePromise(this.device.gatt.getPrimaryService(uuids.SERVICE)))
                 .then(service => {
