@@ -1236,51 +1236,65 @@ export class ProjectView
         return this.saveProjectAsPNGAsync(true, false);
     }
 
-    private saveProjectAsPNGAsync(force: boolean, showDialog: boolean): Promise<void> {
-        // in porgress
-        if (this.screenshotHandler) return Promise.resolve();
+    requestScreenshotPromise: Promise<string>;
+    private requestScreenshotAsync(force: boolean): Promise<string> {
+        if (this.requestScreenshotPromise)
+            return this.requestScreenshotPromise;
+
+        // make sure simulator is ready
 
         this.setState({ screenshoting: true });
         simulator.driver.postMessage({ type: "screenshot", title: this.state.header.name, force } as pxsim.SimulatorScreenshotMessage);
-        return new Promise<void>((resolve, reject) => {
-            this.screenshotHandler = (img) => {
-                resolve(this.exportProjectToFileAsync()
-                    .then(blob => screenshot.encodeBlobAsync(img, blob))
-                    .then(img => {
-                        const fn = pkg.genFileName(".png");
-                        pxt.BrowserUtils.browserDownloadDataUri(img, fn);
-
-                        if (showDialog)
-                            return core.dialogAsync({
-                                header: lf("Project Saved!"),
-                                disagreeLbl: lf("Got it!"),
-                                disagreeClass: "green",
-                                hasCloseIcon: false,
-                                jsx: <div className="ui items">
-                                    <div className="item">
-                                        <div className="ui small image">
-                                            <a download={fn} className="ui link" href={img}>
-                                                <img src={img} alt={lf("Project cartridge")} title={lf("Click to download again")} />
-                                            </a>
-                                        </div>
-                                        <div className="content">
-                                            <div className="description">
-                                                <p>
-                                                    {lf("Your project is saved in this image.")}
-                                                    {lf("Import or drag it into the editor to reload it.")}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            });
-                        else return Promise.resolve();
-                    }))
-            }
-        }).finally(() => {
-            this.screenshotHandler = null
-            this.setState({ screenshoting: false });
+        return this.requestScreenshotPromise = new Promise<string>((resolve, reject) => {
+            if (this.screenshotHandler) reject(new Error("screenshot in progress")); // this should not happend
+            this.screenshotHandler = (img) => resolve(img);
         })
+            .timeout(3000) // simulator might be stopped or in bad shape
+            .catch(e => {
+                return undefined;
+            })
+            .finally(() => {
+                this.screenshotHandler = undefined;
+                this.requestScreenshotPromise = undefined;
+                this.setState({ screenshoting: false });
+            });
+    }
+
+    private saveProjectAsPNGAsync(force: boolean, showDialog: boolean): Promise<void> {
+        let img: string;
+        return this.requestScreenshotAsync(force)
+            .then(img_ => {
+                img = img_;
+                return this.exportProjectToFileAsync();
+            }).then(blob => screenshot.encodeBlobAsync(img, blob))
+            .then(img => {
+                const fn = pkg.genFileName(".png");
+                pxt.BrowserUtils.browserDownloadDataUri(img, fn);
+                if (!showDialog) return Promise.resolve();
+                return core.dialogAsync({
+                    header: lf("Project Saved!"),
+                    disagreeLbl: lf("Got it!"),
+                    disagreeClass: "green",
+                    hasCloseIcon: false,
+                    jsx: <div className="ui items">
+                        <div className="item">
+                            <div className="ui small image">
+                                <a download={fn} className="ui link" href={img}>
+                                    <img src={img} alt={lf("Project cartridge")} title={lf("Click to download again")} />
+                                </a>
+                            </div>
+                            <div className="content">
+                                <div className="description">
+                                    <p>
+                                        {lf("Your project is saved in this image.")}
+                                        {lf("Import or drag it into the editor to reload it.")}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                });
+            });
     }
 
     saveProjectToFileAsync(): Promise<void> {
@@ -2139,8 +2153,11 @@ export class ProjectView
         this.setState({ publishing: true })
         const mpkg = pkg.mainPkg
         const epkg = pkg.getEditorPkg(mpkg)
+        let screenshot: string;
         return this.saveProjectNameAsync()
             .then(() => this.saveFileAsync())
+            .then(() => pxt.appTarget.compile.saveAsPNG ? this.requestScreenshotAsync(false) : undefined)
+            .then(img => screenshot = img)
             .then(() => mpkg.filesToBePublishedAsync(true))
             .then(files => {
                 if (epkg.header.pubCurrent)
@@ -2153,7 +2170,7 @@ export class ProjectView
                     meta.blocksHeight = blocksSize.height;
                     meta.blocksWidth = blocksSize.width;
                 }
-                return workspace.anonymousPublishAsync(epkg.header, files, meta)
+                return workspace.anonymousPublishAsync(epkg.header, files, meta, screenshot)
                     .then(inf => inf.id)
             }).finally(() => {
                 this.setState({ publishing: false })

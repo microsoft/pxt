@@ -202,9 +202,18 @@ export interface ScriptMeta {
 }
 
 // https://github.com/Microsoft/pxt-backend/blob/master/docs/sharing.md#anonymous-publishing
-export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptMeta) {
+export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptMeta, screenshotUri?: string) {
     const saveId = {}
     h.saveId = saveId
+    let thumbnailBuffer: string;
+    let thumbnailMimeType: string;
+    if (screenshotUri) {
+        const m = /^data:(image\/(png|gif));base64,([a-zA-Z0-9]+)$/.exec(screenshotUri);
+        if (m) {
+            thumbnailBuffer = m[3];
+            thumbnailMimeType = m[1];
+        }
+    }
     const stext = JSON.stringify(text, null, 2) + "\n"
     const scrReq = {
         name: h.name,
@@ -217,7 +226,9 @@ export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptM
             versions: pxt.appTarget.versions,
             blocksHeight: meta.blocksHeight,
             blocksWidth: meta.blocksWidth
-        }
+        },
+        thumbnailBuffer,
+        thumbnailMimeType
     }
     pxt.debug(`publishing script; ${stext.length} bytes`)
     return Cloud.privatePostAsync("scripts", scrReq, /* forceLiveEndpoint */ true)
