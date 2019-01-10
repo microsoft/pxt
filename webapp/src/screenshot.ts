@@ -98,8 +98,66 @@ export function decodeBlobAsync(dataURL: string) {
         })
 }
 
-export function encodeBlobAsync(dataURL: string, blob: Uint8Array) {
+function chromifyAsync(canvas: HTMLCanvasElement, title: string): HTMLCanvasElement {
+    const w = canvas.width;
+    const h = canvas.height;
+    const work = document.createElement("canvas")
+    const topBorder = 16;
+    const bottomBorder = 16;
+    const leftBorder = 16;
+    const rightBorder = 16;
+    const bottom = 32;
+    work.width = w + leftBorder + rightBorder;
+    work.height = h + topBorder + bottomBorder + bottom;
+    const ctx = work.getContext("2d")
+    ctx.imageSmoothingEnabled = false
+    // white background
+    ctx.fillStyle = 'white'
+    ctx.fillRect(0, 0, work.width, work.height)
+
+    // border
+    {
+        ctx.strokeStyle = '2px grey';
+        ctx.rect(0, 0, work.width, work.height);
+    }
+
+    // draw image
+    ctx.drawImage(canvas, leftBorder, topBorder);
+
+    // header
+    const header = pxt.appTarget.thumbnailName || pxt.appTarget.name;
+    if (header) {
+        const lblTop = 12
+        ctx.fillStyle = 'black'
+        ctx.font = '10px monospace'
+        ctx.fillText(header, leftBorder, lblTop, w - leftBorder);
+    }
+
+    // title
+    if (title) {
+        const lblTop = topBorder + bottomBorder + h + 4;
+        ctx.fillStyle = 'black'
+        ctx.font = '13px monospace'
+        ctx.fillText(title, leftBorder, lblTop, w - leftBorder);
+    }
+
+    // domain
+    {
+        const lblTop = topBorder + bottomBorder + h + 4 + 16
+        ctx.fillStyle = '#444'
+        ctx.font = '10px monospace'
+        const url = pxt.appTarget.appTheme.homeUrl
+            .replace(/^https:\/\//, '')
+            .replace(/\/$/, '');
+        ctx.fillText(url, leftBorder, lblTop, w);
+    }
+
+    return work;
+}
+
+export function encodeBlobAsync(title: string, dataURL: string, blob: Uint8Array) {
     return pxt.BrowserUtils.loadCanvasAsync(dataURL)
+        .then(cvs => chromifyAsync(cvs, title))
         .then(canvas => {
             const neededBytes = imageHeaderSize + blob.length
             const usableBytes = (canvas.width * canvas.height - 1) * 3
@@ -196,10 +254,11 @@ export function encodeBlobAsync(dataURL: string, blob: Uint8Array) {
         })
 }
 
+/*
 export function testBlobEncodeAsync(dataURL: string, sz = 10000) {
     let blob = new Uint8Array(sz)
     pxt.Util.getRandomBuf(blob)
-    return encodeBlobAsync(dataURL, blob)
+    return encodeBlobAsync("test", dataURL, blob)
         .then(url => {
             let img = document.createElement("img")
             img.src = url
@@ -213,3 +272,4 @@ export function testBlobEncodeAsync(dataURL: string, sz = 10000) {
             }
         })
 }
+*/
