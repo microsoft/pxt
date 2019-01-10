@@ -347,12 +347,14 @@ namespace pxt.webBluetooth {
                 NAME: "dfu control",
                 SERVICE: 'e95d93b0-251d-470a-a062-fa1922dfa9a8',
                 CONTROL: 'e95d93b1-251d-470a-a062-fa1922dfa9a8',
-                PACKET: 'e95d93b2-251d-470a-a062-fa1922dfa9a8' // it's "flash really"
+                CONTROL_NOTIFY: false,
+                PACKET: undefined as string //'e95d93b2-251d-470a-a062-fa1922dfa9a8' // it's "flash really"                
             },
             DFU: {
                 NAME: "dfu",
                 SERVICE: '00001530-1212-efde-1523-785feabcd123',
                 CONTROL: '00001531-1212-efde-1523-785feabcd123',
+                CONTROL_NOTIFY: true,
                 PACKET: '00001532-1212-efde-1523-785feabcd123',
                 /*version: '00001534-1212-efde-1523-785feabcd123'*/
             }
@@ -442,6 +444,9 @@ namespace pxt.webBluetooth {
         }
 
         protected createConnectPromise(): Promise<void> {
+            if (this.state == DFUServiceState.DFURequested)
+                this.state = DFUServiceState.DFU;
+
             const uuids = this.state == DFUServiceState.DFU
                 ? DFUService.UUIDS.DFU : DFUService.UUIDS.CONTROL;
             this.debug(`connecting to ${uuids.NAME} (${uuids.SERVICE})`);
@@ -453,19 +458,21 @@ namespace pxt.webBluetooth {
                     return this.alivePromise(this.service.getCharacteristic(uuids.CONTROL));
                 }).then(controlCharacteristic => {
                     this.controlCharacteristic = controlCharacteristic;
-                    this.debug(`connecting to packet characteristic`)
-                    return this.alivePromise(this.service.getCharacteristic(uuids.PACKET));
-                }).then(packetCharacteristic => {
-                    this.packetCharacteristic = packetCharacteristic;
-                    this.debug(`starting notifications`)
-                    return this.controlCharacteristic.startNotifications()
+                    if (uuids.PACKET) this.debug(`connecting to packet characteristic`)
+                    return uuids.PACKET
+                        ? this.alivePromise(this.service.getCharacteristic(uuids.PACKET))
+                            .then(packetCharacteristic => this.packetCharacteristic = packetCharacteristic)
+                        : Promise.resolve(undefined);
                 }).then(() => {
-                    this.controlCharacteristic.addEventListener('characteristicvaluechanged', this.handleCharacteristic);
-
+                    if (uuids.CONTROL_NOTIFY) this.debug(`starting notifications`)
+                    return uuids.CONTROL_NOTIFY
+                        ? this.controlCharacteristic.startNotifications()
+                            .then(() => this.controlCharacteristic.addEventListener('characteristicvaluechanged', this.handleCharacteristic))
+                        : Promise.resolve();
+                }).then(() => {
                     // so we requested the DFU and we got it
-                    if (this.state == DFUServiceState.DFURequested) {
-                        this.debug(`dfu mode`)
-                        this.state = DFUServiceState.DFU;
+                    if (this.state == DFUServiceState.DFU) {
+                        this.debug(`dfu mode connected`)
                         this.autoReconnect = false;
                         return this.dfuTransferBinAsync();
                     }
@@ -494,6 +501,8 @@ namespace pxt.webBluetooth {
                     pxt.log(`ble: dfu disconnect error packet ${e.message}`);
                 }
             }
+            this.packetCharacteristic = undefined;
+            this.service = undefined;
         }
 
         private handleCharacteristic(ev: Event) {
@@ -503,11 +512,9 @@ namespace pxt.webBluetooth {
                 return;
             }
             switch (this.state) {
+                case DFUServiceState.DFURequested:
                 case DFUServiceState.Idle:
                     // rogue request
-                    break;
-                case DFUServiceState.DFURequested:
-                    this.debug(`dfu control responded`);
                     break;
                 case DFUServiceState.DFU:
                     //case DFUServiceState.DFU:
@@ -661,10 +668,15 @@ namespace pxt.webBluetooth {
             // request device to enter bootloader mode
             this.debug(`dfu: request bootloader mode`);
             this.autoReconnect = true;
+            this.device.pauseLog();
             this.state = DFUServiceState.DFURequested;
-            const msg = new Uint8Array(4);
+            const msg = new Uint8Array(1);
             msg[0] = 0x01;
-            return this.controlCharacteristic.writeValue(msg);
+            return this.controlCharacteristic.writeValue(msg)
+                .then(() => {
+                    // the micro:bit switches into bootloader without emitting disconnected events
+                    // wait for reconnection
+                })
         }
     }
 
@@ -774,16 +786,16 @@ namespace pxt.webBluetooth {
 
         protected createFlashPromise(): Promise<void> {
             return new Promise<void>((resolve, reject) => {
-                    this._flashResolve = resolve;
-                    this._flashReject = reject;
-                    this.debug(`check service version`)
-                    this.state = PartialFlashingState.StatusRequested;
-                    return this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.STATUS]));
-                }).then(() => { })
+                this._flashResolve = resolve;
+                this._flashReject = reject;
+                this.debug(`check service version`)
+                this.state = PartialFlashingState.StatusRequested;
+                return this.pfCharacteristic.writeValue(new Uint8Array([PartialFlashingService.STATUS]));
+            }).then(() => { })
                 .catch(e => {
-                        pxt.log(`pf: error ${e.message}`)
-                        this.clearFlashData();
-                    });
+                    pxt.log(`pf: error ${e.message}`)
+                    this.clearFlashData();
+                });
         }
 
         private checkStateTransition(cmd: number, acceptedStates: PartialFlashingState) {
@@ -1157,6 +1169,7 @@ namespace pxt.webBluetooth {
             optionalServices.push(DFUService.UUIDS.DFU.SERVICE);
             optionalServices.push(PartialFlashingService.SERVICE_UUID)
         }
+        this.debug(`optional services: ${optionalServices.join(', ')}`);
         return navigator.bluetooth.requestDevice({
             filters: pxt.appTarget.appTheme.bluetoothUartFilters,
             optionalServices
