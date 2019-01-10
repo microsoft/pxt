@@ -95,6 +95,7 @@ namespace pxt.webBluetooth {
                 this.reconnectPromise =
                     Promise.delay(this.autoReconnectDelay)
                         .then(() => this.exponentialBackoffConnectAsync(8, 500))
+                        .catch(e => pxt.debug(`reconnect failed`))
                         .finally(() => this.reconnectPromise = undefined);
         }
 
