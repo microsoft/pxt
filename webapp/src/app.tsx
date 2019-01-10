@@ -2156,7 +2156,7 @@ export class ProjectView
         let screenshot: string;
         return this.saveProjectNameAsync()
             .then(() => this.saveFileAsync())
-            .then(() => pxt.appTarget.compile.saveAsPNG ? this.requestScreenshotAsync(false) : undefined)
+            .then(() => pxt.appTarget.cloud && pxt.appTarget.cloud.thumbnails ? this.requestScreenshotAsync(false) : undefined)
             .then(img => screenshot = img)
             .then(() => mpkg.filesToBePublishedAsync(true))
             .then(files => {

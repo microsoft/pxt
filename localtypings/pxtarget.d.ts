@@ -117,6 +117,7 @@ declare namespace pxt {
         workspaces?: boolean;
         packages?: boolean;
         sharing?: boolean; // uses cloud-based anonymous sharing
+        thumbnails?: boolean; // attach screenshots/thumbnail to published scripts
         importing?: boolean; // import url dialog
         embedding?: boolean;
         githubPackages?: boolean; // allow searching github for packages
