@@ -1283,7 +1283,7 @@ namespace pxt.blocks {
 
             if (pxt.blocks.layout.screenshotEnabled()) {
                 const screenshotOption = {
-                    text: lf("Download Screenshot"),
+                    text: lf("Snapshot"),
                     enabled: topBlocks.length > 0 || topComments.length > 0,
                     callback: () => {
                         pxt.tickEvent("blocks.context.screenshot", undefined, { interactiveConsent: true });
