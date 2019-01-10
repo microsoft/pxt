@@ -1237,7 +1237,7 @@ export class ProjectView
     }
 
     requestScreenshotPromise: Promise<string>;
-    private requestScreenshotAsync(force: boolean): Promise<string> {
+    requestScreenshotAsync(force?: boolean): Promise<string> {
         if (this.requestScreenshotPromise)
             return this.requestScreenshotPromise;
 
@@ -2147,16 +2147,13 @@ export class ProjectView
             });
     }
 
-    anonymousPublishAsync(): Promise<string> {
+    anonymousPublishAsync(screenshotUri?: string): Promise<string> {
         pxt.tickEvent("publish");
         this.setState({ publishing: true })
         const mpkg = pkg.mainPkg
         const epkg = pkg.getEditorPkg(mpkg)
-        let screenshot: string;
         return this.saveProjectNameAsync()
             .then(() => this.saveFileAsync())
-            .then(() => pxt.appTarget.cloud && pxt.appTarget.cloud.thumbnails ? this.requestScreenshotAsync(false) : undefined)
-            .then(img => screenshot = img)
             .then(() => mpkg.filesToBePublishedAsync(true))
             .then(files => {
                 if (epkg.header.pubCurrent)
@@ -2169,7 +2166,7 @@ export class ProjectView
                     meta.blocksHeight = blocksSize.height;
                     meta.blocksWidth = blocksSize.width;
                 }
-                return workspace.anonymousPublishAsync(epkg.header, files, meta, screenshot)
+                return workspace.anonymousPublishAsync(epkg.header, files, meta, screenshotUri)
                     .then(inf => inf.id)
             }).finally(() => {
                 this.setState({ publishing: false })

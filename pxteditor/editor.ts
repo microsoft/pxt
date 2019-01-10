@@ -185,7 +185,7 @@ namespace pxt.editor {
         completeTutorial(): void;
         showTutorialHint(): void;
 
-        anonymousPublishAsync(): Promise<string>;
+        anonymousPublishAsync(screenshotUri?: string): Promise<string>;
 
         startStopSimulator(clickTrigger?: boolean): void;
         stopSimulator(unload?: boolean): void;
@@ -204,6 +204,7 @@ namespace pxt.editor {
         openInstructions(): void;
         closeFlyout(): void;
         printCode(): void;
+        requestScreenshotAsync(force?: boolean): Promise<string>;
         downloadScreenshotAsync(): Promise<void>;
 
         toggleDebugging(): void;
