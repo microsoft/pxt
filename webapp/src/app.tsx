@@ -1233,10 +1233,10 @@ export class ProjectView
     }
 
     downloadScreenshotAsync(): Promise<void> {
-        return this.saveProjectAsPNGAsync(true);
+        return this.saveProjectAsPNGAsync(true, false);
     }
 
-    private saveProjectAsPNGAsync(force?: boolean): Promise<void> {
+    private saveProjectAsPNGAsync(force: boolean, showDialog: boolean): Promise<void> {
         // in porgress
         if (this.screenshotHandler) return Promise.resolve();
 
@@ -1249,6 +1249,32 @@ export class ProjectView
                     .then(img => {
                         const fn = pkg.genFileName(".png");
                         pxt.BrowserUtils.browserDownloadDataUri(img, fn);
+
+                        if (showDialog)
+                            return core.dialogAsync({
+                                header: lf("Project Saved!"),
+                                disagreeLbl: lf("Got it!"),
+                                disagreeClass: "green",
+                                hasCloseIcon: false,
+                                jsx: <div className="ui items">
+                                    <div className="item">
+                                        <div className="ui small image">
+                                            <a download={fn} className="ui link" href={img}>
+                                                <img src={img} alt={lf("Project cartridge")} title={lf("Click to download again")} />
+                                            </a>
+                                        </div>
+                                        <div className="content">
+                                            <div className="description">
+                                                <p>
+                                                    {lf("Your project is saved in this image.")}
+                                                    {lf("Import or drag it into the editor to reload it.")}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            });
+                        else return Promise.resolve();
                     }))
             }
         }).finally(() => {
@@ -1268,7 +1294,7 @@ export class ProjectView
             return pkg.mainPkg.saveToJsonAsync(this.getPreferredEditor())
                 .then(project => pxt.commands.saveProjectAsync(project));
         }
-        if (pxt.appTarget.compile.saveAsPNG) return this.saveProjectAsPNGAsync();
+        if (pxt.appTarget.compile.saveAsPNG) return this.saveProjectAsPNGAsync(false, true);
         else return this.exportProjectToFileAsync()
             .then((buf: Uint8Array) => {
                 const fn = pkg.genFileName(".mkcd");
