@@ -373,6 +373,18 @@ namespace pxt.BrowserUtils {
         });
     }
 
+    export function loadCanvasAsync(url: string): Promise<HTMLCanvasElement> {
+        return loadImageAsync(url)
+            .then(img => {
+                const canvas = document.createElement("canvas")
+                canvas.width = img.width
+                canvas.height = img.height
+                const ctx = canvas.getContext("2d")
+                ctx.drawImage(img, 0, 0);
+                return canvas;
+            })
+    }
+
     function resolveCdnUrl(path: string): string {
         // don't expand full urls
         if (/^https?:\/\//i.test(path))
@@ -420,10 +432,10 @@ namespace pxt.BrowserUtils {
         return new Promise<void>((resolve, reject) => {
             const script = document.createElement('script');
             script.type = 'text/javascript';
-            script.src = url;
-            script.async = true;
             script.addEventListener('load', () => resolve());
             script.addEventListener('error', (e) => reject(e));
+            script.src = url;
+            script.async = true;
             document.body.appendChild(script);
         });
     }

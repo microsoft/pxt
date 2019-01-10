@@ -137,6 +137,8 @@ namespace pxsim {
     export interface SimulatorScreenshotMessage extends SimulatorMessage {
         type: "screenshot";
         title?: string;
+        // force take a new screenshot
+        force?: boolean;
         data: string;
     }
 
@@ -238,14 +240,14 @@ namespace pxsim {
                 case "mute": mute((<SimulatorMuteMessage>data).mute); break;
                 case "print": print(); break;
                 case "custom":
-                    if (handleCustomMessage) handleCustomMessage((<SimulatorCustomMessage>data));
+                    if (handleCustomMessage)
+                        handleCustomMessage((<SimulatorCustomMessage>data));
                     break;
                 case 'pxteditor':
                     break; //handled elsewhere
                 case 'debugger':
-                    if (runtime) {
+                    if (runtime)
                         runtime.handleDebuggerMsg(data as DebuggerMessage);
-                    }
                     break;
                 default: queue(data); break;
             }

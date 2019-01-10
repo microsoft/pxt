@@ -1232,11 +1232,18 @@ export class ProjectView
             });
     }
 
-    private saveProjectAsPNG(): Promise<void> {
-        simulator.driver.postMessage({ type: "screenshot", title: this.state.header.name } as pxsim.SimulatorScreenshotMessage);
+    downloadScreenshotAsync(): Promise<void> {
+        return this.saveProjectAsPNGAsync(true);
+    }
+
+    private saveProjectAsPNGAsync(force?: boolean): Promise<void> {
+        // in porgress
+        if (this.screenshotHandler) return Promise.resolve();
+
+        this.setState({ screenshoting: true });
+        simulator.driver.postMessage({ type: "screenshot", title: this.state.header.name, force } as pxsim.SimulatorScreenshotMessage);
         return new Promise<void>((resolve, reject) => {
             this.screenshotHandler = (img) => {
-                this.screenshotHandler = null
                 resolve(this.exportProjectToFileAsync()
                     .then(blob => screenshot.encodeBlobAsync(img, blob))
                     .then(img => {
@@ -1244,6 +1251,9 @@ export class ProjectView
                         pxt.BrowserUtils.browserDownloadDataUri(img, fn);
                     }))
             }
+        }).finally(() => {
+            this.screenshotHandler = null
+            this.setState({ screenshoting: false });
         })
     }
 
@@ -1258,7 +1268,7 @@ export class ProjectView
             return pkg.mainPkg.saveToJsonAsync(this.getPreferredEditor())
                 .then(project => pxt.commands.saveProjectAsync(project));
         }
-        if (pxt.appTarget.compile.saveAsPNG) return this.saveProjectAsPNG();
+        if (pxt.appTarget.compile.saveAsPNG) return this.saveProjectAsPNGAsync();
         else return this.exportProjectToFileAsync()
             .then((buf: Uint8Array) => {
                 const fn = pkg.genFileName(".mkcd");

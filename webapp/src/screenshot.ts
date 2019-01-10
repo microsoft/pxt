@@ -43,30 +43,12 @@ export function saveAsync(header: Header, screenshot: string): Promise<void> {
         });
 }
 
-export function loadImageAsync(url: string) {
-    return new Promise<HTMLCanvasElement>((resolve, reject) => {
-        const img = new Image();
-        img.src = url
-        img.onload = () => {
-            const canvas = document.createElement("canvas")
-            canvas.width = img.width
-            canvas.height = img.height
-            const ctx = canvas.getContext("2d")
-            ctx.drawImage(img, 0, 0);
-            resolve(canvas)
-        };
-        img.onerror = () => {
-            reject(new Error(lf("Cannot load image")))
-        }
-    })
-}
-
 const imageMagic = 0x59347a7d // randomly selected
 const imageHeaderSize = 36 // has to be divisible by 9
 
 export function decodeBlobAsync(dataURL: string) {
-    return loadImageAsync(dataURL)
-        .then<Uint8Array>(canvas => {
+    return pxt.BrowserUtils.loadCanvasAsync(dataURL)
+        .then(canvas => {
             const ctx = canvas.getContext("2d")
             const imgdat = ctx.getImageData(0, 0, canvas.width, canvas.height)
             const d = imgdat.data
@@ -117,7 +99,7 @@ export function decodeBlobAsync(dataURL: string) {
 }
 
 export function encodeBlobAsync(dataURL: string, blob: Uint8Array) {
-    return loadImageAsync(dataURL)
+    return pxt.BrowserUtils.loadCanvasAsync(dataURL)
         .then(canvas => {
             const neededBytes = imageHeaderSize + blob.length
             const usableBytes = (canvas.width * canvas.height - 1) * 3

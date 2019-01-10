@@ -69,6 +69,8 @@ namespace pxt.editor {
 
         home?: boolean;
         hasError?: boolean;
+
+        screenshoting?: boolean;
     }
 
     export interface EditorState {
@@ -202,6 +204,7 @@ namespace pxt.editor {
         openInstructions(): void;
         closeFlyout(): void;
         printCode(): void;
+        downloadScreenshotAsync(): Promise<void>;
 
         toggleDebugging(): void;
         dbgPauseResume(): void;
