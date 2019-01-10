@@ -98,8 +98,29 @@ export function decodeBlobAsync(dataURL: string) {
         })
 }
 
-export function encodeBlobAsync(dataURL: string, blob: Uint8Array) {
+function chromifyAsync(canvas: HTMLCanvasElement, title: string): HTMLCanvasElement {
+    const w = canvas.width;
+    const h = canvas.height;
+    const work = document.createElement("canvas")
+    const border = 16;
+    const bottom = 32;
+    work.width = w + border * 2;
+    work.height = h + border * 2 + bottom;
+    const ctx = work.getContext("2d")
+    ctx.imageSmoothingEnabled = false
+    ctx.fillStyle = 'white'
+    ctx.fillRect(0, 0, work.width, work.height)
+    ctx.drawImage(canvas, border, border);
+    const lblTop = 2 * border + h + 4
+    ctx.fillStyle = 'black'
+    ctx.font = '13px sans-serif'
+    ctx.fillText(title, border, lblTop, w);
+    return work;
+}
+
+export function encodeBlobAsync(title: string, dataURL: string, blob: Uint8Array) {
     return pxt.BrowserUtils.loadCanvasAsync(dataURL)
+        .then(cvs => chromifyAsync(cvs, title))
         .then(canvas => {
             const neededBytes = imageHeaderSize + blob.length
             const usableBytes = (canvas.width * canvas.height - 1) * 3
