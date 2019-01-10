@@ -344,14 +344,15 @@ namespace pxt.webBluetooth {
             control: {
                 name: "dfu control",
                 service: 'e95d93b0-251d-470a-a062-fa1922dfa9a8',
-                control: '8ec90001-f315-4f60-9fb8-838830daea50',
-                packet: '8ec90002-f315-4f60-9fb8-838830daea50'
+                control: 'e95d93b1-251d-470a-a062-fa1922dfa9a8',
+                packet: 'e95d93b2-251d-470a-a062-fa1922dfa9a8' // it's "flash really"
             },
             dfu: {
                 name: "dfu",
-                service: 'e95d93b0-251d-470a-a062-fa1922dfa9a8',
-                control: '8ec90001-f315-4f60-9fb8-838830daea50',
-                packet: '8ec90002-f315-4f60-9fb8-838830daea50'
+                service: '00001530-1212-efde-1523-785feabcd123',
+                control: '00001531-1212-efde-1523-785feabcd123',
+                packet: '00001532-1212-efde-1523-785feabcd123',
+                /*version: '00001534-1212-efde-1523-785feabcd123'*/
             }
         };
         static DFU_LITTLE_ENDIAN = true;
@@ -658,7 +659,7 @@ namespace pxt.webBluetooth {
             this.debug(`dfu: request bootloader mode`);
             this.autoReconnect = true;
             this.state = DFUServiceState.DFURequested;
-            const msg = new Uint8Array(1);
+            const msg = new Uint8Array(4);
             msg[0] = 0x01;
             return this.controlCharacteristic.writeValue(msg);
         }
@@ -1018,7 +1019,7 @@ namespace pxt.webBluetooth {
         _uartService: UARTService; // may be undefined
         _hf2Service: HF2Service; // may be undefined
         _partialFlashingService: PartialFlashingService; // may be undefined
-        _dfuControlService: DFUControlService; // may be undefined
+        _dfuService: DFUService; // may be undefined
 
         private services: BLEService[] = [];
         private pendingResumeLogOnDisconnection = false;
@@ -1042,7 +1043,7 @@ namespace pxt.webBluetooth {
                 this.services.push(this._hf2Service = new HF2Service(this));
             }
             if (hasPartialFlash()) {
-                this.services.push(this._dfuControlService = new DFUControlService(this));
+                this.services.push(this._dfuService = new DFUService(this));
                 this.services.push(this._partialFlashingService = new PartialFlashingService(this));
             }
             this.aliveToken.startOperation();
@@ -1185,9 +1186,8 @@ namespace pxt.webBluetooth {
         return connectAsync()
             .then(() => bleDevice._partialFlashingService.flashAsync(hex))
             .then(() => {
-                if (bleDevice._partialFlashingService.state == PartialFlashingState.USBFlashRequired) {
-                    return bleDevice._dfuControlService.flashAsync(hex);
-                }
+                if (bleDevice._partialFlashingService.state == PartialFlashingState.USBFlashRequired)
+                    return bleDevice._dfuService.flashAsync(hex);
                 return Promise.resolve();
             })
             .then(() => {
