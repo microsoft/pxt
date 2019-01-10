@@ -32,8 +32,9 @@ declare namespace pxt {
         id: string; // has to match ^[a-z]+$; used in URLs and domain names
         platformid?: string; // eg "codal"; used when search for gh packages ("for PXT/codal"); defaults to id
         nickname?: string; // friendly id used when generating files, folders, etc... id is used instead if missing
-        name: string;
-        description?: string;
+        name: string; // long name
+        description?: string; // description
+        thumbnailName?: string; // name imprited on thumbnails when using saveAsPNG
         corepkg: string;
         title?: string;
         cloud?: AppCloud;
