@@ -716,7 +716,7 @@ namespace pxt.blocks {
         });
 
         const compiledArgs = args.map(a => compileArgument(e, b, a, comments));
-        return H.stdCall(name, compiledArgs, externalInputs);
+        return mkStmt(H.stdCall(name, compiledArgs, externalInputs));
     }
 
     function compileArgumentReporter(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
