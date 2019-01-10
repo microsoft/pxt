@@ -308,6 +308,7 @@ declare namespace pxt {
         transparentEditorToolbar?: boolean; // make the editor toolbar float with a transparent background
         hideProjectRename?: boolean; // Temporary flag until we figure out a better way to show the name
         addNewTypeScriptFile?: boolean; // when enabled, the [+] explorer button asks for file name, instead of using "custom.ts"
+        simScreenshot?: boolean; // allows to download a screenshot of the simulator
     }
 
     interface SocialOptions {

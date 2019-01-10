@@ -62,6 +62,16 @@ export class TutorialMenuItem extends data.Component<ISettingsProps, {}> {
         const currentStep = tutorialStep;
         if (!tutorialReady) return <div />;
 
+        function intermediateClassName(index: number) {
+            if (tutorialStepInfo.length < 8 // always show first 8
+                || index == 0 // always show first
+                || index == tutorialStepInfo.length - 1 // always show last
+                || Math.abs(index - currentStep) < 2 // 1 around current step
+            ) return "";
+
+            return "mobile hide";
+        }
+
         return <div className="ui item">
             <div className="ui item tutorial-menuitem" role="menubar">
                 {tutorialStepInfo.map((step, index) =>
@@ -72,7 +82,7 @@ export class TutorialMenuItem extends data.Component<ISettingsProps, {}> {
                                 ariaLabel={lf("Tutorial step {0}. This is the current step", index + 1)}
                                 onClick={this.openTutorialStep}>{index + 1}</TutorialMenuItemLink>
                         </span> :
-                        <span className="step-label" key={'tutorialStep' + index} data-tooltip={`${index + 1}`} data-inverted="" data-position="bottom center">
+                        <span className={`ui step-label ${intermediateClassName(index)}`} key={'tutorialStep' + index} data-tooltip={`${index + 1}`} data-inverted="" data-position="bottom center">
                             <TutorialMenuItemLink index={index}
                                 className={`ui empty circular label ${!tutorialReady ? 'disabled' : ''} clear`}
                                 ariaLabel={lf("Tutorial step {0}", index + 1)}

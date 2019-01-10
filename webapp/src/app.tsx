@@ -1232,18 +1232,54 @@ export class ProjectView
             });
     }
 
-    private saveProjectAsPNG(): Promise<void> {
-        simulator.driver.postMessage({ type: "screenshot", title: this.state.header.name } as pxsim.SimulatorScreenshotMessage);
+    downloadScreenshotAsync(): Promise<void> {
+        return this.saveProjectAsPNGAsync(true, false);
+    }
+
+    private saveProjectAsPNGAsync(force: boolean, showDialog: boolean): Promise<void> {
+        // in porgress
+        if (this.screenshotHandler) return Promise.resolve();
+
+        this.setState({ screenshoting: true });
+        simulator.driver.postMessage({ type: "screenshot", title: this.state.header.name, force } as pxsim.SimulatorScreenshotMessage);
         return new Promise<void>((resolve, reject) => {
             this.screenshotHandler = (img) => {
-                this.screenshotHandler = null
                 resolve(this.exportProjectToFileAsync()
                     .then(blob => screenshot.encodeBlobAsync(img, blob))
                     .then(img => {
                         const fn = pkg.genFileName(".png");
                         pxt.BrowserUtils.browserDownloadDataUri(img, fn);
+
+                        if (showDialog)
+                            return core.dialogAsync({
+                                header: lf("Project Saved!"),
+                                disagreeLbl: lf("Got it!"),
+                                disagreeClass: "green",
+                                hasCloseIcon: false,
+                                jsx: <div className="ui items">
+                                    <div className="item">
+                                        <div className="ui small image">
+                                            <a download={fn} className="ui link" href={img}>
+                                                <img src={img} alt={lf("Project cartridge")} title={lf("Click to download again")} />
+                                            </a>
+                                        </div>
+                                        <div className="content">
+                                            <div className="description">
+                                                <p>
+                                                    {lf("Your project is saved in this image.")}
+                                                    {lf("Import or drag it into the editor to reload it.")}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            });
+                        else return Promise.resolve();
                     }))
             }
+        }).finally(() => {
+            this.screenshotHandler = null
+            this.setState({ screenshoting: false });
         })
     }
 
@@ -1258,7 +1294,7 @@ export class ProjectView
             return pkg.mainPkg.saveToJsonAsync(this.getPreferredEditor())
                 .then(project => pxt.commands.saveProjectAsync(project));
         }
-        if (pxt.appTarget.compile.saveAsPNG) return this.saveProjectAsPNG();
+        if (pxt.appTarget.compile.saveAsPNG) return this.saveProjectAsPNGAsync(false, true);
         else return this.exportProjectToFileAsync()
             .then((buf: Uint8Array) => {
                 const fn = pkg.genFileName(".mkcd");
