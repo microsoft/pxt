@@ -660,24 +660,21 @@ export function showImportGithubDialogAsync() {
 
 export function showImportFileDialogAsync() {
     let input: HTMLInputElement;
-    let ext = ".mkcd";
+    let exts = [pxt.appTarget.compile.saveAsPNG ? ".png" : ".mkcd"];
     if (pxt.appTarget.compile.hasHex) {
-        ext = ".hex";
+        exts.push(".hex");
     }
     if (pxt.appTarget.compile.useUF2) {
-        ext = ".uf2";
-    }
-    if (pxt.appTarget.compile.saveAsPNG) {
-        ext = ".png";
+        exts.push(".uf2");
     }
     return core.confirmAsync({
-        header: lf("Open {0} file", ext),
+        header: lf("Open {0} file", exts.join(lf(" or "))),
         onLoaded: (el) => {
             input = el.querySelectorAll('input')[0] as HTMLInputElement;
         },
         jsx: <div className="ui form">
             <div className="ui field">
-                <label id="selectFileToOpenLabel">{lf("Select a {0} file to open.", ext)}</label>
+                <label id="selectFileToOpenLabel">{lf("Select a {0} file to open.", exts.join(lf(" or ")))}</label>
                 <input type="file" tabIndex={0} autoFocus aria-describedby="selectFileToOpenLabel" className="ui blue fluid"></input>
             </div>
         </div>,
