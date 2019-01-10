@@ -208,7 +208,7 @@ export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptM
     let thumbnailBuffer: string;
     let thumbnailMimeType: string;
     if (screenshotUri) {
-        const m = /^data:(image\/(png|gif));base64,([a-zA-Z0-9]+)$/.exec(screenshotUri);
+        const m = /^data:(image\/(png|gif));base64,([a-zA-Z0-9+/]+=*)$/.exec(screenshotUri);
         if (m) {
             thumbnailBuffer = m[3];
             thumbnailMimeType = m[1];
