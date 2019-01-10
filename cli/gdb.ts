@@ -345,6 +345,11 @@ export async function dumpheapAsync() {
     let numByCategory: pxt.Map<number> = {}
     let maxFree = 0
 
+    const string_inline_ascii_vt = findAddr("pxt::string_inline_ascii_vt")
+    const string_inline_utf8_vt = findAddr("pxt::string_inline_utf8_vt")
+    const string_cons_vt = findAddr("pxt::string_cons_vt")
+    const string_skiplist16_vt = findAddr("pxt::string_skiplist16_vt")
+
     /*
     struct VTable {
         uint16_t numbytes;
@@ -387,7 +392,7 @@ export async function dumpheapAsync() {
                 vtable &= ~ANY_MARKED_MASK
                 let vt0 = read32(vtable)
                 if ((vt0 >>> 24) != pxt.VTABLE_MAGIC) {
-                    console.log(`Invalid vtable: ${hex(vt0)}`)
+                    console.log(`Invalid vtable: at ${hex(objPtr)} *${hex(vtable)} = ${hex(vt0)}`)
                     break
                 }
                 numbytes = vt0 & 0xffff
@@ -399,8 +404,25 @@ export async function dumpheapAsync() {
                 let len = 0
                 switch (classNo) {
                     case pxt.BuiltInType.BoxedString:
-                        category = "string"
-                        numbytes += (word0 & 0xffff) + 1
+                        if (vtable == string_inline_ascii_vt) {
+                            category = "ascii_string"
+                            numbytes = 4 + 2 + (word0 & 0xffff) + 1
+                        } else if (vtable == string_inline_utf8_vt) {
+                            category = "utf8_string"
+                            numbytes = 4 + 2 + (word0 & 0xffff) + 1
+                        } else if (vtable == string_skiplist16_vt) {
+                            category = "skip_string"
+                            numbytes = 4 + 2 + 2 + 4
+                            fields[".data"] = hex(read32(objPtr + 8) - 4)
+                        } else if (vtable == string_cons_vt) {
+                            category = "cons_string"
+                            numbytes = 4 + 4 + 4
+                            fields["left"] = hex(read32(objPtr + 4))
+                            fields["right"] = hex(read32(objPtr + 8))
+                        } else {
+                            console.log(`Invalid string vtable: ${hex(vtable)}`)
+                            break
+                        }
                         break
                     case pxt.BuiltInType.BoxedBuffer:
                         category = "buffer"
