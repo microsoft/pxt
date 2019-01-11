@@ -1545,6 +1545,7 @@ namespace ts.pxtc.service {
 
     export interface ProjectSearchInfo {
         name: string;
+        id?: string;
     }
 
     export interface BlocksOptions {
