@@ -53,7 +53,7 @@ namespace pxsim.util {
             Object.defineProperty(Array.prototype, 'find', {
                 writable: true,
                 enumerable: true,
-                value: function(predicate: (value: any, index: number, obj: any[] ) => boolean) {
+                value: function (predicate: (value: any, index: number, obj: any[]) => boolean) {
                     // 1. Let O be ? ToObject(this value).
                     if (this == null) {
                         throw new TypeError('"this" is null or not defined');
@@ -83,7 +83,7 @@ namespace pxsim.util {
                         // d. If testResult is true, return kValue.
                         const kValue = o[k];
                         if (predicate.call(thisArg, kValue, k, o)) {
-                        return kValue;
+                            return kValue;
                         }
                         // e. Increase k by 1.
                         k++;
@@ -161,7 +161,7 @@ namespace pxsim.util {
                 writable: true,
                 enumerable: true
             });
-        }        
+        }
         // https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.reverse
         if (!Uint8Array.prototype.reverse) {
             Object.defineProperty(Uint8Array.prototype, 'reverse', {
