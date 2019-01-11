@@ -63,6 +63,10 @@ namespace pxsim {
         public state = SimulatorState.Unloaded;
         public hwdbg: HwDebugger;
 
+        // we might "loan" a simulator when the user is recording
+        // screenshots for sharing
+        private loanedSimulator: HTMLElement;
+
         constructor(public container: HTMLElement, public options: SimulatorDriverOptions = {}) {
         }
 
@@ -121,18 +125,26 @@ namespace pxsim {
             }
         }
 
+        private simFrames(): HTMLIFrameElement[] {
+            let frames = pxsim.util.toArray(this.container.getElementsByTagName("iframe"));
+            const loanedFrame = this.loanedIFrame();
+            if (loanedFrame)
+                frames.unshift(loanedFrame);
+            return frames;
+        }
+
         public postMessage(msg: pxsim.SimulatorMessage, source?: Window) {
             if (this.hwdbg) {
                 this.hwdbg.postMessage(msg)
                 return
             }
             // dispatch to all iframe besides self
-            let frames = this.container.getElementsByTagName("iframe");
+            let frames = this.simFrames();
             const broadcastmsg = msg as pxsim.SimulatorBroadcastMessage;
             if (source && broadcastmsg && !!broadcastmsg.broadcast) {
                 if (frames.length < 2) {
                     this.container.appendChild(this.createFrame());
-                    frames = this.container.getElementsByTagName("iframe");
+                    frames = this.simFrames();
                 } else if (frames[1].dataset['runid'] != this.runId) {
                     this.startFrame(frames[1]);
                 }
@@ -204,6 +216,22 @@ namespace pxsim {
 
         public mute(mute: boolean) {
             this.postMessage({ type: 'mute', mute: mute } as pxsim.SimulatorMuteMessage);
+        }
+
+        // returns a simulator iframe that can be hosted anywhere in the page
+        // while a loaned simulator is active, all other iframes are suspended
+        public loan(): HTMLElement {
+            if (this.loanedSimulator) return this.loanedSimulator;
+
+            this.loanedSimulator = this.createFrame();
+            this.stop(false);
+            return this.loanedSimulator;
+        }
+
+        private loanedIFrame(): HTMLIFrameElement {
+            return this.loanedSimulator
+                && this.loanedSimulator.parentNode
+                && this.loanedSimulator.querySelector("iframe");
         }
 
         private frameCleanupTimeout = 0;
@@ -294,11 +322,15 @@ namespace pxsim {
             // first frame
             let frame = this.container.getElementsByTagName("iframe").item(0) as HTMLIFrameElement;
             // lazy allocate iframe
-            if (!frame) {
+            const loanedFrame = this.loanedIFrame();
+            if (loanedFrame) {
+                this.startFrame(loanedFrame);
+            } else if (!frame) {
                 let wrapper = this.createFrame(opts.light);
                 this.container.appendChild(wrapper);
                 frame = wrapper.firstElementChild as HTMLIFrameElement;
-            } else this.startFrame(frame);
+            } else // reuse simulator
+                this.startFrame(frame);
 
             this.setState(SimulatorState.Running);
             this.setTraceInterval(this.traceInterval);
@@ -317,13 +349,6 @@ namespace pxsim {
             frame.dataset['runid'] = this.runId;
             frame.contentWindow.postMessage(msg, "*");
             U.removeClass(frame, this.getStoppedClass());
-        }
-
-        private removeEventListeners() {
-            if (this.listener) {
-                window.removeEventListener('message', this.listener, false);
-                this.listener = undefined;
-            }
         }
 
         private handleMessage(msg: pxsim.SimulatorMessage, source?: Window) {
@@ -357,6 +382,13 @@ namespace pxsim {
                     this.handleMessage(ev.data, ev.source)
                 }
                 window.addEventListener('message', this.listener, false);
+            }
+        }
+
+        private removeEventListeners() {
+            if (this.listener) {
+                window.removeEventListener('message', this.listener, false);
+                this.listener = undefined;
             }
         }
 
