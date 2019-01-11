@@ -902,7 +902,7 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
         const { visible } = this.state;
         if (!visible) return <div />;
 
-        const variants = visible ? pxt.getHwVariants() : [];
+        const variants = pxt.getHwVariants();
         for (const v of variants) {
             if (!v.card)
                 v.card = {

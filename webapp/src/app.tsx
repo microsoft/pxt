@@ -1617,7 +1617,7 @@ export class ProjectView
     checkForHwVariant() {
         if (pxt.hwVariant)
             return false // already set
-        let variants = pxt.getHwVariants()
+        const variants = pxt.getHwVariants()
         if (variants.length == 0)
             return false
         let pairAsync = () => cmds.showWebUSBPairingInstructionsAsync(null)
