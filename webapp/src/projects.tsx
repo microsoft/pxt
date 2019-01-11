@@ -911,14 +911,17 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
             const savedV = v
             v.card.onClick = () => this.setHwVariant(savedV)
         }
-        const cards = this.fetchGallery();
+        let cards = this.fetchGallery();
         for (const card of cards) {
             const savedV = variants.find(variant => variant.name == card.variant);
             if (savedV)
                 card.onClick = () => this.setHwVariant(savedV);
-            else
+            else {
                 pxt.reportError("hw", "invalid variant");
+            }
         }
+        cards = cards.filter(card => !!card.onClick);
+
         /* tslint:disable:react-a11y-anchors */
         return (
             <sui.Modal isOpen={visible} className="hardwaredialog" size="small"
