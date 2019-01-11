@@ -16,7 +16,7 @@ function parseInt(text: string, radix?: number): number {
     if (!text) return 0;
 
     let start = 0;
-    while (start < text.length && helpers.isWhitespace(text.charAt(start)))
+    while (start < text.length && helpers.isWhitespace(text.charCodeAt(start)))
         ++start
 
     if (start === text.length || radix < 2 || radix > 36) return 0;
@@ -339,29 +339,29 @@ namespace helpers {
         let start = 0;
         let end = s.length - 1;
 
-        while (start <= end && isWhitespace(s.charAt(start)))
+        while (start <= end && isWhitespace(s.charCodeAt(start)))
             ++start;
 
-        while (end > start && isWhitespace(s.charAt(end)))
+        while (end > start && isWhitespace(s.charCodeAt(end)))
             --end;
 
         return s.substr(start, end - start + 1);
 
     }
 
-    export function isWhitespace(c: string): boolean {
+    export function isWhitespace(c: number): boolean {
         // https://www.ecma-international.org/ecma-262/6.0/#sec-white-space
         switch (c) {
-            case "\u0009":  // character tab
-            case "\u000B":  // line tab
-            case "\u000C":  // form feed
-            case "\u0020":  // space
-            case "\u00A0":  // no-break space
-            case "\uFEFF":  // zero width no break space
-            case "\u000A":  // line feed
-            case "\u000D":  // carriage return
-            case "\u2028":  // line separator
-            case "\u2029":  // paragraph separator
+            case 0x0009:  // character tab
+            case 0x000B:  // line tab
+            case 0x000C:  // form feed
+            case 0x0020:  // space
+            case 0x00A0:  // no-break space
+            case 0xFEFF:  // zero width no break space
+            case 0x000A:  // line feed
+            case 0x000D:  // carriage return
+            case 0x2028:  // line separator
+            case 0x2029:  // paragraph separator
                 return true;
             default:
                 return false;
