@@ -411,6 +411,17 @@ namespace __internal {
     }
 
     /**
+     * A shim to render a boolean as a win/lose toggle
+     */
+    //% shim=TD_ID blockHidden=1
+    //% blockId=toggleWinLose block="%win"
+    //% win.fieldEditor=togglewinlose
+    //% win.fieldOptions.decompileLiterals=true
+    export function __winLose(win: boolean): boolean {
+        return win;
+    }
+
+    /**
      * Get the color wheel field editor
      * @param color color, eg: #ff0000
      */
