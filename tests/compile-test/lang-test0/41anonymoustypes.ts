@@ -28,6 +28,7 @@ namespace AnonymousTypes {
         assert(bar.bar() == 43)
         assert(foo(baz) == 43)
         // HUH bar(40) - new (expects any)
+        msg("AnonymousTypes DONE")
     }
 }
 

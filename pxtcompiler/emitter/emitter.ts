@@ -1699,6 +1699,8 @@ ${lbl}: .short 0xffff
                 U.userError("enumval only support number literals")
                 // TODO needs dealing with int conversions
                 return ir.rtcall(ev, [])
+            } else if (isClassFunction(decl) || isInterfaceMethod(decl)) {
+                throw userError(9211, lf("cannot use method as lambda; did you forget '()' ?"))
             } else if (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment) {
                 return emitCallCore(node, node, [], null, decl as any, node.expression)
             } else if (decl.kind == SK.PropertyDeclaration || decl.kind == SK.Parameter) {
@@ -1712,8 +1714,6 @@ ${lbl}: .short 0xffff
                     let idx = fieldIndex(node)
                     return ir.op(EK.FieldAccess, [emitExpr(node.expression)], idx)
                 }
-            } else if (isClassFunction(decl) || decl.kind == SK.MethodSignature) {
-                throw userError(9211, lf("cannot use method as lambda; did you forget '()' ?"))
             } else if (decl.kind == SK.FunctionDeclaration) {
                 return emitFunLiteral(decl as FunctionDeclaration)
             } else if (decl.kind == SK.VariableDeclaration) {
@@ -1975,6 +1975,18 @@ ${lbl}: .short 0xffff
             return emitCallCore(node, node.expression, node.arguments, sig)
         }
 
+        function isInterfaceMethod(decl: Declaration) {
+            if (!decl)
+                return false
+            if (decl.kind == SK.MethodSignature)
+                return true
+            if (decl.parent && decl.parent.kind == SK.InterfaceDeclaration) {
+                if (decl.kind == SK.PropertySignature && (decl as PropertySignature).type.kind == SK.FunctionType)
+                    return true
+            }
+            return false
+        }
+
         function emitCallCore(
             node: Expression,
             funcExpr: Expression,
@@ -1996,7 +2008,8 @@ ${lbl}: .short 0xffff
                     case SK.PropertyDeclaration:
                         if (!isStatic(decl)) {
                             isMethod = true
-                            isProperty = true
+                            if (!isInterfaceMethod(decl))
+                                isProperty = true
                         }
                         break;
                     case SK.Parameter:
@@ -2168,7 +2181,7 @@ ${lbl}: .short 0xffff
                         // the property lookup to get the lambda
                         args.shift()
                     }
-                } else if (decl.kind == SK.MethodSignature || (target.switches.slowMethods && !isStatic(decl) && !isSuper)) {
+                } else if (isInterfaceMethod(decl) || (target.switches.slowMethods && !isStatic(decl) && !isSuper)) {
                     let name = getName(decl)
                     return mkMethodCall(null, null, getIfaceMemberId(name, true), args.map((x) => emitExpr(x)))
                 } else {

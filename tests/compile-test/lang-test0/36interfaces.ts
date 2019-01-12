@@ -4,6 +4,7 @@ namespace Ifaces {
         bar(x: number): string;
         twoArg(x: number, y: number): number;
         baz: string;
+        qux: () => number;
     }
 
     class A {
@@ -20,6 +21,7 @@ namespace Ifaces {
            return x
         }
         baz: string;
+        qux() { return 7 }
     }
     class B extends A {
         foo() {
@@ -36,6 +38,7 @@ namespace Ifaces {
         let a = new A()
         assert(foo(a) + "X" == "12QA42X")
         assert((a as IFoo).twoArg(1, 2) == 1, "t")
+        assert((a as IFoo).qux() == 7, "7")
         a = new B()
         assert(foo(a) + "X" == "13QA42X", "b")
         let q = a as IFoo
