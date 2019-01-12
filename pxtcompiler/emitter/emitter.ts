@@ -549,7 +549,9 @@ namespace ts.pxtc {
         if (!r)
             return r
         if (isStringLiteral(node))
-            return r // skip checkType() - type is any for literal fragments
+            return r; // skip checkType() - type is any for literal fragments
+        // save for future use; this cuts around 10% of emit() time
+        (node as any).typeOverride = r
         return checkType(r)
     }
 
