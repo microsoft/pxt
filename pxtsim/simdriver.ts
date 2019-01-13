@@ -224,6 +224,13 @@ namespace pxsim {
             return this.loanedSimulator;
         }
 
+        public unloan() {
+            if (this.loanedSimulator) {
+                this.container.insertBefore(undefined, this.loanedSimulator);
+                delete this.container;
+            }
+        }
+
         private loanedIFrame(): HTMLIFrameElement {
             return this.loanedSimulator
                 && this.loanedSimulator.parentNode

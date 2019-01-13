@@ -1,6 +1,7 @@
 import * as React from "react";
 import * as data from "./data";
 import * as sui from "./sui";
+import * as simulator from "./simulator";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -29,6 +30,7 @@ export interface ShareEditorState {
 }
 
 export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorState> {
+    private loanedSimulator: HTMLElement;
     constructor(props: ShareEditorProps) {
         super(props);
         this.state = {
@@ -43,13 +45,20 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         this.toggleAdvancedMenu = this.toggleAdvancedMenu.bind(this);
         this.setAdvancedMode = this.setAdvancedMode.bind(this);
         this.handleProjectNameChange = this.handleProjectNameChange.bind(this);
+        this.loanedSimulator = undefined;
     }
 
     hide() {
+        if (this.loanedSimulator) {
+            simulator.driver.unloan();
+            this.loanedSimulator = undefined;
+        }
         this.setState({ visible: false, screenshotUri: undefined });
     }
 
     show(header: pxt.workspace.Header) {
+        if (pxt.appTarget.cloud && pxt.appTarget.cloud.thumbnails)
+            this.loanedSimulator = simulator.driver.loan();
         this.setState({
             visible: true,
             mode: ShareMode.Code,
@@ -60,9 +69,10 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
     }
 
     refreshScreenshot() {
-        if (pxt.appTarget.cloud && pxt.appTarget.cloud.thumbnails)
+        if (pxt.appTarget.cloud && pxt.appTarget.cloud.thumbnails) {
             this.props.parent.requestScreenshotAsync(false)
                 .done(img => this.setState({ screenshotUri: img }));
+        }
     }
 
     componentWillReceiveProps(newProps: ShareEditorProps) {
@@ -202,11 +212,16 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                 closeOnEscape>
                 <div className={`ui form`}>
                     {action ?
-                        <div className="ui items"><div className="item">
-                            {screenshotUri
-                                ? <img className="ui small image" src={screenshotUri} alt={lf("Screenshot")} />
+                        <div className="ui grid">
+                            {this.loanedSimulator
+                                ? <div id="shareLoanedSimulator" className="column"></div>
                                 : undefined}
-                            <div className="content">
+                            {screenshotUri
+                                ? <div className="column">
+                                    <img className="ui small image" src={screenshotUri} alt={lf("Screenshot")} />
+                                </div>
+                                : undefined}
+                            <div className="column">
                                 {shouldNameProject ?
                                     <div>
                                         <p>{lf("Give your project a name before sharing.")}</p>
@@ -254,6 +269,10 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                 </div>
             </sui.Modal>
         )
+    }
+
+    domUpdate() {
+
     }
 }
 
