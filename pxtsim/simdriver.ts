@@ -125,10 +125,10 @@ namespace pxsim {
             }
         }
 
-        private simFrames(): HTMLIFrameElement[] {
+        private simFrames(skipLoaned = false): HTMLIFrameElement[] {
             let frames = pxsim.util.toArray(this.container.getElementsByTagName("iframe"));
             const loanedFrame = this.loanedIFrame();
-            if (loanedFrame)
+            if (loanedFrame && !skipLoaned)
                 frames.unshift(loanedFrame);
             return frames;
         }
@@ -187,11 +187,9 @@ namespace pxsim {
             this.setState(SimulatorState.Stopped);
             if (unload) this.unload();
             else {
-                let frames = this.container.getElementsByTagName("iframe");
-                for (let i = 0; i < frames.length; ++i) {
-                    let frame = frames[i] as HTMLIFrameElement
+                this.simFrames().forEach(frame => {
                     U.addClass(frame, this.getStoppedClass());
-                }
+                });
                 this.scheduleFrameCleanup();
             }
         }
@@ -200,11 +198,9 @@ namespace pxsim {
             this.postMessage({ type: 'stop' });
             this.setState(SimulatorState.Suspended);
 
-            let frames = this.container.getElementsByTagName("iframe");
-            for (let i = 0; i < frames.length; ++i) {
-                let frame = frames[i] as HTMLIFrameElement
+            this.simFrames().forEach(frame => {
                 U.addClass(frame, this.getStoppedClass());
-            }
+            });
             this.scheduleFrameCleanup();
         }
 
@@ -250,33 +246,32 @@ namespace pxsim {
         }
 
         private applyAspectRatio() {
-            let frames = this.container.getElementsByTagName("iframe");
-            for (let i = 0; i < frames.length; ++i) {
-                frames[i].parentElement.style.paddingBottom =
+            const frames = this.simFrames();
+            frames.forEach(frame => {
+                frame.parentElement.style.paddingBottom =
                     (100 / this.runOptions.aspectRatio) + "%";
-            }
+            });
         }
 
         private cleanupFrames() {
             // drop unused extras frames after 5 seconds
-            let frames = this.container.getElementsByTagName("iframe");
-            for (let i = 1; i < frames.length; ++i) {
-                let frame = frames[i];
+            const frames = this.simFrames(true);
+            frames.forEach(frame => {
                 if (this.state == SimulatorState.Stopped
                     || frame.dataset['runid'] != this.runId) {
                     if (this.options.removeElement) this.options.removeElement(frame.parentElement);
                     else frame.parentElement.remove();
                 }
-            }
+            });
         }
 
         public hide(completeHandler?: () => void) {
             if (!this.options.removeElement) return;
-            let frames = this.container.getElementsByTagName("iframe");
-            for (let i = 0; i < frames.length; ++i) {
-                let frame = frames[i];
+
+            const frames = this.simFrames();
+            frames.forEach(frame => {
                 this.options.removeElement(frame.parentElement, completeHandler);
-            }
+            });
             // Execute the complete handler if there are no frames in sim view
             if (frames.length == 0 && completeHandler) {
                 completeHandler();
@@ -285,11 +280,11 @@ namespace pxsim {
 
         public unhide() {
             if (!this.options.unhideElement) return;
-            let frames = this.container.getElementsByTagName("iframe");
-            for (let i = 0; i < frames.length; ++i) {
-                let frame = frames[i];
+
+            const frames = this.simFrames();
+            frames.forEach(frame => {
                 this.options.unhideElement(frame.parentElement);
-            }
+            });
         }
 
         public run(js: string, opts: SimulatorRunOptions = {}) {
@@ -320,12 +315,8 @@ namespace pxsim {
             this.scheduleFrameCleanup();
 
             // first frame
-            let frame = this.container.getElementsByTagName("iframe").item(0) as HTMLIFrameElement;
-            // lazy allocate iframe
-            const loanedFrame = this.loanedIFrame();
-            if (loanedFrame) {
-                this.startFrame(loanedFrame);
-            } else if (!frame) {
+            let frame = this.simFrames()[0];
+            if (!frame) {
                 let wrapper = this.createFrame(opts.light);
                 this.container.appendChild(wrapper);
                 frame = wrapper.firstElementChild as HTMLIFrameElement;
