@@ -801,7 +801,8 @@ data.mountVirtualApi("headers", {
         return compiler.projectSearchAsync({ term: p, headers })
             .then((searchResults: pxtc.service.ProjectSearchInfo[]) => searchResults)
             .then(searchResults => {
-                return searchResults;
+                let searchResultsMap = U.toDictionary(searchResults || [], h => h.id)
+                return headers.filter(h => searchResultsMap[h.id]);
             });
     },
     expirationTime: p => 5 * 1000,

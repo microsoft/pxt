@@ -3,6 +3,7 @@ import * as data from "./data";
 import * as sui from "./sui";
 import * as core from "./core";
 import * as workspace from "./workspace";
+import * as compiler from "./compiler";
 
 import { SearchInput } from "./components/searchInput";
 import { ProjectsCodeCard } from "./projects";
@@ -60,6 +61,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
 
     show() {
         this.setState({ visible: true });
+        compiler.projectSearchClear();
     }
 
     fetchLocalData(): pxt.workspace.Header[] {
@@ -176,7 +178,8 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                 })
                 .then((clonedHeader) => workspace.saveAsync(clonedHeader, files))
                 .then(() => {
-                    data.clearCache();
+                    data.invalidate("headers:");
+                    data.invalidate(`headers:${this.state.searchFor}`);
                     this.setState({ selected: {}, markedNew: { '0': 1 }, sortedBy: 'time', sortedAsc: false });
                     setTimeout(() => {
                         this.setState({ markedNew: {} });
