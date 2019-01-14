@@ -12,6 +12,7 @@ namespace pxsim {
         onTopLevelCodeEnd?: () => void;
         simUrl?: string;
         stoppedClass?: string;
+        invalidatedClass?: string;
         embedIcons?: boolean;
     }
 
@@ -63,12 +64,34 @@ namespace pxsim {
         public runOptions: SimulatorRunOptions = {};
         public state = SimulatorState.Unloaded;
         public hwdbg: HwDebugger;
+        private _dirty: boolean = false;
 
         // we might "loan" a simulator when the user is recording
         // screenshots for sharing
         private loanedSimulator: HTMLDivElement;
 
         constructor(public container: HTMLElement, public options: SimulatorDriverOptions = {}) {
+        }
+
+        get dirty() {
+            return this._dirty;
+        }
+
+        set dirty(value: boolean) {
+            if (value != this._dirty) {
+                this._dirty = value;
+                if (this._dirty) {
+                    pxsim.U.addClass(this.container, this.invalidatedClass);
+                    // We suspend the simulator here to stop it from running without
+                    // interfering with the user's stopped state. We're not doing this check
+                    // in the driver because the driver should be able to switch from any state
+                    // to the suspend state, but in this codepath we only want to switch to the
+                    // suspended state if we're running
+                    if (this.state == pxsim.SimulatorState.Running) this.suspend();
+                } else {
+                    pxsim.U.removeClass(this.container, this.invalidatedClass);
+                }
+            }
         }
 
         public setHwDebugger(hw: HwDebugger) {
@@ -96,10 +119,40 @@ namespace pxsim {
             this.themes = themes;
         }
 
+        private setFrameState(frame: HTMLIFrameElement) {
+            switch (this.state) {
+                case SimulatorState.Stopped:
+                case SimulatorState.Suspended:
+                    U.addClass(frame, this.stoppedClass);
+                    if (this.options.embedIcons) {
+                        const i = frame.nextElementSibling as HTMLElement;
+                        i.style.display = '';
+                    }
+                    this.scheduleFrameCleanup();
+                    break;
+                case SimulatorState.Paused:
+                    break; // handled
+                default:
+                    U.removeClass(frame, this.stoppedClass);
+                    if (this.options.embedIcons) {
+                        const i = frame.nextElementSibling as HTMLElement;
+                        i.style.display = 'none';
+                    }
+                    break;
+            }
+        }
+
         private setState(state: SimulatorState) {
             if (this.state != state) {
                 this.state = state;
                 this.freeze(this.state == SimulatorState.Paused); // don't allow interaction when pause
+                switch (this.state) {
+                    case SimulatorState.Stopped:
+                    case SimulatorState.Suspended:
+                        this.dirty = false;
+                        break;
+                }
+                this.simFrames().forEach(frame => this.setFrameState(frame));
                 if (this.options.onStateChanged)
                     this.options.onStateChanged(this.state);
             }
@@ -200,26 +253,11 @@ namespace pxsim {
             this.postMessage({ type: 'stop' });
             this.setState(SimulatorState.Stopped);
             if (unload) this.unload();
-            else {
-                this.simFrames().forEach(frame => {
-                    U.addClass(frame, this.getStoppedClass());
-                    if (this.options.embedIcons) {
-                        const i = frame.nextElementSibling as HTMLElement;
-                        i.style.display = '';
-                    }
-                });
-                this.scheduleFrameCleanup();
-            }
         }
 
         public suspend() {
             this.postMessage({ type: 'stop' });
             this.setState(SimulatorState.Suspended);
-
-            this.simFrames().forEach(frame => {
-                U.addClass(frame, this.getStoppedClass());
-            });
-            this.scheduleFrameCleanup();
         }
 
         private unload() {
@@ -298,6 +336,7 @@ namespace pxsim {
         }
 
         public hide(completeHandler?: () => void) {
+            this.dirty = true;
             if (!this.options.removeElement) return;
 
             const frames = this.simFrames();
@@ -373,11 +412,7 @@ namespace pxsim {
             msg.id = `${msg.options.theme}-${this.nextId()}`;
             frame.dataset['runid'] = this.runId;
             frame.contentWindow.postMessage(msg, "*");
-            U.removeClass(frame, this.getStoppedClass());
-            if (this.options.embedIcons) {
-                const i = frame.nextElementSibling as HTMLElement;
-                i.style.display = 'none';
-            }
+            this.setFrameState(frame);
         }
 
         private handleMessage(msg: pxsim.SimulatorMessage, source?: Window) {
@@ -558,11 +593,12 @@ namespace pxsim {
             return this.nextFrameId++ + (Math.random() + '' + Math.random()).replace(/[^\d]/, '')
         }
 
-        private getStoppedClass() {
-            if (this.options && this.options.stoppedClass) {
-                return this.options.stoppedClass;
-            }
-            return "grayscale";
+        private get stoppedClass() {
+            return (this.options && this.options.stoppedClass) || "grayscale";
+        }
+
+        private get invalidatedClass() {
+            return (this.options && this.options.invalidatedClass) || "sepia";
         }
     }
 }
