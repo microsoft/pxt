@@ -852,12 +852,13 @@ export interface ChooseHwDialogState {
 }
 
 export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialogState> {
+    private prevGalleries: pxt.CodeCard[] = [];
+
     constructor(props: ISettingsProps) {
         super(props);
         this.state = {
             visible: false
         }
-
         this.close = this.close.bind(this);
     }
 
@@ -873,6 +874,19 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
         this.setState({ visible: true });
     }
 
+    fetchGallery(): pxt.CodeCard[] {
+        const path = "/hardware";
+        let res = this.getData(`gallery:${encodeURIComponent(path)}`) as pxt.gallery.Gallery[];
+        if (res) {
+            if (res instanceof Error) {
+                // ignore
+            } else {
+                this.prevGalleries = pxt.Util.concat(res.map(g => g.cards));
+            }
+        }
+        return this.prevGalleries || [];
+    }
+
     private setHwVariant(cfg: pxt.PackageConfig) {
         pxt.tickEvent("projects.choosehwvariant", { hwid: cfg.name }, { interactiveConsent: true });
         this.hide()
@@ -886,16 +900,27 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
 
     renderCore() {
         const { visible } = this.state;
+        if (!visible) return <div />;
 
-        let variants = visible ? pxt.getHwVariants() : []
-        for (let v of variants) {
+        const variants = pxt.getHwVariants();
+        for (const v of variants) {
             if (!v.card)
                 v.card = {
                     name: v.description
                 }
-            let savedV = v
+            const savedV = v
             v.card.onClick = () => this.setHwVariant(savedV)
         }
+        let cards = this.fetchGallery();
+        for (const card of cards) {
+            const savedV = variants.find(variant => variant.name == card.variant);
+            if (savedV)
+                card.onClick = () => this.setHwVariant(savedV);
+            else {
+                pxt.reportError("hw", "invalid variant");
+            }
+        }
+        cards = cards.filter(card => !!card.onClick);
 
         /* tslint:disable:react-a11y-anchors */
         return (
@@ -908,7 +933,7 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
                     <div className="ui cards centered" role="listbox">
                         {variants.map(cfg =>
                             <codecard.CodeCardView
-                                key={cfg.name}
+                                key={'variant' + cfg.name}
                                 name={cfg.card.name}
                                 ariaLabel={cfg.card.name}
                                 description={cfg.card.description}
@@ -916,6 +941,18 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
                                 //learnMoreUrl={cfg.card.learnMoreUrl}
                                 //buyUrl={cfg.card.buyUrl}
                                 onClick={cfg.card.onClick}
+                            />
+                        )}
+                        {cards.map(card =>
+                            <codecard.CodeCardView
+                                key={'card' + card.name}
+                                name={card.name}
+                                ariaLabel={card.name}
+                                description={card.description}
+                                imageUrl={card.imageUrl}
+                                //learnMoreUrl={card.learnMoreUrl}
+                                buyUrl={card.buyUrl}
+                                onClick={card.onClick}
                             />
                         )}
                     </div>

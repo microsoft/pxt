@@ -140,6 +140,7 @@ declare namespace pxt {
 
         target?: string;
         className?: string;
+        variant?: string;
     }
 
     interface JRes {

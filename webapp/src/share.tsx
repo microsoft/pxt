@@ -25,6 +25,7 @@ export interface ShareEditorState {
     sharingError?: boolean;
     loading?: boolean;
     projectName?: string;
+    screenshotUri?: string;
 }
 
 export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorState> {
@@ -34,7 +35,8 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             currentPubId: undefined,
             pubCurrent: false,
             visible: false,
-            advancedMenu: false
+            advancedMenu: false,
+            screenshotUri: undefined
         }
 
         this.hide = this.hide.bind(this);
@@ -44,11 +46,23 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
     }
 
     hide() {
-        this.setState({ visible: false });
+        this.setState({ visible: false, screenshotUri: undefined });
     }
 
     show(header: pxt.workspace.Header) {
-        this.setState({ visible: true, mode: ShareMode.Code, pubCurrent: header.pubCurrent, sharingError: false });
+        this.setState({
+            visible: true,
+            mode: ShareMode.Code,
+            pubCurrent: header.pubCurrent,
+            sharingError: false,
+            screenshotUri: undefined
+        }, () => this.refreshScreenshot());
+    }
+
+    refreshScreenshot() {
+        if (pxt.appTarget.cloud && pxt.appTarget.cloud.thumbnails)
+            this.props.parent.requestScreenshotAsync(false)
+                .done(img => this.setState({ screenshotUri: img }));
     }
 
     componentWillReceiveProps(newProps: ShareEditorProps) {
@@ -72,7 +86,8 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             || this.state.currentPubId != nextState.currentPubId
             || this.state.sharingError != nextState.sharingError
             || this.state.projectName != nextState.projectName
-            || this.state.loading != nextState.loading;
+            || this.state.loading != nextState.loading
+            || this.state.screenshotUri != nextState.screenshotUri;
     }
 
     private toggleAdvancedMenu() {
@@ -89,7 +104,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
     }
 
     renderCore() {
-        const { visible, projectName: newProjectName, loading } = this.state;
+        const { visible, projectName: newProjectName, loading, screenshotUri } = this.state;
         const { projectName } = this.props.parent.state;
         const targetTheme = pxt.appTarget.appTheme;
         const header = this.props.parent.state.header;
@@ -143,7 +158,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                 // save project name if we've made a change change
                 p = this.props.parent.updateHeaderNameAsync(newProjectName);
             }
-            p.then(() => this.props.parent.anonymousPublishAsync())
+            p.then(() => this.props.parent.anonymousPublishAsync(screenshotUri))
                 .catch((e) => {
                     this.setState({ sharingError: true });
                 })
@@ -187,22 +202,30 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                 closeOnEscape>
                 <div className={`ui form`}>
                     {action ?
-                        <div>
-                            {shouldNameProject ?
-                                <div>
-                                    <p>{lf("Give your project a name before sharing.")}</p>
-                                    <div>
-                                        <sui.Input ref="filenameinput" autoFocus={!pxt.BrowserUtils.isMobile()} id={"projectNameInput"}
-                                            ariaLabel={lf("Type a name for your project")} autoComplete={false}
-                                            value={newProjectName || ''} onChange={this.handleProjectNameChange} />
-                                    </div>
-                                </div> : undefined}
-                            <p className="ui message info">{lf("You need to publish your project to share it or embed it in other web pages.") + " " +
-                                lf("You acknowledge having consent to publish this project.")}</p>
-                            {this.state.sharingError ?
-                                <p className="ui red inverted segment">{lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.")}</p>
+                        <div className="ui items"><div className="item">
+                            {screenshotUri
+                                ? <img className="ui small image" src={screenshotUri} alt={lf("Screenshot")} />
                                 : undefined}
-                        </div>
+                            <div className="content">
+                                {shouldNameProject ?
+                                    <div>
+                                        <p>{lf("Give your project a name before sharing.")}</p>
+                                        <div>
+                                            <sui.Input ref="filenameinput" autoFocus={!pxt.BrowserUtils.isMobile()} id={"projectNameInput"}
+                                                ariaLabel={lf("Type a name for your project")} autoComplete={false}
+                                                value={newProjectName || ''} onChange={this.handleProjectNameChange} />
+                                        </div>
+                                    </div> : undefined}
+                                <p className="ui message info">{
+                                    lf("You need to publish your project to share it or embed it in other web pages.") + " " +
+                                    lf("You acknowledge having consent to publish this project.")}
+                                    {screenshotUri ? " " + lf("The screenshot will be published with your project.") : undefined}
+                                </p>
+                                {this.state.sharingError ?
+                                    <p className="ui red inverted segment">{lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.")}</p>
+                                    : undefined}
+                            </div>
+                        </div></div>
                         : undefined}
                     {url && ready ? <div>
                         <p>{lf("Your project is ready! Use the address below to share your projects.")}</p>

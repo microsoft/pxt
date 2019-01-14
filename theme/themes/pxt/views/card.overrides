@@ -202,3 +202,23 @@ a.ui.card:focus,
     justify-content: center;
     background: rgba(0,0,0,0.1);
 }
+
+/* Mobile only */
+
+@media only screen and (max-width: @largestMobileScreen) {
+    .ui.card, .ui.cards>.card {
+        width: 9rem;
+        height: 9rem;
+
+        .content .description {
+            display: none;
+        }
+        .content .header {
+            font-size: 80%;
+            font-weight: normal;
+        }
+        .ui.cardimage {
+            height: 5rem;
+        }
+    }
+}
