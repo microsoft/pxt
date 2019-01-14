@@ -20,6 +20,7 @@ namespace pxsim {
     export enum SimulatorState {
         Unloaded,
         Stopped,
+        Starting,
         Running,
         Paused,
         Suspended
@@ -82,6 +83,10 @@ namespace pxsim {
             if (this.state == pxsim.SimulatorState.Running) this.suspend();
         }
 
+        setStarting() {
+            this.setState(SimulatorState.Starting);
+        }
+
         public setHwDebugger(hw: HwDebugger) {
             if (hw) {
                 // TODO set some visual on the simulator frame
@@ -110,13 +115,25 @@ namespace pxsim {
         private setFrameState(frame: HTMLIFrameElement) {
             // apply state
             switch (this.state) {
+                case SimulatorState.Starting:
+                    if (this.options.embedIcons) {
+                        const icon = frame.nextElementSibling as HTMLElement;
+                        const loader = icon.nextElementSibling as HTMLElement;
+                        icon.style.display = '';
+                        icon.className = '';
+                        loader.className = 'ui active loader';
+                    }
+                    break;
                 case SimulatorState.Stopped:
                 case SimulatorState.Suspended:
                     U.addClass(frame, (this.state == SimulatorState.Stopped || this.options.embedIcons)
                         ? this.stoppedClass : this.invalidatedClass);
                     if (this.options.embedIcons) {
-                        const i = frame.nextElementSibling as HTMLElement;
-                        i.style.display = '';
+                        const icon = frame.nextElementSibling as HTMLElement;
+                        const loader = icon.nextElementSibling as HTMLElement;
+                        icon.style.display = '';
+                        icon.className = 'video play icon';
+                        loader.className = 'ui loader';
                     }
                     this.scheduleFrameCleanup();
                     break;
@@ -124,9 +141,10 @@ namespace pxsim {
                     U.removeClass(frame, this.stoppedClass);
                     U.removeClass(frame, this.invalidatedClass);
                     if (this.options.embedIcons) {
-                        const i = frame.nextElementSibling as HTMLElement;
-                        i.className = "video play icon";
-                        i.style.display = 'none';
+                        const icon = frame.nextElementSibling as HTMLElement;
+                        const loader = icon.nextElementSibling as HTMLElement;
+                        icon.style.display = 'none';
+                        loader.className = 'ui loader';
                     }
                     break;
             }
@@ -222,7 +240,8 @@ namespace pxsim {
                 i.style.display = "none";
                 i.onclick = (ev) => {
                     ev.preventDefault();
-                    if (this.state != SimulatorState.Running) {
+                    if (this.state != SimulatorState.Running
+                        && this.state != SimulatorState.Starting) {
                         // we need to request to restart the simulator
                         if (this.options.restart)
                             this.options.restart();
@@ -232,15 +251,19 @@ namespace pxsim {
                     return false;
                 }
                 wrapper.appendChild(i);
+
+                const l = document.createElement("div");
+                l.className = "ui loader";
+                wrapper.appendChild(l);
             }
 
             return wrapper;
         }
 
-        public stop(unload = false) {
+        public stop(unload = false, starting = false) {
             this.clearDebugger();
             this.postMessage({ type: 'stop' });
-            this.setState(SimulatorState.Stopped);
+            this.setState(starting ? SimulatorState.Starting : SimulatorState.Stopped);
             if (unload) this.unload();
         }
 

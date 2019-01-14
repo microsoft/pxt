@@ -277,7 +277,7 @@ export class ProjectView
             .then(() => {
                 let txt = this.editor.getCurrentSource()
                 if (txt != this.editorFile.content)
-                    simulator.makeDirty();
+                    simulator.setDirty();
                 if (this.editor.isIncomplete()) return Promise.resolve();
                 return this.editorFile.setContentAsync(txt);
             });
@@ -555,6 +555,7 @@ export class ProjectView
             restartSimulator: () => {
                 if (!restartingSim) { // prevent button smashing
                     restartingSim = true;
+                    simulator.setStarting();
                     core.hideDialog();
                     this.runSimulator()
                         .delay(1000) // 1 second debounce
@@ -889,7 +890,7 @@ export class ProjectView
                 if (!this.state || this.state.header != h) {
                     this.showPackageErrorsOnNextTypecheck();
                 }
-                simulator.makeDirty();
+                simulator.setDirty();
                 return compiler.newProjectAsync();
             }).then(() => compiler.applyUpgradesAsync())
             .then(() => {
@@ -2007,7 +2008,7 @@ export class ProjectView
             if (this.state.tracing)
                 opts.trace = true;
 
-            simulator.stop();
+            simulator.stop(false, true);
             const autoRun = this.state.autoRun || !!opts.clickTrigger && !!pxt.appTarget.simulator.autoRun;
             this.setState({ simState: pxt.editor.SimState.Starting, autoRun: autoRun });
 

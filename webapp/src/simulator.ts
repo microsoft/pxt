@@ -230,8 +230,12 @@ export function setState(editor: string, tutMode?: boolean) {
     tutorialMode = tutMode;
 }
 
-export function makeDirty() { // running outdated code
+export function setDirty() { // running outdated code
     driver.setDirty();
+}
+
+export function setStarting() {
+    driver.setStarting();
 }
 
 export function run(pkg: pxt.MainPackage, debug: boolean,
@@ -272,9 +276,9 @@ export function mute(mute: boolean) {
     driver.mute(mute);
 }
 
-export function stop(unload?: boolean) {
+export function stop(unload?: boolean, starting?: boolean) {
     if (!driver) return;
-    driver.stop(unload);
+    driver.stop(unload, starting);
 }
 
 export function suspend() {
