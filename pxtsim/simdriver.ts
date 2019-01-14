@@ -12,6 +12,7 @@ namespace pxsim {
         onTopLevelCodeEnd?: () => void;
         simUrl?: string;
         stoppedClass?: string;
+        embedIcons?: boolean;
     }
 
     export enum SimulatorState {
@@ -160,7 +161,7 @@ namespace pxsim {
 
         private createFrame(light?: boolean): HTMLDivElement {
             const wrapper = document.createElement("div") as HTMLDivElement;
-            wrapper.className = 'simframe';
+            wrapper.className = `simframe ${this.options.embedIcons ? 'ui embed' : ''}`;
 
             const frame = document.createElement('iframe') as HTMLIFrameElement;
             frame.id = 'sim-frame-' + this.nextId()
@@ -178,6 +179,19 @@ namespace pxsim {
 
             wrapper.appendChild(frame);
 
+            if (this.options.embedIcons) {
+                const i = document.createElement("i");
+                i.className = "video play icon";
+                i.style.display = "none";
+                i.onclick = (ev) => {
+                    ev.preventDefault();
+                    if (this.state != SimulatorState.Running)
+                        this.start();
+                    return false;
+                }
+                wrapper.appendChild(i);
+            }
+
             return wrapper;
         }
 
@@ -189,6 +203,10 @@ namespace pxsim {
             else {
                 this.simFrames().forEach(frame => {
                     U.addClass(frame, this.getStoppedClass());
+                    if (this.options.embedIcons) {
+                        const i = frame.nextElementSibling as HTMLElement;
+                        i.style.display = '';
+                    }
                 });
                 this.scheduleFrameCleanup();
             }
@@ -302,11 +320,8 @@ namespace pxsim {
         }
 
         public run(js: string, opts: SimulatorRunOptions = {}) {
-            this.clearDebugger();
             this.runOptions = opts;
             this.runId = this.nextId();
-            this.addEventListeners();
-
             // store information
             this.currentRuntime = {
                 type: "run",
@@ -324,14 +339,19 @@ namespace pxsim {
                 version: opts.version,
                 clickTrigger: opts.clickTrigger
             }
+            this.start();
+        }
 
+        private start() {
+            this.clearDebugger();
+            this.addEventListeners();
             this.applyAspectRatio();
             this.scheduleFrameCleanup();
 
             // first frame
             let frame = this.simFrames()[0];
             if (!frame) {
-                let wrapper = this.createFrame(opts.light);
+                let wrapper = this.createFrame(this.runOptions.light);
                 this.container.appendChild(wrapper);
                 frame = wrapper.firstElementChild as HTMLIFrameElement;
             } else // reuse simulator
@@ -354,6 +374,10 @@ namespace pxsim {
             frame.dataset['runid'] = this.runId;
             frame.contentWindow.postMessage(msg, "*");
             U.removeClass(frame, this.getStoppedClass());
+            if (this.options.embedIcons) {
+                const i = frame.nextElementSibling as HTMLElement;
+                i.style.display = 'none';
+            }
         }
 
         private handleMessage(msg: pxsim.SimulatorMessage, source?: Window) {

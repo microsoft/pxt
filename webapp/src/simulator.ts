@@ -204,7 +204,8 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         onTopLevelCodeEnd: () => {
             postSimEditorEvent("toplevelfinished");
         },
-        stoppedClass: getStoppedClass()
+        stoppedClass: getStoppedClass(),
+        embedIcons: pxt.appTarget.simulator && !pxt.appTarget.simulator.autoRun
     };
     driver = new pxsim.SimulatorDriver(document.getElementById('simulators'), options);
     config = cfg
