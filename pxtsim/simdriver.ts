@@ -1,5 +1,6 @@
 namespace pxsim {
     export interface SimulatorDriverOptions {
+        restart?: () => void; // restart simulator
         revealElement?: (el: HTMLElement) => void;
         removeElement?: (el: HTMLElement, onComplete?: () => void) => void;
         unhideElement?: (el: HTMLElement) => void;
@@ -12,11 +13,14 @@ namespace pxsim {
         onTopLevelCodeEnd?: () => void;
         simUrl?: string;
         stoppedClass?: string;
+        invalidatedClass?: string;
+        embedIcons?: boolean;
     }
 
     export enum SimulatorState {
         Unloaded,
         Stopped,
+        Starting,
         Running,
         Paused,
         Suspended
@@ -63,7 +67,24 @@ namespace pxsim {
         public state = SimulatorState.Unloaded;
         public hwdbg: HwDebugger;
 
+        // we might "loan" a simulator when the user is recording
+        // screenshots for sharing
+        private loanedSimulator: HTMLDivElement;
+
         constructor(public container: HTMLElement, public options: SimulatorDriverOptions = {}) {
+        }
+
+        setDirty() {
+            // We suspend the simulator here to stop it from running without
+            // interfering with the user's stopped state. We're not doing this check
+            // in the driver because the driver should be able to switch from any state
+            // to the suspend state, but in this codepath we only want to switch to the
+            // suspended state if we're running
+            if (this.state == pxsim.SimulatorState.Running) this.suspend();
+        }
+
+        setStarting() {
+            this.setState(SimulatorState.Starting);
         }
 
         public setHwDebugger(hw: HwDebugger) {
@@ -91,10 +112,49 @@ namespace pxsim {
             this.themes = themes;
         }
 
+        private setFrameState(frame: HTMLIFrameElement) {
+            // apply state
+            switch (this.state) {
+                case SimulatorState.Starting:
+                    if (this.options.embedIcons) {
+                        const icon = frame.nextElementSibling as HTMLElement;
+                        const loader = icon.nextElementSibling as HTMLElement;
+                        icon.style.display = '';
+                        icon.className = '';
+                        loader.style.display = '';
+                    }
+                    break;
+                case SimulatorState.Stopped:
+                case SimulatorState.Suspended:
+                    U.addClass(frame, (this.state == SimulatorState.Stopped || this.options.embedIcons)
+                        ? this.stoppedClass : this.invalidatedClass);
+                    if (this.options.embedIcons) {
+                        const icon = frame.nextElementSibling as HTMLElement;
+                        const loader = icon.nextElementSibling as HTMLElement;
+                        icon.style.display = '';
+                        icon.className = 'video play icon';
+                        loader.style.display = 'none';
+                    }
+                    this.scheduleFrameCleanup();
+                    break;
+                default:
+                    U.removeClass(frame, this.stoppedClass);
+                    U.removeClass(frame, this.invalidatedClass);
+                    if (this.options.embedIcons) {
+                        const icon = frame.nextElementSibling as HTMLElement;
+                        const loader = icon.nextElementSibling as HTMLElement;
+                        icon.style.display = 'none';
+                        loader.style.display = 'none';
+                    }
+                    break;
+            }
+        }
+
         private setState(state: SimulatorState) {
             if (this.state != state) {
                 this.state = state;
                 this.freeze(this.state == SimulatorState.Paused); // don't allow interaction when pause
+                this.simFrames().forEach(frame => this.setFrameState(frame));
                 if (this.options.onStateChanged)
                     this.options.onStateChanged(this.state);
             }
@@ -121,18 +181,26 @@ namespace pxsim {
             }
         }
 
+        private simFrames(skipLoaned = false): HTMLIFrameElement[] {
+            let frames = pxsim.util.toArray(this.container.getElementsByTagName("iframe"));
+            const loanedFrame = this.loanedIFrame();
+            if (loanedFrame && !skipLoaned)
+                frames.unshift(loanedFrame);
+            return frames;
+        }
+
         public postMessage(msg: pxsim.SimulatorMessage, source?: Window) {
             if (this.hwdbg) {
                 this.hwdbg.postMessage(msg)
                 return
             }
             // dispatch to all iframe besides self
-            let frames = this.container.getElementsByTagName("iframe");
+            let frames = this.simFrames();
             const broadcastmsg = msg as pxsim.SimulatorBroadcastMessage;
             if (source && broadcastmsg && !!broadcastmsg.broadcast) {
                 if (frames.length < 2) {
                     this.container.appendChild(this.createFrame());
-                    frames = this.container.getElementsByTagName("iframe");
+                    frames = this.simFrames();
                 } else if (frames[1].dataset['runid'] != this.runId) {
                     this.startFrame(frames[1]);
                 }
@@ -148,7 +216,7 @@ namespace pxsim {
 
         private createFrame(light?: boolean): HTMLDivElement {
             const wrapper = document.createElement("div") as HTMLDivElement;
-            wrapper.className = 'simframe';
+            wrapper.className = `simframe ${this.options.embedIcons ? 'ui embed' : ''}`;
 
             const frame = document.createElement('iframe') as HTMLIFrameElement;
             frame.id = 'sim-frame-' + this.nextId()
@@ -166,34 +234,43 @@ namespace pxsim {
 
             wrapper.appendChild(frame);
 
+            if (this.options.embedIcons) {
+                const i = document.createElement("i");
+                i.className = "video play icon";
+                i.style.display = "none";
+                i.onclick = (ev) => {
+                    ev.preventDefault();
+                    if (this.state != SimulatorState.Running
+                        && this.state != SimulatorState.Starting) {
+                        // we need to request to restart the simulator
+                        if (this.options.restart)
+                            this.options.restart();
+                        else
+                            this.start();
+                    }
+                    return false;
+                }
+                wrapper.appendChild(i);
+
+                const l = document.createElement("div");
+                l.className = "ui active loader";
+                i.style.display = "none";
+                wrapper.appendChild(l);
+            }
+
             return wrapper;
         }
 
-        public stop(unload = false) {
+        public stop(unload = false, starting = false) {
             this.clearDebugger();
             this.postMessage({ type: 'stop' });
-            this.setState(SimulatorState.Stopped);
+            this.setState(starting ? SimulatorState.Starting : SimulatorState.Stopped);
             if (unload) this.unload();
-            else {
-                let frames = this.container.getElementsByTagName("iframe");
-                for (let i = 0; i < frames.length; ++i) {
-                    let frame = frames[i] as HTMLIFrameElement
-                    U.addClass(frame, this.getStoppedClass());
-                }
-                this.scheduleFrameCleanup();
-            }
         }
 
         public suspend() {
             this.postMessage({ type: 'stop' });
             this.setState(SimulatorState.Suspended);
-
-            let frames = this.container.getElementsByTagName("iframe");
-            for (let i = 0; i < frames.length; ++i) {
-                let frame = frames[i] as HTMLIFrameElement
-                U.addClass(frame, this.getStoppedClass());
-            }
-            this.scheduleFrameCleanup();
         }
 
         private unload() {
@@ -204,6 +281,37 @@ namespace pxsim {
 
         public mute(mute: boolean) {
             this.postMessage({ type: 'mute', mute: mute } as pxsim.SimulatorMuteMessage);
+        }
+
+        public isLoanedSimulator(el: HTMLElement) {
+            return !!this.loanedSimulator && this.loanedIFrame() == el;
+        }
+
+        // returns a simulator iframe that can be hosted anywhere in the page
+        // while a loaned simulator is active, all other iframes are suspended
+        public loanSimulator(): HTMLDivElement {
+            if (this.loanedSimulator) return this.loanedSimulator;
+
+            // reuse first simulator or create new one
+            this.loanedSimulator = (this.container.firstElementChild as HTMLDivElement) || this.createFrame();
+            if (this.loanedSimulator.parentNode)
+                this.container.removeChild(this.loanedSimulator);
+            return this.loanedSimulator;
+        }
+
+        public unloanSimulator() {
+            if (this.loanedSimulator) {
+                if (this.loanedSimulator.parentNode)
+                    this.loanedSimulator.parentNode.removeChild(this.loanedSimulator);
+                this.container.insertBefore(this.loanedSimulator, this.container.firstElementChild);
+                delete this.loanedSimulator;
+            }
+        }
+
+        private loanedIFrame(): HTMLIFrameElement {
+            return this.loanedSimulator
+                && this.loanedSimulator.parentNode
+                && this.loanedSimulator.querySelector("iframe");
         }
 
         private frameCleanupTimeout = 0;
@@ -222,33 +330,34 @@ namespace pxsim {
         }
 
         private applyAspectRatio() {
-            let frames = this.container.getElementsByTagName("iframe");
-            for (let i = 0; i < frames.length; ++i) {
-                frames[i].parentElement.style.paddingBottom =
+            const frames = this.simFrames();
+            frames.forEach(frame => {
+                frame.parentElement.style.paddingBottom =
                     (100 / this.runOptions.aspectRatio) + "%";
-            }
+            });
         }
 
         private cleanupFrames() {
             // drop unused extras frames after 5 seconds
-            let frames = this.container.getElementsByTagName("iframe");
-            for (let i = 1; i < frames.length; ++i) {
-                let frame = frames[i];
+            const frames = this.simFrames(true);
+            frames.shift(); // drop first frame
+            frames.forEach(frame => {
                 if (this.state == SimulatorState.Stopped
                     || frame.dataset['runid'] != this.runId) {
                     if (this.options.removeElement) this.options.removeElement(frame.parentElement);
                     else frame.parentElement.remove();
                 }
-            }
+            });
         }
 
         public hide(completeHandler?: () => void) {
+            this.suspend();
             if (!this.options.removeElement) return;
-            let frames = this.container.getElementsByTagName("iframe");
-            for (let i = 0; i < frames.length; ++i) {
-                let frame = frames[i];
+
+            const frames = this.simFrames();
+            frames.forEach(frame => {
                 this.options.removeElement(frame.parentElement, completeHandler);
-            }
+            });
             // Execute the complete handler if there are no frames in sim view
             if (frames.length == 0 && completeHandler) {
                 completeHandler();
@@ -257,19 +366,16 @@ namespace pxsim {
 
         public unhide() {
             if (!this.options.unhideElement) return;
-            let frames = this.container.getElementsByTagName("iframe");
-            for (let i = 0; i < frames.length; ++i) {
-                let frame = frames[i];
+
+            const frames = this.simFrames();
+            frames.forEach(frame => {
                 this.options.unhideElement(frame.parentElement);
-            }
+            });
         }
 
         public run(js: string, opts: SimulatorRunOptions = {}) {
-            this.clearDebugger();
             this.runOptions = opts;
             this.runId = this.nextId();
-            this.addEventListeners();
-
             // store information
             this.currentRuntime = {
                 type: "run",
@@ -287,18 +393,23 @@ namespace pxsim {
                 version: opts.version,
                 clickTrigger: opts.clickTrigger
             }
+            this.start();
+        }
 
+        private start() {
+            this.clearDebugger();
+            this.addEventListeners();
             this.applyAspectRatio();
             this.scheduleFrameCleanup();
 
             // first frame
-            let frame = this.container.getElementsByTagName("iframe").item(0) as HTMLIFrameElement;
-            // lazy allocate iframe
+            let frame = this.simFrames()[0];
             if (!frame) {
-                let wrapper = this.createFrame(opts.light);
+                let wrapper = this.createFrame(this.runOptions.light);
                 this.container.appendChild(wrapper);
                 frame = wrapper.firstElementChild as HTMLIFrameElement;
-            } else this.startFrame(frame);
+            } else // reuse simulator
+                this.startFrame(frame);
 
             this.setState(SimulatorState.Running);
             this.setTraceInterval(this.traceInterval);
@@ -316,14 +427,7 @@ namespace pxsim {
             msg.id = `${msg.options.theme}-${this.nextId()}`;
             frame.dataset['runid'] = this.runId;
             frame.contentWindow.postMessage(msg, "*");
-            U.removeClass(frame, this.getStoppedClass());
-        }
-
-        private removeEventListeners() {
-            if (this.listener) {
-                window.removeEventListener('message', this.listener, false);
-                this.listener = undefined;
-            }
+            this.setFrameState(frame);
         }
 
         private handleMessage(msg: pxsim.SimulatorMessage, source?: Window) {
@@ -357,6 +461,13 @@ namespace pxsim {
                     this.handleMessage(ev.data, ev.source)
                 }
                 window.addEventListener('message', this.listener, false);
+            }
+        }
+
+        private removeEventListeners() {
+            if (this.listener) {
+                window.removeEventListener('message', this.listener, false);
+                this.listener = undefined;
             }
         }
 
@@ -497,11 +608,12 @@ namespace pxsim {
             return this.nextFrameId++ + (Math.random() + '' + Math.random()).replace(/[^\d]/, '')
         }
 
-        private getStoppedClass() {
-            if (this.options && this.options.stoppedClass) {
-                return this.options.stoppedClass;
-            }
-            return "grayscale";
+        private get stoppedClass() {
+            return (this.options && this.options.stoppedClass) || "grayscale";
+        }
+
+        private get invalidatedClass() {
+            return (this.options && this.options.invalidatedClass) || "sepia";
         }
     }
 }

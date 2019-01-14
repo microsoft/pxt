@@ -136,8 +136,6 @@ namespace pxsim {
 
     export interface SimulatorScreenshotMessage extends SimulatorMessage {
         type: "screenshot";
-        // force take a new screenshot
-        force?: boolean;
         data: string;
     }
 

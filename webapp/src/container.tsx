@@ -63,8 +63,10 @@ export class DocsMenu extends data.PureComponent<ISettingsProps, {}> {
     private doDocEntryAction(parent: pxt.editor.IProjectView, m: pxt.DocMenuEntry) {
         if (m.tutorial) {
             return () => { openTutorial(parent, m.path) };
-        } else if (!/^\//.test(m.path)) {
+        } else if (!/^\//.test(m.path) && !m.popout) {
             return () => { window.open(m.path, "docs"); };
+        } else if (m.popout) {
+            return () => { window.open(`${pxt.appTarget.appTheme.homeUrl}${m.path}`, "docs"); };
         } else {
             return () => { openDocs(parent, m.path) };
         }

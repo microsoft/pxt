@@ -130,7 +130,7 @@ export class ProjectView
             collapseEditorTools: simcfg.headless || (!isSandbox && pxt.BrowserUtils.isMobile()),
             highContrast: isHighContrast,
             simState: pxt.editor.SimState.Stopped,
-            autoRun: !!simcfg.autoRun
+            autoRun: true // always start simulator by default
         };
         if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 19;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
@@ -277,7 +277,7 @@ export class ProjectView
             .then(() => {
                 let txt = this.editor.getCurrentSource()
                 if (txt != this.editorFile.content)
-                    simulator.makeDirty();
+                    simulator.setDirty();
                 if (this.editor.isIncomplete()) return Promise.resolve();
                 return this.editorFile.setContentAsync(txt);
             });
@@ -487,7 +487,7 @@ export class ProjectView
                     }
                     this.editor.setDiagnostics(this.editorFile, state);
                     data.invalidate("open-pkg-meta:" + pkg.mainEditorPkg().getPkgId());
-                    if (pxt.appTarget.simulator && pxt.appTarget.simulator.autoRun) {
+                    if (this.state.autoRun) {
                         const output = pkg.mainEditorPkg().outputPkg.files["output.txt"];
                         if (output && !output.numDiagnosticsOverride
                             && this.state.autoRun) {
@@ -555,6 +555,7 @@ export class ProjectView
             restartSimulator: () => {
                 if (!restartingSim) { // prevent button smashing
                     restartingSim = true;
+                    simulator.setStarting();
                     core.hideDialog();
                     this.runSimulator()
                         .delay(1000) // 1 second debounce
@@ -874,6 +875,7 @@ export class ProjectView
         pxt.debug(`loading ${h.id} (pxt v${h.targetVersion})`);
         this.stopSimulator(true);
         this.clearSerial()
+        this.setState({ autoRun: true }); // always start simulator once at least
 
         // Merge current and new state but only if the new state members are undefined
         const oldEditorState = this.state.editorState;
@@ -889,7 +891,7 @@ export class ProjectView
                 if (!this.state || this.state.header != h) {
                     this.showPackageErrorsOnNextTypecheck();
                 }
-                simulator.makeDirty();
+                simulator.setDirty();
                 return compiler.newProjectAsync();
             }).then(() => compiler.applyUpgradesAsync())
             .then(() => {
@@ -1233,17 +1235,17 @@ export class ProjectView
     }
 
     downloadScreenshotAsync(): Promise<void> {
-        return this.saveProjectAsPNGAsync(true, false);
+        return this.saveProjectAsPNGAsync(false);
     }
 
     requestScreenshotPromise: Promise<string>;
-    requestScreenshotAsync(force?: boolean): Promise<string> {
+    requestScreenshotAsync(): Promise<string> {
         if (this.requestScreenshotPromise)
             return this.requestScreenshotPromise;
 
         // make sure simulator is ready
         this.setState({ screenshoting: true });
-        simulator.driver.postMessage({ type: "screenshot", force } as pxsim.SimulatorScreenshotMessage);
+        simulator.driver.postMessage({ type: "screenshot" } as pxsim.SimulatorScreenshotMessage);
         return this.requestScreenshotPromise = new Promise<string>((resolve, reject) => {
             if (this.screenshotHandler) reject(new Error("screenshot in progress")); // this should not happend
             this.screenshotHandler = (img) => resolve(img);
@@ -1259,9 +1261,9 @@ export class ProjectView
             });
     }
 
-    private saveProjectAsPNGAsync(force: boolean, showDialog: boolean): Promise<void> {
+    private saveProjectAsPNGAsync(showDialog: boolean): Promise<void> {
         let img: string;
-        return this.requestScreenshotAsync(force)
+        return this.requestScreenshotAsync()
             .then(img_ => {
                 img = img_;
                 return this.exportProjectToFileAsync();
@@ -1307,7 +1309,7 @@ export class ProjectView
             return pkg.mainPkg.saveToJsonAsync(this.getPreferredEditor())
                 .then(project => pxt.commands.saveProjectAsync(project));
         }
-        if (pxt.appTarget.compile.saveAsPNG) return this.saveProjectAsPNGAsync(false, true);
+        if (pxt.appTarget.compile.saveAsPNG) return this.saveProjectAsPNGAsync(true);
         else return this.exportProjectToFileAsync()
             .then((buf: Uint8Array) => {
                 const fn = pkg.genFileName(".mkcd");
@@ -2007,8 +2009,8 @@ export class ProjectView
             if (this.state.tracing)
                 opts.trace = true;
 
-            simulator.stop();
-            const autoRun = this.state.autoRun || !!opts.clickTrigger && !!pxt.appTarget.simulator.autoRun;
+            simulator.stop(false, true);
+            const autoRun = (this.state.autoRun || !!opts.clickTrigger) && !!pxt.appTarget.simulator.autoRun;
             this.setState({ simState: pxt.editor.SimState.Starting, autoRun: autoRun });
 
             const state = this.editor.snapshotState()
