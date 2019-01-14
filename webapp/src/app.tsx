@@ -130,7 +130,7 @@ export class ProjectView
             collapseEditorTools: simcfg.headless || (!isSandbox && pxt.BrowserUtils.isMobile()),
             highContrast: isHighContrast,
             simState: pxt.editor.SimState.Stopped,
-            autoRun: !!simcfg.autoRun
+            autoRun: true // always start simulator by default
         };
         if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 19;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
@@ -487,7 +487,7 @@ export class ProjectView
                     }
                     this.editor.setDiagnostics(this.editorFile, state);
                     data.invalidate("open-pkg-meta:" + pkg.mainEditorPkg().getPkgId());
-                    if (pxt.appTarget.simulator && pxt.appTarget.simulator.autoRun) {
+                    if (this.state.autoRun) {
                         const output = pkg.mainEditorPkg().outputPkg.files["output.txt"];
                         if (output && !output.numDiagnosticsOverride
                             && this.state.autoRun) {
@@ -875,6 +875,7 @@ export class ProjectView
         pxt.debug(`loading ${h.id} (pxt v${h.targetVersion})`);
         this.stopSimulator(true);
         this.clearSerial()
+        this.setState({ autoRun: true }); // always start simulator once at least
 
         // Merge current and new state but only if the new state members are undefined
         const oldEditorState = this.state.editorState;
@@ -2009,7 +2010,7 @@ export class ProjectView
                 opts.trace = true;
 
             simulator.stop(false, true);
-            const autoRun = this.state.autoRun || !!opts.clickTrigger && !!pxt.appTarget.simulator.autoRun;
+            const autoRun = (this.state.autoRun || !!opts.clickTrigger) && !!pxt.appTarget.simulator.autoRun;
             this.setState({ simState: pxt.editor.SimState.Starting, autoRun: autoRun });
 
             const state = this.editor.snapshotState()
