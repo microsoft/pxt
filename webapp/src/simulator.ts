@@ -231,14 +231,13 @@ export function setState(editor: string, tutMode?: boolean) {
 }
 
 export function makeDirty() { // running outdated code
-    driver.dirty = true;
+    driver.setDirty();
 }
 
 export function run(pkg: pxt.MainPackage, debug: boolean,
     res: pxtc.CompileResult, mute?: boolean,
     highContrast?: boolean, light?: boolean,
     clickTrigger?: boolean) {
-    driver.dirty = false;
     const js = res.outfiles[pxtc.BINARY_JS]
     const boardDefinition = pxt.appTarget.simulator.boardDefinition;
     const parts = pxtc.computeUsedParts(res, true);

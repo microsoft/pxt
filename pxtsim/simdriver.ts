@@ -65,7 +65,6 @@ namespace pxsim {
         public runOptions: SimulatorRunOptions = {};
         public state = SimulatorState.Unloaded;
         public hwdbg: HwDebugger;
-        private _dirty: boolean = false;
 
         // we might "loan" a simulator when the user is recording
         // screenshots for sharing
@@ -74,25 +73,13 @@ namespace pxsim {
         constructor(public container: HTMLElement, public options: SimulatorDriverOptions = {}) {
         }
 
-        get dirty() {
-            return this._dirty;
-        }
-
-        set dirty(value: boolean) {
-            if (value != this._dirty) {
-                this._dirty = value;
-                if (this._dirty) {
-                    pxsim.U.addClass(this.container, this.invalidatedClass);
-                    // We suspend the simulator here to stop it from running without
-                    // interfering with the user's stopped state. We're not doing this check
-                    // in the driver because the driver should be able to switch from any state
-                    // to the suspend state, but in this codepath we only want to switch to the
-                    // suspended state if we're running
-                    if (this.state == pxsim.SimulatorState.Running) this.suspend();
-                } else {
-                    pxsim.U.removeClass(this.container, this.invalidatedClass);
-                }
-            }
+        setDirty() {
+            // We suspend the simulator here to stop it from running without
+            // interfering with the user's stopped state. We're not doing this check
+            // in the driver because the driver should be able to switch from any state
+            // to the suspend state, but in this codepath we only want to switch to the
+            // suspended state if we're running
+            if (this.state == pxsim.SimulatorState.Running) this.suspend();
         }
 
         public setHwDebugger(hw: HwDebugger) {
@@ -121,22 +108,24 @@ namespace pxsim {
         }
 
         private setFrameState(frame: HTMLIFrameElement) {
+            // apply state
             switch (this.state) {
                 case SimulatorState.Stopped:
                 case SimulatorState.Suspended:
-                    U.addClass(frame, this.stoppedClass);
+                    U.addClass(frame, (this.state == SimulatorState.Stopped || this.options.embedIcons)
+                        ? this.stoppedClass : this.invalidatedClass);
                     if (this.options.embedIcons) {
                         const i = frame.nextElementSibling as HTMLElement;
                         i.style.display = '';
                     }
                     this.scheduleFrameCleanup();
                     break;
-                case SimulatorState.Paused:
-                    break; // handled
                 default:
                     U.removeClass(frame, this.stoppedClass);
+                    U.removeClass(frame, this.invalidatedClass);
                     if (this.options.embedIcons) {
                         const i = frame.nextElementSibling as HTMLElement;
+                        i.className = "video play icon";
                         i.style.display = 'none';
                     }
                     break;
@@ -147,12 +136,6 @@ namespace pxsim {
             if (this.state != state) {
                 this.state = state;
                 this.freeze(this.state == SimulatorState.Paused); // don't allow interaction when pause
-                switch (this.state) {
-                    case SimulatorState.Stopped:
-                    case SimulatorState.Suspended:
-                        this.dirty = false;
-                        break;
-                }
                 this.simFrames().forEach(frame => this.setFrameState(frame));
                 if (this.options.onStateChanged)
                     this.options.onStateChanged(this.state);
@@ -342,7 +325,7 @@ namespace pxsim {
         }
 
         public hide(completeHandler?: () => void) {
-            this.dirty = true;
+            this.suspend();
             if (!this.options.removeElement) return;
 
             const frames = this.simFrames();
