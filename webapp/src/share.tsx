@@ -136,7 +136,6 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
 
     renderCore() {
         const { visible, projectName: newProjectName, loading, screenshoting, screenshotUri } = this.state;
-        const { projectName } = this.props.parent.state;
         const targetTheme = pxt.appTarget.appTheme;
         const header = this.props.parent.state.header;
         const advancedMenu = !!this.state.advancedMenu;
@@ -243,7 +242,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                         </div>
                     </div> : undefined}
                     {action && this.loanedSimulator ? <div className="ui fields">
-                        <div id="shareLoanedSimulator" className="ui eight wide field"></div>
+                        <div id="shareLoanedSimulator" className="ui eight wide field landscape only"></div>
                         <div className="ui seven wide field">
                             <label>{lf("Name")}</label>
                             <div>
@@ -251,10 +250,10 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                                     ariaLabel={lf("Type a name for your project")} autoComplete={false}
                                     value={newProjectName || ''} onChange={this.handleProjectNameChange} />
                             </div>
-                            <div className="ui segment">{screenshotUri
+                            <div className="ui segment landscape only">{screenshotUri
                                 ? <img className="ui fluid image" src={screenshotUri} alt={lf("Screenshot")} />
                                 : <p>{lf("No screenshot!")}</p>}</div>
-                            <div className="ui buttons">
+                            <div className="ui buttons landscape only">
                                 <sui.Button icon="refresh" title={lf("Restart")} ariaLabel={lf("Restart")} onClick={this.restartSimulator} loading={screenshoting} />
                                 <sui.Button icon="camera" title={lf("Take screenshot")} ariaLabel={lf("Take screenshot")} onClick={this.takeScreenshot} loading={screenshoting} />
                             </div>
