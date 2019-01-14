@@ -41,6 +41,7 @@ namespace ts.pxtc.decompiler {
         attrs: (c: pxtc.CallInfo) => pxtc.CommentAttrs;
         compInfo: (c: pxtc.CallInfo) => pxt.blocks.BlockCompileInfo;
         localReporters: PropertyDesc[][]; // A stack of groups of locally scoped argument declarations, to determine whether an argument should decompile as a reporter or a variable
+        useNewFunctions?: boolean;
     }
 
     interface DecompileArgument {
@@ -350,7 +351,6 @@ namespace ts.pxtc.decompiler {
     }
 
     export function decompileToBlocks(blocksInfo: pxtc.BlocksInfo, file: ts.SourceFile, options: DecompileBlocksOptions, renameMap?: RenameMap): pxtc.CompileResult {
-        const useNewFunctions = options.useNewFunctions;
         let emittedBlocks = 0;
         let stmts: NodeArray<ts.Statement> = file.statements;
         let result: pxtc.CompileResult = {
@@ -364,7 +364,8 @@ namespace ts.pxtc.decompiler {
             functionParamIds: {},
             attrs: attrs,
             compInfo: compInfo,
-            localReporters: []
+            localReporters: [],
+            useNewFunctions: options.useNewFunctions
         };
         const fileText = file.getFullText();
         let output = ""
@@ -377,10 +378,10 @@ namespace ts.pxtc.decompiler {
         const getCommentRef = (() => { let currentCommentId = 0; return () => `${currentCommentId++}` })();
 
         const checkTopNode = (topLevelNode: Node) => {
-            if (topLevelNode.kind === SK.FunctionDeclaration && !checkStatement(topLevelNode, env, false, true, useNewFunctions)) {
+            if (topLevelNode.kind === SK.FunctionDeclaration && !checkStatement(topLevelNode, env, false, true)) {
                 env.declaredFunctions[getVariableName((topLevelNode as ts.FunctionDeclaration).name)] = topLevelNode as ts.FunctionDeclaration;
             }
-            else if (topLevelNode.kind === SK.EnumDeclaration && !checkStatement(topLevelNode, env, false, true, useNewFunctions)) {
+            else if (topLevelNode.kind === SK.EnumDeclaration && !checkStatement(topLevelNode, env, false, true)) {
                 const enumName = (topLevelNode as EnumDeclaration).name.text;
                 env.declaredEnums[enumName] = true;
                 getEnumMembers(topLevelNode as EnumDeclaration).forEach(([name, value]) => {
@@ -400,16 +401,16 @@ namespace ts.pxtc.decompiler {
 
         ts.forEachChild(file, checkTopNode);
 
-        if (useNewFunctions) {
+        if (env.useNewFunctions) {
             // Generate fresh param IDs for all user-declared functions, needed when decompiling
             // function definition and calls. IDs don't need to be crypto secure.
             const genId = () => (Math.PI * Math.random()).toString(36).slice(2);
-            for (const funcName in env.declaredFunctions) {
+            Object.keys(env.declaredFunctions).forEach(funcName => {
                 env.functionParamIds[funcName] = {};
                 env.declaredFunctions[funcName].parameters.forEach(p => {
                     env.functionParamIds[funcName][p.name.getText()] = genId() + genId();
                 });
-            }
+            });
         }
 
         if (enumMembers.length) {
@@ -581,18 +582,18 @@ ${output}</xml>`;
 
         function emitMutation(mMap: pxt.Map<string>, mChildren?: MutationChild[]) {
             write("<mutation ", "");
-            for (const key in mMap) {
+            Object.keys(mMap).forEach(key => {
                 if (mMap[key] !== undefined) {
                     write(`${key}="${mMap[key]}" `, "");
                 }
-            }
+            });
             if (mChildren) {
                 write(">");
                 mChildren.forEach(c => {
                     write(`<${c.nodeName} `, "");
-                    for (const attrName in c.attributes) {
+                    Object.keys(c.attributes).forEach(attrName => {
                         write(`${attrName}="${c.attributes[attrName]}" `, "");
-                    }
+                    });
                     write("/>");
                 });
                 write("</mutation>");
@@ -725,7 +726,7 @@ ${output}</xml>`;
         }
 
         function getOutputBlock(n: ts.Node): OutputNode {
-            if (checkExpression(n, env, useNewFunctions)) {
+            if (checkExpression(n, env)) {
                 return getTypeScriptExpressionBlock(n);
             }
             else {
@@ -1087,7 +1088,7 @@ ${output}</xml>`;
             let stmt: StatementNode;
             let skipComments = false;
 
-            const err = checkStatement(node, env, asExpression, topLevel, useNewFunctions);
+            const err = checkStatement(node, env, asExpression, topLevel);
             if (err) {
                 stmt = getTypeScriptStatementBlock(node, undefined, err);
             }
@@ -1139,10 +1140,10 @@ ${output}</xml>`;
                         stmt = getForOfStatement(node as ts.ForOfStatement);
                         break;
                     case SK.FunctionDeclaration:
-                        stmt = getFunctionDeclaration(node as ts.FunctionDeclaration, useNewFunctions);
+                        stmt = getFunctionDeclaration(node as ts.FunctionDeclaration);
                         break;
                     case SK.CallExpression:
-                        stmt = getCallStatement(node as ts.CallExpression, asExpression, useNewFunctions) as StatementNode;
+                        stmt = getCallStatement(node as ts.CallExpression, asExpression) as StatementNode;
                         break;
                     case SK.DebuggerStatement:
                         stmt = getDebuggerStatementBlock(node);
@@ -1499,9 +1500,9 @@ ${output}</xml>`;
             return getVariableSetOrChangeBlock(node.operand as ts.Identifier, isPlusPlus ? 1 : -1, true);
         }
 
-        function getFunctionDeclaration(n: ts.FunctionDeclaration, useNewFunctions = false): StatementNode {
+        function getFunctionDeclaration(n: ts.FunctionDeclaration): StatementNode {
             const name = getVariableName(n.name);
-            if (useNewFunctions) {
+            if (env.useNewFunctions) {
                 env.localReporters.push(n.parameters.map(p => {
                     return {
                         name: p.name.getText(),
@@ -1510,12 +1511,12 @@ ${output}</xml>`;
                 }));
             }
             const statements = getStatementBlock(n.body);
-            if (useNewFunctions) {
+            if (env.useNewFunctions) {
                 env.localReporters.pop();
             }
             let r: StatementNode;
 
-            if (useNewFunctions) {
+            if (env.useNewFunctions) {
                 r = mkStmt("function_definition");
                 r.mutation = {
                     name
@@ -1543,7 +1544,7 @@ ${output}</xml>`;
             return r;
         }
 
-        function getCallStatement(node: ts.CallExpression, asExpression: boolean, useNewFunctions = false): StatementNode | ExpressionNode {
+        function getCallStatement(node: ts.CallExpression, asExpression: boolean): StatementNode | ExpressionNode {
             const info: pxtc.CallInfo = (node as any).callInfo
             const attributes = attrs(info);
 
@@ -1603,11 +1604,8 @@ ${output}</xml>`;
                 if (!builtin) {
                     const name = getVariableName(node.expression as ts.Identifier);
                     if (env.declaredFunctions[name]) {
-                        if (env.declaredFunctions[name].parameters.length !== info.args.length) {
-                            return getTypeScriptStatementBlock(node);
-                        }
                         let r: StatementNode;
-                        if (useNewFunctions) {
+                        if (env.useNewFunctions) {
                             r = mkStmt("function_call");
                             if (info.args.length) {
                                 r.mutationChildren = [];
@@ -1946,7 +1944,7 @@ ${output}</xml>`;
                 const statement = statements[i];
                 if ((statement.kind === SK.FunctionDeclaration ||
                     (statement.kind == SK.ExpressionStatement && isEventExpression(statement as ts.ExpressionStatement))) &&
-                    !checkStatement(statement, env, false, topLevel, useNewFunctions)) {
+                    !checkStatement(statement, env, false, topLevel)) {
                     eventStatements.unshift(statement)
                 }
                 else {
@@ -2129,18 +2127,18 @@ ${output}</xml>`;
         }
     }
 
-    function checkStatement(node: ts.Node, env: DecompilerEnv, asExpression = false, topLevel = false, useNewFunctions = false): string {
+    function checkStatement(node: ts.Node, env: DecompilerEnv, asExpression = false, topLevel = false): string {
         switch (node.kind) {
             case SK.WhileStatement:
             case SK.IfStatement:
             case SK.Block:
                 return undefined;
             case SK.ExpressionStatement:
-                return checkStatement((node as ts.ExpressionStatement).expression, env, asExpression, topLevel, useNewFunctions);
+                return checkStatement((node as ts.ExpressionStatement).expression, env, asExpression, topLevel);
             case SK.VariableStatement:
                 return checkVariableStatement(node as ts.VariableStatement, env);
             case SK.CallExpression:
-                return checkCall(node as ts.CallExpression, env, asExpression, topLevel, useNewFunctions);
+                return checkCall(node as ts.CallExpression, env, asExpression, topLevel);
             case SK.VariableDeclaration:
                 return checkVariableDeclaration(node as ts.VariableDeclaration, env);
             case SK.PostfixUnaryExpression:
@@ -2156,7 +2154,7 @@ ${output}</xml>`;
             case SK.ForOfStatement:
                 return checkForOfStatement(node as ts.ForOfStatement);
             case SK.FunctionDeclaration:
-                return checkFunctionDeclaration(node as ts.FunctionDeclaration, topLevel, useNewFunctions);
+                return checkFunctionDeclaration(node as ts.FunctionDeclaration, topLevel);
             case SK.EnumDeclaration:
                 return checkEnumDeclaration(node as ts.EnumDeclaration, topLevel);
             case SK.DebuggerStatement:
@@ -2243,7 +2241,7 @@ ${output}</xml>`;
             else if (n.left.kind === SK.Identifier) {
                 switch (n.operatorToken.kind) {
                     case SK.EqualsToken:
-                        return checkExpression(n.right, env, useNewFunctions);
+                        return checkExpression(n.right, env);
                     case SK.PlusEqualsToken:
                     case SK.MinusEqualsToken:
                         return undefined;
@@ -2299,7 +2297,7 @@ ${output}</xml>`;
                 check = Util.lf("Variable declarations must have an initializer");
             }
             else if (!isAutoDeclaration(n)) {
-                check = checkExpression(n.initializer, env, useNewFunctions);
+                check = checkExpression(n.initializer, env);
             }
 
             return check;
@@ -2315,7 +2313,7 @@ ${output}</xml>`;
             return undefined;
         }
 
-        function checkCall(n: ts.CallExpression, env: DecompilerEnv, asExpression = false, topLevel = false, useNewFunctions = false) {
+        function checkCall(n: ts.CallExpression, env: DecompilerEnv, asExpression = false, topLevel = false) {
             const info: pxtc.CallInfo = (n as any).callInfo;
             if (!info) {
                 return Util.lf("Function call not supported in the blocks");
@@ -2354,12 +2352,14 @@ ${output}</xml>`;
             if (!attributes.blockId || !attributes.block) {
                 const builtin = pxt.blocks.builtinFunctionInfo[info.qName];
                 if (!builtin) {
-                    const argsOk = n.arguments.length === 0 || useNewFunctions;
+                    const argsOk = n.arguments.length === 0 || env.useNewFunctions;
                     if (argsOk && n.expression.kind === SK.Identifier) {
-                        if (!env.declaredFunctions[(n.expression as ts.Identifier).text]) {
+                        const funcName = (n.expression as ts.Identifier).text;
+                        if (!env.declaredFunctions[funcName]) {
                             return Util.lf("Call statements must have a valid declared function");
-                        }
-                        else {
+                        } else if (env.declaredFunctions[funcName].parameters.length !== info.args.length) {
+                            return Util.lf("Function calls in blocks must have the same number of arguments as the function definition");
+                        } else {
                             return undefined;
                         }
                     }
@@ -2613,12 +2613,12 @@ ${output}</xml>`;
             }
         }
 
-        function checkFunctionDeclaration(n: ts.FunctionDeclaration, topLevel: boolean, useNewFunctions = false) {
+        function checkFunctionDeclaration(n: ts.FunctionDeclaration, topLevel: boolean) {
             if (!topLevel) {
                 return Util.lf("Function declarations must be top level");
             }
 
-            if (!useNewFunctions && n.parameters.length > 0) {
+            if (!env.useNewFunctions && n.parameters.length > 0) {
                 return Util.lf("Functions with parameters not supported in blocks");
             }
 
@@ -2753,7 +2753,7 @@ ${output}</xml>`;
         }
     }
 
-    function checkExpression(n: ts.Node, env: DecompilerEnv, useNewFunctions = false): string {
+    function checkExpression(n: ts.Node, env: DecompilerEnv): string {
         switch (n.kind) {
             case SK.NumericLiteral:
             case SK.TrueKeyword:
@@ -2763,7 +2763,7 @@ ${output}</xml>`;
             case SK.ElementAccessExpression:
                 return undefined;
             case SK.ParenthesizedExpression:
-                return checkExpression((n as ts.ParenthesizedExpression).expression, env, useNewFunctions);
+                return checkExpression((n as ts.ParenthesizedExpression).expression, env);
             case SK.StringLiteral:
             case SK.FirstTemplateToken:
             case SK.NoSubstitutionTemplateLiteral:
@@ -2780,7 +2780,7 @@ ${output}</xml>`;
             case SK.PropertyAccessExpression:
                 return checkPropertyAccessExpression(n as ts.PropertyAccessExpression, env);
             case SK.CallExpression:
-                return checkStatement(n, env, true, undefined, useNewFunctions);
+                return checkStatement(n, env, true, undefined);
             case SK.TaggedTemplateExpression:
                 return checkTaggedTemplateExpression(n as ts.TaggedTemplateExpression, env);
 
@@ -2851,7 +2851,7 @@ ${output}</xml>`;
                 }
                 else if (attributes.blockCombine || (attributes.blockId && blockInfo && blockInfo.thisParameter)) {
                     // block combine and getters/setters
-                    return checkExpression(n.expression, env, useNewFunctions)
+                    return checkExpression(n.expression, env)
                 }
             }
             return Util.lf("No call info found");

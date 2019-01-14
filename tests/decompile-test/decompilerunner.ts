@@ -136,8 +136,7 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
             opts.ast = true;
             opts.testMode = true;
             opts.ignoreFileResolutionErrors = true;
-            const useNewFunctions = path.basename(f).indexOf("functions_v2") === 0;
-            if (useNewFunctions) {
+            if (path.basename(f).indexOf("functions_v2") === 0) {
                 opts.useNewFunctions = true;
             }
             const decompiled = pxtc.decompile(opts, "main.ts", true);
@@ -157,5 +156,5 @@ function getOptsAsync(dependency: string) {
         return pkg.getCompileOptionsAsync()
             .then(opts => cachedOpts = opts);
     }
-    return Promise.resolve(JSON.parse(JSON.stringify(cachedOpts)));
+    return Promise.resolve(JSON.parse(JSON.stringify(cachedOpts))); // Clone cached options so that tests can individually modify their own options copy
 }

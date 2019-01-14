@@ -749,6 +749,7 @@ namespace pxt {
                         }
                     }
                     opts.jres = this.getJRes()
+                    opts.useNewFunctions = pxt.appTarget.runtime && pxt.appTarget.runtime.functionsOptions && pxt.appTarget.runtime.functionsOptions.useNewFunctions;
                     return opts;
                 })
         }

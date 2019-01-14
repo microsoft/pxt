@@ -160,7 +160,7 @@ export class CreateFunctionDialog extends data.Component<ISettingsProps, CreateF
         return (
             <sui.Modal isOpen={visible} className="createfunction" size="large"
                 onClose={this.hide} dimmer={true} buttons={actions}
-                closeIcon={true} header={lf("Edit function")}
+                closeIcon={true} header={lf("Edit Function")}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
                 modalDidOpen={this.modalDidOpen}
             >
