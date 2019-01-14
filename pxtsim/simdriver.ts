@@ -65,7 +65,7 @@ namespace pxsim {
 
         // we might "loan" a simulator when the user is recording
         // screenshots for sharing
-        private loanedSimulator: HTMLElement;
+        private loanedSimulator: HTMLDivElement;
 
         constructor(public container: HTMLElement, public options: SimulatorDriverOptions = {}) {
         }
@@ -214,20 +214,26 @@ namespace pxsim {
             this.postMessage({ type: 'mute', mute: mute } as pxsim.SimulatorMuteMessage);
         }
 
+        public isLoanedSimulator(el: HTMLElement) {
+            return !!this.loanedSimulator && this.loanedIFrame() == el;
+        }
+
         // returns a simulator iframe that can be hosted anywhere in the page
         // while a loaned simulator is active, all other iframes are suspended
-        public loan(): HTMLElement {
+        public loanSimulator(): HTMLDivElement {
             if (this.loanedSimulator) return this.loanedSimulator;
 
-            this.loanedSimulator = this.createFrame();
-            this.stop(false);
+            // reuse first simulator or create new one
+            this.loanedSimulator = (this.container.firstElementChild as HTMLDivElement) || this.createFrame();
+            if (this.loanedSimulator.parentNode)
+                this.container.removeChild(this.loanedSimulator);
             return this.loanedSimulator;
         }
 
-        public unloan() {
+        public unloanSimulator() {
             if (this.loanedSimulator) {
-                this.container.insertBefore(undefined, this.loanedSimulator);
-                delete this.container;
+                this.container.insertBefore(this.loanedSimulator, this.container.firstElementChild);
+                delete this.loanedSimulator;
             }
         }
 
@@ -263,6 +269,7 @@ namespace pxsim {
         private cleanupFrames() {
             // drop unused extras frames after 5 seconds
             const frames = this.simFrames(true);
+            frames.shift(); // drop first frame
             frames.forEach(frame => {
                 if (this.state == SimulatorState.Stopped
                     || frame.dataset['runid'] != this.runId) {

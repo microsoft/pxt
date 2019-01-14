@@ -45,7 +45,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
 
     let options: pxsim.SimulatorDriverOptions = {
         revealElement: (el) => {
-            if (pxt.options.light) return;
+            if (pxt.options.light || driver.isLoanedSimulator(el)) return;
             // Play enter animation
             const animation = pxt.appTarget.appTheme.simAnimationEnter || 'fly right in';
             el.style.animationDuration = '500ms';

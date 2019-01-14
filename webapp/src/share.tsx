@@ -26,6 +26,7 @@ export interface ShareEditorState {
     sharingError?: boolean;
     loading?: boolean;
     projectName?: string;
+    screenshoting?: boolean;
     screenshotUri?: string;
 }
 
@@ -45,12 +46,14 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         this.toggleAdvancedMenu = this.toggleAdvancedMenu.bind(this);
         this.setAdvancedMode = this.setAdvancedMode.bind(this);
         this.handleProjectNameChange = this.handleProjectNameChange.bind(this);
+        this.restartSimulator = this.restartSimulator.bind(this);
+        this.takeScreenshot = this.takeScreenshot.bind(this);
         this.loanedSimulator = undefined;
     }
 
     hide() {
         if (this.loanedSimulator) {
-            simulator.driver.unloan();
+            simulator.driver.unloanSimulator();
             this.loanedSimulator = undefined;
         }
         this.setState({ visible: false, screenshotUri: undefined });
@@ -58,7 +61,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
 
     show(header: pxt.workspace.Header) {
         if (pxt.appTarget.cloud && pxt.appTarget.cloud.thumbnails)
-            this.loanedSimulator = simulator.driver.loan();
+            this.loanedSimulator = simulator.driver.loanSimulator();
         this.setState({
             visible: true,
             mode: ShareMode.Code,
@@ -97,6 +100,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             || this.state.sharingError != nextState.sharingError
             || this.state.projectName != nextState.projectName
             || this.state.loading != nextState.loading
+            || this.state.screenshoting != nextState.screenshoting
             || this.state.screenshotUri != nextState.screenshotUri;
     }
 
@@ -113,8 +117,26 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         this.setState({ projectName: name });
     }
 
+    restartSimulator() {
+        pxt.tickEvent('share.restart', undefined, { interactiveConsent: true });
+        this.props.parent.restartSimulator();
+    }
+
+    takeScreenshot() {
+        pxt.tickEvent("shakre.takescreenshot", { view: 'computer', collapsedTo: '' + !this.props.parent.state.collapseEditorTools }, { interactiveConsent: true });
+        if (this.state.screenshoting) return;
+
+        this.setState({ screenshoting: true })
+        this.props.parent.requestScreenshotAsync(true)
+            .then(img => {
+                const st: ShareEditorState = { screenshoting: false };
+                if (img) st.screenshotUri = img;
+                this.setState(st);
+            });
+    }
+
     renderCore() {
-        const { visible, projectName: newProjectName, loading, screenshotUri } = this.state;
+        const { visible, projectName: newProjectName, loading, screenshoting, screenshotUri } = this.state;
         const { projectName } = this.props.parent.state;
         const targetTheme = pxt.appTarget.appTheme;
         const header = this.props.parent.state.header;
@@ -188,6 +210,10 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         const action = !ready ? lf("Publish project") : undefined;
         const actionLoading = loading && !this.state.sharingError;
 
+        if (url && ready) {
+            this.loanedSimulator = undefined;
+            simulator.driver.unloanSimulator();
+        }
 
         let actions: sui.ModalButton[] = [];
         if (action) {
@@ -200,8 +226,6 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             })
         }
 
-        const shouldNameProject = projectName == lf("Untitled");
-
         return (
             <sui.Modal isOpen={visible} className="sharedialog" size="small"
                 onClose={this.hide}
@@ -211,36 +235,38 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                 closeOnDocumentClick
                 closeOnEscape>
                 <div className={`ui form`}>
-                    {action ?
-                        <div className="ui grid">
-                            {this.loanedSimulator
-                                ? <div id="shareLoanedSimulator" className="column"></div>
-                                : undefined}
-                            {screenshotUri
-                                ? <div className="column">
-                                    <img className="ui small image" src={screenshotUri} alt={lf("Screenshot")} />
-                                </div>
-                                : undefined}
-                            <div className="column">
-                                {shouldNameProject ?
-                                    <div>
-                                        <p>{lf("Give your project a name before sharing.")}</p>
-                                        <div>
-                                            <sui.Input ref="filenameinput" autoFocus={!pxt.BrowserUtils.isMobile()} id={"projectNameInput"}
-                                                ariaLabel={lf("Type a name for your project")} autoComplete={false}
-                                                value={newProjectName || ''} onChange={this.handleProjectNameChange} />
-                                        </div>
-                                    </div> : undefined}
-                                <p className="ui message info">{
-                                    lf("You need to publish your project to share it or embed it in other web pages.") + " " +
-                                    lf("You acknowledge having consent to publish this project.")}
-                                    {screenshotUri ? " " + lf("The screenshot will be published with your project.") : undefined}
-                                </p>
-                                {this.state.sharingError ?
-                                    <p className="ui red inverted segment">{lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.")}</p>
-                                    : undefined}
+                    {action && !this.loanedSimulator ? <div className="ui field">
+                        <label>{lf("Name")}</label>
+                        <div>
+                            <sui.Input ref="filenameinput" autoFocus={!pxt.BrowserUtils.isMobile()} id={"projectNameInput"}
+                                ariaLabel={lf("Type a name for your project")} autoComplete={false}
+                                value={newProjectName || ''} onChange={this.handleProjectNameChange} />
+                        </div>
+                    </div> : undefined}
+                    {action && this.loanedSimulator ? <div className="ui fields">
+                        <div id="shareLoanedSimulator" className="ui eight wide field"></div>
+                        <div className="ui seven wide field">
+                            <label>{lf("Name")}</label>
+                            <div>
+                                <sui.Input ref="filenameinput" autoFocus={!pxt.BrowserUtils.isMobile()} id={"projectNameInput"}
+                                    ariaLabel={lf("Type a name for your project")} autoComplete={false}
+                                    value={newProjectName || ''} onChange={this.handleProjectNameChange} />
                             </div>
-                        </div></div>
+                            <div className="ui segment">{screenshotUri
+                                ? <img className="ui fluid image" src={screenshotUri} alt={lf("Screenshot")} />
+                                : <p>{lf("No screenshot!")}</p>}</div>
+                            <div className="ui buttons">
+                                <sui.Button icon="refresh" title={lf("Restart")} ariaLabel={lf("Restart")} onClick={this.restartSimulator} loading={screenshoting} />
+                                <sui.Button icon="camera" title={lf("Take screenshot")} ariaLabel={lf("Take screenshot")} onClick={this.takeScreenshot} loading={screenshoting} />
+                            </div>
+                        </div>
+                    </div> : undefined}
+                    {action ? <p className="ui tiny message info">{
+                        lf("You need to publish your project to share it or embed it in other web pages.") + " " +
+                        lf("You acknowledge having consent to publish this project.")}
+                    </p> : undefined}
+                    {this.state.sharingError ?
+                        <p className="ui red inverted segment">{lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.")}</p>
                         : undefined}
                     {url && ready ? <div>
                         <p>{lf("Your project is ready! Use the address below to share your projects.")}</p>
@@ -250,8 +276,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                             <SocialButton url={url} ariaLabel="Facebook" type='facebook' heading={lf("Share on Facebook")} />
                             <SocialButton url={url} ariaLabel="Twitter" type='twitter' heading={lf("Share on Twitter")} />
                         </div> : undefined}
-                    </div>
-                        : undefined}
+                    </div> : undefined}
                     {ready && !hideEmbed ? <div>
                         <div className="ui divider"></div>
                         <sui.Link icon={`chevron ${advancedMenu ? "down" : "right"}`} text={lf("Embed")} ariaExpanded={advancedMenu} onClick={this.toggleAdvancedMenu} />
@@ -267,12 +292,14 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                             </sui.Field> : null}
                     </div> : undefined}
                 </div>
-            </sui.Modal>
+            </sui.Modal >
         )
     }
 
-    domUpdate() {
-
+    componentDidUpdate() {
+        const container = document.getElementById("shareLoanedSimulator");
+        if (container && this.loanedSimulator && !this.loanedSimulator.parentNode)
+            container.appendChild(this.loanedSimulator);
     }
 }
 
