@@ -26,7 +26,7 @@ export interface ShareEditorState {
     sharingError?: boolean;
     loading?: boolean;
     projectName?: string;
-    screenshoting?: boolean;
+    takingScreenshot?: boolean;
     screenshotUri?: string;
 }
 
@@ -48,7 +48,6 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         this.handleProjectNameChange = this.handleProjectNameChange.bind(this);
         this.restartSimulator = this.restartSimulator.bind(this);
         this.takeScreenshot = this.takeScreenshot.bind(this);
-        this.loanedSimulator = undefined;
     }
 
     hide() {
@@ -93,7 +92,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             || this.state.sharingError != nextState.sharingError
             || this.state.projectName != nextState.projectName
             || this.state.loading != nextState.loading
-            || this.state.screenshoting != nextState.screenshoting
+            || this.state.takingScreenshot != nextState.takingScreenshot
             || this.state.screenshotUri != nextState.screenshotUri;
     }
 
@@ -117,25 +116,25 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
 
     takeScreenshot() {
         pxt.tickEvent("shakre.takescreenshot", { view: 'computer', collapsedTo: '' + !this.props.parent.state.collapseEditorTools }, { interactiveConsent: true });
-        if (this.state.screenshoting) return;
+        if (this.state.takingScreenshot) return;
         this.refreshScreenshot();
     }
 
     private refreshScreenshot() {
-        if (!pxt.appTarget.cloud || !pxt.appTarget.cloud.thumbnails || this.state.screenshoting)
+        if (!pxt.appTarget.cloud || !pxt.appTarget.cloud.thumbnails || this.state.takingScreenshot)
             return;
 
-        this.setState({ screenshoting: true })
+        this.setState({ takingScreenshot: true })
         this.props.parent.requestScreenshotAsync()
             .then(img => {
-                const st: ShareEditorState = { screenshoting: false };
+                const st: ShareEditorState = { takingScreenshot: false };
                 if (img) st.screenshotUri = img;
                 this.setState(st);
             });
     }
 
     renderCore() {
-        const { visible, projectName: newProjectName, loading, screenshoting, screenshotUri } = this.state;
+        const { visible, projectName: newProjectName, loading, takingScreenshot, screenshotUri } = this.state;
         const targetTheme = pxt.appTarget.appTheme;
         const header = this.props.parent.state.header;
         const advancedMenu = !!this.state.advancedMenu;
@@ -254,8 +253,8 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                                 ? <img className="ui fluid image" src={screenshotUri} alt={lf("Screenshot")} />
                                 : <p>{lf("No screenshot!")}</p>}</div>
                             <div className="ui buttons landscape only">
-                                <sui.Button icon="refresh" title={lf("Restart")} ariaLabel={lf("Restart")} onClick={this.restartSimulator} loading={screenshoting} />
-                                <sui.Button icon="camera" title={lf("Take screenshot")} ariaLabel={lf("Take screenshot")} onClick={this.takeScreenshot} loading={screenshoting} />
+                                <sui.Button icon="refresh" title={lf("Restart")} ariaLabel={lf("Restart")} onClick={this.restartSimulator} loading={takingScreenshot} />
+                                <sui.Button icon="camera" title={lf("Take screenshot")} ariaLabel={lf("Take screenshot")} onClick={this.takeScreenshot} loading={takingScreenshot} />
                             </div>
                         </div>
                     </div> : undefined}

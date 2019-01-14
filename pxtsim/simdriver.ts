@@ -301,6 +301,8 @@ namespace pxsim {
 
         public unloanSimulator() {
             if (this.loanedSimulator) {
+                if (this.loanedSimulator.parentNode)
+                    this.loanedSimulator.parentNode.removeChild(this.loanedSimulator);
                 this.container.insertBefore(this.loanedSimulator, this.container.firstElementChild);
                 delete this.loanedSimulator;
             }
