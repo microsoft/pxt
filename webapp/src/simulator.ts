@@ -18,11 +18,8 @@ export const FAST_TRACE_INTERVAL = 100;
 export const SLOW_TRACE_INTERVAL = 500;
 
 export let driver: pxsim.SimulatorDriver;
-let nextFrameId: number = 0;
-const themes = ["blue", "red", "green", "yellow"];
 let config: SimulatorConfig;
 let lastCompileResult: pxtc.CompileResult;
-let tutorialMode: boolean;
 let displayedModals: pxt.Map<boolean> = {};
 export let simTranslations: pxt.Map<string>;
 
@@ -43,6 +40,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
     root.appendChild(debuggerDiv);
 
     let options: pxsim.SimulatorDriverOptions = {
+        restart: () => cfg.restartSimulator(),
         revealElement: (el) => {
             if (pxt.options.light || driver.isLoanedSimulator(el)) return;
             // Play enter animation
@@ -222,6 +220,7 @@ function postSimEditorEvent(subtype: string, exception?: string) {
     }
 }
 
+let tutorialMode: boolean = false;
 export function setState(editor: string, tutMode?: boolean) {
     if (config && config.editor != editor) {
         config.editor = editor;

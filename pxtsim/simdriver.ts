@@ -1,5 +1,6 @@
 namespace pxsim {
     export interface SimulatorDriverOptions {
+        restart?: () => void; // restart simulator
         revealElement?: (el: HTMLElement) => void;
         removeElement?: (el: HTMLElement, onComplete?: () => void) => void;
         unhideElement?: (el: HTMLElement) => void;
@@ -238,8 +239,13 @@ namespace pxsim {
                 i.style.display = "none";
                 i.onclick = (ev) => {
                     ev.preventDefault();
-                    if (this.state != SimulatorState.Running)
-                        this.start();
+                    if (this.state != SimulatorState.Running) {
+                        // we need to request to restart the simulator
+                        if (this.options.restart)
+                            this.options.restart();
+                        else
+                            this.start();
+                    }
                     return false;
                 }
                 wrapper.appendChild(i);
