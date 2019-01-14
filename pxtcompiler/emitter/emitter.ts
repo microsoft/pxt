@@ -3710,6 +3710,26 @@ ${lbl}: .short 0xffff
         function emitDebuggerStatement(node: Node) {
             emitBrk(node)
         }
+        function isLoop(node: Node) {
+            switch (node.kind) {
+                case SK.WhileStatement:
+                case SK.ForInStatement:
+                case SK.ForOfStatement:
+                case SK.ForStatement:
+                case SK.DoStatement:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+        function inLoop(node: Node) {
+            while (node) {
+                if (isLoop(node))
+                    return true
+                node = node.parent
+            }
+            return false
+        }
         function emitVariableDeclaration(node: VarOrParam): ir.Cell {
             if (node.name.kind === SK.ObjectBindingPattern) {
                 if (!node.initializer) {
@@ -3761,6 +3781,11 @@ ${lbl}: .short 0xffff
                 typeCheckSubtoSup(node.initializer, node)
                 proc.emitExpr(loc.storeByRef(emitExpr(node.initializer)))
                 currJres = null
+                proc.stackEmpty();
+            } else if (inLoop(node)) {
+                // the variable is declared in a loop - we need to clear it on each iteration
+                emitBrk(node)
+                proc.emitExpr(loc.storeByRef(emitLit(undefined)))
                 proc.stackEmpty();
             }
             return loc;
