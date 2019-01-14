@@ -315,6 +315,8 @@ declare namespace pxt {
         name: string;
         // needs to have one of `path` or `subitems`
         path?: string;
+        // force opening in separate window
+        popout?: boolean;
         tutorial?: boolean;
         subitems?: DocMenuEntry[];
     }
