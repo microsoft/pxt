@@ -1233,17 +1233,17 @@ export class ProjectView
     }
 
     downloadScreenshotAsync(): Promise<void> {
-        return this.saveProjectAsPNGAsync(true, false);
+        return this.saveProjectAsPNGAsync(false);
     }
 
     requestScreenshotPromise: Promise<string>;
-    requestScreenshotAsync(force?: boolean): Promise<string> {
+    requestScreenshotAsync(): Promise<string> {
         if (this.requestScreenshotPromise)
             return this.requestScreenshotPromise;
 
         // make sure simulator is ready
         this.setState({ screenshoting: true });
-        simulator.driver.postMessage({ type: "screenshot", force } as pxsim.SimulatorScreenshotMessage);
+        simulator.driver.postMessage({ type: "screenshot" } as pxsim.SimulatorScreenshotMessage);
         return this.requestScreenshotPromise = new Promise<string>((resolve, reject) => {
             if (this.screenshotHandler) reject(new Error("screenshot in progress")); // this should not happend
             this.screenshotHandler = (img) => resolve(img);
@@ -1259,9 +1259,9 @@ export class ProjectView
             });
     }
 
-    private saveProjectAsPNGAsync(force: boolean, showDialog: boolean): Promise<void> {
+    private saveProjectAsPNGAsync(showDialog: boolean): Promise<void> {
         let img: string;
-        return this.requestScreenshotAsync(force)
+        return this.requestScreenshotAsync()
             .then(img_ => {
                 img = img_;
                 return this.exportProjectToFileAsync();
@@ -1307,7 +1307,7 @@ export class ProjectView
             return pkg.mainPkg.saveToJsonAsync(this.getPreferredEditor())
                 .then(project => pxt.commands.saveProjectAsync(project));
         }
-        if (pxt.appTarget.compile.saveAsPNG) return this.saveProjectAsPNGAsync(false, true);
+        if (pxt.appTarget.compile.saveAsPNG) return this.saveProjectAsPNGAsync(true);
         else return this.exportProjectToFileAsync()
             .then((buf: Uint8Array) => {
                 const fn = pkg.genFileName(".mkcd");

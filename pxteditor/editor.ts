@@ -204,7 +204,7 @@ namespace pxt.editor {
         openInstructions(): void;
         closeFlyout(): void;
         printCode(): void;
-        requestScreenshotAsync(force?: boolean): Promise<string>;
+        requestScreenshotAsync(): Promise<string>;
         downloadScreenshotAsync(): Promise<void>;
 
         toggleDebugging(): void;

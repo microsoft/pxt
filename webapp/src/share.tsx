@@ -68,14 +68,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             pubCurrent: header.pubCurrent,
             sharingError: false,
             screenshotUri: undefined
-        }, () => this.refreshScreenshot());
-    }
-
-    refreshScreenshot() {
-        if (pxt.appTarget.cloud && pxt.appTarget.cloud.thumbnails) {
-            this.props.parent.requestScreenshotAsync(false)
-                .done(img => this.setState({ screenshotUri: img }));
-        }
+        });
     }
 
     componentWillReceiveProps(newProps: ShareEditorProps) {
@@ -125,9 +118,15 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
     takeScreenshot() {
         pxt.tickEvent("shakre.takescreenshot", { view: 'computer', collapsedTo: '' + !this.props.parent.state.collapseEditorTools }, { interactiveConsent: true });
         if (this.state.screenshoting) return;
+        this.refreshScreenshot();
+    }
+
+    private refreshScreenshot() {
+        if (!pxt.appTarget.cloud || !pxt.appTarget.cloud.thumbnails || this.state.screenshoting)
+            return;
 
         this.setState({ screenshoting: true })
-        this.props.parent.requestScreenshotAsync(true)
+        this.props.parent.requestScreenshotAsync()
             .then(img => {
                 const st: ShareEditorState = { screenshoting: false };
                 if (img) st.screenshotUri = img;
