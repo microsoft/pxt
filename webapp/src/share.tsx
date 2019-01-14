@@ -68,7 +68,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             pubCurrent: header.pubCurrent,
             sharingError: false,
             screenshotUri: undefined
-        });
+        }, () => this.props.parent.startSimulator());
     }
 
     componentWillReceiveProps(newProps: ShareEditorProps) {

@@ -121,7 +121,7 @@ namespace pxsim {
                         const loader = icon.nextElementSibling as HTMLElement;
                         icon.style.display = '';
                         icon.className = '';
-                        loader.className = 'ui active loader';
+                        loader.style.display = '';
                     }
                     break;
                 case SimulatorState.Stopped:
@@ -133,7 +133,7 @@ namespace pxsim {
                         const loader = icon.nextElementSibling as HTMLElement;
                         icon.style.display = '';
                         icon.className = 'video play icon';
-                        loader.className = 'ui loader';
+                        loader.style.display = 'none';
                     }
                     this.scheduleFrameCleanup();
                     break;
@@ -144,7 +144,7 @@ namespace pxsim {
                         const icon = frame.nextElementSibling as HTMLElement;
                         const loader = icon.nextElementSibling as HTMLElement;
                         icon.style.display = 'none';
-                        loader.className = 'ui loader';
+                        loader.style.display = 'none';
                     }
                     break;
             }
@@ -253,7 +253,8 @@ namespace pxsim {
                 wrapper.appendChild(i);
 
                 const l = document.createElement("div");
-                l.className = "ui loader";
+                l.className = "ui active loader";
+                i.style.display = "none";
                 wrapper.appendChild(l);
             }
 
