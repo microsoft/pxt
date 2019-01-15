@@ -36,6 +36,7 @@ export class WebUSBPairEditor extends data.Component<WebUSBPairProps, WebUSBPair
             || this.state.loading != nextState.loading
             || this.state.device0 != nextState.device0
             || this.state.device1 != nextState.device1
+            || this.state.pairingError != nextState.pairingError
     }
 
     showAsync(): Promise<number> {
@@ -48,7 +49,13 @@ export class WebUSBPairEditor extends data.Component<WebUSBPairProps, WebUSBPair
     }
 
     show() {
-        this.setState({ visible: true, loading: false, device0: undefined, device1: undefined, pairingError: false });
+        this.setState({
+            visible: true,
+            loading: false,
+            device0: undefined,
+            device1: undefined,
+            pairingError: false
+        });
     }
 
     hide() {
@@ -75,6 +82,9 @@ export class WebUSBPairEditor extends data.Component<WebUSBPairProps, WebUSBPair
                     this.setState({ device0: serialNumber });
                 } else if (serialNumber != device0) {
                     this.setState({ device1: serialNumber })
+                } else {
+                    // same serial number, press reset
+                    this.setState({ pairingError: true });
                 }
             })
             .finally(() => {
@@ -88,7 +98,9 @@ export class WebUSBPairEditor extends data.Component<WebUSBPairProps, WebUSBPair
         const boardName = targetTheme.boardName || lf("device");
 
         const actions: sui.ModalButton[] = [];
-        if (!device0 && !device1) {
+        if (loading) {
+            // no buttons while loading
+        } else if (!device0 && !device1) {
             // first step of wizard
             actions.push({
                 label: lf("Pair"),
@@ -125,33 +137,30 @@ export class WebUSBPairEditor extends data.Component<WebUSBPairProps, WebUSBPair
                 closeOnDocumentClick
                 closeOnEscape>
                 <div>
-                    {!device0 && !device1 ?
-                        <div className="ui">
-                            <h3>Step 1</h3>
-                            <p>
-                                {lf("Connect {0} to computer with USB cable", boardName)}.
-                    {lf("Press Pair and select the device in the pairing dialog.")}
-                            </p>
-                        </div> : undefined}
-                    {device0 && !device1 ?
-                        <div className="ui">
-                            <h3>Step 2</h3>
-                            <p>
-                                {lf("Well done!")}
-                                {lf("Press Connect and select the device in the pairing dialog.")}
-                            </p>
-                        </div> : undefined}
-                    {device0 && device1 ?
-                        <div className="ui">
-                            <h3>All done!</h3>
-                            <p>
-                                {lf("Your device is paired and connected. Close the dialog to continue.")}
-                            </p>
-                        </div> : undefined}
+                    <div className="ui two top attached steps">
+                        <div className={`${(!device0 && !device1) ? 'active' : 'completed'} step`}>
+                            <i className="usb icon"></i>
+                            <div className="content">
+                                <div className="title">{lf("Pair")}</div>
+                            </div>
+                        </div>
+                        <div className={`${(device0 && !device1) ? 'active' : (device0 && device1) ? 'completed' : ''} step`}>
+                            <i className="plug icon"></i>
+                            <div className="content">
+                                <div className="title">{lf("Connect")}</div>
+                            </div>
+                        </div>
+                    </div>
+                    {!device0 && !device1 ? <p>{lf("Pairing allows your browser and your device to communicate together.")}</p> : undefined}
+                    {device0 && !device1 ? <p>{lf("Connecting allows the browser to download code automically and receive data from the device.")}</p> : undefined}
+                    {device0 && device1 ? <p>{lf("Your device is paired and ready to be used!")}</p> : undefined}
                     {pairingError ?
                         <div className="ui warning message">
                             {lf("Oops, it looks like pairing failed. Make sure your device is connected and try again.")}
                         </div> : undefined}
+                    {loading ? <div className="ui active dimmer">
+                        <div className="ui loader"></div>
+                    </div> : undefined}
                 </div>
             </sui.Modal>
         )
