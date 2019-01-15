@@ -2675,14 +2675,16 @@ ${lbl}: .short 0xffff
             if (hasRet)
                 proc.emitLbl(lbl)
 
-            // once we have emitted code for this function,
-            // we should emit code for all decls that are used
-            // as a result
+            // nothing should be on work list in final pass - everything should be already marked as used
             assert(!bin.finalPass || usedWorkList.length == 0, "!bin.finalPass || usedWorkList.length == 0")
-            while (usedWorkList.length > 0) {
-                let f = usedWorkList.pop()
-                emit(f)
-            }
+
+            // otherwise, we emit everything that's left, but only at top level
+            // to avoid unbounded stack
+            if (proc.isRoot)
+                while (usedWorkList.length > 0) {
+                    let f = usedWorkList.pop()
+                    emit(f)
+                }
 
             return lit
         }
