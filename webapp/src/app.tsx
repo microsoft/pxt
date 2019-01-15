@@ -161,8 +161,9 @@ export class ProjectView
         }
         let active = document.visibilityState == 'visible';
         pxt.debug(`page visibility: ${active}`)
-        this.setState({ active: active })
-        if (!active && (pxt.appTarget.simulator && pxt.appTarget.simulator.autoRun)) {
+        this.setState({ active: active });
+
+        if (!active && this.state.autoRun) {
             if (simulator.driver.state == pxsim.SimulatorState.Running) {
                 this.suspendSimulator();
                 this.setState({ resumeOnVisibility: true });
@@ -2010,7 +2011,10 @@ export class ProjectView
                 opts.trace = true;
 
             simulator.stop(false, true);
-            const autoRun = (this.state.autoRun || !!opts.clickTrigger) && !!pxt.appTarget.simulator.autoRun;
+            const simAutoRun = pxt.appTarget.simulator && (pxt.options.light
+                ? !!pxt.appTarget.simulator.autoRunLight
+                : !!pxt.appTarget.simulator.autoRun);
+            const autoRun = (this.state.autoRun || !!opts.clickTrigger) && simAutoRun;
             this.setState({ simState: pxt.editor.SimState.Starting, autoRun: autoRun });
 
             const state = this.editor.snapshotState()
