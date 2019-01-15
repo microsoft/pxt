@@ -245,7 +245,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                     </div> : undefined}
                     {action && this.loanedSimulator ? <div className="ui fields">
                         <div id="shareLoanedSimulator" className="ui seven wide field landscape only"></div>
-                        <div className="ui eight wide field">
+                        <div className="ui seven wide field">
                             <label>{lf("Name")}</label>
                             <div>
                                 <sui.Input ref="filenameinput" autoFocus={!pxt.BrowserUtils.isMobile()} id={"projectNameInput"}
