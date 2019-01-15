@@ -2011,9 +2011,9 @@ export class ProjectView
                 opts.trace = true;
 
             simulator.stop(false, true);
-            const simAutoRun = pxt.appTarget.simulator && pxt.options.light
+            const simAutoRun = pxt.appTarget.simulator && (pxt.options.light
                 ? !!pxt.appTarget.simulator.autoRunLight
-                : !!pxt.appTarget.simulator.autoRun;
+                : !!pxt.appTarget.simulator.autoRun);
             const autoRun = (this.state.autoRun || !!opts.clickTrigger) && simAutoRun;
             this.setState({ simState: pxt.editor.SimState.Starting, autoRun: autoRun });
 

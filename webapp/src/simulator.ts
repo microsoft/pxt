@@ -203,9 +203,9 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         },
         stoppedClass: pxt.appTarget.simulator && pxt.appTarget.simulator.stoppedClass,
         invalidatedClass: pxt.appTarget.simulator && pxt.appTarget.simulator.invalidatedClass,
-        embedIcons: pxt.appTarget.simulator && pxt.options.light
+        embedIcons: pxt.appTarget.simulator && (pxt.options.light
             ? !!pxt.appTarget.simulator.autoRunLight
-            : !!pxt.appTarget.simulator.autoRun
+            : !!pxt.appTarget.simulator.autoRun)
     };
     driver = new pxsim.SimulatorDriver(document.getElementById('simulators'), options);
     config = cfg
