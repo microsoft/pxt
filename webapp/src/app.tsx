@@ -39,6 +39,7 @@ import * as blocklyToolbox from "./blocksSnippets";
 import * as monacoToolbox from "./monacoSnippets";
 import * as greenscreen from "./greenscreen";
 import * as socketbridge from "./socketbridge";
+import * as webusbpair from "./webusbpair";
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -98,6 +99,7 @@ export class ProjectView
     home: projects.Projects;
     extensions: extensions.Extensions;
     shareEditor: share.ShareEditor;
+    webUSBPairEditor: webusbpair.WebUSBPairEditor;
     languagePicker: lang.LanguagePicker;
     scriptManagerDialog: scriptmanager.ScriptManagerDialog;
     importDialog: projects.ImportDialog;
@@ -1622,7 +1624,7 @@ export class ProjectView
         const variants = pxt.getHwVariants()
         if (variants.length == 0)
             return false
-        let pairAsync = () => cmds.showWebUSBPairingInstructionsAsync(null)
+        let pairAsync = () => cmds.showWebUSBPairingInstructionsAsync(null, undefined)
             .then(() => {
                 this.checkForHwVariant()
             }, err => {
@@ -1726,7 +1728,8 @@ export class ProjectView
                 return pxt.commands.deployCoreAsync(resp, {
                     reportDeviceNotFoundAsync: (docPath, compileResult) => this.showDeviceNotFoundDialogAsync(docPath, compileResult),
                     reportError: (e) => core.errorNotification(e),
-                    showNotification: (msg) => core.infoNotification(msg)
+                    showNotification: (msg) => core.infoNotification(msg),
+                    webUSBPairAsync: () => this.webUSBPairEditor.showAsync()
                 })
                     .catch(e => {
                         if (e.notifyUser) {
@@ -2258,6 +2261,11 @@ export class ProjectView
             this.shareEditor.show(header);
     }
 
+    private askPairingCount = 0;
+    showWebUSBPairDialog() {
+        this.webUSBPairEditor.show();
+    }
+
     showLanguagePicker() {
         this.languagePicker.show();
     }
@@ -2581,6 +2589,10 @@ export class ProjectView
         this.shareEditor = c;
     }
 
+    private handleWebUSBPairEditorRef = (c: webusbpair.WebUSBPairEditor) => {
+        this.webUSBPairEditor = c;
+    }
+
     private handleLanguagePickerRef = (c: lang.LanguagePicker) => {
         this.languagePicker = c;
     }
@@ -2710,6 +2722,7 @@ export class ProjectView
                 {sandbox ? undefined : <projects.ExitAndSaveDialog parent={this} ref={this.handleExitAndSaveDialogRef} />}
                 <projects.ChooseHwDialog parent={this} ref={this.handleChooseHwDialogRef} />
                 {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={this.handleShareEditorRef} loading={this.state.publishing} />}
+                {sandbox || !pxt.usb.isEnabled ? undefined : <webusbpair.WebUSBPairEditor parent={this} ref={this.handleWebUSBPairEditorRef} />}
                 {selectLanguage ? <lang.LanguagePicker parent={this} ref={this.handleLanguagePickerRef} /> : undefined}
                 {sandbox ? <container.SandboxFooter parent={this} /> : undefined}
                 {hideMenuBar ? <div id="editorlogo"><a className="poweredbylogo"></a></div> : undefined}

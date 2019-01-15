@@ -383,6 +383,14 @@ namespace pxt.usb {
             });
     }
 
+    export function deviceSerialNumberAsync(): Promise<string> {
+        if (!isEnabled) return Promise.resolve(undefined);
+
+        return getDeviceAsync()
+            .then(dev => dev.serialNumber)
+            .catch(e => undefined);
+    }
+
     function getDeviceAsync(): Promise<USBDevice> {
         return ((navigator as any).usb.getDevices() as Promise<USBDevice[]>)
             .then<USBDevice>((devs: USBDevice[]) => {

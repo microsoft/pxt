@@ -3,6 +3,7 @@ namespace pxt.commands {
         reportError?: (e: string) => void;
         showNotification?: (msg: string) => void;
         reportDeviceNotFoundAsync?: (docPath: string, resp?: ts.pxtc.CompileResult) => Promise<void>;
+        webUSBPairAsync?: () => Promise<void>;
     }
 
     // overriden by targets
