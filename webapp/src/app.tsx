@@ -1944,6 +1944,11 @@ export class ProjectView
     }
 
     shouldStartSimulator(): boolean {
+        switch (this.state.simState) {
+            case pxt.editor.SimState.Starting:
+            case pxt.editor.SimState.Running:
+                return false; // already reunning
+        }
         const hasHome = !pxt.shell.isControllerMode();
         if (!hasHome) return true;
         return !this.state.home;
