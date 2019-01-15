@@ -106,14 +106,25 @@ export class WebUSBPairEditor extends data.Component<WebUSBPairProps, WebUSBPair
         } else if (!device0 && !device1) {
             // first step of wizard
             actions.push({
+                label: lf("Skip"),
+                onclick: this.hide,
+                icon: 'close',
+                className: `secondary`
+            });
+            actions.push({
                 label: lf("Pair"),
                 onclick: this.pair,
                 icon: 'usb',
-                loading,
                 className: 'primary'
             });
         } else if (device0 && !device1) {
             // step 2
+            actions.push({
+                label: lf("Skip"),
+                onclick: this.hide,
+                icon: 'close',
+                className: `secondary`
+            });
             actions.push({
                 label: lf("Connect"),
                 onclick: this.pair,
@@ -155,8 +166,14 @@ export class WebUSBPairEditor extends data.Component<WebUSBPairProps, WebUSBPair
                         </div>
                     </div>
                     <div className="ui basic segment">
-                        {!device0 && !device1 ? <p>{lf("Pairing allows your browser and your device to communicate together.")}</p> : undefined}
-                        {device0 && !device1 ? <p>{lf("Connecting allows the browser to download code automically and receive data from the device.")}</p> : undefined}
+                        {!device0 && !device1 ? <p>
+                            {lf("Pair to download code in your device automatically.")}
+                            {lf("Connect your device to your computer with a USB cable and click 'Pair' to get started.")}
+                        </p> : undefined}
+                        {device0 && !device1 ? <p>
+                            {lf("Pairing successful! We need to connect to the device again to complete the procedure.")}
+                            {lf("Press 'Connect' to continue.")}
+                        </p> : undefined}
                         {device0 && device1 ? <p>{lf("Your device is paired and ready to be used!")}</p> : undefined}
                     </div>
                     {pairingError ?
