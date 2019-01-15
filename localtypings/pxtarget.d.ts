@@ -127,7 +127,8 @@ declare namespace pxt {
     }
 
     interface AppSimulator {
-        autoRun?: boolean;
+        autoRun?: boolean; // enable autoRun in regular mode, not light mode
+        autoRunLight?: boolean; // force autorun in light mode
         stopOnChange?: boolean;
         hideRestart?: boolean;
         // moved to theme

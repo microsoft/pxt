@@ -14,7 +14,7 @@ namespace pxsim {
         simUrl?: string;
         stoppedClass?: string;
         invalidatedClass?: string;
-        embedIcons?: boolean;
+        autoRun?: boolean;
     }
 
     export enum SimulatorState {
@@ -113,39 +113,32 @@ namespace pxsim {
         }
 
         private setFrameState(frame: HTMLIFrameElement) {
+            const icon = frame.nextElementSibling as HTMLElement;
+            const loader = icon.nextElementSibling as HTMLElement;
             // apply state
             switch (this.state) {
                 case SimulatorState.Starting:
-                    if (this.options.embedIcons) {
-                        const icon = frame.nextElementSibling as HTMLElement;
-                        const loader = icon.nextElementSibling as HTMLElement;
-                        icon.style.display = '';
-                        icon.className = '';
-                        loader.style.display = '';
-                    }
+                    icon.style.display = '';
+                    icon.className = '';
+                    loader.style.display = '';
                     break;
                 case SimulatorState.Stopped:
                 case SimulatorState.Suspended:
-                    U.addClass(frame, (this.state == SimulatorState.Stopped || this.options.embedIcons)
+                    U.addClass(frame, (this.state == SimulatorState.Stopped || this.options.autoRun)
                         ? this.stoppedClass : this.invalidatedClass);
-                    if (this.options.embedIcons) {
-                        const icon = frame.nextElementSibling as HTMLElement;
-                        const loader = icon.nextElementSibling as HTMLElement;
+                    if (!this.options.autoRun) {
                         icon.style.display = '';
                         icon.className = 'video play icon';
-                        loader.style.display = 'none';
-                    }
+                    } else
+                        icon.style.display = 'none';
+                    loader.style.display = 'none';
                     this.scheduleFrameCleanup();
                     break;
                 default:
                     U.removeClass(frame, this.stoppedClass);
                     U.removeClass(frame, this.invalidatedClass);
-                    if (this.options.embedIcons) {
-                        const icon = frame.nextElementSibling as HTMLElement;
-                        const loader = icon.nextElementSibling as HTMLElement;
-                        icon.style.display = 'none';
-                        loader.style.display = 'none';
-                    }
+                    icon.style.display = 'none';
+                    loader.style.display = 'none';
                     break;
             }
         }
@@ -216,7 +209,7 @@ namespace pxsim {
 
         private createFrame(light?: boolean): HTMLDivElement {
             const wrapper = document.createElement("div") as HTMLDivElement;
-            wrapper.className = `simframe ${this.options.embedIcons ? 'ui embed' : ''}`;
+            wrapper.className = `simframe ui embed`;
 
             const frame = document.createElement('iframe') as HTMLIFrameElement;
             frame.id = 'sim-frame-' + this.nextId()
@@ -234,29 +227,27 @@ namespace pxsim {
 
             wrapper.appendChild(frame);
 
-            if (this.options.embedIcons) {
-                const i = document.createElement("i");
-                i.className = "video play icon";
-                i.style.display = "none";
-                i.onclick = (ev) => {
-                    ev.preventDefault();
-                    if (this.state != SimulatorState.Running
-                        && this.state != SimulatorState.Starting) {
-                        // we need to request to restart the simulator
-                        if (this.options.restart)
-                            this.options.restart();
-                        else
-                            this.start();
-                    }
-                    return false;
+            const i = document.createElement("i");
+            i.className = "video play icon";
+            i.style.display = "none";
+            i.onclick = (ev) => {
+                ev.preventDefault();
+                if (this.state != SimulatorState.Running
+                    && this.state != SimulatorState.Starting) {
+                    // we need to request to restart the simulator
+                    if (this.options.restart)
+                        this.options.restart();
+                    else
+                        this.start();
                 }
-                wrapper.appendChild(i);
-
-                const l = document.createElement("div");
-                l.className = "ui active loader";
-                i.style.display = "none";
-                wrapper.appendChild(l);
+                return false;
             }
+            wrapper.appendChild(i);
+
+            const l = document.createElement("div");
+            l.className = "ui active loader";
+            i.style.display = "none";
+            wrapper.appendChild(l);
 
             return wrapper;
         }
