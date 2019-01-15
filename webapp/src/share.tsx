@@ -55,7 +55,15 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             simulator.driver.unloanSimulator();
             this.loanedSimulator = undefined;
         }
-        this.setState({ visible: false, screenshotUri: undefined });
+        this.setState({ visible: false, screenshotUri: undefined },
+            () => {
+                // Edge has a rendering bug after closing this dialog
+                if (pxt.BrowserUtils.isEdge()) {
+                    const el = document.body;
+                    el.style.display = 'none';
+                    el.style.display = '';                    
+                }
+            });
     }
 
     show(header: pxt.workspace.Header) {
