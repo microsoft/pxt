@@ -1570,7 +1570,7 @@ export class ProjectView
     pair() {
         const prePairAsync = pxt.commands.webUsbPairDialogAsync
             ? pxt.commands.webUsbPairDialogAsync(core.confirmAsync)
-            : Promise.resolve(1);
+            : this.webUSBPairEditor.showAsync()
         return prePairAsync.then((res) => {
             if (res) {
                 return pxt.usb.pairAsync()
@@ -1729,7 +1729,7 @@ export class ProjectView
                     reportDeviceNotFoundAsync: (docPath, compileResult) => this.showDeviceNotFoundDialogAsync(docPath, compileResult),
                     reportError: (e) => core.errorNotification(e),
                     showNotification: (msg) => core.infoNotification(msg),
-                    webUSBPairAsync: () => this.webUSBPairEditor.showAsync()
+                    webUSBPairAsync: () => this.webUSBPairEditor ? this.webUSBPairEditor.showAsync() : Promise.resolve(0)
                 })
                     .catch(e => {
                         if (e.notifyUser) {
@@ -2259,11 +2259,6 @@ export class ProjectView
         const header = this.state.header;
         if (header)
             this.shareEditor.show(header);
-    }
-
-    private askPairingCount = 0;
-    showWebUSBPairDialog() {
-        this.webUSBPairEditor.show();
     }
 
     showLanguagePicker() {

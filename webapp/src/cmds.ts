@@ -245,7 +245,7 @@ function showFirmwareUpdateInstructionsAsync(resp: pxtc.CompileResult, d: pxt.co
 
 export function showWebUSBPairingInstructionsAsync(resp: pxtc.CompileResult, d: pxt.commands.DeployOptions): Promise<void> {
     pxt.tickEvent(`webusb.pair`);
-    return (d.webUSBPairAsync ? d.webUSBPairAsync() : Promise.resolve())
+    return (d.webUSBPairAsync ? d.webUSBPairAsync() : Promise.resolve(0))
         .then(() => hidDeployCoreAsync(resp))
         .catch(e => browserDownloadDeployCoreAsync(resp));
 }

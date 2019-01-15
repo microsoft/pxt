@@ -17,8 +17,8 @@ export interface WebUSBPairState {
 }
 
 export class WebUSBPairEditor extends data.Component<WebUSBPairProps, WebUSBPairState> {
-    private showPromise: Promise<void>;
-    private showResolve: () => void;
+    private showPromise: Promise<number>;
+    private showResolve: (r: number) => void;
 
     constructor(props: WebUSBPairProps) {
         super(props);
@@ -38,7 +38,7 @@ export class WebUSBPairEditor extends data.Component<WebUSBPairProps, WebUSBPair
             || this.state.device1 != nextState.device1
     }
 
-    showAsync(): Promise<void> {
+    showAsync(): Promise<number> {
         if (!this.showPromise)
             this.showPromise = new Promise((resolve, reject) => {
                 this.showResolve = resolve;
@@ -54,7 +54,7 @@ export class WebUSBPairEditor extends data.Component<WebUSBPairProps, WebUSBPair
     hide() {
         this.setState({ visible: false });
         if (this.showPromise) {
-            this.showResolve();
+            this.showResolve(this.state.device0 && this.state.device1 ? 1 : 0);
             this.showPromise = undefined;
             this.showResolve = undefined;
         }
