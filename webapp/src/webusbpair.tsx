@@ -72,18 +72,22 @@ export class WebUSBPairEditor extends data.Component<WebUSBPairProps, WebUSBPair
         if (loading)
             return; // already in system dialog
 
+        pxt.tickEvent(`webusb.syspair.start`)
         this.setState({ loading: true, pairingError: false });
         pxt.usb.pairAsync()
             .then(() => pxt.usb.deviceInfo())
             .then(info => {
                 if (!info) {
+                    pxt.tickEvent(`webusb.syspair.error`)
                     this.setState({ pairingError: true });
                     return
                 }
                 const sn = info.serialNumber + info.vendorId + info.productId; // TODO: need to identify bootloader vs app
                 if (!device0) {
+                    pxt.tickEvent(`webusb.syspair.ok1`)
                     this.setState({ device0: sn });
                 } else if (sn != device0) {
+                    pxt.tickEvent(`webusb.syspair.ok2`)
                     this.setState({ device1: sn })
                 } else {
                     // same serial number, press reset
