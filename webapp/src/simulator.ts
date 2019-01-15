@@ -203,7 +203,7 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         },
         stoppedClass: pxt.appTarget.simulator && pxt.appTarget.simulator.stoppedClass,
         invalidatedClass: pxt.appTarget.simulator && pxt.appTarget.simulator.invalidatedClass,
-        embedIcons: pxt.appTarget.simulator && (pxt.options.light
+        autoRun: pxt.appTarget.simulator && (pxt.options.light
             ? !!pxt.appTarget.simulator.autoRunLight
             : !!pxt.appTarget.simulator.autoRun)
     };
