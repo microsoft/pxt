@@ -83,7 +83,7 @@ namespace pxt.usb {
         packetSize: number;
     }
 
-    export interface USBDevice {
+    export interface USBDeviceInfo {
         vendorId: number; // VID.*
         productId: number; // 589
 
@@ -101,7 +101,9 @@ namespace pxt.usb {
         usbVersionMajor: number; // 2
         usbVersionMinor: number; // 1
         usbVersionSubminor: number; // 0
+    }
 
+    export interface USBDevice extends USBDeviceInfo {
         configurations: USBConfiguration[];
 
         opened: boolean;
@@ -383,11 +385,11 @@ namespace pxt.usb {
             });
     }
 
-    export function deviceSerialNumberAsync(): Promise<string> {
+    export function deviceInfo(): Promise<USBDeviceInfo> {
         if (!isEnabled) return Promise.resolve(undefined);
 
         return getDeviceAsync()
-            .then(dev => dev.serialNumber)
+            .then(dev => dev)
             .catch(e => undefined);
     }
 

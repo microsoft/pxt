@@ -74,14 +74,17 @@ export class WebUSBPairEditor extends data.Component<WebUSBPairProps, WebUSBPair
 
         this.setState({ loading: true, pairingError: false });
         pxt.usb.pairAsync()
-            .then(() => pxt.usb.deviceSerialNumberAsync())
-            .then(serialNumber => {
-                if (!serialNumber) {
+            .then(() => pxt.usb.deviceInfo())
+            .then(info => {
+                if (!info) {
                     this.setState({ pairingError: true });
-                } else if (!device0) {
-                    this.setState({ device0: serialNumber });
-                } else if (serialNumber != device0) {
-                    this.setState({ device1: serialNumber })
+                    return
+                }
+                const sn = info.serialNumber + info.vendorId + info.productId; // TODO: need to identify bootloader vs app
+                if (!device0) {
+                    this.setState({ device0: sn });
+                } else if (sn != device0) {
+                    this.setState({ device1: sn })
                 } else {
                     // same serial number, press reset
                     this.setState({ pairingError: true });
@@ -109,7 +112,7 @@ export class WebUSBPairEditor extends data.Component<WebUSBPairProps, WebUSBPair
                 loading,
                 className: 'primary'
             });
-        } else if (device0) {
+        } else if (device0 && !device1) {
             // step 2
             actions.push({
                 label: lf("Connect"),
@@ -139,19 +142,19 @@ export class WebUSBPairEditor extends data.Component<WebUSBPairProps, WebUSBPair
                 <div>
                     <div className="ui two top attached steps">
                         <div className={`${(!device0 && !device1) ? 'active' : 'completed'} step`}>
-                            <i className="usb icon"></i>
+                            <i className={`${!device0 && !device1 ? 'usb' : 'check'} icon`}></i>
                             <div className="content">
                                 <div className="title">{lf("Pair")}</div>
                             </div>
                         </div>
                         <div className={`${(device0 && !device1) ? 'active' : (device0 && device1) ? 'completed' : ''} step`}>
-                            <i className="plug icon"></i>
+                            <i className={`${device0 && device1 ? "check" : "plug"} icon`}></i>
                             <div className="content">
                                 <div className="title">{lf("Connect")}</div>
                             </div>
                         </div>
                     </div>
-                    <div className="ui segment">
+                    <div className="ui basic segment">
                         {!device0 && !device1 ? <p>{lf("Pairing allows your browser and your device to communicate together.")}</p> : undefined}
                         {device0 && !device1 ? <p>{lf("Connecting allows the browser to download code automically and receive data from the device.")}</p> : undefined}
                         {device0 && device1 ? <p>{lf("Your device is paired and ready to be used!")}</p> : undefined}
