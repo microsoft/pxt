@@ -224,7 +224,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         }
 
         return (
-            <sui.Modal isOpen={visible} className="sharedialog" size={pxt.appTarget.cloud && pxt.appTarget.cloud.thumbnails ? "large" : "small"}
+            <sui.Modal isOpen={visible} className="sharedialog" size={this.loanedSimulator ? "large" : "small"}
                 onClose={this.hide}
                 dimmer={true} header={lf("Share Project")}
                 closeIcon={true} buttons={actions}
