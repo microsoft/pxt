@@ -938,8 +938,7 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
                                 ariaLabel={cfg.card.name}
                                 description={cfg.card.description}
                                 imageUrl={cfg.card.imageUrl}
-                                //learnMoreUrl={cfg.card.learnMoreUrl}
-                                //buyUrl={cfg.card.buyUrl}
+                                learnMoreUrl={cfg.card.learnMoreUrl}
                                 onClick={cfg.card.onClick}
                             />
                         )}
@@ -950,7 +949,7 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
                                 ariaLabel={card.name}
                                 description={card.description}
                                 imageUrl={card.imageUrl}
-                                //learnMoreUrl={card.learnMoreUrl}
+                                learnMoreUrl={card.learnMoreUrl}
                                 buyUrl={card.buyUrl}
                                 onClick={card.onClick}
                             />
