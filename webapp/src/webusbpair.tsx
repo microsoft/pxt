@@ -151,9 +151,11 @@ export class WebUSBPairEditor extends data.Component<WebUSBPairProps, WebUSBPair
                             </div>
                         </div>
                     </div>
-                    {!device0 && !device1 ? <p>{lf("Pairing allows your browser and your device to communicate together.")}</p> : undefined}
-                    {device0 && !device1 ? <p>{lf("Connecting allows the browser to download code automically and receive data from the device.")}</p> : undefined}
-                    {device0 && device1 ? <p>{lf("Your device is paired and ready to be used!")}</p> : undefined}
+                    <div className="ui segment">
+                        {!device0 && !device1 ? <p>{lf("Pairing allows your browser and your device to communicate together.")}</p> : undefined}
+                        {device0 && !device1 ? <p>{lf("Connecting allows the browser to download code automically and receive data from the device.")}</p> : undefined}
+                        {device0 && device1 ? <p>{lf("Your device is paired and ready to be used!")}</p> : undefined}
+                    </div>
                     {pairingError ?
                         <div className="ui warning message">
                             {lf("Oops, it looks like pairing failed. Make sure your device is connected and try again.")}
