@@ -115,12 +115,6 @@ function chromifyAsync(canvas: HTMLCanvasElement, title: string): HTMLCanvasElem
     ctx.fillStyle = 'white'
     ctx.fillRect(0, 0, work.width, work.height)
 
-    // border
-    {
-        ctx.strokeStyle = 'black';
-        ctx.strokeRect(1, 1, work.width - 1, work.height - 1);
-    }
-
     // draw image
     ctx.drawImage(canvas, leftBorder, topBorder);
 
