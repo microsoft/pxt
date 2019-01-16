@@ -55,15 +55,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             simulator.driver.unloanSimulator();
             this.loanedSimulator = undefined;
         }
-        this.setState({ visible: false, screenshotUri: undefined },
-            () => {
-                // Edge has a rendering bug after closing this dialog
-                if (pxt.BrowserUtils.isEdge()) {
-                    const el = document.body;
-                    el.style.display = 'none';
-                    el.style.display = '';                    
-                }
-            });
+        this.setState({ visible: false, screenshotUri: undefined });
     }
 
     show(header: pxt.workspace.Header) {
@@ -232,10 +224,10 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         }
 
         const disclaimer = lf("You need to publish your project to share it or embed it in other web pages.") + " " +
-        lf("You acknowledge having consent to publish this project.");
+            lf("You acknowledge having consent to publish this project.");
 
         return (
-            <sui.Modal isOpen={visible} className="sharedialog" size={this.loanedSimulator ? "" : "small"}
+            <sui.Modal isOpen={visible} className="sharedialog" size={pxt.appTarget.cloud && pxt.appTarget.cloud.thumbnails ? "" : "small"}
                 onClose={this.hide}
                 dimmer={true} header={lf("Share Project")}
                 closeIcon={true} buttons={actions}
