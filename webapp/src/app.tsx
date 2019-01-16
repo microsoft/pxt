@@ -127,7 +127,8 @@ export class ProjectView
             showFiles: false,
             home: shouldShowHomeScreen,
             active: document.visibilityState == 'visible' || pxt.BrowserUtils.isElectron() || pxt.winrt.isWinRT() || pxt.appTarget.appTheme.dontSuspendOnVisibility,
-            collapseEditorTools: simcfg.headless || (!isSandbox && pxt.BrowserUtils.isMobile()),
+            // don't start collapsed in mobile since we can go fullscreen now
+            collapseEditorTools: simcfg.headless,
             highContrast: isHighContrast,
             simState: pxt.editor.SimState.Stopped,
             autoRun: true // always start simulator by default
