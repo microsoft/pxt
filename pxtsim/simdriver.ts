@@ -259,6 +259,14 @@ namespace pxsim {
             return wrapper;
         }
 
+        public preload(aspectRatio: number) {
+            if (!this.simFrames().length) {
+                this.container.appendChild(this.createFrame());
+                this.applyAspectRatio(aspectRatio);
+                this.setStarting();
+            }
+        }
+
         public stop(unload = false, starting = false) {
             this.clearDebugger();
             this.postMessage({ type: 'stop' });
@@ -327,14 +335,15 @@ namespace pxsim {
             }, 5000);
         }
 
-        private applyAspectRatio() {
+        private applyAspectRatio(ratio?: number) {
             const frames = this.simFrames();
-            frames.forEach(frame => this.applyAspectRatioToFrame(frame));
+            frames.forEach(frame => this.applyAspectRatioToFrame(frame, ratio));
         }
 
-        private applyAspectRatioToFrame(frame: HTMLIFrameElement) {
+        private applyAspectRatioToFrame(frame: HTMLIFrameElement, ratio?: number) {
+            const r = ratio || this.runOptions.aspectRatio;
             frame.parentElement.style.paddingBottom =
-            (100 / this.runOptions.aspectRatio) + "%";
+                (100 / r) + "%";
         }
 
         private cleanupFrames() {

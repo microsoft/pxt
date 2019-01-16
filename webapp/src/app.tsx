@@ -875,6 +875,8 @@ export class ProjectView
 
         pxt.debug(`loading ${h.id} (pxt v${h.targetVersion})`);
         this.stopSimulator(true);
+        if (pxt.appTarget.simulator && pxt.appTarget.simulator.aspectRatio)
+            simulator.driver.preload(pxt.appTarget.simulator.aspectRatio);
         this.clearSerial()
         this.setState({ autoRun: true }); // always start simulator once at least
 
@@ -3196,8 +3198,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const isSandbox = pxt.shell.isSandboxMode() || pxt.shell.isReadOnly();
     const isController = pxt.shell.isControllerMode();
+    const theme = pxt.appTarget.appTheme;
     if (query["ws"]) workspace.setupWorkspace(query["ws"]);
-    else if ((pxt.appTarget.appTheme.allowParentController || isController) && pxt.BrowserUtils.isIFrame()) workspace.setupWorkspace("iframe");
+    else if ((theme.allowParentController || isController) && pxt.BrowserUtils.isIFrame()) workspace.setupWorkspace("iframe");
     else if (isSandbox) workspace.setupWorkspace("mem");
     else if (pxt.winrt.isWinRT()) workspace.setupWorkspace("uwp");
     else if (pxt.BrowserUtils.isIpcRenderer() && pxt.BrowserUtils.isSafari()) workspace.setupWorkspace("idb");
@@ -3208,8 +3211,8 @@ document.addEventListener("DOMContentLoaded", () => {
             if (mlang && window.location.hash.indexOf(mlang[0]) >= 0) {
                 pxt.BrowserUtils.changeHash(window.location.hash.replace(mlang[0], ""));
             }
-            const useLang = mlang ? mlang[3] : (lang.getCookieLang() || pxt.appTarget.appTheme.defaultLocale || (navigator as any).userLanguage || navigator.language);
-            const live = !pxt.appTarget.appTheme.disableLiveTranslations || (mlang && !!mlang[1]);
+            const useLang = mlang ? mlang[3] : (lang.getCookieLang() || theme.defaultLocale || (navigator as any).userLanguage || navigator.language);
+            const live = !theme.disableLiveTranslations || (mlang && !!mlang[1]);
             const force = !!mlang && !!mlang[2];
             return Util.updateLocalizationAsync(
                 pxt.appTarget.id,
@@ -3248,9 +3251,9 @@ document.addEventListener("DOMContentLoaded", () => {
         .then(() => cmds.initCommandsAsync())
         .then(() => {
             // editor messages need to be enabled early, in case workspace provider is IFrame
-            if (pxt.appTarget.appTheme.allowParentController
-                || pxt.appTarget.appTheme.allowPackageExtensions
-                || pxt.appTarget.appTheme.allowSimulatorTelemetry
+            if (theme.allowParentController
+                || theme.allowPackageExtensions
+                || theme.allowSimulatorTelemetry
                 || pxt.shell.isControllerMode())
                 pxt.editor.bindEditorMessages(getEditorAsync);
 
