@@ -26,6 +26,7 @@ export interface ShareEditorState {
     sharingError?: boolean;
     loading?: boolean;
     projectName?: string;
+    thumbnails?: boolean;
     takingScreenshot?: boolean;
     screenshotUri?: string;
 }
@@ -59,9 +60,14 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
     }
 
     show(header: pxt.workspace.Header) {
-        if (pxt.appTarget.cloud && pxt.appTarget.cloud.thumbnails)
+        // TODO investigate why edge does not render well
+        // upon hiding dialog, the screen does not redraw properly
+        const thumbnails = pxt.appTarget.cloud && pxt.appTarget.cloud.thumbnails
+            && !pxt.BrowserUtils.isEdge();
+        if (thumbnails)
             this.loanedSimulator = simulator.driver.loanSimulator();
         this.setState({
+            thumbnails,
             visible: true,
             mode: ShareMode.Code,
             pubCurrent: header.pubCurrent,
@@ -121,7 +127,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
     }
 
     private refreshScreenshot() {
-        if (!pxt.appTarget.cloud || !pxt.appTarget.cloud.thumbnails || this.state.takingScreenshot)
+        if (!this.state.thumbnails || this.state.takingScreenshot)
             return;
 
         this.setState({ takingScreenshot: true })
@@ -134,7 +140,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
     }
 
     renderCore() {
-        const { visible, projectName: newProjectName, loading, takingScreenshot, screenshotUri } = this.state;
+        const { visible, projectName: newProjectName, loading, takingScreenshot, screenshotUri, thumbnails } = this.state;
         const targetTheme = pxt.appTarget.appTheme;
         const header = this.props.parent.state.header;
         const advancedMenu = !!this.state.advancedMenu;
@@ -227,7 +233,8 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             lf("You acknowledge having consent to publish this project.");
 
         return (
-            <sui.Modal isOpen={visible} className="sharedialog" size={pxt.appTarget.cloud && pxt.appTarget.cloud.thumbnails ? "" : "small"}
+            <sui.Modal isOpen={visible} className="sharedialog" 
+                size={thumbnails ? "" : "small"}
                 onClose={this.hide}
                 dimmer={true} header={lf("Share Project")}
                 closeIcon={true} buttons={actions}
