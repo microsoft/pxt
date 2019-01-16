@@ -1251,8 +1251,9 @@ export class ProjectView
             if (this.screenshotHandler) reject(new Error("screenshot in progress")); // this should not happend
             this.screenshotHandler = (img) => resolve(img);
         })
-            .timeout(3000) // simulator might be stopped or in bad shape
+            .timeout(1000) // simulator might be stopped or in bad shape
             .catch(e => {
+                pxt.tickEvent('screenshot.timeout');
                 return undefined;
             })
             .finally(() => {
