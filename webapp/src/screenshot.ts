@@ -117,9 +117,7 @@ function chromifyAsync(canvas: HTMLCanvasElement, title: string): HTMLCanvasElem
 
     // border
     {
-        ctx.strokeStyle = 'grey';
-        ctx.lineWidth = 2;
-        ctx.shadowBlur = 2;
+        ctx.strokeStyle = 'black';
         ctx.strokeRect(1, 1, work.width - 1, work.height - 1);
     }
 
