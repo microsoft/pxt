@@ -1251,8 +1251,9 @@ export class ProjectView
             if (this.screenshotHandler) reject(new Error("screenshot in progress")); // this should not happend
             this.screenshotHandler = (img) => resolve(img);
         })
-            .timeout(3000) // simulator might be stopped or in bad shape
+            .timeout(1000) // simulator might be stopped or in bad shape
             .catch(e => {
+                pxt.tickEvent('screenshot.timeout');
                 return undefined;
             })
             .finally(() => {
@@ -1959,8 +1960,12 @@ export class ProjectView
     }
 
     restartSimulator(debug?: boolean) {
-        this.stopSimulator();
-        return this.startSimulator(debug);
+        if (this.state.simState == pxt.editor.SimState.Stopped
+            || simulator.driver.isDebug() != !!debug)
+            this.startSimulator(debug);
+        else {
+            simulator.driver.restart(); // fast restart
+        }
     }
 
     startSimulator(debug?: boolean, clickTrigger?: boolean) {

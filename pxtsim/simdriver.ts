@@ -74,6 +74,10 @@ namespace pxsim {
         constructor(public container: HTMLElement, public options: SimulatorDriverOptions = {}) {
         }
 
+        isDebug() {
+            return this.runOptions && !!this.runOptions.debug;
+        }
+
         setDirty() {
             // We suspend the simulator here to stop it from running without
             // interfering with the user's stopped state. We're not doing this check
@@ -392,11 +396,18 @@ namespace pxsim {
             this.start();
         }
 
+        public restart() {
+            this.stop();
+            this.start();
+        }
+
         private start() {
             this.clearDebugger();
             this.addEventListeners();
             this.applyAspectRatio();
             this.scheduleFrameCleanup();
+
+            if (!this.currentRuntime) return; // nothing to do
 
             // first frame
             let frame = this.simFrames()[0];

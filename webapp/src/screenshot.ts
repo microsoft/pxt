@@ -115,12 +115,6 @@ function chromifyAsync(canvas: HTMLCanvasElement, title: string): HTMLCanvasElem
     ctx.fillStyle = 'white'
     ctx.fillRect(0, 0, work.width, work.height)
 
-    // border
-    {
-        ctx.strokeStyle = '2px grey';
-        ctx.rect(0, 0, work.width, work.height);
-    }
-
     // draw image
     ctx.drawImage(canvas, leftBorder, topBorder);
 
@@ -155,8 +149,22 @@ function chromifyAsync(canvas: HTMLCanvasElement, title: string): HTMLCanvasElem
     return work;
 }
 
+function defaultCanvasAsync(): Promise<HTMLCanvasElement> {
+    const cvs = document.createElement("canvas");
+    cvs.width = 160;
+    cvs.height = 120;
+    const ctx = cvs.getContext("2d");
+    ctx.fillStyle = '#33b';
+    ctx.fillRect(0, 0, 160, 120);
+    ctx.font = '30px monospace';
+    ctx.fillStyle = '#fff';
+    ctx.fillText(':(', 60, 70);
+    return Promise.resolve(cvs);
+}
+
 export function encodeBlobAsync(title: string, dataURL: string, blob: Uint8Array) {
-    return pxt.BrowserUtils.loadCanvasAsync(dataURL)
+    // if screenshot failed, dataURL is empty
+    return (dataURL ? pxt.BrowserUtils.loadCanvasAsync(dataURL) : defaultCanvasAsync())
         .then(cvs => chromifyAsync(cvs, title))
         .then(canvas => {
             const neededBytes = imageHeaderSize + blob.length
