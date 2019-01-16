@@ -233,7 +233,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             lf("You acknowledge having consent to publish this project.");
 
         return (
-            <sui.Modal isOpen={visible} className="sharedialog" 
+            <sui.Modal isOpen={visible} className="sharedialog"
                 size={thumbnails ? "" : "small"}
                 onClose={this.hide}
                 dimmer={true} header={lf("Share Project")}
