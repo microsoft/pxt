@@ -223,8 +223,6 @@ namespace pxsim {
             frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
             let simUrl = this.options.simUrl || ((window as any).pxtConfig || {}).simUrl || "/sim/simulator.html"
             frame.className = 'no-select'
-            if (this.runOptions && this.runOptions.aspectRatio)
-                wrapper.style.paddingBottom = (100 / this.runOptions.aspectRatio) + "%";
             frame.src = simUrl + '#' + frame.id;
             frame.frameBorder = "0";
             frame.dataset['runid'] = this.runId;
