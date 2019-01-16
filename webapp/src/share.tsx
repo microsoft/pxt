@@ -235,7 +235,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         lf("You acknowledge having consent to publish this project.");
 
         return (
-            <sui.Modal isOpen={visible} className="sharedialog" size={this.loanedSimulator ? "large" : "small"}
+            <sui.Modal isOpen={visible} className="sharedialog" size={this.loanedSimulator ? "" : "small"}
                 onClose={this.hide}
                 dimmer={true} header={lf("Share Project")}
                 closeIcon={true} buttons={actions}
@@ -252,8 +252,8 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                         </div>
                     </div> : undefined}
                     {action && this.loanedSimulator ? <div className="ui fields">
-                        <div id="shareLoanedSimulator" className="ui seven wide field landscape only"></div>
-                        <div className="ui seven wide field">
+                        <div id="shareLoanedSimulator" className="ui six wide field landscape only"></div>
+                        <div className="ui ten wide field">
                             <label>{lf("Name")}</label>
                             <div>
                                 <sui.Input ref="filenameinput" autoFocus={!pxt.BrowserUtils.isMobile()} id={"projectNameInput"}
@@ -261,16 +261,15 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                                     value={newProjectName || ''} onChange={this.handleProjectNameChange} />
                             </div>
                             <div className="ui segment landscape only">{screenshotUri
-                                ? <img className="ui fluid image pixelart" src={screenshotUri} alt={lf("Screenshot")} />
+                                ? <img className="ui centered image pixelart" src={screenshotUri} alt={lf("Screenshot")} />
                                 : <p>{lf("No screenshot!")}</p>}</div>
                             <div className="ui buttons landscape only">
                                 <sui.Button icon="refresh" title={lf("Restart")} ariaLabel={lf("Restart")} onClick={this.restartSimulator} loading={takingScreenshot} />
                                 <sui.Button icon="camera" title={lf("Take screenshot")} ariaLabel={lf("Take screenshot")} onClick={this.takeScreenshot} loading={takingScreenshot} />
                             </div>
-                            <p className="ui tiny message info">{disclaimer}</p>
                         </div>
                     </div> : undefined}
-                    {action && !this.loanedSimulator ? <p className="ui tiny message info">{disclaimer}</p> : undefined}
+                    {action ? <p className="ui tiny message info">{disclaimer}</p> : undefined}
                     {this.state.sharingError ?
                         <p className="ui red inverted segment">{lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.")}</p>
                         : undefined}
