@@ -1960,8 +1960,12 @@ export class ProjectView
     }
 
     restartSimulator(debug?: boolean) {
-        this.stopSimulator();
-        return this.startSimulator(debug);
+        if (this.state.simState == pxt.editor.SimState.Stopped
+            || simulator.driver.isDebug() != !!debug)
+            this.startSimulator(debug);
+        else {
+            simulator.driver.restart(); // fast restart
+        }
     }
 
     startSimulator(debug?: boolean, clickTrigger?: boolean) {
