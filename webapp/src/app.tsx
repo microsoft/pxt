@@ -618,6 +618,10 @@ export class ProjectView
         this.updatingEditorFile = true;
         const simRunning = this.state.simState != pxt.editor.SimState.Stopped;
         this.stopSimulator();
+        if (simRunning || this.state.autoRun) {
+            simulator.driver.setStarting();
+            this.setState({ simState: pxt.editor.SimState.Starting });
+        }
         this.saveSettings();
 
         const hc = this.state.highContrast;
@@ -1990,7 +1994,7 @@ export class ProjectView
         }
         simulator.stop(unload);
         const autoRun = this.state.autoRun && !clickTrigger; // if user pressed stop, don't restart
-        this.setState({ simState: pxt.editor.SimState.Stopped, autoRun: autoRun })
+        this.setState({ simState: pxt.editor.SimState.Stopped, autoRun: autoRun });
     }
 
     suspendSimulator() {
