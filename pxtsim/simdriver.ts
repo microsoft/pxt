@@ -249,6 +249,9 @@ namespace pxsim {
             i.style.display = "none";
             wrapper.appendChild(l);
 
+            if (this.runOptions)
+                this.applyAspectRatioToFrame(frame);
+
             return wrapper;
         }
 
@@ -322,10 +325,12 @@ namespace pxsim {
 
         private applyAspectRatio() {
             const frames = this.simFrames();
-            frames.forEach(frame => {
-                frame.parentElement.style.paddingBottom =
-                    (100 / this.runOptions.aspectRatio) + "%";
-            });
+            frames.forEach(frame => this.applyAspectRatioToFrame(frame));
+        }
+
+        private applyAspectRatioToFrame(frame: HTMLIFrameElement) {
+            frame.parentElement.style.paddingBottom =
+            (100 / this.runOptions.aspectRatio) + "%";
         }
 
         private cleanupFrames() {

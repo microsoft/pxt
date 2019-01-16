@@ -26,6 +26,7 @@ export interface ShareEditorState {
     sharingError?: boolean;
     loading?: boolean;
     projectName?: string;
+    thumbnails?: boolean;
     takingScreenshot?: boolean;
     screenshotUri?: string;
 }
@@ -59,9 +60,14 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
     }
 
     show(header: pxt.workspace.Header) {
-        if (pxt.appTarget.cloud && pxt.appTarget.cloud.thumbnails)
+        // TODO investigate why edge does not render well
+        // upon hiding dialog, the screen does not redraw properly
+        const thumbnails = pxt.appTarget.cloud && pxt.appTarget.cloud.thumbnails
+            && !pxt.BrowserUtils.isEdge();
+        if (thumbnails)
             this.loanedSimulator = simulator.driver.loanSimulator();
         this.setState({
+            thumbnails,
             visible: true,
             mode: ShareMode.Code,
             pubCurrent: header.pubCurrent,
@@ -121,7 +127,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
     }
 
     private refreshScreenshot() {
-        if (!pxt.appTarget.cloud || !pxt.appTarget.cloud.thumbnails || this.state.takingScreenshot)
+        if (!this.state.thumbnails || this.state.takingScreenshot)
             return;
 
         this.setState({ takingScreenshot: true })
@@ -134,7 +140,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
     }
 
     renderCore() {
-        const { visible, projectName: newProjectName, loading, takingScreenshot, screenshotUri } = this.state;
+        const { visible, projectName: newProjectName, loading, takingScreenshot, screenshotUri, thumbnails } = this.state;
         const targetTheme = pxt.appTarget.appTheme;
         const header = this.props.parent.state.header;
         const advancedMenu = !!this.state.advancedMenu;
@@ -223,8 +229,12 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             })
         }
 
+        const disclaimer = lf("You need to publish your project to share it or embed it in other web pages.") + " " +
+            lf("You acknowledge having consent to publish this project.");
+
         return (
-            <sui.Modal isOpen={visible} className="sharedialog" size={this.loanedSimulator ? "large" : "small"}
+            <sui.Modal isOpen={visible} className="sharedialog"
+                size={thumbnails ? "" : "small"}
                 onClose={this.hide}
                 dimmer={true} header={lf("Share Project")}
                 closeIcon={true} buttons={actions}
@@ -241,8 +251,8 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                         </div>
                     </div> : undefined}
                     {action && this.loanedSimulator ? <div className="ui fields">
-                        <div id="shareLoanedSimulator" className="ui eight wide field landscape only"></div>
-                        <div className="ui seven wide field">
+                        <div id="shareLoanedSimulator" className="ui six wide field landscape only"></div>
+                        <div className="ui ten wide field">
                             <label>{lf("Name")}</label>
                             <div>
                                 <sui.Input ref="filenameinput" autoFocus={!pxt.BrowserUtils.isMobile()} id={"projectNameInput"}
@@ -250,7 +260,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                                     value={newProjectName || ''} onChange={this.handleProjectNameChange} />
                             </div>
                             <div className="ui segment landscape only">{screenshotUri
-                                ? <img className="ui fluid image" src={screenshotUri} alt={lf("Screenshot")} />
+                                ? <img className="ui centered image pixelart" src={screenshotUri} alt={lf("Screenshot")} />
                                 : <p>{lf("No screenshot!")}</p>}</div>
                             <div className="ui buttons landscape only">
                                 <sui.Button icon="refresh" title={lf("Restart")} ariaLabel={lf("Restart")} onClick={this.restartSimulator} loading={takingScreenshot} />
@@ -258,10 +268,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                             </div>
                         </div>
                     </div> : undefined}
-                    {action ? <p className="ui tiny message info">{
-                        lf("You need to publish your project to share it or embed it in other web pages.") + " " +
-                        lf("You acknowledge having consent to publish this project.")}
-                    </p> : undefined}
+                    {action ? <p className="ui tiny message info">{disclaimer}</p> : undefined}
                     {this.state.sharingError ?
                         <p className="ui red inverted segment">{lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.")}</p>
                         : undefined}
