@@ -1387,7 +1387,7 @@ export class ProjectView
         const hasHome = !pxt.shell.isControllerMode();
         if (!hasHome) return;
 
-        this.stopSimulator();
+        this.stopSimulator(true); // don't keep simulator around
         if (this.editor) this.editor.unloadFileAsync();
         // clear the hash
         pxt.BrowserUtils.changeHash("", true);

@@ -223,7 +223,7 @@ namespace pxsim {
             frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
             let simUrl = this.options.simUrl || ((window as any).pxtConfig || {}).simUrl || "/sim/simulator.html"
             frame.className = 'no-select'
-            if (this.runOptions.aspectRatio)
+            if (this.runOptions && this.runOptions.aspectRatio)
                 wrapper.style.paddingBottom = (100 / this.runOptions.aspectRatio) + "%";
             frame.src = simUrl + '#' + frame.id;
             frame.frameBorder = "0";
@@ -271,7 +271,10 @@ namespace pxsim {
             this.clearDebugger();
             this.postMessage({ type: 'stop' });
             this.setState(starting ? SimulatorState.Starting : SimulatorState.Stopped);
-            if (unload) this.unload();
+            if (unload) {
+                this.unload();
+                this.runOptions = undefined; // forget about program
+            }
         }
 
         public suspend() {
@@ -336,6 +339,7 @@ namespace pxsim {
         }
 
         private applyAspectRatio(ratio?: number) {
+            if (!ratio && !this.runOptions) return;
             const frames = this.simFrames();
             frames.forEach(frame => this.applyAspectRatioToFrame(frame, ratio));
         }
@@ -421,7 +425,7 @@ namespace pxsim {
             // first frame
             let frame = this.simFrames()[0];
             if (!frame) {
-                let wrapper = this.createFrame(this.runOptions.light);
+                let wrapper = this.createFrame(this.runOptions && this.runOptions.light);
                 this.container.appendChild(wrapper);
                 frame = wrapper.firstElementChild as HTMLIFrameElement;
             } else // reuse simulator
