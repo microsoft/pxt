@@ -949,8 +949,7 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
                                 ariaLabel={card.name}
                                 description={card.description}
                                 imageUrl={card.imageUrl}
-                                learnMoreUrl={card.learnMoreUrl}
-                                buyUrl={card.buyUrl}
+                                learnMoreUrl={card.url}
                                 onClick={card.onClick}
                             />
                         )}
