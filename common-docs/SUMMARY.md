@@ -22,6 +22,7 @@
         * [repeat](/blocks/loops/repeat)
         * [for](/blocks/loops/for)
         * [while](/blocks/loops/while)
+        * [for](/blocks/loops/for-of)
     * [Logic](/blocks/logic)
         * [if](/blocks/logic/if)
         * [Boolean](/blocks/logic/boolean)
