@@ -1287,7 +1287,7 @@ namespace pxt.hex {
         if (pxtc.hex.isSetupFor(extInfo))
             return Promise.resolve(pxtc.hex.currentHexInfo)
 
-        pxt.log("get hex info: " + extInfo.sha)
+        pxt.debug("get hex info: " + extInfo.sha)
 
         let key = "hex-" + extInfo.sha
         return host.cacheGetAsync(key)
