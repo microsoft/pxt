@@ -576,16 +576,7 @@ export class ProjectView
                 if (this.editor) return this.editor.highlightStatement(stmt, brk);
                 return false;
             },
-            restartSimulator: () => {
-                if (!restartingSim) { // prevent button smashing
-                    restartingSim = true;
-                    simulator.setStarting();
-                    core.hideDialog();
-                    this.runSimulator()
-                        .delay(1000) // 1 second debounce
-                        .finally(() => restartingSim = false);
-                }
-            },
+            restartSimulator: () => this.restartSimulator(),
             onStateChanged: (state) => {
                 switch (state) {
                     case pxsim.SimulatorState.Paused:
