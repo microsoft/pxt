@@ -146,7 +146,9 @@ namespace pxt.cpp {
         let constsName = "dal.d.ts"
         let sourcePath = "/source/"
 
-        for (let pkg of mainPkg.sortedDeps()) {
+        let mainDeps = mainPkg.sortedDeps(true)
+
+        for (let pkg of mainDeps) {
             pkg.addSnapshot(pkgSnapshot, [constsName, ".h", ".cpp"])
         }
 
@@ -213,7 +215,7 @@ namespace pxt.cpp {
 
         let makefile = ""
 
-        for (const pkg of mainPkg.sortedDeps()) {
+        for (const pkg of mainDeps) {
             if (pkg.getFiles().indexOf(constsName) >= 0) {
                 const src = pkg.host().readFile(pkg, constsName)
                 Util.assert(!!src, `${constsName} not found in ${pkg.id}`)
@@ -763,8 +765,7 @@ namespace pxt.cpp {
         if (mainPkg) {
             let seenMain = false
 
-            // TODO computeReachableNodes(pkg, true)
-            for (let pkg of mainPkg.sortedDeps()) {
+            for (let pkg of mainDeps) {
                 thisErrors = ""
                 parseJson(pkg)
                 if (pkg == mainPkg) {
@@ -1286,7 +1287,7 @@ namespace pxt.hex {
         if (pxtc.hex.isSetupFor(extInfo))
             return Promise.resolve(pxtc.hex.currentHexInfo)
 
-        pxt.debug("get hex info: " + extInfo.sha)
+        pxt.log("get hex info: " + extInfo.sha)
 
         let key = "hex-" + extInfo.sha
         return host.cacheGetAsync(key)
