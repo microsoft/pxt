@@ -520,8 +520,8 @@ namespace pxt {
                 .then<any>(() => {
                     if (this.level != 0)
                         return Promise.resolve()
-                    return Promise.map(U.values(this.parent.deps), pkg =>
-                        loadDepsRecursive(null, pkg, true))
+                    return Promise.all(U.values(this.parent.deps).map(pkg =>
+                        loadDepsRecursive(null, pkg, true)))
                 })
                 .then(() => null);
         }
