@@ -283,6 +283,8 @@ namespace pxsim {
             pxsim.U.removeChildren(this.container);
             this.setState(SimulatorState.Unloaded);
             this.runOptions = undefined; // forget about program
+            this.currentRuntime = undefined;
+            this.runId = undefined;
         }
 
         public mute(mute: boolean) {
