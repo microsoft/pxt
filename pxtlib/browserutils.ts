@@ -385,7 +385,7 @@ namespace pxt.BrowserUtils {
             })
     }
 
-    function resolveCdnUrl(path: string): string {
+    export function resolveCdnUrl(path: string): string {
         // don't expand full urls
         if (/^https?:\/\//i.test(path))
             return path;

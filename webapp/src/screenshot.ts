@@ -281,3 +281,67 @@ export function testBlobEncodeAsync(dataURL: string, sz = 10000) {
         })
 }
 */
+
+declare interface GIFOptions {
+    repeat?: number;
+    quality?: number;
+    workers?: number;
+    workerScript?: string;
+    background?: string;
+    width?: number;
+    height?: number;
+    transparent?: string;
+    dither?: boolean;
+    debug?: boolean;
+}
+
+declare class GIF {
+    constructor(options: GIFOptions);
+
+    on(ev: string, handler: any): void;
+    render(): void;
+    addFrame(img: HTMLImageElement): void;
+}
+
+export class GifEncoder {
+    private _gif: GIF;
+    constructor(private options: GIFOptions) {
+    }
+
+    get gif(): GIF {
+        if (!this._gif)
+            this._gif = new GIF(this.options);
+        return this._gif;
+    }
+
+    addFrame(dataUri: string) {
+        pxt.BrowserUtils.loadImageAsync(dataUri)
+            .then(img => this.gif.addFrame(img));
+    }
+
+    renderAsync(): Promise<Blob> {
+        return new Promise((resolve, reject) => {
+            this.gif.on('finished', (blob: Blob) => {
+                this._gif = undefined;
+                resolve(blob);
+            });
+            this.gif.on('abort', () => {
+                this._gif = undefined;
+                reject(undefined);
+            });
+            this.gif.render();
+        })
+    }
+}
+
+export function loadGifEncoder(width: number, height: number): Promise<GifEncoder> {
+    const options: GIFOptions = {
+        workers: 1,
+        quality: 10,
+        width,
+        height,
+        workerScript: pxt.BrowserUtils.resolveCdnUrl("gif.worker.js")
+    };
+    return pxt.BrowserUtils.loadScriptAsync("gif.js")
+        .then(() => new GifEncoder(options));
+}
