@@ -251,9 +251,8 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                 closeOnEscape>
                 <div className={`ui form`}>
                     {action && !this.loanedSimulator ? <div className="ui field">
-                        <label>{lf("Name")}</label>
                         <div>
-                            <sui.Input ref="filenameinput" autoFocus={!pxt.BrowserUtils.isMobile()} id={"projectNameInput"}
+                            <sui.Input ref="filenameinput" placeholder={lf("Name")} autoFocus={!pxt.BrowserUtils.isMobile()} id={"projectNameInput"}
                                 ariaLabel={lf("Type a name for your project")} autoComplete={false}
                                 value={newProjectName || ''} onChange={this.handleProjectNameChange} />
                         </div>
@@ -261,9 +260,8 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                     {action && this.loanedSimulator ? <div className="ui fields">
                         <div id="shareLoanedSimulator" className="ui six wide field landscape only"></div>
                         <div className="ui ten wide field">
-                            <label>{lf("Name")}</label>
                             <div>
-                                <sui.Input ref="filenameinput" autoFocus={!pxt.BrowserUtils.isMobile()} id={"projectNameInput"}
+                                <sui.Input ref="filenameinput" placeholder={lf("Name")} autoFocus={!pxt.BrowserUtils.isMobile()} id={"projectNameInput"}
                                     ariaLabel={lf("Type a name for your project")} autoComplete={false}
                                     value={newProjectName || ''} onChange={this.handleProjectNameChange} />
                             </div>
@@ -272,9 +270,8 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                                 : <p>{lf("No screenshot!")}</p>}</div>
                             <div className="ui buttons landscape only">
                                 <sui.Button icon="refresh" title={lf("Restart")} ariaLabel={lf("Restart")} onClick={this.restartSimulator} loading={takingScreenshot} />
-                                <sui.Button icon="camera" title={lf("Take screenshot")} ariaLabel={lf("Take screenshot")} onClick={this.takeScreenshot} loading={takingScreenshot} />
+                                <sui.Button icon="camera" title={screenshotText} ariaLabel={screenshotText} onClick={this.takeScreenshot} loading={takingScreenshot} />
                             </div>
-                            {screenshotText ? <div className="ui tiny message">{screenshotText}</div> : undefined}
                         </div>
                     </div> : undefined}
                     {action ? <p className="ui tiny message info">{disclaimer}</p> : undefined}
