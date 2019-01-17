@@ -270,9 +270,10 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                                 : <p>{lf("No screenshot!")}</p>}</div>
                             <div className="ui buttons landscape only">
                                 <sui.Button icon="refresh" title={lf("Restart")} ariaLabel={lf("Restart")} onClick={this.restartSimulator} loading={takingScreenshot} />
-                                <sui.Button icon="camera" title={screenshotText} ariaLabel={screenshotText} onClick={this.takeScreenshot} loading={takingScreenshot} />
+                                <sui.Button icon="camera" title={lf("Take Screenshot")} ariaLabel={lf("Take Screenshot")} onClick={this.takeScreenshot} loading={takingScreenshot} />
                             </div>
                         </div>
+                        {screenshotText ? <div className="ui field">{screenshotText}</div> : undefined}
                     </div> : undefined}
                     {action ? <p className="ui tiny message info">{disclaimer}</p> : undefined}
                     {this.state.sharingError ?
