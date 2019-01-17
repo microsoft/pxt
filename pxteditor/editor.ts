@@ -262,6 +262,9 @@ namespace pxt.editor {
         showBoardDialogAsync(features?: string[], closeIcon?: boolean): Promise<void>;
 
         showModalDialogAsync(options: ModalDialogOptions): Promise<void>;
+
+        pushScreenshotHandler(handler: (img: string) => void): void;
+        popScreenshotHandler(): void;
     }
 
     export interface IHexFileImporter {
