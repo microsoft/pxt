@@ -122,6 +122,11 @@ switch (step) {
         proc.resolve()
         //console.log("OPT", proc.toString())
 
+        if (proc.classInfo && proc.info.thisParameter) {
+            write("r0 = s.arg0;")
+            emitInstanceOf(proc.classInfo, "validate")
+        }
+
         proc.locals.forEach(l => {
             write(`${locref(l)} = undefined;`)
         })

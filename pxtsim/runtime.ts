@@ -768,6 +768,8 @@ namespace pxsim {
 
             function failedCast(v: any) {
                 // TODO generate the right panic codes
+                if ((pxsim as any).control && (pxsim as any).control.dmesgValue)
+                    (pxsim as any).control.dmesgValue(v)
                 oops("failed cast on " + v)
             }
 
