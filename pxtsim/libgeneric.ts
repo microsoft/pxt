@@ -615,6 +615,10 @@ namespace pxsim {
             return res;
         }
 
+        export function toString(buf: RefBuffer): string {
+            return U.fromUTF8(U.uint8ArrayToString(buf.data))
+        }
+
         function memmove(dst: Uint8Array, dstOff: number, src: Uint8Array, srcOff: number, len: number) {
             if (src.buffer === dst.buffer) {
                 memmove(dst, dstOff, src.slice(srcOff, srcOff + len), 0, len);
@@ -690,6 +694,12 @@ namespace pxsim {
                 return;
 
             memmove(buf.data, dstOffset, src.data, srcOffset, length)
+        }
+    }
+
+    namespace control {
+        export function createBufferFromUTF8(str: string) {
+            return new RefBuffer(U.stringToUint8Array(U.toUTF8(str)));
         }
     }
 
