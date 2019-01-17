@@ -26,6 +26,7 @@ export interface ShareEditorState {
     sharingError?: boolean;
     loading?: boolean;
     projectName?: string;
+    projectNameChanged?: boolean;
     thumbnails?: boolean;
     takingScreenshot?: boolean;
     screenshotUri?: string;
@@ -58,7 +59,12 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             this.loanedSimulator = undefined;
             this.props.parent.popScreenshotHandler();
         }
-        this.setState({ visible: false, screenshotUri: undefined });
+        this.setState({
+            visible: false,
+            screenshotUri: undefined,
+            projectName: undefined,
+            projectNameChanged: false
+        });
     }
 
     show(header: pxt.workspace.Header) {
@@ -86,7 +92,8 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
 
     componentWillReceiveProps(newProps: ShareEditorProps) {
         const newState: ShareEditorState = {}
-        if (newProps.parent.state.projectName != this.state.projectName) {
+        if (!this.state.projectNameChanged &&
+            newProps.parent.state.projectName != this.state.projectName) {
             newState.projectName = newProps.parent.state.projectName;
         }
         if (newProps.loading != this.state.loading) {
@@ -105,6 +112,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             || this.state.currentPubId != nextState.currentPubId
             || this.state.sharingError != nextState.sharingError
             || this.state.projectName != nextState.projectName
+            || this.state.projectNameChanged != nextState.projectNameChanged
             || this.state.loading != nextState.loading
             || this.state.takingScreenshot != nextState.takingScreenshot
             || this.state.screenshotUri != nextState.screenshotUri;
@@ -120,7 +128,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
     }
 
     handleProjectNameChange(name: string) {
-        this.setState({ projectName: name });
+        this.setState({ projectName: name, projectNameChanged: true });
     }
 
     restartSimulator() {
