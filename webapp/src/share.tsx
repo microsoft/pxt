@@ -2,6 +2,7 @@ import * as React from "react";
 import * as data from "./data";
 import * as sui from "./sui";
 import * as simulator from "./simulator";
+import * as screenshot from "./screenshot";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -16,6 +17,14 @@ export interface ShareEditorProps extends ISettingsProps {
     loading?: boolean;
 }
 
+export enum ShareRecordingState {
+    None,
+    TakingScreenshot,
+    GifLoading,
+    GifRecording,
+    GifRendering
+}
+
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 export interface ShareEditorState {
     advancedMenu?: boolean;
@@ -27,12 +36,14 @@ export interface ShareEditorState {
     loading?: boolean;
     projectName?: string;
     thumbnails?: boolean;
-    takingScreenshot?: boolean;
     screenshotUri?: string;
+    recordingState?: ShareRecordingState;
 }
 
 export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorState> {
     private loanedSimulator: HTMLElement;
+    private _gifEncoder: screenshot.GifEncoder;
+
     constructor(props: ShareEditorProps) {
         super(props);
         this.state = {
@@ -49,6 +60,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         this.handleProjectNameChange = this.handleProjectNameChange.bind(this);
         this.restartSimulator = this.restartSimulator.bind(this);
         this.takeScreenshot = this.takeScreenshot.bind(this);
+        this.recordGif = this.recordGif.bind(this);
     }
 
     hide() {
@@ -98,7 +110,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             || this.state.sharingError != nextState.sharingError
             || this.state.projectName != nextState.projectName
             || this.state.loading != nextState.loading
-            || this.state.takingScreenshot != nextState.takingScreenshot
+            || this.state.recordingState != nextState.recordingState
             || this.state.screenshotUri != nextState.screenshotUri;
     }
 
@@ -122,25 +134,40 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
 
     takeScreenshot() {
         pxt.tickEvent("shakre.takescreenshot", { view: 'computer', collapsedTo: '' + !this.props.parent.state.collapseEditorTools }, { interactiveConsent: true });
-        if (this.state.takingScreenshot) return;
+        if (this.state.recordingState != ShareRecordingState.None) return;
         this.refreshScreenshot();
     }
 
     private refreshScreenshot() {
-        if (!this.state.thumbnails || this.state.takingScreenshot)
+        if (!this.state.thumbnails || this.state.recordingState != ShareRecordingState.None)
             return;
 
-        this.setState({ takingScreenshot: true })
+        this.setState({ recordingState: ShareRecordingState.TakingScreenshot })
         this.props.parent.requestScreenshotAsync()
             .then(img => {
-                const st: ShareEditorState = { takingScreenshot: false };
+                const st: ShareEditorState = { recordingState: ShareRecordingState.None };
                 if (img) st.screenshotUri = img;
                 this.setState(st);
             });
     }
 
+    recordGif() {
+        switch (this.state.recordingState) {
+            case ShareRecordingState.None:
+                this.setState({ recordingState: ShareRecordingState.GifLoading });
+                screenshot.loadGifEncoderAsync()
+                    .then(encoder => {
+                        if (!encoder) {
+                            this.setState({ recordingState: ShareRecordingState.None });
+                        } else {
+                            this._gifEncoder = encoder;
+                        }
+                    });
+        }
+    }
+
     renderCore() {
-        const { visible, projectName: newProjectName, loading, takingScreenshot, screenshotUri, thumbnails } = this.state;
+        const { visible, projectName: newProjectName, loading, recordingState, screenshotUri, thumbnails } = this.state;
         const targetTheme = pxt.appTarget.appTheme;
         const header = this.props.parent.state.header;
         const advancedMenu = !!this.state.advancedMenu;
@@ -231,6 +258,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
 
         const disclaimer = lf("You need to publish your project to share it or embed it in other web pages.") + " " +
             lf("You acknowledge having consent to publish this project.");
+        const gifTitle = lf("Record gif");
 
         return (
             <sui.Modal isOpen={visible} className="sharedialog"
@@ -264,7 +292,8 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                                 : <p>{lf("No screenshot!")}</p>}</div>
                             <div className="ui buttons landscape only">
                                 <sui.Button icon="refresh" title={lf("Restart")} ariaLabel={lf("Restart")} onClick={this.restartSimulator} loading={takingScreenshot} />
-                                <sui.Button icon="camera" title={lf("Take screenshot")} ariaLabel={lf("Take screenshot")} onClick={this.takeScreenshot} loading={takingScreenshot} />
+                                <sui.Button icon="camera" title={lf("Take screenshot")} ariaLabel={lf("Take screenshot")} onClick={this.takeScreenshot} loading={recordingState != ShareRecordingState.None} />
+                                <sui.Button icon="circle" title={gifTitle} ariaLabel={gifTitle} onClick={this.recordGif} />
                             </div>
                         </div>
                     </div> : undefined}

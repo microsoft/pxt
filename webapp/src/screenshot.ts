@@ -300,33 +300,61 @@ declare class GIF {
 
     on(ev: string, handler: any): void;
     render(): void;
-    addFrame(img: HTMLImageElement): void;
+    addFrame(img: HTMLImageElement, opts: any): void;
 }
 
 export class GifEncoder {
-    private _gif: GIF;
+    private gif: GIF;
+    private time: number;
+    private frames: {
+        img: string;
+        delay: number;
+    }[];
+
     constructor(private options: GIFOptions) {
     }
 
-    get gif(): GIF {
-        if (!this._gif)
-            this._gif = new GIF(this.options);
-        return this._gif;
+    start() {
+        this.gif = new GIF(this.options);
+        this.frames = [];
+        this.time = 0;
     }
 
     addFrame(dataUri: string) {
-        pxt.BrowserUtils.loadImageAsync(dataUri)
-            .then(img => this.gif.addFrame(img));
+        const t = pxt.Util.now();
+        const delay = this.frames.length ? t - this.time : 0;
+        this.frames.push({
+            img: dataUri,
+            delay
+        });
+        this.time = t;
     }
 
     renderAsync(): Promise<Blob> {
+        return this.renderFramesAsync()
+            .then(() => this.renderGifAsync());
+    }
+
+    private renderFramesAsync(): Promise<void> {
+        const f = this.frames.shift();
+        if (!f) return Promise.resolve();
+
+        return pxt.BrowserUtils.loadImageAsync(f.img)
+            .then(i => {
+                if (i)
+                    this.gif.addFrame(i, { delay: f.delay });
+                return this.renderFramesAsync();
+            });
+    }
+
+    private renderGifAsync(): Promise<Blob> {
         return new Promise((resolve, reject) => {
             this.gif.on('finished', (blob: Blob) => {
-                this._gif = undefined;
+                this.gif = undefined;
                 resolve(blob);
             });
             this.gif.on('abort', () => {
-                this._gif = undefined;
+                this.gif = undefined;
                 reject(undefined);
             });
             this.gif.render();
@@ -334,12 +362,10 @@ export class GifEncoder {
     }
 }
 
-export function loadGifEncoder(width: number, height: number): Promise<GifEncoder> {
+export function loadGifEncoderAsync(): Promise<GifEncoder> {
     const options: GIFOptions = {
         workers: 1,
         quality: 10,
-        width,
-        height,
         workerScript: pxt.BrowserUtils.resolveCdnUrl("gif.worker.js")
     };
     return pxt.BrowserUtils.loadScriptAsync("gif.js")
