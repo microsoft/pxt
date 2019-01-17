@@ -149,16 +149,19 @@ export class ProjectView
     private initScreenshots() {
         window.addEventListener('message', (ev: MessageEvent) => {
             let msg = ev.data as pxsim.SimulatorMessage;
-            if (msg && msg.type == "screenshot") {
+            if (msg && msg.type == "screenshot" && this.state.header) {
                 pxt.tickEvent("sim.screenshot");
                 const scmsg = msg as pxsim.SimulatorScreenshotMessage;
-                pxt.debug('received screenshot');
+                if (!scmsg.data) return;
                 const handler = this.screenshotHandlers[this.screenshotHandlers.length - 1];
                 if (handler)
                     handler(scmsg.data)
-                else
-                    screenshot.saveAsync(theEditor.state.header, scmsg.data)
+                else {
+                    if (pxt.appTarget.compile.saveAsPNG)
+                        this.encodeProjectAsPNGAsync(scmsg.data, false).done();
+                    screenshot.saveAsync(this.state.header, scmsg.data)
                         .done(() => { pxt.debug('screenshot saved') })
+                }
             };
         }, false);
     }
@@ -1294,13 +1297,9 @@ export class ProjectView
             });
     }
 
-    private saveProjectAsPNGAsync(showDialog: boolean): Promise<void> {
-        let img: string;
-        return this.requestScreenshotAsync()
-            .then(img_ => {
-                img = img_;
-                return this.exportProjectToFileAsync();
-            }).then(blob => screenshot.encodeBlobAsync(this.state.header.name, img, blob))
+    private encodeProjectAsPNGAsync(sc: string, showDialog: boolean): Promise<void> {
+        return this.exportProjectToFileAsync()
+            .then(blob => screenshot.encodeBlobAsync(this.state.header.name, sc, blob))
             .then(img => {
                 const fn = pkg.genFileName(".png");
                 pxt.BrowserUtils.browserDownloadDataUri(img, fn);
@@ -1329,6 +1328,11 @@ export class ProjectView
                     </div>
                 });
             });
+    }
+
+    private saveProjectAsPNGAsync(showDialog: boolean): Promise<void> {
+        return this.requestScreenshotAsync()
+            .then(img => this.encodeProjectAsPNGAsync(img, showDialog));
     }
 
     saveProjectToFileAsync(): Promise<void> {
