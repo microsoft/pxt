@@ -238,7 +238,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         const disclaimer = lf("You need to publish your project to share it or embed it in other web pages.") + " " +
             lf("You acknowledge having consent to publish this project.");
         const screenshotText = this.loanedSimulator && targetTheme.simScreenshotKey
-            ? lf("Screenshot shortcut: {0}", targetTheme.simScreenshotKey) : undefined;
+            ? lf("Take Screenshot (shortcut: {0})", targetTheme.simScreenshotKey) : lf("Take Screenshot");
 
         return (
             <sui.Modal isOpen={visible} className="sharedialog"
@@ -270,10 +270,9 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                                 : <p>{lf("No screenshot!")}</p>}</div>
                             <div className="ui buttons landscape only">
                                 <sui.Button icon="refresh" title={lf("Restart")} ariaLabel={lf("Restart")} onClick={this.restartSimulator} loading={takingScreenshot} />
-                                <sui.Button icon="camera" title={lf("Take Screenshot")} ariaLabel={lf("Take Screenshot")} onClick={this.takeScreenshot} loading={takingScreenshot} />
+                                <sui.Button icon="camera" title={screenshotText} ariaLabel={screenshotText} onClick={this.takeScreenshot} loading={takingScreenshot} />
                             </div>
                         </div>
-                        {screenshotText ? <div className="ui field">{screenshotText}</div> : undefined}
                     </div> : undefined}
                     {action ? <p className="ui tiny message info">{disclaimer}</p> : undefined}
                     {this.state.sharingError ?
