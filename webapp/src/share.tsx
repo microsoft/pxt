@@ -59,8 +59,8 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             this.loanedSimulator = undefined;
             this.props.parent.popScreenshotHandler();
         }
-        this.setState({ 
-            visible: false, 
+        this.setState({
+            visible: false,
             screenshotUri: undefined,
             projectName: undefined,
             projectNameChanged: false
@@ -81,7 +81,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             mode: ShareMode.Code,
             pubCurrent: header.pubCurrent,
             sharingError: false,
-            screenshotUri: undefined            
+            screenshotUri: undefined
         }, () => this.props.parent.startSimulator());
     }
 
