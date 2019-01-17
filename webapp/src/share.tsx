@@ -49,12 +49,14 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         this.handleProjectNameChange = this.handleProjectNameChange.bind(this);
         this.restartSimulator = this.restartSimulator.bind(this);
         this.takeScreenshot = this.takeScreenshot.bind(this);
+        this.handleScreenshot = this.handleScreenshot.bind(this);
     }
 
     hide() {
         if (this.loanedSimulator) {
             simulator.driver.unloanSimulator();
             this.loanedSimulator = undefined;
+            this.props.parent.popScreenshotHandler();
         }
         this.setState({ visible: false, screenshotUri: undefined });
     }
@@ -62,10 +64,11 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
     show(header: pxt.workspace.Header) {
         // TODO investigate why edge does not render well
         // upon hiding dialog, the screen does not redraw properly
-        const thumbnails = pxt.appTarget.cloud && pxt.appTarget.cloud.thumbnails
-            && !pxt.BrowserUtils.isEdge();
-        if (thumbnails)
+        const thumbnails = pxt.appTarget.cloud && pxt.appTarget.cloud.thumbnails;
+        if (thumbnails) {
             this.loanedSimulator = simulator.driver.loanSimulator();
+            this.props.parent.pushScreenshotHandler(this.handleScreenshot);
+        }
         this.setState({
             thumbnails,
             visible: true,
@@ -74,6 +77,11 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             sharingError: false,
             screenshotUri: undefined
         }, () => this.props.parent.startSimulator());
+    }
+
+    handleScreenshot(img: string) {
+        if (img)
+            this.setState({ screenshotUri: img });
     }
 
     componentWillReceiveProps(newProps: ShareEditorProps) {
@@ -183,7 +191,6 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                         break;
                 }
             }
-
         }
         const publish = () => {
             pxt.tickEvent("menu.embed.publish", undefined, { interactiveConsent: true });
@@ -194,12 +201,12 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                 p = this.props.parent.updateHeaderNameAsync(newProjectName);
             }
             p.then(() => this.props.parent.anonymousPublishAsync(screenshotUri))
-                .catch((e) => {
-                    this.setState({ sharingError: true });
-                })
-                .done(() => {
+                .then(() => {
                     this.setState({ pubCurrent: true });
                     this.forceUpdate();
+                })
+                .catch((e) => {
+                    this.setState({ sharingError: true });
                 });
             this.forceUpdate();
         }
@@ -212,11 +219,6 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
 
         const action = !ready ? lf("Publish project") : undefined;
         const actionLoading = loading && !this.state.sharingError;
-
-        if (url && ready) {
-            this.loanedSimulator = undefined;
-            simulator.driver.unloanSimulator();
-        }
 
         let actions: sui.ModalButton[] = [];
         if (action) {
@@ -231,6 +233,8 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
 
         const disclaimer = lf("You need to publish your project to share it or embed it in other web pages.") + " " +
             lf("You acknowledge having consent to publish this project.");
+        const screenshotText = this.loanedSimulator && targetTheme.simScreenshotKey
+            ? lf("Take Screenshot (shortcut: {0})", targetTheme.simScreenshotKey) : lf("Take Screenshot");
 
         return (
             <sui.Modal isOpen={visible} className="sharedialog"
@@ -243,9 +247,8 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                 closeOnEscape>
                 <div className={`ui form`}>
                     {action && !this.loanedSimulator ? <div className="ui field">
-                        <label>{lf("Name")}</label>
                         <div>
-                            <sui.Input ref="filenameinput" autoFocus={!pxt.BrowserUtils.isMobile()} id={"projectNameInput"}
+                            <sui.Input ref="filenameinput" placeholder={lf("Name")} autoFocus={!pxt.BrowserUtils.isMobile()} id={"projectNameInput"}
                                 ariaLabel={lf("Type a name for your project")} autoComplete={false}
                                 value={newProjectName || ''} onChange={this.handleProjectNameChange} />
                         </div>
@@ -253,9 +256,8 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                     {action && this.loanedSimulator ? <div className="ui fields">
                         <div id="shareLoanedSimulator" className="ui six wide field landscape only"></div>
                         <div className="ui ten wide field">
-                            <label>{lf("Name")}</label>
                             <div>
-                                <sui.Input ref="filenameinput" autoFocus={!pxt.BrowserUtils.isMobile()} id={"projectNameInput"}
+                                <sui.Input ref="filenameinput" placeholder={lf("Name")} autoFocus={!pxt.BrowserUtils.isMobile()} id={"projectNameInput"}
                                     ariaLabel={lf("Type a name for your project")} autoComplete={false}
                                     value={newProjectName || ''} onChange={this.handleProjectNameChange} />
                             </div>
@@ -264,7 +266,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                                 : <p>{lf("No screenshot!")}</p>}</div>
                             <div className="ui buttons landscape only">
                                 <sui.Button icon="refresh" title={lf("Restart")} ariaLabel={lf("Restart")} onClick={this.restartSimulator} loading={takingScreenshot} />
-                                <sui.Button icon="camera" title={lf("Take screenshot")} ariaLabel={lf("Take screenshot")} onClick={this.takeScreenshot} loading={takingScreenshot} />
+                                <sui.Button icon="camera" title={screenshotText} ariaLabel={screenshotText} onClick={this.takeScreenshot} loading={takingScreenshot} />
                             </div>
                         </div>
                     </div> : undefined}
