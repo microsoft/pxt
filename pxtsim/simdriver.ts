@@ -269,8 +269,10 @@ namespace pxsim {
             this.clearDebugger();
             this.postMessage({ type: 'stop' });
             this.setState(starting ? SimulatorState.Starting : SimulatorState.Stopped);
-            if (unload)
+            if (unload) {
                 this.unload();
+                this.runOptions = undefined; // forget about program
+            }
         }
 
         public suspend() {
@@ -282,9 +284,6 @@ namespace pxsim {
             this.cancelFrameCleanup();
             pxsim.U.removeChildren(this.container);
             this.setState(SimulatorState.Unloaded);
-            this.runOptions = undefined; // forget about program
-            this.currentRuntime = undefined;
-            this.runId = undefined;
         }
 
         public mute(mute: boolean) {
