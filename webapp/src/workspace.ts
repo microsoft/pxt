@@ -219,7 +219,7 @@ export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptM
         name: h.name,
         target: h.target,
         targetVersion: h.targetVersion,
-        description: meta.description,
+        description: meta.description || lf("A program made with ❤️ in Microsoft MakeCode"),
         editor: h.editor,
         text: text,
         meta: {
