@@ -199,8 +199,7 @@ namespace pxsim {
                     this.container.appendChild(this.createFrame());
                     frames = this.simFrames();
                 } else if (frames[1].dataset['runid'] != this.runId) {
-                    if (this._currentRuntime)
-                        this.startFrame(frames[1]);
+                    this.startFrame(frames[1]);
                 }
             }
 
@@ -436,7 +435,8 @@ namespace pxsim {
         }
 
         // ensure _currentRuntime is ready
-        private startFrame(frame: HTMLIFrameElement) {
+        private startFrame(frame: HTMLIFrameElement): boolean {
+            if (!this._currentRuntime) return false;
             let msg = JSON.parse(JSON.stringify(this._currentRuntime)) as pxsim.SimulatorRunMessage;
             let mc = '';
             let m = /player=([A-Za-z0-9]+)/i.exec(window.location.href); if (m) mc = m[1];
@@ -449,6 +449,7 @@ namespace pxsim {
             frame.dataset['runid'] = this.runId;
             frame.contentWindow.postMessage(msg, "*");
             this.setFrameState(frame);
+            return true;
         }
 
         private handleMessage(msg: pxsim.SimulatorMessage, source?: Window) {
@@ -458,7 +459,7 @@ namespace pxsim {
                     let frame = document.getElementById(frameid) as HTMLIFrameElement;
                     // simulator might be gone
                     // or the compiler might not have sent a compiled program yet
-                    if (frame && this._currentRuntime) {
+                    if (frame) {
                         this.startFrame(frame);
                         if (this.options.revealElement)
                             this.options.revealElement(frame);
