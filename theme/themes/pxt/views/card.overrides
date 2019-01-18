@@ -185,7 +185,6 @@ a.ui.card:focus,
 /* Project code cards */
 .ui.card .ui.imagewrapper {
     overflow: hidden;
-    background-size: cover;
     border-top-left-radius: @borderRadius;
     border-top-right-radius: @borderRadius;
 }
