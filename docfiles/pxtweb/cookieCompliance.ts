@@ -277,8 +277,15 @@ namespace pxt {
      */
     function shouldHideCookieBanner(): boolean {
         //We don't want a cookie notification when embedded in editor controllers, we'll use the url to determine that
-        const noCookieBanner = /nocookiebanner=1/i.test(window.location.href)
+        const noCookieBanner = isIFrame() && /nocookiebanner=1/i.test(window.location.href)
         return noCookieBanner;
+    }
+    function isIFrame(): boolean {
+        try {
+            return window && window.self !== window.top;
+        } catch (e) {
+            return true;
+        }
     }
     /**
      * checks for sandbox
