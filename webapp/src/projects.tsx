@@ -924,7 +924,7 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
 
         /* tslint:disable:react-a11y-anchors */
         return (
-            <sui.Modal isOpen={visible} className="hardwaredialog" size="small"
+            <sui.Modal isOpen={visible} className="hardwaredialog" size="large"
                 onClose={this.close} dimmer={true}
                 closeIcon={true} header={lf("Choose your hardware")}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
