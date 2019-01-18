@@ -83,14 +83,10 @@ namespace pxt.docs.codeCard {
         if (card.imageUrl) {
             let imageWrapper = document.createElement("div") as HTMLDivElement;
             imageWrapper.className = "ui imagewrapper";
-            let image = document.createElement("img") as HTMLImageElement;
+            let image = document.createElement("div") as HTMLDivElement;
             image.className = "ui cardimage";
-            image.src = card.imageUrl;
-            image.alt = name;
-            image.onerror = () => {
-                // failed to load, remove
-                imageWrapper.remove();
-            }
+            image.style.backgroundImage = `url("${card.imageUrl}")`;
+            image.title = name;
             image.setAttribute("role", "presentation");
             imageWrapper.appendChild(image);
             img.appendChild(imageWrapper);
