@@ -60,7 +60,7 @@ namespace pxsim {
         private runId = '';
         private nextFrameId = 0;
         private frameCounter = 0;
-        private currentRuntime: pxsim.SimulatorRunMessage;
+        private _currentRuntime: pxsim.SimulatorRunMessage;
         private listener: (ev: MessageEvent) => void;
         private traceInterval = 0;
         public runOptions: SimulatorRunOptions = {};
@@ -283,7 +283,7 @@ namespace pxsim {
             pxsim.U.removeChildren(this.container);
             this.setState(SimulatorState.Unloaded);
             this.runOptions = undefined; // forget about program
-            this.currentRuntime = undefined;
+            this._currentRuntime = undefined;
             this.runId = undefined;
         }
 
@@ -389,7 +389,7 @@ namespace pxsim {
             this.runOptions = opts;
             this.runId = this.nextId();
             // store information
-            this.currentRuntime = {
+            this._currentRuntime = {
                 type: "run",
                 boardDefinition: opts.boardDefinition,
                 parts: opts.parts,
@@ -419,7 +419,7 @@ namespace pxsim {
             this.applyAspectRatio();
             this.scheduleFrameCleanup();
 
-            if (!this.currentRuntime) return; // nothing to do
+            if (!this._currentRuntime) return; // nothing to do
 
             // first frame
             let frame = this.simFrames()[0];
@@ -435,7 +435,7 @@ namespace pxsim {
         }
 
         private startFrame(frame: HTMLIFrameElement) {
-            let msg = JSON.parse(JSON.stringify(this.currentRuntime)) as pxsim.SimulatorRunMessage;
+            let msg = JSON.parse(JSON.stringify(this._currentRuntime)) as pxsim.SimulatorRunMessage;
             let mc = '';
             let m = /player=([A-Za-z0-9]+)/i.exec(window.location.href); if (m) mc = m[1];
             msg.frameCounter = ++this.frameCounter;
@@ -454,7 +454,9 @@ namespace pxsim {
                 case 'ready':
                     let frameid = (msg as pxsim.SimulatorReadyMessage).frameid;
                     let frame = document.getElementById(frameid) as HTMLIFrameElement;
-                    if (frame) {
+                    // simulator might be gone
+                    // or the compiler might not have sent a compiled program yet
+                    if (frame && this._currentRuntime) {
                         this.startFrame(frame);
                         if (this.options.revealElement)
                             this.options.revealElement(frame);
