@@ -86,7 +86,6 @@ namespace pxt.docs.codeCard {
             let image = document.createElement("div") as HTMLDivElement;
             image.className = "ui cardimage";
             image.style.backgroundImage = `url("${card.imageUrl}")`;
-            image.style.backgroundSize = "cover";
             image.title = name;
             image.setAttribute("role", "presentation");
             imageWrapper.appendChild(image);

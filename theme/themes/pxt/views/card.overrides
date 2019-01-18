@@ -185,6 +185,7 @@ a.ui.card:focus,
 /* Project code cards */
 .ui.card .ui.imagewrapper {
     overflow: hidden;
+    background-size: cover;
     border-top-left-radius: @borderRadius;
     border-top-right-radius: @borderRadius;
 }
@@ -207,18 +208,12 @@ a.ui.card:focus,
 
 @media only screen and (max-width: @largestMobileScreen) {
     .ui.card, .ui.cards>.card {
-        width: 9rem;
-        height: 9rem;
-
         .content .description {
             display: none;
         }
         .content .header {
             font-size: 80%;
             font-weight: normal;
-        }
-        .ui.cardimage {
-            height: 5rem;
         }
     }
 }
