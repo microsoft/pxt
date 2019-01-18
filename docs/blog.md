@@ -5,7 +5,7 @@
 January 18th, 2019 by Microsoft MakeCode Team
 
 The MakeCode team is excited to announce a completely new retro gaming experience, 
-spanning the worlds of the web browser and the micrcontroller!
+spanning the worlds of the web browser and the microcontroller!
 **[Continue reading this blog post](/blog/arcade/01-18-2019)**
 
 ## [Cartoon Network Projects for the Adafruit Circuit Playground Express!](/blog/adafruit-circuit-playground-express/cn-projects)
