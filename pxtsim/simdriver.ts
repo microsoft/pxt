@@ -199,7 +199,8 @@ namespace pxsim {
                     this.container.appendChild(this.createFrame());
                     frames = this.simFrames();
                 } else if (frames[1].dataset['runid'] != this.runId) {
-                    this.startFrame(frames[1]);
+                    if (this._currentRuntime)
+                        this.startFrame(frames[1]);
                 }
             }
 
@@ -434,6 +435,7 @@ namespace pxsim {
             this.setTraceInterval(this.traceInterval);
         }
 
+        // ensure _currentRuntime is ready
         private startFrame(frame: HTMLIFrameElement) {
             let msg = JSON.parse(JSON.stringify(this._currentRuntime)) as pxsim.SimulatorRunMessage;
             let mc = '';
