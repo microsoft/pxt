@@ -22,6 +22,7 @@ namespace pxt.blocks {
         snippetMode?: boolean;
         useViewWidth?: boolean;
         splitSvg?: boolean;
+        forceCompilation?: boolean;
     }
 
     export function render(blocksXml: string, options: BlocksRenderOptions = { emPixels: 18, layout: BlockLayout.Align }): Element {
