@@ -457,8 +457,6 @@ namespace pxsim {
                 case 'ready':
                     let frameid = (msg as pxsim.SimulatorReadyMessage).frameid;
                     let frame = document.getElementById(frameid) as HTMLIFrameElement;
-                    // simulator might be gone
-                    // or the compiler might not have sent a compiled program yet
                     if (frame) {
                         this.startFrame(frame);
                         if (this.options.revealElement)
