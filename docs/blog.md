@@ -1,6 +1,6 @@
 # Microsoft MakeCode Blog
 
-## [MakeCode Arcade: Retro Gaming, from Web to Microcontroller](/blog/arcade/01-18-2019)
+## [MakeCode Arcade: Retro Gaming, Modern Programming](/blog/arcade/01-18-2019)
 
 January 18th, 2019 by Microsoft MakeCode Team
 

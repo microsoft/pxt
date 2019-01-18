@@ -1,7 +1,7 @@
 # Microsoft MakeCode Blog
 
 * [Blog](/blog)
-    * [MakeCode Arcade: Retro Gaming, from Web to Microcontroller](/blog/arcade/01-18-2019)
+    * [MakeCode Arcade: Retro Gaming, Modern Programming](/blog/arcade/01-18-2019)
     * [Cartoon Network Projects for the Adafruit Circuit Playground Express!](/blog/adafruit-circuit-playground-express/cn-projects)
     * [New Maker Course for the Adafruit Circuit Playground Express!](/blog/adafruit-circuit-playground-express/maker-course)
     * [Minecraft update](/blog/minecraft/11-07-2018)
