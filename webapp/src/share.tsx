@@ -101,7 +101,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             visible: true,
             mode: ShareMode.Code,
             // always share a new copy when allowing screenshots
-            pubCurrent: thumbnails ? undefined : header.pubCurrent,
+            pubCurrent: thumbnails ? false : header.pubCurrent,
             sharingError: false,
             screenshotUri: undefined
         }, () => this.props.parent.startSimulator());
@@ -110,13 +110,16 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
     handleScreenshot(img: string) {
         if (!img) return;
 
-        this.setState({ screenshotUri: img });
         if (this.state.recordingState == ShareRecordingState.GifRecording
             && this._gifEncoder) {
             pxt.debug(`add gif frame`);
+            if (!this.state.screenshotUri) // only do this once to save perf
+                this.setState({ screenshotUri: img });
             if (this._gifEncoder.addFrame(img) > MAX_FRAMES)
                 this.gifRender();
         } else {
+            // update screenshot
+            this.setState({ screenshotUri: img });
             // make sure simulator is stopped
             simulator.driver.stopRecording();
         }
@@ -342,6 +345,8 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         const gifIcon = recordingState == ShareRecordingState.GifRecording ? "stop" : "circle";
         const gifTitle = lf("Record gif");
         const gifDisabled = false;
+        const gifRecordingClass = recordingState == ShareRecordingState.GifRecording
+            ? "glow" : "";
         const gifLoading = recordingState == ShareRecordingState.GifLoading || recordingState == ShareRecordingState.GifRendering;
 
         return (
@@ -362,7 +367,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                         </div>
                     </div> : undefined}
                     {action && this.loanedSimulator ? <div className="ui fields">
-                        <div id="shareLoanedSimulator" className="ui six wide field landscape only"></div>
+                        <div id="shareLoanedSimulator" className={`ui six wide field landscape only ${gifRecordingClass}`}></div>
                         <div className="ui ten wide field">
                             <div>
                                 <sui.Input ref="filenameinput" placeholder={lf("Name")} autoFocus={!pxt.BrowserUtils.isMobile()} id={"projectNameInput"}
