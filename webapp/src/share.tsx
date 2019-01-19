@@ -70,6 +70,11 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             simulator.driver.unloanSimulator();
             this.loanedSimulator = undefined;
             this.props.parent.popScreenshotHandler();
+            simulator.driver.stopRecording();
+            if (this._gifEncoder) {
+                this._gifEncoder.cancel();
+                this._gifEncoder = undefined;
+            }
         }
         this.setState({
             visible: false,
@@ -98,8 +103,16 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
     }
 
     handleScreenshot(img: string) {
-        if (img)
-            this.setState({ screenshotUri: img });
+        if (!img) return;
+
+        switch (this.state.recordingState) {
+            case ShareRecordingState.GifRecording:
+                if (this._gifEncoder)
+                    this._gifEncoder.addFrame(img);
+            default:
+                this.setState({ screenshotUri: img });
+                break;
+        }
     }
 
     componentWillReceiveProps(newProps: ShareEditorProps) {
@@ -170,16 +183,45 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
     recordGif() {
         switch (this.state.recordingState) {
             case ShareRecordingState.None:
-                this.setState({ recordingState: ShareRecordingState.GifLoading });
-                screenshot.loadGifEncoderAsync()
-                    .then(encoder => {
-                        if (!encoder) {
-                            this.setState({ recordingState: ShareRecordingState.None });
-                        } else {
-                            this._gifEncoder = encoder;
-                        }
-                    });
+                this.gifRecord();
+                break;
+            case ShareRecordingState.GifRecording:
+                this.gifRender();
+                break;
         }
+    }
+
+    private loadEncoderPromise: Promise<screenshot.GifEncoder>;
+    private loadEncoderAsync(): Promise<screenshot.GifEncoder> {
+        if (!this.loadEncoderPromise)
+            this.loadEncoderPromise = screenshot.loadGifEncoderAsync()
+                .then(encoder => this._gifEncoder = encoder);
+        return this.loadEncoderPromise;
+    }
+
+    gifRecord() {
+        this.setState({ recordingState: ShareRecordingState.GifLoading },
+            () => this.loadEncoderAsync()
+                .then(encoder => {
+                    if (!encoder) {
+                        this.setState({ recordingState: ShareRecordingState.None });
+                    } else {
+                        encoder.start();
+                        this.setState({ recordingState: ShareRecordingState.GifRecording },
+                            () => simulator.driver.startRecording());
+                    }
+                })
+        );
+    }
+
+    gifRender() {
+        simulator.driver.stopRecording();
+        if (!this._gifEncoder) return;
+        this.setState({ recordingState: ShareRecordingState.GifRendering },
+            () => this._gifEncoder.renderAsync()
+                .then(uri => {
+                    this.setState({ recordingState: ShareRecordingState.None, screenshotUri: uri })
+                }));
     }
 
     renderCore() {
