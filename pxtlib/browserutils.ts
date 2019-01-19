@@ -426,18 +426,23 @@ namespace pxt.BrowserUtils {
         });
     }
 
+    let loadScriptPromises: pxt.Map<Promise<void>> = {};
     export function loadScriptAsync(path: string): Promise<void> {
         const url = resolveCdnUrl(path);
-        pxt.debug(`script: loading ${url}`);
-        return new Promise<void>((resolve, reject) => {
-            const script = document.createElement('script');
-            script.type = 'text/javascript';
-            script.addEventListener('load', () => resolve());
-            script.addEventListener('error', (e) => reject(e));
-            script.src = url;
-            script.async = true;
-            document.body.appendChild(script);
-        });
+        let p = loadScriptPromises[url];
+        if (!p) {
+            p = loadScriptPromises[url] = new Promise<void>((resolve, reject) => {
+                pxt.debug(`script: loading ${url}`);
+                const script = document.createElement('script');
+                script.type = 'text/javascript';
+                script.addEventListener('load', () => resolve());
+                script.addEventListener('error', (e) => reject(e));
+                script.src = url;
+                script.async = true;
+                document.body.appendChild(script);
+            });
+        }
+        return p;
     }
 
     export function loadAjaxAsync(url: string): Promise<string> {
