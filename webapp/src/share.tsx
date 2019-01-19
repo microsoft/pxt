@@ -318,7 +318,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         const takingScreenshot = recordingState == ShareRecordingState.TakingScreenshot;
         const screenshotText = this.loanedSimulator && targetTheme.simScreenshotKey
             ? lf("Take Screenshot (shortcut: {0})", targetTheme.simScreenshotKey) : lf("Take Screenshot");
-        const gifIcon = recorderingState == ShareRecordingState.GifRecording ? "stop" : "circle";
+        const gifIcon = recordingState == ShareRecordingState.GifRecording ? "stop" : "circle";
         const gifTitle = lf("Record gif");
         const gifDisabled = false;
         const gifLoading = recordingState == ShareRecordingState.GifLoading || recordingState == ShareRecordingState.GifRendering;
