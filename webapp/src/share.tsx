@@ -220,6 +220,13 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                             () => simulator.driver.startRecording());
                     }
                 })
+                .catch(e => {
+                    pxt.reportException(e);
+                    this.setState({ recordingState: ShareRecordingState.None });
+                    if (this._gifEncoder) {
+                        this._gifEncoder.cancel();
+                    }
+                })
         );
     }
 

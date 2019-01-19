@@ -331,8 +331,14 @@ export class GifEncoder {
         if (this.cancellationToken.isCancelled()) return;
 
         this.cancellationToken.cancel();
-        if (this.gif)
-            this.gif.abort();
+        if (this.gif) {
+            try {
+                this.gif.abort();
+            }
+            catch (e) {
+                console.debug(e);
+            }
+        }
         this.gif = undefined;
         this.frames = undefined;
         this.time = 0;
