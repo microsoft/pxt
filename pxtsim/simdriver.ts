@@ -481,8 +481,9 @@ namespace pxsim {
                     }
                     break;
                 case 'simulator': this.handleSimulatorCommand(msg as pxsim.SimulatorCommandMessage); break; //handled elsewhere
-                case 'serial': break; //handled elsewhere
+                case 'serial':
                 case 'pxteditor':
+                case 'screenshot':
                 case 'custom':
                     break; //handled elsewhere
                 case 'debugger': this.handleDebuggerMessage(msg as DebuggerMessage); break;
