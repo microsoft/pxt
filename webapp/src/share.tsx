@@ -109,15 +109,11 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
     handleScreenshot(img: string) {
         if (!img) return;
 
-        switch (this.state.recordingState) {
-            case ShareRecordingState.GifRecording:
-                if (this._gifEncoder)
-                    if(this._gifEncoder.addFrame(img) > MAX_FRAMES)
-                        this.gifRender();
-            default:
-                this.setState({ screenshotUri: img });
-                break;
-        }
+        this.setState({ screenshotUri: img });
+        if (this.state.recordingState == ShareRecordingState.GifRecording
+            && this._gifEncoder
+            && this._gifEncoder.addFrame(img) > MAX_FRAMES)
+            this.gifRender();
     }
 
     componentWillReceiveProps(newProps: ShareEditorProps) {
@@ -322,6 +318,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         const takingScreenshot = recordingState == ShareRecordingState.TakingScreenshot;
         const screenshotText = this.loanedSimulator && targetTheme.simScreenshotKey
             ? lf("Take Screenshot (shortcut: {0})", targetTheme.simScreenshotKey) : lf("Take Screenshot");
+        const gifIcon = recorderingState == ShareRecordingState.GifRecording ? "stop" : "circle";
         const gifTitle = lf("Record gif");
         const gifDisabled = false;
         const gifLoading = recordingState == ShareRecordingState.GifLoading || recordingState == ShareRecordingState.GifRendering;
@@ -357,7 +354,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                             <div className="ui buttons landscape only">
                                 <sui.Button icon="refresh" title={lf("Restart")} ariaLabel={lf("Restart")} onClick={this.restartSimulator} loading={takingScreenshot} />
                                 <sui.Button icon="camera" title={screenshotText} ariaLabel={screenshotText} onClick={this.takeScreenshot} loading={takingScreenshot} />
-                                <sui.Button icon="circle" title={gifTitle} loading={gifLoading} disabled={gifDisabled} onClick={this.handleRecordClick} />
+                                <sui.Button icon={gifIcon} title={gifTitle} loading={gifLoading} disabled={gifDisabled} onClick={this.handleRecordClick} />
                             </div>
                         </div>
                     </div> : undefined}
