@@ -120,12 +120,14 @@ namespace pxtsprite {
             // Draw the left option
             this.leftElement = this.root.group();
             this.leftText = mkText(this.props.leftText)
+                .appendClass("sprite-editor-text")
                 .fill(this.props.selectedTextColor);
             this.leftElement.appendChild(this.leftText);
 
             // Draw the right option
             this.rightElement = this.root.group();
             this.rightText = mkText(this.props.rightText)
+                .appendClass("sprite-editor-text")
                 .fill(this.props.unselectedTextColor);
             this.rightElement.appendChild(this.rightText);
 
@@ -276,7 +278,9 @@ namespace pxtsprite {
 
     export function mkTextButton(text: string, width: number, height: number) {
         const g = drawSingleButton(width, height);
-        return new TextButton(g.root, g.cx, g.cy, text, "sprite-editor-text");
+        const t = new TextButton(g.root, g.cx, g.cy, text, "sprite-editor-text");
+        t.addClass("sprite-editor-label");
+        return t;
     }
 
     /**
