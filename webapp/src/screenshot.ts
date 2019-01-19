@@ -300,6 +300,7 @@ declare class GIF {
 
     on(ev: string, handler: any): void;
     render(): void;
+    abort(): void;
     addFrame(img: HTMLImageElement, opts: any): void;
 }
 
@@ -313,9 +314,11 @@ export class GifEncoder {
     private cancellationToken: pxt.Util.CancellationToken;
 
     constructor(private options: GIFOptions) {
+        this.cancellationToken = new pxt.Util.CancellationToken();
     }
 
     start() {
+        pxt.debug(`gif: start encoder`)
         this.gif = new GIF(this.options);
         this.frames = [];
         this.time = 0;
@@ -324,8 +327,12 @@ export class GifEncoder {
     }
 
     cancel() {
-        if (this.cancellationToken)
-            this.cancellationToken.cancel();
+        pxt.debug(`gif: cancel`)
+        if (this.cancellationToken.isCancelled()) return;
+
+        this.cancellationToken.cancel();
+        if (this.gif)
+            this.gif.abort();
         this.gif = undefined;
         this.frames = undefined;
         this.time = 0;
@@ -333,6 +340,7 @@ export class GifEncoder {
 
     addFrame(dataUri: string, time?: number): number {
         if (this.cancellationToken.isCancelled()) return 0;
+        pxt.debug(`gif: add frame ${this.frames.length}`);
 
         const t = time | pxt.Util.now();
         const delay = this.frames.length ? t - this.time : 0;
@@ -346,6 +354,9 @@ export class GifEncoder {
     }
 
     renderAsync(): Promise<string> {
+        if (this.cancellationToken.isCancelled()) return Promise.resolve(undefined);
+
+        pxt.debug(`gif: render`)
         return this.renderFramesAsync()
             .then(() => this.renderGifAsync())
             .then(blob => {
@@ -360,8 +371,8 @@ export class GifEncoder {
                 });
             })
             .catch(e => {
-                console.debug(`rendering failed`)
-                console.debug(e);
+                pxt.debug(`rendering failed`)
+                pxt.debug(e);
                 return undefined;
             })
     }
