@@ -61,7 +61,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         this.handleProjectNameChange = this.handleProjectNameChange.bind(this);
         this.restartSimulator = this.restartSimulator.bind(this);
         this.takeScreenshot = this.takeScreenshot.bind(this);
-        this.recordGif = this.recordGif.bind(this);
+        this.handleRecordClick = this.handleRecordClick.bind(this);
         this.handleScreenshot = this.handleScreenshot.bind(this);
     }
 
@@ -180,13 +180,17 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             });
     }
 
-    recordGif() {
+    handleRecordClick() {
         switch (this.state.recordingState) {
             case ShareRecordingState.None:
                 this.gifRecord();
                 break;
             case ShareRecordingState.GifRecording:
                 this.gifRender();
+                break;
+            case ShareRecordingState.GifRendering:
+                if (this._gifEncoder)
+                    this._gifEncoder.cancel();
                 break;
         }
     }
@@ -310,10 +314,12 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
 
         const disclaimer = lf("You need to publish your project to share it or embed it in other web pages.") + " " +
             lf("You acknowledge having consent to publish this project.");
-        const gifTitle = lf("Record gif");
         const takingScreenshot = recordingState == ShareRecordingState.TakingScreenshot;
         const screenshotText = this.loanedSimulator && targetTheme.simScreenshotKey
             ? lf("Take Screenshot (shortcut: {0})", targetTheme.simScreenshotKey) : lf("Take Screenshot");
+        const gifTitle = lf("Record gif");
+        const gifDisabled = false;
+        const gifLoading = recordingState == ShareRecordingState.GifLoading || recordingState == ShareRecordingState.GifRendering;
 
         return (
             <sui.Modal isOpen={visible} className="sharedialog"
@@ -346,7 +352,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                             <div className="ui buttons landscape only">
                                 <sui.Button icon="refresh" title={lf("Restart")} ariaLabel={lf("Restart")} onClick={this.restartSimulator} loading={takingScreenshot} />
                                 <sui.Button icon="camera" title={screenshotText} ariaLabel={screenshotText} onClick={this.takeScreenshot} loading={takingScreenshot} />
-                                <sui.Button icon="circle" title={gifTitle} ariaLabel={gifTitle} onClick={this.recordGif} />
+                                <sui.Button icon="circle" title={gifTitle} loading={gifLoading} disabled={gifDisabled} onClick={this.handleRecordClick} />
                             </div>
                         </div>
                     </div> : undefined}

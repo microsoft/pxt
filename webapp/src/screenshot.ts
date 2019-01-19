@@ -326,9 +326,14 @@ export class GifEncoder {
     cancel() {
         if (this.cancellationToken)
             this.cancellationToken.cancel();
+        this.gif = undefined;
+        this.frames = undefined;
+        this.time = 0;
     }
 
     addFrame(dataUri: string, time?: number) {
+        if (!this.frames) return;
+
         const t = time | pxt.Util.now();
         const delay = this.frames.length ? t - this.time : 0;
         this.frames.push({
@@ -342,7 +347,7 @@ export class GifEncoder {
         return this.renderFramesAsync()
             .then(() => this.renderGifAsync())
             .then(blob => {
-                if (this.cancellationToken.isCancelled()) return undefined;
+                this.cancellationToken.throwIfCancelled();
                 this.gif = undefined;
                 this.frames = undefined;
                 return new Promise((resolve, reject) => {
@@ -351,12 +356,19 @@ export class GifEncoder {
                     reader.onerror = e => reject(e);
                     reader.readAsDataURL(blob);
                 });
-            });
+            })
+            .catch(e => {
+                console.debug(`rendering failed`)
+                console.debug(e);
+                return undefined;
+            })
     }
 
     private renderFramesAsync(): Promise<void> {
+        this.cancellationToken.throwIfCancelled();
+
         const f = this.frames.shift();
-        if (!f || this.cancellationToken.isCancelled()) return Promise.resolve();
+        if (!f) return Promise.resolve();
 
         return pxt.BrowserUtils.loadImageAsync(f.img)
             .then(i => {
@@ -367,6 +379,8 @@ export class GifEncoder {
     }
 
     private renderGifAsync(): Promise<Blob> {
+        this.cancellationToken.throwIfCancelled();
+
         return new Promise((resolve, reject) => {
             this.gif.on('finished', (blob: Blob) => {
                 this.gif = undefined;
