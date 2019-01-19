@@ -99,7 +99,8 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             thumbnails,
             visible: true,
             mode: ShareMode.Code,
-            pubCurrent: header.pubCurrent,
+            // always share a new copy when allowing screenshots
+            pubCurrent: thumbnails ? undefined : header.pubCurrent,
             sharingError: false,
             screenshotUri: undefined
         }, () => this.props.parent.startSimulator());
