@@ -426,6 +426,22 @@ namespace pxsim {
             if (Runtime.messagePosted) Runtime.messagePosted(data);
         }
 
+        static postScreenshotAsync(): Promise<void> {
+            const time = pxsim.U.now();
+            const b = runtime && runtime.board;
+            const p = b
+                ? b.screenshotAsync().catch(e => {
+                    console.debug(`screenshot failed`);
+                    return undefined;
+                })
+                : Promise.resolve(undefined);
+            return p.then(img => Runtime.postMessage({
+                type: "screenshot",
+                time,
+                data: img
+            } as SimulatorScreenshotMessage));
+        }
+
         restart() {
             this.kill();
             setTimeout(() =>
