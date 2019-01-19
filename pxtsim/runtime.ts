@@ -143,6 +143,9 @@ namespace pxsim {
             this.runOptions = msg;
             return Promise.resolve()
         }
+        public screenshotAsync(): Promise<string> {
+            return Promise.resolve(undefined);
+        }
         public kill() { }
 
         protected serialOutBuffer: string = '';

@@ -137,6 +137,7 @@ namespace pxsim {
     export interface SimulatorScreenshotMessage extends SimulatorMessage {
         type: "screenshot";
         data: string;
+        time?: number;
     }
 
     export interface TutorialMessage extends SimulatorMessage {
@@ -236,6 +237,7 @@ namespace pxsim {
                 case "stop": stop(); break;
                 case "mute": mute((<SimulatorMuteMessage>data).mute); break;
                 case "print": print(); break;
+                case "screenshot": screenshot(); break;
                 case "custom":
                     if (handleCustomMessage)
                         handleCustomMessage((<SimulatorCustomMessage>data));
@@ -278,6 +280,22 @@ namespace pxsim {
                         Runtime.postMessage({ type: "toplevelcodefinished" })
                     });
                 });
+        }
+
+        function screenshot() {
+            const time = pxsim.U.now();
+            const b = runtime && runtime.board;
+            const p = b
+                ? b.screenshotAsync().catch(e => {
+                    console.debug(`screenshot failed`);
+                    return undefined;
+                })
+                : Promise.resolve(undefined);
+            p.done(img => Runtime.postMessage({
+                type: "screenshot",
+                time,
+                data: img
+            } as SimulatorScreenshotMessage));
         }
 
         function mute(mute: boolean) {
