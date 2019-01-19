@@ -312,6 +312,7 @@ export class GifEncoder {
         delay: number;
     }[];
     private cancellationToken: pxt.Util.CancellationToken;
+    private renderPromise: Promise<string>;
 
     constructor(private options: GIFOptions) {
         this.cancellationToken = new pxt.Util.CancellationToken();
@@ -324,6 +325,7 @@ export class GifEncoder {
         this.time = 0;
         this.cancellationToken = new pxt.Util.CancellationToken();
         this.cancellationToken.startOperation();
+        this.renderPromise = undefined;
     }
 
     cancel() {
@@ -345,7 +347,7 @@ export class GifEncoder {
     }
 
     addFrame(dataUri: string, time?: number): number {
-        if (this.cancellationToken.isCancelled()) return 0;
+        if (this.cancellationToken.isCancelled() || this.renderPromise) return 0;
         pxt.debug(`gif: add frame ${this.frames.length}`);
 
         const t = time | pxt.Util.now();
@@ -363,24 +365,26 @@ export class GifEncoder {
         if (this.cancellationToken.isCancelled()) return Promise.resolve(undefined);
 
         pxt.debug(`gif: render`)
-        return this.renderFramesAsync()
-            .then(() => this.renderGifAsync())
-            .then(blob => {
-                this.cancellationToken.throwIfCancelled();
-                this.gif = undefined;
-                this.frames = undefined;
-                return new Promise((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onload = () => resolve(<string>reader.result);
-                    reader.onerror = e => reject(e);
-                    reader.readAsDataURL(blob);
+        if (!this.renderPromise)
+            this.renderPromise = this.renderFramesAsync()
+                .then(() => this.renderGifAsync())
+                .then(blob => {
+                    this.cancellationToken.throwIfCancelled();
+                    this.gif = undefined;
+                    this.frames = undefined;
+                    return new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = () => resolve(<string>reader.result);
+                        reader.onerror = e => reject(e);
+                        reader.readAsDataURL(blob);
+                    });
+                })
+                .catch(e => {
+                    pxt.debug(`rendering failed`)
+                    pxt.debug(e);
+                    return undefined;
                 });
-            })
-            .catch(e => {
-                pxt.debug(`rendering failed`)
-                pxt.debug(e);
-                return undefined;
-            })
+        return this.renderPromise;
     }
 
     private renderFramesAsync(): Promise<void> {

@@ -209,6 +209,9 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
 
     gifRecord() {
         pxt.tickEvent("share.gifrecord", { view: 'computer', collapsedTo: '' + !this.props.parent.state.collapseEditorTools }, { interactiveConsent: true });
+
+        if (this.state.recordingState != ShareRecordingState.None) return;
+
         this.setState({ recordingState: ShareRecordingState.GifLoading },
             () => this.loadEncoderAsync()
                 .then(encoder => {
