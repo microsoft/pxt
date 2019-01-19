@@ -320,8 +320,8 @@ export class GifEncoder {
         this.time = 0;
     }
 
-    addFrame(dataUri: string) {
-        const t = pxt.Util.now();
+    addFrame(dataUri: string, time?: number) {
+        const t = time | pxt.Util.now();
         const delay = this.frames.length ? t - this.time : 0;
         this.frames.push({
             img: dataUri,
