@@ -116,6 +116,20 @@ namespace pxsim {
             this.themes = themes;
         }
 
+        public startRecording(): void {
+            const frame = this.simFrames()[0];
+            if (!frame) return undefined;
+
+            this.postMessage(<SimulatorRecorderMessage>{
+                type: 'recorder',
+                action: 'start'
+            });
+        }
+
+        public stopRecording() {
+            this.postMessage(<SimulatorRecorderMessage>{ type: 'recorder', action: 'stop' })
+        }
+
         private setFrameState(frame: HTMLIFrameElement) {
             const icon = frame.nextElementSibling as HTMLElement;
             const loader = icon.nextElementSibling as HTMLElement;
@@ -208,6 +222,9 @@ namespace pxsim {
                 if (source && frame.contentWindow == source) continue;
 
                 frame.contentWindow.postMessage(msg, "*");
+
+                if (msg.type == 'recorder') // don't do recorder on more than 1 frame
+                    break;
             }
         }
 

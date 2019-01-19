@@ -358,6 +358,9 @@ namespace pxsim {
 
         dead = false;
         running = false;
+        recording = false;
+        lastRecordedUri: string;
+        recordingTimer = 0;
         startTime = 0;
         startTimeUs = 0;
         id: string;
@@ -455,11 +458,45 @@ namespace pxsim {
         kill() {
             this.dead = true
             // TODO fix this
+            this.stopRecording();
             this.setRunning(false);
         }
 
         updateDisplay() {
-            this.board.updateView()
+            this.board.updateView();
+            this.postFrame();
+        }
+
+        startRecording() {
+            if (this.recording || !this.running) return;
+
+            this.recording = true;
+            this.recordingTimer = setInterval(() => this.postFrame(), 50);
+        }
+
+        stopRecording() {
+            if (!this.recording) return;
+            if (this.recordingTimer) clearInterval(this.recordingTimer);
+            this.recording = false;
+            this.recordingTimer = 0;
+            this.lastRecordedUri = undefined;
+        }
+
+        postFrame() {
+            if (!this.recording || !this.running) return;
+            let time = pxsim.U.now();
+            this.board.screenshotAsync()
+                .then(imageUri => {
+                    // opt; skip doubled frames
+                    if (imageUri == this.lastRecordedUri) return;
+                    this.lastRecordedUri = imageUri;
+                    // it's safer to render the SVG within the current CSS context
+                    Runtime.postMessage(<SimulatorScreenshotMessage>{
+                        type: "screenshot",
+                        data: imageUri,
+                        time
+                    })
+            });
         }
 
         private numDisplayUpdates = 0;
@@ -482,6 +519,7 @@ namespace pxsim {
                     this.startTimeUs = U.perfNowUs();
                     Runtime.postMessage(<SimulatorStateMessage>{ type: 'status', runtimeid: this.id, state: 'running' });
                 } else {
+                    this.stopRecording();
                     Runtime.postMessage(<SimulatorStateMessage>{ type: 'status', runtimeid: this.id, state: 'killed' });
                 }
                 if (this.stateChanged) this.stateChanged();
