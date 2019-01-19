@@ -107,7 +107,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const fullscreenTooltip = isFullscreen ? lf("Exit fullscreen mode") : lf("Launch in fullscreen");
         const muteTooltip = isMuted ? lf("Unmute audio") : lf("Mute audio");
         const collapseTooltip = lf("Hide the simulator");
-        const screenshotTooltip = lf("Download Screenshot")
+        const screenshotTooltip = targetTheme.simScreenshotKey ? lf("Take Screenshot (shortcut {0})", targetTheme.simScreenshotKey) : lf("Take Screenshot");
 
         return <aside className={"ui item grid centered simtoolbar" + (sandbox ? "" : " portrait hide")} role="complementary" aria-label={lf("Simulator toolbar")}>
             <div className={`ui icon tiny buttons`} style={{ padding: "0" }}>
@@ -120,7 +120,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
                 {audio ? <sui.Button key='mutebtn' className={`mute-button ${isMuted ? 'red' : ''}`} icon={`${isMuted ? 'volume off' : 'volume up'}`} title={muteTooltip} onClick={this.toggleMute} /> : undefined}
             </div>
             <div className={`ui icon tiny buttons`} style={{ padding: "0" }}>
-                {screenshot ? <sui.Button key='screenshotbtn' className={`screenshot-button ${screenshotClass}`} icon={`icon camera left`} title={screenshotTooltip} onClick={this.takeScreenshot} /> : undefined}
+                {screenshot ? <sui.Button disabled={!isRunning} key='screenshotbtn' className={`screenshot-button ${screenshotClass}`} icon={`icon camera left`} title={screenshotTooltip} onClick={this.takeScreenshot} /> : undefined}
                 {collapse && !isFullscreen ? <sui.Button key='collapsebtn' className={`collapse-button`} icon={`icon toggle left`} title={collapseTooltip} onClick={this.toggleSimulatorCollapse} /> : undefined}
                 {fullscreen ? <sui.Button key='fullscreenbtn' className={`fullscreen-button`} icon={`xicon ${isFullscreen ? 'fullscreencollapse' : 'fullscreen'}`} title={fullscreenTooltip} onClick={this.toggleSimulatorFullscreen} /> : undefined}
             </div>
