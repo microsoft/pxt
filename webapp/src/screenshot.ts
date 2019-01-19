@@ -331,8 +331,8 @@ export class GifEncoder {
         this.time = 0;
     }
 
-    addFrame(dataUri: string, time?: number) {
-        if (!this.frames) return;
+    addFrame(dataUri: string, time?: number): number {
+        if (this.cancellationToken.isCancelled()) return 0;
 
         const t = time | pxt.Util.now();
         const delay = this.frames.length ? t - this.time : 0;
@@ -341,6 +341,8 @@ export class GifEncoder {
             delay
         });
         this.time = t;
+
+        return this.frames.length;
     }
 
     renderAsync(): Promise<string> {

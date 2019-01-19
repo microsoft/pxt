@@ -4,6 +4,9 @@ import * as sui from "./sui";
 import * as simulator from "./simulator";
 import * as screenshot from "./screenshot";
 
+
+const MAX_FRAMES = 64;
+
 type ISettingsProps = pxt.editor.ISettingsProps;
 
 export enum ShareMode {
@@ -108,7 +111,8 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         switch (this.state.recordingState) {
             case ShareRecordingState.GifRecording:
                 if (this._gifEncoder)
-                    this._gifEncoder.addFrame(img);
+                    if(this._gifEncoder.addFrame(img) > MAX_FRAMES)
+                        this.gifRender();
             default:
                 this.setState({ screenshotUri: img });
                 break;
