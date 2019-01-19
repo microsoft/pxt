@@ -5,7 +5,7 @@ import * as simulator from "./simulator";
 import * as screenshot from "./screenshot";
 
 
-const MAX_FRAMES = 64;
+const MAX_FRAMES = 128;
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -116,6 +116,9 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             pxt.debug(`add gif frame`);
             if (this._gifEncoder.addFrame(img) > MAX_FRAMES)
                 this.gifRender();
+        } else {
+            // make sure simulator is stopped
+            simulator.driver.stopRecording();
         }
     }
 
