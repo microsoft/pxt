@@ -351,6 +351,12 @@ namespace pxsim {
 
 pxsim.util.injectPolyphils();
 if (typeof window !== 'undefined') {
+    // disable context menu
+    window.addEventListener('contextmenu', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+    });
     window.addEventListener('load', function (ev) {
         pxsim.Embed.start();
     });
