@@ -436,7 +436,11 @@ namespace pxt.BrowserUtils {
                 const script = document.createElement('script');
                 script.type = 'text/javascript';
                 script.addEventListener('load', () => resolve());
-                script.addEventListener('error', (e) => reject(e));
+                script.addEventListener('error', (e) => {
+                    // might have had connection issue, allow to try later
+                    delete loadScriptPromises[url];
+                    reject(e);
+                });
                 script.src = url;
                 script.async = true;
                 document.body.appendChild(script);
