@@ -55,7 +55,8 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             pubCurrent: false,
             visible: false,
             advancedMenu: false,
-            screenshotUri: undefined
+            screenshotUri: undefined,
+            recordingState: ShareRecordingState.None
         }
 
         this.hide = this.hide.bind(this);
