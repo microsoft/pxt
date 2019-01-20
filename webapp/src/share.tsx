@@ -241,18 +241,16 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
     gifRender() {
         pxt.debug(`render gif`)
         simulator.driver.stopRecording();
-        if (!this._gifEncoder)
-            return;
+        if (!this._gifEncoder) return;
 
         this.props.parent.stopSimulator();
         this.setState({ recordingState: ShareRecordingState.GifRendering },
             () => this._gifEncoder.renderAsync()
                 .then(uri => {
                     pxt.log(`gif: ${uri ? uri.length : 0} chars`)
-                    this.setState({ screenshotUri: uri })
+                    this.setState({ recordingState: ShareRecordingState.None, screenshotUri: uri })
                     this.props.parent.startSimulator();
-                }).finally(() => this.setState({ recordingState: ShareRecordingState.None }))
-        );
+                }));
     }
 
     renderCore() {
