@@ -105,13 +105,13 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         }, () => this.props.parent.startSimulator());
     }
 
-    handleScreenshot(img: string) {
-        if (!img) return;
+    handleScreenshot(msg: pxt.editor.ScreenshotData) {
+        if (!msg) return;
 
         if (this.state.recordingState == ShareRecordingState.GifRecording
             && this._gifEncoder) {
             pxt.debug(`add gif frame`);
-            if (this._gifEncoder.addFrame(img) > MAX_FRAMES)
+            if (this._gifEncoder.addFrame(msg.data, msg.time) > MAX_FRAMES)
                 this.gifRender();
         } else {
             // ignore
@@ -181,12 +181,10 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         }
     }
 
-    private loadEncoderPromise: Promise<screenshot.GifEncoder>;
     private loadEncoderAsync(): Promise<screenshot.GifEncoder> {
-        if (!this.loadEncoderPromise)
-            this.loadEncoderPromise = screenshot.loadGifEncoderAsync()
+        if (this._gifEncoder) return Promise.resolve(this._gifEncoder);
+        return screenshot.loadGifEncoderAsync()
                 .then(encoder => this._gifEncoder = encoder);
-        return this.loadEncoderPromise;
     }
 
     gifRecord() {

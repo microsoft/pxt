@@ -130,6 +130,11 @@ namespace pxt.editor {
         buttons?: ModalDialogButton[];
     }
 
+    export interface ScreenshotData {
+        data: string;
+        time?: number;
+    }
+
     export interface IProjectView {
         state: IAppState;
         setState(st: IAppState): void;
@@ -263,7 +268,7 @@ namespace pxt.editor {
 
         showModalDialogAsync(options: ModalDialogOptions): Promise<void>;
 
-        pushScreenshotHandler(handler: (img: string) => void): void;
+        pushScreenshotHandler(handler: (msg: ScreenshotData) => void): void;
         popScreenshotHandler(): void;
     }
 

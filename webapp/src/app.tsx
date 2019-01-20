@@ -104,7 +104,7 @@ export class ProjectView
     exitAndSaveDialog: projects.ExitAndSaveDialog;
     chooseHwDialog: projects.ChooseHwDialog;
     prevEditorId: string;
-    screenshotHandlers: ((img: string) => void)[] = [];
+    screenshotHandlers: ((msg: pxsim.SimulatorScreenshotMessage) => void)[] = [];
 
     private lastChangeTime: number;
     private reload: boolean;
@@ -154,7 +154,7 @@ export class ProjectView
                 if (!scmsg.data) return;
                 const handler = this.screenshotHandlers[this.screenshotHandlers.length - 1];
                 if (handler)
-                    handler(scmsg.data)
+                    handler(scmsg)
                 else {
                     if (pxt.appTarget.compile.saveAsPNG)
                         this.encodeProjectAsPNGAsync(scmsg.data, false).done();
@@ -1258,7 +1258,7 @@ export class ProjectView
         return this.saveProjectAsPNGAsync(false);
     }
 
-    pushScreenshotHandler(handler: (img: string) => void): void {
+    pushScreenshotHandler(handler: (msg: pxt.editor.ScreenshotData) => void): void {
         this.screenshotHandlers.push(handler);
     }
     popScreenshotHandler(): void {
@@ -1274,7 +1274,7 @@ export class ProjectView
         this.setState({ screenshoting: true });
         simulator.driver.postMessage({ type: "screenshot" } as pxsim.SimulatorScreenshotMessage);
         return this.requestScreenshotPromise = new Promise<string>((resolve, reject) => {
-            this.pushScreenshotHandler(img => resolve(img));
+            this.pushScreenshotHandler(msg => resolve(msg.data));
         }).timeout(1000) // simulator might be stopped or in bad shape
             .catch(e => {
                 pxt.tickEvent('screenshot.timeout');
