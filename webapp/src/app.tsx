@@ -150,7 +150,6 @@ export class ProjectView
         window.addEventListener('message', (ev: MessageEvent) => {
             let msg = ev.data as pxsim.SimulatorMessage;
             if (msg && msg.type == "screenshot" && this.state.header) {
-                pxt.tickEvent("sim.screenshot");
                 const scmsg = msg as pxsim.SimulatorScreenshotMessage;
                 if (!scmsg.data) return;
                 const handler = this.screenshotHandlers[this.screenshotHandlers.length - 1];
