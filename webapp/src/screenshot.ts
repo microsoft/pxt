@@ -302,6 +302,7 @@ declare class GIF {
     render(): void;
     abort(): void;
     addFrame(img: HTMLImageElement, opts: any): void;
+    static freeWorkers: any[];
 }
 
 export class GifEncoder {
@@ -336,6 +337,8 @@ export class GifEncoder {
         if (this.gif) {
             try {
                 this.gif.abort();
+                if (GIF.freeWorkers)
+                    GIF.freeWorkers.forEach(w => w.terminate());
             }
             catch (e) {
                 console.debug(e);
