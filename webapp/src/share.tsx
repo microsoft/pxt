@@ -354,8 +354,8 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                             <sui.Input ref="filenameinput" placeholder={lf("Name")} autoFocus={!pxt.BrowserUtils.isMobile()} id={"projectNameInput"}
                                 ariaLabel={lf("Type a name for your project")} autoComplete={false}
                                 value={newProjectName || ''} onChange={this.handleProjectNameChange} />
+                            <label></label>
                             <div className="ui buttons landscape only">
-                                <label></label>
                                 <sui.Button icon="refresh" title={lf("Restart")} ariaLabel={lf("Restart")} onClick={this.restartSimulator} disabled={recordingState != ShareRecordingState.None} />
                                 <sui.Button icon={gifIcon} title={gifTitle} loading={gifLoading} onClick={this.handleRecordClick} />
                             </div>
