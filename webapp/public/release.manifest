@@ -50,7 +50,7 @@ CACHE:
 /blb/images/Bars_black.gif
 
 # gifshot
-/cdn/gifshot/gifshot.min.js
+/blb/gifshot/gifshot.min.js
 
 # ai
 /blb/ai.0.js
