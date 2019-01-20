@@ -424,7 +424,7 @@ export function loadGifEncoderAsync(): Promise<GifEncoder> {
         workers: 1,
         quality: 10,
         dither: false,
-        workerScript: pxt.BrowserUtils.resolveCdnUrl("gifjs/gif.worker.js")
+        workerScript: pxt.webConfig.gifworkerjs
     };
     return pxt.BrowserUtils.loadScriptAsync("gifjs/gif.js")
         .then(() => new GifEncoder(options));
