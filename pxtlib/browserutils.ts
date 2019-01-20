@@ -427,7 +427,7 @@ namespace pxt.BrowserUtils {
     }
 
     let loadScriptPromises: pxt.Map<Promise<void>> = {};
-    export function loadScriptAsync(path: string, sync = false): Promise<void> {
+    export function loadScriptAsync(path: string): Promise<void> {
         const url = resolveCdnUrl(path);
         let p = loadScriptPromises[url];
         if (!p) {
@@ -442,7 +442,7 @@ namespace pxt.BrowserUtils {
                     reject(e);
                 });
                 script.src = url;
-                script.async = !sync;
+                script.async = true;
                 document.body.appendChild(script);
             });
         }

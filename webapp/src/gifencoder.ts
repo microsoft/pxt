@@ -1,9 +1,8 @@
 
 declare namespace gifshot {
     interface Result {
-        error: boolean;
-        errorMsg?: string;
-        image?: string;
+        error: any;
+        image: any;
     }
     function createGIF(options: any, callback: (obj: Result) => void): void;
 }
@@ -100,7 +99,7 @@ export class GifEncoder {
             opts.images = this.frames.map(i => i.img);
             opts.frameDuration = 0.2;
             gifshot.createGIF(opts, (res) => {
-                if (res.error) reject(res.errorMsg);
+                if (res.error) reject(res.error);
                 else resolve(res.image);
             });
         })
@@ -108,7 +107,7 @@ export class GifEncoder {
 }
 
 export function loadGifEncoderAsync(): Promise<GifEncoder> {
-    return pxt.BrowserUtils.loadScriptAsync("gifshot.min.js", false)
+    return pxt.BrowserUtils.loadScriptAsync("gifshot.min.js")
         .then(() => new GifEncoder({
             gifWidth: 160,
             gifHeight: 120,
