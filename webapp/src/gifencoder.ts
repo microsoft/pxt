@@ -66,29 +66,13 @@ export class GifEncoder {
 
         pxt.debug(`gif: render`)
         if (!this.renderPromise)
-            this.renderPromise = this.resolveSizeAsync()
-                .then(() => this.renderGifAsync())
+            this.renderPromise = this.renderGifAsync()
                 .catch(e => {
                     pxt.debug(`rendering failed`)
                     pxt.debug(e);
                     return undefined;
                 });
         return this.renderPromise;
-    }
-
-    private resolveSizeAsync(): Promise<void> {
-        // load first image
-        if (!this.frames.length) return Promise.resolve();
-
-        this.options.frameDuration = (this.frames.map(f => f.delay).reduce((p, c) => p + c, 0)
-            / this.frames.length / 100) | 0;
-        pxt.debug(`gif frame duration: ${this.options.frameDuration}`)
-        return pxt.BrowserUtils.loadImageAsync(this.frames[0].img)
-            .then(img => {
-                this.options.gifWidth = img.width;
-                this.options.gifHeight = img.height;
-                pxt.debug(`gif size: ${this.options.gifWidth} x ${this.options.gifHeight}`)
-            })
     }
 
     private renderGifAsync(): Promise<void> {
