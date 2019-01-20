@@ -223,7 +223,9 @@ namespace pxsim {
 
                 frame.contentWindow.postMessage(msg, "*");
 
-                if (msg.type == 'recorder') // don't do recorder on more than 1 frame
+                // don't start more than 1 recorder
+                if (msg.type == 'recorder'
+                    && (<pxsim.SimulatorRecorderMessage>msg).action == "start")
                     break;
             }
         }
