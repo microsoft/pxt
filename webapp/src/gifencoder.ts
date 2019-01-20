@@ -92,7 +92,7 @@ export class GifEncoder {
             })
     }
 
-    private renderGifAsync(): Promise<void> {
+    private renderGifAsync(): Promise<string> {
         this.cancellationToken.throwIfCancelled();
 
         return new Promise((resolve, reject) => {
