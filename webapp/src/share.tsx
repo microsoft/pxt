@@ -2,7 +2,7 @@ import * as React from "react";
 import * as data from "./data";
 import * as sui from "./sui";
 import * as simulator from "./simulator";
-import * as screenshot from "./screenshot";
+import * as gifencoder from "./gifencoder";
 
 
 const MAX_FRAMES = 128;
@@ -46,7 +46,7 @@ export interface ShareEditorState {
 
 export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorState> {
     private loanedSimulator: HTMLElement;
-    private _gifEncoder: pxt.gif.GifEncoder;
+    private _gifEncoder: gifencoder.GifEncoder;
 
     constructor(props: ShareEditorProps) {
         super(props);
@@ -204,10 +204,10 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         }
     }
 
-    private loadEncoderPromise: Promise<pxt.gif.GifEncoder>;
-    private loadEncoderAsync(): Promise<pxt.gif.GifEncoder> {
+    private loadEncoderPromise: Promise<gifencoder.GifEncoder>;
+    private loadEncoderAsync(): Promise<gifencoder.GifEncoder> {
         if (!this.loadEncoderPromise)
-            this.loadEncoderPromise = pxt.gif.loadGifEncoderAsync()
+            this.loadEncoderPromise = gifencoder.loadGifEncoderAsync()
                 .then(encoder => this._gifEncoder = encoder);
         return this.loadEncoderPromise;
     }
