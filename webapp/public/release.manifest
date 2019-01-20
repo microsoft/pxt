@@ -51,7 +51,7 @@ CACHE:
 
 # gifjs
 /cdn/gifjs/gif.js
-/cdn/gifjs/gif.worker.js
+@gifworkerjs@
 
 # ai
 /blb/ai.0.js
