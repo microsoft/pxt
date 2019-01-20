@@ -300,6 +300,7 @@ namespace pxsim {
         }
 
         function recorder(rec: SimulatorRecorderMessage) {
+            if (!runtime) return;
             switch (rec.action) {
                 case "start":
                     runtime.startRecording();
