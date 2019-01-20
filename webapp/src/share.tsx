@@ -46,7 +46,7 @@ export interface ShareEditorState {
 
 export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorState> {
     private loanedSimulator: HTMLElement;
-    private _gifEncoder: screenshot.GifEncoder;
+    private _gifEncoder: pxt.gif.GifEncoder;
 
     constructor(props: ShareEditorProps) {
         super(props);
@@ -204,10 +204,10 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         }
     }
 
-    private loadEncoderPromise: Promise<screenshot.GifEncoder>;
-    private loadEncoderAsync(): Promise<screenshot.GifEncoder> {
+    private loadEncoderPromise: Promise<pxt.gif.GifEncoder>;
+    private loadEncoderAsync(): Promise<pxt.gif.GifEncoder> {
         if (!this.loadEncoderPromise)
-            this.loadEncoderPromise = screenshot.loadGifEncoderAsync()
+            this.loadEncoderPromise = pxt.gif.loadGifEncoderAsync()
                 .then(encoder => this._gifEncoder = encoder);
         return this.loadEncoderPromise;
     }
