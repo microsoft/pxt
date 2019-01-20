@@ -108,8 +108,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
     handleScreenshot(msg: pxt.editor.ScreenshotData) {
         if (!msg) return;
 
-        if (this.state.recordingState == ShareRecordingState.GifRecording
-            && this._gifEncoder) {
+        if (this.state.recordingState == ShareRecordingState.GifRecording) {
             pxt.debug(`add gif frame`);
             if (this._gifEncoder.addFrame(msg.data, msg.time) > MAX_FRAMES)
                 this.gifRender();
@@ -117,7 +116,6 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             // ignore
             // make sure simulator is stopped
             simulator.driver.stopRecording();
-            this.setState({ recordingState: ShareRecordingState.None });
         }
     }
 
