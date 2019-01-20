@@ -110,7 +110,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
 
         if (this.state.recordingState == ShareRecordingState.GifRecording) {
             pxt.debug(`add gif frame`);
-            if (this._gifEncoder.addFrame(msg.data, msg.time) > MAX_FRAMES)
+            if (this._gifEncoder.addFrame(msg.data, msg.delay) > MAX_FRAMES)
                 this.gifRender();
         } else {
             // ignore

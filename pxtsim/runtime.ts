@@ -470,7 +470,7 @@ namespace pxsim {
             if (this.recording || !this.running) return;
 
             this.recording = true;
-            this.recordingTimer = setInterval(() => this.postFrame(), 50);
+            this.recordingTimer = setInterval(() => this.postFrame(), 66);
         }
 
         stopRecording() {
