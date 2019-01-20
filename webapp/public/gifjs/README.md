@@ -1,0 +1,1 @@
+The Monaco loader potentially interferes with the define.amd logic in gif.js. Manually patched out module loading in that file.

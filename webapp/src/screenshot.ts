@@ -332,18 +332,17 @@ export class GifEncoder {
     cancel() {
         pxt.debug(`gif: cancel`)
         if (this.cancellationToken.isCancelled()) return;
-
         this.cancellationToken.cancel();
         if (this.gif) {
             try {
+
                 this.gif.abort();
-                if (GIF.freeWorkers)
-                    GIF.freeWorkers.forEach(w => w.terminate());
-            }
-            catch (e) {
-                console.debug(e);
-            }
+            } catch (e) { }
         }
+        this.clean();
+    }
+
+    private clean() {
         this.gif = undefined;
         this.frames = undefined;
         this.time = 0;
@@ -373,8 +372,6 @@ export class GifEncoder {
                 .then(() => this.renderGifAsync())
                 .then(blob => {
                     this.cancellationToken.throwIfCancelled();
-                    this.gif = undefined;
-                    this.frames = undefined;
                     return new Promise((resolve, reject) => {
                         const reader = new FileReader();
                         reader.onload = () => resolve(<string>reader.result);
@@ -382,6 +379,7 @@ export class GifEncoder {
                         reader.readAsDataURL(blob);
                     });
                 })
+                .finally(() => this.clean())
                 .catch(e => {
                     pxt.debug(`rendering failed`)
                     pxt.debug(e);
@@ -409,12 +407,11 @@ export class GifEncoder {
 
         return new Promise((resolve, reject) => {
             this.gif.on('finished', (blob: Blob) => {
-                this.gif = undefined;
                 resolve(blob);
             });
             this.gif.on('abort', () => {
-                this.gif = undefined;
-                reject(undefined);
+                pxt.debug(`gif: abort`)
+                resolve(undefined);
             });
             this.gif.render();
         })
@@ -426,8 +423,8 @@ export function loadGifEncoderAsync(): Promise<GifEncoder> {
         workers: 1,
         quality: 10,
         dither: false,
-        workerScript: pxt.BrowserUtils.resolveCdnUrl("gif.worker.js")
+        workerScript: pxt.BrowserUtils.resolveCdnUrl("gifjs/gif.worker.js")
     };
-    return pxt.BrowserUtils.loadScriptAsync("gif.js")
+    return pxt.BrowserUtils.loadScriptAsync("gifjs/gif.js")
         .then(() => new GifEncoder(options));
 }

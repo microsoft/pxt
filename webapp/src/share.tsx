@@ -22,7 +22,6 @@ export interface ShareEditorProps extends ISettingsProps {
 
 export enum ShareRecordingState {
     None,
-    TakingScreenshot,
     GifLoading,
     GifRecording,
     GifRendering
@@ -64,7 +63,6 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         this.setAdvancedMode = this.setAdvancedMode.bind(this);
         this.handleProjectNameChange = this.handleProjectNameChange.bind(this);
         this.restartSimulator = this.restartSimulator.bind(this);
-        this.takeScreenshot = this.takeScreenshot.bind(this);
         this.handleRecordClick = this.handleRecordClick.bind(this);
         this.handleScreenshot = this.handleScreenshot.bind(this);
     }
@@ -113,15 +111,13 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         if (this.state.recordingState == ShareRecordingState.GifRecording
             && this._gifEncoder) {
             pxt.debug(`add gif frame`);
-            if (!this.state.screenshotUri) // only do this once to save perf
-                this.setState({ screenshotUri: img });
             if (this._gifEncoder.addFrame(img) > MAX_FRAMES)
                 this.gifRender();
         } else {
-            // update screenshot
-            this.setState({ screenshotUri: img });
+            // ignore
             // make sure simulator is stopped
             simulator.driver.stopRecording();
+            this.setState({ recordingState: ShareRecordingState.None });
         }
     }
 
@@ -171,25 +167,6 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         this.props.parent.restartSimulator();
     }
 
-    takeScreenshot() {
-        pxt.tickEvent("share.takescreenshot", { view: 'computer', collapsedTo: '' + !this.props.parent.state.collapseEditorTools }, { interactiveConsent: true });
-        if (this.state.recordingState != ShareRecordingState.None) return;
-        this.refreshScreenshot();
-    }
-
-    private refreshScreenshot() {
-        if (!this.state.thumbnails || this.state.recordingState != ShareRecordingState.None)
-            return;
-
-        this.setState({ recordingState: ShareRecordingState.TakingScreenshot })
-        this.props.parent.requestScreenshotAsync()
-            .then(img => {
-                const st: ShareEditorState = { recordingState: ShareRecordingState.None };
-                if (img) st.screenshotUri = img;
-                this.setState(st);
-            });
-    }
-
     handleRecordClick() {
         switch (this.state.recordingState) {
             case ShareRecordingState.None:
@@ -217,7 +194,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
 
         if (this.state.recordingState != ShareRecordingState.None) return;
 
-        this.setState({ recordingState: ShareRecordingState.GifLoading },
+        this.setState({ recordingState: ShareRecordingState.GifLoading, screenshotUri: undefined },
             () => this.loadEncoderAsync()
                 .then(encoder => {
                     if (!encoder) {
@@ -339,15 +316,20 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
 
         const disclaimer = lf("You need to publish your project to share it or embed it in other web pages.") + " " +
             lf("You acknowledge having consent to publish this project.");
-        const screenshotLoading = recordingState == ShareRecordingState.TakingScreenshot;
-        const screenshotText = this.loanedSimulator && targetTheme.simScreenshotKey
-            ? lf("Take Screenshot (shortcut: {0})", targetTheme.simScreenshotKey) : lf("Take Screenshot");
-        const gifIcon = recordingState == ShareRecordingState.GifRecording ? "stop" : "circle";
-        const gifTitle = lf("Record gif");
-        const gifDisabled = false;
-        const gifRecordingClass = recordingState == ShareRecordingState.GifRecording
-            ? "glow" : "";
-        const gifLoading = recordingState == ShareRecordingState.GifLoading || recordingState == ShareRecordingState.GifRendering;
+        const isGifRecording = recordingState == ShareRecordingState.GifRecording;
+        const isGifRendering = recordingState == ShareRecordingState.GifRendering;
+        const gifIcon = isGifRecording ? "stop" : "circle";
+        const gifTitle = isGifRecording
+            ? lf("Stop recording")
+            : isGifRendering ? lf("Cancel rendering")
+                : lf("Start recording");
+        const gifRecordingClass = isGifRecording ? "glow" : "";
+        const gifLoading = recordingState == ShareRecordingState.GifLoading
+            || isGifRendering;
+        const gifMessage = isGifRecording
+            ? lf("Recording in progress...")
+            : isGifRendering ? lf("Rendering gif...")
+                : undefined;
 
         return (
             <sui.Modal isOpen={visible} className="sharedialog"
@@ -369,19 +351,19 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                     {action && this.loanedSimulator ? <div className="ui fields">
                         <div id="shareLoanedSimulator" className={`ui six wide field landscape only ${gifRecordingClass}`}></div>
                         <div className="ui ten wide field">
-                            <div>
-                                <sui.Input ref="filenameinput" placeholder={lf("Name")} autoFocus={!pxt.BrowserUtils.isMobile()} id={"projectNameInput"}
-                                    ariaLabel={lf("Type a name for your project")} autoComplete={false}
-                                    value={newProjectName || ''} onChange={this.handleProjectNameChange} />
-                            </div>
-                            <div className="ui segment landscape only">{screenshotUri
-                                ? <img className="ui centered image pixelart" src={screenshotUri} alt={lf("Screenshot")} />
-                                : <p>{lf("No screenshot!")}</p>}</div>
+                            <sui.Input ref="filenameinput" placeholder={lf("Name")} autoFocus={!pxt.BrowserUtils.isMobile()} id={"projectNameInput"}
+                                ariaLabel={lf("Type a name for your project")} autoComplete={false}
+                                value={newProjectName || ''} onChange={this.handleProjectNameChange} />
                             <div className="ui buttons landscape only">
-                                <sui.Button icon="refresh" title={lf("Restart")} ariaLabel={lf("Restart")} onClick={this.restartSimulator} loading={screenshotLoading} />
-                                <sui.Button icon="camera" title={screenshotText} ariaLabel={screenshotText} onClick={this.takeScreenshot} loading={screenshotLoading} />
-                                <sui.Button icon={gifIcon} title={gifTitle} loading={gifLoading} disabled={gifDisabled} onClick={this.handleRecordClick} />
+                                <label></label>
+                                <sui.Button icon="refresh" title={lf("Restart")} ariaLabel={lf("Restart")} onClick={this.restartSimulator} disabled={recordingState != ShareRecordingState.None} />
+                                <sui.Button icon={gifIcon} title={gifTitle} loading={gifLoading} onClick={this.handleRecordClick} />
                             </div>
+                            {screenshotUri || gifMessage ?
+                                <div className="ui segment landscape only">{
+                                    (screenshotUri && !gifMessage)
+                                        ? <img className="ui centered image" src={screenshotUri} alt={lf("Recorded gif")} />
+                                        : <p>{gifMessage}</p>}</div> : undefined}
                         </div>
                     </div> : undefined}
                     {action ? <p className="ui tiny message info">{disclaimer}</p> : undefined}
