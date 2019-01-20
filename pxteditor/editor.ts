@@ -132,7 +132,7 @@ namespace pxt.editor {
 
     export interface ScreenshotData {
         data: string;
-        time?: number;
+        delay?: number;
     }
 
     export interface IProjectView {

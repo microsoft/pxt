@@ -348,12 +348,13 @@ export class GifEncoder {
         this.time = 0;
     }
 
-    addFrame(dataUri: string, time?: number): number {
+    addFrame(dataUri: string, delay?: number): number {
         if (this.cancellationToken.isCancelled() || this.renderPromise) return 0;
-        pxt.debug(`gif: add frame ${this.frames.length}`);
-
-        const t = time | pxt.Util.now();
-        const delay = this.frames.length ? t - this.time : 0;
+        const t = pxt.Util.now();
+        if (delay === undefined) {
+            delay = this.frames.length ? t - this.time : 0;
+        }
+        pxt.debug(`gif: frame ${this.frames.length} ${delay}ms`);
         this.frames.push({
             img: dataUri,
             delay
