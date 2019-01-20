@@ -108,7 +108,7 @@ export class GifEncoder {
 }
 
 export function loadGifEncoderAsync(): Promise<GifEncoder> {
-    return pxt.BrowserUtils.loadScriptAsync("gifshot/gifshot.js", false)
+    return pxt.BrowserUtils.loadScriptAsync("gifshot.min.js", false)
         .then(() => new GifEncoder({
             gifWidth: 160,
             gifHeight: 120,

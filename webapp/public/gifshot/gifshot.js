@@ -2834,8 +2834,6 @@ var API = {
  */
 
 // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js, and plain browser loading
-// Monaco AMD loader breaks loading
-/*
 if (typeof define === 'function' && define.amd) {
     define([], function () {
         return API;
@@ -2843,7 +2841,6 @@ if (typeof define === 'function' && define.amd) {
 } else if (typeof exports !== 'undefined') {
     module.exports = API;
 } else {
-    */
     window.gifshot = API;
-//}
+}
 }(typeof window !== "undefined" ? window : {}, typeof document !== "undefined" ? document : { createElement: function() {} }, typeof window !== "undefined" ? window.navigator : {}));

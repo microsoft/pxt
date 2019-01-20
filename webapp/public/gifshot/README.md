@@ -1,1 +1,0 @@
-When updating this file, make sure to patch the loader code as it interferes with the Monaco AMD loader.
