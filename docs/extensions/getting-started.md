@@ -91,3 +91,6 @@ Read more on [defining blocks](/defining-blocks) to learn how to surface your AP
 The editor will automatically use any ``icon.png`` file when displaying the extension in the editor. **This feature only works for approved extensions.**
 
 The icon should be sized with a 16:9 ratio and of at least ``184`` pixels wide.
+
+### Notes
+Packages must by <64Kb in size. If you go above this limit you will see a 'network request error' when trying to import your project from the Github URL or an HTML file generated with the following text '{"message":"maximum file size in package is ~64k; file main.ts; size #####"}'
