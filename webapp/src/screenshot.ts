@@ -336,7 +336,6 @@ export class GifEncoder {
         if (this.gif) {
             try {
                 this.gif.abort();
-                this.gif = undefined;
             } catch (e) { }
         }
         this.clean();
