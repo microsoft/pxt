@@ -302,7 +302,7 @@ declare class GIF {
     render(): void;
     abort(): void;
     addFrame(img: HTMLImageElement, opts: any): void;
-    static freeWorkers: any[];
+    freeWorkers: Worker[];
 }
 
 export class GifEncoder {
@@ -335,14 +335,18 @@ export class GifEncoder {
         this.cancellationToken.cancel();
         if (this.gif) {
             try {
-
                 this.gif.abort();
+                this.gif = undefined;
             } catch (e) { }
         }
         this.clean();
     }
 
     private clean() {
+        if (this.gif && this.gif.freeWorkers) {
+            this.gif.freeWorkers.forEach(w => w.terminate());
+            this.gif.freeWorkers = [];
+        }
         this.gif = undefined;
         this.frames = undefined;
         this.time = 0;
