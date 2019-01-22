@@ -443,6 +443,16 @@ namespace pxsim {
             } as SimulatorScreenshotMessage));
         }
 
+        static toggleRecording() {
+            const r = runtime;
+            if (!r) return;
+
+            if (!r.recording)
+                r.startRecording()
+            else
+                r.stopRecording();
+        }
+
         restart() {
             this.kill();
             setTimeout(() =>
@@ -489,7 +499,7 @@ namespace pxsim {
                         data: imageData,
                         time
                     })
-            });
+                });
         }
 
         private numDisplayUpdates = 0;

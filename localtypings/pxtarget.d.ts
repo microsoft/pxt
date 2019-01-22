@@ -305,6 +305,8 @@ declare namespace pxt {
         simScreenshot?: boolean; // allows to download a screenshot of the simulator
         simScreenshotKey?: string; // keyboard key name
         simScreenshotMaxUriLength?: number; // maximum base64 encoded length to be uploaded
+        simGif?: boolean; // record gif of the simulator
+        simGifKey?: boolean; // shortcut to start stop
     }
 
     interface SocialOptions {

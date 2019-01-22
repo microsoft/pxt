@@ -350,21 +350,22 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         const screenshotDisabled = recordingState != ShareRecordingState.None;
         const screenshotText = this.loanedSimulator && targetTheme.simScreenshotKey
             ? lf("Take Screenshot (shortcut: {0})", targetTheme.simScreenshotKey) : lf("Take Screenshot");
-        const screenshotLoading = recordingState == ShareRecordingState.ScreenshotSnap;
+        const gif = !light && !!targetTheme.simGif;
         const isGifRecording = recordingState == ShareRecordingState.GifRecording;
         const isGifRendering = recordingState == ShareRecordingState.GifRendering;
         const gifIcon = isGifRecording ? "stop" : "circle";
         const gifTitle = isGifRecording
             ? lf("Stop recording")
             : isGifRendering ? lf("Cancel rendering")
-                : lf("Start recording");
+                : targetTheme.simGifKey ? lf("Start recording (shortcut: {0}", targetTheme.simGifKey)
+                    : lf("Start recording");
         const gifRecordingClass = isGifRecording ? "glow" : "";
         const gifLoading = recordingState == ShareRecordingState.GifLoading
             || isGifRendering;
         const screenshotMessage = recordError ? recordError
             : isGifRecording ? lf("Recording in progress...")
-            : isGifRendering ? lf("Rendering gif...")
-            : undefined;
+                : isGifRendering ? lf("Rendering gif...")
+                    : undefined;
         const screenshotMessageClass = recordError ? "warning" : "";
 
         return (
@@ -392,9 +393,9 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                                 value={newProjectName || ''} onChange={this.handleProjectNameChange} />
                             <label></label>
                             <div className="ui buttons landscape only">
-                                <sui.Button icon="refresh" title={lf("Restart")} ariaLabel={lf("Restart")} onClick={this.restartSimulator} />
-                                <sui.Button icon="camera" title={screenshotText} ariaLabel={screenshotText} onClick={this.handleScreenshotClick} disabled={recordingState != ShareRecordingState.None} loading={screenshotLoading} />
-                                {!light ? <sui.Button icon={gifIcon} title={gifTitle} loading={gifLoading} onClick={this.handleRecordClick} /> : undefined}
+                                <sui.Button icon="refresh" title={lf("Restart")} ariaLabel={lf("Restart")} onClick={this.restartSimulator} disabled={screenshotDisabled} />
+                                <sui.Button icon="camera" title={screenshotText} ariaLabel={screenshotText} onClick={this.handleScreenshotClick} disabled={screenshotDisabled} />
+                                {gif ? <sui.Button icon={gifIcon} title={gifTitle} loading={gifLoading} onClick={this.handleRecordClick} /> : undefined}
                             </div>
                             {screenshotUri || screenshotMessage ?
                                 <div className={`ui ${screenshotMessageClass} segment landscape only`}>{
