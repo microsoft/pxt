@@ -276,10 +276,14 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                         if (maxSize && uri.length > maxSize) {
                             pxt.log(`gif too big`)
                             uri = undefined;
-                            recordError = lf("Gif is too big, try recording a shorter time.")
-                        }
+                            recordError = lf("Gif is too big, try recording a shorter time.");
+                            pxt.tickEvent(`gif.toobig`, { size: uri.length });
+                        } else
+                            pxt.tickEvent(`gif.ok`, { size: uri.length });
+
                         this.setState({ recordingState: ShareRecordingState.None, screenshotUri: uri, recordError })
-                        this.props.parent.startSimulator();
+                        // give a breather to the browser to render the gif
+                        Promise.delay(1000).then(() => this.props.parent.startSimulator());
                     })
             });
     }
