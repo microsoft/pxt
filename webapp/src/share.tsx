@@ -382,10 +382,10 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         const isGifRendering = recordingState == ShareRecordingState.GifRendering;
         const gifIcon = isGifRecording ? "stop" : "circle";
         const gifTitle = isGifRecording
-            ? lf("Stop recording")
+            ? (targetTheme.simGifKey ? lf("Stop recording (shortcut: {0})", targetTheme.simGifKey) : lf("Stop recording"))
             : isGifRendering ? lf("Cancel rendering")
-                : targetTheme.simGifKey ? lf("Start recording (shortcut: {0}", targetTheme.simGifKey)
-                    : lf("Start recording");
+                : (targetTheme.simGifKey ? lf("Start recording (shortcut: {0})", targetTheme.simGifKey)
+                    : lf("Start recording"));
         const gifRecordingClass = isGifRecording ? "glow" : "";
         const gifLoading = recordingState == ShareRecordingState.GifLoading
             || isGifRendering;
