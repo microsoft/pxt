@@ -360,6 +360,7 @@ namespace pxsim {
         running = false;
         recording = false;
         recordingTimer = 0;
+        recordingLastImageData: ImageData = undefined;
         startTime = 0;
         startTimeUs = 0;
         id: string;
@@ -480,6 +481,7 @@ namespace pxsim {
 
             this.recording = true;
             this.recordingTimer = setInterval(() => this.postFrame(), 66);
+            this.recordingLastImageData = undefined;
         }
 
         stopRecording() {
@@ -487,6 +489,7 @@ namespace pxsim {
             if (this.recordingTimer) clearInterval(this.recordingTimer);
             this.recording = false;
             this.recordingTimer = 0;
+            this.recordingLastImageData = undefined;
         }
 
         postFrame() {
@@ -494,6 +497,20 @@ namespace pxsim {
             let time = pxsim.U.now();
             this.board.screenshotAsync()
                 .then(imageData => {
+                    // check for ducs
+                    if (this.recordingLastImageData && imageData
+                        && this.recordingLastImageData.data.byteLength == imageData.data.byteLength) {
+                        const d0 = this.recordingLastImageData.data;
+                        const d1 = imageData.data;
+                        const n = d0.byteLength;
+                        let i = 0;
+                        for (i = 0; i < n; ++i)
+                            if (d0[i] != d1[i])
+                                break;
+                        if (i == n) // same, don't send update
+                            return;
+                    }
+                    this.recordingLastImageData = imageData;
                     Runtime.postMessage(<SimulatorScreenshotMessage>{
                         type: "screenshot",
                         data: imageData,
