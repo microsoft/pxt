@@ -377,7 +377,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                             <label></label>
                             <div className="ui buttons landscape only">
                                 <sui.Button icon="refresh" title={lf("Restart")} ariaLabel={lf("Restart")} onClick={this.restartSimulator} disabled={recordingState != ShareRecordingState.None} />
-                                {light ? <sui.Button icon="camera" title={screenshotText} ariaLabel={screenshotText} onClick={this.handleScreenshotClick} loading={screenshotLoading} /> : undefined}
+                                <sui.Button icon="camera" title={screenshotText} ariaLabel={screenshotText} onClick={this.handleScreenshotClick} loading={screenshotLoading} />
                                 {!light ? <sui.Button icon={gifIcon} title={gifTitle} loading={gifLoading} onClick={this.handleRecordClick} /> : undefined}
                             </div>
                             {screenshotUri || gifMessage ?

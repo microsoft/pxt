@@ -425,7 +425,7 @@ export class GifEncoder {
 export function loadGifEncoderAsync(): Promise<GifEncoder> {
     const options: GIFOptions = {
         workers: 1,
-        quality: 10,
+        quality: 4,
         dither: false,
         workerScript: pxt.webConfig.gifworkerjs
     };
