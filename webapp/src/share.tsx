@@ -70,15 +70,15 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
     }
 
     hide() {
+        if (this._gifEncoder) {
+            this._gifEncoder.cancel();
+            this._gifEncoder = undefined;
+        }
         if (this.loanedSimulator) {
             simulator.driver.unloanSimulator();
             this.loanedSimulator = undefined;
             this.props.parent.popScreenshotHandler();
             simulator.driver.stopRecording();
-            if (this._gifEncoder) {
-                this._gifEncoder.cancel();
-                this._gifEncoder = undefined;
-            }
         }
         this.setState({
             visible: false,
