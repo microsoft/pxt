@@ -304,6 +304,7 @@ declare namespace pxt {
         addNewTypeScriptFile?: boolean; // when enabled, the [+] explorer button asks for file name, instead of using "custom.ts"
         simScreenshot?: boolean; // allows to download a screenshot of the simulator
         simScreenshotKey?: string; // keyboard key name
+        simScreenshotMaxUriLength?: number; // maximum base64 encoded length to be uploaded
     }
 
     interface SocialOptions {

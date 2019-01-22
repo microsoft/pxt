@@ -42,6 +42,7 @@ export interface ShareEditorState {
     thumbnails?: boolean;
     screenshotUri?: string;
     recordingState?: ShareRecordingState;
+    recordError?: string;
 }
 
 export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorState> {
@@ -56,7 +57,8 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             visible: false,
             advancedMenu: false,
             screenshotUri: undefined,
-            recordingState: ShareRecordingState.None
+            recordingState: ShareRecordingState.None,
+            recordError: undefined
         }
 
         this.hide = this.hide.bind(this);
@@ -85,7 +87,8 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             screenshotUri: undefined,
             projectName: undefined,
             projectNameChanged: false,
-            recordingState: ShareRecordingState.None
+            recordingState: ShareRecordingState.None,
+            recordError: undefined
         });
     }
 
@@ -115,7 +118,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                 this.gifRender();
         } else if (this.state.recordingState == ShareRecordingState.ScreenshotSnap) {
             // received a screenshot
-            this.setState({ screenshotUri: msg.data, recordingState: ShareRecordingState.None })
+            this.setState({ screenshotUri: msg.data, recordingState: ShareRecordingState.None, recordError: undefined })
         } else {
             // ignore
             // make sure simulator is stopped
@@ -173,12 +176,13 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         pxt.tickEvent("share.takescreenshot", { view: 'computer', collapsedTo: '' + !this.props.parent.state.collapseEditorTools }, { interactiveConsent: true });
         if (this.state.recordingState != ShareRecordingState.None) return;
 
-        this.setState({ recordingState: ShareRecordingState.ScreenshotSnap },
+        this.setState({ recordingState: ShareRecordingState.ScreenshotSnap, recordError: undefined },
             () => {
                 this.props.parent.requestScreenshotAsync()
                     .then(img => {
-                        const st: ShareEditorState = { recordingState: ShareRecordingState.None };
+                        const st: ShareEditorState = { recordingState: ShareRecordingState.None, recordError: undefined };
                         if (img) st.screenshotUri = img;
+                        else st.recordError = lf("Oops, screenshot failed. Please try again.")
                         this.setState(st);
                     });
 
@@ -214,7 +218,10 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             () => this.loadEncoderAsync()
                 .then(encoder => {
                     if (!encoder) {
-                        this.setState({ recordingState: ShareRecordingState.None });
+                        this.setState({
+                            recordingState: ShareRecordingState.None,
+                            recordError: lf("Oops, gif encoder could not load. Please try again.")
+                        });
                     } else {
                         encoder.start();
                         this.setState({ recordingState: ShareRecordingState.GifRecording },
@@ -223,7 +230,10 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                 })
                 .catch(e => {
                     pxt.reportException(e);
-                    this.setState({ recordingState: ShareRecordingState.None });
+                    this.setState({
+                        recordingState: ShareRecordingState.None,
+                        recordError: lf("Oops, gif recording failed. Please try again.")
+                    });
                     if (this._gifEncoder) {
                         this._gifEncoder.cancel();
                     }
@@ -237,17 +247,24 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         if (!this._gifEncoder) return;
 
         this.props.parent.stopSimulator();
-        this.setState({ recordingState: ShareRecordingState.GifRendering },
+        this.setState({ recordingState: ShareRecordingState.GifRendering, recordError: undefined },
             () => this._gifEncoder.renderAsync()
                 .then(uri => {
                     pxt.log(`gif: ${uri ? uri.length : 0} chars`)
-                    this.setState({ recordingState: ShareRecordingState.None, screenshotUri: uri })
+                    const maxSize = pxt.appTarget.appTheme.simScreenshotMaxUriLength;
+                    let recordError: string = undefined;
+                    if (maxSize && uri.length > maxSize) {
+                        pxt.log(`gif too big`)
+                        uri = undefined;
+                        recordError = lf("Gif is too big, try recording a shorter time.")
+                    }
+                    this.setState({ recordingState: ShareRecordingState.None, screenshotUri: uri, recordError })
                     this.props.parent.startSimulator();
                 }));
     }
 
     renderCore() {
-        const { visible, projectName: newProjectName, loading, recordingState, screenshotUri, thumbnails } = this.state;
+        const { visible, projectName: newProjectName, loading, recordingState, screenshotUri, thumbnails, recordError } = this.state;
         const targetTheme = pxt.appTarget.appTheme;
         const header = this.props.parent.state.header;
         const advancedMenu = !!this.state.advancedMenu;
@@ -333,6 +350,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         const light = !!pxt.options.light;
         const disclaimer = lf("You need to publish your project to share it or embed it in other web pages.") + " " +
             lf("You acknowledge having consent to publish this project.");
+        const screenshotDisabled = recordingState != ShareRecordingState.None;
         const screenshotText = this.loanedSimulator && targetTheme.simScreenshotKey
             ? lf("Take Screenshot (shortcut: {0})", targetTheme.simScreenshotKey) : lf("Take Screenshot");
         const screenshotLoading = recordingState == ShareRecordingState.ScreenshotSnap;
@@ -346,10 +364,11 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         const gifRecordingClass = isGifRecording ? "glow" : "";
         const gifLoading = recordingState == ShareRecordingState.GifLoading
             || isGifRendering;
-        const gifMessage = isGifRecording
-            ? lf("Recording in progress...")
+        const screenshotMessage = recordError ? recordError
+            : isGifRecording ? lf("Recording in progress...")
             : isGifRendering ? lf("Rendering gif...")
-                : undefined;
+            : undefined;
+        const screenshotMessageClass = recordError ? "warning" : "";
 
         return (
             <sui.Modal isOpen={visible} className="sharedialog"
@@ -376,15 +395,15 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                                 value={newProjectName || ''} onChange={this.handleProjectNameChange} />
                             <label></label>
                             <div className="ui buttons landscape only">
-                                <sui.Button icon="refresh" title={lf("Restart")} ariaLabel={lf("Restart")} onClick={this.restartSimulator} disabled={recordingState != ShareRecordingState.None} />
-                                <sui.Button icon="camera" title={screenshotText} ariaLabel={screenshotText} onClick={this.handleScreenshotClick} loading={screenshotLoading} />
+                                <sui.Button icon="refresh" title={lf("Restart")} ariaLabel={lf("Restart")} onClick={this.restartSimulator} />
+                                <sui.Button icon="camera" title={screenshotText} ariaLabel={screenshotText} onClick={this.handleScreenshotClick} disabled={recordingState != ShareRecordingState.None} loading={screenshotLoading} />
                                 {!light ? <sui.Button icon={gifIcon} title={gifTitle} loading={gifLoading} onClick={this.handleRecordClick} /> : undefined}
                             </div>
-                            {screenshotUri || gifMessage ?
-                                <div className="ui segment landscape only">{
-                                    (screenshotUri && !gifMessage)
+                            {screenshotUri || screenshotMessage ?
+                                <div className={`ui ${screenshotMessageClass} segment landscape only`}>{
+                                    (screenshotUri && !screenshotMessage)
                                         ? <img className="ui centered image" src={screenshotUri} alt={lf("Recorded gif")} />
-                                        : <p>{gifMessage}</p>}</div> : undefined}
+                                        : <p>{screenshotMessage}</p>}</div> : undefined}
                         </div>
                     </div> : undefined}
                     {action ? <p className="ui tiny message info">{disclaimer}</p> : undefined}
