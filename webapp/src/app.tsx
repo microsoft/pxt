@@ -156,9 +156,10 @@ export class ProjectView
                 if (handler)
                     handler(scmsg)
                 else {
+                    const pngString = pxt.BrowserUtils.imageDataToPNG(scmsg.data);
                     if (pxt.appTarget.compile.saveAsPNG)
-                        this.encodeProjectAsPNGAsync(scmsg.data, false).done();
-                    screenshot.saveAsync(this.state.header, scmsg.data)
+                        this.encodeProjectAsPNGAsync(pngString, false).done();
+                    screenshot.saveAsync(this.state.header, pngString)
                         .done(() => { pxt.debug('screenshot saved') })
                 }
             };
@@ -1274,7 +1275,7 @@ export class ProjectView
         this.setState({ screenshoting: true });
         simulator.driver.postMessage({ type: "screenshot" } as pxsim.SimulatorScreenshotMessage);
         return this.requestScreenshotPromise = new Promise<string>((resolve, reject) => {
-            this.pushScreenshotHandler(msg => resolve(msg.data));
+            this.pushScreenshotHandler(msg => resolve(pxt.BrowserUtils.imageDataToPNG(msg.data)));
         }).timeout(1000) // simulator might be stopped or in bad shape
             .catch(e => {
                 pxt.tickEvent('screenshot.timeout');

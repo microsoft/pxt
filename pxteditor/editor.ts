@@ -131,7 +131,7 @@ namespace pxt.editor {
     }
 
     export interface ScreenshotData {
-        data: string;
+        data: ImageData;
         delay?: number;
     }
 

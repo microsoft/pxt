@@ -293,37 +293,42 @@ declare interface GIFOptions {
     transparent?: string;
     dither?: boolean;
     debug?: boolean;
+
+    maxFrames?: number;
+}
+
+declare interface GIFFrameOptions {
+    delay?: number;
 }
 
 declare class GIF {
     constructor(options: GIFOptions);
 
+    running: boolean;
     on(ev: string, handler: any): void;
     render(): void;
     abort(): void;
-    addFrame(img: HTMLImageElement, opts: any): void;
+    addFrame(img: ImageData, opts?: GIFFrameOptions): void;
+    frames: any[];
     freeWorkers: Worker[];
 }
 
 export class GifEncoder {
     private gif: GIF;
     private time: number;
-    private frames: {
-        img: string;
-        delay: number;
-    }[];
     private cancellationToken: pxt.Util.CancellationToken;
     private renderPromise: Promise<string>;
 
     constructor(private options: GIFOptions) {
         this.cancellationToken = new pxt.Util.CancellationToken();
+        if (!this.options.maxFrames)
+            this.options.maxFrames = 64;
     }
 
     start() {
         pxt.debug(`gif: start encoder`)
         this.gif = new GIF(this.options);
-        this.frames = [];
-        this.time = 0;
+        this.time = -1;
         this.cancellationToken = new pxt.Util.CancellationToken();
         this.cancellationToken.startOperation();
         this.renderPromise = undefined;
@@ -333,7 +338,7 @@ export class GifEncoder {
         pxt.debug(`gif: cancel`)
         if (this.cancellationToken.isCancelled()) return;
         this.cancellationToken.cancel();
-        if (this.gif) {
+        if (this.gif && this.gif.running) {
             try {
                 this.gif.abort();
             } catch (e) { }
@@ -347,24 +352,22 @@ export class GifEncoder {
             this.gif.freeWorkers = [];
         }
         this.gif = undefined;
-        this.frames = undefined;
-        this.time = 0;
+        this.time = -1;
     }
 
-    addFrame(dataUri: string, delay?: number): number {
-        if (this.cancellationToken.isCancelled() || this.renderPromise) return 0;
+    addFrame(dataUri: ImageData, delay?: number): boolean {
+        if (this.cancellationToken.isCancelled() || this.renderPromise)
+            return false;
         const t = pxt.Util.now();
-        if (delay === undefined) {
-            delay = this.frames.length ? t - this.time : 0;
-        }
-        pxt.debug(`gif: frame ${this.frames.length} ${delay}ms`);
-        this.frames.push({
-            img: dataUri,
-            delay
-        });
+        if (this.time < 0)
+            this.time = t;
+        if (delay === undefined)
+            delay = t - this.time;
+        pxt.debug(`gif: frame ${delay}ms`);
+        this.gif.addFrame(dataUri, { delay });
         this.time = t;
 
-        return this.frames.length;
+        return this.gif.frames.length > this.options.maxFrames;
     }
 
     renderAsync(): Promise<string> {
@@ -372,8 +375,7 @@ export class GifEncoder {
 
         pxt.debug(`gif: render`)
         if (!this.renderPromise)
-            this.renderPromise = this.renderFramesAsync()
-                .then(() => this.renderGifAsync())
+            this.renderPromise = this.renderGifAsync()
                 .then(blob => {
                     this.cancellationToken.throwIfCancelled();
                     return new Promise((resolve, reject) => {
@@ -392,23 +394,8 @@ export class GifEncoder {
         return this.renderPromise;
     }
 
-    private renderFramesAsync(): Promise<void> {
-        this.cancellationToken.throwIfCancelled();
-
-        const f = this.frames.shift();
-        if (!f) return Promise.resolve();
-
-        return pxt.BrowserUtils.loadImageAsync(f.img)
-            .then(i => {
-                if (i)
-                    this.gif.addFrame(i, { delay: f.delay });
-                return this.renderFramesAsync();
-            });
-    }
-
     private renderGifAsync(): Promise<Blob> {
         this.cancellationToken.throwIfCancelled();
-
         return new Promise((resolve, reject) => {
             this.gif.on('finished', (blob: Blob) => {
                 resolve(blob);

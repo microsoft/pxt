@@ -136,7 +136,7 @@ namespace pxsim {
 
     export interface SimulatorScreenshotMessage extends SimulatorMessage {
         type: "screenshot";
-        data: string;
+        data: ImageData;
         delay?: number;
     }
 

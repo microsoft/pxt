@@ -143,7 +143,7 @@ namespace pxsim {
             this.runOptions = msg;
             return Promise.resolve()
         }
-        public screenshotAsync(): Promise<string> {
+        public screenshotAsync(): Promise<ImageData> {
             return Promise.resolve(undefined);
         }
         public kill() { }
@@ -359,7 +359,6 @@ namespace pxsim {
         dead = false;
         running = false;
         recording = false;
-        lastRecordedUri: string;
         recordingTimer = 0;
         startTime = 0;
         startTimeUs = 0;
@@ -478,21 +477,16 @@ namespace pxsim {
             if (this.recordingTimer) clearInterval(this.recordingTimer);
             this.recording = false;
             this.recordingTimer = 0;
-            this.lastRecordedUri = undefined;
         }
 
         postFrame() {
             if (!this.recording || !this.running) return;
             let time = pxsim.U.now();
             this.board.screenshotAsync()
-                .then(imageUri => {
-                    // opt; skip doubled frames
-                    if (imageUri == this.lastRecordedUri) return;
-                    this.lastRecordedUri = imageUri;
-                    // it's safer to render the SVG within the current CSS context
+                .then(imageData => {
                     Runtime.postMessage(<SimulatorScreenshotMessage>{
                         type: "screenshot",
-                        data: imageUri,
+                        data: imageData,
                         time
                     })
             });

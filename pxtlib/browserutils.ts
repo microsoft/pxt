@@ -385,6 +385,17 @@ namespace pxt.BrowserUtils {
             })
     }
 
+    export function imageDataToPNG(img: ImageData): string {
+        if (!img) return undefined;
+
+        const canvas = document.createElement("canvas")
+        canvas.width = img.width
+        canvas.height = img.height
+        const ctx = canvas.getContext("2d")
+        ctx.putImageData(img, 0, 0);
+        return canvas.toDataURL("image/png");
+    }
+
     export function resolveCdnUrl(path: string): string {
         // don't expand full urls
         if (/^https?:\/\//i.test(path))
