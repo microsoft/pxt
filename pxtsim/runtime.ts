@@ -443,14 +443,14 @@ namespace pxsim {
             } as SimulatorScreenshotMessage));
         }
 
-        static toggleRecording() {
+        static requestToggleRecording() {
             const r = runtime;
             if (!r) return;
 
-            if (!r.recording)
-                r.startRecording()
-            else
-                r.stopRecording();
+            Runtime.postMessage(<SimulatorRecorderMessage>{
+                type: "recorder",
+                action: r.recording ? "stop" : "start"
+            })
         }
 
         restart() {

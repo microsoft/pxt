@@ -487,6 +487,7 @@ namespace pxsim {
                 case 'pxteditor':
                 case 'screenshot':
                 case 'custom':
+                case 'recorder':
                     break; //handled elsewhere
                 case 'debugger': this.handleDebuggerMessage(msg as DebuggerMessage); break;
                 case 'toplevelcodefinished': if (this.options.onTopLevelCodeEnd) this.options.onTopLevelCodeEnd(); break;

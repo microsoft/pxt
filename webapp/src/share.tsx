@@ -110,6 +110,28 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
     handleScreenshotMessage(msg: pxt.editor.ScreenshotData) {
         if (!msg) return;
 
+        if (msg.event === "start") {
+            switch (this.state.recordingState) {
+                case ShareRecordingState.None:
+                    this.gifRecord();
+                    break;
+                default:
+                    // ignore
+                    break;
+            }
+            return;
+        } else if (msg.event == "stop") {
+            switch (this.state.recordingState) {
+                case ShareRecordingState.GifRecording:
+                    this.gifRender();
+                    break;
+                default:
+                    // ignore
+                    break;
+            }
+            return;
+        }
+
         if (this.state.recordingState == ShareRecordingState.GifRecording) {
             if (this._gifEncoder.addFrame(msg.data, msg.delay))
                 this.gifRender();
@@ -243,21 +265,23 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         simulator.driver.stopRecording();
         if (!this._gifEncoder) return;
 
-        this.props.parent.stopSimulator();
         this.setState({ recordingState: ShareRecordingState.GifRendering, recordError: undefined },
-            () => this._gifEncoder.renderAsync()
-                .then(uri => {
-                    pxt.log(`gif: ${uri ? uri.length : 0} chars`)
-                    const maxSize = pxt.appTarget.appTheme.simScreenshotMaxUriLength;
-                    let recordError: string = undefined;
-                    if (maxSize && uri.length > maxSize) {
-                        pxt.log(`gif too big`)
-                        uri = undefined;
-                        recordError = lf("Gif is too big, try recording a shorter time.")
-                    }
-                    this.setState({ recordingState: ShareRecordingState.None, screenshotUri: uri, recordError })
-                    this.props.parent.startSimulator();
-                }));
+            () => {
+                this.props.parent.stopSimulator();
+                this._gifEncoder.renderAsync()
+                    .then(uri => {
+                        pxt.log(`gif: ${uri ? uri.length : 0} chars`)
+                        const maxSize = pxt.appTarget.appTheme.simScreenshotMaxUriLength;
+                        let recordError: string = undefined;
+                        if (maxSize && uri.length > maxSize) {
+                            pxt.log(`gif too big`)
+                            uri = undefined;
+                            recordError = lf("Gif is too big, try recording a shorter time.")
+                        }
+                        this.setState({ recordingState: ShareRecordingState.None, screenshotUri: uri, recordError })
+                        this.props.parent.startSimulator();
+                    })
+            });
     }
 
     renderCore() {

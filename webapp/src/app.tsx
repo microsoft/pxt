@@ -104,7 +104,7 @@ export class ProjectView
     exitAndSaveDialog: projects.ExitAndSaveDialog;
     chooseHwDialog: projects.ChooseHwDialog;
     prevEditorId: string;
-    screenshotHandlers: ((msg: pxsim.SimulatorScreenshotMessage) => void)[] = [];
+    screenshotHandlers: ((msg: pxt.editor.ScreenshotData) => void)[] = [];
 
     private lastChangeTime: number;
     private reload: boolean;
@@ -149,7 +149,9 @@ export class ProjectView
     private initScreenshots() {
         window.addEventListener('message', (ev: MessageEvent) => {
             let msg = ev.data as pxsim.SimulatorMessage;
-            if (msg && msg.type == "screenshot" && this.state.header) {
+            if (!msg || !this.state.header) return;
+
+            if (msg.type == "screenshot") {
                 const scmsg = msg as pxsim.SimulatorScreenshotMessage;
                 if (!scmsg.data) return;
                 const handler = this.screenshotHandlers[this.screenshotHandlers.length - 1];
@@ -162,7 +164,14 @@ export class ProjectView
                     screenshot.saveAsync(this.state.header, pngString)
                         .done(() => { pxt.debug('screenshot saved') })
                 }
-            };
+            } else if (msg.type == "recorder") {
+                const scmsg = msg as pxsim.SimulatorRecorderMessage;
+                const handler = this.screenshotHandlers[this.screenshotHandlers.length - 1];
+                if (handler)
+                    handler({
+                        event: scmsg.action
+                    } as pxt.editor.ScreenshotData)
+            }
         }, false);
     }
 

@@ -131,8 +131,9 @@ namespace pxt.editor {
     }
 
     export interface ScreenshotData {
-        data: ImageData;
+        data?: ImageData;
         delay?: number;
+        event?: "start" | "stop";
     }
 
     export interface IProjectView {
