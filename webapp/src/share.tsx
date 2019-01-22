@@ -84,7 +84,8 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             visible: false,
             screenshotUri: undefined,
             projectName: undefined,
-            projectNameChanged: false
+            projectNameChanged: false,
+            recordingState: ShareRecordingState.None
         });
     }
 
