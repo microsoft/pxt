@@ -34,7 +34,6 @@ export interface ShareEditorState {
     visible?: boolean;
     sharingError?: boolean;
     loading?: boolean;
-    simState?: pxt.editor.SimState;
     projectName?: string;
     projectNameChanged?: boolean;
     thumbnails?: boolean;
@@ -154,9 +153,6 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         }
         if (newProps.loading != this.state.loading) {
             newState.loading = newProps.loading;
-        }
-        if (newProps.parent.state.simState != this.state.simState) {
-            newState.simState = newProps.parent.state.simState;
         }
         if (Object.keys(newState).length > 0) {
             this.setState(newState);
@@ -375,11 +371,10 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             })
         }
 
-        const isStarting = this.state.simState == pxt.editor.SimState.Starting;
         const light = !!pxt.options.light;
         const disclaimer = lf("You need to publish your project to share it or embed it in other web pages.") + " " +
             lf("You acknowledge having consent to publish this project.");
-        const screenshotDisabled = isStarting || recordingState != ShareRecordingState.None;
+        const screenshotDisabled = recordingState != ShareRecordingState.None;
         const screenshotText = this.loanedSimulator && targetTheme.simScreenshotKey
             ? lf("Take Screenshot (shortcut: {0})", targetTheme.simScreenshotKey) : lf("Take Screenshot");
         const gif = !light && !!targetTheme.simGif;
@@ -392,7 +387,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                 : (targetTheme.simGifKey ? lf("Start recording (shortcut: {0})", targetTheme.simGifKey)
                     : lf("Start recording"));
         const gifRecordingClass = isGifRecording ? "glow" : "";
-        const gifDisabled = isStarting;
+        const gifDisabled = false;
         const gifLoading = recordingState == ShareRecordingState.GifLoading
             || isGifRendering;
         const screenshotMessage = recordError ? recordError
@@ -434,7 +429,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                                 <div className={`ui ${screenshotMessageClass} segment landscape only`}>{
                                     (screenshotUri && !screenshotMessage)
                                         ? <img className="ui centered image" src={screenshotUri} alt={lf("Recorded gif")} />
-                                        : <p>{screenshotMessage}</p>}</div> : undefined}
+                                        : <p className="no-select">{screenshotMessage}</p>}</div> : undefined}
                         </div>
                     </div> : undefined}
                     {action ? <p className="ui tiny message info">{disclaimer}</p> : undefined}
