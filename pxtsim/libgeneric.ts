@@ -696,11 +696,10 @@ namespace pxsim {
             memmove(buf.data, dstOffset, src.data, srcOffset, length)
         }
     }
+}
 
-    namespace control {
-        export function createBufferFromUTF8(str: string) {
-            return new RefBuffer(U.stringToUint8Array(U.toUTF8(str)));
-        }
+namespace pxsim.control {
+    export function createBufferFromUTF8(str: string) {
+        return new pxsim.RefBuffer(U.stringToUint8Array(U.toUTF8(str)));
     }
-
 }
