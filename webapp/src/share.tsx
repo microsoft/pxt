@@ -273,12 +273,14 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                         pxt.log(`gif: ${uri ? uri.length : 0} chars`)
                         const maxSize = pxt.appTarget.appTheme.simScreenshotMaxUriLength;
                         let recordError: string = undefined;
-                        if (maxSize && uri && uri.length > maxSize) {
-                            pxt.tickEvent(`gif.toobig`, { size: uri.length });
-                            uri = undefined;
-                            recordError = lf("Gif is too big, try recording a shorter time.");
-                        } else
-                            pxt.tickEvent(`gif.ok`, { size: uri.length });
+                        if (uri) {
+                            if (maxSize && uri.length > maxSize) {
+                                pxt.tickEvent(`gif.toobig`, { size: uri.length });
+                                uri = undefined;
+                                recordError = lf("Gif is too big, try recording a shorter time.");
+                            } else
+                                pxt.tickEvent(`gif.ok`, { size: uri.length });
+                        }
 
                         this.setState({ recordingState: ShareRecordingState.None, screenshotUri: uri, recordError })
                         // give a breather to the browser to render the gif
