@@ -160,11 +160,14 @@ namespace pxsim.visuals {
                 const img = document.createElement("img");
                 img.onload = () => {
                     const cvs = document.createElement("canvas");
-                    cvs.width = img.width;
-                    cvs.height = img.height;
-                    if (this.breadboard) {
+                    cvs.width = img.width || this.view.width.baseVal.value;
+                    cvs.height = img.height || this.view.height.baseVal.value;
+                    if (cvs.width < 200) {
                         cvs.width *= 2;
                         cvs.height *= 2;
+                    } else if (cvs.width > 480) {
+                        cvs.width /= 2;
+                        cvs.height /= 2;
                     }
                     const ctx = cvs.getContext("2d");
                     ctx.drawImage(img, 0, 0, cvs.width, cvs.height);
