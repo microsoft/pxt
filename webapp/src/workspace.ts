@@ -219,7 +219,7 @@ export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptM
         name: h.name,
         target: h.target,
         targetVersion: h.targetVersion,
-        description: meta.description,
+        description: meta.description || lf("Made with ❤️ in {0}.", pxt.appTarget.title || pxt.appTarget.name),
         editor: h.editor,
         text: text,
         meta: {

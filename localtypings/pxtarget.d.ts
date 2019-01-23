@@ -303,6 +303,10 @@ declare namespace pxt {
         hideProjectRename?: boolean; // Temporary flag until we figure out a better way to show the name
         addNewTypeScriptFile?: boolean; // when enabled, the [+] explorer button asks for file name, instead of using "custom.ts"
         simScreenshot?: boolean; // allows to download a screenshot of the simulator
+        simScreenshotKey?: string; // keyboard key name
+        simScreenshotMaxUriLength?: number; // maximum base64 encoded length to be uploaded
+        simGif?: boolean; // record gif of the simulator
+        simGifKey?: boolean; // shortcut to start stop
     }
 
     interface SocialOptions {

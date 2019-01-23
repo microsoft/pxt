@@ -510,6 +510,17 @@ Avatar
 }
 
 /* Simulator effects */
+@keyframes glow {
+    to {
+         outline-color: yellow;
+    }
+}
+
+.glow > div {
+    outline: 3px solid transparent;
+    animation: glow 0.3s infinite alternate;  
+    transition: outline 0.3s linear;
+}
 
 .grayscale {
     -moz-filter: grayscale(1);
@@ -704,8 +715,8 @@ p.ui.font.small {
         position: relative;
         height:100%;
         background-color: white;
-        padding-top: 2rem;
-        padding-bottom: 6rem;
+        padding-top: 1rem;
+        padding-bottom: 4.5rem;
         padding-left: 0rem;
         padding-right: 0rem;
 
@@ -1078,6 +1089,11 @@ p.ui.font.small {
 
 .simView div.simframe:only-child > iframe {
     max-width: 100%;
+}
+
+/* ui embed overrides */
+div.simframe.ui.embed {
+    background: transparent;
 }
 
 .sandbox {

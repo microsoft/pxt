@@ -191,26 +191,29 @@ namespace helpers {
         return out;
     }
 
-    export function arraySlice<T>(arr: T[], start: number, end: number): T[] {
+    export function arraySlice<T>(arr: T[], start?: number, end?: number): T[] {
+        // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/slice
         const res: T[] = [];
         const len = arr.length;
 
-        if (start < 0) {
+        if (start === undefined)
+            start = 0;
+        else if (start < 0)
             start = Math.max(len + start, 0);
-        }
 
-        if (end < 0) {
+        if (start > len)
+            return res;
+
+        if (end === undefined)
+            end = len;
+        else if (end < 0)
             end = len + end;
-        }
 
-        const sliceLength = end - start;
+        if (end > len)
+            end = len;
 
-        for (let i = 0; i < sliceLength; ++i) {
-            const index = i + start;
-            if (index >= len) {
-                break;
-            }
-            res.push(arr[index]);
+        for (let i = start; i < end; ++i) {
+            res.push(arr[i]);
         }
         return res;
     }
