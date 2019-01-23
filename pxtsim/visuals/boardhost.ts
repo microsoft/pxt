@@ -154,7 +154,8 @@ namespace pxsim.visuals {
 
         public screenshotAsync(): Promise<ImageData> {
             const xml = new XMLSerializer().serializeToString(this.view);
-            const data = "data:image/svg+xml;base64," + btoa(decodeURIComponent(encodeURIComponent(xml)));
+            const data = "data:image/svg+xml,"
+                + encodeURIComponent(xml.replace(/\s+/g, ' ').replace(/"/g, "'"));
             return new Promise((resolve, reject) => {
                 const img = document.createElement("img");
                 img.onload = () => {
@@ -163,9 +164,9 @@ namespace pxsim.visuals {
                     cvs.height = img.height;
                     const ctx = cvs.getContext("2d");
                     ctx.drawImage(img, 0, 0);
-                    return ctx.getImageData(0, 0, cvs.width, cvs.height);
+                    resolve(ctx.getImageData(0, 0, cvs.width, cvs.height));
                 },
-                img.onerror = () => resolve(undefined);
+                    img.onerror = () => resolve(undefined);
                 img.src = data;
             })
         }
