@@ -162,8 +162,12 @@ namespace pxsim.visuals {
                     const cvs = document.createElement("canvas");
                     cvs.width = img.width;
                     cvs.height = img.height;
+                    if (this.breadboard) {
+                        cvs.width *= 2;
+                        cvs.height *= 2;
+                    }
                     const ctx = cvs.getContext("2d");
-                    ctx.drawImage(img, 0, 0);
+                    ctx.drawImage(img, 0, 0, cvs.width, cvs.height);
                     resolve(ctx.getImageData(0, 0, cvs.width, cvs.height));
                 },
                     img.onerror = () => resolve(undefined);
