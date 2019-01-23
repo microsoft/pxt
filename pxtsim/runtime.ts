@@ -81,6 +81,66 @@ namespace pxsim {
         export function nextTick(f: () => void) {
             (<any>Promise)._async._schedule(f)
         }
+
+        // this will take lower 8 bits from each character
+        export function stringToUint8Array(input: string) {
+            let len = input.length;
+            let res = new Uint8Array(len)
+            for (let i = 0; i < len; ++i)
+                res[i] = input.charCodeAt(i) & 0xff;
+            return res;
+        }
+
+        export function uint8ArrayToString(input: ArrayLike<number>) {
+            let len = input.length;
+            let res = ""
+            for (let i = 0; i < len; ++i)
+                res += String.fromCharCode(input[i]);
+            return res;
+        }
+
+        export function fromUTF8(binstr: string) {
+            if (!binstr) return ""
+
+            // escape function is deprecated
+            let escaped = ""
+            for (let i = 0; i < binstr.length; ++i) {
+                let k = binstr.charCodeAt(i) & 0xff
+                if (k == 37 || k > 0x7f) {
+                    escaped += "%" + k.toString(16);
+                } else {
+                    escaped += binstr.charAt(i)
+                }
+            }
+
+            // decodeURIComponent does the actual UTF8 decoding
+            return decodeURIComponent(escaped)
+        }
+
+        export function toUTF8(str: string, cesu8?: boolean) {
+            let res = "";
+            if (!str) return res;
+            for (let i = 0; i < str.length; ++i) {
+                let code = str.charCodeAt(i);
+                if (code <= 0x7f) res += str.charAt(i);
+                else if (code <= 0x7ff) {
+                    res += String.fromCharCode(0xc0 | (code >> 6), 0x80 | (code & 0x3f));
+                } else {
+                    if (!cesu8 && 0xd800 <= code && code <= 0xdbff) {
+                        let next = str.charCodeAt(++i);
+                        if (!isNaN(next))
+                            code = 0x10000 + ((code - 0xd800) << 10) + (next - 0xdc00);
+                    }
+
+                    if (code <= 0xffff)
+                        res += String.fromCharCode(0xe0 | (code >> 12), 0x80 | ((code >> 6) & 0x3f), 0x80 | (code & 0x3f));
+                    else
+                        res += String.fromCharCode(0xf0 | (code >> 18), 0x80 | ((code >> 12) & 0x3f), 0x80 | ((code >> 6) & 0x3f), 0x80 | (code & 0x3f));
+                }
+
+            }
+            return res;
+        }
     }
 
     export interface Map<T> {
