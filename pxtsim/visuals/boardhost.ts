@@ -152,6 +152,25 @@ namespace pxsim.visuals {
             return this.view;
         }
 
+        private _screenshotImage: HTMLImageElement;
+        public screenshotAsync(): Promise<ImageData> {
+            const xml = new XMLSerializer().serializeToString(this.view);
+            const data = "data:image/svg+xml;base64," + btoa(decodeURIComponent(encodeURIComponent(xml)));
+            return new Promise((resolve, reject) => {
+                const img = document.createElement("img");
+                img.onload = () => {
+                    const cvs = document.createElement("canvas");
+                    cvs.width = img.width;
+                    cvs.height = img.height;
+                    const ctx = cvs.getContext("2d");
+                    ctx.drawImage(img, 0, 0);
+                    return ctx.getImageData(0, 0, cvs.width, cvs.height);
+                },
+                img.onerror = () => resolve(undefined);
+                img.src = data;
+            })
+        }
+
         private updateState() {
             this.parts.forEach(c => c.updateState());
         }
