@@ -152,7 +152,6 @@ namespace pxsim.visuals {
             return this.view;
         }
 
-        private _screenshotImage: HTMLImageElement;
         public screenshotAsync(): Promise<ImageData> {
             const xml = new XMLSerializer().serializeToString(this.view);
             const data = "data:image/svg+xml;base64," + btoa(decodeURIComponent(encodeURIComponent(xml)));
