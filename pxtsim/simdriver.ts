@@ -116,6 +116,20 @@ namespace pxsim {
             this.themes = themes;
         }
 
+        public startRecording(): void {
+            const frame = this.simFrames()[0];
+            if (!frame) return undefined;
+
+            this.postMessage(<SimulatorRecorderMessage>{
+                type: 'recorder',
+                action: 'start'
+            });
+        }
+
+        public stopRecording() {
+            this.postMessage(<SimulatorRecorderMessage>{ type: 'recorder', action: 'stop' })
+        }
+
         private setFrameState(frame: HTMLIFrameElement) {
             const icon = frame.nextElementSibling as HTMLElement;
             const loader = icon.nextElementSibling as HTMLElement;
@@ -208,6 +222,11 @@ namespace pxsim {
                 if (source && frame.contentWindow == source) continue;
 
                 frame.contentWindow.postMessage(msg, "*");
+
+                // don't start more than 1 recorder
+                if (msg.type == 'recorder'
+                    && (<pxsim.SimulatorRecorderMessage>msg).action == "start")
+                    break;
             }
         }
 
@@ -464,9 +483,11 @@ namespace pxsim {
                     }
                     break;
                 case 'simulator': this.handleSimulatorCommand(msg as pxsim.SimulatorCommandMessage); break; //handled elsewhere
-                case 'serial': break; //handled elsewhere
+                case 'serial':
                 case 'pxteditor':
+                case 'screenshot':
                 case 'custom':
+                case 'recorder':
                     break; //handled elsewhere
                 case 'debugger': this.handleDebuggerMessage(msg as DebuggerMessage); break;
                 case 'toplevelcodefinished': if (this.options.onTopLevelCodeEnd) this.options.onTopLevelCodeEnd(); break;

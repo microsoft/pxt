@@ -104,7 +104,7 @@ export class ProjectView
     exitAndSaveDialog: projects.ExitAndSaveDialog;
     chooseHwDialog: projects.ChooseHwDialog;
     prevEditorId: string;
-    screenshotHandlers: ((img: string) => void)[] = [];
+    screenshotHandlers: ((msg: pxt.editor.ScreenshotData) => void)[] = [];
 
     private lastChangeTime: number;
     private reload: boolean;
@@ -149,20 +149,29 @@ export class ProjectView
     private initScreenshots() {
         window.addEventListener('message', (ev: MessageEvent) => {
             let msg = ev.data as pxsim.SimulatorMessage;
-            if (msg && msg.type == "screenshot" && this.state.header) {
-                pxt.tickEvent("sim.screenshot");
+            if (!msg || !this.state.header) return;
+
+            if (msg.type == "screenshot") {
                 const scmsg = msg as pxsim.SimulatorScreenshotMessage;
                 if (!scmsg.data) return;
                 const handler = this.screenshotHandlers[this.screenshotHandlers.length - 1];
                 if (handler)
-                    handler(scmsg.data)
+                    handler(scmsg)
                 else {
+                    const pngString = pxt.BrowserUtils.imageDataToPNG(scmsg.data);
                     if (pxt.appTarget.compile.saveAsPNG)
-                        this.encodeProjectAsPNGAsync(scmsg.data, false).done();
-                    screenshot.saveAsync(this.state.header, scmsg.data)
+                        this.encodeProjectAsPNGAsync(pngString, false).done();
+                    screenshot.saveAsync(this.state.header, pngString)
                         .done(() => { pxt.debug('screenshot saved') })
                 }
-            };
+            } else if (msg.type == "recorder") {
+                const scmsg = msg as pxsim.SimulatorRecorderMessage;
+                const handler = this.screenshotHandlers[this.screenshotHandlers.length - 1];
+                if (handler)
+                    handler({
+                        event: scmsg.action
+                    } as pxt.editor.ScreenshotData)
+            }
         }, false);
     }
 
@@ -1259,7 +1268,7 @@ export class ProjectView
         return this.saveProjectAsPNGAsync(false);
     }
 
-    pushScreenshotHandler(handler: (img: string) => void): void {
+    pushScreenshotHandler(handler: (msg: pxt.editor.ScreenshotData) => void): void {
         this.screenshotHandlers.push(handler);
     }
     popScreenshotHandler(): void {
@@ -1275,7 +1284,7 @@ export class ProjectView
         this.setState({ screenshoting: true });
         simulator.driver.postMessage({ type: "screenshot" } as pxsim.SimulatorScreenshotMessage);
         return this.requestScreenshotPromise = new Promise<string>((resolve, reject) => {
-            this.pushScreenshotHandler(img => resolve(img));
+            this.pushScreenshotHandler(msg => resolve(pxt.BrowserUtils.imageDataToPNG(msg.data)));
         }).timeout(1000) // simulator might be stopped or in bad shape
             .catch(e => {
                 pxt.tickEvent('screenshot.timeout');

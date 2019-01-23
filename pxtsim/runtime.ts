@@ -143,6 +143,9 @@ namespace pxsim {
             this.runOptions = msg;
             return Promise.resolve()
         }
+        public screenshotAsync(): Promise<ImageData> {
+            return Promise.resolve(undefined);
+        }
         public kill() { }
 
         protected serialOutBuffer: string = '';
@@ -355,6 +358,9 @@ namespace pxsim {
 
         dead = false;
         running = false;
+        recording = false;
+        recordingTimer = 0;
+        recordingLastImageData: ImageData = undefined;
         startTime = 0;
         startTimeUs = 0;
         id: string;
@@ -423,6 +429,31 @@ namespace pxsim {
             if (Runtime.messagePosted) Runtime.messagePosted(data);
         }
 
+        static postScreenshotAsync(delay?: number): Promise<void> {
+            const b = runtime && runtime.board;
+            const p = b
+                ? b.screenshotAsync().catch(e => {
+                    console.debug(`screenshot failed`);
+                    return undefined;
+                })
+                : Promise.resolve(undefined);
+            return p.then(img => Runtime.postMessage({
+                type: "screenshot",
+                data: img,
+                delay
+            } as SimulatorScreenshotMessage));
+        }
+
+        static requestToggleRecording() {
+            const r = runtime;
+            if (!r) return;
+
+            Runtime.postMessage(<SimulatorRecorderMessage>{
+                type: "recorder",
+                action: r.recording ? "stop" : "start"
+            })
+        }
+
         restart() {
             this.kill();
             setTimeout(() =>
@@ -436,11 +467,56 @@ namespace pxsim {
         kill() {
             this.dead = true
             // TODO fix this
+            this.stopRecording();
             this.setRunning(false);
         }
 
         updateDisplay() {
-            this.board.updateView()
+            this.board.updateView();
+            this.postFrame();
+        }
+
+        startRecording() {
+            if (this.recording || !this.running) return;
+
+            this.recording = true;
+            this.recordingTimer = setInterval(() => this.postFrame(), 66);
+            this.recordingLastImageData = undefined;
+        }
+
+        stopRecording() {
+            if (!this.recording) return;
+            if (this.recordingTimer) clearInterval(this.recordingTimer);
+            this.recording = false;
+            this.recordingTimer = 0;
+            this.recordingLastImageData = undefined;
+        }
+
+        postFrame() {
+            if (!this.recording || !this.running) return;
+            let time = pxsim.U.now();
+            this.board.screenshotAsync()
+                .then(imageData => {
+                    // check for ducs
+                    if (this.recordingLastImageData && imageData
+                        && this.recordingLastImageData.data.byteLength == imageData.data.byteLength) {
+                        const d0 = this.recordingLastImageData.data;
+                        const d1 = imageData.data;
+                        const n = d0.byteLength;
+                        let i = 0;
+                        for (i = 0; i < n; ++i)
+                            if (d0[i] != d1[i])
+                                break;
+                        if (i == n) // same, don't send update
+                            return;
+                    }
+                    this.recordingLastImageData = imageData;
+                    Runtime.postMessage(<SimulatorScreenshotMessage>{
+                        type: "screenshot",
+                        data: imageData,
+                        time
+                    })
+                });
         }
 
         private numDisplayUpdates = 0;
@@ -463,6 +539,7 @@ namespace pxsim {
                     this.startTimeUs = U.perfNowUs();
                     Runtime.postMessage(<SimulatorStateMessage>{ type: 'status', runtimeid: this.id, state: 'running' });
                 } else {
+                    this.stopRecording();
                     Runtime.postMessage(<SimulatorStateMessage>{ type: 'status', runtimeid: this.id, state: 'killed' });
                 }
                 if (this.stateChanged) this.stateChanged();

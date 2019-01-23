@@ -510,6 +510,17 @@ Avatar
 }
 
 /* Simulator effects */
+@keyframes glow {
+    to {
+         outline-color: yellow;
+    }
+}
+
+.glow > div {
+    outline: 3px solid transparent;
+    animation: glow 0.3s infinite alternate;  
+    transition: outline 0.3s linear;
+}
 
 .grayscale {
     -moz-filter: grayscale(1);
