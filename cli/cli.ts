@@ -1073,6 +1073,7 @@ function uploadCoreAsync(opts: UploadOptions) {
             "verprefix": "",
             "workerjs": opts.localDir + "worker.js",
             "monacoworkerjs": opts.localDir + "monacoworker.js",
+            "gifworkerjs": opts.localDir + "gifjs/gif.worker.js",
             "pxtVersion": pxtVersion(),
             "pxtRelId": "",
             "pxtCdnUrl": opts.localDir,
@@ -1096,6 +1097,7 @@ function uploadCoreAsync(opts: UploadOptions) {
             "/sim/": opts.localDir,
             "/blb/": opts.localDir,
             "@monacoworkerjs@": `${opts.localDir}monacoworker.js`,
+            "@gifworkerjs@": `${opts.localDir}gifjs/gif.worker.js`,
             "@workerjs@": `${opts.localDir}worker.js`,
             "@timestamp@": `# ver ${new Date().toString()}`,
             "var pxtConfig = null": "var pxtConfig = " + JSON.stringify(cfg, null, 4),
@@ -2054,6 +2056,9 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                         cfg.bundledpkgs[path.basename(dirname)] = res
                     }
                     if (isHw) isPrj = true
+                    if (isCore && pxt.appTarget.simulator &&
+                        pxt.appTarget.simulator.dynamicBoardDefinition)
+                        isPrj = true
                 })
                 .then(() => options.quick ? null : testForBuildTargetAsync(isPrj || (!options.skipCore && isCore)))
                 .then((compileOpts) => {
@@ -2576,7 +2581,7 @@ class Host
             nodeutil.writeFileSync(p, contents, { encoding: "utf8" })
     }
 
-    getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<any> {
+    getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo> {
         if (process.env["PXT_LOCAL_DOCKER_TEST"] === "yes") {
             const compileReq = JSON.parse(new Buffer(extInfo.compileData, "base64").toString("utf8"))
             const mappedFiles =
@@ -2602,6 +2607,30 @@ class Host
             const fn = "built/dockerreq.json"
             nodeutil.writeFileSync(fn, JSON.stringify(dockerReq, null, 4))
         }
+
+        if (pxt.options.debug) {
+            const compileReq = JSON.parse(new Buffer(extInfo.compileData, "base64").toString("utf8"))
+            const replLong = (m: any) => {
+                for (let k of Object.keys(m)) {
+                    let v = m[k]
+                    if (typeof v == "string" && v.length > 200) {
+                        m[k] = v.slice(0, 100) + " ... " + U.sha256(v).slice(0, 10)
+                    } else if (v && typeof v == "object") {
+                        replLong(v)
+                    }
+                }
+            }
+            replLong(compileReq)
+            nodeutil.writeFileSync("built/cpp.json", JSON.stringify(compileReq, null, 4))
+        }
+
+        const cachedPath = path.resolve(nodeutil.targetDir, "built", "hexcache", extInfo.sha + ".hex");
+        pxt.debug("trying " + cachedPath)
+        try {
+            const lines = fs.readFileSync(cachedPath, "utf8").split(/\r?\n/)
+            pxt.log(`Using hexcache: ${extInfo.sha}`)
+            return Promise.resolve({ hex: lines })
+        } catch (e) { }
 
         if (!forceLocalBuild && (extInfo.onlyPublic || forceCloudBuild))
             return pxt.hex.getHexInfoAsync(this, extInfo)

@@ -57,7 +57,12 @@ export class ViewZoneEditorHost implements pxt.editor.MonacoFieldEditorHost, mon
                 this.blocks = bi;
                 return this.showViewZoneAsync();
             })
-            .then(() => this.fe.showEditorAsync(this.range, this))
+            .then(() => {
+                this.editor.setScrollPosition({
+                    scrollTop: this.editor.getTopForLineNumber(this.afterLineNumber)
+                });
+                return this.fe.showEditorAsync(this.range, this)
+            })
             .finally(() => {
                 this.close();
             })

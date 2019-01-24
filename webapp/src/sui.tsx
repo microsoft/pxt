@@ -418,6 +418,7 @@ export interface ButtonProps extends UiProps, TooltipUIProps {
     ariaExpanded?: boolean;
     onClick?: (e: React.MouseEvent<HTMLElement>) => void;
     disabled?: boolean;
+    loading?: boolean;
     onKeyDown?: (e: React.KeyboardEvent<HTMLElement>) => void;
     labelPosition?: "left" | "right";
     color?: string;
@@ -426,11 +427,12 @@ export interface ButtonProps extends UiProps, TooltipUIProps {
 
 export class Button extends StatelessUIElement<ButtonProps> {
     renderCore() {
-        const { labelPosition, color, size, disabled } = this.props;
+        const { labelPosition, color, size, disabled, loading } = this.props;
         const classes = cx([
             color,
             size,
-            disabled ? 'disabled' : '',
+            (disabled || loading) ? 'disabled' : '',
+            loading ? 'loading' : '',
             genericClassName("ui button", this.props)
         ])
         const button = <button className={classes}
@@ -924,7 +926,7 @@ export interface ModalProps extends ReactModal.Props {
     defaultOpen?: boolean;
     closeIcon?: boolean | string;
 
-    size?: 'fullscreen' | 'large' | 'mini' | 'small' | 'tiny';
+    size?: '' | 'fullscreen' | 'large' | 'mini' | 'small' | 'tiny';
     className?: string;
     basic?: boolean;
     longer?: boolean;

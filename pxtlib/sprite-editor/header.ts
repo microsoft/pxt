@@ -45,8 +45,7 @@ namespace pxtsprite {
 
         layout() {
             this.toggle.layout();
-            const bounds = this.div.getBoundingClientRect();
-            this.toggle.translate((bounds.width - this.toggle.width()) / 2, (bounds.height - this.toggle.height()) / 2);
+            this.toggle.translate((TOTAL_HEIGHT - this.toggle.width()) / 2, (HEADER_HEIGHT - this.toggle.height()) / 2);
         }
     }
 }

@@ -9,14 +9,14 @@ namespace pxtsprite {
     import svg = pxt.svgUtil;
     import lf = pxt.Util.lf;
 
-    const TOTAL_HEIGHT = 500;
+    export const TOTAL_HEIGHT = 500;
 
     const PADDING = 10;
 
     const DROP_DOWN_PADDING = 4;
 
     // Height of toolbar (the buttons above the canvas)
-    const HEADER_HEIGHT = 50;
+    export const HEADER_HEIGHT = 50;
 
     // Spacing between the toolbar and the canvas
     const HEADER_CANVAS_MARGIN = 10;

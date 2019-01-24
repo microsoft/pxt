@@ -37,6 +37,7 @@ pxt.webConfig = {
     verprefix: undefined,
     workerjs: WEB_PREFIX + "/blb/worker.js",
     monacoworkerjs: undefined,
+    gifworkerjs: undefined,
     pxtVersion: undefined,
     pxtRelId: undefined,
     pxtCdnUrl: undefined,

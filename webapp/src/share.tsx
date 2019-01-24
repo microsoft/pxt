@@ -1,6 +1,8 @@
 import * as React from "react";
 import * as data from "./data";
 import * as sui from "./sui";
+import * as simulator from "./simulator";
+import * as screenshot from "./screenshot";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -15,6 +17,14 @@ export interface ShareEditorProps extends ISettingsProps {
     loading?: boolean;
 }
 
+export enum ShareRecordingState {
+    None,
+    ScreenshotSnap,
+    GifLoading,
+    GifRecording,
+    GifRendering
+}
+
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 export interface ShareEditorState {
     advancedMenu?: boolean;
@@ -25,10 +35,17 @@ export interface ShareEditorState {
     sharingError?: boolean;
     loading?: boolean;
     projectName?: string;
+    projectNameChanged?: boolean;
+    thumbnails?: boolean;
     screenshotUri?: string;
+    recordingState?: ShareRecordingState;
+    recordError?: string;
 }
 
 export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorState> {
+    private loanedSimulator: HTMLElement;
+    private _gifEncoder: screenshot.GifEncoder;
+
     constructor(props: ShareEditorProps) {
         super(props);
         this.state = {
@@ -36,38 +53,102 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             pubCurrent: false,
             visible: false,
             advancedMenu: false,
-            screenshotUri: undefined
+            screenshotUri: undefined,
+            recordingState: ShareRecordingState.None,
+            recordError: undefined
         }
 
         this.hide = this.hide.bind(this);
         this.toggleAdvancedMenu = this.toggleAdvancedMenu.bind(this);
         this.setAdvancedMode = this.setAdvancedMode.bind(this);
         this.handleProjectNameChange = this.handleProjectNameChange.bind(this);
+        this.restartSimulator = this.restartSimulator.bind(this);
+        this.handleRecordClick = this.handleRecordClick.bind(this);
+        this.handleScreenshotClick = this.handleScreenshotClick.bind(this);
+        this.handleScreenshotMessage = this.handleScreenshotMessage.bind(this);
     }
 
     hide() {
-        this.setState({ visible: false, screenshotUri: undefined });
+        if (this._gifEncoder) {
+            this._gifEncoder.cancel();
+            this._gifEncoder = undefined;
+        }
+        if (this.loanedSimulator) {
+            simulator.driver.unloanSimulator();
+            this.loanedSimulator = undefined;
+            this.props.parent.popScreenshotHandler();
+            simulator.driver.stopRecording();
+        }
+        this.setState({
+            visible: false,
+            screenshotUri: undefined,
+            projectName: undefined,
+            projectNameChanged: false,
+            recordingState: ShareRecordingState.None,
+            recordError: undefined
+        });
     }
 
     show(header: pxt.workspace.Header) {
+        // TODO investigate why edge does not render well
+        // upon hiding dialog, the screen does not redraw properly
+        const thumbnails = pxt.appTarget.cloud && pxt.appTarget.cloud.thumbnails;
+        if (thumbnails) {
+            this.loanedSimulator = simulator.driver.loanSimulator();
+            this.props.parent.pushScreenshotHandler(this.handleScreenshotMessage);
+        }
         this.setState({
+            thumbnails,
             visible: true,
             mode: ShareMode.Code,
             pubCurrent: header.pubCurrent,
             sharingError: false,
             screenshotUri: undefined
-        }, () => this.refreshScreenshot());
+        }, () => this.props.parent.startSimulator());
     }
 
-    refreshScreenshot() {
-        if (pxt.appTarget.cloud && pxt.appTarget.cloud.thumbnails)
-            this.props.parent.requestScreenshotAsync(false)
-                .done(img => this.setState({ screenshotUri: img }));
+    handleScreenshotMessage(msg: pxt.editor.ScreenshotData) {
+        if (!msg) return;
+
+        if (msg.event === "start") {
+            switch (this.state.recordingState) {
+                case ShareRecordingState.None:
+                    this.gifRecord();
+                    break;
+                default:
+                    // ignore
+                    break;
+            }
+            return;
+        } else if (msg.event == "stop") {
+            switch (this.state.recordingState) {
+                case ShareRecordingState.GifRecording:
+                    this.gifRender();
+                    break;
+                default:
+                    // ignore
+                    break;
+            }
+            return;
+        }
+
+        if (this.state.recordingState == ShareRecordingState.GifRecording) {
+            if (this._gifEncoder.addFrame(msg.data, msg.delay))
+                this.gifRender();
+        } else if (this.state.recordingState == ShareRecordingState.ScreenshotSnap) {
+            // received a screenshot
+            this.setState({ screenshotUri: pxt.BrowserUtils.imageDataToPNG(msg.data), recordingState: ShareRecordingState.None, recordError: undefined })
+        } else {
+            // ignore
+            // make sure simulator is stopped
+            simulator.driver.stopRecording();
+        }
     }
 
     componentWillReceiveProps(newProps: ShareEditorProps) {
         const newState: ShareEditorState = {}
-        if (newProps.parent.state.projectName != this.state.projectName) {
+        if (!this.state.projectNameChanged &&
+            newProps.parent.state.projectName != this.state.projectName) {
             newState.projectName = newProps.parent.state.projectName;
         }
         if (newProps.loading != this.state.loading) {
@@ -86,7 +167,9 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             || this.state.currentPubId != nextState.currentPubId
             || this.state.sharingError != nextState.sharingError
             || this.state.projectName != nextState.projectName
+            || this.state.projectNameChanged != nextState.projectNameChanged
             || this.state.loading != nextState.loading
+            || this.state.recordingState != nextState.recordingState
             || this.state.screenshotUri != nextState.screenshotUri;
     }
 
@@ -100,12 +183,114 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
     }
 
     handleProjectNameChange(name: string) {
-        this.setState({ projectName: name });
+        this.setState({ projectName: name, projectNameChanged: true });
+    }
+
+    restartSimulator() {
+        pxt.tickEvent('share.restart', undefined, { interactiveConsent: true });
+        this.props.parent.restartSimulator();
+    }
+
+    handleScreenshotClick() {
+        pxt.tickEvent("share.takescreenshot", { view: 'computer', collapsedTo: '' + !this.props.parent.state.collapseEditorTools }, { interactiveConsent: true });
+        if (this.state.recordingState != ShareRecordingState.None) return;
+
+        this.setState({ recordingState: ShareRecordingState.ScreenshotSnap, recordError: undefined },
+            () => {
+                this.props.parent.requestScreenshotAsync()
+                    .then(img => {
+                        const st: ShareEditorState = { recordingState: ShareRecordingState.None, recordError: undefined };
+                        if (img) st.screenshotUri = img;
+                        else st.recordError = lf("Oops, screenshot failed. Please try again.")
+                        this.setState(st);
+                    });
+
+            });
+    }
+
+    handleRecordClick() {
+        switch (this.state.recordingState) {
+            case ShareRecordingState.None:
+                this.gifRecord();
+                break;
+            case ShareRecordingState.GifRecording:
+                this.gifRender();
+                break;
+            default:
+                // ignore
+                break;
+        }
+    }
+
+    private loadEncoderAsync(): Promise<screenshot.GifEncoder> {
+        if (this._gifEncoder) return Promise.resolve(this._gifEncoder);
+        return screenshot.loadGifEncoderAsync()
+            .then(encoder => this._gifEncoder = encoder);
+    }
+
+    gifRecord() {
+        pxt.tickEvent("share.gifrecord", { view: 'computer', collapsedTo: '' + !this.props.parent.state.collapseEditorTools }, { interactiveConsent: true });
+
+        if (this.state.recordingState != ShareRecordingState.None) return;
+
+        this.setState({ recordingState: ShareRecordingState.GifLoading, screenshotUri: undefined },
+            () => this.loadEncoderAsync()
+                .then(encoder => {
+                    if (!encoder) {
+                        this.setState({
+                            recordingState: ShareRecordingState.None,
+                            recordError: lf("Oops, gif encoder could not load. Please try again.")
+                        });
+                    } else {
+                        encoder.start();
+                        this.setState({ recordingState: ShareRecordingState.GifRecording },
+                            () => simulator.driver.startRecording());
+                    }
+                })
+                .catch(e => {
+                    pxt.reportException(e);
+                    this.setState({
+                        recordingState: ShareRecordingState.None,
+                        recordError: lf("Oops, gif recording failed. Please try again.")
+                    });
+                    if (this._gifEncoder) {
+                        this._gifEncoder.cancel();
+                    }
+                })
+        );
+    }
+
+    gifRender() {
+        pxt.debug(`render gif`)
+        simulator.driver.stopRecording();
+        if (!this._gifEncoder) return;
+
+        this.setState({ recordingState: ShareRecordingState.GifRendering, recordError: undefined },
+            () => {
+                this.props.parent.stopSimulator();
+                this._gifEncoder.renderAsync()
+                    .then(uri => {
+                        pxt.log(`gif: ${uri ? uri.length : 0} chars`)
+                        const maxSize = pxt.appTarget.appTheme.simScreenshotMaxUriLength;
+                        let recordError: string = undefined;
+                        if (uri) {
+                            if (maxSize && uri.length > maxSize) {
+                                pxt.tickEvent(`gif.toobig`, { size: uri.length });
+                                uri = undefined;
+                                recordError = lf("Gif is too big, try recording a shorter time.");
+                            } else
+                                pxt.tickEvent(`gif.ok`, { size: uri.length });
+                        }
+
+                        this.setState({ recordingState: ShareRecordingState.None, screenshotUri: uri, recordError })
+                        // give a breather to the browser to render the gif
+                        Promise.delay(1000).then(() => this.props.parent.startSimulator());
+                    })
+            });
     }
 
     renderCore() {
-        const { visible, projectName: newProjectName, loading, screenshotUri } = this.state;
-        const { projectName } = this.props.parent.state;
+        const { visible, projectName: newProjectName, loading, recordingState, screenshotUri, thumbnails, recordError } = this.state;
         const targetTheme = pxt.appTarget.appTheme;
         const header = this.props.parent.state.header;
         const advancedMenu = !!this.state.advancedMenu;
@@ -148,7 +333,6 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                         break;
                 }
             }
-
         }
         const publish = () => {
             pxt.tickEvent("menu.embed.publish", undefined, { interactiveConsent: true });
@@ -159,12 +343,12 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                 p = this.props.parent.updateHeaderNameAsync(newProjectName);
             }
             p.then(() => this.props.parent.anonymousPublishAsync(screenshotUri))
-                .catch((e) => {
-                    this.setState({ sharingError: true });
-                })
-                .done(() => {
+                .then(() => {
                     this.setState({ pubCurrent: true });
                     this.forceUpdate();
+                })
+                .catch((e) => {
+                    this.setState({ sharingError: true });
                 });
             this.forceUpdate();
         }
@@ -178,7 +362,6 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         const action = !ready ? lf("Publish project") : undefined;
         const actionLoading = loading && !this.state.sharingError;
 
-
         let actions: sui.ModalButton[] = [];
         if (action) {
             actions.push({
@@ -190,10 +373,34 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             })
         }
 
-        const shouldNameProject = projectName == lf("Untitled");
+        const light = !!pxt.options.light;
+        const disclaimer = lf("You need to publish your project to share it or embed it in other web pages.") + " " +
+            lf("You acknowledge having consent to publish this project.");
+        const screenshotDisabled = recordingState != ShareRecordingState.None;
+        const screenshotText = this.loanedSimulator && targetTheme.simScreenshotKey
+            ? lf("Take Screenshot (shortcut: {0})", targetTheme.simScreenshotKey) : lf("Take Screenshot");
+        const gif = !light && !!targetTheme.simGif;
+        const isGifRecording = recordingState == ShareRecordingState.GifRecording;
+        const isGifRendering = recordingState == ShareRecordingState.GifRendering;
+        const gifIcon = isGifRecording ? "stop" : "circle";
+        const gifTitle = isGifRecording
+            ? (targetTheme.simGifKey ? lf("Stop recording (shortcut: {0})", targetTheme.simGifKey) : lf("Stop recording"))
+            : isGifRendering ? lf("Cancel rendering")
+                : (targetTheme.simGifKey ? lf("Start recording (shortcut: {0})", targetTheme.simGifKey)
+                    : lf("Start recording"));
+        const gifRecordingClass = isGifRecording ? "glow" : "";
+        const gifDisabled = false;
+        const gifLoading = recordingState == ShareRecordingState.GifLoading
+            || isGifRendering;
+        const screenshotMessage = recordError ? recordError
+            : isGifRecording ? lf("Recording in progress...")
+                : isGifRendering ? lf("Rendering gif...")
+                    : undefined;
+        const screenshotMessageClass = recordError ? "warning" : "";
 
         return (
-            <sui.Modal isOpen={visible} className="sharedialog" size="small"
+            <sui.Modal isOpen={visible} className="sharedialog"
+                size={thumbnails ? "" : "small"}
                 onClose={this.hide}
                 dimmer={true} header={lf("Share Project")}
                 closeIcon={true} buttons={actions}
@@ -201,31 +408,35 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                 closeOnDocumentClick
                 closeOnEscape>
                 <div className={`ui form`}>
-                    {action ?
-                        <div className="ui items"><div className="item">
-                            {screenshotUri
-                                ? <img className="ui small image" src={screenshotUri} alt={lf("Screenshot")} />
-                                : undefined}
-                            <div className="content">
-                                {shouldNameProject ?
-                                    <div>
-                                        <p>{lf("Give your project a name before sharing.")}</p>
-                                        <div>
-                                            <sui.Input ref="filenameinput" autoFocus={!pxt.BrowserUtils.isMobile()} id={"projectNameInput"}
-                                                ariaLabel={lf("Type a name for your project")} autoComplete={false}
-                                                value={newProjectName || ''} onChange={this.handleProjectNameChange} />
-                                        </div>
-                                    </div> : undefined}
-                                <p className="ui message info">{
-                                    lf("You need to publish your project to share it or embed it in other web pages.") + " " +
-                                    lf("You acknowledge having consent to publish this project.")}
-                                    {screenshotUri ? " " + lf("The screenshot will be published with your project.") : undefined}
-                                </p>
-                                {this.state.sharingError ?
-                                    <p className="ui red inverted segment">{lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.")}</p>
-                                    : undefined}
+                    {action && !this.loanedSimulator ? <div className="ui field">
+                        <div>
+                            <sui.Input ref="filenameinput" placeholder={lf("Name")} autoFocus={!pxt.BrowserUtils.isMobile()} id={"projectNameInput"}
+                                ariaLabel={lf("Type a name for your project")} autoComplete={false}
+                                value={newProjectName || ''} onChange={this.handleProjectNameChange} />
+                        </div>
+                    </div> : undefined}
+                    {action && this.loanedSimulator ? <div className="ui fields">
+                        <div id="shareLoanedSimulator" className={`ui six wide field landscape only ${gifRecordingClass}`}></div>
+                        <div className="ui ten wide field">
+                            <sui.Input ref="filenameinput" placeholder={lf("Name")} autoFocus={!pxt.BrowserUtils.isMobile()} id={"projectNameInput"}
+                                ariaLabel={lf("Type a name for your project")} autoComplete={false}
+                                value={newProjectName || ''} onChange={this.handleProjectNameChange} />
+                            <label></label>
+                            <div className="ui buttons landscape only">
+                                <sui.Button icon="refresh" title={lf("Restart")} ariaLabel={lf("Restart")} onClick={this.restartSimulator} disabled={screenshotDisabled} />
+                                <sui.Button icon="camera" title={screenshotText} ariaLabel={screenshotText} onClick={this.handleScreenshotClick} disabled={screenshotDisabled} />
+                                {gif ? <sui.Button icon={gifIcon} title={gifTitle} loading={gifLoading} onClick={this.handleRecordClick} disabled={gifDisabled} /> : undefined}
                             </div>
-                        </div></div>
+                            {screenshotUri || screenshotMessage ?
+                                <div className={`ui ${screenshotMessageClass} segment landscape only`}>{
+                                    (screenshotUri && !screenshotMessage)
+                                        ? <img className="ui centered image" src={screenshotUri} alt={lf("Recorded gif")} />
+                                        : <p className="no-select">{screenshotMessage}</p>}</div> : undefined}
+                        </div>
+                    </div> : undefined}
+                    {action ? <p className="ui tiny message info">{disclaimer}</p> : undefined}
+                    {this.state.sharingError ?
+                        <p className="ui red inverted segment">{lf("Oops! There was an error. Please ensure you are connected to the Internet and try again.")}</p>
                         : undefined}
                     {url && ready ? <div>
                         <p>{lf("Your project is ready! Use the address below to share your projects.")}</p>
@@ -235,8 +446,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                             <SocialButton url={url} ariaLabel="Facebook" type='facebook' heading={lf("Share on Facebook")} />
                             <SocialButton url={url} ariaLabel="Twitter" type='twitter' heading={lf("Share on Twitter")} />
                         </div> : undefined}
-                    </div>
-                        : undefined}
+                    </div> : undefined}
                     {ready && !hideEmbed ? <div>
                         <div className="ui divider"></div>
                         <sui.Link icon={`chevron ${advancedMenu ? "down" : "right"}`} text={lf("Embed")} ariaExpanded={advancedMenu} onClick={this.toggleAdvancedMenu} />
@@ -252,8 +462,14 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                             </sui.Field> : null}
                     </div> : undefined}
                 </div>
-            </sui.Modal>
+            </sui.Modal >
         )
+    }
+
+    componentDidUpdate() {
+        const container = document.getElementById("shareLoanedSimulator");
+        if (container && this.loanedSimulator && !this.loanedSimulator.parentNode)
+            container.appendChild(this.loanedSimulator);
     }
 }
 

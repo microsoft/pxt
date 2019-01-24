@@ -1035,7 +1035,19 @@ ${output}</xml>`;
 
         function getTaggedTemplateExpression(t: ts.TaggedTemplateExpression): ExpressionNode {
             const callInfo: pxtc.CallInfo = (t as any).callInfo;
-            const api = env.blocks.apis.byQName[attrs(callInfo).blockIdentity];
+
+            let api: SymbolInfo;
+            const paramInfo = getParentParameterInfo(t);
+            if (paramInfo && paramInfo.shadowBlockId) {
+                const shadow = env.blocks.blocksById[paramInfo.shadowBlockId];
+                if (shadow && shadow.attributes.shim === "TD_ID") {
+                    api = shadow;
+                }
+            }
+            if (!api) {
+                api = env.blocks.apis.byQName[attrs(callInfo).blockIdentity];
+            }
+
             const comp = pxt.blocks.compileInfo(api);
 
             const r = mkExpr(api.attributes.blockId);
@@ -1046,6 +1058,22 @@ ${output}</xml>`;
             r.fields = [getField(comp.parameters[0].actualName, text)];
 
             return r;
+        }
+
+        function getParentParameterInfo(n: ts.Expression) {
+            if (n.parent && n.parent.kind === SK.CallExpression) {
+                const call = n.parent as CallExpression;
+                const info = (call as any).callInfo;
+                const index = call.arguments.indexOf(n);
+                if (info && index !== -1) {
+                    const blockInfo = blocksInfo.apis.byQName[info.qName];
+                    if (blockInfo) {
+                        const comp = pxt.blocks.compileInfo(blockInfo);
+                        return comp && comp.parameters[index];
+                    }
+                }
+            }
+            return undefined;
         }
 
         function getStatementBlock(n: ts.Node, next?: ts.Node[], parent?: ts.Node, asExpression = false, topLevel = false): StatementNode {
