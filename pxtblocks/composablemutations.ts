@@ -292,9 +292,9 @@ namespace pxt.blocks {
             // If the block isn't rendered, Blockly will crash
             if (b.rendered) {
                 let renderList = input.setVisible(visible);
-                for (let i = 0, block; block = renderList[i]; i++) {
+                renderList.forEach(block => {
                     block.render();
-                }
+                });
             }
         }
     }
