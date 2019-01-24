@@ -153,19 +153,19 @@ namespace pxsim.visuals {
         }
 
         public screenshotAsync(): Promise<ImageData> {
-            const xml = new XMLSerializer().serializeToString(this.view);
+            const svg = this.view.cloneNode(true) as SVGSVGElement;
+            svg.setAttribute('width', this.view.width.baseVal.value + "");
+            svg.setAttribute('height', this.view.height.baseVal.value + "");
+            const xml = new XMLSerializer().serializeToString(svg);
             const data = "data:image/svg+xml,"
                 + encodeURIComponent(xml.replace(/\s+/g, ' ').replace(/"/g, "'"));
-
-            console.log(data);
-            window.open(data, "_self")
 
             return new Promise((resolve, reject) => {
                 const img = document.createElement("img");
                 img.onload = () => {
                     const cvs = document.createElement("canvas");
-                    cvs.width = img.width || this.view.width.baseVal.value;
-                    cvs.height = img.height || this.view.height.baseVal.value;
+                    cvs.width = img.width;
+                    cvs.height = img.height;
                     if (cvs.width < 200) {
                         cvs.width *= 2;
                         cvs.height *= 2;
@@ -176,8 +176,11 @@ namespace pxsim.visuals {
                     const ctx = cvs.getContext("2d");
                     ctx.drawImage(img, 0, 0, cvs.width, cvs.height);
                     resolve(ctx.getImageData(0, 0, cvs.width, cvs.height));
-                },
-                    img.onerror = () => resolve(undefined);
+                };
+                img.onerror = e => {
+                    console.log(e);
+                    resolve(undefined);
+                }
                 img.src = data;
             })
         }
