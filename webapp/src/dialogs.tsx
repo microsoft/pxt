@@ -678,7 +678,7 @@ export function showImportFileDialogAsync() {
                 <input type="file" tabIndex={0} autoFocus aria-describedby="selectFileToOpenLabel" className="ui blue fluid"></input>
             </div>
             <div className="ui secondary segment">
-                {lf("You can import files by drag and dropping them anywhere in the editor!")}
+                {lf("You can import files by dragging and dropping them anywhere in the editor!")}
             </div>
         </div>,
     }).then(res => {
