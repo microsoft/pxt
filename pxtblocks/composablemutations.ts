@@ -291,7 +291,10 @@ namespace pxt.blocks {
         function setInputVisible(input: Blockly.Input, visible: boolean) {
             // If the block isn't rendered, Blockly will crash
             if (b.rendered) {
-                input.setVisible(visible);
+                let renderList = input.setVisible(visible);
+                renderList.forEach(block => {
+                    block.render();
+                });
             }
         }
     }
