@@ -1498,8 +1498,18 @@ function buildFolderAsync(p: string, optional?: boolean, outputName?: string): P
     }
 
     const tsConfig = JSON.parse(fs.readFileSync(path.join(p, "tsconfig.json"), "utf8"));
+    let isNodeModule = false;
     if (outputName && tsConfig.compilerOptions.out !== `../built/${outputName}.js`) {
-        U.userError(`${p}/tsconfig.json expected compilerOptions.out:"../built/${outputName}.js", got "${tsConfig.compilerOptions.out}"`);
+        // Special case to support target sim as an NPM package
+        if (/^node_modules[\/\\]+pxt-.*?-sim$/.test(p)) {
+            // Allow the out dir be inside the folder being built, and manually copy the result to ./built afterwards
+            if (tsConfig.compilerOptions.out !== `./built/${outputName}.js`) {
+                U.userError(`${p}/tsconfig.json expected compilerOptions.out:"./built/${outputName}.js", got "${tsConfig.compilerOptions.out}"`);
+            }
+            isNodeModule = true;
+        } else {
+            U.userError(`${p}/tsconfig.json expected compilerOptions.out:"../built/${outputName}.js", got "${tsConfig.compilerOptions.out}"`);
+        }
     }
 
     if (!fs.existsSync("node_modules/typescript")) {
@@ -1510,7 +1520,7 @@ function buildFolderAsync(p: string, optional?: boolean, outputName?: string): P
     dirsToWatch.push(p)
     return nodeutil.spawnAsync({
         cmd: "node",
-        args: ["../node_modules/typescript/bin/tsc"],
+        args: [`../${isNodeModule ? "" : "node_modules/"}typescript/bin/tsc`],
         cwd: p
     }).then(() => {
         if (tsConfig.prepend) {
@@ -1521,6 +1531,11 @@ function buildFolderAsync(p: string, optional?: boolean, outputName?: string): P
                 s += fs.readFileSync(path.resolve(p, f), "utf8") + "\n"
             }
             fs.writeFileSync(path.resolve(p, tsConfig.compilerOptions.out), s)
+        }
+
+        if (isNodeModule) {
+            const content = fs.readFileSync(path.resolve(p, tsConfig.compilerOptions.out), "utf8");
+            fs.writeFileSync(path.resolve("built", path.basename(tsConfig.compilerOptions.out)), content);
         }
     })
 }
@@ -2005,7 +2020,7 @@ function rebundleAsync() {
 }
 
 function buildSimAsync() {
-    return buildFolderAsync('sim', true, pxt.appTarget.id === 'common' ? 'common-sim' : 'sim');
+    return buildFolderAsync(simDir(), true, pxt.appTarget.id === "common" ? "common-sim" : "sim");
 }
 
 function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
@@ -2185,9 +2200,6 @@ function buildFailed(msg: string, e: any) {
 
 function buildAndWatchTargetAsync(includeSourceMaps: boolean, rebundle: boolean) {
     if (!(fs.existsSync(path.join(simDir(), "tsconfig.json")) || nodeutil.existsDirSync(path.join(simDir(), "public")))) {
-        console.log("*****" + simDir());
-        console.log("*****" + pxt.appTarget.id);
-        console.log("*****" + nodeutil.existsDirSync(`node_modules/pxt-${pxt.appTarget.id}-sim`));
         console.log("No sim/tsconfig.json nor sim/public/; assuming npm installed package")
         return Promise.resolve()
     }
@@ -2197,7 +2209,7 @@ function buildAndWatchTargetAsync(includeSourceMaps: boolean, rebundle: boolean)
     let simDirectories: string[] = [];
     if (hasCommonPackages) {
         const libsdir = path.resolve("node_modules/pxt-common-packages/libs");
-        simDirectories = fs.readdirSync(libsdir).map(fn => path.join(libsdir, fn, simDir()));
+        simDirectories = fs.readdirSync(libsdir).map(fn => path.join(libsdir, fn, "sim"));
         simDirectories = simDirectories.filter(fn => fs.existsSync(fn));
     }
 
