@@ -5872,11 +5872,13 @@ function errorHandler(reason: any) {
 
 let cachedSimDir: string = "";
 function simDir() {
+    const dirSim = "sim";
+    const npmSim = `node_modules/pxt-${pxt.appTarget.id}-sim`;
     if (!cachedSimDir) {
-        if (nodeutil.existsDirSync("sim")) {
-            cachedSimDir = "sim";
-        } else if (fs.existsSync(`node_modules/pxt-${pxt.appTarget.id}-sim`)) {
-            cachedSimDir = `node_modules/pxt-${pxt.appTarget.id}-sim`;
+        if (nodeutil.existsDirSync(dirSim) && fs.existsSync(path.join(dirSim, "tsconfig.json"))) {
+            cachedSimDir = dirSim;
+        } else if (fs.existsSync(npmSim) && fs.existsSync(path.join(npmSim, "tsconfig.json"))) {
+            cachedSimDir = npmSim;
         }
     }
 
