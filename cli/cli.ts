@@ -768,7 +768,7 @@ function pkgVersion() {
 
 function targetFileList() {
     let lst = onlyExts(nodeutil.allFiles("built"), [".js", ".css", ".json", ".webmanifest"])
-        .concat(nodeutil.allFiles("sim/public"))
+        .concat(nodeutil.allFiles(path.join(simDir(), "public")))
     pxt.debug(`target files (on disk): ${lst.join('\r\n    ')}`)
     return lst;
 }
@@ -1459,8 +1459,8 @@ export function internalBuildTargetAsync(options: BuildTargetOptions = {}): Prom
         initPromise = Promise.resolve();
     }
 
-    if (nodeutil.existsDirSync("sim"))
-        initPromise = initPromise.then(() => extractLocStringsAsync("sim-strings", ["sim"]));
+    if (nodeutil.existsDirSync(simDir()))
+        initPromise = initPromise.then(() => extractLocStringsAsync("sim-strings", [simDir()]));
 
     return initPromise
         .then(() => { copyCommonSim(); return simshimAsync() })
@@ -2023,11 +2023,11 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
             dirsToWatch.push("editor");
         if (fs.existsSync("fieldeditors"))
             dirsToWatch.push("fieldeditors");
-        if (fs.existsSync("sim")) {
-            dirsToWatch.push("sim"); // simulator
+        if (fs.existsSync(simDir())) {
+            dirsToWatch.push(simDir()); // simulator
             dirsToWatch = dirsToWatch.concat(
-                fs.readdirSync("sim")
-                    .map(p => path.join("sim", p))
+                fs.readdirSync(simDir())
+                    .map(p => path.join(simDir(), p))
                     .filter(p => fs.statSync(p).isDirectory()));
         }
     }
@@ -2179,7 +2179,10 @@ function buildFailed(msg: string, e: any) {
 }
 
 function buildAndWatchTargetAsync(includeSourceMaps: boolean, rebundle: boolean) {
-    if (!(fs.existsSync(path.join("sim", "tsconfig.json")) || nodeutil.existsDirSync("sim/public"))) {
+    if (!(fs.existsSync(path.join(simDir(), "tsconfig.json")) || nodeutil.existsDirSync(path.join(simDir(), "public")))) {
+        console.log("*****" + simDir());
+        console.log("*****" + pxt.appTarget.id);
+        console.log("*****" + nodeutil.existsDirSync(`node_modules/pxt-${pxt.appTarget.id}-sim`));
         console.log("No sim/tsconfig.json nor sim/public/; assuming npm installed package")
         return Promise.resolve()
     }
@@ -2189,7 +2192,7 @@ function buildAndWatchTargetAsync(includeSourceMaps: boolean, rebundle: boolean)
     let simDirectories: string[] = [];
     if (hasCommonPackages) {
         const libsdir = path.resolve("node_modules/pxt-common-packages/libs");
-        simDirectories = fs.readdirSync(libsdir).map(fn => path.join(libsdir, fn, "sim"));
+        simDirectories = fs.readdirSync(libsdir).map(fn => path.join(libsdir, fn, simDir()));
         simDirectories = simDirectories.filter(fn => fs.existsSync(fn));
     }
 
@@ -2975,7 +2978,7 @@ function runCoreAsync(res: pxtc.CompileResult) {
 
 function simulatorCoverage(pkgCompileRes: pxtc.CompileResult, pkgOpts: pxtc.CompileOptions) {
     process.chdir("../..")
-    if (!nodeutil.existsDirSync("sim")) return;
+    if (!nodeutil.existsDirSync(simDir())) return;
 
     let decls: Map<ts.Symbol> = {}
 
@@ -3100,11 +3103,11 @@ function testForBuildTargetAsync(useNative: boolean): Promise<pxtc.CompileOption
 
 function simshimAsync() {
     pxt.debug("looking for shim annotations in the simulator.")
-    if (!fs.existsSync(path.join("sim", "tsconfig.json"))) {
+    if (!fs.existsSync(path.join(simDir(), "tsconfig.json"))) {
         pxt.debug("no sim/tsconfig.json; skipping")
         return Promise.resolve();
     }
-    let prog = pxtc.plainTsc(path.resolve("sim"))
+    let prog = pxtc.plainTsc(path.resolve(simDir()))
     let shims = pxt.simshim(prog, path.parse)
     let filename = "sims.d.ts"
     for (const s of Object.keys(shims)) {
@@ -5824,6 +5827,19 @@ function errorHandler(reason: any) {
     let msg = reason.stack || reason.message || (reason + "")
     console.error("INTERNAL ERROR:", msg)
     process.exit(20)
+}
+
+let cachedSimDir: string = "";
+function simDir() {
+    if (!cachedSimDir) {
+        if (nodeutil.existsDirSync("sim")) {
+            cachedSimDir = "sim";
+        } else if (fs.existsSync(`node_modules/pxt-${pxt.appTarget.id}-sim`)) {
+            cachedSimDir = `node_modules/pxt-${pxt.appTarget.id}-sim`;
+        }
+    }
+
+    return cachedSimDir;
 }
 
 // called from pxt npm package
