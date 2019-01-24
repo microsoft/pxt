@@ -37,6 +37,7 @@ namespace pxtsprite {
 
             this.cursorText = this.root.draw("text")
                 .appendClass("sprite-editor-text")
+                .appendClass("sprite-editor-label")
                 .setAttribute("dominant-baseline", "middle")
                 .setAttribute("dy", 2.5);
         }

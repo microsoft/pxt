@@ -59,6 +59,16 @@ namespace ts.pxtc {
             argsFmt: ["T", "T", "T", "T"],
             value: 0
         },
+        "BufferMethods::getByte": {
+            name: "_pxt_buffer_get",
+            argsFmt: ["T", "T", "T"],
+            value: 0
+        },
+        "BufferMethods::setByte": {
+            name: "_pxt_buffer_set",
+            argsFmt: ["T", "T", "T", "I"],
+            value: 0
+        },
         "pxtrt::mapGetGeneric": {
             name: "_pxt_map_get",
             argsFmt: ["T", "T", "S"],
