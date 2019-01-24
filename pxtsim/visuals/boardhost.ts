@@ -156,6 +156,10 @@ namespace pxsim.visuals {
             const xml = new XMLSerializer().serializeToString(this.view);
             const data = "data:image/svg+xml,"
                 + encodeURIComponent(xml.replace(/\s+/g, ' ').replace(/"/g, "'"));
+
+            console.log(data);
+            window.open(data, "_self")
+
             return new Promise((resolve, reject) => {
                 const img = document.createElement("img");
                 img.onload = () => {
