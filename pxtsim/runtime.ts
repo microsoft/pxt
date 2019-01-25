@@ -416,6 +416,7 @@ namespace pxsim {
         postError: (e: any) => void;
         stateChanged: () => void;
 
+        webSockets: WebSocket[] = [];
         dead = false;
         running = false;
         recording = false;
@@ -457,6 +458,12 @@ namespace pxsim {
         unregisterLiveObject(object: RefObject, keepAlive?: boolean) {
             if (!keepAlive) U.assert(object.refcnt == 0, "ref count is not 0");
             delete this.liveRefObjs[object.id + ""]
+        }
+
+        createWebSocket(url: string): WebSocket {
+            const ws = new WebSocket('wss://' + url);
+            this.webSockets.push(ws);
+            return ws;
         }
 
         runningTime(): number {
@@ -528,7 +535,17 @@ namespace pxsim {
             this.dead = true
             // TODO fix this
             this.stopRecording();
+            this.stopWebSockets();
             this.setRunning(false);
+        }
+
+        private stopWebSockets() {
+            this.webSockets.forEach(ws => {
+                try {
+                    ws.close();
+                } catch (e) { }
+            })
+            this.webSockets = [];
         }
 
         updateDisplay() {
@@ -600,6 +617,7 @@ namespace pxsim {
                     Runtime.postMessage(<SimulatorStateMessage>{ type: 'status', runtimeid: this.id, state: 'running' });
                 } else {
                     this.stopRecording();
+                    this.stopWebSockets();
                     Runtime.postMessage(<SimulatorStateMessage>{ type: 'status', runtimeid: this.id, state: 'killed' });
                 }
                 if (this.stateChanged) this.stateChanged();
