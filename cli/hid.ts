@@ -8,8 +8,13 @@ function useWebUSB() {
 
 let HID: any = undefined;
 function requireHID(install?: boolean): any {
-    if (useWebUSB())
-        return true
+    if (useWebUSB()) {
+        // in node.js, we need "webusb" package
+        if (pxt.Util.isNodeJS)
+            return nodeutil.lazyRequire("webusb", install);
+        // in the browser, check that USB is defined
+        return !!window.navigator && !!(window.navigator as any).usb;
+    }
     if (HID) return HID;
     return HID = nodeutil.lazyRequire("node-hid", install);
 }
