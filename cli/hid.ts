@@ -7,20 +7,21 @@ function useWebUSB() {
 }
 
 let HID: any = undefined;
-function requireHID(install?: boolean): any {
+function requireHID(install?: boolean): boolean {
     if (useWebUSB()) {
         // in node.js, we need "webusb" package
         if (pxt.Util.isNodeJS)
-            return nodeutil.lazyRequire("webusb", install);
+            return !!nodeutil.lazyRequire("webusb", install);
         // in the browser, check that USB is defined
-        return !!window.navigator && !!(window.navigator as any).usb;
+        return pxt.usb.isAvailable();
     }
     if (HID) return HID;
-    return HID = nodeutil.lazyRequire("node-hid", install);
+    HID = nodeutil.lazyRequire("node-hid", install);
+    return !!HID;
 }
 
 export function isInstalled(install?: boolean): boolean {
-    return !!requireHID(!!install);
+    return requireHID(!!install);
 }
 
 export interface HidDevice {
