@@ -30,11 +30,13 @@ import * as gitfs from './gitfs';
 const rimraf: (f: string, opts: any, cb: (err: any, res: any) => void) => void = require('rimraf');
 
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] !== "no";
-let forceLocalBuild = !!process.env["PXT_FORCE_LOCAL"]
+let forceLocalBuild = !!process.env["PXT_FORCE_LOCAL"];
+let forceBuild = false; // don't use cache
 
 function parseBuildInfo(parsed?: commandParser.ParsedCommand) {
     const cloud = parsed && parsed.flags["cloudbuild"];
     const local = parsed && parsed.flags["localbuild"];
+    forceBuild = parsed && !!parsed.flags["force"]
     if (cloud && local)
         U.userError("cannot specify local-build and cloud-build together");
 
@@ -2621,13 +2623,15 @@ class Host
             nodeutil.writeFileSync("built/cpp.json", JSON.stringify(compileReq, null, 4))
         }
 
-        const cachedPath = path.resolve(nodeutil.targetDir, "built", "hexcache", extInfo.sha + ".hex");
-        pxt.debug("trying " + cachedPath)
-        try {
-            const lines = fs.readFileSync(cachedPath, "utf8").split(/\r?\n/)
-            pxt.log(`Using hexcache: ${extInfo.sha}`)
-            return Promise.resolve({ hex: lines })
-        } catch (e) { }
+        if (!forceBuild) {
+            const cachedPath = path.resolve(nodeutil.targetDir, "built", "hexcache", extInfo.sha + ".hex");
+            pxt.debug("trying " + cachedPath)
+            try {
+                const lines = fs.readFileSync(cachedPath, "utf8").split(/\r?\n/)
+                pxt.log(`Using hexcache: ${extInfo.sha}`)
+                return Promise.resolve({ hex: lines })
+            } catch (e) { }
+        }
 
         if (!forceLocalBuild && (extInfo.onlyPublic || forceCloudBuild))
             return pxt.hex.getHexInfoAsync(this, extInfo)
@@ -5356,6 +5360,10 @@ PXT_ASMDEBUG     - embed additional information in generated binary.asm file
             localbuild: {
                 description: "Build native image using local toolchains",
                 aliases: ["local", "l", "local-build", "lb"]
+            },
+            force: {
+                description: "skip cache lookup and force build",
+                aliases: ["f"]
             }
         },
         onlineHelp: true
@@ -5408,6 +5416,10 @@ PXT_ASMDEBUG     - embed additional information in generated binary.asm file
             localbuild: {
                 description: "Build native image using local toolchains",
                 aliases: ["local", "l", "local-build", "lb"]
+            },
+            force: {
+                description: "skip cache lookup and force build",
+                aliases: ["f"]
             },
             debug: { description: "Emit debug information with build" },
             warndiv: { description: "Warns about division operators" },
