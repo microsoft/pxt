@@ -757,7 +757,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             if (this.debugVariables) this.debugVariables.update(true);
             return;
         }
-        const vars = this.editor.getAllVariables().map((variable: any) => variable.name as string);
+        const vars = Blockly.Variables.allUsedVarModels(this.editor).map((variable: any) => variable.name as string);
         if (!vars.length) {
             if (this.debugVariables) this.debugVariables.clear();
             return;
