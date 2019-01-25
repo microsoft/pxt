@@ -15,9 +15,11 @@ function requireHID(install?: boolean): boolean {
         // in the browser, check that USB is defined
         return pxt.usb.isAvailable();
     }
-    if (HID) return HID;
-    HID = nodeutil.lazyRequire("node-hid", install);
-    return !!HID;
+    else {
+        if (!HID)
+            HID = nodeutil.lazyRequire("node-hid", install);
+        return !!HID;
+    }
 }
 
 export function isInstalled(install?: boolean): boolean {
