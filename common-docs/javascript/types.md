@@ -29,11 +29,9 @@ let isDone: boolean = false;
 
 ## Number
 
-### ~ hint
-In JavaScript, `numbers` are floating point values.
-However, for the @boardname@, `numbers` are integer values.
-### ~
+Both whole numbers and numbers with a fractional part are supported. Sometimes numbers are called _numeric literals_.
 
+### Integers: whole numbers
 Integer values can be specified via decimal, hexadecimal and octal notation:
 
 ```typescript
@@ -41,6 +39,17 @@ let decimal: number = 42;
 let hexadecimal: number = 0xf00d;
 let binary: number = 0b1010;
 let octal: number = 0o744;
+```
+
+### Floating point: numbers with a fractional part
+
+Numbers can have their fractional part too. The decimal point is between the digits of the number.
+But, _floating point_ numbers have the decimal point at any spot between digits, like: 3.14159 or 651.75.
+
+```typescript
+let num = 0
+num = 6.7
+num = 10.083
 ```
 
 ## String #string
