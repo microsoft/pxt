@@ -21,7 +21,7 @@ All the examples below give an example type annotation, but will work just the s
 
 ## Boolean
 
-The most basic datatype is the simple true/false value, which is called a `boolean` value.
+The most basic datatype is the simple `true` or `false` value, which is called a `boolean` value.
 
 ```typescript
 let isDone: boolean = false;
@@ -32,7 +32,13 @@ let isDone: boolean = false;
 Both whole numbers and numbers with a fractional part are supported. Sometimes numbers are called _numeric literals_.
 
 ### Integers: whole numbers
-Integer values can be specified via decimal, hexadecimal and octal notation:
+
+Integer values can be specified using decimal, hexadecimal, binary, and octal notation. When the number isn't expressed in its decimal form, special characters are used for notation to tell which form it is:
+
+* Decimal: no notataion is used
+* Hexadecimal: prefix the value with `0x`
+* Binary: prefix the value with `0b`
+* Octal: prefix the value with `0o`
 
 ```typescript
 let decimal: number = 42;
@@ -63,7 +69,7 @@ color = 'red';
 ```
 
 You can also use *template strings*, which can span multiple lines and have embedded expressions.
-These strings are surrounded by the backtick/backquote (`` ` ``) character, and embedded expressions are of the form `${ expr }`.
+These strings are surrounded by the backtick/backquote (`` ` ``) character, and embedded expressions use the form `${ expr }`.
 
 ```typescript
 let fullName: string = `Bob Bobbington`;
@@ -134,7 +140,7 @@ The TypeScript type `any` is not supported in the @boardname@.
 
 ## Void
 
-`void` is the absence of having any type at all.
+`void` is the absence of any type at all.
 You may commonly see this as the return type of functions that do not return a value:
 
 ```typescript
