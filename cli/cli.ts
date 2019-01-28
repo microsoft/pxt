@@ -770,7 +770,7 @@ function pkgVersion() {
 
 function targetFileList() {
     let lst = onlyExts(nodeutil.allFiles("built"), [".js", ".css", ".json", ".webmanifest"])
-        .concat(nodeutil.allFiles("sim/public"))
+        .concat(nodeutil.allFiles(path.join(simDir(), "public")))
     pxt.debug(`target files (on disk): ${lst.join('\r\n    ')}`)
     return lst;
 }
@@ -1463,8 +1463,8 @@ export function internalBuildTargetAsync(options: BuildTargetOptions = {}): Prom
         initPromise = Promise.resolve();
     }
 
-    if (nodeutil.existsDirSync("sim"))
-        initPromise = initPromise.then(() => extractLocStringsAsync("sim-strings", ["sim"]));
+    if (nodeutil.existsDirSync(simDir()))
+        initPromise = initPromise.then(() => extractLocStringsAsync("sim-strings", [simDir()]));
 
     return initPromise
         .then(() => { copyCommonSim(); return simshimAsync() })
@@ -1500,8 +1500,18 @@ function buildFolderAsync(p: string, optional?: boolean, outputName?: string): P
     }
 
     const tsConfig = JSON.parse(fs.readFileSync(path.join(p, "tsconfig.json"), "utf8"));
+    let isNodeModule = false;
     if (outputName && tsConfig.compilerOptions.out !== `../built/${outputName}.js`) {
-        U.userError(`${p}/tsconfig.json expected compilerOptions.out:"../built/${outputName}.js", got "${tsConfig.compilerOptions.out}"`);
+        // Special case to support target sim as an NPM package
+        if (/^node_modules[\/\\]+pxt-.*?-sim$/.test(p)) {
+            // Allow the out dir be inside the folder being built, and manually copy the result to ./built afterwards
+            if (tsConfig.compilerOptions.out !== `./built/${outputName}.js`) {
+                U.userError(`${p}/tsconfig.json expected compilerOptions.out:"./built/${outputName}.js", got "${tsConfig.compilerOptions.out}"`);
+            }
+            isNodeModule = true;
+        } else {
+            U.userError(`${p}/tsconfig.json expected compilerOptions.out:"../built/${outputName}.js", got "${tsConfig.compilerOptions.out}"`);
+        }
     }
 
     if (!fs.existsSync("node_modules/typescript")) {
@@ -1512,7 +1522,7 @@ function buildFolderAsync(p: string, optional?: boolean, outputName?: string): P
     dirsToWatch.push(p)
     return nodeutil.spawnAsync({
         cmd: "node",
-        args: ["../node_modules/typescript/bin/tsc"],
+        args: [`../${isNodeModule ? "" : "node_modules/"}typescript/bin/tsc`],
         cwd: p
     }).then(() => {
         if (tsConfig.prepend) {
@@ -1523,6 +1533,11 @@ function buildFolderAsync(p: string, optional?: boolean, outputName?: string): P
                 s += fs.readFileSync(path.resolve(p, f), "utf8") + "\n"
             }
             fs.writeFileSync(path.resolve(p, tsConfig.compilerOptions.out), s)
+        }
+
+        if (isNodeModule) {
+            const content = fs.readFileSync(path.resolve(p, tsConfig.compilerOptions.out), "utf8");
+            fs.writeFileSync(path.resolve("built", path.basename(tsConfig.compilerOptions.out)), content);
         }
     })
 }
@@ -2007,7 +2022,7 @@ function rebundleAsync() {
 }
 
 function buildSimAsync() {
-    return buildFolderAsync('sim', true, pxt.appTarget.id === 'common' ? 'common-sim' : 'sim');
+    return buildFolderAsync(simDir(), true, pxt.appTarget.id === "common" ? "common-sim" : "sim");
 }
 
 function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
@@ -2027,11 +2042,11 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
             dirsToWatch.push("editor");
         if (fs.existsSync("fieldeditors"))
             dirsToWatch.push("fieldeditors");
-        if (fs.existsSync("sim")) {
-            dirsToWatch.push("sim"); // simulator
+        if (fs.existsSync(simDir())) {
+            dirsToWatch.push(simDir()); // simulator
             dirsToWatch = dirsToWatch.concat(
-                fs.readdirSync("sim")
-                    .map(p => path.join("sim", p))
+                fs.readdirSync(simDir())
+                    .map(p => path.join(simDir(), p))
                     .filter(p => fs.statSync(p).isDirectory()));
         }
     }
@@ -2186,7 +2201,7 @@ function buildFailed(msg: string, e: any) {
 }
 
 function buildAndWatchTargetAsync(includeSourceMaps: boolean, rebundle: boolean) {
-    if (!(fs.existsSync(path.join("sim", "tsconfig.json")) || nodeutil.existsDirSync("sim/public"))) {
+    if (!(fs.existsSync(path.join(simDir(), "tsconfig.json")) || nodeutil.existsDirSync(path.join(simDir(), "public")))) {
         console.log("No sim/tsconfig.json nor sim/public/; assuming npm installed package")
         return Promise.resolve()
     }
@@ -3008,7 +3023,7 @@ function runCoreAsync(res: pxtc.CompileResult) {
 
 function simulatorCoverage(pkgCompileRes: pxtc.CompileResult, pkgOpts: pxtc.CompileOptions) {
     process.chdir("../..")
-    if (!nodeutil.existsDirSync("sim")) return;
+    if (!nodeutil.existsDirSync(simDir())) return;
 
     let decls: Map<ts.Symbol> = {}
 
@@ -3133,11 +3148,11 @@ function testForBuildTargetAsync(useNative: boolean): Promise<pxtc.CompileOption
 
 function simshimAsync() {
     pxt.debug("looking for shim annotations in the simulator.")
-    if (!fs.existsSync(path.join("sim", "tsconfig.json"))) {
+    if (!fs.existsSync(path.join(simDir(), "tsconfig.json"))) {
         pxt.debug("no sim/tsconfig.json; skipping")
         return Promise.resolve();
     }
-    let prog = pxtc.plainTsc(path.resolve("sim"))
+    let prog = pxtc.plainTsc(path.resolve(simDir()))
     let shims = pxt.simshim(prog, path.parse)
     let filename = "sims.d.ts"
     for (const s of Object.keys(shims)) {
@@ -5865,6 +5880,21 @@ function errorHandler(reason: any) {
     let msg = reason.stack || reason.message || (reason + "")
     console.error("INTERNAL ERROR:", msg)
     process.exit(20)
+}
+
+let cachedSimDir: string = "";
+function simDir() {
+    const dirSim = "sim";
+    const npmSim = `node_modules/pxt-${pxt.appTarget.id}-sim`;
+    if (!cachedSimDir) {
+        if (nodeutil.existsDirSync(dirSim) && fs.existsSync(path.join(dirSim, "tsconfig.json"))) {
+            cachedSimDir = dirSim;
+        } else if (fs.existsSync(npmSim) && fs.existsSync(path.join(npmSim, "tsconfig.json"))) {
+            cachedSimDir = npmSim;
+        }
+    }
+
+    return cachedSimDir;
 }
 
 // called from pxt npm package

@@ -14,6 +14,16 @@ preferably under the MIT License.
 
 ## Editors
 
+### Maker
+
+![Maker editor screenshot](/static/targets/maker/screenshot.png)
+
+An editor for maker-oriented microcontrollers, that typically require breadboarding. For 
+more information, see:
+
+* [Editor](https://maker.makecode.com)
+* [GitHub](https://github.com/Microsoft/pxt-maker)
+
 ### ARcadia: Marker-based augment reality
 
 ![ARcadia screenshot](/static/targets/ar/screenshot.png)
@@ -46,16 +56,6 @@ more information, see:
 
 * [Editor](https://jcspec.github.io/BuildUFace)
 * [GitHub](https://github.com/JCSPEC/BuildUFace)
-
-### Maker
-
-![Maker editor screenshot](/static/targets/maker/screenshot.png)
-
-An editor for maker-oriented microcontrollers, that typically require breadboarding. For 
-more information, see:
-
-* [Editor](https://maker.makecode.com)
-* [GitHub](https://github.com/Microsoft/pxt-maker)
 
 ### Holiday Card
 
