@@ -2047,7 +2047,7 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
             dirsToWatch = dirsToWatch.concat(
                 fs.readdirSync(simDir())
                     .map(p => path.join(simDir(), p))
-                    .filter(p => fs.statSync(p).isDirectory()));
+                    .filter(p => path.basename(p) !== "built" && fs.statSync(p).isDirectory()));
         }
     }
 
