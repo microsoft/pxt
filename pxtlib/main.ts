@@ -160,22 +160,25 @@ namespace pxt {
     }
 
     // this is set by compileServiceVariant in pxt.json
-    export function setAppTargetVariant(variant: string) {
+    export function setAppTargetVariant(variant: string): void {
         pxt.debug(`app variant: ${variant}`);
+        if (appTargetVariant === variant) return;
         appTargetVariant = variant
         appTarget = U.clone(savedAppTarget)
         if (variant) {
-            if (appTarget.variants) {
-                let v = appTarget.variants[variant]
-                if (v) {
-                    U.jsonMergeFrom(appTarget, v)
-                    return
-                }
-            }
-            U.userError(lf("Variant '{0}' not defined in pxtarget.json", variant))
+            const v = appTarget.variants && appTarget.variants[variant];
+            if (v)
+                U.jsonMergeFrom(appTarget, v)
+            else
+                U.userError(lf("Variant '{0}' not defined in pxtarget.json", variant))
         }
         patchAppTarget();
+        if (onAppTargetChanged)
+            onAppTargetChanged();
     }
+
+    // notify when app target was changed
+    export let onAppTargetChanged: () => void;
 
     // This causes the `hw` package to be replaced with `hw---variant` upon package load
     // the pxt.json of hw---variant would generally specify compileServiceVariant

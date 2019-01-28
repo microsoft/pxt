@@ -3269,17 +3269,16 @@ document.addEventListener("DOMContentLoaded", () => {
                         simulator.setTranslations(simStrings);
                 });
         })
-        .then(() => pxt.BrowserUtils.initTheme())
-        .then(() => pxt.editor.experiments.syncTheme())
-        .then(() => cmds.initCommandsAsync())
         .then(() => {
+            pxt.BrowserUtils.initTheme();
+            pxt.editor.experiments.syncTheme();
+            cmds.init();
             // editor messages need to be enabled early, in case workspace provider is IFrame
             if (theme.allowParentController
                 || theme.allowPackageExtensions
                 || theme.allowSimulatorTelemetry
                 || pxt.shell.isControllerMode())
                 pxt.editor.bindEditorMessages(getEditorAsync);
-
             return workspace.initAsync()
         })
         .then((state) => {

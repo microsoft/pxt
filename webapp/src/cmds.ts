@@ -357,16 +357,21 @@ function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     return deploy()
 }
 
-export function initCommandsAsync(): Promise<void> {
+export function init(): void {
+    pxt.onAppTargetChanged = init;
     pxt.commands.browserDownloadAsync = browserDownloadAsync;
     pxt.commands.saveOnlyAsync = browserDownloadDeployCoreAsync;
     pxt.commands.showUploadInstructionsAsync = showUploadInstructionsAsync;
     const forceHexDownload = /forceHexDownload/i.test(window.location.href);
 
     if (pxt.usb.isAvailable() && pxt.appTarget.compile.webUSB) {
-        pxt.log(`enabled webusb`);
+        pxt.debug(`enabled webusb`);
         pxt.usb.setEnabled(true);
         pxt.HF2.mkPacketIOAsync = pxt.usb.mkPacketIOAsync;
+    } else {
+        pxt.debug(`disabled webusb`);
+        pxt.usb.setEnabled(false);
+        pxt.HF2.mkPacketIOAsync = undefined;
     }
     if (isNativeHost()) {
         pxt.debug(`deploy/save using webkit host`);
@@ -408,6 +413,4 @@ export function initCommandsAsync(): Promise<void> {
     } else { // in browser
         pxt.commands.deployCoreAsync = browserDownloadDeployCoreAsync;
     }
-
-    return Promise.resolve();
 }
