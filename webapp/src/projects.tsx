@@ -881,7 +881,8 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
             if (res instanceof Error) {
                 // ignore
             } else {
-                this.prevGalleries = pxt.Util.concat(res.map(g => g.cards));
+                this.prevGalleries = pxt.Util.concat(res.map(g => g.cards))
+                    .filter(c => !!c.variant);
             }
         }
         return this.prevGalleries || [];
