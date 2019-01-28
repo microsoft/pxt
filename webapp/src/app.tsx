@@ -410,7 +410,8 @@ export class ProjectView
     }
 
     openPreviousEditor() {
-        if (this.prevEditorId == "monacoEditor") {
+        const hasBlocks = !!pkg.mainEditorPkg().files["main.blocks"];
+        if (this.prevEditorId == "monacoEditor" || !hasBlocks) {
             this.openJavaScript(false);
         } else {
             this.openBlocks();
