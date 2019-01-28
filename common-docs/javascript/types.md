@@ -35,7 +35,7 @@ Both whole numbers and numbers with a fractional part are supported. Sometimes n
 
 Integer values can be specified using decimal, hexadecimal, binary, and octal notation. When the number isn't expressed in its decimal form, special characters are used for notation to tell which form it is:
 
-* Decimal: no notataion is used
+* Decimal: no notation is used
 * Hexadecimal: prefix the value with `0x`
 * Binary: prefix the value with `0b`
 * Octal: prefix the value with `0o`
