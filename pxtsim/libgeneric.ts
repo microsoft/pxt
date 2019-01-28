@@ -197,7 +197,7 @@ namespace pxsim {
         }
 
         export function idiv(x: number, y: number) {
-            return (x / y) >> 0
+            return ((x | 0) / (y | 0)) | 0
         }
 
         export function round(n: number) { return Math.round(n) }
