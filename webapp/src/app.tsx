@@ -1266,7 +1266,11 @@ export class ProjectView
     }
 
     downloadScreenshotAsync(): Promise<void> {
-        return this.saveProjectAsPNGAsync(false);
+        if (pxt.appTarget.compile.saveAsPNG)
+            return this.saveProjectAsPNGAsync(false);
+        else
+            return this.requestScreenshotAsync()
+                .then(img => pxt.BrowserUtils.browserDownloadDataUri(img, pkg.genFileName(".png")))
     }
 
     pushScreenshotHandler(handler: (msg: pxt.editor.ScreenshotData) => void): void {
