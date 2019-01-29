@@ -311,7 +311,7 @@ namespace pxtsprite {
                     this.gesture.handle(InputEvent.Up, col, row);
                 });
 
-                this.paintLayer.addEventListener(pxt.BrowserUtils.pointerEvents.move, this.hoverHandler);
+                document.addEventListener(pxt.BrowserUtils.pointerEvents.move, this.hoverHandler);
             }
         }
 
@@ -350,11 +350,16 @@ namespace pxtsprite {
             const [col, row] = this.clientToCell(clientCoord(ev));
             if (col >= 0 && row >= 0 && col < this.image.width && row < this.image.height) {
                 this.gesture.handle(InputEvent.Move, col, row);
+                this.gesture.isHover = true;
+            }
+            else if (this.gesture.isHover) {
+                this.gesture.isHover = false;
+                this.gesture.handle(InputEvent.Leave, -1, -1);
             }
         }
 
         private startDrag() {
-            this.paintLayer.removeEventListener(pxt.BrowserUtils.pointerEvents.move, this.hoverHandler);
+            document.removeEventListener(pxt.BrowserUtils.pointerEvents.move, this.hoverHandler);
             document.addEventListener(pxt.BrowserUtils.pointerEvents.move, this.moveHandler);
             document.addEventListener(pxt.BrowserUtils.pointerEvents.up, this.upHandler);
 
@@ -368,7 +373,7 @@ namespace pxtsprite {
         }
 
         private endDrag() {
-            this.paintLayer.addEventListener(pxt.BrowserUtils.pointerEvents.move, this.hoverHandler);
+            document.addEventListener(pxt.BrowserUtils.pointerEvents.move, this.hoverHandler);
             document.removeEventListener(pxt.BrowserUtils.pointerEvents.move, this.moveHandler);
             document.removeEventListener(pxt.BrowserUtils.pointerEvents.up, this.upHandler);
             document.removeEventListener(pxt.BrowserUtils.pointerEvents.leave, this.leaveHandler);
@@ -422,6 +427,7 @@ namespace pxtsprite {
         lastRow: number;
 
         isDown = false;
+        isHover = false;
 
         handlers: {[index: number]: GestureHandler} = {};
 

@@ -140,6 +140,11 @@
 }
 
 .sprite-editor-button.selected {
+    /* Fixes a bug in Microsoft Edge where changing the fill alone would not
+     * trigger a re-render of the button for some reason. The position is already
+     * relative, but having this in the rule forces the render. */
+    position: relative;
+
     .sprite-editor-button-fg {
         fill: #495353;
     }
@@ -167,7 +172,7 @@
     position: absolute;
     top: 0;
     right: 0;
-    height: 4.5rem;
+    height: 0px;
     width: 4.5rem;
     outline: none;
     cursor: pointer;

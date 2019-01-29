@@ -228,6 +228,13 @@ namespace pxtsprite {
                 this.debug("undo");
                 const todo = this.undoStack.pop();
                 this.pushState(false);
+
+                // The current state is at the top of the stack unless the user has pressed redo, so
+                // we need to discard it
+                if (todo.equals(this.state)) {
+                    this.undo();
+                    return;
+                }
                 this.restore(todo);
             }
             this.updateUndoRedo();
@@ -414,13 +421,13 @@ namespace pxtsprite {
         }
 
         private pushState(undo: boolean) {
-            const cp = this.state.copy();
-            if (undo) {
-                this.undoStack.push(cp);
+            const stack = undo ? this.undoStack : this.redoStack;
+            if (stack.length && this.state.equals(stack[stack.length - 1])) {
+                // Don't push empty commits
+                return;
             }
-            else {
-                this.redoStack.push(cp);
-            }
+
+            stack.push(this.state.copy());
             this.updateUndoRedo();
         }
 

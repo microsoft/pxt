@@ -49,6 +49,17 @@ namespace pxtsprite {
             }
         }
 
+        equals(other: Bitmap) {
+            if (this.width === other.width && this.height === other.height && this.x0 === other.x0 && this.y0 === other.y0 && this.buf.length === other.buf.length) {
+                for (let i = 0; i < this.buf.length; i++) {
+                    if (this.buf[i] !== other.buf[i]) return false;
+                }
+                return true;
+            }
+
+            return false;
+        }
+
         protected coordToIndex(col: number, row: number) {
             return col + row * this.width;
         }
