@@ -421,7 +421,9 @@ namespace pxt.py.lexer {
                     asciiParse[i] = parseId
                 else {
                     let s = String.fromCharCode(i)
-                    if (allOps.hasOwnProperty(s)) {
+                    if (specialParse.hasOwnProperty(s)) {
+                        asciiParse[i] = specialParse[s]
+                    } else if (allOps.hasOwnProperty(s)) {
                         let canBeLengthened = false
                         let op = allOps[s]
                         for (let kk of Object.keys(allOps)) {
@@ -434,8 +436,6 @@ namespace pxt.py.lexer {
                         } else {
                             asciiParse[i] = () => singleOp(op)
                         }
-                    } else if (specialParse.hasOwnProperty(s)) {
-                        asciiParse[i] = specialParse[s]
                     } else if (rx.isSpace(i)) {
                         asciiParse[i] = () => { }
                     } else if (i == 13) {
