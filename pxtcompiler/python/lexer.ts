@@ -151,7 +151,7 @@ namespace pxt.py.lexer {
             } else if (rx.isNewline(ch)) {
                 addToken(TokenType.NewLine, "")
             } else {
-                addError(U.lf("invalid token"))
+                invalidToken()
             }
         }
         return res
@@ -345,7 +345,6 @@ namespace pxt.py.lexer {
                 const rx = numBases[c2]
                 if (rx) {
                     pos++
-                    num = c1 + c2
                     while (true) {
                         const ch = source[pos]
                         if (!rx.test(ch))
@@ -354,7 +353,7 @@ namespace pxt.py.lexer {
                         pos++
                     }
                     if (num)
-                        addToken(TokenType.Number, num)
+                        addToken(TokenType.Number, c1 + c2 + num)
                     else
                         addError(U.lf("expecting numbers to follow 0b, 0o, 0x"))
                     return
@@ -403,6 +402,9 @@ namespace pxt.py.lexer {
             return (48 <= ch && ch <= 57)
         }
 
+        function invalidToken() {
+            addError(U.lf("invalid token"))
+        }
 
         function initAsciiParse() {
             const specialParse: Map<() => void> = {
@@ -448,8 +450,10 @@ namespace pxt.py.lexer {
                         }
                     } else if (rx.isNewline(i)) {
                         asciiParse[i] = singleNewline
-                    } else if (isDigit(48)) {
+                    } else if (isDigit(i)) {
                         asciiParse[i] = parseNumber
+                    } else {
+                        asciiParse[i] = invalidToken
                     }
                 }
             }
