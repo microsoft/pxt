@@ -524,7 +524,7 @@ namespace pxt {
                         loadDepsRecursive(null, pkg, true)))
                 })
                 .then(() => {
-                    pxt.log(`  installed ${this.id}`)
+                    pxt.debug(`  installed ${this.id}`)
                 });
         }
 
