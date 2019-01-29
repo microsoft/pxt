@@ -66,7 +66,7 @@ interface Array<T> {
       */
     //% help=arrays/slice
     //% helper=arraySlice weight=41 blockNamespace="arrays"
-    slice(start: number, end: number): T[];
+    slice(start?: number, end?: number): T[];
 
     /**
       * Remove elements from an array.

@@ -160,22 +160,25 @@ namespace pxt {
     }
 
     // this is set by compileServiceVariant in pxt.json
-    export function setAppTargetVariant(variant: string) {
+    export function setAppTargetVariant(variant: string): void {
         pxt.debug(`app variant: ${variant}`);
+        if (appTargetVariant === variant) return;
         appTargetVariant = variant
         appTarget = U.clone(savedAppTarget)
         if (variant) {
-            if (appTarget.variants) {
-                let v = appTarget.variants[variant]
-                if (v) {
-                    U.jsonMergeFrom(appTarget, v)
-                    return
-                }
-            }
-            U.userError(lf("Variant '{0}' not defined in pxtarget.json", variant))
+            const v = appTarget.variants && appTarget.variants[variant];
+            if (v)
+                U.jsonMergeFrom(appTarget, v)
+            else
+                U.userError(lf("Variant '{0}' not defined in pxtarget.json", variant))
         }
         patchAppTarget();
+        if (onAppTargetChanged)
+            onAppTargetChanged();
     }
+
+    // notify when app target was changed
+    export let onAppTargetChanged: () => void;
 
     // This causes the `hw` package to be replaced with `hw---variant` upon package load
     // the pxt.json of hw---variant would generally specify compileServiceVariant
@@ -187,6 +190,11 @@ namespace pxt {
             hwVariant = variant
         else
             hwVariant = null
+    }
+
+    export function hasHwVariants(): boolean {
+        return !!pxt.appTarget.variants
+            && Object.keys(pxt.appTarget.bundledpkgs).some(pkg => /^hw---/.test(pkg));
     }
 
     export function getHwVariants(): PackageConfig[] {
@@ -255,6 +263,7 @@ namespace pxt {
         relprefix: string; // "/beta---",
         workerjs: string;  // "/beta---worker",
         monacoworkerjs: string; // "/beta---monacoworker",
+        gifworkerjs: string; // /beta---gifworker",
         pxtVersion: string; // "?",
         pxtRelId: string; // "9e298e8784f1a1d6787428ec491baf1f7a53e8fa",
         pxtCdnUrl: string; // "https://pxt.azureedge.net/commit/9e2...e8fa/",
@@ -278,6 +287,7 @@ namespace pxt {
             relprefix: "/--",
             workerjs: "/worker.js",
             monacoworkerjs: "/monacoworker.js",
+            gifworkerjs: "/gifjs/gif.worker.js",
             pxtVersion: "local",
             pxtRelId: "",
             pxtCdnUrl: "/cdn/",

@@ -74,12 +74,21 @@ declare namespace pxt {
         callName?: string;      // name of the block's function if changed in target
     }
 
+    interface FunctionEditorTypeInfo {
+        typeName?: string; // The actual type that gets emitted to ts
+        label?: string; // A user-friendly label for the type, e.g. "text" for the string type
+    }
+
     interface RuntimeOptions {
         mathBlocks?: boolean;
         textBlocks?: boolean;
         listsBlocks?: boolean;
         variablesBlocks?: boolean;
         functionBlocks?: boolean;
+        functionsOptions?: {
+            extraFunctionEditorTypes?: FunctionEditorTypeInfo[];
+            useNewFunctions?: boolean;
+        };
         logicBlocks?: boolean;
         loopsBlocks?: boolean;
         onStartNamespace?: string; // default = loops
@@ -303,6 +312,10 @@ declare namespace pxt {
         hideProjectRename?: boolean; // Temporary flag until we figure out a better way to show the name
         addNewTypeScriptFile?: boolean; // when enabled, the [+] explorer button asks for file name, instead of using "custom.ts"
         simScreenshot?: boolean; // allows to download a screenshot of the simulator
+        simScreenshotKey?: string; // keyboard key name
+        simScreenshotMaxUriLength?: number; // maximum base64 encoded length to be uploaded
+        simGif?: boolean; // record gif of the simulator
+        simGifKey?: boolean; // shortcut to start stop
     }
 
     interface SocialOptions {
@@ -408,6 +421,7 @@ declare namespace ts.pxtc {
         warnDiv?: boolean; // warn when emitting division operator
 
         alwaysDecompileOnStart?: boolean; // decompiler only
+        useNewFunctions?: boolean; // decompiler only; whether to decompile functions using the new functions implementation (functions with parameters)
 
         embedMeta?: string;
         embedBlob?: string; // base64

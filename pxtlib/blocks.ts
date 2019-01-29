@@ -652,6 +652,24 @@ namespace pxt.blocks {
                 block: {
                     PROCEDURES_CALLNORETURN_TITLE: Util.lf("call function")
                 }
+            },
+            'function_definition': {
+                name: Util.lf("define the function"),
+                tooltip: Util.lf("Create a function."),
+                url: 'types/function/define',
+                category: 'functions',
+                block: {
+                    FUNCTIONS_EDIT_OPTION: Util.lf("Edit Function")
+                }
+            },
+            'function_call': {
+                name: Util.lf("call the function"),
+                tooltip: Util.lf("Call the user-defined function."),
+                url: 'types/function/call',
+                category: 'functions',
+                block: {
+                    FUNCTIONS_CALL_TITLE: Util.lf("call")
+                }
             }
         };
         _blockDefinitions[pxtc.ON_START_TYPE] = {

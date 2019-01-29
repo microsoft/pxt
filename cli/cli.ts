@@ -30,11 +30,13 @@ import * as gitfs from './gitfs';
 const rimraf: (f: string, opts: any, cb: (err: any, res: any) => void) => void = require('rimraf');
 
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] !== "no";
-let forceLocalBuild = !!process.env["PXT_FORCE_LOCAL"]
+let forceLocalBuild = !!process.env["PXT_FORCE_LOCAL"];
+let forceBuild = false; // don't use cache
 
 function parseBuildInfo(parsed?: commandParser.ParsedCommand) {
     const cloud = parsed && parsed.flags["cloudbuild"];
     const local = parsed && parsed.flags["localbuild"];
+    forceBuild = parsed && !!parsed.flags["force"]
     if (cloud && local)
         U.userError("cannot specify local-build and cloud-build together");
 
@@ -768,7 +770,7 @@ function pkgVersion() {
 
 function targetFileList() {
     let lst = onlyExts(nodeutil.allFiles("built"), [".js", ".css", ".json", ".webmanifest"])
-        .concat(nodeutil.allFiles("sim/public"))
+        .concat(nodeutil.allFiles(path.join(simDir(), "public")))
     pxt.debug(`target files (on disk): ${lst.join('\r\n    ')}`)
     return lst;
 }
@@ -1073,6 +1075,7 @@ function uploadCoreAsync(opts: UploadOptions) {
             "verprefix": "",
             "workerjs": opts.localDir + "worker.js",
             "monacoworkerjs": opts.localDir + "monacoworker.js",
+            "gifworkerjs": opts.localDir + "gifjs/gif.worker.js",
             "pxtVersion": pxtVersion(),
             "pxtRelId": "",
             "pxtCdnUrl": opts.localDir,
@@ -1096,6 +1099,7 @@ function uploadCoreAsync(opts: UploadOptions) {
             "/sim/": opts.localDir,
             "/blb/": opts.localDir,
             "@monacoworkerjs@": `${opts.localDir}monacoworker.js`,
+            "@gifworkerjs@": `${opts.localDir}gifjs/gif.worker.js`,
             "@workerjs@": `${opts.localDir}worker.js`,
             "@timestamp@": `# ver ${new Date().toString()}`,
             "var pxtConfig = null": "var pxtConfig = " + JSON.stringify(cfg, null, 4),
@@ -1459,8 +1463,8 @@ export function internalBuildTargetAsync(options: BuildTargetOptions = {}): Prom
         initPromise = Promise.resolve();
     }
 
-    if (nodeutil.existsDirSync("sim"))
-        initPromise = initPromise.then(() => extractLocStringsAsync("sim-strings", ["sim"]));
+    if (nodeutil.existsDirSync(simDir()))
+        initPromise = initPromise.then(() => extractLocStringsAsync("sim-strings", [simDir()]));
 
     return initPromise
         .then(() => { copyCommonSim(); return simshimAsync() })
@@ -1496,8 +1500,18 @@ function buildFolderAsync(p: string, optional?: boolean, outputName?: string): P
     }
 
     const tsConfig = JSON.parse(fs.readFileSync(path.join(p, "tsconfig.json"), "utf8"));
+    let isNodeModule = false;
     if (outputName && tsConfig.compilerOptions.out !== `../built/${outputName}.js`) {
-        U.userError(`${p}/tsconfig.json expected compilerOptions.out:"../built/${outputName}.js", got "${tsConfig.compilerOptions.out}"`);
+        // Special case to support target sim as an NPM package
+        if (/^node_modules[\/\\]+pxt-.*?-sim$/.test(p)) {
+            // Allow the out dir be inside the folder being built, and manually copy the result to ./built afterwards
+            if (tsConfig.compilerOptions.out !== `./built/${outputName}.js`) {
+                U.userError(`${p}/tsconfig.json expected compilerOptions.out:"./built/${outputName}.js", got "${tsConfig.compilerOptions.out}"`);
+            }
+            isNodeModule = true;
+        } else {
+            U.userError(`${p}/tsconfig.json expected compilerOptions.out:"../built/${outputName}.js", got "${tsConfig.compilerOptions.out}"`);
+        }
     }
 
     if (!fs.existsSync("node_modules/typescript")) {
@@ -1508,7 +1522,7 @@ function buildFolderAsync(p: string, optional?: boolean, outputName?: string): P
     dirsToWatch.push(p)
     return nodeutil.spawnAsync({
         cmd: "node",
-        args: ["../node_modules/typescript/bin/tsc"],
+        args: [`../${isNodeModule ? "" : "node_modules/"}typescript/bin/tsc`],
         cwd: p
     }).then(() => {
         if (tsConfig.prepend) {
@@ -1519,6 +1533,11 @@ function buildFolderAsync(p: string, optional?: boolean, outputName?: string): P
                 s += fs.readFileSync(path.resolve(p, f), "utf8") + "\n"
             }
             fs.writeFileSync(path.resolve(p, tsConfig.compilerOptions.out), s)
+        }
+
+        if (isNodeModule) {
+            const content = fs.readFileSync(path.resolve(p, tsConfig.compilerOptions.out), "utf8");
+            fs.writeFileSync(path.resolve("built", path.basename(tsConfig.compilerOptions.out)), content);
         }
     })
 }
@@ -2003,7 +2022,7 @@ function rebundleAsync() {
 }
 
 function buildSimAsync() {
-    return buildFolderAsync('sim', true, pxt.appTarget.id === 'common' ? 'common-sim' : 'sim');
+    return buildFolderAsync(simDir(), true, pxt.appTarget.id === "common" ? "common-sim" : "sim");
 }
 
 function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
@@ -2023,12 +2042,12 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
             dirsToWatch.push("editor");
         if (fs.existsSync("fieldeditors"))
             dirsToWatch.push("fieldeditors");
-        if (fs.existsSync("sim")) {
-            dirsToWatch.push("sim"); // simulator
+        if (fs.existsSync(simDir())) {
+            dirsToWatch.push(simDir()); // simulator
             dirsToWatch = dirsToWatch.concat(
-                fs.readdirSync("sim")
-                    .map(p => path.join("sim", p))
-                    .filter(p => fs.statSync(p).isDirectory()));
+                fs.readdirSync(simDir())
+                    .map(p => path.join(simDir(), p))
+                    .filter(p => path.basename(p) !== "built" && fs.statSync(p).isDirectory()));
         }
     }
 
@@ -2054,6 +2073,9 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                         cfg.bundledpkgs[path.basename(dirname)] = res
                     }
                     if (isHw) isPrj = true
+                    if (isCore && pxt.appTarget.simulator &&
+                        pxt.appTarget.simulator.dynamicBoardDefinition)
+                        isPrj = true
                 })
                 .then(() => options.quick ? null : testForBuildTargetAsync(isPrj || (!options.skipCore && isCore)))
                 .then((compileOpts) => {
@@ -2179,7 +2201,7 @@ function buildFailed(msg: string, e: any) {
 }
 
 function buildAndWatchTargetAsync(includeSourceMaps: boolean, rebundle: boolean) {
-    if (!(fs.existsSync(path.join("sim", "tsconfig.json")) || nodeutil.existsDirSync("sim/public"))) {
+    if (!(fs.existsSync(path.join(simDir(), "tsconfig.json")) || nodeutil.existsDirSync(path.join(simDir(), "public")))) {
         console.log("No sim/tsconfig.json nor sim/public/; assuming npm installed package")
         return Promise.resolve()
     }
@@ -2573,7 +2595,7 @@ class Host
             nodeutil.writeFileSync(p, contents, { encoding: "utf8" })
     }
 
-    getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<any> {
+    getHexInfoAsync(extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo> {
         if (process.env["PXT_LOCAL_DOCKER_TEST"] === "yes") {
             const compileReq = JSON.parse(new Buffer(extInfo.compileData, "base64").toString("utf8"))
             const mappedFiles =
@@ -2598,6 +2620,32 @@ class Host
 
             const fn = "built/dockerreq.json"
             nodeutil.writeFileSync(fn, JSON.stringify(dockerReq, null, 4))
+        }
+
+        if (pxt.options.debug) {
+            const compileReq = JSON.parse(new Buffer(extInfo.compileData, "base64").toString("utf8"))
+            const replLong = (m: any) => {
+                for (let k of Object.keys(m)) {
+                    let v = m[k]
+                    if (typeof v == "string" && v.length > 200) {
+                        m[k] = v.slice(0, 100) + " ... " + U.sha256(v).slice(0, 10)
+                    } else if (v && typeof v == "object") {
+                        replLong(v)
+                    }
+                }
+            }
+            replLong(compileReq)
+            nodeutil.writeFileSync("built/cpp.json", JSON.stringify(compileReq, null, 4))
+        }
+
+        if (!forceBuild) {
+            const cachedPath = path.resolve(nodeutil.targetDir, "built", "hexcache", extInfo.sha + ".hex");
+            pxt.debug("trying " + cachedPath)
+            try {
+                const lines = fs.readFileSync(cachedPath, "utf8").split(/\r?\n/)
+                pxt.log(`Using hexcache: ${extInfo.sha}`)
+                return Promise.resolve({ hex: lines })
+            } catch (e) { }
         }
 
         if (!forceLocalBuild && (extInfo.onlyPublic || forceCloudBuild))
@@ -2975,7 +3023,7 @@ function runCoreAsync(res: pxtc.CompileResult) {
 
 function simulatorCoverage(pkgCompileRes: pxtc.CompileResult, pkgOpts: pxtc.CompileOptions) {
     process.chdir("../..")
-    if (!nodeutil.existsDirSync("sim")) return;
+    if (!nodeutil.existsDirSync(simDir())) return;
 
     let decls: Map<ts.Symbol> = {}
 
@@ -3100,11 +3148,11 @@ function testForBuildTargetAsync(useNative: boolean): Promise<pxtc.CompileOption
 
 function simshimAsync() {
     pxt.debug("looking for shim annotations in the simulator.")
-    if (!fs.existsSync(path.join("sim", "tsconfig.json"))) {
+    if (!fs.existsSync(path.join(simDir(), "tsconfig.json"))) {
         pxt.debug("no sim/tsconfig.json; skipping")
         return Promise.resolve();
     }
-    let prog = pxtc.plainTsc(path.resolve("sim"))
+    let prog = pxtc.plainTsc(path.resolve(simDir()))
     let shims = pxt.simshim(prog, path.parse)
     let filename = "sims.d.ts"
     for (const s of Object.keys(shims)) {
@@ -3432,6 +3480,7 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
             .then(() => pkg.getCompileOptionsAsync())
             .then(opts => {
                 opts.ast = true;
+                opts.useNewFunctions = pxt.appTarget.runtime && pxt.appTarget.runtime.functionsOptions && pxt.appTarget.runtime.functionsOptions.useNewFunctions;
                 const decompiled = pxtc.decompile(opts, "main.ts");
                 if (decompiled.success) {
                     resolve(decompiled.outfiles["main.blocks"]);
@@ -3531,10 +3580,14 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
                         const file = resp.ast.getSourceFile('main.ts');
                         const apis = pxtc.getApiInfo(opts, resp.ast);
                         const blocksInfo = pxtc.getBlocksInfo(apis);
+                        const useNewFunctions = pxt.appTarget.runtime &&
+                            pxt.appTarget.runtime.functionsOptions &&
+                            pxt.appTarget.runtime.functionsOptions.useNewFunctions;
                         const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, {
                             snippetMode: false,
-                            errorOnGreyBlocks: true
-                        })
+                            errorOnGreyBlocks: true,
+                            useNewFunctions
+                        });
                         const success = !!bresp.outfiles['main.blocks']
                         if (success) return addSuccess(name)
                         else return addFailure(fn, bresp.diagnostics)
@@ -5327,6 +5380,10 @@ PXT_ASMDEBUG     - embed additional information in generated binary.asm file
             localbuild: {
                 description: "Build native image using local toolchains",
                 aliases: ["local", "l", "local-build", "lb"]
+            },
+            force: {
+                description: "skip cache lookup and force build",
+                aliases: ["f"]
             }
         },
         onlineHelp: true
@@ -5379,6 +5436,10 @@ PXT_ASMDEBUG     - embed additional information in generated binary.asm file
             localbuild: {
                 description: "Build native image using local toolchains",
                 aliases: ["local", "l", "local-build", "lb"]
+            },
+            force: {
+                description: "skip cache lookup and force build",
+                aliases: ["f"]
             },
             debug: { description: "Emit debug information with build" },
             warndiv: { description: "Warns about division operators" },
@@ -5824,6 +5885,21 @@ function errorHandler(reason: any) {
     let msg = reason.stack || reason.message || (reason + "")
     console.error("INTERNAL ERROR:", msg)
     process.exit(20)
+}
+
+let cachedSimDir: string = "";
+function simDir() {
+    const dirSim = "sim";
+    const npmSim = `node_modules/pxt-${pxt.appTarget.id}-sim`;
+    if (!cachedSimDir) {
+        if (nodeutil.existsDirSync(dirSim) && fs.existsSync(path.join(dirSim, "tsconfig.json"))) {
+            cachedSimDir = dirSim;
+        } else if (fs.existsSync(npmSim) && fs.existsSync(path.join(npmSim, "tsconfig.json"))) {
+            cachedSimDir = npmSim;
+        }
+    }
+
+    return cachedSimDir;
 }
 
 // called from pxt npm package

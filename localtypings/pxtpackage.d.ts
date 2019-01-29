@@ -41,6 +41,7 @@ declare namespace pxt {
         simFiles?: string[];
         testFiles?: string[];
         testDependencies?: pxt.Map<string>;
+        cppDependencies?: pxt.Map<string>;
         public?: boolean;
         binaryonly?: boolean;
         platformio?: PlatformIOConfig;

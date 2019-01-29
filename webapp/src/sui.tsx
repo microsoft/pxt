@@ -926,7 +926,7 @@ export interface ModalProps extends ReactModal.Props {
     defaultOpen?: boolean;
     closeIcon?: boolean | string;
 
-    size?: 'fullscreen' | 'large' | 'mini' | 'small' | 'tiny';
+    size?: '' | 'fullscreen' | 'large' | 'mini' | 'small' | 'tiny';
     className?: string;
     basic?: boolean;
     longer?: boolean;

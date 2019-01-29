@@ -3,29 +3,33 @@ import * as data from "./data";
 
 type Header = pxt.workspace.Header;
 
+function cover(cvs: HTMLCanvasElement, img: HTMLImageElement) {
+    let ox = 0;
+    let oy = 0;
+    let iw = 0;
+    let ih = 0;
+    if (img.height > img.width) {
+        ox = 0;
+        iw = img.width;
+        ih = iw / cvs.width * cvs.height;
+        oy = (img.height - ih) / 2;
+    } else {
+        oy = 0;
+        ih = img.height;
+        iw = ih / cvs.height * cvs.width;
+        ox = (img.width - iw) / 2;
+    }
+    const ctx = cvs.getContext("2d");
+    ctx.drawImage(img, ox, oy, iw, ih, 0, 0, cvs.width, cvs.height);
+}
+
 function renderIcon(img: HTMLImageElement): string {
     let icon: string = null;
     if (img && img.width > 0 && img.height > 0) {
         const cvs = document.createElement("canvas") as HTMLCanvasElement;
         cvs.width = 305;
         cvs.height = 200;
-        let ox = 0;
-        let oy = 0;
-        let iw = 0;
-        let ih = 0;
-        if (img.height > img.width) {
-            ox = 0;
-            iw = img.width;
-            ih = iw / cvs.width * cvs.height;
-            oy = (img.height - ih) / 2;
-        } else {
-            oy = 0;
-            ih = img.height;
-            iw = ih / cvs.height * cvs.width;
-            ox = (img.width - iw) / 2;
-        }
-        const ctx = cvs.getContext("2d");
-        ctx.drawImage(img, ox, oy, iw, ih, 0, 0, cvs.width, cvs.height);
+        cover(cvs, img);
         icon = cvs.toDataURL('image/jpeg', 85);
     }
     return icon;
@@ -115,12 +119,6 @@ function chromifyAsync(canvas: HTMLCanvasElement, title: string): HTMLCanvasElem
     ctx.fillStyle = 'white'
     ctx.fillRect(0, 0, work.width, work.height)
 
-    // border
-    {
-        ctx.strokeStyle = '2px grey';
-        ctx.rect(0, 0, work.width, work.height);
-    }
-
     // draw image
     ctx.drawImage(canvas, leftBorder, topBorder);
 
@@ -155,8 +153,41 @@ function chromifyAsync(canvas: HTMLCanvasElement, title: string): HTMLCanvasElem
     return work;
 }
 
+function defaultCanvasAsync(): Promise<HTMLCanvasElement> {
+    const cvs = document.createElement("canvas");
+    cvs.width = 160;
+    cvs.height = 120;
+    const ctx = cvs.getContext("2d");
+    ctx.fillStyle = '#33b';
+    ctx.fillRect(0, 0, 160, 120);
+    ctx.font = '30px monospace';
+    ctx.fillStyle = '#fff';
+    ctx.fillText(':(', 60, 70);
+    return Promise.resolve(cvs);
+}
+
+function logoCanvasAsync(): Promise<HTMLCanvasElement> {
+    return pxt.BrowserUtils.loadImageAsync(pxt.appTarget.appTheme.logo)
+        .then(img => {
+            const cvs = document.createElement("canvas") as HTMLCanvasElement;
+            cvs.width = 160;
+            cvs.height = 120;
+            const ctx = cvs.getContext("2d");
+            const accent = pxt.appTarget.appTheme.accentColor;
+            if (accent) {
+                ctx.fillStyle = accent
+                ctx.fillRect(0, 0, cvs.width, cvs.height);
+            }
+            cover(cvs, img);
+            return cvs;
+        })
+        .catch(() => defaultCanvasAsync());
+}
+
 export function encodeBlobAsync(title: string, dataURL: string, blob: Uint8Array) {
-    return pxt.BrowserUtils.loadCanvasAsync(dataURL)
+    // if screenshot failed, dataURL is empty
+    return (dataURL ? pxt.BrowserUtils.loadCanvasAsync(dataURL) : logoCanvasAsync())
+        .catch(() => logoCanvasAsync())
         .then(cvs => chromifyAsync(cvs, title))
         .then(canvas => {
             const neededBytes = imageHeaderSize + blob.length
@@ -273,3 +304,141 @@ export function testBlobEncodeAsync(dataURL: string, sz = 10000) {
         })
 }
 */
+
+declare interface GIFOptions {
+    repeat?: number;
+    quality?: number;
+    workers?: number;
+    workerScript?: string;
+    background?: string;
+    width?: number;
+    height?: number;
+    transparent?: string;
+    dither?: boolean;
+    debug?: boolean;
+
+    maxFrames?: number;
+}
+
+declare interface GIFFrameOptions {
+    delay?: number;
+}
+
+declare class GIF {
+    constructor(options: GIFOptions);
+
+    running: boolean;
+    on(ev: string, handler: any): void;
+    render(): void;
+    abort(): void;
+    addFrame(img: ImageData, opts?: GIFFrameOptions): void;
+    frames: any[];
+    freeWorkers: Worker[];
+}
+
+export class GifEncoder {
+    private gif: GIF;
+    private time: number;
+    private cancellationToken: pxt.Util.CancellationToken;
+    private renderPromise: Promise<string>;
+
+    constructor(private options: GIFOptions) {
+        this.cancellationToken = new pxt.Util.CancellationToken();
+        if (!this.options.maxFrames)
+            this.options.maxFrames = 64;
+    }
+
+    start() {
+        pxt.debug(`gif: start encoder`)
+        this.gif = new GIF(this.options);
+        this.time = -1;
+        this.cancellationToken = new pxt.Util.CancellationToken();
+        this.cancellationToken.startOperation();
+        this.renderPromise = undefined;
+    }
+
+    cancel() {
+        pxt.debug(`gif: cancel`)
+        if (this.cancellationToken.isCancelled()) return;
+        this.cancellationToken.cancel();
+        if (this.gif && this.gif.running) {
+            try {
+                this.gif.abort();
+            } catch (e) { }
+        }
+        this.clean();
+    }
+
+    private clean() {
+        if (this.gif && this.gif.freeWorkers) {
+            this.gif.freeWorkers.forEach(w => w.terminate());
+            this.gif.freeWorkers = [];
+        }
+        this.gif = undefined;
+        this.time = -1;
+    }
+
+    addFrame(dataUri: ImageData, delay?: number): boolean {
+        if (this.cancellationToken.isCancelled() || this.renderPromise)
+            return false;
+        const t = pxt.Util.now();
+        if (this.time < 0)
+            this.time = t;
+        if (delay === undefined)
+            delay = t - this.time;
+        pxt.debug(`gif: frame ${delay}ms`);
+        this.gif.addFrame(dataUri, { delay });
+        this.time = t;
+
+        return this.gif.frames.length > this.options.maxFrames;
+    }
+
+    renderAsync(): Promise<string> {
+        if (this.cancellationToken.isCancelled()) return Promise.resolve(undefined);
+
+        pxt.debug(`gif: render`)
+        if (!this.renderPromise)
+            this.renderPromise = this.renderGifAsync()
+                .then(blob => {
+                    this.cancellationToken.throwIfCancelled();
+                    return new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = () => resolve(<string>reader.result);
+                        reader.onerror = e => reject(e);
+                        reader.readAsDataURL(blob);
+                    });
+                })
+                .finally(() => this.clean())
+                .catch(e => {
+                    pxt.debug(`rendering failed`)
+                    pxt.debug(e);
+                    return undefined;
+                });
+        return this.renderPromise;
+    }
+
+    private renderGifAsync(): Promise<Blob> {
+        this.cancellationToken.throwIfCancelled();
+        return new Promise((resolve, reject) => {
+            this.gif.on('finished', (blob: Blob) => {
+                resolve(blob);
+            });
+            this.gif.on('abort', () => {
+                pxt.debug(`gif: abort`)
+                resolve(undefined);
+            });
+            this.gif.render();
+        })
+    }
+}
+
+export function loadGifEncoderAsync(): Promise<GifEncoder> {
+    const options: GIFOptions = {
+        workers: 1,
+        quality: 10,
+        dither: false,
+        workerScript: pxt.webConfig.gifworkerjs
+    };
+    return pxt.BrowserUtils.loadScriptAsync("gifjs/gif.js")
+        .then(() => new GifEncoder(options));
+}
