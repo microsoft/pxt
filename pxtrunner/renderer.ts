@@ -205,7 +205,7 @@ namespace pxt.runner {
             const hexname = `${appTarget.nickname || appTarget.id}-${options.hexName || ''}-${snippetCount++}.hex`;
             fillWithWidget(options, c, js, s, r, {
                 showEdit: options.showEdit,
-                run: options.simulator && compiled,
+                run: options.simulator,
                 hexname: hexname,
                 hex: hex,
             });
