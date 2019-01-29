@@ -1061,6 +1061,7 @@ declare namespace Blockly {
         let flyoutCategory: (wp: Workspace) => HTMLElement[];
         let flyoutCategoryBlocks: (wp: Workspace) => HTMLElement[];
         function createVariable(wp: Workspace, opt_callback?: ((e: any) => void)): void;
+        function allUsedVarModels(ws: Blockly.Workspace): Blockly.VariableModel[];
     }
 
     class VariableModel {
