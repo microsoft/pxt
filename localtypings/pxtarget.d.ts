@@ -46,6 +46,7 @@ declare namespace pxt {
         serial?: AppSerial;
         appTheme: AppTheme;
         compileService?: TargetCompileService;
+        defaultCompileServiceVariant?: string;
         ignoreDocsErrors?: boolean;
         variants?: Map<AppTarget>; // patches on top of the current AppTarget for different chip variants
         queryVariants?: Map<AppTarget>; // patches on top of the current AppTarget using query url regex
