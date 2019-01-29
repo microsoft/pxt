@@ -59,6 +59,16 @@ namespace ts.pxtc {
             argsFmt: ["T", "T", "T", "T"],
             value: 0
         },
+        "BufferMethods::getByte": {
+            name: "_pxt_buffer_get",
+            argsFmt: ["T", "T", "T"],
+            value: 0
+        },
+        "BufferMethods::setByte": {
+            name: "_pxt_buffer_set",
+            argsFmt: ["T", "T", "T", "I"],
+            value: 0
+        },
         "pxtrt::mapGetGeneric": {
             name: "_pxt_map_get",
             argsFmt: ["T", "T", "S"],
@@ -2675,14 +2685,16 @@ ${lbl}: .short 0xffff
             if (hasRet)
                 proc.emitLbl(lbl)
 
-            // once we have emitted code for this function,
-            // we should emit code for all decls that are used
-            // as a result
+            // nothing should be on work list in final pass - everything should be already marked as used
             assert(!bin.finalPass || usedWorkList.length == 0, "!bin.finalPass || usedWorkList.length == 0")
-            while (usedWorkList.length > 0) {
-                let f = usedWorkList.pop()
-                emit(f)
-            }
+
+            // otherwise, we emit everything that's left, but only at top level
+            // to avoid unbounded stack
+            if (proc.isRoot)
+                while (usedWorkList.length > 0) {
+                    let f = usedWorkList.pop()
+                    emit(f)
+                }
 
             return lit
         }
@@ -3710,6 +3722,26 @@ ${lbl}: .short 0xffff
         function emitDebuggerStatement(node: Node) {
             emitBrk(node)
         }
+        function isLoop(node: Node) {
+            switch (node.kind) {
+                case SK.WhileStatement:
+                case SK.ForInStatement:
+                case SK.ForOfStatement:
+                case SK.ForStatement:
+                case SK.DoStatement:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+        function inLoop(node: Node) {
+            while (node) {
+                if (isLoop(node))
+                    return true
+                node = node.parent
+            }
+            return false
+        }
         function emitVariableDeclaration(node: VarOrParam): ir.Cell {
             if (node.name.kind === SK.ObjectBindingPattern) {
                 if (!node.initializer) {
@@ -3761,6 +3793,11 @@ ${lbl}: .short 0xffff
                 typeCheckSubtoSup(node.initializer, node)
                 proc.emitExpr(loc.storeByRef(emitExpr(node.initializer)))
                 currJres = null
+                proc.stackEmpty();
+            } else if (inLoop(node)) {
+                // the variable is declared in a loop - we need to clear it on each iteration
+                emitBrk(node)
+                proc.emitExpr(loc.storeByRef(emitLit(undefined)))
                 proc.stackEmpty();
             }
             return loc;

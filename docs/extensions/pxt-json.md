@@ -35,8 +35,10 @@ interface PackageConfig {
     targetVersions?: TargetVersions; // versions of the target/pxt the extension was compiled against
 
     testFiles?: string[];
-    testDependencies?: string[];
+    testDependencies?: Map<string>;
     simFiles?: string[];
+
+    cppDependencies?: Map<string>;
 
     binaryonly?: boolean;
     platformio?: PlatformIOConfig;
@@ -93,6 +95,27 @@ with respect to the `pxt.json` in `additionalFilePath`.
 
 The `additionalFilePath` is recursive or multi-level - the `pxt.json` in the referenced directory
 might have another `additionalFilePath` and it will work as expected.
+
+## Test files
+
+The files listed under `testFiles` are only included when the extension is compiled
+as the top-level program and not just imported into some other program.
+Typically this happens when you run `pxt` from command line in the
+extension directory, or when you hit **Download** when editing extension itself in
+the online editor.
+They usually contain unit tests for extension.
+
+Similarly, dependencies from `testDependencies` are only included when compiled
+as top-level.
+
+## C++ dependencies
+
+Dependencies under `cppDependencies` are only considered when generating
+code for the C++ compiler.
+Usually, one would list all optional packages which contain
+C++ code in `cppDependencies` of your core package.
+Then, when user actually adds any of these optional packages, the
+C++ code doesn't change and re-compilation (and thus cloud round-trip) is not required.
 
 [adafruit]: https://github.com/Microsoft/pxt-adafruit
 [common-packages]: https://github.com/Microsoft/pxt-common-packages

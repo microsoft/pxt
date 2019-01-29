@@ -63,8 +63,10 @@ export class DocsMenu extends data.PureComponent<ISettingsProps, {}> {
     private doDocEntryAction(parent: pxt.editor.IProjectView, m: pxt.DocMenuEntry) {
         if (m.tutorial) {
             return () => { openTutorial(parent, m.path) };
-        } else if (!/^\//.test(m.path)) {
+        } else if (!/^\//.test(m.path) && !m.popout) {
             return () => { window.open(m.path, "docs"); };
+        } else if (m.popout) {
+            return () => { window.open(`${pxt.appTarget.appTheme.homeUrl}${m.path}`, "docs"); };
         } else {
             return () => { openDocs(parent, m.path) };
         }
@@ -176,8 +178,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
 
     showBoardDialog() {
         pxt.tickEvent("menu.changeboard", undefined, { interactiveConsent: true });
-        const variants = pxt.getHwVariants();
-        if (variants.length > 1)
+        if (pxt.hasHwVariants())
             this.props.parent.showChooseHwDialog();
         else
             this.props.parent.showBoardDialogAsync(undefined, true).done();

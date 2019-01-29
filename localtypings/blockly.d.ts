@@ -853,7 +853,7 @@ declare namespace Blockly {
         removeField(name: string): void;
         setAlign(align: number): Input;
         setCheck(check: string | string[]): Input;
-        setVisible(visible: boolean): Block;
+        setVisible(visible: boolean): Block[];
     }
 
     class Connection {

@@ -284,12 +284,12 @@ namespace pxtsprite {
         /**
          * This calls getBoundingClientRect() so don't call it in a loop!
          */
-        protected clientToCell(clientX: number, clientY: number) {
+        protected clientToCell(coord: ClientCoordinates) {
             const bounds = this.paintLayer.getBoundingClientRect();
 
             return [
-                Math.floor((clientX - bounds.left) / this.cellWidth),
-                Math.floor((clientY - bounds.top) / this.cellHeight)
+                Math.floor((coord.clientX - bounds.left) / this.cellWidth),
+                Math.floor((coord.clientY - bounds.top) / this.cellHeight)
             ];
         }
 
@@ -300,24 +300,24 @@ namespace pxtsprite {
                 pxt.BrowserUtils.pointerEvents.down.forEach(evId => {
                     this.paintLayer.addEventListener(evId, (ev: MouseEvent) => {
                         this.startDrag();
-                        const [col, row] = this.clientToCell(ev.clientX, ev.clientY);
+                        const [col, row] = this.clientToCell(clientCoord(ev));
                         this.gesture.handle(InputEvent.Down, col, row);
                     });
                 })
 
                 this.paintLayer.addEventListener("click", (ev: MouseEvent) => {
-                    const [col, row] = this.clientToCell(ev.clientX, ev.clientY);
+                    const [col, row] = this.clientToCell(clientCoord(ev));
                     this.gesture.handle(InputEvent.Down, col, row);
                     this.gesture.handle(InputEvent.Up, col, row);
                 });
 
-                this.paintLayer.addEventListener(pxt.BrowserUtils.pointerEvents.move, this.hoverHandler);
+                document.addEventListener(pxt.BrowserUtils.pointerEvents.move, this.hoverHandler);
             }
         }
 
         private upHandler = (ev: MouseEvent) => {
             this.endDrag();
-            const [col, row] = this.clientToCell(ev.clientX, ev.clientY);
+            const [col, row] = this.clientToCell(clientCoord(ev));
             this.gesture.handle(InputEvent.Up, col, row);
 
             ev.stopPropagation();
@@ -326,7 +326,7 @@ namespace pxtsprite {
 
         private leaveHandler = (ev: MouseEvent) => {
             this.endDrag();
-            const [col, row] = this.clientToCell(ev.clientX, ev.clientY);
+            const [col, row] = this.clientToCell(clientCoord(ev));
             this.gesture.handle(InputEvent.Leave, col, row);
 
             ev.stopPropagation();
@@ -334,7 +334,7 @@ namespace pxtsprite {
         };
 
         private moveHandler = (ev: MouseEvent) => {
-            const [col, row] = this.clientToCell(ev.clientX, ev.clientY);
+            const [col, row] = this.clientToCell(clientCoord(ev));
             if (col >= 0 && row >= 0 && col < this.image.width && row < this.image.height) {
                 if (ev.buttons & 1) {
                     this.gesture.handle(InputEvent.Down, col, row);
@@ -347,24 +347,44 @@ namespace pxtsprite {
         }
 
         private hoverHandler = (ev: MouseEvent) => {
-            const [col, row] = this.clientToCell(ev.clientX, ev.clientY);
+            const [col, row] = this.clientToCell(clientCoord(ev));
             if (col >= 0 && row >= 0 && col < this.image.width && row < this.image.height) {
                 this.gesture.handle(InputEvent.Move, col, row);
+                this.gesture.isHover = true;
+            }
+            else if (this.gesture.isHover) {
+                this.gesture.isHover = false;
+                this.gesture.handle(InputEvent.Leave, -1, -1);
             }
         }
 
         private startDrag() {
-            this.paintLayer.removeEventListener(pxt.BrowserUtils.pointerEvents.move, this.hoverHandler);
+            document.removeEventListener(pxt.BrowserUtils.pointerEvents.move, this.hoverHandler);
             document.addEventListener(pxt.BrowserUtils.pointerEvents.move, this.moveHandler);
             document.addEventListener(pxt.BrowserUtils.pointerEvents.up, this.upHandler);
-            document.addEventListener(pxt.BrowserUtils.pointerEvents.leave, this.leaveHandler);
+
+            if (pxt.BrowserUtils.isTouchEnabled() && !pxt.BrowserUtils.hasPointerEvents()) {
+                document.addEventListener("touchend", this.upHandler);
+                document.addEventListener("touchcancel", this.leaveHandler);
+            }
+            else {
+                document.addEventListener(pxt.BrowserUtils.pointerEvents.leave, this.leaveHandler);
+            }
         }
 
         private endDrag() {
-            this.paintLayer.addEventListener(pxt.BrowserUtils.pointerEvents.move, this.hoverHandler);
+            document.addEventListener(pxt.BrowserUtils.pointerEvents.move, this.hoverHandler);
             document.removeEventListener(pxt.BrowserUtils.pointerEvents.move, this.moveHandler);
             document.removeEventListener(pxt.BrowserUtils.pointerEvents.up, this.upHandler);
             document.removeEventListener(pxt.BrowserUtils.pointerEvents.leave, this.leaveHandler);
+
+            if (pxt.BrowserUtils.isTouchEnabled() && !pxt.BrowserUtils.hasPointerEvents()) {
+                document.removeEventListener("touchend", this.upHandler);
+                document.removeEventListener("touchcancel", this.leaveHandler);
+            }
+            else {
+                document.removeEventListener(pxt.BrowserUtils.pointerEvents.leave, this.leaveHandler);
+            }
         }
 
         private layoutCanvas(canvas: HTMLCanvasElement, top: number, left: number, width: number, height: number) {
@@ -407,6 +427,7 @@ namespace pxtsprite {
         lastRow: number;
 
         isDown = false;
+        isHover = false;
 
         handlers: {[index: number]: GestureHandler} = {};
 
@@ -419,6 +440,7 @@ namespace pxtsprite {
                     break;
                 case InputEvent.Down:
                     if (!this.isDown) {
+                        this.update(col, row);
                         this.isDown = true;
                         this.fire(GestureType.Down);
                     }
@@ -492,5 +514,21 @@ namespace pxtsprite {
         kill() {
             this.dead = true;
         }
+    }
+
+    export interface ClientCoordinates {
+        clientX: number;
+        clientY: number;
+    }
+
+    function clientCoord(ev: PointerEvent | MouseEvent | TouchEvent): ClientCoordinates {
+        if ((ev as TouchEvent).touches) {
+            const te = ev as TouchEvent;
+            if (te.touches.length) {
+                return te.touches[0];
+            }
+            return te.changedTouches[0];
+        }
+        return (ev as PointerEvent | MouseEvent);
     }
 }

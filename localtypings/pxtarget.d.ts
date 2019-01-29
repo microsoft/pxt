@@ -136,7 +136,8 @@ declare namespace pxt {
     }
 
     interface AppSimulator {
-        autoRun?: boolean;
+        autoRun?: boolean; // enable autoRun in regular mode, not light mode
+        autoRunLight?: boolean; // force autorun in light mode
         stopOnChange?: boolean;
         hideRestart?: boolean;
         // moved to theme
@@ -311,6 +312,10 @@ declare namespace pxt {
         hideProjectRename?: boolean; // Temporary flag until we figure out a better way to show the name
         addNewTypeScriptFile?: boolean; // when enabled, the [+] explorer button asks for file name, instead of using "custom.ts"
         simScreenshot?: boolean; // allows to download a screenshot of the simulator
+        simScreenshotKey?: string; // keyboard key name
+        simScreenshotMaxUriLength?: number; // maximum base64 encoded length to be uploaded
+        simGif?: boolean; // record gif of the simulator
+        simGifKey?: boolean; // shortcut to start stop
     }
 
     interface SocialOptions {
@@ -324,6 +329,8 @@ declare namespace pxt {
         name: string;
         // needs to have one of `path` or `subitems`
         path?: string;
+        // force opening in separate window
+        popout?: boolean;
         tutorial?: boolean;
         subitems?: DocMenuEntry[];
     }

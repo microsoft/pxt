@@ -130,6 +130,12 @@ namespace pxt.editor {
         buttons?: ModalDialogButton[];
     }
 
+    export interface ScreenshotData {
+        data?: ImageData;
+        delay?: number;
+        event?: "start" | "stop";
+    }
+
     export interface IProjectView {
         state: IAppState;
         setState(st: IAppState): void;
@@ -204,7 +210,7 @@ namespace pxt.editor {
         openInstructions(): void;
         closeFlyout(): void;
         printCode(): void;
-        requestScreenshotAsync(force?: boolean): Promise<string>;
+        requestScreenshotAsync(): Promise<string>;
         downloadScreenshotAsync(): Promise<void>;
 
         toggleDebugging(): void;
@@ -262,6 +268,9 @@ namespace pxt.editor {
         showBoardDialogAsync(features?: string[], closeIcon?: boolean): Promise<void>;
 
         showModalDialogAsync(options: ModalDialogOptions): Promise<void>;
+
+        pushScreenshotHandler(handler: (msg: ScreenshotData) => void): void;
+        popScreenshotHandler(): void;
     }
 
     export interface IHexFileImporter {

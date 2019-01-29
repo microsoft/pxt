@@ -40,6 +40,7 @@ function setupRootDir() {
         "built/web",
         path.join(nodeutil.targetDir, "built"),
         path.join(nodeutil.targetDir, "sim/public"),
+        path.join(nodeutil.targetDir, "node_modules", `pxt-${pxt.appTarget.id}-sim`, "public"),
         path.join(nodeutil.pxtCoreDir, "built/web"),
         path.join(nodeutil.pxtCoreDir, "webapp/public")
     ]

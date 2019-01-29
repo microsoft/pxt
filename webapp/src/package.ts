@@ -331,6 +331,7 @@ export class EditorPackage {
         let res: EditorPackage[] = []
         for (let k of depkeys) {
             if (/---/.test(k)) continue
+            if (deps[k].cppOnly) continue
             res.push(getEditorPkg(deps[k]))
         }
         if (this.assetsPkg)
