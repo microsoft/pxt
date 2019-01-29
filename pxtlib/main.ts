@@ -192,6 +192,11 @@ namespace pxt {
             hwVariant = null
     }
 
+    export function hasHwVariants(): boolean {
+        return !!pxt.appTarget.variants
+            && Object.keys(pxt.appTarget.bundledpkgs).some(pkg => /^hw---/.test(pkg));
+    }
+
     export function getHwVariants(): PackageConfig[] {
         if (!pxt.appTarget.variants)
             return []
