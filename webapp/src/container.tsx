@@ -178,8 +178,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
 
     showBoardDialog() {
         pxt.tickEvent("menu.changeboard", undefined, { interactiveConsent: true });
-        const variants = pxt.getHwVariants();
-        if (variants.length > 1)
+        if (pxt.hasHwVariants())
             this.props.parent.showChooseHwDialog();
         else
             this.props.parent.showBoardDialogAsync(undefined, true).done();

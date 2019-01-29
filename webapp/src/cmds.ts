@@ -371,7 +371,7 @@ export function init(): void {
     } else {
         pxt.debug(`disabled webusb`);
         pxt.usb.setEnabled(false);
-        pxt.HF2.mkPacketIOAsync = undefined;
+        pxt.HF2.mkPacketIOAsync = hidbridge.mkBridgeAsync;
     }
     if (isNativeHost()) {
         pxt.debug(`deploy/save using webkit host`);

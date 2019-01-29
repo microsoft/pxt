@@ -1343,12 +1343,12 @@ export class ProjectView
     saveProjectToFileAsync(): Promise<void> {
         const mpkg = pkg.mainPkg;
         if (saveAsBlocks()) {
-            pxt.BrowserUtils.browserDownloadText(pkg.mainPkg.readFile("main.blocks"), pkg.genFileName(".blocks"), 'application/xml');
+            pxt.BrowserUtils.browserDownloadText(mpkg.readFile("main.blocks"), pkg.genFileName(".blocks"), 'application/xml');
             return Promise.resolve();;
         }
         if (pxt.commands.saveProjectAsync) {
             core.infoNotification(lf("Saving..."))
-            return pkg.mainPkg.saveToJsonAsync(this.getPreferredEditor())
+            return mpkg.saveToJsonAsync(this.getPreferredEditor())
                 .then(project => pxt.commands.saveProjectAsync(project));
         }
         if (pxt.appTarget.compile.saveAsPNG) return this.saveProjectAsPNGAsync(true);
@@ -1659,7 +1659,7 @@ export class ProjectView
 
     private checkWebUSBVariant = true
     checkForHwVariant() {
-        if (pxt.hwVariant)
+        if (pxt.hwVariant || !pxt.hasHwVariants())
             return false // already set
         const variants = pxt.getHwVariants()
         if (variants.length == 0)
@@ -1708,7 +1708,7 @@ export class ProjectView
         if (this.checkForHwVariant())
             return;
 
-        if (pxt.appTarget.compile.saveAsPNG && !pxt.hwVariant) {
+        if (pxt.appTarget.compile.saveAsPNG && pxt.hasHwVariants() && !pxt.hwVariant) {
             this.saveAndCompile();
             return;
         }
@@ -2401,7 +2401,8 @@ export class ProjectView
     }
 
     showChooseHwDialog() {
-        this.chooseHwDialog.show()
+        if (this.chooseHwDialog)
+            this.chooseHwDialog.show()
     }
 
     showRenameProjectDialogAsync(): Promise<boolean> {
@@ -2674,6 +2675,7 @@ export class ProjectView
         const shouldHideEditorFloats = (this.state.hideEditorFloats || this.state.collapseEditorTools) && (!inTutorial || isHeadless);
         const shouldCollapseEditorTools = this.state.collapseEditorTools && (!inTutorial || isHeadless);
         const logoWide = !!targetTheme.logoWide;
+        const hwDialog = !sandbox && pxt.hasHwVariants();
 
         const isApp = cmds.isNativeHost() || pxt.winrt.isWinRT() || pxt.BrowserUtils.isElectron();
 
@@ -2763,7 +2765,7 @@ export class ProjectView
                 {inHome ? <projects.ImportDialog parent={this} ref={this.handleImportDialogRef} /> : undefined}
                 {inHome && targetTheme.scriptManager ? <scriptmanager.ScriptManagerDialog parent={this} ref={this.handleScriptManagerDialogRef} onClose={this.handleScriptManagerDialogClose} /> : undefined}
                 {sandbox ? undefined : <projects.ExitAndSaveDialog parent={this} ref={this.handleExitAndSaveDialogRef} />}
-                <projects.ChooseHwDialog parent={this} ref={this.handleChooseHwDialogRef} />
+                {hwDialog ? <projects.ChooseHwDialog parent={this} ref={this.handleChooseHwDialogRef} /> : undefined}
                 {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={this.handleShareEditorRef} loading={this.state.publishing} />}
                 {selectLanguage ? <lang.LanguagePicker parent={this} ref={this.handleLanguagePickerRef} /> : undefined}
                 {sandbox ? <container.SandboxFooter parent={this} /> : undefined}

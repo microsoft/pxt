@@ -219,7 +219,10 @@ namespace pxsim {
 
             for (let i = 0; i < frames.length; ++i) {
                 let frame = frames[i] as HTMLIFrameElement
+                // same frame as source
                 if (source && frame.contentWindow == source) continue;
+                // frame not in DOM
+                if (!frame.contentWindow) continue;
 
                 frame.contentWindow.postMessage(msg, "*");
 
