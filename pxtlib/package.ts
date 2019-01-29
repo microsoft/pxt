@@ -523,7 +523,9 @@ namespace pxt {
                     return Promise.all(U.values(this.parent.deps).map(pkg =>
                         loadDepsRecursive(null, pkg, true)))
                 })
-                .then(() => null);
+                .then(() => {
+                    pxt.debug(`  installed ${this.id}`)
+                });
         }
 
         getFiles() {
@@ -800,6 +802,8 @@ namespace pxt {
                     })
                     files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4)
                     for (let f of this.getFiles()) {
+                        // already stored
+                        if (f == pxt.CONFIG_NAME) continue;
                         let str = this.readFile(f)
                         if (str == null)
                             U.userError("referenced file missing: " + f)
