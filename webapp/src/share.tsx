@@ -430,7 +430,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                             {screenshotUri || screenshotMessage ?
                                 <div className={`ui ${screenshotMessageClass} segment landscape only`}>{
                                     (screenshotUri && !screenshotMessage)
-                                        ? <img className="ui centered image" src={screenshotUri} alt={lf("Recorded gif")} />
+                                        ? <img className="ui small centered image" src={screenshotUri} alt={lf("Recorded gif")} />
                                         : <p className="no-select">{screenshotMessage}</p>}</div> : undefined}
                         </div>
                     </div> : undefined}
