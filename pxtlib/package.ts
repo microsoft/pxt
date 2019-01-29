@@ -523,7 +523,9 @@ namespace pxt {
                     return Promise.all(U.values(this.parent.deps).map(pkg =>
                         loadDepsRecursive(null, pkg, true)))
                 })
-                .then(() => null);
+                .then(() => {
+                    pxt.log(`  installed ${this.id}`)
+                });
         }
 
         getFiles() {
