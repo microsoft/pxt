@@ -89,15 +89,15 @@ namespace pxt.py.lexer {
             case TokenType.Id:
                 return `id(${t.value})`
             case TokenType.Op:
-                return `op(${t.value})`
+                return t.value
             case TokenType.Keyword:
-                return `kw(${t.value})`
+                return t.value
             case TokenType.Number:
                 return `num(${t.value})`
             case TokenType.String:
-                return `str(${t.stringPrefix}${JSON.stringify(t.value)})`
+                return t.stringPrefix + JSON.stringify(t.value)
             case TokenType.NewLine:
-                return `nl`
+                return `<nl>`
             case TokenType.Comment:
                 return `/* ${t.value} */`
             case TokenType.Indent:
@@ -109,6 +109,26 @@ namespace pxt.py.lexer {
             default:
                 return "???"
         }
+    }
+
+    export function tokensToString(ts: Token[]) {
+        let r = ""
+        let lineLen = 0
+        for (let t of ts) {
+            let tmp = tokenToString(t)
+            if (lineLen + tmp.length > 70) {
+                lineLen = 0
+                r += "\n"
+            }
+            if (lineLen != 0) r += " "
+            r += tmp
+            lineLen += tmp.length
+            if (t.type == TokenType.NewLine || t.type == TokenType.Comment) {
+                lineLen = 0
+                r += "\n"
+            }
+        }
+        return r
     }
 
     export function lex(source: string) {
@@ -130,8 +150,11 @@ namespace pxt.py.lexer {
                 // skip
             } else if (rx.isNewline(ch)) {
                 addToken(TokenType.NewLine, "")
+            } else {
+                addError(U.lf("invalid token"))
             }
         }
+        return res
 
         function addToken(type: TokenType, val: string) {
             let t: Token = {
@@ -194,9 +217,9 @@ namespace pxt.py.lexer {
         }
 
         function parseStringPref(pref: string) {
-            const delim = source.charCodeAt(pos0)
+            const delim = source.charCodeAt(pos++)
             let tripleMode = false
-            if (source.charCodeAt(pos0 + 1) == delim && source.charCodeAt(pos0 + 2) == delim) {
+            if (source.charCodeAt(pos) == delim && source.charCodeAt(pos + 1) == delim) {
                 pos += 2
                 tripleMode = true
             }
@@ -212,6 +235,9 @@ namespace pxt.py.lexer {
                             source.charCodeAt(pos + 1) == delim) {
                             pos += 2
                             break
+                        } else {
+                            quoted += "\\" + String.fromCharCode(delim)
+                            value += String.fromCharCode(delim)
                         }
                     } else {
                         break
@@ -252,11 +278,15 @@ namespace pxt.py.lexer {
                         quoted += "\\\\" + String.fromCharCode(ch2)
                         value += "\\" + String.fromCharCode(ch2)
                     }
+                } else if (isNaN(ch)) {
+                    addError(U.lf("end of file in a string"))
+                    break
                 } else {
                     if (rx.isNewline(ch)) {
-                        if (!tripleMode)
+                        if (!tripleMode) {
                             addError(U.lf("new line in a string"))
-                        break
+                            break
+                        }
                     }
                     value += String.fromCharCode(ch)
                     quoted += String.fromCharCode(ch)
@@ -269,6 +299,7 @@ namespace pxt.py.lexer {
         }
 
         function parseString() {
+            pos--
             parseStringPref("")
         }
 

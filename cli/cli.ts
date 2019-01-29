@@ -5678,9 +5678,14 @@ PXT_ASMDEBUG     - embed additional information in generated binary.asm file
         name: "pyconv",
         help: "convert from python",
         argString: "<package-directory> <support-directory>...",
-        anyArgs: true,
         advanced: true,
-    }, c => pyconv.convertAsync(c.args))
+        flags: {
+            internal: {
+                description: "use internal Python parser",
+                aliases: ["i"]
+            }
+        }
+    }, c => pyconv.convertAsync(c.args, !!c.flags["internal"]))
 
     advancedCommand("thirdpartynotices", "refresh third party notices", thirdPartyNoticesAsync);
     p.defineCommand({

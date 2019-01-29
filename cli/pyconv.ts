@@ -1474,10 +1474,18 @@ function iterPy(e: py.AST, f: (v: py.AST) => void) {
     })
 }
 
-export function convertAsync(fns: string[]) {
+export function convertAsync(fns: string[], useInternal = false) {
     let mainFiles: string[] = []
     while (/\.py$/.test(fns[0])) {
         mainFiles.push(fns.shift().replace(/\\/g, "/"))
+    }
+
+    if (useInternal) {
+        for (let f of mainFiles) {
+            let tokens = pxt.py.lexer.lex(fs.readFileSync(f, "utf8"))
+            console.log(pxt.py.lexer.tokensToString(tokens))
+        }
+        return Promise.resolve()
     }
 
     let primFiles =
