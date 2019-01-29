@@ -399,7 +399,7 @@ namespace pxt {
             let initPromise = Promise.resolve()
 
             if (this.level == 0)
-                pxt.setAppTargetVariant(null)
+                pxt.setAppTargetVariant(pxt.appTarget.defaultCompileServiceVariant)
 
             this.isLoaded = true;
             const str = this.readFile(pxt.CONFIG_NAME);
