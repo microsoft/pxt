@@ -101,7 +101,7 @@ namespace pxt.py.lexer {
             case TokenType.Comment:
                 return `/* ${t.value} */`
             case TokenType.Indent:
-                return "indent"
+                return "indent" + t.value
             case TokenType.Dedent:
                 return "dedent"
             case TokenType.Error:
@@ -149,7 +149,7 @@ namespace pxt.py.lexer {
             } else if (rx.isSpace(ch)) {
                 // skip
             } else if (rx.isNewline(ch)) {
-                addToken(TokenType.NewLine, "")
+                singleNewline()
             } else {
                 invalidToken()
             }
@@ -307,6 +307,23 @@ namespace pxt.py.lexer {
 
         function singleNewline() {
             addToken(TokenType.NewLine, "")
+            checkIndent()
+        }
+
+        function checkIndent() {
+            let ind = 0
+            while (true) {
+                const ch = source.charCodeAt(pos)
+                if (ch == 9) {
+                    addError(U.lf("TAB indentaion not supported"))
+                    break
+                }
+                if (ch != 32)
+                    break
+                ind++
+                pos++
+            }
+            addToken(TokenType.Indent, "" + ind)
         }
 
         function parseBackslash() {
@@ -321,7 +338,7 @@ namespace pxt.py.lexer {
         }
 
         function parseComment() {
-            addToken(TokenType.NewLine, "#")
+            addToken(TokenType.NewLine, "")
             while (pos < source.length) {
                 if (rx.isNewline(source.charCodeAt(pos)))
                     break
@@ -331,6 +348,7 @@ namespace pxt.py.lexer {
             if (source.charCodeAt(pos) == 13 && source.charCodeAt(pos + 1) == 10)
                 pos++
             pos++ // skip newline
+            checkIndent()
         }
 
         function parseNumber() {
