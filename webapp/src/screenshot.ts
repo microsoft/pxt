@@ -3,29 +3,33 @@ import * as data from "./data";
 
 type Header = pxt.workspace.Header;
 
+function cover(cvs: HTMLCanvasElement, img: HTMLImageElement) {
+    let ox = 0;
+    let oy = 0;
+    let iw = 0;
+    let ih = 0;
+    if (img.height > img.width) {
+        ox = 0;
+        iw = img.width;
+        ih = iw / cvs.width * cvs.height;
+        oy = (img.height - ih) / 2;
+    } else {
+        oy = 0;
+        ih = img.height;
+        iw = ih / cvs.height * cvs.width;
+        ox = (img.width - iw) / 2;
+    }
+    const ctx = cvs.getContext("2d");
+    ctx.drawImage(img, ox, oy, iw, ih, 0, 0, cvs.width, cvs.height);
+}
+
 function renderIcon(img: HTMLImageElement): string {
     let icon: string = null;
     if (img && img.width > 0 && img.height > 0) {
         const cvs = document.createElement("canvas") as HTMLCanvasElement;
         cvs.width = 305;
         cvs.height = 200;
-        let ox = 0;
-        let oy = 0;
-        let iw = 0;
-        let ih = 0;
-        if (img.height > img.width) {
-            ox = 0;
-            iw = img.width;
-            ih = iw / cvs.width * cvs.height;
-            oy = (img.height - ih) / 2;
-        } else {
-            oy = 0;
-            ih = img.height;
-            iw = ih / cvs.height * cvs.width;
-            ox = (img.width - iw) / 2;
-        }
-        const ctx = cvs.getContext("2d");
-        ctx.drawImage(img, ox, oy, iw, ih, 0, 0, cvs.width, cvs.height);
+        cover(cvs, img);
         icon = cvs.toDataURL('image/jpeg', 85);
     }
     return icon;
@@ -162,9 +166,28 @@ function defaultCanvasAsync(): Promise<HTMLCanvasElement> {
     return Promise.resolve(cvs);
 }
 
+function logoCanvasAsync(): Promise<HTMLCanvasElement> {
+    return pxt.BrowserUtils.loadImageAsync(pxt.appTarget.appTheme.logo)
+        .then(img => {
+            const cvs = document.createElement("canvas") as HTMLCanvasElement;
+            cvs.width = 160;
+            cvs.height = 120;
+            const ctx = cvs.getContext("2d");
+            const accent = pxt.appTarget.appTheme.accentColor;
+            if (accent) {
+                ctx.fillStyle = accent
+                ctx.fillRect(0, 0, cvs.width, cvs.height);
+            }
+            cover(cvs, img);
+            return cvs;
+        })
+        .catch(() => defaultCanvasAsync());
+}
+
 export function encodeBlobAsync(title: string, dataURL: string, blob: Uint8Array) {
     // if screenshot failed, dataURL is empty
-    return (dataURL ? pxt.BrowserUtils.loadCanvasAsync(dataURL) : defaultCanvasAsync())
+    return (dataURL ? pxt.BrowserUtils.loadCanvasAsync(dataURL) : logoCanvasAsync())
+        .catch(() => logoCanvasAsync())
         .then(cvs => chromifyAsync(cvs, title))
         .then(canvas => {
             const neededBytes = imageHeaderSize + blob.length
