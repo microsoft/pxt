@@ -10,6 +10,7 @@ import * as debug from "./debugger";
 import * as toolbox from "./toolbox";
 import * as snippets from "./blocksSnippets";
 import * as workspace from "./workspace";
+import { CreateFunctionDialog, CreateFunctionDialogState } from "./createFunction";
 
 import Util = pxt.Util;
 
@@ -22,6 +23,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     loadingXmlPromise: Promise<any>;
     compilationResult: pxt.blocks.BlockCompilationResult;
     isFirstBlocklyLoad = true;
+    functionsDialog: CreateFunctionDialog = null;
 
     showCategories: boolean = true;
     filters: pxt.editor.ProjectFilters;
@@ -535,7 +537,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     showFunctionsFlyout() {
-        this.showFlyoutInternal_(Blockly.Procedures.flyoutCategory(this.editor));
+        if (pxt.appTarget.runtime &&
+            pxt.appTarget.runtime.functionsOptions &&
+            pxt.appTarget.runtime.functionsOptions.useNewFunctions) {
+            this.showFlyoutInternal_(Blockly.Functions.flyoutCategory(this.editor));
+        } else {
+            this.showFlyoutInternal_(Blockly.Procedures.flyoutCategory(this.editor));
+        }
     }
 
     getViewState() {
@@ -659,6 +667,19 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     // Make sure the package has extensions enabled, and is a github package.
                     // Extensions are limited to github packages and ghpages, as we infer their url from the installedVersion config
                     .filter(config => !!config && !!config.extension && /^(file:|github:)/.test(config.installedVersion));
+
+                // Initialize the "Make a function" button
+                Blockly.Functions.editFunctionExternalHandler = (mutation: Element, cb: Blockly.Functions.ConfirmEditCallback) => {
+                    Promise.resolve()
+                        .delay(10)
+                        .then(() => {
+                            if (!this.functionsDialog) {
+                                const wrapper = document.body.appendChild(document.createElement('div'));
+                                this.functionsDialog = ReactDOM.render(React.createElement(CreateFunctionDialog), wrapper) as CreateFunctionDialog;
+                            }
+                            this.functionsDialog.show(mutation, cb, this.editor);
+                        });
+                }
             })
     }
 

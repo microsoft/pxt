@@ -3480,6 +3480,7 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
             .then(() => pkg.getCompileOptionsAsync())
             .then(opts => {
                 opts.ast = true;
+                opts.useNewFunctions = pxt.appTarget.runtime && pxt.appTarget.runtime.functionsOptions && pxt.appTarget.runtime.functionsOptions.useNewFunctions;
                 const decompiled = pxtc.decompile(opts, "main.ts");
                 if (decompiled.success) {
                     resolve(decompiled.outfiles["main.blocks"]);
@@ -3579,10 +3580,14 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
                         const file = resp.ast.getSourceFile('main.ts');
                         const apis = pxtc.getApiInfo(opts, resp.ast);
                         const blocksInfo = pxtc.getBlocksInfo(apis);
+                        const useNewFunctions = pxt.appTarget.runtime &&
+                            pxt.appTarget.runtime.functionsOptions &&
+                            pxt.appTarget.runtime.functionsOptions.useNewFunctions;
                         const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, {
                             snippetMode: false,
-                            errorOnGreyBlocks: true
-                        })
+                            errorOnGreyBlocks: true,
+                            useNewFunctions
+                        });
                         const success = !!bresp.outfiles['main.blocks']
                         if (success) return addSuccess(name)
                         else return addFailure(fn, bresp.diagnostics)

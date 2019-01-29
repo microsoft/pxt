@@ -74,12 +74,21 @@ declare namespace pxt {
         callName?: string;      // name of the block's function if changed in target
     }
 
+    interface FunctionEditorTypeInfo {
+        typeName?: string; // The actual type that gets emitted to ts
+        label?: string; // A user-friendly label for the type, e.g. "text" for the string type
+    }
+
     interface RuntimeOptions {
         mathBlocks?: boolean;
         textBlocks?: boolean;
         listsBlocks?: boolean;
         variablesBlocks?: boolean;
         functionBlocks?: boolean;
+        functionsOptions?: {
+            extraFunctionEditorTypes?: FunctionEditorTypeInfo[];
+            useNewFunctions?: boolean;
+        };
         logicBlocks?: boolean;
         loopsBlocks?: boolean;
         onStartNamespace?: string; // default = loops
@@ -412,6 +421,7 @@ declare namespace ts.pxtc {
         warnDiv?: boolean; // warn when emitting division operator
 
         alwaysDecompileOnStart?: boolean; // decompiler only
+        useNewFunctions?: boolean; // decompiler only; whether to decompile functions using the new functions implementation (functions with parameters)
 
         embedMeta?: string;
         embedBlob?: string; // base64
