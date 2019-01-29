@@ -15,3 +15,5 @@ def foo():
 var
 aslkj
 world""")
+    z = 1 << 2 < 13 <= 13
+    z <<= 13

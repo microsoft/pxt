@@ -191,8 +191,10 @@ namespace pxt.py.lexer {
             if (ch2.length == 2 && allOps.hasOwnProperty(ch2)) {
                 let ch3 = source.slice(pos0, pos + 2)
                 if (ch3.length == 3 && allOps.hasOwnProperty(ch3)) {
+                    pos += 2
                     name = allOps[ch3]
                 } else {
+                    pos++
                     name = allOps[ch2]
                 }
             }
