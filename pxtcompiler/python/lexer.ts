@@ -20,15 +20,14 @@ namespace pxt.py.lexer {
         endPos: number;
     }
 
-    const keywords = [
-        `False      await      else       import     pass
-        None       break      except     in         raise
-        True       class      finally    is         return
-        and        continue   for        lambda     try
-        as         def        from       nonlocal   while
-        assert     del        global     not        with
-        async      elif       if         or         yield`
-    ]
+    const keywords: Map<boolean> = {
+        "False": true, "None": true, "True": true, "and": true, "as": true, "assert": true,
+        "async": true, "await": true, "break": true, "class": true, "continue": true,
+        "def": true, "del": true, "elif": true, "else": true, "except": true, "finally": true,
+        "for": true, "from": true, "global": true, "if": true, "import": true, "in": true,
+        "is": true, "lambda": true, "nonlocal": true, "not": true, "or": true, "pass": true,
+        "raise": true, "return": true, "try": true, "while": true, "with": true, "yield": true,
+    }
 
     let asciiParse: (() => void)[] = []
     let allOps: Map<string>
@@ -176,7 +175,9 @@ namespace pxt.py.lexer {
                 pos++
             let id = source.slice(pos0, pos)
             let ch = source.charCodeAt(pos)
-            if (ch == 34 || ch == 39)
+            if (keywords.hasOwnProperty(id))
+                addToken(TokenType.Keyword, id)
+            else if (ch == 34 || ch == 39)
                 parseStringPref(id)
             else
                 addToken(TokenType.Id, id)
