@@ -738,7 +738,7 @@ end
 define bpanic
   b target_panic
 end
-gddefine bfault
+define bfault
   b handleHardFault
 end
 echo \\npxt commands\\n
