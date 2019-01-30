@@ -90,6 +90,7 @@ namespace pxsim {
         static toDebugString(o: any): string {
             if (o === null) return "null";
             if (o === undefined) return "undefined;"
+            if (o.vtable && o.vtable.name) return o.vtable.name;
             if (o.toDebugString) return o.toDebugString();
             if (typeof o == "string") return JSON.stringify(o);
             return o.toString();
