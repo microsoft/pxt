@@ -752,7 +752,7 @@ echo \\ngdb (basic) commands\\n
 echo    s: step, n: step over, fin: step out\\n
 echo    l: line context\\n
 echo    bt: for stacktrace\\n\\n
-echo More help at https://makecode.com/cli/gdb
+echo More help at https://makecode.com/cli/gdb\\n\\n
 `)
 
     pxt.log("starting openocd: " + oargs.join(" "))
