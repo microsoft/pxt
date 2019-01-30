@@ -1482,8 +1482,8 @@ export function convertAsync(fns: string[], useInternal = false) {
 
     if (useInternal) {
         for (let f of mainFiles) {
-            let tokens = pxt.py.lexer.lex(fs.readFileSync(f, "utf8"))
-            console.log(pxt.py.lexer.tokensToString(tokens))
+            let tokens = pxt.py.lex(fs.readFileSync(f, "utf8"))
+            console.log(pxt.py.tokensToString(tokens))
         }
         return Promise.resolve()
     }

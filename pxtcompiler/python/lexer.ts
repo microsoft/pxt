@@ -1,4 +1,4 @@
-namespace pxt.py.lexer {
+namespace pxt.py {
     export enum TokenType {
         Id,
         Op,
@@ -9,6 +9,7 @@ namespace pxt.py.lexer {
         Comment,
         Indent,
         Dedent,
+        EOF,
         Error
     }
     export interface Token {
@@ -105,6 +106,8 @@ namespace pxt.py.lexer {
                 return "dedent"
             case TokenType.Error:
                 return `[ERR: ${t.value}]`
+            case TokenType.EOF:
+                return "End of file"
             default:
                 return "???"
         }

@@ -41,6 +41,8 @@ namespace pxt.py {
     export interface AST {
         lineno: number;
         col_offset: number;
+        startPos?: number;
+        endPos?: number;
         kind: string;
     }
     export interface Stmt extends AST {
