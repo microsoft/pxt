@@ -738,9 +738,21 @@ end
 define bpanic
   b target_panic
 end
-echo \\nUse 'rst' command to re-run program from start (set your breakpoints first!).\\n
-echo Use 'boot' to go into bootloader, 'log' to dump DMESG, and 'exn' to display exception info.\\n
-echo Use 'bpanic' to break in target_panic, 'bt' for stacktrace\\n\\n
+define bfault
+  b handleHardFault
+end
+echo \\npxt commands\\n
+echo    rst: command to re-run program from start (set your breakpoints first!).\\n
+echo    boot: to go into bootloader\\n
+echo    log: to dump DMESG\\n
+echo    exn: to display exception info.\\n
+echo    bpanic: to break in target_panic\\n
+echo    bfault: to break on a hard fault, run 'exn' after\\n
+echo \\ngdb (basic) commands\\n
+echo    s: step, n: step over, fin: step out\\n
+echo    l: line context\\n
+echo    bt: for stacktrace\\n\\n
+echo More help at https://makecode.com/cli/gdb
 `)
 
     pxt.log("starting openocd: " + oargs.join(" "))
