@@ -3695,6 +3695,7 @@ interface BuildCoreOptions {
 
 function gdbAsync(c: commandParser.ParsedCommand) {
     ensurePkgDir()
+    setBuildEngine();
     return mainPkg.loadAsync()
         .then(() => gdb.startAsync(c.args))
 }
