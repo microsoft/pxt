@@ -2651,7 +2651,7 @@ class Host
         if (!forceLocalBuild && (extInfo.onlyPublic || forceCloudBuild))
             return pxt.hex.getHexInfoAsync(this, extInfo)
 
-        return build.buildHexAsync(build.thisBuild, mainPkg, extInfo)
+        return build.buildHexAsync(build.thisBuild, mainPkg, extInfo, forceBuild)
             .then(() => build.thisBuild.patchHexInfo(extInfo))
     }
 
