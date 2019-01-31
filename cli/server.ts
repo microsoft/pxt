@@ -1036,6 +1036,13 @@ export function serveAsync(options: ServeOptions) {
             }
         }
 
+        if (/simulator\.html/.test(pathname)) {
+            // Special handling for missing simulator: redirect to the live sim
+            res.writeHead(302, { location: `https://trg-${pxt.appTarget.id}.userpxt.io/---simulator` });
+            res.end();
+            return;
+        }
+
         // redirect
         let redirectFile = path.join(docsDir, pathname + "-ref.json");
         if (nodeutil.fileExistsSync(redirectFile)) {
