@@ -204,7 +204,7 @@ export class CreateFunctionDialog extends data.Component<ISettingsProps, CreateF
 
             types.forEach(t => {
                 if (!t.icon) {
-                    t.icon = pxt.blocks.defaultIconForArgType("");
+                    t.icon = pxt.blocks.defaultIconForArgType();
                 }
             });
             CreateFunctionDialog.cachedFunctionTypes = types;

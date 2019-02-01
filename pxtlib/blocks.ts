@@ -234,7 +234,7 @@ namespace pxt.blocks {
         return reporterType;
     }
 
-    export function defaultIconForArgType(typeName: string) {
+    export function defaultIconForArgType(typeName: string = "") {
         switch (typeName) {
             case "number":
                 return "calculator";

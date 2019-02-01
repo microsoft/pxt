@@ -2255,7 +2255,7 @@ namespace pxt.blocks {
             };
             if (functionOptions.extraFunctionEditorTypes) {
                 functionOptions.extraFunctionEditorTypes.forEach(t => {
-                    iconsMap[t.typeName] = t.icon || pxt.blocks.defaultIconForArgType("");
+                    iconsMap[t.typeName] = t.icon || pxt.blocks.defaultIconForArgType();
                 });
             }
             Blockly.PXTBlockly.FunctionUtils.argumentIcons = iconsMap;
