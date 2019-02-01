@@ -72,6 +72,10 @@
     font-family: @serialConsoleFont;
 }
 
+#serialConsole.noconsole {
+    display:none;
+}
+
 #serialConsole span {
     word-wrap: break-word;
 }
@@ -79,6 +83,10 @@
 #serialCharts {
     height: calc(70% - 2.5rem);
     overflow-y: auto;
+}
+
+#serialCharts.nochart {
+    display: none;
 }
 
 #serialCharts .seriallabel {

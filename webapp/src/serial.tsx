@@ -229,6 +229,8 @@ export class Editor extends srceditor.Editor {
                     this.chartIdx++;
                     this.charts.push(homeChart)
                     this.chartRoot.appendChild(homeChart.getElement());
+                    this.chartRoot.classList.remove("nochart");
+                    if (this.consoleRoot) this.consoleRoot.classList.remove("nochart");
                 }
                 homeChart.addPoint(variable, nvalue, receivedTime)
             })
@@ -313,10 +315,12 @@ export class Editor extends srceditor.Editor {
         if (this.chartRoot) {
             this.clearNode(this.chartRoot);
             this.chartRoot.classList.add("noconsole")
+            this.chartRoot.classList.add("nochart")
         }
         if (this.consoleRoot) {
             this.clearNode(this.consoleRoot);
             this.consoleRoot.classList.add("noconsole")
+            this.consoleRoot.classList.add("nochart")
         }
         this.charts = []
         this.consoleBuffer = ""
