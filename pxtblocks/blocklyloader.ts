@@ -2231,20 +2231,34 @@ namespace pxt.blocks {
             return xmlList;
         }
 
-        // Patch new functions flyout to add the heading
-        if (pxt.appTarget.runtime &&
-            pxt.appTarget.runtime.functionsOptions &&
-            pxt.appTarget.runtime.functionsOptions.useNewFunctions) {
-            const oldFlyout = Blockly.Functions.flyoutCategory;
-            Blockly.Functions.flyoutCategory = (workspace) => {
-                const elems = oldFlyout(workspace);
-                const headingLabel = createFlyoutHeadingLabel(lf("Functions"),
-                    pxt.toolbox.getNamespaceColor('functions'),
-                    pxt.toolbox.getNamespaceIcon('functions'),
-                    'blocklyFlyoutIconfunctions');
-                elems.unshift(headingLabel);
-                return elems;
+        const functionOptions = pxt.appTarget.runtime && pxt.appTarget.runtime.functionsOptions;
+        if (functionOptions) {
+            if (functionOptions.useNewFunctions) {
+                // Patch new functions flyout to add the heading
+                const oldFlyout = Blockly.Functions.flyoutCategory;
+                Blockly.Functions.flyoutCategory = (workspace) => {
+                    const elems = oldFlyout(workspace);
+                    const headingLabel = createFlyoutHeadingLabel(lf("Functions"),
+                        pxt.toolbox.getNamespaceColor('functions'),
+                        pxt.toolbox.getNamespaceIcon('functions'),
+                        'blocklyFlyoutIconfunctions');
+                    elems.unshift(headingLabel);
+                    return elems;
+                };
+            }
+
+            // Configure function editor argument icons
+            const iconsMap: pxt.Map<string> = {
+                number: pxt.blocks.defaultIconForArgType("number"),
+                boolean: pxt.blocks.defaultIconForArgType("boolean"),
+                string: pxt.blocks.defaultIconForArgType("string")
             };
+            if (functionOptions.extraFunctionEditorTypes) {
+                functionOptions.extraFunctionEditorTypes.forEach(t => {
+                    iconsMap[t.typeName] = t.icon || pxt.blocks.defaultIconForArgType("");
+                });
+            }
+            Blockly.PXTBlockly.FunctionUtils.argumentIcons = iconsMap;
         }
     }
 

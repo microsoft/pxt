@@ -234,6 +234,19 @@ namespace pxt.blocks {
         return reporterType;
     }
 
+    export function defaultIconForArgType(typeName: string) {
+        switch (typeName) {
+            case "number":
+                return "calculator";
+            case "string":
+                return "text width";
+            case "boolean":
+                return "random";
+            default:
+                return "align justify"
+        }
+    }
+
     export interface FieldDescription {
         n: string;
         pre?: string;

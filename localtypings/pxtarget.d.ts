@@ -77,8 +77,7 @@ declare namespace pxt {
     interface FunctionEditorTypeInfo {
         typeName?: string; // The actual type that gets emitted to ts
         label?: string; // A user-friendly label for the type, e.g. "text" for the string type
-        icon?: string; // A base64-encoded SVG that will be shown when editing an argument ("data:image/svg+xml;base64,...")
-        cardImage?: string; // A base64-encoded SVG that will be shown on the function editor card ("data:image/svg+xml;base64,...")
+        icon?: string; // The className of a semantic icon, e.g. "calculator", "text width", etc
     }
 
     interface RuntimeOptions {
