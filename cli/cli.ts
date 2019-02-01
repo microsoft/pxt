@@ -36,7 +36,7 @@ let forceBuild = false; // don't use cache
 function parseBuildInfo(parsed?: commandParser.ParsedCommand) {
     const cloud = parsed && parsed.flags["cloudbuild"];
     const local = parsed && parsed.flags["localbuild"];
-    forceBuild = parsed && !!parsed.flags["force"]
+    forceBuild = parsed && !!parsed.flags["force"];
     if (cloud && local)
         U.userError("cannot specify local-build and cloud-build together");
 
@@ -5601,6 +5601,10 @@ PXT_ASMDEBUG     - embed additional information in generated binary.asm file
                 description: "Build native image using local toolchains",
                 aliases: ["local", "l", "local-build", "lb"]
             },
+            force: {
+                description: "skip cache lookup and force build",
+                aliases: ["f"]
+            },
             skipCore: {
                 description: "skip native build of core packages",
                 aliases: ["skip-core", "skipcore", "sc"]
@@ -5624,6 +5628,10 @@ PXT_ASMDEBUG     - embed additional information in generated binary.asm file
             localbuild: {
                 description: "Build native image using local toolchains",
                 aliases: ["local", "l", "local-build", "lb"]
+            },
+            force: {
+                description: "skip cache lookup and force build",
+                aliases: ["f"]
             }
         }
     }, uploadTargetReleaseAsync);
