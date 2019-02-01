@@ -401,7 +401,7 @@ export class ProjectView
         if (!mainEditorPkg) return; // no project loaded
 
         if (!mainEditorPkg.lookupFile("this/" + pxt.SERIAL_EDITOR_FILE)) {
-            mainEditorPkg.setFile(pxt.SERIAL_EDITOR_FILE, "serial\n")
+            mainEditorPkg.setFile(pxt.SERIAL_EDITOR_FILE, "serial\n", true)
         }
         this.serialEditor.setSim(isSim)
         let event = "serial." + (isSim ? "simulator" : "device") + "EditorOpened"
@@ -641,10 +641,12 @@ export class ProjectView
             return undefined;
         this.updatingEditorFile = true;
         const simRunning = this.state.simState != pxt.editor.SimState.Stopped;
-        this.stopSimulator();
-        if (simRunning || this.state.autoRun) {
-            simulator.driver.setStarting();
-            this.setState({ simState: pxt.editor.SimState.Starting });
+        if (!this.state.currFile.virtual) { // switching to serial should not reset the sim
+            this.stopSimulator();
+            if (simRunning || this.state.autoRun) {
+                simulator.driver.setStarting();
+                this.setState({ simState: pxt.editor.SimState.Starting });
+            }
         }
         this.saveSettings();
 
@@ -681,7 +683,7 @@ export class ProjectView
                 this.updatingEditorFile = false;
                 // if auto-run is not enable, restart the sim
                 // otherwise, autorun will launch it again
-                if (simRunning && !this.state.autoRun)
+                if (!this.state.currFile.virtual && simRunning && !this.state.autoRun)
                     this.startSimulator();
             })
     }
