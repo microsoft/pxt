@@ -433,6 +433,9 @@ export class Editor extends srceditor.Editor {
                         </div>
                     </div>
                     <div className="rightHeader">
+                        <sui.Button title={lf("Copy text")} className="ui icon button editorExport" ariaLabel={lf("Copy text")} onClick={this.downloadRaw}>
+                            <sui.Icon icon="copy" />
+                        </sui.Button>
                         <sui.Button title={lf("Export data")} className="ui icon blue button editorExport" ariaLabel={lf("Export data")} onClick={this.downloadCSV}>
                             <sui.Icon icon="download" />
                         </sui.Button>
@@ -441,13 +444,6 @@ export class Editor extends srceditor.Editor {
                     </div>
                 </div>
                 <div id="serialCharts" ref={this.handleChartRootRef}></div>
-                <div id="consoleHeader" className="ui serialHeader">
-                    <div className="rightHeader">
-                        <sui.Button title={lf("Copy text")} className="ui icon button editorExport" ariaLabel={lf("Copy text")} onClick={this.downloadRaw}>
-                            <sui.Icon icon="copy" />
-                        </sui.Button>
-                    </div>
-                </div>
                 <div id="serialConsole" ref={this.handleConsoleRootRef}></div>
             </div>
         )
