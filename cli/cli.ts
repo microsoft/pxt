@@ -3719,6 +3719,7 @@ function dumpheapAsync(c: commandParser.ParsedCommand) {
 
 function buildDalDTSAsync(c: commandParser.ParsedCommand) {
     forceLocalBuild = true;
+    forceBuild = true; // make sure we actually build
     forceCloudBuild = false;
     const clean = !!c.flags["clean"];
 
