@@ -3726,9 +3726,10 @@ function buildDalDTSAsync(c: commandParser.ParsedCommand) {
     function prepAsync() {
         let p = Promise.resolve();
         if (clean)
-            return p.then(() => cleanAsync())
-                .then(() => buildCoreAsync({ mode: BuildOption.JustBuild }))
-                .then(() => { });
+            p = p.then(() => cleanAsync())
+
+        p = p.then(() => buildCoreAsync({ mode: BuildOption.JustBuild }))
+            .then(() => { });
         return Promise.resolve();
     }
 
