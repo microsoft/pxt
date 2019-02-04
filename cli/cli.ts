@@ -3719,15 +3719,17 @@ function dumpheapAsync(c: commandParser.ParsedCommand) {
 
 function buildDalDTSAsync(c: commandParser.ParsedCommand) {
     forceLocalBuild = true;
+    forceBuild = true; // make sure we actually build
     forceCloudBuild = false;
     const clean = !!c.flags["clean"];
 
     function prepAsync() {
         let p = Promise.resolve();
         if (clean)
-            return p.then(() => cleanAsync())
-                .then(() => buildCoreAsync({ mode: BuildOption.JustBuild }))
-                .then(() => { });
+            p = p.then(() => cleanAsync())
+
+        p = p.then(() => buildCoreAsync({ mode: BuildOption.JustBuild }))
+            .then(() => { });
         return Promise.resolve();
     }
 
