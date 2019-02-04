@@ -13,6 +13,8 @@ namespace pxsim {
     export interface AllocatorResult {
         partsAndWires: PartAndWiresInst[];
         requiresBreadboard?: boolean;
+        parts: pxsim.visuals.IBoardPart<any>[];
+        wires: pxsim.visuals.Wire[];
     }
     export interface PartInst {
         name: string,
@@ -689,11 +691,15 @@ namespace pxsim {
 
                 return {
                     partsAndWires: all,
+                    wires: [],
+                    parts: [],
                     requiresBreadboard: requiresBreadboard
                 }
             } else {
                 return {
-                    partsAndWires: []
+                    partsAndWires: [],
+                    wires: [],
+                    parts: []
                 }
             }
         }
