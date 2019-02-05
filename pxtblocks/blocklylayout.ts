@@ -31,7 +31,7 @@ namespace pxt.blocks.layout {
                 const otp = ob.xy_;
                 if (otp && otp.x != 0 && otp.y != 0) {
                     if (!env) {
-                        env = pxt.blocks.mkEnv(oldWs, blockInfo, true);
+                        env = pxt.blocks.mkEnv(oldWs, blockInfo);
                         newBlocks = {};
                         newWs.getTopBlocks(false).forEach(b => {
                             const nkey = pxt.blocks.callKey(env, b);
