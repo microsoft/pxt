@@ -17,7 +17,7 @@ export interface CreateFunctionDialogState {
 }
 
 export class CreateFunctionDialog extends data.Component<ISettingsProps, CreateFunctionDialogState> {
-    static defaultTypes: pxt.FunctionEditorTypeInfo[] = null;
+    static cachedFunctionTypes: pxt.FunctionEditorTypeInfo[] = null;
 
     constructor(props: ISettingsProps) {
         super(props);
@@ -144,18 +144,7 @@ export class CreateFunctionDialog extends data.Component<ISettingsProps, CreateF
             icon: 'check',
             className: 'approve positive'
         }];
-
-        this.prepareDefaultTypes();
-        const types = CreateFunctionDialog.defaultTypes.slice();
-
-        if (pxt.appTarget.runtime &&
-            pxt.appTarget.runtime.functionsOptions &&
-            pxt.appTarget.runtime.functionsOptions.extraFunctionEditorTypes &&
-            Array.isArray(pxt.appTarget.runtime.functionsOptions.extraFunctionEditorTypes)) {
-            pxt.appTarget.runtime.functionsOptions.extraFunctionEditorTypes.forEach(t => {
-                types.push(t);
-            });
-        }
+        const types = this.getArgumentTypes().slice();
 
         return (
             <sui.Modal isOpen={visible} className="createfunction" size="large"
@@ -174,6 +163,7 @@ export class CreateFunctionDialog extends data.Component<ISettingsProps, CreateF
                                     name={lf("Add {0}", t.label || t.typeName)}
                                     ariaLabel={lf("Add {0}", t.label || t.typeName)}
                                     onClick={this.addArgumentFactory(t.typeName)}
+                                    icon={t.icon}
                                 />
                             )}
                         </div>
@@ -183,22 +173,43 @@ export class CreateFunctionDialog extends data.Component<ISettingsProps, CreateF
         )
     }
 
-    private prepareDefaultTypes() {
-        if (!CreateFunctionDialog.defaultTypes) {
-            CreateFunctionDialog.defaultTypes = [
+    private getArgumentTypes(): pxt.FunctionEditorTypeInfo[] {
+        if (!CreateFunctionDialog.cachedFunctionTypes) {
+            const types: pxt.FunctionEditorTypeInfo[] = [
                 {
                     label: lf("Text"),
-                    typeName: "string"
+                    typeName: "string",
+                    icon: pxt.blocks.defaultIconForArgType("string")
                 },
                 {
                     label: lf("Boolean"),
-                    typeName: "boolean"
+                    typeName: "boolean",
+                    icon: pxt.blocks.defaultIconForArgType("boolean")
                 },
                 {
                     label: lf("Number"),
-                    typeName: "number"
-                },
+                    typeName: "number",
+                    icon: pxt.blocks.defaultIconForArgType("number")
+                }
             ];
+
+            if (pxt.appTarget.runtime &&
+                pxt.appTarget.runtime.functionsOptions &&
+                pxt.appTarget.runtime.functionsOptions.extraFunctionEditorTypes &&
+                Array.isArray(pxt.appTarget.runtime.functionsOptions.extraFunctionEditorTypes)) {
+                pxt.appTarget.runtime.functionsOptions.extraFunctionEditorTypes.forEach(t => {
+                    types.push(t);
+                });
+            }
+
+            types.forEach(t => {
+                if (!t.icon) {
+                    t.icon = pxt.blocks.defaultIconForArgType();
+                }
+            });
+            CreateFunctionDialog.cachedFunctionTypes = types;
         }
+
+        return CreateFunctionDialog.cachedFunctionTypes;
     }
 }

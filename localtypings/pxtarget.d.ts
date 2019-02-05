@@ -77,6 +77,7 @@ declare namespace pxt {
     interface FunctionEditorTypeInfo {
         typeName?: string; // The actual type that gets emitted to ts
         label?: string; // A user-friendly label for the type, e.g. "text" for the string type
+        icon?: string; // The className of a semantic icon, e.g. "calculator", "text width", etc
     }
 
     interface RuntimeOptions {

@@ -199,7 +199,7 @@ function platformioUploadAsync(r: pxtc.CompileResult) {
         })
 }
 
-export function buildHexAsync(buildEngine: BuildEngine, mainPkg: pxt.MainPackage, extInfo: pxtc.ExtensionInfo) {
+export function buildHexAsync(buildEngine: BuildEngine, mainPkg: pxt.MainPackage, extInfo: pxtc.ExtensionInfo, forceBuild: boolean) {
     let tasks = Promise.resolve()
     let buildCachePath = buildEngine.buildPath + "/buildcache.json"
     let buildCache: BuildCache = {}
@@ -207,7 +207,7 @@ export function buildHexAsync(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
         buildCache = nodeutil.readJson(buildCachePath)
     }
 
-    if (buildCache.sha == extInfo.sha && !process.env["PXT_RUNTIME_DEV"]) {
+    if (!forceBuild && (buildCache.sha == extInfo.sha && !process.env["PXT_RUNTIME_DEV"])) {
         pxt.debug("Skipping C++ build.")
         return tasks
     }
@@ -246,7 +246,7 @@ export function buildHexAsync(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
 
     let modSha = U.sha256(extInfo.generatedFiles["/" + buildEngine.moduleConfig])
     let needDal = false
-    if (buildCache.modSha !== modSha) {
+    if (buildCache.modSha !== modSha || forceBuild) {
         tasks = tasks
             .then(buildEngine.setPlatformAsync)
             .then(buildEngine.updateEngineAsync)
@@ -257,7 +257,7 @@ export function buildHexAsync(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
                 needDal = true
             })
     } else {
-        pxt.debug("Skipping C++ build update.")
+        pxt.debug(`Skipping C++ build update.`)
     }
 
     tasks = tasks

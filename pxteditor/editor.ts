@@ -17,6 +17,7 @@ namespace pxt.editor {
 
     export interface IFile {
         name: string;
+        virtual?: boolean; // gimmick to switch views
     }
 
     export interface FileHistoryEntry {

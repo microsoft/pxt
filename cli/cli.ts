@@ -36,7 +36,7 @@ let forceBuild = false; // don't use cache
 function parseBuildInfo(parsed?: commandParser.ParsedCommand) {
     const cloud = parsed && parsed.flags["cloudbuild"];
     const local = parsed && parsed.flags["localbuild"];
-    forceBuild = parsed && !!parsed.flags["force"]
+    forceBuild = parsed && !!parsed.flags["force"];
     if (cloud && local)
         U.userError("cannot specify local-build and cloud-build together");
 
@@ -2201,7 +2201,8 @@ function buildFailed(msg: string, e: any) {
 }
 
 function buildAndWatchTargetAsync(includeSourceMaps: boolean, rebundle: boolean) {
-    if (!(fs.existsSync(path.join(simDir(), "tsconfig.json")) || nodeutil.existsDirSync(path.join(simDir(), "public")))) {
+    if (fs.existsSync("pxt.json") &&
+        !(fs.existsSync(path.join(simDir(), "tsconfig.json")) || nodeutil.existsDirSync(path.join(simDir(), "public")))) {
         console.log("No sim/tsconfig.json nor sim/public/; assuming npm installed package")
         return Promise.resolve()
     }
@@ -2224,7 +2225,7 @@ function buildAndWatchTargetAsync(includeSourceMaps: boolean, rebundle: boolean)
             if (hasCommonPackages) {
                 toWatch = toWatch.concat(simDirectories);
             }
-            return toWatch;
+            return toWatch.filter(d => fs.existsSync(d));
         }));
 }
 
@@ -2651,7 +2652,7 @@ class Host
         if (!forceLocalBuild && (extInfo.onlyPublic || forceCloudBuild))
             return pxt.hex.getHexInfoAsync(this, extInfo)
 
-        return build.buildHexAsync(build.thisBuild, mainPkg, extInfo)
+        return build.buildHexAsync(build.thisBuild, mainPkg, extInfo, forceBuild)
             .then(() => build.thisBuild.patchHexInfo(extInfo))
     }
 
@@ -3719,15 +3720,17 @@ function dumpheapAsync(c: commandParser.ParsedCommand) {
 
 function buildDalDTSAsync(c: commandParser.ParsedCommand) {
     forceLocalBuild = true;
+    forceBuild = true; // make sure we actually build
     forceCloudBuild = false;
     const clean = !!c.flags["clean"];
 
     function prepAsync() {
         let p = Promise.resolve();
         if (clean)
-            return p.then(() => cleanAsync())
-                .then(() => buildCoreAsync({ mode: BuildOption.JustBuild }))
-                .then(() => { });
+            p = p.then(() => cleanAsync())
+
+        p = p.then(() => buildCoreAsync({ mode: BuildOption.JustBuild }))
+            .then(() => { });
         return Promise.resolve();
     }
 
@@ -5601,6 +5604,10 @@ PXT_ASMDEBUG     - embed additional information in generated binary.asm file
                 description: "Build native image using local toolchains",
                 aliases: ["local", "l", "local-build", "lb"]
             },
+            force: {
+                description: "skip cache lookup and force build",
+                aliases: ["f"]
+            },
             skipCore: {
                 description: "skip native build of core packages",
                 aliases: ["skip-core", "skipcore", "sc"]
@@ -5624,6 +5631,10 @@ PXT_ASMDEBUG     - embed additional information in generated binary.asm file
             localbuild: {
                 description: "Build native image using local toolchains",
                 aliases: ["local", "l", "local-build", "lb"]
+            },
+            force: {
+                description: "skip cache lookup and force build",
+                aliases: ["f"]
             }
         }
     }, uploadTargetReleaseAsync);
