@@ -1487,7 +1487,13 @@ namespace pxt.blocks {
                         property: !fn.parameters,
                         isIdentity: fn.attributes.shim == "TD_ID"
                     }
-                })
+                });
+
+            w.getTopBlocks(false).filter(isFunctionDefinition).forEach(b => {
+                // Add functions to the rename map to prevent name collisions with variables
+                const name = b.type === "procedures_defnoreturn" ? b.getFieldValue("NAME") : b.getFieldValue("function_name");
+                escapeVarName(name, e, true);
+            });
         }
 
         return e;
@@ -1659,7 +1665,7 @@ namespace pxt.blocks {
             // multiple calls allowed
             if (b.type == ts.pxtc.ON_START_TYPE)
                 flagDuplicate(ts.pxtc.ON_START_TYPE, b);
-            else if (b.type === "procedures_defnoreturn" || b.type === "function_definition" || call && call.attrs.blockAllowMultiple && !call.attrs.handlerStatement) return;
+            else if (isFunctionDefinition(b) || call && call.attrs.blockAllowMultiple && !call.attrs.handlerStatement) return;
             // is this an event?
             else if (call && call.hasHandler && !call.attrs.handlerStatement) {
                 // compute key that identifies event call
@@ -2243,5 +2249,9 @@ namespace pxt.blocks {
         function between(val: number, lower: number, upper: number) {
             return val >= lower && val <= upper;
         }
+    }
+
+    function isFunctionDefinition(b: Blockly.Block) {
+        return b.type === "procedures_defnoreturn" || b.type === "function_definition";
     }
 }

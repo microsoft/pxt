@@ -1,9 +1,8 @@
-let item = 0
-function item2() {
-    item = 0
+function item() {
+    let item2 = 0
 }
 function _Math()  {
-	
+
 }
-item2()
+item()
 _Math()
