@@ -2225,7 +2225,7 @@ function buildAndWatchTargetAsync(includeSourceMaps: boolean, rebundle: boolean)
             if (hasCommonPackages) {
                 toWatch = toWatch.concat(simDirectories);
             }
-            return toWatch;
+            return toWatch.filter(d => fs.existsSync(d));
         }));
 }
 
