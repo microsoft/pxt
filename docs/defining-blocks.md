@@ -300,7 +300,7 @@ export function showNumber(value: number, interval: number = 150): void
 value is used as the shadow value.
 * An optional `help` attribute can be used to point to an specific documentation path.
 * If the parameter has a default value (``interval`` in this case), it is **not** exposed in blocks.
-* If you want to include minimum and maximum value range for a numeric parameter, you can use square brackets with the range [min-max] after the parameter name in the `@param` annotation. It is important to include the shadow value if you are using range
+* If you want to include minimum and maximum value range for a numeric parameter, you can use square brackets with the range [min-max] after the parameter name in the `@param` annotation. It is important to include the shadow value if you are using a range.
      - `@param` power [0-7] a value in the range 0..7, where 0 is the lowest power and 7 is the highest. `eg:` 7
 
 ## Objects and Instance methods
