@@ -2474,12 +2474,7 @@ export class ProjectView
                     return files["README.md"];
                 });
         } else {
-            p = Promise.resolve().then(() => {
-                // unknown format
-                pxt.reportError("tutorial", "start unknown", { tutorialId });
-                core.errorNotification(lf("Unsupported tutorial"));
-                return undefined as string;
-            });
+            p = Promise.resolve(undefined);
         }
 
         return p.then(md => {
