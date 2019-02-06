@@ -554,7 +554,7 @@ class Foo {
 
 Field editors let you control how a parameter value is entered or selected. A field editor is a [shadow](#shadow-block) block that invokes the render of a selection UI element, dropdown list of items, or some other extended input method.
 
-A field editor is attached to a parameter using the `shadow` attribute with the field editor name. In this example, a function to turn and LED on or off uses the `toggleOnOff` field editor to show a switch element as a block paramter.
+A field editor is attached to a parameter using the `shadow` attribute with the field editor name. In this example, a function to turn an LED on or off uses the `toggleOnOff` field editor to show a switch element as a block paramter.
 
 ```typescript-ignore
 /**
