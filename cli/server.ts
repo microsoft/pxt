@@ -40,6 +40,7 @@ function setupRootDir() {
         "built/web",
         path.join(nodeutil.targetDir, "built"),
         path.join(nodeutil.targetDir, "sim/public"),
+        path.join(nodeutil.targetDir, "node_modules", `pxt-${pxt.appTarget.id}-sim`, "public"),
         path.join(nodeutil.pxtCoreDir, "built/web"),
         path.join(nodeutil.pxtCoreDir, "webapp/public")
     ]
@@ -1033,6 +1034,13 @@ export function serveAsync(options: ServeOptions) {
                 sendFile(filename)
                 return;
             }
+        }
+
+        if (/simulator\.html/.test(pathname)) {
+            // Special handling for missing simulator: redirect to the live sim
+            res.writeHead(302, { location: `https://trg-${pxt.appTarget.id}.userpxt.io/---simulator` });
+            res.end();
+            return;
         }
 
         // redirect

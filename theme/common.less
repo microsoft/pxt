@@ -125,6 +125,16 @@ body {
     bottom: 0rem !important;
 }
 
+#filelistOverlay {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+    cursor: pointer;
+}
+
 /* File list / Simulator layout */
 #simulator {
     height: 100%;
@@ -500,6 +510,17 @@ Avatar
 }
 
 /* Simulator effects */
+@keyframes glow {
+    to {
+         outline-color: yellow;
+    }
+}
+
+.glow > div {
+    outline: 3px solid transparent;
+    animation: glow 0.3s infinite alternate;  
+    transition: outline 0.3s linear;
+}
 
 .grayscale {
     -moz-filter: grayscale(1);
@@ -670,6 +691,93 @@ p.ui.font.small {
 }
 
 /*******************************
+        fuyllscreensim
+*******************************/
+.fullscreensim {
+    /* Full screen */
+    #filelist {
+        position: fixed;
+        z-index: @fullscreenZIndex;
+        top:0 !important;
+        left:0 !important;
+        bottom:0 !important;
+        right:0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: 100%;
+        min-width: 100%;
+        height:100% !important;
+    }
+    #filelistOverlay {
+        display: none;
+    }
+    #boardview {
+        position: relative;
+        height:100%;
+        background-color: white;
+        padding-top: 1rem;
+        padding-bottom: 4.5rem;
+        padding-left: 0rem;
+        padding-right: 0rem;
+
+        background-color: @fullscreenBackgroundGradientStart;
+        background: @fullscreenBackgroundGradientStart; /* For browsers that do not support gradients */
+        background: -webkit-linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* For Safari 5.1 to 6.0 */
+        background: -o-linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* For Opera 11.1 to 12.0 */
+        background: -moz-linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* For Firefox 3.6 to 15 */
+        background: linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* Standard syntax */
+    }
+    #simulator .hidefullscreen,
+    .menubar .ui.item:not(.logo),
+    #maineditor,
+    #editortools,
+    #serialPreview {
+        display: none !important;
+        z-index: -10 !important;
+    }
+    .sandboxfooter {
+        z-index: @sandboxFooterZIndex;
+        bottom: 1rem;
+    }
+    #mainmenu {
+        background: transparent !important;
+    }
+    #filelist .simtoolbar {
+        position: fixed;
+        bottom: 1rem;
+        left: auto;
+        right: auto;
+        display: block !important;
+    }
+    #simulators {
+        position: relative;
+        padding: 3rem 1rem 3rem;
+        width: 100%;
+        height: 100%;
+    }
+    div.simframe {
+        position:relative;
+        width: 50%;
+        height: 100%;
+        float: left;
+        padding-bottom: 0 !important;
+    }
+    div.simframe > iframe {
+        position:relative;
+        max-width: 90%;
+    }
+    div.simframe:only-child {
+        width: 100%;
+    }
+    div.simframe:only-child > iframe {
+        max-width: 100%;
+    }
+    .simtoolbar .ui.button {
+        font-size: 1.7rem;
+    }
+}
+
+/*******************************
         Media Adjustments
 *******************************/
 
@@ -726,79 +834,6 @@ p.ui.font.small {
     .collapsedEditorTools #maineditor {
         left: 0;
     }
-
-    /* Full screen */
-    .fullscreensim #filelist {
-        position: fixed;
-        z-index: @fullscreenZIndex;
-        top:0;
-        left:0;
-        bottom:0;
-        right:0;
-        padding: 0;
-        max-width: 100%;
-        min-width: 100%;
-        height:100%;
-    }
-    .fullscreensim #boardview {
-        position: relative;
-        height:100%;
-        background-color: white;
-        padding: @mainMenuHeight;
-        padding-left: calc(2*@mainMenuHeight);
-        padding-right: calc(2*@mainMenuHeight);
-
-        background-color: @fullscreenBackgroundGradientStart;
-        background: @fullscreenBackgroundGradientStart; /* For browsers that do not support gradients */
-        background: -webkit-linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* For Safari 5.1 to 6.0 */
-        background: -o-linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* For Opera 11.1 to 12.0 */
-        background: -moz-linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* For Firefox 3.6 to 15 */
-        background: linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* Standard syntax */
-    }
-    .fullscreensim #simulator .hidefullscreen,
-        .fullscreensim .menubar .ui.item:not(.logo),
-        .fullscreensim #maineditor,
-        .fullscreensim #editortools,
-        .fullscreensim #serialPreview {
-        display: none !important;
-        z-index: -10 !important;
-    }
-    .fullscreensim .sandboxfooter {
-        z-index: @sandboxFooterZIndex;
-        bottom: 1rem;
-    }
-    .fullscreensim #mainmenu {
-        background: transparent !important;
-    }
-    .fullscreensim #filelist .simtoolbar {
-        position: fixed;
-        bottom: 1rem;
-        left: auto;
-        right: auto;
-    }
-    .fullscreensim #simulators {
-        position: relative;
-        padding: 3rem;
-        width: 100%;
-        height: 100%;
-    }
-    .fullscreensim div.simframe {
-        position:relative;
-        width: 50%;
-        height: 100%;
-        float: left;
-        padding-bottom: 0 !important;
-    }
-    .fullscreensim div.simframe > iframe {
-        position:relative;
-        max-width: 90%;
-    }
-    .fullscreensim div.simframe:only-child {
-        width: 100%;
-    }
-    .fullscreensim div.simframe:only-child > iframe {
-        max-width: 100%;
-    }
 }
 
 /* <= Small Monitor (Mobile + Tablet + Small Monitor) */
@@ -848,6 +883,9 @@ p.ui.font.small {
         min-width: inherit;
         max-width: inherit;
         background: transparent !important;
+    }
+    #filelistOverlay {
+        display: block;
     }
     #maineditor {
         left: 0;
@@ -962,6 +1000,9 @@ p.ui.font.small {
             display: none !important;
         }
     }
+    .fullscreensim .simtoolbar .ui.button {
+        font-size: 1rem;
+    }
 }
 
 .simView #filelist {
@@ -1050,6 +1091,11 @@ p.ui.font.small {
     max-width: 100%;
 }
 
+/* ui embed overrides */
+div.simframe.ui.embed {
+    background: transparent;
+}
+
 .sandbox {
     #simulators, #simulator, #editortools {
         display: none;
@@ -1106,4 +1152,10 @@ p.ui.font.small {
         flex-direction: row !important;
         margin-bottom: 1em !important;
     }
+}
+
+img.pixelart {
+    image-rendering: auto;
+    image-rendering: crisp-edges;
+    image-rendering: pixelated;    
 }

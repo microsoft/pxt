@@ -34,6 +34,7 @@ namespace pxt {
         public isLoaded = false;
         private resolvedVersion: string;
         public ignoreTests = false;
+        public cppOnly = false;
 
         constructor(public id: string, public _verspec: string, public parent: MainPackage, addedBy: Package) {
             if (addedBy) {
@@ -378,13 +379,16 @@ namespace pxt {
             }
         }
 
-        dependencies(): pxt.Map<string> {
+        dependencies(includeCpp = false): pxt.Map<string> {
             if (!this.config) return {};
 
             const dependencies = Util.clone(this.config.dependencies || {});
             // add test dependencies if nedeed
             if (this.level == 0 && this.config.testDependencies) {
                 Util.jsonMergeFrom(dependencies, this.config.testDependencies);
+            }
+            if (includeCpp && this.config.cppDependencies) {
+                Util.jsonMergeFrom(dependencies, this.config.cppDependencies);
             }
             return dependencies;
         }
@@ -439,30 +443,35 @@ namespace pxt {
                 })
             }
 
-            const loadDepsRecursive = (deps: Map<string>) => {
-                return U.mapStringMapAsync(deps, (id, ver) => {
+
+            const loadDepsRecursive = (deps: pxt.Map<string>, from: Package, isCpp = false) => {
+                return U.mapStringMapAsync(deps || from.dependencies(isCpp), (id, ver) => {
                     if (id == "hw" && pxt.hwVariant)
                         id = "hw---" + pxt.hwVariant
-                    let mod = this.resolveDep(id)
+                    let mod = from.resolveDep(id)
                     ver = ver || "*"
                     if (mod) {
                         if (mod._verspec != ver && !/^file:/.test(mod._verspec) && !/^file:/.test(ver))
                             U.userError("Version spec mismatch on " + id)
-                        mod.level = Math.min(mod.level, this.level + 1)
-                        mod.addedBy.push(this)
+                        if (!isCpp) {
+                            mod.level = Math.min(mod.level, from.level + 1)
+                            mod.addedBy.push(from)
+                        }
                         return Promise.resolve()
                     } else {
-                        mod = new Package(id, ver, this.parent, this)
-                        this.parent.deps[id] = mod
+                        let mod = new Package(id, ver, from.parent, from)
+                        if (isCpp)
+                            mod.cppOnly = true
+                        from.parent.deps[id] = mod
                         // we can have "core---nrf52" to be used instead of "core" in other packages
-                        this.parent.deps[id.replace(/---.*/, "")] = mod
+                        from.parent.deps[id.replace(/---.*/, "")] = mod
                         return mod.loadAsync(isInstall)
                     }
                 })
             }
 
             return initPromise
-                .then(() => loadDepsRecursive(this.dependencies()))
+                .then(() => loadDepsRecursive(null, this))
                 .then(() => {
                     // get paletter config loading deps, so the more higher level packages take precedence
                     if (this.config.palette && appTarget.runtime)
@@ -494,7 +503,7 @@ namespace pxt {
                                         this.config.dependencies[missing] = "*"
                                         const addDependency: Map<string> = {};
                                         addDependency[missing] = missingPackages[missing];
-                                        return loadDepsRecursive(addDependency);
+                                        return loadDepsRecursive(addDependency, this);
                                     }
                                 });
                         }, Promise.resolve(null))
@@ -508,7 +517,15 @@ namespace pxt {
                     }
                     return Promise.resolve(null);
                 })
-                .then(() => null);
+                .then<any>(() => {
+                    if (this.level != 0)
+                        return Promise.resolve()
+                    return Promise.all(U.values(this.parent.deps).map(pkg =>
+                        loadDepsRecursive(null, pkg, true)))
+                })
+                .then(() => {
+                    pxt.debug(`  installed ${this.id}`)
+                });
         }
 
         getFiles() {
@@ -597,17 +614,20 @@ namespace pxt {
             return this.loadAsync(true, targetVersion);
         }
 
-        sortedDeps() {
+        sortedDeps(includeCpp = false) {
             let visited: Map<boolean> = {}
             let ids: string[] = []
-            let rec = (p: Package) => {
+            const weight = (p: Package) =>
+                p.config ? Object.keys(p.config.cppDependencies || {}).length : 0
+            const rec = (p: Package) => {
                 if (!p || U.lookup(visited, p.id)) return;
                 visited[p.id] = true;
 
-                const dependencies = p.dependencies();
-                const deps = Object.keys(dependencies);
-                deps.sort((a, b) => U.strcmp(a, b))
-                deps.forEach(id => rec(this.resolveDep(id)))
+                const depNames = Object.keys(p.dependencies(includeCpp))
+                const deps = depNames.map(id => this.resolveDep(id))
+                // packages with more cppDependencies (core---* most likely) come first
+                deps.sort((a, b) => weight(b) - weight(a) || U.strcmp(a.id, b.id))
+                deps.forEach(rec)
                 ids.push(p.id)
             }
             rec(this)
@@ -749,6 +769,7 @@ namespace pxt {
                         }
                     }
                     opts.jres = this.getJRes()
+                    opts.useNewFunctions = pxt.appTarget.runtime && pxt.appTarget.runtime.functionsOptions && pxt.appTarget.runtime.functionsOptions.useNewFunctions;
                     return opts;
                 })
         }
@@ -782,6 +803,8 @@ namespace pxt {
                     })
                     files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4)
                     for (let f of this.getFiles()) {
+                        // already stored
+                        if (f == pxt.CONFIG_NAME) continue;
                         let str = this.readFile(f)
                         if (str == null)
                             U.userError("referenced file missing: " + f)

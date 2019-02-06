@@ -207,7 +207,7 @@ namespace pxt.blocks {
                     if (parentType.childType) {
                         return parentType.childType;
                     }
-                    const p = isArrayType(parentType.type) ? mkPoint(parentType.type.substr(-2)) : mkPoint(null);
+                    const p = isArrayType(parentType.type) ? mkPoint(parentType.type.substr(0, parentType.type.length - 2)) : mkPoint(null);
                     genericLink(parentType, p);
                     return p;
                 }
@@ -467,14 +467,14 @@ namespace pxt.blocks {
         if (p.childType) {
             union(p.childType, c);
         }
-        else {
+        else if (!p.type) {
             p.childType = c;
         }
 
         if (c.parentType) {
             union(c.parentType, p);
         }
-        else {
+        else if (!c.type) {
             c.parentType = p;
         }
     }
@@ -679,6 +679,18 @@ namespace pxt.blocks {
         return H.mathCall(op, args);
     }
 
+    function compileFunctionDefinition(e: Environment, b: Blockly.Block, comments: string[]): JsNode[] {
+        const name = escapeVarName(b.getFieldValue("function_name"), e, true);
+        const stmts = getInputTargetBlock(b, "STACK");
+        const argsDeclaration = (b as Blockly.FunctionDefinitionBlock).getArguments().map(a => {
+            return `${escapeVarName(a.name, e)}: ${ts.pxtc.escapeIdentifier(a.type)}`;
+        });
+        return [
+            mkText(`function ${name} (${argsDeclaration.join(", ")})`),
+            compileStatements(e, stmts)
+        ];
+    }
+
     function compileProcedure(e: Environment, b: Blockly.Block, comments: string[]): JsNode[] {
         const name = escapeVarName(b.getFieldValue("NAME"), e, true);
         const stmts = getInputTargetBlock(b, "STACK");
@@ -691,6 +703,20 @@ namespace pxt.blocks {
     function compileProcedureCall(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
         const name = escapeVarName(b.getFieldValue("NAME"), e, true);
         return mkStmt(mkText(name + "()"));
+    }
+
+    function compileFunctionCall(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
+        const name = escapeVarName(b.getFieldValue("function_name"), e, true);
+        const externalInputs = !b.getInputsInline();
+        const args: BlockParameter[] = (b as Blockly.FunctionCallBlock).getArguments().map(a => {
+            return {
+                actualName: a.name,
+                definitionName: a .id
+            };
+        });
+
+        const compiledArgs = args.map(a => compileArgument(e, b, a, comments));
+        return mkStmt(H.stdCall(name, compiledArgs, externalInputs));
     }
 
     function compileArgumentReporter(e: Environment, b: Blockly.Block, comments: string[]): JsNode {
@@ -1313,8 +1339,14 @@ namespace pxt.blocks {
             case 'procedures_defnoreturn':
                 r = compileProcedure(e, b, comments);
                 break;
+            case 'function_definition':
+                r = compileFunctionDefinition(e, b, comments);
+                break
             case 'procedures_callnoreturn':
                 r = [compileProcedureCall(e, b, comments)];
+                break;
+            case 'function_call':
+                r = [compileFunctionCall(e, b, comments)];
                 break;
             case ts.pxtc.ON_START_TYPE:
                 r = compileStartEvent(e, b).children;
@@ -1767,7 +1799,7 @@ namespace pxt.blocks {
             // multiple calls allowed
             if (b.type == ts.pxtc.ON_START_TYPE)
                 flagDuplicate(ts.pxtc.ON_START_TYPE, b);
-            else if (b.type === "procedures_defnoreturn" || call && call.attrs.blockAllowMultiple && !call.attrs.handlerStatement) return;
+            else if (b.type === "procedures_defnoreturn" || b.type === "function_definition" || call && call.attrs.blockAllowMultiple && !call.attrs.handlerStatement) return;
             // is this an event?
             else if (call && call.hasHandler && !call.attrs.handlerStatement) {
                 // compute key that identifies event call

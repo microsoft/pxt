@@ -457,6 +457,12 @@ namespace pxsim.visuals {
             return { endG: endG, end1: end1, end2: end2, wires: wires };
         }
 
+        public checkWire(start: Loc, end: Loc): boolean {
+            let startLoc = this.getLocCoord(start);
+            let endLoc = this.getLocCoord(end);
+            return !!startLoc && !!endLoc;
+        }
+
         public addWire(start: Loc, end: Loc, color: string): Wire {
             let startLoc = this.getLocCoord(start);
             let endLoc = this.getLocCoord(end);

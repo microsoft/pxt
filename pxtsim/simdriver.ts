@@ -60,7 +60,7 @@ namespace pxsim {
         private runId = '';
         private nextFrameId = 0;
         private frameCounter = 0;
-        private currentRuntime: pxsim.SimulatorRunMessage;
+        private _currentRuntime: pxsim.SimulatorRunMessage;
         private listener: (ev: MessageEvent) => void;
         private traceInterval = 0;
         public runOptions: SimulatorRunOptions = {};
@@ -72,6 +72,10 @@ namespace pxsim {
         private loanedSimulator: HTMLDivElement;
 
         constructor(public container: HTMLElement, public options: SimulatorDriverOptions = {}) {
+        }
+
+        isDebug() {
+            return this.runOptions && !!this.runOptions.debug;
         }
 
         setDirty() {
@@ -110,6 +114,20 @@ namespace pxsim {
         public setThemes(themes: string[]) {
             U.assert(themes && themes.length > 0)
             this.themes = themes;
+        }
+
+        public startRecording(): void {
+            const frame = this.simFrames()[0];
+            if (!frame) return undefined;
+
+            this.postMessage(<SimulatorRecorderMessage>{
+                type: 'recorder',
+                action: 'start'
+            });
+        }
+
+        public stopRecording() {
+            this.postMessage(<SimulatorRecorderMessage>{ type: 'recorder', action: 'stop' })
         }
 
         private setFrameState(frame: HTMLIFrameElement) {
@@ -201,9 +219,17 @@ namespace pxsim {
 
             for (let i = 0; i < frames.length; ++i) {
                 let frame = frames[i] as HTMLIFrameElement
+                // same frame as source
                 if (source && frame.contentWindow == source) continue;
+                // frame not in DOM
+                if (!frame.contentWindow) continue;
 
                 frame.contentWindow.postMessage(msg, "*");
+
+                // don't start more than 1 recorder
+                if (msg.type == 'recorder'
+                    && (<pxsim.SimulatorRecorderMessage>msg).action == "start")
+                    break;
             }
         }
 
@@ -219,8 +245,6 @@ namespace pxsim {
             frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
             let simUrl = this.options.simUrl || ((window as any).pxtConfig || {}).simUrl || "/sim/simulator.html"
             frame.className = 'no-select'
-            if (this.runOptions.aspectRatio)
-                wrapper.style.paddingBottom = (100 / this.runOptions.aspectRatio) + "%";
             frame.src = simUrl + '#' + frame.id;
             frame.frameBorder = "0";
             frame.dataset['runid'] = this.runId;
@@ -249,14 +273,26 @@ namespace pxsim {
             i.style.display = "none";
             wrapper.appendChild(l);
 
+            if (this.runOptions)
+                this.applyAspectRatioToFrame(frame);
+
             return wrapper;
+        }
+
+        public preload(aspectRatio: number) {
+            if (!this.simFrames().length) {
+                this.container.appendChild(this.createFrame());
+                this.applyAspectRatio(aspectRatio);
+                this.setStarting();
+            }
         }
 
         public stop(unload = false, starting = false) {
             this.clearDebugger();
             this.postMessage({ type: 'stop' });
             this.setState(starting ? SimulatorState.Starting : SimulatorState.Stopped);
-            if (unload) this.unload();
+            if (unload)
+                this.unload();
         }
 
         public suspend() {
@@ -268,6 +304,9 @@ namespace pxsim {
             this.cancelFrameCleanup();
             pxsim.U.removeChildren(this.container);
             this.setState(SimulatorState.Unloaded);
+            this.runOptions = undefined; // forget about program
+            this._currentRuntime = undefined;
+            this.runId = undefined;
         }
 
         public mute(mute: boolean) {
@@ -320,12 +359,16 @@ namespace pxsim {
             }, 5000);
         }
 
-        private applyAspectRatio() {
+        private applyAspectRatio(ratio?: number) {
+            if (!ratio && !this.runOptions) return;
             const frames = this.simFrames();
-            frames.forEach(frame => {
-                frame.parentElement.style.paddingBottom =
-                    (100 / this.runOptions.aspectRatio) + "%";
-            });
+            frames.forEach(frame => this.applyAspectRatioToFrame(frame, ratio));
+        }
+
+        private applyAspectRatioToFrame(frame: HTMLIFrameElement, ratio?: number) {
+            const r = ratio || this.runOptions.aspectRatio;
+            frame.parentElement.style.paddingBottom =
+                (100 / r) + "%";
         }
 
         private cleanupFrames() {
@@ -368,7 +411,7 @@ namespace pxsim {
             this.runOptions = opts;
             this.runId = this.nextId();
             // store information
-            this.currentRuntime = {
+            this._currentRuntime = {
                 type: "run",
                 boardDefinition: opts.boardDefinition,
                 parts: opts.parts,
@@ -387,16 +430,23 @@ namespace pxsim {
             this.start();
         }
 
+        public restart() {
+            this.stop();
+            this.start();
+        }
+
         private start() {
             this.clearDebugger();
             this.addEventListeners();
             this.applyAspectRatio();
             this.scheduleFrameCleanup();
 
+            if (!this._currentRuntime) return; // nothing to do
+
             // first frame
             let frame = this.simFrames()[0];
             if (!frame) {
-                let wrapper = this.createFrame(this.runOptions.light);
+                let wrapper = this.createFrame(this.runOptions && this.runOptions.light);
                 this.container.appendChild(wrapper);
                 frame = wrapper.firstElementChild as HTMLIFrameElement;
             } else // reuse simulator
@@ -406,8 +456,10 @@ namespace pxsim {
             this.setTraceInterval(this.traceInterval);
         }
 
-        private startFrame(frame: HTMLIFrameElement) {
-            let msg = JSON.parse(JSON.stringify(this.currentRuntime)) as pxsim.SimulatorRunMessage;
+        // ensure _currentRuntime is ready
+        private startFrame(frame: HTMLIFrameElement): boolean {
+            if (!this._currentRuntime) return false;
+            let msg = JSON.parse(JSON.stringify(this._currentRuntime)) as pxsim.SimulatorRunMessage;
             let mc = '';
             let m = /player=([A-Za-z0-9]+)/i.exec(window.location.href); if (m) mc = m[1];
             msg.frameCounter = ++this.frameCounter;
@@ -419,6 +471,7 @@ namespace pxsim {
             frame.dataset['runid'] = this.runId;
             frame.contentWindow.postMessage(msg, "*");
             this.setFrameState(frame);
+            return true;
         }
 
         private handleMessage(msg: pxsim.SimulatorMessage, source?: Window) {
@@ -433,9 +486,11 @@ namespace pxsim {
                     }
                     break;
                 case 'simulator': this.handleSimulatorCommand(msg as pxsim.SimulatorCommandMessage); break; //handled elsewhere
-                case 'serial': break; //handled elsewhere
+                case 'serial':
                 case 'pxteditor':
+                case 'screenshot':
                 case 'custom':
+                case 'recorder':
                     break; //handled elsewhere
                 case 'debugger': this.handleDebuggerMessage(msg as DebuggerMessage); break;
                 case 'toplevelcodefinished': if (this.options.onTopLevelCodeEnd) this.options.onTopLevelCodeEnd(); break;

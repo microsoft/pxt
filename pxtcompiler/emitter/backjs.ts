@@ -136,6 +136,11 @@ switch (step) {
             write(`}`)
         }
 
+        if (proc.classInfo && proc.info.thisParameter) {
+            write("r0 = s.arg0;")
+            emitInstanceOf(proc.classInfo, "validate")
+        }
+
         const jumpToNextInstructionMarker = -1
 
 

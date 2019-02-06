@@ -71,6 +71,12 @@ namespace pxt.editor.experiments {
                 name: "Bluetooth Download",
                 description: lf("Download code via Web Bluetooth"),
                 feedbackUrl: "https://github.com/Microsoft/pxt/issues/4807"
+            },
+            {
+                id: "simScreenshot",
+                name: lf("Simulator Screenshots"),
+                description: lf("Download screenshots of the simulator"),
+                feedbackUrl: "https://github.com/Microsoft/pxt/issues/5232"
             }
         ].filter(experiment => ids.indexOf(experiment.id) > -1);
     }

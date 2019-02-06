@@ -794,6 +794,7 @@ ${linkString}
 
     export interface DecompileResult {
         package: pxt.MainPackage;
+        compileProgram?: ts.Program;
         compileJS?: pxtc.CompileResult;
         compileBlocks?: pxtc.CompileResult;
         apiInfo?: pxtc.ApisInfo;
@@ -815,7 +816,14 @@ ${linkString}
                     opts.fileSystem["main.ts"] = code;
                 opts.ast = true
 
-                const program = pxtc.getTSProgram(opts, programCache);
+                let compileJS: pxtc.CompileResult = undefined;
+                let program: ts.Program;
+                if (options && options.forceCompilation) {
+                    compileJS = pxtc.compile(opts);
+                    program = compileJS && compileJS.ast;
+                } else {
+                    program = pxtc.getTSProgram(opts, programCache);
+                }
                 programCache = program;
 
                 // decompile to blocks
@@ -824,19 +832,27 @@ ${linkString}
                     .then(() => {
                         let blocksInfo = pxtc.getBlocksInfo(apis);
                         pxt.blocks.initializeAndInject(blocksInfo);
+                        const useNewFunctions = appTarget.runtime && appTarget.runtime.functionsOptions && appTarget.runtime.functionsOptions.useNewFunctions;
                         let bresp = pxtc.decompiler.decompileToBlocks(
                             blocksInfo,
                             program.getSourceFile("main.ts"),
-                            { snippetMode: options && options.snippetMode })
+                            { snippetMode: options && options.snippetMode, useNewFunctions });
                         if (bresp.diagnostics && bresp.diagnostics.length > 0)
                             bresp.diagnostics.forEach(diag => console.error(diag.messageText));
                         if (!bresp.success)
-                            return <DecompileResult>{ package: mainPkg, compileJS: null, compileBlocks: bresp, apiInfo: apis };
+                            return <DecompileResult>{
+                                package: mainPkg,
+                                compileProgram: program,
+                                compileJS,
+                                compileBlocks: bresp,
+                                apiInfo: apis
+                            };
                         pxt.debug(bresp.outfiles["main.blocks"])
                         const blocksSvg = pxt.blocks.render(bresp.outfiles["main.blocks"], options);
                         return <DecompileResult>{
                             package: mainPkg,
-                            compileJS: null,
+                            compileProgram: program,
+                            compileJS,
                             compileBlocks: bresp,
                             apiInfo: apis,
                             blocksSvg

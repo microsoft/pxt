@@ -73,6 +73,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             if (!this.hasBlocks())
                 return undefined;
 
+            if (this.feWidget) {
+                this.feWidget.close();
+                this.activeRangeID = null;
+            }
+
             let blockFile = this.currFile.getVirtualFileName();
             if (!blockFile) {
                 let mainPkg = pkg.mainEditorPkg();
@@ -874,6 +879,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.feWidget.heightInPx = viewZoneHeight;
         this.feWidget.showAsync(this.editor)
             .then(edit => {
+                this.activeRangeID = null;
                 if (edit) {
                     this.editModelAsync(edit.range, edit.replacement)
                         .then(newRange => this.indentRangeAsync(newRange));

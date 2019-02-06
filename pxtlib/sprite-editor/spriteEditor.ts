@@ -9,14 +9,14 @@ namespace pxtsprite {
     import svg = pxt.svgUtil;
     import lf = pxt.Util.lf;
 
-    const TOTAL_HEIGHT = 500;
+    export const TOTAL_HEIGHT = 500;
 
     const PADDING = 10;
 
     const DROP_DOWN_PADDING = 4;
 
     // Height of toolbar (the buttons above the canvas)
-    const HEADER_HEIGHT = 50;
+    export const HEADER_HEIGHT = 50;
 
     // Spacing between the toolbar and the canvas
     const HEADER_CANVAS_MARGIN = 10;
@@ -228,6 +228,13 @@ namespace pxtsprite {
                 this.debug("undo");
                 const todo = this.undoStack.pop();
                 this.pushState(false);
+
+                // The current state is at the top of the stack unless the user has pressed redo, so
+                // we need to discard it
+                if (todo.equals(this.state)) {
+                    this.undo();
+                    return;
+                }
                 this.restore(todo);
             }
             this.updateUndoRedo();
@@ -414,13 +421,13 @@ namespace pxtsprite {
         }
 
         private pushState(undo: boolean) {
-            const cp = this.state.copy();
-            if (undo) {
-                this.undoStack.push(cp);
+            const stack = undo ? this.undoStack : this.redoStack;
+            if (stack.length && this.state.equals(stack[stack.length - 1])) {
+                // Don't push empty commits
+                return;
             }
-            else {
-                this.redoStack.push(cp);
-            }
+
+            stack.push(this.state.copy());
             this.updateUndoRedo();
         }
 

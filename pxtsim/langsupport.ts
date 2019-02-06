@@ -562,7 +562,10 @@ namespace pxsim {
         export let RefRecord_gcsize: any;
         export let startPerfCounter: any;
         export let stopPerfCounter: any;
-
+        export let string_inline_ascii_vt: any;
+        export let string_inline_utf8_vt: any;
+        export let string_cons_vt: any;
+        export let string_skiplist16_vt: any;
     }
 
     // these can only be used from assembly - silence warnings

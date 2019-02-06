@@ -130,6 +130,8 @@ namespace pxt.blocks {
 
         Blockly.Extensions.apply('inline-svgs', b, false);
 
+        addPlusButton();
+
         appendMutation(b, {
             mutationToDom: (el: Element) => {
                 // The reason we store the inputsInitialized variable separately from visibleOptions
@@ -291,7 +293,10 @@ namespace pxt.blocks {
         function setInputVisible(input: Blockly.Input, visible: boolean) {
             // If the block isn't rendered, Blockly will crash
             if (b.rendered) {
-                input.setVisible(visible);
+                let renderList = input.setVisible(visible);
+                renderList.forEach(block => {
+                    block.render();
+                });
             }
         }
     }

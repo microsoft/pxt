@@ -212,7 +212,13 @@ namespace ts.pxtc {
         annotate(program, fileName, target || (pxt.appTarget && pxt.appTarget.compile));
         const apis = getApiInfo(opts, program);
         const blocksInfo = pxtc.getBlocksInfo(apis, bannedCategories);
-        const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, { snippetMode: false, alwaysEmitOnStart: opts.alwaysDecompileOnStart, includeGreyBlockMessages }, pxtc.decompiler.buildRenameMap(program, file))
+        const decompileOpts: decompiler.DecompileBlocksOptions = {
+            snippetMode: false,
+            alwaysEmitOnStart: opts.alwaysDecompileOnStart,
+            includeGreyBlockMessages,
+            useNewFunctions: opts.useNewFunctions
+        };
+        const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, decompileOpts, pxtc.decompiler.buildRenameMap(program, file));
         return bresp;
     }
 

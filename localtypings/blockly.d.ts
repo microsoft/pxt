@@ -774,6 +774,21 @@ declare namespace Blockly {
         getSvgRoot(): Element;
     }
 
+    class FunctionBlockAbstract extends Block {
+        getArguments: () => Functions.ArgumentInfo[];
+    }
+
+    class FunctionDeclarationBlock extends FunctionBlockAbstract {
+        updateFunctionSignature: () => void;
+        addBooleanExternal(): void;
+        addStringExternal(): void;
+        addNumberExternal(): void;
+        addCustomExternal(typeName: string): void;
+    }
+
+    class FunctionDefinitionBlock extends FunctionBlockAbstract { }
+    class FunctionCallBlock extends FunctionBlockAbstract { }
+
     class WorkspaceComment {
         getContent(): string;
 
@@ -838,7 +853,7 @@ declare namespace Blockly {
         removeField(name: string): void;
         setAlign(align: number): Input;
         setCheck(check: string | string[]): Input;
-        setVisible(visible: boolean): Block;
+        setVisible(visible: boolean): Block[];
     }
 
     class Connection {
@@ -1046,6 +1061,7 @@ declare namespace Blockly {
         let flyoutCategory: (wp: Workspace) => HTMLElement[];
         let flyoutCategoryBlocks: (wp: Workspace) => HTMLElement[];
         function createVariable(wp: Workspace, opt_callback?: ((e: any) => void)): void;
+        function allUsedVarModels(ws: Blockly.Workspace): Blockly.VariableModel[];
     }
 
     class VariableModel {
@@ -1203,11 +1219,21 @@ declare namespace Blockly {
     }
 
     namespace Functions {
+        interface ArgumentInfo {
+            type: string;
+            name: string;
+            id: string;
+        }
+        type ConfirmEditCallback = (mutation: Element) => void;
+        let editFunctionExternalHandler: (mutation: Element, cb: ConfirmEditCallback) => void;
+        function validateFunctionExternal(mutation: Element, targetWorkspace: Blockly.Workspace): boolean;
+        function flyoutCategory(workspace: Blockly.Workspace): HTMLElement[];
         function isFunctionArgumentReporter(block: Blockly.Block): boolean;
     }
 
     namespace PXTBlockly {
         namespace FunctionUtils {
+            let argumentIcons: {[typeName: string]: string};
             function createCustomArgumentReporter(typeName: string, ws: Blockly.Workspace): Blockly.Block;
         }
     }
