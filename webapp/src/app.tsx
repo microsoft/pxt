@@ -1170,6 +1170,7 @@ export class ProjectView
         const importer = this.hexFileImporters.filter(fi => fi.canImport(data))[0];
         if (importer) {
             pxt.tickEvent("import." + importer.id);
+            core.hideDialog();
             core.showLoading("importhex", lf("loading project..."))
             importer.importAsync(this, data)
                 .done(() => core.hideLoading("importhex"), e => {
@@ -2441,6 +2442,7 @@ export class ProjectView
     }
 
     startTutorialAsync(tutorialId: string, tutorialTitle?: string): Promise<void> {
+        core.hideDialog();
         core.showLoading("tutorial", lf("starting tutorial..."));
         sounds.initTutorial(); // pre load sounds
         let id = pxt.Cloud.parseScriptId(tutorialId);
