@@ -2446,7 +2446,8 @@ export class ProjectView
         core.hideDialog();
         core.showLoading("tutorial", lf("starting tutorial..."));
         sounds.initTutorial(); // pre load sounds
-        let id = pxt.Cloud.parseScriptId(tutorialId);
+        const scriptId = pxt.Cloud.parseScriptId(tutorialId);
+        const ghid = pxt.github.parseRepoId(tutorialId);
         let reportId: string = undefined;
         let tutorialmd: string;
         let title: string;
@@ -2465,16 +2466,37 @@ export class ProjectView
                     }
                     return md;
                 })
-        } else if (id) {
+        } else if (scriptId) {
             pxt.tickEvent("tutorial.shared");
-            p = workspace.downloadFilesByIdAsync(id)
+            p = workspace.downloadFilesByIdAsync(scriptId)
                 .then(files => {
                     const pxtJson = JSON.parse(files["pxt.json"]) as pxt.PackageConfig;
                     dependencies = pxtJson.dependencies || {};
                     title = pxtJson.name || lf("Untitled");
                     autoChooseBoard = false;
-                    reportId = id;
+                    reportId = scriptId;
                     return files["README.md"];
+                });
+        } else if (!!ghid) {
+            p = pxt.packagesConfigAsync()
+                .then(config => {
+                    const status = pxt.github.repoStatus(ghid, config);
+                    switch (status) {
+                        case pxt.github.GitRepoStatus.Banned:
+                            throw lf("This tutorial has been banned.");
+                        //case pxt.github.GitRepoStatus.Approved:
+                        default:
+                            reportId = "https://github.com/" + ghid.fullName;
+                            break;
+                    }
+                    return pxt.github.downloadPackageAsync(ghid.fullName, config);
+                })
+                .then(gh => {
+                    const pxtJson = JSON.parse(gh.files["pxt.json"]) as pxt.PackageConfig;
+                    dependencies = pxtJson.dependencies || {};
+                    title = pxtJson.name || lf("Untitled");
+                    autoChooseBoard = false;
+                    return gh.files["README.md"];
                 });
         } else {
             p = Promise.resolve(undefined);

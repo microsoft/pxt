@@ -699,7 +699,7 @@ export function showReportAbuseAsync(pubId?: string) {
             urlInput = el.querySelectorAll('input')[0] as HTMLInputElement;
             reasonInput = el.querySelectorAll('textarea')[0] as HTMLTextAreaElement;
             if (pubId)
-                urlInput.value = (shareUrl + pubId);
+                urlInput.value = /^https:\/\//i.test(pubId) ? pubId : (shareUrl + pubId);
         },
         agreeLbl: lf("Submit"),
         jsx: <div className="ui form">
