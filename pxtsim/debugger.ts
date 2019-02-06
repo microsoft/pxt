@@ -104,7 +104,7 @@ namespace pxsim {
                         }
                     }
                     if (v._width && v._height) {
-                        return { text: "Image " + v._width + 'x' + v._height }
+                        return { text: v._width + 'x' + v._height }
                     }
                     return { text: "(object)" }
                 default:
