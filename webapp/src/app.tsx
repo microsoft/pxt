@@ -2436,31 +2436,45 @@ export class ProjectView
         if (!pxt.Cloud.isNavigatorOnline()) {
             core.errorNotification(lf("No Internet access, please connect and try again."));
         } else {
-            core.showLoading("tutorial", lf("starting tutorial..."));
             this.startTutorialAsync(tutorialId, tutorialTitle);
         }
     }
 
     startTutorialAsync(tutorialId: string, tutorialTitle?: string): Promise<void> {
-        let title = tutorialTitle || tutorialId.split('/').reverse()[0].replace('-', ' '); // drop any kind of sub-paths
-
+        core.showLoading("tutorial", lf("starting tutorial..."));
         sounds.initTutorial(); // pre load sounds
+        let id = pxt.Cloud.parseScriptId(tutorialId);
         let tutorialmd: string;
+        let title: string;
+        let p: Promise<string>;
+        if (/^\//.test(tutorialId)) {
+            title = tutorialTitle || tutorialId.split('/').reverse()[0].replace('-', ' '); // drop any kind of sub-paths
+            p = pxt.Cloud.markdownAsync(tutorialId);
+        } else if (id) {
+            title = lf("Tutorial");
+            p = workspace.downloadFilesByIdAsync(id)
+                .then(files => files["README.md"]);
+        } else {
+            p = Promise.resolve().then(() => {
+                // unknown format
+                pxt.reportError("tutorial", "start unknown", { tutorialId });
+                core.errorNotification(lf("Unsupported tutorial"));
+                return undefined as string;
+            });
+        }
 
-        return Promise.resolve()
-            .then(() => pxt.Cloud.markdownAsync(tutorialId))
-            .then(md => {
-                if (!md)
-                    throw new Error("tutorial not found");
-                tutorialmd = md;
-                const dependencies = pxt.gallery.parsePackagesFromMarkdown(md);
-                const features = pxt.gallery.parseFeaturesFromMarkdown(md);
-                return this.createProjectAsync({
-                    name: title,
-                    inTutorial: true,
-                    dependencies
-                }).then(() => this.autoChooseBoardAsync(features));
-            })
+        return p.then(md => {
+            if (!md)
+                throw new Error("tutorial not found");
+            tutorialmd = md;
+            const dependencies = pxt.gallery.parsePackagesFromMarkdown(md);
+            const features = pxt.gallery.parseFeaturesFromMarkdown(md);
+            return this.createProjectAsync({
+                name: title,
+                inTutorial: true,
+                dependencies
+            }).then(() => this.autoChooseBoardAsync(features));
+        })
             .then(() => {
                 this.setState({
                     tutorialOptions: {
