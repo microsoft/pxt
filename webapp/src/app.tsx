@@ -2466,7 +2466,7 @@ export class ProjectView
                     return md;
                 })
         } else if (id) {
-            title = lf("Tutorial");
+            pxt.tickEvent("tutorial.shared");
             p = workspace.downloadFilesByIdAsync(id)
                 .then(files => {
                     const pxtJson = JSON.parse(files["pxt.json"]) as pxt.PackageConfig;
