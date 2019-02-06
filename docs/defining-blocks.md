@@ -1,10 +1,20 @@
 # Defining blocks
 
-This section describes how to annotate your PXT APIs to expose them in the Block Editor.
+This section describes how to annotate your MakeCode APIs to expose them in the Block Editor.
 
-* [Try it live in the playground](https://makecode.com/playground)
+```block
+let APIs = false;
+let Annotations = false;
+let Blocks = APIs && Annotations;
+```
 
-All the `//%` annotations are found in TypeScript library files.
+## ~ hint
+
+Try out some blocks live in the **[Playground](https://makecode.com/playground)** to see how they work. Modify them or even create new ones!
+
+## ~
+
+Blocks are defined by annotations added to the beginning of an API element (export function, method, enum, etc.). Attributes are specified on annotation lines that begin with the comment form of `//%`. All of the `//%` annotations are found in TypeScript library files containg the code for the exposed APIs.
 They can optionally be [auto-generated](/simshim) from C++ library files or from TypeScript
 simulator files.
 
@@ -29,6 +39,8 @@ samples.
  */
 //% color=190 weight=100 icon="\uf1ec" block="Basic Blocks"
 namespace basic {
+    ...
+}
 ```
 * `icon` icon Unicode character from the icon font to display. The [Semantic UI](https://semantic-ui.com/elements/icon.html) icon set has been ported from Font Awesome (v4.5.6 at the time of writing), and a full list can be found at http://fontawesome.io/icons/
 * `color` should be included in a comment line starting with `//%`. The color takes a **hue** value or a HTML color.
@@ -43,11 +55,10 @@ This makes it easier for the user to go through your available blocks.
 
 To define your groups, add the `groups` attribute to your namespace. The `groups` attribute is an array of group names. You can individually assign blocks to these groups when defining each block.
 
-> **Note**: The order in which you define your groups is the order in which the groups will appear in the toolbox flyout
-
-> **Note**: Blocks that are not assigned to a named group are placed in the default `others` group, which does not show a label. The `others` group can be used to decide where in the order of groups the ungrouped blocks will appear. This is based on where you place `others` in the `groups` array.
-
-> **Note**: When assigning blocks to groups, names are case sensitive, so make sure the group names you put on your blocks are identical to the ones in your group definitions.
+> **Notes**:
+>* The order in which you define your groups is the order in which the groups will appear in the toolbox flyout
+>* Blocks that are not assigned to a named group are placed in the default `others` group, which does not show a label. The `others` group can be used to decide where in the order of groups the ungrouped blocks will appear. This is based on where you place `others` in the `groups` array.
+>* When assigning blocks to groups, names are case sensitive, so make sure the group names you put on your blocks are identical to the ones in your group definitions.
 
 ```typescript-ignore
 /**
@@ -115,7 +126,7 @@ The following [types](/playground#basic-types) are supported in function signatu
 * custom classes that are also exported
 * arrays of the above
 
-## Specifying shadow blocks
+## Specifying shadow blocks #shadow-block
 
 A "shadow" block is a block which cannot be removed from its parent but can have
 other blocks placed on top. They are used to ensure that block inputs always have
@@ -134,15 +145,34 @@ the value can be changed using the above syntax without altering the block strin
 allows the shadow block to be changed without invalidating the localization of the block.
 Setting the shadow id to `unset` will remove any existing shadow value.
 
-## Specifying min and max values
+## Specifying min, max, and default values
 
-For parameters of type ``number``, you can specify minimum and maximum values, as follows:
+For parameters of type ``number``, you can specify a minimum, maximum, and default values, as follows:
+
 ```typescript-ignore
 //% block
-//% v.min=0 v.max= 42
+//% v.min=0 v.max= 42 x.defl=25
 export function showNumber(v: number, interval: number = 150): void
 { }
 ```
+
+>**Note**: Using ``defl`` to specify a default parameter value will take precedence over a default value given in the `eg:` portion for ``@param`` in JsDoc. See the [Docs and default values](#jsdoc) section below.
+
+**Playground examples**: [Range](https://makecode.com/playground#field-editors-range), [Default values](https://makecode.com/playground#basic-default-values)
+
+## Inline input
+
+To make a block with multiple parameters appear as a single line, use `inlineInputMode`. The block will expand left to right instead of wrapping the parameter input across mulitple lines.
+
+```typescript-ignore
+//% block="magnitude of 3d vector at x %x and y %y and z %z"
+//% inlineInputMode=inline
+export function mag3d(x: number, y: number, z: number): number {
+    return Math.sqrt(x * x + y * y + z * z);
+}
+```
+
+**Playground example**: [Inline input](https://makecode.com/playground#https://makecode.com/playground#basic-inline)
 
 ## Callbacks with Parameters
 
@@ -215,9 +245,11 @@ The other attributes related to object destructuring mutators include:
 * `mutateText` - defines the text that appears in the top block of the Blockly mutator dialog (the dialog that appears when you click the blue gear)
 * `mutateDefaults` - defines the versions of this block that should appear in the toolbox. Block definitions are separated by semicolons and property names should be separated by commas
 
+**Playground examples**: [Functions](https://makecode.com/playground#functions), [Types of blocks](https://makecode.com/playground#basic-types), [Events](https://makecode.com/playground#events)
+
 ## Enums
 
-[Enum](/playground#basic-enums) is supported and will automatically be represented by a dropdown in blocks.
+Enum is supported and will automatically be represented by a dropdown in blocks.
 
 ```typescript-ignore
 enum Button {
@@ -282,8 +314,62 @@ parameter like so:
 Note that the parameter is referred to using its declared name (`text`) and not the
 name in the block definition string (`msg`).
 
+**Playground examples**: [Enumerations](https://makecode.com/playground#basic-enums)
 
-## Docs and default values
+### Creating enumerations with blocks
+
+You can have blocks themselves define an enumeration dynamically. The block will specify some inital members but additional ones are added by selecting the "Add a new &lt;enum_name&gt;..." option in the parameter dropdown.
+
+You first create a shadow block that defines the enumeration and has the initial members. 
+
+```typescript-ignore
+//% shim=ENUM_GET
+//% blockId=planet_enum_shim
+//% block="Planet $arg"
+//% enumName="Planets"
+//% enumMemberName="planet"
+//% enumPromptHint="e.g. Saturn, Mars, ..."
+//% enumInitialMembers="Mecury, Venus, Earth"
+export function _planetEnumShim(arg: number) {
+    return arg;
+}
+```
+
+This function will never actually appear in user code, it is just for defining the block.
+To ensure that the function does not show up in intellisense add
+an "_" to the beginning of its name.
+
+All of the comment attributes shown in the example are required (including `shim`,
+`blockId`, and `block`). The enum attributes work like this:
+
+* `enumName` - The name of the enum. Must be a valid JavaScript identifier.
+* `enumMemberName` - The name that will be used to refer to members of the enum in dialogs and on the block. This should be unique.
+* `enumPromptHint` - The hint that will appear in the dialog for creating new members of the enum.
+* `enumInitialMembers` - These are the enum values that are always added
+to the project when this block is used. The first value is the default selection. It's comma or whitespace separated and all the members use
+valid JavaScript identifiers. The list must have at least one value.
+* `enumStartValue` (optional) - A positive integer that specifies the
+lowest value that will be emitted when going from blocks to TypeScript.
+
+Enums are emitted at the top of user code only if the block is used in the
+project (or if it was used in the past). If the user changes the value of
+the enum in TypeScript then those changes should persist when switching back to blocks.
+
+When a function uses an enum shadow block, the incoming argument 
+should be of type `number` (don't use the `enum` type).
+
+```typescript-ignore
+//% blockId=planet_id
+//% block="planet id from $planet"
+//% color.shadow="planet_enum_shim"
+export function whatPlanet(planet: number): number{
+    return planet;
+}
+```
+
+**Playground example**: [Create Enums from Blocks](https://makecode.com/playground#language-create-enums)
+
+## Docs and default values #jsdoc
 
 The JSDoc comment is automatically used as the help for the block.
 ```typescript-ignore
@@ -461,6 +547,77 @@ class Foo {
     set qux(v: number) { if (v != 42) this._qux = v }
 }
 ```
+
+**Playground examples**: [Classes](https://makecode.com/playground#classes), [Factories](https://makecode.com/playground#factories)
+
+## Field editors
+
+Field editors let you control how a parameter value is entered or selected. A field editor is a [shadow](#shadow-block) block that invokes the render of a selection UI element, dropdown list of items, or some other extended input method.
+
+A field editor is attached to a parameter using the `shadow` attribute with the field editor name. In this example, a function to turn and LED on or off uses the `toggleOnOff` field editor to show a switch element as a block paramter.
+
+```typescript-ignore
+/**
+* Toggle the LED on or off
+*/
+//% block="LED $on"
+//% on.shadow="toggleOnOff"
+export function ledOn(on: boolean) {
+
+}
+```
+
+### Built-in field editors
+
+There are ready made field editors that are built-in and available to use directly in your blocks:
+
+* [Range](https://makecode.com/playground#field-editors-range)
+* [Color Picker](https://makecode.com/playground#field-editors-color)
+* [Toggle](https://makecode.com/playground#field-editors-toggle)
+* [Time Picker](https://makecode.com/playground#field-editors-dropdowns)
+* [Grid Picker](https://makecode.com/playground#field-editors-gridpicker)
+* [Note](https://makecode.com/playground#field-editors-note)
+* [Protractor](https://makecode.com/playground#field-editors-protractor)
+* [Speed](https://makecode.com/playground#field-editors-speed)
+* [Turn Ratio](https://makecode.com/playground#field-editors-turn-ratio)
+
+### Custom field editor
+
+If you want to create a custom field editor for you blocks then you need to define the shadow block for it. The `blockId` is the name that is used as the parameter `shadow` attribute.
+
+Here's an example field editor for setting the score of a tennis game:
+
+```typescript-ignore
+/**
+  * Get the score for a tennis score
+  * @param score eg: 1
+  */
+//% blockId=tennisScore block="$score"
+//% blockHidden=true
+//% colorSecondary="#FFFFFF"
+//% score.fieldEditor="numberdropdown" score.fieldOptions.decompileLiterals=true
+//% score.fieldOptions.data='[["Love", 1], ["15", 2], ["30", 3], ["40", 4], ["Game", 5]]'
+export function __tennisScore(score: number): number {
+    return score;
+}
+
+//% block="set game score $score"
+//% score.shadow="tennisScore"
+export function setScore(score: number) {
+
+}
+```
+
+The block is hidden by setting `blockHidden` to `true`. The `score` parameter has three attributes set for it:
+
+* `fieldEditor` - the UI element used to select values.
+* `fieldOptions.decompileLiterals` - set to `true`  to match values to their literal form.
+* `fieldOptions.data` - a list of name to value matches for the selection dropdown.
+> -- or --
+* `fieldOptions.values` - a list of simple values to select from, like:
+> ``vehicles.fieldOptions.values='[["truck"], ["airplane"], ["cruise ship"]]'``
+
+**Playground example**: [Custom field editor](https://makecode.com/playground#field-editors-dropdowns)
 
 ## Ordering
 
