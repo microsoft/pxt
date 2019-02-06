@@ -2301,7 +2301,8 @@ export class ProjectView
     ///////////////////////////////////////////////////////////
 
     showReportAbuse() {
-        const pubId = this.state.header && this.state.header.pubCurrent && this.state.header.pubId;
+        const pubId = (this.state.tutorialOptions && this.state.tutorialOptions.tutorialReportId)
+            || (this.state.header && this.state.header.pubCurrent && this.state.header.pubId);
         dialogs.showReportAbuseAsync(pubId);
     }
 
@@ -2446,6 +2447,7 @@ export class ProjectView
         core.showLoading("tutorial", lf("starting tutorial..."));
         sounds.initTutorial(); // pre load sounds
         let id = pxt.Cloud.parseScriptId(tutorialId);
+        let reportId: string = undefined;
         let tutorialmd: string;
         let title: string;
         let autoChooseBoard: boolean = true;
@@ -2471,6 +2473,7 @@ export class ProjectView
                     dependencies = pxtJson.dependencies || {};
                     title = pxtJson.name || lf("Untitled");
                     autoChooseBoard = false;
+                    reportId = id;
                     return files["README.md"];
                 });
         } else {
@@ -2491,7 +2494,8 @@ export class ProjectView
                 this.setState({
                     tutorialOptions: {
                         tutorial: tutorialId,
-                        tutorialName: title
+                        tutorialName: title,
+                        tutorialReportId: reportId
                     },
                     tracing: undefined
                 });
@@ -2512,6 +2516,7 @@ export class ProjectView
                             tutorialOptions: {
                                 tutorial: tutorialId,
                                 tutorialName: title,
+                                tutorialReportId: reportId,
                                 tutorialStep: 0,
                                 tutorialReady: true,
                                 tutorialStepInfo: stepInfo
@@ -2961,7 +2966,7 @@ let myexports: any = {
 export let ksVersion: string;
 
 function parseHash(): { cmd: string; arg: string } {
-    let hashM = /^#(\w+)(:([\/\-\+\=\w]+))?$/.exec(window.location.hash)
+    let hashM = /^#(\w+)(:([:\.\/\-\+\=\w]+))?$/.exec(window.location.hash)
     if (hashM) {
         return { cmd: hashM[1], arg: hashM[3] || '' };
     }
