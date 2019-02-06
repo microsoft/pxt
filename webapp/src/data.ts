@@ -30,7 +30,6 @@ export interface DataFetchResult<T> {
 }
 
 const virtualApis: pxt.Map<VirtualApi> = {}
-let targetConfig: pxt.TargetConfig = undefined;
 
 mountVirtualApi("cloud", {
     getAsync: p => Cloud.privateGetAsync(stripProtocol(p)).catch(core.handleNetworkError),
