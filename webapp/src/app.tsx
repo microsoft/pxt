@@ -2448,14 +2448,31 @@ export class ProjectView
         let id = pxt.Cloud.parseScriptId(tutorialId);
         let tutorialmd: string;
         let title: string;
+        let autoChooseBoard: boolean = true;
+        let dependencies: pxt.Map<string> = {};
+        let features: string[] = undefined;
         let p: Promise<string>;
         if (/^\//.test(tutorialId)) {
             title = tutorialTitle || tutorialId.split('/').reverse()[0].replace('-', ' '); // drop any kind of sub-paths
-            p = pxt.Cloud.markdownAsync(tutorialId);
+            p = pxt.Cloud.markdownAsync(tutorialId)
+                .then(md => {
+                    if (md) {
+                        dependencies = pxt.gallery.parsePackagesFromMarkdown(md);
+                        features = pxt.gallery.parseFeaturesFromMarkdown(md);
+                        autoChooseBoard = true;
+                    }
+                    return md;
+                })
         } else if (id) {
             title = lf("Tutorial");
             p = workspace.downloadFilesByIdAsync(id)
-                .then(files => files["README.md"]);
+                .then(files => {
+                    const pxtJson = JSON.parse(files["pxt.json"]) as pxt.PackageConfig;
+                    dependencies = pxtJson.dependencies || {};
+                    title = pxtJson.name || lf("Untitled");
+                    autoChooseBoard = false;
+                    return files["README.md"];
+                });
         } else {
             p = Promise.resolve().then(() => {
                 // unknown format
@@ -2469,13 +2486,11 @@ export class ProjectView
             if (!md)
                 throw new Error("tutorial not found");
             tutorialmd = md;
-            const dependencies = pxt.gallery.parsePackagesFromMarkdown(md);
-            const features = pxt.gallery.parseFeaturesFromMarkdown(md);
             return this.createProjectAsync({
                 name: title,
                 inTutorial: true,
                 dependencies
-            }).then(() => this.autoChooseBoardAsync(features));
+            }).then(() => autoChooseBoard ? this.autoChooseBoardAsync(features) : Promise.resolve());
         })
             .then(() => {
                 this.setState({
