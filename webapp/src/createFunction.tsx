@@ -104,6 +104,7 @@ export class CreateFunctionDialog extends data.Component<ISettingsProps, CreateF
     }
 
     confirm() {
+        Blockly.hideChaff();
         const { functionBeingEdited, mainWorkspace, functionCallback } = this.state;
         const mutation = (functionBeingEdited as any).mutationToDom();
         if (Blockly.Functions.validateFunctionExternal(mutation, mainWorkspace)) {
