@@ -1363,6 +1363,7 @@ namespace pxt.blocks {
         if (firstBlock && e.blockDeclarations[firstBlock.id]) {
             e.blockDeclarations[firstBlock.id].filter(v => !v.alreadyDeclared).forEach(varInfo => {
                 stmts.unshift(mkVariableDeclaration(varInfo, e.blocksInfo));
+                varInfo.alreadyDeclared = true;
             });
         }
         return mkBlock(stmts);
@@ -1609,7 +1610,8 @@ namespace pxt.blocks {
                 }
             });
 
-            return stmtsEnums.concat(stmtsMain);
+            const leftoverVars = e.allVariables.filter(v => !v.alreadyDeclared).map(v => mkVariableDeclaration(v, blockInfo));
+            return stmtsEnums.concat(leftoverVars.concat(stmtsMain));
         } catch (err) {
             let be: Blockly.Block = (err as any).block;
             if (be) {
@@ -1810,13 +1812,6 @@ namespace pxt.blocks {
                 tp = ": " + tpname
         }
         return mkStmt(mkText("let " + v.escapedName + tp + " = "), defl)
-    }
-
-    function endsWith(text: string, suffix: string) {
-        if (text.length < suffix.length) {
-            return false;
-        }
-        return text.substr(text.length - suffix.length) === suffix;
     }
 
     function countOptionals(b: Blockly.Block) {
@@ -2229,11 +2224,16 @@ namespace pxt.blocks {
     function markDeclarationLocations(scope: Scope, e: Environment) {
         const declared = Object.keys(scope.declaredVars);
         if (declared.length) {
-            Util.assert(!e.blockDeclarations[scope.firstStatement.id]);
-
             const decls = declared.map(name => scope.declaredVars[name]);
 
-            e.blockDeclarations[scope.firstStatement.id] = decls;
+            if (scope.firstStatement) {
+                // If we can't find a better place to declare the variable, we'll declare
+                // it before the first statement in the code block so we need to keep
+                // track of the blocks ids
+                Util.assert(!e.blockDeclarations[scope.firstStatement.id]);
+                e.blockDeclarations[scope.firstStatement.id] = decls;
+            }
+
             decls.forEach(d => e.allVariables.push(d));
         }
 
