@@ -33,6 +33,7 @@
     * [Macros](/writing-docs/macros)
     * [Anchors](/writing-docs/anchors)
     * [Tutorials](/writing-docs/tutorials)
+    * [User Tutorials](/writing-docs/tutorials)
     * [Routing](/writing-docs/routing)
     * [Testing](/writing-docs/testing)
 * [Translations](/translate)
