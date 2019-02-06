@@ -437,7 +437,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
                 {sandbox || inTutorial ? undefined : <container.SettingsMenu parent={this.props.parent} highContrast={highContrast} greenScreen={greenScreen} />}
 
                 {sandbox && !targetTheme.hideEmbedEdit ? <sui.Item role="menuitem" icon="external" textClass="mobile hide" text={lf("Edit")} onClick={this.launchFullEditor} /> : undefined}
-                {inTutorial && tutorialReportId ? <sui.ButtonMenuItem className="report-tutorial-btn" role="menuitem" icon="warning circle" text={lf("Report")} textClass="landscape only" onClick={this.showReportAbuse} /> : undefined}
+                {inTutorial && tutorialReportId ? <sui.ButtonMenuItem className="report-tutorial-btn" role="menuitem" icon="warning circle" text={lf("Report Abuse")} textClass="landscape only" onClick={this.showReportAbuse} /> : undefined}
                 {inTutorial ? <sui.ButtonMenuItem className="exit-tutorial-btn" role="menuitem" icon="external" text={lf("Exit tutorial")} textClass="landscape only" onClick={this.exitTutorial} /> : undefined}
 
                 {!sandbox ? <a href={targetTheme.organizationUrl} aria-label={lf("{0} Logo", targetTheme.organization)} role="menuitem" target="blank" rel="noopener" className="ui item logo organization" onClick={this.orgIconClick}>
