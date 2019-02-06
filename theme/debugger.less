@@ -63,17 +63,30 @@
     }
 
     .variable {
-        color: white;
+        // color: white;
     }
     .variable.changed {
-        outline: solid 2px yellow;
+        // outline: solid 2px yellow;
     }
     .variable .varname {
         font-weight: bold;
     }
     .variable .detail {
-        background:white;
+        // background:white;
+        // color: #87D282;
         color:black;
+    }
+    .varval.number {
+        color: darkorchid; // TODO: Change this for the color we want for numbers
+    }
+    .varval.string {
+        color: coral; // TODO: Change this for the color we want for strings
+    }
+    .varval.boolean {
+        color: darkturquoise; // TODO: Change this for the color we want for bools
+    }
+    .varval.object {
+        color: mediumblue; // TODO: Change this for the color we want for objects
     }
     .previousval {
         text-decoration: line-through;

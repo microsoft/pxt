@@ -98,10 +98,16 @@ namespace pxsim {
                     if (!v) return null;
                     if (v instanceof RefObject) {
                         heap[(v as RefObject).id] = v;
+                        let preview = RefObject.toDebugString(v);
                         return {
                             id: (v as RefObject).id,
-                            preview: RefObject.toDebugString(v)
+                            preview: preview,
+                            hasFields: (v as any).fields !== null || preview.endsWith('[]'),
                         }
+                    }
+
+                    if (v._width && v._height) {
+                        return { text: v._width + 'x' + v._height }
                     }
                     return { text: "(object)" }
                 default:
@@ -115,6 +121,17 @@ namespace pxsim {
                 if (!/^__/.test(k) && /___\d+$/.test(k)) {
                     r[k.replace(/___\d+$/, '')] = valToJSON(frame[k])
                 }
+            }
+            if (frame.fields) {
+                // Fields of an object.
+                for (let k of Object.keys(frame.fields)) {
+                    r[k.replace(/___\d+$/, '')] = valToJSON(frame.fields[k])
+                }
+            } else if (frame.data) {
+                // This is an Array.
+               (frame.data as any[]).forEach((element, index) => {
+                    r[index] = valToJSON(element);
+                });
             }
             return r
         }

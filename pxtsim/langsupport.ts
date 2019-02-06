@@ -90,6 +90,23 @@ namespace pxsim {
         static toDebugString(o: any): string {
             if (o === null) return "null";
             if (o === undefined) return "undefined;"
+            if (o.vtable && o.vtable.name) return o.vtable.name;
+            if (o instanceof RefCollection && (o as any).data) {
+                if ((o as any).data.length > 0) {
+                    let arrayType = typeof (o as any).data[0]
+                    switch (arrayType) {
+                        case "string":
+                        case "number":
+                        case "boolean":
+                            return arrayType + "[]";
+                        default:
+                            return this.toDebugString((o as any).data[0]) + "[]";
+                    }
+                } else {
+                    // We lose the type information, so we can only show that it is an Array.
+                    return "[]";
+                }
+            }
             if (o.toDebugString) return o.toDebugString();
             if (typeof o == "string") return JSON.stringify(o);
             return o.toString();

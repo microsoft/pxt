@@ -92,6 +92,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
     }
 
     private toggle(v: Variable) {
+        // We have to take care of the logic for nested looped variables. Currently they break this implementation.
         if (v.children) {
             delete v.children;
             this.setState({ variables: this.state.variables })
@@ -112,24 +113,28 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         }
     }
 
-    private renderVariables(variables: pxt.Map<Variable>, parent?: string): JSX.Element[] {
-        const varcolor = pxt.toolbox.getNamespaceColor('variables');
-        let r: JSX.Element[] = []
+    private renderVariables(variables: pxt.Map<Variable>, parent?: string, depth?: number): JSX.Element[] {
+        let r: JSX.Element[] = [];
+        depth = depth || 0;
+        let margin = String(depth*1.5+'em');
         Object.keys(variables).forEach(variable => {
             const v = variables[variable];
+            const type = v.value === null ? "undefined" : String(typeof v.value);
             const onClick = v.value && v.value.id ? () => this.toggle(v) : undefined;
-            r.push(<div key={(parent || "") + variable} className="item">
-                <div role="listitem" className={`ui label image variable ${v.prevValue !== undefined ? "changed" : ""}`} style={{ backgroundColor: varcolor }}
-                    onClick={onClick}>
-                    <span className="varname">{variable}</span>
+            const onMouseOver : any = undefined; // prob a bad idea. Maybe onMouseEnter --> onMouseLeave?
+            r.push(<div key={(parent || "") + variable} className="item" style={{padding: "0em",}}>
+                <div role="listitem" className={`ui horizontal label variable ${v.prevValue !== undefined ? "changed" : ""}`} style={{ marginLeft: margin }}
+                    onClick={onClick} onMouseOver={onMouseOver}>
+                    <i className= {`${v.value && v.value.hasFields ? (v.children ? "down triangle icon" : "right triangle icon") : '  '}`} ></i>
+                    <span className="varname">{variable + ':'}</span>
                     <div className="detail">
-                        <span className="varval">{DebuggerVariables.renderValue(v.value)}</span>
+                        <span className={`varval ${type}`}>{DebuggerVariables.renderValue(v.value)}</span>
                         <span className="previousval">{v.prevValue !== undefined ? `${DebuggerVariables.renderValue(v.prevValue)}` : ''}</span>
                     </div>
                 </div>
             </div>);
             if (v.children)
-                r = r.concat(this.renderVariables(v.children, variable));
+                r = r.concat(this.renderVariables(v.children, variable, depth + 1));
         })
         return r;
     }
