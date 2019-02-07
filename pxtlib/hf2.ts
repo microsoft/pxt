@@ -12,6 +12,7 @@ namespace pxt {
         RefCollection = 6,
         RefRefLocal = 7,
         RefMap = 8,
+        RefMImage = 9, // microbit-specific
         User0 = 16,
     }
 }
