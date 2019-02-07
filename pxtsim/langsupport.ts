@@ -98,7 +98,8 @@ namespace pxsim {
                         case "string":
                         case "number":
                         case "boolean":
-                            return arrayType + "[]";
+                            let contents = (o as any).data.slice(0,10).join(", ")
+                            return "[" + contents + "]";
                         default:
                             return this.toDebugString((o as any).data[0]) + "[]";
                     }

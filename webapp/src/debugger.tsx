@@ -125,7 +125,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
             r.push(<div key={(parent || "") + variable} className="item" style={{padding: "0em",}}>
                 <div role="listitem" className={`ui horizontal label variable ${v.prevValue !== undefined ? "changed" : ""}`} style={{ marginLeft: margin }}
                     onClick={onClick} onMouseOver={onMouseOver}>
-                    <i className= {`${v.value && v.value.hasFields ? (v.children ? "down triangle icon" : "right triangle icon") : '  '}`} ></i>
+                    <i className= {`${v.value && v.value.hasFields ? (v.children ? "down triangle icon" : "right triangle icon") : 'right triangle icon transparent'}`} ></i>
                     <span className="varname">{variable + ':'}</span>
                     <div className="detail">
                         <span className={`varval ${type}`}>{DebuggerVariables.renderValue(v.value)}</span>
