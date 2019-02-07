@@ -10,7 +10,7 @@ A value is _constrained_, or limited, within a range by testing it's value again
 
 If the value tested is within the range of these two limit numbers, the value itself is returned. If the value is outside of the range of these two limit numbers, the value returned is one of the limit numbers that is closest to the value being tested.
 
-So, if `15` is constrained within a range of `3` to `10`, then ``Math.constrain(15, 6, 10)`` will return `10`. Also, if `3` is constrained to the same range, ``Math.constrain(3, 6, 10)`` will return `6`. Of course, a value of `4` that is constrained by `3` to `10` stays as `4`.
+So, if `15` is constrained within a range of `6` to `10`, then ``Math.constrain(15, 6, 10)`` will return `10`. Also, if `3` is constrained to the same range, ``Math.constrain(3, 6, 10)`` will return `6`. Of course, a value of `4` that is constrained by `3` to `10` stays as `4`.
 
 ## Parameters
 
