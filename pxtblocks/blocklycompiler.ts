@@ -1844,8 +1844,8 @@ namespace pxt.blocks {
         return res;
     }
 
-    function getEscapedCBParameters(b: Blockly.Block, stdfun: StdFunc, e: Environment) {
-        return getCBParameters(b, stdfun).map(binding => escapeVarName(binding[0], e));
+    function getEscapedCBParameters(b: Blockly.Block, stdfun: StdFunc, e: Environment): string[] {
+        return getCBParameters(b, stdfun).map(binding => lookup(e, b, binding[0]).escapedName);
     }
 
     function getCBParameters(b: Blockly.Block, stdfun: StdFunc): [string, Point][] {
