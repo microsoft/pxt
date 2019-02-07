@@ -105,7 +105,6 @@ namespace pxsim {
                             hasFields: (v as any).fields !== null || preview.endsWith(']'),
                         }
                     }
-
                     if (v._width && v._height) {
                         return { text: v._width + 'x' + v._height }
                     }

@@ -1170,6 +1170,7 @@ export class ProjectView
         const importer = this.hexFileImporters.filter(fi => fi.canImport(data))[0];
         if (importer) {
             pxt.tickEvent("import." + importer.id);
+            core.hideDialog();
             core.showLoading("importhex", lf("loading project..."))
             importer.importAsync(this, data)
                 .done(() => core.hideLoading("importhex"), e => {
@@ -2300,7 +2301,8 @@ export class ProjectView
     ///////////////////////////////////////////////////////////
 
     showReportAbuse() {
-        const pubId = this.state.header && this.state.header.pubCurrent && this.state.header.pubId;
+        const pubId = (this.state.tutorialOptions && this.state.tutorialOptions.tutorialReportId)
+            || (this.state.header && this.state.header.pubCurrent && this.state.header.pubId);
         dialogs.showReportAbuseAsync(pubId);
     }
 
@@ -2436,36 +2438,86 @@ export class ProjectView
         if (!pxt.Cloud.isNavigatorOnline()) {
             core.errorNotification(lf("No Internet access, please connect and try again."));
         } else {
-            core.showLoading("tutorial", lf("starting tutorial..."));
             this.startTutorialAsync(tutorialId, tutorialTitle);
         }
     }
 
     startTutorialAsync(tutorialId: string, tutorialTitle?: string): Promise<void> {
-        let title = tutorialTitle || tutorialId.split('/').reverse()[0].replace('-', ' '); // drop any kind of sub-paths
-
+        core.hideDialog();
+        core.showLoading("tutorial", lf("starting tutorial..."));
         sounds.initTutorial(); // pre load sounds
+        const scriptId = pxt.Cloud.parseScriptId(tutorialId);
+        const ghid = pxt.github.parseRepoId(tutorialId);
+        let reportId: string = undefined;
         let tutorialmd: string;
+        let title: string;
+        let autoChooseBoard: boolean = true;
+        let dependencies: pxt.Map<string> = {};
+        let features: string[] = undefined;
+        let p: Promise<string>;
+        if (/^\//.test(tutorialId)) {
+            title = tutorialTitle || tutorialId.split('/').reverse()[0].replace('-', ' '); // drop any kind of sub-paths
+            p = pxt.Cloud.markdownAsync(tutorialId)
+                .then(md => {
+                    if (md) {
+                        dependencies = pxt.gallery.parsePackagesFromMarkdown(md);
+                        features = pxt.gallery.parseFeaturesFromMarkdown(md);
+                        autoChooseBoard = true;
+                    }
+                    return md;
+                })
+        } else if (scriptId) {
+            pxt.tickEvent("tutorial.shared");
+            p = workspace.downloadFilesByIdAsync(scriptId)
+                .then(files => {
+                    const pxtJson = JSON.parse(files["pxt.json"]) as pxt.PackageConfig;
+                    dependencies = pxtJson.dependencies || {};
+                    title = pxtJson.name || lf("Untitled");
+                    autoChooseBoard = false;
+                    reportId = scriptId;
+                    return files["README.md"];
+                });
+        } else if (!!ghid) {
+            p = pxt.packagesConfigAsync()
+                .then(config => {
+                    const status = pxt.github.repoStatus(ghid, config);
+                    switch (status) {
+                        case pxt.github.GitRepoStatus.Banned:
+                            throw lf("This tutorial has been banned.");
+                        //case pxt.github.GitRepoStatus.Approved:
+                        default:
+                            reportId = "https://github.com/" + ghid.fullName;
+                            break;
+                    }
+                    return pxt.github.downloadPackageAsync(ghid.fullName, config);
+                })
+                .then(gh => {
+                    const pxtJson = JSON.parse(gh.files["pxt.json"]) as pxt.PackageConfig;
+                    dependencies = pxtJson.dependencies || {};
+                    title = pxtJson.name || lf("Untitled");
+                    autoChooseBoard = false;
+                    return gh.files["README.md"];
+                });
+        } else {
+            p = Promise.resolve(undefined);
+        }
 
-        return Promise.resolve()
-            .then(() => pxt.Cloud.markdownAsync(tutorialId))
-            .then(md => {
-                if (!md)
-                    throw new Error("tutorial not found");
-                tutorialmd = md;
-                const dependencies = pxt.gallery.parsePackagesFromMarkdown(md);
-                const features = pxt.gallery.parseFeaturesFromMarkdown(md);
-                return this.createProjectAsync({
-                    name: title,
-                    inTutorial: true,
-                    dependencies
-                }).then(() => this.autoChooseBoardAsync(features));
-            })
+        return p.then(md => {
+            if (!md)
+                throw new Error("tutorial not found");
+            tutorialmd = md;
+            return this.createProjectAsync({
+                name: title,
+                inTutorial: true,
+                dependencies
+            }).then(() => autoChooseBoard ? this.autoChooseBoardAsync(features) : Promise.resolve());
+        })
             .then(() => {
                 this.setState({
                     tutorialOptions: {
                         tutorial: tutorialId,
-                        tutorialName: title
+                        tutorialName: title,
+                        tutorialReportId: reportId
                     },
                     tracing: undefined
                 });
@@ -2486,6 +2538,7 @@ export class ProjectView
                             tutorialOptions: {
                                 tutorial: tutorialId,
                                 tutorialName: title,
+                                tutorialReportId: reportId,
                                 tutorialStep: 0,
                                 tutorialReady: true,
                                 tutorialStepInfo: stepInfo
@@ -2935,7 +2988,7 @@ let myexports: any = {
 export let ksVersion: string;
 
 function parseHash(): { cmd: string; arg: string } {
-    let hashM = /^#(\w+)(:([\/\-\+\=\w]+))?$/.exec(window.location.hash)
+    let hashM = /^#(\w+)(:([:\.\/\-\+\=\w]+))?$/.exec(window.location.hash)
     if (hashM) {
         return { cmd: hashM[1], arg: hashM[3] || '' };
     }
