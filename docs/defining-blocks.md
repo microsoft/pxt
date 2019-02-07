@@ -160,7 +160,9 @@ export function showNumber(v: number, interval: number = 150): void
 
 **Playground examples**: [Range](https://makecode.com/playground#field-editors-range), [Default values](https://makecode.com/playground#basic-default-values)
 
-## Inline input
+## Input formats
+
+### Inline input
 
 To make a block with multiple parameters appear as a single line, use `inlineInputMode`. The block will expand left to right instead of wrapping the parameter input across mulitple lines.
 
@@ -173,6 +175,45 @@ export function mag3d(x: number, y: number, z: number): number {
 ```
 
 **Playground example**: [Inline input](https://makecode.com/playground#https://makecode.com/playground#basic-inline)
+
+### Expandable arguments
+
+If your block has multiple parameters but some or all of them are likely to remain set to the default values, you can set the block as expandable. This simplifies the block and it appears shorter when unexpanded.
+
+The portion of the block that is set to expand is separated by two field delimiters `||`. In the following example, the two optional parameters are separated from the first part of the block definition by `||`:
+
+``//% block="play an alarm sound || of %sound for %duration ms"``
+
+The `expandableArgumentMode` attribute controls how the expansion for the parameters will work. It is set to `toggle` in this example which will show the block collapsed with a **(+)** icon which expands the block when clicked.
+
+```typescript-ignore
+enum AlarmSound {
+    //% block="annoy"
+    Annoy,
+    //% block="alert"
+    Alert
+}
+
+//% color="#AA278D"
+namespace alarms {
+    /**
+     * Play an alarm sound for some time
+     * @param sound of the alarm to play, eg: AlarmSound.Annoy
+     * @param duration of the alarm sound, eg: 2000
+     */
+    //% block="play an alarm sound || of %sound for %duration ms"
+    //% duration.shadow=timePicker
+    //% expandableArgumentMode="toggle"
+    export function alarmSound(sound?: AlarmSound, duration?: number) {
+    }
+}
+```
+
+These are the settings for `expandableArgumentMode`:
+
+* `toggle` - expand all parameters when the the expand icon is selected (clicked).
+* `enabled` - expand one parameter at a time for each selection (click) of the expand icon.
+* `disabled` - don't expand any parameters, keep the block collapsed. No icon is shown.
 
 ## Callbacks with Parameters
 
@@ -361,7 +402,7 @@ should be of type `number` (don't use the `enum` type).
 ```typescript-ignore
 //% blockId=planet_id
 //% block="planet id from $planet"
-//% color.shadow="planet_enum_shim"
+//% planet.shadow="planet_enum_shim"
 export function whatPlanet(planet: number): number{
     return planet;
 }
@@ -548,7 +589,85 @@ class Foo {
 }
 ```
 
-**Playground examples**: [Classes](https://makecode.com/playground#classes), [Factories](https://makecode.com/playground#factories)
+**Playground examples**: [Classes](https://makecode.com/playground#classes)
+
+### Factories #factories
+
+If you want a class instance created on demand rather than auto-creating or using a fixed instance, you can make a factory function to create the instance. This is typically a simple function that instantiates a class with the `new` operator and possibly passes some parameter values to the constructor as options.
+
+```typescript
+//% color="#FF8000"
+namespace Widgets {
+    export class Gizmo {
+        _active: boolean;
+
+        constructor(activate: boolean) {
+            this._active = activate;
+        }
+
+        setInactive() {
+            this._active = false;
+        }
+    }
+
+    /**
+     * Create a Gizmo widget and automtically set it to a variable
+     */
+    //% block="create gizmo"
+    //% blockSetVariable=gizmo
+    export function createGizmo(): Gizmo {
+        return new Gizmo(true);
+    }
+}
+```
+
+To ensure there's a valid instance of the class when the block is used, the `blockSetVariable` attribute sets a variable to the new instance. In the example above, the `blockSetVariable` attribute will automatically create an instance of `Gizmo` and set the `gizmo` variable to it. The `gizmo` variable is created if it doesn't exist already. This allows a valid instance of `Gizmo` to be created by default when the block is pulled into the editor. 
+
+**Playground examples**: [Factories](https://makecode.com/playground#factories)
+
+### Namespace attachment
+
+If a class is defined outside a namespace but you want the blocks defined for its methods or properties associated with the namespace, you can attach the class to the namespace. At the beginning of the class definition, add an annotation with the `blockNamespace` attribute and set it to the name of the associated namespace. Using the class from the example in [Factories](#factories), the annotation might be:
+
+``//% blockNamespace=Widgets color="#FF8000"``
+
+This allows the blocks in the `Gizmo` class to appear together with the other blocks in the `Widgets` namespace in the editor. Notice also, that the `color` for the class is set to match the color of the `Widgets` blocks.
+
+In this example, the `Gizmo` class from before is placed outside of the `Widgets` namespace. Also, the `setActive` method is turned into a block so it appears along with other blocks in `Widgets`.
+
+```typescript
+//% blockNamespace=Widgets color="#FF8000"
+class Gizmo {
+    _active: boolean;
+
+    constructor(activate: boolean) {
+        this._active = activate;
+    }
+
+    /**
+     * Create a Gizmo widget and automtically set it to a variable
+     */
+    //% block="set %Widgets(gizmo) to inactive"
+    setInactive() {
+        this._active = false;
+    }
+}
+
+//% color="#FF8000"
+namespace Widgets {
+
+    /**
+     * Create a Gizmo widget and automtically set it to a variable
+     */
+    //% block="create gizmo"
+    //% blockSetVariable=gizmo
+    export function createGizmo(): Gizmo {
+        return new Gizmo(true);
+    }
+}
+```
+
+The `block` attribute for `setInactive` includes a reference to the `gizmo` variable created by the `createGizmo` factory function. This matches the block with a valid instance by default.
 
 ## Field editors
 
