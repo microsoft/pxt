@@ -116,7 +116,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
     private renderVariables(variables: pxt.Map<Variable>, parent?: string, depth?: number): JSX.Element[] {
         let r: JSX.Element[] = [];
         depth = depth || 0;
-        let margin = String(depth*1.5+'em');
+        let margin = depth*1.5 + 'em';
         Object.keys(variables).forEach(variable => {
             const v = variables[variable];
             const type = v.value === null ? "undefined" : String(typeof v.value);
@@ -125,7 +125,8 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
             r.push(<div key={(parent || "") + variable} className="item" style={{padding: "0em",}}>
                 <div role="listitem" className={`ui horizontal label variable ${v.prevValue !== undefined ? "changed" : ""}`} style={{ marginLeft: margin }}
                     onClick={onClick} onMouseOver={onMouseOver}>
-                    <i className= {`${v.value && v.value.hasFields ? (v.children ? "down triangle icon" : "right triangle icon") : 'right triangle icon transparent'}`} ></i>
+                    {/* <i className= {`${v.value && v.value.hasFields ? (v.children ? "down triangle icon" : "right triangle icon") : 'right triangle icon transparent'}`} ></i> */}
+                    <i className= {`${(v.children ? "down triangle icon" : "right triangle icon") + ((v.value && v.value.hasFields) ? "" : " transparent")}`} ></i>
                     <span className="varname">{variable + ':'}</span>
                     <div className="detail">
                         <span className={`varval ${type}`}>{DebuggerVariables.renderValue(v.value)}</span>

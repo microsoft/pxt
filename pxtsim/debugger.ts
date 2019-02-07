@@ -102,7 +102,7 @@ namespace pxsim {
                         return {
                             id: (v as RefObject).id,
                             preview: preview,
-                            hasFields: (v as any).fields !== null || preview.endsWith('[]'),
+                            hasFields: (v as any).fields !== null || preview.endsWith(']'),
                         }
                     }
 
