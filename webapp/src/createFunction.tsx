@@ -114,8 +114,6 @@ export class CreateFunctionDialog extends data.Component<ISettingsProps, CreateF
     }
 
     addArgumentFactory(typeName: string) {
-        // const self = this;
-        // return () => self.addArgument(typeName);
         return () => this.addArgument(typeName);
     }
 
@@ -137,38 +135,50 @@ export class CreateFunctionDialog extends data.Component<ISettingsProps, CreateF
         }
     }
 
+    // TODO fix mobile confirm buttons (no text, but still space for text)
+
     renderCore() {
         const { visible } = this.state;
-        const actions: sui.ModalButton[] = [{
-            label: lf("Done"),
-            onclick: this.confirm,
-            icon: 'check',
-            className: 'approve positive'
-        }];
+        const actions: sui.ModalButton[] = [
+            {
+                label: lf("Cancel"),
+                onclick: this.hide,
+                icon: "cancel",
+                className: "cancel lightgrey"
+            },
+            {
+                label: lf("Done"),
+                onclick: this.confirm,
+                icon: "check",
+                className: "approve positive"
+            }
+        ];
         const types = this.getArgumentTypes().slice();
 
         return (
             <sui.Modal isOpen={visible} className="createfunction" size="large"
-                onClose={this.hide} dimmer={true} buttons={actions}
-                closeIcon={true} header={lf("Edit Function")}
-                closeOnDimmerClick closeOnDocumentClick closeOnEscape
+                closeOnEscape={false} closeIcon={false} closeOnDimmerClick={false} closeOnDocumentClick={false}
+                dimmer={true} buttons={actions} header={lf("Edit Function")}
                 modalDidOpen={this.modalDidOpen}
             >
                 <div>
-                    <div id="functionEditorWorkspace"></div>
-                    <div className="group">
-                        <div className="ui cards centered" role="listbox">
-                            {types.map(t =>
-                                <codecard.CodeCardView
-                                    key={t.typeName}
-                                    name={lf("Add {0}", t.label || t.typeName)}
-                                    ariaLabel={lf("Add {0}", t.label || t.typeName)}
-                                    onClick={this.addArgumentFactory(t.typeName)}
-                                    icon={t.icon}
-                                />
-                            )}
-                        </div>
+                    <span className="ui text mobile only paramlabel">{lf("Add a parameter")}</span>
+                    <div className="horizontal list">
+                        <span className="ui text mobile hide paramlabel">{lf("Add a parameter")}</span>
+                        {types.map(t =>
+                            <sui.Button
+                                key={t.typeName}
+                                role="button"
+                                className="icon"
+                                icon={t.icon}
+                                textClass="mobile hide"
+                                text={t.label || t.typeName}
+                                ariaLabel={lf("Add {0} parameter", t.label || t.typeName)}
+                                onClick={this.addArgumentFactory(t.typeName)}
+                            />
+                        )}
                     </div>
+                    <div id="functionEditorWorkspace"></div>
                 </div>
             </sui.Modal>
         )
