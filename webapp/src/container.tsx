@@ -320,6 +320,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         this.openBlocks = this.openBlocks.bind(this);
         this.openJavaScript = this.openJavaScript.bind(this);
         this.exitTutorial = this.exitTutorial.bind(this);
+        this.showReportAbuse = this.showReportAbuse.bind(this);
     }
 
     brandIconClick() {
@@ -369,6 +370,11 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         this.props.parent.exitTutorial();
     }
 
+    showReportAbuse() {
+        pxt.tickEvent("tutorial.reportabuse", undefined, { interactiveConsent: true });
+        this.props.parent.showReportAbuse();
+    }
+
     renderCore() {
         const { home, header, highContrast, greenScreen, simState } = this.props.parent.state;
         if (home) return <div />; // Don't render if we're on the home screen
@@ -379,6 +385,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         const sandbox = pxt.shell.isSandboxMode();
         const tutorialOptions = this.props.parent.state.tutorialOptions;
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
+        const tutorialReportId = tutorialOptions && tutorialOptions.tutorialReportId;
         const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox && !inTutorial;
         const isRunning = simState == pxt.editor.SimState.Running;
         const hc = !!this.props.parent.state.highContrast;
@@ -430,6 +437,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
                 {sandbox || inTutorial ? undefined : <container.SettingsMenu parent={this.props.parent} highContrast={highContrast} greenScreen={greenScreen} />}
 
                 {sandbox && !targetTheme.hideEmbedEdit ? <sui.Item role="menuitem" icon="external" textClass="mobile hide" text={lf("Edit")} onClick={this.launchFullEditor} /> : undefined}
+                {inTutorial && tutorialReportId ? <sui.ButtonMenuItem className="report-tutorial-btn" role="menuitem" icon="warning circle" text={lf("Report Abuse")} textClass="landscape only" onClick={this.showReportAbuse} /> : undefined}
                 {inTutorial ? <sui.ButtonMenuItem className="exit-tutorial-btn" role="menuitem" icon="external" text={lf("Exit tutorial")} textClass="landscape only" onClick={this.exitTutorial} /> : undefined}
 
                 {!sandbox ? <a href={targetTheme.organizationUrl} aria-label={lf("{0} Logo", targetTheme.organization)} role="menuitem" target="blank" rel="noopener" className="ui item logo organization" onClick={this.orgIconClick}>

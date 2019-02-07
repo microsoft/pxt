@@ -690,6 +690,15 @@ export function showImportFileDialogAsync() {
 }
 
 export function showReportAbuseAsync(pubId?: string) {
+    // send users to github directly for unwanted repoes
+    const ghid = /^https:\/\/github.com\//i.test(pubId) && pxt.github.parseRepoUrl(pubId);
+    if (ghid) {
+        pxt.tickEvent("reportabuse.github");
+        window.open("https://github.com/contact/report-content", "_blank");
+        return;
+    }
+
+    // shared script id section
     let urlInput: HTMLInputElement;
     let reasonInput: HTMLTextAreaElement;
     const shareUrl = pxt.appTarget.appTheme.shareUrl || "https://makecode.com/";
@@ -699,7 +708,7 @@ export function showReportAbuseAsync(pubId?: string) {
             urlInput = el.querySelectorAll('input')[0] as HTMLInputElement;
             reasonInput = el.querySelectorAll('textarea')[0] as HTMLTextAreaElement;
             if (pubId)
-                urlInput.value = (shareUrl + pubId);
+                urlInput.value = shareUrl + pubId;
         },
         agreeLbl: lf("Submit"),
         jsx: <div className="ui form">

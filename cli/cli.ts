@@ -5043,7 +5043,9 @@ export function getCodeSnippets(fileName: string, md: string): CodeSnippet[] {
             .map(l => l.replace(/\s*$/, ''))
             .filter(line => !!line)
             .forEach(line => {
-                pkgs[line] = "*";
+                const i = line.indexOf('=');
+                if (i < 0) pkgs[line] = "*";
+                else pkgs[line.substring(0, i)] = line.substring(i + 1);
             })
         );
 
