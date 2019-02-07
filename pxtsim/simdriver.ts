@@ -458,7 +458,7 @@ namespace pxsim {
 
         // ensure _currentRuntime is ready
         private startFrame(frame: HTMLIFrameElement): boolean {
-            if (!this._currentRuntime) return false;
+            if (!this._currentRuntime || !frame.contentWindow) return false;
             let msg = JSON.parse(JSON.stringify(this._currentRuntime)) as pxsim.SimulatorRunMessage;
             let mc = '';
             let m = /player=([A-Za-z0-9]+)/i.exec(window.location.href); if (m) mc = m[1];
