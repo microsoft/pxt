@@ -224,7 +224,7 @@ function blockTestAsync(name: string) {
                 console.log(compiledTs);
             }
 
-            chai.assert(compiledTs === baselineTs, "Compiled result did not match baseline");
+            chai.assert(compiledTs === baselineTs, "Compiled result did not match baseline: " + name + " " + res.source);
         }, err => fail('Compiling blocks failed'));
 }
 
@@ -356,6 +356,22 @@ describe("blockly compiler", function () {
 
         it("should change reserved names", (done: () => void) => {
             blockTestAsync("variables_reserved_names").then(done, done);
+        });
+
+        it("should handle collisions with variables declared by the destructuring mutator", (done: () => void) => {
+            blockTestAsync("old_radio_mutator").then(done, done);
+        });
+
+        it("should handle collisions with variables declared by callback arguments", (done: () => void) => {
+            blockTestAsync("new_radio_block").then(done, done);
+        });
+
+        it("should handle collisions with variables declared by the minecraft destructuring mutator", (done: () => void) => {
+            blockTestAsync("mc_old_chat_blocks").then(done, done);
+        });
+
+        it("should handle collisions with variables declared by optional callback arguments", (done: () => void) => {
+            blockTestAsync("mc_chat_blocks").then(done, done);
         });
     });
 
