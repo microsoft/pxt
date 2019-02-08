@@ -633,7 +633,7 @@ If a class is defined outside a namespace but you want the blocks defined for it
 
 This allows the blocks in the `Gizmo` class to appear together with the other blocks in the `Widgets` namespace in the editor. Notice also, that the `color` for the class is set to match the color of the `Widgets` blocks.
 
-In this example, the `Gizmo` class from before is placed outside of the `Widgets` namespace. Also, the `setActive` method is turned into a block so it appears along with other blocks in `Widgets`.
+In this example, the `Gizmo` class from before is placed outside of the `Widgets` namespace. Also, the `setInactive` method is turned into a block so it appears along with other blocks in `Widgets`.
 
 ```typescript
 //% blockNamespace=Widgets color="#FF8000"
@@ -645,7 +645,7 @@ class Gizmo {
     }
 
     /**
-     * Create a Gizmo widget and automtically set it to a variable
+     * Set the Gizmo widget to inactive
      */
     //% block="set %Widgets(gizmo) to inactive"
     setInactive() {
@@ -666,6 +666,8 @@ namespace Widgets {
     }
 }
 ```
+
+**Playground examples**: [Factories](https://makecode.com/playground#factories)
 
 The `block` attribute for `setInactive` includes a reference to the `gizmo` variable created by the `createGizmo` factory function. This matches the block with a valid instance by default.
 
