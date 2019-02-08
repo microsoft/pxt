@@ -78,6 +78,7 @@ declare namespace pxt {
         typeName?: string; // The actual type that gets emitted to ts
         label?: string; // A user-friendly label for the type, e.g. "text" for the string type
         icon?: string; // The className of a semantic icon, e.g. "calculator", "text width", etc
+        defaultName?: string; // The default argument name to use in the function declaration for this type
     }
 
     interface RuntimeOptions {
