@@ -501,10 +501,6 @@ declare namespace Blockly {
     let VARIABLE_CATEGORY_NAME: string;
     let PROCEDURE_CATEGORY_NAME: string;
 
-    let NEXT_STATEMENT: number;
-    let DUMMY_INPUT: number;
-    let INPUT_VALUE: number;
-
     namespace utils {
         function wrap(tip: string, limit: number): string;
         function genUid(): string;
@@ -847,7 +843,6 @@ declare namespace Blockly {
         connection: Connection;
         sourceBlock_: Block;
         fieldRow: Field[];
-        type: number;
 
         appendField(field: Field | string, opt_name?: string): Input;
         appendTitle(field: any, opt_name?: string): Input;
@@ -1239,6 +1234,7 @@ declare namespace Blockly {
     namespace PXTBlockly {
         namespace FunctionUtils {
             let argumentIcons: {[typeName: string]: string};
+            let argumentDefaultNames: {[typeName: string]: string};
             function createCustomArgumentReporter(typeName: string, ws: Blockly.Workspace): Blockly.Block;
         }
     }

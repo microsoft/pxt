@@ -2253,12 +2253,19 @@ namespace pxt.blocks {
                 boolean: pxt.blocks.defaultIconForArgType("boolean"),
                 string: pxt.blocks.defaultIconForArgType("string")
             };
+            const customNames: pxsim.Map<string> = {};
+
             if (functionOptions.extraFunctionEditorTypes) {
                 functionOptions.extraFunctionEditorTypes.forEach(t => {
                     iconsMap[t.typeName] = t.icon || pxt.blocks.defaultIconForArgType();
+
+                    if (t.defaultName) {
+                        customNames[t.typeName] = t.defaultName;
+                    }
                 });
             }
             Blockly.PXTBlockly.FunctionUtils.argumentIcons = iconsMap;
+            Blockly.PXTBlockly.FunctionUtils.argumentDefaultNames = customNames;
         }
     }
 
