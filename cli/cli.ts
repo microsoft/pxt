@@ -1749,12 +1749,13 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
                 targetStrings[k] = k;
                 const gallerymd = nodeutil.resolveMd(docsRoot, targetConfig.galleries[k]);
                 const gallery = pxt.gallery.parseGalleryMardown(gallerymd);
+                const gurl = `/${targetConfig.galleries[k].replace(/^\//, '')}`;
                 tocmd +=
-                    `* [${k}](${targetConfig.galleries[k]})
+                    `* [${k}](${gurl})
 `;
                 const gcard: pxt.CodeCard = {
                     name: k,
-                    url: targetConfig.galleries[k]
+                    url: gurl
                 };
                 gcards.push(gcard)
                 gallery.forEach(cards => cards.cards
@@ -1763,7 +1764,8 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
                             gcard.imageUrl = card.imageUrl;
                         if (card.largeImageUrl && !gcard.largeImageUrl)
                             gcard.largeImageUrl = card.largeImageUrl;
-                        tocmd += `  * [${card.name || card.title}](${card.url})
+                        const url = card.url || card.learnMoreUrl || card.buyUrl || (card.youTubeId && `https://youtu.be/${card.youTubeId}`);
+                        tocmd += `  * [${card.name || card.title}](${url})
 `;
                         if (card.tags)
                             card.tags.forEach(tag => targetStrings[tag] = tag);
