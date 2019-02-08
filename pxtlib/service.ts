@@ -679,7 +679,7 @@ namespace ts.pxtc {
             }))
             .then(() => apis)
             .finally(() => {
-                if (Object.keys(errors))
+                if (Object.keys(errors).length)
                     pxt.reportError(`loc.errors`, `invalid translation`, errors);
             })
     }

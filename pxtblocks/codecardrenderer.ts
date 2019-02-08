@@ -80,7 +80,8 @@ namespace pxt.docs.codeCard {
             img.appendChild(pre);
         }
 
-        if (card.imageUrl) {
+        const imgUrl = card.imageUrl || (card.youTubeId && `https://img.youtube.com/vi/${card.youTubeId}/0.jpg`)
+        if (imgUrl) {
             let imageWrapper = document.createElement("div") as HTMLDivElement;
             imageWrapper.className = "ui imagewrapper";
             let image = document.createElement("div") as HTMLDivElement;
@@ -90,13 +91,6 @@ namespace pxt.docs.codeCard {
             image.setAttribute("role", "presentation");
             imageWrapper.appendChild(image);
             img.appendChild(imageWrapper);
-        }
-        // don't put two images
-        else if (card.youTubeId) {
-            let screenshot = document.createElement("img") as HTMLImageElement;
-            screenshot.className = "ui image";
-            screenshot.src = `https://img.youtube.com/vi/${card.youTubeId}/0.jpg`;
-            img.appendChild(screenshot)
         }
 
         if (card.cardType == "file") {
