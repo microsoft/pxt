@@ -15,7 +15,7 @@ namespace pxt.docs.codeCard {
             else if (card.software && !card.hardware) color = 'teal';
         }
         const url = card.url ? /^[^:]+:\/\//.test(card.url) ? card.url : ('/' + card.url.replace(/^\.?\/?/, ''))
-            : undefined;
+            : card.youTubeId ? `https://www.youtube.com/watch?v=${card.youTubeId}` : undefined;
         const link = !!url;
         const div = (parent: HTMLElement, cls: string, tag = "div", text: string | number = ''): HTMLElement => {
             let d = document.createElement(tag);
