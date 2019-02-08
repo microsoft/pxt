@@ -91,8 +91,8 @@ namespace pxt.docs.codeCard {
             imageWrapper.appendChild(image);
             img.appendChild(imageWrapper);
         }
-
-        if (card.youTubeId) {
+        // don't put two images
+        else if (card.youTubeId) {
             let screenshot = document.createElement("img") as HTMLImageElement;
             screenshot.className = "ui image";
             screenshot.src = `https://img.youtube.com/vi/${card.youTubeId}/0.jpg`;
