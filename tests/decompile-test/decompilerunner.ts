@@ -35,6 +35,7 @@ pxt.setAppTarget({
         isNative: false,
         hasHex: false,
         jsRefCounting: true,
+        switches: {}
     },
     bundledpkgs: {},
     appTheme: {},
@@ -54,15 +55,15 @@ describe("decompiler", () => {
             continue;
         }
 
-        const filename = path.join(casesDir, file)
+        const filename = path.join(casesDir, file);
         if (file.substr(-3) === ".ts") {
-            filenames.push(filename)
+            filenames.push(filename);
         }
     };
 
     filenames.forEach(filename => {
         it("should decompile " + path.basename(filename), () => {
-            return decompileTestAsync(filename)
+            return decompileTestAsync(filename);
         });
     });
 });
@@ -100,8 +101,8 @@ function decompileTestAsync(filename: string) {
                     fs.writeFileSync(outFile, decompiled)
                     fail(`${basename} did not match baseline, output written to ${outFile}`);
                 }
-            }, error => fail("Could not decompile: " +  error))
-            .then(() => resolve(), reject)
+            }, error => fail("Could not decompile: " + error.stack))
+            .then(() => resolve(), reject);
     });
 }
 
@@ -113,6 +114,10 @@ function compareBaselines(a: string, b: string): boolean {
     // Ignore error messages in TS statement mutations
     a = a.replace(/error="[^"]*"/g, "");
     b = b.replace(/error="[^"]*"/g, "");
+
+    // Ignore IDs
+    a = a.replace(/id="[^"]*"/g, "");
+    b = b.replace(/id="[^"]*"/g, "");
 
     return a === b;
 }
@@ -131,6 +136,9 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
             opts.ast = true;
             opts.testMode = true;
             opts.ignoreFileResolutionErrors = true;
+            if (path.basename(f).indexOf("functions_v2") === 0) {
+                opts.useNewFunctions = true;
+            }
             const decompiled = pxtc.decompile(opts, "main.ts", true);
             if (decompiled.success) {
                 return decompiled.outfiles["main.blocks"];
@@ -148,5 +156,5 @@ function getOptsAsync(dependency: string) {
         return pkg.getCompileOptionsAsync()
             .then(opts => cachedOpts = opts);
     }
-    return Promise.resolve(cachedOpts);
+    return Promise.resolve(JSON.parse(JSON.stringify(cachedOpts))); // Clone cached options so that tests can individually modify their own options copy
 }

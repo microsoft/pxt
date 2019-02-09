@@ -42,6 +42,14 @@ namespace pxt.editor {
      */
     export interface ExtensionEvent extends ExtensionMessage {
         event: string;
+        target: string;
+    }
+
+    /**
+     * Event fired when the extension is loaded.
+     */
+    export interface LoadedEvent extends ExtensionEvent {
+        event: "extloaded";
     }
 
     /**

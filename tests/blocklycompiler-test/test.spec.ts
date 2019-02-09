@@ -19,6 +19,7 @@ pxt.setAppTarget({
         isNative: false,
         hasHex: false,
         jsRefCounting: true,
+        switches: {}
     },
     bundledpkgs: {},
     appTheme: {},
@@ -36,6 +37,7 @@ pxt.webConfig = {
     verprefix: undefined,
     workerjs: WEB_PREFIX + "/blb/worker.js",
     monacoworkerjs: undefined,
+    gifworkerjs: undefined,
     pxtVersion: undefined,
     pxtRelId: undefined,
     pxtCdnUrl: undefined,
@@ -209,8 +211,7 @@ function blockTestAsync(name: string) {
             const workspace = new Blockly.Workspace();
             (Blockly as any).mainWorkspace = workspace;
             const xml = Blockly.Xml.textToDom(blocksFile);
-            Blockly.Xml.domToWorkspace(xml, workspace);
-
+            pxt.blocks.domToWorkspaceNoEvents(xml, workspace);
             return pxt.blocks.compileAsync(workspace, blocksInfo)
         }, err => fail(`Unable to get block info: ` + JSON.stringify(err)))
         .then((res: pxt.blocks.BlockCompilationResult) => {
@@ -223,7 +224,7 @@ function blockTestAsync(name: string) {
                 console.log(compiledTs);
             }
 
-            chai.assert(compiledTs === baselineTs, "Compiled result did not match baseline");
+            chai.assert(compiledTs === baselineTs, "Compiled result did not match baseline: " + name + " " + res.source);
         }, err => fail('Compiling blocks failed'));
 }
 
@@ -355,6 +356,22 @@ describe("blockly compiler", function () {
 
         it("should change reserved names", (done: () => void) => {
             blockTestAsync("variables_reserved_names").then(done, done);
+        });
+
+        it("should handle collisions with variables declared by the destructuring mutator", (done: () => void) => {
+            blockTestAsync("old_radio_mutator").then(done, done);
+        });
+
+        it("should handle collisions with variables declared by callback arguments", (done: () => void) => {
+            blockTestAsync("new_radio_block").then(done, done);
+        });
+
+        it("should handle collisions with variables declared by the minecraft destructuring mutator", (done: () => void) => {
+            blockTestAsync("mc_old_chat_blocks").then(done, done);
+        });
+
+        it("should handle collisions with variables declared by optional callback arguments", (done: () => void) => {
+            blockTestAsync("mc_chat_blocks").then(done, done);
         });
     });
 

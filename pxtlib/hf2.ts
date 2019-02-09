@@ -1,3 +1,22 @@
+namespace pxt {
+    // keep all of these in sync with pxtbase.h
+    export const REFCNT_FLASH = "0xfffe"
+    export const VTABLE_MAGIC = 0xF9
+    export const ValTypeObject = 4
+    export enum BuiltInType {
+        BoxedString = 1,
+        BoxedNumber = 2,
+        BoxedBuffer = 3,
+        RefAction = 4,
+        RefImage = 5,
+        RefCollection = 6,
+        RefRefLocal = 7,
+        RefMap = 8,
+        RefMImage = 9, // microbit-specific
+        User0 = 16,
+    }
+}
+
 namespace pxt.HF2 {
     export interface MutableArrayLike<T> {
         readonly length: number;
@@ -246,6 +265,7 @@ namespace pxt.HF2 {
         pageSize: number;
         flashSize: number;
         maxMsgSize: number = 63; // when running in forwarding mode, we do not really know
+        familyID: number;
         bootloaderMode = false;
         reconnectTries = 0;
         autoReconnect = false;
@@ -386,7 +406,18 @@ namespace pxt.HF2 {
                 this.io.isSwitchingToBootloader();
             }
             return this.maybeReconnectAsync()
-                .then(() => this.talkAsync(HF2_CMD_START_FLASH))
+                .then(() => this.talkAsync(HF2_CMD_START_FLASH)
+                    .then(() => { }, err =>
+                        this.talkAsync(HF2_CMD_RESET_INTO_BOOTLOADER)
+                            .then(() => { }, err => { })
+                            .then(() =>
+                                this.reconnectAsync()
+                                    .catch(err => {
+                                        if (err.type === "devicenotfound")
+                                            err.type = "repairbootloader"
+                                        throw err
+                                    }))
+                    ))
                 .then(() => this.initAsync())
                 .then(() => {
                     if (!this.bootloaderMode)
@@ -437,7 +468,7 @@ namespace pxt.HF2 {
                 if (pos >= blocks.length)
                     return Promise.resolve()
                 let b = blocks[pos]
-                U.assert(b.payloadSize == this.pageSize)
+                //U.assert(b.payloadSize == this.pageSize)
                 let buf = new Uint8Array(4 + b.payloadSize)
                 write32(buf, 0, b.targetAddr)
                 U.memcpy(buf, 4, b.data, 0, b.payloadSize)
@@ -446,15 +477,18 @@ namespace pxt.HF2 {
             }
             return this.switchToBootloaderAsync()
                 .then(() => {
-                    let size = blocks.length * this.pageSize
+                    let size = blocks.length * 256
                     log(`Starting flash (${Math.round(size / 1024)}kB).`)
                     fstart = Date.now()
+                    // only try partial flash when page size is small
+                    if (this.pageSize > 16 * 1024)
+                        return blocks
                     return onlyChangedBlocksAsync(blocks, (a, l) => this.readWordsAsync(a, l))
                 })
                 .then(res => {
                     if (res.length != blocks.length) {
                         blocks = res
-                        let size = blocks.length * this.pageSize
+                        let size = blocks.length * 256
                         log(`Performing partial flash (${Math.round(size / 1024)}kB).`)
                     }
                 })
@@ -463,7 +497,7 @@ namespace pxt.HF2 {
                     let n = Date.now()
                     let t0 = n - start
                     let t1 = n - fstart
-                    log(`Flashing done at ${Math.round(blocks.length * this.pageSize / t1 * 1000 / 1024)} kB/s in ${t0}ms (reset ${t0 - t1}ms). Resetting.`)
+                    log(`Flashing done at ${Math.round(blocks.length * 256 / t1 * 1000 / 1024)} kB/s in ${t0}ms (reset ${t0 - t1}ms). Resetting.`)
                 })
                 .then(() =>
                     this.talkAsync(HF2_CMD_RESET_INTO_APP)
@@ -483,11 +517,13 @@ namespace pxt.HF2 {
                     this.pageSize = read32(binfo, 4)
                     this.flashSize = read32(binfo, 8) * this.pageSize
                     this.maxMsgSize = read32(binfo, 12)
-                    log(`Connected; msgSize ${this.maxMsgSize}B; flash ${this.flashSize / 1024}kB; ${this.bootloaderMode ? "bootloader" : "application"} mode`)
+                    this.familyID = read32(binfo, 16)
+                    log(`Connected; msgSize ${this.maxMsgSize}B; flash ${this.flashSize / 1024}kB; ${this.bootloaderMode ? "bootloader" : "application"} mode; family=0x${this.familyID.toString(16)}`)
                     return this.talkAsync(HF2_CMD_INFO)
                 })
                 .then(buf => {
                     this.infoRaw = U.fromUTF8(U.uint8ArrayToString(buf));
+                    pxt.debug("Info: " + this.infoRaw)
                     let info = {} as any
                     ("Header: " + this.infoRaw).replace(/^([\w\-]+):\s*([^\n\r]*)/mg,
                         (f, n, v) => {
@@ -495,11 +531,17 @@ namespace pxt.HF2 {
                             return ""
                         })
                     this.info = info
-                    let m = /v(\d\S+)\s+(\S+)/.exec(this.info.Header)
-                    this.info.Parsed = {
-                        Version: m[1],
-                        Features: m[2],
-                    }
+                    let m = /v(\d\S+)(\s+(\S+))?/.exec(this.info.Header)
+                    if (m)
+                        this.info.Parsed = {
+                            Version: m[1],
+                            Features: m[3] || "",
+                        }
+                    else
+                        this.info.Parsed = {
+                            Version: "?",
+                            Features: "",
+                        }
                     log(`Board-ID: ${this.info.BoardID} v${this.info.Parsed.Version} f${this.info.Parsed.Features}`)
                 })
                 .then(() => {

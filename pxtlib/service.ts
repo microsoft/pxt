@@ -90,6 +90,7 @@ namespace ts.pxtc {
         memberName: string;
         blockId: string;
         isBitMask: boolean;
+        isHash: boolean;
         firstValue?: number;
         initialMembers: string[];
         promptHint: string;
@@ -112,6 +113,7 @@ namespace ts.pxtc {
     export interface CommentAttrs {
         debug?: boolean; // requires ?dbg=1
         shim?: string;
+        shimArgument?: string;
         enumval?: string;
         helper?: string;
         help?: string;
@@ -185,7 +187,7 @@ namespace ts.pxtc {
         mutatePropertyEnum?: string;
         inlineInputMode?: string; // can be inline, external, or auto
         expandableArgumentMode?: string; // can be disabled, enabled, or toggle
-        draggableParameters?: boolean;
+        draggableParameters?: string; // can be reporter or variable; defaults to variable
 
 
         /* start enum-only attributes (i.e. a block with shim=ENUM_GET) */
@@ -194,6 +196,7 @@ namespace ts.pxtc {
         enumMemberName?: string; // If the name of the enum was "Colors", this would be "color"
         enumStartValue?: number; // The lowest value to emit when going from blocks to TS
         enumIsBitMask?: boolean; // If true then values will be emitted in the form "1 << n"
+        enumIsHash?: boolean; // if true, the name of the enum is normalized, then hashed to generate the value
         enumPromptHint?: string; // The hint that will be displayed in the member creation prompt
         enumInitialMembers?: string[]; // The initial enum values which will be given the lowest values available
 
@@ -544,6 +547,7 @@ namespace ts.pxtc {
                     memberName: s.attributes.enumMemberName,
                     firstValue: isNaN(firstValue) ? undefined : firstValue,
                     isBitMask: s.attributes.enumIsBitMask,
+                    isHash: s.attributes.enumIsHash,
                     initialMembers: s.attributes.enumInitialMembers,
                     promptHint: s.attributes.enumPromptHint
                 };
@@ -625,6 +629,7 @@ namespace ts.pxtc {
         const lang = pxtc.Util.userLanguage();
         if (pxtc.Util.userLanguage() == "en") return Promise.resolve(apis);
 
+        const errors: pxt.Map<number> = {};
         return mainPkg.localizationStringsAsync(lang)
             .then(loc => Util.values(apis.byQName).forEach(fn => {
                 const jsDoc = loc[fn.qName]
@@ -660,7 +665,7 @@ namespace ts.pxtc {
                 else if (fn.attributes.block && locBlock) {
                     const ps = pxt.blocks.compileInfo(fn);
                     const oldBlock = fn.attributes.block;
-                    fn.attributes.block = pxt.blocks.normalizeBlock(locBlock);
+                    fn.attributes.block = pxt.blocks.normalizeBlock(locBlock, err => errors[`${fn}.${lang}`] = 1);
                     fn.attributes._untranslatedBlock = oldBlock;
                     if (oldBlock != fn.attributes.block) {
                         const locps = pxt.blocks.compileInfo(fn);
@@ -672,7 +677,11 @@ namespace ts.pxtc {
                 }
                 updateBlockDef(fn.attributes);
             }))
-            .then(() => apis);
+            .then(() => apis)
+            .finally(() => {
+                if (Object.keys(errors).length)
+                    pxt.reportError(`loc.errors`, `invalid translation`, errors);
+            })
     }
 
     export function emptyExtInfo(): ExtensionInfo {
@@ -706,8 +715,8 @@ namespace ts.pxtc {
         "constantShim",
         "blockCombine",
         "enumIsBitMask",
+        "enumIsHash",
         "decompileIndirectFixedInstances",
-        "draggableParameters",
         "topblock"
     ];
 
@@ -1195,6 +1204,7 @@ namespace ts.pxtc {
         export const UF2_FLAG_NONE = 0x00000000
         export const UF2_FLAG_NOFLASH = 0x00000001
         export const UF2_FLAG_FILE = 0x00001000
+        export const UF2_FLAG_FAMILY_ID_PRESENT = 0x00002000
 
         export interface Block {
             flags: number;
@@ -1203,6 +1213,7 @@ namespace ts.pxtc {
             blockNo: number;
             numBlocks: number;
             fileSize: number;
+            familyId: number;
             filename?: string;
             data: Uint8Array;
         }
@@ -1220,6 +1231,8 @@ namespace ts.pxtc {
             if (payloadSize > 476)
                 payloadSize = 256
             let filename: string = null
+            let familyId = 0
+            let fileSize = 0
             if (flags & UF2_FLAG_FILE) {
                 let fnbuf = block.slice(32 + payloadSize)
                 let len = fnbuf.indexOf(0)
@@ -1227,14 +1240,21 @@ namespace ts.pxtc {
                     fnbuf = fnbuf.slice(0, len)
                 }
                 filename = U.fromUTF8(U.uint8ArrayToString(fnbuf))
+                fileSize = wordAt(28)
             }
+            
+            if (flags & UF2_FLAG_FAMILY_ID_PRESENT) {
+                familyId = wordAt(28)
+            }
+
             return {
                 flags,
                 targetAddr: wordAt(12),
                 payloadSize,
                 blockNo: wordAt(20),
                 numBlocks: wordAt(24),
-                fileSize: wordAt(28),
+                fileSize,
+                familyId,
                 data: block.slice(32, 32 + payloadSize),
                 filename
             }
@@ -1264,7 +1284,7 @@ namespace ts.pxtc {
                 let ptr = i * 512
                 let bl = parseBlock(blocks.slice(ptr, ptr + 512))
                 if (!bl) continue
-                if (endAddr && bl.targetAddr  + 256 > endAddr) break;
+                if (endAddr && bl.targetAddr + 256 > endAddr) break;
                 if (curraddr == -1) {
                     curraddr = bl.targetAddr
                     appstartaddr = curraddr
@@ -1324,15 +1344,19 @@ namespace ts.pxtc {
             ptrs: number[];
             filename?: string;
             filesize: number;
+            familyId: number;
         }
 
-        export function newBlockFile(): BlockFile {
+        export function newBlockFile(familyId?: string | number): BlockFile {
+            if (typeof familyId == "string")
+                familyId = parseInt(familyId)
             return {
                 currBlock: null,
                 currPtr: -1,
                 blocks: [],
                 ptrs: [],
-                filesize: 0
+                filesize: 0,
+                familyId: familyId || 0
             }
         }
 
@@ -1427,12 +1451,15 @@ namespace ts.pxtc {
                     currBlock = new Uint8Array(512)
                     if (f.filename)
                         flags |= UF2_FLAG_FILE
+                    else if (f.familyId)
+                        flags |= UF2_FLAG_FAMILY_ID_PRESENT
                     setWord(currBlock, 0, UF2_MAGIC_START0)
                     setWord(currBlock, 4, UF2_MAGIC_START1)
                     setWord(currBlock, 8, flags)
                     setWord(currBlock, 12, needAddr << 8)
                     setWord(currBlock, 16, 256)
                     setWord(currBlock, 20, f.blocks.length)
+                    setWord(currBlock, 28, f.familyId)
                     setWord(currBlock, 512 - 4, UF2_MAGIC_END)
                     if (f.filename) {
                         U.memcpy(currBlock, 32 + 256, U.stringToUint8Array(U.toUTF8(f.filename)))
@@ -1484,6 +1511,7 @@ namespace ts.pxtc.service {
         search?: SearchOptions;
         format?: FormatOptions;
         blocks?: BlocksOptions;
+        projectSearch?: ProjectSearchOptions;
     }
 
     export interface SearchOptions {
@@ -1508,6 +1536,16 @@ namespace ts.pxtc.service {
         field?: [string, string];
         localizedCategory?: string;
         builtinBlock?: boolean;
+    }
+
+    export interface ProjectSearchOptions {
+        term: string;
+        headers: ProjectSearchInfo[];
+    }
+
+    export interface ProjectSearchInfo {
+        name: string;
+        id?: string;
     }
 
     export interface BlocksOptions {

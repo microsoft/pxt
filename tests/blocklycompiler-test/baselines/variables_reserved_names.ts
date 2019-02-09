@@ -1,10 +1,5 @@
-let _Math = 0
-let _let = 0
-let string = 0
-let Number = 0
 let boolean = 0
-boolean = 0
-Number = 0
-string = 0
-_let = 0
-_Math = 0
+let Number = 0
+let string = 0
+let _let = 0
+let _Math = 0

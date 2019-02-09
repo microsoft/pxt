@@ -5,7 +5,6 @@ import * as ReactDOM from "react-dom";
 import * as data from "./data";
 import * as sui from "./sui";
 import * as core from "./core";
-import * as compiler from "./compiler";
 
 import * as codecard from "./codecard"
 import * as carousel from "./carousel";
@@ -35,6 +34,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         this.chgGallery = this.chgGallery.bind(this);
         this.chgCode = this.chgCode.bind(this);
         this.importProject = this.importProject.bind(this);
+        this.showScriptManager = this.showScriptManager.bind(this);
         this.cloudSignIn = this.cloudSignIn.bind(this);
         this.setSelected = this.setSelected.bind(this);
     }
@@ -137,6 +137,11 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
         this.props.parent.importProjectDialog();
     }
 
+    showScriptManager() {
+        pxt.tickEvent("projects.showall.header", undefined, { interactiveConsent: true });
+        this.props.parent.showScriptManager();
+    }
+
     cloudSignIn() {
         pxt.tickEvent("projects.signin", undefined, { interactiveConsent: true });
         showCloudSignInDialog();
@@ -174,20 +179,23 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             signIn = this.getData("sync:username") || lf("Sign in")
         }
 
-        return <div ref="homeContainer" className={tabClasses}>
+        return <div ref="homeContainer" className={tabClasses} role="main">
             {showHeroBanner ?
                 <div className="ui segment getting-started-segment" style={{ backgroundImage: `url(${encodeURI(targetTheme.homeScreenHero)})` }} /> : undefined}
-            <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment mystuff-segment">
+            <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment mystuff-segment" role="region" aria-label={lf("My Projects")}>
                 <div className="ui grid equal width padded heading">
-                    <div className="column">
-                        <h2 className="ui header">{lf("My Projects")} </h2>
+                    <div className="column" style={{ zIndex: 1 }}>
+                        {targetTheme.scriptManager ? <h2 role="button" className="ui header myproject-header" title={lf("See all projects")} tabIndex={0}
+                            onClick={this.showScriptManager} onKeyDown={sui.fireClickOnEnter}>
+                            {lf("My Projects")}
+                            <span className="ui grid-dialog-btn">
+                                <sui.Icon icon="angle right" />
+                            </span>
+                        </h2> : <h2 className="ui header">{lf("My Projects")}</h2>}
                     </div>
-                    <div className="column right aligned">
+                    <div className="column right aligned" style={{ zIndex: 1 }}>
                         {pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing) ?
-                            <sui.Button key="import" icon="upload" className="mini import-dialog-btn" textClass="landscape only" text={lf("Import")} title={lf("Import a project")} onClick={this.importProject} /> : undefined}
-                        {signIn ?
-                            <sui.Button key="signin" icon={signInIcon} className="mini import-dialog-btn" textClass="landscape only" text={signIn} title={lf("Sign in to sync your projects")} onClick={this.cloudSignIn} />
-                            : undefined}
+                            <sui.Button key="import" icon="upload" className="import-dialog-btn" textClass="landscape only" text={lf("Import")} title={lf("Import a project")} onClick={this.importProject} /> : undefined}
                     </div>
                 </div>
                 <div className="content">
@@ -195,7 +203,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 </div>
             </div>
             {Object.keys(galleries).map(galleryName =>
-                <div key={`${galleryName}_gallerysegment`} className="ui segment gallerysegment">
+                <div key={`${galleryName}_gallerysegment`} className="ui segment gallerysegment" role="region" aria-label={pxt.Util.rlf(galleryName)}>
                     <h2 className="ui header heading">{pxt.Util.rlf(galleryName)} </h2>
                     <div className="content">
                         <ProjectsCarousel ref={`${selectedCategory == galleryName ? 'activeCarousel' : ''}`} key={`${galleryName}_carousel`} parent={this.props.parent} name={galleryName} path={galleries[galleryName]}
@@ -279,7 +287,9 @@ interface ProjectsCarouselState {
 export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, ProjectsCarouselState> {
     private prevGalleries: pxt.CodeCard[] = [];
     private hasFetchErrors = false;
-    private latestProject: codecard.CodeCardView
+    private latestProject: codecard.CodeCardView;
+
+    private static NUM_PROJECTS_HOMESCREEN = 10;
 
     constructor(props: ProjectsCarouselProps) {
         super(props)
@@ -290,6 +300,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         this.closeDetailOnEscape = this.closeDetailOnEscape.bind(this);
         this.reload = this.reload.bind(this);
         this.newProject = this.newProject.bind(this);
+        this.showScriptManager = this.showScriptManager.bind(this);
         this.handleCardClick = this.handleCardClick.bind(this);
     }
 
@@ -321,6 +332,11 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
     newProject() {
         pxt.tickEvent("projects.new", undefined, { interactiveConsent: true });
         this.props.parent.newProject();
+    }
+
+    showScriptManager() {
+        pxt.tickEvent("projects.showscriptmanager", undefined, { interactiveConsent: true });
+        this.props.parent.showScriptManager();
     }
 
     closeDetail() {
@@ -358,7 +374,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
         this.setState({})
     }
 
-    handleCardClick(scr: any, index?: number) {
+    handleCardClick(e: any, scr: any, index?: number) {
         const { name } = this.props;
         if (this.props.setSelected) {
             // Set this item as selected
@@ -371,6 +387,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
 
     renderCore() {
         const { name, path, selectedIndex } = this.props;
+        const targetTheme = pxt.appTarget.appTheme;
 
         if (path) {
             // Fetch the gallery
@@ -427,19 +444,19 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                 </div>
             }
         } else {
-            const headers = this.fetchLocalData();
+            const headers = this.fetchLocalData()
             const showNewProject = pxt.appTarget.appTheme && !pxt.appTarget.appTheme.hideNewProjectButton;
-            const bundledcoresvgs = pxt.appTarget.bundledcoresvgs;
+            const showScriptManagerCard = targetTheme.scriptManager && headers.length > ProjectsCarousel.NUM_PROJECTS_HOMESCREEN;
             return <carousel.Carousel bleedPercent={20}>
-                {showNewProject ? <div role="button" className="ui card link newprojectcard" title={lf("Creates a new empty project")}
+                {showNewProject ? <div role="button" className="ui card link buttoncard newprojectcard" title={lf("Creates a new empty project")}
                     onClick={this.newProject} onKeyDown={sui.fireClickOnEnter} >
                     <div className="content">
                         <sui.Icon icon="huge add circle" />
                         <span className="header">{lf("New Project")}</span>
                     </div>
                 </div> : undefined}
-                {headers.map((scr, index) => {
-                    const boardsvg = scr.board && bundledcoresvgs && bundledcoresvgs[scr.board];
+                {headers.slice(0, ProjectsCarousel.NUM_PROJECTS_HOMESCREEN).map((scr, index) => {
+                    const boardsvg = pxt.bundledSvg(scr.board);
                     return <ProjectsCodeCard
                         key={'local' + scr.id + scr.recentUse}
                         // ref={(view) => { if (index === 1) this.latestProject = view }}
@@ -449,10 +466,17 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                         name={scr.name}
                         time={scr.recentUse}
                         url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}
-                        scr={scr}
+                        scr={scr} index={index}
                         onCardClick={this.handleCardClick}
                     />;
                 })}
+                {showScriptManagerCard ? <div role="button" className="ui card link buttoncard scriptmanagercard" title={lf("See all projects")}
+                    onClick={this.showScriptManager} onKeyDown={sui.fireClickOnEnter} >
+                    <div className="content">
+                        <sui.Icon icon="huge right angle" />
+                        <span className="header">{lf("See all projects")}</span>
+                    </div>
+                </div> : undefined}
             </carousel.Carousel>
         }
     }
@@ -461,24 +485,31 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
 interface ProjectsCodeCardProps extends pxt.CodeCard {
     scr: any;
     index?: number;
-    onCardClick: (scr: any, index?: number) => void;
+    onCardClick: (e: any, scr: any, index?: number) => void;
+    onLabelClick?: (e: any, scr: any, index?: number) => void;
 }
 
-class ProjectsCodeCard extends sui.StatelessUIElement<ProjectsCodeCardProps> {
+export class ProjectsCodeCard extends sui.StatelessUIElement<ProjectsCodeCardProps> {
 
     constructor(props: ProjectsCodeCardProps) {
         super(props);
 
         this.handleClick = this.handleClick.bind(this);
+        this.handleLabelClick = this.handleLabelClick.bind(this);
     }
 
-    handleClick() {
-        this.props.onCardClick(this.props.scr, this.props.index);
+    handleClick(e: any) {
+        this.props.onCardClick(e, this.props.scr, this.props.index);
+    }
+
+    handleLabelClick(e: any) {
+        this.props.onLabelClick(e, this.props.scr, this.props.index);
     }
 
     renderCore() {
-        const { scr, onCardClick, onClick, ...rest } = this.props;
-        return <codecard.CodeCardView {...rest} onClick={this.handleClick} />
+        const { scr, onCardClick, onLabelClick, onClick, ...rest } = this.props;
+        return <codecard.CodeCardView {...rest} onClick={this.handleClick}
+            onLabelClicked={onLabelClick ? this.handleLabelClick : undefined} />
     }
 }
 
@@ -491,7 +522,7 @@ export interface ProjectsDetailProps extends ISettingsProps {
     url?: string;
     scr?: any;
     onClick: (scr: any) => void;
-    cardType: string;
+    cardType: pxt.CodeCardType;
     tags?: string[];
 }
 
@@ -667,7 +698,7 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
                             icon="cloud download"
                             iconColor="secondary"
                             name={lf("Import URL...")}
-                            description={lf("Open a shared project URL or GithHub repo")}
+                            description={lf("Open a shared project URL or GitHub repo")}
                             onClick={this.importUrl}
                         /> : undefined}
 
@@ -694,7 +725,6 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
     }
 }
 
-
 export interface ExitAndSaveDialogState {
     visible?: boolean;
     emoji?: string;
@@ -713,8 +743,8 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
         this.hide = this.hide.bind(this);
         this.modalDidOpen = this.modalDidOpen.bind(this);
         this.handleChange = this.handleChange.bind(this);
-        this.cancel = this.cancel.bind(this);
         this.save = this.save.bind(this);
+        this.skip = this.skip.bind(this);
     }
 
     componentWillReceiveProps(newProps: ISettingsProps) {
@@ -734,7 +764,7 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
         // Save on enter typed
         let dialogInput = document.getElementById('projectNameInput') as HTMLInputElement;
         if (dialogInput) {
-            dialogInput.setSelectionRange(0, 9999);
+            if (!pxt.BrowserUtils.isMobile()) dialogInput.setSelectionRange(0, 9999);
             dialogInput.onkeydown = (e: KeyboardEvent) => {
                 const charCode = core.keyCodeFromEvent(e);
                 if (charCode === core.ENTER_KEY) {
@@ -763,9 +793,10 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
         }
     }
 
-    cancel() {
-        pxt.tickEvent("exitandsave.cancel", undefined, { interactiveConsent: true });
+    skip() {
+        pxt.tickEvent("exitandsave.skip", undefined, { interactiveConsent: true });
         this.hide();
+        this.props.parent.openHome();
     }
 
     save() {
@@ -786,10 +817,13 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
         const { visible, emoji, projectName } = this.state;
 
         const actions: sui.ModalButton[] = [{
-            label: lf("Done"),
+            label: lf("Save"),
             onclick: this.save,
             icon: 'check',
             className: 'approve positive'
+        }, {
+            label: lf("Skip"),
+            onclick: this.skip
         }]
 
         return (
@@ -799,10 +833,13 @@ export class ExitAndSaveDialog extends data.Component<ISettingsProps, ExitAndSav
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
                 modalDidOpen={this.modalDidOpen}
             >
-                <div className="ui form">
-                    <sui.Input ref="filenameinput" autoFocus id={"projectNameInput"} label={lf("Name")}
-                        ariaLabel={lf("Type a name for your project")} autoComplete={false}
-                        value={projectName || ''} onChange={this.handleChange} />
+                <div>
+                    <p>{lf("Give your project a name.")}</p>
+                    <div className="ui form">
+                        <sui.Input ref="filenameinput" autoFocus={!pxt.BrowserUtils.isMobile()} id={"projectNameInput"}
+                            ariaLabel={lf("Type a name for your project")} autoComplete={false}
+                            value={projectName || ''} onChange={this.handleChange} />
+                    </div>
                 </div>
             </sui.Modal>
         )
@@ -815,12 +852,13 @@ export interface ChooseHwDialogState {
 }
 
 export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialogState> {
+    private prevGalleries: pxt.CodeCard[] = [];
+
     constructor(props: ISettingsProps) {
         super(props);
         this.state = {
             visible: false
         }
-
         this.close = this.close.bind(this);
     }
 
@@ -836,11 +874,25 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
         this.setState({ visible: true });
     }
 
+    fetchGallery(): pxt.CodeCard[] {
+        const path = "/hardware";
+        let res = this.getData(`gallery:${encodeURIComponent(path)}`) as pxt.gallery.Gallery[];
+        if (res) {
+            if (res instanceof Error) {
+                // ignore
+            } else {
+                this.prevGalleries = pxt.Util.concat(res.map(g => g.cards))
+                    .filter(c => !!c.variant);
+            }
+        }
+        return this.prevGalleries || [];
+    }
+
     private setHwVariant(cfg: pxt.PackageConfig) {
         pxt.tickEvent("projects.choosehwvariant", { hwid: cfg.name }, { interactiveConsent: true });
         this.hide()
 
-        pxt.setHwVariant(cfg.name.replace(/.*---/, ""))
+        pxt.setHwVariant(cfg.name)
         let editor = this.props.parent
         editor.reloadHeaderAsync()
             .then(() => editor.compile())
@@ -849,20 +901,31 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
 
     renderCore() {
         const { visible } = this.state;
+        if (!visible) return <div />;
 
-        let variants = visible ? pxt.getHwVariants() : []
-        for (let v of variants) {
+        const variants = pxt.getHwVariants();
+        for (const v of variants) {
             if (!v.card)
                 v.card = {
                     name: v.description
                 }
-            let savedV = v
+            const savedV = v
             v.card.onClick = () => this.setHwVariant(savedV)
         }
+        let cards = this.fetchGallery();
+        for (const card of cards) {
+            const savedV = variants.find(variant => variant.name == card.variant);
+            if (savedV)
+                card.onClick = () => this.setHwVariant(savedV);
+            else {
+                pxt.reportError("hw", "invalid variant");
+            }
+        }
+        cards = cards.filter(card => !!card.onClick);
 
         /* tslint:disable:react-a11y-anchors */
         return (
-            <sui.Modal isOpen={visible} className="importdialog" size="small"
+            <sui.Modal isOpen={visible} className="hardwaredialog" size="large"
                 onClose={this.close} dimmer={true}
                 closeIcon={true} header={lf("Choose your hardware")}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
@@ -871,13 +934,24 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
                     <div className="ui cards centered" role="listbox">
                         {variants.map(cfg =>
                             <codecard.CodeCardView
-                                key={cfg.name}
+                                key={'variant' + cfg.name}
                                 name={cfg.card.name}
                                 ariaLabel={cfg.card.name}
                                 description={cfg.card.description}
+                                imageUrl={cfg.card.imageUrl}
                                 learnMoreUrl={cfg.card.learnMoreUrl}
-                                buyUrl={cfg.card.buyUrl}
                                 onClick={cfg.card.onClick}
+                            />
+                        )}
+                        {cards.map(card =>
+                            <codecard.CodeCardView
+                                key={'card' + card.name}
+                                name={card.name}
+                                ariaLabel={card.name}
+                                description={card.description}
+                                imageUrl={card.imageUrl}
+                                learnMoreUrl={card.url}
+                                onClick={card.onClick}
                             />
                         )}
                     </div>

@@ -10,6 +10,7 @@ import * as codecard from "./codecard";
 import * as electron from "./electron";
 import * as workspace from "./workspace";
 import * as dialogs from "./dialogs";
+import { SearchInput } from "./components/searchInput";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -43,7 +44,6 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         }
 
         this.hide = this.hide.bind(this);
-        this.handleSearchKeyUpdate = this.handleSearchKeyUpdate.bind(this);
         this.handleSearch = this.handleSearch.bind(this);
         this.addUrl = this.addUrl.bind(this);
         this.addBundle = this.addBundle.bind(this);
@@ -108,19 +108,20 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
             data: [],
             status: data.FetchStatus.Complete
         };
-        if (!this.state.searchFor || this.state.mode != ScriptSearchMode.Extensions) return emptyResult;
+        if (!this.state.searchFor || this.state.mode != ScriptSearchMode.Extensions)
+            return emptyResult;
 
-        let scriptid = pxt.Cloud.parseScriptId(this.state.searchFor)
-
+        const scriptid = pxt.Cloud.parseScriptId(this.state.searchFor)
         if (!scriptid) {
             return emptyResult;
         }
 
         const res = this.getDataWithStatus(`cloud-search:${scriptid}`);
-
-        if (res.data && res.data.statusCode === 404)
+        if (!res.data || (res.data && res.data.statusCode === 404))
             res.data = []; // No shared project with that URL exists
-
+        // cloud may return single result, wrapping in array
+        if (!Array.isArray(res.data))
+            res.data = [res.data];
         return res;
     }
 
@@ -172,7 +173,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         return Object.keys(bundled).filter(k => !/prj$/.test(k))
             .map(k => JSON.parse(bundled[k]["pxt.json"]) as pxt.PackageConfig)
             .filter(pk => !query || pk.name.toLowerCase().indexOf(query.toLowerCase()) > -1) // search filter
-            .filter(pk => boards || !pkg.mainPkg.deps[pk.name]) // don't show package already referenced in extensions
+            .filter(pk => boards || !pkg.mainPkg.deps[pk.name] || pkg.mainPkg.deps[pk.name].cppOnly) // don't show package already referenced in extensions
             .filter(pk => !/---/.test(pk.name)) //filter any package with ---, these are part of common-packages such as core---linux or music---pwm
             .filter(pk => boards == !!pk.core) // show core in "boards" mode
             .filter(pk => !features || features.every(f => pk.features && pk.features.indexOf(f) > -1)); // ensure features are supported
@@ -197,20 +198,13 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         }
     }
 
-    handleSearchKeyUpdate(ev: React.KeyboardEvent<HTMLElement>) {
-        if (ev.keyCode == 13) this.handleSearch();
-
-    }
-
-    handleSearch() {
-        let str = (ReactDOM.findDOMNode(this.refs["searchInput"]) as HTMLInputElement).value
-
+    handleSearch(str: string) {
         // Hidden navigation, used to test /beta or other versions inside released UWP apps
         // Secret prefix is /@, e.g.: /@beta
         const urlPathExec = /^\/@(.*)$/.exec(str);
         let urlPath = urlPathExec && urlPathExec[1];
         if (urlPath) {
-            if (urlPath === "devtools" && electron.isPxtElectron()) {
+            if (urlPath === "devtools" && pxt.BrowserUtils.isPxtElectron()) {
                 electron.openDevTools();
                 this.hide();
                 this.afterHide();
@@ -408,17 +402,11 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                             {lf("Try out these features and tell us what you think!")}
                         </div> : undefined}
                     {mode == ScriptSearchMode.Extensions ?
-                        <div className="ui search">
-                            <div className="ui fluid action input" role="search">
-                                <div aria-live="polite" className="accessible-hidden">{lf("{0} result matching '{1}'", bundles.length + ghdata.data.length + urldata.data.length, searchFor)}</div>
-                                <input autoFocus ref="searchInput" type="text" placeholder={lf("Search or enter project URL...")}
-                                    onKeyUp={this.handleSearchKeyUpdate} disabled={isSearching}
-                                    autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} />
-                                <button title={lf("Search")} disabled={isSearching} className="ui right icon button" onClick={this.handleSearch}>
-                                    <sui.Icon icon="search" />
-                                </button>
-                            </div>
-                        </div> : undefined}
+                        <SearchInput key="search"
+                            ariaMessage={lf("{0} result matching '{1}'", bundles.length + ghdata.data.length + urldata.data.length, searchFor)}
+                            placeholder={lf("Search or enter project URL...")}
+                            searchHandler={this.handleSearch} inputClassName="fluid" autoFocus={true}
+                            disabled={isSearching} /> : undefined}
                     {isSearching ?
                         <div className="ui medium active centered inline loader"></div>
                         :

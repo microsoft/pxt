@@ -14,4 +14,3 @@ let enumTest = getABoolean() ? SomeEnum.One : SomeEnum.Two;
 assert(`${enumTest}` === "1", "enum tostring in template")
 assert(enumTest + "" === "1", "enum tostring in concatenation")
 
-msg("test OK!")

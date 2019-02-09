@@ -1,5 +1,9 @@
 namespace pxt.editor {
-
+    export enum SimState {
+        Stopped,
+        Starting,
+        Running
+    }
     export interface IEditor {
         undo(): void;
         redo(): void;
@@ -13,6 +17,7 @@ namespace pxt.editor {
 
     export interface IFile {
         name: string;
+        virtual?: boolean; // gimmick to switch views
     }
 
     export interface FileHistoryEntry {
@@ -42,7 +47,8 @@ namespace pxt.editor {
         tutorialOptions?: TutorialOptions;
         lightbox?: boolean;
 
-        running?: boolean;
+        simState?: SimState;
+        autoRun?: boolean;
         resumeOnVisibility?: boolean;
         compiling?: boolean;
         isSaving?: boolean;
@@ -64,6 +70,8 @@ namespace pxt.editor {
 
         home?: boolean;
         hasError?: boolean;
+
+        screenshoting?: boolean;
     }
 
     export interface EditorState {
@@ -107,6 +115,7 @@ namespace pxt.editor {
     export interface TutorialOptions {
         tutorial?: string; // tutorial
         tutorialName?: string; // tutorial title
+        tutorialReportId?: string; // if this tutorial was user generated, the report abuse id
         tutorialStepInfo?: pxt.tutorial.TutorialStepInfo[];
         tutorialStep?: number; // current tutorial page
         tutorialReady?: boolean; // current tutorial page
@@ -121,6 +130,12 @@ namespace pxt.editor {
         header: string;
         body: string;
         buttons?: ModalDialogButton[];
+    }
+
+    export interface ScreenshotData {
+        data?: ImageData;
+        delay?: number;
+        event?: "start" | "stop";
     }
 
     export interface IProjectView {
@@ -153,6 +168,7 @@ namespace pxt.editor {
         newProject(options?: ProjectCreationOptions): void;
         createProjectAsync(options: ProjectCreationOptions): Promise<void>;
         importExampleAsync(options: ExampleImportOptions): Promise<void>;
+        showScriptManager(): void;
         importProjectDialog(): void;
         removeProject(): void;
         editText(): void;
@@ -177,7 +193,7 @@ namespace pxt.editor {
         completeTutorial(): void;
         showTutorialHint(): void;
 
-        anonymousPublishAsync(): Promise<string>;
+        anonymousPublishAsync(screenshotUri?: string): Promise<string>;
 
         startStopSimulator(clickTrigger?: boolean): void;
         stopSimulator(unload?: boolean): void;
@@ -196,6 +212,8 @@ namespace pxt.editor {
         openInstructions(): void;
         closeFlyout(): void;
         printCode(): void;
+        requestScreenshotAsync(): Promise<string>;
+        downloadScreenshotAsync(): Promise<void>;
 
         toggleDebugging(): void;
         dbgPauseResume(): void;
@@ -252,6 +270,9 @@ namespace pxt.editor {
         showBoardDialogAsync(features?: string[], closeIcon?: boolean): Promise<void>;
 
         showModalDialogAsync(options: ModalDialogOptions): Promise<void>;
+
+        pushScreenshotHandler(handler: (msg: ScreenshotData) => void): void;
+        popScreenshotHandler(): void;
     }
 
     export interface IHexFileImporter {

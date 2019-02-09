@@ -284,3 +284,6 @@
     Greenscreen
 -------------------*/
 @greenScreenColor: #00ff00;
+@greenScreenBlockColor: #107c10; // loops category typically uses green
+                                   // keep in sync with pxtarget blocks color changes
+@greenScreenGreen: #005d51; // a green that does not get erased by chromekey 

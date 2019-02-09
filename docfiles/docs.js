@@ -53,15 +53,25 @@ function searchSubmit(form) {
     if (pxt && pxt.tickEvent) pxt.tickEvent("docs.search", { 'source': form.id }, { interactiveConsent: true })
 }
 
-function setupSidebar() {
-    $('#togglesidebar').on('keydown', handleEnterKey);
+function scrollActiveHeaderIntoView() {
+    var activeHeaders = document.getElementsByClassName("header active");
+    for (var i = 0; i < activeHeaders.length; ++i) {
+        var activeHeader = activeHeaders.item(i);
+        if (activeHeader.scrollIntoView)
+            activeHeader.scrollIntoView()
+    }
+}
 
+function setupSidebar() {
+    // do not use pxt.appTarget in this function
+    $('#togglesidebar').on('keydown', handleEnterKey);
     $('.ui.sidebar')
         .sidebar({
             dimPage: false,
             onShow: function () {
                 togglesidebar.setAttribute("aria-expanded", "true");
                 document.getElementsByClassName("sidebar").item(0).getElementsByClassName("focused").item(0).focus();
+                scrollActiveHeaderIntoView();
             },
             onHidden: function () {
                 togglesidebar.setAttribute("aria-expanded", "false");
@@ -112,9 +122,12 @@ function setupSidebar() {
     for (var i = 0; i < searchIcons.length; i++) {
         searchIcons.item(i).onkeydown = handleEnterKey;
     }
+
+    scrollActiveHeaderIntoView();
 }
 
 function setupSemantic() {
+    // do not use pxt.appTarget in this function
     // don't show related videos
     $.fn.embed.settings.sources.youtube.url = '//www.youtube.com/embed/{id}?rel=0'
 
@@ -220,11 +233,8 @@ function setupBlocklyAsync() {
 }
 
 function renderSnippets() {
-    var downloadScreenshots = /screenshots=1/i.test(window.location.href);
     var path = window.location.href.split('/').pop().split(/[?#]/)[0];
     ksRunnerReady(function () {
-        setupSidebar();
-        setupSemantic();
         setupBlocklyAsync()
             .then(function () {
                 return pxt.runner.renderAsync({
@@ -241,13 +251,14 @@ function renderSnippets() {
                     snippetReplaceParent: true,
                     simulator: true,
                     hex: true,
-                    hexName: path,
-                    downloadScreenshots: downloadScreenshots
+                    hexName: path
                 });
             }).done();
     });
 }
 
 $(document).ready(function () {
+    setupSidebar();
+    setupSemantic();
     renderSnippets();
 });

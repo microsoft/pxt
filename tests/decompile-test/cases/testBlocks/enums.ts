@@ -67,4 +67,12 @@ namespace enumTest {
     export function userEnumShimBitMask(arg: number) {
         return arg;
     }
+
+    //% shim=ENUM_GET
+    //% blockId=enum_user_shim_hash
+    //% enumName="EnumOfFHash" enumMemberName="whatever" enumPromptHint="whatever" enumInitialMembers="whatever,dontcare"
+    //% enumIsHash=true
+    export function userEnumShimHash(arg: number) {
+        return arg;
+    }
 }

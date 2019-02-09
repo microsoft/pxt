@@ -249,19 +249,6 @@ namespace pxt.docs {
 
         params["breadcrumb"] = breadcrumbHtml;
 
-        if (currentTocEntry) {
-            if (currentTocEntry.prevPath) {
-                params["prev"] = `<a href="${normalizeUrl(currentTocEntry.prevPath)}" class="navigation navigation-prev " title="${currentTocEntry.prevName}">
-                                    <i class="icon angle left"></i>
-                                </a>`;
-            }
-            if (currentTocEntry.nextPath) {
-                params["next"] = `<a href="${normalizeUrl(currentTocEntry.nextPath)}" class="navigation navigation-next " title="${currentTocEntry.nextName}">
-                                    <i class="icon angle right"></i>
-                                </a>`;
-            }
-        }
-
         if (theme.boardName)
             params["boardname"] = html2Quote(theme.boardName);
         if (theme.boardNickname)
@@ -381,7 +368,7 @@ namespace pxt.docs {
             if (title) {
                 out += ' title="' + title + '"';
             }
-            out += this.options.xhtml ? '/>' : '>';
+            out += (this as any).options.xhtml ? '/>' : '>';
             return out;
         }
         renderer.listitem = function (text: string): string {
@@ -401,8 +388,8 @@ namespace pxt.docs {
             // remove tutorial macros
             if (text)
                 text = text.replace(/@(fullscreen|unplugged)/g, '');
-            return `<h${level} id="${this.options.headerPrefix}${id}">${text}</h${level}>`
-        } as any
+            return `<h${level} id="${(this as any).options.headerPrefix}${id}">${text}</h${level}>`
+        }
     }
 
     export function renderMarkdown(opts: RenderOptions): string {
@@ -475,7 +462,7 @@ namespace pxt.docs {
         setupRenderer(renderer);
         const linkRenderer = renderer.link;
         renderer.link = function (href: string, title: string, text: string) {
-            const relative = href.indexOf('/') == 0;
+            const relative = new RegExp('^[/#]').test(href);
             const target = !relative ? '_blank' : '';
             if (relative && d.versionPath) href = `/${d.versionPath}${href}`;
             const html = linkRenderer.call(renderer, href, title, text);
@@ -620,7 +607,8 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
         }
 
         pubinfo["body"] = html
-        pubinfo["name"] = pubinfo["title"] + " - " + pubinfo["targetname"]
+        // don't mangle target name in title, it is already in the sitename
+        pubinfo["name"] = pubinfo["title"] || ""
 
         for (let k of Object.keys(opts.theme)) {
             let v = (opts.theme as any)[k]
@@ -853,29 +841,6 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
 
         let TOC = dummy.subitems
         if (!TOC || TOC.length == 0) return null
-
-        let previousNode: pxt.TOCMenuEntry;
-        // Scan tree and build next / prev paths
-        let buildPrevNext = (node: pxt.TOCMenuEntry) => {
-            if (previousNode) {
-                node.prevName = previousNode.name;
-                node.prevPath = previousNode.path;
-
-                previousNode.nextName = node.name;
-                previousNode.nextPath = node.path;
-            }
-            if (node.path) {
-                previousNode = node;
-            }
-            node.subitems.forEach((tocItem, tocIndex) => {
-                buildPrevNext(tocItem);
-            })
-        }
-
-        TOC.forEach((tocItem, tocIndex) => {
-            buildPrevNext(tocItem)
-        })
-
         return TOC
     }
 

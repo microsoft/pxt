@@ -1,4 +1,9 @@
-let myList: string[][] = []
 let item: string[] = []
-myList[0].push("")
-item = myList[0]
+let myList: string[][] = []
+if (true) {
+    myList[0].push("")
+    item = myList[0]
+} else {
+    item = item
+    myList = myList
+}

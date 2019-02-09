@@ -12,6 +12,10 @@ function tscIn(task, dir, builtDir) {
     let command = 'node ' + path.relative(dir, './node_modules/typescript/bin/tsc')
     if (process.env.sourceMaps === 'true') {
         command += ' --sourceMap --mapRoot file:///' + path.resolve(builtDir)
+        if (process.env.PXT_ENV != 'production') {
+            // In development, dump the sources inline
+            command += ' --inlineSourceMap --inlineSources'
+        }
     }
     cmdIn(task, dir, command)
 }
@@ -70,7 +74,7 @@ function runKarma(that, flags) {
     cmdIn(that, "node_modules/.bin", command);
 }
 
-task('default', ['updatestrings', 'built/pxt.js', 'built/pxt.d.ts', 'built/pxtrunner.js', 'built/backendutils.js', 'built/target.js', 'wapp', 'monaco-editor', 'built/web/pxtweb.js'], { parallelLimit: 10 })
+task('default', ['updatestrings', 'built/pxt.js', 'built/pxt.d.ts', 'built/pxtrunner.js', 'built/backendutils.js', 'built/target.js', 'wapp', 'monaco-editor', 'built/web/pxtweb.js', 'built/tests/blocksrunner.js'], { parallelLimit: 10 })
 
 task('test', ['default', 'testfmt', 'testerr', 'testdecompiler', 'testlang', 'karma'])
 
@@ -156,9 +160,13 @@ task("blocklycompilertest", ["default"], { async: true }, function () {
     cmdIn(this, "tests/blocklycompiler-test", "node ../../node_modules/typescript/bin/tsc")
 })
 
+file("built/tests/blocksrunner.js", ["built/pxtlib.js", "built/pxtcompiler.js", "built/pxtblocks.js", "built/pxteditor.js"], { async: true }, function () {
+    cmdIn(this, "tests/blocks-test", "node ../../node_modules/typescript/bin/tsc")
+})
+
 task("travis", ["lint", "test", "upload"])
 
-task('upload', ["wapp", "built/pxt.js"], { async: true }, function () {
+task('upload', ["wapp", "built/pxt.js", "built/tests/blocksrunner.js"], { async: true }, function () {
     jake.exec([
         "node built/pxt.js travis",
         "node built/pxt.js buildtarget"
@@ -434,7 +442,7 @@ file('built/web/main.js', ["built/web/pxtapp.js", "built/webapp/src/app.js"], { 
         cmdIn(this, ".", 'node node_modules/browserify/bin/cmd ./built/webapp/src/app.js -g ' +
             '[ envify --NODE_ENV production ] -g uglifyify -o ./built/web/main.js')
     } else {
-        cmdIn(this, ".", 'node node_modules/browserify/bin/cmd built/webapp/src/app.js -o built/web/main.js')
+        cmdIn(this, ".", 'node node_modules/browserify/bin/cmd built/webapp/src/app.js -o built/web/main.js --debug')
     }
 })
 

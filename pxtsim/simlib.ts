@@ -181,18 +181,21 @@ namespace pxsim {
 
     export namespace AudioContextManager {
         let _frequency = 0;
-        let _context: any; // AudioContext
-        let _vco: any; // OscillatorNode;
-        let _vca: any; // GainNode;
+        let _context: AudioContext;
+        let _vco: OscillatorNode;
+        let _vca: GainNode;
 
         let _mute = false; //mute audio
 
-        function context(): any {
+        // for playing WAV
+        let audio: HTMLAudioElement;
+
+        function context(): AudioContext {
             if (!_context) _context = freshContext();
             return _context;
         }
 
-        function freshContext(): any {
+        function freshContext(): AudioContext {
             (<any>window).AudioContext = (<any>window).AudioContext || (<any>window).webkitAudioContext;
             if ((<any>window).AudioContext) {
                 try {
@@ -206,7 +209,7 @@ namespace pxsim {
 
         export function mute(mute: boolean) {
             _mute = mute;
-            stop();
+            stopAll();
         }
 
         function stopTone() {
@@ -217,12 +220,214 @@ namespace pxsim {
             }
         }
 
+        export function stopAll() {
+            stopTone();
+            muteAllChannels();
+        }
+
         export function stop() {
             stopTone();
         }
 
         export function frequency(): number {
             return _frequency;
+        }
+
+        const waveForms: OscillatorType[] = [null, "triangle", "sawtooth", "sine"]
+        let metallicBuffer: AudioBuffer
+        let noiseBuffer: AudioBuffer
+        let squareBuffer: AudioBuffer[] = []
+
+        function getMetallicBuffer() {
+            if (!metallicBuffer) {
+                const bufferSize = 1024;
+                metallicBuffer = context().createBuffer(1, bufferSize, context().sampleRate);
+                const output = metallicBuffer.getChannelData(0);
+
+                for (let i = 0; i < bufferSize; i++) {
+                    output[i] = (((i * 7919) & 1023) / 512.0) - 1.0;
+                }
+            }
+            return metallicBuffer
+        }
+
+        function getNoiseBuffer() {
+            if (!noiseBuffer) {
+                const bufferSize = 100000;
+                noiseBuffer = context().createBuffer(1, bufferSize, context().sampleRate);
+                const output = noiseBuffer.getChannelData(0);
+
+                let x = 0xf01ba80;
+                for (let i = 0; i < bufferSize; i++) {
+                    x ^= x << 13;
+                    x ^= x >> 17;
+                    x ^= x << 5;
+                    output[i] = ((x & 1023) / 512.0) - 1.0;
+                }
+            }
+            return noiseBuffer
+        }
+
+        function getSquareBuffer(param: number) {
+            if (!squareBuffer[param]) {
+                const bufferSize = 1024;
+                const buf = context().createBuffer(1, bufferSize, context().sampleRate);
+                const output = buf.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    output[i] = i < (param / 100 * bufferSize) ? 1 : -1;
+                }
+                squareBuffer[param] = buf
+            }
+            return squareBuffer[param]
+        }
+
+        /*
+        #define SW_TRIANGLE 1
+        #define SW_SAWTOOTH 2
+        #define SW_SINE 3 // TODO remove it? it takes space
+        #define SW_NOISE 4
+        #define SW_REAL_NOISE 5
+        #define SW_SQUARE_10 11
+        #define SW_SQUARE_50 15
+        */
+
+
+        /*
+         struct SoundInstruction {
+             uint8_t soundWave;
+             uint8_t flags;
+             uint16_t frequency;
+             uint16_t duration;
+             uint16_t startVolume;
+             uint16_t endVolume;
+         };
+         */
+
+        function getGenerator(waveFormIdx: number, hz: number): OscillatorNode | AudioBufferSourceNode {
+            let form = waveForms[waveFormIdx]
+            if (form) {
+                let src = context().createOscillator()
+                src.type = form
+                src.frequency.value = hz
+                return src
+            }
+
+            let buffer: AudioBuffer
+            if (waveFormIdx == 4)
+                buffer = getMetallicBuffer()
+            else if (waveFormIdx == 5)
+                buffer = getNoiseBuffer()
+            else if (11 <= waveFormIdx && waveFormIdx <= 15)
+                buffer = getSquareBuffer((waveFormIdx - 10) * 10)
+            else
+                return null
+
+            let node = context().createBufferSource();
+            node.buffer = buffer;
+            node.loop = true;
+            if (waveFormIdx != 5)
+                node.playbackRate.value = hz / (context().sampleRate / 1024);
+
+            return node
+        }
+
+        const channels: Channel[] = []
+        class Channel {
+            generator: OscillatorNode | AudioBufferSourceNode;
+            gain: GainNode
+            mute() {
+                if (this.generator) {
+                    this.generator.stop()
+                    this.generator.disconnect()
+                }
+                if (this.gain)
+                    this.gain.disconnect()
+                this.gain = null
+                this.generator = null
+            }
+            remove() {
+                const idx = channels.indexOf(this)
+                if (idx >= 0) channels.splice(idx, 1)
+                this.mute()
+            }
+        }
+
+        function muteAllChannels() {
+            while (channels.length)
+                channels[0].remove()
+        }
+
+        export function playInstructionsAsync(b: RefBuffer) {
+            let ctx = context();
+
+            let idx = 0
+            let ch = new Channel()
+            let currWave = -1
+            let currFreq = -1
+            let timeOff = 0
+
+            if (channels.length > 5)
+                channels[0].remove()
+            channels.push(ch)
+
+            const scaleVol = (n: number) => (n / 1024) * 2
+
+            const finish = () => {
+                ch.mute()
+                timeOff = 0
+                currWave = -1
+                currFreq = -1
+            }
+
+            const loopAsync = (): Promise<void> => {
+                if (idx >= b.data.length || !b.data[idx])
+                    return Promise.delay(timeOff).then(finish)
+
+                const soundWaveIdx = b.data[idx]
+                const flags = b.data[idx + 1]
+                const freq = BufferMethods.getNumber(b, BufferMethods.NumberFormat.UInt16LE, idx + 2)
+                const duration = BufferMethods.getNumber(b, BufferMethods.NumberFormat.UInt16LE, idx + 4)
+                const startVol = BufferMethods.getNumber(b, BufferMethods.NumberFormat.UInt16LE, idx + 6)
+                const endVol = BufferMethods.getNumber(b, BufferMethods.NumberFormat.UInt16LE, idx + 8)
+
+                if (!ctx)
+                    return Promise.delay(duration)
+
+                if (currWave != soundWaveIdx || currFreq != freq) {
+                    if (ch.generator) {
+                        return Promise.delay(timeOff)
+                            .then(() => {
+                                finish()
+                                return loopAsync()
+                            })
+                    }
+
+                    ch.generator = _mute ? null : getGenerator(soundWaveIdx, freq)
+
+                    if (!ch.generator)
+                        return Promise.delay(duration)
+
+                    currWave = soundWaveIdx
+                    currFreq = freq
+                    ch.gain = ctx.createGain()
+                    ch.gain.gain.value = scaleVol(startVol)
+
+                    ch.generator.connect(ch.gain)
+                    ch.gain.connect(ctx.destination);
+                    ch.generator.start();
+                }
+
+                idx += 10
+
+                ch.gain.gain.setValueAtTime(scaleVol(startVol), ctx.currentTime + (timeOff / 1000))
+                timeOff += duration
+                ch.gain.gain.linearRampToValueAtTime(scaleVol(endVol), ctx.currentTime + (timeOff / 1000))
+
+                return loopAsync()
+            }
+
+            return loopAsync()
+                .then(() => ch.remove())
         }
 
         export function tone(frequency: number, gain: number) {
@@ -266,7 +471,6 @@ namespace pxsim {
             return res;
         }
 
-        let audio: HTMLAudioElement;
         export function playBufferAsync(buf: RefBuffer) {
             if (!buf) return Promise.resolve();
 

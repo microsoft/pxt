@@ -21,6 +21,7 @@ export interface SpawnOptions {
     pipe?: boolean;
     input?: string;
     silent?: boolean;
+    envOverrides?: pxt.Map<string>;
 }
 
 //This should be correct at startup when running from command line
@@ -62,7 +63,7 @@ export function spawnWithPipeAsync(opts: SpawnOptions) {
     return new Promise<Buffer>((resolve, reject) => {
         let ch = child_process.spawn(opts.cmd, opts.args, {
             cwd: opts.cwd,
-            env: process.env,
+            env: opts.envOverrides ? extendEnv(process.env, opts.envOverrides) : process.env,
             stdio: opts.pipe ? [opts.input == null ? process.stdin : "pipe", "pipe", process.stderr] : "inherit",
             shell: opts.shell || false
         } as any)
@@ -82,6 +83,13 @@ export function spawnWithPipeAsync(opts: SpawnOptions) {
         if (opts.input != null)
             ch.stdin.end(opts.input, "utf8")
     })
+}
+
+function extendEnv(base: any, overrides: any) {
+    let res: any = {};
+    Object.keys(base).forEach(key => res[key] = base[key])
+    Object.keys(overrides).forEach(key => res[key] = overrides[key])
+    return res;
 }
 
 export function addCmd(name: string) {
@@ -303,7 +311,7 @@ export function pathToPtr(path: string) {
 }
 
 export function mkdirP(thePath: string) {
-    if (thePath == ".") return;
+    if (thePath == "." || !thePath) return;
     if (!fs.existsSync(thePath)) {
         mkdirP(path.dirname(thePath))
         fs.mkdirSync(thePath)
@@ -363,11 +371,12 @@ export function existsDirSync(name: string): boolean {
     }
 }
 
-export function writeFileSync(path: string, data: any, options?: { encoding?: string | null; mode?: number | string; flag?: string; } | string | null) {
-    fs.writeFileSync(path, data, options);
+export function writeFileSync(p: string, data: any, options?: { encoding?: string | null; mode?: number | string; flag?: string; } | string | null) {
+    mkdirP(path.dirname(p));
+    fs.writeFileSync(p, data, options);
     if (pxt.options.debug) {
-        const stats = fs.statSync(path);
-        pxt.log(`  + ${path} ${stats.size > 1000000 ? (stats.size / 1000000).toFixed(2) + ' m' : stats.size > 1000 ? (stats.size / 1000).toFixed(2) + 'k' : stats.size}b`)
+        const stats = fs.statSync(p);
+        pxt.log(`  + ${p} ${stats.size > 1000000 ? (stats.size / 1000000).toFixed(2) + ' m' : stats.size > 1000 ? (stats.size / 1000).toFixed(2) + 'k' : stats.size}b`)
     }
 }
 

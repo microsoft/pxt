@@ -794,11 +794,14 @@ ${linkString}
 
     export interface DecompileResult {
         package: pxt.MainPackage;
+        compileProgram?: ts.Program;
         compileJS?: pxtc.CompileResult;
         compileBlocks?: pxtc.CompileResult;
         apiInfo?: pxtc.ApisInfo;
         blocksSvg?: Element;
     }
+
+    let programCache: ts.Program;
 
     export function decompileToBlocksAsync(code: string, options?: blocks.BlocksRenderOptions): Promise<DecompileResult> {
         // code may be undefined or empty!!!
@@ -812,31 +815,44 @@ ${linkString}
                 if (code)
                     opts.fileSystem["main.ts"] = code;
                 opts.ast = true
-                let resp = pxtc.compile(opts)
-                if (resp.diagnostics && resp.diagnostics.length > 0)
-                    resp.diagnostics.forEach(diag => console.error(diag.messageText));
-                if (!resp.success)
-                    return Promise.resolve<DecompileResult>({ package: mainPkg, compileJS: resp });
+
+                let compileJS: pxtc.CompileResult = undefined;
+                let program: ts.Program;
+                if (options && options.forceCompilation) {
+                    compileJS = pxtc.compile(opts);
+                    program = compileJS && compileJS.ast;
+                } else {
+                    program = pxtc.getTSProgram(opts, programCache);
+                }
+                programCache = program;
 
                 // decompile to blocks
-                let apis = pxtc.getApiInfo(opts, resp.ast);
+                let apis = pxtc.getApiInfo(opts, program);
                 return ts.pxtc.localizeApisAsync(apis, mainPkg)
                     .then(() => {
                         let blocksInfo = pxtc.getBlocksInfo(apis);
                         pxt.blocks.initializeAndInject(blocksInfo);
+                        const useNewFunctions = appTarget.runtime && appTarget.runtime.functionsOptions && appTarget.runtime.functionsOptions.useNewFunctions;
                         let bresp = pxtc.decompiler.decompileToBlocks(
                             blocksInfo,
-                            resp.ast.getSourceFile("main.ts"),
-                            { snippetMode: options && options.snippetMode })
+                            program.getSourceFile("main.ts"),
+                            { snippetMode: options && options.snippetMode, useNewFunctions });
                         if (bresp.diagnostics && bresp.diagnostics.length > 0)
                             bresp.diagnostics.forEach(diag => console.error(diag.messageText));
                         if (!bresp.success)
-                            return <DecompileResult>{ package: mainPkg, compileJS: resp, compileBlocks: bresp, apiInfo: apis };
+                            return <DecompileResult>{
+                                package: mainPkg,
+                                compileProgram: program,
+                                compileJS,
+                                compileBlocks: bresp,
+                                apiInfo: apis
+                            };
                         pxt.debug(bresp.outfiles["main.blocks"])
                         const blocksSvg = pxt.blocks.render(bresp.outfiles["main.blocks"], options);
                         return <DecompileResult>{
                             package: mainPkg,
-                            compileJS: resp,
+                            compileProgram: program,
+                            compileJS,
                             compileBlocks: bresp,
                             apiInfo: apis,
                             blocksSvg

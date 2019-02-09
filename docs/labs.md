@@ -8,11 +8,21 @@ A collection of experimental MakeCode Editors created by the community.
 
 Experimental Editors are not supported by the Microsoft MakeCode team.
 To be listed on this page, your editor must be open source on GitHub,
-preferrably under the MIT License. 
+preferably under the MIT License. 
 
 ## ~
 
 ## Editors
+
+### Maker
+
+![Maker editor screenshot](/static/targets/maker/screenshot.png)
+
+An editor for maker-oriented microcontrollers, that typically require breadboarding. For 
+more information, see:
+
+* [Editor](https://maker.makecode.com)
+* [GitHub](https://github.com/Microsoft/pxt-maker)
 
 ### ARcadia: Marker-based augment reality
 
@@ -46,16 +56,6 @@ more information, see:
 
 * [Editor](https://jcspec.github.io/BuildUFace)
 * [GitHub](https://github.com/JCSPEC/BuildUFace)
-
-### Maker
-
-![Maker editor screenshot](/static/targets/maker/screenshot.png)
-
-An editor for maker-oriented microcontrollers, that typically require breadboarding. For 
-more information, see:
-
-* [Editor](https://maker.makecode.com)
-* [GitHub](https://github.com/Microsoft/pxt-maker)
 
 ### Holiday Card
 

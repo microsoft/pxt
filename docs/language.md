@@ -39,40 +39,44 @@ functions, lambdas, classes).
 * class inheritance
 * classes implementing interfaces (explicitly and implicitly)
 * object literals `{ foo: 1, bar: "two" }`
+* `typeof` expression
+* `public`/`private` annotations on constructor arguments (syntactic sugar to make them into fields)
+* initializers for class fields
+* lambda functions with more than three arguments
+* using generic functions as values and nested generic functions
+
+The following used to be disallowed, but should be supported now,
+though they require testing:
+
+* downcasts of a superclass to a subclass
+* function parameter bi-variance
+* explicit or implicit use of the `any` type
+* `union` or `intersection` types
+* using a generic function as a value
+* class inheritance for generic classes and methods
 
 ## Unsupported language features
 
-Static TypeScript has a more restrictive type checker than TypeScript. In particular, it does not support:
-* explicit or implicit use of the `any` type
-* `union` or `intersection` types
+Static TypeScript has *nominal typing* for classes, rather than the *structural typing* of TypeScript. In particular, it does not support:
 * `interface` with same name as a `class`
 * casts of a non-`class` type to a `class`
-* downcasts of a superclass to a subclass
-* extending a `class` by an `interface`
-* function parameter bi-variance (parameter subtyping is contra-variant)
+* `interface` that extends a a `class`
 * inheriting from a built-in type
-* using a built-in or generic function as a value
 * `this` used outside of a method
 * function overloading
-
-Static TypeScript enforces *nominal typing* of classes, rather than the *structural typing* of TypeScript.
 
 We generally stay away from the more dynamic parts of JavaScript.  Things you may miss and we may implement:
 
 * object destructuring with initializers
-* shorthand properties
-* exceptions (`throw`, `try ... catch`, `try ... finally`)
-* using generic functions as values and nested generic functions
-* class inheritance for generic classes and methods
-* initializers for class fields
-* `public`/`private` annotations on constructor arguments (syntactic sugar to make them into fields)
+* shorthand properties (`{a, b: 1}` parsed as `{a: a, b: 1}`)
+* exceptions (`throw`, `try ... catch`, `try ... finally`);
+  currently all exceptions just stop the program
 * binding with arrays or objects: `let [a, b] = ...; let { x, y } = ...`
 * `delete` statement (on object literals)
 * spread and reset operators (statically typed)
 * support of `enums` as run-time arrays
-* lambda functions with more than three arguments
 * `new` on non-class types
-* `typeof` expression
+* using a built-in function as a value
 
 Things that we are not very likely to implement due to the scope of the project
 or other constraints (note that if you don't know what a given feature is, you're
@@ -81,7 +85,6 @@ unlikely to miss it):
 * file-based modules (`import * from ...`, `module.exports` etc); we do support namespaces
 * `yield` expression and ``function*``
 * `await` expression and `async function`
-* `typeof` expression
 * tagged templates ``tag `text ${expression} more text` ``; regular templates are supported
 * `with` statement
 * `eval`
@@ -101,18 +104,25 @@ Note, that you can use all of these while implementing your runtime environment
 
 As such, it isn't really feasible to run a full JavaScript virtual machine
 in 3k of RAM, and thus PXT programs are statically compiled to native code to run efficiently.
-There are two compilation strategies available - the legacy strategy used by the current
-micro:bit target, and a tagged strategy used by the upcoming SAMD21 targets, as well as all
-the other targets going forward (possibly including new version of the micro:bit target).
 
-In the **legacy strategy**, there are some semantic differences with JavaScript,
-particularly:
-* numbers are 32 bit signed integers with wrap-around semantics; 
-  in JavaScript they are 64 bit floating points
-* JavaScript doesn't have types, and therefore every value can be `undefined` or `null` 
-  (which are two different values, distinct from `0` or `false`); 
-  in PXT `0`, `false`, `null`, and `undefined` all have the same underlying
-  representation (32 zero bits) and thus will test as equal
+PXT used to support a *legacy compilation strategy*, where numbers were represented
+as 32 bit signed integers, and all types were static.
+This is used by the `v0` branch of micro:bit (but not the current `v1`) 
+and the Chibitronics editors, but is no longer included in the main PXT code base.
+
+PXT follows nominal typing for classes.
+This means that if you declare `x` to be of class type `C`, and at runtime
+it happens to be not of this type, then when you try to access fields
+or methods of `x` you will get an exception, just as if `x` was `null`.
+
+It is also impossible to 
+[monkey-patch](https://en.wikipedia.org/wiki/Monkey_patch)
+classes by overriding methods on class instance.
+As prototype chains are not accessible or even used, it's also not possible to
+monkey-patch these.
+
+Finally, classes are currently not extensible with arbitrary fields.
+We might lift this in future.
 
 ## Execution environments
 
@@ -142,16 +152,17 @@ On the plus side, this allows for [handling of async calls](/async), even if the
 doesn't support `yield` statement, as well as cross-browser and remote
 debugging. On the other hand, the generated code is not really human readable.
 
-In the [tagged strategy](/js/values), numbers are either tagged 31-bit signed
-integers, or if they do not fit boxed doubles. Special constants like `false`, `null` and
+Numbers are either [tagged 31-bit signed integers](/js/values), 
+or if they do not fit boxed doubles. Special constants like `false`, `null` and
 `undefined` are given special values and can be distinguished.
 We're aiming at full JavaScript compatibility here.
 
 ## Static compilation vs a dynamic VM
 
-PXT programs are compiled to native code. The native targets include ARM Thumb,
-and an unfinished AVR port. The information below concerns the tagged compilation
-strategy.
+PXT programs are compiled to native code. The only currently supported
+native target is ARM Thumb.
+PXT used to support two different AVR ports, but these have been
+removed together with the legacy compilation strategy.
 
 Compared to a typical dynamic JavaScript engine, PXT compiles code statically,
 giving rise to significant time and space performance improvements:
@@ -210,3 +221,19 @@ In legacy strategy, `number` is equivalent to `int32`, and there is no `uint32`.
 
 * arrays of int types are currently not supported; you can use a `Buffer` instead
 * locals and parameters of int types are not supported
+
+## Near future work
+
+There are following differences currently, which should be fixed soon.
+They are mostly missing bridges between static, nominally typed classes,
+and dynamic maps.
+
+* default parameters are resolved at call site; they should be resolved in the
+  called method so eg. virtual methods can have different defaults
+* `x.foo`, where `x` is class and `foo` is method cannot be currently used as a value;
+  we could make it equivalent to JavaScript's `x.foo.bind(x)`
+* `Object.keys()` is currently not implemented for classes; when it will be
+  the order of fields will be static declaration order
+* the `delete` statement is currently disallowed; it can be implemented
+  rather easily, though on classes it will just assign `undefined`
+* how to validate types of C++ classes (Pin mostly)?

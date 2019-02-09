@@ -63,8 +63,10 @@ export class DocsMenu extends data.PureComponent<ISettingsProps, {}> {
     private doDocEntryAction(parent: pxt.editor.IProjectView, m: pxt.DocMenuEntry) {
         if (m.tutorial) {
             return () => { openTutorial(parent, m.path) };
-        } else if (!/^\//.test(m.path)) {
+        } else if (!/^\//.test(m.path) && !m.popout) {
             return () => { window.open(m.path, "docs"); };
+        } else if (m.popout) {
+            return () => { window.open(`${pxt.appTarget.appTheme.homeUrl}${m.path}`, "docs"); };
         } else {
             return () => { openDocs(parent, m.path) };
         }
@@ -176,7 +178,10 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
 
     showBoardDialog() {
         pxt.tickEvent("menu.changeboard", undefined, { interactiveConsent: true });
-        this.props.parent.showBoardDialogAsync(undefined, true).done();
+        if (pxt.hasHwVariants())
+            this.props.parent.showChooseHwDialog();
+        else
+            this.props.parent.showBoardDialogAsync(undefined, true).done();
     }
 
     saveProject() {
@@ -272,29 +277,29 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             && greenscreen.isSupported();
 
         return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem">
-            <sui.Item role="menuitem" icon="options" text={lf("Project Settings")} onClick={this.openSettings} tabIndex={-1} />
-            {packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Extensions")} onClick={this.showPackageDialog} tabIndex={-1} /> : undefined}
-            {boards ? <sui.Item role="menuitem" icon="microchip" text={lf("Change Board")} onClick={this.showBoardDialog} tabIndex={-1} /> : undefined}
-            {targetTheme.print ? <sui.Item role="menuitem" icon="print" text={lf("Print...")} onClick={this.print} tabIndex={-1} /> : undefined}
-            {showSave ? <sui.Item role="menuitem" icon="save" text={lf("Save Project")} onClick={this.saveProject} tabIndex={-1} /> : undefined}
-            {!isController ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project")} onClick={this.removeProject} tabIndex={-1} /> : undefined}
-            {showSimCollapse ? <sui.Item role="menuitem" icon='toggle right' text={lf("Toggle the simulator")} onClick={this.toggleCollapse} tabIndex={-1} /> : undefined}
-            {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={this.showReportAbuse} tabIndex={-1} /> : undefined}
+            <sui.Item role="menuitem" icon="options" text={lf("Project Settings")} onClick={this.openSettings} />
+            {packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Extensions")} onClick={this.showPackageDialog} /> : undefined}
+            {boards ? <sui.Item role="menuitem" icon="microchip" text={lf("Change Board")} onClick={this.showBoardDialog} /> : undefined}
+            {targetTheme.print ? <sui.Item role="menuitem" icon="print" text={lf("Print...")} onClick={this.print} /> : undefined}
+            {showSave ? <sui.Item role="menuitem" icon="save" text={lf("Save Project")} onClick={this.saveProject} /> : undefined}
+            {!isController ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project")} onClick={this.removeProject} /> : undefined}
+            {showSimCollapse ? <sui.Item role="menuitem" icon='toggle right' text={lf("Toggle the simulator")} onClick={this.toggleCollapse} /> : undefined}
+            {reportAbuse ? <sui.Item role="menuitem" icon="warning circle" text={lf("Report Abuse...")} onClick={this.showReportAbuse} /> : undefined}
             <div className="ui divider"></div>
-            {targetTheme.selectLanguage ? <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} tabIndex={-1} /> : undefined}
-            {targetTheme.highContrast ? <sui.Item role="menuitem" text={highContrast ? lf("High Contrast Off") : lf("High Contrast On")} onClick={this.toggleHighContrast} tabIndex={-1} /> : undefined}
-            {showGreenScreen ? <sui.Item role="menuitem" text={greenScreen ? lf("Green Screen Off") : lf("Green Screen On")} onClick={this.toggleGreenScreen} tabIndex={-1} /> : undefined}
+            {targetTheme.selectLanguage ? <sui.Item icon='xicon globe' role="menuitem" text={lf("Language")} onClick={this.showLanguagePicker} /> : undefined}
+            {targetTheme.highContrast ? <sui.Item role="menuitem" text={highContrast ? lf("High Contrast Off") : lf("High Contrast On")} onClick={this.toggleHighContrast} /> : undefined}
+            {showGreenScreen ? <sui.Item role="menuitem" text={greenScreen ? lf("Green Screen Off") : lf("Green Screen On")} onClick={this.toggleGreenScreen} /> : undefined}
             {
                 // we always need a way to clear local storage, regardless if signed in or not
             }
-            {!isController ? <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} tabIndex={-1} /> : undefined}
-            {pxt.usb.isEnabled ? <sui.Item role="menuitem" icon='usb' text={lf("Pair device")} onClick={this.pair} tabIndex={-1} /> : undefined}
-            {pxt.webBluetooth.isAvailable() ? <sui.Item role="menuitem" icon='bluetooth' text={lf("Pair Bluetooth")} onClick={this.pairBluetooth} tabIndex={-1} /> : undefined}
+            {!isController ? <sui.Item role="menuitem" icon='sign out' text={lf("Reset")} onClick={this.showResetDialog} /> : undefined}
+            {pxt.usb.isEnabled ? <sui.Item role="menuitem" icon='usb' text={lf("Pair device")} onClick={this.pair} /> : undefined}
+            {pxt.webBluetooth.isAvailable() ? <sui.Item role="menuitem" icon='bluetooth' text={lf("Pair Bluetooth")} onClick={this.pairBluetooth} /> : undefined}
             <div className="ui mobile only divider"></div>
             {renderDocItems(this.props.parent, "mobile only")}
             <div className="ui divider"></div>
-            <sui.Item role="menuitem" text={lf("About...")} onClick={this.showAboutDialog} tabIndex={-1} />
-            {targetTheme.feedbackUrl ? <a className="ui item" href={targetTheme.feedbackUrl} role="menuitem" title={lf("Give Feedback")} target="_blank" rel="noopener noreferrer" tabIndex={-1}>{lf("Give Feedback")}</a> : undefined}
+            <sui.Item role="menuitem" text={lf("About...")} onClick={this.showAboutDialog} />
+            {targetTheme.feedbackUrl ? <a className="ui item" href={targetTheme.feedbackUrl} role="menuitem" title={lf("Give Feedback")} target="_blank" rel="noopener noreferrer" >{lf("Give Feedback")}</a> : undefined}
         </sui.DropdownMenu>;
     }
 }
@@ -315,6 +320,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         this.openBlocks = this.openBlocks.bind(this);
         this.openJavaScript = this.openJavaScript.bind(this);
         this.exitTutorial = this.exitTutorial.bind(this);
+        this.showReportAbuse = this.showReportAbuse.bind(this);
     }
 
     brandIconClick() {
@@ -364,8 +370,13 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         this.props.parent.exitTutorial();
     }
 
+    showReportAbuse() {
+        pxt.tickEvent("tutorial.reportabuse", undefined, { interactiveConsent: true });
+        this.props.parent.showReportAbuse();
+    }
+
     renderCore() {
-        const { home, header, highContrast, greenScreen } = this.props.parent.state;
+        const { home, header, highContrast, greenScreen, simState } = this.props.parent.state;
         if (home) return <div />; // Don't render if we're on the home screen
 
         const targetTheme = pxt.appTarget.appTheme;
@@ -374,8 +385,9 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         const sandbox = pxt.shell.isSandboxMode();
         const tutorialOptions = this.props.parent.state.tutorialOptions;
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
+        const tutorialReportId = tutorialOptions && tutorialOptions.tutorialReportId;
         const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox && !inTutorial;
-        const isRunning = this.props.parent.state.running;
+        const isRunning = simState == pxt.editor.SimState.Running;
         const hc = !!this.props.parent.state.highContrast;
         const showShare = !inTutorial && header && pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && !isController;
 
@@ -413,7 +425,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
                 </div>}
             {!inTutorial && !targetTheme.blocksOnly ? <div className="ui item link editor-menuitem">
                 <div className="ui grid padded">
-                    {sandbox ? <sui.Item className="sim-menuitem thin portrait only" role="menuitem" textClass="landscape only" text={lf("Simulator")} icon={simActive && isRunning ? "stop" : "play"} active={simActive} onClick={this.openSimView} title={!simActive ? lf("Show Simulator") : runTooltip} /> : undefined}
+                    {sandbox ? <sui.Item className="sim-menuitem" role="menuitem" textClass="landscape only" text={lf("Simulator")} icon={simActive && isRunning ? "stop" : "play"} active={simActive} onClick={this.openSimView} title={!simActive ? lf("Show Simulator") : runTooltip} /> : undefined}
                     <sui.Item className="blocks-menuitem" role="menuitem" textClass="landscape only" text={lf("Blocks")} icon="xicon blocks" active={blockActive} onClick={this.openBlocks} title={lf("Convert code to Blocks")} />
                     <sui.Item className="javascript-menuitem" role="menuitem" textClass="landscape only" text={lf("JavaScript")} icon="xicon js" active={javascriptActive} onClick={this.openJavaScript} title={lf("Convert code to JavaScript")} />
                     <div className="ui item toggle"></div>
@@ -425,6 +437,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
                 {sandbox || inTutorial ? undefined : <container.SettingsMenu parent={this.props.parent} highContrast={highContrast} greenScreen={greenScreen} />}
 
                 {sandbox && !targetTheme.hideEmbedEdit ? <sui.Item role="menuitem" icon="external" textClass="mobile hide" text={lf("Edit")} onClick={this.launchFullEditor} /> : undefined}
+                {inTutorial && tutorialReportId ? <sui.ButtonMenuItem className="report-tutorial-btn" role="menuitem" icon="warning circle" text={lf("Report Abuse")} textClass="landscape only" onClick={this.showReportAbuse} /> : undefined}
                 {inTutorial ? <sui.ButtonMenuItem className="exit-tutorial-btn" role="menuitem" icon="external" text={lf("Exit tutorial")} textClass="landscape only" onClick={this.exitTutorial} /> : undefined}
 
                 {!sandbox ? <a href={targetTheme.organizationUrl} aria-label={lf("{0} Logo", targetTheme.organization)} role="menuitem" target="blank" rel="noopener" className="ui item logo organization" onClick={this.orgIconClick}>

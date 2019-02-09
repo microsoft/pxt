@@ -1,4 +1,7 @@
 declare namespace pxt {
+
+    type CodeCardType = "file" | "example" | "codeExample" | "tutorial" | "side" | "template" | "package" | "hw";
+
     interface Map<T> {
         [index: string]: T;
     }
@@ -38,6 +41,7 @@ declare namespace pxt {
         simFiles?: string[];
         testFiles?: string[];
         testDependencies?: pxt.Map<string>;
+        cppDependencies?: pxt.Map<string>;
         public?: boolean;
         binaryonly?: boolean;
         platformio?: PlatformIOConfig;
@@ -55,7 +59,8 @@ declare namespace pxt {
         gistId?: string;
         extension?: PackageExtension; // describe the associated extension if any
         dalDTS?: {
-            includeDirs: string[];
+            corePackage?: string;
+            includeDirs?: string[];
             excludePrefix?: string[];
         };
         features?: string[];
@@ -99,6 +104,7 @@ declare namespace pxt {
         role?: string;
         ariaLabel?: string;
         label?: string;
+        labelIcon?: string;
         labelClass?: string;
         tags?: string[]; // tags shown in home screen, colors specified in theme
         tabIndex?: number;
@@ -117,7 +123,7 @@ declare namespace pxt {
         buyUrl?: string;
         feedbackUrl?: string;
         responsive?: boolean;
-        cardType?: "file" | "example" | "codeExample" | "tutorial" | "side" | "template" | "package" | "hw";
+        cardType?: CodeCardType;
 
         header?: string;
         any?: number;
@@ -131,9 +137,11 @@ declare namespace pxt {
         iconColor?: string;
 
         onClick?: (e: any) => void; // React event
+        onLabelClicked?: (e: any) => void;
 
         target?: string;
         className?: string;
+        variant?: string;
     }
 
     interface JRes {

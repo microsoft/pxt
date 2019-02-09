@@ -501,6 +501,10 @@ declare namespace Blockly {
     let VARIABLE_CATEGORY_NAME: string;
     let PROCEDURE_CATEGORY_NAME: string;
 
+    let NEXT_STATEMENT: number;
+    let DUMMY_INPUT: number;
+    let INPUT_VALUE: number;
+
     namespace utils {
         function wrap(tip: string, limit: number): string;
         function genUid(): string;
@@ -561,7 +565,7 @@ declare namespace Blockly {
         render_(): void;
         showEditor_(e?: Event): void;
         getAbsoluteXY_(): goog.math.Coordinate;
-        getScaledBBox_(): {top: number, bottom: number, left: number, right: number};
+        getScaledBBox_(): { top: number, bottom: number, left: number, right: number };
         setValue(newValue: string | number): void;
         getValue(): string;
         isCurrentlyEditable(): boolean;
@@ -639,7 +643,6 @@ declare namespace Blockly {
     class FieldNumber extends FieldTextInput {
         constructor(value: string | number, opt_min?: any, opt_max?: any, opt_precision?: any, opt_validator?: Function);
         setConstraints(min: any, max: any, precision?: any): void;
-        position_(): void;
     }
 
     class FieldLabel extends Field {
@@ -767,13 +770,28 @@ declare namespace Blockly {
         isInsertionMarker(): boolean;
         isShadow(): boolean;
 
-        render(): void;
+        render(opt_bubble?: boolean): void;
         bumpNeighbours_(): void;
         select(): void;
         getRelativeToSurfaceXY(): goog.math.Coordinate;
         getOutputShape(): number;
         getSvgRoot(): Element;
     }
+
+    class FunctionBlockAbstract extends Block {
+        getArguments: () => Functions.ArgumentInfo[];
+    }
+
+    class FunctionDeclarationBlock extends FunctionBlockAbstract {
+        updateFunctionSignature: () => void;
+        addBooleanExternal(): void;
+        addStringExternal(): void;
+        addNumberExternal(): void;
+        addCustomExternal(typeName: string): void;
+    }
+
+    class FunctionDefinitionBlock extends FunctionBlockAbstract { }
+    class FunctionCallBlock extends FunctionBlockAbstract { }
 
     class WorkspaceComment {
         getContent(): string;
@@ -829,6 +847,7 @@ declare namespace Blockly {
         connection: Connection;
         sourceBlock_: Block;
         fieldRow: Field[];
+        type: number;
 
         appendField(field: Field | string, opt_name?: string): Input;
         appendTitle(field: any, opt_name?: string): Input;
@@ -839,7 +858,7 @@ declare namespace Blockly {
         removeField(name: string): void;
         setAlign(align: number): Input;
         setCheck(check: string | string[]): Input;
-        setVisible(visible: boolean): Block;
+        setVisible(visible: boolean): Block[];
     }
 
     class Connection {
@@ -1047,6 +1066,7 @@ declare namespace Blockly {
         let flyoutCategory: (wp: Workspace) => HTMLElement[];
         let flyoutCategoryBlocks: (wp: Workspace) => HTMLElement[];
         function createVariable(wp: Workspace, opt_callback?: ((e: any) => void)): void;
+        function allUsedVarModels(ws: Blockly.Workspace): Blockly.VariableModel[];
     }
 
     class VariableModel {
@@ -1176,6 +1196,7 @@ declare namespace Blockly {
         function hideIfOwner(owner: any): void;
         function hideWithoutAnimation(): void;
         function showPositionedByBlock(owner: any, block: Blockly.Block, opt_onHide?: Function, opt_secondaryYOffset?: number): void;
+        function showPositionedByField(field: Blockly.Field, opt_onHide?: Function, opt_secondaryYOffset?: number): void;
         function clearContent(): void;
         function getContentDiv(): HTMLElement;
         function setColour(backgroundColour: string, borderColour: string): void;
@@ -1200,5 +1221,26 @@ declare namespace Blockly {
 
     class PXTUtils {
         static fadeColour(hex: string, luminosity: number, lighten: boolean): string;
+    }
+
+    namespace Functions {
+        interface ArgumentInfo {
+            type: string;
+            name: string;
+            id: string;
+        }
+        type ConfirmEditCallback = (mutation: Element) => void;
+        let editFunctionExternalHandler: (mutation: Element, cb: ConfirmEditCallback) => void;
+        function validateFunctionExternal(mutation: Element, targetWorkspace: Blockly.Workspace): boolean;
+        function flyoutCategory(workspace: Blockly.Workspace): HTMLElement[];
+        function isFunctionArgumentReporter(block: Blockly.Block): boolean;
+    }
+
+    namespace PXTBlockly {
+        namespace FunctionUtils {
+            let argumentIcons: {[typeName: string]: string};
+            let argumentDefaultNames: {[typeName: string]: string};
+            function createCustomArgumentReporter(typeName: string, ws: Blockly.Workspace): Blockly.Block;
+        }
     }
 }

@@ -10,6 +10,7 @@ import * as debug from "./debugger";
 import * as toolbox from "./toolbox";
 import * as snippets from "./blocksSnippets";
 import * as workspace from "./workspace";
+import { CreateFunctionDialog, CreateFunctionDialogState } from "./createFunction";
 
 import Util = pxt.Util;
 
@@ -22,6 +23,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     loadingXmlPromise: Promise<any>;
     compilationResult: pxt.blocks.BlockCompilationResult;
     isFirstBlocklyLoad = true;
+    functionsDialog: CreateFunctionDialog = null;
 
     showCategories: boolean = true;
     filters: pxt.editor.ProjectFilters;
@@ -138,11 +140,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
 
         this.typeScriptSaveable = false;
-        this.editor.clear();
+        pxt.blocks.clearWithoutEvents(this.editor);
         try {
             const text = s || `<block type="${ts.pxtc.ON_START_TYPE}"></block>`;
             const xml = Blockly.Xml.textToDom(text);
-            Blockly.Xml.domToWorkspace(xml, this.editor);
+            pxt.blocks.domToWorkspaceNoEvents(xml, this.editor);
 
             this.initLayout();
             this.editor.clearUndo();
@@ -151,7 +153,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.typeScriptSaveable = true;
         } catch (e) {
             pxt.log(e);
-            this.editor.clear();
+            pxt.blocks.clearWithoutEvents(this.editor);
             this.switchToTypeScript();
             this.changeCallback();
             return false;
@@ -266,7 +268,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         Blockly.prompt = function (message, defaultValue, callback) {
             return core.promptAsync({
                 header: message,
-                defaultValue: defaultValue,
+                initialValue: defaultValue,
                 agreeLbl: lf("Ok"),
                 disagreeLbl: lf("Cancel"),
                 size: "tiny"
@@ -348,9 +350,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private markIncomplete = false;
     isIncomplete() {
-        const incomplete = this.editor ? this.editor.isDragging()
-            || (Blockly as any).WidgetDiv.isVisible()
-            || (Blockly as any).DropDownDiv.isVisible() : false;
+        const incomplete = this.editor && ((this.editor as any).currentGesture_ && (this.editor as any).currentGesture_.isDraggingBlock_);
         if (incomplete) this.markIncomplete = true;
         return incomplete;
     }
@@ -381,7 +381,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.parent.setState({ hideEditorFloats: false });
                 workspace.fireEvent({ type: 'create', editor: 'blocks', blockId } as pxt.editor.events.CreateEvent);
             }
-            if (ev.type == 'ui') {
+            else if (ev.type == 'var_create') {
+                // a new variable was created,
+                // clear the toolbox caches as some blocks may need to be recomputed
+                this.clearFlyoutCaches();
+            }
+            else if (ev.type == 'ui') {
                 if (ev.element == 'category') {
                     let toolboxVisible = !!ev.newValue;
                     if (toolboxVisible) {
@@ -532,7 +537,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     showFunctionsFlyout() {
-        this.showFlyoutInternal_(Blockly.Procedures.flyoutCategory(this.editor));
+        if (pxt.appTarget.runtime &&
+            pxt.appTarget.runtime.functionsOptions &&
+            pxt.appTarget.runtime.functionsOptions.useNewFunctions) {
+            this.showFlyoutInternal_(Blockly.Functions.flyoutCategory(this.editor));
+        } else {
+            this.showFlyoutInternal_(Blockly.Procedures.flyoutCategory(this.editor));
+        }
     }
 
     getViewState() {
@@ -623,8 +634,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.typeScriptSaveable = false;
                 this.setDiagnostics(file)
                 this.delayLoadXml = file.content;
-                this.editor.clear();
-                this.editor.clearUndo();
+                pxt.blocks.clearWithoutEvents(this.editor);
                 this.closeFlyout();
 
                 if (this.currFile && this.currFile != file) {
@@ -657,6 +667,19 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     // Make sure the package has extensions enabled, and is a github package.
                     // Extensions are limited to github packages and ghpages, as we infer their url from the installedVersion config
                     .filter(config => !!config && !!config.extension && /^(file:|github:)/.test(config.installedVersion));
+
+                // Initialize the "Make a function" button
+                Blockly.Functions.editFunctionExternalHandler = (mutation: Element, cb: Blockly.Functions.ConfirmEditCallback) => {
+                    Promise.resolve()
+                        .delay(10)
+                        .then(() => {
+                            if (!this.functionsDialog) {
+                                const wrapper = document.body.appendChild(document.createElement('div'));
+                                this.functionsDialog = ReactDOM.render(React.createElement(CreateFunctionDialog), wrapper) as CreateFunctionDialog;
+                            }
+                            this.functionsDialog.show(mutation, cb, this.editor);
+                        });
+                }
             })
     }
 
@@ -755,7 +778,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             if (this.debugVariables) this.debugVariables.update(true);
             return;
         }
-        const vars = this.editor.getAllVariables().map((variable: any) => variable.name as string);
+        const vars = Blockly.Variables.allUsedVarModels(this.editor).map((variable: any) => variable.name as string);
         if (!vars.length) {
             if (this.debugVariables) this.debugVariables.clear();
             return;
@@ -905,8 +928,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             .then((config) => {
                 const repoStatus = pxt.github.repoStatus(parsedRepo, config);
                 const repoName = parsedRepo.fullName.substr(parsedRepo.fullName.indexOf(`/`) + 1);
-                const localDebug = pxt.Cloud.isLocalHost() && /^file:/.test(extension.installedVersion) && extension.extension.localUrl;
-                const debug = pxt.Cloud.isLocalHost() && /debugExtensions/i.test(window.location.href);
+                const localDebug = pxt.BrowserUtils.isLocalHost() && /^file:/.test(extension.installedVersion) && extension.extension.localUrl;
+                const debug = pxt.BrowserUtils.isLocalHost() && /debugExtensions/i.test(window.location.href);
                 /* tslint:disable:no-http-string */
                 const url = debug ? "http://localhost:3232/extension.html"
                     : localDebug ? extension.extension.localUrl : `https://${parsedRepo.owner}.github.io/${repoName}/`;
@@ -964,8 +987,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     protected clearCaches() {
         super.clearCaches();
-        this.flyoutBlockXmlCache = {};
+        this.clearFlyoutCaches();
         snippets.clearBuiltinBlockCache();
+    }
+
+    clearFlyoutCaches() {
+        this.flyoutBlockXmlCache = {};
     }
 
     shouldShowSearch() {
@@ -1143,9 +1170,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     protected showFlyoutGroupLabel(group: string, groupicon: string, labelLineWidth: string, helpCallback: string) {
         let groupLabel = pxt.blocks.createFlyoutGroupLabel(pxt.Util.rlf(`{id:group}${group}`),
-            groupicon, labelLineWidth, helpCallback ? `GROUP_HELP_${helpCallback}` : undefined);
+            groupicon, labelLineWidth, helpCallback ? `GROUP_HELP_${group}` : undefined);
         if (helpCallback) {
-            this.editor.registerButtonCallback(`GROUP_HELP_${helpCallback}`, (/*btn*/) => {
+            this.editor.registerButtonCallback(`GROUP_HELP_${group}`, (/*btn*/) => {
                 this.helpButtonCallback(group);
             })
         }
@@ -1159,7 +1186,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     protected showFlyoutBlocks(ns: string, color: string, blocks: toolbox.BlockDefinition[]) {
         const filters = this.parent.state.editorState ? this.parent.state.editorState.filters : undefined;
-        const categoryState = filters ? (filters.namespaces && filters.namespaces[ns] != undefined ? filters.namespaces[ns] : filters.defaultState) : undefined;
         blocks.sort((f1, f2) => {
             // Sort the blocks
             return (f2.attributes.weight != undefined ? f2.attributes.weight : 50)
@@ -1326,6 +1352,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     else {
                         varName = Util.htmlEscape(rawName);
                     }
+                    // since we are creating variable, generate a new name that does not
+                    // clash with existing variable names
+                    const variables = this.editor.getVariablesOfType("");
+                    let varNameUnique = varName;
+                    let index = 2;
+                    while (variables.some(v => v.name == varNameUnique)) {
+                        varNameUnique = varName + index++;
+                    }
+                    varName = varNameUnique;
+
                     const setblock = Blockly.Xml.textToDom(`
 <block type="variables_set" gap="${Util.htmlEscape((fn.attributes.blockGap || 8) + "")}">
 <field name="VAR" variabletype="">${varName}</field>

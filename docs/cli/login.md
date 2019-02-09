@@ -1,8 +1,8 @@
 # pxt-login Manual Page
 
-### @description Stores tokens for PXT or GitHub
+### @description Stores tokens for GitHub or Crowdin
 
-Stores tokens for PXT or GitHub
+Stores tokens for GitHub or Crowdin
 
 ```
 pxt login <service> <token>
@@ -18,7 +18,6 @@ Stores a service token.
 
 * **github**, GitHub token to create gists. See https://github.com/settings/tokens/new.
 * **crowdin**, Crowdin token to upload or download translations. See https://crowdin.com/project/kindscript/settings#api.
-* **pxt**, PXT token
 
 ### <token>
 

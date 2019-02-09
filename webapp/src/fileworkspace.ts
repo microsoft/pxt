@@ -96,7 +96,7 @@ function saveScreenshotAsync(h: Header, screenshot: string, icon: string) {
 }
 
 function resetAsync() {
-    if (electron.isPxtElectron())
+    if (pxt.BrowserUtils.isPxtElectron())
         return apiAsync("resetworkspace", {})
             .then(() => { });
     return Promise.resolve()

@@ -21,7 +21,7 @@ All the examples below give an example type annotation, but will work just the s
 
 ## Boolean
 
-The most basic datatype is the simple true/false value, which is called a `boolean` value.
+The most basic datatype is the simple `true` or `false` value, which is called a `boolean` value.
 
 ```typescript
 let isDone: boolean = false;
@@ -29,18 +29,33 @@ let isDone: boolean = false;
 
 ## Number
 
-### ~ hint
-In JavaScript, `numbers` are floating point values.
-However, for the @boardname@, `numbers` are integer values.
-### ~
+Both whole numbers and numbers with a fractional part are supported. Sometimes numbers are called _numeric literals_.
 
-Integer values can be specified via decimal, hexadecimal and octal notation:
+### Integers: whole numbers
+
+Integer values can be specified using decimal, hexadecimal, binary, and octal notation. When the number isn't expressed in its decimal form, special characters are used for notation to tell which form it is:
+
+* Decimal: no notation is used
+* Hexadecimal: prefix the value with `0x`
+* Binary: prefix the value with `0b`
+* Octal: prefix the value with `0o`
 
 ```typescript
 let decimal: number = 42;
 let hexadecimal: number = 0xf00d;
 let binary: number = 0b1010;
 let octal: number = 0o744;
+```
+
+### Floating point: numbers with a fractional part
+
+Numbers can have their fractional part too. The decimal point is between the digits of the number.
+But, _floating point_ numbers have the decimal point at any spot between digits, like: 3.14159 or 651.75.
+
+```typescript
+let num = 0
+num = 6.7
+num = 10.083
 ```
 
 ## String #string
@@ -54,7 +69,7 @@ color = 'red';
 ```
 
 You can also use *template strings*, which can span multiple lines and have embedded expressions.
-These strings are surrounded by the backtick/backquote (`` ` ``) character, and embedded expressions are of the form `${ expr }`.
+These strings are surrounded by the backtick/backquote (`` ` ``) character, and embedded expressions use the form `${ expr }`.
 
 ```typescript
 let fullName: string = `Bob Bobbington`;
@@ -125,7 +140,7 @@ The TypeScript type `any` is not supported in the @boardname@.
 
 ## Void
 
-`void` is the absence of having any type at all.
+`void` is the absence of any type at all.
 You may commonly see this as the return type of functions that do not return a value:
 
 ```typescript
@@ -157,7 +172,7 @@ let received = false;
 while (!received) {
     message = ports.readString();
     if (message != undefined)
-        recieved = true;
+        received = true;
     } else {
         pause(1000);
     }

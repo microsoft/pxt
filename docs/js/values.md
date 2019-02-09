@@ -2,6 +2,8 @@
 
 ## Ref-counting
 
+**Ref-counting will be dropped soon. Most targets by now use GC.**
+
 There are currently two types of ref-counted objects. There's a `RefCounted` type coming
 from Codal and `RefObject` one coming from PXT. They use exact same layout though, and will
 likely be unified more in the future.
@@ -79,3 +81,54 @@ The following operations have the integer fast-path implemented in assembly for 
 It's particularly important for `adds` and `subs` since they otherwise always
 use doubles (for easier overflow checking in C++). In the other cases it just saves a few
 cycles.
+
+## Strings
+
+There are multiple representations of JS strings. This is to support fast concatenation,
+as well as 16-bit characters, and constant time character lookup, while maintaining
+low memory usage.
+
+The following types are defined:
+
+* inline ASCII strings
+* inline UTF8 strings
+* cons tree strings
+* skip-list strings
+* long strings
+
+Let _header_ be 32 bit vtable pointer. This header is common for all object types, not only strings.
+
+Inline strings layout is: header, followed by 16 bit length, data (which is inline, hence the name).
+Inline ASCII strings only contain ASCII characters (0-127 inclusive).
+UTF8 string contain only valid, canonical [CESU-8](https://en.wikipedia.org/wiki/UTF-8#CESU-8)
+data (which is UTF-8, where surrogate pairs are encoded using 6 bytes, i.e., 2 characters 
+of 3 bytes each, to maintain JS compatibility).
+
+Instead of long (say over 30 characters) inline UTF8 strings, the compiler generates 
+skip-list strings.
+
+Cons tree strings consist of header, followed by pointers to two strings.
+They are made by `+` operation, and are turned into skip-list strings (or long
+strings) when they are used (eg., `charAt` or `length` are called).
+
+Skip-list strings consist of header, followed by 16 bit data byte length
+and 16 bit character count, followed by pointer to the data.
+Data consists of the skip list, followed by the actual UTF8 character data.
+Skip list `s` gives 16 bit indices into the UTF8 character data.
+`s[i]` points to character number `i * 16`.
+The skip list has `character count / 16` entries.
+
+Long strings are like skip-list strings, except that skip list indices are 32 bit.
+Long strings are not compiled in on targets with small memory.
+They are not implemented yet.
+
+For all strings, except for cons-strings, the data contained within them is valid, canonical
+UTF8, thus they can be sorted using byte sort and compared using `memcmp()`.
+
+The UTF8 representation is used so that it can be easily sent over wire (JACDAC, radio,
+WiFi, etc.) without conversion. It also lowers memory usage (compared to UTF-16 which
+is common in JS engines) for Latin alphabets with moderate usage of accents, as well 
+as other text which is mostly ASCII (eg. source code, XML, or JSON).
+
+The choice of CESU8 as opposed to plain UTF8, while unfortunate for on-wire transmission,
+is required to handle split surrogate pairs in JS-compatible way.

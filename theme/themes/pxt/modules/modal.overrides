@@ -46,6 +46,7 @@
 .ui.button.back-button {
     background: none !important;
     border: none !important;
+    box-shadow: none !important;
 }
 
 .ui.fullscreen.modal,
@@ -92,15 +93,6 @@
         }
     }
 
-    .header-actions {
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        flex-direction: row;
-        height: @mainMenuHeight;
-        background: @extensionsSecondaryBackground;
-    }
-
     > .content {
         padding: 1rem;
         flex: 1;
@@ -110,8 +102,9 @@
         border: 0;
     }
 
-    .has-actions .content {
+    .has-actions.content {
         height: calc(100% - (2 * @mainMenuHeight));
+        padding: 1.2rem;
     }
     .ui.button.back-button, .ui.help-button {
         color: @extensionsHeaderColor !important;
@@ -120,6 +113,37 @@
             border: 2px solid yellow !important;
             border-radius: 1px;
         } */
+    }
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-direction: row;
+    height: @mainMenuHeight;
+    background: @extensionsSecondaryBackground;
+    padding: 0 1rem;
+
+    .divider {
+        border: 0.5px solid @extensionsHeaderBackground;
+        height: 70%;
+        margin: 0.5rem;
+        margin-right: 0.75rem;
+        opacity: 0.3;
+    }
+
+    .ui.button {
+        background-color: @white;
+        color: @blue;
+        border: 1px solid @white;
+    }
+    .ui.button:focus, .ui.button:hover {
+        background-color: @white;
+        border-color: darken(@white, 30%);
+    }
+    .ui.button.red {
+        color: @red;
     }
 }
 
@@ -155,7 +179,7 @@
         > .header {
             height: @mobileMenuHeight;
         }
-        .has-actions .content {
+        .has-actions.content {
             height: calc(100% - @mobileMenuHeight - @mainMenuHeight);
         }
     }
@@ -182,7 +206,8 @@
     right: @innerCloseRight;
     color: @innerCloseColor;
     border-radius: 50%;
-    font-size: 34px;
+    font-size: 2.15rem;
+    line-height: 2.15rem;
     transition: all .15s ease-out;
     height: 2.15rem;
     width: 2.15rem;
@@ -190,7 +215,7 @@
 }
 .ui.modal > .closeIcon:focus .close,
 .ui.modal > .closeIcon:hover  .close {
-    box-shadow: 0 0 0 4px rgba(0,0,0,.35);
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.35);
     outline: none;
     transform: scale(1.1);
 }

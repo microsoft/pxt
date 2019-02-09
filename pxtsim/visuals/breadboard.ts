@@ -230,9 +230,9 @@ namespace pxsim.visuals {
                 let cx = xOff + j * opts.pinDist + colGaps * opts.pinDist;
                 let colIdx = j + colIdxOffset;
                 const addEl = (pin: SVGElAndSize) => {
-                    let pinX = cx - pin.w * 0.5;
-                    let pinY = cy - pin.h * 0.5;
-                    svg.hydrate(pin.el, {x: pinX, y: pinY});
+                    svg.hydrate(pin.el, pin.el.tagName == "circle"
+                        ? { cx, cy }
+                        : { x: cx - pin.w * 0.5, y: cy - pin.h * 0.5 });
                     grid.appendChild(pin.el);
                     return pin.el;
                 }
@@ -241,7 +241,7 @@ namespace pxsim.visuals {
                 let row = opts.getRowName(rowIdx);
                 let col = opts.getColName(colIdx);
                 let group = opts.getGroupName ? opts.getGroupName(rowIdx, colIdx) : null;
-                let gridPin: GridPin = {el: el, hoverEl: hoverEl, cx: cx, cy: cy, row: row, col: col, group: group};
+                let gridPin: GridPin = { el: el, hoverEl: hoverEl, cx: cx, cy: cy, row: row, col: col, group: group };
                 allPins.push(gridPin);
                 //column gaps
                 colGaps += removeAll(colIdxsWithGap, colIdx);
@@ -249,7 +249,7 @@ namespace pxsim.visuals {
             //row gaps
             rowGaps += removeAll(rowIdxsWithGap, rowIdx);
         }
-        return {g: grid, allPins: allPins};
+        return { g: grid, allPins: allPins };
     }
     function mkBBPin(): SVGElAndSize {
         let el = svg.elt("rect");
@@ -261,7 +261,7 @@ namespace pxsim.visuals {
             width: width,
             height: width
         });
-        return {el: el, w: width, h: width, x: 0, y: 0};
+        return { el: el, w: width, h: width, x: 0, y: 0 };
     }
     function mkBBHoverPin(): SVGElAndSize {
         let el = svg.elt("rect");
@@ -273,7 +273,7 @@ namespace pxsim.visuals {
             width: width,
             height: width,
         });
-        return {el: el, w: width, h: width, x: 0, y: 0};
+        return { el: el, w: width, h: width, x: 0, y: 0 };
     }
     export interface GridLabel {
         el: SVGTextElement,
@@ -294,7 +294,7 @@ namespace pxsim.visuals {
         if (extraClasses)
             extraClasses.forEach(c => svg.addClass(hoverEl, c));
 
-        let lbl = {el: el, hoverEl: hoverEl, txt: txt, group: group};
+        let lbl = { el: el, hoverEl: hoverEl, txt: txt, group: group };
         return lbl;
     }
     interface BBBar {
@@ -346,7 +346,7 @@ namespace pxsim.visuals {
             return pin;
         }
         public getCoord(rowCol: BBLoc): Coord {
-            let {row, col, xOffset, yOffset} = rowCol;
+            let { row, col, xOffset, yOffset } = rowCol;
             let pin = this.getPin(row, col);
             if (!pin)
                 return null;
@@ -372,7 +372,7 @@ namespace pxsim.visuals {
             this.defs = <SVGDefsElement>svg.child(this.bb, "defs", {});
 
             //background
-            svg.child(this.bb, "rect", { class: "sim-bb-background", width: WIDTH, height: HEIGHT, rx: BACKGROUND_ROUNDING, ry: BACKGROUND_ROUNDING});
+            svg.child(this.bb, "rect", { class: "sim-bb-background", width: WIDTH, height: HEIGHT, rx: BACKGROUND_ROUNDING, ry: BACKGROUND_ROUNDING });
 
             //mid channel
             let channelGid = "sim-bb-channel-grad";
@@ -387,7 +387,7 @@ namespace pxsim.visuals {
             let stop4 = svg.child(channelGrad, "stop", { offset: "100%", style: `stop-color: ${channelDark};` })
 
             const mkChannel = (cy: number, h: number, cls?: string) => {
-                let channel = svg.child(this.bb, "rect", { class: `sim-bb-channel ${cls || ""}`, y: cy - h / 2, width: WIDTH, height: h});
+                let channel = svg.child(this.bb, "rect", { class: `sim-bb-channel ${cls || ""}`, y: cy - h / 2, width: WIDTH, height: h });
                 channel.setAttribute("fill", `url(#${channelGid})`);
                 return channel;
             }
@@ -465,10 +465,10 @@ namespace pxsim.visuals {
 
             //tooltip
             this.allPins.forEach(pin => {
-                let {el, row, col, hoverEl} = pin
+                let { el, row, col, hoverEl } = pin
                 let title = `(${row},${col})`;
-                svg.hydrate(el, {title: title});
-                svg.hydrate(hoverEl, {title: title});
+                svg.hydrate(el, { title: title });
+                svg.hydrate(hoverEl, { title: title });
             })
 
             //catalog pins
@@ -483,7 +483,7 @@ namespace pxsim.visuals {
             const mkBBLabelAtPin = (row: string, col: string, xOffset: number, yOffset: number, txt: string, group?: string): GridLabel => {
                 let size = PIN_LBL_SIZE;
                 let rotation = LBL_ROTATION;
-                let loc = this.getCoord({type: "breadboard", row: row, col: col});
+                let loc = this.getCoord({ type: "breadboard", row: row, col: col });
                 let [cx, cy] = loc;
                 let t = mkBBLabel(cx + xOffset, cy + yOffset, size, rotation, txt, group);
                 return t;
@@ -543,13 +543,13 @@ namespace pxsim.visuals {
             //catalog lbls
             let lblNmToLbls: Map<GridLabel[]> = {};
             this.allLabels.forEach(lbl => {
-                let {el, txt} = lbl;
+                let { el, txt } = lbl;
                 let lbls = lblNmToLbls[txt] = lblNmToLbls[txt] || []
                 lbls.push(lbl);
             });
             const isPowerPin = (pin: GridPin) => pin.row === "-" || pin.row === "+";
             this.allPins.forEach(pin => {
-                let {row, col, group} = pin;
+                let { row, col, group } = pin;
                 let colToLbls = this.rowColToLbls[row] || (this.rowColToLbls[row] = {});
                 let lbls = colToLbls[col] || (colToLbls[col] = []);
                 if (isPowerPin(pin)) {
@@ -580,8 +580,9 @@ namespace pxsim.visuals {
                     x: x,
                     y: y - lnThickness / 2.0,
                     width: lnLen,
-                    height: lnThickness});
-                let bar: BBBar = {el: ln, group: group};
+                    height: lnThickness
+                });
+                let bar: BBBar = { el: ln, group: group };
                 return bar;
             }
             let barLines = [
@@ -623,8 +624,8 @@ namespace pxsim.visuals {
                 let [minX, maxX, minY, maxY] = [minFn(xs), maxFn(xs), minFn(ys), maxFn(ys)];
                 let wire = svg.elt("rect");
                 let width = Math.max(maxX - minX, 0.0001/*rects with no width aren't displayed*/);
-                let height =  Math.max(maxY - minY, 0.0001);
-                svg.hydrate(wire, {x: minX, y: minY, width: width, height: height});
+                let height = Math.max(maxY - minY, 0.0001);
+                svg.hydrate(wire, { x: minX, y: minY, width: width, height: height });
                 svg.addClass(wire, "sim-bb-group-wire")
                 let g = grpNmToGroup[grpNm];
                 g.appendChild(wire);
@@ -637,7 +638,7 @@ namespace pxsim.visuals {
             })
             //group lbls
             let miscLblGroup = <SVGGElement>svg.elt("g");
-            svg.hydrate(miscLblGroup, {class: "sim-bb-group-misc"});
+            svg.hydrate(miscLblGroup, { class: "sim-bb-group-misc" });
             groups.push(miscLblGroup);
             this.allLabels.forEach(l => {
                 if (l.group) {
@@ -655,13 +656,13 @@ namespace pxsim.visuals {
         }
 
         public getSVGAndSize(): SVGAndSize<SVGSVGElement> {
-            return {el: this.bb, y: 0, x: 0, w: WIDTH, h: HEIGHT};
+            return { el: this.bb, y: 0, x: 0, w: WIDTH, h: HEIGHT };
         }
 
         public highlightLoc(rowCol: BBLoc) {
-            let {row, col} = rowCol;
+            let { row, col } = rowCol;
             let pin = this.rowColToPin[row][col];
-            let {cx, cy} = pin;
+            let { cx, cy } = pin;
             let lbls = this.rowColToLbls[row][col];
             const highlightLbl = (lbl: GridLabel) => {
                 svg.addClass(lbl.el, "highlight");

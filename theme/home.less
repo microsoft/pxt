@@ -21,7 +21,6 @@
 }
 
 .projectsdialog {
-    background: @homeScreenBackground;
     position: relative;
     height: 100%;
     overflow: auto;
@@ -76,6 +75,13 @@
             padding-left: @carouselArrowSize;
             font-size: 20px;
             color: @homeHeaderColor;
+            &.myproject-header {
+                cursor: pointer;
+                outline: none;
+                &:focus, &:hover {
+                    color: fade(@homeHeaderColor, 80%);
+                }
+            }
         }
         .ui.padded.grid.heading, .heading {
             margin-bottom: -1rem !important;
@@ -116,30 +122,10 @@
             line-height: 15px !important;
         }
     }
-    .ui.card {
-        margin-right: 5px;
-        border-radius: @homeCardBorderRadius;
-        color: @homeCardColor;
-        border: @homeCardBorderSize solid @homeCardBorderColor !important;
-        background-color: @homeCardBackgroundColor;
-        .ui.image, .ui.imagewrapper, .content {
-            border-radius: @homeCardImageBorderRadius !important;
-        }
-        .header {
-            color: @homeCardHeaderColor;
-        }
-        .meta {
-            color: @homeCardMetaColor;
-        }
-    }
     .ui.card:hover {
         border: @homeCardBorderSize solid @homeCardHoverBorderColor !important;
         background-color: @homeCardHoverBackgroundColor;
         transform: scale(1.1);
-    }
-    .ui.card:focus {
-        outline: none;
-        border: @homeCardBorderSize solid @homeCardFocusBorderColor !important;
     }
     .header {
         user-select: none;
@@ -232,24 +218,50 @@
             z-index: 1;
         }
         >.close .remove.icon {
-            font-size: 34px;
+            font-size: 2.15rem;
+            line-height: 2.15rem;
             cursor: pointer;
-            width: 2.0rem;
+            width: 2.15rem;
             color: @homeDetailCloseColor;
-            height: 2.0rem;
+            height: 2.15rem;
             transition: all 0.15s ease-out;
             opacity: 0.9;
             border-radius: 50%;
-            padding-top: 0.3rem;
-            outline: none;
             background-color: @homeDetailCloseBackground;
         }
         > .close .remove.icon:hover, > .close .remove.icon:focus {
             opacity: 1;
             transform: scale(1.1, 1.1);
-            box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.35);
+            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.35);
         }
     }
+}
+
+.scriptmanager, .projectsdialog {
+    .ui.card {
+        margin-right: 5px;
+        border-radius: @homeCardBorderRadius;
+        color: @homeCardColor;
+        border: @homeCardBorderSize solid @homeCardBorderColor !important;
+        background-color: @homeCardBackgroundColor;
+        .ui.image, .ui.imagewrapper, .content {
+            border-radius: @homeCardImageBorderRadius !important;
+        }
+        .header {
+            color: @homeCardHeaderColor;
+        }
+        .meta {
+            color: @homeCardMetaColor;
+        }
+    }
+    .ui.card:focus {
+        outline: none;
+        border: @homeCardBorderSize solid @homeCardFocusBorderColor !important;
+    }
+}
+
+.ui.fullscreen.modal.scriptmanager > .content, .projectsdialog {
+    background: @homeScreenBackground;
 }
 
 
@@ -384,7 +396,7 @@
             width: 9rem;
             height: 9rem;
         }
-        .ui.card.newprojectcard {
+        .ui.card.buttoncard {
             .content {
                 padding: 1rem;
             }
@@ -422,6 +434,7 @@
             }
             .meta {
                 font-size: 0.7rem;
+                padding: 0;
             }
         }
         .getting-started-segment {

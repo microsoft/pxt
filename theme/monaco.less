@@ -1,6 +1,7 @@
 /* Import all components */
 @import 'themes/default/globals/site.variables';
 @import 'themes/pxt/globals/site.variables';
+@import 'spriteeditor.less';
 
 /* Reference import */
 @import (reference) "semantic.less";
@@ -220,4 +221,14 @@
 
 .monacoDraggableBlock:focus {
     outline: none; /* We highlight the focused item in the toolbox, no need to outline */
+}
+
+.monaco-field-editor-frame {
+    padding: 4px;
+    position: relative;
+}
+
+.pxt-view-zone {
+    width: 100%;
+    z-index: calc(@monacoFlyoutZIndex - 1);
 }

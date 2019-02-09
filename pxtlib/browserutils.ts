@@ -111,8 +111,31 @@ namespace pxt.BrowserUtils {
 
     export function isTouchEnabled(): boolean {
         return typeof window !== "undefined" &&
-            ('ontouchstart' in window               // works on most browsers
-                || navigator.maxTouchPoints > 0);       // works on IE10/11 and Surface);
+            ('ontouchstart' in window                              // works on most browsers
+                || (navigator && navigator.maxTouchPoints > 0));       // works on IE10/11 and Surface);
+    }
+
+    export function isPxtElectron(): boolean {
+        return typeof window != "undefined" && !!(window as any).pxtElectron;
+    }
+
+    export function isIpcRenderer(): boolean {
+        return typeof window != "undefined" && !!(window as any).ipcRenderer;
+    }
+    export function isElectron() {
+        return isPxtElectron() || isIpcRenderer();
+    }
+
+    export function isLocalHost(): boolean {
+        try {
+            return /^http:\/\/(localhost|127\.0\.0\.1):\d+\//.test(window.location.href)
+                && !/nolocalhost=1/.test(window.location.href)
+                && !(pxt.webConfig && pxt.webConfig.isStatic);
+        } catch (e) { return false; }
+    }
+
+    export function isLocalHostDev(): boolean {
+        return isLocalHost() && !isElectron();
     }
 
     export function hasPointerEvents(): boolean {
@@ -350,7 +373,30 @@ namespace pxt.BrowserUtils {
         });
     }
 
-    function resolveCdnUrl(path: string): string {
+    export function loadCanvasAsync(url: string): Promise<HTMLCanvasElement> {
+        return loadImageAsync(url)
+            .then(img => {
+                const canvas = document.createElement("canvas")
+                canvas.width = img.width
+                canvas.height = img.height
+                const ctx = canvas.getContext("2d")
+                ctx.drawImage(img, 0, 0);
+                return canvas;
+            })
+    }
+
+    export function imageDataToPNG(img: ImageData): string {
+        if (!img) return undefined;
+
+        const canvas = document.createElement("canvas")
+        canvas.width = img.width
+        canvas.height = img.height
+        const ctx = canvas.getContext("2d")
+        ctx.putImageData(img, 0, 0);
+        return canvas.toDataURL("image/png");
+    }
+
+    export function resolveCdnUrl(path: string): string {
         // don't expand full urls
         if (/^https?:\/\//i.test(path))
             return path;
@@ -391,18 +437,27 @@ namespace pxt.BrowserUtils {
         });
     }
 
+    let loadScriptPromises: pxt.Map<Promise<void>> = {};
     export function loadScriptAsync(path: string): Promise<void> {
         const url = resolveCdnUrl(path);
-        pxt.debug(`script: loading ${url}`);
-        return new Promise<void>((resolve, reject) => {
-            const script = document.createElement('script');
-            script.type = 'text/javascript';
-            script.src = url;
-            script.async = true;
-            script.addEventListener('load', () => resolve());
-            script.addEventListener('error', (e) => reject(e));
-            document.body.appendChild(script);
-        });
+        let p = loadScriptPromises[url];
+        if (!p) {
+            p = loadScriptPromises[url] = new Promise<void>((resolve, reject) => {
+                pxt.debug(`script: loading ${url}`);
+                const script = document.createElement('script');
+                script.type = 'text/javascript';
+                script.addEventListener('load', () => resolve());
+                script.addEventListener('error', (e) => {
+                    // might have had connection issue, allow to try later
+                    delete loadScriptPromises[url];
+                    reject(e);
+                });
+                script.src = url;
+                script.async = true;
+                document.body.appendChild(script);
+            });
+        }
+        return p;
     }
 
     export function loadAjaxAsync(url: string): Promise<string> {
@@ -538,18 +593,16 @@ namespace pxt.BrowserUtils {
     export const scheduleStorageCleanup = hasNavigator() && (<any>navigator).storage && (<any>navigator).storage.estimate // some browser don't support this
         ? ts.pxtc.Util.throttle(function () {
             const MIN_QUOTA = 1000000; // 1Mb
-            const MAX_USAGE_BYTES = 100000000; // 100Mb
-            const MAX_USAGE_RATIO = 0.5; // max 50% 
+            const MAX_USAGE_RATIO = 0.9; // max 90%
 
             storageEstimateAsync()
                 .then(estimate => {
                     // quota > 50%
-                    pxt.log(`storage estimate: ${(estimate.usage / estimate.quota * 100) >> 0}%, ${(estimate.usage / 1000000) >> 0}/${(estimate.quota / 1000000) >> 0}Mb`)
+                    pxt.debug(`storage estimate: ${(estimate.usage / estimate.quota * 100) >> 0}%, ${(estimate.usage / 1000000) >> 0}/${(estimate.quota / 1000000) >> 0}Mb`)
                     if (estimate.quota
                         && estimate.usage
                         && estimate.quota > MIN_QUOTA
-                        && (estimate.usage > MAX_USAGE_BYTES ||
-                            (estimate.usage / estimate.quota) > MAX_USAGE_RATIO)) {
+                        && (estimate.usage / estimate.quota) > MAX_USAGE_RATIO) {
                         pxt.log(`quota usage exceeded, clearing translations`);
                         pxt.tickEvent('storage.cleanup');
                         return clearTranslationDbAsync();
@@ -852,5 +905,56 @@ namespace pxt.BrowserUtils {
         return _translationDbPromise
             .then(db => db.clearAsync())
             .catch(e => deleteDbAsync().done());
+    }
+
+    export interface IPointerEvents {
+        up: string,
+        down: string[],
+        move: string,
+        enter: string,
+        leave: string
+    }
+
+    export const pointerEvents: IPointerEvents = hasPointerEvents() ? {
+        up: "pointerup",
+        down: ["pointerdown"],
+        move: "pointermove",
+        enter: "pointerenter",
+        leave: "pointerleave"
+    } : isTouchEnabled() ?
+            {
+                up: "mouseup",
+                down: ["mousedown", "touchstart"],
+                move: "touchmove",
+                enter: "touchenter",
+                leave: "touchend"
+            } :
+            {
+                up: "mouseup",
+                down: ["mousedown"],
+                move: "mousemove",
+                enter: "mouseenter",
+                leave: "mouseleave"
+            };
+    export function popupWindow(url: string, title: string, popUpWidth: number, popUpHeight: number) {
+        try {
+            const winLeft = window.screenLeft ? window.screenLeft : window.screenX;
+            const winTop = window.screenTop ? window.screenTop : window.screenY;
+            const width = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+            const height = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+            const left = ((width / 2) - (popUpWidth / 2)) + winLeft;
+            const top = ((height / 2) - (popUpHeight / 2)) + winTop;
+
+            const popupWindow = window.open(url, title, "width=" + popUpWidth + ", height=" + popUpHeight + ", top=" + top + ", left=" + left);
+            if (popupWindow.focus) {
+                popupWindow.focus();
+            }
+
+            return popupWindow;
+        } catch (e) {
+            // Error opening popup
+            pxt.tickEvent('pxt.popupError', { url: url, msg: e.message });
+            return null;
+        }
     }
 }

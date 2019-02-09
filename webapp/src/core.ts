@@ -138,7 +138,9 @@ export interface ConfirmOptions extends DialogOptions {
 }
 
 export interface PromptOptions extends ConfirmOptions {
-    defaultValue: string;
+    initialValue?: string;
+    placeholder?: string;
+    onInputChanged?: (newValue?: string) => void;
 }
 
 export interface DialogOptions {
@@ -190,6 +192,7 @@ export function confirmAsync(options: ConfirmOptions): Promise<number> {
             label: options.agreeLbl || lf("Go ahead!"),
             className: options.agreeClass,
             icon: options.agreeIcon || "checkmark",
+            approveButton: true,
             onclick: () => {
                 result = 1;
             }
@@ -211,9 +214,11 @@ export function confirmAsync(options: ConfirmOptions): Promise<number> {
         .then(() => result)
 }
 
-export function confirmDelete(what: string, cb: () => Promise<void>) {
+export function confirmDelete(what: string, cb: () => Promise<void>, multiDelete?: boolean) {
     confirmAsync({
-        header: lf("Would you like to delete '{0}'?", what),
+        header: multiDelete ?
+            lf("Would you like to delete {0} projects?", what) :
+            lf("Would you like to delete '{0}'?", what),
         body: lf("It will be deleted for good. No undo."),
         agreeLbl: lf("Delete"),
         agreeClass: "red",
@@ -229,18 +234,17 @@ export function promptAsync(options: PromptOptions): Promise<string> {
     options.type = 'prompt';
     if (!options.buttons) options.buttons = []
 
-    let result = "";
+    let result = options.initialValue || "";
     let cancelled: boolean = false;
+
+    options.onInputChanged = (v: string) => { result = v };
 
     if (!options.hideAgree) {
         options.buttons.push({
             label: options.agreeLbl || lf("Go ahead!"),
             className: options.agreeClass,
             icon: options.agreeIcon || "checkmark",
-            onclick: () => {
-                let dialogInput = document.getElementById('promptDialogInput') as HTMLInputElement;
-                result = dialogInput.value;
-            }
+            approveButton: true
         })
     }
 
@@ -256,21 +260,6 @@ export function promptAsync(options: PromptOptions): Promise<string> {
         });
         options.hideCancel = true;
     }
-
-    options.onLoaded = (ref: HTMLElement) => {
-        let dialogInput = document.getElementById('promptDialogInput') as HTMLInputElement;
-        if (dialogInput) {
-            dialogInput.setSelectionRange(0, 9999);
-            dialogInput.onkeyup = (e: KeyboardEvent) => {
-                const charCode = keyCodeFromEvent(e);
-                if (charCode === ENTER_KEY) {
-                    e.preventDefault();
-                    const firstButton = ref.getElementsByClassName("approve positive").item(0) as HTMLElement;
-                    if (firstButton) firstButton.click();
-                }
-            }
-        }
-    };
 
     return dialogAsync(options)
         .then(() => cancelled ? null : result);
@@ -318,7 +307,8 @@ export function findChild(c: React.Component<any, any>, selector: string): Eleme
 
 export function parseQueryString(qs: string) {
     let r: pxt.Map<string> = {}
-    qs.replace(/\+/g, " ").replace(/([^&=]+)=?([^&]*)/g, (f: string, k: string, v: string) => {
+
+    qs.replace(/\+/g, " ").replace(/([^#?&=]+)=([^#?&=]*)/g, (f: string, k: string, v: string) => {
         r[decodeURIComponent(k)] = decodeURIComponent(v)
         return ""
     })

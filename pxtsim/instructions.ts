@@ -123,9 +123,10 @@ namespace pxsim.instructions {
         crocClips?: boolean
     };
 
-    function mkBoardImgSvg(def: string | BoardImageDefinition): visuals.SVGElAndSize {
+    function mkBoardImgSvg(def: BoardDefinition): visuals.SVGElAndSize {
         const boardView = pxsim.visuals.mkBoardView({
-            visual: def
+            visual: def.visual,
+            boardDef: def
         });
         return boardView.getView();
     }
@@ -354,6 +355,7 @@ namespace pxsim.instructions {
         };
         let boardHost = new visuals.BoardHost(pxsim.visuals.mkBoardView({
             visual: opts.boardDef.visual,
+            boardDef: opts.boardDef,
             wireframe: opts.wireframe
         }), opts);
         let view = boardHost.getView();
@@ -396,7 +398,8 @@ namespace pxsim.instructions {
             let wires = props.stepToWires[i];
             if (wires) {
                 wires.forEach(w => {
-                    let wire = board.addWire(w)
+                    let wire = board.addWire(w);
+                    if (!wire) return;
                     //last step
                     if (i === step) {
                         //location highlights
@@ -406,7 +409,7 @@ namespace pxsim.instructions {
                             board.highlightBoardPin((<BoardLoc>w.start).pin);
                         }
                         if (w.end.type == "breadboard") {
-                            let lbls = board.highlightBreadboardPin((<BBLoc>w.end));
+                            board.highlightBreadboardPin((<BBLoc>w.end));
                         } else {
                             board.highlightBoardPin((<BoardLoc>w.end).pin);
                         }
@@ -428,7 +431,7 @@ namespace pxsim.instructions {
         let panel = mkPanel();
 
         // board and breadboard
-        let boardImg = mkBoardImgSvg(props.boardDef.visual);
+        let boardImg = mkBoardImgSvg(props.boardDef);
         let board = wrapSvg(boardImg, { left: QUANT_LBL(1), leftSize: QUANT_LBL_SIZE, cmpScale: PARTS_BOARD_SCALE });
         panel.appendChild(board);
         let bbRaw = mkBBSvg();

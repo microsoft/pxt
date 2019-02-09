@@ -49,6 +49,9 @@ CACHE:
 /blb/smoothie/smoothie_compressed.js
 /blb/images/Bars_black.gif
 
+# gifjs
+/blb/gifjs/gif.js
+
 # ai
 /blb/ai.0.js
 

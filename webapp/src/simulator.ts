@@ -18,14 +18,10 @@ export const FAST_TRACE_INTERVAL = 100;
 export const SLOW_TRACE_INTERVAL = 500;
 
 export let driver: pxsim.SimulatorDriver;
-let nextFrameId: number = 0;
-const themes = ["blue", "red", "green", "yellow"];
 let config: SimulatorConfig;
 let lastCompileResult: pxtc.CompileResult;
-let tutorialMode: boolean;
 let displayedModals: pxt.Map<boolean> = {};
 export let simTranslations: pxt.Map<string>;
-let dirty = false;
 
 export function setTranslations(translations: pxt.Map<string>) {
     simTranslations = translations;
@@ -44,8 +40,9 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
     root.appendChild(debuggerDiv);
 
     let options: pxsim.SimulatorDriverOptions = {
+        restart: () => cfg.restartSimulator(),
         revealElement: (el) => {
-            if (pxt.options.light) return;
+            if (pxt.options.light || driver.isLoanedSimulator(el)) return;
             // Play enter animation
             const animation = pxt.appTarget.appTheme.simAnimationEnter || 'fly right in';
             el.style.animationDuration = '500ms';
@@ -204,7 +201,11 @@ export function init(root: HTMLElement, cfg: SimulatorConfig) {
         onTopLevelCodeEnd: () => {
             postSimEditorEvent("toplevelfinished");
         },
-        stoppedClass: getStoppedClass()
+        stoppedClass: pxt.appTarget.simulator && pxt.appTarget.simulator.stoppedClass,
+        invalidatedClass: pxt.appTarget.simulator && pxt.appTarget.simulator.invalidatedClass,
+        autoRun: pxt.appTarget.simulator && (pxt.options.light
+            ? !!pxt.appTarget.simulator.autoRunLight
+            : !!pxt.appTarget.simulator.autoRun)
     };
     driver = new pxsim.SimulatorDriver(document.getElementById('simulators'), options);
     config = cfg
@@ -221,6 +222,7 @@ function postSimEditorEvent(subtype: string, exception?: string) {
     }
 }
 
+let tutorialMode: boolean = false;
 export function setState(editor: string, tutMode?: boolean) {
     if (config && config.editor != editor) {
         config.editor = editor;
@@ -230,27 +232,18 @@ export function setState(editor: string, tutMode?: boolean) {
     tutorialMode = tutMode;
 }
 
-export function makeDirty() { // running outdated code
-    pxsim.U.addClass(driver.container, getInvalidatedClass());
-    dirty = true;
-
-    // We suspend the simulator here to stop it from running without
-    // interfering with the user's stopped state. We're not doing this check
-    // in the driver because the driver should be able to switch from any state
-    // to the suspend state, but in this codepath we only want to switch to the
-    // suspended state if we're running
-    if (driver.state == pxsim.SimulatorState.Running) driver.suspend();
+export function setDirty() { // running outdated code
+    driver.setDirty();
 }
 
-export function isDirty(): boolean { // in need of a restart?
-    return dirty;
+export function setStarting() {
+    driver.setStarting();
 }
 
 export function run(pkg: pxt.MainPackage, debug: boolean,
     res: pxtc.CompileResult, mute?: boolean,
     highContrast?: boolean, light?: boolean,
     clickTrigger?: boolean) {
-    makeClean();
     const js = res.outfiles[pxtc.BINARY_JS]
     const boardDefinition = pxt.appTarget.simulator.boardDefinition;
     const parts = pxtc.computeUsedParts(res, true);
@@ -273,47 +266,45 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
         version: pkg.version(),
         clickTrigger: clickTrigger
     }
+    //if (pxt.options.debug)
+    //    pxt.debug(JSON.stringify(opts, null, 2))
     postSimEditorEvent("started");
 
     driver.run(js, opts);
 }
 
 export function mute(mute: boolean) {
+    if (!driver) return;
     driver.mute(mute);
 }
 
-export function stop(unload?: boolean) {
+export function stop(unload?: boolean, starting?: boolean) {
     if (!driver) return;
-
-    makeClean();
-    driver.stop(unload);
+    driver.stop(unload, starting);
 }
 
 export function suspend() {
     if (!driver) return;
-
-    makeClean();
     driver.suspend();
 }
 
 export function hide(completeHandler?: () => void) {
-    if (!pxt.appTarget.simulator.headless) {
-        makeDirty();
-    }
+    if (!driver) return;
     driver.hide(completeHandler);
 }
 
 export function unhide() {
+    if (!driver) return;
     driver.unhide();
 }
 
 export function setTraceInterval(intervalMs: number) {
+    if (!driver) return;
     driver.setTraceInterval(intervalMs);
 }
 
 export function proxy(message: pxsim.SimulatorCustomMessage) {
     if (!driver) return;
-
     driver.postMessage(message);
 }
 
@@ -341,23 +332,4 @@ export function dbgStepOut() {
     if (driver.state == pxsim.SimulatorState.Paused) {
         driver.resume(pxsim.SimulatorDebuggerCommand.StepOut);
     }
-}
-
-function makeClean() {
-    pxsim.U.removeClass(driver.container, getInvalidatedClass());
-    dirty = false;
-}
-
-function getInvalidatedClass() {
-    if (pxt.appTarget.simulator && pxt.appTarget.simulator.invalidatedClass) {
-        return pxt.appTarget.simulator.invalidatedClass;
-    }
-    return "sepia";
-}
-
-function getStoppedClass() {
-    if (pxt.appTarget.simulator && pxt.appTarget.simulator.stoppedClass) {
-        return pxt.appTarget.simulator.stoppedClass;
-    }
-    return undefined;
 }

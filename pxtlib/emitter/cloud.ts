@@ -2,7 +2,7 @@ namespace pxt.Cloud {
     import Util = pxtc.Util;
 
     // hit /api/ to stay on same domain and avoid CORS
-    export let apiRoot = isLocalHost() || Util.isNodeJS ? "https://www.makecode.com/api/" : "/api/";
+    export let apiRoot = pxt.BrowserUtils.isLocalHost() || Util.isNodeJS ? "https://www.makecode.com/api/" : "/api/";
     export let accessToken = "";
     export let localToken = "";
     let _isOnline = true;
@@ -16,14 +16,6 @@ namespace pxt.Cloud {
 
     export function hasAccessToken() {
         return !!accessToken
-    }
-
-    export function isLocalHost(): boolean {
-        try {
-            return /^http:\/\/(localhost|127\.0\.0\.1):\d+\//.test(window.location.href)
-                && !/nolocalhost=1/.test(window.location.href)
-                && !(pxt.webConfig && pxt.webConfig.isStatic);
-        } catch (e) { return false; }
     }
 
     export function localRequestAsync(path: string, data?: any) {
@@ -43,7 +35,7 @@ namespace pxt.Cloud {
             return offlineError(options.url);
         }
         if (!options.headers) options.headers = {}
-        if (pxt.Cloud.isLocalHost()) {
+        if (pxt.BrowserUtils.isLocalHost()) {
             if (Cloud.localToken)
                 options.headers["Authorization"] = Cloud.localToken;
         } else if (accessToken) {
@@ -77,7 +69,7 @@ namespace pxt.Cloud {
 
         const targetVersion = pxt.appTarget.versions && pxt.appTarget.versions.target;
         const url = pxt.webConfig && pxt.webConfig.isStatic ? `targetconfig.json` : `config/${pxt.appTarget.id}/targetconfig${targetVersion ? `/v${targetVersion}` : ''}`;
-        if (Cloud.isLocalHost())
+        if (pxt.BrowserUtils.isLocalHost())
             return localRequestAsync(url).then(r => r ? r.json : undefined)
         else
             return Cloud.privateGetAsync(url);
@@ -89,8 +81,8 @@ namespace pxt.Cloud {
         })
     }
 
-    // 1h check on markdown content
-    const MARKDOWN_EXPIRATION = 1 * 60 * 60 * 1000;
+    // 1h check on markdown content if not on development server
+    const MARKDOWN_EXPIRATION = pxt.BrowserUtils.isLocalHostDev() ? 1 : 1 * 60 * 60 * 1000;
     export function markdownAsync(docid: string, locale?: string, live?: boolean): Promise<string> {
         const branch = "";
         return pxt.BrowserUtils.translationDbAsync()
@@ -135,7 +127,7 @@ namespace pxt.Cloud {
             url += `&lang=${encodeURIComponent(Util.userLanguage())}`
             if (live) url += "&live=1"
         }
-        if (Cloud.isLocalHost() && !live)
+        if (pxt.BrowserUtils.isLocalHost() && !live)
             return localRequestAsync(url).then(resp => {
                 if (resp.statusCode == 404)
                     return privateRequestAsync({ url, method: "GET" })

@@ -77,7 +77,7 @@ namespace ts.pxtc {
             return "TBD(load_reg_src_off)";
         }
         rt_call(name: string, r0: string, r1: string) { return "TBD(rt_call)"; }
-        call_lbl(lbl: string) { return "TBD(call_lbl)" }
+        call_lbl(lbl: string, saveStack?: boolean) { return "TBD(call_lbl)" }
         call_reg(reg: string) { return "TBD(call_reg)" }
         vcall(mapMethod: string, isSet: boolean, vtableShift: number) {
             return "TBD(vcall)"
@@ -88,15 +88,48 @@ namespace ts.pxtc {
         helper_prologue() { return "TBD(lambda_prologue)" }
         helper_epilogue() { return "TBD(lambda_epilogue)" }
         pop_clean(pops: boolean[]) { return "TBD" }
-        load_ptr(lbl: string, reg: string) { return "TBD(load_ptr)" }
         load_ptr_full(lbl: string, reg: string) { return "TBD(load_ptr_full)" }
         emit_int(v: number, reg: string) { return "TBD(emit_int)" }
 
-        string_literal(lbl: string, s: string) {
+        obj_header(vt: string) {
+            if (target.gc)
+                return `.word ${vt}`
+            else
+                return `.short ${pxt.REFCNT_FLASH}, ${vt}>>${target.vtableShift}`
+        }
+
+        string_literal(lbl: string, strLit: string) {
+            const SKIP_INCR = 16
+            let vt = "pxt::string_inline_ascii_vt"
+            let utfLit = target.utf8 ? U.toUTF8(strLit, true) : strLit
+            if (utfLit !== strLit) {
+                if (utfLit.length > SKIP_INCR) {
+                    vt = "pxt::string_skiplist16_vt"
+                    let skipList: number[] = []
+                    let off = 0
+                    for (let i = 0; i + SKIP_INCR <= strLit.length; i += SKIP_INCR) {
+                        off += U.toUTF8(strLit.slice(i, i + SKIP_INCR), true).length
+                        skipList.push(off)
+                    }
+                    return `
+.balign 4
+${lbl}meta: ${this.obj_header(vt)}
+        .short ${utfLit.length}, ${strLit.length}
+        .word ${lbl}data
+${lbl}data:
+        .short ${skipList.map(s => s.toString()).join(", ")}
+${lbl}: .string ${asmStringLiteral(utfLit)}
+`
+                } else {
+                    vt = "pxt::string_inline_utf8_vt"
+                }
+            }
+
             return `
 .balign 4
-${lbl}meta: .short 0xffff, ${pxt.REF_TAG_STRING}, ${s.length}
-${lbl}: .string ${asmStringLiteral(s)}
+${lbl}meta: ${this.obj_header(vt)}
+        .short ${utfLit.length}
+${lbl}: .string ${asmStringLiteral(utfLit)}
 `
         }
 
@@ -104,7 +137,8 @@ ${lbl}: .string ${asmStringLiteral(s)}
         hex_literal(lbl: string, data: string) {
             return `
 .balign 4
-${lbl}: .short 0xffff, ${pxt.REF_TAG_BUFFER}, ${data.length >> 1}, 0x0000
+${lbl}: ${this.obj_header("pxt::buffer_vt")}
+        .short ${data.length >> 1}, 0x0000
         .hex ${data}${data.length % 4 == 0 ? "" : "00"}
 `
         }
@@ -132,12 +166,20 @@ ${lbl}: .short 0xffff, ${pxt.REF_TAG_BUFFER}, ${data.length >> 1}, 0x0000
         private calls: ProcCallInfo[] = []
         private proc: ir.Procedure = null;
         private baseStackSize = 0; // real stack size is this + exprStack.length
+        private labelledHelpers: pxt.Map<string> = {};
 
         constructor(t: AssemblerSnippets, bin: Binary, proc: ir.Procedure) {
             this.t = t as any; // TODO in future, figure out if we follow the "Snippets" architecture
             this.bin = bin;
             this.proc = proc;
-            this.work();
+            if (this.proc)
+                this.work();
+        }
+
+        public emitHelpers() {
+            this.emitLambdaTrampoline()
+            this.emitArrayMethods()
+            this.emitFieldMethods()
         }
 
         private write = (s: string) => { this.resText += asmline(s); }
@@ -165,39 +207,37 @@ ${lbl}: .short 0xffff, ${pxt.REF_TAG_BUFFER}, ${data.length >> 1}, 0x0000
             else return npush
         }
 
-        private alignStack(offset = 0) {
-            let npush = this.stackAlignmentNeeded(offset)
-            if (!npush) return ""
-            this.write(this.t.push_locals(npush))
-            return this.t.pop_locals(npush)
-        }
-
         public getAssembly() {
             return this.resText;
         }
 
         private work() {
-            let name = this.proc.getName()
-            if (assembler.debug && this.proc.action) {
-                let info = ts.pxtc.nodeLocationInfo(this.proc.action)
-                name += " " + info.fileName + ":" + (info.line + 1)
-            }
             this.write(`
 ;
-; Function ${name}
+; Function ${this.proc.getFullName()}
 ;
 `)
 
-            if (this.proc.args.length <= 3)
-                this.emitLambdaWrapper(this.proc.isRoot)
+            this.emitLambdaWrapper(this.proc.isRoot)
 
             let baseLabel = this.proc.label()
             let bkptLabel = baseLabel + "_bkpt"
             let locLabel = baseLabel + "_locals"
             let endLabel = baseLabel + "_end"
             this.write(`.section code`)
+            this.write(`${baseLabel}:`)
+
+            if (this.proc.classInfo && this.proc.info.thisParameter
+                && !target.switches.skipClassCheck
+                && !target.switches.noThisCheckOpt) {
+                this.write(`mov r7, lr`)
+                this.write(`ldr r0, [sp, #0]`)
+                this.emitInstanceOf(this.proc.classInfo, "validate")
+                this.write("mov lr, r7")
+            }
+
             this.write(`
-${baseLabel}:
+${baseLabel}_nochk:
     @stackmark func
     @stackmark args
 `)
@@ -241,9 +281,16 @@ ${baseLabel}:
             }
             this.baseStackSize = 1 // push {lr}
             let numlocals = this.proc.locals.length
+
+            this.write("push {lr}")
+            this.write(".locals:\n")
+            if (this.proc.perfCounterNo) {
+                this.write(this.t.emit_int(this.proc.perfCounterNo, "r0"))
+                this.write("bl pxt::startPerfCounter")
+            }
+
             this.write(this.t.proc_setup(numlocals))
             this.baseStackSize += numlocals
-
 
             this.write("@stackmark locals")
             this.write(`${locLabel}:`)
@@ -293,10 +340,19 @@ ${baseLabel}:
             assert(0 <= numlocals && numlocals < 127);
             if (numlocals > 0)
                 this.write(this.t.pop_locals(numlocals))
+
+            if (this.proc.perfCounterNo) {
+                this.write("mov r4, r0")
+                this.write(this.t.emit_int(this.proc.perfCounterNo, "r0"))
+                this.write("bl pxt::stopPerfCounter")
+                this.write("mov r0, r4")
+            }
+
             this.write(`${endLabel}:`)
             this.write(this.t.proc_return())
             this.write("@stackempty func");
             this.write("@stackempty args")
+            this.write("; endfun")
         }
 
         private mkLbl(root: string) {
@@ -427,10 +483,7 @@ ${baseLabel}:
                     else oops();
                     break;
                 case ir.EK.PointerLiteral:
-                    if (e.args)
-                        this.write(this.t.load_ptr_full(e.data, reg))
-                    else
-                        this.write(this.t.load_ptr(e.data, reg))
+                    this.write(this.t.load_ptr_full(e.data, reg))
                     break;
                 case ir.EK.SharedRef:
                     let arg = e.args[0]
@@ -457,7 +510,11 @@ ${baseLabel}:
                             this.write(this.t.emit_int(cell.index, reg))
                             off = reg
                         }
-                        this.write(this.t.load_reg_src_off(reg, "r6", off, false, false, inf))
+                        if (target.gc) {
+                            this.write(this.t.load_reg_src_off("r7", "r6", "#0"))
+                            this.write(this.t.load_reg_src_off(reg, "r7", off, false, false, inf))
+                        } else
+                            this.write(this.t.load_reg_src_off(reg, "r6", off, false, false, inf))
                     } else {
                         let [src, imm, idx] = this.cellref(cell)
                         this.write(this.t.load_reg_src_off(reg, src, imm, idx))
@@ -504,9 +561,8 @@ ${baseLabel}:
                     this.emitCallRaw("pxt::decr")
                     break;
                 case ir.EK.FieldAccess:
-                    let info = e.data as FieldAccessInfo
-                    // it does the decr itself, no mask
-                    return this.emitExpr(ir.rtcall(this.withRef("pxtrt::ldfld", info.isRef), [e.args[0], ir.numlit(info.idx)]))
+                    this.emitExpr(e.args[0])
+                    return this.emitFieldAccess(e)
                 case ir.EK.Store:
                     return this.emitStore(e.args[0], e.args[1])
                 case ir.EK.RuntimeCall:
@@ -518,9 +574,331 @@ ${baseLabel}:
                 case ir.EK.Sequence:
                     e.args.forEach(e => this.emitExpr(e))
                     return this.clearStack()
+                case ir.EK.InstanceOf:
+                    this.emitExpr(e.args[0])
+                    return this.emitInstanceOf(e.data, e.jsInfo)
                 default:
                     return this.emitExprInto(e, "r0")
             }
+        }
+
+        private emitFieldAccess(e: ir.Expr, store = false) {
+            let info = e.data as FieldAccessInfo
+            let pref = store ? "st" : "ld"
+            let lbl = pref + "fld_" + info.classInfo.id + "_" + info.name
+            if (info.needsCheck && !target.switches.skipClassCheck) {
+                this.emitInstanceOf(info.classInfo, "validateDecr")
+                lbl += "_chk"
+            }
+
+            if (target.gc) {
+                let off = info.idx * 4 + 4
+                let xoff = "#" + off
+                if (off > 124) {
+                    this.t.emit_int(off, "r3")
+                    xoff = "r3"
+                }
+                if (store)
+                    this.write(`str r1, [r0, ${xoff}]`)
+                else
+                    this.write(`ldr r0, [r0, ${xoff}]`)
+                return
+            }
+
+            this.emitLabelledHelper(lbl, () => {
+                let off = info.idx * 4 + 4
+                let xoff = "#" + off
+                if (off > 124) {
+                    this.t.emit_int(off, "r3")
+                    xoff = "r3"
+                }
+
+                this.write(`mov r7, lr`)
+
+                if (store) {
+                    this.write(`push {r0, r1}`)
+                    this.write(`ldr r0, [r0, ${xoff}]`)
+                    this.write(`bl _pxt_decr`)
+                    this.write(`pop {r0, r1}`)
+                    if (off > 124)
+                        this.t.emit_int(off, "r3")
+                    this.write(`str r1, [r0, ${xoff}]`)
+                    if (info.needsCheck)
+                        this.write(`ldrh r2, [r0, #0]`)
+                } else {
+                    this.write(`ldr r4, [r0, ${xoff}]`)
+                }
+
+
+                if (info.needsCheck) {
+                    // already decremented, but need to check for refcnt=0
+                    this.write(`cmp r2, #1`)
+                    this.write(`bne .notzero`)
+                    this.write(`bl pxt::deleteRefObject`)
+                    this.write(`.notzero:`)
+                } else {
+                    // need to decrement
+                    this.write(`bl _pxt_decr`)
+                }
+
+                if (!store) {
+                    this.write(`mov r0, r4`)
+                    this.write(`bl _pxt_incr`)
+                }
+
+                this.write(`bx r7`)
+            })
+        }
+
+        private emitClassCall(procid: ir.ProcId) {
+            let effIdx = procid.virtualIndex + firstMethodOffset()
+            this.write(this.t.emit_int(effIdx * 4, "r1"))
+
+            let info = procid.classInfo
+            let suff = ""
+            if (procid.isThis)
+                suff += "_this"
+            this.emitLabelledHelper("classCall_" + info.id + suff, () => {
+                this.write(`ldr r0, [sp, #0] ; ld-this`)
+                this.loadVTable()
+                if (!target.switches.skipClassCheck && !procid.isThis)
+                    this.checkSubtype(info)
+                this.write(`ldr r1, [r3, r1] ; ld-method`)
+                this.write(`bx r1 ; keep lr from caller`)
+                this.write(`.fail:`)
+                this.write(this.t.callCPP("pxt::failedCast"))
+            })
+        }
+
+        private ifaceCallCore(numargs: number, getset: string, noObjlit = false) {
+            this.write(`
+                ldr r2, [r3, #12] ; load mult
+                movs r7, r2
+                beq .objlit ; built-in types have mult=0
+                muls r7, r1
+                lsrs r7, r2
+                lsls r7, r7, #1 ; r7 - hash offset
+                ldr r3, [r3, #4] ; iface table
+                adds r3, r3, r7
+                ; r0-this, r1-method idx, r2-free, r3-hash entry, r4-num args, r7-free
+                `)
+
+            for (let i = 0; i < vtLookups; ++i) {
+                if (i > 0)
+                    this.write("    adds r3, #2")
+                this.write(`
+                ldrh r2, [r3, #0] ; r2-offset of descriptor
+                ldrh r7, [r2, r3] ; r7-method idx
+                cmp r7, r1
+                beq .hit
+                `)
+            }
+
+            if (getset == "get") {
+                this.write("movs r0, #0 ; undefined")
+                this.write("bx lr")
+            } else
+                this.write("b .fail2")
+
+            this.write(`
+            .hit:
+                adds r3, r3, r2 ; r3-descriptor
+                ldr r2, [r3, #4]
+                lsls r7, r2, #31
+                beq .field
+            `)
+
+            if (getset == "set") {
+                this.write(`
+                    ; check for next descriptor
+                    ldrh r7, [r3, #8]
+                    cmp r7, r1
+                    bne .fail2 ; no setter!
+                    ldr r2, [r3, #12]
+                `)
+            }
+
+            this.write(this.t.emit_int(numargs, "r4"))
+            this.write("bx r2")
+
+            if (!noObjlit) {
+                this.write(`
+                .objlit:
+                    ldrh r2, [r3, #8]
+                    cmp r2, #${pxt.BuiltInType.RefMap}
+                    bne .fail
+                    mov r4, lr
+                `)
+
+                if (getset && !target.gc) {
+                    this.write("movs r3, #0")
+                    this.write("str r3, [sp, #0] ; clear so it won't get decr()ed outside")
+                }
+
+                if (getset == "set") {
+                    this.write("ldr r2, [sp, #4] ; ld-val")
+                    if (!target.gc)
+                        this.write("str r3, [sp, #4] ; clear so it won't get decr()ed outside")
+                }
+
+                this.write(this.t.callCPP(getset == "set" ? "pxtrt::mapSet" : "pxtrt::mapGet"))
+
+                if (getset) {
+                    this.write("bx r4")
+                } else {
+                    this.write("mov lr, r4")
+                    this.write("b .moveArgs")
+                }
+            }
+
+            this.write(".field:")
+            if (getset == "set") {
+                if (target.gc) {
+                    this.write(`
+                        ldr r3, [sp, #4] ; ld-val
+                        str r3, [r0, r2] ; store field
+                        bx lr
+                    `)
+                } else {
+                    this.write(`
+                        ldr r7, [r0, r2] ; load field
+                        ldr r3, [sp, #4] ; ld-val
+                        str r7, [sp, #4] ; save previous value - it will get decr()ed outside
+                        str r3, [r0, r2] ; store field
+                        bx lr
+                    `)
+                }
+            } else if (getset == "get") {
+                if (target.gc) {
+                    this.write(`
+                        ldr r0, [r0, r2] ; load field
+                        bx lr
+                    `)
+                } else {
+                    this.write(`
+                        mov r4, lr
+                        ldr r0, [r0, r2] ; load field
+                        bl _pxt_incr
+                        bx r4
+                    `)
+                }
+            } else {
+                if (target.gc) {
+                    this.write(`
+                        ldr r0, [r0, r2] ; load field
+                    `)
+                } else {
+                    this.write(`
+                        mov r4, lr
+                        ldr r7, [r0, r2] ; load field
+                        bl _pxt_decr
+                        mov r0, r7
+                        bl _pxt_incr
+                        mov lr, r4
+                    `)
+                }
+            }
+
+            if (!getset) {
+                this.write(`.moveArgs:`)
+
+                for (let i = 0; i < numargs; ++i) {
+                    if (i == numargs - 1)
+                        // we keep the actual lambda value on the stack, so it gets decremented
+                        this.write(`movs r1, r0`)
+                    else
+                        this.write(`ldr r1, [sp, #4*${i + 1}]`)
+                    this.write(`str r1, [sp, #4*${i}]`)
+                }
+
+                // one argument consumed
+                this.lambdaCall(numargs - 1)
+            }
+
+            if (noObjlit)
+                this.write(".objlit:")
+
+            this.write(`
+            .fail:
+                ${this.t.callCPP("pxt::failedCast")}
+            .fail2:
+                ${this.t.callCPP("pxt::missingProperty")}
+            `)
+        }
+
+        private emitIfaceCall(procid: ir.ProcId, numargs: number, getset = "") {
+            U.assert(procid.ifaceIndex > 0)
+            this.write(this.t.emit_int(procid.ifaceIndex, "r1"))
+
+            this.emitLabelledHelper("ifacecall" + numargs + "_" + getset, () => {
+                this.write(`ldr r0, [sp, #0] ; ld-this`)
+                this.loadVTable()
+                this.ifaceCallCore(numargs, getset)
+            })
+        }
+
+        // vtable in r3; clobber r2
+        private checkSubtype(info: ClassInfo, failLbl = ".fail", r2 = "r2") {
+            this.write(`ldrh ${r2}, [r3, #8]`)
+            this.write(`cmp ${r2}, #${info.classNo}`)
+            if (info.classNo == info.lastSubtypeNo) {
+                this.write(`bne ${failLbl}`) // different class
+            } else {
+                this.write(`blt ${failLbl}`)
+                this.write(`cmp ${r2}, #${info.lastSubtypeNo}`)
+                this.write(`bgt ${failLbl}`)
+            }
+        }
+
+        // keep r0, keep r1, clobber r2, vtable in r3
+        private loadVTable(decr = false, r2 = "r2") {
+            this.write(`lsls ${r2}, r0, #30`)
+            this.write(`bne .fail`) // tagged
+            this.write(`cmp r0, #0`)
+            this.write(`beq .fail`) // null
+
+            this.write(`ldr r3, [r0, #0]`)
+
+            if (!target.gc) {
+                this.write(`lsls ${r2}, r3, #30`)
+                this.write(`beq .fail`) // C++ class - TODO remove
+                if (decr) {
+                    this.write(`lsls ${r2}, r3, #31`)
+                    this.write(`beq .inflash`)
+                    this.write(`uxth ${r2}, r3`)
+                    this.write(`subs ${r2}, #2`)
+                    this.write(`blt .fail`) // ref-cnt underflow!
+                    this.write(`strh ${r2}, [r0, #0]`)
+                    this.write(`.inflash:`)
+                }
+                this.write(`lsrs r3, r3, #16`)
+                this.write(`lsls r3, r3, #${target.vtableShift}`)
+            }
+
+            this.write("; vtable in R3")
+        }
+
+        private emitInstanceOf(info: ClassInfo, tp: string) {
+            let lbl = "inst_" + info.id + "_" + tp
+
+            this.emitLabelledHelper(lbl, () => {
+                this.loadVTable(tp == "validateDecr")
+                this.checkSubtype(info)
+
+                if (tp == "bool") {
+                    this.write(`movs r0, #${taggedTrue}`)
+                    this.write(`bx lr`)
+                    this.write(`.fail:`)
+                    this.write(`movs r0, #${taggedFalse}`)
+                    this.write(`bx lr`)
+                } else if (tp == "validate" || tp == "validateDecr") {
+                    this.write(`bx lr`)
+                    this.write(`.fail:`)
+                    this.write(this.t.callCPP("pxt::failedCast"))
+                } else {
+                    U.oops()
+                }
+            })
         }
 
         private emitSharedDef(e: ir.Expr) {
@@ -553,8 +931,11 @@ ${baseLabel}:
                 r.currUses = 1
             }
 
-            if (refs.length == 0) {
+            if (target.gc || refs.length == 0) {
                 // no helper in that case
+                for (let r of refs) {
+                    r.currUses = 1
+                }
                 this.clearStack()
                 return
             }
@@ -572,7 +953,7 @@ ${baseLabel}:
                         this.exprStack.shift()
                         refs.splice(idx, 1)
                         this.write(this.t.pop_fixed(["r0"]))
-                        this.write(this.t.inline_decr(k++, this.stackSize()))
+                        this.write(this.t.inline_decr(k++))
                     } else {
                         break
                     }
@@ -581,7 +962,7 @@ ${baseLabel}:
                     let r = refs.shift()
                     r.currUses = 1
                     this.write(this.loadFromExprStack("r0", r))
-                    this.write(this.t.inline_decr(k++, this.stackSize()))
+                    this.write(this.t.inline_decr(k++))
                 }
                 this.clearStack()
                 this.write(this.t.mov("r0", "r7"))
@@ -593,7 +974,11 @@ ${baseLabel}:
             this.write(`@dummystack ${-numPops}`)
         }
 
-        private emitRtCall(topExpr: ir.Expr) {
+        private builtInClassNo(typeNo: pxt.BuiltInType): ClassInfo {
+            return { id: "builtin" + typeNo, classNo: typeNo, lastSubtypeNo: typeNo } as any
+        }
+
+        private emitRtCall(topExpr: ir.Expr, genCall: () => void = null) {
             let name: string = topExpr.data
 
             let maskInfo = topExpr.mask || { refMask: 0 }
@@ -649,19 +1034,38 @@ ${baseLabel}:
                 if (convArgs.length) {
                     const conv = this.redirectOutput(() => {
                         let off = 0
-                        if (this.t.stackAligned())
-                            off += 2
-                        else
-                            off += 1
+                        if (!target.switches.inlineConversions) {
+                            if (this.t.stackAligned())
+                                off += 2
+                            else
+                                off += 1
+                        }
                         for (let a of convArgs) {
-                            this.write(this.loadFromExprStack("r0", a.expr, off))
-                            this.alignedCall(a.conv.method, "", off)
-                            if (a.conv.returnsRef)
-                                // replace the entry on the stack with the return value,
-                                // as the original was already decr'ed, but the result
-                                // has yet to be
-                                this.write(this.loadFromExprStack("r0", a.expr, off, true))
-                            this.write(this.t.push_fixed(["r0"]))
+                            if (isThumb() && a.conv.method == "pxt::toInt") {
+                                // SPEED 2.5%
+                                this.write(this.loadFromExprStack("r0", a.expr, off))
+                                this.write("asrs r0, r0, #1")
+                                let idx = target.switches.inlineConversions ? a.expr.getId() : off
+                                this.write("bcs .isint" + idx)
+                                this.write("lsls r0, r0, #1")
+                                this.alignedCall(a.conv.method, "", off)
+                                this.write(".isint" + idx + ":")
+                                this.write(this.t.push_fixed(["r0"]))
+                            } else {
+                                this.write(this.loadFromExprStack("r0", a.expr, off))
+                                if (a.conv.refTag) {
+                                    if (!target.switches.skipClassCheck)
+                                        this.emitInstanceOf(this.builtInClassNo(a.conv.refTag), "validate")
+                                } else {
+                                    this.alignedCall(a.conv.method, "", off)
+                                    if (a.conv.returnsRef)
+                                        // replace the entry on the stack with the return value,
+                                        // as the original was already decr'ed, but the result
+                                        // has yet to be
+                                        this.write(this.loadFromExprStack("r0", a.expr, off, true))
+                                }
+                                this.write(this.t.push_fixed(["r0"]))
+                            }
                             off++
                         }
                         for (let a of U.reversed(convArgs)) {
@@ -673,7 +1077,10 @@ ${baseLabel}:
                                 this.write(this.loadFromExprStack("r" + a.idx, a.expr, off))
                         }
                     })
-                    this.emitHelper(this.t.helper_prologue() + conv + this.t.helper_epilogue(), "conv")
+                    if (target.switches.inlineConversions)
+                        this.write(conv)
+                    else
+                        this.emitHelper(this.t.helper_prologue() + conv + this.t.helper_epilogue(), "conv")
                 } else {
                     // not really worth a helper; some of this will be peep-holed away
                     for (let a of complexArgs)
@@ -685,9 +1092,12 @@ ${baseLabel}:
                 if (a.isSimple)
                     this.emitExprInto(a.expr, "r" + a.idx)
 
-
-            if (name != "langsupp::ignore")
-                this.alignedCall(name)
+            if (genCall) {
+                genCall()
+            } else {
+                if (name != "langsupp::ignore")
+                    this.alignedCall(name, "", 0, true)
+            }
 
             if (clearStack) {
                 this.clearArgs(complexArgs.filter(a => !a.isRef).map(a => a.expr),
@@ -695,10 +1105,20 @@ ${baseLabel}:
             }
         }
 
-        private alignedCall(name: string, cmt = "", off = 0) {
-            let unalign = this.alignStack(off)
-            this.write(this.t.call_lbl(name) + cmt)
-            this.write(unalign)
+        private alignedCall(name: string, cmt = "", off = 0, saveStack = false) {
+            if (U.startsWith(name, "_cmp_") || U.startsWith(name, "_pxt_"))
+                saveStack = false
+            this.write(this.t.call_lbl(name, saveStack, this.stackAlignmentNeeded(off)) + cmt)
+        }
+
+        private emitLabelledHelper(lbl: string, generate: () => void) {
+            if (!this.labelledHelpers[lbl]) {
+                let outp = this.redirectOutput(generate)
+                this.emitHelper(outp, lbl)
+                this.labelledHelpers[lbl] = this.bin.codeHelpers[outp];
+            } else {
+                this.write(this.t.call_lbl(this.labelledHelpers[lbl]))
+            }
         }
 
         private emitHelper(asm: string, baseName = "hlp") {
@@ -740,16 +1160,271 @@ ${baseLabel}:
         private alignExprStack(numargs: number) {
             let interAlign = this.stackAlignmentNeeded(numargs)
             if (interAlign) {
-                this.write(this.t.push_locals(interAlign))
-                for (let i = 0; i < interAlign; ++i)
+                if (!target.gc)
+                    this.write(this.t.push_locals(interAlign))
+                for (let i = 0; i < interAlign; ++i) {
+                    // r5 should be safe to push on gc stack
+                    if (target.gc)
+                        this.write(`push {r5} ; align`)
                     this.pushDummy()
+                }
             }
+        }
+
+        private emitFieldMethods() {
+            for (let op of ["get", "set"]) {
+                this.write(`
+                .section code
+                _pxt_map_${op}:
+                `)
+
+                this.loadVTable(false, "r4")
+                this.checkSubtype(this.builtInClassNo(pxt.BuiltInType.RefMap), ".notmap", "r4")
+
+                this.write(this.t.callCPPPush(op == "set" ? "pxtrt::mapSetByString" : "pxtrt::mapGetByString"))
+                this.write(".notmap:")
+
+                let numargs = op == "set" ? 2 : 1
+                let hasAlign = false
+
+                this.write("mov r4, r3 ; save VT")
+
+                if (op == "set") {
+                    if (target.stackAlign) {
+                        hasAlign = true
+                        this.write("push {lr} ; align")
+                    }
+                    if (target.gc) {
+                        this.write(`
+                            push {r0, r2, lr}
+                            mov r0, r1
+                        `)
+                    } else {
+                        this.write(`
+                            mov r7, r1
+                            push {r0, r2, lr}
+                            bl _pxt_incr
+                            ldr r0, [sp, #4]
+                            bl _pxt_incr
+                            mov r0, r7
+                        `)
+                    }
+                } else {
+                    if (target.gc) {
+                        this.write(`
+                            push {r0, lr}
+                            mov r0, r1
+                        `)
+                    } else {
+                        this.write(`
+                            mov r7, r1
+                            push {r0, lr}
+                            bl _pxt_incr
+                            mov r0, r7
+                        `)
+                    }
+                }
+
+                this.write(`
+                    bl pxtrt::lookupMapKey
+                    mov r1, r0 ; put key index in r1
+                    ldr r0, [sp, #0] ; restore obj pointer
+                    mov r3, r4 ; restore vt
+                    bl .dowork
+                `)
+
+                if (!target.gc) {
+                    this.write("mov r7, r0")
+                    for (let i = 0; i < numargs; ++i) {
+                        this.write("pop {r0}")
+                        this.write("bl _pxt_decr")
+                    }
+                    if (hasAlign)
+                        this.write(this.t.pop_locals(1))
+                    this.write("mov r0, r7")
+                } else {
+                    this.write(this.t.pop_locals(numargs + (hasAlign ? 1 : 0)))
+                }
+
+                this.write("pop {pc}")
+
+                this.write(".dowork:")
+                this.ifaceCallCore(numargs, op, true)
+            }
+        }
+
+        private emitArrayMethod(op: string, isBuffer: boolean) {
+            this.write(`
+            .section code
+            _pxt_${isBuffer ? "buffer" : "array"}_${op}:
+            `)
+
+            this.loadVTable(false, "r4")
+
+            let classNo = this.builtInClassNo(!isBuffer ?
+                pxt.BuiltInType.RefCollection : pxt.BuiltInType.BoxedBuffer)
+            if (!target.switches.skipClassCheck)
+                this.checkSubtype(classNo, ".fail", "r4")
+
+            // on linux we use 32 bits for array size
+            const ldrSize = target.stackAlign || isBuffer ? "ldr" : "ldrh"
+
+            this.write(`
+                asrs r1, r1, #1
+                bcc .notint
+                ${ldrSize} r4, [r0, #${isBuffer ? 4 : 8}]
+                cmp r1, r4
+                bhs .oob
+            `)
+
+            let off = "r1"
+            if (isBuffer) {
+                off = "#8"
+                this.write(`
+                    adds r4, r0, r1
+                `);
+            } else {
+                this.write(`
+                    lsls r1, r1, #2
+                    ldr r4, [r0, #4]
+                `);
+            }
+
+            let suff = isBuffer ? "b" : ""
+            let conv = isBuffer && op == "get" ? "lsls r0, r0, #1\nadds r0, #1" : ""
+
+            if (op == "set") {
+                this.write(`
+                        str${suff} r2, [r4, ${off}]
+                        bx lr
+                    `)
+            } else {
+                this.write(`
+                        ldr${suff} r0, [r4, ${off}]
+                        ${conv}
+                        bx lr
+                    `)
+            }
+
+            this.write(`
+            .notint:
+                lsls r1, r1, #1
+                push {r0, r2}
+                mov r0, r1
+                ${this.t.callCPP("pxt::toInt")}
+                mov r1, r0
+                pop {r0, r2}
+            ${op == "set" ? ".oob:" : ""}
+                ${this.t.pushLR()}
+                ${this.t.callCPP(`Array_::${op}At`)}
+                ${conv}
+                ${this.t.popPC()}
+
+            .fail:
+                bl pxt::failedCast
+            `)
+
+            if (op == "get") {
+                this.write(`
+                    .oob:
+                        movs r0, #${isBuffer ? 1 : 0} ; 0 or undefined
+                        bx lr
+                `)
+            }
+
+        }
+
+        private emitArrayMethods() {
+            for (let op of ["get", "set"]) {
+                this.emitArrayMethod(op, true)
+                this.emitArrayMethod(op, false)
+            }
+        }
+
+        private emitLambdaTrampoline() {
+            let gcNo = target.gc ? ";" : ""
+            let rfNo = !target.gc ? ";" : ""
+            let r3 = target.stackAlign ? "r3," : ""
+            this.write(`
+            .section code
+            _pxt_lambda_trampoline:
+                push {${r3} r4, r5, r6, r7, lr}
+                mov r4, r1
+                mov r5, r2
+                mov r6, r3
+                mov r7, r0`)
+            // TODO should inline this?
+            this.emitInstanceOf(this.builtInClassNo(pxt.BuiltInType.RefAction), "validate")
+            this.write(`
+                ${rfNo}mov r0, sp
+                push {r4, r5, r6, r7} ; push args and the lambda
+                ${rfNo}mov r1, sp
+                ${rfNo}bl pxt::pushThreadContext
+                ${gcNo}bl pxtrt::getGlobalsPtr
+                mov r6, r0          ; save ctx or globals
+                mov r5, r7          ; save lambda for closure
+                ${gcNo}mov r0, r7
+                ${gcNo}bl _pxt_incr        ; make sure lambda stays alive
+                ldr r0, [r5, #8]    ; ld fnptr
+                movs r4, #3         ; 3 args
+                blx r0              ; execute the actual lambda
+                mov r7, r0          ; save result
+                @dummystack 4
+                add sp, #4*4        ; remove arguments and lambda
+                ${gcNo}mov r0, r5   ; decrement lambda
+                ${gcNo}bl _pxt_decr
+                ${rfNo}mov r0, r6   ; or pop the thread context
+                ${rfNo}bl pxt::popThreadContext
+                mov r0, r7 ; restore result
+                pop {${r3} r4, r5, r6, r7, pc}`)
+
+            this.write(`
+            .section code
+            _pxt_stringConv:
+            `)
+
+            this.loadVTable()
+            this.checkSubtype(this.builtInClassNo(pxt.BuiltInType.BoxedString), ".notstring")
+
+            this.write(`
+                bx lr
+
+            .notstring: ; no string, but vtable in r3
+                ldr r7, [r3, #4*${firstMethodOffset() - 1}]
+                cmp r7, #0
+                beq .fail
+                push {r0, lr}
+                ${gcNo}bl _pxt_incr
+                movs r4, #1
+                blx r7
+                ${rfNo}str r0, [sp, #0]
+                ${gcNo}mov r7, r0
+                ${gcNo}pop {r0}
+                ${gcNo}bl _pxt_decr
+                ${gcNo}mov r0, r7
+                ${gcNo}push {r7}
+                b .numops
+
+            .fail: ; not an object or no toString
+                push {r0, lr}
+            .numops:
+                ${this.t.callCPP("numops::toString")}
+                ${rfNo}pop {r1}
+                ${gcNo}mov r7, r0
+                ${gcNo}pop {r0}
+                ${gcNo}bl _pxt_decr
+                ${gcNo}mov r0, r7
+                pop {pc}
+            `)
         }
 
         private emitProcCall(topExpr: ir.Expr) {
             let complexArgs: ir.Expr[] = []
             let theOne: ir.Expr = null
             let theOneReg = ""
+            let procid = topExpr.data as ir.ProcId
+
+            let isLambda = procid.virtualIndex == -1
 
             let seenUpdate = false
             for (let c of U.reversed(topExpr.args)) {
@@ -784,8 +1459,9 @@ ${baseLabel}:
             }
 
             this.alignExprStack(topExpr.args.length)
-            // available registers
-            let regList = ["r1", "r2", "r3", "r4", "r7"]
+
+            // available registers; r7 can be used in loading globals, don't use it
+            let regList = ["r1", "r2", "r3", "r4"]
             let regExprs: ir.Expr[] = []
 
             if (complexArgs.length) {
@@ -816,7 +1492,12 @@ ${baseLabel}:
                 }
             }
 
-            for (let a of U.reversed(topExpr.args)) {
+            let argsToPush = U.reversed(topExpr.args)
+            // for lambda, move the first argument (lambda object) to the end
+            if (isLambda)
+                argsToPush.unshift(argsToPush.pop())
+
+            for (let a of argsToPush) {
                 if (complexArgs.indexOf(a) >= 0) {
                     if (regList) {
                         this.write(this.t.push_fixed([regList[regExprs.indexOf(a)]]))
@@ -840,45 +1521,36 @@ ${baseLabel}:
             }
 
             let lbl = this.mkLbl("_proccall")
+            let argsToClear = topExpr.args.slice()
 
-            let procid = topExpr.data as ir.ProcId
             let procIdx = -1
-            if (procid.virtualIndex != null || procid.ifaceIndex != null) {
+            if (isLambda) {
+                let numargs = topExpr.args.length - 1
+                this.write(this.loadFromExprStack("r0", topExpr.args[0]))
+                this.emitLabelledHelper("lambda_call" + numargs, () => {
+                    this.lambdaCall(numargs)
+                    this.write(`.fail:`)
+                    this.write(this.t.callCPP("pxt::failedCast"))
+                })
+            } else if (procid.virtualIndex != null || procid.ifaceIndex != null) {
                 let custom = this.t.method_call(procid, topExpr)
                 if (custom) {
                     this.write(custom)
-                    this.write(lbl + ":")
                 } else if (procid.mapMethod) {
                     let isSet = /Set/.test(procid.mapMethod)
                     assert(isSet == (topExpr.args.length == 2))
                     assert(!isSet == (topExpr.args.length == 1))
-                    this.write(this.t.emit_int(procid.mapIdx, "r1"))
-                    if (isSet)
-                        this.write(this.t.emit_int(procid.ifaceIndex, "r2"))
-                    this.emitHelper(this.t.vcall(procid.mapMethod, isSet, this.bin.options.target.vtableShift), "vcall")
-                    this.write(lbl + ":")
+                    this.emitIfaceCall(procid, topExpr.args.length, isSet ? "set" : "get")
+                } else if (procid.ifaceIndex != null) {
+                    this.emitIfaceCall(procid, topExpr.args.length)
                 } else {
-                    this.write(this.t.prologue_vtable(0, this.bin.options.target.vtableShift))
-
-                    let effIdx = procid.virtualIndex + numSpecialMethods + 2
-                    if (procid.ifaceIndex != null) {
-                        this.write(this.t.load_reg_src_off("r0", "r0", "#4") + " ; iface table")
-                        effIdx = procid.ifaceIndex
-                    }
-                    if (effIdx <= 31) {
-                        this.write(this.t.load_reg_src_off("r0", "r0", effIdx.toString(), true) + " ; ld-method")
-                    } else {
-                        this.write(this.t.emit_int(effIdx * 4, "r1"))
-                        this.write(this.t.load_reg_src_off("r0", "r0", "r1") + " ; ld-method")
-                    }
-
-                    this.write(this.t.call_reg("r0"))
-                    this.write(lbl + ":")
+                    this.emitClassCall(procid)
                 }
+                this.write(lbl + ":")
             } else {
                 let proc = procid.proc
                 procIdx = proc.seqNo
-                this.write(this.t.call_lbl(proc.label()))
+                this.write(this.t.call_lbl(proc.label() + (procid.isThis ? "_nochk" : "")))
                 this.write(lbl + ":")
             }
             this.calls.push({
@@ -890,7 +1562,68 @@ ${baseLabel}:
 
             // note that we have to treat all arguments as refs,
             // because the procedure might have overriden them and we need to unref them
-            this.clearArgs([], topExpr.args)
+            // this doesn't apply to the lambda expression itself though
+            if (isLambda && topExpr.args[0].isStateless()) {
+                this.clearArgs([topExpr.args[0]], topExpr.args.slice(1))
+            } else {
+                this.clearArgs([], topExpr.args)
+            }
+        }
+
+        private lambdaCall(numargs: number) {
+            this.write("; lambda call")
+            this.loadVTable()
+            if (!target.switches.skipClassCheck)
+                this.checkSubtype(this.builtInClassNo(pxt.BuiltInType.RefAction))
+            // the conditional branch below saves stack space for functions that do not require closure
+            this.write(`
+                movs r4, #${numargs}
+                ldrh r1, [r0, #4]
+                cmp r1, #0
+                bne .pushR5
+                ldr r1, [r0, #8]
+                bx r1 ; keep lr from the caller
+            .pushR5:
+                sub sp, #8
+            `)
+
+            // move arguments two steps up
+            for (let i = 0; i < numargs; ++i) {
+                this.write(`ldr r1, [sp, #4*${i + 2}]`)
+                this.write(`str r1, [sp, #4*${i}]`)
+            }
+
+            let gcNo = target.gc ? ";" : ""
+
+            this.write(`
+                str r5, [sp, #4*${numargs}]
+                mov r1, lr
+                str r1, [sp, #4*${numargs + 1}]
+                mov r5, r0
+                ldr r7, [r5, #8]
+                ${gcNo}ldr r0, [sp, #4*${numargs}]
+                ${gcNo}bl _pxt_incr
+                blx r7
+                ${gcNo}mov r7, r0
+                ldr r4, [sp, #4*${numargs + 1}]
+                ldr r5, [sp, #4*${numargs}]
+                ${gcNo}mov r0, r5
+                ${gcNo}bl _pxt_decr
+            `)
+
+            // move arguments back where they were
+            for (let i = 0; i < numargs; ++i) {
+                this.write(`ldr r1, [sp, #4*${i}]`)
+                this.write(`str r1, [sp, #4*${i + 2}]`)
+            }
+
+            this.write(`
+                add sp, #8
+                ${gcNo}mov r0, r7
+                bx r4
+            `)
+
+            this.write("; end lambda call")
         }
 
         private emitStore(trg: ir.Expr, src: ir.Expr) {
@@ -905,16 +1638,20 @@ ${baseLabel}:
                             this.write(this.t.emit_int(cell.index, "r1"))
                             off = "r1"
                         }
-                        this.write(this.t.load_reg_src_off("r0", "r6", off, false, true, inf))
+
+                        if (target.gc) {
+                            this.write(this.t.load_reg_src_off("r7", "r6", "#0"))
+                            this.write(this.t.load_reg_src_off("r0", "r7", off, false, true, inf))
+                        } else {
+                            this.write(this.t.load_reg_src_off("r0", "r6", off, false, true, inf))
+                        }
                     } else {
                         let [reg, imm, off] = this.cellref(cell)
                         this.write(this.t.load_reg_src_off("r0", reg, imm, off, true))
                     }
                     break;
                 case ir.EK.FieldAccess:
-                    let info = trg.data as FieldAccessInfo
-                    // it does the decr itself, no mask
-                    this.emitExpr(ir.rtcall(this.withRef("pxtrt::stfld", info.isRef), [trg.args[0], ir.numlit(info.idx), src]))
+                    this.emitRtCall(ir.rtcall("dummy", [trg.args[0], src]), () => this.emitFieldAccess(trg, true))
                     break;
                 default: oops();
             }
@@ -924,8 +1661,9 @@ ${baseLabel}:
             if (cell.isGlobal()) {
                 throw oops()
             } else if (cell.iscap) {
-                assert(0 <= cell.index && cell.index < 32)
-                return ["r5", cell.index.toString(), true]
+                let idx = cell.index + 3
+                assert(0 <= idx && idx < 32)
+                return ["r5", idx.toString(), true]
             } else if (cell.isarg) {
                 let idx = cell.index
                 return ["sp", "args@" + idx.toString() + ":" + this.baseStackSize, false]
@@ -935,55 +1673,81 @@ ${baseLabel}:
         }
 
         private emitLambdaWrapper(isMain: boolean) {
-            let node = this.proc.action
             this.write("")
             this.write(".section code");
 
-            if (isMain)
-                this.write(this.t.unconditional_branch(".themain"))
             this.write(".balign 4");
-            this.write(this.proc.label() + "_Lit:");
-            this.write(`.short 0xffff, ${pxt.REF_TAG_ACTION}   ; action literal`);
+
             if (isMain)
-                this.write(".themain:")
+                this.proc.info.usedAsValue = true
 
-            this.write("@stackmark litfunc");
+            if (!this.proc.info.usedAsValue && !this.proc.info.usedAsIface)
+                return
 
-            let parms = this.proc.args.map(a => a.def)
-            let numpop = parms.length
+            // TODO can use InlineRefAction_vtable or something to limit the size of the thing
 
-            this.write(this.t.proc_setup(0, true))
+            if (this.proc.info.usedAsValue) {
+                this.write(this.proc.label() + "_Lit:");
+                this.write(this.t.obj_header("pxt::RefAction_vtable"));
+                this.write(`.short 0, 0 ; no captured vars`)
+                this.write(`.word ${this.proc.label()}_args@fn`)
+            }
 
-            const setup = this.redirectOutput(() => {
-                this.write(this.t.push_fixed(["r4", "r5", "r6", "r7"]))
-                this.baseStackSize = 1 + 4
+            this.write(`${this.proc.label()}_args:`)
 
-                let alignment = this.stackAlignmentNeeded(parms.length)
-                if (alignment) {
-                    this.write(this.t.push_locals(alignment))
-                    numpop += alignment
+            let numargs = this.proc.args.length
+            if (numargs == 0)
+                return
+
+            this.write(`cmp r4, #${numargs}`)
+            this.write(`bge ${this.proc.label()}_nochk`)
+
+            let needsAlign = this.stackAlignmentNeeded(numargs + 1)
+
+            let numpush = needsAlign ? numargs + 2 : numargs + 1
+
+            this.write(`push {lr}`)
+
+            this.emitLabelledHelper(`expand_args_${numargs}`, () => {
+                this.write(`movs r0, #0`)
+                this.write(`movs r1, #0`)
+                if (needsAlign)
+                    this.write(`push {r0}`)
+                for (let i = numargs; i > 0; i--) {
+                    if (i != numargs) {
+                        this.write(`cmp r4, #${i}`)
+                        this.write(`blt .zero${i}`)
+                        this.write(`ldr r0, [sp, #${numpush - 1}*4]`)
+                        this.write(`str r1, [sp, #${numpush - 1}*4] ; clear existing`)
+                        this.write(`.zero${i}:`)
+                    }
+                    this.write(`push {r0}`)
                 }
-
-                parms.forEach((_, i) => {
-                    if (i >= 3)
-                        U.userError(U.lf("only up to three parameters supported in lambdas"))
-                    this.write(this.t.push_local(`r${parms.length - i}`))
-                })
-
-                this.write(this.t.lambda_init())
+                this.write(`bx lr`)
             })
 
-            let stackEntries = numpop + 4
+            this.write(`bl ${this.proc.label()}_nochk`)
 
-            this.write(`@dummystack ${stackEntries}`)
-            this.emitHelper(`${setup}\n@dummystack ${-stackEntries}`, "lambda_setup")
-            this.write(this.t.call_lbl(this.proc.label()))
-
-            if (numpop)
-                this.write(this.t.pop_locals(numpop))
-            this.write(this.t.pop_fixed(["r4", "r5", "r6", "r7", "pc"]))
-
-            this.write("@stackempty litfunc");
+            if (target.gc) {
+                let stackSize = numargs + (needsAlign ? 1 : 0)
+                this.write(`@dummystack ${stackSize}`)
+                this.write(`add sp, #4*${stackSize}`)
+                this.write(`pop {pc}`)
+            } else {
+                this.emitLabelledHelper(`clr_and_ret_${numargs}`, () => {
+                    this.write(`@dummystack ${numpush}`)
+                    this.write(`mov r7, r0`)
+                    for (let i = numargs; i > 0; i--) {
+                        this.write(`pop {r0}`)
+                        this.write(`bl _pxt_decr`)
+                    }
+                    this.write(`mov r0, r7`)
+                    if (needsAlign)
+                        this.write(`pop {r1, pc}`)
+                    else
+                        this.write(`pop {pc}`)
+                })
+            }
         }
 
         private emitCallRaw(name: string) {

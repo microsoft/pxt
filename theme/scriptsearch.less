@@ -37,18 +37,39 @@
         .ui.card, .ui.cards>.card {
             width: 9rem;
             height: 9rem;
-        }
-        .ui.card {
-            .content .description {
-                display: none;
-            }
-            .content .header {
-                font-size: 80%;
-                font-weight: normal;
-            }
+
             .ui.cardimage {
                 height: 5rem;
             }
         }
+    }
+}
+
+/*******************************
+    Script manager dialog
+*******************************/
+
+.ui.modal .empty-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+.ui.modal.scriptmanager {
+    .sort-by {
+        display: flex;
+        margin-bottom: 1rem;
+
+        > div {
+            margin-left: auto;
+        }
+        .item.no-icon {
+            padding-left: 3.1rem !important;
+        }
+    }
+
+    .ui.card.file .content {
+        margin-right: 3rem;
     }
 }

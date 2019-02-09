@@ -71,7 +71,7 @@ let volume2 = side ** 3;
 ```
 ## Square root
 
-The square root of a number is another number that when multiplied by itself it becomes the original number. You know that `2 * 2` equals `4` so the square root of `4` is `2`. It's called a _square root_ because the area of a _square_ is the length of two equal sides multplied together. The _root_ is the length of a side.
+The square root of a number is another number that when multiplied by itself it becomes the original number. You know that `2 * 2` equals `4` so the square root of `4` is `2`. It's called a _square root_ because the area of a _square_ is the length of two equal sides multiplied together. The _root_ is the length of a side.
 
 ```block
 let side = 5

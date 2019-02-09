@@ -1,6 +1,6 @@
 # Microsoft MakeCode
 
-* [Try our the editors in your browser...](https://makecode.com)
+* [Try out the editors in your browser...](https://makecode.com)
 
 [![Build Status](https://travis-ci.org/Microsoft/pxt.svg?branch=master)](https://travis-ci.org/Microsoft/pxt) 
 [![Community Discord](https://img.shields.io/discord/448979533891371018.svg)](https://aka.ms/makecodecommunity)
@@ -97,7 +97,7 @@ browser tests. To execute them, run `npm run test:all` in the root directory.
 
 ## License
 
-MIT
+[MIT License](https://github.com/Microsoft/pxt/blob/master/LICENSE)
 
 ## Code of Conduct
 

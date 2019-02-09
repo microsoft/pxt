@@ -149,6 +149,10 @@ function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.DeployOpt
         .then(dev => dev.reflashAsync(blocks))
         .catch((e) => {
             const troubleshootDoc = pxt.appTarget && pxt.appTarget.appTheme && pxt.appTarget.appTheme.appFlashingTroubleshoot;
+            if (e.type === "repairbootloader") {
+                return pairBootloaderAsync()
+                    .then(() => hidDeployCoreAsync(resp))
+            }
             if (e.type === "devicenotfound" && d.reportDeviceNotFoundAsync && !!troubleshootDoc) {
                 pxt.tickEvent("hid.flash.devicenotfound");
                 return d.reportDeviceNotFoundAsync(troubleshootDoc, resp);
@@ -178,10 +182,20 @@ ${lf("You will get instant downloads and data logging.")}</p>
     }).then(r => r ? showFirmwareUpdateInstructionsAsync(resp) : browserDownloadDeployCoreAsync(resp));
 }
 
+function pairBootloaderAsync(): Promise<void> {
+    return core.confirmAsync({
+        header: lf("Just one more time..."),
+        body: lf("You need to pair the board again, now in bootloader mode. We know..."),
+        agreeLbl: lf("Ok, pair!")
+    }).then(r => pxt.usb.pairAsync())
+}
+
 function showFirmwareUpdateInstructionsAsync(resp: pxtc.CompileResult): Promise<void> {
     return pxt.targetConfigAsync()
         .then(config => {
-            const firmwareUrl = (config.firmwareUrls || {})[pxt.appTarget.simulator.boardDefinition.id];
+            const firmwareUrl = (config.firmwareUrls || {})[
+                pxt.appTarget.simulator.boardDefinition ? pxt.appTarget.simulator.boardDefinition.id
+                    : ""];
             if (!firmwareUrl) // skip firmware update
                 return showWebUSBPairingInstructionsAsync(resp)
             pxt.tickEvent(`webusb.upgradefirmware`);
@@ -234,7 +248,7 @@ function showFirmwareUpdateInstructionsAsync(resp: pxtc.CompileResult): Promise<
         });
 }
 
-function showWebUSBPairingInstructionsAsync(resp: pxtc.CompileResult): Promise<void> {
+export function showWebUSBPairingInstructionsAsync(resp: pxtc.CompileResult): Promise<void> {
     pxt.tickEvent(`webusb.pair`);
     const boardName = pxt.appTarget.appTheme.boardName || lf("device");
     const htmlBody = `
@@ -277,7 +291,15 @@ function showWebUSBPairingInstructionsAsync(resp: pxtc.CompileResult): Promise<v
         agreeLbl: lf("Let's pair it!"),
         htmlBody,
     }).then(r => {
-        pxt.usb.pairAsync()
+        if (!r) {
+            if (resp)
+                return browserDownloadDeployCoreAsync(resp)
+            else
+                pxt.U.userError(pxt.U.lf("Device not paired"))
+        }
+        if (!resp)
+            return pxt.usb.pairAsync()
+        return pxt.usb.pairAsync()
             .then(() => {
                 pxt.tickEvent(`webusb.pair.success`);
                 return hidDeployCoreAsync(resp)
@@ -335,16 +357,21 @@ function localhostDeployCoreAsync(resp: pxtc.CompileResult): Promise<void> {
     return deploy()
 }
 
-export function initCommandsAsync(): Promise<void> {
+export function init(): void {
+    pxt.onAppTargetChanged = init;
     pxt.commands.browserDownloadAsync = browserDownloadAsync;
     pxt.commands.saveOnlyAsync = browserDownloadDeployCoreAsync;
     pxt.commands.showUploadInstructionsAsync = showUploadInstructionsAsync;
     const forceHexDownload = /forceHexDownload/i.test(window.location.href);
 
     if (pxt.usb.isAvailable() && pxt.appTarget.compile.webUSB) {
-        pxt.log(`enabled webusb`);
+        pxt.debug(`enabled webusb`);
         pxt.usb.setEnabled(true);
         pxt.HF2.mkPacketIOAsync = pxt.usb.mkPacketIOAsync;
+    } else {
+        pxt.debug(`disabled webusb`);
+        pxt.usb.setEnabled(false);
+        pxt.HF2.mkPacketIOAsync = hidbridge.mkBridgeAsync;
     }
     if (isNativeHost()) {
         pxt.debug(`deploy/save using webkit host`);
@@ -376,16 +403,14 @@ export function initCommandsAsync(): Promise<void> {
                 })
                 .catch((e) => core.errorNotification(lf("saving file failed...")));
         };
-    } else if (electron.isPxtElectron()) {
+    } else if (pxt.BrowserUtils.isPxtElectron()) {
         pxt.commands.deployCoreAsync = electron.driveDeployAsync;
         pxt.commands.electronDeployAsync = electron.driveDeployAsync;
     } else if (hidbridge.shouldUse() && !pxt.appTarget.serial.noDeploy && !forceHexDownload) {
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
-    } else if (Cloud.isLocalHost() && Cloud.localToken && !forceHexDownload) { // local node.js
+    } else if (pxt.BrowserUtils.isLocalHost() && Cloud.localToken && !forceHexDownload) { // local node.js
         pxt.commands.deployCoreAsync = localhostDeployCoreAsync;
     } else { // in browser
         pxt.commands.deployCoreAsync = browserDownloadDeployCoreAsync;
     }
-
-    return Promise.resolve();
 }

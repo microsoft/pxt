@@ -46,7 +46,13 @@
         "41anonymoustypes.ts",
         "42lambdaproperties.ts",
         "43nestednamespace.ts",
-        "44toplevelcode.ts"
+        "44toplevelcode.ts",
+        "45enumtostring.ts",
+        "46dynamicmaps.ts",
+        "47json.ts",
+        "48instanceof.ts",
+        "49unicode.ts",
+        "99final.ts"
     ],
     "public": true,
     "dependencies": {

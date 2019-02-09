@@ -26,6 +26,7 @@ export class File implements pxt.editor.IFile {
     numDiagnosticsOverride: number;
     filters: pxt.editor.ProjectFilters;
     forceChangeCallback: ((from: string, to: string) => void);
+    virtual: boolean;
 
     constructor(public epkg: EditorPackage, public name: string, public content: string) { }
 
@@ -234,8 +235,9 @@ export class EditorPackage {
         return this.ksPkg && this.ksPkg.level == 0;
     }
 
-    setFile(n: string, v: string) {
+    setFile(n: string, v: string, virtual?: boolean) {
         let f = new File(this, n, v)
+        if (virtual) f.virtual = true;
         this.files[n] = f
         data.invalidate("open-meta:")
         return f
@@ -331,6 +333,7 @@ export class EditorPackage {
         let res: EditorPackage[] = []
         for (let k of depkeys) {
             if (/---/.test(k)) continue
+            if (deps[k].cppOnly) continue
             res.push(getEditorPkg(deps[k]))
         }
         if (this.assetsPkg)

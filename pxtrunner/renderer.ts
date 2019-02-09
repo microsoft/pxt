@@ -23,7 +23,6 @@ namespace pxt.runner {
         package?: string;
         showEdit?: boolean;
         showJavaScript?: boolean; // default is to show blocks first
-        downloadScreenshots?: boolean;
         split?: boolean; // split in multiple divs if too big
     }
 
@@ -136,22 +135,6 @@ namespace pxt.runner {
 
         // inject container
         $container.replaceWith(r as any);
-
-        // download screenshots
-        if (options.downloadScreenshots && woptions.hexname) {
-            pxt.debug("Downloading screenshot for: " + woptions.hexname);
-            let filename = woptions.hexname.substr(0, woptions.hexname.lastIndexOf('.'));
-            let fontSize = window.getComputedStyle($svg.get(0).getElementsByClassName("blocklyText").item(0)).getPropertyValue("font-size");
-            let svgElement = $svg.get(0) as any;
-            let bbox = $svg.get(0).getBoundingClientRect();
-            pxt.blocks.layout.svgToPngAsync(svgElement, 0, 0, bbox.width, bbox.height, 4)
-                .done(uri => {
-                    if (uri)
-                        BrowserUtils.browserDownloadDataUri(
-                            uri,
-                            (name || `${pxt.appTarget.nickname || pxt.appTarget.id}-${filename}`) + ".png");
-                });
-        }
     }
 
     let renderQueue: {
@@ -222,7 +205,7 @@ namespace pxt.runner {
             const hexname = `${appTarget.nickname || appTarget.id}-${options.hexName || ''}-${snippetCount++}.hex`;
             fillWithWidget(options, c, js, s, r, {
                 showEdit: options.showEdit,
-                run: options.simulator && compiled,
+                run: options.simulator,
                 hexname: hexname,
                 hex: hex,
             });
@@ -245,9 +228,9 @@ namespace pxt.runner {
 
     function renderSignaturesAsync(options: ClientRenderOptions): Promise<void> {
         return renderNextSnippetAsync(options.signatureClass, (c, r) => {
-            let cjs = r.compileJS;
+            let cjs = r.compileProgram;
             if (!cjs) return;
-            let file = r.compileJS.ast.getSourceFile("main.ts");
+            let file = cjs.getSourceFile("main.ts");
             let info = decompileCallInfo(file.statements[0]);
             if (!info || !r.apiInfo) return;
             const symbolInfo = r.apiInfo.byQName[info.qName];
@@ -334,7 +317,7 @@ namespace pxt.runner {
             })
             .then((nsStyleBuffer) => {
                 Object.keys(pxt.toolbox.blockColors).forEach((ns) => {
-                    const color = pxt.toolbox.blockColors[ns] as string;
+                    const color = pxt.toolbox.getNamespaceColor(ns);
                     nsStyleBuffer += `
                         span.docs.${ns.toLowerCase()} {
                             background-color: ${color} !important;
@@ -384,7 +367,7 @@ namespace pxt.runner {
                 .then(r => {
                     if (r.blocksSvg) {
                         let $newel = $('<span class="block"/>').append(r.blocksSvg);
-                        const file = r.compileJS.ast.getSourceFile("main.ts");
+                        const file = r.compileProgram.getSourceFile("main.ts");
                         const stmt = file.statements[0];
                         const info = decompileCallInfo(stmt);
                         if (info && r.apiInfo) {
@@ -434,9 +417,9 @@ namespace pxt.runner {
 
     function renderLinksAsync(options: ClientRenderOptions, cls: string, replaceParent: boolean, ns: boolean): Promise<void> {
         return renderNextSnippetAsync(cls, (c, r) => {
-            const cjs = r.compileJS;
+            const cjs = r.compileProgram;
             if (!cjs) return;
-            const file = r.compileJS.ast.getSourceFile("main.ts");
+            const file = cjs.getSourceFile("main.ts");
             const stmts = file.statements.slice(0);
             const ul = $('<div />').addClass('ui cards');
             ul.attr("role", "listbox");

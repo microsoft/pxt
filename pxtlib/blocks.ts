@@ -218,6 +218,34 @@ namespace pxt.blocks {
         }
     }
 
+    /**
+     * Returns which Blockly block type to use for an argument reporter based
+     * on the specified TypeScript type.
+     * @param varType The variable's TypeScript type
+     * @return The Blockly block type of the reporter to be used
+     */
+    export function reporterTypeForArgType(varType: string) {
+        let reporterType = "argument_reporter_custom";
+
+        if (varType === "boolean" || varType === "number" || varType === "string") {
+            reporterType = `argument_reporter_${varType}`;
+        }
+
+        return reporterType;
+    }
+
+    export function defaultIconForArgType(typeName: string = "") {
+        switch (typeName) {
+            case "number":
+                return "calculator";
+            case "string":
+                return "text width";
+            case "boolean":
+                return "random";
+            default:
+                return "align justify"
+        }
+    }
 
     export interface FieldDescription {
         n: string;
@@ -636,6 +664,24 @@ namespace pxt.blocks {
                 category: 'functions',
                 block: {
                     PROCEDURES_CALLNORETURN_TITLE: Util.lf("call function")
+                }
+            },
+            'function_definition': {
+                name: Util.lf("define the function"),
+                tooltip: Util.lf("Create a function."),
+                url: 'types/function/define',
+                category: 'functions',
+                block: {
+                    FUNCTIONS_EDIT_OPTION: Util.lf("Edit Function")
+                }
+            },
+            'function_call': {
+                name: Util.lf("call the function"),
+                tooltip: Util.lf("Call the user-defined function."),
+                url: 'types/function/call',
+                category: 'functions',
+                block: {
+                    FUNCTIONS_CALL_TITLE: Util.lf("call")
                 }
             }
         };

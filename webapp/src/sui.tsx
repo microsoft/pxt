@@ -45,11 +45,6 @@ function genericContent(props: UiProps) {
     return retVal;
 }
 
-export function popupWindow(url: string, title: string, width: number, height: number) {
-    return window.open(url, title, `resizable=no, copyhistory=no, ` +
-        `width=${width}, height=${height}, top=${(screen.height / 2) - (height / 2)}, left=${(screen.width / 2) - (width / 2)}`);
-}
-
 function removeClass(el: HTMLElement, cls: string) {
     if (el.classList) el.classList.remove(cls);
     else if (el.className.indexOf(cls) >= 0) el.className.replace(new RegExp(`(?:^|\\s)${cls}(?:\\s|$)`), ' ');
@@ -80,17 +75,17 @@ export interface DropdownProps extends UiProps {
     title?: string;
     onChange?: (v: string) => void;
 
-    openOnMouseOver?: boolean;
 }
 
 export interface DropdownState {
     open?: boolean;
+    focus?: boolean;
 }
 
 export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
 
     show() {
-        this.setState({ open: true });
+        this.setState({ open: true, focus: true });
     }
 
     hide() {
@@ -98,7 +93,11 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
     }
 
     toggle() {
-        this.setState({ open: !this.state.open });
+        if (this.state.open) {
+            this.hide();
+        } else {
+            this.show();
+        }
     }
 
     private focus(el: HTMLElement) {
@@ -122,59 +121,9 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
         return el && el.classList.contains("active");
     }
 
-    private selectFirstElementOnDown(e: KeyboardEvent, first: HTMLElement) {
-        // When the dropdown menu item is selected, an Enter Space or Down arrow opens the menu
-        const charCode = core.keyCodeFromEvent(e);
-        if (charCode === core.SPACE_KEY || charCode === core.ENTER_KEY) {
-            e.preventDefault();
-            this.toggle();
-        } else if (charCode === core.ESC_KEY) {
-            e.preventDefault();
-            this.hide();
-        } else if (charCode === 40 /* Down arrow key */) {
-            e.preventDefault();
-            if (!this.state.open) this.show();
-            if (first) this.focus(first);
-        } else if (charCode === core.TAB_KEY) {
-            this.hide();
-        }
-    }
-
-    private navigateToNextElement(e: KeyboardEvent, prev: HTMLElement, next: HTMLElement) {
-        const charCode = core.keyCodeFromEvent(e);
-        const current = e.currentTarget as HTMLElement;
-        if (charCode === 40 /* Down arrow */
-            || (!e.shiftKey && charCode === core.TAB_KEY)) {
-            e.preventDefault();
-            if (next) {
-                //this.blur(current);
-                this.focus(next);
-            }
-        } else if (charCode === 38 /* Up arrow */
-            || (e.shiftKey && charCode === core.TAB_KEY)) {
-            e.preventDefault();
-            if (prev) {
-                //this.blur(current);
-                this.focus(prev);
-            }
-        } else if (charCode === core.ESC_KEY) {
-            e.preventDefault();
-            const dropdown = this.refs["dropdown"] as HTMLElement;
-            this.hide();
-            dropdown.focus();
-        } else if (charCode === core.SPACE_KEY || charCode === core.ENTER_KEY) {
-            // Trigger click
-            e.preventDefault();
-            current.click();
-        }
-    }
-
-    componentDidMount() {
-        const { openOnMouseOver } = this.props;
-        const dropdown = this.refs["dropdown"] as HTMLElement;
-
+    getChildren() {
         const menu = this.refs["menu"] as HTMLElement;
-        let children = [];
+        const children = [];
         for (let i = 0; i < menu.childNodes.length; i++) {
             const child = menu.childNodes[i] as HTMLElement;
             // Remove separators
@@ -183,64 +132,179 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
             if (child.classList.contains("mobile") && !pxt.BrowserUtils.isMobile()) continue;
             children.push(child);
         }
-        for (let i = 0; i < children.length; i++) {
-            const prev = i > 0 ? children[i - 1] as HTMLElement : dropdown;
-            const child = children[i] as HTMLElement;
-            const next = i < children.length ? children[i + 1] as HTMLElement : undefined;
-            child.addEventListener('keydown', (e) => {
-                this.navigateToNextElement(e, prev, next);
-                e.stopPropagation();
-            })
-            child.addEventListener('focus', (e) => {
-                this.setActive(child);
-            })
-            child.addEventListener('blur', (e) => {
-                this.blur(child);
-                setTimeout(() => {
-                    if (menu.querySelectorAll('.item.active').length == 0) {
-                        this.hide();
-                    }
-                }, 10);
-            })
-        }
-        const first = children.length > 0 ? children[0] as HTMLElement : undefined;
-        dropdown.addEventListener('keydown', (e) => {
-            this.selectFirstElementOnDown(e, first)
-        });
-        dropdown.addEventListener('blur', (e) => {
-            setTimeout(() => {
-                if (menu.querySelectorAll('.item.active').length == 0) {
-                    this.hide();
-                }
-            }, 1);
-        });
-        if (openOnMouseOver) {
-            dropdown.addEventListener('mouseover', (e) => {
-                dropdown.focus();
-                this.show();
-            });
-        }
-        dropdown.addEventListener('click', (e) => {
-            this.toggle();
-        })
+        return children;
     }
 
-    componentDidUpdate(nextProps: DropdownProps, nextState: DropdownState) {
+    isChildFocused() {
+        const children = this.getChildren();
+        for (let i = 0; i < children.length; i++) {
+            if (document.activeElement === children[i]) return true;
+        }
+        return false;
+    }
+
+    private navigateToNextElement = (e: KeyboardEvent, prev: HTMLElement, next: HTMLElement) => {
+        const dropdown = this.refs["dropdown"] as HTMLElement;
+        const charCode = core.keyCodeFromEvent(e);
+        const current = e.currentTarget as HTMLElement;
+        if (charCode === 40 /* Down arrow */) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (next) {
+                this.focus(next);
+            }
+        } else if (charCode === 38 /* Up arrow */) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (prev) {
+                this.focus(prev);
+            } else {
+                // Prev is undefined, go to dropdown
+                dropdown.focus();
+                this.setState({ open: false });
+            }
+        } else if (charCode === core.SPACE_KEY || charCode === core.ENTER_KEY) {
+            // Trigger click
+            e.preventDefault();
+            e.stopPropagation();
+            current.click();
+        }
+    }
+
+    componentDidMount() {
+        const children = this.getChildren();
+        for (let i = 0; i < children.length; i++) {
+            const prev = i > 0 ? children[i - 1] as HTMLElement : undefined;
+            const child = children[i] as HTMLElement;
+            const next = i < children.length ? children[i + 1] as HTMLElement : undefined;
+
+            child.addEventListener('keydown', (e) => {
+                this.navigateToNextElement(e, prev, next);
+            })
+
+            child.addEventListener('focus', (e: FocusEvent) => {
+                this.setActive(child);
+            })
+            child.addEventListener('blur', (e: FocusEvent) => {
+                this.blur(child);
+            })
+
+            if (i == children.length - 1) {
+                // set tab on last child to clear focus
+                child.addEventListener('keydown', (e) => {
+                    const charCode = core.keyCodeFromEvent(e);
+                    if (!e.shiftKey && charCode === core.TAB_KEY) {
+                        this.hide();
+                    }
+                })
+            }
+        }
+    }
+
+    componentDidUpdate(prevProps: DropdownProps, prevState: DropdownState) {
         // Remove active from all menu items on any update
-        const menu = this.refs["menu"] as HTMLElement;
-        for (let i = 0; i < menu.childNodes.length; i++) {
-            const child = menu.childNodes[i] as HTMLElement;
-            this.blur(child);
+        const children = this.getChildren();
+        for (let i = 0; i < children.length; i++) {
+            const child = children[i] as HTMLElement;
+            // On allow tabbing to valid child nodes (ie: no separators or mobile only items)
+            child.tabIndex = this.state.open ? 0 : -1;
         }
 
         // Check if dropdown width exceeds the bounds, add the left class to the menu
-        if (nextState.open != this.state.open && this.state.open) {
+        if (prevState.open != this.state.open && this.state.open) {
             const dropdown = this.refs["dropdown"] as HTMLElement;
             const menu = this.refs["menu"] as HTMLElement;
             if (dropdown.offsetLeft + menu.offsetWidth > window.innerWidth) {
                 // Add left class to the menu
                 pxsim.U.addClass(menu, 'left');
             }
+        }
+
+        if (!prevState.focus && this.state.focus) {
+            // Dropdown focused
+        } else if (prevState.focus && !this.state.focus) {
+            // Dropdown blurred
+            if (!this.isMouseDown) {
+                this.hide()
+            }
+        }
+
+        if (!prevState.open && this.state.open) {
+            // Dropdown opened
+            document.addEventListener('keydown', this.closeOnEscape);
+        } else if (prevState.open && !this.state.open) {
+            // Dropdown closed
+            document.removeEventListener('keydown', this.closeOnEscape);
+            this.handleClose()
+        }
+        if (this.focusFirst && children.length > 0) {
+            // Focus the first child
+            this.focus(children[0]);
+            this.focusFirst = false;
+        }
+    }
+
+    private closeOnEscape = (e: KeyboardEvent) => {
+        const charCode = core.keyCodeFromEvent(e);
+        if (charCode === core.ESC_KEY) {
+            e.preventDefault();
+            const dropdown = this.refs["dropdown"] as HTMLElement;
+            dropdown.focus();
+            // Reset the focus handlers
+            this.isMouseDown = true;
+            this.hide();
+        }
+    }
+
+    private handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+        this.toggle();
+        e.stopPropagation()
+    }
+
+    private handleClose = () => {
+        this.isMouseDown = false
+        const hasFocus = document.activeElement === this.refs['dropdown'];
+        this.setState({ focus: hasFocus })
+    }
+
+    private isMouseDown: boolean;
+    private handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+        this.isMouseDown = true
+        document.addEventListener(pxsim.pointerEvents.up, this.handleDocumentMouseUp)
+    }
+
+    private handleDocumentMouseUp = (e: MouseEvent) => {
+        this.isMouseDown = false
+        document.removeEventListener(pxsim.pointerEvents.up, this.handleDocumentMouseUp)
+    }
+
+    private handleFocus = (e: React.FocusEvent<HTMLDivElement>) => {
+        const { focus } = this.state;
+        if (focus) return;
+
+        this.setState({ focus: true });
+    }
+
+    private handleBlur = (e: React.FocusEvent<HTMLDivElement>) => {
+        if (this.isMouseDown) return;
+        // Use timeout to delay examination of activeElement until after blur/focus 
+        // events have been processed.
+        setTimeout(() => {
+            let open = this.isChildFocused();
+            this.setState({ focus: open });
+        }, 1);
+    }
+
+    private focusFirst: boolean;
+    private handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+        const charCode = core.keyCodeFromEvent(e);
+        if (charCode === 40 /* Down arrow key */) {
+            e.preventDefault();
+            this.focusFirst = true;
+            this.show();
+        } else if (charCode === core.SPACE_KEY || charCode === core.ENTER_KEY) {
+            e.preventDefault();
+            this.toggle();
         }
     }
 
@@ -264,15 +328,20 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
             open ? 'active visible' : '',
             'dropdown',
             icon ? 'icon' : '',
-            className,
+            className || '',
         ]);
         const menuClasses = cx([
             'menu',
             open ? 'visible transition' : ''
         ])
         return (
-            <div ref="dropdown" title={title} {...aria}
+            <div role="listbox" ref="dropdown" title={title} {...aria}
                 className={classes}
+                onMouseDown={this.handleMouseDown}
+                onClick={this.handleClick}
+                onKeyDown={this.handleKeyDown}
+                onFocus={this.handleFocus}
+                onBlur={this.handleBlur}
                 tabIndex={0}
             >
                 {genericContent(this.props)}
@@ -349,6 +418,7 @@ export interface ButtonProps extends UiProps, TooltipUIProps {
     ariaExpanded?: boolean;
     onClick?: (e: React.MouseEvent<HTMLElement>) => void;
     disabled?: boolean;
+    loading?: boolean;
     onKeyDown?: (e: React.KeyboardEvent<HTMLElement>) => void;
     labelPosition?: "left" | "right";
     color?: string;
@@ -357,11 +427,12 @@ export interface ButtonProps extends UiProps, TooltipUIProps {
 
 export class Button extends StatelessUIElement<ButtonProps> {
     renderCore() {
-        const { labelPosition, color, size, disabled, tooltipId, tooltip, tooltipDelayShow, tooltipPlace } = this.props;
+        const { labelPosition, color, size, disabled, loading } = this.props;
         const classes = cx([
             color,
             size,
-            disabled ? 'disabled' : '',
+            (disabled || loading) ? 'disabled' : '',
+            loading ? 'loading' : '',
             genericClassName("ui button", this.props)
         ])
         const button = <button className={classes}
@@ -376,8 +447,9 @@ export class Button extends StatelessUIElement<ButtonProps> {
             {genericContent(this.props)}
             {this.props.children}
         </button>;
-        return tooltip ? <Tooltip id={tooltipId} content={tooltip}
-            place={tooltipPlace} delayShow={tooltipDelayShow}>{button}</Tooltip> : button;
+        // Tooltips don't work great on IOS, disabling them
+        return this.props.tooltipId && !pxt.BrowserUtils.isIOS() ? <Tooltip id={this.props.tooltipId} content={this.props.tooltip || this.props.title}
+            place={this.props.tooltipPlace} delayShow={this.props.tooltipDelayShow}>{button}</Tooltip> : button;
     }
 }
 
@@ -537,7 +609,7 @@ export class Input extends data.Component<InputProps, { value: string }> {
                         autoComplete={p.autoComplete ? "" : "off"}
                         autoCorrect={p.autoComplete ? "" : "off"}
                         autoCapitalize={p.autoComplete ? "" : "off"}
-                        spellCheck={p.autoComplete}/>
+                        spellCheck={p.autoComplete} />
                         : <textarea
                             id={p.id}
                             className={"ui input " + (p.class || "") + (p.inputLabel ? " labelled" : "")}
@@ -840,6 +912,8 @@ export interface ModalButton {
     url?: string;
     fileName?: string;
     loading?: boolean;
+    disabled?: boolean;
+    approveButton?: boolean;
 }
 
 export interface ModalProps extends ReactModal.Props {
@@ -848,10 +922,11 @@ export interface ModalProps extends ReactModal.Props {
     closeOnEscape?: boolean;
 
     onClose?: () => void;
+    onKeyDown?: (ev: React.KeyboardEvent<any>) => void;
     defaultOpen?: boolean;
     closeIcon?: boolean | string;
 
-    size?: 'fullscreen' | 'large' | 'mini' | 'small' | 'tiny';
+    size?: '' | 'fullscreen' | 'large' | 'mini' | 'small' | 'tiny';
     className?: string;
     basic?: boolean;
     longer?: boolean;
@@ -964,7 +1039,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
 
     render() {
         const { isOpen, size, longer, basic, className,
-            onClose, closeIcon, children,
+            onClose, closeIcon, children, onKeyDown,
             header, headerClass, headerActions, helpUrl, description,
             closeOnDimmerClick, closeOnDocumentClick, closeOnEscape,
             shouldCloseOnEsc, shouldCloseOnOverlayClick, shouldFocusAfterRender, ...rest } = this.props;
@@ -1008,7 +1083,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
             style={customStyles}
             aria={aria} {...rest}>
             {header || showBack || helpUrl ? <div id={this.id + 'title'} className={"header " + (headerClass || "")}>
-                <span className="header-title" style={{margin: `0 ${helpUrl ? '-20rem' : '0'} 0 ${showBack ? '-20rem' : '0'}`}}>{header}</span>
+                <span className="header-title" style={{ margin: `0 ${helpUrl ? '-20rem' : '0'} 0 ${showBack ? '-20rem' : '0'}` }}>{header}</span>
                 {showBack ? <div className="header-close">
                     <Button className="back-button large" title={lf("Go back")} onClick={onClose} tabIndex={0} onKeyDown={fireClickOnEnter}>
                         <Icon icon="arrow left" />
@@ -1036,7 +1111,7 @@ export class Modal extends React.Component<ModalProps, ModalState> {
                                 key={`action_${action.label}`}
                                 icon={action.icon}
                                 text={action.label}
-                                className={`ui button approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''} ${action.loading ? "loading disabled" : ""}`}
+                                className={`ui button approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''} ${action.loading ? "loading disabled" : ""} ${action.disabled ? "disabled" : ""}`}
                                 href={action.url}
                                 target={!action.fileName ? '_blank' : undefined}
                                 download={action.fileName ? pxt.Util.htmlEscape(action.fileName) : undefined}
@@ -1064,7 +1139,8 @@ class ModalButtonElement extends data.PureComponent<ModalButton, {}> {
     }
 
     handleClick() {
-        this.props.onclick();
+        if (!this.props.disabled)
+            this.props.onclick();
     }
 
     renderCore() {
@@ -1072,7 +1148,7 @@ class ModalButtonElement extends data.PureComponent<ModalButton, {}> {
         return <Button
             icon={action.icon}
             text={action.label}
-            className={`approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''} ${action.loading ? "loading disabled" : ""}`}
+            className={`approve ${action.icon ? 'icon right labeled' : ''} ${action.className || ''} ${action.loading ? "loading disabled" : ""} ${action.disabled ? "disabled" : ""}`}
             onClick={this.handleClick}
             onKeyDown={fireClickOnEnter} />
     }

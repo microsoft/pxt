@@ -92,7 +92,7 @@ text.blocklyText.blocklyBoldItalicizedText {
 *******************************/
 
 .blocklyFlyoutButton {
-    fill: none !important;
+    fill: transparent !important;
 }
 
 .blocklyFlyoutButton:hover {
@@ -151,6 +151,11 @@ div.blocklyWidgetDiv {
     position: fixed;
     /* Lower Z index for BlocklyWidgetDiv and grid picker tooltips */
     z-index: @blocklyWidgetDivZIndex;
+}
+
+div.blocklyWidgetDiv.functioneditor {
+    /* The Blockly widget should appear above the function editor  */
+    z-index: @blocklyWidgetDivFunctionEditorZIndex;
 }
 
 div.blocklyDropDownDiv {
@@ -243,6 +248,14 @@ text.blocklyCheckbox {
     border: none !important;
     padding: .92857143em 1.14285714em !important;
     background: rgba(0,0,0,.05) !important;
+}
+
+/*******************************
+        Comments
+*******************************/
+
+.blocklyCommentForeignObject {
+    overflow: hidden;
 }
 
 /*******************************

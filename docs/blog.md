@@ -1,5 +1,27 @@
 # Microsoft MakeCode Blog
 
+## [MakeCode Arcade: Retro Gaming, Modern Programming](/blog/arcade/01-18-2019)
+
+January 18th, 2019 by Microsoft MakeCode Team
+
+The MakeCode team is excited to announce a completely new retro gaming experience, 
+spanning the worlds of the web browser and the microcontroller!
+**[Continue reading this blog post](/blog/arcade/01-18-2019)**
+
+## [Cartoon Network Projects for the Adafruit Circuit Playground Express!](/blog/adafruit-circuit-playground-express/cn-projects)
+ 
+January 7th, 2019 by [Jaqster](https://github.com/jaqster)
+
+Happy New Year! And what better way to start 2019 than with a series of brand-new projects for Circuit Playground Express inspired by Cartoon Network!
+**[Continue reading this blog post](/blog/adafruit-circuit-playground-express/cn-projects)**
+
+## [New Maker Course for the Adafruit Circuit Playground Express!](/blog/adafruit-circuit-playground-express/maker-course)
+ 
+December 6th, 2018 by [Jaqster](https://github.com/jaqster)
+
+We are so excited to partner with Rob Morrill on this new curriculum for the Adafruit Circuit Playground Express...
+**[Continue reading this blog post](/blog/adafruit-circuit-playground-express/maker-course)**
+
 ## [MakeCode for Minecraft update](/blog/minecraft/11-07-2018)
  
 November 7th, 2018 by [Jaqster](https://github.com/jaqster)
