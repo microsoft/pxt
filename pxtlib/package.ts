@@ -149,7 +149,6 @@ namespace pxt {
         }
 
         private downloadAsync() {
-            let kindCfg = ""
             return this.resolveVersionAsync()
                 .then(verNo => {
                     if (!/^embed:/.test(verNo) &&
