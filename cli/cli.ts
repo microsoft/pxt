@@ -2464,8 +2464,8 @@ class SnippetHost implements pxt.Host {
             }
         }
 
-        pxt.log(`unresolved file ${module.id}/${filename}`)
-        return null
+        // might be ok
+        return null;
     }
 
     private getRepoDir() {
@@ -2499,7 +2499,7 @@ class SnippetHost implements pxt.Host {
             .then(resp => {
                 if (resp) {
                     U.iterMap(resp, (fn: string, cont: string) => {
-                        pkg.host().writeFile(pkg, fn, cont)
+                        this.writeFile(pkg, fn, cont)
                     })
                 }
             })

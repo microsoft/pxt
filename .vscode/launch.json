@@ -10,7 +10,8 @@
 			"args": [
 				"checkdocs",
 				"--re", 
-				"turtle-spiral"
+				"turtle-spiral",
+				"--dbg"
 			],
 			"cwd": "${workspaceRoot}/../pxt-microbit",
 			"runtimeExecutable": null,
