@@ -344,351 +344,8 @@ namespace pxt.webBluetooth {
         }
     }
 
-    export enum DFUServiceState {
-        Idle = 1 << 0,
-        DFURequested = 1 << 2,
-        DFU = 1 << 4
-    }
-
-    // see https://github.com/thegecko/web-bluetooth-dfu
-    export class DFUService extends BLEFlashingService {
-        static UUIDS = {
-            CONTROL: {
-                NAME: "dfu control",
-                SERVICE: 'e95d93b0-251d-470a-a062-fa1922dfa9a8',
-                CONTROL: 'e95d93b1-251d-470a-a062-fa1922dfa9a8',
-                CONTROL_NOTIFY: false,
-                PACKET: undefined as string //'e95d93b2-251d-470a-a062-fa1922dfa9a8' // it's "flash really"                
-            },
-            DFU: {
-                NAME: "dfu",
-                SERVICE: '00001530-1212-efde-1523-785feabcd123',
-                CONTROL: '00001531-1212-efde-1523-785feabcd123',
-                CONTROL_NOTIFY: true,
-                PACKET: '00001532-1212-efde-1523-785feabcd123',
-                /*version: '00001534-1212-efde-1523-785feabcd123'*/
-            }
-        };
-        static DFU_LITTLE_ENDIAN = true;
-        static DFU_PACKET_SIZE = 20;
-        static DFU_OPERATIONS = {
-            BUTTON_COMMAND: [0x01],
-            CREATE_COMMAND: [0x01, 0x01],
-            CREATE_DATA: [0x01, 0x02],
-            RECEIPT_NOTIFICATIONS: [0x02],
-            CACULATE_CHECKSUM: [0x03],
-            EXECUTE: [0x04],
-            SELECT_COMMAND: [0x06, 0x01],
-            SELECT_DATA: [0x06, 0x02],
-            RESPONSE: [0x60, 0x20]
-        };
-        static DFU_RESPONSE: pxt.Map<string> = {
-            // Invalid code
-            0x00: "Invalid opcode",
-            // Success
-            0x01: "Operation successful",
-            // Opcode not supported
-            0x02: "Opcode not supported",
-            // Invalid parameter
-            0x03: "Missing or invalid parameter value",
-            // Insufficient resources
-            0x04: "Not enough memory for the data object",
-            // Invalid object
-            0x05: "Data object does not match the firmware and hardware requirements, the signature is wrong, or parsing the command failed",
-            // Unsupported type
-            0x07: "Not a valid object type for a Create request",
-            // Operation not permitted
-            0x08: "The state of the DFU process does not allow this operation",
-            // Operation failed
-            0x0A: "Operation failed",
-            // Extended error
-            0x0B: "Extended error"
-        };
-        static DFU_EXTENDED_ERROR: pxt.Map<string> = {
-            // No error
-            0x00: "No extended error code has been set. This error indicates an implementation problem",
-            // Invalid error code
-            0x01: "Invalid error code. This error code should never be used outside of development",
-            // Wrong command format
-            0x02: "The format of the command was incorrect",
-            // Unknown command
-            0x03: "The command was successfully parsed, but it is not supported or unknown",
-            // Init command invalid
-            0x04: "The init command is invalid. The init packet either has an invalid update type or it is missing required fields for the update type",
-            // Firmware version failure
-            0x05: "The firmware version is too low. For an application, the version must be greater than the current application. For a bootloader, it must be greater than or equal to the current version",
-            // Hardware version failure
-            0x06: "The hardware version of the device does not match the required hardware version for the update",
-            // Softdevice version failure
-            0x07: "The array of supported SoftDevices for the update does not contain the FWID of the current SoftDevice",
-            // Signature missing
-            0x08: "The init packet does not contain a signature",
-            // Wrong hash type
-            0x09: "The hash type that is specified by the init packet is not supported by the DFU bootloader",
-            // Hash failed
-            0x0A: "The hash of the firmware image cannot be calculated",
-            // Wrong signature type
-            0x0B: "The type of the signature is unknown or not supported by the DFU bootloader",
-            // Verification failed
-            0x0C: "The hash of the received firmware image does not match the hash in the init packet",
-            // Insufficient space
-            0x0D: "The available space on the device is insufficient to hold the firmware"
-        };
-
-        state = DFUServiceState.Idle;
-        private service: BluetoothRemoteGATTService;
-        private chunkDelay: number;
-        private controlCharacteristic: BluetoothRemoteGATTCharacteristic;
-        private packetCharacteristic: BluetoothRemoteGATTCharacteristic;
-        private notifyFns: pxt.Map<{
-            resolve: (data: DataView) => void,
-            reject: (e: Error) => void
-        }> = {};
-
-        constructor(protected device: BLEDevice) {
-            super("dfu ", device, false);
-            this.autoReconnect = false;
-            this.disconnectOnAutoReconnect = true;
-            this.handleCharacteristic = this.handleCharacteristic.bind(this);
-            this.chunkDelay = 1;
-        }
-
-        protected createConnectPromise(): Promise<void> {
-            if (this.state == DFUServiceState.DFURequested)
-                this.state = DFUServiceState.DFU;
-
-            const uuids = this.state == DFUServiceState.DFU
-                ? DFUService.UUIDS.DFU : DFUService.UUIDS.CONTROL;
-            this.debug(`connecting to ${uuids.NAME} (${uuids.SERVICE})`);
-            return this.device.connectAsync()
-                .then(() => this.alivePromise(this.device.gatt.getPrimaryService(uuids.SERVICE)))
-                .then(service => {
-                    this.service = service;
-                    this.debug(`connecting to control characteristic`)
-                    return this.alivePromise(this.service.getCharacteristic(uuids.CONTROL));
-                }).then(controlCharacteristic => {
-                    this.controlCharacteristic = controlCharacteristic;
-                    if (uuids.PACKET) this.debug(`connecting to packet characteristic`)
-                    return uuids.PACKET
-                        ? this.alivePromise(this.service.getCharacteristic(uuids.PACKET))
-                            .then(packetCharacteristic => this.packetCharacteristic = packetCharacteristic)
-                        : Promise.resolve(undefined);
-                }).then(() => {
-                    if (uuids.CONTROL_NOTIFY) this.debug(`starting notifications`)
-                    return uuids.CONTROL_NOTIFY
-                        ? this.controlCharacteristic.startNotifications()
-                            .then(() => this.controlCharacteristic.addEventListener('characteristicvaluechanged', this.handleCharacteristic))
-                        : Promise.resolve();
-                }).then(() => {
-                    // so we requested the DFU and we got it
-                    if (this.state == DFUServiceState.DFU) {
-                        this.debug(`dfu mode connected`)
-                        this.autoReconnect = false;
-                        return this.dfuTransferBinAsync();
-                    }
-                    return Promise.resolve();
-                });
-        }
-
-        disconnect() {
-            super.disconnect();
-            if (this.controlCharacteristic && this.device.connected) {
-                try {
-                    this.controlCharacteristic.stopNotifications();
-                    this.controlCharacteristic.removeEventListener('characteristicvaluechanged', this.handleCharacteristic);
-                }
-                catch (e) {
-                    pxt.log(`ble: dfu disconnect error control ${e.message}`);
-                }
-            }
-            this.controlCharacteristic = undefined;
-            if (this.packetCharacteristic && this.device.connected) {
-                try {
-                    this.packetCharacteristic.stopNotifications();
-                    this.packetCharacteristic.removeEventListener('characteristicvaluechanged', this.handleCharacteristic);
-                }
-                catch (e) {
-                    pxt.log(`ble: dfu disconnect error packet ${e.message}`);
-                }
-            }
-            this.packetCharacteristic = undefined;
-            this.service = undefined;
-        }
-
-        private handleCharacteristic(ev: Event) {
-            // check service is still alive
-            if (this.aliveToken.isCancelled()) {
-                // done
-                return;
-            }
-            switch (this.state) {
-                case DFUServiceState.DFURequested:
-                case DFUServiceState.Idle:
-                    // rogue request
-                    break;
-                case DFUServiceState.DFU:
-                    //case DFUServiceState.DFU:
-                    this.handleDFUCharacteristic(ev);
-            }
-        }
-
-        private handleDFUCharacteristic(ev: Event) {
-            const dataView: DataView = (<any>event.target).value;
-            const cmd = dataView.getUint8(0);
-            const operation = dataView.getUint8(1);
-            const result = dataView.getUint8(2);
-
-            this.debug(`${cmd.toString(16)}> ${operation.toString(16)}> ${result.toString(16)}`);
-
-            if (DFUService.DFU_OPERATIONS.RESPONSE.indexOf(cmd) < 0) {
-                throw new Error("Unrecognised control characteristic response notification");
-            }
-
-            if (this.notifyFns[operation]) {
-                let error: string = null;
-
-                if (result === 0x01) {
-                    const data = new DataView(dataView.buffer, 3);
-                    this.notifyFns[operation].resolve(data);
-                } else if (result === 0x0B) {
-                    const code = dataView.getUint8(3);
-                    error = `Error: ${DFUService.DFU_EXTENDED_ERROR[code]}`;
-                } else {
-                    error = `Error: ${DFUService.DFU_RESPONSE[result]}`;
-                }
-
-                if (error) {
-                    this.debug(`notify: ${error}`);
-                    this.notifyFns[operation].reject(new Error(error));
-                }
-                delete this.notifyFns[operation];
-            }
-        }
-
-        private sendDFUControlAsync(operation: Array<number>, buffer?: ArrayBuffer): Promise<DataView> {
-            return new Promise((resolve, reject) => {
-                let size = operation.length;
-                if (buffer) size += buffer.byteLength;
-
-                const value = new Uint8Array(size);
-                value.set(operation);
-                if (buffer) {
-                    const data = new Uint8Array(buffer);
-                    value.set(data, operation.length);
-                }
-
-                this.notifyFns[operation[0]] = {
-                    resolve: resolve,
-                    reject: reject
-                };
-
-                this.debug(`send ctrl ${operation[0].toString(16)}`)
-                this.controlCharacteristic.writeValue(value).done();
-            });
-        }
-
-        private dfuTransferBinAsync() {
-            // the microbit init packet is ignored by the bootloader
-            const init = new ArrayBuffer(0);
-            return this.dfuTransferInitAsync(init)
-                .then(() => this.dfuTransferFirmwareAsync(this.bin.buffer));
-        }
-
-        private dfuTransferInitAsync(buffer: ArrayBuffer): Promise<void> {
-            return this.dfuTransferAsync(buffer, "init", DFUService.DFU_OPERATIONS.SELECT_COMMAND, DFUService.DFU_OPERATIONS.CREATE_COMMAND);
-        }
-
-        private dfuTransferFirmwareAsync(buffer: ArrayBuffer): Promise<void> {
-            this.debug(`dfu transfer ${buffer.byteLength >> 10} kb`);
-            return this.dfuTransferAsync(buffer, "firmware", DFUService.DFU_OPERATIONS.SELECT_DATA, DFUService.DFU_OPERATIONS.CREATE_DATA);
-        }
-
-        private dfuTransferAsync(buffer: ArrayBuffer, type: string, selectType: Array<number>, createType: Array<number>): Promise<void> {
-            this.debug(`transfer ${type} ${buffer.byteLength >> 10}kb`);
-            return this.sendDFUControlAsync(selectType)
-                .then(response => {
-                    const maxSize = response.getUint32(0, DFUService.DFU_LITTLE_ENDIAN);
-                    const offset = response.getUint32(4, DFUService.DFU_LITTLE_ENDIAN);
-                    const crc = response.getInt32(8, DFUService.DFU_LITTLE_ENDIAN);
-
-                    // TODO crc check
-                    if (type === "init" && offset === buffer.byteLength) {
-                        this.debug("init packet already available, skipping transfer");
-                        return Promise.resolve();
-                    }
-
-                    // TODO this.progress(0);
-                    return this.dfuTransferObjectAsync(buffer, createType, maxSize, offset);
-                });
-        }
-
-        private dfuTransferObjectAsync(buffer: ArrayBuffer, createType: Array<number>, maxSize: number, offset: number): Promise<void> {
-            const start = offset - offset % maxSize;
-            const end = Math.min(start + maxSize, buffer.byteLength);
-
-            const view = new DataView(new ArrayBuffer(4));
-            view.setUint32(0, end - start, DFUService.DFU_LITTLE_ENDIAN);
-
-            return this.sendDFUControlAsync(createType, view.buffer)
-                .then(() => {
-                    const data = buffer.slice(start, end);
-                    return this.dfuTransferDataAsync(data, start);
-                })
-                .then(() => {
-                    return this.sendDFUControlAsync(DFUService.DFU_OPERATIONS.CACULATE_CHECKSUM);
-                })
-                .then(response => {
-                    const crc = response.getInt32(4, DFUService.DFU_LITTLE_ENDIAN);
-                    const transferred = response.getUint32(0, DFUService.DFU_LITTLE_ENDIAN);
-                    const data = buffer.slice(0, transferred);
-
-                    // TODO: CRC
-                    this.debug(`written ${transferred} bytes`);
-                    offset = transferred;
-                    return this.sendDFUControlAsync(DFUService.DFU_OPERATIONS.EXECUTE);
-                })
-                .then(() => {
-                    if (end < buffer.byteLength) {
-                        return this.dfuTransferObjectAsync(buffer, createType, maxSize, offset);
-                    } else {
-                        this.debug("transfer complete");
-                        return Promise.resolve();
-                    }
-                });
-        }
-
-        private dfuTransferDataAsync(data: ArrayBuffer, offset: number, start?: number): Promise<void> {
-            start = start || 0;
-            const end = Math.min(start + DFUService.DFU_PACKET_SIZE, data.byteLength);
-            const packet = data.slice(start, end);
-
-            return this.packetCharacteristic.writeValue(packet)
-                .then(() => Promise.delay(this.chunkDelay))
-                .then(() => {
-                    // this.progress(offset + end);
-                    if (end < data.byteLength) {
-                        return this.dfuTransferDataAsync(data, offset, end);
-                    }
-
-                    return Promise.resolve();
-                });
-        }
-
-        protected createFlashPromise(): Promise<void> {
-            // request device to enter bootloader mode
-            this.debug(`dfu: request bootloader mode`);
-            this.autoReconnect = true;
-            this.device.pauseLog();
-            this.state = DFUServiceState.DFURequested;
-            const msg = new Uint8Array(1);
-            msg[0] = 0x01;
-            return this.controlCharacteristic.writeValue(msg)
-                .then(() => {
-                    // the micro:bit switches into bootloader without emitting disconnected events
-                    // wait for reconnection
-                })
-        }
-    }
+    // Unsecure DFU permanently banned.
+    // Permanently banned from WebUSB: https://github.com/WebBluetoothCG/registries/issues/7
 
     export enum PartialFlashingState {
         Idle = 1 << 0,
@@ -1043,7 +700,6 @@ namespace pxt.webBluetooth {
         _uartService: UARTService; // may be undefined
         _hf2Service: HF2Service; // may be undefined
         _partialFlashingService: PartialFlashingService; // may be undefined
-        _dfuService: DFUService; // may be undefined
 
         private services: BLEService[] = [];
         private pendingResumeLogOnDisconnection = false;
@@ -1067,7 +723,6 @@ namespace pxt.webBluetooth {
                 this.services.push(this._hf2Service = new HF2Service(this));
             }
             if (hasPartialFlash()) {
-                this.services.push(this._dfuService = new DFUService(this));
                 this.services.push(this._partialFlashingService = new PartialFlashingService(this));
             }
             this.aliveToken.startOperation();
@@ -1174,11 +829,8 @@ namespace pxt.webBluetooth {
             optionalServices.push(UARTService.SERVICE_UUID);
             optionalServices.push(HF2Service.SERVICE_UUID);
         }
-        if (hasPartialFlash()) {
-            optionalServices.push(DFUService.UUIDS.CONTROL.SERVICE);
-            optionalServices.push(DFUService.UUIDS.DFU.SERVICE);
+        if (hasPartialFlash())
             optionalServices.push(PartialFlashingService.SERVICE_UUID)
-        }
         pxt.debug(`optional services: ${optionalServices.join('\n')}`);
         return navigator.bluetooth.requestDevice({
             filters: pxt.appTarget.appTheme.bluetoothUartFilters,
@@ -1214,12 +866,14 @@ namespace pxt.webBluetooth {
         return connectAsync()
             .then(() => bleDevice._partialFlashingService.flashAsync(hex))
             .then(() => {
-                if (bleDevice._partialFlashingService.state == PartialFlashingState.USBFlashRequired)
-                    return bleDevice._dfuService.flashAsync(hex);
+                if (bleDevice._partialFlashingService.state == PartialFlashingState.USBFlashRequired) {
+                    // user needs to flash "manually"
+                    if (d && d.showNotification)
+                        d.showNotification(lf("Download file into device drive in order to use WebBLE flashing."));
+                    pxt.tickEvent("webble.flash.ddrequired");
+                } else
+                    pxt.tickEvent("webble.flash.success");
                 return Promise.resolve();
-            })
-            .then(() => {
-                pxt.tickEvent("webble.flash.success");
             })
             .catch(e => {
                 pxt.tickEvent("webble.fail.fail", { "message": e.message });
