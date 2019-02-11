@@ -1057,6 +1057,17 @@ namespace pxt.blocks {
         const currentScope = e.idToScope[b.id];
         let isDef = currentScope.declaredVars[binding.name] === binding && !binding.firstReference && !binding.alreadyDeclared;
 
+        if (isDef) {
+            // Check the expression of the set block to determine if it references itself and needs
+            // to be hoisted
+            forEachChildExpression(b, child => {
+                if (child.type === "variables_get") {
+                    let childBinding = lookup(e, child, child.getField("VAR").getText());
+                    if (childBinding === binding) isDef = false;
+                }
+            }, true);
+        }
+
         if (isDef) binding.alreadyDeclared = true;
         else if (!binding.firstReference) binding.firstReference = b;
 
@@ -2232,10 +2243,13 @@ namespace pxt.blocks {
         return [];
     }
 
-    function forEachChildExpression(block: Blockly.Block, cb: (block: Blockly.Block) => void) {
+    function forEachChildExpression(block: Blockly.Block, cb: (block: Blockly.Block) => void, recursive = false) {
         block.inputList.filter(i => i.type === Blockly.INPUT_VALUE).forEach(i => {
             if (i.connection && i.connection.targetBlock()) {
                 cb(i.connection.targetBlock());
+                if (recursive) {
+                    forEachChildExpression(i.connection.targetBlock(), cb, recursive);
+                }
             }
         });
     }
