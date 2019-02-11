@@ -91,7 +91,10 @@ namespace pxsim {
                 case "boolean":
                     return v;
                 case "function":
-                    return { text: "(function)" }
+                    return { 
+                        text: "(function)", 
+                        type: "function" 
+                    }
                 case "undefined":
                     return null;
                 case "object":
@@ -99,16 +102,24 @@ namespace pxsim {
                     if (v instanceof RefObject) {
                         heap[(v as RefObject).id] = v;
                         let preview = RefObject.toDebugString(v);
+                        let type = preview.startsWith('[') ? "array" : preview;
                         return {
                             id: (v as RefObject).id,
                             preview: preview,
-                            hasFields: (v as any).fields !== null || preview.endsWith(']'),
+                            hasFields: (v as any).fields !== null || preview.startsWith('['),
+                            type: type,
                         }
                     }
                     if (v._width && v._height) {
-                        return { text: v._width + 'x' + v._height }
+                        return { 
+                            text: v._width + 'x' + v._height,
+                            type: "image",
+                        }
                     }
-                    return { text: "(object)" }
+                    return { 
+                        text: "(object)",
+                        type: "object",
+                    }
                 default:
                     throw new Error();
             }

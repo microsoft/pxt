@@ -113,24 +113,50 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         }
     }
 
+    private variableType(variable: Variable) : string {
+        let val = variable.value;
+        if (val == null) return "undefined";
+        let type = typeof val
+        switch (type) {
+            case "string":
+            case "number":
+            case "boolean":
+                return type;
+            case "object":
+                if (val.type) return val.type;
+                if (val.preview) return val.preview;
+                if (val.text) return val.text;
+                return "object";
+            default:
+                return "unknown";
+        }
+    }
+
     private renderVariables(variables: pxt.Map<Variable>, parent?: string, depth?: number): JSX.Element[] {
         let r: JSX.Element[] = [];
+        let varNames = Object.keys(variables);
+        if (!parent) {
+            varNames = varNames.sort((var_a, var_b) => {
+                return this.variableType(variables[var_a]).localeCompare(this.variableType(variables[var_b])) || var_a.toLowerCase().localeCompare(var_b.toLowerCase());
+            })
+        }
         depth = depth || 0;
         let margin = depth*1.5 + 'em';
-        Object.keys(variables).forEach(variable => {
+        varNames.forEach(variable => {
             const v = variables[variable];
-            const type = v.value === null ? "undefined" : String(typeof v.value);
+            const oldValue = DebuggerVariables.renderValue(v.prevValue);
+            const newValue = DebuggerVariables.renderValue(v.value);
+            let type = this.variableType(v);
             const onClick = v.value && v.value.id ? () => this.toggle(v) : undefined;
             const onMouseOver : any = undefined; // prob a bad idea. Maybe onMouseEnter --> onMouseLeave?
             r.push(<div key={(parent || "") + variable} className="item" style={{padding: "0em",}}>
                 <div role="listitem" className={`ui horizontal label variable ${v.prevValue !== undefined ? "changed" : ""}`} style={{ marginLeft: margin }}
                     onClick={onClick} onMouseOver={onMouseOver}>
-                    {/* <i className= {`${v.value && v.value.hasFields ? (v.children ? "down triangle icon" : "right triangle icon") : 'right triangle icon transparent'}`} ></i> */}
                     <i className= {`${(v.children ? "down triangle icon" : "right triangle icon") + ((v.value && v.value.hasFields) ? "" : " transparent")}`} ></i>
                     <span className="varname">{variable + ':'}</span>
                     <div className="detail">
                         <span className={`varval ${type}`}>{DebuggerVariables.renderValue(v.value)}</span>
-                        <span className="previousval">{v.prevValue !== undefined ? `${DebuggerVariables.renderValue(v.prevValue)}` : ''}</span>
+                        <span className="previousval">{(oldValue !== "undefined" && oldValue !== newValue) ? `${oldValue}` : ''}</span>
                     </div>
                 </div>
             </div>);

@@ -80,16 +80,19 @@
         color:black;
     }
     .varval.number {
-        color: darkorchid; // TODO: Change this for the color we want for numbers
+        color: @debugNumberVariable;
     }
     .varval.string {
-        color: coral; // TODO: Change this for the color we want for strings
+        color: @debugStringVariable
     }
     .varval.boolean {
-        color: darkturquoise; // TODO: Change this for the color we want for bools
+        color: @debugBooleanVariable;
     }
-    .varval.object {
-        color: mediumblue; // TODO: Change this for the color we want for objects
+    .varval.array {
+        color: @debugArrayVariable;
+    }
+    .varval.Sprite {
+        color: @debugSpriteVariable;
     }
     .previousval {
         text-decoration: line-through;
