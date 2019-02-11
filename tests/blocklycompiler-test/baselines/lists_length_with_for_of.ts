@@ -1,4 +1,5 @@
+let item = 0
 let list: number[] = []
 for (let value of list) {
-    let item = list.length
+    item = list.length
 }

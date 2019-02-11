@@ -81,6 +81,7 @@ namespace pxt.blocks {
         firstStatement: Blockly.Block;
         declaredVars: Map<VarInfo>;
         referencedVars: number[];
+        assignedVars: number[];
         children: Scope[];
     }
 
@@ -1963,6 +1964,18 @@ namespace pxt.blocks {
         return false;
     }
 
+    function assignedWithinScope(scope: Scope, varID: number) {
+        if (scope.assignedVars.indexOf(varID) !== -1) {
+            return true;
+        }
+        else {
+            for (const child of scope.children) {
+                if (assignedWithinScope(child, varID)) return true;
+            }
+        }
+        return false;
+    }
+
     function escapeVariables(current: Scope, e: Environment) {
         for (const varName of Object.keys(current.declaredVars)) {
             const info = current.declaredVars[varName];
@@ -1994,7 +2007,7 @@ namespace pxt.blocks {
             if (scope) {
                 for (const varName of Object.keys(scope.declaredVars)) {
                     const info = scope.declaredVars[varName];
-                    if (info.escapedName === name) return true;
+                    if (info.name !== info.escapedName && info.escapedName === name) return true;
                 }
                 return nameIsTaken(name, scope.parent);
             }
@@ -2013,6 +2026,9 @@ namespace pxt.blocks {
 
         for (const child of current.children) {
             if (referencedWithinScope(child, varID)) {
+                if (assignedWithinScope(child, varID)) {
+                    return current;
+                }
                 if (!ref) {
                     ref = child;
                 }
@@ -2022,24 +2038,46 @@ namespace pxt.blocks {
             }
         }
 
-        return findCommonScope(ref, varID);
+        return ref ? findCommonScope(ref, varID) : undefined;
     }
 
     function trackAllVariables(topBlocks: Blockly.Block[], e: Environment) {
-        const topScope: Scope = {
-            firstStatement: null,
-            declaredVars: {},
-            referencedVars: [],
-            children: []
-        };
-
         topBlocks = topBlocks.filter(b => !b.disabled);
 
         let id = 1;
+        let topScope: Scope;
+
+        // First, look for on-start
+        topBlocks.forEach(block => {
+            if (block.type === ts.pxtc.ON_START_TYPE) {
+                const firstStatement = block.getInputTargetBlock("HANDLER");
+                if (firstStatement) {
+                    topScope = {
+                        firstStatement: firstStatement,
+                        declaredVars: {},
+                        referencedVars: [],
+                        children: [],
+                        assignedVars: []
+                    }
+                    trackVariables(firstStatement, topScope, e);
+                }
+            }
+        });
+
+        // If we didn't find on-start, then create an empty top scope
+        if (!topScope) {
+            topScope = {
+                firstStatement: null,
+                declaredVars: {},
+                referencedVars: [],
+                children: [],
+                assignedVars: []
+            }
+        }
 
         topBlocks.forEach(block => {
             if (block.type === ts.pxtc.ON_START_TYPE) {
-                topScope.firstStatement = block;
+                return;
             }
             trackVariables(block, topScope, e);
         });
@@ -2047,7 +2085,7 @@ namespace pxt.blocks {
         Object.keys(topScope.declaredVars).forEach(varName => {
             const varID = topScope.declaredVars[varName];
             delete topScope.declaredVars[varName];
-            const declaringScope = findCommonScope(topScope, varID.id);
+            const declaringScope = findCommonScope(topScope, varID.id) || topScope;
             declaringScope.declaredVars[varName] = varID;
         })
 
@@ -2059,9 +2097,15 @@ namespace pxt.blocks {
         function trackVariables(block: Blockly.Block, currentScope: Scope, e: Environment) {
             e.idToScope[block.id] = currentScope;
 
-            if (block.type === "variables_get" || block.type === "variables_set" || block.type === "variables_change") {
+            if (block.type === "variables_get") {
                 const name = block.getField("VAR").getText();
                 const info = findOrDeclareVariable(name, currentScope);
+                currentScope.referencedVars.push(info.id);
+            }
+            else if (block.type === "variables_set" || block.type === "variables_change") {
+                const name = block.getField("VAR").getText();
+                const info = findOrDeclareVariable(name, currentScope);
+                currentScope.assignedVars.push(info.id);
                 currentScope.referencedVars.push(info.id);
             }
 
@@ -2089,6 +2133,7 @@ namespace pxt.blocks {
                         firstStatement: block,
                         declaredVars: {},
                         referencedVars: [],
+                        assignedVars: [],
                         children: []
                     };
 
@@ -2111,6 +2156,7 @@ namespace pxt.blocks {
                         firstStatement: connectedBlock,
                         declaredVars: {},
                         referencedVars: [],
+                        assignedVars: [],
                         children: []
                     };
                     parentScope.children.push(newScope);
