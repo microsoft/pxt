@@ -373,6 +373,10 @@ describe("blockly compiler", function () {
         it("should handle collisions with variables declared by optional callback arguments", (done: () => void) => {
             blockTestAsync("mc_chat_blocks").then(done, done);
         });
+
+        it("should hoist variable declarations when the first set references the target", (done: () => void) => {
+            blockTestAsync("self_reference_vars").then(done, done);
+        });
     });
 
     describe("compiling functions", () => {
