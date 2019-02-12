@@ -383,6 +383,18 @@ describe("blockly compiler", function () {
         it("should handle name collisions", (done: () => void) => {
             blockTestAsync("functions_names").then(done, done);
         });
+
+        it("should handle function declarations", (done: () => void) => {
+            blockTestAsync("functions_v2").then(done, done);
+        });
+
+        it("should handle function reporters", (done: () => void) => {
+            blockTestAsync("functions_v2_reporters").then(done, done);
+        });
+
+        it("should narrow variable types when used as function call arguments", (done: () => void) => {
+            blockTestAsync("function_call_inference").then(done, done);
+        });
     });
 
     describe("compiling special blocks", () => {
