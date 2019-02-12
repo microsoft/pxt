@@ -375,6 +375,7 @@ namespace pxt.py {
     export interface Num extends Expr {
         kind: "Num";
         n: number;
+        s: string;
     }
     export interface Str extends Expr {
         kind: "Str";
