@@ -74,12 +74,23 @@ declare namespace pxt {
         callName?: string;      // name of the block's function if changed in target
     }
 
+    interface FunctionEditorTypeInfo {
+        typeName?: string; // The actual type that gets emitted to ts
+        label?: string; // A user-friendly label for the type, e.g. "text" for the string type
+        icon?: string; // The className of a semantic icon, e.g. "calculator", "text width", etc
+        defaultName?: string; // The default argument name to use in the function declaration for this type
+    }
+
     interface RuntimeOptions {
         mathBlocks?: boolean;
         textBlocks?: boolean;
         listsBlocks?: boolean;
         variablesBlocks?: boolean;
         functionBlocks?: boolean;
+        functionsOptions?: {
+            extraFunctionEditorTypes?: FunctionEditorTypeInfo[];
+            useNewFunctions?: boolean;
+        };
         logicBlocks?: boolean;
         loopsBlocks?: boolean;
         onStartNamespace?: string; // default = loops
@@ -391,6 +402,7 @@ declare namespace ts.pxtc {
         vmOpCodes?: pxt.Map<number>;
         vtableShift?: number; // defaults to 2, i.e., (1<<2) == 4 byte alignment of vtables, and thus 256k max program size; increase for chips with more flash!
         postProcessSymbols?: boolean;
+        imageRefTag?: number;
     }
 
     interface CompileOptions {
@@ -412,6 +424,7 @@ declare namespace ts.pxtc {
         warnDiv?: boolean; // warn when emitting division operator
 
         alwaysDecompileOnStart?: boolean; // decompiler only
+        useNewFunctions?: boolean; // decompiler only; whether to decompile functions using the new functions implementation (functions with parameters)
 
         embedMeta?: string;
         embedBlob?: string; // base64

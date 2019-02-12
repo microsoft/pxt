@@ -17,6 +17,7 @@ namespace pxt.editor {
 
     export interface IFile {
         name: string;
+        virtual?: boolean; // gimmick to switch views
     }
 
     export interface FileHistoryEntry {
@@ -114,6 +115,7 @@ namespace pxt.editor {
     export interface TutorialOptions {
         tutorial?: string; // tutorial
         tutorialName?: string; // tutorial title
+        tutorialReportId?: string; // if this tutorial was user generated, the report abuse id
         tutorialStepInfo?: pxt.tutorial.TutorialStepInfo[];
         tutorialStep?: number; // current tutorial page
         tutorialReady?: boolean; // current tutorial page

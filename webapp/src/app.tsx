@@ -401,7 +401,7 @@ export class ProjectView
         if (!mainEditorPkg) return; // no project loaded
 
         if (!mainEditorPkg.lookupFile("this/" + pxt.SERIAL_EDITOR_FILE)) {
-            mainEditorPkg.setFile(pxt.SERIAL_EDITOR_FILE, "serial\n")
+            mainEditorPkg.setFile(pxt.SERIAL_EDITOR_FILE, "serial\n", true)
         }
         this.serialEditor.setSim(isSim)
         let event = "serial." + (isSim ? "simulator" : "device") + "EditorOpened"
@@ -641,10 +641,12 @@ export class ProjectView
             return undefined;
         this.updatingEditorFile = true;
         const simRunning = this.state.simState != pxt.editor.SimState.Stopped;
-        this.stopSimulator();
-        if (simRunning || this.state.autoRun) {
-            simulator.driver.setStarting();
-            this.setState({ simState: pxt.editor.SimState.Starting });
+        if (!this.state.currFile.virtual) { // switching to serial should not reset the sim
+            this.stopSimulator();
+            if (simRunning || this.state.autoRun) {
+                simulator.driver.setStarting();
+                this.setState({ simState: pxt.editor.SimState.Starting });
+            }
         }
         this.saveSettings();
 
@@ -681,7 +683,7 @@ export class ProjectView
                 this.updatingEditorFile = false;
                 // if auto-run is not enable, restart the sim
                 // otherwise, autorun will launch it again
-                if (simRunning && !this.state.autoRun)
+                if (!this.state.currFile.virtual && simRunning && !this.state.autoRun)
                     this.startSimulator();
             })
     }
@@ -1168,6 +1170,7 @@ export class ProjectView
         const importer = this.hexFileImporters.filter(fi => fi.canImport(data))[0];
         if (importer) {
             pxt.tickEvent("import." + importer.id);
+            core.hideDialog();
             core.showLoading("importhex", lf("loading project..."))
             importer.importAsync(this, data)
                 .done(() => core.hideLoading("importhex"), e => {
@@ -1343,12 +1346,12 @@ export class ProjectView
     saveProjectToFileAsync(): Promise<void> {
         const mpkg = pkg.mainPkg;
         if (saveAsBlocks()) {
-            pxt.BrowserUtils.browserDownloadText(pkg.mainPkg.readFile("main.blocks"), pkg.genFileName(".blocks"), 'application/xml');
+            pxt.BrowserUtils.browserDownloadText(mpkg.readFile("main.blocks"), pkg.genFileName(".blocks"), 'application/xml');
             return Promise.resolve();;
         }
         if (pxt.commands.saveProjectAsync) {
             core.infoNotification(lf("Saving..."))
-            return pkg.mainPkg.saveToJsonAsync(this.getPreferredEditor())
+            return mpkg.saveToJsonAsync(this.getPreferredEditor())
                 .then(project => pxt.commands.saveProjectAsync(project));
         }
         if (pxt.appTarget.compile.saveAsPNG) return this.saveProjectAsPNGAsync(true);
@@ -1659,7 +1662,7 @@ export class ProjectView
 
     private checkWebUSBVariant = true
     checkForHwVariant() {
-        if (pxt.hwVariant)
+        if (pxt.hwVariant || !pxt.hasHwVariants())
             return false // already set
         const variants = pxt.getHwVariants()
         if (variants.length == 0)
@@ -1708,7 +1711,7 @@ export class ProjectView
         if (this.checkForHwVariant())
             return;
 
-        if (pxt.appTarget.compile.saveAsPNG && !pxt.hwVariant) {
+        if (pxt.appTarget.compile.saveAsPNG && pxt.hasHwVariants() && !pxt.hwVariant) {
             this.saveAndCompile();
             return;
         }
@@ -2298,7 +2301,8 @@ export class ProjectView
     ///////////////////////////////////////////////////////////
 
     showReportAbuse() {
-        const pubId = this.state.header && this.state.header.pubCurrent && this.state.header.pubId;
+        const pubId = (this.state.tutorialOptions && this.state.tutorialOptions.tutorialReportId)
+            || (this.state.header && this.state.header.pubCurrent && this.state.header.pubId);
         dialogs.showReportAbuseAsync(pubId);
     }
 
@@ -2401,7 +2405,8 @@ export class ProjectView
     }
 
     showChooseHwDialog() {
-        this.chooseHwDialog.show()
+        if (this.chooseHwDialog)
+            this.chooseHwDialog.show()
     }
 
     showRenameProjectDialogAsync(): Promise<boolean> {
@@ -2433,36 +2438,86 @@ export class ProjectView
         if (!pxt.Cloud.isNavigatorOnline()) {
             core.errorNotification(lf("No Internet access, please connect and try again."));
         } else {
-            core.showLoading("tutorial", lf("starting tutorial..."));
             this.startTutorialAsync(tutorialId, tutorialTitle);
         }
     }
 
     startTutorialAsync(tutorialId: string, tutorialTitle?: string): Promise<void> {
-        let title = tutorialTitle || tutorialId.split('/').reverse()[0].replace('-', ' '); // drop any kind of sub-paths
-
+        core.hideDialog();
+        core.showLoading("tutorial", lf("starting tutorial..."));
         sounds.initTutorial(); // pre load sounds
+        const scriptId = pxt.Cloud.parseScriptId(tutorialId);
+        const ghid = pxt.github.parseRepoId(tutorialId);
+        let reportId: string = undefined;
         let tutorialmd: string;
+        let title: string;
+        let autoChooseBoard: boolean = true;
+        let dependencies: pxt.Map<string> = {};
+        let features: string[] = undefined;
+        let p: Promise<string>;
+        if (/^\//.test(tutorialId)) {
+            title = tutorialTitle || tutorialId.split('/').reverse()[0].replace('-', ' '); // drop any kind of sub-paths
+            p = pxt.Cloud.markdownAsync(tutorialId)
+                .then(md => {
+                    if (md) {
+                        dependencies = pxt.gallery.parsePackagesFromMarkdown(md);
+                        features = pxt.gallery.parseFeaturesFromMarkdown(md);
+                        autoChooseBoard = true;
+                    }
+                    return md;
+                })
+        } else if (scriptId) {
+            pxt.tickEvent("tutorial.shared");
+            p = workspace.downloadFilesByIdAsync(scriptId)
+                .then(files => {
+                    const pxtJson = JSON.parse(files["pxt.json"]) as pxt.PackageConfig;
+                    dependencies = pxtJson.dependencies || {};
+                    title = pxtJson.name || lf("Untitled");
+                    autoChooseBoard = false;
+                    reportId = scriptId;
+                    return files["README.md"];
+                });
+        } else if (!!ghid) {
+            p = pxt.packagesConfigAsync()
+                .then(config => {
+                    const status = pxt.github.repoStatus(ghid, config);
+                    switch (status) {
+                        case pxt.github.GitRepoStatus.Banned:
+                            throw lf("This tutorial has been banned.");
+                        //case pxt.github.GitRepoStatus.Approved:
+                        default:
+                            reportId = "https://github.com/" + ghid.fullName;
+                            break;
+                    }
+                    return pxt.github.downloadPackageAsync(ghid.fullName, config);
+                })
+                .then(gh => {
+                    const pxtJson = JSON.parse(gh.files["pxt.json"]) as pxt.PackageConfig;
+                    dependencies = pxtJson.dependencies || {};
+                    title = pxtJson.name || lf("Untitled");
+                    autoChooseBoard = false;
+                    return gh.files["README.md"];
+                });
+        } else {
+            p = Promise.resolve(undefined);
+        }
 
-        return Promise.resolve()
-            .then(() => pxt.Cloud.markdownAsync(tutorialId))
-            .then(md => {
-                if (!md)
-                    throw new Error("tutorial not found");
-                tutorialmd = md;
-                const dependencies = pxt.gallery.parsePackagesFromMarkdown(md);
-                const features = pxt.gallery.parseFeaturesFromMarkdown(md);
-                return this.createProjectAsync({
-                    name: title,
-                    inTutorial: true,
-                    dependencies
-                }).then(() => this.autoChooseBoardAsync(features));
-            })
+        return p.then(md => {
+            if (!md)
+                throw new Error("tutorial not found");
+            tutorialmd = md;
+            return this.createProjectAsync({
+                name: title,
+                inTutorial: true,
+                dependencies
+            }).then(() => autoChooseBoard ? this.autoChooseBoardAsync(features) : Promise.resolve());
+        })
             .then(() => {
                 this.setState({
                     tutorialOptions: {
                         tutorial: tutorialId,
-                        tutorialName: title
+                        tutorialName: title,
+                        tutorialReportId: reportId
                     },
                     tracing: undefined
                 });
@@ -2483,6 +2538,7 @@ export class ProjectView
                             tutorialOptions: {
                                 tutorial: tutorialId,
                                 tutorialName: title,
+                                tutorialReportId: reportId,
                                 tutorialStep: 0,
                                 tutorialReady: true,
                                 tutorialStepInfo: stepInfo
@@ -2674,6 +2730,7 @@ export class ProjectView
         const shouldHideEditorFloats = (this.state.hideEditorFloats || this.state.collapseEditorTools) && (!inTutorial || isHeadless);
         const shouldCollapseEditorTools = this.state.collapseEditorTools && (!inTutorial || isHeadless);
         const logoWide = !!targetTheme.logoWide;
+        const hwDialog = !sandbox && pxt.hasHwVariants();
 
         const isApp = cmds.isNativeHost() || pxt.winrt.isWinRT() || pxt.BrowserUtils.isElectron();
 
@@ -2763,7 +2820,7 @@ export class ProjectView
                 {inHome ? <projects.ImportDialog parent={this} ref={this.handleImportDialogRef} /> : undefined}
                 {inHome && targetTheme.scriptManager ? <scriptmanager.ScriptManagerDialog parent={this} ref={this.handleScriptManagerDialogRef} onClose={this.handleScriptManagerDialogClose} /> : undefined}
                 {sandbox ? undefined : <projects.ExitAndSaveDialog parent={this} ref={this.handleExitAndSaveDialogRef} />}
-                <projects.ChooseHwDialog parent={this} ref={this.handleChooseHwDialogRef} />
+                {hwDialog ? <projects.ChooseHwDialog parent={this} ref={this.handleChooseHwDialogRef} /> : undefined}
                 {sandbox || !sharingEnabled ? undefined : <share.ShareEditor parent={this} ref={this.handleShareEditorRef} loading={this.state.publishing} />}
                 {selectLanguage ? <lang.LanguagePicker parent={this} ref={this.handleLanguagePickerRef} /> : undefined}
                 {sandbox ? <container.SandboxFooter parent={this} /> : undefined}
@@ -2931,7 +2988,7 @@ let myexports: any = {
 export let ksVersion: string;
 
 function parseHash(): { cmd: string; arg: string } {
-    let hashM = /^#(\w+)(:([\/\-\+\=\w]+))?$/.exec(window.location.hash)
+    let hashM = /^#(\w+)(:([:\.\/\-\+\=\w]+))?$/.exec(window.location.hash)
     if (hashM) {
         return { cmd: hashM[1], arg: hashM[3] || '' };
     }

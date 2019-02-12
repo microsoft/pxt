@@ -103,6 +103,9 @@ namespace pxsim {
                             preview: RefObject.toDebugString(v)
                         }
                     }
+                    if (v._width && v._height) {
+                        return { text: v._width + 'x' + v._height }
+                    }
                     return { text: "(object)" }
                 default:
                     throw new Error();

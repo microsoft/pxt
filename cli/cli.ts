@@ -36,7 +36,7 @@ let forceBuild = false; // don't use cache
 function parseBuildInfo(parsed?: commandParser.ParsedCommand) {
     const cloud = parsed && parsed.flags["cloudbuild"];
     const local = parsed && parsed.flags["localbuild"];
-    forceBuild = parsed && !!parsed.flags["force"]
+    forceBuild = parsed && !!parsed.flags["force"];
     if (cloud && local)
         U.userError("cannot specify local-build and cloud-build together");
 
@@ -1749,12 +1749,13 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
                 targetStrings[k] = k;
                 const gallerymd = nodeutil.resolveMd(docsRoot, targetConfig.galleries[k]);
                 const gallery = pxt.gallery.parseGalleryMardown(gallerymd);
+                const gurl = `/${targetConfig.galleries[k].replace(/^\//, '')}`;
                 tocmd +=
-                    `* [${k}](${targetConfig.galleries[k]})
+                    `* [${k}](${gurl})
 `;
                 const gcard: pxt.CodeCard = {
                     name: k,
-                    url: targetConfig.galleries[k]
+                    url: gurl
                 };
                 gcards.push(gcard)
                 gallery.forEach(cards => cards.cards
@@ -1763,7 +1764,8 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
                             gcard.imageUrl = card.imageUrl;
                         if (card.largeImageUrl && !gcard.largeImageUrl)
                             gcard.largeImageUrl = card.largeImageUrl;
-                        tocmd += `  * [${card.name || card.title}](${card.url})
+                        const url = card.url || card.learnMoreUrl || card.buyUrl || (card.youTubeId && `https://youtu.be/${card.youTubeId}`);
+                        tocmd += `  * [${card.name || card.title}](${url})
 `;
                         if (card.tags)
                             card.tags.forEach(tag => targetStrings[tag] = tag);
@@ -2201,7 +2203,8 @@ function buildFailed(msg: string, e: any) {
 }
 
 function buildAndWatchTargetAsync(includeSourceMaps: boolean, rebundle: boolean) {
-    if (!(fs.existsSync(path.join(simDir(), "tsconfig.json")) || nodeutil.existsDirSync(path.join(simDir(), "public")))) {
+    if (fs.existsSync("pxt.json") &&
+        !(fs.existsSync(path.join(simDir(), "tsconfig.json")) || nodeutil.existsDirSync(path.join(simDir(), "public")))) {
         console.log("No sim/tsconfig.json nor sim/public/; assuming npm installed package")
         return Promise.resolve()
     }
@@ -2224,7 +2227,7 @@ function buildAndWatchTargetAsync(includeSourceMaps: boolean, rebundle: boolean)
             if (hasCommonPackages) {
                 toWatch = toWatch.concat(simDirectories);
             }
-            return toWatch;
+            return toWatch.filter(d => fs.existsSync(d));
         }));
 }
 
@@ -2461,8 +2464,8 @@ class SnippetHost implements pxt.Host {
             }
         }
 
-        pxt.log(`unresolved file ${module.id}/${filename}`)
-        return null
+        // might be ok
+        return null;
     }
 
     private getRepoDir() {
@@ -2496,7 +2499,7 @@ class SnippetHost implements pxt.Host {
             .then(resp => {
                 if (resp) {
                     U.iterMap(resp, (fn: string, cont: string) => {
-                        pkg.host().writeFile(pkg, fn, cont)
+                        this.writeFile(pkg, fn, cont)
                     })
                 }
             })
@@ -2651,7 +2654,7 @@ class Host
         if (!forceLocalBuild && (extInfo.onlyPublic || forceCloudBuild))
             return pxt.hex.getHexInfoAsync(this, extInfo)
 
-        return build.buildHexAsync(build.thisBuild, mainPkg, extInfo)
+        return build.buildHexAsync(build.thisBuild, mainPkg, extInfo, forceBuild)
             .then(() => build.thisBuild.patchHexInfo(extInfo))
     }
 
@@ -3480,6 +3483,7 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
             .then(() => pkg.getCompileOptionsAsync())
             .then(opts => {
                 opts.ast = true;
+                opts.useNewFunctions = pxt.appTarget.runtime && pxt.appTarget.runtime.functionsOptions && pxt.appTarget.runtime.functionsOptions.useNewFunctions;
                 const decompiled = pxtc.decompile(opts, "main.ts");
                 if (decompiled.success) {
                     resolve(decompiled.outfiles["main.blocks"]);
@@ -3579,10 +3583,14 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
                         const file = resp.ast.getSourceFile('main.ts');
                         const apis = pxtc.getApiInfo(opts, resp.ast);
                         const blocksInfo = pxtc.getBlocksInfo(apis);
+                        const useNewFunctions = pxt.appTarget.runtime &&
+                            pxt.appTarget.runtime.functionsOptions &&
+                            pxt.appTarget.runtime.functionsOptions.useNewFunctions;
                         const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, {
                             snippetMode: false,
-                            errorOnGreyBlocks: true
-                        })
+                            errorOnGreyBlocks: true,
+                            useNewFunctions
+                        });
                         const success = !!bresp.outfiles['main.blocks']
                         if (success) return addSuccess(name)
                         else return addFailure(fn, bresp.diagnostics)
@@ -3695,6 +3703,7 @@ interface BuildCoreOptions {
 
 function gdbAsync(c: commandParser.ParsedCommand) {
     ensurePkgDir()
+    setBuildEngine();
     return mainPkg.loadAsync()
         .then(() => gdb.startAsync(c.args))
 }
@@ -3713,15 +3722,17 @@ function dumpheapAsync(c: commandParser.ParsedCommand) {
 
 function buildDalDTSAsync(c: commandParser.ParsedCommand) {
     forceLocalBuild = true;
+    forceBuild = true; // make sure we actually build
     forceCloudBuild = false;
     const clean = !!c.flags["clean"];
 
     function prepAsync() {
         let p = Promise.resolve();
         if (clean)
-            return p.then(() => cleanAsync())
-                .then(() => buildCoreAsync({ mode: BuildOption.JustBuild }))
-                .then(() => { });
+            p = p.then(() => cleanAsync())
+
+        p = p.then(() => buildCoreAsync({ mode: BuildOption.JustBuild }))
+            .then(() => { });
         return Promise.resolve();
     }
 
@@ -5034,7 +5045,9 @@ export function getCodeSnippets(fileName: string, md: string): CodeSnippet[] {
             .map(l => l.replace(/\s*$/, ''))
             .filter(line => !!line)
             .forEach(line => {
-                pkgs[line] = "*";
+                const i = line.indexOf('=');
+                if (i < 0) pkgs[line] = "*";
+                else pkgs[line.substring(0, i)] = line.substring(i + 1);
             })
         );
 
@@ -5595,6 +5608,10 @@ PXT_ASMDEBUG     - embed additional information in generated binary.asm file
                 description: "Build native image using local toolchains",
                 aliases: ["local", "l", "local-build", "lb"]
             },
+            force: {
+                description: "skip cache lookup and force build",
+                aliases: ["f"]
+            },
             skipCore: {
                 description: "skip native build of core packages",
                 aliases: ["skip-core", "skipcore", "sc"]
@@ -5618,6 +5635,10 @@ PXT_ASMDEBUG     - embed additional information in generated binary.asm file
             localbuild: {
                 description: "Build native image using local toolchains",
                 aliases: ["local", "l", "local-build", "lb"]
+            },
+            force: {
+                description: "skip cache lookup and force build",
+                aliases: ["f"]
             }
         }
     }, uploadTargetReleaseAsync);

@@ -219,7 +219,10 @@ namespace pxsim {
 
             for (let i = 0; i < frames.length; ++i) {
                 let frame = frames[i] as HTMLIFrameElement
+                // same frame as source
                 if (source && frame.contentWindow == source) continue;
+                // frame not in DOM
+                if (!frame.contentWindow) continue;
 
                 frame.contentWindow.postMessage(msg, "*");
 
@@ -455,7 +458,7 @@ namespace pxsim {
 
         // ensure _currentRuntime is ready
         private startFrame(frame: HTMLIFrameElement): boolean {
-            if (!this._currentRuntime) return false;
+            if (!this._currentRuntime || !frame.contentWindow) return false;
             let msg = JSON.parse(JSON.stringify(this._currentRuntime)) as pxsim.SimulatorRunMessage;
             let mc = '';
             let m = /player=([A-Za-z0-9]+)/i.exec(window.location.href); if (m) mc = m[1];

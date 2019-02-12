@@ -673,6 +673,11 @@ export async function importGithubAsync(id: string) {
         })
 }
 
+export function downloadFilesByIdAsync(id: string): Promise<pxt.Map<string>> {
+    return Cloud.privateGetAsync(id, /* forceLiveEndpoint */ true)
+        .then((scr: Cloud.JsonScript) => getPublishedScriptAsync(scr.id));
+}
+
 export function installByIdAsync(id: string) {
     return Cloud.privateGetAsync(id, /* forceLiveEndpoint */ true)
         .then((scr: Cloud.JsonScript) =>

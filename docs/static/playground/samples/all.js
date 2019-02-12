@@ -45,9 +45,9 @@
         },
         {
             chapter: "Basic",
-            name: "Inline input",
-            id: "basic-inline",
-            path: "basic/inline"
+            name: "Input Format",
+            id: "basic-input-format",
+            path: "basic/input-format"
         },
         {
             chapter: "Basic",

@@ -99,7 +99,7 @@ namespace pxsim.visuals {
                 else {
                     this.addAll(allocRes);
                     if (!allocRes.requiresBreadboard && !opts.forceBreadboardRender)
-                        this.breadboard.hide();
+                        useBreadboardView = false;
                 }
             }
 
@@ -263,18 +263,25 @@ namespace pxsim.visuals {
             part.updateState();
             return part;
         }
+
         public addWire(inst: WireInst): Wire {
             return this.wireFactory.addWire(inst.start, inst.end, inst.color);
         }
+
         public addAll(allocRes: AllocatorResult) {
             allocRes.partsAndWires.forEach(pAndWs => {
+                const wires = pAndWs.wires;
+                const wiresOk = wires && wires.every(w => this.wireFactory.checkWire(w.start, w.end));
+                if (wiresOk) // try to add all the wires
+                    wires.forEach(w => allocRes.wires.push(this.addWire(w)));
                 let part = pAndWs.part;
-                if (part)
-                    this.addPart(part)
-                let wires = pAndWs.wires;
-                if (wires)
-                    wires.forEach(w => this.addWire(w));
-            })
+                if (part && (!wires || wiresOk))
+                    allocRes.parts.push(this.addPart(part));
+            });
+
+            // at least one wire
+            allocRes.requiresBreadboard = !!allocRes.wires.length
+                || !!allocRes.parts.length;
         }
     }
 }
