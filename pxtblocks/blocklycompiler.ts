@@ -409,6 +409,11 @@ namespace pxt.blocks {
                         handleGenericType(b, "LIST");
                         unionParam(e, b, "INDEX", ground(pNumber.type));
                         break;
+                    case 'function_call':
+                        (b as Blockly.FunctionCallBlock).getArguments().forEach(arg => {
+                            unionParam(e, b, arg.id, ground(arg.type));
+                        });
+                        break;
                     case pxtc.PAUSE_UNTIL_TYPE:
                         unionParam(e, b, "PREDICATE", pBoolean);
                         break;
@@ -1469,7 +1474,11 @@ namespace pxt.blocks {
             // so add them to the taken names to avoid collision
             Object.keys(blockInfo.apis.byQName).forEach(name => {
                 const info = blockInfo.apis.byQName[name];
-                if (info.kind === pxtc.SymbolKind.Enum || info.kind === pxtc.SymbolKind.Function || info.kind === pxtc.SymbolKind.Module) {
+                // Note: the check for info.pkg filters out functions defined in the user's project.
+                // Otherwise, after the first compile the function will be renamed because it conflicts
+                // with itself. You can still get collisions if you attempt to define a function with
+                // the same name as a function defined in another file in the user's project (e.g. custom.ts)
+                if (info.pkg && (info.kind === pxtc.SymbolKind.Enum || info.kind === pxtc.SymbolKind.Function || info.kind === pxtc.SymbolKind.Module)) {
                     e.renames.takenNames[info.qName] = true;
                 }
             });
