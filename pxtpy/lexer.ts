@@ -128,13 +128,18 @@ namespace pxt.py {
     export function tokenToStringWithPos(t: Token, source: string) {
         let len = t.endPos - t.startPos
         let s = ""
-        if (len > 20) {
-            s = source.slice(t.startPos, t.startPos + 20) + "..."
+        if (len == 0) {
+            s = tokenToString(t)
+        } else if (len > 20) {
+            s = "`" + source.slice(t.startPos, t.startPos + 20) + "`..."
         } else {
-            s = source.slice(t.startPos, t.endPos)
+            s = "`" + source.slice(t.startPos, t.endPos) + "`"
         }
         s = s.replace(/\r/g, "").replace(/\n/g, "\\n")
-        return U.lf("`{0}` at {1}", s, position(t, source))
+        let r = U.lf("{0} at {1}", s, position(t, source))
+        if (pxt.options.debug)
+            r += " " + tokenToString(t)
+        return r
     }
 
     export function tokensToString(ts: Token[]) {
@@ -180,6 +185,8 @@ namespace pxt.py {
                 invalidToken()
             }
         }
+        pos0 = pos
+        addToken(TokenType.EOF, "")
         return res
 
         function addToken(type: TokenType, val: string) {

@@ -7,8 +7,6 @@ namespace pxt.py {
     let indentStack: number[]
     let prevToken: Token
 
-    const eof: Token = fakeToken(TokenType.EOF, "EOF")
-
     type Parse = () => AST
 
     function fakeToken(tp: TokenType, val: string): Token {
@@ -21,7 +19,7 @@ namespace pxt.py {
     }
 
     function peekToken() {
-        return tokens[nextToken] || eof
+        return tokens[nextToken]
     }
 
     function skipTokens() {
@@ -32,6 +30,20 @@ namespace pxt.py {
                 continue
             }
 
+            if (t.type == TokenType.Op)
+                switch (t.value) {
+                    case "LParen":
+                    case "LSquare":
+                    case "LBracket":
+                        inParens++
+                        break
+                    case "RParen":
+                    case "RSquare":
+                    case "RBracket":
+                        inParens--
+                        break
+                }
+
             if (t.type == TokenType.Error)
                 error(t.value)
 
@@ -40,6 +52,10 @@ namespace pxt.py {
                     continue
             } else {
                 if (t.type == TokenType.Indent) {
+                    if (tokens[nextToken + 1].type == TokenType.NewLine) {
+                        nextToken++
+                        continue // skip empty lines
+                    }
                     let curr = parseInt(t.value)
                     let top = indentStack[indentStack.length - 1]
                     if (curr == top)
@@ -68,16 +84,18 @@ namespace pxt.py {
                         }
                     }
                 }
-                return
             }
+            return
         }
     }
 
     function shiftToken() {
         prevToken = peekToken()
+        if (prevToken.type == TokenType.EOF)
+            return
         nextToken++
         skipTokens()
-        console.log("TOK: " + tokenToString(peekToken()))
+        console.log(`TOK: ${tokenToString(peekToken())}`)
     }
 
     function error(msg?: string) {
@@ -146,7 +164,7 @@ namespace pxt.py {
     }
 
     function notSupported() {
-        U.userError(U.lf("not supported yet, at {0}", tokenToString(peekToken())))
+        error(U.lf("not supported yet"))
     }
 
     function colon_suite(): Stmt[] {
@@ -232,8 +250,53 @@ namespace pxt.py {
         return finish(r)
     }
 
-    function try_stmt(): Stmt { throw notSupported() }
-    function raise_stmt(): Stmt { throw notSupported() }
+    function try_stmt(): Stmt {
+        let r = mkAST("Try") as Try
+        expectKw("try")
+        r.body = colon_suite()
+        r.handlers = []
+        let sawDefault = false
+        for (; ;) {
+            if (currentKw() == "except") {
+                let eh = mkAST("ExceptHandler") as ExceptHandler
+                r.handlers.push(eh)
+                shiftToken()
+                if (currentOp() != "Colon") {
+                    if (sawDefault)
+                        error()
+                    eh.type = test()
+                    if (currentKw() == "as") {
+                        shiftToken()
+                        eh.name = name()
+                    }
+                } else {
+                    sawDefault = true
+                }
+                eh.body = colon_suite()
+            } else {
+                break
+            }
+        }
+        r.orelse = orelse()
+        if (r.handlers.length == 0 && r.orelse.length)
+            error()
+        if (currentKw() == "finally") {
+            shiftToken()
+            r.finalbody = colon_suite()
+        }
+        return finish(r)
+    }
+
+    function raise_stmt(): Stmt {
+        let r = mkAST("Raise") as Raise
+        expectKw("raise")
+        r.exc = test()
+        if (currentKw() == "from") {
+            shiftToken()
+            r.cause = test()
+        }
+        return finish(r)
+    }
 
     function with_item() {
         let r = mkAST("WithItem") as WithItem
@@ -866,29 +929,24 @@ namespace pxt.py {
     function dictorsetmaker() {
         let t0 = peekToken()
 
-        try {
-            inParens++
-            shiftToken()
+        shiftToken()
 
-            if (currentOp() == "Pow") {
+        if (currentOp() == "Pow") {
+            shiftToken()
+            return dict(null, expr())
+        } else if (currentOp() == "RBracket") {
+            let r = mkAST("Dict", t0) as Dict
+            r.keys = []
+            r.values = []
+            return finish(r)
+        } else {
+            let e = star_or_test()
+            if (e.kind != "Starred" && currentOp() == "Colon") {
                 shiftToken()
-                return dict(null, expr())
-            } else if (currentOp() == "RBracket") {
-                let r = mkAST("Dict", t0) as Dict
-                r.keys = []
-                r.values = []
-                return finish(r)
+                return dict(e, test())
             } else {
-                let e = star_or_test()
-                if (e.kind != "Starred" && currentOp() == "Colon") {
-                    shiftToken()
-                    return dict(e, test())
-                } else {
-                    return set(e)
-                }
+                return set(e)
             }
-        } finally {
-            inParens--
         }
 
 
@@ -1030,14 +1088,17 @@ namespace pxt.py {
         for (; ;) {
             r.push(f())
 
-            if (currentOp() == "Comma")
+            let hasComma = currentOp() == "Comma"
+
+            if (hasComma)
                 shiftToken()
 
             // final comma is allowed, so no "else if" here
             if (atListEnd()) {
                 return r
             } else {
-                error(U.lf("expecting {0}", category))
+                if (!hasComma)
+                    error(U.lf("expecting {0}", category))
             }
         }
     }
@@ -1062,52 +1123,42 @@ namespace pxt.py {
         category: string,
         f: () => T
     ): T[] {
-        inParens++
-        try {
-            shiftToken()
-            let r = parseList(category, f)
-            expectOp(cl)
-            return r
-        } finally {
-            inParens--
-        }
+        shiftToken()
+        let r = parseList(category, f)
+        expectOp(cl)
+        return r
     }
 
     function parseParens(cl: string, tuple: string, comp: string): Expr {
-        inParens++
-        try {
-            let t0 = peekToken()
+        let t0 = peekToken()
+        shiftToken()
+        if (currentOp() == cl) {
             shiftToken()
-            if (currentOp() == cl) {
-                shiftToken()
-                let r = mkAST(tuple) as Tuple
-                r.elts = []
-                return finish(r)
-            }
-
-            let e0 = star_or_test()
-            if (currentKw() == "for") {
-                let r = mkAST(comp) as GeneratorExp
-                r.elt = e0
-                r.generators = comp_for()
-                return finish(r)
-            }
-
-            if (currentOp() == "Comma") {
-                let r = mkAST(tuple) as Tuple
-                shiftToken()
-                r.elts = parseList(U.lf("expression"), star_or_test)
-                r.elts.unshift(e0)
-                expectOp(cl)
-
-                return finish(r)
-            }
-
-            expectOp(cl)
-            return e0
-        } finally {
-            inParens--
+            let r = mkAST(tuple) as Tuple
+            r.elts = []
+            return finish(r)
         }
+
+        let e0 = star_or_test()
+        if (currentKw() == "for") {
+            let r = mkAST(comp) as GeneratorExp
+            r.elt = e0
+            r.generators = comp_for()
+            return finish(r)
+        }
+
+        if (currentOp() == "Comma") {
+            let r = mkAST(tuple) as Tuple
+            shiftToken()
+            r.elts = parseList(U.lf("expression"), star_or_test)
+            r.elts.unshift(e0)
+            expectOp(cl)
+
+            return finish(r)
+        }
+
+        expectOp(cl)
+        return e0
     }
 
     function name() {
@@ -1134,11 +1185,7 @@ namespace pxt.py {
         return { args: rargs, keywords: rkeywords }
     }
 
-
-
-    function atom_expr(): Expr {
-        let t0 = peekToken()
-        let e = atom()
+    function trailer(t0: Token, e: Expr) {
         let o = currentOp()
         if (o == "LParen") {
             let r = mkAST("Call", t0) as Call
@@ -1170,7 +1217,17 @@ namespace pxt.py {
             return finish(r)
         } else {
             return e
+        }
+    }
 
+    function atom_expr(): Expr {
+        let t0 = peekToken()
+        let e = atom()
+        for (; ;) {
+            let ee = trailer(t0, e)
+            if (ee === e)
+                return e
+            e = ee
         }
     }
 
