@@ -137,7 +137,9 @@ namespace pxt.py {
         } else {
             s = "`" + source.slice(t.startPos, t.endPos) + "`"
         }
-        s = s.replace(/\r/g, "").replace(/\n/g, "\\n")
+        s = s.replace(/\r/g, "")
+            .replace(/\n/g, "\\n")
+            .replace(/\t/g, "\\t")
         let r = U.lf("{0} at {1}{2}", s, fn, position(t, source))
         if (pxt.options.debug)
             r += " " + tokenToString(t)
@@ -190,6 +192,7 @@ namespace pxt.py {
             }
         }
         pos0 = pos
+        singleNewline()
         addToken(TokenType.EOF, "")
         return res
 
@@ -354,8 +357,10 @@ namespace pxt.py {
             while (true) {
                 const ch = source.charCodeAt(pos)
                 if (ch == 9) {
-                    addError(U.lf("TAB indentaion not supported"))
-                    break
+                    // addError(U.lf("TAB indentaion not supported"))
+                    ind = (ind + 8) & ~7
+                    pos++
+                    continue
                 }
                 if (ch != 32)
                     break

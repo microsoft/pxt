@@ -293,10 +293,12 @@ namespace pxt.py {
     function raise_stmt(): Stmt {
         let r = mkAST("Raise") as Raise
         expectKw("raise")
-        r.exc = test()
-        if (currentKw() == "from") {
-            shiftToken()
-            r.cause = test()
+        if (!atStmtEnd()) {
+            r.exc = test()
+            if (currentKw() == "from") {
+                shiftToken()
+                r.cause = test()
+            }
         }
         return finish(r)
     }
@@ -349,6 +351,7 @@ namespace pxt.py {
 
     function del_stmt(): Stmt {
         let r = mkAST("Delete") as Delete
+        expectKw("del")
         r.targets = parseList(U.lf("expression"), expr)
         return finish(r)
     }
@@ -963,6 +966,7 @@ namespace pxt.py {
             return dict(null, expr())
         } else if (currentOp() == "RBracket") {
             let r = mkAST("Dict", t0) as Dict
+            shiftToken()
             r.keys = []
             r.values = []
             return finish(r)
@@ -1193,6 +1197,7 @@ namespace pxt.py {
             let r = mkAST(comp) as GeneratorExp
             r.elt = e0
             r.generators = comp_for()
+            expectOp(cl)
             return finish(r)
         }
 
