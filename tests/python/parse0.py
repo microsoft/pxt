@@ -1,3 +1,1 @@
-while True:
-  pass
-  x += x + 1
+q = [int(i * self.brightness) for i in self._buf]

@@ -1485,7 +1485,7 @@ export function convertAsync(fns: string[], useInternal = false) {
             let source = fs.readFileSync(f, "utf8")
             let tokens = pxt.py.lex(source)
             console.log(pxt.py.tokensToString(tokens))
-            let p = pxt.py.parse(source, tokens)
+            let p = pxt.py.parse(source, f, tokens)
             console.log(pxt.py.dump(p))
         }
         return Promise.resolve()

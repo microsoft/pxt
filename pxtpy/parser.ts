@@ -2,6 +2,7 @@ namespace pxt.py {
     let inParens: number
     let tokens: Token[]
     let source: string
+    let filename: string
     let nextToken: number
     let currComments: Token[]
     let indentStack: number[]
@@ -101,7 +102,7 @@ namespace pxt.py {
     function error(msg?: string) {
         if (!msg) msg = U.lf("invalid syntax")
         U.userError(U.lf("Python parse error: {0} near {1}", msg,
-            tokenToStringWithPos(peekToken(), source)))
+            tokenToStringWithPos(peekToken(), filename, source)))
     }
 
     function expect(tp: TokenType, val: string) {
@@ -161,11 +162,13 @@ namespace pxt.py {
         "import": import_name,
         "from": import_from,
         "assert": assert_stmt,
+        "yield": yield_stmt,
     }
 
     function notSupported() {
         error(U.lf("not supported yet"))
     }
+
 
     function colon_suite(): Stmt[] {
         expectOp("Colon")
@@ -310,6 +313,7 @@ namespace pxt.py {
 
     function with_stmt(): Stmt {
         let r = mkAST("With") as With
+        expectKw("with")
         r.items = parseSepList(U.lf("with item"), with_item)
         r.body = colon_suite()
         return finish(r)
@@ -334,7 +338,7 @@ namespace pxt.py {
         let r = mkAST("ClassDef") as ClassDef
         expectKw("class")
         r.name = name()
-        if (currentKw() == "LParen") {
+        if (currentOp() == "LParen") {
             let rr = parseArgs()
             r.bases = rr.args
             r.keywords = rr.keywords
@@ -348,6 +352,30 @@ namespace pxt.py {
         r.targets = parseList(U.lf("expression"), expr)
         return finish(r)
     }
+
+    function wrap_expr_stmt(e: Expr) {
+        let r = mkAST("ExprStmt") as ExprStmt
+        r.startPos = e.startPos
+        r.endPos = e.endPos
+        r.value = e
+        return r
+    }
+
+    function yield_stmt(): Stmt {
+        let t0 = peekToken()
+        shiftToken()
+        if (currentKw() == "from") {
+            let r = mkAST("YieldFrom") as YieldFrom
+            r.value = test()
+            return wrap_expr_stmt(finish(r))
+        }
+
+        let r = mkAST("Yield") as Yield
+        if (!atStmtEnd())
+            r.value = testlist()
+        return wrap_expr_stmt(finish(r))
+    }
+
 
     function pass_stmt(): Stmt {
         let r = mkAST("Pass") as Pass
@@ -709,19 +737,18 @@ namespace pxt.py {
         return t
     }
 
-
     function bool_test(op: string, f: () => Expr): Expr {
         let t0 = peekToken()
         let r = f()
         if (currentKw() == op) {
-            let r = mkAST("BoolOp", t0) as BoolOp
-            r.op = op == "or" ? "Or" : "And"
-            r.values = [r]
+            let rr = mkAST("BoolOp", t0) as BoolOp
+            rr.op = op == "or" ? "Or" : "And"
+            rr.values = [r]
             while (currentKw() == op) {
                 expectKw(op)
-                r.values.push(f())
+                rr.values.push(f())
             }
-            return finish(r)
+            return finish(rr)
         }
         return r
     }
@@ -893,13 +920,13 @@ namespace pxt.py {
 
     function argument(): Expr | Keyword {
         let t0 = peekToken()
-        if (currentKw() == "Mult") {
+        if (currentOp() == "Mult") {
             let r = mkAST("Starred") as Starred
             shiftToken()
             r.value = test()
             return finish(r)
         }
-        if (currentKw() == "**") {
+        if (currentOp() == "Pow") {
             let r = mkAST("Keyword") as Keyword
             shiftToken()
             r.arg = null
@@ -1071,6 +1098,9 @@ namespace pxt.py {
             return true
         if (U.endsWith(op, "Assign"))
             return true
+        let kw = currentKw()
+        if (kw == "in")
+            return true
         if (peekToken().type == TokenType.NewLine)
             return true
         return false
@@ -1124,7 +1154,26 @@ namespace pxt.py {
         f: () => T
     ): T[] {
         shiftToken()
-        let r = parseList(category, f)
+
+        let r: T[] = []
+
+        if (currentOp() != cl)
+            for (; ;) {
+                r.push(f())
+
+                let hasComma = currentOp() == "Comma"
+                if (hasComma)
+                    shiftToken()
+
+                // final comma is allowed, so no "else if" here
+                if (currentOp() == cl) {
+                    break
+                } else {
+                    if (!hasComma)
+                        error(U.lf("expecting {0}", category))
+                }
+            }
+
         expectOp(cl)
         return r
     }
@@ -1234,7 +1283,7 @@ namespace pxt.py {
     function power(): Expr {
         let t0 = peekToken()
         let e = atom_expr()
-        if (currentOp() == "**") {
+        if (currentOp() == "Pow") {
             let r = mkAST("BinOp") as BinOp
             shiftToken()
             r.left = e
@@ -1264,7 +1313,7 @@ namespace pxt.py {
             col_offset: 1,
             startPos: 1,
             endPos: 1,
-            kind: 1
+            kind: 1,
         }
         const stmts = {
             body: 1,
@@ -1298,6 +1347,13 @@ namespace pxt.py {
                         r += i2 + rec(i2, e) + "\n"
                     }
                     r += ind + "]"
+                } else if (k == "_comments") {
+                    r += "[\n"
+                    let i2 = ind + "  "
+                    for (let e of v[k] as Token[]) {
+                        r += i2 + JSON.stringify(e.value) + "\n"
+                    }
+                    r += ind + "]"
                 } else {
                     r += rec(ind, v[k])
                 }
@@ -1312,8 +1368,9 @@ namespace pxt.py {
         return r
     }
 
-    export function parse(_source: string, _tokens: Token[]) {
+    export function parse(_source: string, _filename: string, _tokens: Token[]) {
         source = _source
+        filename = _filename
         tokens = _tokens
         inParens = 0
         nextToken = 0

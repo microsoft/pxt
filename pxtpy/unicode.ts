@@ -23,7 +23,7 @@ namespace pxt.py.rx {
         if (code < 0x41) return false;
         if (code <= 0x5a) return true;
         if (code < 0x61) return code === 0x5f;
-        if (code < 0x7a) return true;
+        if (code <= 0x7a) return true;
         return code >= 0xaa && nonASCIIidentifier.test(String.fromCharCode(code));
     }
 

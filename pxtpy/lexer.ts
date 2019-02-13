@@ -50,6 +50,7 @@ namespace pxt.py {
     }
 
     const nonEqOps: Map<string> = {
+        "!": "Bang", // not really a token, but needed by the lexer
         "!=": "NotEq",
         "(": "LParen",
         ")": "RParen",
@@ -81,7 +82,8 @@ namespace pxt.py {
     }
 
     // resettable lexer state
-    let res: Token[] = []
+    let res: Token[]
+    let source: string
     let pos = 0, pos0 = 0
 
     function position(t: Token, source?: string) {
@@ -125,7 +127,7 @@ namespace pxt.py {
         }
     }
 
-    export function tokenToStringWithPos(t: Token, source: string) {
+    export function tokenToStringWithPos(t: Token, fn: string, source: string) {
         let len = t.endPos - t.startPos
         let s = ""
         if (len == 0) {
@@ -136,7 +138,7 @@ namespace pxt.py {
             s = "`" + source.slice(t.startPos, t.endPos) + "`"
         }
         s = s.replace(/\r/g, "").replace(/\n/g, "\\n")
-        let r = U.lf("{0} at {1}", s, position(t, source))
+        let r = U.lf("{0} at {1}{2}", s, fn, position(t, source))
         if (pxt.options.debug)
             r += " " + tokenToString(t)
         return r
@@ -162,10 +164,12 @@ namespace pxt.py {
         return r
     }
 
-    export function lex(source: string) {
+    export function lex(_source: string) {
         if (asciiParse.length == 0)
             initAsciiParse()
 
+        // these can't be local, since we capture lambdas from the first execution
+        source = _source
         res = []
         pos = 0
         pos0 = 0
