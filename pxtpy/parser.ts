@@ -138,7 +138,8 @@ namespace pxt.py {
         "raise": raise_stmt,
         "global": global_stmt,
         "nonlocal": nonlocal_stmt,
-        "import": import_stmt,
+        "import": import_name,
+        "from": import_from,
         "assert": assert_stmt,
     }
 
@@ -206,38 +207,204 @@ namespace pxt.py {
         return finish(r)
     }
 
-    function if_stmt(): Stmt { throw notSupported() }
-    function for_stmt(): Stmt { throw notSupported() }
+    function if_stmt(): Stmt {
+        let r = mkAST("If") as If
+        shiftToken()
+        r.test = test()
+        r.body = colon_suite()
+        if (currentKw() == "elif") {
+            r.orelse = [if_stmt()]
+        } else {
+            r.orelse = orelse()
+        }
+        return finish(r)
+    }
+
+    function for_stmt(): Stmt {
+        let r = mkAST("For") as For
+        expectKw("for")
+        r.target = exprlist()
+        expectKw("in")
+        r.iter = testlist()
+        r.body = colon_suite()
+        r.orelse = orelse()
+        return finish(r)
+    }
+
     function try_stmt(): Stmt { throw notSupported() }
-    function with_stmt(): Stmt { throw notSupported() }
+    function raise_stmt(): Stmt { throw notSupported() }
+
+    function with_item() {
+        let r = mkAST("WithItem") as WithItem
+        r.context_expr = test()
+        if (currentKw() == "as") {
+            shiftToken()
+            r.optional_vars = expr()
+        }
+        return finish(r)
+    }
+
+    function with_stmt(): Stmt {
+        let r = mkAST("With") as With
+        r.items = parseSepList(U.lf("with item"), with_item)
+        r.body = colon_suite()
+        return finish(r)
+    }
+
     function funcdef(): Stmt { throw notSupported() }
     function classdef(): Stmt { throw notSupported() }
 
-    function del_stmt(): Stmt { throw notSupported() }
+    function del_stmt(): Stmt {
+        let r = mkAST("Delete") as Delete
+        r.targets = parseList(U.lf("expression"), expr)
+        return finish(r)
+    }
+
     function pass_stmt(): Stmt {
         let r = mkAST("Pass") as Pass
         expectKw("pass")
         return finish(r)
     }
-    function break_stmt(): Stmt { throw notSupported() }
-    function continue_stmt(): Stmt { throw notSupported() }
-    function return_stmt(): Stmt { throw notSupported() }
-    function raise_stmt(): Stmt { throw notSupported() }
-    function global_stmt(): Stmt { throw notSupported() }
-    function nonlocal_stmt(): Stmt { throw notSupported() }
-    function import_stmt(): Stmt { throw notSupported() }
-    function assert_stmt(): Stmt { throw notSupported() }
 
-    /*
-    expr_stmt: testlist_star_expr (annassign | augassign (yield_expr|testlist) |
-                     ('=' (yield_expr|testlist_star_expr))*)
- 
-    annassign: ':' test ['=' test]
-testlist_star_expr: (test|star_expr) (',' (test|star_expr))* [',']
-augassign: ('+=' | '-=' | '*=' | '@=' | '/=' | '%=' | '&=' | '|=' | '^=' |
-            '<<=' | '>>=' | '**=' | '//=')
- 
-*/
+    function atStmtEnd() {
+        let t = peekToken()
+        return t.type == TokenType.NewLine || (t.type == TokenType.Op && t.value == "Semicolon")
+    }
+
+    function break_stmt(): Stmt {
+        let r = mkAST("Break") as Break
+        shiftToken()
+        return finish(r)
+    }
+
+    function continue_stmt(): Stmt {
+        let r = mkAST("Continue") as Continue
+        shiftToken()
+        return finish(r)
+    }
+
+    function return_stmt(): Stmt {
+        let r = mkAST("Return") as Return
+        shiftToken()
+        if (!atStmtEnd()) {
+            r.value = testlist()
+        }
+        return finish(r)
+    }
+
+    function global_stmt(): Stmt {
+        let r = mkAST("Global") as Global
+        shiftToken()
+        r.names = []
+        for (; ;) {
+            r.names.push(name())
+            if (currentOp() == "Comma") {
+                shiftToken()
+            } else {
+                break
+            }
+        }
+        return finish(r)
+    }
+
+    function nonlocal_stmt(): Stmt {
+        let r = global_stmt()
+        r.kind = "Nonlocal"
+        return r
+    }
+
+    function dotted_name() {
+        let s = ""
+        for (; ;) {
+            s += name()
+            if (currentOp() == "Dot") {
+                s += "."
+                shiftToken()
+            } else {
+                return s
+            }
+        }
+    }
+
+    function dotted_as_name() {
+        let r = mkAST("Alias") as Alias
+        r.name = dotted_name()
+        if (currentKw() == "as") {
+            shiftToken()
+            r.asname = name()
+        }
+        return finish(r)
+    }
+
+    function import_as_name() {
+        let r = mkAST("Alias") as Alias
+        r.name = name()
+        if (currentKw() == "as") {
+            shiftToken()
+            r.asname = name()
+        }
+        return finish(r)
+    }
+
+    function dots() {
+        let r = 0
+        for (; ;) {
+            if (currentOp() == "Dot") {
+                r += 1
+                shiftToken()
+            } else if (currentOp() == "Ellipsis") {
+                // not currently generated by lexer anyways
+                r += 3
+                shiftToken()
+            } else {
+                return r
+            }
+        }
+    }
+
+    function import_name(): Stmt {
+        let r = mkAST("Import") as Import
+        shiftToken()
+        r.names = parseSepList(U.lf("import name"), dotted_as_name)
+        return finish(r)
+    }
+
+    function import_from(): Stmt {
+        let r = mkAST("ImportFrom") as ImportFrom
+        shiftToken()
+        r.level = dots()
+        if (peekToken().type == TokenType.Id)
+            r.module = dotted_name()
+        if (!r.level && !r.module)
+            error(U.lf("invalid syntax"))
+        expectKw("import")
+
+        if (currentOp() == "Mult") {
+            shiftToken()
+            let star = mkAST("Alias") as Alias
+            star.name = "*"
+            r.names = [star]
+        } else if (currentOp() == "LParen") {
+            shiftToken()
+            r.names = parseList(U.lf("import name"), import_as_name)
+            expectOp("RParen")
+        } else {
+            r.names = parseList(U.lf("import name"), import_as_name)
+        }
+
+        return finish(r)
+    }
+
+    function assert_stmt(): Stmt {
+        let r = mkAST("Assert") as Assert
+        shiftToken()
+        r.test = test()
+        if (currentOp() == "Comma") {
+            shiftToken()
+            r.msg = test()
+        }
+        return finish(r)
+    }
 
     function testlist_core(f: () => Expr): Expr {
         let t0 = peekToken()
@@ -252,6 +419,7 @@ augassign: ('+=' | '-=' | '*=' | '@=' | '/=' | '%=' | '&=' | '|=' | '^=' |
 
     function testlist_star_expr(): Expr { return testlist_core(star_or_test) }
     function testlist(): Expr { return testlist_core(test) }
+    function exprlist(): Expr { return testlist_core(expr) }
 
     function expr_stmt(): Stmt {
         let t0 = peekToken()
@@ -303,7 +471,8 @@ augassign: ('+=' | '-=' | '*=' | '@=' | '/=' | '%=' | '&=' | '|=' | '^=' |
             return finish(exprStmt)
         }
 
-        throw notSupported()
+        error(U.lf("unexpected token"))
+        return null
     }
 
     function small_stmt() {
@@ -311,6 +480,7 @@ augassign: ('+=' | '-=' | '*=' | '@=' | '/=' | '%=' | '&=' | '|=' | '^=' |
         if (fn) return fn()
         else return expr_stmt()
     }
+
     function simple_stmt() {
         let res = [small_stmt()]
         while (currentOp() == "Semicolon") {
@@ -403,7 +573,7 @@ augassign: ('+=' | '-=' | '*=' | '@=' | '/=' | '%=' | '&=' | '|=' | '^=' |
         'is': "Is",
     }
 
-    function currentCmpOp() {
+    function getCmpOp() {
         return cmpOpMap[currentOp()] || cmpOpMap[currentKw()] || null
     }
 
@@ -411,7 +581,7 @@ augassign: ('+=' | '-=' | '*=' | '@=' | '/=' | '%=' | '&=' | '|=' | '^=' |
         let t0 = peekToken()
         let e = expr()
 
-        if (!currentCmpOp())
+        if (!getCmpOp())
             return e
 
         let r = mkAST("Compare", t0) as Compare
@@ -420,7 +590,7 @@ augassign: ('+=' | '-=' | '*=' | '@=' | '/=' | '%=' | '&=' | '|=' | '^=' |
         r.ops = []
 
         while (true) {
-            let c = currentCmpOp()
+            let c = getCmpOp()
             if (!c)
                 break
             shiftToken();
@@ -597,7 +767,8 @@ augassign: ('+=' | '-=' | '*=' | '@=' | '/=' | '%=' | '&=' | '|=' | '^=' |
 
     function atListEnd() {
         let op = currentOp()
-        if (op == "RParen" || op == "RSquare" || op == "RBrace" || op == "Colon")
+        if (op == "RParen" || op == "RSquare" || op == "RBrace" ||
+            op == "Colon" || op == "Semicolon")
             return true
         if (U.endsWith(op, "Assign"))
             return true
@@ -628,6 +799,21 @@ augassign: ('+=' | '-=' | '*=' | '@=' | '/=' | '%=' | '&=' | '|=' | '^=' |
                 error(U.lf("expecting {0}", category))
             }
         }
+    }
+
+    function parseSepList<T>(
+        category: string,
+        f: () => T,
+    ): T[] {
+        let r: T[] = []
+        for (; ;) {
+            r.push(f())
+            if (currentOp() == "Comma")
+                shiftToken()
+            else
+                break
+        }
+        return r
     }
 
     function parseParenthesizedList<T>(
@@ -683,6 +869,14 @@ augassign: ('+=' | '-=' | '*=' | '@=' | '/=' | '%=' | '&=' | '|=' | '^=' |
         }
     }
 
+    function name() {
+        let t = peekToken()
+        if (t.type != TokenType.Id)
+            error(U.lf("expecting identifier"))
+        shiftToken()
+        return t.value
+    }
+
     function atom_expr(): Expr {
         let t0 = peekToken()
         let e = atom()
@@ -722,11 +916,7 @@ augassign: ('+=' | '-=' | '*=' | '@=' | '/=' | '%=' | '&=' | '|=' | '^=' |
             let r = mkAST("Attribute", t0) as Attribute
             r.value = e
             shiftToken()
-            let t = peekToken()
-            if (t.type != TokenType.Id)
-                error(U.lf("expecting attribute name"))
-            r.attr = t.value
-            shiftToken()
+            r.attr = name()
             return finish(r)
         } else {
             return e
