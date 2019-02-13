@@ -1,1 +1,3 @@
-x += x + 1
+while True:
+  pass
+  x += x + 1

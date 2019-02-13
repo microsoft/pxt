@@ -49,14 +49,20 @@ namespace pxt.py {
                         return
                     } else {
                         t.type = TokenType.Dedent
+                        let numPop = 0
                         while (indentStack.length) {
                             let top = indentStack[indentStack.length - 1]
-                            if (top > curr)
+                            if (top > curr) {
                                 indentStack.pop()
-                            else if (top == curr)
-                                return
-                            else {
-                                error(U.lf("inconsitent indentation"))
+                                numPop++
+                            } else {
+                                if (top != curr)
+                                    error(U.lf("inconsitent indentation"))
+                                // in case there is more than one dedent, replicate current dedent token
+                                while (numPop > 1) {
+                                    tokens.splice(nextToken, 0, t)
+                                    numPop--
+                                }
                                 return
                             }
                         }
@@ -71,6 +77,7 @@ namespace pxt.py {
         prevToken = peekToken()
         nextToken++
         skipTokens()
+        console.log("TOK: " + tokenToString(peekToken()))
     }
 
     function error(msg: string) {
@@ -144,8 +151,26 @@ namespace pxt.py {
         return suite()
     }
 
+    // suite: simple_stmt | NEWLINE INDENT stmt+ DEDENT
     function suite(): Stmt[] {
-        throw notSupported()
+        if (peekToken().type == TokenType.NewLine) {
+            shiftToken()
+            if (peekToken().type != TokenType.Indent) {
+                error(U.lf("expecting indent"))
+            }
+            shiftToken()
+            let r = stmt()
+            for (; ;) {
+                if (peekToken().type == TokenType.Dedent) {
+                    shiftToken()
+                    break
+                }
+                U.pushRange(r, stmt())
+            }
+            return r
+        } else {
+            return simple_stmt()
+        }
     }
 
     function mkAST(kind: string, beg?: Token): AST {
@@ -206,12 +231,12 @@ namespace pxt.py {
     /*
     expr_stmt: testlist_star_expr (annassign | augassign (yield_expr|testlist) |
                      ('=' (yield_expr|testlist_star_expr))*)
-
+ 
     annassign: ':' test ['=' test]
 testlist_star_expr: (test|star_expr) (',' (test|star_expr))* [',']
 augassign: ('+=' | '-=' | '*=' | '@=' | '/=' | '%=' | '&=' | '|=' | '^=' |
             '<<=' | '>>=' | '**=' | '//=')
-
+ 
 */
 
     function testlist_core(f: () => Expr): Expr {
@@ -428,6 +453,7 @@ augassign: ('+=' | '-=' | '*=' | '@=' | '/=' | '%=' | '&=' | '|=' | '^=' |
             let r = mkAST("BinOp", t0) as BinOp
             r.left = e
             r.op = o as operator
+            shiftToken()
             r.right = binOp(f, ops)
             return r
         } else {
@@ -769,10 +795,10 @@ augassign: ('+=' | '-=' | '*=' | '@=' | '/=' | '%=' | '&=' | '|=' | '^=' |
                     r += ", "
                 r += k + "="
                 if (Array.isArray(v[k]) && v[k].length && U.lookup(stmts, k)) {
-                    r += "["
+                    r += "[\n"
                     let i2 = ind + "  "
                     for (let e of v[k]) {
-                        r += i2 + rec(i2, v[k]) + "\n"
+                        r += i2 + rec(i2, e) + "\n"
                     }
                     r += ind + "]"
                 } else {
