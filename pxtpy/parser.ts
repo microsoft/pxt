@@ -736,26 +736,55 @@ augassign: ('+=' | '-=' | '*=' | '@=' | '/=' | '%=' | '&=' | '|=' | '^=' |
     }
 
     export function dump(asts: AST[]) {
-        const rec = (v: any): any => {
-            if (Array.isArray(v)) {
-                for (let i = 0; i < v.length; ++i)
-                    v[i] = rec(v[i])
-                return v
-            }
-            if (!v || !v.kind)
-                return v
-            delete v.col_offset
-            delete v.startPos
-            delete v.endPos
-            delete v.lineno
-            for (let k of Object.keys(v)) {
-                v[k] = rec(v[k])
-            }
-            return v
+        const ignore = {
+            lineno: 1,
+            col_offset: 1,
+            startPos: 1,
+            endPos: 1,
+            kind: 1
         }
+        const stmts = {
+            body: 1,
+            orelse: 1,
+            finalbody: 1
+        }
+        const rec = (ind: string, v: any): any => {
+            if (Array.isArray(v)) {
+                let s = ""
+                for (let i = 0; i < v.length; ++i) {
+                    if (i > 0) s += ", "
+                    s += rec(ind, v[i])
+                }
+                return "[" + s + "]"
+            }
+
+            if (!v || !v.kind)
+                return JSON.stringify(v)
+
+            let r = ""
+            for (let k of Object.keys(v)) {
+                if (U.lookup(ignore, k))
+                    continue
+                if (r)
+                    r += ", "
+                r += k + "="
+                if (Array.isArray(v[k]) && v[k].length && U.lookup(stmts, k)) {
+                    r += "["
+                    let i2 = ind + "  "
+                    for (let e of v[k]) {
+                        r += i2 + rec(i2, v[k]) + "\n"
+                    }
+                    r += ind + "]"
+                } else {
+                    r += rec(ind, v[k])
+                }
+            }
+            return v.kind + "(" + r + ")"
+        }
+
         let r = ""
         for (let e of asts) {
-            r += JSON.stringify(rec(U.clone(e)), null, 1) + "\n"
+            r += rec("", e) + "\n"
         }
         return r
     }
