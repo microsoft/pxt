@@ -136,7 +136,7 @@ namespace pxt.py {
     }
 
     function notSupported() {
-        U.userError(U.lf("not supported yet"))
+        U.userError(U.lf("not supported yet, at {0}", tokenToString(peekToken())))
     }
 
     function colon_suite(): Stmt[] {
@@ -203,7 +203,83 @@ namespace pxt.py {
     function import_stmt(): Stmt { throw notSupported() }
     function assert_stmt(): Stmt { throw notSupported() }
 
-    function expr_stmt(): Stmt { throw notSupported() }
+    /*
+    expr_stmt: testlist_star_expr (annassign | augassign (yield_expr|testlist) |
+                     ('=' (yield_expr|testlist_star_expr))*)
+
+    annassign: ':' test ['=' test]
+testlist_star_expr: (test|star_expr) (',' (test|star_expr))* [',']
+augassign: ('+=' | '-=' | '*=' | '@=' | '/=' | '%=' | '&=' | '|=' | '^=' |
+            '<<=' | '>>=' | '**=' | '//=')
+
+*/
+
+    function testlist_core(f: () => Expr): Expr {
+        let t0 = peekToken()
+        let exprs = parseList(U.lf("expression"), f)
+        let expr = exprs[0]
+        if (exprs.length != 1) {
+            let tupl = mkAST("Tuple", t0) as Tuple
+            tupl.elts = exprs
+        }
+        return expr
+    }
+
+    function testlist_star_expr(): Expr { return testlist_core(star_or_test) }
+    function testlist(): Expr { return testlist_core(test) }
+
+    function expr_stmt(): Stmt {
+        let t0 = peekToken()
+        let expr = testlist_star_expr()
+        let op = currentOp()
+
+        if (op == "Assign") {
+            let assign = mkAST("Assign") as Assign
+            assign.targets = [expr]
+            for (; ;) {
+                shiftToken()
+                expr = testlist_star_expr()
+                op = currentOp()
+                if (op == "Assign") {
+                    assign.targets.push(expr)
+                } else {
+                    assign.value = expr
+                    break
+                }
+            }
+            return finish(assign)
+        }
+
+        if (op == "Colon") {
+            let annAssign = mkAST("AnnAssign") as AnnAssign
+            annAssign.target = expr
+            shiftToken()
+            annAssign.annotation = test()
+            if (currentOp() == "Assign") {
+                shiftToken()
+                annAssign.value = test()
+            }
+            annAssign.simple = t0.type == TokenType.Id && expr.kind == "Name" ? 1 : 0
+            return finish(annAssign)
+        }
+
+        if (U.endsWith(op, "Assign")) {
+            let augAssign = mkAST("AugAssign") as AugAssign
+            augAssign.target = expr
+            augAssign.op = op as operator
+            shiftToken()
+            augAssign.value = testlist()
+            return finish(augAssign)
+        }
+
+        if (peekToken().type == TokenType.NewLine) {
+            let exprStmt = mkAST("ExprStmt") as ExprStmt
+            exprStmt.value = expr
+            return finish(exprStmt)
+        }
+
+        throw notSupported()
+    }
 
     function small_stmt() {
         let fn = U.lookup(small_stmt_map, currentKw())
@@ -291,12 +367,12 @@ namespace pxt.py {
 
 
     const cmpOpMap: Map<cmpop> = {
-        '<': "Lt",
-        '>': "Gt",
-        '==': "Eq",
-        '>=': "GtE",
-        '<=': "LtE",
-        '!=': "NotEq",
+        'Lt': "Lt",
+        'Gt': "Gt",
+        'Eq': "Eq",
+        'GtE': "GtE",
+        'LtE': "LtE",
+        'NotEq': "NotEq",
         'in': "In",
         'not': "NotIn",
         'is': "Is",
@@ -338,26 +414,10 @@ namespace pxt.py {
         return finish(r)
     }
 
-    const binOpMap: Map<operator> = {
-        '+': "Add",
-        '-': "Sub",
-        '*': "Mult",
-        '@': "MatMult",
-        '/': "Div",
-        '%': "Mod",
-        '**': "Pow",
-        '<<': "LShift",
-        '>>': "RShift",
-        '|': "BitOr",
-        '^': "BitXor",
-        '&': "BitAnd",
-        '//': "FloorDiv",
-    }
-
     const unOpMap: Map<unaryop> = {
-        '~': "Invert",
-        '-': "USub",
-        '+': "UAdd",
+        'Invert': "Invert",
+        'Sub': "USub",
+        'Add': "UAdd",
     }
 
     function binOp(f: () => Expr, ops: string): Expr {
@@ -367,7 +427,7 @@ namespace pxt.py {
         if (o && ops.indexOf("," + o + ",") >= 0) {
             let r = mkAST("BinOp", t0) as BinOp
             r.left = e
-            r.op = binOpMap[o]
+            r.op = o as operator
             r.right = binOp(f, ops)
             return r
         } else {
@@ -375,42 +435,31 @@ namespace pxt.py {
         }
     }
 
-    function term() { return binOp(factor, ",*,@,/,%,//,") }
-    function arith_expr() { return binOp(term, ",+,-,") }
-    function shift_expr() { return binOp(arith_expr, ",<<,>>,") }
-    function and_expr() { return binOp(shift_expr, ",&,") }
-    function xor_expr() { return binOp(and_expr, ",^,") }
-    function expr() { return binOp(xor_expr, ",|,") }
-
-
-    /*
-atom: ('(' [yield_expr|testlist_comp] ')' |
-       '[' [testlist_comp] ']' |
-       '{' [dictorsetmaker] '}' |
-       NAME | NUMBER | STRING+ | '...' | 'None' | 'True' | 'False')
-
-       sync_comp_for: 'for' exprlist 'in' or_test [comp_iter]
-
-       */
+    function term() { return binOp(factor, ",Mult,MatMult,Div,Mod,FloorDiv,") }
+    function arith_expr() { return binOp(term, ",Add,Sub,") }
+    function shift_expr() { return binOp(arith_expr, ",LShift,RShift,") }
+    function and_expr() { return binOp(shift_expr, ",BitAnd,") }
+    function xor_expr() { return binOp(and_expr, ",BitXor,") }
+    function expr() { return binOp(xor_expr, ",BitOr,") }
 
 
     function subscript(): AnySlice {
         let t0 = peekToken()
         let lower: Expr = null
-        if (currentOp() != ":") {
+        if (currentOp() != "Colon") {
             lower = test()
         }
-        if (currentOp() == ":") {
+        if (currentOp() == "Colon") {
             let r = mkAST("Slice", t0) as Slice
             r.lower = lower
             shiftToken()
             let o = currentOp()
-            if (o != ":" && o != "," && o != "]")
+            if (o != "Colon" && o != "Comma" && o != "RSquare")
                 r.upper = test()
-            if (currentOp() == ":") {
+            if (currentOp() == "Colon") {
                 shiftToken()
                 o = currentOp()
-                if (o != "," && o != "]")
+                if (o != "Comma" && o != "RSquare")
                     r.step = test()
             }
             return finish(r)
@@ -422,7 +471,7 @@ atom: ('(' [yield_expr|testlist_comp] ')' |
     }
 
     function star_or_test() {
-        if (currentOp() == "*") {
+        if (currentOp() == "Mult") {
             let r = mkAST("Starred") as Starred
             r.value = expr()
             return finish(r)
@@ -437,7 +486,7 @@ atom: ('(' [yield_expr|testlist_comp] ')' |
 
     function argument(): Expr | Keyword {
         let t0 = peekToken()
-        if (currentKw() == "*") {
+        if (currentKw() == "Mult") {
             let r = mkAST("Starred") as Starred
             shiftToken()
             r.value = test()
@@ -452,7 +501,7 @@ atom: ('(' [yield_expr|testlist_comp] ')' |
         }
 
         let e = test()
-        if (currentOp() == "=") {
+        if (currentOp() == "Assign") {
             if (e.kind != "Name")
                 error(U.lf("invalid keyword argument; did you mean ==?"))
             shiftToken()
@@ -504,11 +553,11 @@ atom: ('(' [yield_expr|testlist_comp] ')' |
             }
         } else if (t.type == TokenType.Op) {
             let o = t.value
-            if (o == "(") {
-                return parseParens(")", "Tuple", "GeneratorExp")
-            } else if (o == "[") {
-                return parseParens("]", "List", "ListComp")
-            } else if (o == "{") {
+            if (o == "LParen") {
+                return parseParens("RParen", "Tuple", "GeneratorExp")
+            } else if (o == "LSquare") {
+                return parseParens("RSquare", "List", "ListComp")
+            } else if (o == "LBracket") {
                 throw notSupported()
             } else {
                 error(U.lf("unexpected operator"))
@@ -520,24 +569,34 @@ atom: ('(' [yield_expr|testlist_comp] ')' |
         throw notSupported()
     }
 
+    function atListEnd() {
+        let op = currentOp()
+        if (op == "RParen" || op == "RSquare" || op == "RBrace" || op == "Colon")
+            return true
+        if (U.endsWith(op, "Assign"))
+            return true
+        if (peekToken().type == TokenType.NewLine)
+            return true
+        return false
+    }
+
     function parseList<T>(
-        cl: string,
         category: string,
         f: () => T,
     ): T[] {
         let r: T[] = []
 
-        if (currentOp() == cl)
+        if (atListEnd())
             return r
+
         for (; ;) {
             r.push(f())
 
-            if (currentOp() == ",")
+            if (currentOp() == "Comma")
                 shiftToken()
 
             // final comma is allowed, so no "else if" here
-            if (currentOp() == cl) {
-                shiftToken()
+            if (atListEnd()) {
                 return r
             } else {
                 error(U.lf("expecting {0}", category))
@@ -553,7 +612,9 @@ atom: ('(' [yield_expr|testlist_comp] ')' |
         inParens = true
         try {
             shiftToken()
-            return parseList(cl, category, f)
+            let r = parseList(category, f)
+            expectOp(cl)
+            return r
         } finally {
             inParens = false
         }
@@ -579,20 +640,17 @@ atom: ('(' [yield_expr|testlist_comp] ')' |
                 return finish(r)
             }
 
-            if (currentOp() == ",") {
+            if (currentOp() == "Comma") {
                 let r = mkAST(tuple) as Tuple
-                r.elts = parseList(cl, U.lf("expression"), star_or_test)
+                shiftToken()
+                r.elts = parseList(U.lf("expression"), star_or_test)
                 r.elts.unshift(e0)
+                expectOp(cl)
 
                 return finish(r)
             }
 
-            if (currentOp() == cl) {
-                shiftToken()
-                return e0
-            }
-
-            error(U.lf("expecting expression"))
+            expectOp(cl)
             return e0
         } finally {
             inParens = false
@@ -603,10 +661,10 @@ atom: ('(' [yield_expr|testlist_comp] ')' |
         let t0 = peekToken()
         let e = atom()
         let o = currentOp()
-        if (o == "(") {
+        if (o == "LParen") {
             let r = mkAST("Call", t0) as Call
             r.func = e
-            let args = parseParenthesizedList(")", U.lf("argument"), argument)
+            let args = parseParenthesizedList("RParen", U.lf("argument"), argument)
             r.args = []
             r.keywords = []
             for (let e of args) {
@@ -619,11 +677,11 @@ atom: ('(' [yield_expr|testlist_comp] ')' |
                 }
             }
             return finish(r)
-        } else if (o == "[") {
+        } else if (o == "LSquare") {
             let t1 = peekToken()
             let r = mkAST("Subscript", t0) as Subscript
             r.value = e
-            let sl = parseParenthesizedList("]", U.lf("subscript"), subscript)
+            let sl = parseParenthesizedList("RSquare", U.lf("subscript"), subscript)
             if (sl.length == 0)
                 error(U.lf("need non-empty index list"))
             else if (sl.length == 1)
@@ -634,7 +692,7 @@ atom: ('(' [yield_expr|testlist_comp] ')' |
                 r.slice = finish(extSl)
             }
             return finish(r)
-        } else if (o == ".") {
+        } else if (o == "Dot") {
             let r = mkAST("Attribute", t0) as Attribute
             r.value = e
             shiftToken()
@@ -669,6 +727,7 @@ atom: ('(' [yield_expr|testlist_comp] ')' |
         if (unOpMap[currentOp()]) {
             let r = mkAST("UnaryOp") as UnaryOp
             r.op = unOpMap[currentOp()]
+            shiftToken()
             r.operand = factor()
             return finish(r)
         } else {
@@ -676,6 +735,30 @@ atom: ('(' [yield_expr|testlist_comp] ')' |
         }
     }
 
+    export function dump(asts: AST[]) {
+        const rec = (v: any): any => {
+            if (Array.isArray(v)) {
+                for (let i = 0; i < v.length; ++i)
+                    v[i] = rec(v[i])
+                return v
+            }
+            if (!v || !v.kind)
+                return v
+            delete v.col_offset
+            delete v.startPos
+            delete v.endPos
+            delete v.lineno
+            for (let k of Object.keys(v)) {
+                v[k] = rec(v[k])
+            }
+            return v
+        }
+        let r = ""
+        for (let e of asts) {
+            r += JSON.stringify(rec(U.clone(e)), null, 1) + "\n"
+        }
+        return r
+    }
 
     export function parse(_source: string, _tokens: Token[]) {
         source = _source

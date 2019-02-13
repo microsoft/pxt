@@ -1,3 +1,6 @@
+/// <reference path='../built/pxtlib.d.ts' />
+/// <reference path='../built/pxtcompiler.d.ts' />
+
 namespace pxt.py {
     export interface TypeOptions {
         union?: Type;
@@ -5,11 +8,11 @@ namespace pxt.py {
         primType?: string;
         arrayType?: Type;
     }
-    
+
     export interface Type extends TypeOptions {
         tid: number;
     }
-    
+
     export interface FieldDesc {
         name: string;
         type: Type;
@@ -20,7 +23,7 @@ namespace pxt.py {
         isProtected?: boolean;
         initializer?: py.Expr;
     }
-    
+
     export interface VarDescOptions {
         expandsTo?: string;
         isImportStar?: boolean;

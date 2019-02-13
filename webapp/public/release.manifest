@@ -10,6 +10,7 @@ CACHE:
 /blb/jquery.js
 /blb/pxtlib.js
 /blb/pxtcompiler.js
+/blb/pxtpy.js
 /blb/pxtblockly.js
 /blb/pxtwinrt.js
 /blb/pxteditor.js
