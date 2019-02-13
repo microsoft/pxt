@@ -4834,7 +4834,8 @@ declare module Blockly.ContextMenu {
 
     /**
      * Make a context menu option for duplicating the current workspace comment.
-     * @param {!Blockly.WorkspaceCommentSvg} comment The workspace comment where the right-click originated.
+     * @param {!Blockly.WorkspaceCommentSvg} comment The workspace comment
+     *  where the right-click originated.
      * @return {!Object} A menu option, containing text, enabled, and a callback.
      * @package
      */
@@ -13457,6 +13458,19 @@ declare module Blockly.pxtBlocklyUtils {
      * @return {boolean} Whether there is a matching reporter or not.
      */
     function hasMatchingArgumentReporter(targetBlock: Blockly.Block, reporter: Blockly.Block): boolean;
+}
+
+declare module Blockly.PXTUtils {
+
+    /**
+     * Fade hex colour.
+     * Words may not be split.  Any space after a word is included in the length.
+     * @param {string} hex Hex colour
+     * @param {number} luminosity Luminosity
+     * @param {number} lighten Lighten weight
+     * @return {number} rgb colour.
+     */
+    function fadeColour(hex: string, luminosity: number, lighten: number): number;
 }
 
 declare module Blockly {
