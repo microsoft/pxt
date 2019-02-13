@@ -13,22 +13,43 @@ interface GEntry {
 export class Provider extends cloudsync.ProviderBase implements cloudsync.Provider {
     private entryCache: pxt.Map<GEntry> = {}
 
+    private oauthWindow_: any;
+    private oauthInterval_: any;
+
     constructor() {
-        super("googledrive", lf("Google Drive"), "https://www.googleapis.com")
+        super("googledrive", lf("Google Drive"), "xicon googledrive", "https://www.googleapis.com")
     }
 
     login() {
         let p = this.loginInner()
-        p.scope = "https://www.googleapis.com/auth/drive.appfolder https://www.googleapis.com/auth/plus.me"
+        p.scope = "https://www.googleapis.com/auth/drive.appfolder https://www.googleapis.com/auth/userinfo.profile"
         let url = core.stringifyQueryString("https://accounts.google.com/o/oauth2/v2/auth", p)
-        window.location.href = url
+        if (p.redirect) {
+            // Redirect
+            window.location.href = url
+        } else {
+            // Pop out
+            const popupCallback = () => {
+                pxt.BrowserUtils.changeHash("", true);
+                window.location.reload();
+            }
+            const that = this;
+            that.oauthWindow_ = pxt.BrowserUtils.popupWindow(url, lf("Login with Google"), 483, 600);
+            that.oauthInterval_ = window.setInterval(() => {
+                if (that.oauthWindow_.closed) {
+                    window.clearInterval(that.oauthInterval_);
+                    popupCallback();
+                }
+            }, 1000);
+        }
     }
 
     getUserInfoAsync() {
-        return this.getJsonAsync("/plus/v1/people/me")
+        return this.getJsonAsync("/oauth2/v1/userinfo")
             .then(resp => ({
-                name: resp.displayName as string || lf("{0} User", this.friendlyName),
-                id: resp.id
+                name: (resp.name as string) || lf("{0} User", this.friendlyName),
+                id: resp.id,
+                photo: resp.picture
             }))
     }
 
@@ -105,6 +126,10 @@ export class Provider extends cloudsync.ProviderBase implements cloudsync.Provid
             updatedAt: U.nowSeconds(),
             name: cached.name,
         }
+    }
+
+    async updateAsync(id: string, newName: string): Promise<void> {
+        // NOP
     }
 
     async deleteAsync(id: string): Promise<void> {

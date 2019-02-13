@@ -134,7 +134,12 @@ declare namespace pxt {
         embedding?: boolean;
         githubPackages?: boolean; // allow searching github for packages
         noGithubProxy?: boolean;
-        cloudProviders?: pxt.Map<{}>;
+        cloudProviders?: pxt.Map<AppCloudProvider>;
+    }
+
+    interface AppCloudProvider {
+        client_id: string;
+        redirect?: boolean; // Whether or not to popup or redirect the oauth. Default to popup
     }
 
     interface AppSimulator {

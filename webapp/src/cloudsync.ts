@@ -29,13 +29,22 @@ export interface FileInfo {
 export interface UserInfo {
     id: string;
     name: string;
+    email?: string;
+    photo?: string;
+}
+
+export interface ProviderLoginResponse {
+    accessToken: string;
+    expiresIn: number; // seconds
 }
 
 export interface Provider {
     name: string;
     friendlyName: string;
+    icon: string;
     loginCheck(): void;
-    login(): void;
+    loginAsync(redirect?: boolean, silent?: boolean): Promise<ProviderLoginResponse>;
+    logout(): void;
     loginCallback(queryString: pxt.Map<string>): void;
     getUserInfoAsync(): Promise<UserInfo>;
     listAsync(): Promise<FileInfo[]>;
@@ -44,6 +53,7 @@ export interface Provider {
     // id can be null - creates a new file then
     uploadAsync(id: string, baseVersion: string, files: pxt.Map<string>): Promise<FileInfo>;
     deleteAsync(id: string): Promise<void>;
+    updateAsync(id: string, newName: string): Promise<void>;
 }
 
 
@@ -53,6 +63,8 @@ export interface OAuthParams {
     response_type: string;
     state: string;
     redirect_uri: string;
+    expires_in?: number;
+    redirect?: boolean;
 }
 
 function mkSyncError(msg: string) {
@@ -63,7 +75,7 @@ function mkSyncError(msg: string) {
 }
 
 export class ProviderBase {
-    constructor(public name: string, public friendlyName: string, public urlRoot: string) {
+    constructor(public name: string, public friendlyName: string, public icon: string, public urlRoot: string) {
     }
 
     syncError(msg: string) {
@@ -106,6 +118,11 @@ export class ProviderBase {
         return ".mkcd-" + pxt.appTarget.id
     }
 
+    protected createFileNameWithSuffix(name: string): string {
+        const xname = name.replace(/[~"#%&*:<>?/\\{|}]+/g, "_");
+        return xname + this.fileSuffix()
+    }
+
     parseTime(s: string) {
         return Math.round(new Date(s).getTime() / 1000)
     }
@@ -136,47 +153,78 @@ export class ProviderBase {
             }
 
             pxt.storage.setLocal(this.name + "AutoLogin", "yes")
-            this.login();
+            this.loginAsync(undefined, true)
+                .then((resp) => {
+                    pxt.storage.setLocal("access_token", resp.accessToken);
+                    pxt.storage.setLocal(this.name + "tokenExp", resp.expiresIn + "")
+                })
+                .done();
         } else {
             setProvider(this as any)
         }
     }
 
-    login() {
+    loginAsync(redirect?: boolean, silent?: boolean): Promise<ProviderLoginResponse> {
         U.userError("Not implemented")
+        return Promise.resolve(undefined);
     }
 
     protected loginInner() {
         const ns = this.name
         core.showLoading(ns + "login", lf("Logging you in to {0}...", this.friendlyName))
-        const state = ts.pxtc.Util.guidGen();
-        pxt.storage.setLocal("oauthState", state)
         pxt.storage.setLocal("oauthType", ns)
         pxt.storage.setLocal("oauthRedirect", window.location.href)
+        const state = ts.pxtc.Util.guidGen();
+        pxt.storage.setLocal("oauthState", state)
+        const providerDef = pxt.appTarget.cloud.cloudProviders[this.name];
         const redir = window.location.protocol + "//" + window.location.host + "/oauth-redirect"
         const r: OAuthParams = {
-            client_id: (pxt.appTarget.cloud.cloudProviders[this.name] as any)["client_id"],
+            client_id: providerDef.client_id,
             response_type: "token",
             state: state,
             redirect_uri: redir,
-            scope: ""
+            scope: "",
+            expires_in: 60 * 60 * 24, // in seconds (1 day)
         }
-        return r
+        if (providerDef.redirect) r.redirect = providerDef.redirect;
+        return r;
+    }
+
+    protected loginCompleteInner() {
+        const ns = this.name
+        core.hideLoading(ns + "login");
     }
 
     loginCallback(qs: pxt.Map<string>) {
         const ns = this.name
         pxt.storage.removeLocal(ns + "AutoLogin")
-        pxt.storage.setLocal(ns + "token", qs["access_token"])
-        let expIn = parseInt(qs["expires_in"])
-        if (expIn) {
-            let time = Math.round(Date.now() / 1000 + (0.75 * expIn))
-            pxt.storage.setLocal(ns + "tokenExp", time + "")
-        } else {
-            pxt.storage.removeLocal(ns + "tokenExp")
-        }
+        this.setNewToken(qs["access_token"], parseInt(qs["expires_in"]));
+
         // re-compute
         pxt.storage.removeLocal("cloudName")
+        pxt.storage.removeLocal("cloudPhoto")
+    }
+
+    setNewToken(accessToken: string, expiresIn?: number) {
+        const ns = this.name
+        pxt.storage.setLocal(ns + "token", accessToken)
+        if (expiresIn) {
+            let time = Math.round(Date.now() / 1000 + (0.75 * expiresIn));
+            pxt.storage.setLocal(ns + "tokenExp", time + "")
+        }
+    }
+
+    hasTokenExpired() {
+        let exp = parseInt(pxt.storage.getLocal(this.name + "tokenExp") || "0")
+        if (exp && exp < U.nowSeconds()) {
+            return false;
+        }
+        return true;
+    }
+
+    logout() {
+        pxt.storage.removeLocal(this.name + "token")
+        pxt.storage.removeLocal(this.name + "tokenExp")
     }
 }
 
@@ -264,7 +312,32 @@ async function syncOneUpAsync(h: Header) {
     await ws.saveAsync(h, null, true)
 }
 
+export async function renameAsync(h: Header, newName: string) {
+    try {
+        await provider.updateAsync(h.blobId, newName)
+    } catch (e) {
+
+    }
+}
+
 export function resetAsync() {
+    if (provider) provider.logout()
+    provider = null
+
+    pxt.storage.removeLocal("cloudId")
+    pxt.storage.removeLocal("cloudName")
+
+    pxt.storage.removeLocal("oauthType")
+    pxt.storage.removeLocal("oauthHash")
+    pxt.storage.removeLocal("oauthRedirect")
+    pxt.storage.removeLocal("cloudName")
+    pxt.storage.removeLocal("cloudPhoto")
+
+    data.invalidate("sync:status")
+    data.invalidate("sync:username")
+    data.invalidate("sync:userphoto")
+    data.invalidate("sync:loggedin")
+
     return Promise.resolve()
 }
 
@@ -293,7 +366,8 @@ function updateNameAsync() {
                                 location.reload()
                             })
                     } else {
-                        dialogs.showCloudSignInDialog()
+                        console.log("Show the cloud sign in dialog")
+                        //dialogs.showCloudSignInDialog()
                     }
                 })
                 // never return
@@ -302,9 +376,18 @@ function updateNameAsync() {
                 pxt.storage.setLocal("cloudId", id)
             }
             pxt.storage.setLocal("cloudName", info.name)
+            pxt.storage.setLocal("cloudUser", JSON.stringify(info))
             data.invalidate("sync:username")
+            if (info.photo) {
+                pxt.storage.setLocal("cloudPhoto", info.photo)
+                data.invalidate("sync:userphoto")
+            }
             return null
         })
+}
+
+export function refreshToken() {
+    provider.loginAsync(undefined, true).done();
 }
 
 export function syncAsync(): Promise<void> {
@@ -320,6 +403,7 @@ export function syncAsync(): Promise<void> {
         pxt.debug(`uninstall local ${h.blobId}`)
         h.isDeleted = true
         h.blobVersion = "DELETED"
+        h.blobCurrent = false
         return ws.saveAsync(h, null, true)
     }
 
@@ -356,6 +440,7 @@ export function syncAsync(): Promise<void> {
                 let hd = JSON.parse(files[HEADER_JSON] || "{}") as Header
                 delete files[HEADER_JSON]
 
+                header.cloudSync = true
                 header.blobCurrent = true
                 header.blobVersion = resp.version
                 // TODO copy anything else from the cloud?
@@ -415,27 +500,39 @@ export function syncAsync(): Promise<void> {
     return updateNameAsync()
         .then(() => provider.listAsync())
         .then(entries => {
-            let allScripts = ws.getHeaders()
+            // Get all local headers including those that had been deleted
+            let allScripts = ws.getHeaders(true)
             let cloudHeaders = U.toDictionary(entries, e => e.id)
-            let existingHeaders = U.toDictionary(allScripts, h => h.blobId)
-            let waitFor = allScripts.map(hd => {
+            let existingHeaders = U.toDictionary(allScripts.filter(h => h.blobId), h => h.blobId)
+            console.log('all', allScripts);
+            console.log('cloud', cloudHeaders);
+            console.log('existing', existingHeaders);
+            console.log('syncthese', allScripts.filter(hd => hd.cloudSync));
+            // Only syncronize those that have been marked with cloudSync
+            let waitFor = allScripts.filter(hd => hd.cloudSync).map(hd => {
                 if (cloudHeaders.hasOwnProperty(hd.blobId)) {
                     let chd = cloudHeaders[hd.blobId]
 
-                    if (hd.isDeleted)
+                    // The script was deleted locally, delete on cloud
+                    if (hd.isDeleted) {
+                        console.log("deleted header: " + hd.id)
                         return syncDeleteAsync(hd)
+                    }
 
                     if (chd.version == hd.blobVersion) {
                         if (hd.blobCurrent) {
                             // nothing to do
                             return Promise.resolve()
                         } else {
+                            console.log('might have synced up: ', hd.name);
                             return syncUpAsync(hd)
                         }
                     } else {
                         if (hd.blobCurrent) {
+                            console.log('might have synced down: ', hd.name);
                             return syncDownAsync(hd, chd)
                         } else {
+                            console.log("there's a conflict with these two: ", hd, chd);
                             return resolveConflictAsync(hd, chd)
                         }
                     }
@@ -443,9 +540,11 @@ export function syncAsync(): Promise<void> {
                     if (hd.blobVersion)
                         // this has been pushed once to the cloud - uninstall wins
                         return uninstallAsync(hd)
-                    else
+                    else {
                         // never pushed before
+                        console.log('might have synced up: ', hd.name);
                         return syncUpAsync(hd)
+                    }
                 }
             })
             waitFor = waitFor.concat(entries.filter(e => !existingHeaders[e.id]).map(e => syncDownAsync(null, e)))
@@ -504,6 +603,7 @@ function setStatus(s: string) {
 
 /*
     sync:username
+    sync:userphoto
     sync:loggedin
     sync:status
 */
@@ -512,6 +612,11 @@ data.mountVirtualApi("sync", {
         switch (data.stripProtocol(p)) {
             case "username":
                 return pxt.storage.getLocal("cloudName")
+            case "userphoto":
+                return pxt.storage.getLocal("cloudPhoto")
+            case "user":
+                const user = pxt.storage.getLocal("cloudUser");
+                return user ? JSON.parse(user) : undefined;
             case "loggedin":
                 return provider != null
             case "status":

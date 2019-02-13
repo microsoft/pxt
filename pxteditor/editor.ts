@@ -170,6 +170,9 @@ namespace pxt.editor {
         importExampleAsync(options: ExampleImportOptions): Promise<void>;
         showScriptManager(): void;
         importProjectDialog(): void;
+        cloudSync(): boolean;
+        cloudSignInDialog(): void;
+        cloudSignOut(): void;
         removeProject(): void;
         editText(): void;
         pushPullAsync(): Promise<void>;

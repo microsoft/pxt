@@ -10,6 +10,8 @@ import { ProjectsCodeCard } from "./projects";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
+export type ScriptSource = 'cloud' | 'local';
+
 export interface ScriptManagerDialogProps extends ISettingsProps {
     onClose?: () => void;
 }
@@ -156,7 +158,8 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
             agreeClass: "green approve positive",
             agreeIcon: "clone",
             initialValue: workspace.createDuplicateName(header),
-            placeholder: lf("Enter your project name here")
+            placeholder: lf("Enter your project name here"),
+            size: "tiny"
         };
         return core.promptAsync(opts).then(res => {
             if (res === null) return Promise.resolve(false); // null means cancelled, empty string means ok (but no value entered)
@@ -168,8 +171,14 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                     return workspace.duplicateAsync(header, text, false);
                 })
                 .then((clonedHeader) => {
+                    // If we're cloud synced, update the cloudSync flag
+                    if (this.props.parent.cloudSync()) clonedHeader.cloudSync = true;
+
                     // Update the name of the new header
                     clonedHeader.name = res;
+                    delete clonedHeader.blobId
+                    delete clonedHeader.blobVersion
+                    delete clonedHeader.blobCurrent
                     // Set the name in the pxt.json (config)
                     let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig
                     cfg.name = clonedHeader.name
@@ -370,7 +379,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                                     key={'local' + scr.id + scr.recentUse}
                                     cardType="file"
                                     className={`file ${isMarkedNew ? 'warning' : isSelected ? 'positive' : ''}`}
-                                    name={scr.name}
+                                    name={(scr.cloudSync && scr.blobCurrent ? '(Synced) ' : '') + scr.name}
                                     time={scr.recentUse}
                                     url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}
                                     scr={scr} index={index}

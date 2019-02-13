@@ -5,10 +5,11 @@ import * as ReactDOM from "react-dom";
 import * as data from "./data";
 import * as sui from "./sui";
 import * as core from "./core";
+import * as cloud from "./cloud";
 
 import * as codecard from "./codecard"
 import * as carousel from "./carousel";
-import { showAboutDialogAsync, showCloudSignInDialog } from "./dialogs";
+import { showAboutDialogAsync } from "./dialogs";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -144,7 +145,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
 
     cloudSignIn() {
         pxt.tickEvent("projects.signin", undefined, { interactiveConsent: true });
-        showCloudSignInDialog();
+        this.props.parent.cloudSignInDialog();
     }
 
     renderCore() {
@@ -172,12 +173,8 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             'ui segment bottom attached tab active tabsegment'
         ]);
 
-        let signIn = ""
-        let signInIcon = ""
-        if (this.getData("sync:hascloud")) {
-            signInIcon = this.getData("sync:status") == "syncing" ? "cloud download" : "user circle"
-            signIn = this.getData("sync:username") || lf("Sign in")
-        }
+        const hasCloud = this.hasCloud();
+        const user = hasCloud ? this.getUser() : undefined;
 
         return <div ref="homeContainer" className={tabClasses} role="main">
             {showHeroBanner ?
@@ -194,6 +191,9 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                         </h2> : <h2 className="ui header">{lf("My Projects")}</h2>}
                     </div>
                     <div className="column right aligned" style={{ zIndex: 1 }}>
+                        {/* {hasCloud ?
+                            <sui.Button key="signin" className="sign-in-btn blue" text={user ? user.name : lf("Sign in")} title={lf("Sign in to sync your projects")} onClick={this.cloudSignIn} />
+                            : undefined} */}
                         {pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing) ?
                             <sui.Button key="import" icon="upload" className="import-dialog-btn" textClass="landscape only" text={lf("Import")} title={lf("Import a project")} onClick={this.importProject} /> : undefined}
                     </div>
@@ -249,6 +249,9 @@ export class ProjectsMenu extends data.Component<ISettingsProps, {}> {
     renderCore() {
         const targetTheme = pxt.appTarget.appTheme;
 
+        const hasCloud = this.hasCloud();
+        const user = hasCloud ? this.getUser() : undefined;
+
         return <div id="homemenu" className={`ui borderless fixed ${targetTheme.invertedMenu ? `inverted` : ''} menu`} role="menubar">
             <div className="left menu">
                 <a href={targetTheme.logoUrl} aria-label={lf("{0} Logo", targetTheme.boardName)} role="menuitem" target="blank" rel="noopener" className="ui item logo brand" onClick={this.brandIconClick}>
@@ -258,8 +261,9 @@ export class ProjectsMenu extends data.Component<ISettingsProps, {}> {
                     {targetTheme.portraitLogo ? (<img className={`ui ${targetTheme.logoWide ? "small" : "mini"} image portrait only`} src={targetTheme.portraitLogo} alt={lf("{0} Logo", targetTheme.boardName)} />) : null}
                 </a>
             </div>
-            <div className="ui item home mobile hide"><sui.Icon icon={`icon home large`} /> <span>{lf("Home")}</span></div>
+            {/* <div className="ui item home mobile hide"><sui.Icon icon={`icon home large`} /> <span>{lf("Home")}</span></div> */}
             <div className="right menu">
+                {!hasCloud ? undefined : <cloud.UserMenu parent={this.props.parent} user={user}/>}
                 <a href={targetTheme.organizationUrl} target="blank" rel="noopener" className="ui item logo organization" onClick={this.orgIconClick}>
                     {targetTheme.organizationWideLogo || targetTheme.organizationLogo
                         ? <img className={`ui logo ${targetTheme.organizationWideLogo ? " portrait hide" : ''}`} src={targetTheme.organizationWideLogo || targetTheme.organizationLogo} alt={lf("{0} Logo", targetTheme.organization)} />

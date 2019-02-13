@@ -6,6 +6,7 @@ export type AnyComponent = Component<any, any>;
 
 import Cloud = pxt.Cloud;
 import Util = pxt.Util;
+import { UserInfo } from "./cloudsync";
 
 interface CacheEntry {
     path: string;
@@ -296,6 +297,12 @@ export function getAsync(path: string) {
     })
 }
 
+function userInitials(username: string): string {
+    // Parse the user name for user initials
+    let initials = username.match(/\b\w/g) || [];
+    return ((initials.shift() || '') + (initials.pop() || '')).toUpperCase();
+}
+
 export class Component<TProps, TState> extends React.Component<TProps, TState> {
     subscriptions: CacheEntry[] = [];
     renderCoreOk = false;
@@ -317,6 +324,29 @@ export class Component<TProps, TState> extends React.Component<TProps, TState> {
         if (!this.renderCoreOk)
             Util.oops("Override renderCore() not render()")
         return getCached(this, path)
+    }
+
+    hasCloud() {
+        return this.getData("sync:hascloud");
+    }
+
+    getUserInfo() {
+        const user = this.getData("sync:username");
+        if (!user) return undefined;
+
+        return user;
+    }
+
+    getUser() {
+        const name = this.getData("sync:username");
+        if (!name) return undefined;
+
+        const photo = this.getData("sync:userphoto");
+        return {
+            name: name,
+            initials: userInitials(name),
+            photo: photo
+        }
     }
 
     componentWillUnmount(): void {
