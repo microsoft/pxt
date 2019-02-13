@@ -22,6 +22,7 @@ export interface SpawnOptions {
     input?: string;
     silent?: boolean;
     envOverrides?: pxt.Map<string>;
+    allowNonZeroExit?: boolean;
 }
 
 //This should be correct at startup when running from command line
@@ -76,7 +77,7 @@ export function spawnWithPipeAsync(opts: SpawnOptions) {
                 }
             })
         ch.on('close', (code: number) => {
-            if (code != 0)
+            if (code != 0 && !opts.allowNonZeroExit)
                 reject(new Error("Exit code: " + code + " from " + info))
             resolve(Buffer.concat(bufs))
         });

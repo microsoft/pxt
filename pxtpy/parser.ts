@@ -96,7 +96,7 @@ namespace pxt.py {
             return
         nextToken++
         skipTokens()
-        console.log(`TOK: ${tokenToString(peekToken())}`)
+        //console.log(`TOK: ${tokenToString(peekToken())}`)
     }
 
     function error(msg?: string) {
@@ -271,9 +271,13 @@ namespace pxt.py {
                     if (currentKw() == "as") {
                         shiftToken()
                         eh.name = name()
+                    } else {
+                        eh.name = null
                     }
                 } else {
                     sawDefault = true
+                    eh.type = null
+                    eh.name = null
                 }
                 eh.body = colon_suite()
             } else {
@@ -286,6 +290,8 @@ namespace pxt.py {
         if (currentKw() == "finally") {
             shiftToken()
             r.finalbody = colon_suite()
+        } else {
+            r.finalbody = []
         }
         return finish(r)
     }
@@ -328,6 +334,7 @@ namespace pxt.py {
         expectOp("LParen")
         r.args = parse_arguments(true)
         expectOp("RParen")
+        r.returns = null
         if (currentOp() == "Arrow") {
             shiftToken()
             r.returns = test()
@@ -452,6 +459,8 @@ namespace pxt.py {
         if (currentKw() == "as") {
             shiftToken()
             r.asname = name()
+        } else {
+            r.asname = null
         }
         return finish(r)
     }
@@ -462,6 +471,8 @@ namespace pxt.py {
         if (currentKw() == "as") {
             shiftToken()
             r.asname = name()
+        } else {
+            r.asname = null
         }
         return finish(r)
     }
@@ -533,6 +544,7 @@ namespace pxt.py {
         if (exprs.length != 1) {
             let tupl = mkAST("Tuple", t0) as Tuple
             tupl.elts = exprs
+            return finish(tupl)
         }
         return expr
     }
@@ -579,7 +591,7 @@ namespace pxt.py {
         if (U.endsWith(op, "Assign")) {
             let augAssign = mkAST("AugAssign") as AugAssign
             augAssign.target = expr
-            augAssign.op = op as operator
+            augAssign.op = op.replace("Assign", "") as operator
             shiftToken()
             augAssign.value = testlist()
             return finish(augAssign)
@@ -624,19 +636,20 @@ namespace pxt.py {
         let kw = currentKw()
         let fn = U.lookup(compound_stmt_map, currentKw())
         let rr: Stmt[] = []
+
         let comments = currComments
         currComments = []
 
-        if (decorators.length) {
-            if (kw != "class" && kw != "def")
-                error(U.lf("decorators not allowed here"))
+        if (kw == "class" || kw == "def") {
             let r = fn() as FunctionDef
             r.decorator_list = decorators
             rr = [r]
+        } else if (decorators.length) {
+            error(U.lf("decorators not allowed here"))
         } else if (fn) rr = [fn()]
         else rr = simple_stmt()
 
-        if (comments.length)
+        if (comments.length && rr.length)
             rr[0]._comments = comments
 
         return rr
@@ -696,6 +709,9 @@ namespace pxt.py {
             }
         }
 
+        if (!r.kwarg) r.kwarg = null
+        if (!r.vararg) r.vararg = null
+
         return finish(r)
 
         function pdef() {
@@ -705,6 +721,8 @@ namespace pxt.py {
                 if (currentOp() == "Colon") {
                     shiftToken()
                     r.annotation = test()
+                } else {
+                    r.annotation = null
                 }
             }
             return r
@@ -834,16 +852,18 @@ namespace pxt.py {
     function binOp(f: () => Expr, ops: string): Expr {
         let t0 = peekToken()
         let e = f()
-        let o = currentOp()
-        if (o && ops.indexOf("," + o + ",") >= 0) {
-            let r = mkAST("BinOp", t0) as BinOp
-            r.left = e
-            r.op = o as operator
-            shiftToken()
-            r.right = binOp(f, ops)
-            return r
-        } else {
-            return e
+        for (; ;) {
+            let o = currentOp()
+            if (o && ops.indexOf("," + o + ",") >= 0) {
+                let r = mkAST("BinOp", t0) as BinOp
+                r.left = e
+                r.op = o as operator
+                shiftToken()
+                r.right = f()
+                e = r
+            } else {
+                return e
+            }
         }
     }
 
@@ -868,6 +888,9 @@ namespace pxt.py {
             let o = currentOp()
             if (o != "Colon" && o != "Comma" && o != "RSquare")
                 r.upper = test()
+            else
+                r.upper = null
+            r.step = null
             if (currentOp() == "Colon") {
                 shiftToken()
                 o = currentOp()
@@ -904,6 +927,7 @@ namespace pxt.py {
 
         for (; ;) {
             let r = mkAST("Comprehension") as Comprehension
+            r.is_async = 0
             rr.push(r)
             expectKw("for")
             r.target = exprlist()
@@ -1055,8 +1079,8 @@ namespace pxt.py {
         } else if (t.type == TokenType.Number) {
             let r = mkAST("Num") as Num
             shiftToken()
-            r.s = t.value
-            r.n = parseFloat(r.s)
+            r.ns = t.value
+            r.n = parseFloat(r.ns)
             return finish(r)
         } else if (t.type == TokenType.String) {
             let r = mkAST("Str") as Str
@@ -1312,19 +1336,34 @@ namespace pxt.py {
         }
     }
 
-    export function dump(asts: AST[]) {
-        const ignore = {
-            lineno: 1,
-            col_offset: 1,
-            startPos: 1,
-            endPos: 1,
-            kind: 1,
-        }
-        const stmts = {
-            body: 1,
-            orelse: 1,
-            finalbody: 1
-        }
+    const fieldOrder: Map<number> = {
+        kind: 1, id: 2, n: 3, s: 4, func: 5, key: 6, elt: 7, elts: 8, keys: 9, left: 10,
+        ops: 11, comparators: 12, names: 13, items: 14, test: 15, targets: 16, dims: 17,
+        context_expr: 18, name: 19, bases: 20, type: 21, inClass: 22, target: 23,
+        annotation: 24, simple: 25, op: 26, operand: 27, right: 28, values: 29, iter: 30,
+        ifs: 31, is_async: 32, value: 33, slice: 34, attr: 35, generators: 36, args: 37,
+        keywords: 38, body: 39, handlers: 40, orelse: 41, finalbody: 42, decorator_list: 43,
+        kwonlyargs: 44, kw_defaults: 45, defaults: 46, arg: 47,
+    }
+    const fieldsIgnore = {
+        lineno: 1,
+        col_offset: 1,
+        startPos: 1,
+        endPos: 1,
+        kind: 1,
+    }
+    const stmtFields = {
+        body: 1,
+        orelse: 1,
+        finalbody: 1
+    }
+    const cmpIgnore = {
+        _comments: 1,
+        ctx: 1,
+        ns: 1,
+    }
+
+    export function dump(asts: AST[], cmp = false) {
         const rec = (ind: string, v: any): any => {
             if (Array.isArray(v)) {
                 let s = ""
@@ -1339,13 +1378,17 @@ namespace pxt.py {
                 return JSON.stringify(v)
 
             let r = ""
-            for (let k of Object.keys(v)) {
-                if (U.lookup(ignore, k))
+            let keys = Object.keys(v)
+            keys.sort((a, b) => (fieldOrder[a] || 100) - (fieldOrder[b] || 100) || U.strcmp(a, b))
+            for (let k of keys) {
+                if (U.lookup(fieldsIgnore, k))
+                    continue
+                if (cmp && U.lookup(cmpIgnore, k))
                     continue
                 if (r)
                     r += ", "
                 r += k + "="
-                if (Array.isArray(v[k]) && v[k].length && U.lookup(stmts, k)) {
+                if (Array.isArray(v[k]) && v[k].length && U.lookup(stmtFields, k)) {
                     r += "[\n"
                     let i2 = ind + "  "
                     for (let e of v[k]) {

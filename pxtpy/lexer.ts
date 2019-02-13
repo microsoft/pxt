@@ -176,6 +176,8 @@ namespace pxt.py {
         pos = 0
         pos0 = 0
 
+        checkIndent()
+
         while (pos < source.length) {
             pos0 = pos
             const ch = source.charCodeAt(pos++)
