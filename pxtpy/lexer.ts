@@ -84,6 +84,18 @@ namespace pxt.py {
     let res: Token[] = []
     let pos = 0, pos0 = 0
 
+    function position(t: Token, source?: string) {
+        let lineno = 1
+        let lastnl = 0
+        for (let i = 0; i < t.startPos; ++i) {
+            if (source.charCodeAt(i) == 10) {
+                lineno++
+                lastnl = i
+            }
+        }
+        return `(${lineno},${t.startPos - lastnl})`
+    }
+
     export function tokenToString(t: Token) {
         switch (t.type) {
             case TokenType.Id:
@@ -111,6 +123,18 @@ namespace pxt.py {
             default:
                 return "???"
         }
+    }
+
+    export function tokenToStringWithPos(t: Token, source: string) {
+        let len = t.endPos - t.startPos
+        let s = ""
+        if (len > 20) {
+            s = source.slice(t.startPos, t.startPos + 20) + "..."
+        } else {
+            s = source.slice(t.startPos, t.endPos)
+        }
+        s = s.replace(/\r/g, "").replace(/\n/g, "\\n")
+        return U.lf("`{0}` at {1}", s, position(t, source))
     }
 
     export function tokensToString(ts: Token[]) {

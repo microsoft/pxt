@@ -82,7 +82,8 @@ namespace pxt.py {
 
     function error(msg?: string) {
         if (!msg) msg = U.lf("invalid syntax")
-        U.userError(U.lf("Python parse error: {0} near {1}", msg, tokenToString(peekToken())))
+        U.userError(U.lf("Python parse error: {0} near {1}", msg,
+            tokenToStringWithPos(peekToken(), source)))
     }
 
     function expect(tp: TokenType, val: string) {
@@ -542,7 +543,7 @@ namespace pxt.py {
         else rr = simple_stmt()
 
         if (comments.length)
-            rr[0].comments = comments
+            rr[0]._comments = comments
 
         return rr
     }
