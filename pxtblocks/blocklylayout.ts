@@ -54,9 +54,9 @@ namespace pxt.blocks.layout {
      * Splits a blockly SVG AFTER a vertical layout. This function relies on the ordering
      * of blocks / comments to get as getTopBlock(true)/getTopComment(true)
      */
-    export function splitSvg(svg: SVGSVGElement, ws: Blockly.Workspace, emPixels: number = 18): Element {
-        const comments = ws.getTopComments(true);
-        const blocks = ws.getTopBlocks(true)
+    export function splitSvg(svg: SVGSVGElement, ws: Blockly.WorkspaceSvg, emPixels: number = 18): Element {
+        const comments = ws.getTopComments(true) as Blockly.WorkspaceCommentSvg[];
+        const blocks = ws.getTopBlocks(true) as Blockly.BlockSvg[];
         // don't split for a single block
         if (comments.length + blocks.length < 2)
             return svg;
@@ -117,15 +117,15 @@ namespace pxt.blocks.layout {
         return div;
     }
 
-    export function verticalAlign(ws: Blockly.Workspace, emPixels: number) {
+    export function verticalAlign(ws: Blockly.WorkspaceSvg, emPixels: number) {
         let y = 0
-        let comments = ws.getTopComments(true);
+        let comments = ws.getTopComments(true) as Blockly.WorkspaceCommentSvg[];
         comments.forEach(comment => {
             comment.moveBy(0, y)
             y += comment.getHeightWidth().height
             y += emPixels; //buffer
         })
-        let blocks = ws.getTopBlocks(true);
+        let blocks = ws.getTopBlocks(true) as Blockly.BlockSvg[];
         blocks.forEach((block, bi) => {
             // TODO: REMOVE THIS WHEN FIXED IN PXT-BLOCKLY
             if (block.getStartHat())
@@ -136,21 +136,21 @@ namespace pxt.blocks.layout {
         })
     };
 
-    export function flow(ws: Blockly.Workspace, opts?: FlowOptions) {
+    export function flow(ws: Blockly.WorkspaceSvg, opts?: FlowOptions) {
         if (opts) {
             if (opts.useViewWidth) {
                 const metrics = ws.getMetrics();
 
                 // Only use the width if in portrait, otherwise the blocks are too spread out
                 if (metrics.viewHeight > metrics.viewWidth) {
-                    flowBlocks(ws.getTopComments(true), ws.getTopBlocks(true), undefined, metrics.viewWidth)
+                    flowBlocks(ws.getTopComments(true) as Blockly.WorkspaceCommentSvg[], ws.getTopBlocks(true) as Blockly.BlockSvg[], undefined, metrics.viewWidth)
                     return;
                 }
             }
-            flowBlocks(ws.getTopComments(true), ws.getTopBlocks(true), opts.ratio);
+            flowBlocks(ws.getTopComments(true) as Blockly.WorkspaceCommentSvg[], ws.getTopBlocks(true) as Blockly.BlockSvg[], opts.ratio);
         }
         else {
-            flowBlocks(ws.getTopComments(true), ws.getTopBlocks(true));
+            flowBlocks(ws.getTopComments(true) as Blockly.WorkspaceCommentSvg[], ws.getTopBlocks(true) as Blockly.BlockSvg[]);
         }
     }
 
@@ -358,7 +358,7 @@ namespace pxt.blocks.layout {
     }
 
     interface Formattable {
-        value: Blockly.Block | Blockly.WorkspaceComment;
+        value: Blockly.BlockSvg | Blockly.WorkspaceCommentSvg;
         children?: Formattable[];
         width: number;
         height: number;
@@ -368,7 +368,7 @@ namespace pxt.blocks.layout {
         y?: number;
     }
 
-    function flowBlocks(comments: Blockly.WorkspaceComment[], blocks: Blockly.Block[], ratio: number = 1.62, maxWidth?: number) {
+    function flowBlocks(comments: Blockly.WorkspaceCommentSvg[], blocks: Blockly.BlockSvg[], ratio: number = 1.62, maxWidth?: number) {
         // Margin between blocks and their comments
         const innerGroupMargin = 13;
 
@@ -380,7 +380,7 @@ namespace pxt.blocks.layout {
         const marginy = 20;
 
         const groups: Formattable[] = [];
-        const commentMap: Map<Blockly.WorkspaceComment> = {};
+        const commentMap: Map<Blockly.WorkspaceCommentSvg> = {};
 
         comments.forEach(comment => {
             const ref: string = (comment as any).data;
@@ -455,7 +455,7 @@ namespace pxt.blocks.layout {
         for (let i = 0; i < groups.length; i++) {
             const group = groups[i];
             if (group.children) {
-                const valueDimensions = group.value.getHeightWidth();
+                const valueDimensions = (group.value as Blockly.BlockSvg).getHeightWidth();
                 group.x = 0;
                 group.y = 0;
 
@@ -517,7 +517,7 @@ namespace pxt.blocks.layout {
         }
     }
 
-    function formattable(entity: Blockly.Block | Blockly.WorkspaceComment): Formattable {
+    function formattable(entity: Blockly.BlockSvg | Blockly.WorkspaceCommentSvg): Formattable {
         const hw = entity.getHeightWidth();
         return { value: entity, height: hw.height, width: hw.width }
     }

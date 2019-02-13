@@ -21,9 +21,6 @@ namespace pxtblockly {
         public isFieldCustom_ = true;
 
         protected colour_: string;
-
-        private colorPicker_: goog.ui.ColorPicker;
-        private className_: string;
         private valueMode_: FieldColourValueMode = "rgb";
 
         constructor(text: string, params: FieldColourNumberOptions, opt_validator?: Function) {
