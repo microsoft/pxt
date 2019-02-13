@@ -684,6 +684,12 @@ export class ProjectView
             })
     }
 
+    /**
+     * Sets the file that is currently being edited. Warning: Do not call
+     * setFile() on any `.blocks` file directly. Instead, use openBlocks()
+     * which will decompile if necessary.
+     * @param fn
+     */
     setFile(fn: pkg.File) {
         if (!fn) return;
 
