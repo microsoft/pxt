@@ -1,5 +1,5 @@
 namespace pxt.py {
-    let inParens = false
+    let inParens: number
     let tokens: Token[]
     let source: string
     let nextToken: number
@@ -80,7 +80,8 @@ namespace pxt.py {
         console.log("TOK: " + tokenToString(peekToken()))
     }
 
-    function error(msg: string) {
+    function error(msg?: string) {
+        if (!msg) msg = U.lf("invalid syntax")
         U.userError(U.lf("Python parse error: {0} near {1}", msg, tokenToString(peekToken())))
     }
 
@@ -152,7 +153,6 @@ namespace pxt.py {
         return suite()
     }
 
-    // suite: simple_stmt | NEWLINE INDENT stmt+ DEDENT
     function suite(): Stmt[] {
         if (peekToken().type == TokenType.NewLine) {
             shiftToken()
@@ -251,8 +251,33 @@ namespace pxt.py {
         return finish(r)
     }
 
-    function funcdef(): Stmt { throw notSupported() }
-    function classdef(): Stmt { throw notSupported() }
+    function funcdef(): Stmt {
+        let r = mkAST("FunctionDef") as FunctionDef
+        expectKw("def")
+        r.name = name()
+        expectOp("LParen")
+        r.args = parse_arguments(true)
+        expectOp("RParen")
+        if (currentOp() == "Arrow") {
+            shiftToken()
+            r.returns = test()
+        }
+        r.body = colon_suite()
+        return finish(r)
+    }
+
+    function classdef(): Stmt {
+        let r = mkAST("ClassDef") as ClassDef
+        expectKw("class")
+        r.name = name()
+        if (currentKw() == "LParen") {
+            let rr = parseArgs()
+            r.bases = rr.args
+            r.keywords = rr.keywords
+        }
+        r.body = colon_suite()
+        return finish(r)
+    }
 
     function del_stmt(): Stmt {
         let r = mkAST("Delete") as Delete
@@ -494,13 +519,110 @@ namespace pxt.py {
     }
 
     function stmt(): Stmt[] {
+        let decorators: Expr[] = []
+        while (currentOp() == "MatMult") {
+            shiftToken()
+            decorators.push(atom_expr())
+            expectNewline()
+        }
+
+        let kw = currentKw()
         let fn = U.lookup(compound_stmt_map, currentKw())
-        if (fn) return [fn()]
-        else return simple_stmt()
+        let rr: Stmt[] = []
+        let comments = currComments
+        currComments = []
+
+        if (decorators.length) {
+            if (kw != "class" && kw != "def")
+                error(U.lf("decorators not allowed here"))
+            let r = fn() as FunctionDef
+            r.decorator_list = decorators
+            rr = [r]
+        } else if (fn) rr = [fn()]
+        else rr = simple_stmt()
+
+        if (comments.length)
+            rr[0].comments = comments
+
+        return rr
     }
 
-    function lambdef(): Expr {
-        throw notSupported()
+    function parse_arguments(allowTypes: boolean) {
+        let r = mkAST("Arguments") as Arguments
+
+        r.args = []
+        r.defaults = []
+        r.kwonlyargs = []
+        r.kw_defaults = []
+        r.vararg = undefined
+
+        for (; ;) {
+            let o = currentOp()
+            if (o == "Colon" || o == "RParen")
+                break
+            if (o == "Mult") {
+                if (r.vararg)
+                    error(U.lf("multiple *arg"))
+                shiftToken()
+                if (peekToken().type == TokenType.Id)
+                    r.vararg = pdef()
+                else
+                    r.vararg = null
+            } else if (o == "Pow") {
+                if (r.kwarg)
+                    error(U.lf("multiple **arg"))
+                shiftToken()
+                r.kwarg = pdef()
+            } else {
+                if (r.kwarg)
+                    error(U.lf("arguments after **"))
+                let a = pdef()
+                let defl: Expr = null
+                if (currentOp() == "Assign") {
+                    shiftToken()
+                    defl = test()
+                }
+                if (r.vararg !== undefined) {
+                    r.kwonlyargs.push(a)
+                    r.kw_defaults.push(defl)
+                } else {
+                    r.args.push(a)
+                    if (defl)
+                        r.defaults.push(defl)
+                    else if (r.defaults.length)
+                        error(U.lf("non-default argument follows default argument"))
+                }
+            }
+
+            if (currentOp() == "Comma") {
+                shiftToken()
+            } else {
+                break
+            }
+        }
+
+        return finish(r)
+
+        function pdef() {
+            let r = mkAST("Arg") as Arg
+            r.arg = name()
+            if (allowTypes) {
+                if (currentOp() == "Colon") {
+                    shiftToken()
+                    r.annotation = test()
+                }
+            }
+            return r
+        }
+    }
+
+    function lambdef(noCond?: boolean): Expr {
+        let r = mkAST("Lambda") as Lambda
+        shiftToken()
+        r.args = parse_arguments(false)
+        expectOp("Colon")
+        r.body = noCond ? test_nocond() : test()
+        return finish(r)
     }
 
 
@@ -676,8 +798,33 @@ namespace pxt.py {
         }
     }
 
-    function for_comp(): Comprehension[] {
-        throw notSupported()
+    function test_nocond() {
+        if (currentKw() == "lambda")
+            return lambdef(true)
+        else
+            return or_test()
+    }
+
+    function comp_for(): Comprehension[] {
+        let rr: Comprehension[] = []
+
+        for (; ;) {
+            let r = mkAST("Comprehension") as Comprehension
+            rr.push(r)
+            expectKw("for")
+            r.target = exprlist()
+            expectKw("in")
+            r.iter = or_test()
+            r.ifs = []
+            for (; ;) {
+                if (currentKw() == "if") {
+                    shiftToken()
+                    r.ifs.push(test_nocond())
+                } else break
+            }
+            if (currentKw() != "for")
+                return rr
+        }
     }
 
     function argument(): Expr | Keyword {
@@ -708,10 +855,102 @@ namespace pxt.py {
         } else if (currentKw() == "for") {
             let r = mkAST("GeneratorExp", t0) as GeneratorExp
             r.elt = e
-            r.generators = for_comp()
+            r.generators = comp_for()
             return finish(r)
         } else {
             return e
+        }
+    }
+
+    function dictorsetmaker() {
+        let t0 = peekToken()
+
+        try {
+            inParens++
+            shiftToken()
+
+            if (currentOp() == "Pow") {
+                shiftToken()
+                return dict(null, expr())
+            } else if (currentOp() == "RBracket") {
+                let r = mkAST("Dict", t0) as Dict
+                r.keys = []
+                r.values = []
+                return finish(r)
+            } else {
+                let e = star_or_test()
+                if (e.kind != "Starred" && currentOp() == "Colon") {
+                    shiftToken()
+                    return dict(e, test())
+                } else {
+                    return set(e)
+                }
+            }
+        } finally {
+            inParens--
+        }
+
+
+        function set(e: Expr) {
+            if (currentKw() == "for") {
+                if (e.kind == "Starred")
+                    error(U.lf("iterable unpacking cannot be used in comprehension"))
+                let r = mkAST("SetComp", t0) as SetComp
+                r.elt = e
+                r.generators = comp_for()
+                return finish(r)
+            }
+
+            let r = mkAST("Set", t0) as Set
+            r.elts = [e]
+
+            if (currentOp() == "Comma") {
+                let rem = parseParenthesizedList("RBracket", U.lf("set element"), star_or_test)
+                r.elts = [e].concat(rem)
+            } else {
+                expectOp("RBracket")
+            }
+
+            return finish(r)
+        }
+
+        function dictelt() {
+            if (currentOp() == "Pow") {
+                shiftToken()
+                return [null, expr()]
+            } else {
+                let e = test()
+                expectOp("Colon")
+                return [e, test()]
+            }
+        }
+
+        function dict(key0: Expr, value0: Expr) {
+            if (currentKw() == "for") {
+                if (!key0)
+                    error(U.lf("dict unpacking cannot be used in dict comprehension"))
+                let r = mkAST("DictComp", t0) as DictComp
+                r.key = key0
+                r.value = value0
+                r.generators = comp_for()
+                return finish(r)
+            }
+
+            let r = mkAST("Dict", t0) as Dict
+            r.keys = [key0]
+            r.values = [value0]
+
+            if (currentOp() == "Comma") {
+                let rem = parseParenthesizedList("RBracket", U.lf("dict element"), dictelt)
+                for (let e of rem) {
+                    r.keys.push(e[0])
+                    r.values.push(e[1])
+                }
+            } else {
+                expectOp("RBracket")
+            }
+
+            return finish(r)
         }
     }
 
@@ -746,6 +985,7 @@ namespace pxt.py {
                 return finish(r)
             } else {
                 error(U.lf("expecting atom"))
+                return null
             }
         } else if (t.type == TokenType.Op) {
             let o = t.value
@@ -754,20 +994,20 @@ namespace pxt.py {
             } else if (o == "LSquare") {
                 return parseParens("RSquare", "List", "ListComp")
             } else if (o == "LBracket") {
-                throw notSupported()
+                return dictorsetmaker()
             } else {
                 error(U.lf("unexpected operator"))
+                return null
             }
         } else {
             error(U.lf("unexpected token"))
+            return null
         }
-
-        throw notSupported()
     }
 
     function atListEnd() {
         let op = currentOp()
-        if (op == "RParen" || op == "RSquare" || op == "RBrace" ||
+        if (op == "RParen" || op == "RSquare" || op == "RBracket" ||
             op == "Colon" || op == "Semicolon")
             return true
         if (U.endsWith(op, "Assign"))
@@ -821,19 +1061,19 @@ namespace pxt.py {
         category: string,
         f: () => T
     ): T[] {
-        inParens = true
+        inParens++
         try {
             shiftToken()
             let r = parseList(category, f)
             expectOp(cl)
             return r
         } finally {
-            inParens = false
+            inParens--
         }
     }
 
     function parseParens(cl: string, tuple: string, comp: string): Expr {
-        inParens = true
+        inParens++
         try {
             let t0 = peekToken()
             shiftToken()
@@ -848,7 +1088,7 @@ namespace pxt.py {
             if (currentKw() == "for") {
                 let r = mkAST(comp) as GeneratorExp
                 r.elt = e0
-                r.generators = for_comp()
+                r.generators = comp_for()
                 return finish(r)
             }
 
@@ -865,7 +1105,7 @@ namespace pxt.py {
             expectOp(cl)
             return e0
         } finally {
-            inParens = false
+            inParens--
         }
     }
 
@@ -877,6 +1117,24 @@ namespace pxt.py {
         return t.value
     }
 
+    function parseArgs() {
+        let args = parseParenthesizedList("RParen", U.lf("argument"), argument)
+        let rargs: Expr[] = []
+        let rkeywords: Keyword[] = []
+        for (let e of args) {
+            if (e.kind == "Keyword")
+                rkeywords.push(e as Keyword)
+            else {
+                if (rkeywords.length)
+                    error(U.lf("positional argument follows keyword argument"))
+                rargs.push(e as Expr)
+            }
+        }
+        return { args: rargs, keywords: rkeywords }
+    }
+
+
+
     function atom_expr(): Expr {
         let t0 = peekToken()
         let e = atom()
@@ -884,18 +1142,9 @@ namespace pxt.py {
         if (o == "LParen") {
             let r = mkAST("Call", t0) as Call
             r.func = e
-            let args = parseParenthesizedList("RParen", U.lf("argument"), argument)
-            r.args = []
-            r.keywords = []
-            for (let e of args) {
-                if (e.kind == "Keyword")
-                    r.keywords.push(e as Keyword)
-                else {
-                    if (r.keywords.length)
-                        error(U.lf("positional argument follows keyword argument"))
-                    r.args.push(e as Expr)
-                }
-            }
+            let rr = parseArgs()
+            r.args = rr.args
+            r.keywords = rr.keywords
             return finish(r)
         } else if (o == "LSquare") {
             let t1 = peekToken()
@@ -1008,7 +1257,7 @@ namespace pxt.py {
     export function parse(_source: string, _tokens: Token[]) {
         source = _source
         tokens = _tokens
-        inParens = false
+        inParens = 0
         nextToken = 0
         currComments = []
         indentStack = [0]

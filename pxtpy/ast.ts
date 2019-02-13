@@ -50,6 +50,7 @@ namespace pxt.py {
     }
     export interface Stmt extends AST {
         _stmtBrand: void;
+        comments?: Token[];
     }
     export interface Symbol extends Stmt {
         _symbolBrand: void;
