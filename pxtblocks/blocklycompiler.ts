@@ -2167,7 +2167,7 @@ namespace pxt.blocks {
             });
 
             if (hasStatementInput(block)) {
-                let draggableParams = false;
+                let draggableParams = block.type === "function_definition";
                 let stdFunc = e.stdCallTable[block.type];
                 if (stdFunc && stdFunc.comp.handlerArgs.length && stdFunc.attrs.draggableParameters === "reporter") {
                     draggableParams = true;
@@ -2287,6 +2287,10 @@ namespace pxt.blocks {
         let stdFunc = e.stdCallTable[block.type];
         if (stdFunc && stdFunc.comp.handlerArgs.length) {
             return getCBParameters(block, stdFunc);
+        }
+
+        if (block.type === "function_definition") {
+            return (block as Blockly.FunctionDefinitionBlock).getArguments().map(arg => [arg.name, ground(arg.type)] as [string, Point])
         }
 
         return [];
