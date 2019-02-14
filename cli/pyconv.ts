@@ -1520,6 +1520,7 @@ export function convertAsync(fns: string[], useInternal = false) {
         return parseWithPythonAsync(mainFiles)
             .then(parsedPy => {
                 for (let f of mainFiles) {
+                    pxt.log(`parse: ${f}`)
                     let source = fs.readFileSync(f, "utf8")
                     let tokens = pxt.py.lex(source)
                     //console.log(pxt.py.tokensToString(tokens))

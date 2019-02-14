@@ -15,6 +15,7 @@ namespace pxt.py {
     export interface Token {
         type: TokenType;
         value: string;
+        auxValue?: any;
         quoted?: string;
         stringPrefix?: string;
         startPos: number;
@@ -79,6 +80,15 @@ namespace pxt.py {
         "O": /^[_0-7]$/,
         "x": /^[_0-9a-fA-F]$/,
         "X": /^[_0-9a-fA-F]$/,
+    }
+
+    const numBasesRadix: Map<number> = {
+        "b": 2,
+        "B": 2,
+        "o": 8,
+        "O": 8,
+        "x": 16,
+        "X": 16,
     }
 
     // resettable lexer state
@@ -198,12 +208,13 @@ namespace pxt.py {
         addToken(TokenType.EOF, "")
         return res
 
-        function addToken(type: TokenType, val: string) {
+        function addToken(type: TokenType, val: string, aux?: any) {
             let t: Token = {
                 type: type,
                 value: val,
                 startPos: pos0,
                 endPos: pos,
+                auxValue: aux
             }
             res.push(t)
             return t
@@ -314,12 +325,21 @@ namespace pxt.py {
                         } else {
                             // skip
                         }
+                    } else if (!rawMode && ch2 == 48) {
+                        // handle \0 as special case
+                        quoted += "\\\\x00"
+                        value += "\x00"
                     } else if (!rawMode && (ch2 == 117 || ch2 == 120)) {
                         // We pass as is
-                        // TODO would be nice to validate
                         // TODO add support for octal (\123)
-                        quoted += "\\" + String.fromCharCode(ch2)
-                        value += String.fromCharCode(ch2)
+                        let len = ch2 == 117 ? 4 : 2
+                        let num = source.slice(pos, pos + len)
+                        pos += len
+                        let v = parseInt(num, 16)
+                        if (isNaN(v))
+                            addError(U.lf("invalid unicode or hex escape"))
+                        quoted += "\\" + String.fromCharCode(ch2) + num
+                        value += String.fromCharCode(v)
                     } else {
                         quoted += "\\\\" + String.fromCharCode(ch2)
                         value += "\\" + String.fromCharCode(ch2)
@@ -416,9 +436,12 @@ namespace pxt.py {
                         num += ch
                         pos++
                     }
-                    if (num)
-                        addToken(TokenType.Number, c1 + c2 + num)
-                    else
+                    if (num) {
+                        let p = parseInt(num, numBasesRadix[c2])
+                        if (isNaN(p))
+                            addError(U.lf("invalid number"))
+                        addToken(TokenType.Number, c1 + c2 + num, p)
+                    } else
                         addError(U.lf("expecting numbers to follow 0b, 0o, 0x"))
                     return
                 }
@@ -452,7 +475,10 @@ namespace pxt.py {
 
             if (!seenDot && !seenE && c1 == "0" && num.length > 1 && !/^0+/.test(num))
                 addError(U.lf("unexpected leading zero"))
-            addToken(TokenType.Number, num)
+            let p = parseFloat(num)
+            if (isNaN(p))
+                addError(U.lf("invalid number"))
+            addToken(TokenType.Number, num, p)
         }
 
         function parseDot() {

@@ -96,7 +96,7 @@ namespace pxt.py {
             return
         nextToken++
         skipTokens()
-        //console.log(`TOK: ${tokenToString(peekToken())}`)
+        // console.log(`TOK: ${tokenToString(peekToken())}`)
     }
 
     function error(msg?: string) {
@@ -299,6 +299,8 @@ namespace pxt.py {
     function raise_stmt(): Stmt {
         let r = mkAST("Raise") as Raise
         expectKw("raise")
+        r.exc = null
+        r.cause = null
         if (!atStmtEnd()) {
             r.exc = test()
             if (currentKw() == "from") {
@@ -312,6 +314,7 @@ namespace pxt.py {
     function with_item() {
         let r = mkAST("WithItem") as WithItem
         r.context_expr = test()
+        r.optional_vars = null
         if (currentKw() == "as") {
             shiftToken()
             r.optional_vars = expr()
@@ -351,6 +354,9 @@ namespace pxt.py {
             let rr = parseArgs()
             r.bases = rr.args
             r.keywords = rr.keywords
+        } else {
+            r.bases = []
+            r.keywords = []
         }
         r.body = colon_suite()
         return finish(r)
@@ -415,6 +421,8 @@ namespace pxt.py {
         shiftToken()
         if (!atStmtEnd()) {
             r.value = testlist()
+        } else {
+            r.value = null
         }
         return finish(r)
     }
@@ -506,6 +514,8 @@ namespace pxt.py {
         r.level = dots()
         if (peekToken().type == TokenType.Id)
             r.module = dotted_name()
+        else
+            r.module = null
         if (!r.level && !r.module)
             error(U.lf("invalid syntax"))
         expectKw("import")
@@ -533,19 +543,22 @@ namespace pxt.py {
         if (currentOp() == "Comma") {
             shiftToken()
             r.msg = test()
-        }
+        } else r.msg = null
         return finish(r)
+    }
+
+    function tuple(t0: Token, exprs: Expr[]) {
+        let tupl = mkAST("Tuple", t0) as Tuple
+        tupl.elts = exprs
+        return finish(tupl)
     }
 
     function testlist_core(f: () => Expr): Expr {
         let t0 = peekToken()
         let exprs = parseList(U.lf("expression"), f)
         let expr = exprs[0]
-        if (exprs.length != 1) {
-            let tupl = mkAST("Tuple", t0) as Tuple
-            tupl.elts = exprs
-            return finish(tupl)
-        }
+        if (exprs.length != 1)
+            return tuple(t0, exprs)
         return expr
     }
 
@@ -717,12 +730,11 @@ namespace pxt.py {
         function pdef() {
             let r = mkAST("Arg") as Arg
             r.arg = name()
+            r.annotation = null
             if (allowTypes) {
                 if (currentOp() == "Colon") {
                     shiftToken()
                     r.annotation = test()
-                } else {
-                    r.annotation = null
                 }
             }
             return r
@@ -1080,17 +1092,24 @@ namespace pxt.py {
             let r = mkAST("Num") as Num
             shiftToken()
             r.ns = t.value
-            r.n = parseFloat(r.ns)
+            r.n = t.auxValue
             return finish(r)
         } else if (t.type == TokenType.String) {
-            let r = mkAST("Str") as Str
             shiftToken()
-            r.s = t.value
+            let s = t.value
             while (peekToken().type == TokenType.String) {
-                r.s += peekToken().value
+                s += peekToken().value
                 shiftToken()
             }
-            return finish(r)
+            if (t.stringPrefix == "b") {
+                let r = mkAST("Bytes", t) as Bytes
+                r.s = U.toArray(U.stringToUint8Array(s))
+                return finish(r)
+            } else {
+                let r = mkAST("Str", t) as Str
+                r.s = s
+                return finish(r)
+            }
         } else if (t.type == TokenType.Keyword) {
             if (t.value == "None" || t.value == "True" || t.value == "False") {
                 let r = mkAST("NameConstant") as NameConstant
@@ -1211,14 +1230,14 @@ namespace pxt.py {
         shiftToken()
         if (currentOp() == cl) {
             shiftToken()
-            let r = mkAST(tuple) as Tuple
+            let r = mkAST(tuple, t0) as Tuple
             r.elts = []
             return finish(r)
         }
 
         let e0 = star_or_test()
         if (currentKw() == "for") {
-            let r = mkAST(comp) as GeneratorExp
+            let r = mkAST(comp, t0) as GeneratorExp
             r.elt = e0
             r.generators = comp_for()
             expectOp(cl)
@@ -1226,7 +1245,7 @@ namespace pxt.py {
         }
 
         if (currentOp() == "Comma") {
-            let r = mkAST(tuple) as Tuple
+            let r = mkAST(tuple, t0) as Tuple
             shiftToken()
             r.elts = parseList(U.lf("expression"), star_or_test)
             r.elts.unshift(e0)
@@ -1236,6 +1255,13 @@ namespace pxt.py {
         }
 
         expectOp(cl)
+
+        if (tuple == "List") {
+            let r = mkAST(tuple, t0) as List
+            r.elts = [e0]
+            return finish(r)
+        }
+
         return e0
     }
 
@@ -1282,9 +1308,15 @@ namespace pxt.py {
             else if (sl.length == 1)
                 r.slice = sl[0]
             else {
-                let extSl = mkAST("ExtSlice", t1) as ExtSlice
-                extSl.dims = sl
-                r.slice = finish(extSl)
+                if (sl.every(s => s.kind == "Index")) {
+                    let q = sl[0] as Index
+                    q.value = tuple(t1, sl.map(e => (e as Index).value))
+                    r.slice = q
+                } else {
+                    let extSl = mkAST("ExtSlice", t1) as ExtSlice
+                    extSl.dims = sl
+                    r.slice = finish(extSl)
+                }
             }
             return finish(r)
         } else if (o == "Dot") {
@@ -1427,6 +1459,9 @@ namespace pxt.py {
 
         prevToken = tokens[0]
         skipTokens()
+
+        if (peekToken().type == TokenType.EOF)
+            return []
 
         let res = stmt()
         while (peekToken().type != TokenType.EOF)
