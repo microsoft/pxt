@@ -1,4 +1,6 @@
 namespace pxt.py {
+    import B = pxt.blocks;
+
     function stmtTODO(v: py.Stmt) {
         return B.mkStmt(B.mkText("TODO: " + v.kind))
     }
