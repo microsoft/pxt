@@ -9,7 +9,6 @@ namespace pxt {
     export import U = pxtc.Util;
     export import Util = pxtc.Util;
 
-
     export interface TCPIO {
         onData: (v: Uint8Array) => void;
         onError: (e: Error) => void;
@@ -18,6 +17,9 @@ namespace pxt {
         error(msg: string): any;
         disconnectAsync(): Promise<void>;
     }
+
+    export type ConversionPass = (mpkg: MainPackage, opts: pxtc.CompileOptions)=>void
+    export let conversionPasses: ConversionPass[] = []
 
     export let mkTCPSocket: (host: string, port: number) => TCPIO;
 

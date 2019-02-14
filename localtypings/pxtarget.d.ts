@@ -410,6 +410,7 @@ declare namespace ts.pxtc {
         target: CompileTarget;
         testMode?: boolean;
         sourceFiles?: string[];
+        generatedFiles?: string[];
         jres?: pxt.Map<pxt.JRes>;
         hexinfo: HexInfo;
         extinfo?: ExtensionInfo;

@@ -767,6 +767,8 @@ namespace pxt {
                             }
                         }
                     }
+                    for (let pass of pxt.conversionPasses)
+                        pass(this, opts)
                     opts.jres = this.getJRes()
                     opts.useNewFunctions = pxt.appTarget.runtime && pxt.appTarget.runtime.functionsOptions && pxt.appTarget.runtime.functionsOptions.useNewFunctions;
                     return opts;

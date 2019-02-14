@@ -568,6 +568,16 @@ namespace pxt.py {
     function testlist(): Expr { return testlist_core(test) }
     function exprlist(): Expr { return testlist_core(expr) }
 
+    // somewhat approximate
+    function setStoreCtx(e: Expr) {
+        if (e.kind == "Tuple") {
+            let t = e as Tuple
+            t.elts.forEach(setStoreCtx)
+        } else {
+            (e as AssignmentExpr).ctx = "Store"
+        }
+    }
+
     function expr_stmt(): Stmt {
         let t0 = peekToken()
         let expr = testlist_star_expr()
@@ -587,6 +597,7 @@ namespace pxt.py {
                     break
                 }
             }
+            assign.targets.forEach(setStoreCtx)
             return finish(assign)
         }
 
@@ -600,6 +611,7 @@ namespace pxt.py {
                 annAssign.value = test()
             }
             annAssign.simple = t0.type == TokenType.Id && expr.kind == "Name" ? 1 : 0
+            setStoreCtx(annAssign.target)
             return finish(annAssign)
         }
 
@@ -609,6 +621,7 @@ namespace pxt.py {
             augAssign.op = op.replace("Assign", "") as operator
             shiftToken()
             augAssign.value = testlist()
+            setStoreCtx(augAssign.target)
             return finish(augAssign)
         }
 
@@ -1089,6 +1102,7 @@ namespace pxt.py {
             let r = mkAST("Name") as Name
             shiftToken()
             r.id = t.value
+            r.ctx = "Load"
             return finish(r)
         } else if (t.type == TokenType.Number) {
             let r = mkAST("Num") as Num

@@ -106,8 +106,8 @@ namespace pxt.py {
         kind: "Module";
         body: Stmt[];
         name?: string;
-        source?: string[];
-        comments?: string[];
+        source: string;
+        tsFilename: string;
     }
 
     export interface ExceptHandler extends AST {
@@ -412,38 +412,34 @@ namespace pxt.py {
     }
 
     // the following expression can appear in assignment context
-    export interface AssignmentExpr extends Expr { }
+    export interface AssignmentExpr extends Expr { 
+        ctx: expr_context;
+    }
     export interface Attribute extends AssignmentExpr {
         kind: "Attribute";
         value: Expr;
         attr: identifier;
-        ctx: expr_context;
     }
     export interface Subscript extends AssignmentExpr {
         kind: "Subscript";
         value: Expr;
         slice: AnySlice;
-        ctx: expr_context;
     }
     export interface Starred extends AssignmentExpr {
         kind: "Starred";
         value: Expr;
-        ctx: expr_context;
     }
     export interface Name extends AssignmentExpr {
         kind: "Name";
         id: identifier;
-        ctx: expr_context;
         isdef?: boolean;
     }
     export interface List extends AssignmentExpr {
         kind: "List";
         elts: Expr[];
-        ctx: expr_context;
     }
     export interface Tuple extends AssignmentExpr {
         kind: "Tuple";
         elts: Expr[];
-        ctx: expr_context;
     }
 }

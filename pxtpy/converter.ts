@@ -954,10 +954,6 @@ namespace pxt.py {
         return v.kind == "Name" && (v as py.Name).id == "self"
     }
 
-    function sourceAt(e: py.AST) {
-        return (ctx.currModule.source[e.lineno - 1] || "").slice(e.col_offset)
-    }
-
     const exprMap: Map<(v: py.Expr) => B.JsNode> = {
         BoolOp: (n: py.BoolOp) => {
             let r = expr(n.values[0])
@@ -1258,11 +1254,7 @@ namespace pxt.py {
         },
         Num: (n: py.Num) => {
             unify(n.tsType, tpNumber)
-            let src = sourceAt(n)
-            let m = /^(0[box][0-9a-f]+)/i.exec(src)
-            if (m)
-                return B.mkText(m[1])
-            return B.mkText(n.n + "")
+            return B.mkText(n.ns)
         },
         Str: (n: py.Str) => {
             unify(n.tsType, tpString)
@@ -1355,16 +1347,7 @@ namespace pxt.py {
             U.oops(e.kind + " - unknown stmt")
         }
 
-        let cmts: string[] = []
-        let scmts = ctx.currModule.comments
-        if (scmts) {
-            for (let i = 0; i < e.lineno; ++i) {
-                if (scmts[i]) {
-                    cmts.push(scmts[i])
-                    scmts[i] = null
-                }
-            }
-        }
+        let cmts: string[] = (e._comments || []).map(c => c.value)
 
         let r = f(e)
         if (currErrs) {
@@ -1400,14 +1383,6 @@ namespace pxt.py {
         ]
     }
 
-    function parseComments(mod: py.Module) {
-        mod.comments = mod.source.map(l => {
-            let m = /(\s|^)#\s*(.*)/.exec(l)
-            if (m) return m[2]
-            return null
-        })
-    }
-
     function iterPy(e: py.AST, f: (v: py.AST) => void) {
         if (!e) return
         f(e)
@@ -1419,4 +1394,72 @@ namespace pxt.py {
                 v.forEach((x: any) => iterPy(x, f))
         })
     }
+
+    export function convert(mpkg: MainPackage, opts: pxtc.CompileOptions) {
+        moduleAst = {}
+
+        if (!opts.generatedFiles)
+            opts.generatedFiles = []
+
+        for (const pkg of mpkg.sortedDeps()) {
+            for (const f of pkg.getFiles()) {
+                if (!U.endsWith(f, ".py"))
+                    continue
+                let sn = f
+                let modname = f.replace(/^\.py/, "")
+                if (pkg.level > 0)
+                    sn = "pxt_modules/" + pkg.id + "/" + f
+                let src = pkg.readFile(f)
+
+                try {
+                    let tokens = pxt.py.lex(src)
+                    console.log(pxt.py.tokensToString(tokens))
+                    let stmts = pxt.py.parse(src, sn, tokens)
+                    console.log(pxt.py.dump(stmts))
+
+                    sn += ".ts"
+
+                    moduleAst[modname] = {
+                        kind: "Module",
+                        body: stmts,
+                        name: modname,
+                        tsFilename: sn
+                    } as any
+                } catch (e) {
+                    // TODO
+                    console.log("Parse error", e)
+                }
+            }
+        }
+
+        for (let i = 0; i < 5; ++i) {
+            currIteration = i
+            for (let m of U.values(moduleAst)) {
+                try {
+                    toTS(m)
+                } catch (e) {
+                    console.log("Conv pass error", e);
+                }
+            }
+        }
+
+        let files: pxt.Map<string> = {}
+
+        currIteration = 1000
+        for (let m of U.values(moduleAst)) {
+            try {
+                let nodes = toTS(m)
+                if (!nodes) return
+                let res = B.flattenNode(nodes)
+                opts.sourceFiles.push(m.tsFilename)
+                opts.generatedFiles.push(m.tsFilename)
+                opts.fileSystem[m.tsFilename] = res.output
+            } catch (e) {
+                console.log("Conv error", e);
+            }
+        }
+    }
+
+
+    pxt.conversionPasses.push(convert)
 }

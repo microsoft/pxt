@@ -200,6 +200,10 @@ namespace ts.pxtc {
                 res.outfiles[f.slice(6)] = opts.fileSystem[f]
         }
 
+        for (let f of opts.generatedFiles || []) {
+            res.outfiles[f] = opts.fileSystem[f]
+        }
+
         res.times["all"] = U.now() - startTime;
         pxt.tickEvent(`compile`, res.times);
         return res
