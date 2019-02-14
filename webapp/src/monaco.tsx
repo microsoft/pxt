@@ -62,15 +62,21 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     public openBlocks() {
         pxt.tickEvent("typescript.showBlocks");
-        if (!this.currFile) return;
-        const header = this.parent.state.header;
-        if (header) {
-            header.editor = pxt.BLOCKS_PROJECT_NAME;
-            header.pubCurrent = false
+        let initPromise = Promise.resolve();
+
+        if (!this.currFile) {
+            const mainPkg = pkg.mainEditorPkg();
+            if (mainPkg && mainPkg.files["main.ts"]) {
+                initPromise = this.loadFileAsync(mainPkg.files["main.ts"]);
+            }
+            else {
+                return;
+            }
         }
 
-        let promise = Promise.resolve().then(() => {
-            if (!this.hasBlocks())
+        let promise = initPromise.then(() => {
+            const mainPkg = pkg.mainEditorPkg();
+            if (!this.hasBlocks() && !mainPkg && !mainPkg.files["main.blocks"])
                 return undefined;
 
             if (this.feWidget) {
@@ -79,14 +85,17 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }
 
             let blockFile = this.currFile.getVirtualFileName();
-            if (!blockFile) {
-                let mainPkg = pkg.mainEditorPkg();
+            if (!this.hasBlocks()) {
                 if (!mainPkg || !mainPkg.files["main.blocks"]) {
+                    // Either the project isn't loaded, or it's ts-only
                     if (mainPkg) {
                         this.parent.setFile(mainPkg.files["main.ts"]);
                     }
                     return undefined;
                 }
+
+                // The current file doesn't have an associated blocks file, so switch
+                // to main.ts instead
                 this.currFile = mainPkg.files["main.ts"];
                 blockFile = this.currFile.getVirtualFileName();
             }
@@ -98,7 +107,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }
 
             // might be undefined
-            let mainPkg = pkg.mainEditorPkg();
             let xml: string;
 
             // it's a bit for a wild round trip:
@@ -136,18 +144,27 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     const oldWorkspace = values[0] as Blockly.Workspace;
                     const shouldDecompile = values[1] as boolean;
                     if (!shouldDecompile) return Promise.resolve();
-                    return compiler.decompileAsync(this.currFile.name, blocksInfo, oldWorkspace, blockFile)
+                    return compiler.compileAsync()
                         .then(resp => {
-                            if (!resp.success) {
-                                this.currFile.diagnostics = resp.diagnostics;
-                                let tooLarge = false;
-                                resp.diagnostics.forEach(d => tooLarge = (tooLarge || d.code === 9266 /* error code when script is too large */));
-                                return failedAsync(blockFile, tooLarge);
+                            if (resp.success) {
+                                return compiler.decompileAsync(this.currFile.name, blocksInfo, oldWorkspace, blockFile)
+                                    .then(resp => {
+                                        if (!resp.success) {
+                                            this.currFile.diagnostics = resp.diagnostics;
+                                            let tooLarge = false;
+                                            resp.diagnostics.forEach(d => tooLarge = (tooLarge || d.code === 9266 /* error code when script is too large */));
+                                            return failedAsync(blockFile, tooLarge);
+                                        }
+                                        xml = resp.outfiles[blockFile];
+                                        Util.assert(!!xml);
+                                        return mainPkg.setContentAsync(blockFile, xml)
+                                            .then(() => this.parent.setFile(mainPkg.files[blockFile]));
+                                    })
                             }
-                            xml = resp.outfiles[blockFile];
-                            Util.assert(!!xml);
-                            return mainPkg.setContentAsync(blockFile, xml)
-                                .then(() => this.parent.setFile(mainPkg.files[blockFile]));
+                            else {
+                                return failedAsync(blockFile, false)
+                            }
+
                         })
                 }).catch(e => {
                     pxt.reportException(e);
