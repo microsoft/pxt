@@ -1722,10 +1722,43 @@ namespace pxt.blocks {
     }
 
     function initVariables() {
-        // We only give types to "special" variables like enum members and we don't
-        // want those showing up in the variable dropdown so filter the variables
-        // that show up to only ones that have an empty type
-        (Blockly.FieldVariable.prototype as any).getVariableTypes_ = () => [""];
+        // We only give types to "special" variables that aren't seen by the user.
+        // Local variables have a type assigned so we can control where they are
+        // visible, but never actually get used (see setValue below)
+        (Blockly.FieldVariable.prototype as any).getVariableTypes_ = function() {
+            const field = this as Blockly.FieldVariable;
+            if ((field.sourceBlock_ as BlockWithScope)._pxtScope) {
+                return [""].concat((field.sourceBlock_ as BlockWithScope)._pxtScope);
+            }
+            else {
+                return [""];
+            }
+        };
+
+        const oldSetV = Blockly.FieldVariable.prototype.setValue;
+
+        (Blockly.FieldVariable.prototype as any).setValue = function(id: string) {
+            const field = this as Blockly.FieldVariable;
+            const workspace = field.sourceBlock_.workspace;
+            const variable = Blockly.Variables.getVariable(workspace, id);
+
+            // If the Blockly variable has a type, then it's a local variable.
+            // We delete and recreate those on each compile, so we need a global
+            // variable to use in the script
+            let targetVar = variable;
+            if (variable && variable.type) {
+                // If one already exists with the same name, then we're good
+                targetVar = workspace.getVariable(variable.name, "");
+            }
+
+            if (!targetVar) {
+                // Otherwise, create a new global variable (empty type)
+                targetVar = workspace.createVariable(variable.name, "");
+            }
+
+            oldSetV.call(field, targetVar.getId());
+        }
+
 
         let varname = lf("{id:var}item");
         Blockly.Variables.flyoutCategory = function (workspace: Blockly.WorkspaceSvg) {

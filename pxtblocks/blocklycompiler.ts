@@ -17,6 +17,10 @@ namespace pxt.blocks {
         idToComments: Map<Blockly.WorkspaceComment[]>;
     }
 
+    export interface BlockWithScope extends Blockly.Block {
+        _pxtScope?: string[];
+    }
+
     ///////////////////////////////////////////////////////////////////////////////
     // Miscellaneous utility functions
     ///////////////////////////////////////////////////////////////////////////////
@@ -93,6 +97,7 @@ namespace pxt.blocks {
         type?: Point;
         alreadyDeclared?: boolean;
         firstReference?: Blockly.Block;
+        isDraggableArgument?: boolean;
     }
 
     function find(p: Point): Point {
@@ -2001,6 +2006,11 @@ namespace pxt.blocks {
         for (const varName of Object.keys(current.declaredVars)) {
             const info = current.declaredVars[varName];
             if (!info.escapedName) info.escapedName = escapeVarName(varName);
+
+            const id = scopeID(current);
+            if (id && info.isDraggableArgument && !e.workspace.getVariable(info.name, "") && !e.workspace.getVariable(info.name, id)) {
+                e.workspace.createVariable(info.name, id)
+            }
         }
 
         current.children.forEach(c => escapeVariables(c, e));
@@ -2111,7 +2121,23 @@ namespace pxt.blocks {
         })
 
         markDeclarationLocations(topScope, e);
+
+
+        // As we do our final pass, we create variables in the workspace for
+        // locals so that we can track the scopes they are visible in. Disable
+        // events so that we don't retrigger the compiler
+        Blockly.Events.disable();
+
+        // First, delete all local variables from the workspace
+        const varMap = e.workspace.getVariableMap();
+        varMap.getAllVariables().filter(v => v.type.indexOf("*scope") === 0).forEach(v => {
+            varMap.deleteVariable(v);
+        });
+
+        // Next, recursively walk the scope tree and create new ones
         escapeVariables(topScope, e);
+
+        Blockly.Events.enable();
 
         return topScope;
 
@@ -2122,6 +2148,12 @@ namespace pxt.blocks {
                 const name = block.getField("VAR").getText();
                 const info = findOrDeclareVariable(name, currentScope);
                 currentScope.referencedVars.push(info.id);
+
+                // Store the visible scopes so that we can add local variables in the variable
+                // getter dropdown. We only do this for getters, because local variables in
+                // blocks are almost always function arguments and should be readonly.
+                // See initVariables() in blocklyloader for where this is used
+                (block as BlockWithScope)._pxtScope = getScopeTypes(currentScope);
             }
             else if (block.type === "variables_set" || block.type === "variables_change") {
                 const name = block.getField("VAR").getText();
@@ -2135,10 +2167,17 @@ namespace pxt.blocks {
             });
 
             if (hasStatementInput(block)) {
+                let draggableParams = false;
+                let stdFunc = e.stdCallTable[block.type];
+                if (stdFunc && stdFunc.comp.handlerArgs.length && stdFunc.attrs.draggableParameters === "reporter") {
+                    draggableParams = true;
+                }
+
                 const vars: VarInfo[] = getDeclaredVariables(block, e).map(binding => {
                     return {
                         name: binding[0],
                         type: binding[1],
+                        isDraggableArgument: draggableParams,
                         id: id++
                     }
                 });
@@ -2323,5 +2362,20 @@ namespace pxt.blocks {
 
     function isFunctionDefinition(b: Blockly.Block) {
         return b.type === "procedures_defnoreturn" || b.type === "function_definition";
+    }
+
+    function scopeID(scope: Scope) {
+        return scope.firstStatement ? "*scope_" + scope.firstStatement.id : undefined;
+    }
+
+    function getScopeTypes(scope: Scope) {
+        let res = [];
+
+        while (scope) {
+            res.push(scopeID(scope));
+            scope = scope.parent;
+        }
+
+        return res.filter(id => !!id);
     }
 }
