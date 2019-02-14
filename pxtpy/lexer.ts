@@ -1,3 +1,5 @@
+// Lexer spec: https://docs.python.org/3/reference/lexical_analysis.html
+
 namespace pxt.py {
     export enum TokenType {
         Id,
