@@ -166,7 +166,7 @@ cache:
                 files[f] = prj.files[f];
 
         const pkgFiles = Object.keys(files).filter(s =>
-            /\.(md|ts|asm|cpp|h)$/.test(s))
+            /\.(md|ts|asm|cpp|h|py)$/.test(s))
 
         const fieldsOrder = [
             "name",
