@@ -67,6 +67,10 @@ namespace pxt.py {
         return ctx.currFun || ctx.currClass || ctx.currModule
     }
 
+    function isTopLevel() {
+        return ctx.currModule.name == "main" && !ctx.currFun && !ctx.currClass
+    }
+
     function defvar(n: string, opts: py.VarDescOptions) {
         let scopeDef = currentScope()
         let v = scopeDef.vars[n]
@@ -432,6 +436,8 @@ namespace pxt.py {
             if (!isMethod)
                 defvar(n.name, { fundef: n })
 
+            let topLev = isTopLevel()
+
             setupScope(n)
             ctx.currFun = n
             if (!n.retType) n.retType = mkType()
@@ -507,7 +513,7 @@ namespace pxt.py {
                 fd.fundef = n
             } else {
                 U.assert(!prefix)
-                if (n.name[0] == "_")
+                if (n.name[0] == "_" || topLev)
                     nodes.push(B.mkText("function "), quote(funname))
                 else
                     nodes.push(B.mkText("export function "), quote(funname))
@@ -537,11 +543,12 @@ namespace pxt.py {
             setupScope(n)
             defvar(n.name, { classdef: n })
             U.assert(!ctx.currClass)
+            let topLev = isTopLevel()
             ctx.currClass = n
             let nodes = [
                 todoComment("keywords", n.keywords.map(doKeyword)),
                 todoComment("decorators", n.decorator_list.map(expr)),
-                B.mkText("export class "),
+                B.mkText(topLev ? "class " : "export class "),
                 quote(n.name)
             ]
             if (n.bases.length > 0) {
@@ -594,7 +601,7 @@ namespace pxt.py {
             let isConstCall = isCallTo(n.value, "const")
             let nm = getName(n.targets[0]) || ""
             let isUpperCase = nm && !/[a-z]/.test(nm)
-            if (!ctx.currClass && !ctx.currFun && nm[0] != "_")
+            if (!isTopLevel() && !ctx.currClass && !ctx.currFun && nm[0] != "_")
                 pref = "export "
             if (nm && ctx.currClass && !ctx.currFun) {
                 // class fields can't be const
@@ -1377,6 +1384,7 @@ namespace pxt.py {
         if (!mod.vars) mod.vars = {}
         let res = mod.body.map(stmt)
         if (res.every(isEmpty)) return null
+        else if (mod.name == "main") return res
         return [
             B.mkText("namespace " + mod.name + " "),
             B.mkBlock(res)
@@ -1406,7 +1414,7 @@ namespace pxt.py {
                 if (!U.endsWith(f, ".py"))
                     continue
                 let sn = f
-                let modname = f.replace(/^\.py/, "")
+                let modname = f.replace(/\.py$/, "")
                 if (pkg.level > 0)
                     sn = "pxt_modules/" + pkg.id + "/" + f
                 let src = pkg.readFile(f)
