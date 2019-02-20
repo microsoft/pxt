@@ -1560,8 +1560,9 @@ namespace pxt.blocks {
             updateDisabledBlocks(e, w.getAllBlocks(), topblocks);
 
             // compile workspace comments, add them to the top
-            const topComments = w.getTopComments(true)
-            const commentMap = groupWorkspaceComments(topblocks, topComments);
+            const topComments = w.getTopComments(true);
+            const commentMap = groupWorkspaceComments(topblocks as Blockly.BlockSvg[],
+                topComments as Blockly.WorkspaceCommentSvg[]);
 
             commentMap.orphans.forEach(comment => append(stmtsMain, compileWorkspaceComment(comment).children));
 
@@ -1915,7 +1916,7 @@ namespace pxt.blocks {
         height: number;
     }
 
-    function groupWorkspaceComments(blocks: Blockly.Block[], comments: Blockly.WorkspaceComment[]) {
+    function groupWorkspaceComments(blocks: Blockly.BlockSvg[], comments: Blockly.WorkspaceCommentSvg[]) {
         if (!blocks.length || blocks.some(b => !b.rendered)) {
             return {
                 orphans: comments,

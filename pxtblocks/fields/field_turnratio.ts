@@ -66,7 +66,7 @@ namespace pxtblockly {
                 'y1': FieldTurnRatio.HALF,
                 'marker-end': 'url(#head)',
                 'style': 'fill: none; stroke: #f12a21; stroke-width: 10'
-            }, svg);
+            }, svg) as SVGPathElement;
             this.updateGraph_();
             let readout = document.createElement('span');
             readout.setAttribute('class', 'blocklyFieldSliderReadout');

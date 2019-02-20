@@ -872,7 +872,7 @@ namespace pxt.blocks {
     export let openHelpUrl: (url: string) => void;
 
     function initLists() {
-        const msg: any = Blockly.Msg;
+        const msg = Blockly.Msg;
 
         // lists_create_with
         const listsCreateWithId = "lists_create_with";
@@ -911,7 +911,7 @@ namespace pxt.blocks {
     }
 
     function initLoops() {
-        const msg: any = Blockly.Msg;
+        const msg = Blockly.Msg;
 
         // controls_repeat_ext
         const controlsRepeatExtId = "controls_repeat_ext";
@@ -1185,7 +1185,7 @@ namespace pxt.blocks {
 
     function initContextMenu() {
         // Translate the context menu for blocks.
-        let msg: any = Blockly.Msg;
+        const msg = Blockly.Msg;
         msg.DUPLICATE_BLOCK = lf("{id:block}Duplicate");
         msg.REMOVE_COMMENT = lf("Remove Comment");
         msg.ADD_COMMENT = lf("Add Comment");
@@ -1305,51 +1305,6 @@ namespace pxt.blocks {
                 onShowContextMenu(this, menuOptions);
 
             Blockly.ContextMenu.show(e, menuOptions, this.RTL);
-        };
-
-        // We override Blockly's category mouse event handler so that only one
-        // category can be expanded at a time. Also prevent categories from toggling
-        // once openend.
-        Blockly.Toolbox.TreeNode.prototype.onClick_ = function (a: Event) {
-            // Expand icon.
-            const that = <Blockly.Toolbox.TreeNode>this;
-
-            if (!that.isSelected()) {
-                // Collapse the currently selected node and its parent nodes
-                collapseSubcategories(that.getTree().getSelectedItem(), that);
-            }
-
-            if (that.hasChildren() && that.isUserCollapsible_) {
-                if (that.isSelected()) {
-                    collapseSubcategories(that.getTree().getSelectedItem(), that);
-                    that.getTree().setSelectedItem(null);
-                } else {
-                    that.setExpanded(true);
-                    that.select();
-                }
-            } else if (that.isSelected()) {
-                that.getTree().setSelectedItem(null);
-            } else {
-                that.select();
-            }
-
-            that.updateRow()
-        }
-
-        // We also must override this handler to handle the case where no category is selected (e.g. clicking outside the toolbox)
-        const oldSetSelectedItem = Blockly.Toolbox.TreeControl.prototype.setSelectedItem;
-        let editor = this;
-        Blockly.Toolbox.TreeControl.prototype.setSelectedItem = function (a: Blockly.Toolbox.TreeNode) {
-            const that = <Blockly.Toolbox.TreeControl>this;
-            let toolbox = (that as any).toolbox_;
-            if (a == that.selectedItem_ || a == toolbox.tree_) {
-                return;
-            }
-            let oldSelectedItem = that.selectedItem_;
-            oldSetSelectedItem.call(that, a);
-            if (a === null) {
-                collapseSubcategories(oldSelectedItem);
-            }
         };
 
         // Get rid of bumping behavior
@@ -1736,7 +1691,7 @@ namespace pxt.blocks {
         })
 
         // builtin math_arithmetic
-        const msg: any = Blockly.Msg;
+        const msg = Blockly.Msg;
         const mathArithmeticId = "math_arithmetic";
         const mathArithmeticDef = pxt.blocks.getBlockDefinition(mathArithmeticId);
         const mathArithmeticTooltips = <Map<string>>mathArithmeticDef.tooltip;
@@ -1773,7 +1728,7 @@ namespace pxt.blocks {
         (Blockly.FieldVariable.prototype as any).getVariableTypes_ = () => [""];
 
         let varname = lf("{id:var}item");
-        Blockly.Variables.flyoutCategory = function (workspace) {
+        Blockly.Variables.flyoutCategory = function (workspace: Blockly.WorkspaceSvg) {
             let xmlList: HTMLElement[] = [];
 
             if (!pxt.appTarget.appTheme.hideFlyoutHeadings) {
@@ -1794,7 +1749,7 @@ namespace pxt.blocks {
 
             xmlList.push(button);
 
-            let blockList = Blockly.Variables.flyoutCategoryBlocks(workspace);
+            let blockList = Blockly.Variables.flyoutCategoryBlocks(workspace) as HTMLElement[];
             xmlList = xmlList.concat(blockList);
             return xmlList;
         };
@@ -1874,7 +1829,7 @@ namespace pxt.blocks {
         };
 
         // builtin variables_get
-        const msg: any = Blockly.Msg;
+        const msg = Blockly.Msg;
         const variablesGetId = "variables_get";
         const variablesGetDef = pxt.blocks.getBlockDefinition(variablesGetId);
         msg.VARIABLES_GET_CREATE_SET = variablesGetDef.block["VARIABLES_GET_CREATE_SET"];
@@ -1930,7 +1885,7 @@ namespace pxt.blocks {
     }
 
     function initFunctions() {
-        const msg: any = Blockly.Msg;
+        const msg = Blockly.Msg;
 
         // New functions implementation messages
         msg.FUNCTION_CREATE_NEW = lf("Make a Function...");
@@ -1950,7 +1905,7 @@ namespace pxt.blocks {
         const proceduresDef = pxt.blocks.getBlockDefinition(proceduresDefId);
 
         msg.PROCEDURES_DEFNORETURN_TITLE = proceduresDef.block["PROCEDURES_DEFNORETURN_TITLE"];
-        msg.PROCEDURE_ALREADY_EXISTS = proceduresDef.block["PROCEDURE_ALREADY_EXISTS"];
+        (msg as any).PROCEDURE_ALREADY_EXISTS = proceduresDef.block["PROCEDURE_ALREADY_EXISTS"];
 
         Blockly.Blocks['procedures_defnoreturn'].init = function () {
             let nameField = new Blockly.FieldTextInput('',
@@ -2092,7 +2047,7 @@ namespace pxt.blocks {
                 let name = this.getProcedureCall();
                 let workspace = this.workspace;
                 option.callback = function () {
-                    let def = Blockly.Procedures.getDefinition(name, workspace);
+                    let def = Blockly.Procedures.getDefinition(name, workspace) as Blockly.BlockSvg;
                     if (def) def.select();
                 };
                 options.push(option);
@@ -2115,7 +2070,7 @@ namespace pxt.blocks {
         msg.FUNCTIONS_CALL_TITLE = functionCall.block["FUNCTIONS_CALL_TITLE"];
         installBuiltinHelpInfo(functionCallId);
 
-        Blockly.Procedures.flyoutCategory = function (workspace: Blockly.Workspace) {
+        Blockly.Procedures.flyoutCategory = function (workspace: Blockly.WorkspaceSvg) {
             let xmlList: HTMLElement[] = [];
 
             if (!pxt.appTarget.appTheme.hideFlyoutHeadings) {
@@ -2164,7 +2119,7 @@ namespace pxt.blocks {
                 let newBlockIds = pxt.blocks.domToWorkspaceNoEvents(xml, workspace);
                 // Close flyout and highlight block
                 Blockly.hideChaff();
-                let newBlock = workspace.getBlockById(newBlockIds[0]);
+                let newBlock = workspace.getBlockById(newBlockIds[0]) as Blockly.BlockSvg;
                 newBlock.select();
                 // Center on the new block so we know where it is
                 workspace.centerOnBlock(newBlock.id);
@@ -2191,7 +2146,7 @@ namespace pxt.blocks {
                                     });
                             }
                             else if (!Blockly.Procedures.isLegalName_(newFunc, workspace)) {
-                                Blockly.alert((Blockly as any).Msg.PROCEDURE_ALREADY_EXISTS.replace('%1',
+                                Blockly.alert((Blockly.Msg as any).PROCEDURE_ALREADY_EXISTS.replace('%1',
                                     newFunc.toLowerCase()),
                                     function () {
                                         promptAndCheckWithAlert(newFunc);  // Recurse
@@ -2270,7 +2225,7 @@ namespace pxt.blocks {
     }
 
     function initLogic() {
-        const msg: any = Blockly.Msg;
+        const msg = Blockly.Msg;
 
         // builtin controls_if
         const controlsIfId = "controls_if";
@@ -2331,7 +2286,7 @@ namespace pxt.blocks {
             (Blockly as any).Colours.textField);
 
         // builtin text_length
-        const msg: any = Blockly.Msg;
+        const msg = Blockly.Msg;
         const textLengthId = "text_length";
         const textLengthDef = pxt.blocks.getBlockDefinition(textLengthId);
         msg.TEXT_LENGTH_TITLE = textLengthDef.block["TEXT_LENGTH_TITLE"];
@@ -2388,7 +2343,7 @@ namespace pxt.blocks {
     }
 
     function initComments() {
-        (Blockly.Msg as any).WORKSPACE_COMMENT_DEFAULT_TEXT = '';
+        Blockly.Msg.WORKSPACE_COMMENT_DEFAULT_TEXT = '';
     }
 
     function initTooltip(blockInfo: pxtc.BlocksInfo) {
@@ -2421,37 +2376,38 @@ namespace pxt.blocks {
                 let rtl = Blockly.Tooltip.element_.RTL;
                 let windowSize = goog.dom.getViewportSize();
                 // Display the tooltip.
-                Blockly.Tooltip.DIV.style.direction = rtl ? 'rtl' : 'ltr';
-                Blockly.Tooltip.DIV.style.display = 'block';
+                let tooltip = Blockly.Tooltip.DIV as HTMLElement;
+                tooltip.style.direction = rtl ? 'rtl' : 'ltr';
+                tooltip.style.display = 'block';
                 Blockly.Tooltip.visible = true;
                 // Move the tooltip to just below the cursor.
                 let anchorX = Blockly.Tooltip.lastX_;
                 if (rtl) {
-                    anchorX -= Blockly.Tooltip.OFFSET_X + Blockly.Tooltip.DIV.offsetWidth;
+                    anchorX -= Blockly.Tooltip.OFFSET_X + tooltip.offsetWidth;
                 } else {
                     anchorX += Blockly.Tooltip.OFFSET_X;
                 }
                 let anchorY = Blockly.Tooltip.lastY_ + Blockly.Tooltip.OFFSET_Y;
 
-                if (anchorY + Blockly.Tooltip.DIV.offsetHeight >
+                if (anchorY + tooltip.offsetHeight >
                     windowSize.height + window.scrollY) {
                     // Falling off the bottom of the screen; shift the tooltip up.
-                    anchorY -= Blockly.Tooltip.DIV.offsetHeight + 2 * Blockly.Tooltip.OFFSET_Y;
+                    anchorY -= tooltip.offsetHeight + 2 * Blockly.Tooltip.OFFSET_Y;
                 }
                 if (rtl) {
                     // Prevent falling off left edge in RTL mode.
                     anchorX = Math.max(Blockly.Tooltip.MARGINS - window.scrollX, anchorX);
                 } else {
-                    if (anchorX + Blockly.Tooltip.DIV.offsetWidth >
+                    if (anchorX + tooltip.offsetWidth >
                         windowSize.width + window.scrollX - 2 * Blockly.Tooltip.MARGINS) {
                         // Falling off the right edge of the screen;
                         // clamp the tooltip on the edge.
-                        anchorX = windowSize.width - Blockly.Tooltip.DIV.offsetWidth -
+                        anchorX = windowSize.width - tooltip.offsetWidth -
                             2 * Blockly.Tooltip.MARGINS;
                     }
                 }
-                Blockly.Tooltip.DIV.style.top = anchorY + 'px';
-                Blockly.Tooltip.DIV.style.left = anchorX + 'px';
+                tooltip.style.top = anchorY + 'px';
+                tooltip.style.left = anchorX + 'px';
             }
             if (card) {
                 const cardEl = pxt.docs.codeCard.render({
@@ -2477,28 +2433,6 @@ namespace pxt.blocks {
     function removeBlock(fn: pxtc.SymbolInfo) {
         delete Blockly.Blocks[fn.attributes.blockId];
         delete cachedBlocks[fn.attributes.blockId];
-    }
-
-    function categoryElement(tb: Element, nameid: string): Element {
-        return tb ? getFirstChildWithAttr(tb, "category", "nameid", nameid.toLowerCase()) : undefined;
-    }
-
-    function collapseSubcategories(cat: Blockly.Toolbox.TreeNode, child?: Blockly.Toolbox.TreeNode) {
-        while (cat) {
-            if (cat.isUserCollapsible_ && cat.getTree() && cat != child && (!child || !isChild(child, cat))) {
-                cat.setExpanded(false);
-                cat.updateRow();
-            }
-            cat = cat.getParent();
-        }
-    }
-
-    function isChild(child: Blockly.Toolbox.TreeNode, parent: Blockly.Toolbox.TreeNode): boolean {
-        const myParent = child.getParent();
-        if (myParent) {
-            return myParent === parent || isChild(myParent, parent);
-        }
-        return false;
     }
 
     /**
