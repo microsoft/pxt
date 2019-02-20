@@ -1413,41 +1413,38 @@ namespace pxt.py {
         })
     }
 
-    export function convert(mpkg: MainPackage, opts: pxtc.CompileOptions) {
+    export function convert(opts: pxtc.CompileOptions) {
         moduleAst = {}
 
         if (!opts.generatedFiles)
             opts.generatedFiles = []
 
-        for (const pkg of mpkg.sortedDeps()) {
-            for (const f of pkg.getFiles()) {
-                if (!U.endsWith(f, ".py"))
-                    continue
-                let sn = f
-                let modname = f.replace(/\.py$/, "")
-                if (pkg.level > 0)
-                    sn = "pxt_modules/" + pkg.id + "/" + f
-                let src = pkg.readFile(f)
+        for (const fn of opts.sourceFiles) {
+            if (!U.endsWith(fn, ".py"))
+                continue
+            let sn = fn
+            let modname = fn.replace(/\.py$/, "").replace(/.*\//, "")
+            let src = opts.fileSystem[fn]
 
-                try {
-                    let tokens = pxt.py.lex(src)
-                    console.log(pxt.py.tokensToString(tokens))
-                    let stmts = pxt.py.parse(src, sn, tokens)
-                    console.log(pxt.py.dump(stmts))
+            try {
+                let tokens = pxt.py.lex(src)
+                console.log(pxt.py.tokensToString(tokens))
+                let stmts = pxt.py.parse(src, sn, tokens)
+                console.log(pxt.py.dump(stmts))
 
-                    sn += ".ts"
+                sn += ".ts"
 
-                    moduleAst[modname] = {
-                        kind: "Module",
-                        body: stmts,
-                        name: modname,
-                        tsFilename: sn
-                    } as any
-                } catch (e) {
-                    // TODO
-                    console.log("Parse error", e)
-                }
+                moduleAst[modname] = {
+                    kind: "Module",
+                    body: stmts,
+                    name: modname,
+                    tsFilename: sn
+                } as any
+            } catch (e) {
+                // TODO
+                console.log("Parse error", e)
             }
+
         }
 
         for (let i = 0; i < 5; ++i) {

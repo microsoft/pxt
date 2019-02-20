@@ -758,7 +758,7 @@ namespace pxt {
                 .then(() => {
                     for (const pkg of this.sortedDeps()) {
                         for (const f of pkg.getFiles()) {
-                            if (/\.(ts|asm)$/.test(f)) {
+                            if (/\.(ts|asm|py)$/.test(f)) {
                                 let sn = f
                                 if (pkg.level > 0)
                                     sn = "pxt_modules/" + pkg.id + "/" + f
@@ -767,8 +767,6 @@ namespace pxt {
                             }
                         }
                     }
-                    for (let pass of pxt.conversionPasses)
-                        pass(this, opts)
                     opts.jres = this.getJRes()
                     opts.useNewFunctions = pxt.appTarget.runtime && pxt.appTarget.runtime.functionsOptions && pxt.appTarget.runtime.functionsOptions.useNewFunctions;
                     return opts;

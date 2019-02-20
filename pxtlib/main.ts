@@ -18,7 +18,7 @@ namespace pxt {
         disconnectAsync(): Promise<void>;
     }
 
-    export type ConversionPass = (mpkg: MainPackage, opts: pxtc.CompileOptions)=>void
+    export type ConversionPass = (opts: pxtc.CompileOptions)=>void
     export let conversionPasses: ConversionPass[] = []
 
     export let mkTCPSocket: (host: string, port: number) => TCPIO;

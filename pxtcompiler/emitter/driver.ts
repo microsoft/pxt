@@ -94,6 +94,9 @@ namespace ts.pxtc {
             times: {},
         }
 
+        for (let pass of pxt.conversionPasses)
+            pass(opts)
+
         let fileText: { [index: string]: string } = {};
         for (let fileName in opts.fileSystem) {
             fileText[normalizePath(fileName)] = opts.fileSystem[fileName];
