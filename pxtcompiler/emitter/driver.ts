@@ -137,6 +137,10 @@ namespace ts.pxtc {
             getDirectories: () => []
         }
 
+        // save files first, in case we generated some .ts files that fail to compile
+        for (let f of opts.generatedFiles || [])
+            res.outfiles[f] = opts.fileSystem[f]
+
         if (!opts.sourceFiles)
             opts.sourceFiles = Object.keys(opts.fileSystem)
 
@@ -198,10 +202,6 @@ namespace ts.pxtc {
         for (let f of opts.sourceFiles) {
             if (Util.startsWith(f, "built/"))
                 res.outfiles[f.slice(6)] = opts.fileSystem[f]
-        }
-
-        for (let f of opts.generatedFiles || []) {
-            res.outfiles[f] = opts.fileSystem[f]
         }
 
         res.times["all"] = U.now() - startTime;

@@ -310,6 +310,15 @@ namespace pxt.py {
             return B.mkGroup([B.mkText("**"), t])
     }
 
+    function compileType(e: Expr): Type {
+        // TODO
+        if (e.kind == "Name") {
+            return mkType({ primType: (e as Name).id })
+        } else {
+            return mkType({})
+        }
+    }
+
     function doArgs(args: py.Arguments, isMethod: boolean) {
         U.assert(!args.kwonlyargs.length)
         let nargs = args.args.slice()
@@ -322,10 +331,12 @@ namespace pxt.py {
         let didx = args.defaults.length - nargs.length
         let lst = nargs.map(a => {
             let v = defvar(a.arg, { isParam: true })
+            if (!a.type && a.annotation) {
+                a.type = compileType(a.annotation)
+                unify(a.type, v.type)
+            }
             if (!a.type) a.type = v.type
             let res = [quote(a.arg), typeAnnot(v.type)]
-            if (a.annotation)
-                res.push(todoExpr("annotation", expr(a.annotation)))
             if (didx >= 0) {
                 res.push(B.mkText(" = "))
                 res.push(expr(args.defaults[didx]))
@@ -520,8 +531,7 @@ namespace pxt.py {
             }
             nodes.push(
                 doArgs(n.args, isMethod),
-                n.name == "__init__" ? B.mkText("") : typeAnnot(n.retType),
-                todoComment("returns", n.returns ? [expr(n.returns)] : []))
+                n.returns ? typeAnnot(compileType(n.returns)) : B.mkText(""))
 
             let body = n.body.map(stmt)
             if (n.name == "__init__") {
