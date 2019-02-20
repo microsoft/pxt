@@ -689,12 +689,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     "cpp": "cpp",
                     "h": "cpp",
                     "json": "json",
-                    "md": "text",
+                    "md": "markdown",
+                    "py": "python",
                     "ts": "typescript",
                     "js": "javascript",
                     "svg": "xml",
                     "blocks": "xml",
-                    "asm": "asm"
+                    "asm": "asm",
                 }
                 if (modeMap.hasOwnProperty(ext)) mode = modeMap[ext]
 
