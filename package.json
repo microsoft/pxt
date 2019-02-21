@@ -39,6 +39,7 @@
     "typings/**",
     "localtypings/**",
     "tests/blocks-test/karma.conf.js",
+    "built/tests/blocksrunner.js",
     "docfiles",
     "theme",
     "common-docs"
