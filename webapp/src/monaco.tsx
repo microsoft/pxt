@@ -17,10 +17,16 @@ import Util = pxt.Util;
 const MIN_EDITOR_FONT_SIZE = 10
 const MAX_EDITOR_FONT_SIZE = 40
 
-enum FileType {
-    Unknown,
-    TypeScript,
-    Markdown
+export enum FileType {
+    Text = "text",
+    TypeScript = "typescript",
+    JavaScript = "javascript",
+    Markdown = "markdown",
+    Python = "python",
+    CPP = "cpp",
+    JSON = "json",
+    XML = "xml",
+    Asm = "asm"
 }
 
 /**
@@ -42,7 +48,7 @@ interface FoldingController extends monaco.editor.IEditorContribution {
 export class Editor extends toolboxeditor.ToolboxEditor {
     editor: monaco.editor.IStandaloneCodeEditor;
     currFile: pkg.File;
-    fileType: FileType = FileType.Unknown;
+    fileType: FileType = FileType.Text;
     extraLibs: pxt.Map<monaco.IDisposable>;
     public nsMap: pxt.Map<toolbox.BlockDefinition[]>;
     private _loadMonacoPromise: Promise<void>;
@@ -56,7 +62,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     hasBlocks() {
         if (!this.currFile) return true
-        let blockFile = this.currFile.getVirtualFileName();
+        let blockFile = this.currFile.getVirtualFileName(pxt.BLOCKS_PROJECT_NAME);
         return (blockFile && pkg.mainEditorPkg().files[blockFile] != null)
     }
 
@@ -84,7 +90,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.activeRangeID = null;
             }
 
-            let blockFile = this.currFile.getVirtualFileName();
+            let blockFile = this.currFile.getVirtualFileName(pxt.BLOCKS_PROJECT_NAME);
             if (!this.hasBlocks()) {
                 if (!mainPkg || !mainPkg.files["main.blocks"]) {
                     // Either the project isn't loaded, or it's ts-only
@@ -97,7 +103,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 // The current file doesn't have an associated blocks file, so switch
                 // to main.ts instead
                 this.currFile = mainPkg.files["main.ts"];
-                blockFile = this.currFile.getVirtualFileName();
+                blockFile = this.currFile.getVirtualFileName(pxt.BLOCKS_PROJECT_NAME);
             }
 
             const failedAsync = (file: string, programTooLarge = false) => {
@@ -685,7 +691,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     loadFileAsync(file: pkg.File, hc?: boolean): Promise<void> {
-        let mode = "text";
+        let mode = FileType.Text;
         this.currSource = file.content;
 
         let loading = document.createElement("div");
@@ -702,19 +708,20 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.updateFieldEditors();
 
                 let ext = file.getExtension()
-                let modeMap: any = {
-                    "cpp": "cpp",
-                    "h": "cpp",
-                    "json": "json",
-                    "md": "markdown",
-                    "py": "python",
-                    "ts": "typescript",
-                    "js": "javascript",
-                    "svg": "xml",
-                    "blocks": "xml",
-                    "asm": "asm",
+                let modeMap: pxt.Map<FileType> = {
+                    "cpp": FileType.CPP,
+                    "h": FileType.CPP,
+                    "json": FileType.JSON,
+                    "md": FileType.Markdown,
+                    "py": FileType.Python,
+                    "ts": FileType.TypeScript,
+                    "js": FileType.JavaScript,
+                    "svg": FileType.XML,
+                    "blocks": FileType.XML,
+                    "asm": FileType.Asm,
                 }
                 if (modeMap.hasOwnProperty(ext)) mode = modeMap[ext]
+                this.fileType = mode
 
                 const readOnly = file.isReadonly() || pxt.shell.isReadOnly();
                 this.editor.updateOptions({ readOnly: readOnly });
@@ -742,8 +749,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
                 this.setValue(file.content)
                 this.setDiagnostics(file, this.snapshotState())
-
-                this.fileType = mode == "typescript" ? FileType.TypeScript : ext == "md" ? FileType.Markdown : FileType.Unknown;
 
                 if (this.fileType == FileType.Markdown)
                     this.parent.setSideMarkdown(file.content);

@@ -1413,7 +1413,7 @@ namespace pxt.py {
         })
     }
 
-    export function convert(opts: pxtc.CompileOptions) {
+    export function py2ts(opts: pxtc.CompileOptions) {
         moduleAst = {}
 
         if (!opts.generatedFiles)
@@ -1475,6 +1475,11 @@ namespace pxt.py {
         }
     }
 
+    export function convert(opts: pxtc.CompileOptions) {
+        if (opts.target.preferredEditor == pxt.PYTHON_PROJECT_NAME) {
+            py2ts(opts)
+        }
+    }
 
     pxt.conversionPasses.push(convert)
 }

@@ -20,6 +20,10 @@ namespace pxt.editor {
         virtual?: boolean; // gimmick to switch views
     }
 
+    export function isBlocks(f: IFile) {
+        return U.endsWith(f.name, ".blocks")
+    }
+
     export interface FileHistoryEntry {
         id: string;
         name: string;

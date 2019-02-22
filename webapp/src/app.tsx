@@ -371,7 +371,7 @@ export class ProjectView
             const header = this.state.header;
 
             // Check to see if the last edit happened in monaco
-            if (header && header.editor === pxt.JAVASCRIPT_PROJECT_NAME) {
+            if (header && header.editor !== pxt.BLOCKS_PROJECT_NAME) {
                 this.textEditor.openBlocks();
             }
             else {
@@ -446,8 +446,8 @@ export class ProjectView
     private maybeShowPackageErrors(force = false) {
         // Only show in blocks or main.ts
         if (this.state.currFile) {
-            const fn = this.state.currFile.name;
-            if (!pkg.File.blocksFileNameRx.test(fn) && fn !== "main.ts") return false;
+            const fn = this.state.currFile;
+            if (!pxt.editor.isBlocks(fn) && fn.name !== "main.ts") return false;
         }
 
         if (!this.state.suppressPackageWarning || force) {
@@ -712,6 +712,10 @@ export class ProjectView
                     header.editor = pxt.JAVASCRIPT_PROJECT_NAME
                     header.pubCurrent = false
                 }
+                else if (this.isPythonFile(fn.name)) {
+                    header.editor = pxt.PYTHON_PROJECT_NAME
+                    header.pubCurrent = false
+                }
             }
         }
 
@@ -726,7 +730,7 @@ export class ProjectView
     setSideFile(fn: pkg.File) {
         let fileName = fn.name;
         let currFile = this.state.currFile.name;
-        if (fileName != currFile && pkg.File.blocksFileNameRx.test(fileName)) {
+        if (fileName != currFile && pxt.editor.isBlocks(fn)) {
             // Going from ts -> blocks
             pxt.tickEvent("sidebar.showBlocks");
             this.openBlocks();
@@ -932,11 +936,14 @@ export class ProjectView
                 let file = main.getMainFile();
                 if (e)
                     file = main.lookupFile(e.name) || file
-                if ((!e && h.editor == pxt.JAVASCRIPT_PROJECT_NAME && !pkg.File.tsFileNameRx.test(file.getName()) && file.getVirtualFileName()))
-                    file = main.lookupFile("this/" + file.getVirtualFileName()) || file;
-                if (pkg.File.blocksFileNameRx.test(file.getName()) && file.getVirtualFileName()) {
+
+                // no history entry, and there is a virtual file for the current file in the language recorded in the header
+                if ((!e && file.getVirtualFileName(h.editor)))
+                    file = main.lookupFile("this/" + file.getVirtualFileName(h.editor)) || file;
+
+                if (pxt.editor.isBlocks(file) && !file.content) {
                     if (!file.content) // empty blocks file, open javascript editor
-                        file = main.lookupFile("this/" + file.getVirtualFileName()) || file
+                        file = main.lookupFile("this/" + file.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)) || file
                 }
                 if (file.name === "main.ts") {
                     this.shouldTryDecompile = true;
@@ -1056,6 +1063,10 @@ export class ProjectView
 
     isTypescriptFile(filename: string): boolean {
         return /\.ts$/i.test(filename);
+    }
+
+    isPythonFile(filename: string): boolean {
+        return /\.py$/i.test(filename);
     }
 
     isProjectFile(filename: string): boolean {
@@ -1448,7 +1459,18 @@ export class ProjectView
     }
 
     getPreferredEditor(): string {
-        return this.editor == this.blocksEditor ? pxt.BLOCKS_PROJECT_NAME : pxt.JAVASCRIPT_PROJECT_NAME;
+        if (this.editor == this.blocksEditor)
+            return pxt.BLOCKS_PROJECT_NAME
+
+        if (this.editor == this.textEditor)
+            switch (this.textEditor.fileType) {
+                case monaco.FileType.Python:
+                    return pxt.PYTHON_PROJECT_NAME;
+                default:
+                    return pxt.JAVASCRIPT_PROJECT_NAME;
+            }
+        else
+            return pxt.JAVASCRIPT_PROJECT_NAME;
     }
 
     ///////////////////////////////////////////////////////////
@@ -1559,7 +1581,7 @@ export class ProjectView
 
     switchTypeScript() {
         const mainPkg = pkg.mainEditorPkg();
-        const tsName = this.editorFile.getVirtualFileName();
+        const tsName = this.editorFile.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME);
         const f = mainPkg.files[tsName];
         this.setFile(f);
     }
@@ -1581,7 +1603,7 @@ export class ProjectView
                 // if (open) src = pxtc.format(src, 0).formatted;
 
                 let mainPkg = pkg.mainEditorPkg();
-                let tsName = this.editorFile.getVirtualFileName();
+                let tsName = this.editorFile.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME);
                 Util.assert(tsName != this.editorFile.name);
                 return mainPkg.setContentAsync(tsName, src).then(() => {
                     if (open) {

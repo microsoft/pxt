@@ -368,6 +368,7 @@ declare namespace ts.pxtc {
 
     interface CompileTarget {
         isNative: boolean; // false -> JavaScript for simulator
+        preferredEditor?: string; // used to indicate which way to run any source-level conversions (TS/Py/Blocks)
         nativeType?: string; // currently only "thumb"
         runtimeIsARM?: boolean; // when nativeType is "thumb" but runtime is compiled in ARM mode
         hasHex: boolean;

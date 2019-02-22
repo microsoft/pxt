@@ -274,7 +274,7 @@ export function applyUpgradesAsync(): Promise<UpgradeResult> {
         });
     }
 
-    const upgradeOp = epkg.header.editor === pxt.JAVASCRIPT_PROJECT_NAME ? upgradeFromTSAsync : upgradeFromBlocksAsync;
+    const upgradeOp = epkg.header.editor !== pxt.BLOCKS_PROJECT_NAME ? upgradeFromTSAsync : upgradeFromBlocksAsync;
 
     let projectNeverCompiled = false;
 

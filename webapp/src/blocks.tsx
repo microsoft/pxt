@@ -705,7 +705,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             b.setWarningText(null);
             b.setHighlightWarning(false);
         });
-        let tsfile = file.epkg.files[file.getVirtualFileName()];
+        let tsfile = file.epkg.files[file.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)];
         if (!tsfile || !tsfile.diagnostics) return;
 
         // only show errors

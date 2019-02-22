@@ -49,14 +49,21 @@ export class File implements pxt.editor.IFile {
         return ""
     }
 
-    static tsFileNameRx = /\.ts$/;
-    static blocksFileNameRx = /\.blocks$/;
-    getVirtualFileName(): string {
-        if (File.blocksFileNameRx.test(this.name))
-            return this.name.replace(File.blocksFileNameRx, '.ts');
-        if (File.tsFileNameRx.test(this.name))
-            return this.name.replace(File.tsFileNameRx, '.blocks');
-        return undefined;
+    getVirtualFileName(forPrj: string): string {
+        const ext = this.name.replace(/.*\./, "");
+        const basename = ext ? this.name.slice(0, -ext.length - 1) : this.name;
+
+        switch (forPrj) {
+            case pxt.BLOCKS_PROJECT_NAME:
+                return ext == "ts" || ext == "py" ? basename + ".blocks" : undefined;
+            case pxt.JAVASCRIPT_PROJECT_NAME:
+                return ext == "blocks" || ext == "py" ? basename + ".ts" : undefined;
+            case pxt.PYTHON_PROJECT_NAME:
+                return ext == "blocks" || ext == "ts" ? basename + ".py" : undefined;
+            default:
+                pxt.U.oops();
+                return undefined;
+        }
     }
 
     weight() {
