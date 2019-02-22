@@ -1460,7 +1460,7 @@ namespace pxt.py {
         for (let m of U.values(moduleAst)) {
             try {
                 let nodes = toTS(m)
-                if (!nodes) return
+                if (!nodes) return opts
                 let res = B.flattenNode(nodes)
                 opts.sourceFiles.push(m.tsFilename)
                 opts.generatedFiles.push(m.tsFilename)
@@ -1469,6 +1469,8 @@ namespace pxt.py {
                 console.log("Conv error", e);
             }
         }
+
+        return opts
     }
 
     export function convert(opts: pxtc.CompileOptions) {

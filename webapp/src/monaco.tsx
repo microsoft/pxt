@@ -296,7 +296,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let py = this.currFile.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)
         return compiler.py2tsAsync()
             .then(res => {
-                if (res.generatedFiles.indexOf(py) >= 0)
+                if (res.generatedFiles && res.generatedFiles.indexOf(py) >= 0)
                     return res.fileSystem[py]
                 return ""
             })

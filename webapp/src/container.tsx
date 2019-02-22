@@ -436,7 +436,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
                     <sui.Item className="blocks-menuitem" role="menuitem" textClass="landscape only" text={lf("Blocks")} icon="xicon blocks" active={blockActive} onClick={this.openBlocks} title={lf("Convert code to Blocks")} />
                     <sui.Item className="javascript-menuitem" role="menuitem" textClass="landscape only" text={lf("JavaScript")} icon="xicon js" active={javascriptActive} onClick={this.openJavaScript} title={lf("Convert code to JavaScript")} />
                     {targetTheme.python ? 
-                    <sui.Item className="javascript-menuitem" role="menuitem" textClass="landscape only" text={lf("Python")} icon="xicon js" active={pythonActive} onClick={this.openPython} title={lf("Convert code to Python")} /> : undefined}
+                    <sui.Item className="python-menuitem" role="menuitem" textClass="landscape only" text={lf("Python")} icon="xicon python" active={pythonActive} onClick={this.openPython} title={lf("Convert code to Python")} /> : undefined}
                     <div className="ui item toggle"></div>
                 </div>
             </div> : undefined}
