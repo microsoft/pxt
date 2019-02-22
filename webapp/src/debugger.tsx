@@ -149,17 +149,21 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
             let type = this.variableType(v);
             const onClick = v.value && v.value.id ? () => this.toggle(v) : undefined;
             const onMouseOver : any = undefined; // prob a bad idea. Maybe onMouseEnter --> onMouseLeave?
-            r.push(<div key={(parent || "") + variable} className="item" style={{padding: "0em",}}>
-                <div role="listitem" className={`ui horizontal label variable ${v.prevValue !== undefined ? "changed" : ""}`} style={{ marginLeft: margin }}
-                    onClick={onClick} onMouseOver={onMouseOver}>
-                    <i className= {`${(v.children ? "down triangle icon" : "right triangle icon") + ((v.value && v.value.hasFields) ? "" : " transparent")}`} ></i>
-                    <span className="varname">{variable + ':'}</span>
-                    <div className="detail">
-                        <span className={`varval ${type}`}>{DebuggerVariables.renderValue(v.value)}</span>
-                        <span className="previousval">{(oldValue !== "undefined" && oldValue !== newValue) ? `${oldValue}` : ''}</span>
-                    </div>
-                </div>
-            </div>);
+            r.push(<tr key={(parent || "") + variable} className="item" style={{padding: "0em",}}>
+                    <td className={`variable ${v.prevValue !== undefined ? "changed" : ""}`}
+                        onClick={onClick} onMouseOver={onMouseOver} style={{ padding: 0.2, }}>
+                        <i className= {`${(v.children ? "down triangle icon" : "right triangle icon") + ((v.value && v.value.hasFields) ? "" : " transparent")}`} style={{ marginLeft: margin }} ></i>
+                        {/* <span className="varname">{variable + ':'}</span> */}
+                        <span>{variable + ':'}</span>
+                    </td>
+                    <td style={{ padding:0.2}}>
+                        <div className="detail">
+                            <span className={`varval ${type}`}>{DebuggerVariables.renderValue(v.value)}</span>
+                            <span className="previousval">{(oldValue !== "undefined" && oldValue !== newValue) ? `${oldValue}` : ''}</span>
+                        </div>
+                    </td>
+                </tr>
+            );
             if (v.children)
                 r = r.concat(this.renderVariables(v.children, variable, depth + 1));
         })
@@ -171,8 +175,14 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
 
         return Object.keys(variables).length == 0 ? <div /> :
             <div className={`ui segment debugvariables ${frozen ? "frozen" : ""}`}>
-                <div className="ui middle aligned list">
-                    {this.renderVariables(variables)}
+                <div className="ui collapsing celled table">
+                <thead>
+                    <tr><th>Variable</th>
+                    <th>Type/Value</th></tr>
+                </thead>
+                    <tbody>
+                        {this.renderVariables(variables)}
+                    </tbody>
                 </div>
             </div>;
     }
