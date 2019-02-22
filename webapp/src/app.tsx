@@ -330,9 +330,39 @@ export class ProjectView
             && this.editorFile && this.editorFile.name == "main.ts";
     }
 
+    isPythonActive(): boolean {
+        return !this.state.embedSimView && this.editor == this.textEditor
+            && this.editorFile && this.editorFile.name == "main.py";
+    }
+
     private isAnyEditeableJavaScriptOrPackageActive(): boolean {
         return this.editor == this.textEditor
             && this.editorFile && !this.editorFile.isReadonly() && /(\.ts|pxt.json)$/.test(this.editorFile.name);
+    }
+
+    openPython(giveFocusOnLoading = true) {
+        if (this.updatingEditorFile) return; // already transitioning
+
+        if (this.isPythonActive()) {
+            if (this.state.embedSimView) {
+                this.setState({ embedSimView: false });
+            }
+            if (giveFocusOnLoading) {
+                this.textEditor.editor.focus();
+            }
+            return;
+        }
+        if (this.textEditor) {
+            this.textEditor.giveFocusOnLoading = giveFocusOnLoading;
+        }
+        if (this.isBlocksActive()) {
+            // TODO
+            // this.blocksEditor.openTypeScript();
+            this.setFile(pkg.mainEditorPkg().files["main.py"])
+        }
+        else {
+            this.setFile(pkg.mainEditorPkg().files["main.py"])
+        }
     }
 
     openJavaScript(giveFocusOnLoading = true) {
@@ -352,6 +382,9 @@ export class ProjectView
         }
         if (this.isBlocksActive()) {
             this.blocksEditor.openTypeScript();
+        } 
+        else if (this.isPythonActive()) {
+            this.openTypeScriptAsync().done()
         }
         else this.setFile(pkg.mainEditorPkg().files["main.ts"])
     }

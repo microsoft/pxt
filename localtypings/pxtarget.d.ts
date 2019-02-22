@@ -252,6 +252,7 @@ declare namespace pxt {
         allowSimulatorTelemetry?: boolean; // allow the simulator to send telemetry messages
         hideEmbedEdit?: boolean; // hide the edit button in the embedded view
         blocksOnly?: boolean; // blocks only workspace
+        python?: boolean; // enable Python?
         hideDocsSimulator?: boolean; // do not show simulator button in docs
         hideDocsEdit?: boolean; // do not show edit button in docs
         hideMenuBar?: boolean; // Hides the main menu bar

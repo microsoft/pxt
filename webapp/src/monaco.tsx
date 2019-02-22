@@ -289,6 +289,19 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
+    saveToTypeScript() {
+        if (this.fileType !== FileType.Python)
+            return Promise.resolve("")
+        this.parent
+        let py = this.currFile.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)
+        return compiler.py2tsAsync()
+            .then(res => {
+                if (res.generatedFiles.indexOf(py) >= 0)
+                    return res.fileSystem[py]
+                return ""
+            })
+    }
+
     setHighContrast(hc: boolean) {
         if (this._loadMonacoPromise) this.defineEditorTheme(hc, true);
     }

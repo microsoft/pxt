@@ -18,7 +18,7 @@ namespace pxt {
         disconnectAsync(): Promise<void>;
     }
 
-    export type ConversionPass = (opts: pxtc.CompileOptions)=>void
+    export type ConversionPass = (opts: pxtc.CompileOptions) => void
     export let conversionPasses: ConversionPass[] = []
 
     export let mkTCPSocket: (host: string, port: number) => TCPIO;
@@ -108,6 +108,8 @@ namespace pxt {
         if (comp.utf8 === undefined)
             comp.utf8 = true
         if (!appTarget.appTheme) appTarget.appTheme = {}
+        if (appTarget.appTheme.python === undefined)
+            appTarget.appTheme.python = true // TODO remove before final merge
         if (!appTarget.appTheme.embedUrl)
             appTarget.appTheme.embedUrl = appTarget.appTheme.homeUrl
         let cs = appTarget.compileService
