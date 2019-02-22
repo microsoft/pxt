@@ -1432,13 +1432,11 @@ namespace pxt.py {
                 let stmts = pxt.py.parse(src, sn, tokens)
                 console.log(pxt.py.dump(stmts))
 
-                sn += ".ts"
-
                 moduleAst[modname] = {
                     kind: "Module",
                     body: stmts,
                     name: modname,
-                    tsFilename: sn
+                    tsFilename: sn.replace(/\.py$/, ".ts")
                 } as any
             } catch (e) {
                 // TODO
@@ -1457,8 +1455,6 @@ namespace pxt.py {
                 }
             }
         }
-
-        let files: pxt.Map<string> = {}
 
         currIteration = 1000
         for (let m of U.values(moduleAst)) {

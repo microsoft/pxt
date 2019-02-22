@@ -2084,6 +2084,8 @@ export class ProjectView
             if (this.state.tracing)
                 opts.trace = true;
 
+            opts.preferredEditor = this.getPreferredEditor();
+
             simulator.stop(false, true);
             const simAutoRun = pxt.appTarget.simulator && (pxt.options.light
                 ? !!pxt.appTarget.simulator.autoRunLight
