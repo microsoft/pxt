@@ -20,11 +20,14 @@ class SerialIO implements pxt.TCPIO {
     fd: number;
     id = 0
     comName = "/dev/cu.usbmodemE0D8BDE61"
-    trace = false
+    trace = true
 
     connectAsync(): Promise<void> {
         return this.disconnectAsync()
-            .then(() => openAsync(this.comName, "r+"))
+            .then(() => {
+                pxt.log("open GDB at " + this.comName)
+                return openAsync(this.comName, "r+")
+            })
             .then(fd => {
                 this.fd = fd
                 const id = ++this.id
@@ -61,14 +64,18 @@ class SerialIO implements pxt.TCPIO {
         pxt.log(this.comName + ": " + msg)
     }
 
+    // TODO this seems to hang, while there is fs.read() ongoing (as it is)
     disconnectAsync(): Promise<void> {
         if (this.fd == null)
             return Promise.resolve()
         this.id++
         const f = this.fd
         this.fd = null
+        pxt.log("close GDB at " + this.comName)
         return closeAsync(f)
-            .then(() => { })
+            .then(() => {
+                pxt.log("closed")
+             })
     }
 }
 
@@ -229,6 +236,13 @@ async function initGdbServerAsync() {
     await gdbServer.initAsync()
     await gdbServer.sendRCmdAsync("swdp_scan")
     await gdbServer.sendCmdAsync("vAttach;1")
+    nodeutil.addCliFinalizer(() => {
+        if (!gdbServer)
+            return Promise.resolve()
+        let g = gdbServer
+        gdbServer = null
+        return g.io.disconnectAsync()
+    })
 }
 
 async function getMemoryAsync(addr: number, bytes: number) {

@@ -5989,6 +5989,7 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
                 .then(() => {
                     if (readlineCount)
                         (process.stdin as any).unref();
+                    return nodeutil.runCliFinalizersAsync()
                 });
         });
 }
