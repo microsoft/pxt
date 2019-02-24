@@ -7,6 +7,72 @@ import * as commandParser from './commandparser';
 
 import U = pxt.Util;
 
+
+const openAsync = Promise.promisify(fs.open)
+const closeAsync = Promise.promisify(fs.close) as (fd: number) => Promise<void>
+const writeAsync = Promise.promisify(fs.write)
+
+let gdbServer: pxt.GDBServer
+
+class SerialIO implements pxt.TCPIO {
+    onData: (v: Uint8Array) => void;
+    onError: (e: Error) => void;
+    fd: number;
+    id = 0
+    comName = "/dev/cu.usbmodemE0D8BDE61"
+    trace = false
+
+    connectAsync(): Promise<void> {
+        return this.disconnectAsync()
+            .then(() => openAsync(this.comName, "r+"))
+            .then(fd => {
+                this.fd = fd
+                const id = ++this.id
+                const buf = Buffer.alloc(128)
+                const loop = () => fs.read(fd, buf, 0, buf.length, null, (err, nb, buf) => {
+                    if (this.id != id)
+                        return
+                    if (nb > 0) {
+                        let bb = buf.slice(0, nb)
+                        if (this.trace)
+                            pxt.log("R:" + bb.toString("utf8"))
+                        if (this.onData)
+                            this.onData(bb)
+                        loop()
+                    } else {
+                        let msg = "GDB read error, nb=" + nb + err.message
+                        if (this.trace) pxt.log(msg)
+                        else pxt.debug(msg)
+                        setTimeout(loop, 500)
+                    }
+                })
+                loop()
+            })
+    }
+
+    sendPacketAsync(pkt: Uint8Array): Promise<void> {
+        if (this.trace)
+            pxt.log("W:" + Buffer.from(pkt).toString("utf8"))
+        return writeAsync(this.fd, pkt)
+            .then(() => { })
+    }
+
+    error(msg: string): any {
+        pxt.log(this.comName + ": " + msg)
+    }
+
+    disconnectAsync(): Promise<void> {
+        if (this.fd == null)
+            return Promise.resolve()
+        this.id++
+        const f = this.fd
+        this.fd = null
+        return closeAsync(f)
+            .then(() => { })
+    }
+}
+
+
 function fatal(msg: string) {
     U.userError(msg)
 }
@@ -157,7 +223,20 @@ function findAddr(symbolName: string) {
     }
 }
 
+async function initGdbServerAsync() {
+    gdbServer = new pxt.GDBServer(new SerialIO())
+    await gdbServer.io.connectAsync()
+    await gdbServer.initAsync()
+    await gdbServer.sendRCmdAsync("swdp_scan")
+    await gdbServer.sendCmdAsync("vAttach;1")
+}
+
 async function getMemoryAsync(addr: number, bytes: number) {
+    if (gdbServer) {
+        return gdbServer.readMemAsync(addr, bytes)
+            .then((b: Uint8Array) => Buffer.from(b))
+    }
+
     let toolPaths = getOpenOcdPath(`
 init
 halt
@@ -212,6 +291,8 @@ function VAR_BLOCK_WORDS(vt: number) {
 }
 
 export async function dumpheapAsync() {
+    await initGdbServerAsync()
+
     let memStart = findAddr("_sdata")
     let memEnd = findAddr("_estack")
     console.log(`memory: ${hex(memStart)} - ${hex(memEnd)}`)
@@ -678,6 +759,7 @@ export async function dumpheapAsync() {
 }
 
 export async function dumplogAsync() {
+    await initGdbServerAsync()
     let addr = findAddr("codalLogStore")
     let buf = await getMemoryAsync(addr + 4, 1024)
     for (let i = 0; i < buf.length; ++i) {
