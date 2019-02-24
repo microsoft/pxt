@@ -64,7 +64,6 @@ class SerialIO implements pxt.TCPIO {
         pxt.log(this.comName + ": " + msg)
     }
 
-    // TODO this seems to hang, while there is fs.read() ongoing (as it is)
     disconnectAsync(): Promise<void> {
         if (this.fd == null)
             return Promise.resolve()
@@ -72,9 +71,11 @@ class SerialIO implements pxt.TCPIO {
         const f = this.fd
         this.fd = null
         pxt.log("close GDB at " + this.comName)
+        // try to elicit some response from the server, so that the read loop is tickled
+        // and stops; without this the close() below hangs
+        fs.write(f, "$?#78", () => {})
         return closeAsync(f)
             .then(() => {
-                pxt.log("closed")
              })
     }
 }
