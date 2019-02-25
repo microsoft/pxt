@@ -3708,6 +3708,12 @@ function gdbAsync(c: commandParser.ParsedCommand) {
         .then(() => gdb.startAsync(c.args))
 }
 
+function hwAsync(c: commandParser.ParsedCommand) {
+    ensurePkgDir()
+    return mainPkg.loadAsync()
+        .then(() => gdb.hwAsync(c.args))
+}
+
 function dumplogAsync(c: commandParser.ParsedCommand) {
     ensurePkgDir()
     return mainPkg.loadAsync()
@@ -5737,6 +5743,14 @@ PXT_ASMDEBUG     - embed additional information in generated binary.asm file
         advanced: true,
         onlineHelp: true
     }, gdbAsync);
+
+    p.defineCommand({
+        name: "hw",
+        help: "apply hardware operation (via BMP)",
+        argString: "reset|boot",
+        anyArgs: true,
+        advanced: true,
+    }, hwAsync);
 
     p.defineCommand({
         name: "dmesg",

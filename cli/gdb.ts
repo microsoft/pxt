@@ -14,13 +14,62 @@ const writeAsync = Promise.promisify(fs.write)
 
 let gdbServer: pxt.GDBServer
 
+const execAsync: (cmd: string, options?: { cwd?: string }) => Promise<Buffer | string> = Promise.promisify(child_process.exec)
+
+function getBMPSerialPortsAsync(): Promise<string[]> {
+    if (process.platform == "win32") {
+        return execAsync("wmic PATH Win32_SerialPort get DeviceID, PNPDeviceID")
+            .then((buf: Buffer) => {
+                let res: string[] = []
+                buf.toString("utf8").split(/\n/).forEach(ln => {
+                    let m = /^(COM\d+)\s+USB\\VID_(\w+)&PID_(\w+)&MI_(\w+)/.exec(ln)
+                    if (m) {
+                        const comp = m[1]
+                        const vid = parseInt(m[2], 16)
+                        const pid = parseInt(m[3], 16)
+                        const mi = parseInt(m[4], 16)
+                        if (vid == 0x1d50 && pid == 0x6018 && mi == 0) {
+                            res.push(comp)
+                        }
+                    }
+                })
+                return res
+            })
+    }
+    else if (process.platform == "darwin") {
+        return execAsync("ioreg -p IOUSB -l -w 0")
+            .then((buf: Buffer) => {
+                let res: string[] = []
+                let inBMP = false
+                buf.toString("utf8").split(/\n/).forEach(ln => {
+                    if (ln.indexOf("+-o Black Magic Probe") >= 0)
+                        inBMP = true
+                    if (!inBMP)
+                        return
+                    let m = /"USB Serial Number" = "(\w+)"/.exec(ln)
+                    if (m) {
+                        inBMP = false
+                        res.push("/dev/cu.usbmodem" + m[1] + "1")
+                    }
+                })
+                return res
+            })
+    } else if (process.platform == "linux") {
+        // TODO
+        return Promise.resolve([])
+    } else {
+        return Promise.resolve([])
+    }
+}
+
 class SerialIO implements pxt.TCPIO {
     onData: (v: Uint8Array) => void;
     onError: (e: Error) => void;
     fd: number;
     id = 0
-    comName = "/dev/cu.usbmodemE0D8BDE61"
-    trace = true
+    trace = false
+
+    constructor(public comName: string) { }
 
     connectAsync(): Promise<void> {
         return this.disconnectAsync()
@@ -73,10 +122,10 @@ class SerialIO implements pxt.TCPIO {
         pxt.log("close GDB at " + this.comName)
         // try to elicit some response from the server, so that the read loop is tickled
         // and stops; without this the close() below hangs
-        fs.write(f, "$?#78", () => {})
+        fs.write(f, "$?#78", () => { })
         return closeAsync(f)
             .then(() => {
-             })
+            })
     }
 }
 
@@ -232,11 +281,17 @@ function findAddr(symbolName: string) {
 }
 
 async function initGdbServerAsync() {
-    gdbServer = new pxt.GDBServer(new SerialIO())
+    let ports = await getBMPSerialPortsAsync()
+    if (ports.length == 0) {
+        pxt.log(`Black Magic Probe not detected; falling back to openocd`)
+        return
+    }
+    pxt.log(`detected Black Magic Probe at ${ports[0]}`)
+    gdbServer = new pxt.GDBServer(new SerialIO(ports[0]))
+    // gdbServer.trace = true
     await gdbServer.io.connectAsync()
     await gdbServer.initAsync()
-    await gdbServer.sendRCmdAsync("swdp_scan")
-    await gdbServer.sendCmdAsync("vAttach;1")
+    pxt.log(gdbServer.targetInfo)
     nodeutil.addCliFinalizer(() => {
         if (!gdbServer)
             return Promise.resolve()
@@ -785,6 +840,45 @@ export async function dumplogAsync() {
     }
 }
 
+export async function hwAsync(cmds: string[]) {
+    await initGdbServerAsync()
+
+    switch (cmds[0]) {
+        case "rst":
+        case "reset":
+            await gdbServer.sendCmdAsync("R00", null)
+            break
+        case "boot":
+            let bi = getBootInfo()
+            if (bi.addr) {
+                await gdbServer.write32Async(bi.addr, bi.boot)
+            }
+            await gdbServer.sendCmdAsync("R00", null)
+            break
+        case "log":
+        case "dmesg":
+            await dumplogAsync()
+            break
+    }
+}
+
+function getBootInfo() {
+    let r = {
+        addr: 0,
+        boot: 0,
+        app: 0
+    }
+
+    if (/at91samd/.test(pxt.appTarget.compile.openocdScript)) {
+        let ramSize = pxt.appTarget.compile.ramSize || 0x8000
+        r.addr = 0x20000000 + ramSize - 4
+        r.app = 0xf02669ef
+        r.boot = 0xf01669ef
+    }
+
+    return r
+}
+
 export function startAsync(gdbArgs: string[]) {
     let elfFile = codalBin()
     if (!fs.existsSync(elfFile))
@@ -793,15 +887,10 @@ export function startAsync(gdbArgs: string[]) {
     let toolPaths = getOpenOcdPath()
     let oargs = toolPaths.args
 
-    let goToApp = ""
-    let goToBl = ""
+    let binfo = getBootInfo()
 
-    if (/at91samd/.test(pxt.appTarget.compile.openocdScript)) {
-        let ramSize = pxt.appTarget.compile.ramSize || 0x8000
-        let addr = 0x20000000 + ramSize - 4
-        goToApp = `set {int}(${addr}) = 0xf02669ef`
-        goToBl = `set {int}(${addr}) = 0xf01669ef`
-    }
+    let goToApp = binfo.addr ? `set {int}(${binfo.addr}) = ${binfo.boot}` : ""
+    let goToBl = binfo.addr ? `set {int}(${binfo.addr}) = ${binfo.boot}` : ""
 
     // use / not \ for paths on Windows; otherwise gdb has issue starting openocd
     fs.writeFileSync("built/openocd.gdb",
