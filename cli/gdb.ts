@@ -13,6 +13,7 @@ const closeAsync = Promise.promisify(fs.close) as (fd: number) => Promise<void>
 const writeAsync = Promise.promisify(fs.write)
 
 let gdbServer: pxt.GDBServer
+let bmpMode = false
 
 const execAsync: (cmd: string, options?: { cwd?: string }) => Promise<Buffer | string> = Promise.promisify(child_process.exec)
 
@@ -184,7 +185,7 @@ function getOpenOcdPath(cmds = "") {
         if (!pkgDir)
             fatal("cannot find Arduino packages directory")
 
-        openocdPath = latest("openocd")
+        openocdPath = bmpMode ? "" : latest("openocd")
         gccPath = latest("arm-none-eabi-gcc")
     }
 
@@ -193,7 +194,7 @@ function getOpenOcdPath(cmds = "") {
     if (process.platform == "win32")
         openocdBin += ".exe"
 
-    let script = pxt.appTarget.compile.openocdScript
+    let script = bmpMode ? "N/A" : pxt.appTarget.compile.openocdScript
     if (!script) fatal("no openocdScript in pxtarget.json")
 
     if (!cmds)
@@ -286,6 +287,7 @@ async function initGdbServerAsync() {
         pxt.log(`Black Magic Probe not detected; falling back to openocd`)
         return
     }
+    bmpMode = true
     pxt.log(`detected Black Magic Probe at ${ports[0]}`)
     gdbServer = new pxt.GDBServer(new SerialIO(ports[0]))
     // gdbServer.trace = true
@@ -879,13 +881,28 @@ function getBootInfo() {
     return r
 }
 
-export function startAsync(gdbArgs: string[]) {
+export async function startAsync(gdbArgs: string[]) {
     let elfFile = codalBin()
     if (!fs.existsSync(elfFile))
         fatal("compiled file not found: " + elfFile)
 
+    let bmpPort = (await getBMPSerialPortsAsync())[0]
+    let trg = ""
+
+    if (bmpPort) {
+        bmpMode = true
+        trg = "target extended-remote " + bmpPort
+        trg += "\nmonitor swdp_scan\nattach 1"
+        pxt.log("Using Black Magic Probe at " + bmpPort)
+    }
+
     let toolPaths = getOpenOcdPath()
-    let oargs = toolPaths.args
+
+    if (!bmpMode) {
+        let oargs = toolPaths.args
+        trg = "target remote | " + oargs.map(s => `"${s.replace(/\\/g, "/")}"`).join(" ")
+        pxt.log("starting openocd: " + oargs.join(" "))
+    }
 
     let binfo = getBootInfo()
 
@@ -895,7 +912,7 @@ export function startAsync(gdbArgs: string[]) {
     // use / not \ for paths on Windows; otherwise gdb has issue starting openocd
     fs.writeFileSync("built/openocd.gdb",
         `
-target remote | ${oargs.map(s => `"${s.replace(/\\/g, "/")}"`).join(" ")}
+${trg}
 define rst
   ${goToApp}
   monitor reset halt
@@ -941,7 +958,6 @@ echo    bt: for stacktrace\\n\\n
 echo More help at https://makecode.com/cli/gdb\\n\\n
 `)
 
-    pxt.log("starting openocd: " + oargs.join(" "))
 
     let gdbargs = ["--command=built/openocd.gdb", elfFile].concat(gdbArgs)
 
