@@ -290,7 +290,7 @@ async function initGdbServerAsync() {
     bmpMode = true
     pxt.log(`detected Black Magic Probe at ${ports[0]}`)
     gdbServer = new pxt.GDBServer(new SerialIO(ports[0]))
-    gdbServer.trace = true
+    // gdbServer.trace = true
     await gdbServer.io.connectAsync()
     await gdbServer.initAsync()
     pxt.log(gdbServer.targetInfo)
