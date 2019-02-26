@@ -77,6 +77,11 @@ namespace pxt.editor.experiments {
                 name: lf("Simulator Screenshots"),
                 description: lf("Download screenshots of the simulator"),
                 feedbackUrl: "https://github.com/Microsoft/pxt/issues/5232"
+            },
+            {
+                id: "python",
+                name: lf("Static Python"),
+                description: lf("Use Static Python to code your device")
             }
         ].filter(experiment => ids.indexOf(experiment.id) > -1);
     }
