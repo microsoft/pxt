@@ -290,7 +290,7 @@ async function initGdbServerAsync() {
     bmpMode = true
     pxt.log(`detected Black Magic Probe at ${ports[0]}`)
     gdbServer = new pxt.GDBServer(new SerialIO(ports[0]))
-    // gdbServer.trace = true
+    gdbServer.trace = true
     await gdbServer.io.connectAsync()
     await gdbServer.initAsync()
     pxt.log(gdbServer.targetInfo)
@@ -888,12 +888,16 @@ export async function startAsync(gdbArgs: string[]) {
 
     let bmpPort = (await getBMPSerialPortsAsync())[0]
     let trg = ""
+    let monReset = "monitor reset"
+    let monResetHalt = "monitor reset halt"
 
     if (bmpPort) {
         bmpMode = true
         trg = "target extended-remote " + bmpPort
         trg += "\nmonitor swdp_scan\nattach 1"
         pxt.log("Using Black Magic Probe at " + bmpPort)
+        monReset = "run"
+        monResetHalt = "run"
     }
 
     let toolPaths = getOpenOcdPath()
@@ -914,13 +918,16 @@ export async function startAsync(gdbArgs: string[]) {
         `
 ${trg}
 define rst
+  set confirm off
   ${goToApp}
-  monitor reset halt
+  ${monResetHalt}
   continue
+  set confirm on
 end
 define boot
+  set confirm off
   ${goToBl}
-  monitor reset
+  ${monReset}
   quit
 end
 define irq
