@@ -318,6 +318,7 @@ declare namespace pxt {
         simScreenshotMaxUriLength?: number; // maximum base64 encoded length to be uploaded
         simGif?: boolean; // record gif of the simulator
         simGifKey?: boolean; // shortcut to start stop
+        simGifTransparent?: string; // HTML transparent color
     }
 
     interface SocialOptions {
