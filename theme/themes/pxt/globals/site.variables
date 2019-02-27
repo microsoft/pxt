@@ -299,3 +299,5 @@
 @debugBooleanVariable: darkturquoise;
 @debugArrayVariable: #663905;
 @debugSpriteVariable: blue;
+
+@mainMenuDebuggerBackground: @green;
