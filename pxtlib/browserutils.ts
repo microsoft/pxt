@@ -128,7 +128,7 @@ namespace pxt.BrowserUtils {
 
     export function isLocalHost(): boolean {
         try {
-            return typeof window !== "undefined"            
+            return typeof window !== "undefined"
                 && /^http:\/\/(localhost|127\.0\.0\.1):\d+\//.test(window.location.href)
                 && !/nolocalhost=1/.test(window.location.href)
                 && !(pxt.webConfig && pxt.webConfig.isStatic);
