@@ -8,6 +8,7 @@ namespace pxtsprite {
 
     export interface ReporterHost extends UndoRedoHost {
         resize(width: number, height: number): void;
+        closeEditor(): void;
     }
 
     export class ReporterBar {
@@ -15,6 +16,7 @@ namespace pxtsprite {
         cursorText: svg.Text;
 
         sizeButton: TextButton;
+        doneButton: StandaloneTextButton;
         undoRedo: UndoRedoGroup;
 
         protected sizePresets: [number, number][];
@@ -30,6 +32,12 @@ namespace pxtsprite {
             });
 
             this.root.appendChild(this.sizeButton.getElement());
+
+            this.doneButton = new StandaloneTextButton(lf("Done"), height);
+            this.doneButton.addClass("sprite-editor-confirm-button");
+            this.doneButton.onClick(() => this.host.closeEditor());
+
+            this.root.appendChild(this.doneButton.getElement());
 
             this.sizePresets = [
                 [16, 16]
@@ -60,7 +68,13 @@ namespace pxtsprite {
 
         layout(top: number, left: number, width: number) {
             this.root.translate(left, top);
-            this.undoRedo.translate(width - UNDO_REDO_WIDTH, 0);
+
+            this.doneButton.layout();
+
+            const doneWidth = this.doneButton.width();
+
+            this.undoRedo.translate(width - UNDO_REDO_WIDTH - SIZE_CURSOR_MARGIN - doneWidth, 0);
+            this.doneButton.getElement().translate(width - doneWidth, 0);
             this.cursorText.moveTo(SIZE_BUTTON_WIDTH + SIZE_CURSOR_MARGIN, this.height / 2);
         }
 

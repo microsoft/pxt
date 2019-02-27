@@ -1,2 +1,6 @@
 let item: exp.Fixed[] = []
-item = exp.arrayReturnType(0)
+if (true) {
+    item = exp.arrayReturnType(0)
+} else {
+    item = item
+}

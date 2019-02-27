@@ -172,9 +172,9 @@ namespace pxtblockly {
 
         private setXY(x: number, y: number) {
             const xField = this.getFieldByName(this.params.xInputName);
-            if (xField) xField.setValue(x);
+            if (xField) xField.setValue(String(x));
             const yField = this.getFieldByName(this.params.yInputName);
-            if (yField) yField.setValue(y);
+            if (yField) yField.setValue(String(y));
         }
 
         private getFieldByName(name: string) {
@@ -220,7 +220,7 @@ namespace pxtblockly {
         widgetDispose_() {
             const that = this;
             return function () {
-                (Blockly.FieldNumber.superClass_ as any).widgetDispose_.call(that)();
+                (Blockly.FieldNumber as any).superClass_.widgetDispose_.call(that)();
                 that.close(true);
             }
         }

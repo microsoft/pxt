@@ -69,7 +69,7 @@ namespace pxtblockly {
             this.redrawPreview();
 
             this.updateEditable();
-            this.sourceBlock_.getSvgRoot().appendChild(this.fieldGroup_);
+            (this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot().appendChild(this.fieldGroup_);
 
             // Force a render.
             this.render_();
@@ -132,7 +132,7 @@ namespace pxtblockly {
         }
 
         private isInFlyout() {
-            return (this.sourceBlock_.workspace.getParentSvg() as SVGElement).className.baseVal == "blocklyFlyout";
+            return ((this.sourceBlock_.workspace as Blockly.WorkspaceSvg).getParentSvg() as SVGElement).className.baseVal == "blocklyFlyout";
         }
 
         render_() {

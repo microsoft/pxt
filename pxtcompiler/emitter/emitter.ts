@@ -340,7 +340,7 @@ namespace ts.pxtc {
     function getRefTagToValidate(tp: string): number {
         switch (tp) {
             case "_Buffer": return pxt.BuiltInType.BoxedBuffer
-            case "_Image": return pxt.BuiltInType.RefImage
+            case "_Image": return target.imageRefTag || pxt.BuiltInType.RefImage
             case "_Action": return pxt.BuiltInType.RefAction
             case "_RefCollection": return pxt.BuiltInType.RefCollection
             default:

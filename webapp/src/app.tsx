@@ -366,15 +366,18 @@ export class ProjectView
         if (this.isJavaScriptActive() || (this.shouldTryDecompile && !this.state.embedSimView)) this.textEditor.openBlocks();
         // any other editeable .ts or pxt.json
         else if (this.isAnyEditeableJavaScriptOrPackageActive()) {
-            this.saveFileAsync()
-                .then(() => compiler.newProjectAsync())
-                .then(() => compiler.getBlocksAsync())
-                .done((bi: pxtc.BlocksInfo) => {
-                    pxt.blocks.initializeAndInject(bi);
-                    this.blocksEditor.updateBlocksInfo(bi);
-                    this.setFile(pkg.mainEditorPkg().files["main.blocks"])
-                });
-        } else this.setFile(pkg.mainEditorPkg().files["main.blocks"]);
+            this.saveFileAsync().then(() => this.textEditor.openBlocks());
+        } else {
+            const header = this.state.header;
+
+            // Check to see if the last edit happened in monaco
+            if (header && header.editor === pxt.JAVASCRIPT_PROJECT_NAME) {
+                this.textEditor.openBlocks();
+            }
+            else {
+                this.setFile(pkg.mainEditorPkg().files["main.blocks"])
+            }
+        }
 
         this.shouldTryDecompile = false;
     }
@@ -419,14 +422,7 @@ export class ProjectView
     }
 
     openTypeScriptAsync(): Promise<void> {
-        return this.saveTypeScriptAsync(true)
-            .then(() => {
-                const header = this.state.header;
-                if (header) {
-                    header.editor = pxt.JAVASCRIPT_PROJECT_NAME;
-                    header.pubCurrent = false
-                }
-            });
+        return this.saveTypeScriptAsync(true);
     }
 
     openSimView() {
@@ -688,11 +684,35 @@ export class ProjectView
             })
     }
 
+    /**
+     * Sets the file that is currently being edited. Warning: Do not call
+     * setFile() on any `.blocks` file directly. Instead, use openBlocks()
+     * which will decompile if necessary.
+     * @param fn
+     */
     setFile(fn: pkg.File) {
         if (!fn) return;
 
         if (fn.name === "main.ts") {
             this.shouldTryDecompile = true;
+        }
+
+        const header = this.state.header;
+        if (header) {
+            const pkgId = fn.epkg && fn.epkg.getPkgId();
+
+            if (pkgId === "this") {
+
+                // Update the last-used editor if opening a user file
+                if (this.isBlocksFile(fn.name)) {
+                    header.editor = pxt.BLOCKS_PROJECT_NAME;
+                    header.pubCurrent = false
+                }
+                else if (this.isTypescriptFile(fn.name)) {
+                    header.editor = pxt.JAVASCRIPT_PROJECT_NAME
+                    header.pubCurrent = false
+                }
+            }
         }
 
         this.setState({
@@ -704,33 +724,12 @@ export class ProjectView
     }
 
     setSideFile(fn: pkg.File) {
-        const header = this.state.header;
-        if (header) {
-            header.editor = this.getPreferredEditor();
-            header.pubCurrent = false
-        }
         let fileName = fn.name;
         let currFile = this.state.currFile.name;
         if (fileName != currFile && pkg.File.blocksFileNameRx.test(fileName)) {
             // Going from ts -> blocks
             pxt.tickEvent("sidebar.showBlocks");
-            let tsFileName = fn.getVirtualFileName();
-            let tsFile = pkg.mainEditorPkg().lookupFile("this/" + tsFileName)
-            if (currFile == tsFileName) {
-                // current file is the ts file, so just switch
-                this.textEditor.openBlocks();
-            } else if (tsFile) {
-                this.textEditor.decompileAsync(tsFile.name).then(resp => {
-                    if (!resp.success) {
-                        this.setFile(tsFile)
-                        let tooLarge = false;
-                        resp.diagnostics.forEach(d => tooLarge = (tooLarge || d.code === 9266 /* error code when script is too large */));
-                        this.textEditor.showConversionFailedDialog(fn.name, tooLarge)
-                    } else {
-                        this.setFile(fn)
-                    }
-                });
-            }
+            this.openBlocks();
         } else {
             if (this.isTextEditor() || this.isPxtJsonEditor()) {
                 this.textEditor.giveFocusOnLoading = false

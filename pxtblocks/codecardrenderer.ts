@@ -15,7 +15,7 @@ namespace pxt.docs.codeCard {
             else if (card.software && !card.hardware) color = 'teal';
         }
         const url = card.url ? /^[^:]+:\/\//.test(card.url) ? card.url : ('/' + card.url.replace(/^\.?\/?/, ''))
-            : undefined;
+            : card.youTubeId ? `https://www.youtube.com/watch?v=${card.youTubeId}` : undefined;
         const link = !!url;
         const div = (parent: HTMLElement, cls: string, tag = "div", text: string | number = ''): HTMLElement => {
             let d = document.createElement(tag);
@@ -80,7 +80,8 @@ namespace pxt.docs.codeCard {
             img.appendChild(pre);
         }
 
-        if (card.imageUrl) {
+        const imgUrl = card.imageUrl || (card.youTubeId && `https://img.youtube.com/vi/${card.youTubeId}/0.jpg`)
+        if (imgUrl) {
             let imageWrapper = document.createElement("div") as HTMLDivElement;
             imageWrapper.className = "ui imagewrapper";
             let image = document.createElement("div") as HTMLDivElement;
@@ -90,13 +91,6 @@ namespace pxt.docs.codeCard {
             image.setAttribute("role", "presentation");
             imageWrapper.appendChild(image);
             img.appendChild(imageWrapper);
-        }
-
-        if (card.youTubeId) {
-            let screenshot = document.createElement("img") as HTMLImageElement;
-            screenshot.className = "ui image";
-            screenshot.src = `https://img.youtube.com/vi/${card.youTubeId}/0.jpg`;
-            img.appendChild(screenshot)
         }
 
         if (card.cardType == "file") {

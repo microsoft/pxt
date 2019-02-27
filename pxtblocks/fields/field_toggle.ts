@@ -12,12 +12,12 @@ namespace pxtblockly {
 
         private toggleThumb_: any;
 
-        protected CURSOR = 'pointer';
+        public CURSOR = 'pointer';
 
         private type_: string;
 
         constructor(state: string, params: Blockly.FieldCustomOptions, opt_validator?: Function) {
-            super(state, opt_validator);
+            super(state, undefined, undefined, undefined, opt_validator);
             this.params = params;
             this.setValue(state);
             this.addArgType('toggle');
@@ -37,7 +37,7 @@ namespace pxtblockly {
             // Add an attribute to cassify the type of field.
             if ((this as any).getArgTypes() !== null) {
                 if (this.sourceBlock_.isShadow()) {
-                    this.sourceBlock_.svgGroup_.setAttribute('data-argument-type',
+                    (this.sourceBlock_ as Blockly.BlockSvg).svgGroup_.setAttribute('data-argument-type',
                         (this as any).getArgTypes());
                 } else {
                     // Fields without a shadow wrapper, like square dropdowns.
@@ -56,7 +56,7 @@ namespace pxtblockly {
                     'height': this.size_.height,
                     'fill': (Blockly as any).Colours.textField,
                     'stroke': this.sourceBlock_.getColourTertiary()
-                });
+                }) as SVGRectElement;
                 this.fieldGroup_.insertBefore(this.box_, this.textElement_);
             }
             // Adjust X to be flipped for RTL. Position is relative to horizontal start of source block.
@@ -110,7 +110,7 @@ namespace pxtblockly {
                 this.fieldGroup_);
 
             this.updateEditable();
-            this.sourceBlock_.getSvgRoot().appendChild(this.fieldGroup_);
+            (this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot().appendChild(this.fieldGroup_);
 
             this.switchToggle(this.state_);
             this.setValue(this.getValue());

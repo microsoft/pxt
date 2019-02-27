@@ -309,12 +309,17 @@ namespace pxsim {
 
     export type EventValueToActionArgs<T> = (value: T) => any[];
 
+    enum LogType {
+        UserSet, BackAdd, BackRemove
+    }
+
     export class EventQueue<T> {
         max: number = 5;
         events: T[] = [];
         private awaiters: ((v?: any) => void)[] = [];
         private lock: boolean;
         private _handlers: RefAction[] = [];
+        private _addRemoveLog: { act: RefAction, log: LogType}[] = [];
 
         constructor(public runtime: Runtime, private valueToArgs?: EventValueToActionArgs<T>) { }
 
@@ -334,8 +339,8 @@ namespace pxsim {
 
             this.events.push(e)
 
-            // if this is the first event pushed - start processing
-            if (this.events.length == 1 && !this.lock)
+            // start processing, if not already processing
+            if (!this.lock)
                 return this.poke();
             else
                 return Promise.resolve()
@@ -343,47 +348,68 @@ namespace pxsim {
 
         private poke(): Promise<void> {
             this.lock = true;
-            let ret = Promise.each(this.events, (value) => {
+            let events = this.events;
+            // all events will be processed by concurrent promisified code below, so start afresh
+            this.events = []
+            // in order semantics for events and handlers
+            return Promise.each(events, (value) => {
                 return Promise.each(this.handlers, (handler) => {
                     return this.runtime.runFiberAsync(handler, ...(this.valueToArgs ? this.valueToArgs(value) : [value]))
                 })
             }).then(() => {
-                // if some events arrived while processing above
-                // then keep processing
+                // if some events arrived while processing above then keep processing
                 if (this.events.length > 0) {
                     return this.poke()
                 } else {
                     this.lock = false
+                    // process the log (synchronous)
+                    this._addRemoveLog.forEach(l => {
+                        if (l.log === LogType.BackAdd) { this.addHandler(l.act) }
+                        else if (l.log === LogType.BackRemove) { this.removeHandler(l.act) }
+                        else this.setHandler(l.act)
+                    });
+                    this._addRemoveLog = [];
                     return Promise.resolve()
                 }
             })
-            // all events will be processed by above code, so
-            // start afresh
-            this.events = []
-            return ret
         }
 
         get handlers() {
             return this._handlers;
         }
 
-        addHandler(a: RefAction) {
-            this._handlers.push(a);
-            pxtcore.incr(a)
-        }
-
         setHandler(a: RefAction) {
-            this._handlers.forEach(old => pxtcore.decr(old))
-            this._handlers = [a];
-            pxtcore.incr(a)
+            if (!this.lock) {
+                this._handlers.forEach(old => pxtcore.decr(old))
+                this._handlers = [a];
+                pxtcore.incr(a)
+            } else {
+                this._addRemoveLog.push({act: a, log: LogType.UserSet});
+            }
+    }
+
+        addHandler(a: RefAction) {
+            if (!this.lock) {
+                let index = this._handlers.indexOf(a)
+                // only add if new, just like CODAL
+                if (index == -1) {
+                    this._handlers.push(a);
+                    pxtcore.incr(a)
+                }
+            } else {
+                this._addRemoveLog.push({act: a, log: LogType.BackAdd});
+            }
         }
 
         removeHandler(a: RefAction) {
-            let index = this._handlers.indexOf(a)
-            while (index != -1) {
-                this._handlers.splice(index, 1)
-                pxtcore.decr(a)
-                index = this._handlers.indexOf(a)
+            if (!this.lock) {
+                let index = this._handlers.indexOf(a)
+                if (index != -1) {
+                    this._handlers.splice(index,1)
+                    pxtcore.decr(a)
+                }
+            } else {
+                this._addRemoveLog.push({act: a, log: LogType.BackRemove});
             }
         }
 

@@ -224,7 +224,7 @@ function blockTestAsync(name: string) {
                 console.log(compiledTs);
             }
 
-            chai.assert(compiledTs === baselineTs, "Compiled result did not match baseline");
+            chai.assert(compiledTs === baselineTs, "Compiled result did not match baseline: " + name + " " + res.source);
         }, err => fail('Compiling blocks failed'));
 }
 
@@ -357,11 +357,43 @@ describe("blockly compiler", function () {
         it("should change reserved names", (done: () => void) => {
             blockTestAsync("variables_reserved_names").then(done, done);
         });
+
+        it("should handle collisions with variables declared by the destructuring mutator", (done: () => void) => {
+            blockTestAsync("old_radio_mutator").then(done, done);
+        });
+
+        it("should handle collisions with variables declared by callback arguments", (done: () => void) => {
+            blockTestAsync("new_radio_block").then(done, done);
+        });
+
+        it("should handle collisions with variables declared by the minecraft destructuring mutator", (done: () => void) => {
+            blockTestAsync("mc_old_chat_blocks").then(done, done);
+        });
+
+        it("should handle collisions with variables declared by optional callback arguments", (done: () => void) => {
+            blockTestAsync("mc_chat_blocks").then(done, done);
+        });
+
+        it("should hoist variable declarations when the first set references the target", (done: () => void) => {
+            blockTestAsync("self_reference_vars").then(done, done);
+        });
     });
 
     describe("compiling functions", () => {
         it("should handle name collisions", (done: () => void) => {
             blockTestAsync("functions_names").then(done, done);
+        });
+
+        it("should handle function declarations", (done: () => void) => {
+            blockTestAsync("functions_v2").then(done, done);
+        });
+
+        it("should handle function reporters", (done: () => void) => {
+            blockTestAsync("functions_v2_reporters").then(done, done);
+        });
+
+        it("should narrow variable types when used as function call arguments", (done: () => void) => {
+            blockTestAsync("function_call_inference").then(done, done);
         });
     });
 
