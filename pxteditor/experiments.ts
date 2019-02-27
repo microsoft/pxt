@@ -77,6 +77,12 @@ namespace pxt.editor.experiments {
                 name: lf("Simulator Screenshots"),
                 description: lf("Download screenshots of the simulator"),
                 feedbackUrl: "https://github.com/Microsoft/pxt/issues/5232"
+            },
+            {
+                id: "simGif",
+                name: lf("Simulator Gifs"),
+                description: lf("Download gifs of the simulator"),
+                feedbackUrl: "https://github.com/Microsoft/pxt/issues/5297"
             }
         ].filter(experiment => ids.indexOf(experiment.id) > -1);
     }
