@@ -441,7 +441,7 @@ export function loadGifEncoderAsync(): Promise<GifEncoder> {
         quality: 10,
         dither: false,
         workerScript: pxt.webConfig.gifworkerjs,
-        transparent: 'rgba(0,0,0,0)'
+        transparent: pxt.appTarget.appTheme.simGifTransparent
     };
     return pxt.BrowserUtils.loadScriptAsync("gifjs/gif.js")
         .then(() => new GifEncoder(options));
