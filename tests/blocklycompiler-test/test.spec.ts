@@ -373,11 +373,31 @@ describe("blockly compiler", function () {
         it("should handle collisions with variables declared by optional callback arguments", (done: () => void) => {
             blockTestAsync("mc_chat_blocks").then(done, done);
         });
+
+        it("should hoist variable declarations when the first set references the target", (done: () => void) => {
+            blockTestAsync("self_reference_vars").then(done, done);
+        });
+
+        it("should allow variables declared in a for-loop at the top of on-start", (done: () => void) => {
+            blockTestAsync("on_start_with_for_loop").then(done, done);
+        });
     });
 
     describe("compiling functions", () => {
         it("should handle name collisions", (done: () => void) => {
             blockTestAsync("functions_names").then(done, done);
+        });
+
+        it("should handle function declarations", (done: () => void) => {
+            blockTestAsync("functions_v2").then(done, done);
+        });
+
+        it("should handle function reporters", (done: () => void) => {
+            blockTestAsync("functions_v2_reporters").then(done, done);
+        });
+
+        it("should narrow variable types when used as function call arguments", (done: () => void) => {
+            blockTestAsync("function_call_inference").then(done, done);
         });
     });
 

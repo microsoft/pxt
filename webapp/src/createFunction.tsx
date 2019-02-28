@@ -9,7 +9,7 @@ type ISettingsProps = pxt.editor.ISettingsProps;
 
 export interface CreateFunctionDialogState {
     visible?: boolean;
-    functionEditorWorkspace?: Blockly.Workspace;
+    functionEditorWorkspace?: Blockly.WorkspaceSvg;
     functionCallback?: Blockly.Functions.ConfirmEditCallback;
     initialMutation?: Element;
     functionBeingEdited?: Blockly.FunctionDeclarationBlock;
@@ -74,7 +74,7 @@ export class CreateFunctionDialog extends data.Component<ISettingsProps, CreateF
         functionEditorWorkspace = Blockly.inject(workspaceDiv, {
             trashcan: false,
             scrollbars: true
-        });
+        }) as Blockly.WorkspaceSvg;
         (functionEditorWorkspace as any).showContextMenu_ = () => { }; // Disable the context menu
         functionEditorWorkspace.clear();
 

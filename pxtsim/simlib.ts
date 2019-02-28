@@ -42,15 +42,14 @@ namespace pxsim {
 
         constructor(private runtime: Runtime, private valueToArgs?: EventValueToActionArgs<T>) { }
 
-        private start(id: number | string, evid: number | string, create: boolean, background: boolean) {
-            let k = (background ? "back:" : "") + id + ":" + evid;
-            let queue = this.queues[k];
-            if (!queue) queue = this.queues[k] = new EventQueue<T>(this.runtime, this.valueToArgs);
-            return queue;
+        private start(id: number | string, evid: number | string, background: boolean, create: boolean = false) {
+            let key = (background ? "back" : "fore") + ":" + id + ":" + evid
+            if (!this.queues[key] && create) this.queues[key] = new EventQueue<T>(this.runtime, this.valueToArgs);;
+            return this.queues[key];
         }
 
         listen(id: number | string, evid: number | string, handler: RefAction) {
-            let q = this.start(id, evid, true, this.backgroundHandlerFlag);
+            let q = this.start(id, evid, this.backgroundHandlerFlag, true);
             if (this.backgroundHandlerFlag)
                 q.addHandler(handler);
             else
@@ -61,8 +60,22 @@ namespace pxsim {
         removeBackgroundHandler(handler: RefAction) {
             Object.keys(this.queues).forEach((k: string) => {
                 if (k.startsWith("back:"))
-                    this.queues[k].removeHandler(handler);
+                    this.queues[k].removeHandler(handler)
             });
+        }
+
+        // this handles ANY (0) semantics for id and evid
+        private getQueues(id: number | string, evid: number | string, bg: boolean) {
+            let ret = [ this.start(0, 0, bg) ]
+            if (id == 0 && evid == 0)
+                return ret
+            if (id == 0)
+                ret.push(this.start(0, evid, bg))
+            if (evid == 0)
+                ret.push(this.start(id, 0, bg))
+            if (id != 0 && evid != 0)
+                ret.push(this.start(id, evid, bg))
+            return ret
         }
 
         queue(id: number | string, evid: number | string, value: T = null) {
@@ -70,23 +83,18 @@ namespace pxsim {
             const notifyOne = this.notifyID && this.notifyOneID && id == this.notifyOneID;
             if (notifyOne)
                 id = this.notifyID;
-            let qBackground = this.start(id, evid, false, true);
-            let qForeground = this.start(id, evid, false, false);
-            if (qBackground || qForeground) {
-                this.lastEventValue = evid;
-                this.lastEventTimestampUs = U.perfNowUs();
-                let promise: Promise<void> = Promise.resolve();
-                if (qBackground)
-                    promise = qBackground.push(value, notifyOne);
-                // do the foreground handler after the background handlers
-                if (qForeground)
-                    promise.then(() => { qForeground.push(value, notifyOne) })
-            }
+            let queues = this.getQueues(id, evid, true).concat(this.getQueues(id, evid, false))
+            this.lastEventValue = evid;
+            this.lastEventTimestampUs = U.perfNowUs();
+            Promise.each(queues, (q) => {
+                if (q) return q.push(value, notifyOne);
+                else return Promise.resolve()
+            })
         }
 
         // only for foreground handlers
         wait(id: number | string, evid: number | string, cb: (value?: any) => void) {
-            let q = this.start(id, evid, true, false);
+            let q = this.start(id, evid, false, true);
             q.addAwaiter(cb);
         }
 

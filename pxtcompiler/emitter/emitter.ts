@@ -1750,7 +1750,9 @@ ${lbl}: .short 0xffff
             } else if (isInterfaceType(t)) {
                 attrs = parseCommentsOnSymbol(t.symbol)
                 indexer = assign ? attrs.indexerSet : attrs.indexerGet
-            } else if (t.flags & (TypeFlags.Any | TypeFlags.StructuredOrTypeVariable)) {
+            }
+
+            if (!indexer && (t.flags & (TypeFlags.Any | TypeFlags.StructuredOrTypeVariable))) {
                 indexer = assign ? "pxtrt::mapSetGeneric" : "pxtrt::mapGetGeneric"
                 stringOk = true
             }

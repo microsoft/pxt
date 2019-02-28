@@ -81,6 +81,7 @@ namespace pxt.blocks {
         firstStatement: Blockly.Block;
         declaredVars: Map<VarInfo>;
         referencedVars: number[];
+        assignedVars: number[];
         children: Scope[];
     }
 
@@ -407,6 +408,11 @@ namespace pxt.blocks {
                         attachPlaceholderIf(e, b, "VALUE");
                         handleGenericType(b, "LIST");
                         unionParam(e, b, "INDEX", ground(pNumber.type));
+                        break;
+                    case 'function_call':
+                        (b as Blockly.FunctionCallBlock).getArguments().forEach(arg => {
+                            unionParam(e, b, arg.id, ground(arg.type));
+                        });
                         break;
                     case pxtc.PAUSE_UNTIL_TYPE:
                         unionParam(e, b, "PREDICATE", pBoolean);
@@ -1056,6 +1062,17 @@ namespace pxt.blocks {
         const currentScope = e.idToScope[b.id];
         let isDef = currentScope.declaredVars[binding.name] === binding && !binding.firstReference && !binding.alreadyDeclared;
 
+        if (isDef) {
+            // Check the expression of the set block to determine if it references itself and needs
+            // to be hoisted
+            forEachChildExpression(b, child => {
+                if (child.type === "variables_get") {
+                    let childBinding = lookup(e, child, child.getField("VAR").getText());
+                    if (childBinding === binding) isDef = false;
+                }
+            }, true);
+        }
+
         if (isDef) binding.alreadyDeclared = true;
         else if (!binding.firstReference) binding.firstReference = b;
 
@@ -1457,7 +1474,11 @@ namespace pxt.blocks {
             // so add them to the taken names to avoid collision
             Object.keys(blockInfo.apis.byQName).forEach(name => {
                 const info = blockInfo.apis.byQName[name];
-                if (info.kind === pxtc.SymbolKind.Enum || info.kind === pxtc.SymbolKind.Function || info.kind === pxtc.SymbolKind.Module) {
+                // Note: the check for info.pkg filters out functions defined in the user's project.
+                // Otherwise, after the first compile the function will be renamed because it conflicts
+                // with itself. You can still get collisions if you attempt to define a function with
+                // the same name as a function defined in another file in the user's project (e.g. custom.ts)
+                if (info.pkg && (info.kind === pxtc.SymbolKind.Enum || info.kind === pxtc.SymbolKind.Function || info.kind === pxtc.SymbolKind.Module)) {
                     e.renames.takenNames[info.qName] = true;
                 }
             });
@@ -1539,8 +1560,9 @@ namespace pxt.blocks {
             updateDisabledBlocks(e, w.getAllBlocks(), topblocks);
 
             // compile workspace comments, add them to the top
-            const topComments = w.getTopComments(true)
-            const commentMap = groupWorkspaceComments(topblocks, topComments);
+            const topComments = w.getTopComments(true);
+            const commentMap = groupWorkspaceComments(topblocks as Blockly.BlockSvg[],
+                topComments as Blockly.WorkspaceCommentSvg[]);
 
             commentMap.orphans.forEach(comment => append(stmtsMain, compileWorkspaceComment(comment).children));
 
@@ -1894,7 +1916,7 @@ namespace pxt.blocks {
         height: number;
     }
 
-    function groupWorkspaceComments(blocks: Blockly.Block[], comments: Blockly.WorkspaceComment[]) {
+    function groupWorkspaceComments(blocks: Blockly.BlockSvg[], comments: Blockly.WorkspaceCommentSvg[]) {
         if (!blocks.length || blocks.some(b => !b.rendered)) {
             return {
                 orphans: comments,
@@ -1963,6 +1985,18 @@ namespace pxt.blocks {
         return false;
     }
 
+    function assignedWithinScope(scope: Scope, varID: number) {
+        if (scope.assignedVars.indexOf(varID) !== -1) {
+            return true;
+        }
+        else {
+            for (const child of scope.children) {
+                if (assignedWithinScope(child, varID)) return true;
+            }
+        }
+        return false;
+    }
+
     function escapeVariables(current: Scope, e: Environment) {
         for (const varName of Object.keys(current.declaredVars)) {
             const info = current.declaredVars[varName];
@@ -1994,7 +2028,7 @@ namespace pxt.blocks {
             if (scope) {
                 for (const varName of Object.keys(scope.declaredVars)) {
                     const info = scope.declaredVars[varName];
-                    if (info.escapedName === name) return true;
+                    if (info.name !== info.escapedName && info.escapedName === name) return true;
                 }
                 return nameIsTaken(name, scope.parent);
             }
@@ -2013,6 +2047,9 @@ namespace pxt.blocks {
 
         for (const child of current.children) {
             if (referencedWithinScope(child, varID)) {
+                if (assignedWithinScope(child, varID)) {
+                    return current;
+                }
                 if (!ref) {
                     ref = child;
                 }
@@ -2022,24 +2059,46 @@ namespace pxt.blocks {
             }
         }
 
-        return findCommonScope(ref, varID);
+        return ref ? findCommonScope(ref, varID) : undefined;
     }
 
     function trackAllVariables(topBlocks: Blockly.Block[], e: Environment) {
-        const topScope: Scope = {
-            firstStatement: null,
-            declaredVars: {},
-            referencedVars: [],
-            children: []
-        };
-
         topBlocks = topBlocks.filter(b => !b.disabled);
 
         let id = 1;
+        let topScope: Scope;
+
+        // First, look for on-start
+        topBlocks.forEach(block => {
+            if (block.type === ts.pxtc.ON_START_TYPE) {
+                const firstStatement = block.getInputTargetBlock("HANDLER");
+                if (firstStatement) {
+                    topScope = {
+                        firstStatement: firstStatement,
+                        declaredVars: {},
+                        referencedVars: [],
+                        children: [],
+                        assignedVars: []
+                    }
+                    trackVariables(firstStatement, topScope, e);
+                }
+            }
+        });
+
+        // If we didn't find on-start, then create an empty top scope
+        if (!topScope) {
+            topScope = {
+                firstStatement: null,
+                declaredVars: {},
+                referencedVars: [],
+                children: [],
+                assignedVars: []
+            }
+        }
 
         topBlocks.forEach(block => {
             if (block.type === ts.pxtc.ON_START_TYPE) {
-                topScope.firstStatement = block;
+                return;
             }
             trackVariables(block, topScope, e);
         });
@@ -2047,7 +2106,7 @@ namespace pxt.blocks {
         Object.keys(topScope.declaredVars).forEach(varName => {
             const varID = topScope.declaredVars[varName];
             delete topScope.declaredVars[varName];
-            const declaringScope = findCommonScope(topScope, varID.id);
+            const declaringScope = findCommonScope(topScope, varID.id) || topScope;
             declaringScope.declaredVars[varName] = varID;
         })
 
@@ -2059,15 +2118,17 @@ namespace pxt.blocks {
         function trackVariables(block: Blockly.Block, currentScope: Scope, e: Environment) {
             e.idToScope[block.id] = currentScope;
 
-            if (block.type === "variables_get" || block.type === "variables_set" || block.type === "variables_change") {
+            if (block.type === "variables_get") {
                 const name = block.getField("VAR").getText();
                 const info = findOrDeclareVariable(name, currentScope);
                 currentScope.referencedVars.push(info.id);
             }
-
-            forEachChildExpression(block, child => {
-                trackVariables(child, currentScope, e);
-            });
+            else if (block.type === "variables_set" || block.type === "variables_change") {
+                const name = block.getField("VAR").getText();
+                const info = findOrDeclareVariable(name, currentScope);
+                currentScope.assignedVars.push(info.id);
+                currentScope.referencedVars.push(info.id);
+            }
 
             if (hasStatementInput(block)) {
                 const vars: VarInfo[] = getDeclaredVariables(block, e).map(binding => {
@@ -2084,11 +2145,12 @@ namespace pxt.blocks {
                     // We need to create a scope for this block, and then a scope
                     // for each statement input (in case there are multiple)
 
-                    parentScope = currentScope.firstStatement === block ? currentScope : {
+                    parentScope = {
                         parent: currentScope,
                         firstStatement: block,
                         declaredVars: {},
                         referencedVars: [],
+                        assignedVars: [],
                         children: []
                     };
 
@@ -2105,16 +2167,26 @@ namespace pxt.blocks {
                     currentScope.children.push(parentScope);
                 }
 
+                forEachChildExpression(block, child => {
+                    trackVariables(child, parentScope, e);
+                });
+
                 forEachStatementInput(block, connectedBlock => {
                     const newScope: Scope = {
                         parent: parentScope,
                         firstStatement: connectedBlock,
                         declaredVars: {},
                         referencedVars: [],
+                        assignedVars: [],
                         children: []
                     };
                     parentScope.children.push(newScope);
                     trackVariables(connectedBlock, newScope, e);
+                });
+            }
+            else {
+                forEachChildExpression(block, child => {
+                    trackVariables(child, currentScope, e);
                 });
             }
 
@@ -2186,10 +2258,13 @@ namespace pxt.blocks {
         return [];
     }
 
-    function forEachChildExpression(block: Blockly.Block, cb: (block: Blockly.Block) => void) {
+    function forEachChildExpression(block: Blockly.Block, cb: (block: Blockly.Block) => void, recursive = false) {
         block.inputList.filter(i => i.type === Blockly.INPUT_VALUE).forEach(i => {
             if (i.connection && i.connection.targetBlock()) {
                 cb(i.connection.targetBlock());
+                if (recursive) {
+                    forEachChildExpression(i.connection.targetBlock(), cb, recursive);
+                }
             }
         });
     }
@@ -2230,8 +2305,7 @@ namespace pxt.blocks {
                 // If we can't find a better place to declare the variable, we'll declare
                 // it before the first statement in the code block so we need to keep
                 // track of the blocks ids
-                Util.assert(!e.blockDeclarations[scope.firstStatement.id]);
-                e.blockDeclarations[scope.firstStatement.id] = decls;
+                e.blockDeclarations[scope.firstStatement.id] = decls.concat(e.blockDeclarations[scope.firstStatement.id] || []);
             }
 
             decls.forEach(d => e.allVariables.push(d));

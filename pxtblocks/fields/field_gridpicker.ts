@@ -707,9 +707,10 @@ namespace pxtblockly {
                 );
                 this.textElement_.parentNode.appendChild(this.arrow_);
             }
-            if (this.sourceBlock_ && this.sourceBlock_.rendered) {
-                this.sourceBlock_.render();
-                this.sourceBlock_.bumpNeighbours_();
+            const sourceBlock = this.sourceBlock_ as Blockly.BlockSvg;
+            if (sourceBlock && sourceBlock.rendered) {
+                sourceBlock.render();
+                sourceBlock.bumpNeighbours_();
             }
         };
 
