@@ -38,6 +38,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     setBreakpointsMap(breakpoints: pxtc.Breakpoint[]): void{
         let map = new Map<string, number>();
+        if (!breakpoints || !this.compilationResult) return;
         breakpoints.forEach(breakpoint => {
             let blockId = pxt.blocks.findBlockId(this.compilationResult.sourceMap, { start: breakpoint.line, length: breakpoint.endLine-breakpoint.line });
             map.set(blockId, breakpoint.id);

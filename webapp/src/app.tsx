@@ -2139,7 +2139,7 @@ export class ProjectView
                 block.enableBreakpoint(state);
             }
         });
-        this.blocksEditor.editor.options.debugMode = state;
+        // this.blocksEditor.editor.options.debugMode = state;
         this.restartSimulator(state);
         this.renderCore()
     }
