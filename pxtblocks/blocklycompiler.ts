@@ -2130,10 +2130,6 @@ namespace pxt.blocks {
                 currentScope.referencedVars.push(info.id);
             }
 
-            forEachChildExpression(block, child => {
-                trackVariables(child, currentScope, e);
-            });
-
             if (hasStatementInput(block)) {
                 const vars: VarInfo[] = getDeclaredVariables(block, e).map(binding => {
                     return {
@@ -2149,7 +2145,7 @@ namespace pxt.blocks {
                     // We need to create a scope for this block, and then a scope
                     // for each statement input (in case there are multiple)
 
-                    parentScope = currentScope.firstStatement === block ? currentScope : {
+                    parentScope = {
                         parent: currentScope,
                         firstStatement: block,
                         declaredVars: {},
@@ -2171,6 +2167,10 @@ namespace pxt.blocks {
                     currentScope.children.push(parentScope);
                 }
 
+                forEachChildExpression(block, child => {
+                    trackVariables(child, parentScope, e);
+                });
+
                 forEachStatementInput(block, connectedBlock => {
                     const newScope: Scope = {
                         parent: parentScope,
@@ -2182,6 +2182,11 @@ namespace pxt.blocks {
                     };
                     parentScope.children.push(newScope);
                     trackVariables(connectedBlock, newScope, e);
+                });
+            }
+            else {
+                forEachChildExpression(block, child => {
+                    trackVariables(child, currentScope, e);
                 });
             }
 
@@ -2300,8 +2305,7 @@ namespace pxt.blocks {
                 // If we can't find a better place to declare the variable, we'll declare
                 // it before the first statement in the code block so we need to keep
                 // track of the blocks ids
-                Util.assert(!e.blockDeclarations[scope.firstStatement.id]);
-                e.blockDeclarations[scope.firstStatement.id] = decls;
+                e.blockDeclarations[scope.firstStatement.id] = decls.concat(e.blockDeclarations[scope.firstStatement.id] || []);
             }
 
             decls.forEach(d => e.allVariables.push(d));
