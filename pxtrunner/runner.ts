@@ -78,10 +78,11 @@ namespace pxt.runner {
             for (const k of Object.keys(cfg.dependencies)) {
                 const v = cfg.dependencies[k];
                 const kv = pxt.github.parseRepoId(v);
-                if (kv && repo.fullName == kv.fullName
-                    && pxt.semver.strcmp(repo.tag, kv.tag) < 0) {
-                    // we have a later tag, use this one
-                    cfg.dependencies[k] = repoId;
+                if (kv && repo.fullName == kv.fullName) {
+                    if (pxt.semver.strcmp(repo.tag, kv.tag) < 0) {
+                        // we have a later tag, use this one
+                        cfg.dependencies[k] = repoId;
+                    }
                     return true;
                 }
             }
