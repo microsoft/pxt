@@ -468,7 +468,8 @@ namespace pxt.webBluetooth {
         private checkStateTransition(cmd: number, acceptedStates: PartialFlashingState) {
             if (!(this.state & acceptedStates)) {
                 this.debug(`flash cmd ${cmd} in state ${this.state.toString(16)} `);
-                this._flashReject(new Error());
+                if (this._flashReject)
+                    this._flashReject(new Error());
                 this.clearFlashData();
                 return false;
             }
