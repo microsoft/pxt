@@ -69,6 +69,26 @@ namespace pxt.runner {
             return Promise.resolve(null as string)
         }
 
+        patchDependencies(cfg: pxt.PackageConfig, name: string, repoId: string): boolean {
+            if (!repoId) return false;
+            // check that the same package hasn't been added yet
+            const repo = pxt.github.parseRepoId(repoId);
+            if (!repo) return false;
+
+            for (const k of Object.keys(cfg.dependencies)) {
+                const v = cfg.dependencies[k];
+                const kv = pxt.github.parseRepoId(v);
+                if (kv && repo.fullName == kv.fullName
+                    && pxt.semver.strcmp(repo.tag, kv.tag) < 0) {
+                    // we have a later tag, use this one
+                    cfg.dependencies[k] = repoId;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private githubPackageCache: pxt.Map<Map<string>> = {};
         downloadPackageAsync(pkg: pxt.Package) {
             let proto = pkg.verProtocol()
@@ -92,13 +112,17 @@ namespace pxt.runner {
                     } else if (proto == "docs") {
                         let files = emptyPrjFiles();
                         let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+                        // load all dependencies
                         pkg.verArgument().split(',').forEach(d => {
                             let m = /^([a-zA-Z0-9_-]+)(=(.+))?$/.exec(d);
-                            if (m)
+                            if (m) {
+                                if (m[3] && this.patchDependencies(cfg, m[1], m[3]))
+                                    return;
                                 cfg.dependencies[m[1]] = m[3] || "*"
-                            else
+                            } else
                                 console.warn(`unknown package syntax ${d}`)
                         });
+
                         if (!cfg.yotta) cfg.yotta = {};
                         cfg.yotta.ignoreConflicts = true;
                         files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4);
