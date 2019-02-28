@@ -377,6 +377,10 @@ describe("blockly compiler", function () {
         it("should hoist variable declarations when the first set references the target", (done: () => void) => {
             blockTestAsync("self_reference_vars").then(done, done);
         });
+
+        it("should allow variables declared in a for-loop at the top of on-start", (done: () => void) => {
+            blockTestAsync("on_start_with_for_loop").then(done, done);
+        });
     });
 
     describe("compiling functions", () => {
