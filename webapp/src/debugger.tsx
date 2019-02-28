@@ -153,7 +153,6 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
                     <td className={`variable ${v.prevValue !== undefined ? "changed" : ""}`}
                         onClick={onClick} onMouseOver={onMouseOver} style={{ padding: 0.2, }}>
                         <i className= {`${(v.children ? "down triangle icon" : "right triangle icon") + ((v.value && v.value.hasFields) ? "" : " transparent")}`} style={{ marginLeft: margin }} ></i>
-                        {/* <span className="varname">{variable + ':'}</span> */}
                         <span>{variable + ':'}</span>
                     </td>
                     <td style={{ padding:0.2}}>

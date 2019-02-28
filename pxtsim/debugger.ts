@@ -91,9 +91,9 @@ namespace pxsim {
                 case "boolean":
                     return v;
                 case "function":
-                    return { 
-                        text: "(function)", 
-                        type: "function" 
+                    return {
+                        text: "(function)",
+                        type: "function",
                     }
                 case "undefined":
                     return null;
@@ -111,12 +111,12 @@ namespace pxsim {
                         }
                     }
                     if (v._width && v._height) {
-                        return { 
+                        return {
                             text: v._width + 'x' + v._height,
                             type: "image",
                         }
                     }
-                    return { 
+                    return {
                         text: "(object)",
                         type: "object",
                     }

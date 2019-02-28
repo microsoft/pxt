@@ -1734,7 +1734,7 @@ export class ProjectView
         compiler.compileAsync({ native: true, forceEmit: true, preferredEditor: this.getPreferredEditor() })
             .then<pxtc.CompileResult>(resp => {
                 this.editor.setDiagnostics(this.editorFile, state)
-                
+
                 let fn = pxt.outputName()
                 if (!resp.outfiles[fn]) {
                     pxt.tickEvent("compile.noemit")
@@ -2139,7 +2139,7 @@ export class ProjectView
                 block.enableBreakpoint(state);
             }
         });
-        // this.blocksEditor.editor.options.debugMode = state;
+
         this.restartSimulator(state);
         this.renderCore()
     }
