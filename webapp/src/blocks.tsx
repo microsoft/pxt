@@ -29,19 +29,19 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     showCategories: boolean = true;
     filters: pxt.editor.ProjectFilters;
     showSearch: boolean;
-    breakpointsByBlock: Map<string, number>; // Map block id --> breakpoint ID
+    breakpointsByBlock: pxt.Map<number>; // Map block id --> breakpoint ID
     breakpointsSet: number[]; // the IDs of the breakpoints set.
 
     public nsMap: pxt.Map<toolbox.BlockDefinition[]>;
 
     private debugVariables: debug.DebuggerVariables;
 
-    setBreakpointsMap(breakpoints: pxtc.Breakpoint[]): void{
-        let map = new Map<string, number>();
+    setBreakpointsMap(breakpoints: pxtc.Breakpoint[]): void {
+        let map: pxt.Map<number> = {};
         if (!breakpoints || !this.compilationResult) return;
         breakpoints.forEach(breakpoint => {
-            let blockId = pxt.blocks.findBlockId(this.compilationResult.sourceMap, { start: breakpoint.line, length: breakpoint.endLine-breakpoint.line });
-            map.set(blockId, breakpoint.id);
+            let blockId = pxt.blocks.findBlockId(this.compilationResult.sourceMap, { start: breakpoint.line, length: breakpoint.endLine - breakpoint.line });
+            if (blockId) map[blockId] = breakpoint.id;
         });
         this.breakpointsByBlock = map;
     }
@@ -51,8 +51,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let map = this.breakpointsByBlock;
         if (map) {
             this.editor.getAllBlocks().forEach(block => {
-                if (map.has(block.id) && block.isBreakpointSet()) {
-                    breakpoints.push(this.breakpointsByBlock.get(block.id));
+                if (map[block.id] && block.isBreakpointSet()) {
+                    breakpoints.push(this.breakpointsByBlock[block.id]);
                 }
             });
         }
@@ -62,12 +62,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     addBreakpointFromEvent(blockId: string) {
-        this.breakpointsSet.push(this.breakpointsByBlock.get(blockId));
+        this.breakpointsSet.push(this.breakpointsByBlock[blockId]);
         simulator.driver.setBreakpoints(this.breakpointsSet);
     }
 
     removeBreakpointFromEvent(blockId: string) {
-        let breakpointId = this.breakpointsByBlock.get(blockId);
+        let breakpointId = this.breakpointsByBlock[blockId];
         this.breakpointsSet.filter(breakpoint => breakpoint != breakpointId);
         simulator.driver.setBreakpoints(this.breakpointsSet);
     }

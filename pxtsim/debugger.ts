@@ -137,7 +137,7 @@ namespace pxsim {
                 for (let k of Object.keys(frame.fields)) {
                     r[k.replace(/___\d+$/, '')] = valToJSON(frame.fields[k])
                 }
-            } else if (frame.data) {
+            } else if (Array.isArray(frame.data)) {
                 // This is an Array.
                (frame.data as any[]).forEach((element, index) => {
                     r[index] = valToJSON(element);

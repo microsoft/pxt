@@ -31,6 +31,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         this.state = {
             variables: {}
         }
+        this.onMouseOverVariable = this.onMouseOverVariable.bind(this);
     }
 
     clear() {
@@ -113,7 +114,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         }
     }
 
-    private variableType(variable: Variable) : string {
+    private variableType(variable: Variable): string {
         let val = variable.value;
         if (val == null) return "undefined";
         let type = typeof val
@@ -132,6 +133,8 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         }
     }
 
+    private onMouseOverVariable(): void {};
+
     private renderVariables(variables: pxt.Map<Variable>, parent?: string, depth?: number): JSX.Element[] {
         let r: JSX.Element[] = [];
         let varNames = Object.keys(variables);
@@ -141,7 +144,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
             })
         }
         depth = depth || 0;
-        let margin = depth*1.5 + 'em';
+        let margin = depth * 1.5 + 'em';
         varNames.forEach(variable => {
             const v = variables[variable];
             const oldValue = DebuggerVariables.renderValue(v.prevValue);
@@ -150,18 +153,18 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
             const onClick = v.value && v.value.id ? () => this.toggle(v) : undefined;
             const onMouseOver : any = undefined; // prob a bad idea. Maybe onMouseEnter --> onMouseLeave?
             r.push(<tr key={(parent || "") + variable} className="item" style={{padding: "0em",}}>
-                    <td className={`variable ${v.prevValue !== undefined ? "changed" : ""}`}
-                        onClick={onClick} onMouseOver={onMouseOver} style={{ padding: 0.2, }}>
-                        <i className= {`${(v.children ? "down triangle icon" : "right triangle icon") + ((v.value && v.value.hasFields) ? "" : " transparent")}`} style={{ marginLeft: margin }} ></i>
-                        <span>{variable + ':'}</span>
-                    </td>
-                    <td style={{ padding:0.2}}>
-                        <div className="detail">
-                            <span className={`varval ${type}`}>{DebuggerVariables.renderValue(v.value)}</span>
-                            <span className="previousval">{(oldValue !== "undefined" && oldValue !== newValue) ? `${oldValue}` : ''}</span>
-                        </div>
-                    </td>
-                </tr>
+                <td className={`variable ${v.prevValue !== undefined ? "changed" : ""}`}
+                    onClick={onClick} onMouseOver={this.onMouseOverVariable} style={{ padding: 0.2, }}>
+                    <i className={`${(v.children ? "down triangle icon" : "right triangle icon") + ((v.value && v.value.hasFields) ? "" : " transparent")}`} style={{ marginLeft: margin }} ></i>
+                    <span>{variable + ':'}</span>
+                </td>
+                <td style={{ padding: 0.2 }}>
+                    <div className="detail">
+                        <span className={`varval ${type}`}>{DebuggerVariables.renderValue(v.value)}</span>
+                        <span className="previousval">{(oldValue !== "undefined" && oldValue !== newValue) ? `${oldValue}` : ''}</span>
+                    </div>
+                </td>
+            </tr>
             );
             if (v.children)
                 r = r.concat(this.renderVariables(v.children, variable, depth + 1));
@@ -171,13 +174,17 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
 
     renderCore() {
         const { variables, frozen } = this.state;
+        const variableTableHeader = lf("Variable");
+        const valueTableHeader = lf("Type/Value");
 
         return Object.keys(variables).length == 0 ? <div /> :
             <div className={`ui segment debugvariables ${frozen ? "frozen" : ""}`}>
                 <div className="ui collapsing celled table">
                 <thead>
-                    <tr><th>Variable</th>
-                    <th>Type/Value</th></tr>
+                    <tr>
+                        <th>{variableTableHeader}</th>
+                        <th>{valueTableHeader}</th>
+                    </tr>
                 </thead>
                     <tbody>
                         {this.renderVariables(variables)}

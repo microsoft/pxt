@@ -75,5 +75,5 @@
 }
 
 .debugger .ui.inverted.menu {
-    background: @mainMenuDebuggerBackground !important;
+    background: @DebuggerBackgroundPrimaryColor !important;
 }

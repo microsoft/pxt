@@ -62,12 +62,8 @@
         max-height: 25rem;
     }
 
-    .variable {
-    }
     .transparent{
         opacity: 0;
-    }
-    .variable.changed {
     }
     .variable .varname {
         font-weight: bold;
@@ -114,17 +110,17 @@ div.simframe div.pause-overlay {
 }
 
 .debugger .grid.equal.width {
-    background: @mainMenuDebuggerBackground;
+    background: @DebuggerBackgroundPrimaryColor;
 }
 
 .debugger #downloadArea {
-    background: @mainMenuDebuggerBackground;
+    background: @DebuggerBackgroundPrimaryColor;
     //background-color: lightgreen
 }
 
 .debugger #filelist {
-    background: @mainMenuDebuggerBackground;
-    background-color: lightgreen
+    background: @DebuggerBackgroundPrimaryColor;
+    background-color: @DebuggerBackgroundSecondaryColor
 }
 
 /* Old debugger view */

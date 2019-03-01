@@ -2131,9 +2131,9 @@ export class ProjectView
 
     toggleDebugging() {
         const state = !this.state.debugging;
-        console.log("turning debugging mode to " + state);
+        pxt.log("turning debugging mode to " + state);
         this.setState({ debugging: state, tracing: false });
-        var blocks = this.blocksEditor.editor.getAllBlocks();
+        let blocks = this.blocksEditor.editor.getAllBlocks();
         blocks.forEach(block => {
             if (block.nextConnection && block.previousConnection) {
                 block.enableBreakpoint(state);
