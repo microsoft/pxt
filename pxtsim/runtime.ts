@@ -519,7 +519,7 @@ namespace pxsim {
         static postScreenshotAsync(opts: SimulatorScreenshotMessage): Promise<void> {
             const b = runtime && runtime.board;
             const p = b
-                ? b.screenshotAsync(opts).catch(e => {
+                ? b.screenshotAsync().catch(e => {
                     console.debug(`screenshot failed`);
                     return undefined;
                 })

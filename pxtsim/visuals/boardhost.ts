@@ -170,7 +170,7 @@ namespace pxsim.visuals {
                     // check if a width or a height was specified
                     if (width > 0) {
                         cvs.width = width;
-                        cvs.height = (img.width / cvs.width * img.height) | 0;
+                        cvs.height = (img.height * width / img.width) | 0;
                     } else if (cvs.width < 200) {
                         cvs.width *= 2;
                         cvs.height *= 2;
