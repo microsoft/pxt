@@ -173,7 +173,7 @@ namespace pxt {
                 U.userError(lf("Variant '{0}' not defined in pxtarget.json", variant))
         }
         patchAppTarget();
-        if (onAppTargetChanged)
+        if (onAppTargetChanged && variant)
             onAppTargetChanged();
     }
 
