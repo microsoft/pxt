@@ -405,7 +405,7 @@ export class GifEncoder {
                     // check if we've passed the max size for the blob length
                     if (this.options.maxLength && imageUri.length > this.options.maxLength) {
                         const nframes = Math.floor(this.gif.frames.length * this.options.maxLength / imageUri.length) - 1;
-                        pxt.log(`gif: reducing frames to ${nframes}`);
+                        pxt.log(`gif: size too large (${(imageUri.length / 1000) | 0}kb) reducing frames to ${nframes}`);
                         if (nframes <= 0) {
                             pxt.log(`gif: simulator image too large, cannot have a single frame`);
                             return undefined;
@@ -416,7 +416,7 @@ export class GifEncoder {
                     }
 
                     // all done
-                    pxt.log(`gif: rendered to ${imageUri.length / 1000}kb`);
+                    pxt.log(`gif: rendered ${this.gif.frames.length} frames to ${(imageUri.length / 1000) | 0}kb`);
                     return imageUri;
                 })
         };
