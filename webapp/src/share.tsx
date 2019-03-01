@@ -92,7 +92,8 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
     show(header: pxt.workspace.Header) {
         // TODO investigate why edge does not render well
         // upon hiding dialog, the screen does not redraw properly
-        const thumbnails = pxt.appTarget.cloud && pxt.appTarget.cloud.thumbnails;
+        const thumbnails = pxt.appTarget.cloud && pxt.appTarget.cloud.thumbnails
+            && (pxt.appTarget.appTheme.simScreenshot || pxt.appTarget.appTheme.simGif);
         if (thumbnails) {
             this.loanedSimulator = simulator.driver.loanSimulator();
             this.props.parent.pushScreenshotHandler(this.handleScreenshotMessage);
