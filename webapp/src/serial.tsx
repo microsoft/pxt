@@ -165,14 +165,12 @@ export class Editor extends srceditor.Editor {
         this.appendRawData(data);
         const niceSource = this.mapSource(source);
 
-        console.debug(`RAW: ${data}`)
 
         // chunk into lines
         let lines = this.chunkDataIntoLines(data)
 
         // process each line
         for (let line of lines) {
-            console.debug(`line: ${line}`)
             this.processMessageLine(line, niceSource, receivedTime);
         }
     }
