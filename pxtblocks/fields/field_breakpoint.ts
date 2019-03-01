@@ -13,12 +13,12 @@ namespace pxtblockly {
 
         private toggleThumb_: any;
 
-        protected CURSOR = 'pointer';
+        public CURSOR = 'pointer';
 
         private type_: string;
 
         constructor(state: string, params: Blockly.FieldCustomOptions, opt_validator?: Function) {
-            super(state, opt_validator);
+            super(state, undefined, undefined, undefined, opt_validator);
             this.params = params;
             this.setValue(state);
             this.addArgType('toggle');
@@ -38,7 +38,7 @@ namespace pxtblockly {
             // Add an attribute to cassify the type of field.
             if ((this as any).getArgTypes() !== null) {
                 if (this.sourceBlock_.isShadow()) {
-                    this.sourceBlock_.svgGroup_.setAttribute('data-argument-type',
+                    (this.sourceBlock_ as any).svgGroup_.setAttribute('data-argument-type',
                         (this as any).getArgTypes());
                 } else {
                     // Fields without a shadow wrapper, like square dropdowns.
@@ -71,7 +71,7 @@ namespace pxtblockly {
                 this.fieldGroup_);
 
             this.updateEditable();
-            this.sourceBlock_.getSvgRoot().appendChild(this.fieldGroup_);
+            (this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot().appendChild(this.fieldGroup_);
 
             this.switchToggle(this.state_);
             this.setValue(this.getValue());

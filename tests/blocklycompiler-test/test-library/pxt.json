@@ -4,6 +4,7 @@
     "files": [
         "actionEvent.ts",
         "enums.ts",
+        "mbit.ts",
         "expandableBlocks.ts",
         "toStringArgs.ts"
     ],

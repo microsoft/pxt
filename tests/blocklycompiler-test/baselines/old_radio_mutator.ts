@@ -1,4 +1,5 @@
 actions.onDataPacketReceived(function ({ receivedString }) {
-    let item = receivedString
+    item = receivedString
 })
+let item = ""
 let receivedString = ""

@@ -1,8 +1,4 @@
 // Describe this function...
-function foo_all (num: number, text: string, bool: boolean) {
-
-}
-// Describe this function...
 function foo_noarg () {
 
 }
@@ -18,8 +14,12 @@ function foo_string (text: string) {
 function foo_bool (bool: boolean) {
 
 }
+// Describe this function...
+function foo_all (num: number, text: string, bool: boolean) {
+
+}
 foo_noarg()
 foo_num(1)
-foo_string("abcd")
+foo_string("abc")
 foo_bool(true)
 foo_all(1, "abc", true)

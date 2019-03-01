@@ -78,6 +78,7 @@ declare namespace pxt {
         typeName?: string; // The actual type that gets emitted to ts
         label?: string; // A user-friendly label for the type, e.g. "text" for the string type
         icon?: string; // The className of a semantic icon, e.g. "calculator", "text width", etc
+        defaultName?: string; // The default argument name to use in the function declaration for this type
     }
 
     interface RuntimeOptions {
@@ -236,7 +237,7 @@ declare namespace pxt {
         invertedToolbox?: boolean; // if true: use the blockly inverted toolbox
         invertedMonaco?: boolean; // if true: use the vs-dark monaco theme
         lightToc?: boolean; // if true: do NOT use inverted style in docs toc
-        blocklyOptions?: Blockly.Options; // Blockly options, see Configuration: https://developers.google.com/blockly/guides/get-started/web
+        blocklyOptions?: Blockly.WorkspaceOptions; // Blockly options, see Configuration: https://developers.google.com/blockly/guides/get-started/web
         hideFlyoutHeadings?: boolean; // Hide the flyout headings at the top of the flyout when on a mobile device.
         monacoColors?: pxt.Map<string>; // Monaco theme colors, see https://code.visualstudio.com/docs/getstarted/theme-color-reference
         simAnimationEnter?: string; // Simulator enter animation
@@ -317,6 +318,7 @@ declare namespace pxt {
         simScreenshotMaxUriLength?: number; // maximum base64 encoded length to be uploaded
         simGif?: boolean; // record gif of the simulator
         simGifKey?: boolean; // shortcut to start stop
+        simGifTransparent?: string; // specify the gif transparency color
     }
 
     interface SocialOptions {
