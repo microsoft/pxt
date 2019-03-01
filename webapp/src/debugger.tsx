@@ -151,7 +151,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
             const newValue = DebuggerVariables.renderValue(v.value);
             let type = this.variableType(v);
             const onClick = v.value && v.value.id ? () => this.toggle(v) : undefined;
-            const onMouseOver : any = undefined; // prob a bad idea. Maybe onMouseEnter --> onMouseLeave?
+
             r.push(<tr key={(parent || "") + variable} className="item" style={{padding: "0em",}}>
                 <td className={`variable ${v.prevValue !== undefined ? "changed" : ""}`}
                     onClick={onClick} onMouseOver={this.onMouseOverVariable} style={{ padding: 0.2, }}>
