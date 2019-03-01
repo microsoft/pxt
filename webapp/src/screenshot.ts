@@ -438,7 +438,7 @@ export function loadGifEncoderAsync(): Promise<GifEncoder> {
 
     const options: GIFOptions = {
         workers: 1,
-        quality: 10,
+        quality: pxt.appTarget.appTheme.simGifQuality || 16,
         dither: false,
         workerScript: pxt.webConfig.gifworkerjs,
         transparent: pxt.appTarget.appTheme.simGifTransparent

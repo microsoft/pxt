@@ -319,6 +319,7 @@ declare namespace pxt {
         simGif?: boolean; // record gif of the simulator
         simGifKey?: boolean; // shortcut to start stop
         simGifTransparent?: string; // specify the gif transparency color
+        simGifQuality?: number; // generated gif quality (pixel sampling size) - 30 (poor) - 1 (best)
     }
 
     interface SocialOptions {
