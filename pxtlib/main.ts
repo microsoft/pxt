@@ -162,7 +162,7 @@ namespace pxt {
     // this is set by compileServiceVariant in pxt.json
     export function setAppTargetVariant(variant: string): void {
         pxt.debug(`app variant: ${variant}`);
-        if (!!appTargetVariant === !!variant) return;
+        if (appTargetVariant === variant || (!appTargetVariant && !variant)) return;
         appTargetVariant = variant
         appTarget = U.clone(savedAppTarget)
         if (variant) {
