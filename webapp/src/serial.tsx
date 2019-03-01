@@ -164,7 +164,6 @@ export class Editor extends srceditor.Editor {
         this.appendRawData(data);
         const niceSource = this.mapSource(source);
 
-        // TODO(dz) parsing has to happen after chunking
         // packet payload as json
         if (/^\s*\{[^}]+\}\s*$/.test(data)) {
             try {
