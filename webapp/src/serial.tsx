@@ -167,10 +167,10 @@ export class Editor extends srceditor.Editor {
 
 
         // chunk into lines
-        let lines = this.chunkDataIntoLines(data)
+        const lines = this.chunkDataIntoLines(data)
 
         // process each line
-        for (let line of lines) {
+        for (const line of lines) {
             this.processMessageLine(line, niceSource, receivedTime);
         }
     }
@@ -251,7 +251,7 @@ export class Editor extends srceditor.Editor {
     chunkDataIntoLines(data: string): string[] {
         let lines: string[] = []
         for (let i = 0; i < data.length; ++i) {
-            let ch = data[i]
+            const ch = data[i]
             this.serialInputDataBuffer += ch
             if (ch !== "\n" && this.serialInputDataBuffer.length < this.maxSerialInputDataLength) {
                 continue
