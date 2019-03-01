@@ -30,7 +30,7 @@ namespace pxt {
 
         public addedBy: Package[];
         public config: PackageConfig;
-        public level = -1;
+        public level = -1; // main package = 0, first children = 1, etc
         public isLoaded = false;
         private resolvedVersion: string;
         public ignoreTests = false;

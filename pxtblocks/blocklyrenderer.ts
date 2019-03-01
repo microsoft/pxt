@@ -2,7 +2,7 @@
 /// <reference path="../built/pxtlib.d.ts" />
 
 namespace pxt.blocks {
-    let workspace: Blockly.Workspace;
+    let workspace: Blockly.WorkspaceSvg;
     let blocklyDiv: HTMLElement;
 
     export enum BlockLayout {
@@ -40,7 +40,7 @@ namespace pxt.blocks {
                 sound: false,
                 media: pxt.webConfig.commitCdnUrl + "blockly/media/",
                 rtl: Util.isUserLanguageRtl()
-            });
+            }) as Blockly.WorkspaceSvg;
         }
 
         pxt.blocks.clearWithoutEvents(workspace);
@@ -89,12 +89,12 @@ namespace pxt.blocks {
         }
     }
 
-    export function blocksMetrics(ws: Blockly.Workspace): { width: number; height: number; } {
+    export function blocksMetrics(ws: Blockly.WorkspaceSvg): { width: number; height: number; } {
         const blocks = ws.getTopBlocks(false);
         if (!blocks.length) return { width: 0, height: 0 };
 
         let m: { l: number, r: number, t: number, b: number } = undefined;
-        blocks.forEach(b => {
+        blocks.forEach((b: Blockly.BlockSvg) => {
             const r = b.getBoundingRectangle();
             if (!m) m = { l: r.topLeft.x, r: r.bottomRight.x, t: r.topLeft.y, b: r.bottomRight.y }
             else {

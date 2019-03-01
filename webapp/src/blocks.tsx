@@ -15,7 +15,7 @@ import { CreateFunctionDialog, CreateFunctionDialogState } from "./createFunctio
 import Util = pxt.Util;
 
 export class Editor extends toolboxeditor.ToolboxEditor {
-    editor: Blockly.Workspace;
+    editor: Blockly.WorkspaceSvg;
     currFile: pkg.File;
     delayLoadXml: string;
     typeScriptSaveable: boolean;
@@ -168,9 +168,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let minX: number;
         let minY: number;
         let needsLayout = false;
-        let flyoutOnly = !this.editor.toolbox_ && this.editor.flyout_;
+        let flyoutOnly = !this.editor.toolbox_ && (this.editor as any).flyout_;
 
-        this.editor.getTopComments(false).forEach(b => {
+        (this.editor.getTopComments(false) as Blockly.WorkspaceCommentSvg[]).forEach(b => {
             const tp = b.getBoundingRectangle().topLeft;
             if (minX === undefined || tp.x < minX) {
                 minX = tp.x;
@@ -181,7 +181,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
             needsLayout = needsLayout || (tp.x == 10 && tp.y == 10);
         });
-        this.editor.getTopBlocks(false).forEach(b => {
+        (this.editor.getTopBlocks(false) as Blockly.BlockSvg[]).forEach(b => {
             const tp = b.getBoundingRectangle().topLeft;
             if (minX === undefined || tp.x < minX) {
                 minX = tp.x;
@@ -201,7 +201,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             // Otherwise translate the blocks so that they are positioned on the top left
             this.editor.getTopComments(false).forEach(c => c.moveBy(-minX, -minY));
             this.editor.getTopBlocks(false).forEach(b => b.moveBy(-minX, -minY));
-            this.editor.scrollX = flyoutOnly ? this.editor.flyout_.width_ + 10 : 10;
+            this.editor.scrollX = flyoutOnly ? (this.editor as any).flyout_.width_ + 10 : 10;
             this.editor.scrollY = 10;
 
             // Forces scroll to take effect
@@ -362,12 +362,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private prepareBlockly(forceHasCategories?: boolean) {
         let blocklyDiv = document.getElementById('blocksEditor');
         pxsim.U.clear(blocklyDiv);
-        this.editor = Blockly.inject(blocklyDiv, this.getBlocklyOptions(forceHasCategories));
+        this.editor = Blockly.inject(blocklyDiv, this.getBlocklyOptions(forceHasCategories)) as Blockly.WorkspaceSvg;
         // set Blockly Colors
         let blocklyColors = (Blockly as any).Colours;
         Util.jsonMergeFrom(blocklyColors, pxt.appTarget.appTheme.blocklyColors || {});
         (Blockly as any).Colours = blocklyColors;
-        this.editor.addChangeListener((ev) => {
+        this.editor.addChangeListener((ev: any) => {
             Blockly.Events.disableOrphans(ev);
             if (ev.type != 'ui' || this.markIncomplete) {
                 this.changeCallback();
@@ -443,7 +443,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     undo() {
         if (!this.editor) return;
-        this.editor.undo();
+        this.editor.undo(false);
         Blockly.hideChaff();
         this.parent.forceUpdate();
     }
@@ -701,7 +701,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             return;
 
         // clear previous warnings on non-disabled blocks
-        this.editor.getAllBlocks().filter(b => !b.disabled).forEach(b => {
+        this.editor.getAllBlocks().filter(b => !b.disabled).forEach((b: Blockly.BlockSvg) => {
             b.setWarningText(null);
             b.setHighlightWarning(false);
         });
@@ -715,7 +715,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         diags.filter(diag => diag.category == ts.pxtc.DiagnosticCategory.Error).forEach(diag => {
             let bid = pxt.blocks.findBlockId(sourceMap, { start: diag.line, length: 0 });
             if (bid) {
-                let b = this.editor.getBlockById(bid)
+                let b = this.editor.getBlockById(bid) as Blockly.BlockSvg;
                 if (b) {
                     let txt = ts.pxtc.flattenDiagnosticMessageText(diag.messageText, "\n");
                     b.setWarningText(txt);
@@ -734,7 +734,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             if (bid) {
                 this.editor.highlightBlock(bid);
                 if (brk) {
-                    const b = this.editor.getBlockById(bid);
+                    const b = this.editor.getBlockById(bid) as Blockly.BlockSvg;
                     b.setWarningText(brk ? brk.exceptionMessage : undefined);
                     // ensure highlight is in the screen when a breakpoint info is available
                     // TODO: make warning mode look good
@@ -836,11 +836,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return blocklyOptions;
     }
 
-    private blocklyOptionsCache: Blockly.Options;
+    private blocklyOptionsCache: Blockly.WorkspaceOptions;
     private getDefaultOptions() {
         if (this.blocklyOptionsCache) return this.blocklyOptionsCache;
         const readOnly = pxt.shell.isReadOnly();
-        const blocklyOptions: Blockly.Options = {
+        const blocklyOptions: Blockly.WorkspaceOptions = {
             scrollbars: true,
             media: pxt.webConfig.commitCdnUrl + "blockly/media/",
             sound: true,
@@ -884,7 +884,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const hasCategories = this.shouldShowCategories();
 
         // We might need to switch the toolbox type
-        if ((this.editor.toolbox_ && hasCategories) || (this.editor.flyout_ && !hasCategories)) {
+        if ((this.editor.toolbox_ && hasCategories) || ((this.editor as any).flyout_ && !hasCategories)) {
             // Toolbox is consistent with current mode, safe to update
             if (hasCategories) {
                 this.toolbox.setState({ loading: false, categories: this.getAllCategories(), showSearchBox: this.shouldShowSearch() });
@@ -1242,10 +1242,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         // Blockly internal methods to show a toolbox or a flyout
         if (this.editor.toolbox_) {
             this.editor.toolbox_.flyout_.show(xmlList);
-            this.editor.toolbox_.flyout_.scrollToStart();
-        } else if (this.editor.flyout_) {
-            this.editor.flyout_.show(xmlList);
-            this.editor.flyout_.scrollToStart();
+            (this.editor.toolbox_.flyout_ as Blockly.VerticalFlyout).scrollToStart();
+        } else if ((this.editor as any).flyout_) {
+            (this.editor as any).show(xmlList);
+            (this.editor as any).scrollToStart();
         }
     }
 

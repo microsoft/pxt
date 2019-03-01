@@ -30,7 +30,7 @@ namespace pxt.blocks {
                 if (/@highlight/.test(c)) {
                     const cc = c.replace(/@highlight/g, '').trim();
                     b.setCommentText(cc || null);
-                    workspace.highlightBlock(b.id)
+                    (workspace as Blockly.WorkspaceSvg).highlightBlock(b.id)
                 }
             });
     }
@@ -81,7 +81,7 @@ namespace pxt.blocks {
      * Loads the xml into a off-screen workspace (not suitable for size computations)
      */
     export function loadWorkspaceXml(xml: string, skipReport = false) {
-        const workspace = new Blockly.Workspace();
+        const workspace = new Blockly.Workspace() as Blockly.WorkspaceSvg;
         try {
             const dom = Blockly.Xml.textToDom(xml);
             pxt.blocks.domToWorkspaceNoEvents(dom, workspace);
