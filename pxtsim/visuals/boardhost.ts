@@ -152,7 +152,7 @@ namespace pxsim.visuals {
             return this.view;
         }
 
-        public screenshotAsync(): Promise<ImageData> {
+        public screenshotAsync(width?: number): Promise<ImageData> {
             const svg = this.view.cloneNode(true) as SVGSVGElement;
             svg.setAttribute('width', this.view.width.baseVal.value + "");
             svg.setAttribute('height', this.view.height.baseVal.value + "");
@@ -166,7 +166,12 @@ namespace pxsim.visuals {
                     const cvs = document.createElement("canvas");
                     cvs.width = img.width;
                     cvs.height = img.height;
-                    if (cvs.width < 200) {
+
+                    // check if a width or a height was specified
+                    if (width > 0) {
+                        cvs.width = width;
+                        cvs.height = (img.width / cvs.width * img.height) | 0;
+                    } else if (cvs.width < 200) {
                         cvs.width *= 2;
                         cvs.height *= 2;
                     } else if (cvs.width > 480) {

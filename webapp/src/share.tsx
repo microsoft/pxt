@@ -243,8 +243,9 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                         });
                     } else {
                         encoder.start();
+                        const gifwidth = pxt.appTarget.appTheme.simGifWidth || 160;
                         this.setState({ recordingState: ShareRecordingState.GifRecording },
-                            () => simulator.driver.startRecording());
+                            () => simulator.driver.startRecording(gifwidth));
                     }
                 })
                 .catch(e => {
