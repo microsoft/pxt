@@ -792,9 +792,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (this.debugVariables) this.debugVariables.update();
 
         function getValueOfVariable(name: string): pxsim.Variables {
+            // Variable names could have spaces.
+            let correctedName = name.replace(/\s/g, '_');
             for (let k of Object.keys(globals)) {
                 let n = k.replace(/___\d+$/, "");
-                if (name === n) {
+                if (correctedName === n) {
                     let v = globals[k]
                     return v;
                 }
