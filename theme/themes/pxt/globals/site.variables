@@ -34,13 +34,13 @@
      Fonts
 --------------------*/
 
-@importGoogleFonts: false;
+@importGoogleFonts: true;
 
-@docsHeaderFont: "Helvetica Neue", Helvetica, Arial, sans-serif;
-@docsPageFont: "Helvetica Neue", Helvetica, Arial, sans-serif;
+@docsHeaderFont: Lato,"Helvetica Neue", Helvetica, Arial, sans-serif;
+@docsPageFont: Lato, "Helvetica Neue", Helvetica, Arial, sans-serif;
 
-@emSize      : 14px;
-@fontSize    : 12pt;
+@emSize      : 18px;
+@fontSize    : 18px;
 
 /*-------------------
    Links

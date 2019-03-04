@@ -4,11 +4,11 @@
 
 /* Background and foreground */
 @docsBackgroundColor: white;
-@docsTextColor: #333;
+@docsTextColor: #505473;
 @docsLineHeight: 1.7;
 
 /* Text color */
-@docsHeadingColor: @docsTextColor;
+@docsHeadingColor: #1A1C33;
 
 /* Link color */
 @docsLinkColor: #4183c4;
@@ -54,7 +54,7 @@
 
 #docs {
     background-color: @docsBackgroundColor;
-    font-family: @docsPageFont !important;
+    font-family: @docsPageFont ;
     color: @docsTextColor;
     * {
         -webkit-overflow-scrolling: touch;
@@ -64,8 +64,9 @@
         -webkit-font-smoothing: antialiased;
     }
     h1, h2, h3, h4, h5, h6 {
-        font-family: @docsHeaderFont !important;
+        font-family: @docsHeaderFont;
         color: @docsHeadingColor;
+        font-weight: 400;
     }
     h1 {
         margin-bottom: .85em;
@@ -126,6 +127,11 @@
     code.lang-typescript {
         overflow-wrap: break-word;
     }
+    /*Header*/
+    .main.menu .header.item{
+            font-weight: 400;
+    }
+
     /* Cards */
     .ui.card {
         padding: 0 !important;
@@ -163,8 +169,6 @@
     .toc .inverted .item a.header.active {
         color: @primaryColor;
     }
-
-  
     .toc a.item {
         color: black;
         padding: 10px 15px !important;
@@ -250,3 +254,12 @@
     }
 }
 .replaceDocsAvatar();
+
+.footer{
+    > .container{
+        padding: 3em 0;
+    }
+    .poweredBy a{
+        display: inline-block;
+    }
+}
