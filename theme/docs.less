@@ -163,11 +163,13 @@
         margin-right: 1em;
     }
     .toc .inverted .item a.header {
-        color: black;
+        color: black !important;
+        font-weight: normal;
     }
 
     .toc .inverted .item a.header.active {
-        color: @primaryColor;
+        color: @primaryColor !important;
+        font-weight: normal;
     }
     .toc a.item {
         color: black;
@@ -190,7 +192,8 @@
     }
 
     .tocmenu .menu {
-        padding-left: 20px;
+        padding-left: 26px;
+        margin:0px;
         font-family: @docsPageFont;
     }
 
@@ -206,10 +209,11 @@
     
     .ui.inverted.menu .item.bold {
         font-weight: bold;
+        margin-left: -4px;
     }
     
     .ui.inverted.menu .active.item {
-        color: @primaryColor;
+        color: @primaryColor !important;
     }
 
     /* Buttons */
@@ -237,6 +241,39 @@
     }
     table tr:nth-child(2n) {
         background-color: #f8f8f8;
+    }
+
+    a.header:before{
+        content: '';
+        display: inline-block;
+        -webkit-mask: url(static/folder-menu.svg) no-repeat;
+        mask: url(static/folder-menu.svg) no-repeat;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        height:17px;  
+        width:17px; 
+        background-color: @primaryColor;
+        position: relative;
+        top: 6px;
+        right: 5px;
+    }
+    
+    a.item:before{
+        content: '';
+        position: relative;
+      top: -2px;
+      height:20px;  
+    }
+
+    div.item{
+        margin-left:19px;
+    }
+    
+    div.item > div.menu > a.item:after{
+        content: '';
+        position: relative;
+      top: -2px;
+      height:20px;  
     }
 
     
