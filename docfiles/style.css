@@ -282,6 +282,7 @@ svg {
 
 .ui.menu.tocmenu .menuContainer {
     margin-bottom: 45px;
+    margin-top:0px;
 }
 
 .cc-banner {
