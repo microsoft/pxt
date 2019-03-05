@@ -34,10 +34,10 @@
      Fonts
 --------------------*/
 
-@importGoogleFonts: true;
+@importGoogleFonts: false;
 
-@docsHeaderFont: Lato,"Helvetica Neue", Helvetica, Arial, sans-serif;
-@docsPageFont: Lato, "Helvetica Neue", Helvetica, Arial, sans-serif;
+@docsHeaderFont: "Helvetica Neue", Helvetica, Arial, sans-serif;
+@docsPageFont: "Helvetica Neue", Helvetica, Arial, sans-serif;
 
 @emSize      : 18px;
 @fontSize    : 18px;
