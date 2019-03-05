@@ -152,14 +152,14 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
             let type = this.variableType(v);
             const onClick = v.value && v.value.id ? () => this.toggle(v) : undefined;
 
-            r.push(<tr key={(parent || "") + variable} className="item" style={{padding: "0em",}}>
+            r.push(<tr key={(parent || "") + variable} className="item">
                 <td className={`variable ${v.prevValue !== undefined ? "changed" : ""}`}
-                    onClick={onClick} onMouseOver={this.onMouseOverVariable} style={{ padding: 0.2, }}>
+                    onClick={onClick} onMouseOver={this.onMouseOverVariable}>
                     <i className={`${(v.children ? "down triangle icon" : "right triangle icon") + ((v.value && v.value.hasFields) ? "" : " transparent")}`} style={{ marginLeft: margin }} ></i>
                     <span>{variable + ':'}</span>
                 </td>
                 <td style={{ padding: 0.2 }}>
-                    <div className="detail">
+                    <div className="variable detail">
                         <span className={`varval ${type}`}>{DebuggerVariables.renderValue(v.value)}</span>
                         <span className="previousval">{(oldValue !== "undefined" && oldValue !== newValue) ? `${oldValue}` : ''}</span>
                     </div>
@@ -179,17 +179,17 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
 
         return Object.keys(variables).length == 0 ? <div /> :
             <div className={`ui segment debugvariables ${frozen ? "frozen" : ""}`}>
-                <div className="ui collapsing celled table">
-                <thead>
-                    <tr>
-                        <th>{variableTableHeader}</th>
-                        <th>{valueTableHeader}</th>
-                    </tr>
-                </thead>
+                <table className="ui collapsing celled table">
+                    <thead>
+                        <tr>
+                            <th>{variableTableHeader}</th>
+                            <th>{valueTableHeader}</th>
+                        </tr>
+                    </thead>
                     <tbody>
                         {this.renderVariables(variables)}
                     </tbody>
-                </div>
+                </table>
             </div>;
     }
 }
