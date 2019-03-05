@@ -11,7 +11,7 @@
     "appTheme": {
         "logoUrl": "https://makecode.com/",
         "logo": "./static/logo.svg",
-        "docsLogo": "/static/logo.svg",
+        "docsLogo": "./static/logo.svg",
         "portraitLogo": "./static/logo.svg",
         "homeUrl": "https://makecode.com/",
         "cardLogo": "./static/logo.svg",

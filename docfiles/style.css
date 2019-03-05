@@ -219,7 +219,7 @@ svg {
 }
 
 .fixed.menu > .container > .item {
-    margin: 10px;
+    padding: 26px;
 }
 
 /* breadcrumbs in inverted view */
