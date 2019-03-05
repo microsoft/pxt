@@ -6,6 +6,7 @@
 @docsBackgroundColor: white;
 @docsTextColor: #505473;
 @docsLineHeight: 1.7;
+@docsPrimaryColorLighter: fadeout(@primaryColor, 95%);
 
 /* Text color */
 @docsHeadingColor: #1A1C33;
@@ -31,7 +32,7 @@
 #app-header {
 
     color: white;
-    padding-left: 1rem;
+    padding-left: 0px;
     padding-right: 1rem;
     padding-top: 0;
     padding-bottom: 0;
@@ -46,12 +47,19 @@
             margin-right: 3px;
         }
     }
+
+    
+
+    img{margin-right:7px}
+    
 }
 
 .ui.inverted.menu {
     color: black;
     background-color: @primaryColor;
 }
+
+
 
 
 #docs {
@@ -160,6 +168,7 @@
     .ui.breadcrumb .divider {
         color: black;
     }
+
     /* TOC */
     .toc .inverted .item.title a.header {
         margin-right: 1em;
@@ -167,6 +176,7 @@
     .toc .inverted .item a.header {
         color: black !important;
         font-weight: normal;
+        margin-left: 19px;
     }
 
     .toc .inverted .item a.header.active {
@@ -176,6 +186,10 @@
     .toc a.item {
         color: black;
         padding: 10px 15px !important;
+    }
+
+    .toc a.item:hover{
+        background: rgba(0, 0, 0, 0.05);
     }
     .toc .inverted a.item {
         color: rgb(0, 0, 0);
@@ -194,9 +208,10 @@
     }
 
     .tocmenu .menu {
-        padding-left: 26px;
+        padding-left: 0px;
         margin:0px;
         font-family: @docsPageFont;
+        margin-left: -19px;
     }
 
     .ui.inverted.menu .item{
@@ -205,7 +220,11 @@
 
     .ui.inverted.menu {
         color: black;
-        background-color: @backgroundToc;
+        background-color: @backgroundGrey;
+    }
+
+    div.menu > a.item{
+        padding-left:64px !important;
     }
     
     
@@ -254,32 +273,136 @@
         mask-size: contain;
         height:17px;  
         width:17px; 
-        background-color: @primaryColor;
+        background-color: @primaryColor !important;
         position: relative;
         top: 6px;
         right: 5px;
     }
-    
-    a.item:before{
+
+    div.item > div.menu > a.item.active:before{
         content: '';
+        display: inline-block;
+        -webkit-mask: url(static/folder-menu.svg) no-repeat;
+        mask: url(static/folder-menu.svg) no-repeat;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        height:17px;  
+        width:17px; 
+        background-color: @primaryColor !important;
         position: relative;
-      top: -2px;
-      height:20px;  
+        top: 4px;
+        right: 1px;
+        transform: rotate(-90deg);
     }
 
-    div.item{
-        margin-left:19px;
+    .header.active + .menu{
+        background-color: @docsPrimaryColorLighter;
     }
     
-    div.item > div.menu > a.item:after{
-        content: '';
-        position: relative;
-      top: -2px;
-      height:20px;  
+}
+
+
+#docsMobile {
+    
+    background-color: @backgroundGrey !important;
+
+    .item{
+        color: black;
+        line-height: 1.16666667em;
     }
+
+   
+    
+    
+    .item.bold {
+        font-weight: bold;
+        margin-left: -4px;
+    }
+    
+
+    .ui.list.menuContainer{
+
+        color: black;
+        a.item{
+            font-weight: normal;
+            padding: 10px 15px !important;
+        }
+
+        a.item:hover{
+        background: rgba(0, 0, 0, 0.05);
+        }
+
+        div.item{
+            margin-left: 15px;
+        }
+
+        .menu {
+            padding-left: 0px;
+            margin:0px;
+            font-family: @docsPageFont;
+            margin-left: -19px;
+        }
+
+        div.menu > a.item{
+            padding-left:64px !important;
+        }
+    
+        .active.item, .header.active {
+            color: @primaryColor !important;
+        }
+
+        .header{
+            color: black !important;
+            font-weight: normal;
+            margin-left: 5px;
+        }
+    
+    
+        a.header:before{
+            content: '';
+            display: inline-block;
+            -webkit-mask: url(static/folder-menu.svg) no-repeat;
+            mask: url(static/folder-menu.svg) no-repeat;
+            -webkit-mask-size: contain;
+            mask-size: contain;
+            height:17px;  
+            width:17px; 
+            background-color: @primaryColor !important;
+            position: relative;
+            top: 6px;
+            right: 5px;
+        }
+    
+        div.item > div.menu > a.item.active:before{
+            content: '';
+            display: inline-block;
+            -webkit-mask: url(static/folder-menu.svg) no-repeat;
+            mask: url(static/folder-menu.svg) no-repeat;
+            -webkit-mask-size: contain;
+            mask-size: contain;
+            height:17px;  
+            width:17px; 
+            background-color: @primaryColor !important;
+            position: relative;
+            top: 4px;
+            right: 1px;
+            transform: rotate(-90deg);
+        }
+    
+        .header.active + .menu{
+            background-color: @docsPrimaryColorLighter;
+        }
+    }
+
+
+    
+
+    
 
     
 }
+
+
 
 .sideDocs #sidedocsbar a {
     color: @docsLinkColor;

@@ -149,6 +149,7 @@ svg {
 
 .header .ui.mini.image {
     display: inline !important;
+    margin-right: 7px;
 }
 
 /* page layout */

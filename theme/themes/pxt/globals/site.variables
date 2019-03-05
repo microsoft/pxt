@@ -20,7 +20,7 @@
 @brown:#00BCF2;
 @grey:#505050;
 @lightGrey: #d9d9d9;
-@backgroundToc: #F0F2F7;
+@backgroundGrey: #F0F2F7;
 
 @greenTextColor: darken(@green, 5);
 
@@ -135,7 +135,7 @@
 --------------------*/
 
 @mainMenuBackground: @white;
-@mainMenuInvertedBackground: @backgroundToc;
+@mainMenuInvertedBackground: @backgroundGrey;
 @mainMenuTutorialBackground: @orange;
 
 @mainMenuHeight: 4.0rem;
