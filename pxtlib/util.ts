@@ -148,6 +148,17 @@ namespace ts.pxtc.Util {
         }
     }
 
+    export function blobReadAsDataURL(blob: Blob): Promise<string> {
+        if (!blob) return Promise.resolve(undefined);
+
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(<string>reader.result);
+            reader.onerror = e => reject(e);
+            reader.readAsDataURL(blob);
+        });
+    }
+
     export function fileReadAsBufferAsync(f: File): Promise<Uint8Array> { // ArrayBuffer
         if (!f)
             return Promise.resolve<Uint8Array>(null);

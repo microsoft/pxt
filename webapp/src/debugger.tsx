@@ -31,6 +31,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         this.state = {
             variables: {}
         }
+        this.onMouseOverVariable = this.onMouseOverVariable.bind(this);
     }
 
     clear() {
@@ -92,6 +93,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
     }
 
     private toggle(v: Variable) {
+        // We have to take care of the logic for nested looped variables. Currently they break this implementation.
         if (v.children) {
             delete v.children;
             this.setState({ variables: this.state.variables })
@@ -112,36 +114,82 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         }
     }
 
-    private renderVariables(variables: pxt.Map<Variable>, parent?: string): JSX.Element[] {
-        const varcolor = pxt.toolbox.getNamespaceColor('variables');
-        let r: JSX.Element[] = []
-        Object.keys(variables).forEach(variable => {
+    private variableType(variable: Variable): string {
+        let val = variable.value;
+        if (val == null) return "undefined";
+        let type = typeof val
+        switch (type) {
+            case "string":
+            case "number":
+            case "boolean":
+                return type;
+            case "object":
+                if (val.type) return val.type;
+                if (val.preview) return val.preview;
+                if (val.text) return val.text;
+                return "object";
+            default:
+                return "unknown";
+        }
+    }
+
+    private onMouseOverVariable(): void {};
+
+    private renderVariables(variables: pxt.Map<Variable>, parent?: string, depth?: number): JSX.Element[] {
+        let r: JSX.Element[] = [];
+        let varNames = Object.keys(variables);
+        if (!parent) {
+            varNames = varNames.sort((var_a, var_b) => {
+                return this.variableType(variables[var_a]).localeCompare(this.variableType(variables[var_b])) || var_a.toLowerCase().localeCompare(var_b.toLowerCase());
+            })
+        }
+        depth = depth || 0;
+        let margin = depth * 1.5 + 'em';
+        varNames.forEach(variable => {
             const v = variables[variable];
+            const oldValue = DebuggerVariables.renderValue(v.prevValue);
+            const newValue = DebuggerVariables.renderValue(v.value);
+            let type = this.variableType(v);
             const onClick = v.value && v.value.id ? () => this.toggle(v) : undefined;
-            r.push(<div key={(parent || "") + variable} className="item">
-                <div role="listitem" className={`ui label image variable ${v.prevValue !== undefined ? "changed" : ""}`} style={{ backgroundColor: varcolor }}
-                    onClick={onClick}>
-                    <span className="varname">{variable}</span>
-                    <div className="detail">
-                        <span className="varval">{DebuggerVariables.renderValue(v.value)}</span>
-                        <span className="previousval">{v.prevValue !== undefined ? `${DebuggerVariables.renderValue(v.prevValue)}` : ''}</span>
+
+            r.push(<tr key={(parent || "") + variable} className="item">
+                <td className={`variable ${v.prevValue !== undefined ? "changed" : ""}`}
+                    onClick={onClick} onMouseOver={this.onMouseOverVariable}>
+                    <i className={`${(v.children ? "down triangle icon" : "right triangle icon") + ((v.value && v.value.hasFields) ? "" : " transparent")}`} style={{ marginLeft: margin }} ></i>
+                    <span>{variable + ':'}</span>
+                </td>
+                <td style={{ padding: 0.2 }}>
+                    <div className="variable detail">
+                        <span className={`varval ${type}`}>{DebuggerVariables.renderValue(v.value)}</span>
+                        <span className="previousval">{(oldValue !== "undefined" && oldValue !== newValue) ? `${oldValue}` : ''}</span>
                     </div>
-                </div>
-            </div>);
+                </td>
+            </tr>
+            );
             if (v.children)
-                r = r.concat(this.renderVariables(v.children, variable));
+                r = r.concat(this.renderVariables(v.children, variable, depth + 1));
         })
         return r;
     }
 
     renderCore() {
         const { variables, frozen } = this.state;
+        const variableTableHeader = lf("Variable");
+        const valueTableHeader = lf("Type/Value");
 
         return Object.keys(variables).length == 0 ? <div /> :
             <div className={`ui segment debugvariables ${frozen ? "frozen" : ""}`}>
-                <div className="ui middle aligned list">
-                    {this.renderVariables(variables)}
-                </div>
+                <table className="ui collapsing celled table">
+                    <thead>
+                        <tr>
+                            <th>{variableTableHeader}</th>
+                            <th>{valueTableHeader}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {this.renderVariables(variables)}
+                    </tbody>
+                </table>
             </div>;
     }
 }

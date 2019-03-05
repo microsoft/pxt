@@ -2013,7 +2013,7 @@ export class ProjectView
     startSimulator(debug?: boolean, clickTrigger?: boolean) {
         pxt.tickEvent('simulator.start');
         pxt.debug(`start sim (autorun ${this.state.autoRun})`)
-        if (!this.shouldStartSimulator()) {
+        if (!this.shouldStartSimulator() && !debug) {
             pxt.log("Ignoring call to start simulator, either already running or we shouldn't start.");
             return Promise.resolve();
         }
@@ -2079,6 +2079,8 @@ export class ProjectView
                     if (resp.outfiles[pxtc.BINARY_JS]) {
                         if (!cancellationToken.isCancelled()) {
                             simulator.run(pkg.mainPkg, opts.debug, resp, this.state.mute, this.state.highContrast, pxt.options.light, opts.clickTrigger)
+                            this.blocksEditor.setBreakpointsMap(resp.breakpoints);
+                            this.blocksEditor.setBreakpointsFromBlocks();
                             if (!cancellationToken.isCancelled()) {
                                 // running state is set by the simulator once the iframe is loaded
                                 this.setState({ showParts: simulator.driver.runOptions.parts.length > 0 })
@@ -2129,8 +2131,17 @@ export class ProjectView
 
     toggleDebugging() {
         const state = !this.state.debugging;
+        pxt.log("turning debugging mode to " + state);
         this.setState({ debugging: state, tracing: false });
+        let blocks = this.blocksEditor.editor.getAllBlocks();
+        blocks.forEach(block => {
+            if (block.nextConnection && block.previousConnection) {
+                block.enableBreakpoint(state);
+            }
+        });
+
         this.restartSimulator(state);
+        this.renderCore()
     }
 
     dbgPauseResume() {
@@ -2714,6 +2725,7 @@ export class ProjectView
         const sideDocs = !(sandbox || targetTheme.hideSideDocs);
         const tutorialOptions = this.state.tutorialOptions;
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
+        const inDebugMode = this.state.debugging;
         const inHome = this.state.home && !sandbox;
         const inEditor = !!this.state.header && !inHome;
         const { lightbox, greenScreen } = this.state;
@@ -2745,6 +2757,7 @@ export class ProjectView
             pxt.shell.layoutTypeClass(),
             inHome ? 'inHome' : '',
             inTutorial ? 'tutorial' : '',
+            inDebugMode ? 'debugger' : '',
             pxt.options.light ? 'light' : '',
             pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : '',
             hideMenuBar ? 'hideMenuBar' : '',

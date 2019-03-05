@@ -73,3 +73,7 @@
 .tutorial .ui.inverted.menu {
     background: @mainMenuTutorialBackground !important;
 }
+
+.debugger .ui.inverted.menu {
+    background: @DebuggerBackgroundPrimaryColor !important;
+}

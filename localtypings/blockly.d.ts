@@ -1370,6 +1370,25 @@ declare module Blockly {
             setCommentText(text: string): void;
     
             /**
+             * Set this Block's breakpoint as enabled or disabled.
+             * @param {boolean} enable A boolean definining if the breakpoint should be enabled or disabled.
+             */
+            enableBreakpoint(enable: boolean): void;
+    
+            /**
+             * Returns a boolean representing if the block has a breakpoint set or not 
+             * (regardless of whether it is enabled).
+             * @return {boolean} Block's breakpoint set or not.
+             */
+            isBreakpointSet(): boolean;
+    
+            /**
+             * Set this block's breakpoint.
+             * @param {boolean} set Boolean representing if the breakpoint is now set or not.
+             */
+            setBreakpoint(set: boolean): void;
+    
+            /**
              * Set this block's output shape.
              * e.g., null, OUTPUT_SHAPE_HEXAGONAL, OUTPUT_SHAPE_ROUND, OUTPUT_SHAPE_SQUARE.
              * @param {?number} outputShape Value representing output shape
@@ -2727,7 +2746,13 @@ declare module Blockly {
             warning: Blockly.Warning;
     
             /**
-             * Returns a list of mutator, comment, and warning icons.
+             * Block's breakpoint icon (if any).
+             * @type {Blockly.Breakpoint}
+             */
+            breakpoint: Blockly.Breakpoint;
+    
+            /**
+             * Returns a list of breakpoint, mutator, comment, and warning icons.
              * @return {!Array} List of icons.
              */
             getIcons(): any[];
@@ -2938,6 +2963,12 @@ declare module Blockly {
              * @return {string} Block's comment.
              */
             getCommentText(): string;
+    
+            /**
+             * Set this blockSvg's breakpoint as enabled.
+             * @param {boolean} enable Boolean representing if the breakpoint is being enabled or disabled.
+             */
+            enableBreakpoint(enable: boolean): void;
     
             /**
              * Set this block's comment text.
@@ -13460,6 +13491,64 @@ declare module Blockly.pxtBlocklyUtils {
     function hasMatchingArgumentReporter(targetBlock: Blockly.Block, reporter: Blockly.Block): boolean;
 }
 
+declare module Blockly {
+
+    class Breakpoint extends Breakpoint__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class Breakpoint__Class extends Blockly.Icon__Class  { 
+    
+            /**
+             * Class for a breakpoint.
+             * @param {!Blockly.Block} block The block associated with this breakpoint.
+             * @extends {Blockly.Icon}
+             * @constructor
+             */
+            constructor(block: Blockly.Block);
+    
+            /**
+             * Does this icon get hidden when the block is collapsed.
+             */
+            collapseHidden: any /*missing*/;
+    
+            /**
+             * Draw the breakpoint icon.
+             * @param {!Element} group The icon group.
+             * @private
+             */
+            drawIcon_(group: Element): void;
+    
+            /**
+             * Enable/Disable the breakpoint icon.
+             * @private
+             */
+            enableBreakpoint(): void;
+    
+            /**
+             * Dispose of this breakpoint Icon.
+             */
+            dispose(): void;
+    
+            /**
+             * Toggle the breakpoint icon between set and unset.
+             * @param {boolean} visible True if the breakpoint icon should be set.
+             */
+            setVisible(visible: boolean): void;
+    
+            /**
+             * Is this breakpoint set?
+             * @return {boolean} True if the breakpoint is Set.
+             */
+            isVisible(): boolean;
+    
+            /**
+             * Notification that the icon has moved.
+             * @param {!goog.math.Coordinate} xy Absolute location in workspace coordinates.
+             */
+            setIconLocation(xy: goog.math.Coordinate): void;
+    } 
+    
+}
+
 declare module Blockly.PXTUtils {
 
     /**
@@ -14851,7 +14940,7 @@ declare module Blockly.Events {
             /**
              * Class for a UI event.
              * @param {Blockly.Block} block The affected block.
-             * @param {string} element One of 'selected', 'comment', 'mutator', etc.
+             * @param {string} element One of 'selected', 'comment', 'mutator', 'breakpoint' etc.
              * @param {*} oldValue Previous value of element.
              * @param {*} newValue New value of element.
              * @extends {Blockly.Events.Abstract}
