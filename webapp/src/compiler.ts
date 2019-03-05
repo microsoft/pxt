@@ -63,20 +63,21 @@ export function compileAsync(options: CompileOptions = {}): Promise<pxtc.Compile
     return pkg.mainPkg.getCompileOptionsAsync(trg)
         .then(opts => {
             if (options.debug) {
-                opts.breakpoints = true
-                opts.justMyCode = true
+                opts.breakpoints = true;
+                opts.justMyCode = true;
+                opts.testMode = true;
             }
             if (options.trace) {
-                opts.breakpoints = true
-                opts.justMyCode = true
+                opts.breakpoints = true;
+                opts.justMyCode = true;
                 opts.trace = true;
             }
-            opts.computeUsedSymbols = true
+            opts.computeUsedSymbols = true;
             if (options.forceEmit)
                 opts.forceEmit = true;
             if (/test=1/i.test(window.location.href))
-                opts.testMode = true
-            return opts
+                opts.testMode = true;
+            return opts;
         })
         .then(compileCoreAsync)
         .then(resp => {

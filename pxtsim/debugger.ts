@@ -91,22 +91,35 @@ namespace pxsim {
                 case "boolean":
                     return v;
                 case "function":
-                    return { text: "(function)" }
+                    return {
+                        text: "(function)",
+                        type: "function",
+                    }
                 case "undefined":
                     return null;
                 case "object":
                     if (!v) return null;
                     if (v instanceof RefObject) {
                         heap[(v as RefObject).id] = v;
+                        let preview = RefObject.toDebugString(v);
+                        let type = preview.startsWith('[') ? "array" : preview;
                         return {
                             id: (v as RefObject).id,
-                            preview: RefObject.toDebugString(v)
+                            preview: preview,
+                            hasFields: (v as any).fields !== null || preview.startsWith('['),
+                            type: type,
                         }
                     }
                     if (v._width && v._height) {
-                        return { text: v._width + 'x' + v._height }
+                        return {
+                            text: v._width + 'x' + v._height,
+                            type: "image",
+                        }
                     }
-                    return { text: "(object)" }
+                    return {
+                        text: "(object)",
+                        type: "object",
+                    }
                 default:
                     throw new Error();
             }
@@ -118,6 +131,17 @@ namespace pxsim {
                 if (!/^__/.test(k) && /___\d+$/.test(k)) {
                     r[k.replace(/___\d+$/, '')] = valToJSON(frame[k])
                 }
+            }
+            if (frame.fields) {
+                // Fields of an object.
+                for (let k of Object.keys(frame.fields)) {
+                    r[k.replace(/___\d+$/, '')] = valToJSON(frame.fields[k])
+                }
+            } else if (Array.isArray(frame.data)) {
+                // This is an Array.
+               (frame.data as any[]).forEach((element, index) => {
+                    r[index] = valToJSON(element);
+                });
             }
             return r
         }

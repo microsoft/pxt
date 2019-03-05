@@ -24,10 +24,15 @@ namespace pxsim {
             for (let i = 0; i < this.data.length; ++i) {
                 if (i > 0)
                     s += ",";
-                s += RefObject.toDebugString(this.data[i]);
-                if (s.length > 15) {
+                let newElem = RefObject.toDebugString(this.data[i]);
+                if (s.length + newElem.length > 20) {
+                    if (i == 0) {
+                        s += newElem.substr(0,20);
+                    }
                     s += "..."
                     break;
+                } else {
+                    s += newElem;
                 }
             }
             s += "]"
