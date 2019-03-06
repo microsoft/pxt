@@ -5186,9 +5186,9 @@ declare module Blockly.DropDownDiv {
 
     /**
      * Provide the div for inserting content into the drop-down.
-     * @return {Element} Div to populate with content
+     * @return {HTMLElement} Div to populate with content
      */
-    function getContentDiv(): Element;
+    function getContentDiv(): HTMLElement;
 
     /**
      * Clear the content of the drop-down.
@@ -6865,6 +6865,44 @@ declare module Blockly {
              * @private
              */
             showEditor_(): void;
+    
+            /**
+             * Add a listener for mouse and keyboard events in the menu and its items.
+             * @param {!goog.ui.Menu} menu The menu to add listeners to.
+             * @private
+             */
+            addActionListener_(menu: goog.ui.Menu): void;
+    
+            /**
+             * Create and populate the menu and menu items for this dropdown, based on
+             * the options list.
+             * @return {!goog.ui.Menu} The populated dropdown menu.
+             * @private
+             */
+            createMenu_(): goog.ui.Menu;
+    
+            /**
+             * Place the menu correctly on the screen, taking into account the dimensions
+             * of the menu and the dimensions of the screen so that it doesn't run off any
+             * edges.
+             * @param {!goog.ui.Menu} menu The menu to position.
+             * @private
+             */
+            positionMenu_(menu: goog.ui.Menu): void;
+    
+            /**
+             * Create and render the menu widget inside Blockly's widget div.
+             * @param {!goog.ui.Menu} menu The menu to add to the widget div.
+             * @private
+             */
+            createWidget_(menu: goog.ui.Menu): void;
+    
+            /**
+             * Set the colours of the dropdown div to match the colours of the field or
+             * parent block.
+             * @private
+             */
+            updateColours_(): void;
     
             /**
              * Callback for when the drop-down is hidden.
@@ -10117,6 +10155,14 @@ declare module Blockly {
              * @return {number} Horizontal offset for next item to draw.
              */
             renderIcon(cursorX: number): number;
+    
+            /**
+             * Move the icon.
+             * @param {number} cursorX Horizontal offset at which to position the icon.
+             * @param {number} cursorY Vertical offset at which to position the icon.
+             * @return {number} Horizontal offset for next item to draw.
+             */
+            moveIcon(cursorX: number, cursorY: number): number;
     
             /**
              * Notification that the icon has moved.  Update the arrow accordingly.
@@ -13509,6 +13555,11 @@ declare module Blockly {
              * Does this icon get hidden when the block is collapsed.
              */
             collapseHidden: any /*missing*/;
+    
+            /**
+             * Create the icon on the block.
+             */
+            createIcon(): void;
     
             /**
              * Draw the breakpoint icon.
@@ -18166,9 +18217,9 @@ declare module Blockly {
     
             /**
              * Get the SVG element that contains this workspace.
-             * @return {Element} SVG element.
+             * @return {SVGElement} SVG element.
              */
-            getParentSvg(): Element;
+            getParentSvg(): SVGElement;
     
             /**
              * Translate this workspace to new coordinates.
