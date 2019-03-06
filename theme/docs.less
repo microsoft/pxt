@@ -7,6 +7,7 @@
 @docsTextColor: #505473;
 @docsLineHeight: 1.7;
 @docsPrimaryColorLighter: fadeout(@primaryColor, 95%);
+@docsPrimaryColorLighter2: fadeout(@primaryColor, 90%);
 
 /* Text color */
 @docsHeadingColor: #1A1C33;
@@ -62,7 +63,10 @@
 #togglesidebar + div.menu > a{
 height:100%;
 }
-
+/*Search input*/
+.search.link.icon{
+    color: @primaryColor;
+}
 
 #docs {
     background-color: @docsBackgroundColor;
@@ -172,13 +176,25 @@ height:100%;
     }
 
     /* Breadcrumb */
-    .ui.breadcrumb .divider {
-        color: black;
+    .ui.breadcrumb {
+        .divider {
+        //color: black;
+        color: @primaryColor;
+        margin-right: .25rem;
+        margin-right: .25rem;
+        }
+        a{
+            color: @docsHeadingColor;
+        }
+        a.active{
+            color: @primaryColor;
+        }
     }
 
     /* TOC */
     .toc .inverted .item.title a.header {
         margin-right: 1em;
+        font-family: @docsPageFont !important;
     }
     .toc .inverted .item a.header {
         color: black !important;
@@ -192,11 +208,11 @@ height:100%;
     }
     .toc a.item {
         color: black;
-        padding: 10px 15px !important;
+        padding: 11px 15px !important;
     }
 
     .toc a.item:hover{
-        background: rgba(0, 0, 0, 0.05);
+        background: @docsPrimaryColorLighter2;
     }
     .toc .inverted a.item {
         color: rgb(0, 0, 0);
@@ -226,7 +242,7 @@ height:100%;
     }
 
     .ui.inverted.menu {
-        color: black;
+        color: #1A1C33 !important;
         background-color: @backgroundGrey;
     }
 
@@ -332,11 +348,12 @@ height:100%;
         color: black;
         a.item{
             font-weight: normal;
-            padding: 10px 15px !important;
+            padding: 12px 15px !important;
         }
 
         a.item:hover{
-        background: rgba(0, 0, 0, 0.05);
+        text-decoration: underline;
+        background: @docsPrimaryColorLighter2;
         }
 
         div.item{
@@ -352,6 +369,9 @@ height:100%;
 
         div.menu > a.item{
             padding-left:64px !important;
+        }
+        div.menu > a.item.active{
+            font-weight: 600;
         }
     
         .active.item, .header.active {
