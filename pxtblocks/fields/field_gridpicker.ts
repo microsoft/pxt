@@ -383,15 +383,15 @@ namespace pxtblockly {
             this.createTooltip_();
 
             const tableContainer = document.createElement("div");
-            this.positionMenu_(tableContainer);
+            this.positionTable_(tableContainer);
         }
 
-        private positionMenu_(tableContainer: HTMLElement) {
+        private positionTable_(tableContainer: HTMLElement) {
             // Record viewport dimensions before adding the dropdown.
             const viewportBBox = Blockly.utils.getViewportBBox();
             const anchorBBox = this.getAnchorDimensions_();
 
-            const { paddingContainer, scrollContainer } = this.createWidget_(tableContainer);
+            const { paddingContainer, scrollContainer } = this.createTableWidget(tableContainer);
 
             const containerSize = {
                 width: paddingContainer.offsetWidth,
@@ -455,7 +455,7 @@ namespace pxtblockly {
             return boundingBox;
         };
 
-        private createWidget_(tableContainer: HTMLElement) {
+        private createTableWidget(tableContainer: HTMLElement) {
             const div = Blockly.WidgetDiv.DIV;
 
             const options = this.getOptions();
