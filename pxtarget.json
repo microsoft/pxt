@@ -9,6 +9,7 @@
         "jsRefCounting": true
     },
     "appTheme": {
+        "accentColor": "#E2008C",
         "logoUrl": "https://makecode.com/",
         "logo": "./static/logo.svg",
         "docsLogo": "./static/logo.svg",
