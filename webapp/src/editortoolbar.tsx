@@ -134,13 +134,13 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const trace = !!targetTheme.enableTrace;
         const tracing = this.props.parent.state.tracing;
         const traceTooltip = tracing ? lf("Disable Slow-Mo") : lf("Slow-Mo")
-        const debug = !!targetTheme.debugger && !readOnly;
+        const debug = !!pxt.editor.experiments.isEnabledByKey('experiments-debugger') && !readOnly;
         const debugging = this.props.parent.state.debugging;
         const debugTooltip = debugging ? lf("Disable Debugging") : lf("Debugging")
         const downloadIcon = pxt.appTarget.appTheme.downloadIcon || "download";
         const downloadText = pxt.appTarget.appTheme.useUploadMessage ? lf("Upload") : lf("Download");
 
-        const bigRunButtonTooltip = [lf("Stop"),lf("Starting"), lf("Run Code in Game")][simState || 0];
+        const bigRunButtonTooltip = [lf("Stop"), lf("Starting"), lf("Run Code in Game")][simState || 0];
 
         let downloadButtonClasses = "";
         let saveButtonClasses = "";

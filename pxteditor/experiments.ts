@@ -96,6 +96,10 @@ namespace pxt.editor.experiments {
         return all().some(experiment => isEnabled(experiment));
     }
 
+    export function isEnabledByKey(experimentKey: string): boolean {
+        return !!pxt.storage.getLocal(experimentKey);
+    }
+
     export function isEnabled(experiment: Experiment): boolean {
         return !!pxt.storage.getLocal(key(experiment));
     }

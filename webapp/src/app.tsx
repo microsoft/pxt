@@ -2729,7 +2729,7 @@ export class ProjectView
         const inHome = this.state.home && !sandbox;
         const inEditor = !!this.state.header && !inHome;
         const { lightbox, greenScreen } = this.state;
-        const simDebug = !!targetTheme.debugger;
+        const simDebug = pxt.editor.experiments.isEnabledByKey('experiments-debugger');
 
         const { hideMenuBar, hideEditorToolbar, transparentEditorToolbar } = targetTheme;
         const isHeadless = simOpts && simOpts.headless;
@@ -2793,7 +2793,7 @@ export class ProjectView
                     <tutorial.TutorialCard ref="tutorialcard" parent={this} />
                 </div> : undefined}
                 <div id="simulator">
-                    {simDebug ? <debug.DebuggerToolbar parent={this} /> : undefined}
+                    {(simDebug && inDebugMode) ? <debug.DebuggerToolbar parent={this} /> : undefined}
                     <div id="filelist" className="ui items">
                         <div id="boardview" className={`ui vertical editorFloat`} role="region" aria-label={lf("Simulator")}>
                         </div>
