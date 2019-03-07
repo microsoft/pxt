@@ -1689,6 +1689,13 @@ declare module Blockly {
              *     being moved to a different surface.
              */
             clearAndHide(opt_newSurface?: Element): void;
+    
+            /**
+             * Sets the opacity of the drag surface and everything on it.
+             * @param {number} value The new opacity value to use.
+             * @package
+             */
+            setOpacity(value: number): void;
     } 
     
 }
@@ -5828,10 +5835,10 @@ declare module Blockly {
     
             /**
              * Box drawn around a field.
-             * @type {SVGRectElement}
+             * @type {SVGElement}
              * @private
              */
-            arrow_: SVGRectElement;
+            arrow_: SVGElement;
     
             /**
              * Box drawn around a field.
