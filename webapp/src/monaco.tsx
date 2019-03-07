@@ -1426,6 +1426,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private getMonacoBlock(fn: toolbox.BlockDefinition, ns: string, color: string, isDisabled?: boolean) {
+        // TODO(dz):
+        console.log(`getMonacoBlock(ns: ${ns})`)
         // Check if the block is built in, ignore it as it's already defined in snippets
         if (fn.attributes.blockBuiltin) {
             pxt.log("ignoring built in block: " + fn.attributes.blockId);
@@ -1482,15 +1484,17 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     let exactInstances = fixedInstances.filter(value =>
                         value.retType == nsInfo.qName)
                         .sort((v1, v2) => v1.name.localeCompare(v2.name));
-                    // second choice: use fixed instances whose retType extends type of nsInfo.name
-                    // e.g., nsInfo.name == AnalogPin and instance retType == PwmPin
-                    let extendedInstances = fixedInstances.filter(value =>
-                        getExtendsTypesFor(nsInfo.qName).indexOf(value.retType) !== -1)
-                        .sort((v1, v2) => v1.name.localeCompare(v2.name));
                     if (exactInstances.length) {
                         snippetPrefix = `${exactInstances[0].name}`
-                    } else if (extendedInstances.length) {
-                        snippetPrefix = `${extendedInstances[0].name}`
+                    } else {
+                        // second choice: use fixed instances whose retType extends type of nsInfo.name
+                        // e.g., nsInfo.name == AnalogPin and instance retType == PwmPin
+                        let extendedInstances = fixedInstances.filter(value =>
+                            getExtendsTypesFor(nsInfo.qName).indexOf(value.retType) !== -1)
+                            .sort((v1, v2) => v1.name.localeCompare(v2.name));
+                        if (extendedInstances.length) {
+                            snippetPrefix = `${extendedInstances[0].name}`
+                        }
                     }
                     isInstance = true;
                     addNamespace = true;
