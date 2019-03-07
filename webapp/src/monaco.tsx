@@ -1426,8 +1426,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private getMonacoBlock(fn: toolbox.BlockDefinition, ns: string, color: string, isDisabled?: boolean): HTMLDivElement {
-        // TODO(dz):
-        console.log(`getMonacoBlock(ns: ${ns})`)
         // Check if the block is built in, ignore it as it's already defined in snippets
         if (fn.attributes.blockBuiltin) {
             pxt.log("ignoring built in block: " + fn.attributes.blockId);
