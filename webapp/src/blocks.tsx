@@ -1294,45 +1294,27 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private flyouts: pxt.Map<Blockly.VerticalFlyout> = {};
-    private showFlyoutInternal_(xmlList: Element[], cacheKey: string) {
+    private showFlyoutInternal_(xmlList: Element[], flyoutName: string, alwaysRebuild: boolean = false) {
         type PxtToolbox = Blockly.Toolbox & { pxtFlyouts: Blockly.Flyout[] };
 
         // Blockly internal methods to show a toolbox or a flyout
         if (this.editor.toolbox_) {
-            // Util.values(this.flyouts).forEach(f => f.setVisible(false));
             let oldFlyout = this.editor.toolbox_.flyout_ as Blockly.VerticalFlyout;
-            // oldFlyout.hide(); // TODO(dz): try setVisible(false) instead
-            // oldFlyout.setVisible(false)
-            // let oldSvg = (oldFlyout as any).svgGroup_ as SVGSVGElement;
-            let hasNewFlyout = cacheKey in this.flyouts;
-            // TODO(dz)
+            let hasCachedFlyout = flyoutName in this.flyouts;
 
             let swapFlyout = (old: Blockly.VerticalFlyout, nw: Blockly.VerticalFlyout) => {
-                console.log("Swapping flyouts")
-                let oldSvg = (old as any).svgGroup_ as SVGSVGElement; // TODO(dz) types
+                let oldSvg = (old as any).svgGroup_ as SVGSVGElement; // TODO(dz) update types
                 let newSvg = (nw as any).svgGroup_ as SVGSVGElement;
-                // let parent = oldSvg.parentElement;
-                // parent.removeChild(oldSvg);
-                // parent.appendChild(newSvg);
 
                 oldSvg.style.visibility = "hidden"
                 newSvg.style.visibility = null;
 
                 this.editor.toolbox_.flyout_ = nw;
-                if ((this.editor as any).flyout_) {
-                    // TODO(dz)
-                    console.log("!!(this.editor as any).flyout_");
-                    (this.editor as any).flyout_ = nw;
-                }
             }
             let mkFlyout = () => {
-                console.log("Making new flyout")
-                // let oldSvg = (oldFlyout as any).svgGroup_ as Element;
-                // let newSvgGroup = oldSvg.cloneNode(true) as Element;
-                // this.editor.addFlyout_("svg");
-
+                // TODO(dz): move flyout creation into pxt-blockly
                 let workspace = this.editor.toolbox_.workspace_ as Blockly.WorkspaceSvg
-                let wsOpts = workspace.options as any; // TODO(dz): types
+                let wsOpts = workspace.options as any; // TODO(dz): update types
                 let workspaceOptions = {
                     disabledPatternId: wsOpts.disabledPatternId,
                     parentWorkspace: workspace,
@@ -1345,57 +1327,35 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 };
                 let newFlyout = new Blockly.VerticalFlyout(workspaceOptions);
                 let newSvg = newFlyout.createDom('svg');
-                let oldSvg = (oldFlyout as any).svgGroup_ as Element;
+                let oldSvg = (oldFlyout as any).svgGroup_ as Element; // TODO(dz): update types
                 let parent = oldSvg.parentElement;
                 parent.insertBefore(newSvg, oldSvg);
-                // newFlyout.createDom('svg');
                 newFlyout.init(workspace);
 
                 return newFlyout;
             }
             let newFlyout: Blockly.VerticalFlyout;
-            if (!hasNewFlyout) {
-                // debugger;
-
-                // create new flyout
-                // let newFlyout = new Blockly.VerticalFlyout(workspaceOptions);
+            if (!hasCachedFlyout) {
                 newFlyout = mkFlyout();
-                // let newWs = Object.assign(new Blockly.WorkspaceSvg(oldWs.options), oldWs); // TODO try Object.assign
-
-                // let newWsAny = newWs as any;
-                // newWsAny.svgGroup_ = newSvgGroup;
-                // newWsAny.svgBlockCanvas_ = newSvgGroup.getElementsByClassName("blocklyBlockCanvas")[0];
-                // newWsAny.svgBubbleCanvas_ = newSvgGroup.getElementsByClassName("blocklyBubbleCanvas")[0];
-
                 swapFlyout(oldFlyout, newFlyout);
                 newFlyout.show(xmlList);
-                this.flyouts[cacheKey] = newFlyout;
+                this.flyouts[flyoutName] = newFlyout;
             } else {
-                newFlyout = this.flyouts[cacheKey];
+                newFlyout = this.flyouts[flyoutName];
                 swapFlyout(oldFlyout, newFlyout);
-                newFlyout.setVisible(true);
+                if (alwaysRebuild)
+                    newFlyout.show(xmlList);
+                else
+                    newFlyout.setVisible(true);
             }
 
-            // TODO(dz): move into scrollToStart
+            // TODO(dz): update typings
+            // TODO(dz): move into pxt-blockly scrollToStart ?
             let scrollbar = (newFlyout as any).scrollbar_ as Blockly.Scrollbar;
             if (scrollbar.handlePosition_ != 0)
                 newFlyout.scrollToStart();
 
-            // let toolbox = this.editor.toolbox_.flyout_ as PxtToolbox;
-            // let isPopulated = (this.editor.toolbox_.flyout_ as any).isPopulated
-            // if (!isPopulated) {
-            //     console.log("show()")
-            //     this.editor.toolbox_.flyout_.show(xmlList);
-            //     (this.editor.toolbox_.flyout_ as any).isPopulated = true;
-            // }
-            // else {
-            //     console.log("setVisible()")
-            //     this.editor.toolbox_.flyout_.setVisible(true);
-            // }
-
-            // (this.editor.toolbox_.flyout_ as Blockly.VerticalFlyout).scrollToStart();
         } else if ((this.editor as any).flyout_) {
-            console.log("B"); // TODO(dz)
             (this.editor as any).show(xmlList);
             (this.editor as any).scrollToStart();
         }
