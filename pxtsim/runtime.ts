@@ -516,7 +516,7 @@ namespace pxsim {
             if (Runtime.messagePosted) Runtime.messagePosted(data);
         }
 
-        static postScreenshotAsync(opts: SimulatorScreenshotMessage): Promise<void> {
+        static postScreenshotAsync(opts?: SimulatorScreenshotMessage): Promise<void> {
             const b = runtime && runtime.board;
             const p = b
                 ? b.screenshotAsync().catch(e => {
@@ -527,7 +527,7 @@ namespace pxsim {
             return p.then(img => Runtime.postMessage({
                 type: "screenshot",
                 data: img,
-                delay: opts.delay
+                delay: opts && opts.delay
             } as SimulatorScreenshotMessage));
         }
 
