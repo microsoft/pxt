@@ -159,22 +159,28 @@ namespace pxt {
         }
     }
 
-    // this is set by compileServiceVariant in pxt.json
-    export function setAppTargetVariant(variant: string): void {
-        pxt.debug(`app variant: ${variant}`);
-        if (appTargetVariant === variant || (!appTargetVariant && !variant)) return;
-        appTargetVariant = variant
+    export function reloadAppTargetVariant() {
+        const curr = JSON.stringify(appTarget);
         appTarget = U.clone(savedAppTarget)
-        if (variant) {
-            const v = appTarget.variants && appTarget.variants[variant];
+        if (appTargetVariant) {
+            const v = appTarget.variants && appTarget.variants[appTargetVariant];
             if (v)
                 U.jsonMergeFrom(appTarget, v)
             else
-                U.userError(lf("Variant '{0}' not defined in pxtarget.json", variant))
+                U.userError(lf("Variant '{0}' not defined in pxtarget.json", appTargetVariant))
         }
         patchAppTarget();
-        if (onAppTargetChanged)
+        // check if apptarget changed
+        if (onAppTargetChanged && curr != JSON.stringify(appTarget))
             onAppTargetChanged();
+    }
+
+    // this is set by compileServiceVariant in pxt.json
+    export function setAppTargetVariant(variant: string, force?: boolean): void {
+        pxt.debug(`app variant: ${variant}`);
+        if (!force && (appTargetVariant === variant || (!appTargetVariant && !variant))) return;
+        appTargetVariant = variant
+        reloadAppTargetVariant();
     }
 
     // notify when app target was changed
