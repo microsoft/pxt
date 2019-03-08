@@ -1349,12 +1349,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
                 return newFlyout;
             }
+            let newFlyout: Blockly.VerticalFlyout;
             if (!hasNewFlyout) {
                 // debugger;
 
                 // create new flyout
                 // let newFlyout = new Blockly.VerticalFlyout(workspaceOptions);
-                let newFlyout = mkFlyout();
+                newFlyout = mkFlyout();
                 // let newWs = Object.assign(new Blockly.WorkspaceSvg(oldWs.options), oldWs); // TODO try Object.assign
 
                 // let newWsAny = newWs as any;
@@ -1364,14 +1365,17 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
                 swapFlyout(oldFlyout, newFlyout);
                 newFlyout.show(xmlList);
-                newFlyout.scrollToStart();
                 this.flyouts[cacheKey] = newFlyout;
             } else {
-                let newFlyout = this.flyouts[cacheKey];
+                newFlyout = this.flyouts[cacheKey];
                 swapFlyout(oldFlyout, newFlyout);
                 newFlyout.setVisible(true);
-                newFlyout.scrollToStart();
             }
+
+            // TODO(dz): move into scrollToStart
+            let scrollbar = (newFlyout as any).scrollbar_ as Blockly.Scrollbar;
+            if (scrollbar.handlePosition_ != 0)
+                newFlyout.scrollToStart();
 
             // let toolbox = this.editor.toolbox_.flyout_ as PxtToolbox;
             // let isPopulated = (this.editor.toolbox_.flyout_ as any).isPopulated
