@@ -1,5 +1,12 @@
 # Microsoft MakeCode Blog
 
+## [Intro to CS with the micro:bit – free Educator Materials](/blog/microbit/csintro-educator)
+ 
+March 8th, 2019 by [Jaqster](https://github.com/jaqster)
+
+We've decided to supplement the curriculum by providing some additional Educator materials that would help new teachers learn and teach the course. We didn’t change the course at all, just added some extra materials, like...
+**[Continue reading this blog post](/blog/microbit/csintro-educator)**
+
 ## [MakeCode Arcade: Retro Gaming, Modern Programming](/blog/arcade/01-18-2019)
 
 January 18th, 2019 by Microsoft MakeCode Team
