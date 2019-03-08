@@ -1195,7 +1195,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
 
         this.flyoutXmlList = [];
+        console.log(`0 CACHE KEY: ${ns + subns}`) // TODO(dz)
         if (this.flyoutBlockXmlCache[ns + subns]) {
+            console.log("1 USING CACHE") // TODO(dz)
             pxt.debug("showing flyout with blocks from flyout blocks xml cache");
             this.flyoutXmlList = this.flyoutBlockXmlCache[ns + subns];
             this.showFlyoutInternal_(this.flyoutXmlList);
@@ -1203,6 +1205,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
 
         if (this.abstractShowFlyout(treeRow)) {
+            console.log("2 FILLING CACHE") // TODO(dz)
             // Cache blocks xml list for later
             this.flyoutBlockXmlCache[ns + subns] = this.flyoutXmlList;
 
@@ -1290,9 +1293,20 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private showFlyoutInternal_(xmlList: Element[]) {
         // Blockly internal methods to show a toolbox or a flyout
         if (this.editor.toolbox_) {
-            this.editor.toolbox_.flyout_.show(xmlList);
+            let isPopulated = (this.editor.toolbox_.flyout_ as any).isPopulated
+            if (!isPopulated) {
+                console.log("show()")
+                this.editor.toolbox_.flyout_.show(xmlList);
+                (this.editor.toolbox_.flyout_ as any).isPopulated = true;
+            }
+            else {
+                console.log("setVisible()")
+                this.editor.toolbox_.flyout_.setVisible(true);
+            }
+
             (this.editor.toolbox_.flyout_ as Blockly.VerticalFlyout).scrollToStart();
         } else if ((this.editor as any).flyout_) {
+            console.log("B"); // TODO(dz)
             (this.editor as any).show(xmlList);
             (this.editor as any).scrollToStart();
         }
