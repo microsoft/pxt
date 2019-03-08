@@ -1302,17 +1302,21 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             // Util.values(this.flyouts).forEach(f => f.setVisible(false));
             let oldFlyout = this.editor.toolbox_.flyout_ as Blockly.VerticalFlyout;
             // oldFlyout.hide(); // TODO(dz): try setVisible(false) instead
-            oldFlyout.setVisible(false)
+            // oldFlyout.setVisible(false)
+            // let oldSvg = (oldFlyout as any).svgGroup_ as SVGSVGElement;
             let hasNewFlyout = cacheKey in this.flyouts;
             // TODO(dz)
 
             let swapFlyout = (old: Blockly.VerticalFlyout, nw: Blockly.VerticalFlyout) => {
                 console.log("Swapping flyouts")
-                // let oldSvg = (old as any).svgGroup_ as Element; // TODO(dz) types
-                // let newSvg = (nw as any).svgGroup_ as Element;
+                let oldSvg = (old as any).svgGroup_ as SVGSVGElement; // TODO(dz) types
+                let newSvg = (nw as any).svgGroup_ as SVGSVGElement;
                 // let parent = oldSvg.parentElement;
                 // parent.removeChild(oldSvg);
                 // parent.appendChild(newSvg);
+
+                oldSvg.style.visibility = "hidden"
+                newSvg.style.visibility = null;
 
                 this.editor.toolbox_.flyout_ = nw;
                 if ((this.editor as any).flyout_) {
