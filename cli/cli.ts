@@ -3810,6 +3810,9 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
                 }
             }
 
+            if (pxt.appTarget.compile.switches.time)
+                console.log(compileResult.times)
+
             switch (buildOpts.mode) {
                 case BuildOption.GenDocs:
                     const apiInfo = pxtc.getApiInfo(compileOptions, res.ast)

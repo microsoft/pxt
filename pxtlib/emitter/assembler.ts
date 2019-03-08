@@ -289,7 +289,9 @@ namespace ts.pxtc.assembler {
             if (!s)
                 return null;
 
-            if (s == "0") return 0;
+            // fast path
+            if (/^\d+$/.test(s))
+                return parseInt(s, 10)
 
             let mul = 1
 
@@ -311,7 +313,9 @@ namespace ts.pxtc.assembler {
                 s = s.slice(1)
             }
 
-            let v: number = null
+            // decimal encoding; fast-ish path
+            if (/^\d+$/.test(s))
+                return mul * parseInt(s, 10)
 
             // allow or'ing of 1 to least-signficant bit
             if (U.endsWith(s, "|1")) {
@@ -334,6 +338,8 @@ namespace ts.pxtc.assembler {
                 return left >> parseInt(shm[2])
             }
 
+            let v: number = null
+
             // handle hexadecimal and binary encodings
             if (s[0] == "0") {
                 if (s[1] == "x" || s[1] == "X") {
@@ -345,15 +351,11 @@ namespace ts.pxtc.assembler {
                 }
             }
 
-            // decimal encoding
-            let m = /^(\d+)$/i.exec(s)
-            if (m) v = parseInt(m[1], 10)
-
             // stack-specific processing
 
             // more special characters to handle
             if (s.indexOf("@") >= 0) {
-                m = /^(\w+)@(-?\d+)$/.exec(s)
+                let m = /^(\w+)@(-?\d+)$/.exec(s)
                 if (m) {
                     if (mul != 1)
                         this.directiveError(lf("multiplication not supported with saved stacks"));
