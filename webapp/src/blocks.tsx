@@ -579,16 +579,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     showVariablesFlyout() {
-        this.showFlyoutInternal_(Blockly.Variables.flyoutCategory(this.editor), "variables");
+        this.showFlyoutInternal_(Blockly.Variables.flyoutCategory(this.editor));
     }
 
     showFunctionsFlyout() {
         if (pxt.appTarget.runtime &&
             pxt.appTarget.runtime.functionsOptions &&
             pxt.appTarget.runtime.functionsOptions.useNewFunctions) {
-            this.showFlyoutInternal_(Blockly.Functions.flyoutCategory(this.editor), "functions");
+            this.showFlyoutInternal_(Blockly.Functions.flyoutCategory(this.editor));
         } else {
-            this.showFlyoutInternal_(Blockly.Procedures.flyoutCategory(this.editor), "functions");
+            this.showFlyoutInternal_(Blockly.Procedures.flyoutCategory(this.editor));
         }
     }
 
@@ -1042,8 +1042,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     clearFlyoutCaches() {
         this.flyoutBlockXmlCache = {};
-        // TODO(dz)
-        // this.flyouts = {};
     }
 
     shouldShowSearch() {
@@ -1198,21 +1196,18 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         this.flyoutXmlList = [];
         let cacheKey = ns + subns;
-        console.log(`0 CACHE KEY: ${cacheKey}`) // TODO(dz)
         if (this.flyoutBlockXmlCache[cacheKey]) {
-            console.log("1 USING CACHE") // TODO(dz)
             pxt.debug("showing flyout with blocks from flyout blocks xml cache");
             this.flyoutXmlList = this.flyoutBlockXmlCache[cacheKey];
-            this.showFlyoutInternal_(this.flyoutXmlList, cacheKey);
+            this.showFlyoutInternal_(this.flyoutXmlList, cacheKey, true);
             return;
         }
 
         if (this.abstractShowFlyout(treeRow)) {
-            console.log("2 FILLING CACHE") // TODO(dz)
             // Cache blocks xml list for later
             this.flyoutBlockXmlCache[cacheKey] = this.flyoutXmlList;
 
-            this.showFlyoutInternal_(this.flyoutXmlList, cacheKey);
+            this.showFlyoutInternal_(this.flyoutXmlList, cacheKey, true);
         }
     }
 
@@ -1270,7 +1265,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             label.setAttribute('text', lf("No search results..."));
             this.flyoutXmlList.push(label);
         }
-        this.showFlyoutInternal_(this.flyoutXmlList, "search");
+        this.showFlyoutInternal_(this.flyoutXmlList);
     }
 
     private showTopBlocksFlyout() {
@@ -1290,11 +1285,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (blockXmlList) this.flyoutXmlList = this.flyoutXmlList.concat(blockXmlList);
             })
         }
-        this.showFlyoutInternal_(this.flyoutXmlList, "topblocks");
+        this.showFlyoutInternal_(this.flyoutXmlList);
     }
 
     private flyouts: pxt.Map<Blockly.VerticalFlyout> = {};
-    private showFlyoutInternal_(xmlList: Element[], flyoutName: string, alwaysRebuild: boolean = false) {
+    private showFlyoutInternal_(xmlList: Element[], flyoutName: string = "default", skipRebuild: boolean = false) {
         type PxtToolbox = Blockly.Toolbox & { pxtFlyouts: Blockly.Flyout[] };
 
         // Blockly internal methods to show a toolbox or a flyout
@@ -1302,13 +1297,18 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             let oldFlyout = this.editor.toolbox_.flyout_ as Blockly.VerticalFlyout;
             let hasCachedFlyout = flyoutName in this.flyouts;
 
+            let setVisibility = (flyout: Blockly.VerticalFlyout, visibility: string) => {
+                // TODO(dz): update typings
+                let svg = (flyout as any).svgGroup_ as SVGSVGElement;
+                let flyoutScrollbar = (flyout as any).scrollbar_ as Blockly.Scrollbar;
+                let flyoutSbSvg = (flyoutScrollbar as any).outerSvg_ as SVGSVGElement;
+
+                svg.style.visibility = visibility;
+                flyoutSbSvg.style.visibility = visibility;
+            }
             let swapFlyout = (old: Blockly.VerticalFlyout, nw: Blockly.VerticalFlyout) => {
-                let oldSvg = (old as any).svgGroup_ as SVGSVGElement; // TODO(dz) update types
-                let newSvg = (nw as any).svgGroup_ as SVGSVGElement;
-
-                oldSvg.style.visibility = "hidden"
-                newSvg.style.visibility = null;
-
+                setVisibility(old, "hidden")
+                setVisibility(nw, null);
                 this.editor.toolbox_.flyout_ = nw;
             }
             let mkFlyout = () => {
@@ -1343,7 +1343,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             } else {
                 newFlyout = this.flyouts[flyoutName];
                 swapFlyout(oldFlyout, newFlyout);
-                if (alwaysRebuild)
+                if (!skipRebuild)
                     newFlyout.show(xmlList);
                 else
                     newFlyout.setVisible(true);
@@ -1380,7 +1380,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             const blockXmlList = this.getBlockXml(block);
             if (blockXmlList) xmlList = xmlList.concat(blockXmlList);
         })
-        this.showFlyoutInternal_(xmlList, "allblocks");
+        this.showFlyoutInternal_(xmlList);
     }
 
     ///////////////////////////////////////////////////////////
