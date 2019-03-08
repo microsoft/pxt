@@ -1308,11 +1308,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
             let swapFlyout = (old: Blockly.VerticalFlyout, nw: Blockly.VerticalFlyout) => {
                 console.log("Swapping flyouts")
-                let oldSvg = (old as any).svgGroup_ as Element; // TODO(dz) types
-                let newSvg = (nw as any).svgGroup_ as Element;
-                let parent = oldSvg.parentElement;
-                parent.removeChild(oldSvg);
-                parent.appendChild(newSvg);
+                // let oldSvg = (old as any).svgGroup_ as Element; // TODO(dz) types
+                // let newSvg = (nw as any).svgGroup_ as Element;
+                // let parent = oldSvg.parentElement;
+                // parent.removeChild(oldSvg);
+                // parent.appendChild(newSvg);
 
                 this.editor.toolbox_.flyout_ = nw;
                 if ((this.editor as any).flyout_) {
