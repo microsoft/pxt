@@ -1689,6 +1689,13 @@ declare module Blockly {
              *     being moved to a different surface.
              */
             clearAndHide(opt_newSurface?: Element): void;
+    
+            /**
+             * Sets the opacity of the drag surface and everything on it.
+             * @param {number} value The new opacity value to use.
+             * @package
+             */
+            setOpacity(value: number): void;
     } 
     
 }
@@ -5186,9 +5193,9 @@ declare module Blockly.DropDownDiv {
 
     /**
      * Provide the div for inserting content into the drop-down.
-     * @return {Element} Div to populate with content
+     * @return {HTMLElement} Div to populate with content
      */
-    function getContentDiv(): Element;
+    function getContentDiv(): HTMLElement;
 
     /**
      * Clear the content of the drop-down.
@@ -5828,10 +5835,10 @@ declare module Blockly {
     
             /**
              * Box drawn around a field.
-             * @type {SVGRectElement}
+             * @type {SVGElement}
              * @private
              */
-            arrow_: SVGRectElement;
+            arrow_: SVGElement;
     
             /**
              * Box drawn around a field.
@@ -10119,6 +10126,14 @@ declare module Blockly {
             renderIcon(cursorX: number): number;
     
             /**
+             * Move the icon.
+             * @param {number} cursorX Horizontal offset at which to position the icon.
+             * @param {number} cursorY Vertical offset at which to position the icon.
+             * @return {number} Horizontal offset for next item to draw.
+             */
+            moveIcon(cursorX: number, cursorY: number): number;
+    
+            /**
              * Notification that the icon has moved.  Update the arrow accordingly.
              * @param {!goog.math.Coordinate} xy Absolute location in workspace coordinates.
              */
@@ -13509,6 +13524,11 @@ declare module Blockly {
              * Does this icon get hidden when the block is collapsed.
              */
             collapseHidden: any /*missing*/;
+    
+            /**
+             * Create the icon on the block.
+             */
+            createIcon(): void;
     
             /**
              * Draw the breakpoint icon.
@@ -18166,9 +18186,9 @@ declare module Blockly {
     
             /**
              * Get the SVG element that contains this workspace.
-             * @return {Element} SVG element.
+             * @return {SVGElement} SVG element.
              */
-            getParentSvg(): Element;
+            getParentSvg(): SVGElement;
     
             /**
              * Translate this workspace to new coordinates.
