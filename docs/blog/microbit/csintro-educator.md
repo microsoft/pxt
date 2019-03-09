@@ -12,7 +12,7 @@ So, we decided to supplement the curriculum by providing some additional Educato
 
 * Educator Guides – lesson overview, preparation tasks, resources required, etc.
 * Educator Quick-start videos – short videos walking through the lesson and activities
-* Standards and Assessment guides – CSTA standards addressed, formative and summative assessment answer keys and rubrics
+* Standards and Assessment guides – [CSTA standards](https://www.csteachers.org/page/standards) addressed, formative and summative assessment answer keys and rubrics
 * Unit presentations – classroom aids for teaching each lesson
 * Student workbooks – printer-friendly workbooks for students
 
