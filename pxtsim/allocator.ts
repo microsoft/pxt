@@ -1,7 +1,7 @@
 namespace pxsim {
     const GROUND_COLOR = "blue";
     const POWER_COLOR = "red";
-    const POWER5V_COLOR = "red";
+    const POWER5V_COLOR = "orange";
 
     export interface AllocatorOpts {
         boardDef: BoardDefinition,
@@ -612,7 +612,7 @@ namespace pxsim {
                 fiveVoltWires.push({
                     start: this.allocLocation("fiveVolt", { referenceBBPin: top }),
                     end: this.allocLocation("fiveVolt", { referenceBBPin: bot }),
-                    color: POWER_COLOR,
+                    color: POWER5V_COLOR,
                 });
             }
 
@@ -628,7 +628,7 @@ namespace pxsim {
                 threeVoltWires.push({
                     start: this.allocLocation("threeVolt", { referenceBBPin: bot }),
                     end: { type: "dalboard", pin: threeVoltPin },
-                    color: POWER_COLOR,
+                    color: POWER5V_COLOR,
                 });
             }
 
@@ -644,7 +644,7 @@ namespace pxsim {
                 fiveVoltWires.push({
                     start: this.allocLocation("fiveVolt", { referenceBBPin: bot }),
                     end: { type: "dalboard", pin: fiveVoltPin },
-                    color: POWER_COLOR,
+                    color: POWER5V_COLOR,
                 });
             }
 
