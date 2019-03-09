@@ -1,6 +1,7 @@
 namespace pxsim {
     const GROUND_COLOR = "blue";
     const POWER_COLOR = "red";
+    const POWER5V_COLOR = "red";
 
     export interface AllocatorOpts {
         boardDef: BoardDefinition,
@@ -203,10 +204,12 @@ namespace pxsim {
         private opts: AllocatorOpts;
         private availablePowerPins = {
             top: {
+                fiveVolt: mkRange(26, 51).map(n => <BBLoc>{ type: "breadboard", row: "+", col: `${n}` }),
                 threeVolt: mkRange(26, 51).map(n => <BBLoc>{ type: "breadboard", row: "+", col: `${n}` }),
                 ground: mkRange(26, 51).map(n => <BBLoc>{ type: "breadboard", row: "-", col: `${n}` }),
             },
             bottom: {
+                fiveVolt: mkRange(1, 26).map(n => <BBLoc>{ type: "breadboard", row: "+", col: `${n}` }),
                 threeVolt: mkRange(1, 26).map(n => <BBLoc>{ type: "breadboard", row: "+", col: `${n}` }),
                 ground: mkRange(1, 26).map(n => <BBLoc>{ type: "breadboard", row: "-", col: `${n}` }),
             },
@@ -427,6 +430,8 @@ namespace pxsim {
                     color = GROUND_COLOR;
                 } else if (end === "threeVolt") {
                     color = POWER_COLOR;
+                } else if (end === "fiveVolt") {
+                    color = POWER5V_COLOR;
                 } else if (typeof pin.def.colorGroup === "number") {
                     if (groupToColor[pin.def.colorGroup]) {
                         color = groupToColor[pin.def.colorGroup];
@@ -478,12 +483,16 @@ namespace pxsim {
                         barPins = this.availablePowerPins.top.ground;
                     } else if (location === "threeVolt") {
                         barPins = this.availablePowerPins.top.threeVolt;
+                    } else if (location === "fiveVolt") {
+                        barPins = this.availablePowerPins.top.fiveVolt;
                     }
                 } else {
                     if (location === "ground") {
                         barPins = this.availablePowerPins.bottom.ground;
                     } else if (location === "threeVolt") {
                         barPins = this.availablePowerPins.bottom.threeVolt;
+                    } else if (location === "fiveVolt") {
+                        barPins = this.availablePowerPins.bottom.fiveVolt;
                     }
                 }
                 let pinCoords = barPins.map(rowCol => {
@@ -657,16 +666,16 @@ namespace pxsim {
             };
         }
         private allocWire(wireIR: WireIR): WireInst {
-            let ends = [wireIR.start, wireIR.end];
-            let endIsPower = ends.map(e => e === "ground" || e === "threeVolt");
+            const ends = [wireIR.start, wireIR.end];
+            const endIsPower = ends.map(e => e === "ground" || e === "threeVolt" || e === "fiveVolt");
             //allocate non-power first so we know the nearest pin for the power end
             let endInsts = ends.map((e, idx) => !endIsPower[idx] ? this.allocLocation(e, {}) : undefined)
             //allocate power pins closest to the other end of the wire
             endInsts = endInsts.map((e, idx) => {
                 if (e)
                     return e;
-                let locInst = <BBLoc>endInsts[1 - idx]; // non-power end
-                let l = this.allocLocation(ends[idx], {
+                const locInst = <BBLoc>endInsts[1 - idx]; // non-power end
+                const l = this.allocLocation(ends[idx], {
                     referenceBBPin: locInst,
                 });
                 return l;
