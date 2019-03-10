@@ -22,7 +22,7 @@ namespace pxt.editor.experiments {
         })
         if (experiments.length && Object.keys(r).length) {
             pxt.tickEvent("experiments.loaded", r);
-            pxt.setAppTargetVariant(null);
+            pxt.reloadAppTargetVariant();
         }
     }
 

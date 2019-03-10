@@ -44,7 +44,8 @@ declare namespace pxsim {
         gpioPinBlocks?: string[][], // not used
         gpioPinMap: { [pin: string]: string },
         groundPins: string[],
-        threeVoltPins: string[],
+        threeVoltPins?: string[],
+        fiveVoltPins?: string[],
         attachPowerOnRight?: boolean,
         onboardComponents?: string[],
         pinStyles?: { [pin: string]: PinStyle },

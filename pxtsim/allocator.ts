@@ -1,6 +1,7 @@
 namespace pxsim {
     const GROUND_COLOR = "blue";
     const POWER_COLOR = "red";
+    const POWER5V_COLOR = "orange";
 
     export interface AllocatorOpts {
         boardDef: BoardDefinition,
@@ -82,10 +83,13 @@ namespace pxsim {
     interface PowerUsage {
         topGround: boolean,
         topThreeVolt: boolean,
+        topFiveVolt: boolean,
         bottomGround: boolean,
         bottomThreeVolt: boolean,
+        bottomFiveVolt: boolean,
         singleGround: boolean,
         singleThreeVolt: boolean,
+        singleFiveVolt: boolean
     }
     interface AllocLocOpts {
         referenceBBPin?: BBLoc,
@@ -110,39 +114,52 @@ namespace pxsim {
         let ends = [wire.start, wire.end];
         let endIsGround = ends.map(e => e === "ground");
         let endIsThreeVolt = ends.map(e => e === "threeVolt");
+        let endIsFiveVolt = ends.map(e => e === "fiveVolt");
         let endIsBot = ends.map(e => isOnBreadboardBottom(e));
         let hasGround = arrAny(endIsGround);
         let hasThreeVolt = arrAny(endIsThreeVolt);
+        let hasFiveVolt = arrAny(endIsFiveVolt);
         let hasBot = arrAny(endIsBot);
         return {
             topGround: hasGround && !hasBot,
             topThreeVolt: hasThreeVolt && !hasBot,
+            topFiveVolt: hasFiveVolt && !hasBot,
             bottomGround: hasGround && hasBot,
             bottomThreeVolt: hasThreeVolt && hasBot,
+            bottomFiveVolt: hasFiveVolt && hasBot,
             singleGround: hasGround,
-            singleThreeVolt: hasThreeVolt
+            singleThreeVolt: hasThreeVolt,
+            singleFiveVolt: hasFiveVolt
         };
     }
-    function mergePowerUsage(powerUsages: PowerUsage[]) {
-        let finalPowerUsage = powerUsages.reduce((p, n) => ({
+    function mergePowerUsage(powerUsages: PowerUsage[]): PowerUsage {
+        const finalPowerUsage = powerUsages.reduce((p, n) => ({
             topGround: p.topGround || n.topGround,
             topThreeVolt: p.topThreeVolt || n.topThreeVolt,
+            topFiveVolt: p.topFiveVolt || n.topFiveVolt,
             bottomGround: p.bottomGround || n.bottomGround,
             bottomThreeVolt: p.bottomThreeVolt || n.bottomThreeVolt,
+            bottomFiveVolt: p.bottomFiveVolt || n.bottomFiveVolt,
             singleGround: n.singleGround ? p.singleGround === null : p.singleGround,
             singleThreeVolt: n.singleThreeVolt ? p.singleThreeVolt === null : p.singleThreeVolt,
+            singleFiveVolt: n.singleFiveVolt ? p.singleFiveVolt === null : p.singleFiveVolt,
         }), {
                 topGround: false,
                 topThreeVolt: false,
+                topFiveVolt: false,
                 bottomGround: false,
                 bottomThreeVolt: false,
+                bottomFiveVolt: false,
                 singleGround: null,
                 singleThreeVolt: null,
+                singleFiveVolt: null
             });
         if (finalPowerUsage.singleGround)
             finalPowerUsage.topGround = finalPowerUsage.bottomGround = false;
         if (finalPowerUsage.singleThreeVolt)
             finalPowerUsage.topThreeVolt = finalPowerUsage.bottomThreeVolt = false;
+        if (finalPowerUsage.singleFiveVolt)
+            finalPowerUsage.topFiveVolt = finalPowerUsage.bottomFiveVolt = false;
         return finalPowerUsage;
     }
     function copyDoubleArray(a: string[][]) {
@@ -187,10 +204,12 @@ namespace pxsim {
         private opts: AllocatorOpts;
         private availablePowerPins = {
             top: {
+                fiveVolt: mkRange(26, 51).map(n => <BBLoc>{ type: "breadboard", row: "+", col: `${n}` }),
                 threeVolt: mkRange(26, 51).map(n => <BBLoc>{ type: "breadboard", row: "+", col: `${n}` }),
                 ground: mkRange(26, 51).map(n => <BBLoc>{ type: "breadboard", row: "-", col: `${n}` }),
             },
             bottom: {
+                fiveVolt: mkRange(1, 26).map(n => <BBLoc>{ type: "breadboard", row: "+", col: `${n}` }),
                 threeVolt: mkRange(1, 26).map(n => <BBLoc>{ type: "breadboard", row: "+", col: `${n}` }),
                 ground: mkRange(1, 26).map(n => <BBLoc>{ type: "breadboard", row: "-", col: `${n}` }),
             },
@@ -411,6 +430,8 @@ namespace pxsim {
                     color = GROUND_COLOR;
                 } else if (end === "threeVolt") {
                     color = POWER_COLOR;
+                } else if (end === "fiveVolt") {
+                    color = POWER5V_COLOR;
                 } else if (typeof pin.def.colorGroup === "number") {
                     if (groupToColor[pin.def.colorGroup]) {
                         color = groupToColor[pin.def.colorGroup];
@@ -430,7 +451,7 @@ namespace pxsim {
             return merge2(part, { wires: wires });
         }
         private allocLocation(location: WireIRLoc, opts: AllocLocOpts): Loc {
-            if (location === "ground" || location === "threeVolt") {
+            if (location === "ground" || location === "threeVolt" || location == "fiveVolt") {
                 //special case if there is only a single ground or three volt pin in the whole build
                 if (location === "ground" && this.powerUsage.singleGround) {
                     let boardGroundPin = this.getBoardGroundPin();
@@ -438,6 +459,9 @@ namespace pxsim {
                 } else if (location === "threeVolt" && this.powerUsage.singleThreeVolt) {
                     let boardThreeVoltPin = this.getBoardThreeVoltPin();
                     return { type: "dalboard", pin: boardThreeVoltPin };
+                } else if (location === "fiveVolt" && this.powerUsage.singleFiveVolt) {
+                    let boardFiveVoltPin = this.getBoardFiveVoltPin();
+                    return { type: "dalboard", pin: boardFiveVoltPin };
                 }
 
                 U.assert(!!opts.referenceBBPin);
@@ -459,12 +483,16 @@ namespace pxsim {
                         barPins = this.availablePowerPins.top.ground;
                     } else if (location === "threeVolt") {
                         barPins = this.availablePowerPins.top.threeVolt;
+                    } else if (location === "fiveVolt") {
+                        barPins = this.availablePowerPins.top.fiveVolt;
                     }
                 } else {
                     if (location === "ground") {
                         barPins = this.availablePowerPins.bottom.ground;
                     } else if (location === "threeVolt") {
                         barPins = this.availablePowerPins.bottom.threeVolt;
+                    } else if (location === "fiveVolt") {
+                        barPins = this.availablePowerPins.bottom.fiveVolt;
                     }
                 }
                 let pinCoords = barPins.map(rowCol => {
@@ -505,24 +533,34 @@ namespace pxsim {
             }
         }
         private getBoardGroundPin(): string {
-            let boardGround = this.opts.boardDef.groundPins[0] || null;
-            if (!boardGround) {
+            let pin = this.opts.boardDef.groundPins && this.opts.boardDef.groundPins[0] || null;
+            if (!pin) {
                 console.log("No available ground pin on board!");
                 //TODO
             }
-            return boardGround;
+            return pin;
         }
         private getBoardThreeVoltPin(): string {
-            let threeVoltPin = this.opts.boardDef.threeVoltPins[0] || null;
-            if (!threeVoltPin) {
+            let pin = this.opts.boardDef.threeVoltPins && this.opts.boardDef.threeVoltPins[0] || null;
+            if (!pin) {
                 console.log("No available 3.3V pin on board!");
                 //TODO
             }
-            return threeVoltPin;
+            return pin;
         }
+        private getBoardFiveVoltPin(): string {
+            let pin = this.opts.boardDef.fiveVoltPins && this.opts.boardDef.fiveVoltPins[0] || null;
+            if (!pin) {
+                console.log("No available 5V pin on board!");
+                //TODO
+            }
+            return pin;
+        }
+
         private allocPowerWires(powerUsage: PowerUsage): PartAndWiresInst {
             let boardGroundPin = this.getBoardGroundPin();
             let threeVoltPin = this.getBoardThreeVoltPin();
+            let fiveVoltPin = this.getBoardFiveVoltPin();
             const topLeft: BBLoc = { type: "breadboard", row: "-", col: "26" };
             const botLeft: BBLoc = { type: "breadboard", row: "-", col: "1" };
             const topRight: BBLoc = { type: "breadboard", row: "-", col: "50" };
@@ -537,6 +575,7 @@ namespace pxsim {
             }
             let groundWires: WireInst[] = [];
             let threeVoltWires: WireInst[] = [];
+            let fiveVoltWires: WireInst[] = [];
             if (powerUsage.bottomGround && powerUsage.topGround) {
                 //bb top - <==> bb bot -
                 groundWires.push({
@@ -560,6 +599,7 @@ namespace pxsim {
                     color: GROUND_COLOR,
                 });
             }
+
             if (powerUsage.bottomThreeVolt && powerUsage.bottomGround) {
                 //bb top + <==> bb bot +
                 threeVoltWires.push({
@@ -567,7 +607,15 @@ namespace pxsim {
                     end: this.allocLocation("threeVolt", { referenceBBPin: bot }),
                     color: POWER_COLOR,
                 });
+            } else if (powerUsage.bottomFiveVolt && powerUsage.bottomGround) {
+                //bb top + <==> bb bot +
+                fiveVoltWires.push({
+                    start: this.allocLocation("fiveVolt", { referenceBBPin: top }),
+                    end: this.allocLocation("fiveVolt", { referenceBBPin: bot }),
+                    color: POWER5V_COLOR,
+                });
             }
+
             if (powerUsage.topThreeVolt) {
                 //board + <==> bb top +
                 threeVoltWires.push({
@@ -580,31 +628,54 @@ namespace pxsim {
                 threeVoltWires.push({
                     start: this.allocLocation("threeVolt", { referenceBBPin: bot }),
                     end: { type: "dalboard", pin: threeVoltPin },
-                    color: POWER_COLOR,
+                    color: POWER5V_COLOR,
                 });
             }
+
+            if (powerUsage.topFiveVolt && !powerUsage.topThreeVolt) {
+                //board + <==> bb top +
+                fiveVoltWires.push({
+                    start: this.allocLocation("fiveVolt", { referenceBBPin: top }),
+                    end: { type: "dalboard", pin: fiveVoltPin },
+                    color: POWER_COLOR,
+                });
+            } else if (powerUsage.bottomFiveVolt && !powerUsage.bottomThreeVolt) {
+                //board + <==> bb bot +
+                fiveVoltWires.push({
+                    start: this.allocLocation("fiveVolt", { referenceBBPin: bot }),
+                    end: { type: "dalboard", pin: fiveVoltPin },
+                    color: POWER5V_COLOR,
+                });
+            }
+
             let assembly: AssemblyStep[] = [];
             if (groundWires.length > 0)
                 assembly.push({ wireIndices: groundWires.map((w, i) => i) });
             let numGroundWires = groundWires.length;
             if (threeVoltWires.length > 0)
-                assembly.push({ wireIndices: threeVoltWires.map((w, i) => i + numGroundWires) });
+                assembly.push({
+                    wireIndices: threeVoltWires.map((w, i) => i + numGroundWires)
+                });
+            if (fiveVoltWires.length > 0)
+                assembly.push({
+                    wireIndices: threeVoltWires.map((w, i) => i + numGroundWires + threeVoltWires.length)
+                });
             return {
-                wires: groundWires.concat(threeVoltWires),
+                wires: groundWires.concat(threeVoltWires).concat(fiveVoltWires),
                 assembly: assembly
             };
         }
         private allocWire(wireIR: WireIR): WireInst {
-            let ends = [wireIR.start, wireIR.end];
-            let endIsPower = ends.map(e => e === "ground" || e === "threeVolt");
+            const ends = [wireIR.start, wireIR.end];
+            const endIsPower = ends.map(e => e === "ground" || e === "threeVolt" || e === "fiveVolt");
             //allocate non-power first so we know the nearest pin for the power end
             let endInsts = ends.map((e, idx) => !endIsPower[idx] ? this.allocLocation(e, {}) : undefined)
             //allocate power pins closest to the other end of the wire
             endInsts = endInsts.map((e, idx) => {
                 if (e)
                     return e;
-                let locInst = <BBLoc>endInsts[1 - idx]; // non-power end
-                let l = this.allocLocation(ends[idx], {
+                const locInst = <BBLoc>endInsts[1 - idx]; // non-power end
+                const l = this.allocLocation(ends[idx], {
                     referenceBBPin: locInst,
                 });
                 return l;

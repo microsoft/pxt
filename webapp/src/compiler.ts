@@ -174,7 +174,17 @@ function decompileCoreAsync(opts: pxtc.CompileOptions, fileName: string): Promis
 }
 
 export function workerOpAsync(op: string, arg: pxtc.service.OpArg) {
-    return pxt.worker.getWorker(pxt.webConfig.workerjs).opAsync(op, arg)
+    const startTm = Date.now()
+    return pxt.worker.getWorker(pxt.webConfig.workerjs)
+        .opAsync(op, arg)
+        .then(res => {
+            if (pxt.appTarget.compile.switches.time) {
+                pxt.log(`Worker perf: ${op} ${Date.now() - startTm}ms`)
+                if (res.times)
+                    console.log(res.times)
+            }
+            return res
+        })
 }
 
 let firstTypecheck: Promise<void>;
@@ -219,7 +229,7 @@ export function projectSearchAsync(searchFor: pxtc.service.ProjectSearchOptions)
 export function projectSearchClear() {
     return ensureApisInfoAsync()
         .then(() => {
-            return workerOpAsync("projectSearchClear", { });
+            return workerOpAsync("projectSearchClear", {});
         });
 }
 
@@ -280,34 +290,34 @@ export function applyUpgradesAsync(): Promise<UpgradeResult> {
     let projectNeverCompiled = false;
 
     return checkPatchAsync()
-    .catch(() => projectNeverCompiled = true)
-    .then(upgradeOp)
-    .then(result => {
-        if (!result.success) {
-            pxt.tickEvent("upgrade.failed", {
+        .catch(() => projectNeverCompiled = true)
+        .then(upgradeOp)
+        .then(result => {
+            if (!result.success) {
+                pxt.tickEvent("upgrade.failed", {
+                    projectEditor: epkg.header.editor,
+                    preUpgradeVersion: epkg.header.targetVersion || "unknown",
+                    errors: JSON.stringify(result.errorCodes),
+                    projectNeverCompiled: "" + projectNeverCompiled
+                });
+
+                pxt.debug("Upgrade failed; bailing out and leaving project as-is");
+
+                return Promise.resolve(result);
+            }
+
+            pxt.tickEvent("upgrade.success", {
                 projectEditor: epkg.header.editor,
+                upgradedEditor: result.editor,
                 preUpgradeVersion: epkg.header.targetVersion || "unknown",
-                errors: JSON.stringify(result.errorCodes),
                 projectNeverCompiled: "" + projectNeverCompiled
             });
 
-            pxt.debug("Upgrade failed; bailing out and leaving project as-is");
+            pxt.debug("Upgrade successful!");
 
-            return Promise.resolve(result);
-        }
-
-        pxt.tickEvent("upgrade.success", {
-            projectEditor: epkg.header.editor,
-            upgradedEditor: result.editor,
-            preUpgradeVersion: epkg.header.targetVersion || "unknown",
-            projectNeverCompiled: "" + projectNeverCompiled
-        });
-
-        pxt.debug("Upgrade successful!");
-
-        return patchProjectFilesAsync(epkg, result.patchedFiles, result.editor)
-            .then(() => result);
-    })
+            return patchProjectFilesAsync(epkg, result.patchedFiles, result.editor)
+                .then(() => result);
+        })
 }
 
 function upgradeFromBlocksAsync(): Promise<UpgradeResult> {
@@ -321,7 +331,7 @@ function upgradeFromBlocksAsync(): Promise<UpgradeResult> {
 
     pxt.debug("Applying upgrades to blocks")
 
-    return  pxt.BrowserUtils.loadBlocklyAsync()
+    return pxt.BrowserUtils.loadBlocklyAsync()
         .then(() => getBlocksAsync())
         .then(info => {
             ws = new Blockly.Workspace();
@@ -441,13 +451,13 @@ export function updatePackagesAsync(packages: pkg.EditorPackage[], token?: pxt.U
             return workspace.saveAsync(epkg.header);
         })
         .then(() => Promise.each(packages, p => {
-                if (token) token.throwIfCancelled();
-                return epkg.updateDepAsync(p.getPkgId())
-                    .then(() => {
-                        ++completed;
-                        if (token && !token.isCancelled()) token.reportProgress(completed, packages.length);
-                    })
+            if (token) token.throwIfCancelled();
+            return epkg.updateDepAsync(p.getPkgId())
+                .then(() => {
+                    ++completed;
+                    if (token && !token.isCancelled()) token.reportProgress(completed, packages.length);
                 })
+        })
         )
         .then(() => pkg.loadPkgAsync(epkg.header.id))
         .then(() => newProjectAsync())
@@ -495,7 +505,7 @@ export function getPackagesWithErrors(): pkg.EditorPackage[] {
 
         topPkg.forEachFile(file => {
             if (file.diagnostics && file.diagnostics.length && file.epkg && corePkgs.indexOf(file.epkg.getPkgId()) === -1 && !file.epkg.isTopLevel() &&
-                    file.diagnostics.some(d => d.category === ts.pxtc.DiagnosticCategory.Error)) {
+                file.diagnostics.some(d => d.category === ts.pxtc.DiagnosticCategory.Error)) {
                 badPackages[file.epkg.getPkgId()] = file.epkg;
             }
         });
