@@ -48,11 +48,17 @@ There's a quick start video for each lesson sequence to help spark the student's
 
 ## Go ahead, get them now!
 
-These materials are all freely available for educators to download, use and modify.
+These materials are all freely available for educators to download, use and modify. Get them using the following button links. You can choose the entire Educator Materials pack or go to the download page to select individual lessons and resources.
 
-The original online course is here: https://makecode.microbit.org/courses/csintro
+### Download all of the materials
 
-All of the new Educator Materials can be downloaded here: https://makecode.microbit.org/courses/csintro-educator
+**[`|Complete course pack|`](https://1drv.ms/u/s!AqsgsTyHBmRBhFofN7NDsaf1Y2DZ)**
+
+### Educator Materials download page
+
+**[`|Materials download page|`](https://makecode.microbit.org/courses/csintro-educator)**
+
+As always, the original online course is available at: **[Intro to CS with the micro:bit](https://makecode.microbit.org/courses/csintro)**
 
 If you have any feedback or suggestions for us, please let us know [@MSMakeCode](https://twitter.com/MSMakeCode).
 
