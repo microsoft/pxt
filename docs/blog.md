@@ -2,7 +2,7 @@
 
 ## [Intro to CS with the micro:bit – free Educator Materials](/blog/microbit/csintro-educator)
  
-March 8th, 2019 by [Jaqster](https://github.com/jaqster)
+March 12th, 2019 by [Jaqster](https://github.com/jaqster)
 
 We've decided to supplement the curriculum by providing some additional Educator materials that would help new teachers learn and teach the course. We didn’t change the course at all, just added some extra materials, like...
 **[Continue reading this blog post](/blog/microbit/csintro-educator)**

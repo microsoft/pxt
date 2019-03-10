@@ -1,6 +1,6 @@
 # Intro to CS with the micro:bit – free Educator Materials
 
-**Posted on March 8th, 2019 by [Jaqster](https://github.com/jaqster)**
+**Posted on March 12th, 2019 by [Jaqster](https://github.com/jaqster)**
 
 ![Curriculum banner logo](/static/blog/microbit/csintro-educator/curriculum-header.jpg)
 
