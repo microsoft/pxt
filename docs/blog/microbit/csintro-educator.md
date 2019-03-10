@@ -44,7 +44,7 @@ The student workbook is for the student to follow. It sets the lesson goals and 
 
 There's a quick start video for each lesson sequence to help spark the student's interest and get them thinking about the lessons they'll be working on.
 
-![Example student workbook page](/static/blog/microbit/csintro-educator/qs-video-example.jpg)
+![Example student workbook page](/static/blog/microbit/csintro-educator/qs-video-example.gif)
 
 ## Go ahead, get them now!
 
