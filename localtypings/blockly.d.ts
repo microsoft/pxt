@@ -8516,6 +8516,20 @@ declare module Blockly {
             dragAngleRange_: number;
     
             /**
+             * The svg or g element that contains the flyout dom (excluding scrollbar).
+             * @type {!SVGElement}
+             * @private
+             */
+            svgGroup_: SVGElement;
+    
+            /**
+             * Scrollbar for scrolling blocks.
+             * @type {!Blockly.Scrollbar}
+             * @private
+             */
+            scrollbar_: Blockly.Scrollbar;
+    
+            /**
              * Creates the flyout's DOM.  Only needs to be called once.  The flyout can
              * either exist as its own svg element or be a g element nested inside a
              * separate svg element.
@@ -13422,6 +13436,14 @@ declare module Blockly.Functions {
      * @return {boolean} True if the block is a function argument reporter.
      */
     function isFunctionArgumentReporter(block: Blockly.BlockSvg): boolean;
+
+    /**
+     * Create a flyout, creates the DOM elements for the flyout, and initializes the flyout.
+     * @param {!Blockly.Workspace} workspace The target and parent workspace for this flyout. The workspace's options will
+     *     be used to create the flyout's inner workspace.
+     * @return { flyout: !Blockly.Flyout, flyoutSvg: SVGSVGElement } True if the block is a function argument reporter.
+     */
+    function createFlyout(workspace: Blockly.Workspace): void;
 }
 
 declare module Blockly.pxtBlocklyUtils {
@@ -13714,6 +13736,13 @@ declare module Blockly {
              * @constructor
              */
             constructor(workspace: Blockly.Workspace, horizontal: boolean, opt_pair?: boolean, opt_class?: string);
+    
+            /**
+             * The svg element containing the scrollbar dom elements.
+             * @type {!SVGSVGElement}
+             * @private
+             */
+            svgGroup_: SVGSVGElement;
     
             /**
              * The upper left corner of the scrollbar's SVG group in CSS pixels relative
