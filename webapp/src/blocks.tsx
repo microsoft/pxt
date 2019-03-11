@@ -1297,42 +1297,18 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             let oldFlyout = this.editor.toolbox_.flyout_ as Blockly.VerticalFlyout;
             let hasCachedFlyout = flyoutName in this.flyouts;
 
-            let setVisibility = (flyout: Blockly.VerticalFlyout, visibility: string) => {
-                // TODO(dz): update typings
-                let svg = (flyout as any).svgGroup_ as SVGSVGElement;
-                let flyoutScrollbar = (flyout as any).scrollbar_ as Blockly.Scrollbar;
-                let flyoutSbSvg = (flyoutScrollbar as any).outerSvg_ as SVGSVGElement;
-
-                svg.style.visibility = visibility;
-                flyoutSbSvg.style.visibility = visibility;
-            }
             let swapFlyout = (old: Blockly.VerticalFlyout, nw: Blockly.VerticalFlyout) => {
-                setVisibility(old, "hidden")
-                setVisibility(nw, null);
+                old.setVisible(false)
+                nw.setVisible(true)
                 this.editor.toolbox_.flyout_ = nw;
             }
             let mkFlyout = () => {
-                // TODO(dz): move flyout creation into pxt-blockly
                 let workspace = this.editor.toolbox_.workspace_ as Blockly.WorkspaceSvg
-                let wsOpts = workspace.options as any; // TODO(dz): update types
-                let workspaceOptions = {
-                    disabledPatternId: wsOpts.disabledPatternId,
-                    parentWorkspace: workspace,
-                    RTL: workspace.RTL,
-                    oneBasedIndex: wsOpts.oneBasedIndex,
-                    horizontalLayout: workspace.horizontalLayout,
-                    toolboxPosition: wsOpts.toolboxPosition,
-                    // pxt-blockly: pass the newFunctions option
-                    newFunctions: wsOpts.newFunctions
-                };
-                let newFlyout = new Blockly.VerticalFlyout(workspaceOptions);
-                let newSvg = newFlyout.createDom('svg');
-                let oldSvg = (oldFlyout as any).svgGroup_ as Element; // TODO(dz): update types
+                let { flyout, flyoutSvg } = Blockly.Functions.createFlyout(workspace)
+                let oldSvg = oldFlyout.svgGroup_;
                 let parent = oldSvg.parentElement;
-                parent.insertBefore(newSvg, oldSvg);
-                newFlyout.init(workspace);
-
-                return newFlyout;
+                parent.insertBefore(flyoutSvg, oldSvg);
+                return newFlyout as Blockly.VerticalFlyout;
             }
             let newFlyout: Blockly.VerticalFlyout;
             if (!hasCachedFlyout) {
@@ -1349,11 +1325,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     newFlyout.setVisible(true);
             }
 
-            // TODO(dz): update typings
-            // TODO(dz): move into pxt-blockly scrollToStart ?
-            let scrollbar = (newFlyout as any).scrollbar_ as Blockly.Scrollbar;
-            if (scrollbar.handlePosition_ != 0)
-                newFlyout.scrollToStart();
+            newFlyout.scrollToStart();
 
         } else if ((this.editor as any).flyout_) {
             (this.editor as any).show(xmlList);
