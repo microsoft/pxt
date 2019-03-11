@@ -158,6 +158,10 @@ namespace pxt {
         private downloadAsync() {
             return this.resolveVersionAsync()
                 .then(verNo => {
+                    if (this.invalid()) {
+                        pxt.debug(`skip download of invalid package ${this.id}`);
+                        return undefined;
+                    }
                     if (!/^embed:/.test(verNo) &&
                         this.config && this.config.installedVersion == verNo)
                         return undefined;
@@ -475,6 +479,13 @@ namespace pxt {
                     let mod = from.resolveDep(id)
                     ver = ver || "*"
                     if (mod) {
+                        if (mod.invalid()) {
+                            // failed to resolve dependency, ignore
+                            mod.level = Math.min(mod.level, from.level + 1)
+                            mod.addedBy.push(from)
+                            return Promise.resolve();
+                        }
+
                         if (mod._verspec != ver && !/^file:/.test(mod._verspec) && !/^file:/.test(ver))
                             U.userError("Version spec mismatch on " + id)
                         if (!isCpp) {

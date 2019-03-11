@@ -390,7 +390,7 @@ class Host
             .then(v => v.val, e => null)
     }
 
-    downloadPackageAsync(pkg: pxt.Package) {
+    downloadPackageAsync(pkg: pxt.Package): Promise<void> {
         let proto = pkg.verProtocol()
         let epkg = getEditorPkg(pkg)
 
@@ -420,6 +420,9 @@ class Host
         } else if (proto == "embed") {
             epkg.setFiles(pxt.getEmbeddedScript(pkg.verArgument()))
             return Promise.resolve()
+        } else if (proto == "invalid") {
+            pxt.log(`skipping invalid pkg ${pkg.id}`);
+            return Promise.resolve();
         } else {
             return Promise.reject(`Cannot download ${pkg.version()}; unknown protocol`)
         }
