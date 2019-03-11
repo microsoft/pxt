@@ -771,7 +771,9 @@ namespace pxt {
                         }
                     }
                     opts.jres = this.getJRes()
-                    opts.useNewFunctions = pxt.appTarget.runtime && pxt.appTarget.runtime.functionsOptions && pxt.appTarget.runtime.functionsOptions.useNewFunctions;
+                    const functionOpts = pxt.appTarget.runtime && pxt.appTarget.runtime.functionsOptions;
+                    opts.useNewFunctions = functionOpts && functionOpts.useNewFunctions;
+                    opts.allowedArgumentTypes = functionOpts && functionOpts.extraFunctionEditorTypes && functionOpts.extraFunctionEditorTypes.map(info => info.typeName).concat("number", "boolean", "string");
                     return opts;
                 })
         }
