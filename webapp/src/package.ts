@@ -390,7 +390,7 @@ class Host
             .then(v => v.val, e => null)
     }
 
-    downloadPackageAsync(pkg: pxt.Package) {
+    downloadPackageAsync(pkg: pxt.Package): Promise<void> {
         let proto = pkg.verProtocol()
         let epkg = getEditorPkg(pkg)
 
@@ -420,6 +420,9 @@ class Host
         } else if (proto == "embed") {
             epkg.setFiles(pxt.getEmbeddedScript(pkg.verArgument()))
             return Promise.resolve()
+        } else if (proto == "invalid") {
+            pxt.log(`skipping invalid pkg ${pkg.id}`);
+            return Promise.resolve();
         } else {
             return Promise.reject(`Cannot download ${pkg.version()}; unknown protocol`)
         }
@@ -484,9 +487,13 @@ export function loadPkgAsync(id: string, targetVersion?: string) {
 
     return theHost.downloadPackageAsync(mainPkg)
         .catch(core.handleNetworkError)
-        .then(() => JSON.parse(theHost.readFile(mainPkg, pxt.CONFIG_NAME)) as pxt.PackageConfig)
+        .then(() => ts.pxtc.Util.jsonTryParse(theHost.readFile(mainPkg, pxt.CONFIG_NAME)) as pxt.PackageConfig)
         .then(config => {
-            if (!config) throw new Error(lf("invalid pxt.json file"));
+            if (!config) {
+                mainPkg.configureAsInvalidPackage(lf("invalid pxt.json file"));
+                return mainEditorPkg().afterMainLoadAsync();
+            }
+
             return mainPkg.installAllAsync(targetVersion)
                 .then(() => mainEditorPkg().afterMainLoadAsync());
         })
@@ -536,9 +543,12 @@ data.mountVirtualApi("open-pkg-meta", {
             return {}
 
         const files = f.sortedFiles();
-        const numErrors = files.reduce((n, file) => n + (file.numDiagnosticsOverride
+        let numErrors = files.reduce((n, file) => n + (file.numDiagnosticsOverride
             || (file.diagnostics ? file.diagnostics.length : 0)
             || 0), 0);
+        const ks = f.getKsPkg();
+        if (ks && ks.invalid())
+            numErrors++;
         return <PackageMeta>{
             numErrors
         }

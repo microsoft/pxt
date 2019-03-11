@@ -273,6 +273,14 @@ namespace ts.pxtc.Util {
         return r
     }
 
+    export function jsonTryParse(s: string): any {
+        try {
+            return JSON.parse(s);
+        } catch (e) {
+            return undefined;
+        }
+    }
+
     export function jsonMergeFrom(trg: any, src: any) {
         if (!src) return;
         Object.keys(src).forEach(k => {
