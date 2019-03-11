@@ -40,11 +40,11 @@ We have create a [tasks for each language and editor](https://crowdin.com/projec
 
 ## Live Translations
 
-To test your changes "live", use **beta** build and the ``#liveforcelang=CODE`` hash argument where ``CODE`` is your language ISO code. For example, to see the french translations:
+To test your changes "live", use **beta** build and the ``?liveforcelang=CODE`` hash argument where ``CODE`` is your language ISO code. For example, to see the french translations:
 
 * https://pxt.microbit.org/beta?liveforcelang=fr
 
-Note that there may be a delay of up to 5 minutes before your changes in Crowdin make it into the "live" view.
+Note that there may be a delay of up to 24 hours before your changes in Crowdin make it into the "live" view.
 Also, the language will only be available in the editor's language selection if the target has enabled that locale - which is why you need to use the hash mentioned above.
 
 ## Translating the editor interface
