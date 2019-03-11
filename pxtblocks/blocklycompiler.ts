@@ -706,7 +706,7 @@ namespace pxt.blocks {
         const name = escapeVarName(b.getFieldValue("function_name"), e, true);
         const stmts = getInputTargetBlock(b, "STACK");
         const argsDeclaration = (b as Blockly.FunctionDefinitionBlock).getArguments().map(a => {
-            return `${escapeVarName(a.name, e)}: ${ts.pxtc.escapeIdentifier(a.type)}`;
+            return `${escapeVarName(a.name, e)}: ${a.type}`;
         });
         return [
             mkText(`function ${name} (${argsDeclaration.join(", ")})`),
