@@ -484,9 +484,13 @@ export function loadPkgAsync(id: string, targetVersion?: string) {
 
     return theHost.downloadPackageAsync(mainPkg)
         .catch(core.handleNetworkError)
-        .then(() => JSON.parse(theHost.readFile(mainPkg, pxt.CONFIG_NAME)) as pxt.PackageConfig)
+        .then(() => ts.pxtc.Util.jsonTryParse(theHost.readFile(mainPkg, pxt.CONFIG_NAME)) as pxt.PackageConfig)
         .then(config => {
-            if (!config) throw new Error(lf("invalid pxt.json file"));
+            if (!config) {
+                mainPkg.configureAsInvalidPackage(lf("invalid pxt.json file"));
+                return mainEditorPkg().afterMainLoadAsync();
+            }
+
             return mainPkg.installAllAsync(targetVersion)
                 .then(() => mainEditorPkg().afterMainLoadAsync());
         })
