@@ -62,18 +62,32 @@
         max-height: 25rem;
     }
 
-    .variable {
-        color: white;
+    .transparent{
+        opacity: 0;
     }
-    .variable.changed {
-        outline: solid 2px yellow;
+    .variable {
+        padding: 0.15rem;
     }
     .variable .varname {
         font-weight: bold;
     }
-    .variable .detail {
-        background:white;
-        color:black;
+    .variable.detail {
+        text-align: right;
+    }
+    .varval.number {
+        color: @debugNumberVariable;
+    }
+    .varval.string {
+        color: @debugStringVariable
+    }
+    .varval.boolean {
+        color: @debugBooleanVariable;
+    }
+    .varval.array {
+        color: @debugArrayVariable;
+    }
+    .varval.Sprite {
+        color: @debugSpriteVariable;
     }
     .previousval {
         text-decoration: line-through;
@@ -95,6 +109,20 @@ div.simframe div.pause-overlay {
     height: 100%;
     position: absolute;
     z-index: 100;    
+}
+
+.debugger .grid.equal.width {
+    background: @DebuggerBackgroundPrimaryColor;
+}
+
+.debugger #downloadArea {
+    background: @DebuggerBackgroundPrimaryColor;
+    //background-color: lightgreen
+}
+
+.debugger #filelist {
+    background: @DebuggerBackgroundPrimaryColor;
+    background-color: @DebuggerBackgroundSecondaryColor
 }
 
 /* Old debugger view */
