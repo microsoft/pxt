@@ -343,13 +343,11 @@ class PackgeTreeItem extends sui.StatelessUIElement<PackageTreeItemProps> {
         const { onItemClick, onItemRemove, onItemRefresh, version,
             isActive, hasRefresh, hasDelete, pkg: p, ...rest } = this.props;
 
-        const invalid = p.getKsPkg().invalid();
         return <div className="header link item" role="treeitem"
             aria-selected={isActive} aria-expanded={isActive}
             aria-label={lf("{0}, {1}", p.getPkgId(), isActive ? lf("expanded") : lf("collapsed"))}
             onClick={this.handleClick} tabIndex={0} onKeyDown={sui.fireClickOnEnter} {...rest}>
             <sui.Icon icon={`chevron ${isActive ? "down" : "right"} icon`} />
-            {invalid ? <span className='ui label red'>!</span> : null}
             {hasRefresh ? <sui.Button className="primary label" icon="refresh" title={lf("Refresh extension {0}", p.getPkgId())}
                 onClick={this.handleRefresh} onKeyDown={this.handleButtonKeydown} text={version || ''}></sui.Button> : undefined}
             {hasDelete ? <sui.Button className="primary label" icon="trash" title={lf("Delete extension {0}", p.getPkgId())}

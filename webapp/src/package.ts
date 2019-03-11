@@ -543,9 +543,12 @@ data.mountVirtualApi("open-pkg-meta", {
             return {}
 
         const files = f.sortedFiles();
-        const numErrors = files.reduce((n, file) => n + (file.numDiagnosticsOverride
+        let numErrors = files.reduce((n, file) => n + (file.numDiagnosticsOverride
             || (file.diagnostics ? file.diagnostics.length : 0)
             || 0), 0);
+        const ks = f.getKsPkg();
+        if (ks && ks.invalid())
+            numErrors++;
         return <PackageMeta>{
             numErrors
         }
