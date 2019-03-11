@@ -23,6 +23,9 @@ function setDiagnostics(diagnostics: pxtc.KsDiagnostic[]) {
         output += `${category} TS${diagnostic.code}: ${ts.pxtc.flattenDiagnosticMessageText(diagnostic.messageText, "\n")}\n`;
     }
 
+    if (output) // helpful for debugging
+        pxt.debug(output);
+
     if (!output)
         output = U.lf("Everything seems fine!\n")
 
