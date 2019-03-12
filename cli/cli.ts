@@ -2681,6 +2681,9 @@ class Host
                 if (proto == "file") {
                     pxt.log(`skipping download of local pkg: ${pkg.version()}`)
                     return Promise.resolve()
+                } else if (proto == "invalid") {
+                    pxt.log(`skipping invalid pkg ${pkg.id}`);
+                    return Promise.resolve();
                 } else {
                     return Promise.reject(`Cannot download ${pkg.version()}; unknown protocol`)
                 }

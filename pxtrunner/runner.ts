@@ -129,6 +129,9 @@ namespace pxt.runner {
                         files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4);
                         epkg.setFiles(files);
                         return Promise.resolve();
+                    } else if (proto == "invalid") {
+                        pxt.log(`skipping invalid pkg ${pkg.id}`);
+                        return Promise.resolve();
                     } else {
                         return Promise.reject(`Cannot download ${pkg.version()}; unknown protocol`)
                     }

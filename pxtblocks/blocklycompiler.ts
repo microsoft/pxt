@@ -1073,13 +1073,29 @@ namespace pxt.blocks {
             }, true);
         }
 
-        if (isDef) binding.alreadyDeclared = true;
-        else if (!binding.firstReference) binding.firstReference = b;
-
         let expr = compileExpression(e, bExpr, comments);
+
+        let bindString = binding.escapedName + " = ";
+
+        if (isDef) {
+            binding.alreadyDeclared = true;
+            const declaredType = getConcreteType(binding.type);
+
+            bindString = `let ${binding.escapedName} = `;
+
+            if (declaredType) {
+                const expressionType = getConcreteType(returnType(e, bExpr));
+                if (declaredType.type !== expressionType.type) {
+                    bindString = `let ${binding.escapedName}: ${declaredType.type} = `;
+                }
+            }
+        }
+        else if (!binding.firstReference) {
+            binding.firstReference = b;
+        }
+
         return mkStmt(
-            mkText(isDef ? "let " : ""),
-            mkText(binding.escapedName + " = "),
+            mkText(bindString),
             expr)
     }
 
