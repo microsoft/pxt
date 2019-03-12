@@ -247,6 +247,7 @@
         float:left;
         margin-top:1px;
         color: @primaryColor;
+        font-family: Icons;
     }
     .menuContainer .dropdown.icon.chevron.down {
         float: left;
@@ -257,6 +258,7 @@
         float:left;
         margin-top:1px;
         color: @primaryColor;
+        font-family: Icons;
     }
 
     .menuContainer .dropdown.icon.chevron.down{
@@ -312,9 +314,8 @@
     .ui.accordion  div.content a.item { 
         padding-left: 65px !important;
     }
-    .ui.accordion .accordion .active.title .dropdown.icon, .ui.accordion .active.title .dropdown.icon, .ui.accordion.menu .item .active.title>.dropdown.icon {
-        -webkit-transform: rotate(-90deg);
-        transform: rotate(-90deg);
+    .ui.accordion .accordion .title .dropdown.icon:before, .ui.accordion .title .dropdown.icon:before {
+        content: "\f054";
     } 
 }
 
@@ -362,6 +363,7 @@
             font-weight: normal;
             margin-left: 5px;
         }
+
         div.item > div.menu > a.item.active:before {
             content: "\f078";
             color: @primaryColor;
@@ -376,6 +378,7 @@
             float:left;
             margin-top:1px;
             color: @primaryColor;
+            font-family: Icons;
         }
         .dropdown.icon.chevron.down {
             float: left;
@@ -395,9 +398,8 @@
         .ui.accordion  div.content a.item {
             padding-left: 65px !important;
         }
-        .ui.accordion .accordion .active.title .dropdown.icon, .ui.accordion .active.title .dropdown.icon, .ui.accordion.menu .item .active.title>.dropdown.icon {
-            -webkit-transform: rotate(-90deg);
-            transform: rotate(-90deg);
+        .ui.accordion .accordion .title .dropdown.icon:before, .ui.accordion .title .dropdown.icon:before {
+            content: "\f054";
         }
     } 
 }
