@@ -1294,21 +1294,19 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         // Blockly internal methods to show a toolbox or a flyout
         if (this.editor.toolbox_) {
-            let oldFlyout = this.editor.toolbox_.flyout_ as Blockly.VerticalFlyout;
-            let hasCachedFlyout = flyoutName in this.flyouts;
+            const oldFlyout = this.editor.toolbox_.flyout_ as Blockly.VerticalFlyout;
+            const hasCachedFlyout = flyoutName in this.flyouts;
 
-            let swapFlyout = (old: Blockly.VerticalFlyout, nw: Blockly.VerticalFlyout) => {
+            const swapFlyout = (old: Blockly.VerticalFlyout, nw: Blockly.VerticalFlyout) => {
                 old.setVisible(false)
                 nw.setVisible(true)
                 this.editor.toolbox_.flyout_ = nw;
             }
-            let mkFlyout = () => {
-                let workspace = this.editor.toolbox_.workspace_ as Blockly.WorkspaceSvg
-                let { flyout, flyoutSvg } = Blockly.Functions.createFlyout(workspace)
-                let oldSvg = oldFlyout.svgGroup_;
-                let parent = oldSvg.parentElement;
-                parent.insertBefore(flyoutSvg, oldSvg);
-                return newFlyout as Blockly.VerticalFlyout;
+            const mkFlyout = () => {
+                const workspace = this.editor.toolbox_.workspace_ as Blockly.WorkspaceSvg
+                const oldSvg = oldFlyout.svgGroup_;
+                const flyout = Blockly.Functions.createFlyout(workspace, oldSvg)
+                return flyout as Blockly.VerticalFlyout;
             }
             let newFlyout: Blockly.VerticalFlyout;
             if (!hasCachedFlyout) {
