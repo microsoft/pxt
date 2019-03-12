@@ -878,6 +878,7 @@ namespace pxt.BrowserUtils {
         }
     }
 
+    // TODO(dz):
     // wired up in the app to store translations in pouchdb. MAY BE UNDEFINED!
     let _translationDbPromise: Promise<ITranslationDb>;
     export function translationDbAsync(): Promise<ITranslationDb> {
