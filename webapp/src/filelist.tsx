@@ -79,7 +79,6 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
     private filesOf(pkg: pkg.EditorPackage): JSX.Element[] {
         const { currentFile } = this.state;
         const deleteFiles = pkg.getPkgId() == "this";
-        const parent = this.props.parent;
         return pkg.sortedFiles().map(file => {
             let meta: pkg.FileMeta = this.getData("open-meta:" + file.getName())
             return (

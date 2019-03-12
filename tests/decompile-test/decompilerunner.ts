@@ -111,6 +111,10 @@ function compareBaselines(a: string, b: string): boolean {
     a = a.replace(/\s/g, "");
     b = b.replace(/\s/g, "");
 
+    // Strip encoded carriage-return from grey blocks
+    a = a.replace(/&#13;/g, "");
+    b = b.replace(/&#13;/g, "");
+
     // Ignore error messages in TS statement mutations
     a = a.replace(/error="[^"]*"/g, "");
     b = b.replace(/error="[^"]*"/g, "");
@@ -131,7 +135,7 @@ let cachedOpts: pxtc.CompileOptions;
 function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
     return getOptsAsync(dependency)
         .then(opts => {
-            const input = fs.readFileSync(f, "utf8")
+            const input = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
             opts.fileSystem["main.ts"] = input;
             opts.ast = true;
             opts.testMode = true;

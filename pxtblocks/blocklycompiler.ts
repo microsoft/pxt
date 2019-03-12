@@ -706,7 +706,7 @@ namespace pxt.blocks {
         const name = escapeVarName(b.getFieldValue("function_name"), e, true);
         const stmts = getInputTargetBlock(b, "STACK");
         const argsDeclaration = (b as Blockly.FunctionDefinitionBlock).getArguments().map(a => {
-            return `${escapeVarName(a.name, e)}: ${ts.pxtc.escapeIdentifier(a.type)}`;
+            return `${escapeVarName(a.name, e)}: ${a.type}`;
         });
         return [
             mkText(`function ${name} (${argsDeclaration.join(", ")})`),
@@ -1073,13 +1073,29 @@ namespace pxt.blocks {
             }, true);
         }
 
-        if (isDef) binding.alreadyDeclared = true;
-        else if (!binding.firstReference) binding.firstReference = b;
-
         let expr = compileExpression(e, bExpr, comments);
+
+        let bindString = binding.escapedName + " = ";
+
+        if (isDef) {
+            binding.alreadyDeclared = true;
+            const declaredType = getConcreteType(binding.type);
+
+            bindString = `let ${binding.escapedName} = `;
+
+            if (declaredType) {
+                const expressionType = getConcreteType(returnType(e, bExpr));
+                if (declaredType.type !== expressionType.type) {
+                    bindString = `let ${binding.escapedName}: ${declaredType.type} = `;
+                }
+            }
+        }
+        else if (!binding.firstReference) {
+            binding.firstReference = b;
+        }
+
         return mkStmt(
-            mkText(isDef ? "let " : ""),
-            mkText(binding.escapedName + " = "),
+            mkText(bindString),
             expr)
     }
 
