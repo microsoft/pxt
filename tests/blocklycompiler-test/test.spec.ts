@@ -381,6 +381,10 @@ describe("blockly compiler", function () {
         it("should allow variables declared in a for-loop at the top of on-start", (done: () => void) => {
             blockTestAsync("on_start_with_for_loop").then(done, done);
         });
+
+        it("should handle variables declared within grey blocks", (done: () => void) => {
+            blockTestAsync("grey_block_declared_vars").then(done, done);
+        });
     });
 
     describe("compiling functions", () => {
