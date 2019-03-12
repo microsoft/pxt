@@ -1195,19 +1195,18 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
 
         this.flyoutXmlList = [];
-        let cacheKey = ns + subns;
-        if (this.flyoutBlockXmlCache[cacheKey]) {
+        if (this.flyoutBlockXmlCache[ns + subns]) {
             pxt.debug("showing flyout with blocks from flyout blocks xml cache");
-            this.flyoutXmlList = this.flyoutBlockXmlCache[cacheKey];
-            this.showFlyoutInternal_(this.flyoutXmlList, cacheKey, true);
+            this.flyoutXmlList = this.flyoutBlockXmlCache[ns + subns];
+            this.showFlyoutInternal_(this.flyoutXmlList);
             return;
         }
 
         if (this.abstractShowFlyout(treeRow)) {
             // Cache blocks xml list for later
-            this.flyoutBlockXmlCache[cacheKey] = this.flyoutXmlList;
+            this.flyoutBlockXmlCache[ns + subns] = this.flyoutXmlList;
 
-            this.showFlyoutInternal_(this.flyoutXmlList, cacheKey, true);
+            this.showFlyoutInternal_(this.flyoutXmlList);
         }
     }
 
@@ -1288,43 +1287,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.showFlyoutInternal_(this.flyoutXmlList);
     }
 
-    private flyouts: pxt.Map<Blockly.VerticalFlyout> = {};
-    private showFlyoutInternal_(xmlList: Element[], flyoutName: string = "default", skipRebuild: boolean = false) {
-        type PxtToolbox = Blockly.Toolbox & { pxtFlyouts: Blockly.Flyout[] };
-
+    private showFlyoutInternal_(xmlList: Element[]) {
         // Blockly internal methods to show a toolbox or a flyout
         if (this.editor.toolbox_) {
-            const oldFlyout = this.editor.toolbox_.flyout_ as Blockly.VerticalFlyout;
-            const hasCachedFlyout = flyoutName in this.flyouts;
-
-            const swapFlyout = (old: Blockly.VerticalFlyout, nw: Blockly.VerticalFlyout) => {
-                old.setVisible(false)
-                nw.setVisible(true)
-                this.editor.toolbox_.flyout_ = nw;
-            }
-            const mkFlyout = () => {
-                const workspace = this.editor.toolbox_.workspace_ as Blockly.WorkspaceSvg
-                const oldSvg = oldFlyout.svgGroup_;
-                const flyout = Blockly.Functions.createFlyout(workspace, oldSvg)
-                return flyout as Blockly.VerticalFlyout;
-            }
-            let newFlyout: Blockly.VerticalFlyout;
-            if (!hasCachedFlyout) {
-                newFlyout = mkFlyout();
-                swapFlyout(oldFlyout, newFlyout);
-                newFlyout.show(xmlList);
-                this.flyouts[flyoutName] = newFlyout;
-            } else {
-                newFlyout = this.flyouts[flyoutName];
-                swapFlyout(oldFlyout, newFlyout);
-                if (!skipRebuild)
-                    newFlyout.show(xmlList);
-                else
-                    newFlyout.setVisible(true);
-            }
-
-            newFlyout.scrollToStart();
-
+            this.editor.toolbox_.flyout_.show(xmlList);
+            (this.editor.toolbox_.flyout_ as Blockly.VerticalFlyout).scrollToStart();
         } else if ((this.editor as any).flyout_) {
             (this.editor as any).show(xmlList);
             (this.editor as any).scrollToStart();
