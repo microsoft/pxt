@@ -1443,12 +1443,10 @@ ${output}</xml>`;
 
         function getForOfStatement(n: ts.ForOfStatement): StatementNode {
             const initializer = n.initializer as ts.VariableDeclarationList;
-            const indexVar = (initializer.declarations[0].name as ts.Identifier).text;
             const renamed = getVariableName(initializer.declarations[0].name as ts.Identifier);
 
-            const r = mkStmt("controls_for_of");
-            r.inputs = [getValue("LIST", n.expression)];
-            r.fields = [getField("VAR", renamed)];
+            const r = mkStmt("pxt_controls_for_of");
+            r.inputs = [getValue("LIST", n.expression), getDraggableVariableBlock("VAR", renamed)];
             r.handlers = [{ name: "DO", statement: getStatementBlock(n.statement) }];
 
             return r
