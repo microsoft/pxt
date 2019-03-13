@@ -106,6 +106,22 @@ namespace pxt {
             this.host().writeFile(this, pxt.CONFIG_NAME, text)
         }
 
+        setPreferredEditor(editor: string) {
+            if (this.config.preferredEditor != editor) {
+                this.config.preferredEditor = editor
+                this.saveConfig()
+            }
+        }
+
+        getPreferredEditor() {
+            let editor = this.config.preferredEditor
+            if (!editor) {
+                editor = this.getFiles().indexOf("main.blocks") >= 0 ?
+                    pxt.BLOCKS_PROJECT_NAME : pxt.JAVASCRIPT_PROJECT_NAME
+            }
+            return editor
+        }
+
         parseJRes(allres: Map<JRes> = {}) {
             for (const f of this.getFiles()) {
                 if (U.endsWith(f, ".jres")) {
@@ -768,7 +784,7 @@ namespace pxt {
                             status: "unpublished",
                             scriptId: this.config.installedVersion,
                             cloudId: pxt.CLOUD_ID + appTarget.id,
-                            editor: target.preferredEditor ? target.preferredEditor : (U.lookup(files, "main.blocks") ? pxt.BLOCKS_PROJECT_NAME : pxt.JAVASCRIPT_PROJECT_NAME),
+                            editor: this.getPreferredEditor(),
                             targetVersions: pxt.appTarget.versions
                         })
                         const programText = JSON.stringify(files)
@@ -852,14 +868,14 @@ namespace pxt {
                 })
         }
 
-        saveToJsonAsync(editor?: string): Promise<pxt.cpp.HexFile> {
+        saveToJsonAsync(): Promise<pxt.cpp.HexFile> {
             return this.filesToBePublishedAsync(true)
                 .then(files => {
                     const project: pxt.cpp.HexFile = {
                         meta: {
                             cloudId: pxt.CLOUD_ID + pxt.appTarget.id,
                             targetVersions: pxt.appTarget.versions,
-                            editor: editor || pxt.BLOCKS_PROJECT_NAME,
+                            editor: this.getPreferredEditor(),
                             name: this.config.name
                         },
                         source: JSON.stringify(files, null, 2)
@@ -868,8 +884,8 @@ namespace pxt {
                 });
         }
 
-        compressToFileAsync(editor?: string): Promise<Uint8Array> {
-            return this.saveToJsonAsync(editor)
+        compressToFileAsync(): Promise<Uint8Array> {
+            return this.saveToJsonAsync()
                 .then(project => pxt.lzmaCompressAsync(JSON.stringify(project, null, 2)));
         }
 

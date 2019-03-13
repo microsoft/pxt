@@ -55,14 +55,12 @@ export interface CompileOptions {
     debug?: boolean;
     background?: boolean; // not explicitly requested by user (hint for simulator)
     forceEmit?: boolean;
-    preferredEditor?: string;
     clickTrigger?: boolean;
 }
 
 export function compileAsync(options: CompileOptions = {}): Promise<pxtc.CompileResult> {
     let trg = pkg.mainPkg.getTargetOptions()
     trg.isNative = options.native
-    trg.preferredEditor = options.preferredEditor;
     return pkg.mainPkg.getCompileOptionsAsync(trg)
         .then(opts => {
             if (options.debug) {

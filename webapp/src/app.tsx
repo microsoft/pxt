@@ -736,7 +736,6 @@ export class ProjectView
             const pkgId = fn.epkg && fn.epkg.getPkgId();
 
             if (pkgId === "this") {
-
                 // Update the last-used editor if opening a user file
                 if (this.isBlocksFile(fn.name)) {
                     header.editor = pxt.BLOCKS_PROJECT_NAME;
@@ -750,6 +749,7 @@ export class ProjectView
                     header.editor = pxt.PYTHON_PROJECT_NAME
                     header.pubCurrent = false
                 }
+                pkg.mainPkg.setPreferredEditor(header.editor)
             }
         }
 
@@ -982,6 +982,8 @@ export class ProjectView
                 if (file.name === "main.ts") {
                     this.shouldTryDecompile = true;
                 }
+                if (pkg.mainPkg.config.preferredEditor)
+                    h.editor = pkg.mainPkg.config.preferredEditor
                 this.setState({
                     home: false,
                     showFiles: h.githubId ? true : false,
@@ -1027,13 +1029,13 @@ export class ProjectView
                     })
                     .done()
 
-                const preferredEditor = this.pickEditorFor(file);
+                const editorForFile = this.pickEditorFor(file);
                 const readme = main.lookupFile("this/README.md");
                 // no auto-popup when editing packages locally
                 if (!h.githubId && readme && readme.content && readme.content.trim())
                     this.setSideMarkdown(readme.content);
                 else if (pkg.mainPkg && pkg.mainPkg.config && pkg.mainPkg.config.documentation)
-                    this.setSideDoc(pkg.mainPkg.config.documentation, preferredEditor == this.blocksEditor);
+                    this.setSideDoc(pkg.mainPkg.config.documentation, editorForFile == this.blocksEditor);
 
                 // update recentUse on the header
                 return workspace.saveAsync(h)
@@ -1299,9 +1301,14 @@ export class ProjectView
     ////////////           Export                 /////////////
     ///////////////////////////////////////////////////////////
 
+    syncPreferredEditor() {
+        pkg.mainPkg.setPreferredEditor(this.getPreferredEditor())
+    }
+
     exportProjectToFileAsync(): Promise<Uint8Array> {
+        this.syncPreferredEditor()
         const mpkg = pkg.mainPkg;
-        return mpkg.compressToFileAsync(this.getPreferredEditor())
+        return mpkg.compressToFileAsync()
     }
 
     exportAsync(): Promise<string> {
@@ -1395,7 +1402,8 @@ export class ProjectView
         }
         if (pxt.commands.saveProjectAsync) {
             core.infoNotification(lf("Saving..."))
-            return mpkg.saveToJsonAsync(this.getPreferredEditor())
+            this.syncPreferredEditor()
+            return mpkg.saveToJsonAsync()
                 .then(project => pxt.commands.saveProjectAsync(project));
         }
         if (pxt.appTarget.compile.saveAsPNG) return this.saveProjectAsPNGAsync(true);
@@ -1787,7 +1795,8 @@ export class ProjectView
         this.editor.beforeCompile();
         if (simRestart) this.stopSimulator();
         let state = this.editor.snapshotState()
-        compiler.compileAsync({ native: true, forceEmit: true, preferredEditor: this.getPreferredEditor() })
+        this.syncPreferredEditor()
+        compiler.compileAsync({ native: true, forceEmit: true })
             .then<pxtc.CompileResult>(resp => {
                 this.editor.setDiagnostics(this.editorFile, state)
 
@@ -2118,7 +2127,7 @@ export class ProjectView
             if (this.state.tracing)
                 opts.trace = true;
 
-            opts.preferredEditor = this.getPreferredEditor();
+            this.syncPreferredEditor()
 
             simulator.stop(false, true);
             const simAutoRun = pxt.appTarget.simulator && (pxt.options.light
