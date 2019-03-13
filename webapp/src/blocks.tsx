@@ -585,7 +585,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             <debug.DebuggerVariables ref={this.handleDebuggerVariablesRef} parent={this.parent} />
         </div> : <div />;
         Util.assert(!!this.debuggerToolboxDiv)
-        debugging ? this.toolbox.hide() : this.toolbox.show();
+        if (debugging) {
+            this.toolbox.hide();
+        } else {
+            this.toolbox.show();
+        }
         ReactDOM.render(debuggerToolbox, document.getElementById('debuggerToolbox'));
     }
 
