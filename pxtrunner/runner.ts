@@ -4,6 +4,7 @@
 /// <reference path="../built/pxteditor.d.ts" />
 /// <reference path="../built/pxtcompiler.d.ts" />
 /// <reference path="../built/pxtblocks.d.ts" />
+/// <reference path="../built/pxteditor.d.ts" />
 /// <reference path="../built/pxtsim.d.ts" />
 
 namespace pxt.runner {
@@ -397,24 +398,6 @@ namespace pxt.runner {
         }
     }
 
-    function initEditorExtensionsAsync(): Promise<void> {
-        let promise = Promise.resolve();
-        if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendFieldEditors) {
-            const opts: pxt.editor.FieldExtensionOptions = {};
-            promise = promise
-                .then(() => pxt.BrowserUtils.loadBlocklyAsync())
-                .then(() => pxt.BrowserUtils.loadScriptAsync("fieldeditors.js"))
-                .then(() => pxt.editor.initFieldExtensionsAsync(opts))
-                .then(res => {
-                    if (res.fieldEditors)
-                        res.fieldEditors.forEach(fi => {
-                            pxt.blocks.registerFieldEditor(fi.selector, fi.editor, fi.validator);
-                        })
-                })
-        }
-        return promise;
-    }
-
     export function startRenderServer() {
         pxt.tickEvent("renderer.ready");
 
@@ -450,7 +433,7 @@ namespace pxt.runner {
                 })
         }
 
-        initEditorExtensionsAsync()
+        pxt.editor.initEditorExtensionsAsync()
             .done(() => {
                 // notify parent that render engine is loaded
                 window.addEventListener("message", function (ev) {
@@ -568,7 +551,7 @@ namespace pxt.runner {
                 p.then(() => render(m[1], decodeURIComponent(m[2])));
             }
         }
-        let promise = initEditorExtensionsAsync();
+        let promise = pxt.editor.initEditorExtensionsAsync();
         promise.done(() => {
             window.addEventListener("message", receiveDocMessage, false);
             window.addEventListener("hashchange", () => {

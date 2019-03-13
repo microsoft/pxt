@@ -650,20 +650,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     }
                     this.prepareBlockly();
                 })
-                .then(() => {
-                    if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendFieldEditors) {
-                        return pxt.BrowserUtils.loadScriptAsync("fieldeditors.js")
-                            .then(() => pxt.editor.initFieldExtensionsAsync({}))
-                            .then(res => {
-                                if (res.fieldEditors) {
-                                    res.fieldEditors.forEach(fi => {
-                                        pxt.blocks.registerFieldEditor(fi.selector, fi.editor, fi.validator);
-                                    })
-                                }
-                            });
-                    }
-                    return Promise.resolve();
-                })
+                .then(() => pxt.editor.initEditorExtensionsAsync())
         return this._loadBlocklyPromise;
     }
 
