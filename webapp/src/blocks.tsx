@@ -1298,9 +1298,22 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             const hasCachedFlyout = flyoutName in this.flyouts;
 
             const swapFlyout = (old: Blockly.VerticalFlyout, nw: Blockly.VerticalFlyout) => {
+                // hide the old flyout
                 old.setVisible(false)
-                nw.setVisible(true)
+
+                // set the "current" flyout
                 this.editor.toolbox_.flyout_ = nw;
+
+                // show the new flyout
+                nw.setVisible(true)
+
+                // reflow if scale changed
+                const flyoutWs = nw.workspace_ as Blockly.WorkspaceSvg;
+                const targetWs = nw.targetWorkspace_ as Blockly.WorkspaceSvg;
+                const scaleChange = flyoutWs.scale !== targetWs.scale;
+                if (scaleChange) {
+                    nw.reflow();
+                }
             }
             const mkFlyout = () => {
                 const workspace = this.editor.toolbox_.workspace_ as Blockly.WorkspaceSvg
