@@ -8646,9 +8646,15 @@ declare module Blockly {
             positionAt_(width: number, height: number, x: number, y: number): void;
     
             /**
-             * Hide and empty the flyout.
+             * Hide the flyout.
              */
             hide(): void;
+    
+            /**
+             * Delete any event listeners.
+             * @private
+             */
+            clearOldEventListeners_(): void;
     
             /**
              * Show and populate the flyout.
