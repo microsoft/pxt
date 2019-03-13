@@ -234,7 +234,7 @@ export function init(): void {
         pxt.debug(`deploy/save using webkit host`);
         pxt.commands.deployCoreAsync = nativeHostDeployCoreAsync;
         pxt.commands.saveOnlyAsync = nativeHostSaveCoreAsync;
-    } else if (pxt.usb.isEnabled && pxt.appTarget.compile.useUF2) {
+    } else if (pxt.usb.isEnabled && pxt.appTarget.compile.useUF2 && pxt.appTarget.appTheme.autoWebUSBDownload) {
         pxt.commands.deployCoreAsync = webusb.webUsbDeployCoreAsync;
     } else if (pxt.winrt.isWinRT()) { // windows app
         if (pxt.appTarget.serial && pxt.appTarget.serial.useHF2) {
