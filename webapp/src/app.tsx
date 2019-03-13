@@ -39,6 +39,7 @@ import * as blocklyToolbox from "./blocksSnippets";
 import * as monacoToolbox from "./monacoSnippets";
 import * as greenscreen from "./greenscreen";
 import * as socketbridge from "./socketbridge";
+import * as webusb from "./webusb";
 
 import * as monaco from "./monaco"
 import * as pxtjson from "./pxtjson"
@@ -1666,7 +1667,7 @@ export class ProjectView
         const variants = pxt.getHwVariants()
         if (variants.length == 0)
             return false
-        let pairAsync = () => cmds.showWebUSBPairingInstructionsAsync(null)
+        let pairAsync = () => webusb.showWebUSBPairingInstructionsAsync(null)
             .then(() => {
                 this.checkForHwVariant()
             }, err => {
