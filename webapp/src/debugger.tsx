@@ -32,6 +32,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
             variables: {}
         }
         this.onMouseOverVariable = this.onMouseOverVariable.bind(this);
+        this.toggleDebugging = this.toggleDebugging.bind(this);
     }
 
     clear() {
@@ -133,7 +134,11 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         }
     }
 
-    private onMouseOverVariable(): void {};
+    toggleDebugging(): void {
+        this.props.parent.toggleDebugging();
+    }
+
+    private onMouseOverVariable(): void { };
 
     private renderVariables(variables: pxt.Map<Variable>, parent?: string, depth?: number): JSX.Element[] {
         let r: JSX.Element[] = [];
@@ -152,9 +157,8 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
             let type = this.variableType(v);
             const onClick = v.value && v.value.id ? () => this.toggle(v) : undefined;
 
-            r.push(<tr key={(parent || "") + variable} className="item">
-                <td className={`variable ${v.prevValue !== undefined ? "changed" : ""}`}
-                    onClick={onClick} onMouseOver={this.onMouseOverVariable}>
+            r.push(<tr key={(parent || "") + variable} className="item" onClick={onClick} onMouseOver={this.onMouseOverVariable}>
+                <td className={`variable varname ${v.prevValue !== undefined ? "changed" : ""}`}>
                     <i className={`${(v.children ? "down triangle icon" : "right triangle icon") + ((v.value && v.value.hasFields) ? "" : " transparent")}`} style={{ marginLeft: margin }} ></i>
                     <span>{variable + ':'}</span>
                 </td>
@@ -177,20 +181,17 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         const variableTableHeader = lf("Variable");
         const valueTableHeader = lf("Type/Value");
 
-        return Object.keys(variables).length == 0 ? <div /> :
-            <div className={`ui segment debugvariables ${frozen ? "frozen" : ""}`}>
-                <table className="ui collapsing celled table">
-                    <thead>
-                        <tr>
-                            <th>{variableTableHeader}</th>
-                            <th>{valueTableHeader}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {this.renderVariables(variables)}
-                    </tbody>
-                </table>
-            </div>;
+        return <table className={`ui segment debugvariables ${frozen ? "frozen" : ""} ui collapsing basic table`}>
+            <thead>
+                <tr>
+                    <th>{variableTableHeader}</th>
+                    <th>{valueTableHeader}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {(Object.keys(variables).length == 0) ? <tr /> : this.renderVariables(variables)}
+            </tbody>
+        </table>;
     }
 }
 
@@ -209,13 +210,12 @@ export class DebuggerToolbar extends data.Component<DebuggerToolbarProps, Debugg
         this.state = {
         }
 
-        this.toolbarHandleDown = this.toolbarHandleDown.bind(this);
         this.restartSimulator = this.restartSimulator.bind(this);
         this.dbgPauseResume = this.dbgPauseResume.bind(this);
-        this.dbgInsertBreakpoint = this.dbgInsertBreakpoint.bind(this);
         this.dbgStepOver = this.dbgStepOver.bind(this);
         this.dbgStepInto = this.dbgStepInto.bind(this);
         this.dbgStepOut = this.dbgStepOut.bind(this);
+        this.exitDebugging = this.exitDebugging.bind(this);
     }
 
     restartSimulator() {
@@ -233,11 +233,6 @@ export class DebuggerToolbar extends data.Component<DebuggerToolbarProps, Debugg
         this.props.parent.dbgPauseResume();
     }
 
-    dbgInsertBreakpoint() {
-        pxt.tickEvent('debugger.breakpoint', undefined, { interactiveConsent: true });
-        this.props.parent.dbgInsertBreakpoint();
-    }
-
     dbgStepOver() {
         pxt.tickEvent('debugger.stepover', undefined, { interactiveConsent: true });
         this.props.parent.dbgStepOver();
@@ -253,77 +248,13 @@ export class DebuggerToolbar extends data.Component<DebuggerToolbarProps, Debugg
         simulator.dbgStepOut();
     }
 
-    componentDidUpdate(props: DebuggerToolbarProps, state: DebuggerToolbarState) {
-        if (this.state.isDragging && !state.isDragging) {
-            document.addEventListener('mousemove', this.toolbarHandleMove.bind(this));
-            document.addEventListener('mouseup', this.toolbarHandleUp.bind(this));
-        } else if (!this.state.isDragging && state.isDragging) {
-            document.removeEventListener('mousemove', this.toolbarHandleMove.bind(this));
-            document.removeEventListener('mouseup', this.toolbarHandleUp.bind(this));
-        }
-
-        // Center the component if it hasn't been initialized yet
-        if (state.xPos == undefined && props.parent.state.debugging) {
-            this.centerToolbar();
-            window.addEventListener('resize', this.centerToolbar.bind(this));
-        }
-    }
-
-    componentWillUnmount() {
-        document.removeEventListener('mousemove', this.toolbarHandleMove.bind(this));
-        document.removeEventListener('mouseup', this.toolbarHandleUp.bind(this));
-        window.removeEventListener('resize', this.centerToolbar.bind(this));
-    }
-
-    private cachedMaxWidth = 0;
-
-    toolbarHandleDown(e: React.MouseEvent<any>) {
-        if (e.button !== 0) return
-        const menuDOM = this.getMenuDom();
-        const menuWidth = menuDOM && menuDOM.clientWidth || 0;
-        this.cachedMaxWidth = window.innerWidth - menuWidth;
-        this.setState({
-            isDragging: true,
-            xPos: Math.min(e.pageX, this.cachedMaxWidth)
-        })
-        e.stopPropagation();
-        e.preventDefault();
-    }
-
-    toolbarHandleMove(e: MouseEvent) {
-        if (!this.state.isDragging) return;
-        this.setState({
-            isDragging: true,
-            xPos: Math.min(e.pageX, this.cachedMaxWidth)
-        })
-        e.stopPropagation();
-        e.preventDefault();
-    }
-
-    toolbarHandleUp(e: MouseEvent) {
-        this.setState({ isDragging: false });
-        e.stopPropagation();
-        e.preventDefault();
-    }
-
     getMenuDom() {
         const node = ReactDOM.findDOMNode(this);
         return node && node.firstElementChild;
     }
 
-    centerToolbar() {
-        // Center the toolbar in the middle of the editor view (blocks / JS)
-        const menuDOM = this.getMenuDom();
-        const width = menuDOM && menuDOM.clientWidth;
-        const mainEditor = document.getElementById('maineditor');
-        const simWidth = window.innerWidth - mainEditor.clientWidth;
-        this.setState({ xPos: simWidth + (mainEditor.clientWidth - width) / 2 });
-    }
-
     renderCore() {
-        const { xPos } = this.state;
         const parentState = this.props.parent.state;
-        const simOpts = pxt.appTarget.simulator;
 
         const simState = parentState.simState;
         const isRunning = simState == pxt.editor.SimState.Running;
@@ -341,24 +272,19 @@ export class DebuggerToolbar extends data.Component<DebuggerToolbarProps, Debugg
         const dbgStepIntoTooltip = lf("Step into");
         const dbgStepOverTooltip = lf("Step over");
         const dbgStepOutTooltip = lf("Step out");
+        const dbgExitTooltip = lf("Exit Debug Mode");
 
-        return <aside className="debugtoolbar" style={{ left: xPos }} role="complementary" aria-label={lf("Debugger toolbar")}>
+        return <div className="debugtoolbar" role="complementary" aria-label={lf("Debugger toolbar")}>
             {!isDebugging ? undefined :
                 <div className={`ui compact borderless menu icon`}>
-                    <div role="button" className={`ui item link dbg-btn dbg-handle`} key={'toolbarhandle'}
-                        title={lf("Debugger buttons")}
-                        onMouseDown={this.toolbarHandleDown}>
-                        <sui.Icon key='iconkey' icon={`icon ellipsis vertical`} />
-                        <sui.Icon key='iconkey2' icon={`xicon bug`} />
-                    </div>
                     <sui.Item key='dbgpauseresume' className={`dbg-btn dbg-pause-resume ${isDebuggerRunning ? "pause" : "play"}`} icon={`${isDebuggerRunning ? "pause blue" : "step forward green"}`} title={dbgPauseResumeTooltip} onClick={this.dbgPauseResume} />
-                    <sui.Item key='dbgbreakpoint' className={`dbg-btn dbg-breakpoint`} icon="circle red" title={lf("Insert debugger breakpoint")} onClick={this.dbgInsertBreakpoint} />
                     {!advancedDebugging ? <sui.Item key='dbgstep' className={`dbg-btn dbg-step`} icon={`arrow right ${isDebuggerRunning ? "disabled" : "blue"}`} title={dbgStepIntoTooltip} onClick={this.dbgStepInto} /> : undefined}
                     {advancedDebugging ? <sui.Item key='dbgstepover' className={`dbg-btn dbg-step-over`} icon={`xicon stepover ${isDebuggerRunning ? "disabled" : "blue"}`} title={dbgStepOverTooltip} onClick={this.dbgStepOver} /> : undefined}
                     {advancedDebugging ? <sui.Item key='dbgstepinto' className={`dbg-btn dbg-step-into`} icon={`xicon stepinto ${isDebuggerRunning ? "disabled" : ""}`} title={dbgStepIntoTooltip} onClick={this.dbgStepInto} /> : undefined}
                     {advancedDebugging ? <sui.Item key='dbgstepout' className={`dbg-btn dbg-step-out`} icon={`xicon stepout ${isDebuggerRunning ? "disabled" : ""}`} title={dbgStepOutTooltip} onClick={this.dbgStepOut} /> : undefined}
                     <sui.Item key='dbgrestart' className={`dbg-btn dbg-restart right`} icon={`refresh green`} title={restartTooltip} onClick={this.restartSimulator} />
+                    <sui.Item key='dbgexit' className={`dbg-btn dbg-exit`} icon={`stop`} title={dbgExitTooltip} onClick={this.exitDebugging} />
                 </div>}
-        </aside>;
+        </div>;
     }
 }

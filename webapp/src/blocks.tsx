@@ -31,6 +31,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     showSearch: boolean;
     breakpointsByBlock: pxt.Map<number>; // Map block id --> breakpoint ID
     breakpointsSet: number[]; // the IDs of the breakpoints set.
+    debuggerToolboxDiv: JSX.Element;
 
     public nsMap: pxt.Map<toolbox.BlockDefinition[]>;
 
@@ -70,6 +71,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let breakpointId = this.breakpointsByBlock[blockId];
         this.breakpointsSet.filter(breakpoint => breakpoint != breakpointId);
         simulator.driver.setBreakpoints(this.breakpointsSet);
+    }
+
+    clearBreakpoints(): void {
+        simulator.driver.setBreakpoints([]);
     }
 
     setVisible(v: boolean) {
@@ -537,8 +542,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             <div>
                 <div id="blocksEditor"></div>
                 <toolbox.ToolboxTrashIcon />
-                {this.parent.state.debugging ?
-                    <debug.DebuggerVariables ref={this.handleDebuggerVariablesRef} parent={this.parent} /> : undefined}
             </div>
         )
     }
@@ -564,12 +567,30 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     renderToolbox(immediate?: boolean) {
         if (pxt.shell.isReadOnly()) return;
         const blocklyToolboxDiv = this.getBlocklyToolboxDiv();
-        const blocklyToolbox = <toolbox.Toolbox ref={this.handleToolboxRef} editorname="blocks" parent={this} />;
-
+        const debuggerToolboxDiv = <div id="debuggerToolbox"></div>;
+        const blocklyToolbox = <div className="blocklyToolbox">
+            <toolbox.Toolbox ref={this.handleToolboxRef} editorname="blocks" parent={this} />
+            {debuggerToolboxDiv}
+        </div>;
+        this.debuggerToolboxDiv = debuggerToolboxDiv;
         Util.assert(!!blocklyToolboxDiv);
         ReactDOM.render(blocklyToolbox, blocklyToolboxDiv);
 
         if (!immediate) this.toolbox.showLoading();
+    }
+
+    updateToolbox(debugging: boolean) {
+        let debuggerToolbox = debugging ? <div>
+            <debug.DebuggerToolbar parent={this.parent} />
+            <debug.DebuggerVariables ref={this.handleDebuggerVariablesRef} parent={this.parent} />
+        </div> : <div />;
+        Util.assert(!!this.debuggerToolboxDiv)
+        if (debugging) {
+            this.toolbox.hide();
+        } else {
+            this.toolbox.show();
+        }
+        ReactDOM.render(debuggerToolbox, document.getElementById('debuggerToolbox'));
     }
 
     showPackageDialog() {
@@ -770,6 +791,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 }
             }
         })
+        this.setBreakpointsFromBlocks();
     }
 
     highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage): boolean {

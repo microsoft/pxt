@@ -279,6 +279,9 @@ export class ProjectView
         if (this.editor && this.editor.isReady) {
             this.updateEditorFile();
         }
+        if (this.state.debugging) {
+            this.blocksEditor.updateToolbox(true);
+        }
     }
 
     fireResize() {
@@ -2009,6 +2012,7 @@ export class ProjectView
         else {
             simulator.driver.restart(); // fast restart
         }
+        this.blocksEditor.setBreakpointsFromBlocks();
     }
 
     startSimulator(debug?: boolean, clickTrigger?: boolean) {
@@ -2133,7 +2137,9 @@ export class ProjectView
     toggleDebugging() {
         const state = !this.state.debugging;
         pxt.log("turning debugging mode to " + state);
-        this.setState({ debugging: state, tracing: false });
+        this.setState({ debugging: state, tracing: false }, () => {
+            this.renderCore()
+        });
         let blocks = this.blocksEditor.editor.getAllBlocks();
         blocks.forEach(block => {
             if (block.nextConnection && block.previousConnection) {
@@ -2141,8 +2147,8 @@ export class ProjectView
             }
         });
 
+        this.blocksEditor.updateToolbox(state)
         this.restartSimulator(state);
-        this.renderCore()
     }
 
     dbgPauseResume() {
@@ -2385,6 +2391,7 @@ export class ProjectView
     }
 
     showExitAndSaveDialog() {
+        this.setState({ debugging: false })
         if (this.state.projectName !== lf("Untitled")) {
             this.openHome();
         }
@@ -2730,7 +2737,7 @@ export class ProjectView
         const inHome = this.state.home && !sandbox;
         const inEditor = !!this.state.header && !inHome;
         const { lightbox, greenScreen } = this.state;
-        const simDebug = !!targetTheme.debugger;
+        const simDebug = !!targetTheme.debugger || inDebugMode;
 
         const { hideMenuBar, hideEditorToolbar, transparentEditorToolbar } = targetTheme;
         const isHeadless = simOpts && simOpts.headless;
@@ -2794,7 +2801,6 @@ export class ProjectView
                     <tutorial.TutorialCard ref="tutorialcard" parent={this} />
                 </div> : undefined}
                 <div id="simulator">
-                    {simDebug ? <debug.DebuggerToolbar parent={this} /> : undefined}
                     <div id="filelist" className="ui items">
                         <div id="boardview" className={`ui vertical editorFloat`} role="region" aria-label={lf("Simulator")}>
                         </div>
@@ -2811,7 +2817,7 @@ export class ProjectView
                         <div id="filelistOverlay" role="button" title={lf("Open in fullscreen")} onClick={this.toggleSimulatorFullscreen}></div>
                     </div>
                 </div>
-                <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main" aria-hidden={inHome}>
+                <div id="maineditor" className={(sandbox ? "sandbox" : "") + (inDebugMode ? "debugging" : "")} role="main" aria-hidden={inHome}>
                     {this.allEditors.map(e => e.displayOuter())}
                 </div>
                 {inHome ? <div id="homescreen" className="full-abs">
