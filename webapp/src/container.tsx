@@ -321,6 +321,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         this.openJavaScript = this.openJavaScript.bind(this);
         this.exitTutorial = this.exitTutorial.bind(this);
         this.showReportAbuse = this.showReportAbuse.bind(this);
+        this.toggleDebug = this.toggleDebug.bind(this);
     }
 
     brandIconClick() {
@@ -375,21 +376,25 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         this.props.parent.showReportAbuse();
     }
 
+    toggleDebug() {
+        pxt.tickEvent("simulator.debug", undefined, { interactiveConsent: true });
+        this.props.parent.toggleDebugging();
+    }
+
     renderCore() {
-        const { home, header, highContrast, greenScreen, simState } = this.props.parent.state;
+        const { debugging, home, header, highContrast, greenScreen, simState, tutorialOptions } = this.props.parent.state;
         if (home) return <div />; // Don't render if we're on the home screen
 
         const targetTheme = pxt.appTarget.appTheme;
         const isController = pxt.shell.isControllerMode();
         const homeEnabled = !isController;
         const sandbox = pxt.shell.isSandboxMode();
-        const tutorialOptions = this.props.parent.state.tutorialOptions;
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
         const tutorialReportId = tutorialOptions && tutorialOptions.tutorialReportId;
-        const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox && !inTutorial;
+        const docMenu = targetTheme.docMenu && targetTheme.docMenu.length && !sandbox && !inTutorial && !debugging;
         const isRunning = simState == pxt.editor.SimState.Running;
         const hc = !!this.props.parent.state.highContrast;
-        const showShare = !inTutorial && header && pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && !isController;
+        const showShare = !inTutorial && header && pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && !isController && !debugging;
 
         const logo = (hc ? targetTheme.highContrastLogo : undefined) || targetTheme.logo;
         const portraitLogo = (hc ? targetTheme.highContrastPortraitLogo : undefined) || targetTheme.portraitLogo;
@@ -433,8 +438,9 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
             </div> : undefined}
             {inTutorial ? <tutorial.TutorialMenuItem parent={this.props.parent} /> : undefined}
             <div className="right menu">
+                {debugging ? <sui.ButtonMenuItem className="exit-tutorial-btn" role="menuitem" icon="external" text={lf("Exit Debug Mode")} textClass="landscape only" onClick={this.toggleDebug} /> : undefined}
                 {docMenu ? <container.DocsMenu parent={this.props.parent} /> : undefined}
-                {sandbox || inTutorial ? undefined : <container.SettingsMenu parent={this.props.parent} highContrast={highContrast} greenScreen={greenScreen} />}
+                {sandbox || inTutorial || debugging ? undefined : <container.SettingsMenu parent={this.props.parent} highContrast={highContrast} greenScreen={greenScreen} />}
 
                 {sandbox && !targetTheme.hideEmbedEdit ? <sui.Item role="menuitem" icon="external" textClass="mobile hide" text={lf("Edit")} onClick={this.launchFullEditor} /> : undefined}
                 {inTutorial && tutorialReportId ? <sui.ButtonMenuItem className="report-tutorial-btn" role="menuitem" icon="warning circle" text={lf("Report Abuse")} textClass="landscape only" onClick={this.showReportAbuse} /> : undefined}

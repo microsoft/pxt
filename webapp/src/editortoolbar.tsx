@@ -93,7 +93,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
     }
 
     renderCore() {
-        const { home, tutorialOptions, hideEditorFloats, collapseEditorTools, projectName, compiling, isSaving, simState } = this.props.parent.state;
+        const { home, tutorialOptions, hideEditorFloats, collapseEditorTools, projectName, compiling, isSaving, simState, debugging } = this.props.parent.state;
 
         if (home) return <div />; // Don't render if we're in the home screen
 
@@ -109,7 +109,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         if (!isEditor) return <div />;
 
         const disableFileAccessinMaciOs = targetTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac());
-        const showSave = !readOnly && !isController && !targetTheme.saveInMenu && !tutorial && !disableFileAccessinMaciOs;
+        const showSave = !readOnly && !isController && !targetTheme.saveInMenu && !tutorial && !debugging && !disableFileAccessinMaciOs;
         const compile = pxt.appTarget.compile;
         const compileBtn = compile.hasHex || compile.saveAsPNG || compile.useUF2;
         const compileTooltip = lf("Download your code to the {0}", targetTheme.boardName);
@@ -125,8 +125,8 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const hasRedo = this.props.parent.editor.hasRedo();
 
         const showCollapsed = !tutorial && !sandbox && !targetTheme.simCollapseInMenu;
-        const showProjectRename = !tutorial && !readOnly && !isController && !targetTheme.hideProjectRename;
-        const showUndoRedo = !tutorial && !readOnly;
+        const showProjectRename = !tutorial && !readOnly && !isController && !targetTheme.hideProjectRename && !debugging;
+        const showUndoRedo = !tutorial && !readOnly && !debugging;
         const showZoomControls = true;
 
         const run = !targetTheme.bigRunButton;
@@ -135,12 +135,11 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
         const tracing = this.props.parent.state.tracing;
         const traceTooltip = tracing ? lf("Disable Slow-Mo") : lf("Slow-Mo")
         const debug = !!targetTheme.debugger && !readOnly;
-        const debugging = this.props.parent.state.debugging;
         const debugTooltip = debugging ? lf("Disable Debugging") : lf("Debugging")
         const downloadIcon = pxt.appTarget.appTheme.downloadIcon || "download";
         const downloadText = pxt.appTarget.appTheme.useUploadMessage ? lf("Upload") : lf("Download");
 
-        const bigRunButtonTooltip = [lf("Stop"),lf("Starting"), lf("Run Code in Game")][simState || 0];
+        const bigRunButtonTooltip = [lf("Stop"), lf("Starting"), lf("Run Code in Game")][simState || 0];
 
         let downloadButtonClasses = "";
         let saveButtonClasses = "";

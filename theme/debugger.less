@@ -11,15 +11,20 @@
         Debugger
 *******************************/
 
+.debuggerToolbox.elements {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
 /* Debugger toolbar */
 .debugtoolbar {
-    position: absolute;
-    top: @mainMenuHeight;
+    width: 100%;
     z-index: @debuggerToolsZIndex;
     .ui.menu {
-        box-shadow: 0 2px 8px #a8a8a8;
         border-radius: 0 !important;
         border: 0 !important;
+        display: flex;
         .item {
             padding-left: 10px;
             padding-right: 10px;
@@ -50,12 +55,17 @@
     color: #87D282 !important;
 }
 
+.ui.item.link.dbg-btn.dbg-exit {
+    background-color: #cccccc;
+    color: rgb(255, 21, 0);
+}
+
 /* Debugger variables view */
 .ui.segment.debugvariables {
-    position: absolute;
-    right: 1rem;
-    top: 3.5rem;
-    margin-top: 0rem;
+    table-layout: auto;
+    width: 100%;
+    background: @debuggerVariableExplorerBackground;
+    display: none;
     
     .ui.middle.aligned.list {
         overflow-y: auto;
@@ -68,8 +78,11 @@
     .variable {
         padding: 0.15rem;
     }
-    .variable .varname {
-        font-weight: bold;
+    .variable.varname {
+        text-overflow: ellipsis;
+        max-width: 1rem;
+        overflow: hidden;
+        white-space: nowrap;
     }
     .variable.detail {
         text-align: right;
@@ -94,6 +107,12 @@
         font-size: 90%;
         margin-left: 0.5rem;
     }
+}
+
+.debugging .ui.segment.debugvariables {
+    display: table;
+    margin: 0;
+    border: none;
 }
 
 .ui.segment.debugvariables.frozen {
@@ -128,11 +147,4 @@ div.simframe div.pause-overlay {
 /* Old debugger view */
 #root .debuggerview h4 {
     margin: 0.9em 0 0 0;
-}
-
-/* <= Tablet (Mobile + Tablet) */
-@media only screen and (max-width: @largestTabletScreen) {
-    .debugtoolbar {
-        top: @mobileMenuHeight;
-    }
 }
