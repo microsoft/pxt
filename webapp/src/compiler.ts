@@ -23,6 +23,9 @@ function setDiagnostics(diagnostics: pxtc.KsDiagnostic[]) {
         output += `${category} TS${diagnostic.code}: ${ts.pxtc.flattenDiagnosticMessageText(diagnostic.messageText, "\n")}\n`;
     }
 
+    if (output) // helpful for debugging
+        pxt.debug(output);
+
     if (!output)
         output = U.lf("Everything seems fine!\n")
 
@@ -63,20 +66,21 @@ export function compileAsync(options: CompileOptions = {}): Promise<pxtc.Compile
     return pkg.mainPkg.getCompileOptionsAsync(trg)
         .then(opts => {
             if (options.debug) {
-                opts.breakpoints = true
-                opts.justMyCode = true
+                opts.breakpoints = true;
+                opts.justMyCode = true;
+                opts.testMode = true;
             }
             if (options.trace) {
-                opts.breakpoints = true
-                opts.justMyCode = true
+                opts.breakpoints = true;
+                opts.justMyCode = true;
                 opts.trace = true;
             }
-            opts.computeUsedSymbols = true
+            opts.computeUsedSymbols = true;
             if (options.forceEmit)
                 opts.forceEmit = true;
             if (/test=1/i.test(window.location.href))
-                opts.testMode = true
-            return opts
+                opts.testMode = true;
+            return opts;
         })
         .then(compileCoreAsync)
         .then(resp => {
@@ -182,7 +186,17 @@ function decompileCoreAsync(opts: pxtc.CompileOptions, fileName: string): Promis
 }
 
 export function workerOpAsync(op: string, arg: pxtc.service.OpArg) {
-    return pxt.worker.getWorker(pxt.webConfig.workerjs).opAsync(op, arg)
+    const startTm = Date.now()
+    return pxt.worker.getWorker(pxt.webConfig.workerjs)
+        .opAsync(op, arg)
+        .then(res => {
+            if (pxt.appTarget.compile.switches.time) {
+                pxt.log(`Worker perf: ${op} ${Date.now() - startTm}ms`)
+                if (res.times)
+                    console.log(res.times)
+            }
+            return res
+        })
 }
 
 let firstTypecheck: Promise<void>;

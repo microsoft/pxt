@@ -22,7 +22,7 @@ namespace pxt.editor.experiments {
         })
         if (experiments.length && Object.keys(r).length) {
             pxt.tickEvent("experiments.loaded", r);
-            pxt.setAppTargetVariant(null);
+            pxt.reloadAppTargetVariant();
         }
     }
 
@@ -82,6 +82,12 @@ namespace pxt.editor.experiments {
                 id: "python",
                 name: lf("Static Python"),
                 description: lf("Use Static Python to code your device")
+            },
+            {
+                id: "simGif",
+                name: lf("Simulator Gifs"),
+                description: lf("Download gifs of the simulator"),
+                feedbackUrl: "https://github.com/Microsoft/pxt/issues/5297"
             }
         ].filter(experiment => ids.indexOf(experiment.id) > -1);
     }

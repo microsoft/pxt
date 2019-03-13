@@ -336,7 +336,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
             >
                 {!hasHeaders ? <div className="empty-content">
-                    <h2 className="ui center aligned header">
+                    <h2 className={`ui center aligned header ${darkTheme ? "inverted" : ""}`}>
                         <div className="content">
                             {lf("It's empty in here")}
                             <div className="sub header">{lf("Go back to create a new project")}</div>
@@ -348,8 +348,8 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                         <div className="sort-by">
                             <div className="ui compact buttons">
                                 <sui.DropdownMenu role="menuitem" text={sortedBy == 'time' ? lf("Last Modified") : lf("Name")} title={lf("Sort by dropdown")} className={`inline button ${darkTheme ? 'inverted' : ''}`}>
-                                    <sui.Item role="menuitem" icon={sortedBy == 'name' ? 'check' : undefined} className={sortedBy != 'name' ? 'no-icon' : ''} text={lf("Name")} tabIndex={-1} onClick={this.handleSortName} />
-                                    <sui.Item role="menuitem" icon={sortedBy == 'time' ? 'check' : undefined} className={sortedBy != 'time' ? 'no-icon' : ''} text={lf("Last Modified")} tabIndex={-1} onClick={this.handleSortTime} />
+                                    <sui.Item role="menuitem" icon={sortedBy == 'name' ? 'check' : undefined} className={`${sortedBy != 'name' ? 'no-icon' : ''} ${darkTheme ? 'inverted' : ''}`} text={lf("Name")} tabIndex={-1} onClick={this.handleSortName} />
+                                    <sui.Item role="menuitem" icon={sortedBy == 'time' ? 'check' : undefined} className={`${sortedBy != 'time' ? 'no-icon' : ''} ${darkTheme ? 'inverted' : ''}`} text={lf("Last Modified")} tabIndex={-1} onClick={this.handleSortTime} />
                                 </sui.DropdownMenu>
                                 <sui.Button icon={`arrow ${sortedAsc ? 'up' : 'down'}`} className={`${darkTheme ? 'inverted' : ''}`} onClick={this.handleSwitchSortDirection} title={lf("Switch sort order to {0}", !sortedAsc ? lf("ascending") : lf("descending"))} />
                             </div>

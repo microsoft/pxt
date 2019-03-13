@@ -143,6 +143,7 @@ namespace pxsim {
     export interface SimulatorRecorderMessage extends SimulatorMessage {
         type: "recorder";
         action: "start" | "stop";
+        width?: number;
     }
 
     export interface TutorialMessage extends SimulatorMessage {
@@ -243,7 +244,7 @@ namespace pxsim {
                 case "mute": mute((<SimulatorMuteMessage>data).mute); break;
                 case "print": print(); break;
                 case 'recorder': recorder(<SimulatorRecorderMessage>data); break;
-                case "screenshot": Runtime.postScreenshotAsync().done(); break;
+                case "screenshot": Runtime.postScreenshotAsync(<SimulatorScreenshotMessage>data).done(); break;
                 case "custom":
                     if (handleCustomMessage)
                         handleCustomMessage((<SimulatorCustomMessage>data));
@@ -303,7 +304,7 @@ namespace pxsim {
             if (!runtime) return;
             switch (rec.action) {
                 case "start":
-                    runtime.startRecording();
+                    runtime.startRecording(rec.width);
                     break;
                 case "stop":
                     runtime.stopRecording();

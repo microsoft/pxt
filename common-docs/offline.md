@@ -1,4 +1,8 @@
-# Offline editing
+# Using MakeCode offline
+
+MakeCode is typically accessed at @homeurl@ where create, modify, and run your projects while you're online. You can can use  MakeCode when you're offline too. Here are some ways you can work with MakeCode offline:
+
+## #target-app
 
 ## Web application
 
@@ -13,8 +17,6 @@ When the editor loads in your browser it tells it to keep the MakeCode service f
 ### Cloud compilation
 
 When running on actual hardware, the code you write in JavaScript is compiled into instructions which are understood by the processor on the board. Some of the files saved in the application cache are compiled code for the features on the board. To use the hardware features on your board, the editor provides blocks for them that you include in your programs. These blocks are available to your program when they're included as part of an added extension. The code in an extension is in TypeScript and sometimes also in C++. It's necessary to compile this code at least once on the server and then have the compiled files returned to the browser to get cached. Once cached, the editor can use them together with your code, even when offline. This one time compile process is called cloud compilation.
-
-## #target-app
 
 ## Hosting MakeCode locally #local-serve
 

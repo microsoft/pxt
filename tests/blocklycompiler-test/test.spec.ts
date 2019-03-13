@@ -377,6 +377,18 @@ describe("blockly compiler", function () {
         it("should hoist variable declarations when the first set references the target", (done: () => void) => {
             blockTestAsync("self_reference_vars").then(done, done);
         });
+
+        it("should allow variables declared in a for-loop at the top of on-start", (done: () => void) => {
+            blockTestAsync("on_start_with_for_loop").then(done, done);
+        });
+
+        it("should handle variables declared within grey blocks", (done: () => void) => {
+            blockTestAsync("grey_block_declared_vars").then(done, done);
+        });
+
+        it("should declare variable types when the initializer expression has a generic type", (done: () => void) => {
+            blockTestAsync("array_type_declaration_in_set").then(done, done);
+        });
     });
 
     describe("compiling functions", () => {

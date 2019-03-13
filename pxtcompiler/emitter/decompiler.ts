@@ -32,6 +32,7 @@ namespace ts.pxtc.decompiler {
     const maxCommentHeight = 360;
 
     const validStringRegex = /^[^\f\n\r\t\v\u00a0\u1680\u180e\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]*$/;
+    const arrayTypeRegex = /^(?:Array<(.+)>)|(?:(.+)\[\])$/;
 
     interface DecompilerEnv {
         blocks: BlocksInfo;
@@ -41,7 +42,7 @@ namespace ts.pxtc.decompiler {
         attrs: (c: pxtc.CallInfo) => pxtc.CommentAttrs;
         compInfo: (c: pxtc.CallInfo) => pxt.blocks.BlockCompileInfo;
         localReporters: PropertyDesc[][]; // A stack of groups of locally scoped argument declarations, to determine whether an argument should decompile as a reporter or a variable
-        useNewFunctions?: boolean;
+        opts: DecompileBlocksOptions;
     }
 
     interface DecompileArgument {
@@ -336,6 +337,7 @@ namespace ts.pxtc.decompiler {
         alwaysEmitOnStart?: boolean; // emit "on start" even if empty
         errorOnGreyBlocks?: boolean; // fail on grey blocks (usefull when testing docs)
         useNewFunctions?: boolean; // whether to decompile functions using the new functions implementation (functions with parameters)
+        allowedArgumentTypes?: string[]; // a whitelist of types that can be decompiled for user defined function arguments
 
         /*@internal*/
         includeGreyBlockMessages?: boolean; // adds error attributes to the mutations in typescript_statement blocks (for debug pruposes)
@@ -365,7 +367,7 @@ namespace ts.pxtc.decompiler {
             attrs: attrs,
             compInfo: compInfo,
             localReporters: [],
-            useNewFunctions: options.useNewFunctions
+            opts: options || {}
         };
         const fileText = file.getFullText();
         let output = ""
@@ -401,7 +403,7 @@ namespace ts.pxtc.decompiler {
 
         ts.forEachChild(file, checkTopNode);
 
-        if (env.useNewFunctions) {
+        if (env.opts.useNewFunctions) {
             // Generate fresh param IDs for all user-declared functions, needed when decompiling
             // function definition and calls. IDs don't need to be crypto secure.
             const genId = () => (Math.PI * Math.random()).toString(36).slice(2);
@@ -1441,12 +1443,10 @@ ${output}</xml>`;
 
         function getForOfStatement(n: ts.ForOfStatement): StatementNode {
             const initializer = n.initializer as ts.VariableDeclarationList;
-            const indexVar = (initializer.declarations[0].name as ts.Identifier).text;
             const renamed = getVariableName(initializer.declarations[0].name as ts.Identifier);
 
-            const r = mkStmt("controls_for_of");
-            r.inputs = [getValue("LIST", n.expression)];
-            r.fields = [getField("VAR", renamed)];
+            const r = mkStmt("pxt_controls_for_of");
+            r.inputs = [getValue("LIST", n.expression), getDraggableVariableBlock("VAR", renamed)];
             r.handlers = [{ name: "DO", statement: getStatementBlock(n.statement) }];
 
             return r
@@ -1530,7 +1530,7 @@ ${output}</xml>`;
 
         function getFunctionDeclaration(n: ts.FunctionDeclaration): StatementNode {
             const name = getVariableName(n.name);
-            if (env.useNewFunctions) {
+            if (env.opts.useNewFunctions) {
                 env.localReporters.push(n.parameters.map(p => {
                     return {
                         name: p.name.getText(),
@@ -1539,12 +1539,12 @@ ${output}</xml>`;
                 }));
             }
             const statements = getStatementBlock(n.body);
-            if (env.useNewFunctions) {
+            if (env.opts.useNewFunctions) {
                 env.localReporters.pop();
             }
             let r: StatementNode;
 
-            if (env.useNewFunctions) {
+            if (env.opts.useNewFunctions) {
                 r = mkStmt("function_definition");
                 r.mutation = {
                     name
@@ -1633,7 +1633,7 @@ ${output}</xml>`;
                     const name = getVariableName(node.expression as ts.Identifier);
                     if (env.declaredFunctions[name]) {
                         let r: StatementNode;
-                        if (env.useNewFunctions) {
+                        if (env.opts.useNewFunctions) {
                             r = mkStmt("function_call");
                             if (info.args.length) {
                                 r.mutationChildren = [];
@@ -2380,7 +2380,7 @@ ${output}</xml>`;
             if (!attributes.blockId || !attributes.block) {
                 const builtin = pxt.blocks.builtinFunctionInfo[info.qName];
                 if (!builtin) {
-                    const argsOk = n.arguments.length === 0 || env.useNewFunctions;
+                    const argsOk = n.arguments.length === 0 || env.opts.useNewFunctions;
                     if (argsOk && n.expression.kind === SK.Identifier) {
                         const funcName = (n.expression as ts.Identifier).text;
                         if (!env.declaredFunctions[funcName]) {
@@ -2646,8 +2646,27 @@ ${output}</xml>`;
                 return Util.lf("Function declarations must be top level");
             }
 
-            if (!env.useNewFunctions && n.parameters.length > 0) {
-                return Util.lf("Functions with parameters not supported in blocks");
+            if (n.parameters.length > 0) {
+                if (!env.opts.useNewFunctions) {
+                    return Util.lf("Functions with parameters not supported in blocks");
+                }
+
+                if (env.opts.allowedArgumentTypes) {
+                    for (const param of n.parameters) {
+                        if (param.initializer || param.questionToken) {
+                            return Util.lf("Function parameters cannot be optional");
+                        }
+
+                        const type = param.type ? param.type.getText() : undefined;
+                        if (!type) {
+                            return Util.lf("Function parameters must declare a type");
+                        }
+
+                        if (env.opts.allowedArgumentTypes.indexOf(normalizeType(type)) === -1) {
+                            return Util.lf("Only types that can be added in blocks can be used for function arguments");
+                        }
+                    }
+                }
             }
 
             let fail = false;
@@ -3114,5 +3133,13 @@ ${output}</xml>`;
 
     function isRoundingFunction(op: string) {
         return pxt.blocks.ROUNDING_FUNCTIONS.indexOf(op) !== -1;
+    }
+
+    function normalizeType(type: string) {
+        const match = arrayTypeRegex.exec(type);
+        if (match) {
+            return `${match[1] || match[2]}[]`
+        }
+        return type;
     }
 }
