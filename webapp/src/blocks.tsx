@@ -31,7 +31,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     showSearch: boolean;
     breakpointsByBlock: pxt.Map<number>; // Map block id --> breakpoint ID
     breakpointsSet: number[]; // the IDs of the breakpoints set.
-    debuggerToolboxDiv: any;
+    debuggerToolboxDiv: JSX.Element;
 
     public nsMap: pxt.Map<toolbox.BlockDefinition[]>;
 

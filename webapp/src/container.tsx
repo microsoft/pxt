@@ -377,6 +377,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
     }
 
     toggleDebug() {
+        // This function will get called when the user clicks the "Exit Debug Mode" button in the menu bar.
         pxt.tickEvent("simulator.debug", undefined, { interactiveConsent: true });
         this.props.parent.toggleDebugging();
     }
