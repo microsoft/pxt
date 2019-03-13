@@ -759,6 +759,7 @@ namespace pxt {
 
             return this.loadAsync()
                 .then(() => {
+                    opts.target.preferredEditor = this.getPreferredEditor()
                     pxt.debug(`building: ${this.sortedDeps().map(p => p.config.name).join(", ")}`)
                     let ext = cpp.getExtensionInfo(this)
                     if (ext.shimsDTS) generateFile("shims.d.ts", ext.shimsDTS)

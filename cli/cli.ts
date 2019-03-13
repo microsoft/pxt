@@ -3683,10 +3683,14 @@ function prepBuildOptionsAsync(mode: BuildOption, quick = false, ignoreTests = f
 
             // this is suboptimal, but we need apisInfo for the python converter
             if (opts.sourceFiles.some(fn => U.endsWith(fn, ".py"))) {
+                pxt.log("pre-compiling apisInfo for Python")
                 const opts2 = U.clone(opts)
                 opts2.ast = true
+                opts2.target.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME
+                opts2.noEmit = true
                 const res = pxtc.compile(opts2)
                 opts.apisInfo = pxtc.getApiInfo(opts2, res.ast)
+                pxt.log("done pre-compiling apisInfo for Python")
             }
 
             return opts;

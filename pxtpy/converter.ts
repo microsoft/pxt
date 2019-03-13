@@ -1428,9 +1428,9 @@ namespace pxt.py {
 
             try {
                 let tokens = pxt.py.lex(src)
-                console.log(pxt.py.tokensToString(tokens))
+                //console.log(pxt.py.tokensToString(tokens))
                 let stmts = pxt.py.parse(src, sn, tokens)
-                console.log(pxt.py.dump(stmts))
+                //console.log(pxt.py.dump(stmts))
 
                 moduleAst[modname] = {
                     kind: "Module",
