@@ -91,7 +91,7 @@ export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogSt
     render() {
         const options = this.props;
         const { inputValue } = this.state;
-        const size: any = options.size || 'small';
+        const size: any = options.size === undefined ? 'small' : options.size;
 
         const buttons = options.buttons ? options.buttons.filter(b => !!b) : [];
         buttons.forEach(btn => {
