@@ -230,20 +230,25 @@ export function init(): void {
         pxt.usb.setEnabled(false);
         pxt.HF2.mkPacketIOAsync = hidbridge.mkBridgeAsync;
     }
+
+    const shouldUseWebUSB = pxt.usb.isEnabled && pxt.appTarget.compile.useUF2;
     if (isNativeHost()) {
-        pxt.debug(`deploy/save using webkit host`);
+        pxt.debug(`deploy: webkit host`);
         pxt.commands.deployCoreAsync = nativeHostDeployCoreAsync;
         pxt.commands.saveOnlyAsync = nativeHostSaveCoreAsync;
-    } else if (pxt.usb.isEnabled && pxt.appTarget.compile.useUF2 && pxt.appTarget.appTheme.autoWebUSBDownload) {
+    } else if (shouldUseWebUSB && pxt.appTarget.appTheme.autoWebUSBDownload) {
+        pxt.debug(`deploy: webusb`);
         pxt.commands.deployCoreAsync = webusb.webUsbDeployCoreAsync;
     } else if (pxt.winrt.isWinRT()) { // windows app
         if (pxt.appTarget.serial && pxt.appTarget.serial.useHF2) {
+            pxt.debug(`deploy: winrt`);
             pxt.winrt.initWinrtHid(() => hidbridge.initAsync(true).then(() => { }), () => hidbridge.disconnectWrapperAsync());
             pxt.HF2.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
             pxt.commands.deployCoreAsync = winrtDeployCoreAsync;
         } else {
             // If we're not using HF2, then the target is using their own deploy logic in extension.ts, so don't use
             // the wrapper callbacks
+            pxt.debug(`deploy: winrt + custom deploy`);
             pxt.winrt.initWinrtHid(null, null);
             if (pxt.appTarget.serial && pxt.appTarget.serial.rawHID) {
                 pxt.HF2.mkPacketIOAsync = pxt.winrt.mkPacketIOAsync;
@@ -261,13 +266,17 @@ export function init(): void {
                 .catch((e) => core.errorNotification(lf("saving file failed...")));
         };
     } else if (pxt.BrowserUtils.isPxtElectron()) {
+        pxt.debug(`deploy: electron`);
         pxt.commands.deployCoreAsync = electron.driveDeployAsync;
         pxt.commands.electronDeployAsync = electron.driveDeployAsync;
-    } else if (hidbridge.shouldUse() && !pxt.appTarget.serial.noDeploy && !forceHexDownload) {
+    } else if (!shouldUseWebUSB && hidbridge.shouldUse() && !pxt.appTarget.serial.noDeploy && !forceHexDownload) {
+        pxt.debug(`deploy: hid`);
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
     } else if (pxt.BrowserUtils.isLocalHost() && Cloud.localToken && !forceHexDownload) { // local node.js
+        pxt.debug(`deploy: localhost`);
         pxt.commands.deployCoreAsync = localhostDeployCoreAsync;
     } else { // in browser
+        pxt.debug(`deploy: browser`);
         pxt.commands.deployCoreAsync = browserDownloadDeployCoreAsync;
     }
 }
