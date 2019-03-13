@@ -1,6 +1,21 @@
 namespace pxt.py {
     import B = pxt.blocks;
 
+    interface Ctx {
+        currModule: py.Module;
+        currClass: py.ClassDef;
+        currFun: py.FunctionDef;
+    }
+
+    // global state
+    let moduleAst: Map<py.Module> = {}
+    let apisInfo: pxtc.ApisInfo
+    let ctx: Ctx
+    let currIteration = 0
+    let typeId = 0
+    let numUnifies = 0
+    let currErrs = ""
+
     function stmtTODO(v: py.Stmt) {
         return B.mkStmt(B.mkText("TODO: " + v.kind))
     }
@@ -16,8 +31,6 @@ namespace pxt.py {
             cmt = cmt + "\n"
         return B.mkStmt(B.mkText("/** " + cmt + " */"))
     }
-
-    let moduleAst: Map<py.Module> = {}
 
     function lookupSymbol(name: string): py.Symbol {
         if (!name) return null
@@ -46,17 +59,6 @@ namespace pxt.py {
         return null
     }
 
-    interface Ctx {
-        currModule: py.Module;
-        currClass: py.ClassDef;
-        currFun: py.FunctionDef;
-    }
-
-    let ctx: Ctx
-    let currIteration = 0
-
-    let typeId = 0
-    let numUnifies = 0
     function mkType(o: py.TypeOptions = {}) {
         let r: Type = U.flatClone(o) as any
         r.tid = ++typeId
@@ -83,12 +85,11 @@ namespace pxt.py {
         return v
     }
 
-    let tpString: Type = mkType({ primType: "string" })
-    let tpNumber: Type = mkType({ primType: "number" })
-    let tpBoolean: Type = mkType({ primType: "boolean" })
-    let tpBuffer: Type = mkType({ primType: "Buffer" })
-    let tpVoid: Type = mkType({ primType: "void" })
-
+    const tpString: Type = mkType({ primType: "string" })
+    const tpNumber: Type = mkType({ primType: "number" })
+    const tpBoolean: Type = mkType({ primType: "boolean" })
+    const tpBuffer: Type = mkType({ primType: "Buffer" })
+    const tpVoid: Type = mkType({ primType: "void" })
 
     function find(t: Type) {
         if (t.union) {
@@ -137,10 +138,14 @@ namespace pxt.py {
             return "?" + t.tid
     }
 
-    let currErrs = ""
+    function error(a: py.AST, msg: string) {
+        const mod = ctx.currModule
+        const pos = position(a.startPos || 0, mod.source)
+        currErrs += U.lf("{0} near {1}{2}", msg, mod.tsFilename.replace(/\.ts/, ".py"), pos) + "\n"
+    }
 
-    function error(t0: Type, t1: Type) {
-        currErrs += "types not compatible: " + t2s(t0) + " and " + t2s(t1) + "; "
+    function typeError(a: py.AST, t0: Type, t1: Type) {
+        error(a, U.lf("types not comaptible: {0} and {1}", t2s(t0), t2s(t1)))
     }
 
     function typeCtor(t: Type): any {
@@ -175,31 +180,35 @@ namespace pxt.py {
         return true
     }
 
-    function unifyClass(t: Type, cd: py.ClassDef) {
+    function unifyClass(a: AST, t: Type, cd: py.ClassDef) {
         t = find(t)
         if (t.classType == cd) return
         if (isFree(t)) {
             t.classType = cd
             return
         }
-        unify(t, mkType({ classType: cd }))
+        unify(a, t, mkType({ classType: cd }))
     }
 
-    function unify(t0: Type, t1: Type): void {
+    function unifyTypeOf(e: Expr, t1: Type): void {
+        unify(e, typeOf(e), t1)
+    }
+
+    function unify(a: AST, t0: Type, t1: Type): void {
         t0 = find(t0)
         t1 = find(t1)
         if (t0 === t1)
             return
         if (!canUnify(t0, t1)) {
-            error(t0, t1)
+            typeError(a, t0, t1)
             return
         }
         if (typeCtor(t0) && !typeCtor(t1))
-            return unify(t1, t0)
+            return unify(a, t1, t0)
         numUnifies++
         t0.union = t1
         if (t0.arrayType && t1.arrayType)
-            unify(t0.arrayType, t1.arrayType)
+            unify(a, t0.arrayType, t1.arrayType)
     }
 
     function getClassField(ct: py.ClassDef, n: string, checkOnly = false, skipBases = false) {
@@ -333,14 +342,14 @@ namespace pxt.py {
             let v = defvar(a.arg, { isParam: true })
             if (!a.type && a.annotation) {
                 a.type = compileType(a.annotation)
-                unify(a.type, v.type)
+                unify(a, a.type, v.type)
             }
             if (!a.type) a.type = v.type
             let res = [quote(a.arg), typeAnnot(v.type)]
             if (didx >= 0) {
                 res.push(B.mkText(" = "))
                 res.push(expr(args.defaults[didx]))
-                unify(a.type, typeOf(args.defaults[didx]))
+                unify(a, a.type, typeOf(args.defaults[didx]))
             }
             didx++
             return B.mkGroup(res)
@@ -476,22 +485,16 @@ namespace pxt.py {
                     n.alwaysThrows = true
                 if (n.name == "__init__") {
                     nodes.push(B.mkText("constructor"))
-                    unifyClass(n.retType, ctx.currClass)
+                    unifyClass(n, n.retType, ctx.currClass)
                 } else {
                     if (funname == "__get__" || funname == "__set__") {
                         let i2cArg = "i2cDev"
                         let vv = n.vars[i2cArg]
-                        if (vv) {
-                            let i2cDevClass =
-                                lookupSymbol("adafruit_bus_device.i2c_device.I2CDevice") as py.ClassDef
-                            if (i2cDevClass)
-                                unifyClass(vv.type, i2cDevClass)
-                        }
                         vv = n.vars["value"]
                         if (funname == "__set__" && vv) {
                             let cf = getClassField(ctx.currClass, "__get__")
                             if (cf.fundef)
-                                unify(vv.type, cf.fundef.retType)
+                                unify(n, vv.type, cf.fundef.retType)
                         }
                         let nargs = n.args.args
                         if (nargs[1].arg == "obj") {
@@ -582,7 +585,7 @@ namespace pxt.py {
         Return: (n: py.Return) => {
             if (n.value) {
                 let f = ctx.currFun
-                if (f) unify(f.retType, typeOf(n.value))
+                if (f) unifyTypeOf(n.value, f.retType)
                 return B.mkStmt(B.mkText("return "), expr(n.value))
             } else {
                 return B.mkStmt(B.mkText("return"))
@@ -621,10 +624,10 @@ namespace pxt.py {
                 let attrTp = typeOf(n.value)
                 let getter = getTypeField(attrTp, "__get__", true)
                 if (getter) {
-                    unify(fd.type, getter.fundef.retType)
+                    unify(n, fd.type, getter.fundef.retType)
                     let implNm = "_" + nm
                     let fdBack = getClassField(ctx.currClass, implNm)
-                    unify(fdBack.type, attrTp)
+                    unify(n, fdBack.type, attrTp)
                     let setter = getTypeField(attrTp, "__set__", true)
                     let res = [
                         B.mkNewLine(),
@@ -648,11 +651,11 @@ namespace pxt.py {
                 } else if (currIteration < 2) {
                     return B.mkText("/* skip for now */")
                 }
-                unify(fd.type, typeOf(n.targets[0]))
+                unifyTypeOf(n.targets[0], fd.type)
                 fd.isStatic = true
                 pref = "static "
             }
-            unify(typeOf(n.targets[0]), typeOf(n.value))
+            unifyTypeOf(n.targets[0], typeOf(n.value))
             if (isConstCall || isUpperCase) {
                 // first run would have "let" in it
                 defvar(getName(n.targets[0]), {})
@@ -681,7 +684,7 @@ namespace pxt.py {
                 let r = n.iter as py.Call
                 let def = expr(n.target)
                 let ref = quote(getName(n.target))
-                unify(typeOf(n.target), tpNumber)
+                unifyTypeOf(n.target, tpNumber)
                 let start = r.args.length == 1 ? B.mkText("0") : expr(r.args[0])
                 let stop = expr(r.args[r.args.length == 1 ? 0 : 1])
                 return B.mkStmt(
@@ -696,7 +699,7 @@ namespace pxt.py {
                     B.mkText(")"),
                     stmts(n.body))
             }
-            unify(typeOf(n.iter), mkType({ arrayType: typeOf(n.target) }))
+            unifyTypeOf(n.iter, mkType({ arrayType: typeOf(n.target) }))
             return B.mkStmt(
                 B.mkText("for ("),
                 expr(n.target),
@@ -745,7 +748,7 @@ namespace pxt.py {
                     let v = defvar(id, { isLocal: true })
                     id = quoteStr(id)
                     res.push(B.mkStmt(B.mkText("const " + id + " = "), devRef))
-                    unify(typeOf(it.context_expr), v.type)
+                    unifyTypeOf(it.context_expr, v.type)
                     devRef = B.mkText(id)
                 }
                 res.push(B.mkStmt(B.mkInfix(devRef, ".", B.mkText("begin()"))))
@@ -876,7 +879,7 @@ namespace pxt.py {
             } else {
                 n.isdef = false
             }
-            unify(n.tsType, curr.type)
+            unify(n, n.tsType, curr.type)
         }
 
         if (n.isdef)
@@ -940,7 +943,7 @@ namespace pxt.py {
         scale?: number;
     }
 
-    let funMap: Map<FunOverride> = {
+    const funMap: Map<FunOverride> = {
         "memoryview": { n: "", t: tpBuffer },
         "const": { n: "", t: tpNumber },
         "micropython.const": { n: "", t: tpNumber },
@@ -971,6 +974,32 @@ namespace pxt.py {
         return v.kind == "Name" && (v as py.Name).id == "self"
     }
 
+    function handleFmt(n: py.BinOp) {
+        if (n.op == "Mod" && n.left.kind == "Str" &&
+            (n.right.kind == "Tuple" || n.right.kind == "List")) {
+            let fmt = (n.left as py.Str).s
+            let elts = (n.right as py.List).elts
+            elts = elts.slice()
+            let res = [B.mkText("`")]
+            fmt.replace(/([^%]+)|(%[\d\.]*([a-zA-Z%]))/g,
+                (f: string, reg: string, f2: string, flet: string) => {
+                    if (reg)
+                        res.push(B.mkText(reg.replace(/[`\\$]/g, f => "\\" + f)))
+                    else {
+                        let ee = elts.shift()
+                        let et = ee ? expr(ee) : B.mkText("???")
+                        /* tslint:disable:no-invalid-template-strings */
+                        res.push(B.mkText("${"), et, B.mkText("}"))
+                        /* tslint:enable:no-invalid-template-strings */
+                    }
+                    return ""
+                })
+            res.push(B.mkText("`"))
+            return B.mkGroup(res)
+        }
+        return null
+    }
+
     const exprMap: Map<(v: py.Expr) => B.JsNode> = {
         BoolOp: (n: py.BoolOp) => {
             let r = expr(n.values[0])
@@ -980,33 +1009,13 @@ namespace pxt.py {
             return r
         },
         BinOp: (n: py.BinOp) => {
-            if (n.op == "Mod" && n.left.kind == "Str" &&
-                (n.right.kind == "Tuple" || n.right.kind == "List")) {
-                let fmt = (n.left as py.Str).s
-                let elts = (n.right as py.List).elts
-                elts = elts.slice()
-                let res = [B.mkText("`")]
-                fmt.replace(/([^%]+)|(%[\d\.]*([a-zA-Z%]))/g,
-                    (f: string, reg: string, f2: string, flet: string) => {
-                        if (reg)
-                            res.push(B.mkText(reg.replace(/[`\\$]/g, f => "\\" + f)))
-                        else {
-                            let ee = elts.shift()
-                            let et = ee ? expr(ee) : B.mkText("???")
-                            /* tslint:disable:no-invalid-template-strings */
-                            res.push(B.mkText("${"), et, B.mkText("}"))
-                            /* tslint:enable:no-invalid-template-strings */
-                        }
-                        return ""
-                    })
-                res.push(B.mkText("`"))
-                return B.mkGroup(res)
-            }
-            let r = binop(expr(n.left), n.op, expr(n.right))
+            let r = handleFmt(n)
+            if (r) return r
+            r = binop(expr(n.left), n.op, expr(n.right))
             if (numOps[n.op]) {
-                unify(typeOf(n.left), tpNumber)
-                unify(typeOf(n.right), tpNumber)
-                unify(n.tsType, tpNumber)
+                unifyTypeOf(n.left, tpNumber)
+                unifyTypeOf(n.right, tpNumber)
+                unify(n, n.tsType, tpNumber)
             }
             return r
         },
@@ -1044,7 +1053,7 @@ namespace pxt.py {
         Compare: (n: py.Compare) => {
             if (n.ops.length == 1 && (n.ops[0] == "In" || n.ops[0] == "NotIn")) {
                 if (find(typeOf(n.comparators[0])) == tpString)
-                    unify(typeOf(n.left), tpString)
+                    unifyTypeOf(n.left, tpString)
                 let idx = B.mkInfix(expr(n.comparators[0]), ".", B.H.mkCall("indexOf", [expr(n.left)]))
                 return B.mkInfix(idx, n.ops[0] == "In" ? ">=" : "<", B.mkText("0"))
             }
@@ -1098,12 +1107,12 @@ namespace pxt.py {
                 let e = n.args[i]
                 allargs.push(expr(e))
                 if (fdargs[i] && fdargs[i].type) {
-                    unify(typeOf(e), fdargs[i].type)
+                    unifyTypeOf(e, fdargs[i].type)
                 }
             }
 
             if (fd) {
-                unify(typeOf(n), fd.retType)
+                unifyTypeOf(n, fd.retType)
             }
 
             let nm = getName(n.func)
@@ -1151,50 +1160,6 @@ namespace pxt.py {
                     }
                 } else {
                     let keywords = n.keywords.slice()
-
-                    if (recv && isOfType(recv, "pins.I2CDevice")) {
-                        let stopArg: B.JsNode = null
-                        let startArg: B.JsNode = null
-                        let endArg: B.JsNode = null
-
-                        keywords = keywords.filter(kw => {
-                            if (kw.arg == "stop") {
-                                if (kw.value.kind == "NameConstant") {
-                                    let vv = (kw.value as py.NameConstant).value
-                                    if (vv === false)
-                                        stopArg = B.mkText("true")
-                                    else
-                                        stopArg = B.mkText("false")
-                                } else {
-                                    stopArg = B.mkInfix(null, "!", expr(kw.value))
-                                }
-                                return false
-                            } else if (kw.arg == "start") {
-                                startArg = expr(kw.value)
-                                return false
-                            } else if (kw.arg == "end") {
-                                endArg = expr(kw.value)
-                                return false
-                            }
-                            return true
-                        })
-
-                        if (endArg && !startArg) startArg = B.mkText("0")
-
-                        if (methName == "read_into") {
-                            if (startArg) {
-                                allargs.push(stopArg || B.mkText("false"))
-                                allargs.push(startArg)
-                            }
-                            if (endArg) allargs.push(endArg)
-                        } else {
-                            if (stopArg) allargs.push(stopArg)
-                            if (startArg || endArg) {
-                                allargs[0] = B.mkInfix(allargs[0], ".", B.H.mkCall("slice",
-                                    endArg ? [startArg, endArg] : [startArg]))
-                            }
-                        }
-                    }
                     if (keywords.length) {
                         let kwargs = keywords.map(kk =>
                             B.mkGroup([quote(kk.arg), B.mkText(": "), expr(kk.value)]))
@@ -1209,7 +1174,7 @@ namespace pxt.py {
 
             if (nm == "super" && allargs.length == 0) {
                 if (ctx.currClass && ctx.currClass.baseClass)
-                    unifyClass(n.tsType, ctx.currClass.baseClass)
+                    unifyClass(n, n.tsType, ctx.currClass.baseClass)
                 return B.mkText("super")
             }
 
@@ -1218,7 +1183,7 @@ namespace pxt.py {
                     allargs.unshift(expr(recv))
                 let overName = over.n
                 if (over.t)
-                    unify(typeOf(n), over.t)
+                    unifyTypeOf(n, over.t)
                 if (over.scale) {
                     allargs = allargs.map(a => {
                         let s = "?"
@@ -1250,7 +1215,7 @@ namespace pxt.py {
             if (recvTp && recvTp.arrayType) {
                 if (methName == "append") {
                     methName = "push"
-                    unify(typeOf(n.args[0]), recvTp.arrayType)
+                    unifyTypeOf(n.args[0], recvTp.arrayType)
                 }
                 fn = B.mkInfix(expr(recv), ".", B.mkText(methName))
             }
@@ -1270,11 +1235,11 @@ namespace pxt.py {
             return B.mkGroup(nodes)
         },
         Num: (n: py.Num) => {
-            unify(n.tsType, tpNumber)
+            unify(n, n.tsType, tpNumber)
             return B.mkText(n.ns)
         },
         Str: (n: py.Str) => {
-            unify(n.tsType, tpString)
+            unify(n, n.tsType, tpString)
             return B.mkText(B.stringLit(n.s))
         },
         FormattedValue: (n: py.FormattedValue) => exprTODO(n),
@@ -1284,7 +1249,7 @@ namespace pxt.py {
         },
         NameConstant: (n: py.NameConstant) => {
             if (n.value != null)
-                unify(n.tsType, tpBoolean)
+                unify(n, n.tsType, tpBoolean)
             return B.mkText(JSON.stringify(n.value))
         },
         Ellipsis: (n: py.Ellipsis) => exprTODO(n),
@@ -1292,14 +1257,14 @@ namespace pxt.py {
         Attribute: (n: py.Attribute) => {
             let part = typeOf(n.value)
             let fd = getTypeField(part, n.attr)
-            if (fd) unify(n.tsType, fd.type)
+            if (fd) unify(n, n.tsType, fd.type)
             return B.mkInfix(expr(n.value), ".", B.mkText(quoteStr(n.attr)))
         },
         Subscript: (n: py.Subscript) => {
             if (n.slice.kind == "Index") {
                 let idx = (n.slice as py.Index).value
                 if (currIteration > 2 && isFree(typeOf(idx))) {
-                    unify(typeOf(idx), tpNumber)
+                    unifyTypeOf(idx, tpNumber)
                 }
                 return B.mkGroup([
                     expr(n.value),
@@ -1319,15 +1284,19 @@ namespace pxt.py {
         },
         Starred: (n: py.Starred) => B.mkGroup([B.mkText("... "), expr(n.value)]),
         Name: (n: py.Name) => {
+            // shortcut, but should work
             if (n.id == "self" && ctx.currClass) {
-                unifyClass(n.tsType, ctx.currClass)
-            } else {
-                let v = lookupVar(n.id)
-                if (v) {
-                    unify(n.tsType, v.type)
-                    if (v.isImport)
-                        return quote(n.id) // it's import X = Y.Z.X, use X not Y.Z.X
-                }
+                unifyClass(n, n.tsType, ctx.currClass)
+                return B.mkText("this")
+            }
+
+            let v = lookupVar(n.id)
+            if (v) {
+                unify(n, n.tsType, v.type)
+                if (v.isImport)
+                    return quote(n.id) // it's import X = Y.Z.X, use X not Y.Z.X
+            } else if (currIteration > 0) {
+                error(n, U.lf("name '{0}' is not defined", n.id))
             }
 
             if (n.ctx.indexOf("Load") >= 0) {
@@ -1341,7 +1310,7 @@ namespace pxt.py {
     }
 
     function mkArrayExpr(n: py.List | py.Tuple) {
-        unify(n.tsType, mkType({ arrayType: n.elts[0] ? typeOf(n.elts[0]) : mkType() }))
+        unify(n, n.tsType, mkType({ arrayType: n.elts[0] ? typeOf(n.elts[0]) : mkType() }))
         return B.mkGroup([
             B.mkText("["),
             B.mkCommaSep(n.elts.map(expr)),
@@ -1368,7 +1337,9 @@ namespace pxt.py {
 
         let r = f(e)
         if (currErrs) {
-            cmts.push("TODO: (below) " + currErrs)
+            for (let err of currErrs.split("\n"))
+                if (err)
+                    cmts.push("ERROR: " + err)
             currErrs = ""
         }
         if (cmts.length) {
@@ -1415,6 +1386,9 @@ namespace pxt.py {
 
     export function py2ts(opts: pxtc.CompileOptions) {
         moduleAst = {}
+        apisInfo = opts.apisInfo
+        if (!apisInfo)
+            U.oops()
 
         if (!opts.generatedFiles)
             opts.generatedFiles = []
@@ -1436,6 +1410,7 @@ namespace pxt.py {
                     kind: "Module",
                     body: stmts,
                     name: modname,
+                    source: src,
                     tsFilename: sn.replace(/\.py$/, ".ts")
                 } as any
             } catch (e) {
@@ -1457,6 +1432,7 @@ namespace pxt.py {
         }
 
         currIteration = 1000
+        currErrs = ""
         for (let m of U.values(moduleAst)) {
             try {
                 let nodes = toTS(m)

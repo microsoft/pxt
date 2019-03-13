@@ -98,16 +98,16 @@ namespace pxt.py {
     let source: string
     let pos = 0, pos0 = 0
 
-    function position(t: Token, source?: string) {
+    export function position(startPos: number, source: string) {
         let lineno = 1
         let lastnl = 0
-        for (let i = 0; i < t.startPos; ++i) {
+        for (let i = 0; i < startPos; ++i) {
             if (source.charCodeAt(i) == 10) {
                 lineno++
                 lastnl = i
             }
         }
-        return `(${lineno},${t.startPos - lastnl})`
+        return `(${lineno},${startPos - lastnl})`
     }
 
     export function tokenToString(t: Token) {
@@ -152,7 +152,7 @@ namespace pxt.py {
         s = s.replace(/\r/g, "")
             .replace(/\n/g, "\\n")
             .replace(/\t/g, "\\t")
-        let r = U.lf("{0} at {1}{2}", s, fn, position(t, source))
+        let r = U.lf("{0} at {1}{2}", s, fn, position(t.startPos, source))
         if (pxt.options.debug)
             r += " " + tokenToString(t)
         return r
