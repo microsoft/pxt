@@ -8647,6 +8647,7 @@ declare module Blockly {
     
             /**
              * Hide the flyout.
+             * Note: this does not remove any flyout state like event listeners.
              */
             hide(): void;
     
