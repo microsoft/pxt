@@ -430,6 +430,7 @@ declare namespace ts.pxtc {
         computeUsedSymbols?: boolean;
         name?: string;
         warnDiv?: boolean; // warn when emitting division operator
+        apisInfo?: ApisInfo;
 
         alwaysDecompileOnStart?: boolean; // decompiler only
         useNewFunctions?: boolean; // decompiler only; whether to decompile functions using the new functions implementation (functions with parameters)

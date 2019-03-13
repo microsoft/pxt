@@ -3681,6 +3681,14 @@ function prepBuildOptionsAsync(mode: BuildOption, quick = false, ignoreTests = f
                 opts.ast = true
             }
 
+            // this is suboptimal, but we need apisInfo for the python converter
+            if (opts.sourceFiles.some(fn => U.endsWith(fn, ".py"))) {
+                const opts2 = U.clone(opts)
+                opts2.ast = true
+                const res = pxtc.compile(opts2)
+                opts.apisInfo = pxtc.getApiInfo(opts2, res.ast)
+            }
+
             return opts;
         })
 }
