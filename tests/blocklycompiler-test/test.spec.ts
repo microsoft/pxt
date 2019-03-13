@@ -382,6 +382,10 @@ describe("blockly compiler", function () {
             blockTestAsync("on_start_with_for_loop").then(done, done);
         });
 
+        it("should handle variables declared within grey blocks", (done: () => void) => {
+            blockTestAsync("grey_block_declared_vars").then(done, done);
+        });
+
         it("should declare variable types when the initializer expression has a generic type", (done: () => void) => {
             blockTestAsync("array_type_declaration_in_set").then(done, done);
         });
