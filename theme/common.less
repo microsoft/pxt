@@ -518,7 +518,7 @@ Avatar
 
 .glow > div {
     outline: 3px solid transparent;
-    animation: glow 0.3s infinite alternate;  
+    animation: glow 0.3s infinite alternate;
     transition: outline 0.3s linear;
 }
 
@@ -775,6 +775,9 @@ p.ui.font.small {
     .simtoolbar .ui.button {
         font-size: 1.7rem;
     }
+    div.simframe:not(:first-child) {
+        display: inherit;
+    }
 }
 
 /*******************************
@@ -920,7 +923,11 @@ p.ui.font.small {
         padding-bottom: 81.96% !important;
     }
     div.simframe:not(:first-child) {
-        display:none !important;
+        display:none;
+    }
+    #simulators {
+        flex-direction: row;
+        display: flex !important;
     }
     /* Hide floating editors */
     .hideEditorFloats .editorFloat {
@@ -1106,6 +1113,20 @@ div.simframe.ui.embed {
         left: 0;
     }
 
+    /* Not needed in triple toggle view */
+    #filelistOverlay {
+        display: none;
+    }
+
+    #simulators {
+        flex-direction: row;
+        display: flex !important;
+    }
+
+    div.simframe:not(:first-child) {
+        display: inherit;
+    }
+
     #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #editortools, #msg {
         bottom: 1.5rem !important;
     }
@@ -1157,5 +1178,5 @@ div.simframe.ui.embed {
 img.pixelart {
     image-rendering: auto;
     image-rendering: crisp-edges;
-    image-rendering: pixelated;    
+    image-rendering: pixelated;
 }
