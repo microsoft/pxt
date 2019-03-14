@@ -114,9 +114,9 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         return <aside className={"ui item grid centered simtoolbar" + (sandbox ? "" : " portrait hide")} role="complementary" aria-label={lf("Simulator toolbar")}>
             <div className={`ui icon tiny buttons`} style={{ padding: "0" }}>
                 {make ? <sui.Button disabled={debugging} icon='configure' className="secondary" title={makeTooltip} onClick={this.openInstructions} /> : undefined}
-                {run ? <sui.Button disabled={debugging || isStarting} key='runbtn' className={`play-button ${isRunning ? "stop" : "play"}`} icon={isRunning ? "stop" : "play green"} title={runTooltip} onClick={this.startStopSimulator} /> : undefined}
-                {restart ? <sui.Button disabled={isStarting} key='restartbtn' className={`restart-button`} icon="refresh" title={restartTooltip} onClick={this.restartSimulator} /> : undefined}
-                {run ? <sui.Button disabled={false} key='debugbtn' className={`debug-button ${debugging ? "red" : "orange"}`} icon="xicon bug" title={debugTooltip} onClick={this.toggleDebug} /> : undefined}
+                {run ? <sui.Button disabled={debugging || isStarting} key='runbtn' className={`play-button ${isRunning || debugging ? "stop" : "play"}`} icon={isRunning ? "stop" : "play green"} title={runTooltip} onClick={this.startStopSimulator} /> : undefined}
+                {restart ? <sui.Button disabled={debugging || isStarting} key='restartbtn' className={`restart-button`} icon="refresh" title={restartTooltip} onClick={this.restartSimulator} /> : undefined}
+                {run ? <sui.Button disabled={false} key='debugbtn' className={`debug-button ${debugging ? "orange" : ""}`} icon="xicon bug" title={debugTooltip} onClick={this.toggleDebug} /> : undefined}
                 {trace ? <sui.Button key='trace' className={`trace-button ${tracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onClick={this.toggleTrace} /> : undefined}
             </div>
             <div className={`ui icon tiny buttons`} style={{ padding: "0" }}>
