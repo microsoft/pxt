@@ -108,6 +108,7 @@ namespace pxt.py {
         name?: string;
         source: string;
         tsFilename: string;
+        tsBody?: pxtc.SymbolInfo[];
     }
 
     export interface ExceptHandler extends AST {

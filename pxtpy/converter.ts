@@ -42,6 +42,12 @@ namespace pxt.py {
             let par = moduleAst[parts.slice(0, last).join(".")]
             let ename = parts[last]
             if (par) {
+                if (!par.body) {
+                    par.body = []
+                    for (let sym of par.tsBody) {
+                        // do something
+                    }
+                }
                 for (let stmt of par.body) {
                     if (stmt.kind == "ClassDef" || stmt.kind == "FunctionDef") {
                         if ((stmt as py.FunctionDef).name == ename)
@@ -57,6 +63,33 @@ namespace pxt.py {
             }
         }
         return null
+    }
+
+    function reflectModules() {
+        for (let sym of U.values(apisInfo.byQName)) {
+            if (sym.kind == pxtc.SymbolKind.Module) {
+                let name = sym.qName
+                moduleAst[name] = {
+                    kind: "Module",
+                    body: null,
+                    tsBody: [],
+                    name: name,
+                    source: "",
+                    tsFilename: "lib"
+                } as any
+            }
+        }
+        for (let sym of U.values(apisInfo.byQName)) {
+            if (sym.kind == pxtc.SymbolKind.Module)
+                continue
+            let m = /(.*)\.(.*)/.exec(sym.qName)
+            if (!m)
+                continue
+            let mod = moduleAst[m[1]]
+            if (!mod || !mod.tsBody)
+                continue
+            mod.tsBody.push(sym)
+        }
     }
 
     function mkType(o: py.TypeOptions = {}) {
@@ -1361,6 +1394,8 @@ namespace pxt.py {
 
     function toTS(mod: py.Module): B.JsNode[] {
         U.assert(mod.kind == "Module")
+        if (mod.tsBody)
+            return null
         resetCtx(mod)
         if (!mod.vars) mod.vars = {}
         let res = mod.body.map(stmt)
@@ -1389,6 +1424,7 @@ namespace pxt.py {
         apisInfo = opts.apisInfo
         if (!apisInfo)
             U.oops()
+        reflectModules()
 
         if (!opts.generatedFiles)
             opts.generatedFiles = []
@@ -1436,7 +1472,7 @@ namespace pxt.py {
         for (let m of U.values(moduleAst)) {
             try {
                 let nodes = toTS(m)
-                if (!nodes) return opts
+                if (!nodes) continue
                 let res = B.flattenNode(nodes)
                 opts.sourceFiles.push(m.tsFilename)
                 opts.generatedFiles.push(m.tsFilename)
