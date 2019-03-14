@@ -87,7 +87,8 @@ namespace pxt.editor.experiments {
             {
                 id: "autoWebUSBDownload",
                 name: lf("WebUSB Download"),
-                description: lf("Automatically try to download via WebUSB")
+                description: lf("Automatically try to download via WebUSB"),
+                feedbackUrl: "https://github.com/Microsoft/pxt/issues/5344"
             }
         ].filter(experiment => ids.indexOf(experiment.id) > -1);
     }
