@@ -274,6 +274,15 @@ div.simframe > iframe {
     background: @editorToggleColor !important;
 }
 
+.item.javascript-menuitem span.ui.text,
+.item.blocks-menuitem span.ui.text
+ {
+    word-wrap: break-word;
+    text-overflow: clip;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
 /* Help card */
 #helpcard {
     position: absolute;
