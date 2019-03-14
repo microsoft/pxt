@@ -3912,7 +3912,7 @@ function internalUploadTargetTranslationsAsync(uploadDocs: boolean) {
             } else {
                 pxt.log("uploading target translations...");
                 return execCrowdinAsync("upload", "built/target-strings.json", crowdinDir)
-                    .then(() => execCrowdinAsync("upload", "built/sim-strings.json", crowdinDir))
+                    .then(() => fs.existsSync("built/sim-strings.json") ? execCrowdinAsync("upload", "built/sim-strings.json", crowdinDir) : Promise.resolve())
                     .then(() => uploadBundledTranslationsAsync(crowdinDir, cred.branch, cred.prj, cred.key))
                     .then(() => {
                         if (uploadDocs) {
