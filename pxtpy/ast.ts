@@ -5,6 +5,7 @@ namespace pxt.py {
     export interface TypeOptions {
         union?: Type;
         classType?: py.ClassDef;
+        moduleType?: py.Module | py.ClassDef;
         primType?: string;
         arrayType?: Type;
     }

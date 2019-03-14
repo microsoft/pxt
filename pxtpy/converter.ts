@@ -1,5 +1,6 @@
 namespace pxt.py {
     import B = pxt.blocks;
+    import SK = pxtc.SymbolKind
 
     interface Ctx {
         currModule: py.Module;
@@ -15,6 +16,7 @@ namespace pxt.py {
     let typeId = 0
     let numUnifies = 0
     let currErrs = ""
+    let autoImport = true
 
     function stmtTODO(v: py.Stmt) {
         return B.mkStmt(B.mkText("TODO: " + v.kind))
@@ -32,22 +34,83 @@ namespace pxt.py {
         return B.mkStmt(B.mkText("/** " + cmt + " */"))
     }
 
+    function defName(n: string, tp: Type): Name {
+        return {
+            kind: "Name",
+            id: n,
+            isdef: true,
+            ctx: "Store",
+            tsType: tp
+        } as any
+    }
+
+    function mapTsType(tp: string) {
+        let ai = apisInfo.byQName[tp]
+        if (ai && ai.kind == SK.Enum)
+            return tpNumber
+        let sym = lookupSymbol(tp)
+        if (sym && sym.kind == "ClassDef")
+            return mkType({ classType: sym as ClassDef })
+        return mkType({ primType: tp })
+    }
+
+    function mapTsArg(a: pxtc.ParameterDesc): Arg {
+        return {
+            kind: "Arg",
+            arg: a.name,
+            type: mapTsType(a.type),
+        } as any
+    }
+
     function lookupSymbol(name: string): py.Symbol {
         if (!name) return null
-        if (moduleAst[name])
-            return moduleAst[name]
+
+        const mod = moduleAst[name]
+        if (mod) {
+            if (!mod.body) {
+                mod.body = []
+                for (let sym of mod.tsBody) {
+                    if (isModule(sym)) {
+                        if (moduleAst[sym.qName])
+                            mod.body.push(lookupSymbol(sym.qName))
+                    } else if (sym.kind == SK.Variable || sym.kind == SK.EnumMember) {
+                        mod.body.push({
+                            kind: "Assign",
+                            targets: [defName(sym.name, mapTsType(sym.retType))],
+                            value: null
+                        } as any)
+                    } else if (sym.kind == SK.Function || sym.kind == SK.Method) {
+                        let fd: FunctionDef = {
+                            kind: "FunctionDef",
+                            name: sym.name,
+                            parent: mod,
+                            args: {
+                                kind: "Arguments",
+                                args: [],
+                                defaults: [],
+                                kwonlyargs: [],
+                                kw_defaults: []
+                            },
+                            body: [],
+                            decorator_list: [],
+                            retType: mapTsType(sym.retType)
+                        } as any
+                        mod.body.push(fd)
+                        fd.args.args = sym.parameters.map(mapTsArg)
+                    } else {
+                        // TODO
+                    }
+                }
+            }
+            return mod
+        }
+
         let parts = name.split(".")
         if (parts.length >= 2) {
             let last = parts.length - 1
             let par = moduleAst[parts.slice(0, last).join(".")]
             let ename = parts[last]
             if (par) {
-                if (!par.body) {
-                    par.body = []
-                    for (let sym of par.tsBody) {
-                        // do something
-                    }
-                }
                 for (let stmt of par.body) {
                     if (stmt.kind == "ClassDef" || stmt.kind == "FunctionDef") {
                         if ((stmt as py.FunctionDef).name == ename)
@@ -65,9 +128,19 @@ namespace pxt.py {
         return null
     }
 
+    function isModule(sym: pxtc.SymbolInfo) {
+        switch (sym.kind) {
+            case SK.Module:
+            case SK.Enum:
+                return true
+            default:
+                return false
+        }
+    }
+
     function reflectModules() {
         for (let sym of U.values(apisInfo.byQName)) {
-            if (sym.kind == pxtc.SymbolKind.Module) {
+            if (isModule(sym)) {
                 let name = sym.qName
                 moduleAst[name] = {
                     kind: "Module",
@@ -80,8 +153,6 @@ namespace pxt.py {
             }
         }
         for (let sym of U.values(apisInfo.byQName)) {
-            if (sym.kind == pxtc.SymbolKind.Module)
-                continue
             let m = /(.*)\.(.*)/.exec(sym.qName)
             if (!m)
                 continue
@@ -106,8 +177,18 @@ namespace pxt.py {
         return ctx.currModule.name == "main" && !ctx.currFun && !ctx.currClass
     }
 
-    function defvar(n: string, opts: py.VarDescOptions) {
-        let scopeDef = currentScope()
+    function addImport(a: AST, name: string, scope?: ScopeDef) {
+        const v = defvar(name, { isPlainImport: true }, scope)
+        const sym = lookupSymbol(name)
+        if (!sym)
+            error(a, U.lf("No module named '{0}'", name))
+        else
+            unify(a, v.type, mkType({ moduleType: sym as Module }))
+        return v
+    }
+
+    function defvar(n: string, opts: py.VarDescOptions, scope?: ScopeDef) {
+        let scopeDef = scope || currentScope()
         let v = scopeDef.vars[n]
         if (!v) {
             v = scopeDef.vars[n] = { type: mkType(), name: n }
@@ -165,6 +246,8 @@ namespace pxt.py {
             return t.primType
         else if (t.classType)
             return applyTypeMap(getFullName(t.classType))
+        else if (t.moduleType)
+            return applyTypeMap(t.moduleType.name)
         else if (t.arrayType)
             return t2s(t.arrayType) + "[]"
         else
@@ -184,6 +267,7 @@ namespace pxt.py {
     function typeCtor(t: Type): any {
         if (t.primType) return t.primType
         else if (t.classType) return t.classType
+        else if (t.moduleType) return t.moduleType
         else if (t.arrayType) return "array"
         return null
     }
@@ -281,6 +365,9 @@ namespace pxt.py {
                 s = s.parent
             } while (s && s.kind == "ClassDef")
         }
+        if (autoImport && lookupSymbol(n)) {
+            return addImport(currentScope(), n, ctx.currModule)
+        }
         return null
     }
 
@@ -319,6 +406,15 @@ namespace pxt.py {
             currFun: null,
             currModule: m
         }
+    }
+
+    function symbolType(s: Symbol): Type {
+        if (s.kind == "Module" || s.kind == "ClassDef")
+            return mkType({ moduleType: s as Module })
+        else if (s.kind == "Assign")
+            return typeOf((s as Assign).targets[0])
+        else
+            return mkType({})
     }
 
     function scope(f: () => B.JsNode) {
@@ -830,9 +926,7 @@ namespace pxt.py {
                     defvar(nm.asname, {
                         expandsTo: nm.name
                     })
-                defvar(nm.name, {
-                    isPlainImport: true
-                })
+                addImport(n, nm.name)
             }
             return B.mkText("")
         },
@@ -1291,6 +1385,15 @@ namespace pxt.py {
             let part = typeOf(n.value)
             let fd = getTypeField(part, n.attr)
             if (fd) unify(n, n.tsType, fd.type)
+            else if (part.moduleType) {
+                let sym = lookupSymbol(part.moduleType.name + "." + n.attr)
+                if (sym)
+                    unifyTypeOf(n, symbolType(sym))
+                else
+                    error(n, U.lf("module '{0}' has no attribute '{1}'", part.moduleType.name, n.attr))
+            } else {
+                error(n, U.lf("unknown object type; cannot lookup attribute '{0}'", n.attr))
+            }
             return B.mkInfix(expr(n.value), ".", B.mkText(quoteStr(n.attr)))
         },
         Subscript: (n: py.Subscript) => {
