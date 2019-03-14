@@ -1175,13 +1175,14 @@ export class ProjectView
             pxt.tickEvent("import." + importer.id);
             core.hideDialog();
             core.showLoading("importhex", lf("loading project..."))
-            importer.importAsync(this, data)
-                .done(() => core.hideLoading("importhex"), e => {
-                    pxt.reportException(e, { importer: importer.id });
-                    core.hideLoading("importhex");
-                    core.errorNotification(lf("Oops, something went wrong when importing your project"));
-                    if (createNewIfFailed) this.openHome();
-                });
+            pxt.editor.initEditorExtensionsAsync()
+                .then(() => importer.importAsync(this, data)
+                    .done(() => core.hideLoading("importhex"), e => {
+                        pxt.reportException(e, { importer: importer.id });
+                        core.hideLoading("importhex");
+                        core.errorNotification(lf("Oops, something went wrong when importing your project"));
+                        if (createNewIfFailed) this.openHome();
+                    }));
         }
         else {
             core.warningNotification(lf("Sorry, we could not import this project."))
