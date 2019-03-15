@@ -1293,9 +1293,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private flyouts: pxt.Map<{ flyout: Blockly.VerticalFlyout, blocksHash: number }> = {};
     private showFlyoutInternal_(xmlList: Element[], flyoutName: string = "default") {
-        type PxtToolbox = Blockly.Toolbox & { pxtFlyouts: Blockly.Flyout[] };
-
-        // Blockly internal methods to show a toolbox or a flyout
         if (this.editor.toolbox_) {
             const oldFlyout = this.editor.toolbox_.flyout_ as Blockly.VerticalFlyout;
 
