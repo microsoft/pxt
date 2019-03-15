@@ -15,7 +15,6 @@ type ISettingsProps = pxt.editor.ISettingsProps;
 // lf("Getting started")
 // lf("Buy")
 // lf("Blocks")
-// lf("JavaScript")
 // lf("Examples")
 // lf("Tutorials")
 // lf("Projects")
@@ -433,7 +432,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
                 <div className="ui grid padded">
                     {sandbox ? <sui.Item className="sim-menuitem" role="menuitem" textClass="landscape only" text={lf("Simulator")} icon={simActive && isRunning ? "stop" : "play"} active={simActive} onClick={this.openSimView} title={!simActive ? lf("Show Simulator") : runTooltip} /> : undefined}
                     <sui.Item className="blocks-menuitem" role="menuitem" textClass="landscape only" text={lf("Blocks")} icon="xicon blocks" active={blockActive} onClick={this.openBlocks} title={lf("Convert code to Blocks")} />
-                    <sui.Item className="javascript-menuitem" role="menuitem" textClass="landscape only" text={lf("JavaScript")} icon="xicon js" active={javascriptActive} onClick={this.openJavaScript} title={lf("Convert code to JavaScript")} />
+                    <sui.Item className="javascript-menuitem" role="menuitem" textClass="landscape only" text={"JavaScript"} icon="xicon js" active={javascriptActive} onClick={this.openJavaScript} title={lf("Convert code to JavaScript")} />
                     <div className="ui item toggle"></div>
                 </div>
             </div> : undefined}
