@@ -579,16 +579,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     showVariablesFlyout() {
-        this.showFlyoutInternal_(Blockly.Variables.flyoutCategory(this.editor));
+        this.showFlyoutInternal_(Blockly.Variables.flyoutCategory(this.editor), "variables");
     }
 
     showFunctionsFlyout() {
         if (pxt.appTarget.runtime &&
             pxt.appTarget.runtime.functionsOptions &&
             pxt.appTarget.runtime.functionsOptions.useNewFunctions) {
-            this.showFlyoutInternal_(Blockly.Functions.flyoutCategory(this.editor));
+            this.showFlyoutInternal_(Blockly.Functions.flyoutCategory(this.editor), "functions");
         } else {
-            this.showFlyoutInternal_(Blockly.Procedures.flyoutCategory(this.editor));
+            this.showFlyoutInternal_(Blockly.Procedures.flyoutCategory(this.editor), "functions");
         }
     }
 
@@ -1202,7 +1202,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (this.flyoutBlockXmlCache[cacheKey]) {
             pxt.debug("showing flyout with blocks from flyout blocks xml cache");
             this.flyoutXmlList = this.flyoutBlockXmlCache[cacheKey];
-            this.showFlyoutInternal_(this.flyoutXmlList, cacheKey, true);
+            this.showFlyoutInternal_(this.flyoutXmlList, cacheKey);
             return;
         }
 
@@ -1210,7 +1210,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             // Cache blocks xml list for later
             this.flyoutBlockXmlCache[cacheKey] = this.flyoutXmlList;
 
-            this.showFlyoutInternal_(this.flyoutXmlList, cacheKey, true);
+            this.showFlyoutInternal_(this.flyoutXmlList, cacheKey);
         }
     }
 
@@ -1268,7 +1268,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             label.setAttribute('text', lf("No search results..."));
             this.flyoutXmlList.push(label);
         }
-        this.showFlyoutInternal_(this.flyoutXmlList);
+        this.showFlyoutInternal_(this.flyoutXmlList, "search");
     }
 
     private showTopBlocksFlyout() {
@@ -1291,9 +1291,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.showFlyoutInternal_(this.flyoutXmlList);
     }
 
-    // private flyouts: pxt.Map<Blockly.VerticalFlyout> = {};
     private flyouts: pxt.Map<{ flyout: Blockly.VerticalFlyout, blocksHash: number }> = {};
-    private showFlyoutInternal_(xmlList: Element[], flyoutName: string = "default", skipRebuild: boolean = false) {
+    private showFlyoutInternal_(xmlList: Element[], flyoutName: string = "default") {
         type PxtToolbox = Blockly.Toolbox & { pxtFlyouts: Blockly.Flyout[] };
 
         // Blockly internal methods to show a toolbox or a flyout
@@ -1303,10 +1302,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             // determine if the cached flyout exists and isn't stale
             const hasCachedFlyout = flyoutName in this.flyouts
             const cachedBlocksHash = hasCachedFlyout ? this.flyouts[flyoutName].blocksHash : 0;
+            const blocksToString = (xmlList: Element[]): string =>
+                xmlList.map(b => b.outerHTML).reduce((p, c) => p + c)
             const hashBlocks = (xmlList: Element[]): number =>
-                pxt.Util.codalHash16(xmlList.map(b => b.outerHTML).reduce((p, c) => p + c));
+                pxt.Util.codalHash16(blocksToString(xmlList));
             const currentBlocksHash = hashBlocks(xmlList);
-            const isFlyoutUpToDate = cachedBlocksHash === currentBlocksHash && skipRebuild
+            const isFlyoutUpToDate = cachedBlocksHash === currentBlocksHash
 
             const swapFlyout = (old: Blockly.VerticalFlyout, nw: Blockly.VerticalFlyout) => {
                 // hide the old flyout
@@ -1337,21 +1338,20 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             let newFlyout: Blockly.VerticalFlyout;
             if (!hasCachedFlyout) {
                 newFlyout = mkFlyout();
-                this.flyouts[flyoutName] = { flyout: newFlyout, blocksHash: currentBlocksHash };
+                this.flyouts[flyoutName] = { flyout: newFlyout, blocksHash: 0 };
             } else {
                 newFlyout = this.flyouts[flyoutName].flyout;
             }
+
+            // update the blocks hash
+            this.flyouts[flyoutName].blocksHash = currentBlocksHash;
 
             // switch to the new flyout
             swapFlyout(oldFlyout, newFlyout);
 
             // if the flyout contents have changed, recreate the blocks
             if (!isFlyoutUpToDate) {
-                // TODO(dz)
-                console.log("Creating new flyout for: " + flyoutName)
                 newFlyout.show(xmlList);
-            } else {
-                newFlyout.setVisible(true);
             }
 
             newFlyout.scrollToStart();
