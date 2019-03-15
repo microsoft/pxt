@@ -1038,6 +1038,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         super.clearCaches();
         this.clearFlyoutCaches();
         snippets.clearBuiltinBlockCache();
+        // note that we don't need to clear the flyout SVG cache since those 
+        // will regenerate themselves more precisely based on the hash of the
+        // input blocks xml.
     }
 
     clearFlyoutCaches() {
@@ -1288,14 +1291,22 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.showFlyoutInternal_(this.flyoutXmlList);
     }
 
-    private flyouts: pxt.Map<Blockly.VerticalFlyout> = {};
+    // private flyouts: pxt.Map<Blockly.VerticalFlyout> = {};
+    private flyouts: pxt.Map<{ flyout: Blockly.VerticalFlyout, blocksHash: number }> = {};
     private showFlyoutInternal_(xmlList: Element[], flyoutName: string = "default", skipRebuild: boolean = false) {
         type PxtToolbox = Blockly.Toolbox & { pxtFlyouts: Blockly.Flyout[] };
 
         // Blockly internal methods to show a toolbox or a flyout
         if (this.editor.toolbox_) {
             const oldFlyout = this.editor.toolbox_.flyout_ as Blockly.VerticalFlyout;
-            const hasCachedFlyout = flyoutName in this.flyouts;
+
+            // determine if the cached flyout exists and isn't stale
+            const hasCachedFlyout = flyoutName in this.flyouts
+            const cachedBlocksHash = hasCachedFlyout ? this.flyouts[flyoutName].blocksHash : 0;
+            const hashBlocks = (xmlList: Element[]): number =>
+                pxt.Util.codalHash16(xmlList.map(b => b.outerHTML).reduce((p, c) => p + c));
+            const currentBlocksHash = hashBlocks(xmlList);
+            const isFlyoutUpToDate = cachedBlocksHash === currentBlocksHash && skipRebuild
 
             const swapFlyout = (old: Blockly.VerticalFlyout, nw: Blockly.VerticalFlyout) => {
                 // hide the old flyout
@@ -1321,23 +1332,29 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 const flyout = Blockly.Functions.createFlyout(workspace, oldSvg)
                 return flyout as Blockly.VerticalFlyout;
             }
+
+            // get the flyout from the cache or make a new one
             let newFlyout: Blockly.VerticalFlyout;
             if (!hasCachedFlyout) {
                 newFlyout = mkFlyout();
-                swapFlyout(oldFlyout, newFlyout);
-                newFlyout.show(xmlList);
-                this.flyouts[flyoutName] = newFlyout;
+                this.flyouts[flyoutName] = { flyout: newFlyout, blocksHash: currentBlocksHash };
             } else {
-                newFlyout = this.flyouts[flyoutName];
-                swapFlyout(oldFlyout, newFlyout);
-                if (!skipRebuild)
-                    newFlyout.show(xmlList);
-                else
-                    newFlyout.setVisible(true);
+                newFlyout = this.flyouts[flyoutName].flyout;
+            }
+
+            // switch to the new flyout
+            swapFlyout(oldFlyout, newFlyout);
+
+            // if the flyout contents have changed, recreate the blocks
+            if (!isFlyoutUpToDate) {
+                // TODO(dz)
+                console.log("Creating new flyout for: " + flyoutName)
+                newFlyout.show(xmlList);
+            } else {
+                newFlyout.setVisible(true);
             }
 
             newFlyout.scrollToStart();
-
         } else if ((this.editor as any).flyout_) {
             (this.editor as any).show(xmlList);
             (this.editor as any).scrollToStart();
