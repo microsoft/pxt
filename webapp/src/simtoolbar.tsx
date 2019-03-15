@@ -91,6 +91,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const run = true; // !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
         const restart = run && !simOpts.hideRestart;
         const trace = !!targetTheme.enableTrace;
+        const debug = targetTheme.debugger;
         const tracing = this.props.parent.state.tracing;
         const traceTooltip = tracing ? lf("Disable Slow-Mo") : lf("Slow-Mo")
         const debugging = parentState.debugging;
@@ -116,7 +117,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
                 {make ? <sui.Button disabled={debugging} icon='configure' className="secondary" title={makeTooltip} onClick={this.openInstructions} /> : undefined}
                 {run ? <sui.Button disabled={debugging || isStarting} key='runbtn' className={`play-button ${isRunning || debugging ? "stop" : "play"}`} icon={isRunning ? "stop" : "play green"} title={runTooltip} onClick={this.startStopSimulator} /> : undefined}
                 {restart ? <sui.Button disabled={debugging || isStarting} key='restartbtn' className={`restart-button`} icon="refresh" title={restartTooltip} onClick={this.restartSimulator} /> : undefined}
-                {run ? <sui.Button disabled={false} key='debugbtn' className={`debug-button ${debugging ? "orange" : ""}`} icon="xicon bug" title={debugTooltip} onClick={this.toggleDebug} /> : undefined}
+                {run && debug ? <sui.Button disabled={false} key='debugbtn' className={`debug-button ${debugging ? "orange" : ""}`} icon="xicon bug" title={debugTooltip} onClick={this.toggleDebug} /> : undefined}
                 {trace ? <sui.Button key='trace' className={`trace-button ${tracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onClick={this.toggleTrace} /> : undefined}
             </div>
             <div className={`ui icon tiny buttons`} style={{ padding: "0" }}>
