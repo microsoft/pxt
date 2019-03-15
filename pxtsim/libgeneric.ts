@@ -20,17 +20,14 @@ namespace pxsim {
         }
 
         toDebugString(): string {
-            return "[" + this.data.join(", ") + "]";
-        }
-        toDebugStringTruncating(): string {
             let s = "[";
             for (let i = 0; i < this.data.length; ++i) {
                 if (i > 0)
                     s += ",";
                 let newElem = RefObject.toDebugString(this.data[i]);
-                if (s.length + newElem.length > 20) {
+                if (s.length + newElem.length > 100) {
                     if (i == 0) {
-                        s += newElem.substr(0, 20);
+                        s += newElem.substr(0, 100);
                     }
                     s += "..."
                     break;
