@@ -39,7 +39,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
 
     restartSimulator() {
         pxt.tickEvent('simulator.restart', undefined, { interactiveConsent: true });
-        this.props.parent.restartSimulator();
+        this.props.parent.restartSimulator(this.props.parent.state.debugging);
     }
 
     toggleTrace() {
@@ -91,7 +91,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const run = true; // !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
         const restart = run && !simOpts.hideRestart;
         const trace = !!targetTheme.enableTrace;
-        const debug = targetTheme.debugger;
+        const debug = targetTheme.debugger && !inTutorial;
         const tracing = this.props.parent.state.tracing;
         const traceTooltip = tracing ? lf("Disable Slow-Mo") : lf("Slow-Mo")
         const debugging = parentState.debugging;
@@ -116,8 +116,8 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
             <div className={`ui icon tiny buttons`} style={{ padding: "0" }}>
                 {make ? <sui.Button disabled={debugging} icon='configure' className="secondary" title={makeTooltip} onClick={this.openInstructions} /> : undefined}
                 {run ? <sui.Button disabled={debugging || isStarting} key='runbtn' className={`play-button ${isRunning || debugging ? "stop" : "play"}`} icon={isRunning ? "stop" : "play green"} title={runTooltip} onClick={this.startStopSimulator} /> : undefined}
-                {restart ? <sui.Button disabled={debugging || isStarting} key='restartbtn' className={`restart-button`} icon="refresh" title={restartTooltip} onClick={this.restartSimulator} /> : undefined}
-                {run && debug ? <sui.Button disabled={false} key='debugbtn' className={`debug-button ${debugging ? "orange" : ""}`} icon="xicon bug" title={debugTooltip} onClick={this.toggleDebug} /> : undefined}
+                {restart ? <sui.Button disabled={isStarting} key='restartbtn' className={`restart-button`} icon="refresh" title={restartTooltip} onClick={this.restartSimulator} /> : undefined}
+                {run && debug ? <sui.Button disabled={false} key='debugbtn' className={`debug-button ${debugging ? "orange" : ""}`} icon="icon bug" title={debugTooltip} onClick={this.toggleDebug} /> : undefined}
                 {trace ? <sui.Button key='trace' className={`trace-button ${tracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onClick={this.toggleTrace} /> : undefined}
             </div>
             <div className={`ui icon tiny buttons`} style={{ padding: "0" }}>
