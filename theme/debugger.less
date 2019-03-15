@@ -21,14 +21,18 @@
 .debugtoolbar {
     width: 100%;
     z-index: @debuggerToolsZIndex;
+    display: flex;
     .ui.menu {
         border-radius: 0 !important;
-        border: 0 !important;
+        border-left: none;
         display: flex;
+        width: 100%;
         .item {
             padding-left: 10px;
             padding-right: 10px;
-            border-radius: 0 !important;
+        }
+        .separator-after {
+            border-right: 1px solid #dddddd;
         }
     }
 }
@@ -43,11 +47,15 @@
 }
 
 /* Debugger toolbar buttons */
-.ui.button.dbg-btn .icon.blue {
-    color: #72BDFF !important;
+
+.ui.item.dbg-btn {
+    white-space: pre;
+}
+.ui.item.dbg-btn .icon.blue {
+    color: #0078D7!important;
 }
 
-.ui.button.dbg-btn .icon.red {
+.ui.item.dbg-btn .icon.red {
     color: #F6876D !important;
 }
 
@@ -64,9 +72,8 @@
 .ui.segment.debugvariables {
     table-layout: auto;
     width: 100%;
-    background: @debuggerVariableExplorerBackground;
     display: none;
-    
+
     .ui.middle.aligned.list {
         overflow-y: auto;
         max-height: 25rem;
@@ -128,20 +135,6 @@ div.simframe div.pause-overlay {
     height: 100%;
     position: absolute;
     z-index: 100;    
-}
-
-.debugger .grid.equal.width {
-    background: @DebuggerBackgroundPrimaryColor;
-}
-
-.debugger #downloadArea {
-    background: @DebuggerBackgroundPrimaryColor;
-    //background-color: lightgreen
-}
-
-.debugger #filelist {
-    background: @DebuggerBackgroundPrimaryColor;
-    background-color: @DebuggerBackgroundSecondaryColor
 }
 
 /* Old debugger view */
