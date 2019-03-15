@@ -31,6 +31,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     showSearch: boolean;
     breakpointsByBlock: pxt.Map<number>; // Map block id --> breakpoint ID
     breakpointsSet: number[]; // the IDs of the breakpoints set.
+    debuggerToolboxDiv: JSX.Element;
 
     public nsMap: pxt.Map<toolbox.BlockDefinition[]>;
 
@@ -70,6 +71,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let breakpointId = this.breakpointsByBlock[blockId];
         this.breakpointsSet.filter(breakpoint => breakpoint != breakpointId);
         simulator.driver.setBreakpoints(this.breakpointsSet);
+    }
+
+    clearBreakpoints(): void {
+        simulator.driver.setBreakpoints([]);
     }
 
     setVisible(v: boolean) {
@@ -537,8 +542,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             <div>
                 <div id="blocksEditor"></div>
                 <toolbox.ToolboxTrashIcon />
-                {this.parent.state.debugging ?
-                    <debug.DebuggerVariables ref={this.handleDebuggerVariablesRef} parent={this.parent} /> : undefined}
             </div>
         )
     }
@@ -564,12 +567,30 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     renderToolbox(immediate?: boolean) {
         if (pxt.shell.isReadOnly()) return;
         const blocklyToolboxDiv = this.getBlocklyToolboxDiv();
-        const blocklyToolbox = <toolbox.Toolbox ref={this.handleToolboxRef} editorname="blocks" parent={this} />;
-
+        const debuggerToolboxDiv = <div id="debuggerToolbox"></div>;
+        const blocklyToolbox = <div className="blocklyToolbox">
+            <toolbox.Toolbox ref={this.handleToolboxRef} editorname="blocks" parent={this} />
+            {debuggerToolboxDiv}
+        </div>;
+        this.debuggerToolboxDiv = debuggerToolboxDiv;
         Util.assert(!!blocklyToolboxDiv);
         ReactDOM.render(blocklyToolbox, blocklyToolboxDiv);
 
         if (!immediate) this.toolbox.showLoading();
+    }
+
+    updateToolbox(debugging: boolean) {
+        let debuggerToolbox = debugging ? <div>
+            <debug.DebuggerToolbar parent={this.parent} />
+            <debug.DebuggerVariables ref={this.handleDebuggerVariablesRef} parent={this.parent} />
+        </div> : <div />;
+        Util.assert(!!this.debuggerToolboxDiv)
+        if (debugging) {
+            this.toolbox.hide();
+        } else {
+            this.toolbox.show();
+        }
+        ReactDOM.render(debuggerToolbox, document.getElementById('debuggerToolbox'));
     }
 
     showPackageDialog() {
@@ -650,20 +671,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     }
                     this.prepareBlockly();
                 })
-                .then(() => {
-                    if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendFieldEditors) {
-                        return pxt.BrowserUtils.loadScriptAsync("fieldeditors.js")
-                            .then(() => pxt.editor.initFieldExtensionsAsync({}))
-                            .then(res => {
-                                if (res.fieldEditors) {
-                                    res.fieldEditors.forEach(fi => {
-                                        pxt.blocks.registerFieldEditor(fi.selector, fi.editor, fi.validator);
-                                    })
-                                }
-                            });
-                    }
-                    return Promise.resolve();
-                })
+                .then(() => pxt.editor.initEditorExtensionsAsync())
         return this._loadBlocklyPromise;
     }
 
@@ -770,6 +778,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 }
             }
         })
+        this.setBreakpointsFromBlocks();
     }
 
     highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage): boolean {
@@ -1195,19 +1204,18 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
 
         this.flyoutXmlList = [];
-        let cacheKey = ns + subns;
-        if (this.flyoutBlockXmlCache[cacheKey]) {
+        if (this.flyoutBlockXmlCache[ns + subns]) {
             pxt.debug("showing flyout with blocks from flyout blocks xml cache");
-            this.flyoutXmlList = this.flyoutBlockXmlCache[cacheKey];
-            this.showFlyoutInternal_(this.flyoutXmlList, cacheKey, true);
+            this.flyoutXmlList = this.flyoutBlockXmlCache[ns + subns];
+            this.showFlyoutInternal_(this.flyoutXmlList);
             return;
         }
 
         if (this.abstractShowFlyout(treeRow)) {
             // Cache blocks xml list for later
-            this.flyoutBlockXmlCache[cacheKey] = this.flyoutXmlList;
+            this.flyoutBlockXmlCache[ns + subns] = this.flyoutXmlList;
 
-            this.showFlyoutInternal_(this.flyoutXmlList, cacheKey, true);
+            this.showFlyoutInternal_(this.flyoutXmlList);
         }
     }
 
@@ -1288,43 +1296,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.showFlyoutInternal_(this.flyoutXmlList);
     }
 
-    private flyouts: pxt.Map<Blockly.VerticalFlyout> = {};
-    private showFlyoutInternal_(xmlList: Element[], flyoutName: string = "default", skipRebuild: boolean = false) {
-        type PxtToolbox = Blockly.Toolbox & { pxtFlyouts: Blockly.Flyout[] };
-
+    private showFlyoutInternal_(xmlList: Element[]) {
         // Blockly internal methods to show a toolbox or a flyout
         if (this.editor.toolbox_) {
-            const oldFlyout = this.editor.toolbox_.flyout_ as Blockly.VerticalFlyout;
-            const hasCachedFlyout = flyoutName in this.flyouts;
-
-            const swapFlyout = (old: Blockly.VerticalFlyout, nw: Blockly.VerticalFlyout) => {
-                old.setVisible(false)
-                nw.setVisible(true)
-                this.editor.toolbox_.flyout_ = nw;
-            }
-            const mkFlyout = () => {
-                const workspace = this.editor.toolbox_.workspace_ as Blockly.WorkspaceSvg
-                const oldSvg = oldFlyout.svgGroup_;
-                const flyout = Blockly.Functions.createFlyout(workspace, oldSvg)
-                return flyout as Blockly.VerticalFlyout;
-            }
-            let newFlyout: Blockly.VerticalFlyout;
-            if (!hasCachedFlyout) {
-                newFlyout = mkFlyout();
-                swapFlyout(oldFlyout, newFlyout);
-                newFlyout.show(xmlList);
-                this.flyouts[flyoutName] = newFlyout;
-            } else {
-                newFlyout = this.flyouts[flyoutName];
-                swapFlyout(oldFlyout, newFlyout);
-                if (!skipRebuild)
-                    newFlyout.show(xmlList);
-                else
-                    newFlyout.setVisible(true);
-            }
-
-            newFlyout.scrollToStart();
-
+            this.editor.toolbox_.flyout_.show(xmlList);
+            (this.editor.toolbox_.flyout_ as Blockly.VerticalFlyout).scrollToStart();
         } else if ((this.editor as any).flyout_) {
             (this.editor as any).show(xmlList);
             (this.editor as any).scrollToStart();

@@ -67,6 +67,7 @@ namespace pxtblockly {
          * @param {string} colour The new colour in '#rrggbb' format.
          */
         setValue(colour: string) {
+            colour = fixEnumColor(colour);
             if (colour.indexOf('0x') > -1) {
                 colour = `#${colour.substr(2)}`;
             }
@@ -104,5 +105,28 @@ namespace pxtblockly {
         getColours_(): string[] {
             return (this as any).colours_;
         }
+    }
+
+    function fixEnumColor(colour: string) {
+        if (colour) {
+            const match = /Colors\.([a-zA-Z]+)/.exec(colour);
+            if (match) {
+                switch (match[1].toLocaleLowerCase()) {
+                    case "red": return "#FF0000";
+                    case "orange": return "#FF7F00";
+                    case "yellow": return "#FFFF00";
+                    case "green": return "#00FF00";
+                    case "blue": return "#0000FF";
+                    case "indigo": return "#4B0082";
+                    case "violet": return "#8A2BE2";
+                    case "purple": return "#A033E5";
+                    case "pink": return "#FF007F";
+                    case "white": return "#FFFFFF";
+                    case "black": return "#000000";
+                    default: return colour;
+                }
+            }
+        }
+        return colour;
     }
 }

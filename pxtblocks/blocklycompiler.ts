@@ -1412,27 +1412,6 @@ namespace pxt.blocks {
 
             if (value !== null) {
                 res.push(mkText(value + "\n"));
-
-                // const declaredVars: string = (b as any).declaredVariables
-                // if (declaredVars) {
-                //     const varNames = declaredVars.split(",");
-                //     varNames.forEach(n => {
-                //         const existing = lookup(e, n);
-                //         if (existing) {
-                //             existing.assigned = VarUsage.Assign;
-                //             existing.mustBeGlobal = false;
-                //         }
-                //         else {
-                //             e.bindings.push({
-                //                 name: n,
-                //                 type: mkPoint(null),
-                //                 assigned: VarUsage.Assign,
-                //                 declaredInLocalScope: 1,
-                //                 mustBeGlobal: false
-                //             });
-                //         }
-                //     })
-                // }
             }
             else {
                 break;
@@ -2144,6 +2123,16 @@ namespace pxt.blocks {
                 const info = findOrDeclareVariable(name, currentScope);
                 currentScope.assignedVars.push(info.id);
                 currentScope.referencedVars.push(info.id);
+            }
+            else if (block.type === pxtc.TS_STATEMENT_TYPE) {
+                const declaredVars: string = (block as any).declaredVariables
+                if (declaredVars) {
+                    const varNames = declaredVars.split(",");
+                    varNames.forEach(vName => {
+                        const info = findOrDeclareVariable(vName, currentScope);
+                        info.alreadyDeclared = true;
+                    });
+                }
             }
 
             if (hasStatementInput(block)) {

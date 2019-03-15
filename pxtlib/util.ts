@@ -876,22 +876,32 @@ namespace ts.pxtc.Util {
 
     }
 
-    export function normalizeLanguageCode(code: string): string {
+    export function normalizeLanguageCode(code: string): string[] {
         const langParts = /^(\w{2})-(\w{2}$)/i.exec(code);
         if (langParts && langParts[1] && langParts[2]) {
-            return `${langParts[1].toLowerCase()}-${langParts[2].toUpperCase()}`;
+            return [`${langParts[1].toLowerCase()}-${langParts[2].toUpperCase()}`, langParts[1].toLowerCase()];
         } else {
-            return code.toLowerCase();
+            return [code.toLowerCase()];
         }
     }
 
     export function isLocaleEnabled(code: string): boolean {
-        code = normalizeLanguageCode(code);
-        return pxt.appTarget.appTheme && pxt.appTarget.appTheme.availableLocales && pxt.appTarget.appTheme.availableLocales.indexOf(code) > -1;
+        let [lang, baseLang] = normalizeLanguageCode(code);
+        let appTheme = pxt.appTarget.appTheme;
+        if (appTheme && appTheme.availableLocales) {
+            if (appTheme.availableLocales.indexOf(lang) > -1) {
+                return true;
+            }
+            //check for base language if we didn't find the full language. Example: nl for nl-NL
+            if (baseLang && appTheme.availableLocales.indexOf(baseLang) > -1 ) {
+                    return true;
+            }
+        }
+        return  false;
     }
 
     export function updateLocalizationAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean, force?: boolean): Promise<void> {
-        code = normalizeLanguageCode(code);
+        code = normalizeLanguageCode(code)[0];
         if (code === userLanguage() || (!isLocaleEnabled(code) && !force))
             return Promise.resolve();
 
@@ -909,7 +919,7 @@ namespace ts.pxtc.Util {
     }
 
     export function downloadSimulatorLocalizationAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean, force?: boolean): Promise<pxt.Map<string>> {
-        code = normalizeLanguageCode(code);
+        code = normalizeLanguageCode(code)[0];
         if (code === userLanguage() || (!isLocaleEnabled(code) && !force))
             return Promise.resolve<pxt.Map<string>>(undefined);
 
@@ -917,7 +927,7 @@ namespace ts.pxtc.Util {
     }
 
     export function downloadTranslationsAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean): Promise<pxt.Map<string>> {
-        code = normalizeLanguageCode(code);
+        code = normalizeLanguageCode(code)[0];
         let translationsCacheId = `${code}/${live}`;
         if (translationsCache()[translationsCacheId]) {
             return Promise.resolve(translationsCache()[translationsCacheId]);
