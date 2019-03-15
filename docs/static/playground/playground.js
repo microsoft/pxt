@@ -351,7 +351,7 @@
 
     function xhr(url) {
         if (preloaded[url]) {
-            return Promise.as({
+            return Promise.resolve({
                 responseText: preloaded[url]
             });
         }
