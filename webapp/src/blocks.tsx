@@ -10,6 +10,7 @@ import * as debug from "./debugger";
 import * as toolbox from "./toolbox";
 import * as snippets from "./blocksSnippets";
 import * as workspace from "./workspace";
+import * as simulator from "./simulator";
 import { CreateFunctionDialog, CreateFunctionDialogState } from "./createFunction";
 
 import Util = pxt.Util;
@@ -28,10 +29,53 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     showCategories: boolean = true;
     filters: pxt.editor.ProjectFilters;
     showSearch: boolean;
+    breakpointsByBlock: pxt.Map<number>; // Map block id --> breakpoint ID
+    breakpointsSet: number[]; // the IDs of the breakpoints set.
+    debuggerToolboxDiv: JSX.Element;
 
     public nsMap: pxt.Map<toolbox.BlockDefinition[]>;
 
     private debugVariables: debug.DebuggerVariables;
+
+    setBreakpointsMap(breakpoints: pxtc.Breakpoint[]): void {
+        let map: pxt.Map<number> = {};
+        if (!breakpoints || !this.compilationResult) return;
+        breakpoints.forEach(breakpoint => {
+            let blockId = pxt.blocks.findBlockId(this.compilationResult.sourceMap, { start: breakpoint.line, length: breakpoint.endLine - breakpoint.line });
+            if (blockId) map[blockId] = breakpoint.id;
+        });
+        this.breakpointsByBlock = map;
+    }
+
+    setBreakpointsFromBlocks(): void {
+        let breakpoints: number[] = []
+        let map = this.breakpointsByBlock;
+        if (map) {
+            this.editor.getAllBlocks().forEach(block => {
+                if (map[block.id] && block.isBreakpointSet()) {
+                    breakpoints.push(this.breakpointsByBlock[block.id]);
+                }
+            });
+        }
+
+        this.breakpointsSet = breakpoints;
+        simulator.driver.setBreakpoints(breakpoints);
+    }
+
+    addBreakpointFromEvent(blockId: string) {
+        this.breakpointsSet.push(this.breakpointsByBlock[blockId]);
+        simulator.driver.setBreakpoints(this.breakpointsSet);
+    }
+
+    removeBreakpointFromEvent(blockId: string) {
+        let breakpointId = this.breakpointsByBlock[blockId];
+        this.breakpointsSet.filter(breakpoint => breakpoint != breakpointId);
+        simulator.driver.setBreakpoints(this.breakpointsSet);
+    }
+
+    clearBreakpoints(): void {
+        simulator.driver.setBreakpoints([]);
+    }
 
     setVisible(v: boolean) {
         super.setVisible(v);
@@ -398,6 +442,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         pxt.analytics.enableCookies();
                     }
                     this.parent.setState({ hideEditorFloats: toolboxVisible });
+                } else if (ev.element == 'breakpointSet') {
+                    this.setBreakpointsFromBlocks();
+                    // if (ev.newValue) {
+                    //     this.addBreakpointFromEvent(ev.blockId);
+                    // } else {
+                    //     this.removeBreakpointFromEvent(ev.blockId);
+                    // }
                 }
             }
         })
@@ -491,8 +542,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             <div>
                 <div id="blocksEditor"></div>
                 <toolbox.ToolboxTrashIcon />
-                {this.parent.state.debugging ?
-                    <debug.DebuggerVariables ref={this.handleDebuggerVariablesRef} parent={this.parent} /> : undefined}
             </div>
         )
     }
@@ -518,12 +567,30 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     renderToolbox(immediate?: boolean) {
         if (pxt.shell.isReadOnly()) return;
         const blocklyToolboxDiv = this.getBlocklyToolboxDiv();
-        const blocklyToolbox = <toolbox.Toolbox ref={this.handleToolboxRef} editorname="blocks" parent={this} />;
-
+        const debuggerToolboxDiv = <div id="debuggerToolbox"></div>;
+        const blocklyToolbox = <div className="blocklyToolbox">
+            <toolbox.Toolbox ref={this.handleToolboxRef} editorname="blocks" parent={this} />
+            {debuggerToolboxDiv}
+        </div>;
+        this.debuggerToolboxDiv = debuggerToolboxDiv;
         Util.assert(!!blocklyToolboxDiv);
         ReactDOM.render(blocklyToolbox, blocklyToolboxDiv);
 
         if (!immediate) this.toolbox.showLoading();
+    }
+
+    updateToolbox(debugging: boolean) {
+        let debuggerToolbox = debugging ? <div>
+            <debug.DebuggerToolbar parent={this.parent} />
+            <debug.DebuggerVariables ref={this.handleDebuggerVariablesRef} parent={this.parent} />
+        </div> : <div />;
+        Util.assert(!!this.debuggerToolboxDiv)
+        if (debugging) {
+            this.toolbox.hide();
+        } else {
+            this.toolbox.show();
+        }
+        ReactDOM.render(debuggerToolbox, document.getElementById('debuggerToolbox'));
     }
 
     showPackageDialog() {
@@ -570,6 +637,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
+    // TODO: remove this, we won't use it anymore
     insertBreakpoint() {
         if (!this.editor) return;
         const b = this.editor.newBlock(pxtc.TS_DEBUGGER_TYPE);
@@ -603,20 +671,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     }
                     this.prepareBlockly();
                 })
-                .then(() => {
-                    if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendFieldEditors) {
-                        return pxt.BrowserUtils.loadScriptAsync("fieldeditors.js")
-                            .then(() => pxt.editor.initFieldExtensionsAsync({}))
-                            .then(res => {
-                                if (res.fieldEditors) {
-                                    res.fieldEditors.forEach(fi => {
-                                        pxt.blocks.registerFieldEditor(fi.selector, fi.editor, fi.validator);
-                                    })
-                                }
-                            });
-                    }
-                    return Promise.resolve();
-                })
+                .then(() => pxt.editor.initEditorExtensionsAsync())
         return this._loadBlocklyPromise;
     }
 
@@ -723,6 +778,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 }
             }
         })
+        this.setBreakpointsFromBlocks();
     }
 
     highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage): boolean {
@@ -792,9 +848,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (this.debugVariables) this.debugVariables.update();
 
         function getValueOfVariable(name: string): pxsim.Variables {
+            // Variable names could have spaces.
+            let correctedName = name.replace(/\s/g, '_');
             for (let k of Object.keys(globals)) {
                 let n = k.replace(/___\d+$/, "");
-                if (name === n) {
+                if (correctedName === n) {
                     let v = globals[k]
                     return v;
                 }

@@ -30,7 +30,7 @@ namespace pxt {
 
         public addedBy: Package[];
         public config: PackageConfig;
-        public level = -1;
+        public level = -1; // main package = 0, first children = 1, etc
         public isLoaded = false;
         private resolvedVersion: string;
         public ignoreTests = false;
@@ -42,6 +42,10 @@ namespace pxt {
             }
 
             this.addedBy = [addedBy];
+        }
+
+        invalid(): boolean {
+            return /^invalid:/.test(this.version());
         }
 
         version() {
@@ -143,7 +147,10 @@ namespace pxt {
             if (getEmbeddedScript(this.id)) {
                 this.resolvedVersion = v = "embed:" + this.id
             } else if (!v || v == "*") {
-                U.userError(lf("version not specified for {0}", this.id))
+                // don't hard crash, instead ignore dependency
+                // U.userError(lf("version not specified for {0}", this.id))
+                this.configureAsInvalidPackage(lf("version not specified for {0}", this.id));
+                v = this._verspec;
             }
             return Promise.resolve(v)
         }
@@ -151,6 +158,10 @@ namespace pxt {
         private downloadAsync() {
             return this.resolveVersionAsync()
                 .then(verNo => {
+                    if (this.invalid()) {
+                        pxt.debug(`skip download of invalid package ${this.id}`);
+                        return undefined;
+                    }
                     if (!/^embed:/.test(verNo) &&
                         this.config && this.config.installedVersion == verNo)
                         return undefined;
@@ -329,9 +340,24 @@ namespace pxt {
                 });
         }
 
+        public configureAsInvalidPackage(reason: string) {
+            pxt.log(`invalid package ${this.id}: ${reason}`);
+            this._verspec = "invalid:" + this.id;
+            this.config = <PackageConfig>{
+                name: this.id,
+                description: reason,
+                dependencies: {},
+                files: []
+            }
+        }
+
         private parseConfig(cfgSrc: string, targetVersion?: string) {
-            const cfg = <PackageConfig>JSON.parse(cfgSrc);
-            this.config = cfg;
+            try {
+                const cfg = <PackageConfig>JSON.parse(cfgSrc);
+                this.config = cfg;
+            } catch (e) {
+                this.configureAsInvalidPackage(lf("Syntax error in pxt.json"));
+            }
 
             const currentConfig = JSON.stringify(this.config);
             for (const dep in this.config.dependencies) {
@@ -360,7 +386,10 @@ namespace pxt {
 
             // find all core packages in target
             const corePackages = Object.keys(this.config.dependencies)
-                .filter(dep => !!dep && (<pxt.PackageConfig>JSON.parse((pxt.appTarget.bundledpkgs[dep] || {})[pxt.CONFIG_NAME] || "{}").core));
+                .filter(dep => !!dep && (
+                    dep == pxt.BLOCKS_PROJECT_NAME || dep == pxt.JAVASCRIPT_PROJECT_NAME ||
+                    (<pxt.PackageConfig>JSON.parse((pxt.appTarget.bundledpkgs[dep] || {})[pxt.CONFIG_NAME] || "{}").core)
+                ));
             // no core package? add the first one
             if (corePackages.length == 0) {
                 const allCorePkgs = pxt.Package.corePackages();
@@ -450,6 +479,13 @@ namespace pxt {
                     let mod = from.resolveDep(id)
                     ver = ver || "*"
                     if (mod) {
+                        if (mod.invalid()) {
+                            // failed to resolve dependency, ignore
+                            mod.level = Math.min(mod.level, from.level + 1)
+                            mod.addedBy.push(from)
+                            return Promise.resolve();
+                        }
+
                         if (mod._verspec != ver && !/^file:/.test(mod._verspec) && !/^file:/.test(ver))
                             U.userError("Version spec mismatch on " + id)
                         if (!isCpp) {
@@ -768,7 +804,9 @@ namespace pxt {
                         }
                     }
                     opts.jres = this.getJRes()
-                    opts.useNewFunctions = pxt.appTarget.runtime && pxt.appTarget.runtime.functionsOptions && pxt.appTarget.runtime.functionsOptions.useNewFunctions;
+                    const functionOpts = pxt.appTarget.runtime && pxt.appTarget.runtime.functionsOptions;
+                    opts.useNewFunctions = functionOpts && functionOpts.useNewFunctions;
+                    opts.allowedArgumentTypes = functionOpts && functionOpts.extraFunctionEditorTypes && functionOpts.extraFunctionEditorTypes.map(info => info.typeName).concat("number", "boolean", "string");
                     return opts;
                 })
         }

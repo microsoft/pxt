@@ -38,9 +38,9 @@ test:
 - [ ] Add "- beta" to the GitHub project description if you are still iterating it.
 - [ ] Turn on your automated build on https://travis-ci.org
 - [ ] Use "pxt bump" to create a tagged release on GitHub
-- [ ] Get your package reviewed and approved @DOCS@packages/approval
+- [ ] Get your package reviewed and approved @DOCS@extensions/approval
 
-Read more at @DOCS@packages/build-your-own
+Read more at @DOCS@extensions
 
 ## License
 

@@ -1,6 +1,7 @@
 {
 	"version": "0.2.0",
 	"configurations": [
+
 		{
 			"name": "checkdocs",
 			"type": "node",
@@ -10,10 +11,9 @@
 			"args": [
 				"checkdocs",
 				"--re", 
-				"turtle-spiral",
-				"--dbg"
+				"adafruit"
 			],
-			"cwd": "${workspaceRoot}/../pxt-microbit",
+			"cwd": "${workspaceRoot}/../pxt-maker",
 			"runtimeExecutable": null,
 			"runtimeArgs": [
 				"--nolazy"

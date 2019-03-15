@@ -2681,6 +2681,9 @@ class Host
                 if (proto == "file") {
                     pxt.log(`skipping download of local pkg: ${pkg.version()}`)
                     return Promise.resolve()
+                } else if (proto == "invalid") {
+                    pxt.log(`skipping invalid pkg ${pkg.id}`);
+                    return Promise.resolve();
                 } else {
                     return Promise.reject(`Cannot download ${pkg.version()}; unknown protocol`)
                 }
@@ -3616,7 +3619,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
                     }
                 ])
             }))
-    }, { concurrency: 8 }).then((a: any) => {
+    }, { concurrency: 1 }).then((a: any) => {
         pxt.log(`${successes.length}/${successes.length + failures.length} snippets compiled to blocks, ${failures.length} failed`)
         if (ignoreCount > 0) {
             pxt.log(`Skipped ${ignoreCount} snippets`)
@@ -3816,6 +3819,9 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
                 }
             }
 
+            if (pxt.appTarget.compile.switches.time)
+                console.log(compileResult.times)
+
             switch (buildOpts.mode) {
                 case BuildOption.GenDocs:
                     const apiInfo = pxtc.getApiInfo(compileOptions, res.ast)
@@ -3912,7 +3918,7 @@ function internalUploadTargetTranslationsAsync(uploadDocs: boolean) {
             } else {
                 pxt.log("uploading target translations...");
                 return execCrowdinAsync("upload", "built/target-strings.json", crowdinDir)
-                    .then(() => execCrowdinAsync("upload", "built/sim-strings.json", crowdinDir))
+                    .then(() => fs.existsSync("built/sim-strings.json") ? execCrowdinAsync("upload", "built/sim-strings.json", crowdinDir) : Promise.resolve())
                     .then(() => uploadBundledTranslationsAsync(crowdinDir, cred.branch, cred.prj, cred.key))
                     .then(() => {
                         if (uploadDocs) {

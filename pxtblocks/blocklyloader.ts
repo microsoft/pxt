@@ -64,6 +64,9 @@ namespace pxt.blocks {
         "device_while": true
     }
 
+    // Cached block info from the last inject operation
+    let cachedBlockInfo: pxtc.BlocksInfo;
+
     // blocks cached
     interface CachedBlock {
         hash: string;
@@ -299,6 +302,7 @@ namespace pxt.blocks {
     }
 
     export function injectBlocks(blockInfo: pxtc.BlocksInfo): pxtc.SymbolInfo[] {
+        cachedBlockInfo = blockInfo;
         // inject Blockly with all block definitions
         return blockInfo.blocks
             .map(fn => {
@@ -512,28 +516,7 @@ namespace pxt.blocks {
             block.setInputsInline(true);
         }
 
-        switch (fn.retType) {
-            case "number": block.setOutput(true, "Number"); break;
-            case "string": block.setOutput(true, "String"); break;
-            case "boolean": block.setOutput(true, "Boolean"); break;
-            case "void": break; // do nothing
-            //TODO
-            default:
-                if (fn.retType !== "T") {
-                    const opt_check = isArrayType(fn.retType) ? ["Array"] : [];
-
-                    const si_r = info.apis.byQName[fn.retType];
-                    if (si_r && si_r.extendsTypes && 0 < si_r.extendsTypes.length) {
-                        opt_check.push(...si_r.extendsTypes);
-                    } else {
-                        opt_check.push(fn.retType);
-                    }
-
-                    block.setOutput(true, opt_check);
-                } else {
-                    block.setOutput(true);
-                }
-        }
+        setOutputCheck(block, fn.retType, info);
 
         // hook up/down if return value is void
         const hasHandlers = hasArrowFunction(fn);
@@ -827,6 +810,31 @@ namespace pxt.blocks {
                 this.disabled = disabled;
             }
         };
+    }
+
+    function setOutputCheck(block: Blockly.Block, retType: string, info: pxtc.BlocksInfo) {
+        switch (retType) {
+            case "number": block.setOutput(true, "Number"); break;
+            case "string": block.setOutput(true, "String"); break;
+            case "boolean": block.setOutput(true, "Boolean"); break;
+            case "void": break; // do nothing
+            //TODO
+            default:
+                if (retType !== "T") {
+                    const opt_check = isArrayType(retType) ? ["Array"] : [];
+
+                    const si_r = info.apis.byQName[retType];
+                    if (si_r && si_r.extendsTypes && 0 < si_r.extendsTypes.length) {
+                        opt_check.push(...si_r.extendsTypes);
+                    } else {
+                        opt_check.push(retType);
+                    }
+
+                    block.setOutput(true, opt_check);
+                } else {
+                    block.setOutput(true);
+                }
+        }
     }
 
     function setBuiltinHelpInfo(block: any, id: string) {
@@ -2221,6 +2229,18 @@ namespace pxt.blocks {
             }
             Blockly.PXTBlockly.FunctionUtils.argumentIcons = iconsMap;
             Blockly.PXTBlockly.FunctionUtils.argumentDefaultNames = customNames;
+        }
+
+        if (Blockly.Blocks["argument_reporter_custom"]) {
+            // The logic for setting the output check relies on the internals of PXT
+            // too much to be refactored into pxt-blockly, so we need to monkey patch
+            // it here
+            Blockly.Blocks["argument_reporter_custom"].domToMutation = function(xmlElement: Element) {
+                const typeName = xmlElement.getAttribute('typename');
+                this.typeName_ = typeName;
+
+                setOutputCheck(this, typeName, cachedBlockInfo);
+            };
         }
     }
 

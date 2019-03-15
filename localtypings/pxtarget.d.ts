@@ -318,6 +318,11 @@ declare namespace pxt {
         simScreenshotMaxUriLength?: number; // maximum base64 encoded length to be uploaded
         simGif?: boolean; // record gif of the simulator
         simGifKey?: boolean; // shortcut to start stop
+        simGifTransparent?: string; // specify the gif transparency color
+        simGifQuality?: number; // generated gif quality (pixel sampling size) - 30 (poor) - 1 (best), default 16
+        simGifMaxFrames?: number; // maximum number of frames, default 64
+        simGifWidth?: number; // with in pixels for gif frames
+        autoWebUSBDownload?: boolean; // automatically prompt user for webusb download
     }
 
     interface SocialOptions {
@@ -364,6 +369,7 @@ declare namespace ts.pxtc {
         noTreeShake?: boolean;
         inlineConversions?: boolean;
         noPeepHole?: boolean;
+        time?: boolean;
     }
 
     interface CompileTarget {
@@ -425,6 +431,7 @@ declare namespace ts.pxtc {
 
         alwaysDecompileOnStart?: boolean; // decompiler only
         useNewFunctions?: boolean; // decompiler only; whether to decompile functions using the new functions implementation (functions with parameters)
+        allowedArgumentTypes?: string[]; // decompiler-only; the types allowed for user-defined function arguments in blocks (unlisted types will cause grey blocks)
 
         embedMeta?: string;
         embedBlob?: string; // base64

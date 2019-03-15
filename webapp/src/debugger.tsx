@@ -31,6 +31,8 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         this.state = {
             variables: {}
         }
+        this.onMouseOverVariable = this.onMouseOverVariable.bind(this);
+        this.toggleDebugging = this.toggleDebugging.bind(this);
     }
 
     clear() {
@@ -58,7 +60,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
                 else sv = "(unknown)"
                 break;
         }
-        return DebuggerVariables.capLength(sv);
+        return sv;
     }
 
     static capLength(varstr: string) {
@@ -92,6 +94,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
     }
 
     private toggle(v: Variable) {
+        // We have to take care of the logic for nested looped variables. Currently they break this implementation.
         if (v.children) {
             delete v.children;
             this.setState({ variables: this.state.variables })
@@ -112,37 +115,95 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         }
     }
 
-    private renderVariables(variables: pxt.Map<Variable>, parent?: string): JSX.Element[] {
-        const varcolor = pxt.toolbox.getNamespaceColor('variables');
-        let r: JSX.Element[] = []
-        Object.keys(variables).forEach(variable => {
+    private variableType(variable: Variable): string {
+        let val = variable.value;
+        if (val == null) return "undefined";
+        let type = typeof val
+        switch (type) {
+            case "string":
+            case "number":
+            case "boolean":
+                return type;
+            case "object":
+                if (val.type) return val.type;
+                if (val.preview) return val.preview;
+                if (val.text) return val.text;
+                return "object";
+            default:
+                return "unknown";
+        }
+    }
+
+    private shouldShowValueOnHover(type: string): boolean {
+        switch (type) {
+            case "string":
+            case "number":
+            case "boolean":
+            case "array":
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    toggleDebugging(): void {
+        this.props.parent.toggleDebugging();
+    }
+
+    private onMouseOverVariable(): void { };
+
+    private renderVariables(variables: pxt.Map<Variable>, parent?: string, depth?: number): JSX.Element[] {
+        let r: JSX.Element[] = [];
+        let varNames = Object.keys(variables);
+        if (!parent) {
+            varNames = varNames.sort((var_a, var_b) => {
+                return this.variableType(variables[var_a]).localeCompare(this.variableType(variables[var_b])) || var_a.toLowerCase().localeCompare(var_b.toLowerCase());
+            })
+        }
+        depth = depth || 0;
+        let margin = depth * 1.5 + 'em';
+        varNames.forEach(variable => {
             const v = variables[variable];
+            const oldValue = DebuggerVariables.renderValue(v.prevValue);
+            const newValue = DebuggerVariables.renderValue(v.value);
+            let type = this.variableType(v);
             const onClick = v.value && v.value.id ? () => this.toggle(v) : undefined;
-            r.push(<div key={(parent || "") + variable} className="item">
-                <div role="listitem" className={`ui label image variable ${v.prevValue !== undefined ? "changed" : ""}`} style={{ backgroundColor: varcolor }}
-                    onClick={onClick}>
-                    <span className="varname">{variable}</span>
-                    <div className="detail">
-                        <span className="varval">{DebuggerVariables.renderValue(v.value)}</span>
-                        <span className="previousval">{v.prevValue !== undefined ? `${DebuggerVariables.renderValue(v.prevValue)}` : ''}</span>
+
+            r.push(<tr key={(parent || "") + variable} className="item" onClick={onClick} onMouseOver={this.onMouseOverVariable}>
+                <td className={`variable varname ${v.prevValue !== undefined ? "changed" : ""}`} title={variable}>
+                    <i className={`${(v.children ? "down triangle icon" : "right triangle icon") + ((v.value && v.value.hasFields) ? "" : " transparent")}`} style={{ marginLeft: margin }} ></i>
+                    <span>{variable + ':'}</span>
+                </td>
+                <td style={{ padding: 0.2 }} title={this.shouldShowValueOnHover(type) ? newValue : ""}>
+                    <div className="variable detail">
+                        <span className={`varval ${type}`}>{DebuggerVariables.capLength(newValue)}</span>
+                        <span className="previousval">{(oldValue !== "undefined" && oldValue !== newValue) ? `${DebuggerVariables.capLength(oldValue)}` : ''}</span>
                     </div>
-                </div>
-            </div>);
+                </td>
+            </tr>
+            );
             if (v.children)
-                r = r.concat(this.renderVariables(v.children, variable));
+                r = r.concat(this.renderVariables(v.children, variable, depth + 1));
         })
         return r;
     }
 
     renderCore() {
         const { variables, frozen } = this.state;
+        const variableTableHeader = lf("Variable");
+        const valueTableHeader = lf("Type/Value");
 
-        return Object.keys(variables).length == 0 ? <div /> :
-            <div className={`ui segment debugvariables ${frozen ? "frozen" : ""}`}>
-                <div className="ui middle aligned list">
-                    {this.renderVariables(variables)}
-                </div>
-            </div>;
+        return <table className={`ui segment debugvariables ${frozen ? "frozen" : ""} ui collapsing basic striped table`}>
+            <thead>
+                <tr>
+                    <th>{variableTableHeader}</th>
+                    <th>{valueTableHeader}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {(Object.keys(variables).length == 0) ? <tr /> : this.renderVariables(variables)}
+            </tbody>
+        </table>;
     }
 }
 
@@ -161,13 +222,12 @@ export class DebuggerToolbar extends data.Component<DebuggerToolbarProps, Debugg
         this.state = {
         }
 
-        this.toolbarHandleDown = this.toolbarHandleDown.bind(this);
         this.restartSimulator = this.restartSimulator.bind(this);
         this.dbgPauseResume = this.dbgPauseResume.bind(this);
-        this.dbgInsertBreakpoint = this.dbgInsertBreakpoint.bind(this);
         this.dbgStepOver = this.dbgStepOver.bind(this);
         this.dbgStepInto = this.dbgStepInto.bind(this);
         this.dbgStepOut = this.dbgStepOut.bind(this);
+        this.exitDebugging = this.exitDebugging.bind(this);
     }
 
     restartSimulator() {
@@ -185,11 +245,6 @@ export class DebuggerToolbar extends data.Component<DebuggerToolbarProps, Debugg
         this.props.parent.dbgPauseResume();
     }
 
-    dbgInsertBreakpoint() {
-        pxt.tickEvent('debugger.breakpoint', undefined, { interactiveConsent: true });
-        this.props.parent.dbgInsertBreakpoint();
-    }
-
     dbgStepOver() {
         pxt.tickEvent('debugger.stepover', undefined, { interactiveConsent: true });
         this.props.parent.dbgStepOver();
@@ -205,77 +260,13 @@ export class DebuggerToolbar extends data.Component<DebuggerToolbarProps, Debugg
         simulator.dbgStepOut();
     }
 
-    componentDidUpdate(props: DebuggerToolbarProps, state: DebuggerToolbarState) {
-        if (this.state.isDragging && !state.isDragging) {
-            document.addEventListener('mousemove', this.toolbarHandleMove.bind(this));
-            document.addEventListener('mouseup', this.toolbarHandleUp.bind(this));
-        } else if (!this.state.isDragging && state.isDragging) {
-            document.removeEventListener('mousemove', this.toolbarHandleMove.bind(this));
-            document.removeEventListener('mouseup', this.toolbarHandleUp.bind(this));
-        }
-
-        // Center the component if it hasn't been initialized yet
-        if (state.xPos == undefined && props.parent.state.debugging) {
-            this.centerToolbar();
-            window.addEventListener('resize', this.centerToolbar.bind(this));
-        }
-    }
-
-    componentWillUnmount() {
-        document.removeEventListener('mousemove', this.toolbarHandleMove.bind(this));
-        document.removeEventListener('mouseup', this.toolbarHandleUp.bind(this));
-        window.removeEventListener('resize', this.centerToolbar.bind(this));
-    }
-
-    private cachedMaxWidth = 0;
-
-    toolbarHandleDown(e: React.MouseEvent<any>) {
-        if (e.button !== 0) return
-        const menuDOM = this.getMenuDom();
-        const menuWidth = menuDOM && menuDOM.clientWidth || 0;
-        this.cachedMaxWidth = window.innerWidth - menuWidth;
-        this.setState({
-            isDragging: true,
-            xPos: Math.min(e.pageX, this.cachedMaxWidth)
-        })
-        e.stopPropagation();
-        e.preventDefault();
-    }
-
-    toolbarHandleMove(e: MouseEvent) {
-        if (!this.state.isDragging) return;
-        this.setState({
-            isDragging: true,
-            xPos: Math.min(e.pageX, this.cachedMaxWidth)
-        })
-        e.stopPropagation();
-        e.preventDefault();
-    }
-
-    toolbarHandleUp(e: MouseEvent) {
-        this.setState({ isDragging: false });
-        e.stopPropagation();
-        e.preventDefault();
-    }
-
     getMenuDom() {
         const node = ReactDOM.findDOMNode(this);
         return node && node.firstElementChild;
     }
 
-    centerToolbar() {
-        // Center the toolbar in the middle of the editor view (blocks / JS)
-        const menuDOM = this.getMenuDom();
-        const width = menuDOM && menuDOM.clientWidth;
-        const mainEditor = document.getElementById('maineditor');
-        const simWidth = window.innerWidth - mainEditor.clientWidth;
-        this.setState({ xPos: simWidth + (mainEditor.clientWidth - width) / 2 });
-    }
-
     renderCore() {
-        const { xPos } = this.state;
         const parentState = this.props.parent.state;
-        const simOpts = pxt.appTarget.simulator;
 
         const simState = parentState.simState;
         const isRunning = simState == pxt.editor.SimState.Running;
@@ -293,24 +284,31 @@ export class DebuggerToolbar extends data.Component<DebuggerToolbarProps, Debugg
         const dbgStepIntoTooltip = lf("Step into");
         const dbgStepOverTooltip = lf("Step over");
         const dbgStepOutTooltip = lf("Step out");
+        const dbgExitTooltip = lf("Exit Debug Mode");
 
-        return <aside className="debugtoolbar" style={{ left: xPos }} role="complementary" aria-label={lf("Debugger toolbar")}>
-            {!isDebugging ? undefined :
+        if (!isDebugging) {
+            return <div className="debugtoolbar" role="complementary" aria-label={lf("Debugger toolbar")} />
+        } else if (advancedDebugging) {
+            // Debugger Toolbar for the monaco editor.
+            return <div className="debugtoolbar" role="complementary" aria-label={lf("Debugger toolbar")}>
+                {!isDebugging ? undefined :
+                    <div className={`ui compact menu icon`}>
+                        <sui.Item key='dbgpauseresume' className={`dbg-btn dbg-pause-resume ${isDebuggerRunning ? "pause" : "play"}`} icon={`${isDebuggerRunning ? "pause blue" : "play green"}`} title={dbgPauseResumeTooltip} onClick={this.dbgPauseResume} />
+                        <sui.Item key='dbgstepover' className={`dbg-btn dbg-step-over`} icon={`xicon stepover ${isDebuggerRunning ? "disabled" : "blue"}`} title={dbgStepOverTooltip} onClick={this.dbgStepOver} />
+                        <sui.Item key='dbgstepinto' className={`dbg-btn dbg-step-into`} icon={`xicon stepinto ${isDebuggerRunning ? "disabled" : ""}`} title={dbgStepIntoTooltip} onClick={this.dbgStepInto} />
+                        <sui.Item key='dbgstepout' className={`dbg-btn dbg-step-out`} icon={`xicon stepout ${isDebuggerRunning ? "disabled" : ""}`} title={dbgStepOutTooltip} onClick={this.dbgStepOut} />
+                        <sui.Item key='dbgrestart' className={`dbg-btn dbg-restart right`} icon={`refresh green`} title={restartTooltip} onClick={this.restartSimulator} />
+                    </div>}
+            </div>;
+        } else {
+            // Debugger Toolbar for the blocks editor.
+            return <div className="debugtoolbar" role="complementary" aria-label={lf("Debugger toolbar")}>
                 <div className={`ui compact borderless menu icon`}>
-                    <div role="button" className={`ui item link dbg-btn dbg-handle`} key={'toolbarhandle'}
-                        title={lf("Debugger buttons")}
-                        onMouseDown={this.toolbarHandleDown}>
-                        <sui.Icon key='iconkey' icon={`icon ellipsis vertical`} />
-                        <sui.Icon key='iconkey2' icon={`xicon bug`} />
-                    </div>
-                    <sui.Item key='dbgpauseresume' className={`dbg-btn dbg-pause-resume ${isDebuggerRunning ? "pause" : "play"}`} icon={`${isDebuggerRunning ? "pause blue" : "step forward green"}`} title={dbgPauseResumeTooltip} onClick={this.dbgPauseResume} />
-                    <sui.Item key='dbgbreakpoint' className={`dbg-btn dbg-breakpoint`} icon="circle red" title={lf("Insert debugger breakpoint")} onClick={this.dbgInsertBreakpoint} />
-                    {!advancedDebugging ? <sui.Item key='dbgstep' className={`dbg-btn dbg-step`} icon={`arrow right ${isDebuggerRunning ? "disabled" : "blue"}`} title={dbgStepIntoTooltip} onClick={this.dbgStepInto} /> : undefined}
-                    {advancedDebugging ? <sui.Item key='dbgstepover' className={`dbg-btn dbg-step-over`} icon={`xicon stepover ${isDebuggerRunning ? "disabled" : "blue"}`} title={dbgStepOverTooltip} onClick={this.dbgStepOver} /> : undefined}
-                    {advancedDebugging ? <sui.Item key='dbgstepinto' className={`dbg-btn dbg-step-into`} icon={`xicon stepinto ${isDebuggerRunning ? "disabled" : ""}`} title={dbgStepIntoTooltip} onClick={this.dbgStepInto} /> : undefined}
-                    {advancedDebugging ? <sui.Item key='dbgstepout' className={`dbg-btn dbg-step-out`} icon={`xicon stepout ${isDebuggerRunning ? "disabled" : ""}`} title={dbgStepOutTooltip} onClick={this.dbgStepOut} /> : undefined}
-                    <sui.Item key='dbgrestart' className={`dbg-btn dbg-restart right`} icon={`refresh green`} title={restartTooltip} onClick={this.restartSimulator} />
-                </div>}
-        </aside>;
+                    <sui.Item key='dbgstep' className={`dbg-btn dbg-step separator-after`} icon={`arrow right ${isDebuggerRunning ? "disabled" : "blue"}`} title={dbgStepIntoTooltip} onClick={this.dbgStepInto} text={"Step"} />
+                    <sui.Item key='dbgpauseresume' className={`dbg-btn dbg-pause-resume ${isDebuggerRunning ? "pause" : "play"}`} icon={`${isDebuggerRunning ? "pause blue" : "play green"}`} title={dbgPauseResumeTooltip} onClick={this.dbgPauseResume} />
+                    <sui.Item key='dbgrestart' className={`dbg-btn dbg-restart`} icon={`refresh green`} title={restartTooltip} onClick={this.restartSimulator} />
+                </div>
+            </div>;
+        }
     }
 }

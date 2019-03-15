@@ -116,13 +116,14 @@ namespace pxsim {
             this.themes = themes;
         }
 
-        public startRecording(): void {
+        public startRecording(width?: number): void {
             const frame = this.simFrames()[0];
             if (!frame) return undefined;
 
             this.postMessage(<SimulatorRecorderMessage>{
                 type: 'recorder',
-                action: 'start'
+                action: 'start',
+                width
             });
         }
 

@@ -203,7 +203,7 @@ namespace pxsim {
             this.runOptions = msg;
             return Promise.resolve()
         }
-        public screenshotAsync(): Promise<ImageData> {
+        public screenshotAsync(width?: number): Promise<ImageData> {
             return Promise.resolve(undefined);
         }
         public kill() { }
@@ -447,6 +447,7 @@ namespace pxsim {
         recording = false;
         recordingTimer = 0;
         recordingLastImageData: ImageData = undefined;
+        recordingWidth: number = undefined;
         startTime = 0;
         startTimeUs = 0;
         id: string;
@@ -515,7 +516,7 @@ namespace pxsim {
             if (Runtime.messagePosted) Runtime.messagePosted(data);
         }
 
-        static postScreenshotAsync(delay?: number): Promise<void> {
+        static postScreenshotAsync(opts?: SimulatorScreenshotMessage): Promise<void> {
             const b = runtime && runtime.board;
             const p = b
                 ? b.screenshotAsync().catch(e => {
@@ -526,7 +527,7 @@ namespace pxsim {
             return p.then(img => Runtime.postMessage({
                 type: "screenshot",
                 data: img,
-                delay
+                delay: opts && opts.delay
             } as SimulatorScreenshotMessage));
         }
 
@@ -562,12 +563,13 @@ namespace pxsim {
             this.postFrame();
         }
 
-        startRecording() {
+        startRecording(width?: number) {
             if (this.recording || !this.running) return;
 
             this.recording = true;
             this.recordingTimer = setInterval(() => this.postFrame(), 66);
             this.recordingLastImageData = undefined;
+            this.recordingWidth = width;
         }
 
         stopRecording() {
@@ -576,14 +578,15 @@ namespace pxsim {
             this.recording = false;
             this.recordingTimer = 0;
             this.recordingLastImageData = undefined;
+            this.recordingWidth = undefined;
         }
 
         postFrame() {
             if (!this.recording || !this.running) return;
             let time = pxsim.U.now();
-            this.board.screenshotAsync()
+            this.board.screenshotAsync(this.recordingWidth)
                 .then(imageData => {
-                    // check for ducs
+                    // check for duplicate images
                     if (this.recordingLastImageData && imageData
                         && this.recordingLastImageData.data.byteLength == imageData.data.byteLength) {
                         const d0 = this.recordingLastImageData.data;
