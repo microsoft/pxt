@@ -128,8 +128,13 @@ namespace ts.pxtc {
 
             // TypeScript 2.0.0+ will assign constant variables numeric literal types which breaks the
             // type checking we do in the blocks
-            if (!isNaN(Number(readableName))) {
+            // This can be a number literal '7' or a union type of them '0 | 1 | 2'
+            if (/^\d/.test(readableName)) {
                 return "number";
+            }
+
+            if (readableName == "this") {
+                return getFullName(typechecker, t.symbol);
             }
 
             return readableName;
@@ -359,16 +364,25 @@ namespace ts.pxtc {
                 if (si) {
                     let existing = U.lookup(res.byQName, qName)
                     if (existing) {
-                        si.attributes = parseCommentString(
-                            existing.attributes._source + "\n" +
-                            si.attributes._source)
-                        if (existing.extendsTypes) {
-                            si.extendsTypes = si.extendsTypes || []
-                            existing.extendsTypes.forEach(t => {
-                                if (si.extendsTypes.indexOf(t) === -1) {
-                                    si.extendsTypes.push(t);
-                                }
-                            })
+                        // we can have a function and an interface of the same name
+                        if (existing.kind == SymbolKind.Interface && si.kind != SymbolKind.Interface) {
+                            // save existing entry
+                            res.byQName[qName + "@type"] = existing
+                        } else if (existing.kind != SymbolKind.Interface && si.kind == SymbolKind.Interface) {
+                            res.byQName[qName + "@type"] = si
+                            si = existing
+                        } else {
+                            si.attributes = parseCommentString(
+                                existing.attributes._source + "\n" +
+                                si.attributes._source)
+                            if (existing.extendsTypes) {
+                                si.extendsTypes = si.extendsTypes || []
+                                existing.extendsTypes.forEach(t => {
+                                    if (si.extendsTypes.indexOf(t) === -1) {
+                                        si.extendsTypes.push(t);
+                                    }
+                                })
+                            }
                         }
                     }
                     if (stmt.parent &&
