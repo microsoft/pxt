@@ -19,6 +19,7 @@ namespace pxt.py {
     let numUnifies = 0
     let currErrs = ""
     let autoImport = true
+    let currErrorCtx = "???"
 
     function stmtTODO(v: py.Stmt) {
         return B.mkStmt(B.mkText("TODO: " + v.kind))
@@ -50,6 +51,7 @@ namespace pxt.py {
     const tpNumber = mkType({ primType: "number" })
     const tpBoolean = mkType({ primType: "boolean" })
     const tpVoid = mkType({ primType: "void" })
+    const tpAny = mkType({ primType: "any" })
     let tpBuffer: Type
 
 
@@ -58,39 +60,75 @@ namespace pxt.py {
         "number": tpNumber,
         "boolean": tpBoolean,
         "void": tpVoid,
+        "any": tpAny,
     }
 
-    function mapTsType(tp: string) {
+    function mapTsType(tp: string): Type {
+        if (tp[0] == "(" && U.endsWith(tp, ")")) {
+            return mapTsType(tp.slice(1, -1))
+        }
+
+        const arrowIdx = tp.indexOf(" => ")
+        if (arrowIdx > 0) {
+            const retTypeStr = tp.slice(arrowIdx + 4)
+            if (retTypeStr.indexOf(")[]") == -1) {
+                const retType = mapTsType(retTypeStr)
+                const argsStr = tp.slice(1, arrowIdx - 1)
+                const argsWords = argsStr ? argsStr.split(/, /) : []
+                const argTypes = argsWords.map(a => mapTsType(a.replace(/\w+: /, "")))
+                return mkFunType(retType, argTypes)
+            }
+        }
+
+        if (U.endsWith(tp, "[]")) {
+            return mkArrayType(mapTsType(tp.slice(0, -2)))
+        }
+
         const t = U.lookup(builtInTypes, tp)
         if (t) return t
 
-        let ai = lookupGlobalSymbol(tp)
+        if (tp == "T" || tp == "U") // TODO hack!
+            return mkType({ primType: "'" + tp })
+
+        let ai = lookupApi(tp + "@type") || lookupApi(tp)
         if (!ai) {
-            error(null, U.lf("unknown type '{0}'", tp))
+            error(null, U.lf("unknown type '{0}' near '{1}'", tp, currErrorCtx || "???"))
             return mkType({ primType: tp })
         }
 
-        if (ai.kind == SK.Enum)
+        if (ai.kind == SK.EnumMember)
             return tpNumber
 
         if (ai.kind == SK.Class || ai.kind == SK.Interface)
             return mkType({ classType: ai })
 
-        error(null, U.lf("'{0}' is not a type", tp))
+        if (ai.kind == SK.Enum)
+            return tpNumber
+
+        error(null, U.lf("'{0}' is not a type near '{1}'", tp, currErrorCtx || "???"))
         return mkType({ primType: tp })
     }
 
     function mapTypes(sym: SymbolInfo) {
-        if (!sym || sym.retType) return sym
-        sym.pyRetType = mapTsType(sym.retType)
+        if (!sym || sym.pyRetType) return sym
+        currErrorCtx = sym.qName
+        if (!sym.retType && isModule(sym))
+            sym.pyRetType = symbolType(sym)
+        else
+            sym.pyRetType = mapTsType(sym.retType)
         for (let p of sym.parameters || [])
             p.pyType = mapTsType(p.type)
+        currErrorCtx = null
         return sym
+    }
+
+    function lookupApi(name: string) {
+        return U.lookup(internalApis, name) || U.lookup(externalApis, name)
     }
 
     function lookupGlobalSymbol(name: string): SymbolInfo {
         if (!name) return null
-        return mapTypes(U.lookup(internalApis, name) || U.lookup(externalApis, name))
+        return mapTypes(lookupApi(name))
     }
 
     function initApis() {
@@ -99,6 +137,8 @@ namespace pxt.py {
             sym.members = []
             mapTypes(sym) // TODO remove when done
         }
+        if (currErrs)
+            pxt.log(currErrs)
         for (let sym of U.values(externalApis)) {
             if (sym.namespace && sym.namespace != sym.qName) {
                 let par = externalApis[sym.namespace]
@@ -113,6 +153,14 @@ namespace pxt.py {
         let r: Type = U.flatClone(o) as any
         r.tid = ++typeId
         return r
+    }
+
+    function mkArrayType(eltTp: Type) {
+        return mkType({ primType: "@array", typeArgs: [eltTp] })
+    }
+
+    function mkFunType(retTp: Type, argTypes: Type[]) {
+        return mkType({ primType: "@fn" + argTypes.length, typeArgs: [retTp].concat(argTypes) })
     }
 
     function currentScope(): py.ScopeDef {
@@ -182,14 +230,21 @@ namespace pxt.py {
 
     function t2s(t: Type): string {
         t = find(t)
-        if (t.primType)
+
+        if (t.primType) {
+            if (t.primType == "@array")
+                return t2s(t.typeArgs[0]) + "[]"
+
+            if (U.startsWith(t.primType, "@fn"))
+                return "(" + t.typeArgs.slice(1).map(t => "_: " + t2s(t)).join(", ") + ") => " + t2s(t.typeArgs[0])
+
             return t.primType
-        else if (t.classType)
+        }
+
+        if (t.classType)
             return applyTypeMap(t.classType.qName)
         else if (t.moduleType)
-            return applyTypeMap(t.moduleType.name)
-        else if (t.arrayType)
-            return t2s(t.arrayType) + "[]"
+            return applyTypeMap(t.moduleType.qName)
         else
             return "?" + t.tid
     }
@@ -212,7 +267,6 @@ namespace pxt.py {
         if (t.primType) return t.primType
         else if (t.classType) return t.classType
         else if (t.moduleType) return t.moduleType
-        else if (t.arrayType) return "array"
         return null
     }
 
@@ -235,8 +289,10 @@ namespace pxt.py {
         if (c0 !== c1)
             return false
 
-        if (c0 == "array") {
-            return canUnify(t0.arrayType, t1.arrayType)
+        if (t0.typeArgs && t1.typeArgs) {
+            for (let i = 0; i < Math.min(t0.typeArgs.length, t1.typeArgs.length); ++i)
+                if (!canUnify(t0.typeArgs[i], t1.typeArgs[i]))
+                    return false
         }
         return true
     }
@@ -268,8 +324,11 @@ namespace pxt.py {
             return unify(a, t1, t0)
         numUnifies++
         t0.union = t1
-        if (t0.arrayType && t1.arrayType)
-            unify(a, t0.arrayType, t1.arrayType)
+
+        if (t0.typeArgs && t1.typeArgs) {
+            for (let i = 0; i < Math.min(t0.typeArgs.length, t1.typeArgs.length); ++i)
+                unify(a, t0.typeArgs[i], t1.typeArgs[i])
+        }
     }
 
     function addSymbol(kind: SK, qname: string) {
@@ -360,7 +419,7 @@ namespace pxt.py {
 
     function isOfType(e: py.Expr, name: string) {
         let t = typeOf(e)
-        if (t.classType && t.classType.name == name)
+        if (t.classType && t.classType.qName == name)
             return true
         if (t2s(t) == name)
             return true
@@ -811,7 +870,7 @@ namespace pxt.py {
                     B.mkText(")"),
                     stmts(n.body))
             }
-            unifyTypeOf(n.iter, mkType({ arrayType: typeOf(n.target) }))
+            unifyTypeOf(n.iter, mkArrayType(typeOf(n.target)))
             return B.mkStmt(
                 B.mkText("for ("),
                 expr(n.target),
@@ -1067,8 +1126,8 @@ namespace pxt.py {
         "bytes": { n: "pins.createBufferFromArray", t: tpBuffer },
         "ustruct.pack": { n: "pins.packBuffer", t: tpBuffer },
         "ustruct.pack_into": { n: "pins.packIntoBuffer", t: tpVoid },
-        "ustruct.unpack": { n: "pins.unpackBuffer", t: mkType({ arrayType: tpNumber }) },
-        "ustruct.unpack_from": { n: "pins.unpackBuffer", t: mkType({ arrayType: tpNumber }) },
+        "ustruct.unpack": { n: "pins.unpackBuffer", t: mkArrayType(tpNumber) },
+        "ustruct.unpack_from": { n: "pins.unpackBuffer", t: mkArrayType(tpNumber) },
         "ustruct.calcsize": { n: "pins.packedSize", t: tpNumber },
         "pins.I2CDevice.read_into": { n: ".readInto", t: tpVoid },
         "bool": { n: "!!", t: tpBoolean },
@@ -1237,7 +1296,7 @@ namespace pxt.py {
             if (methName) {
                 nm = t2s(recvTp) + "." + methName
                 over = U.lookup(funMap, nm)
-                if (!over && find(recvTp).arrayType) {
+                if (!over && typeCtor(find(recvTp)) == "@array") {
                     nm = "Array." + methName
                     over = U.lookup(funMap, nm)
                 }
@@ -1324,10 +1383,10 @@ namespace pxt.py {
 
             let fn = expr(n.func)
 
-            if (recvTp && recvTp.arrayType) {
+            if (recvTp && recvTp.primType == "@array") {
                 if (methName == "append") {
                     methName = "push"
-                    unifyTypeOf(n.args[0], recvTp.arrayType)
+                    unifyTypeOf(n.args[0], recvTp.typeArgs[0])
                 }
                 fn = B.mkInfix(expr(recv), ".", B.mkText(methName))
             }
@@ -1371,11 +1430,11 @@ namespace pxt.py {
             let fd = getTypeField(part, n.attr)
             if (fd) unify(n, n.tsType, fd.pyRetType)
             else if (part.moduleType) {
-                let sym = lookupGlobalSymbol(part.moduleType.name + "." + n.attr)
+                let sym = lookupGlobalSymbol(part.moduleType.qName + "." + n.attr)
                 if (sym)
                     unifyTypeOf(n, symbolType(sym))
                 else
-                    error(n, U.lf("module '{0}' has no attribute '{1}'", part.moduleType.name, n.attr))
+                    error(n, U.lf("module '{0}' has no attribute '{1}'", part.moduleType.qName, n.attr))
             } else {
                 error(n, U.lf("unknown object type; cannot lookup attribute '{0}'", n.attr))
             }
@@ -1431,7 +1490,7 @@ namespace pxt.py {
     }
 
     function mkArrayExpr(n: py.List | py.Tuple) {
-        unify(n, n.tsType, mkType({ arrayType: n.elts[0] ? typeOf(n.elts[0]) : mkType() }))
+        unify(n, n.tsType, mkArrayType(n.elts[0] ? typeOf(n.elts[0]) : mkType()))
         return B.mkGroup([
             B.mkText("["),
             B.mkCommaSep(n.elts.map(expr)),

@@ -19,7 +19,7 @@ namespace pxt.py {
         classType?: SymbolInfo; // instance type
         moduleType?: SymbolInfo; // class/static member type
         primType?: string;
-        arrayType?: Type;
+        typeArgs?: Type[];
     }
 
     export interface Type extends TypeOptions {
