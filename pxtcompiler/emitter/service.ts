@@ -371,6 +371,10 @@ namespace ts.pxtc {
                             })
                         }
                     }
+                    if (stmt.parent &&
+                        (stmt.parent.kind == SK.ClassDeclaration || stmt.parent.kind == SK.InterfaceDeclaration) &&
+                        !isStatic(stmt as Declaration))
+                        si.isInstance = true
                     res.byQName[qName] = si
                 }
             }

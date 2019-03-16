@@ -2,10 +2,22 @@
 /// <reference path='../built/pxtcompiler.d.ts' />
 
 namespace pxt.py {
+    export interface ParameterDesc extends pxtc.ParameterDesc {
+        pyType?: Type;
+    }
+
+    export interface SymbolInfo extends pxtc.SymbolInfo {
+        pyRetType?: Type;
+        members: SymbolInfo[]; // TODO needed?
+        parameters: ParameterDesc[];
+        pyAST?: AST;
+        isProtected?: boolean;
+    }
+
     export interface TypeOptions {
         union?: Type;
-        classType?: py.ClassDef;
-        moduleType?: py.Module | py.ClassDef;
+        classType?: SymbolInfo; // instance type
+        moduleType?: SymbolInfo; // class/static member type
         primType?: string;
         arrayType?: Type;
     }
@@ -33,7 +45,7 @@ namespace pxt.py {
         isParam?: boolean;
         fundef?: py.FunctionDef;
         classdef?: py.ClassDef;
-        isImport?: py.Module;
+        isImport?: SymbolInfo;
     }
 
     export interface VarDesc extends VarDescOptions {
@@ -55,6 +67,7 @@ namespace pxt.py {
     }
     export interface Symbol extends Stmt {
         _symbolBrand: void;
+        symInfo: SymbolInfo;
     }
     export interface Expr extends AST {
         tsType?: Type;
@@ -414,7 +427,7 @@ namespace pxt.py {
     }
 
     // the following expression can appear in assignment context
-    export interface AssignmentExpr extends Expr { 
+    export interface AssignmentExpr extends Expr {
         ctx: expr_context;
     }
     export interface Attribute extends AssignmentExpr {

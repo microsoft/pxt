@@ -63,6 +63,7 @@ namespace ts.pxtc {
         parameters: ParameterDesc[];
         retType: string;
         extendsTypes?: string[]; // for classes and interfaces
+        isInstance?: boolean;
         isContextual?: boolean;
         qName?: string;
         pkg?: string;
