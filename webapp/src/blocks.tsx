@@ -1291,6 +1291,35 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.showFlyoutInternal_(this.flyoutXmlList);
     }
 
+    private blocksToString(xmlList: Element[]): string {
+        return xmlList
+            .map(b => b.outerHTML || new XMLSerializer().serializeToString(b))
+            .reduce((p, c) => p + c, "")
+    }
+
+    private hashBlocks(xmlList: Element[]): number {
+        return pxt.Util.codalHash16(this.blocksToString(xmlList));
+    }
+
+    private swapFlyout(old: Blockly.VerticalFlyout, nw: Blockly.VerticalFlyout) {
+        // hide the old flyout
+        old.setVisible(false)
+
+        // set the "current" flyout
+        this.editor.toolbox_.flyout_ = nw;
+
+        // show the new flyout
+        nw.setVisible(true)
+
+        // reflow if scale changed
+        const flyoutWs = nw.workspace_ as Blockly.WorkspaceSvg;
+        const targetWs = nw.targetWorkspace_ as Blockly.WorkspaceSvg;
+        const scaleChange = flyoutWs.scale !== targetWs.scale;
+        if (scaleChange) {
+            nw.reflow();
+        }
+    }
+
     private flyouts: pxt.Map<{ flyout: Blockly.VerticalFlyout, blocksHash: number }> = {};
     private showFlyoutInternal_(xmlList: Element[], flyoutName: string = "default") {
         if (this.editor.toolbox_) {
@@ -1299,31 +1328,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             // determine if the cached flyout exists and isn't stale
             const hasCachedFlyout = flyoutName in this.flyouts
             const cachedBlocksHash = hasCachedFlyout ? this.flyouts[flyoutName].blocksHash : 0;
-            const blocksToString = (xmlList: Element[]): string =>
-                xmlList.map(b => b.outerHTML).reduce((p, c) => p + c)
-            const hashBlocks = (xmlList: Element[]): number =>
-                pxt.Util.codalHash16(blocksToString(xmlList));
-            const currentBlocksHash = hashBlocks(xmlList);
-            const isFlyoutUpToDate = cachedBlocksHash === currentBlocksHash
+            const currentBlocksHash = this.hashBlocks(xmlList);
+            const isFlyoutUpToDate = cachedBlocksHash === currentBlocksHash && !cachedBlocksHash
 
-            const swapFlyout = (old: Blockly.VerticalFlyout, nw: Blockly.VerticalFlyout) => {
-                // hide the old flyout
-                old.setVisible(false)
-
-                // set the "current" flyout
-                this.editor.toolbox_.flyout_ = nw;
-
-                // show the new flyout
-                nw.setVisible(true)
-
-                // reflow if scale changed
-                const flyoutWs = nw.workspace_ as Blockly.WorkspaceSvg;
-                const targetWs = nw.targetWorkspace_ as Blockly.WorkspaceSvg;
-                const scaleChange = flyoutWs.scale !== targetWs.scale;
-                if (scaleChange) {
-                    nw.reflow();
-                }
-            }
             const mkFlyout = () => {
                 const workspace = this.editor.toolbox_.workspace_ as Blockly.WorkspaceSvg
                 const oldSvg = oldFlyout.svgGroup_;
@@ -1344,7 +1351,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.flyouts[flyoutName].blocksHash = currentBlocksHash;
 
             // switch to the new flyout
-            swapFlyout(oldFlyout, newFlyout);
+            this.swapFlyout(oldFlyout, newFlyout);
 
             // if the flyout contents have changed, recreate the blocks
             if (!isFlyoutUpToDate) {
