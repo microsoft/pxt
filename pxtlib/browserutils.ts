@@ -83,13 +83,15 @@ namespace pxt.BrowserUtils {
 
     //Chrome and Microsoft Edge lie about being Safari
     export function isSafari(): boolean {
+        // Example: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/12.0.3 Safari/605.1.15
         //Could also check isMac but I don't want to risk excluding iOS
         //Checking for iPhone, iPod or iPad as well as Safari in order to detect home screen browsers on iOS
-        return !isChrome() && !isEdge() && !!navigator && /(Macintosh|Safari|iPod|iPhone|iPad)/i.test(navigator.userAgent);
+        return !isChrome() && !isEdge() && !!navigator && /Safari/i.test(navigator.userAgent) && /(Macintosh|Safari|iPod|iPhone|iPad)/i.test(navigator.userAgent);
     }
 
     //Safari and WebKit lie about being Firefox
     export function isFirefox(): boolean {
+        // Example: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:65.0) Gecko/20100101 Firefox/65.0
         return !isSafari() && !!navigator && (/Firefox/i.test(navigator.userAgent) || /Seamonkey/i.test(navigator.userAgent));
     }
 
