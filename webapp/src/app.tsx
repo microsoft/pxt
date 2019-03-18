@@ -1099,6 +1099,7 @@ export class ProjectView
             .catch(e => {
                 pxt.log(e);
                 core.warningNotification(lf("Sorry, we could not recognize this file."))
+                pxt.reportException(e);
             });
     }
 
