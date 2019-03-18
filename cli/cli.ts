@@ -3690,7 +3690,8 @@ function prepBuildOptionsAsync(mode: BuildOption, quick = false, ignoreTests = f
                 opts2.noEmit = true
                 const res = pxtc.compile(opts2)
                 opts.apisInfo = pxtc.getApiInfo(opts2, res.ast)
-                // fs.writeFileSync("built/apisinfo.json", JSON.stringify(opts.apisInfo, null, 4))
+                if (process.env["PXT_SAVE_APISINFO"])
+                    fs.writeFileSync("built/apisinfo.json", JSON.stringify(opts.apisInfo, null, 4))
                 pxt.log("done pre-compiling apisInfo for Python")
             }
 
