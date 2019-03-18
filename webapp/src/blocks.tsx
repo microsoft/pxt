@@ -1303,6 +1303,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private blocksToString(xmlList: Element[]): string {
         let xmlSerializer: XMLSerializer = null;
         const serialize = (e: Element) => {
+            if (!e)
+                return "<!-- invalid block here! -->"
             if (e.outerHTML)
                 return e.outerHTML
             // The below code is only needed for IE 11 where outerHTML occassionally returns undefined :/
