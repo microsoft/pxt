@@ -12,6 +12,7 @@ namespace pxt.py {
         parameters: ParameterDesc[];
         pyAST?: AST;
         isProtected?: boolean;
+        moduleTypeMarker?: {};
     }
 
     export interface TypeOptions {
@@ -195,6 +196,7 @@ namespace pxt.py {
         decorator_list: Expr[];
         fields?: Map<FieldDesc>;
         baseClass?: ClassDef;
+        isEnum?: boolean;
     }
     export interface Return extends Stmt {
         kind: "Return";

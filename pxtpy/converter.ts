@@ -20,6 +20,7 @@ namespace pxt.py {
     let currErrs = ""
     let autoImport = true
     let currErrorCtx = "???"
+    let verboseTypes = false
 
     function stmtTODO(v: py.Stmt) {
         return B.mkStmt(B.mkText("TODO: " + v.kind))
@@ -75,7 +76,7 @@ namespace pxt.py {
                 const retType = mapTsType(retTypeStr)
                 const argsStr = tp.slice(1, arrowIdx - 1)
                 const argsWords = argsStr ? argsStr.split(/, /) : []
-                const argTypes = argsWords.map(a => mapTsType(a.replace(/\w+: /, "")))
+                const argTypes = argsWords.map(a => mapTsType(a.replace(/\w+\??: /, "")))
                 return mkFunType(retType, argTypes)
             }
         }
@@ -230,7 +231,7 @@ namespace pxt.py {
 
     function t2s(t: Type): string {
         t = find(t)
-
+        const suff = (s: string) => verboseTypes ? s : ""
         if (t.primType) {
             if (t.primType == "@array")
                 return t2s(t.typeArgs[0]) + "[]"
@@ -238,13 +239,13 @@ namespace pxt.py {
             if (U.startsWith(t.primType, "@fn"))
                 return "(" + t.typeArgs.slice(1).map(t => "_: " + t2s(t)).join(", ") + ") => " + t2s(t.typeArgs[0])
 
-            return t.primType
+            return t.primType + suff("/P")
         }
 
         if (t.classType)
-            return applyTypeMap(t.classType.qName)
+            return applyTypeMap(t.classType.qName) + suff("/C")
         else if (t.moduleType)
-            return applyTypeMap(t.moduleType.qName)
+            return applyTypeMap(t.moduleType.qName) + suff("/M")
         else
             return "?" + t.tid
     }
@@ -266,7 +267,13 @@ namespace pxt.py {
     function typeCtor(t: Type): any {
         if (t.primType) return t.primType
         else if (t.classType) return t.classType
-        else if (t.moduleType) return t.moduleType
+        else if (t.moduleType) {
+            // a class SymbolInfo can be used as both classType and moduleType
+            // but these are different constructors (one is instance, one is class itself)
+            if (!t.moduleType.moduleTypeMarker)
+                t.moduleType.moduleTypeMarker = {}
+            return t.moduleType.moduleTypeMarker
+        }
         return null
     }
 
@@ -332,8 +339,10 @@ namespace pxt.py {
     }
 
     function addSymbol(kind: SK, qname: string) {
+        let sym = internalApis[qname]
+        if (sym) return sym
         let m = /(.*)\.(.*)/.exec(qname)
-        let sym: SymbolInfo = {
+        sym = {
             kind: kind,
             name: m ? m[2] : qname,
             qName: qname,
@@ -345,15 +354,19 @@ namespace pxt.py {
         return sym
     }
 
+    function addSymbolFor(k: SK, n: py.Symbol) {
+        if (!n.symInfo) {
+            n.symInfo = addSymbol(SK.Class, getFullName(n))
+            n.symInfo.pyAST = n
+        }
+        return n.symInfo
+    }
+
     function getClassField(ct: SymbolInfo, n: string, checkOnly = false, skipBases = false) {
         let qid = ct.qName + "." + n
         let f = lookupGlobalSymbol(qid)
-        if (f) {
-            if (f.isInstance) return f
-            if (!checkOnly)
-                error(null, U.lf("the field '{0}' of '{1}' is static", n, ct.qName))
-            return null
-        }
+        if (f)
+            return f
 
         if (!skipBases) {
             for (let b of ct.extendsTypes || []) {
@@ -376,8 +389,13 @@ namespace pxt.py {
     function getTypeField(t: Type, n: string, checkOnly = false) {
         t = find(t)
         let ct = t.classType
-        if (ct)
-            return getClassField(ct, n, checkOnly)
+        if (ct) {
+            let f = getClassField(ct, n, checkOnly)
+            if (!f.isInstance)
+                error(null, U.lf("the field '{0}' of '{1}' is static", n, ct.qName))
+            return f
+        }
+
         return null
     }
 
@@ -488,12 +506,21 @@ namespace pxt.py {
     }
 
     function compileType(e: Expr): Type {
-        // TODO
-        if (e.kind == "Name") {
-            return mkType({ primType: (e as Name).id })
-        } else {
-            return mkType({})
+        let tpName = getName(e)
+        if (tpName) {
+            let sym = lookupApi(tpName + "@type") || lookupApi(tpName)
+            if (sym) {
+                if (sym.kind == SK.Class || sym.kind == SK.Interface)
+                    return mkType({ classType: sym })
+
+                if (sym.kind == SK.Enum)
+                    return tpNumber
+            }
+            error(e, U.lf("cannot find type '{0}'", tpName))
         }
+
+        error(e, U.lf("invalid type syntax"))
+        return mkType({})
     }
 
     function doArgs(args: py.Arguments, isMethod: boolean) {
@@ -614,6 +641,7 @@ namespace pxt.py {
             return scope(f);
         }
         catch (e) {
+            console.log(e)
             return B.mkStmt(todoComment(`conversion failed for ${(v as any).name || v.kind}`, []));
         }
     }
@@ -722,7 +750,11 @@ namespace pxt.py {
 
         ClassDef: (n: py.ClassDef) => guardedScope(n, () => {
             setupScope(n)
-            defvar(n.name, { classdef: n })
+
+            const cv = defvar(n.name, { classdef: n })
+            const sym = addSymbolFor(SK.Class, n)
+            unify(n, cv.type, mkType({ moduleType: sym }))
+
             U.assert(!ctx.currClass)
             let topLev = isTopLevel()
             ctx.currClass = n
@@ -733,11 +765,15 @@ namespace pxt.py {
                 quote(n.name)
             ]
             if (n.bases.length > 0) {
-                nodes.push(B.mkText(" extends "))
-                nodes.push(B.mkCommaSep(n.bases.map(expr)))
-                let b = getClassDef(n.bases[0])
-                if (b)
-                    n.baseClass = b
+                if (getName(n.bases[0]) == "Enum") {
+                    n.isEnum = true
+                } else {
+                    nodes.push(B.mkText(" extends "))
+                    nodes.push(B.mkCommaSep(n.bases.map(expr)))
+                    let b = getClassDef(n.bases[0])
+                    if (b)
+                        n.baseClass = b
+                }
             }
             let body = stmts(n.body)
             nodes.push(body)
@@ -1233,25 +1269,27 @@ namespace pxt.py {
             return r
         },
         Call: (n: py.Call) => {
-            let cd = getClassDef(n.func)
+            let namedSymbol = lookupGlobalSymbol(getName(n.func))
+            let isClass = namedSymbol && namedSymbol.kind == SK.Class
+
+            let fun = namedSymbol
+
             let recvTp: Type
             let recv: py.Expr
             let methName: string
             let fd: py.FunctionDef
 
-            if (cd) {
-                if (cd.fields) {
-                    let ff = cd.fields["__init__"]
-                    if (ff)
-                        fd = ff.fundef
-                }
+            if (isClass) {
+                fun = lookupGlobalSymbol(namedSymbol.qName + ".__constructor")
             } else {
                 if (n.func.kind == "Attribute") {
                     let attr = n.func as py.Attribute
                     recv = attr.value
                     recvTp = typeOf(recv)
-                    methName = attr.attr
-                    let field = getTypeField(recvTp, methName)
+                    if (recvTp.classType) {
+                        methName = attr.attr
+                        fun = getTypeField(recvTp, methName)
+                    }
                     /*
                     if (field) {
                         if (isSuper(recv) || (isThis(recv) && field.inClass != ctx.currClass)) {
@@ -1262,13 +1300,10 @@ namespace pxt.py {
                         fd = field.fundef
                         */
                 }
-                if (!fd) {
-                    let name = getName(n.func)
-                    let v = lookupVar(name)
-                    if (v)
-                        fd = v.fundef
-                }
             }
+
+            if (fun && fun.pyAST && fun.pyAST.kind == "FunctionDef")
+                fd = fun.pyAST as py.FunctionDef
 
             let allargs: B.JsNode[] = []
             let fdargs = fd ? fd.args.args : []
@@ -1282,8 +1317,8 @@ namespace pxt.py {
                 }
             }
 
-            if (fd) {
-                unifyTypeOf(n, fd.retType)
+            if (fun) {
+                unifyTypeOf(n, fun.pyRetType)
             }
 
             let nm = getName(n.func)
@@ -1398,8 +1433,8 @@ namespace pxt.py {
                 B.mkText(")")
             ]
 
-            if (cd) {
-                nodes[0] = B.mkText(applyTypeMap(getFullName(cd)))
+            if (isClass) {
+                nodes[0] = B.mkText(applyTypeMap(namedSymbol.qName))
                 nodes.unshift(B.mkText("new "))
             }
 
@@ -1436,7 +1471,8 @@ namespace pxt.py {
                 else
                     error(n, U.lf("module '{0}' has no attribute '{1}'", part.moduleType.qName, n.attr))
             } else {
-                error(n, U.lf("unknown object type; cannot lookup attribute '{0}'", n.attr))
+                if (currIteration > 2)
+                    error(n, U.lf("unknown object type; cannot lookup attribute '{0}'", n.attr))
             }
             return B.mkInfix(expr(n.value), ".", B.mkText(quoteStr(n.attr)))
         },
