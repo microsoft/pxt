@@ -388,11 +388,24 @@ namespace pxt.py {
 
     function getTypeField(t: Type, n: string, checkOnly = false) {
         t = find(t)
+
         let ct = t.classType
+
+        if (!ct && t.primType == "@array")
+            ct = lookupApi("Array")
+
         if (ct) {
             let f = getClassField(ct, n, checkOnly)
             if (!f.isInstance)
                 error(null, U.lf("the field '{0}' of '{1}' is static", n, ct.qName))
+            return f
+        }
+
+        ct = t.moduleType
+        if (ct) {
+            let f = getClassField(ct, n, checkOnly)
+            if (f.isInstance)
+                error(null, U.lf("the field '{0}' of '{1}' is not static", n, ct.qName))
             return f
         }
 
