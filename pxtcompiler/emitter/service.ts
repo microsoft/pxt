@@ -782,8 +782,8 @@ namespace ts.pxtc.service {
                     return mappedSi;
                 });
 
-                // filter out built-ins from the main search set as those 
-                // should come from the built-in search set 
+                // filter out built-ins from the main search set as those
+                // should come from the built-in search set
                 let builtinBlockIds: pxt.Map<Boolean> = {}
                 builtinSearchSet.forEach(b => builtinBlockIds[b.id] = true)
                 searchSet = searchSet.filter(b => !(b.id in builtinBlockIds));
@@ -950,9 +950,9 @@ namespace ts.pxtc.service {
             let functionArgument = "()";
             let returnValue = "";
 
-            let displayParts = (ts as any).mapToDisplayParts((writer: ts.DisplayPartsSymbolWriter) => {
-                checker.getSymbolDisplayBuilder().buildSignatureDisplay(functionSignature, writer);
-            });
+            // let displayParts = (ts as any).mapToDisplayParts((writer: ts.DisplayPartsSymbolWriter) => {
+            //     checker.getSymbolDisplayBuilder().buildSignatureDisplay(functionSignature, writer);
+            // });
 
             let returnType = checker.getReturnTypeOfSignature(functionSignature);
 
@@ -963,7 +963,8 @@ namespace ts.pxtc.service {
             else if (returnType.flags & (ts.TypeFlags.Boolean | ts.TypeFlags.BooleanLiteral))
                 returnValue = "return false;";
 
-            let displayPartsStr = ts.displayPartsToString(displayParts);
+            // let displayPartsStr = ts.displayPartsToString(displayParts);
+            let displayPartsStr = "FIXME";
             functionArgument = displayPartsStr.substr(0, displayPartsStr.lastIndexOf(":"));
 
             return `function ${functionArgument} {\n    ${returnValue}\n}`

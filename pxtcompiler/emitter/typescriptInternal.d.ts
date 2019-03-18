@@ -6,15 +6,6 @@ declare namespace ts {
         symbol?: Symbol;                // Symbol declared by node (initialized by binding)
     }
 
-
-    interface DiagnosticCollection {
-        add(diagnostic: Diagnostic): void;
-        getGlobalDiagnostics(): Diagnostic[];
-        getDiagnostics(fileName?: string): Diagnostic[];
-        getModificationCount(): number;
-    }
-
-
     interface ReferencePathMatchResult {
         fileReference?: FileReference;
         diagnosticMessage?: DiagnosticMessage;
@@ -26,9 +17,6 @@ declare namespace ts {
         startsOnNewLine: boolean;
     }
     function getDeclarationOfKind(symbol: Symbol, kind: SyntaxKind): Declaration;
-    interface StringSymbolWriter extends SymbolWriter {
-        string(): string;
-    }
     interface EmitHost extends ScriptReferenceHost {
         getSourceFiles(): SourceFile[];
         getCommonSourceDirectory(): string;
@@ -37,8 +25,6 @@ declare namespace ts {
         isEmitBlocked(emitFileName: string): boolean;
         writeFile: WriteFileCallback;
     }
-    function getSingleLineStringWriter(): StringSymbolWriter;
-    function releaseStringWriter(writer: StringSymbolWriter): void;
     function getFullWidth(node: Node): number;
     function arrayIsEqualTo<T>(array1: T[], array2: T[], equaler?: (a: T, b: T) => boolean): boolean;
     function hasResolvedModule(sourceFile: SourceFile, moduleNameText: string): boolean;
@@ -141,7 +127,6 @@ declare namespace ts {
     function isTemplateLiteralKind(kind: SyntaxKind): boolean;
     function isBindingPattern(node: Node): node is BindingPattern;
     function isNodeDescendentOf(node: Node, ancestor: Node): boolean;
-    function isInAmbientContext(node: Node): boolean;
     function isDeclaration(node: Node): boolean;
     function isStatement(n: Node): boolean;
     function isClassElement(n: Node): boolean;
@@ -204,7 +189,6 @@ declare namespace ts {
     function nodeIsSynthesized(node: Node): boolean;
     function createSynthesizedNode(kind: SyntaxKind, startsOnNewLine?: boolean): Node;
     function createSynthesizedNodeArray(): NodeArray<any>;
-    function createDiagnosticCollection(): DiagnosticCollection;
     /**
      * Based heavily on the abstract 'Quote'/'QuoteJSONString' operation from ECMA-262 (24.3.2.2),
      * but augmented for a few select characters (e.g. lineSeparator, paragraphSeparator, nextLine)
@@ -245,7 +229,6 @@ declare namespace ts {
     }
     function forEachExpectedEmitFile(host: EmitHost, action: (emitFileNames: EmitFileNames, sourceFiles: SourceFile[], isBundledEmit: boolean) => void, targetSourceFile?: SourceFile): void;
     function getSourceFilePathInNewDir(sourceFile: SourceFile, host: EmitHost, newDirPath: string): string;
-    function writeFile(host: EmitHost, diagnostics: DiagnosticCollection, fileName: string, data: string, writeByteOrderMark: boolean): void;
     function getLineOfLocalPosition(currentSourceFile: SourceFile, pos: number): number;
     function getLineOfLocalPositionFromLineMap(lineMap: number[], pos: number): number;
     function getFirstConstructorWithBody(node: ClassLikeDeclaration): ConstructorDeclaration;
@@ -287,4 +270,6 @@ declare namespace ts {
     function convertToBase64(input: string): string;
     function convertToRelativePath(absoluteOrRelativePath: string, basePath: string, getCanonicalFileName: (path: string) => string): string;
     function getNewLineCharacter(options: CompilerOptions): string;
+
+    function hasModifier(node: Node, flags: ModifierFlags): boolean;
 }

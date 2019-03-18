@@ -62,7 +62,7 @@ namespace ts.pxtc {
                     line: 0,
                     column: 0,
                     messageText: d.messageText,
-                    category: d.category,
+                    category: d.category as pxtc.DiagnosticCategory,
                     fileName: "?",
                 }
                 return rr
@@ -76,7 +76,7 @@ namespace ts.pxtc {
                 line: pos.line,
                 column: pos.character,
                 messageText: d.messageText,
-                category: d.category,
+                category: d.category  as pxtc.DiagnosticCategory,
                 fileName: d.file.fileName,
             }
             if (r.code == 1148)

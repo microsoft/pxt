@@ -505,7 +505,7 @@ namespace pxsim {
             if (!this.listener) {
                 this.listener = (ev: MessageEvent) => {
                     if (this.hwdbg) return
-                    this.handleMessage(ev.data, ev.source)
+                    this.handleMessage(ev.data, ev.source as Window)
                 }
                 window.addEventListener('message', this.listener, false);
             }

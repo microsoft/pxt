@@ -473,7 +473,7 @@ namespace ts.pxtc {
             return false;
         }
         // check if we like the class?
-        return !!((t.objectFlags & ObjectFlags.Class) || (t.symbol.flags & SymbolFlags.Class))
+        return !!((t.objectFlags & ObjectFlags.Class) || (t.symbol && (t.symbol.flags & SymbolFlags.Class)))
     }
 
     function isObjectLiteral(t: Type) {
@@ -868,7 +868,7 @@ namespace ts.pxtc {
         res: CompileResult,
         entryPoint: string): EmitResult {
         target = opts.target
-        const diagnostics = createDiagnosticCollection();
+        const diagnostics: Diagnostic[] = [];
         checker = program.getTypeChecker();
         let classInfos: pxt.Map<ClassInfo> = {}
         let usedDecls: pxt.Map<Node> = {}
@@ -972,7 +972,7 @@ namespace ts.pxtc {
         pruneMethodsAndRecompute()
         emitVTables()
 
-        if (diagnostics.getModificationCount() == 0) {
+        if (diagnostics.length == 0) {
             reset();
             bin.finalPass = true
             emit(rootFunction)
@@ -997,13 +997,13 @@ namespace ts.pxtc {
         }
 
         return {
-            diagnostics: diagnostics.getDiagnostics(),
+            diagnostics: diagnostics,
             emittedFiles: undefined,
             emitSkipped: !!opts.noEmit
         }
 
         function diag(category: DiagnosticCategory, node: Node, code: number, message: string, arg0?: any, arg1?: any, arg2?: any) {
-            diagnostics.add(createDiagnosticForNode(node, <any>{
+            diagnostics.push(createDiagnosticForNode(node, <any>{
                 code,
                 message,
                 key: message.replace(/^[a-zA-Z]+/g, "_"),
@@ -1161,7 +1161,7 @@ namespace ts.pxtc {
         }
 
         function finalEmit() {
-            if (diagnostics.getModificationCount() || opts.noEmit || !host)
+            if (diagnostics.length || opts.noEmit || !host)
                 return;
 
             bin.writeFile = (fn: string, data: string) =>
@@ -1752,7 +1752,7 @@ ${lbl}: .short 0xffff
                 indexer = assign ? attrs.indexerSet : attrs.indexerGet
             }
 
-            if (!indexer && (t.flags & (TypeFlags.Any | TypeFlags.StructuredOrTypeVariable))) {
+            if (!indexer && (t.flags & (TypeFlags.Any | TypeFlags.StructuredType | TypeFlags.TypeVariable))) {
                 indexer = assign ? "pxtrt::mapSetGeneric" : "pxtrt::mapGetGeneric"
                 stringOk = true
             }
@@ -2736,7 +2736,7 @@ ${lbl}: .short 0xffff
                     return undefined;
             }
 
-            if (ts.isInAmbientContext(node))
+            if (isInAmbientContext(node))
                 return undefined;
 
             if (!node.body)
@@ -3415,7 +3415,7 @@ ${lbl}: .short 0xffff
                         addConfigEntry({ name: nm, key: key, value: val })
                     }
                 }
-            if (ts.isInAmbientContext(node))
+            if (isInAmbientContext(node))
                 return;
             checkForLetOrConst(node.declarationList);
             node.declarationList.declarations.forEach(emit);
@@ -3878,7 +3878,7 @@ ${lbl}: .short 0xffff
                 lastSecondaryError = null
                 // if (!e.ksEmitterUserError)
                 let code = e.ksErrorCode || 9200
-                error(node, code, e.message)
+                error(node, code, code == 9200 ? e.stack : e.message)
                 pxt.debug(e.stack)
                 return null
             }
@@ -4248,5 +4248,15 @@ ${lbl}: .short 0xffff
 
     function isNumberLikeType(type: Type) {
         return !!(type.flags & (TypeFlags.NumberLike | TypeFlags.EnumLike | TypeFlags.BooleanLike))
+    }
+
+    function isInAmbientContext(node: Node): boolean {
+        while (node) {
+            if (hasModifier(node, ModifierFlags.Ambient) || (node.kind === SyntaxKind.SourceFile && (node as SourceFile).isDeclarationFile)) {
+                return true;
+            }
+            node = node.parent;
+        }
+        return false;
     }
 }

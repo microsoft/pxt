@@ -17,7 +17,7 @@ namespace pxt.blocks.layout {
         const oldDom = Blockly.Xml.workspaceToDom(oldWs, true);
         const newDom = Blockly.Xml.workspaceToDom(newWs, true);
         Util.toArray(oldDom.childNodes)
-            .filter(n => n.nodeType == Node.ELEMENT_NODE && n.localName == "block" && (<Element>n).getAttribute("disabled") == "true")
+            .filter(n => n.nodeType == Node.ELEMENT_NODE && (n as Element).localName == "block" && (n as Element).getAttribute("disabled") == "true")
             .forEach(n => newDom.appendChild(newDom.ownerDocument.importNode(n, true)));
         const updatedXml = Blockly.Xml.domToText(newDom);
         return updatedXml;
@@ -304,13 +304,13 @@ namespace pxt.blocks.layout {
     function expandImagesAsync(xsg: Document): Promise<void> {
         if (!imageXLinkCache) imageXLinkCache = {};
 
-        const images = xsg.getElementsByTagName("image") as NodeListOf<Element>;
+        const images = xsg.getElementsByTagName("image") as U.ArrayLike<SVGImageElement>;
         const p = pxt.Util.toArray(images)
             .filter(image => {
                 const href = image.getAttributeNS(XLINK_NAMESPACE, "href");
                 return href && !/^data:/.test(href);
             })
-            .map((image: HTMLImageElement) => {
+            .map((image: SVGImageElement) => {
                 const href = image.getAttributeNS(XLINK_NAMESPACE, "href");
                 let dataUri = imageXLinkCache[href];
                 return (dataUri ? Promise.resolve(imageXLinkCache[href])
@@ -338,10 +338,10 @@ namespace pxt.blocks.layout {
 
         if (!BrowserUtils.isEdge()) return Promise.resolve();
 
-        const images = xsg.getElementsByTagName("image") as NodeListOf<Element>;
+        const images = xsg.getElementsByTagName("image") as U.ArrayLike<SVGImageElement>;
         const p = pxt.Util.toArray(images)
             .filter(image => /^data:image\/svg\+xml/.test(image.getAttributeNS(XLINK_NAMESPACE, "href")))
-            .map((image: HTMLImageElement) => {
+            .map((image: SVGImageElement) => {
                 const svgUri = image.getAttributeNS(XLINK_NAMESPACE, "href");
                 const width = parseInt(image.getAttribute("width").replace(/[^0-9]/g, ""));
                 const height = parseInt(image.getAttribute("height").replace(/[^0-9]/g, ""));

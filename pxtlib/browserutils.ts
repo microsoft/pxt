@@ -257,10 +257,12 @@ namespace pxt.BrowserUtils {
     export function devicePixelRatio(): number {
         if (typeof window === "undefined" || !window.screen) return 1;
 
-        if (window.screen.systemXDPI !== undefined
-            && window.screen.logicalXDPI !== undefined
-            && window.screen.systemXDPI > window.screen.logicalXDPI) {
-            return window.screen.systemXDPI / window.screen.logicalXDPI;
+        const theScreen = window.screen as any;
+
+        if (theScreen.systemXDPI !== undefined
+            && theScreen.logicalXDPI !== undefined
+            && theScreen.systemXDPI > theScreen.logicalXDPI) {
+            return theScreen.systemXDPI / theScreen.logicalXDPI;
         }
         else if (window && window.devicePixelRatio !== undefined) {
             return window.devicePixelRatio;

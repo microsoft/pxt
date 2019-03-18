@@ -3067,7 +3067,7 @@ function simulatorCoverage(pkgCompileRes: pxtc.CompileResult, pkgOpts: pxtc.Comp
 
     let typechecker = simDeclRes.ast.getTypeChecker()
     let doSymbol = (sym: ts.Symbol) => {
-        if (sym.getFlags() & ts.SymbolFlags.HasExports) {
+        if (sym.getFlags() & ts.SymbolFlags.ModuleExports) {
             typechecker.getExportsOfModule(sym).forEach(doSymbol)
         }
         decls[pxtc.getFullName(typechecker, sym)] = sym
@@ -3542,7 +3542,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
             } catch (e) {
                 addFailure(fn, [{
                     code: 4242,
-                    category: ts.DiagnosticCategory.Error,
+                    category: ts.DiagnosticCategory.Error as number,
                     messageText: "invalid JSON: " + e.message,
                     fileName: fn,
                     start: 1,
@@ -3609,7 +3609,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
                 addFailure(name, [
                     {
                         code: 4242,
-                        category: ts.DiagnosticCategory.Error,
+                        category: ts.DiagnosticCategory.Error as number,
                         messageText: e.message,
                         fileName: fn,
                         start: 1,
