@@ -9,8 +9,6 @@ namespace pxt.py {
     }
 
     // global state
-    let moduleAst: Map<py.Module> = {}
-    let apisInfo: pxtc.ApisInfo
     let externalApis: pxt.Map<SymbolInfo> // slurped from libraries
     let internalApis: pxt.Map<SymbolInfo> // defined in Python
     let ctx: Ctx
@@ -132,7 +130,8 @@ namespace pxt.py {
         return mapTypes(lookupApi(name))
     }
 
-    function initApis() {
+    function initApis(apisInfo: pxtc.ApisInfo) {
+        internalApis = {}
         externalApis = apisInfo.byQName as any
         for (let sym of U.values(externalApis)) {
             sym.members = []
@@ -1616,12 +1615,8 @@ namespace pxt.py {
     }
 
     export function py2ts(opts: pxtc.CompileOptions) {
-        moduleAst = {}
-        apisInfo = opts.apisInfo
-        if (!apisInfo)
-            U.oops()
-        internalApis = {}
-        initApis()
+        let modules: py.Module[] = []
+        initApis(opts.apisInfo)
 
         if (!opts.generatedFiles)
             opts.generatedFiles = []
@@ -1639,13 +1634,13 @@ namespace pxt.py {
                 let stmts = pxt.py.parse(src, sn, tokens)
                 //console.log(pxt.py.dump(stmts))
 
-                moduleAst[modname] = {
+                modules.push({
                     kind: "Module",
                     body: stmts,
                     name: modname,
                     source: src,
                     tsFilename: sn.replace(/\.py$/, ".ts")
-                } as any
+                } as any)
             } catch (e) {
                 // TODO
                 console.log("Parse error", e)
@@ -1655,9 +1650,10 @@ namespace pxt.py {
 
         for (let i = 0; i < 5; ++i) {
             currIteration = i
-            for (let m of U.values(moduleAst)) {
+            for (let m of modules) {
                 try {
                     toTS(m)
+                    // console.log(`after ${currIteration} - ${numUnifies}`)
                 } catch (e) {
                     console.log("Conv pass error", e);
                 }
@@ -1666,7 +1662,7 @@ namespace pxt.py {
 
         currIteration = 1000
         currErrs = ""
-        for (let m of U.values(moduleAst)) {
+        for (let m of modules) {
             try {
                 let nodes = toTS(m)
                 if (!nodes) continue
