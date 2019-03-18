@@ -1338,7 +1338,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             const hasCachedFlyout = flyoutName in this.flyouts
             const cachedBlocksHash = hasCachedFlyout ? this.flyouts[flyoutName].blocksHash : 0;
             const currentBlocksHash = this.hashBlocks(xmlList);
-            const isFlyoutUpToDate = cachedBlocksHash === currentBlocksHash && !cachedBlocksHash
+            const isFlyoutUpToDate = cachedBlocksHash === currentBlocksHash && !!cachedBlocksHash
 
             const mkFlyout = () => {
                 const workspace = this.editor.toolbox_.workspace_ as Blockly.WorkspaceSvg
