@@ -1097,9 +1097,8 @@ export class ProjectView
         pxt.cpp.unpackSourceFromHexFileAsync(file)
             .then(data => this.importHex(data))
             .catch(e => {
-                pxt.log(e);
-                core.warningNotification(lf("Sorry, we could not recognize this file."))
                 pxt.reportException(e);
+                core.warningNotification(lf("Sorry, we could not recognize this file."))
             });
     }
 
