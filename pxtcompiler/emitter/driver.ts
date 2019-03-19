@@ -230,6 +230,25 @@ namespace ts.pxtc {
         return bresp;
     }
 
+    // TODO(dz): unify with above
+    export function pydecompile(opts: CompileOptions, fileName: string) {
+        let program = getTSProgram(opts);
+
+        let file = program.getSourceFile(fileName);
+        annotate(program, fileName, target || (pxt.appTarget && pxt.appTarget.compile));
+        // const apis = getApiInfo(opts, program);
+        // const blocksInfo = pxtc.getBlocksInfo(apis, bannedCategories);
+        // const decompileOpts: decompiler.DecompileBlocksOptions = {
+        //     snippetMode: false,
+        //     alwaysEmitOnStart: opts.alwaysDecompileOnStart,
+        //     includeGreyBlockMessages,
+        //     useNewFunctions: opts.useNewFunctions,
+        //     allowedArgumentTypes: opts.allowedArgumentTypes || ["number", "boolean", "string"]
+        // };
+        const bresp = pxtc.decompiler.decompileToPython(file);
+        return bresp;
+    }
+
     export function getTSProgram(opts: CompileOptions, old?: ts.Program) {
         let outfiles: pxt.Map<string> = {};
 

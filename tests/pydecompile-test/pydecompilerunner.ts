@@ -145,9 +145,9 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
             if (path.basename(f).indexOf("functions_v2") === 0) {
                 opts.useNewFunctions = true;
             }
-            const decompiled = pxtc.decompile(opts, "main.ts", true);
+            const decompiled = pxtc.pydecompile(opts, "main.ts");
             if (decompiled.success) {
-                return decompiled.outfiles["main.blocks"];
+                return decompiled.outfiles["main.py"];
             }
             else {
                 return Promise.reject("Could not decompile " + f + JSON.stringify(decompiled.diagnostics, null, 4));
