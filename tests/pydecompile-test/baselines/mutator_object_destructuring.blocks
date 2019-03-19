@@ -1,0 +1,22 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="test_object_destructuring">
+<statement name="HANDLER">
+</statement>
+<comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;basic.ts&#34; &#47;&#62;</comment>
+</block>
+<block type="test_object_destructuring">
+<mutation callbackproperties="" renamemap="&#123;&#125;" />
+<statement name="HANDLER">
+</statement>
+</block>
+<block type="test_object_destructuring">
+<mutation callbackproperties="n" renamemap="&#123;&#125;" />
+<statement name="HANDLER">
+</statement>
+</block>
+<block type="test_object_destructuring">
+<mutation callbackproperties="n,text" renamemap="&#123;&#34;text&#34;&#58;&#34;data&#34;&#125;" />
+<statement name="HANDLER">
+</statement>
+</block>
+</xml>

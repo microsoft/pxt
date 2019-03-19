@@ -1,0 +1,94 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="variables_set">
+<field name="VAR">math_op_1</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="math_js_op">
+<mutation op-type="unary" />
+<field name="OP">sqrt</field>
+<value name="ARG0">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+</block>
+</value>
+<next>
+<block type="variables_set">
+<field name="VAR">math_op_2</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="math_js_op">
+<mutation op-type="unary" />
+<field name="OP">sin</field>
+<value name="ARG0">
+<shadow type="math_number">
+<field name="NUM">2</field>
+</shadow>
+</value>
+</block>
+</value>
+<next>
+<block type="variables_set">
+<field name="VAR">math_op_3</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="math_js_op">
+<mutation op-type="unary" />
+<field name="OP">cos</field>
+<value name="ARG0">
+<shadow type="math_number">
+<field name="NUM">3</field>
+</shadow>
+</value>
+</block>
+</value>
+<next>
+<block type="variables_set">
+<field name="VAR">math_op_4</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="math_js_op">
+<mutation op-type="unary" />
+<field name="OP">tan</field>
+<value name="ARG0">
+<shadow type="math_number">
+<field name="NUM">4</field>
+</shadow>
+</value>
+</block>
+</value>
+<next>
+<block type="variables_set">
+<field name="VAR">math_op_5</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="math_js_op">
+<mutation op-type="binary" />
+<field name="OP">atan2</field>
+<value name="ARG0">
+<shadow type="math_number">
+<field name="NUM">5</field>
+</shadow>
+</value>
+<value name="ARG1">
+<shadow type="math_number">
+<field name="NUM">6</field>
+</shadow>
+</value>
+</block>
+</value>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</statement>
+</block>
+</xml>

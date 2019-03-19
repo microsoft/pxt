@@ -1,0 +1,49 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="variables_set">
+<field name="VAR">cs_1</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="constant_dropdown">
+<field name="constant">constant.PI</field>
+</block>
+</value>
+<next>
+<block type="variables_set">
+<field name="VAR">cs_2</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="constant_dropdown">
+<field name="constant">constant.LN2</field>
+</block>
+</value>
+<next>
+<block type="variables_set">
+<field name="VAR">cs_3</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="constant_dropdown">
+<field name="constant">constant.PI</field>
+</block>
+</value>
+<next>
+<block type="variables_set">
+<field name="VAR">cs_4</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="constant_dropdown">
+<field name="constant">constant.LN2</field>
+</block>
+</value>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+<comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;constantShim.ts&#34; &#47;&#62;</comment>
+</block>
+</statement>
+</block>
+</xml>

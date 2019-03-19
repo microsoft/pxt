@@ -1,0 +1,20 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<variables>
+<variable type="EnumWithStart">0G</variable>
+<variable type="EnumWithStart">1H</variable>
+<variable type="EnumWithStart">2I</variable>
+</variables>
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="variables_set">
+<field name="VAR">userDefinedTest4</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="enum_user_shim_with_start_value">
+<field name="MEMBER">G</field>
+</block>
+</value>
+</block>
+</statement>
+</block>
+</xml>

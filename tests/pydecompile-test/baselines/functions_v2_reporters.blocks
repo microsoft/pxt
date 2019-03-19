@@ -1,0 +1,44 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="function_definition">
+<mutation name="foo_all" >
+<arg name="num" type="number" id="8llt4zko0w3c0fr3cwax1" />
+<arg name="text" type="string" id="95xldc45fl46ioyc9tmk" />
+<arg name="bool" type="boolean" id="wthr93xs658v7972msnz" />
+</mutation>
+<statement name="STACK">
+<block type="variables_set">
+<field name="VAR">tmp</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="text_join">
+<mutation items="4" />
+<value name="ADD0">
+<shadow type="text">
+<field name="TEXT"></field>
+</shadow>
+</value>
+<value name="ADD1">
+<shadow type="text"><field name="TEXT"></field></shadow>
+<block type="argument_reporter_number">
+<field name="VALUE">num</field>
+</block>
+</value>
+<value name="ADD2">
+<shadow type="text"><field name="TEXT"></field></shadow>
+<block type="argument_reporter_string">
+<field name="VALUE">text</field>
+</block>
+</value>
+<value name="ADD3">
+<shadow type="text"><field name="TEXT"></field></shadow>
+<block type="argument_reporter_boolean">
+<field name="VALUE">bool</field>
+</block>
+</value>
+</block>
+</value>
+</block>
+</statement>
+<comment pinned="false">Describe this function...</comment>
+</block>
+</xml>

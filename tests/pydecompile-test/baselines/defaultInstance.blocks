@@ -1,0 +1,38 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="test_class_defaultInstanceMethod">
+<value name="a">
+<shadow type="math_number">
+<field name="NUM">10</field>
+</shadow>
+</value>
+<value name="b">
+<shadow type="math_number">
+<field name="NUM">20</field>
+</shadow>
+</value>
+<next>
+<block type="test_class_defaultInstanceMethod">
+<mutation showing="true" />
+<value name="__instance__">
+<block type="test_createDefInstanceClass">
+</block>
+</value>
+<value name="a">
+<shadow type="math_number">
+<field name="NUM">10</field>
+</shadow>
+</value>
+<value name="b">
+<shadow type="math_number">
+<field name="NUM">20</field>
+</shadow>
+</value>
+</block>
+</next>
+<comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;basic.ts&#34; &#47;&#62;</comment>
+</block>
+</statement>
+</block>
+</xml>

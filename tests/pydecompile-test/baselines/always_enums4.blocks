@@ -1,0 +1,35 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="variables_set">
+<field name="VAR">x</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="test_create_class">
+<value name="x">
+<shadow type="math_number">
+<field name="NUM">5</field>
+</shadow>
+</value>
+</block>
+</value>
+<next>
+<block type="test_class_method2">
+<field name="a">TestEnum.testValue2</field>
+<value name="testClass">
+<block type="variables_get">
+<field name="VAR">x</field>
+</block>
+</value>
+<next>
+<block type="typescript_statement">
+<mutation numlines="1" line0="x.testMethodWithEnum&#40;58&#41;" />
+</block>
+</next>
+</block>
+</next>
+<comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;basic.ts&#34; &#47;&#62;</comment>
+</block>
+</statement>
+</block>
+</xml>

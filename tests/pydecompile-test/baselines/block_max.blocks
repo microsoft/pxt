@@ -1,0 +1,46 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="variables_set">
+<field name="VAR">level</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="math_op2">
+<field name="op">max</field>
+<value name="x">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
+</value>
+<value name="y">
+<shadow type="math_number">
+<field name="NUM">10</field>
+</shadow>
+</value>
+</block>
+</value>
+<next>
+<block type="variables_set">
+<field name="VAR">level2</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="math_op2">
+<value name="x">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
+</value>
+<value name="y">
+<shadow type="math_number">
+<field name="NUM">10</field>
+</shadow>
+</value>
+</block>
+</value>
+</block>
+</next>
+<comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;core.ts&#34; &#47;&#62;</comment>
+</block>
+</statement>
+</block>
+</xml>

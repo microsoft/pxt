@@ -1,0 +1,303 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="variables_set">
+<field name="VAR">item</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+<next>
+<block type="controls_repeat_ext">
+<value name="TIMES">
+<shadow type="math_whole_number">
+<field name="NUM">4</field>
+</shadow>
+</value>
+<statement name="DO">
+<block type="device_while">
+<value name="COND">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="logic_operation">
+<field name="OP">OR</field>
+<value name="A">
+<shadow type="logic_boolean">
+<field name="BOOL">TRUE</field>
+</shadow>
+</value>
+<value name="B">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="logic_negate">
+<value name="BOOL">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="logic_negate">
+<value name="BOOL">
+<shadow type="logic_boolean">
+<field name="BOOL">FALSE</field>
+</shadow>
+</value>
+</block>
+</value>
+</block>
+</value>
+</block>
+</value>
+<statement name="DO">
+<block type="controls_repeat_ext">
+<value name="TIMES">
+<shadow type="math_whole_number"><field name="NUM">0</field></shadow>
+<block type="math_arithmetic">
+<field name="OP">ADD</field>
+<value name="A">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="variables_get">
+<field name="VAR">item</field>
+</block>
+</value>
+<value name="B">
+<shadow type="math_number">
+<field name="NUM">7</field>
+</shadow>
+</value>
+</block>
+</value>
+<statement name="DO">
+<block type="variables_change">
+<field name="VAR">item</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+<next>
+<block type="controls_if">
+<mutation elseif="1" else="1" />
+<value name="IF0">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="logic_operation">
+<field name="OP">AND</field>
+<value name="A">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="logic_compare">
+<field name="OP">EQ</field>
+<value name="A">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="math_arithmetic">
+<field name="OP">ADD</field>
+<value name="A">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="math_arithmetic">
+<field name="OP">MINUS</field>
+<value name="A">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="math_arithmetic">
+<field name="OP">MULTIPLY</field>
+<value name="A">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="math_arithmetic">
+<field name="OP">DIVIDE</field>
+<value name="A">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="math_modulo">
+<value name="DIVIDEND">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
+</value>
+<value name="DIVISOR">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+</block>
+</value>
+<value name="B">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
+</value>
+</block>
+</value>
+<value name="B">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
+</value>
+</block>
+</value>
+<value name="B">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
+</value>
+</block>
+</value>
+<value name="B">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
+</value>
+</block>
+</value>
+<value name="B">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
+</value>
+</block>
+</value>
+<value name="B">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="logic_operation">
+<field name="OP">OR</field>
+<value name="A">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="logic_compare">
+<field name="OP">LT</field>
+<value name="A">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
+</value>
+<value name="B">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
+</value>
+</block>
+</value>
+<value name="B">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="logic_operation">
+<field name="OP">OR</field>
+<value name="A">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="logic_operation">
+<field name="OP">OR</field>
+<value name="A">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="logic_compare">
+<field name="OP">LTE</field>
+<value name="A">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
+</value>
+<value name="B">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
+</value>
+</block>
+</value>
+<value name="B">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="logic_compare">
+<field name="OP">GT</field>
+<value name="A">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
+</value>
+<value name="B">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
+</value>
+</block>
+</value>
+</block>
+</value>
+<value name="B">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="logic_compare">
+<field name="OP">GTE</field>
+<value name="A">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
+</value>
+<value name="B">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
+</value>
+</block>
+</value>
+</block>
+</value>
+</block>
+</value>
+</block>
+</value>
+<value name="IF1">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="logic_operation">
+<field name="OP">OR</field>
+<value name="A">
+<shadow type="logic_boolean">
+<field name="BOOL">TRUE</field>
+</shadow>
+</value>
+<value name="B">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="logic_negate">
+<value name="BOOL">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="logic_negate">
+<value name="BOOL">
+<shadow type="logic_boolean">
+<field name="BOOL">FALSE</field>
+</shadow>
+</value>
+</block>
+</value>
+</block>
+</value>
+</block>
+</value>
+<statement name="DO0">
+<block type="variables_set">
+<field name="VAR">item</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
+</value>
+</block>
+</statement>
+<statement name="DO1">
+<block type="variables_change">
+<field name="VAR">item</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+</block>
+</statement>
+<statement name="ELSE">
+<block type="variables_set">
+<field name="VAR">item</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">2</field>
+</shadow>
+</value>
+</block>
+</statement>
+</block>
+</next>
+</block>
+</statement>
+</block>
+</statement>
+</block>
+</statement>
+</block>
+</next>
+</block>
+</statement>
+</block>
+</xml>

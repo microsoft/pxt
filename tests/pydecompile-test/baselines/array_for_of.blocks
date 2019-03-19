@@ -1,0 +1,65 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="variables_set">
+<field name="VAR">x</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="lists_create_with">
+<mutation items="1" />
+<value name="ADD0">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
+</value>
+</block>
+</value>
+<next>
+<block type="pxt_controls_for_of">
+<value name="LIST">
+<block type="variables_get">
+<field name="VAR">x</field>
+</block>
+</value>
+<value name="VAR">
+<shadow type="variables_get_reporter">
+<field name="VAR">a</field>
+</shadow>
+</value>
+<statement name="DO">
+<block type="variables_change">
+<field name="VAR">a</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+</block>
+</statement>
+<next>
+<block type="pxt_controls_for_of">
+<value name="LIST">
+<block type="lists_create_with">
+<mutation items="1" />
+<value name="ADD0">
+<shadow type="text">
+<field name="TEXT"></field>
+</shadow>
+</value>
+</block>
+</value>
+<value name="VAR">
+<shadow type="variables_get_reporter">
+<field name="VAR">b</field>
+</shadow>
+</value>
+<statement name="DO">
+</statement>
+</block>
+</next>
+</block>
+</next>
+</block>
+</statement>
+</block>
+</xml>

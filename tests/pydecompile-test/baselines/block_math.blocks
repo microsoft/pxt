@@ -1,0 +1,163 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="typescript_statement">
+<mutation numlines="1" line0="0 &#43; 0" />
+<next>
+<block type="typescript_statement">
+<mutation numlines="1" line0="0 - 0" />
+<next>
+<block type="typescript_statement">
+<mutation numlines="1" line0="0 &#42; 0" />
+<next>
+<block type="typescript_statement">
+<mutation numlines="1" line0="0 &#47; 0" />
+<next>
+<block type="typescript_statement">
+<mutation numlines="1" line0="0 &#37; 1" />
+<next>
+<block type="typescript_statement">
+<mutation numlines="1" line0="0" />
+<next>
+<block type="variables_set">
+<field name="VAR">x</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="math_arithmetic">
+<field name="OP">MULTIPLY</field>
+<value name="A">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="math_arithmetic">
+<field name="OP">MINUS</field>
+<value name="A">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+<value name="B">
+<shadow type="math_number">
+<field name="NUM">2</field>
+</shadow>
+</value>
+</block>
+</value>
+<value name="B">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="math_arithmetic">
+<field name="OP">MULTIPLY</field>
+<value name="A">
+<shadow type="math_number">
+<field name="NUM">3</field>
+</shadow>
+</value>
+<value name="B">
+<shadow type="math_number">
+<field name="NUM">4</field>
+</shadow>
+</value>
+</block>
+</value>
+</block>
+</value>
+<next>
+<block type="variables_set">
+<field name="VAR">y</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="math_arithmetic">
+<field name="OP">MINUS</field>
+<value name="A">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+<value name="B">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="math_arithmetic">
+<field name="OP">MULTIPLY</field>
+<value name="A">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="math_arithmetic">
+<field name="OP">MULTIPLY</field>
+<value name="A">
+<shadow type="math_number">
+<field name="NUM">2</field>
+</shadow>
+</value>
+<value name="B">
+<shadow type="math_number">
+<field name="NUM">3</field>
+</shadow>
+</value>
+</block>
+</value>
+<value name="B">
+<shadow type="math_number">
+<field name="NUM">4</field>
+</shadow>
+</value>
+</block>
+</value>
+</block>
+</value>
+<next>
+<block type="variables_set">
+<field name="VAR">z</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="math_arithmetic">
+<field name="OP">MULTIPLY</field>
+<value name="A">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="math_arithmetic">
+<field name="OP">MINUS</field>
+<value name="A">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+<value name="B">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="math_arithmetic">
+<field name="OP">MULTIPLY</field>
+<value name="A">
+<shadow type="math_number">
+<field name="NUM">2</field>
+</shadow>
+</value>
+<value name="B">
+<shadow type="math_number">
+<field name="NUM">3</field>
+</shadow>
+</value>
+</block>
+</value>
+</block>
+</value>
+<value name="B">
+<shadow type="math_number">
+<field name="NUM">4</field>
+</shadow>
+</value>
+</block>
+</value>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</statement>
+</block>
+</xml>

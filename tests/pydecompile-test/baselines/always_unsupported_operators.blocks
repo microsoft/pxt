@@ -1,0 +1,169 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="typescript_statement">
+<mutation declaredvars="x" numlines="1" line0="let x &#61; 0 &#60;&#60; 1&#59;" />
+<next>
+<block type="typescript_statement">
+<mutation declaredvars="y" numlines="1" line0="let y &#61; 0 &#62;&#62; 1&#59;" />
+<next>
+<block type="typescript_statement">
+<mutation declaredvars="z" numlines="1" line0="let z &#61; 0 &#62;&#62;&#62; 1&#59;" />
+<next>
+<block type="typescript_statement">
+<mutation declaredvars="a" numlines="1" line0="let a &#61; 0 &#124; 1&#59;" />
+<next>
+<block type="typescript_statement">
+<mutation declaredvars="b" numlines="1" line0="let b &#61; 0 &#38; 1&#59;" />
+<next>
+<block type="typescript_statement">
+<mutation declaredvars="c" numlines="1" line0="let c &#61; 0 &#94; 1&#59;" />
+<next>
+<block type="variables_set">
+<field name="VAR">d</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+<next>
+<block type="typescript_statement">
+<mutation numlines="1" line0="d &#42;&#61; 1&#59;" />
+<next>
+<block type="variables_set">
+<field name="VAR">e</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+<next>
+<block type="typescript_statement">
+<mutation numlines="1" line0="e &#47;&#61; 1&#59;" />
+<next>
+<block type="variables_set">
+<field name="VAR">f</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+<next>
+<block type="typescript_statement">
+<mutation numlines="1" line0="f &#37;&#61; 1&#59;" />
+<next>
+<block type="variables_set">
+<field name="VAR">g</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+<next>
+<block type="typescript_statement">
+<mutation numlines="1" line0="g &#124;&#61; 1&#59;" />
+<next>
+<block type="variables_set">
+<field name="VAR">h</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+<next>
+<block type="typescript_statement">
+<mutation numlines="1" line0="h &#38;&#61; 1&#59;" />
+<next>
+<block type="variables_set">
+<field name="VAR">i</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+<next>
+<block type="typescript_statement">
+<mutation numlines="1" line0="i &#94;&#61; 1&#59;" />
+<next>
+<block type="variables_set">
+<field name="VAR">j</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+<next>
+<block type="typescript_statement">
+<mutation numlines="1" line0="j &#60;&#60;&#61; 1&#59;" />
+<next>
+<block type="variables_set">
+<field name="VAR">k</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+<next>
+<block type="typescript_statement">
+<mutation numlines="1" line0="k &#62;&#62;&#61; 1&#59;" />
+<next>
+<block type="variables_set">
+<field name="VAR">l</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+<next>
+<block type="typescript_statement">
+<mutation numlines="1" line0="l &#62;&#62;&#62;&#61; 1&#59;" />
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</statement>
+</block>
+</xml>

@@ -1,0 +1,19 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="typescript_statement">
+<mutation declaredvars="test" numlines="1" line0="let test &#61; getStuff&#40;&#41;&#59;" />
+<next>
+<block type="typescript_statement">
+<mutation numlines="1" line0="getStuff&#40;&#41;&#59;" />
+<next>
+<block type="typescript_statement">
+<mutation numlines="3" line0="function getStuff&#40;&#41;&#58; string &#123;" line1="    return &#34;Unknown&#34;&#59;" line2="&#125;" />
+</block>
+</next>
+</block>
+</next>
+</block>
+</statement>
+</block>
+</xml>

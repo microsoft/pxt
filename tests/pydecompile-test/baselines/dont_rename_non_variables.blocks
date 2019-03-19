@@ -1,0 +1,24 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="typescript_statement">
+<mutation numlines="4" line0="interface Foo &#123;" line1="    a&#58; number" line2="    b?&#58; number" line3="&#125;" />
+<next>
+<block type="typescript_statement">
+<mutation declaredvars="x" numlines="1" line0="let x&#58; Foo &#61; &#123; a&#58; 1&#44; b&#58; 2 &#125;" />
+<next>
+<block type="typescript_statement">
+<mutation numlines="1" line0="bar&#40;x&#41;" />
+<next>
+<block type="typescript_statement">
+<mutation numlines="3" line0="function bar&#40;y&#58; Foo&#41; &#123;" line1="    let z &#61; y.a" line2="&#125;" />
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</statement>
+</block>
+</xml>

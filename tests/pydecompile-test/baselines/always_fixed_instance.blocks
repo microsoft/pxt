@@ -1,0 +1,25 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="typescript_statement">
+<mutation declaredvars="a" numlines="1" line0="let a &#61; pins.A9" />
+<next>
+<block type="pin_analog_pitch">
+<field name="pin">pins.A10</field>
+<value name="frequency">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
+</value>
+<value name="ms">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
+</value>
+</block>
+</next>
+<comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;cp.ts&#34; &#47;&#62;</comment>
+</block>
+</statement>
+</block>
+</xml>

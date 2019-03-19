@@ -1,0 +1,15 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="typescript_statement">
+<mutation declaredvars="a" numlines="1" line0="let a &#61; TestEnum.testValue1&#59;" />
+<next>
+<block type="typescript_statement">
+<mutation numlines="1" line0="a &#61; TestEnum.testValue2&#59;" />
+</block>
+</next>
+<comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;basic.ts&#34; &#47;&#62;</comment>
+</block>
+</statement>
+</block>
+</xml>

@@ -1,0 +1,141 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="device_while">
+<value name="COND">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="logic_operation">
+<field name="OP">OR</field>
+<value name="A">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="logic_operation">
+<field name="OP">AND</field>
+<value name="A">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="logic_compare">
+<field name="OP">LT</field>
+<value name="A">
+<shadow type="math_number">
+<field name="NUM">0</field>
+</shadow>
+</value>
+<value name="B">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+</block>
+</value>
+<value name="B">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="logic_compare">
+<field name="OP">LTE</field>
+<value name="A">
+<shadow type="math_number">
+<field name="NUM">9</field>
+</shadow>
+</value>
+<value name="B">
+<shadow type="math_number">
+<field name="NUM">5</field>
+</shadow>
+</value>
+</block>
+</value>
+</block>
+</value>
+<value name="B">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="logic_negate">
+<value name="BOOL">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="logic_compare">
+<field name="OP">EQ</field>
+<value name="A">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="math_arithmetic">
+<field name="OP">MULTIPLY</field>
+<value name="A">
+<shadow type="math_number">
+<field name="NUM">6</field>
+</shadow>
+</value>
+<value name="B">
+<shadow type="math_number">
+<field name="NUM">5</field>
+</shadow>
+</value>
+</block>
+</value>
+<value name="B">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="math_arithmetic">
+<field name="OP">DIVIDE</field>
+<value name="A">
+<shadow type="math_number">
+<field name="NUM">8</field>
+</shadow>
+</value>
+<value name="B">
+<shadow type="math_number">
+<field name="NUM">7</field>
+</shadow>
+</value>
+</block>
+</value>
+</block>
+</value>
+</block>
+</value>
+</block>
+</value>
+<statement name="DO">
+</statement>
+<next>
+<block type="device_while">
+<value name="COND">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="logic_negate">
+<value name="BOOL">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="logic_negate">
+<value name="BOOL">
+<shadow type="logic_boolean">
+<field name="BOOL">FALSE</field>
+</shadow>
+</value>
+</block>
+</value>
+</block>
+</value>
+<statement name="DO">
+<block type="controls_if">
+<mutation elseif="0" else="1" />
+<value name="IF0">
+<shadow type="logic_boolean">
+<field name="BOOL">TRUE</field>
+</shadow>
+</value>
+<statement name="DO0">
+</statement>
+<statement name="ELSE">
+</statement>
+</block>
+</statement>
+<next>
+<block type="device_while">
+<value name="COND">
+<shadow type="logic_boolean">
+<field name="BOOL">TRUE</field>
+</shadow>
+</value>
+<statement name="DO">
+</statement>
+</block>
+</next>
+</block>
+</next>
+</block>
+</statement>
+</block>
+</xml>

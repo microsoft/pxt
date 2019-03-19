@@ -1,0 +1,51 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="enum_event">
+<field name="enum">MyEnum.Value2</field>
+<statement name="HANDLER">
+</statement>
+</block>
+<block type="enum_event">
+<field name="enum">MyEnum.Value2</field>
+<statement name="HANDLER">
+</statement>
+</block>
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="variables_set">
+<field name="VAR">enum_var1</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="enum_shim">
+<field name="enum">MyEnum.Value2</field>
+</block>
+</value>
+<next>
+<block type="variables_set">
+<field name="VAR">enum_var2</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="enum_shim">
+<field name="enum">MyEnum.Value2</field>
+</block>
+</value>
+<next>
+<block type="enum_arg">
+<field name="enum">MyEnum.Value2</field>
+<next>
+<block type="enum_shadow_arg">
+<value name="enum">
+<shadow type="enum_shim">
+<field name="enum">MyEnum.Value2</field>
+</shadow>
+</value>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+<comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;enums.ts&#34; &#47;&#62;</comment>
+</block>
+</statement>
+</block>
+</xml>

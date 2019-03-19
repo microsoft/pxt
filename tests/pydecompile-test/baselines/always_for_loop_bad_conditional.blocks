@@ -1,0 +1,39 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="variables_set">
+<field name="VAR">y</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+<next>
+<block type="typescript_statement">
+<mutation numlines="1" line0="for &#40;let x &#61; 0&#59; y &#60;&#61; 5&#59; x&#43;&#43;&#41; &#123;&#125;" />
+<next>
+<block type="typescript_statement">
+<mutation numlines="1" line0="for &#40;let z &#61; 0&#59; false&#59; z&#43;&#43;&#41; &#123;&#125;" />
+<next>
+<block type="typescript_statement">
+<mutation numlines="1" line0="for &#40;let a &#61; 0&#59; a &#61;&#61; 2&#59; a&#43;&#43;&#41; &#123;&#125;" />
+<next>
+<block type="typescript_statement">
+<mutation numlines="1" line0="for &#40;let b &#61; 0&#59; 2 &#60;&#61; 2&#59; b&#43;&#43;&#41; &#123;&#125;" />
+<next>
+<block type="typescript_statement">
+<mutation numlines="1" line0="for &#40;let c &#61; 0&#59; &#59; c&#43;&#43;&#41; &#123;&#125;" />
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</statement>
+</block>
+</xml>

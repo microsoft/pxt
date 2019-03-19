@@ -96,6 +96,7 @@ setupTest('testdecompiler', 'decompile-test', 'decompilerunner.js')
 setupTest('testlang', 'compile-test', 'compilerunner.js')
 setupTest('testerr', 'errors-test', 'errorrunner.js')
 setupTest('testfmt', 'format-test', 'formatrunner.js')
+setupTest('testpydecompiler', 'pydecompile-test', 'pydecompilerunner.js')
 
 
 task('testpkgconflicts', ['built/pxt.js'], { async: true }, function () {
@@ -148,7 +149,7 @@ compileDir("pxtrunner", ["built/pxtlib.js", "built/pxteditor.js", "built/pxtcomp
 compileDir("pxtsim", ["built/pxtlib.js"])
 compileDir("pxteditor", ["built/pxtlib.js", "built/pxtblockly.js"])
 compileDir("cli", ["built/pxtlib.js", "built/pxtsim.js", "built/pxtcompiler.js"
-//    , "built/pxtpy.js" PRTODO add this back
+    //    , "built/pxtpy.js" PRTODO add this back
 ])
 compileDir("backendutils", ['pxtlib/commonutil.ts', 'pxtlib/docsrender.ts'])
 file("built/web/pxtweb.js", expand(["docfiles/pxtweb"]), { async: true }, function () { tscIn(this, "docfiles/pxtweb", "built") })

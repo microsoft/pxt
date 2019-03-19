@@ -1,0 +1,26 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="device_forever">
+<statement name="HANDLER">
+<block type="typescript_statement">
+<mutation numlines="3" line0="basic.forever&#40;&#40;&#41; &#61;&#62; &#123;" line1="        i &#43;&#43;&#59;" line2="    &#125;&#41;&#59;" />
+<next>
+<block type="variables_change">
+<field name="VAR">i</field>
+<value name="VALUE">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+</block>
+</next>
+</block>
+</statement>
+</block>
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="typescript_statement">
+<mutation declaredvars="i" numlines="1" line0="let i &#61; 0" />
+</block>
+</statement>
+</block>
+</xml>

@@ -1,0 +1,225 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="pxt_controls_for">
+<value name="VAR">
+<shadow type="variables_get_reporter">
+<field name="VAR">i</field>
+</shadow>
+</value>
+<value name="TO">
+<shadow type="math_whole_number">
+<field name="NUM">4</field>
+</shadow>
+</value>
+<statement name="DO">
+</statement>
+<next>
+<block type="pxt_controls_for">
+<value name="VAR">
+<shadow type="variables_get_reporter">
+<field name="VAR">j</field>
+</shadow>
+</value>
+<value name="TO">
+<shadow type="math_whole_number">
+<field name="NUM">4</field>
+</shadow>
+</value>
+<statement name="DO">
+<block type="variables_set">
+<field name="VAR">j</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="math_arithmetic">
+<field name="OP">ADD</field>
+<value name="A">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="variables_get">
+<field name="VAR">j</field>
+</block>
+</value>
+<value name="B">
+<shadow type="math_number">
+<field name="NUM">7</field>
+</shadow>
+</value>
+</block>
+</value>
+<next>
+<block type="variables_set">
+<field name="VAR">j</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="math_arithmetic">
+<field name="OP">MINUS</field>
+<value name="A">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="variables_get">
+<field name="VAR">j</field>
+</block>
+</value>
+<value name="B">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="math_arithmetic">
+<field name="OP">ADD</field>
+<value name="A">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+<value name="B">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="variables_get">
+<field name="VAR">j</field>
+</block>
+</value>
+</block>
+</value>
+</block>
+</value>
+</block>
+</next>
+</block>
+</statement>
+<next>
+<block type="controls_repeat_ext">
+<value name="TIMES">
+<shadow type="math_whole_number"><field name="NUM">0</field></shadow>
+<block type="math_arithmetic">
+<field name="OP">MINUS</field>
+<value name="A">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="math_arithmetic">
+<field name="OP">ADD</field>
+<value name="A">
+<shadow type="math_number">
+<field name="NUM">2</field>
+</shadow>
+</value>
+<value name="B">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="math_modulo">
+<value name="DIVIDEND">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="math_arithmetic">
+<field name="OP">DIVIDE</field>
+<value name="A">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="math_arithmetic">
+<field name="OP">MULTIPLY</field>
+<value name="A">
+<shadow type="math_number">
+<field name="NUM">7</field>
+</shadow>
+</value>
+<value name="B">
+<shadow type="math_number">
+<field name="NUM">3</field>
+</shadow>
+</value>
+</block>
+</value>
+<value name="B">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+</block>
+</value>
+<value name="DIVISOR">
+<shadow type="math_number">
+<field name="NUM">7</field>
+</shadow>
+</value>
+</block>
+</value>
+</block>
+</value>
+<value name="B">
+<shadow type="math_number">
+<field name="NUM">9</field>
+</shadow>
+</value>
+</block>
+</value>
+<statement name="DO">
+</statement>
+<next>
+<block type="pxt_controls_for">
+<value name="VAR">
+<shadow type="variables_get_reporter">
+<field name="VAR">u</field>
+</shadow>
+</value>
+<value name="TO">
+<shadow type="math_whole_number"><field name="NUM">0</field></shadow>
+<block type="math_arithmetic">
+<field name="OP">MINUS</field>
+<value name="A">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="math_arithmetic">
+<field name="OP">ADD</field>
+<value name="A">
+<shadow type="math_number">
+<field name="NUM">2</field>
+</shadow>
+</value>
+<value name="B">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="math_modulo">
+<value name="DIVIDEND">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="math_arithmetic">
+<field name="OP">DIVIDE</field>
+<value name="A">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="math_arithmetic">
+<field name="OP">MULTIPLY</field>
+<value name="A">
+<shadow type="math_number">
+<field name="NUM">7</field>
+</shadow>
+</value>
+<value name="B">
+<shadow type="math_number">
+<field name="NUM">3</field>
+</shadow>
+</value>
+</block>
+</value>
+<value name="B">
+<shadow type="math_number">
+<field name="NUM">1</field>
+</shadow>
+</value>
+</block>
+</value>
+<value name="DIVISOR">
+<shadow type="math_number">
+<field name="NUM">7</field>
+</shadow>
+</value>
+</block>
+</value>
+</block>
+</value>
+<value name="B">
+<shadow type="math_number">
+<field name="NUM">9</field>
+</shadow>
+</value>
+</block>
+</value>
+<statement name="DO">
+</statement>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</statement>
+</block>
+</xml>

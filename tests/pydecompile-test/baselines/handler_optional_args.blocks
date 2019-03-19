@@ -1,0 +1,17 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="test_handler_arguments2">
+<statement name="HANDLER">
+</statement>
+<comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;basic.ts&#34; &#47;&#62;</comment>
+</block>
+<block type="test_handler_arguments2">
+<mutation numargs="1" arg0="a" />
+<statement name="HANDLER">
+</statement>
+</block>
+<block type="test_handler_arguments2">
+<mutation numargs="2" arg0="one" arg1="two" />
+<statement name="HANDLER">
+</statement>
+</block>
+</xml>

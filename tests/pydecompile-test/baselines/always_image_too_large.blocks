@@ -1,0 +1,15 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="typescript_statement">
+<mutation declaredvars="item" numlines="7" line0="let item &#61; images.createBigImage&#40;&#96;" line1="    . . . . .   . . . . .   . . . . ." line2="    . &#35; &#35; &#35; .   . &#35; &#35; &#35; .   . &#35; &#35; &#35; ." line3="    . &#35; . &#35; .   . &#35; . &#35; .   . &#35; . &#35; ." line4="    . &#35; &#35; &#35; .   . &#35; &#35; &#35; .   . &#35; &#35; &#35; ." line5="    . . . . .   . . . . .   . . . . ." line6="    &#96;&#41;" />
+<next>
+<block type="typescript_statement">
+<mutation declaredvars="z" numlines="7" line0="let z &#61; images.createBigImage&#40;&#96;" line1="    . ." line2="    . &#35;" line3="    . &#35;" line4="    . &#35;" line5="    . ." line6="    &#96;&#41;" />
+</block>
+</next>
+<comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;mb.ts&#34; &#47;&#62;</comment>
+</block>
+</statement>
+</block>
+</xml>

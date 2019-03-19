@@ -1,0 +1,79 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+    <block type="pxt-on-start">
+    <statement name="HANDLER">
+    <block type="expandable_test">
+    <mutation _expanded="2" />
+    <field name="enu">Direction.Right</field>
+    <value name="str">
+    <shadow type="text">
+    <field name="TEXT">hello</field>
+    </shadow>
+    </value>
+    <value name="ang">
+    <shadow type="math_number">
+    <field name="NUM">180</field>
+    </shadow>
+    </value>
+    <value name="opt">
+    <shadow type="logic_boolean">
+    <field name="BOOL">TRUE</field>
+    </shadow>
+    </value>
+    <next>
+    <block type="expandable_test">
+    <value name="str">
+    <shadow type="text">
+    <field name="TEXT">hi there</field>
+    </shadow>
+    </value>
+    <value name="ang">
+    <shadow type="math_number">
+    <field name="NUM">180</field>
+    </shadow>
+    </value>
+    <next>
+    <block type="expandable_just">
+    <next>
+    <block type="expandable_just">
+    <mutation _expanded="1" />
+    <value name="str">
+    <shadow type="text">
+    <field name="TEXT">how are you</field>
+    </shadow>
+    </value>
+    <next>
+    <block type="expandable_subset">
+    <mutation _expanded="1" />
+    <value name="str">
+    <shadow type="text">
+    <field name="TEXT">i am fine</field>
+    </shadow>
+    </value>
+    <value name="ang">
+    <shadow type="math_number">
+    <field name="NUM">180</field>
+    </shadow>
+    </value>
+    <value name="opt">
+    <shadow type="logic_boolean">
+    <field name="BOOL">TRUE</field>
+    </shadow>
+    </value>
+    <next>
+    <block type="typescript_statement">
+    <mutation numlines="1" error="Function call has more arguments than are supported by its block" line0="expandable.optionalSubset&#40;&#34;that is good&#34;&#44; 180&#44; true&#44; Direction.Right&#41;&#59;" />
+    </block>
+    </next>
+    </block>
+    </next>
+    </block>
+    </next>
+    </block>
+    </next>
+    </block>
+    </next>
+    <comment pinned="false">&#47; &#60;reference path&#61;&#34;.&#47;testBlocks&#47;expandableBlocks.ts&#34; &#47;&#62;</comment>
+    </block>
+    </statement>
+    </block>
+    </xml>
