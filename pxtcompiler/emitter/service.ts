@@ -683,10 +683,15 @@ namespace ts.pxtc.service {
         },
         blocksInfo: v => blocksInfoOp(v as any),
         apiSearch: v => {
-            const SEARCH_RESULT_COUNT = 7;
+            const SEARCH_RESULT_COUNT = 20; // TODO(dz)
+            // const SEARCH_RESULT_COUNT = 7;
             const search = v.search;
             const bannedCategories = v.blocks ? v.blocks.bannedCategories : undefined;
             const blockInfo = blocksInfoOp(search.localizedApis, bannedCategories); // cache
+
+            // TODO(dz):
+            console.log("blockInfo")
+            console.log(blockInfo)
 
             if (search.localizedStrings) {
                 pxt.Util.setLocalizedStrings(search.localizedStrings);
@@ -768,8 +773,32 @@ namespace ts.pxtc.service {
                     builtinSearchSet = builtinItems;
                 }
 
-                let searchSet: SearchInfo[] = subset.map(s => {
-                    const mappedSi: SearchInfo = {
+                // create a lookup table for enum members
+                let enumMembers = pxt.Util.values(blockInfo.apis.byQName)
+                    .filter(s => s.kind === SymbolKind.EnumMember)
+                let enumMembersByType: pxt.Map<SymbolInfo[]> = {}
+                for (let sym of enumMembers) {
+                    if (!(sym.retType in enumMembersByType))
+                        enumMembersByType[sym.retType] = []
+                    enumMembersByType[sym.retType].push(sym)
+                }
+
+                const getParameterEnumMembers = (s: SymbolInfo): SymbolInfo[] => {
+                    const params = (s.parameters || [])
+                        .map(p => p.type)
+                        .filter(p => p)
+                        .map(t => blockInfo.apis.byQName[t])
+                        .filter(p => p)
+                    const enumParams = params
+                        .filter(p => p.kind == SymbolKind.Enum)
+                    const enumParamMembers = enumParams
+                        .map(p => enumMembersByType[p.qName])
+                        .filter(p => p)
+                        .reduce((p, c) => p.concat(c), [])
+                    return enumParamMembers
+                }
+                const createSearchInfo = (s: SymbolInfo): SearchInfo => {
+                    return {
                         id: s.attributes.blockId,
                         qName: s.qName,
                         name: s.name,
@@ -779,8 +808,33 @@ namespace ts.pxtc.service {
                         localizedCategory: tbSubset && typeof tbSubset[s.attributes.blockId] === "string"
                             ? tbSubset[s.attributes.blockId] as string : undefined
                     };
-                    return mappedSi;
-                });
+                }
+                const mergeSearchInfo = (a: SearchInfo, b: SearchInfo): SearchInfo => {
+                    const concatTwo = (a: string, b: string) =>
+                        a && b ? `${a} ${b}` : a || b
+                    return {
+                        // keep these attributes (which may be used as keys) from the primary
+                        id: a.id,
+                        qName: a.qName,
+                        name: a.name,
+                        namespace: a.namespace,
+                        // merge these descriptive fields
+                        block: concatTwo(a.block, b.block),
+                        jsdoc: concatTwo(a.jsdoc, b.jsdoc),
+                        localizedCategory: concatTwo(a.localizedCategory, b.localizedCategory),
+                    };
+                }
+                const createSearchInfoInclEnums = (s: SymbolInfo): SearchInfo => {
+                    const baseSearchInfo = createSearchInfo(s);
+                    const paramEnums = getParameterEnumMembers(s);
+                    const enumSearchInfo = paramEnums
+                        .map(createSearchInfo);
+                    const mergedSearchInfo = enumSearchInfo
+                        .reduce((p, c) => mergeSearchInfo(p, c), baseSearchInfo)
+                    return mergedSearchInfo;
+                }
+
+                let searchSet: SearchInfo[] = subset.map(createSearchInfoInclEnums);
 
                 // filter out built-ins from the main search set as those 
                 // should come from the built-in search set 
@@ -796,11 +850,18 @@ namespace ts.pxtc.service {
 
                 searchSet = searchSet.concat(builtinSearchSet);
 
+                console.log("searchSet");
+                console.log(searchSet);
+                const longestBlock = searchSet
+                    .map(s => s.block || "")
+                    .reduce((p, c) => c.length > p.length ? c : p, "")
+                    .length
+
                 const fuseOptions = {
                     shouldSort: true,
                     threshold: 0.6,
                     location: 0,
-                    distance: 100,
+                    distance: Math.min(longestBlock, 200),
                     maxPatternLength: 16,
                     minMatchCharLength: 2,
                     findAllMatches: false,
@@ -822,6 +883,9 @@ namespace ts.pxtc.service {
                 lastFuse = new Fuse(searchSet, fuseOptions);
             }
             const fns = lastFuse.search(search.term);
+            console.log("RESULTS") // TODO(dz)
+            console.log(fns)
+            console.log(JSON.stringify(fns))
             return fns.slice(0, SEARCH_RESULT_COUNT);
         },
         projectSearch: v => {
