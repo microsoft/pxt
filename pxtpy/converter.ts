@@ -108,6 +108,17 @@ namespace pxt.py {
         return mkType({ primType: tp })
     }
 
+    function symbolType(s: SymbolInfo): Type {
+        if (isModule(s))
+            return mkType({ moduleType: s })
+        else if (s.kind == SK.Property || s.kind == SK.EnumMember)
+            return s.pyRetType
+        else if (s.kind == SK.Function)
+            return mkFunType(s.pyRetType, s.parameters.map(p => p.pyType))
+        else
+            return mkType({})
+    }
+
     function mapTypes(sym: SymbolInfo) {
         if (!sym || sym.pyRetType) return sym
         currErrorCtx = sym.qName
@@ -177,7 +188,7 @@ namespace pxt.py {
         if (!sym)
             error(a, U.lf("No module named '{0}'", name))
         else
-            unify(a, v.type, mkType({ moduleType: sym }))
+            unify(a, v.type, symbolType(sym))
         return v
     }
 
@@ -355,7 +366,10 @@ namespace pxt.py {
 
     function addSymbolFor(k: SK, n: py.Symbol) {
         if (!n.symInfo) {
-            n.symInfo = addSymbol(SK.Class, getFullName(n))
+            let qn = getFullName(n)
+            if (U.endsWith(qn, ".__init__"))
+                qn = qn.slice(0, -9) + ".__constructor"
+            n.symInfo = addSymbol(k, qn)
             n.symInfo.pyAST = n
         }
         return n.symInfo
@@ -477,15 +491,6 @@ namespace pxt.py {
         }
     }
 
-    function symbolType(s: SymbolInfo): Type {
-        if (isModule(s))
-            return mkType({ moduleType: s })
-        else if (s.kind == SK.Property)
-            return s.pyRetType
-        else
-            return mkType({})
-    }
-
     function scope(f: () => B.JsNode) {
         const prevCtx = U.flatClone(ctx)
         let r: B.JsNode;
@@ -518,6 +523,8 @@ namespace pxt.py {
     }
 
     function compileType(e: Expr): Type {
+        if (!e)
+            return mkType()
         let tpName = getName(e)
         if (tpName) {
             let sym = lookupApi(tpName + "@type") || lookupApi(tpName)
@@ -535,7 +542,8 @@ namespace pxt.py {
         return mkType({})
     }
 
-    function doArgs(args: py.Arguments, isMethod: boolean) {
+    function doArgs(n: FunctionDef, isMethod: boolean) {
+        const args = n.args
         U.assert(!args.kwonlyargs.length)
         let nargs = args.args.slice()
         if (isMethod) {
@@ -544,21 +552,36 @@ namespace pxt.py {
         } else {
             U.assert(!nargs[0] || nargs[0].arg != "self")
         }
-        let didx = args.defaults.length - nargs.length
-        let lst = nargs.map(a => {
-            let v = defvar(a.arg, { isParam: true })
-            if (!a.type && a.annotation) {
-                a.type = compileType(a.annotation)
-                unify(a, a.type, v.type)
+        if (!n.symInfo.parameters) {
+            let didx = args.defaults.length - nargs.length
+            n.symInfo.parameters = nargs.map(a => {
+                let tp = compileType(a.annotation)
+                a.type = tp
+                let defl = ""
+                if (didx >= 0) {
+                    defl = B.flattenNode([expr(args.defaults[didx])]).output
+                    unify(a, tp, typeOf(args.defaults[didx]))
+                }
+                didx++
+                return {
+                    name: a.arg,
+                    description: "",
+                    type: "",
+                    initializer: defl,
+                    default: defl,
+                    pyType: tp
+                }
+            })
+        }
+
+
+        let lst = n.symInfo.parameters.map(p => {
+            let v = defvar(p.name, { isParam: true })
+            unify(n, v.type, p.pyType)
+            let res = [quote(p.name), typeAnnot(v.type)]
+            if (p.default) {
+                res.push(B.mkText(" = " + p.default))
             }
-            if (!a.type) a.type = v.type
-            let res = [quote(a.arg), typeAnnot(v.type)]
-            if (didx >= 0) {
-                res.push(B.mkText(" = "))
-                res.push(expr(args.defaults[didx]))
-                unify(a, a.type, typeOf(args.defaults[didx]))
-            }
-            didx++
             return B.mkGroup(res)
         })
 
@@ -660,18 +683,18 @@ namespace pxt.py {
 
     const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
         FunctionDef: (n: py.FunctionDef) => guardedScope(n, () => {
-            let isMethod = !!ctx.currClass && !ctx.currFun
-            if (!isMethod)
-                defvar(n.name, { fundef: n })
+            const isMethod = !!ctx.currClass && !ctx.currFun
 
-            let topLev = isTopLevel()
+            const sym = addSymbolFor(isMethod ? SK.Method : SK.Function, n)
+            if (!n.retType) n.retType = sym.pyRetType
+
+            const topLev = isTopLevel()
 
             setupScope(n)
             ctx.currFun = n
-            if (!n.retType) n.retType = mkType()
             let prefix = ""
             let funname = n.name
-            let decs = n.decorator_list.filter(d => {
+            const remainingDecorators = n.decorator_list.filter(d => {
                 if (getName(d) == "property") {
                     prefix = "get"
                     return false
@@ -685,45 +708,22 @@ namespace pxt.py {
                 return true
             })
             let nodes = [
-                todoComment("decorators", decs.map(expr))
+                todoComment("decorators", remainingDecorators.map(expr))
             ]
+            if (n.body.length >= 1 && n.body[0].kind == "Raise")
+                n.alwaysThrows = true
             if (isMethod) {
                 let fd = getClassField(ctx.currClass.symInfo, funname, false, true)
-                if (n.body.length == 1 && n.body[0].kind == "Raise")
-                    n.alwaysThrows = true
                 if (n.name == "__init__") {
                     nodes.push(B.mkText("constructor"))
                     unifyClass(n, n.retType, ctx.currClass.symInfo)
                 } else {
                     if (funname == "__get__" || funname == "__set__") {
-                        let i2cArg = "i2cDev"
-                        let vv = n.vars[i2cArg]
-                        vv = n.vars["value"]
+                        let vv = n.vars["value"]
                         if (funname == "__set__" && vv) {
                             let cf = getClassField(ctx.currClass.symInfo, "__get__")
                             if (cf.pyAST && cf.pyAST.kind == "FunctionDef")
                                 unify(n, vv.type, (cf.pyAST as FunctionDef).retType)
-                        }
-                        let nargs = n.args.args
-                        if (nargs[1].arg == "obj") {
-                            // rewrite
-                            nargs[1].arg = i2cArg
-                            if (nargs[nargs.length - 1].arg == "objtype") {
-                                nargs.pop()
-                                n.args.defaults.pop()
-                            }
-                            iterPy(n, e => {
-                                if (e.kind == "Attribute") {
-                                    let a = e as py.Attribute
-                                    if (a.attr == "i2c_device" && getName(a.value) == "obj") {
-                                        let nm = e as py.Name
-                                        nm.kind = "Name"
-                                        nm.id = i2cArg
-                                        delete a.attr
-                                        delete a.value
-                                    }
-                                }
-                            })
                         }
                         funname = funname.replace(/_/g, "")
                     }
@@ -741,8 +741,13 @@ namespace pxt.py {
                     nodes.push(B.mkText("export function "), quote(funname))
             }
             nodes.push(
-                doArgs(n.args, isMethod),
+                doArgs(n, isMethod),
                 n.returns ? typeAnnot(compileType(n.returns)) : B.mkText(""))
+
+            if (!isMethod) {
+                const v = defvar(n.name, { fundef: n })
+                unify(n, symbolType(sym), v.type)
+            }
 
             let body = n.body.map(stmt)
             if (n.name == "__init__") {
