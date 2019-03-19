@@ -4,9 +4,12 @@ namespace ts.pxtc.decompiler {
             blocksInfo: null,
             outfiles: {},
             diagnostics: [],
-            success: false,
+            success: true,
             times: {}
         }
+
+        result.outfiles[file.fileName.replace(/(\.blocks)?\.\w*$/i, '') + '.py'] = "print('Hello, world!')";
+
         return result
     }
 }

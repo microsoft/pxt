@@ -10,7 +10,7 @@ import { TestHost } from "../common/testHost";
 
 const casesDir = path.join(process.cwd(), "tests", "pydecompile-test", "cases");
 const baselineDir = path.join(process.cwd(), "tests", "pydecompile-test", "baselines");
-const testBlocksDir = path.relative(process.cwd(), path.join("tests", "pydecompile-test", "cases", "testBlocks"));
+const testPythonDir = path.relative(process.cwd(), path.join("tests", "pydecompile-test", "cases", "testBlocks"));
 
 function initGlobals() {
     let g = global as any
@@ -51,7 +51,7 @@ pxt.setAppTarget({
 // TODO(dz): unify with decompilerrunner.ts
 
 describe("pydecompiler", () => {
-    const filenames: string[] = [];
+    let filenames: string[] = [];
     for (const file of fs.readdirSync(casesDir)) {
         if (file[0] == ".") {
             continue;
@@ -62,6 +62,11 @@ describe("pydecompiler", () => {
             filenames.push(filename);
         }
     };
+
+    // TODO(dz): starting with a smaller set
+    // console.log(JSON.stringify(filenames))
+    filenames = filenames
+        .filter(f => f.indexOf("string_length") > 0)
 
     filenames.forEach(filename => {
         it("should decompile " + path.basename(filename), () => {
@@ -77,7 +82,7 @@ function fail(msg: string) {
 function pydecompileTestAsync(filename: string) {
     return new Promise((resolve, reject) => {
         const basename = path.basename(filename);
-        const baselineFile = path.join(baselineDir, replaceFileExtension(basename, ".blocks"))
+        const baselineFile = path.join(baselineDir, replaceFileExtension(basename, ".py"))
 
         let baselineExists: boolean;
         try {
@@ -88,9 +93,9 @@ function pydecompileTestAsync(filename: string) {
             baselineExists = false
         }
 
-        return decompileAsyncWorker(filename, testBlocksDir)
+        return decompileAsyncWorker(filename, testPythonDir)
             .then(decompiled => {
-                const outFile = path.join(replaceFileExtension(filename, ".local.blocks"));
+                const outFile = path.join(replaceFileExtension(filename, ".local.py"));
 
                 if (!baselineExists) {
                     fs.writeFileSync(outFile, decompiled)
