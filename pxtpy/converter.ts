@@ -1172,15 +1172,8 @@ namespace pxt.py {
         "ord": { n: ".charCodeAt(0)", t: tpNumber },
         "bytearray": { n: "pins.createBuffer", t: tpBuffer },
         "bytes": { n: "pins.createBufferFromArray", t: tpBuffer },
-        "ustruct.pack": { n: "pins.packBuffer", t: tpBuffer },
-        "ustruct.pack_into": { n: "pins.packIntoBuffer", t: tpVoid },
-        "ustruct.unpack": { n: "pins.unpackBuffer", t: mkArrayType(tpNumber) },
-        "ustruct.unpack_from": { n: "pins.unpackBuffer", t: mkArrayType(tpNumber) },
-        "ustruct.calcsize": { n: "pins.packedSize", t: tpNumber },
-        "pins.I2CDevice.read_into": { n: ".readInto", t: tpVoid },
         "bool": { n: "!!", t: tpBoolean },
         "Array.index": { n: ".indexOf", t: tpNumber },
-        "time.sleep": { n: "pause", t: tpVoid, scale: 1000 }
     }
 
     function isSuper(v: py.Expr) {
@@ -1314,122 +1307,92 @@ namespace pxt.py {
                 }
             }
 
+            let nm = getName(n.func)
             if (fun && fun.pyAST && fun.pyAST.kind == "FunctionDef")
                 fd = fun.pyAST as py.FunctionDef
-
-            let allargs: B.JsNode[] = []
-            let fdargs = fd ? fd.args.args : []
-            if (fdargs[0] && fdargs[0].arg == "self")
-                fdargs = fdargs.slice(1)
-            for (let i = 0; i < n.args.length; ++i) {
-                let e = n.args[i]
-                allargs.push(expr(e))
-                if (fdargs[i] && fdargs[i].type) {
-                    unifyTypeOf(e, fdargs[i].type)
+            else {
+                let over = U.lookup(funMap, nm)
+                if (over) {
+                    methName = ""
+                    recv = null
                 }
-            }
 
-            if (fun) {
-                unifyTypeOf(n, fun.pyRetType)
-            }
-
-            let nm = getName(n.func)
-            let over = U.lookup(funMap, nm)
-            if (over) {
-                methName = ""
-                recv = null
-            }
-
-            if (methName) {
-                nm = t2s(recvTp) + "." + methName
-                over = U.lookup(funMap, nm)
-                if (!over && typeCtor(find(recvTp)) == "@array") {
-                    nm = "Array." + methName
+                if (methName) {
+                    nm = t2s(recvTp) + "." + methName
                     over = U.lookup(funMap, nm)
+                    if (!over && typeCtor(find(recvTp)) == "@array") {
+                        nm = "Array." + methName
+                        over = U.lookup(funMap, nm)
+                    }
+                }
+
+                if (over)
+                    fun = lookupGlobalSymbol(over.n)
+            }
+
+            if (!fun)
+                error(n, U.lf("can't find called function"))
+
+            let orderedArgs = n.args.slice()
+            let formals = fun ? fun.parameters : null
+            let allargs: B.JsNode[] = []
+            if (!formals) {
+                if (fun)
+                    error(n, U.lf("calling non-function"))
+            } else {
+                if (orderedArgs.length > formals.length)
+                    error(n, U.lf("too many arguments in call to '{0}'", fun.qName))
+
+                while (orderedArgs.length < formals.length)
+                    orderedArgs.push(null)
+                orderedArgs = orderedArgs.slice(0, formals.length)
+
+                for (let kw of n.keywords) {
+                    let idx = formals.findIndex(f => f.name == kw.arg)
+                    if (idx < 0)
+                        error(kw, U.lf("'{0}' doesn't have argument named '{1}'", fun.qName, kw.arg))
+                    else if (orderedArgs[idx] != null)
+                        error(kw, U.lf("argument '{0} already specified in call to '{1}'", kw.arg, fun.qName))
+                    else
+                        orderedArgs[idx] = kw.value
+                }
+
+                // skip optional args
+                for (let i = orderedArgs.length - 1; i >= 0; i--) {
+                    if (formals[i].initializer == "undefined" && orderedArgs[i] == null)
+                        orderedArgs.pop()
+                    else
+                        break
+                }
+
+                for (let i = 0; i < orderedArgs.length; ++i) {
+                    let arg = orderedArgs[i]
+                    if (arg == null && !formals[i].initializer) {
+                        error(n, U.lf("missing argument '{0}' in call to '{1}'", formals[i].name, fun.qName))
+                        allargs.push(B.mkText("NULL"))
+                    } else if (arg) {
+                        unifyTypeOf(arg, formals[i].pyType)
+                        allargs.push(expr(arg))
+                    } else {
+                        allargs.push(B.mkText(formals[i].initializer))
+                    }
                 }
             }
 
-            if (n.keywords.length > 0) {
-                if (fd && !fd.args.kwarg) {
-                    let formals = fdargs.slice(n.args.length)
-                    let defls = fd.args.defaults.slice()
-                    while (formals.length > 0) {
-                        let last = formals[formals.length - 1]
-                        if (n.keywords.some(k => k.arg == last.arg))
-                            break
-                        formals.pop()
-                        defls.pop()
-                    }
-                    while (defls.length > formals.length)
-                        defls.shift()
-                    while (defls.length < formals.length)
-                        defls.unshift(null)
+            if (fun)
+                unifyTypeOf(n, fun.pyRetType)
 
-                    let actual = U.toDictionary(n.keywords, k => k.arg)
-                    let idx = 0
-                    for (let formal of formals) {
-                        let ex = U.lookup(actual, formal.arg)
-                        if (ex)
-                            allargs.push(expr(ex.value))
-                        else {
-                            allargs.push(expr(defls[idx]))
-                        }
-                        idx++
-                    }
-                } else {
-                    let keywords = n.keywords.slice()
-                    if (keywords.length) {
-                        let kwargs = keywords.map(kk =>
-                            B.mkGroup([quote(kk.arg), B.mkText(": "), expr(kk.value)]))
-                        allargs.push(B.mkGroup([
-                            B.mkText("{"),
-                            B.mkCommaSep(kwargs),
-                            B.mkText("}")
-                        ]))
-                    }
-                }
-            }
-
+            /*
             if (nm == "super" && allargs.length == 0) {
                 if (ctx.currClass && ctx.currClass.baseClass)
                     unifyClass(n, n.tsType, ctx.currClass.baseClass.symInfo)
                 return B.mkText("super")
             }
-
-            if (over != null) {
-                if (recv)
-                    allargs.unshift(expr(recv))
-                let overName = over.n
-                if (over.t)
-                    unifyTypeOf(n, over.t)
-                if (over.scale) {
-                    allargs = allargs.map(a => {
-                        let s = "?"
-                        if (a.type == B.NT.Prefix && a.children.length == 0)
-                            s = a.op
-                        let n = parseFloat(s)
-                        if (!isNaN(n)) {
-                            return B.mkText((over.scale * n) + "")
-                        } else {
-                            return B.mkInfix(a, "*", B.mkText(over.scale + ""))
-                        }
-                    })
-                }
-                if (overName == "") {
-                    if (allargs.length == 1)
-                        return allargs[0]
-                } else if (overName[0] == ".") {
-                    if (allargs.length == 1)
-                        return B.mkInfix(allargs[0], ".", B.mkText(overName.slice(1)))
-                    else
-                        return B.mkInfix(allargs[0], ".", B.H.mkCall(overName.slice(1), allargs.slice(1)))
-                } else {
-                    return B.H.mkCall(overName, allargs)
-                }
-            }
+            */
 
             let fn = expr(n.func)
 
+            /*
             if (recvTp && recvTp.primType == "@array") {
                 if (methName == "append") {
                     methName = "push"
@@ -1437,6 +1400,7 @@ namespace pxt.py {
                 }
                 fn = B.mkInfix(expr(recv), ".", B.mkText(methName))
             }
+            */
 
             let nodes = [
                 fn,
