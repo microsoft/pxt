@@ -237,7 +237,9 @@ namespace ts.pxtc {
                         name: n,
                         description: desc,
                         type: typeOf(p.type, p),
-                        initializer: p.initializer ? p.initializer.getText() : attributes.paramDefl[n],
+                        initializer:
+                            p.initializer ? p.initializer.getText() :
+                                attributes.paramDefl[n] || (p.questionToken ? "undefined" : undefined),
                         default: attributes.paramDefl[n],
                         properties: props,
                         handlerParameters: parameters,
