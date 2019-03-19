@@ -1261,7 +1261,8 @@ namespace ts.pxtc {
             for (let m of inf.methods) {
                 bin.numMethods++
                 let minf = getFunctionInfo(m)
-                if (isToString(m)) {
+                const attrs = parseComments(m)
+                if (isToString(m) && !attrs.shim) {
                     inf.toStringMethod = lookupProc(m)
                     inf.toStringMethod.info.usedAsIface = true
                 }
@@ -1302,6 +1303,9 @@ namespace ts.pxtc {
                 for (let m of curr.methods) {
                     const n = getName(m)
                     if (isIfaceMemberUsed(n) || isUsed(m)) {
+                        const attrs = parseComments(m);
+                        if (attrs.shim) continue;
+
                         const proc = lookupProc(m)
                         const ex = inf.itable.find(e => e.name == n)
                         const isSet = m.kind == SK.SetAccessor
