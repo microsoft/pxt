@@ -667,7 +667,6 @@ namespace ts.pxtc.service {
         },
 
         py2ts: v => (pxt as any).py.py2ts(v.options),
-        ts2py: v => (pxt as any).py.ts2py(v.options),
 
         fileDiags: v => patchUpDiagnostics(fileDiags(v.fileName)),
 

@@ -123,13 +123,18 @@ export function assembleAsync(src: string) {
 }
 
 function compileCoreAsync(opts: pxtc.CompileOptions): Promise<pxtc.CompileResult> {
+    // we don't want any conversion to be run on the worker sides
+    opts.target.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME
     return workerOpAsync("compile", { options: opts })
 }
 
-export function py2tsAsync(): Promise<pxtc.CompileOptions> {
+export function py2tsAsync(): Promise<{ generated: pxt.Map<string> }> {
     let trg = pkg.mainPkg.getTargetOptions()
-    return pkg.mainPkg.getCompileOptionsAsync(trg)
+    return waitForFirstTypecheckAsync()
+        .then(() => pkg.mainPkg.getCompileOptionsAsync(trg))
         .then(opts => {
+            U.assert(!!cachedApis)
+            opts.apisInfo = cachedApis
             opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
             return workerOpAsync("py2ts", { options: opts })
         })
@@ -185,6 +190,7 @@ function decompileCoreAsync(opts: pxtc.CompileOptions, fileName: string): Promis
 
 export function workerOpAsync(op: string, arg: pxtc.service.OpArg) {
     const startTm = Date.now()
+    pxt.debug("worker op: " + op)
     return pxt.worker.getWorker(pxt.webConfig.workerjs)
         .opAsync(op, arg)
         .then(res => {
@@ -193,6 +199,7 @@ export function workerOpAsync(op: string, arg: pxtc.service.OpArg) {
                 if (res.times)
                     console.log(res.times)
             }
+            pxt.debug("worker op done: " + op)
             return res
         })
 }

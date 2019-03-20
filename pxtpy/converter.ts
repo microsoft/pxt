@@ -1665,6 +1665,7 @@ namespace pxt.py {
 
         currIteration = 1000
         currErrs = ""
+        let generated: Map<string> = {}
         for (let m of modules) {
             try {
                 let nodes = toTS(m)
@@ -1673,12 +1674,15 @@ namespace pxt.py {
                 opts.sourceFiles.push(m.tsFilename)
                 opts.generatedFiles.push(m.tsFilename)
                 opts.fileSystem[m.tsFilename] = res.output
+                generated[m.tsFilename] = res.output
             } catch (e) {
                 console.log("Conv error", e);
             }
         }
 
-        return opts
+        return {
+            generated
+        }
     }
 
     export function convert(opts: pxtc.CompileOptions) {

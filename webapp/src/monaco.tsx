@@ -292,12 +292,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     saveToTypeScript() {
         if (this.fileType !== FileType.Python)
             return Promise.resolve("")
-        this.parent
-        let py = this.currFile.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)
+        let tsName = this.currFile.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)
         return compiler.py2tsAsync()
             .then(res => {
-                if (res.generatedFiles && res.generatedFiles.indexOf(py) >= 0)
-                    return res.fileSystem[py]
+                if (res.generated[tsName])
+                    return res.generated[tsName]
                 return ""
             })
     }
