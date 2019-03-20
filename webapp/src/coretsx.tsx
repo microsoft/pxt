@@ -126,7 +126,6 @@ export class CoreDialog extends React.Component<core.PromptOptions, CoreDialogSt
                 </div> : undefined}
                 {options.jsx}
                 {options.body ? <p>{options.body}</p> : undefined}
-                {options.htmlBody ? <div dangerouslySetInnerHTML={{ __html: options.htmlBody }} /> : undefined}
                 {options.copyable ? <div className="ui fluid action input">
                     <input ref="linkinput" className="linkinput" readOnly spellCheck={false} type="text" value={`${options.copyable}`} />
                     <sui.Button ref="copybtn" labelPosition='right' color="teal" className='copybtn' data-content={lf("Copied!")} />
