@@ -14,6 +14,7 @@ namespace pxt.runner {
         highContrast?: boolean;
         light?: boolean;
         fullScreen?: boolean;
+        deps?: string[]
     }
 
     class EditorPackage {
@@ -92,7 +93,7 @@ namespace pxt.runner {
         }
 
         private githubPackageCache: pxt.Map<Map<string>> = {};
-        downloadPackageAsync(pkg: pxt.Package) {
+        downloadPackageAsync(pkg: pxt.Package, deps?: string[]) {
             let proto = pkg.verProtocol()
             let cached: pxt.Map<string> = undefined;
             // cache resolve github packages
@@ -100,16 +101,29 @@ namespace pxt.runner {
                 cached = this.githubPackageCache[pkg._verspec];
             let epkg = getEditorPkg(pkg)
 
+            if (pkg.depends) {
+                loadDependencies(pkg);
+            }
+            if (deps) {
+                loadDependencies(pkg, deps);
+            }
             return (cached ? Promise.resolve(cached) : pkg.commonDownloadAsync())
                 .then(resp => {
                     if (resp) {
                         if (proto == "github" && !cached)
                             this.githubPackageCache[pkg._verspec] = Util.clone(resp);
                         epkg.setFiles(resp)
+                        //if (pkg.depends) {
+                        //    loadDependencies(pkg);
+                        //}
+                        //let cfg = JSON.parse(epkg.files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+                        //cfg.dependencies["pxt-stats"] = "github:chasemor/pxt-stats#f4df403898b26a2cac020417b84d32dd15db6841"
+                        //epkg.files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4);
                         return Promise.resolve()
                     }
                     if (proto == "empty") {
                         epkg.setFiles(emptyPrjFiles())
+                        loadDependencies(pkg);
                         return Promise.resolve()
                     } else if (proto == "docs") {
                         let files = emptyPrjFiles();
@@ -124,11 +138,14 @@ namespace pxt.runner {
                             } else
                                 console.warn(`unknown package syntax ${d}`)
                         });
-
+                        //cfg.dependencies["pxt-stats"] = "github:chasemor/pxt-stats#f4df403898b26a2cac020417b84d32dd15db6841"
                         if (!cfg.yotta) cfg.yotta = {};
                         cfg.yotta.ignoreConflicts = true;
                         files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4);
                         epkg.setFiles(files);
+                        //if (pkg.depends) {
+                        //    loadDependencies(pkg);
+                        //}
                         return Promise.resolve();
                     } else if (proto == "invalid") {
                         pxt.log(`skipping invalid pkg ${pkg.id}`);
@@ -216,7 +233,8 @@ namespace pxt.runner {
     }
 
     let previousMainPackage: pxt.MainPackage = undefined;
-    function loadPackageAsync(id: string, code?: string) {
+    function loadPackageAsync(simOptions: SimulateOptions | string, code?: string) {
+        const id = typeof simOptions == "string" ? simOptions : simOptions.id;
         const verspec = id ? /\w+:\w+/.test(id) ? id : "pub:" + id : "empty:tsprj";
         let host: pxt.Host;
         let downloadPackagePromise: Promise<void>;
@@ -231,7 +249,12 @@ namespace pxt.runner {
             mainPkg = new pxt.MainPackage(host)
             mainPkg._verspec = id ? /\w+:\w+/.test(id) ? id : "pub:" + id : "empty:tsprj"
             downloadPackagePromise = host.downloadPackageAsync(mainPkg);
-            installPromise = mainPkg.installAllAsync()
+            if (typeof simOptions == "object" && simOptions.deps) {
+                //loadDependencies(mainPkg, simOptions.deps);
+                installPromise = mainPkg.installAllAsync("",simOptions.deps)
+            } else {
+                installPromise = mainPkg.installAllAsync()
+            }
             // cache previous package
             previousMainPackage = mainPkg;
         }
@@ -261,6 +284,32 @@ namespace pxt.runner {
                     showError(lf("Cannot load extension: {0}", e.message))
                 })
             });
+    }
+
+    function loadDependencies(pkg: pxt.Package, deps?: string[]) {
+        deps = pkg.depends;
+        if (deps) {
+            console.log("loading dependencices")
+            let epkg = getEditorPkg(pkg)
+            let cfg = JSON.parse(epkg.files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+            deps.forEach((dep: string) => {
+                if (dep.indexOf("=") > 0) {
+                    let ids =/(\S+)=(\S+:\S+)/.exec(dep);
+                    let id = ids[1];
+                    let ver = ids[2];
+                    //cfg.dependencies["pxt-stats"] = "github:chasemor/pxt-stats#f4df403898b26a2cac020417b84d32dd15db6841"
+                    cfg.dependencies[id] = ver;
+                    //mainPkg.deps[id] = new Package(id, ver, mainPkg, mainPkg)
+                } else {
+                    cfg.dependencies[dep] = "*";
+                }
+                //cfg.dependencies["pxt-stats"] = "github:chasemor/pxt-stats#f4df403898b26a2cac020417b84d32dd15db6841"
+                //mainPkg.deps[id] = new Package(id, ver, mainPkg, mainPkg)
+            });
+            epkg.files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4);
+        } else {
+            console.log("No dependencies given");
+        }
     }
 
     function getCompileOptionsAsync(hex?: boolean) {
@@ -298,7 +347,7 @@ namespace pxt.runner {
     }
 
     export function simulateAsync(container: HTMLElement, simOptions: SimulateOptions) {
-        return loadPackageAsync(simOptions.id)
+        return loadPackageAsync(simOptions)
             .then(() => compileAsync(false, opts => {
                 if (simOptions.code) opts.fileSystem["main.ts"] = simOptions.code;
             }))
