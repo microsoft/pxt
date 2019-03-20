@@ -1,2 +1,2 @@
-let x = "Okay";
-let y = x.length;
+x = "Okay"
+y = len(x)

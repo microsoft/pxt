@@ -65,8 +65,9 @@ describe("pydecompiler", () => {
 
     // TODO(dz): starting with a smaller set
     // console.log(JSON.stringify(filenames))
+    let incl = ["string_length", "game"]
     filenames = filenames
-        .filter(f => f.indexOf("string_length") > 0)
+        .filter(f => incl.some(s => f.indexOf(s) > 0))
 
     filenames.forEach(filename => {
         it("should decompile " + path.basename(filename), () => {
@@ -106,6 +107,13 @@ function pydecompileTestAsync(filename: string) {
                 const baseline = fs.readFileSync(baselineFile, "utf8")
                 if (!compareBaselines(decompiled, baseline)) {
                     fs.writeFileSync(outFile, decompiled)
+                    // TODO(dz)
+                    console.log("-- INPUT");
+                    console.log(fs.readFileSync(filename, 'utf8'))
+                    console.log("-- OUTPUT");
+                    console.log(fs.readFileSync(outFile, 'utf8'))
+                    console.log("-- DESIRED");
+                    console.log(baseline)
                     fail(`${basename} did not match baseline, output written to ${outFile}`);
                 }
             }, error => fail("Could not decompile: " + error.stack))

@@ -26,8 +26,10 @@ namespace ts.pxtc.decompiler {
             switch (s.kind) {
                 case ts.SyntaxKind.VariableStatement:
                     return emitVarStmt(s as ts.VariableStatement)
+                case ts.SyntaxKind.ClassDeclaration:
+                    return emitClassStmt(s as ts.ClassDeclaration)
                 default:
-                    throw Error("Not implemented");
+                    throw Error(`Not implemented: statement kind ${s.kind}`);
             }
         }
         let emitVarStmt = (s: ts.VariableStatement) => {
@@ -35,6 +37,11 @@ namespace ts.pxtc.decompiler {
             // console.log(s.declarationList)
             let decls = s.declarationList.declarations;
             return decls.map(emitVarDecl)
+        }
+        // TODO map names from camel case to snake case
+        let emitClassStmt = (s: ts.ClassDeclaration) => {
+            // TODO inheritence
+            return `class ${s.name}:`
         }
         let emitVarDecl = (s: ts.VariableDeclaration) => {
             let decl = s.name.getText();
@@ -55,11 +62,6 @@ namespace ts.pxtc.decompiler {
         // TODO VariableDeclarationList
 
         let output: string = outLns.join("\n");
-
-        console.log("INPUT")
-        console.log(file.getText())
-        console.log("OUTPUT")
-        console.log(output)
 
         // output += "print('Hello, world!')"
 
