@@ -323,6 +323,7 @@ declare namespace pxt {
         simGifQuality?: number; // generated gif quality (pixel sampling size) - 30 (poor) - 1 (best), default 16
         simGifMaxFrames?: number; // maximum number of frames, default 64
         simGifWidth?: number; // with in pixels for gif frames
+        autoWebUSBDownload?: boolean; // automatically prompt user for webusb download
     }
 
     interface SocialOptions {

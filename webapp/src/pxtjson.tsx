@@ -71,17 +71,36 @@ export class Editor extends srceditor.Editor {
         this.parent.forceUpdate();
     }
 
+    private depConfig() {
+        // will contain all flatton configs
+        let cfg: any = {};
+        // look at all config coming dependencies
+        pkg.mainPkg.sortedDeps()
+            .filter(dep => dep.config && dep.config.yotta && dep.config.yotta.optionalConfig)
+            .forEach(dep => Util.jsonMergeFrom(cfg, dep.config.yotta.optionalConfig));
+        return cfg;
+    }
+
     isUserConfigActive(uc: pxt.CompilationConfig) {
-        const cfg = Util.jsonFlatten(this.config.yotta ? this.config.yotta.config : {});
+        let cfg = this.depConfig();
+        if (this.config.yotta && this.config.yotta.config)
+            Util.jsonMergeFrom(cfg, this.config.yotta.config);
+        // flatten configs
+        cfg = Util.jsonFlatten(cfg);
+
         const ucfg = Util.jsonFlatten(uc.config);
         return !Object.keys(ucfg).some(k => ucfg[k] === null ? !!cfg[k] : cfg[k] !== ucfg[k]);
     }
 
     applyUserConfig(uc: pxt.CompilationConfig) {
+        const depcfg = Util.jsonFlatten(this.depConfig());
         const cfg = Util.jsonFlatten(this.config.yotta ? this.config.yotta.config : {});
         const ucfg = Util.jsonFlatten(uc.config);
         if (this.isUserConfigActive(uc)) {
-            Object.keys(ucfg).forEach(k => delete cfg[k]);
+            Object.keys(ucfg).forEach(k => {
+                if (depcfg[k]) cfg[k] = 0;
+                else delete cfg[k]
+            });
         } else {
             Object.keys(ucfg).forEach(k => cfg[k] = ucfg[k]);
         }
@@ -105,7 +124,9 @@ export class Editor extends srceditor.Editor {
         this.nameInput = c;
     }
 
-    display() {
+    display(): JSX.Element {
+        if (!this.isVisible) return undefined;
+
         const c = this.config;
         let userConfigs: pxt.CompilationConfig[] = [];
         pkg.allEditorPkgs().map(ep => ep.getKsPkg())

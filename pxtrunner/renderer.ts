@@ -96,7 +96,7 @@ namespace pxt.runner {
             if (woptions.showJs) {
                 appendJs($c, $js, woptions);
             } else {
-                const $jsBtn = $(`<a class="item js" role="button" tabindex="0" aria-label="${lf("JavaScript")}"><i role="presentation" aria-hidden="true" class="align left icon"></i></a>`).click(() => {
+                const $jsBtn = $(`<a class="item js" role="button" tabindex="0" aria-label="${"JavaScript"}"><i role="presentation" aria-hidden="true" class="align left icon"></i></a>`).click(() => {
                     if ($c.find('.js')[0])
                         $c.find('.js').remove();
                     else {

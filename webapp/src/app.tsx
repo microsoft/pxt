@@ -279,6 +279,9 @@ export class ProjectView
         if (this.editor && this.editor.isReady) {
             this.updateEditorFile();
         }
+        if (this.state.debugging) {
+            this.blocksEditor.updateToolbox(true);
+        }
     }
 
     fireResize() {
@@ -1138,7 +1141,11 @@ export class ProjectView
     importHexFile(file: File) {
         if (!file) return;
         pxt.cpp.unpackSourceFromHexFileAsync(file)
-            .done(data => this.importHex(data));
+            .then(data => this.importHex(data))
+            .catch(e => {
+                pxt.reportException(e);
+                core.warningNotification(lf("Sorry, we could not recognize this file."))
+            });
     }
 
     importBlocksFiles(file: File) {
@@ -1218,13 +1225,14 @@ export class ProjectView
             pxt.tickEvent("import." + importer.id);
             core.hideDialog();
             core.showLoading("importhex", lf("loading project..."))
-            importer.importAsync(this, data)
-                .done(() => core.hideLoading("importhex"), e => {
-                    pxt.reportException(e, { importer: importer.id });
-                    core.hideLoading("importhex");
-                    core.errorNotification(lf("Oops, something went wrong when importing your project"));
-                    if (createNewIfFailed) this.openHome();
-                });
+            pxt.editor.initEditorExtensionsAsync()
+                .then(() => importer.importAsync(this, data)
+                    .done(() => core.hideLoading("importhex"), e => {
+                        pxt.reportException(e, { importer: importer.id });
+                        core.hideLoading("importhex");
+                        core.errorNotification(lf("Oops, something went wrong when importing your project"));
+                        if (createNewIfFailed) this.openHome();
+                    }));
         }
         else {
             core.warningNotification(lf("Sorry, we could not import this project."))
@@ -2073,6 +2081,7 @@ export class ProjectView
         else {
             simulator.driver.restart(); // fast restart
         }
+        this.blocksEditor.setBreakpointsFromBlocks();
     }
 
     startSimulator(debug?: boolean, clickTrigger?: boolean) {
@@ -2199,7 +2208,9 @@ export class ProjectView
     toggleDebugging() {
         const state = !this.state.debugging;
         pxt.log("turning debugging mode to " + state);
-        this.setState({ debugging: state, tracing: false });
+        this.setState({ debugging: state, tracing: false }, () => {
+            this.renderCore()
+        });
         let blocks = this.blocksEditor.editor.getAllBlocks();
         blocks.forEach(block => {
             if (block.nextConnection && block.previousConnection) {
@@ -2207,8 +2218,8 @@ export class ProjectView
             }
         });
 
+        this.blocksEditor.updateToolbox(state)
         this.restartSimulator(state);
-        this.renderCore()
     }
 
     dbgPauseResume() {
@@ -2451,6 +2462,7 @@ export class ProjectView
     }
 
     showExitAndSaveDialog() {
+        this.setState({ debugging: false })
         if (this.state.projectName !== lf("Untitled")) {
             this.openHome();
         }
@@ -2796,7 +2808,7 @@ export class ProjectView
         const inHome = this.state.home && !sandbox;
         const inEditor = !!this.state.header && !inHome;
         const { lightbox, greenScreen } = this.state;
-        const simDebug = !!targetTheme.debugger;
+        const simDebug = !!targetTheme.debugger || inDebugMode;
 
         const { hideMenuBar, hideEditorToolbar, transparentEditorToolbar } = targetTheme;
         const isHeadless = simOpts && simOpts.headless;
@@ -2860,7 +2872,6 @@ export class ProjectView
                     <tutorial.TutorialCard ref="tutorialcard" parent={this} />
                 </div> : undefined}
                 <div id="simulator">
-                    {simDebug ? <debug.DebuggerToolbar parent={this} /> : undefined}
                     <div id="filelist" className="ui items">
                         <div id="boardview" className={`ui vertical editorFloat`} role="region" aria-label={lf("Simulator")}>
                         </div>
@@ -2877,7 +2888,7 @@ export class ProjectView
                         <div id="filelistOverlay" role="button" title={lf("Open in fullscreen")} onClick={this.toggleSimulatorFullscreen}></div>
                     </div>
                 </div>
-                <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main" aria-hidden={inHome}>
+                <div id="maineditor" className={(sandbox ? "sandbox" : "") + (inDebugMode ? "debugging" : "")} role="main" aria-hidden={inHome}>
                     {this.allEditors.map(e => e.displayOuter())}
                 </div>
                 {inHome ? <div id="homescreen" className="full-abs">
@@ -3016,21 +3027,6 @@ function enableAnalytics() {
     pxt.tickEvent("editor.loaded", stats);
 }
 
-function showIcons() {
-    let usedIcons = [
-        "cancel", "certificate", "checkmark", "cloud", "cloud upload", "copy", "disk outline", "download",
-        "dropdown", "edit", "file outline", "find", "folder", "folder open", "help circle",
-        "keyboard", "lock", "play", "puzzle", "search", "setting", "settings",
-        "share alternate", "sign in", "sign out", "square", "stop", "translate", "trash", "undo", "upload",
-        "user", "wizard", "configure", "align left"
-    ]
-    core.confirmAsync({
-        header: "Icons",
-        htmlBody:
-            usedIcons.map(s => `<i style='font-size:2em' class="ui icon ${s}"></i>&nbsp;${s}&nbsp; `).join("\n")
-    })
-}
-
 function assembleCurrent() {
     compiler.compileAsync({ native: true })
         .then(() => compiler.assembleAsync(getEditor().editorFile.content))
@@ -3057,7 +3053,6 @@ let myexports: any = {
     getsrc,
     sim: simulator,
     apiAsync: core.apiAsync,
-    showIcons,
     assembleCurrent,
     log,
     cloudsync

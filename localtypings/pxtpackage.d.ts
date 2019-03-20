@@ -65,6 +65,7 @@ declare namespace pxt {
             excludePrefix?: string[];
         };
         features?: string[];
+        hidden?: boolean; // hide package from package selection dialog
     }
 
     interface PackageExtension {

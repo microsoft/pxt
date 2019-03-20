@@ -780,7 +780,7 @@ namespace ts.pxtc.service {
 
             if (!lastFuse || search.subset) {
                 const weights: pxt.Map<number> = {};
-                let builtinSearchSet: SearchInfo[];
+                let builtinSearchSet: SearchInfo[] = [];
 
                 if (search.subset) {
                     tbSubset = search.subset;
@@ -809,6 +809,11 @@ namespace ts.pxtc.service {
                     return mappedSi;
                 });
 
+                // filter out built-ins from the main search set as those 
+                // should come from the built-in search set 
+                let builtinBlockIds: pxt.Map<Boolean> = {}
+                builtinSearchSet.forEach(b => builtinBlockIds[b.id] = true)
+                searchSet = searchSet.filter(b => !(b.id in builtinBlockIds));
 
                 let mw = 0;
                 subset.forEach(b => {
