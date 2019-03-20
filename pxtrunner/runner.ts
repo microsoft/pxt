@@ -264,11 +264,11 @@ namespace pxt.runner {
     }
 
     function loadDependencies(pkg: pxt.Package) {
-        if (pkg.depends) {
+        if (pkg.dependLinks) {
             console.log("loading dependencices")
             let epkg = getEditorPkg(pkg)
             let cfg = JSON.parse(epkg.files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
-            pkg.depends.forEach((dep: string) => {
+            pkg.dependLinks.forEach((dep: string) => {
                 if (dep.indexOf("=") > 0) {
                     let ids =/(\S+)=(\S+:\S+)/.exec(dep);
                     let id = ids[1];
