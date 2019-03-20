@@ -50,7 +50,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     setBreakpointsFromBlocks(): void {
         let breakpoints: number[] = []
         let map = this.breakpointsByBlock;
-        if (map) {
+        if (map && this.editor) {
             this.editor.getAllBlocks().forEach(block => {
                 if (map[block.id] && block.isBreakpointSet()) {
                     breakpoints.push(this.breakpointsByBlock[block.id]);

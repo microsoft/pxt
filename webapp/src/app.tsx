@@ -1871,7 +1871,7 @@ export class ProjectView
             simulator.setTraceInterval(intervalSpeed || simulator.SLOW_TRACE_INTERVAL);
         }
         this.setState({ tracing: !tracing, debugging: debugging && !tracing },
-            () => this.startSimulator())
+            () => this.restartSimulator())
     }
 
     setTrace(enabled: boolean, intervalSpeed?: number) {
@@ -2017,20 +2017,25 @@ export class ProjectView
         else {
             simulator.driver.restart(); // fast restart
         }
-        this.blocksEditor.setBreakpointsFromBlocks();
+        // TODO: typescript breakpoints
+        if (isDebug)
+            this.blocksEditor.setBreakpointsFromBlocks();
+        else    
+            this.blocksEditor.clearBreakpoints();
     }
 
     startSimulator(opts?: pxt.editor.SimulatorStartOptions) {
         pxt.tickEvent('simulator.start');
-        const dbg = this.state.debugging || this.state.tracing;
+        const isDebug = this.state.debugging || this.state.tracing;
+        const isDebugMatch = simulator.driver.isDebug() == isDebug;
         const clickTrigger = opts && opts.clickTrigger;
         pxt.debug(`start sim (autorun ${this.state.autoRun})`)
-        if (!this.shouldStartSimulator() && !dbg) {
+        if (!this.shouldStartSimulator() && isDebugMatch) {
             pxt.log("Ignoring call to start simulator, either already running or we shouldn't start.");
             return Promise.resolve();
         }
         return this.saveFileAsync()
-            .then(() => this.runSimulator({ debug: dbg, clickTrigger }))
+            .then(() => this.runSimulator({ debug: isDebug, clickTrigger }))
     }
 
     stopSimulator(unload?: boolean, opts?: pxt.editor.SimulatorStartOptions) {
