@@ -125,7 +125,8 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
                         } else {
                             let children: pxt.Map<Variable> = {};
                             Object.keys(msg.variables).forEach(variableName => {
-                                children[variableName] = { value: msg.variables[variableName] }
+                                let variableDisplayName = (allApis[variableName] && allApis[variableName].attributes.dbgDisplayName) ? allApis[variableName].attributes.dbgDisplayName : variableName
+                                children[variableDisplayName] = { value: msg.variables[variableName] }
                             })
                             v.children = children;
                         }

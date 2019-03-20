@@ -135,8 +135,7 @@ namespace pxsim {
             if (frame.fields && fields) {
                 // Fields of an object.
                 for (let k of fields) {
-                    k = k.substring(k.lastIndexOf(".") + 1)
-                    r[k] = valToJSON(evalGetter(frame.vtable.iface[k], frame));
+                    r[k] = valToJSON(evalGetter(frame.vtable.iface[k.substring(k.lastIndexOf(".") + 1)], frame));
                 }
             } else if (frame.fields) {
                 for (let k of Object.keys(frame.fields)) {
