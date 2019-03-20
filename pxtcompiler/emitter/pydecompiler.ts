@@ -39,8 +39,6 @@ namespace ts.pxtc.decompiler {
 
     function emitNode(s: ts.Node): string[] {
         switch (s.kind) {
-            case ts.SyntaxKind.NewLineTrivia:
-                return ["FOO"]
             case ts.SyntaxKind.SyntaxList:
                 return (s as ts.SyntaxList)._children
                     .map(emitNode)
