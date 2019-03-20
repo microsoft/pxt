@@ -168,20 +168,23 @@ namespace pxt.py {
 
     function initApis(apisInfo: pxtc.ApisInfo) {
         internalApis = {}
-        externalApis = apisInfo.byQName as any
-        for (let sym of U.values(externalApis)) {
-            sym.members = []
-            fillTypes(sym) // TODO remove when done
-        }
-        if (currErrs)
-            pxt.log(currErrs)
-        for (let sym of U.values(externalApis)) {
-            if (sym.namespace && sym.namespace != sym.qName) {
-                let par = externalApis[sym.namespace]
-                if (par)
-                    par.members.push(sym)
+        externalApis = {}
+
+        for (let sym of U.values(apisInfo.byQName)) {
+            // sym.pkg == null - from main package - skip these
+            if (sym.pkg != null) {
+                let sym2 = sym as SymbolInfo
+                externalApis[sym2.qName] = sym2
             }
         }
+
+        // TODO this is for testing mostly; we can do this lazily
+        for (let sym of U.values(externalApis)) {
+            fillTypes(sym)
+        }
+
+        if (currErrs)
+            pxt.log(currErrs)
         tpBuffer = mapTsType("Buffer")
     }
 

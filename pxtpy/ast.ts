@@ -10,7 +10,6 @@ namespace pxt.py {
         pyRetType?: Type;
         pySymbolType?: Type;
         pyInstanceType?: Type;
-        members: SymbolInfo[]; // TODO needed?
         parameters: ParameterDesc[];
         pyAST?: AST;
         isProtected?: boolean;
