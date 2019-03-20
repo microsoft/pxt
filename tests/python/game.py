@@ -1,8 +1,11 @@
 class Foo:
   def qux2(self):
-    self.baz = 13
+    z = 12
+    x = z * 3
+    self.baz = x
   def qux(self):
     self.baz = self.bar
+    self.blah = "hello"
 
 class SpriteKind(Enum):
     Player = 0
