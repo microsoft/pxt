@@ -119,8 +119,15 @@ namespace ts.pxtc.decompiler {
     }
     // TODO map names from camel case to snake case
     function emitClassStmt(s: ts.ClassDeclaration): string[] {
-        // TODO inheritence
-        let out = [`class ${s.name.getText()}:`]
+        let out: string[] = []
+
+        // TODO handle inheritence
+
+        let isEnum = s.members.every(isEnumMem) // TODO hack?
+        if (isEnum)
+            out.push(`class ${s.name.getText()}(Enum):`)
+        else
+            out.push(`class ${s.name.getText()}:`)
 
         let mems = s.members
             .map(emitClassMem)
@@ -132,6 +139,20 @@ namespace ts.pxtc.decompiler {
         out.push("") // leave newline after class
 
         return out;
+    }
+    function isEnumMem(s: ts.ClassElement): boolean {
+        if (s.kind !== ts.SyntaxKind.PropertyDeclaration)
+            return false
+        let prop = s as ts.PropertyDeclaration
+        if (!prop.modifiers || prop.modifiers.length !== 1)
+            return false
+        for (let mod of prop.modifiers)
+            if (mod.kind !== ts.SyntaxKind.StaticKeyword)
+                return false;
+        if (prop.initializer.kind !== ts.SyntaxKind.NumericLiteral)
+            return false;
+
+        return true
     }
     function emitClassMem(s: ts.ClassElement): string[] {
         switch (s.kind) {
