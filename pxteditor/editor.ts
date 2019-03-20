@@ -1,6 +1,8 @@
 namespace pxt.editor {
     export enum SimState {
         Stopped,
+        // waiting to be started
+        Pending,
         Starting,
         Running
     }

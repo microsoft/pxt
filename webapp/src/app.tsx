@@ -590,6 +590,7 @@ export class ProjectView
                     case pxsim.SimulatorState.Paused:
                     case pxsim.SimulatorState.Unloaded:
                     case pxsim.SimulatorState.Suspended:
+                    case pxsim.SimulatorState.Pending:
                     case pxsim.SimulatorState.Stopped:
                         this.setState({ simState: pxt.editor.SimState.Stopped });
                         break;
@@ -642,8 +643,8 @@ export class ProjectView
         if (!this.state.currFile.virtual) { // switching to serial should not reset the sim
             this.stopSimulator();
             if (simRunning || this.state.autoRun) {
-                simulator.driver.setStarting();
-                this.setState({ simState: pxt.editor.SimState.Starting });
+                simulator.setPending();
+                this.setState({ simState: pxt.editor.SimState.Pending });
             }
         }
         this.saveSettings();
@@ -1849,6 +1850,7 @@ export class ProjectView
     startStopSimulator(opts?: pxt.editor.SimulatorStartOptions) {
         switch (this.state.simState) {
             case pxt.editor.SimState.Starting:
+            case pxt.editor.SimState.Pending:
                 // button smashing, do nothing
                 break;
             case pxt.editor.SimState.Running:

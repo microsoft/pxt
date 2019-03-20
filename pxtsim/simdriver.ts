@@ -20,6 +20,7 @@ namespace pxsim {
     export enum SimulatorState {
         Unloaded,
         Stopped,
+        Pending,
         Starting,
         Running,
         Paused,
@@ -87,7 +88,11 @@ namespace pxsim {
             if (this.state == pxsim.SimulatorState.Running) this.suspend();
         }
 
-        setStarting() {
+        setPending() {
+            this.setState(SimulatorState.Pending);
+        }
+
+        private setStarting() {
             this.setState(SimulatorState.Starting);
         }
 
@@ -136,6 +141,7 @@ namespace pxsim {
             const loader = icon.nextElementSibling as HTMLElement;
             // apply state
             switch (this.state) {
+                case SimulatorState.Pending:
                 case SimulatorState.Starting:
                     icon.style.display = '';
                     icon.className = '';

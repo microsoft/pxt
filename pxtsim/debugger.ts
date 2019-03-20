@@ -365,7 +365,8 @@ namespace pxsim {
                 case SimulatorState.Stopped:
                     this.sendEvent(new protocol.TerminatedEvent())
                     break;
-                case SimulatorState.Unloaded:
+                //case SimulatorState.Unloaded:
+                //case SimulatorState.Pending:
                 default:
             }
         }
