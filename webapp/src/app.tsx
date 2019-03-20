@@ -1873,7 +1873,7 @@ export class ProjectView
             simulator.setTraceInterval(intervalSpeed != undefined ? intervalSpeed : simulator.SLOW_TRACE_INTERVAL);
         }
         this.setState({ tracing: !tracing })
-        this.restartSimulatorTrace(!tracing);
+        this.startSimulator(true);
     }
 
     setTrace(enabled: boolean, intervalSpeed?: number) {
@@ -1882,7 +1882,7 @@ export class ProjectView
         }
         else if (this.state.tracing) {
             simulator.setTraceInterval(intervalSpeed != undefined ? intervalSpeed : simulator.SLOW_TRACE_INTERVAL);
-            this.restartSimulatorTrace();
+            this.startSimulator(true);
         }
     }
 
@@ -2019,15 +2019,6 @@ export class ProjectView
             simulator.driver.restart(); // fast restart
         }
         this.blocksEditor.setBreakpointsFromBlocks();
-    }
-
-    restartSimulatorTrace(trace?: boolean) {
-        if (this.state.simState == pxt.editor.SimState.Stopped
-            || this.state.tracing != !!trace)
-            this.startSimulator(true);
-        else {
-            simulator.driver.restart(); // fast restart
-        }
     }
 
     startSimulator(debug?: boolean, clickTrigger?: boolean) {
