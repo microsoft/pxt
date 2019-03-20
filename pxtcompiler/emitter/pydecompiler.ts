@@ -9,7 +9,6 @@ namespace ts.pxtc.decompiler {
             times: {}
         }
 
-        let stmts: NodeArray<ts.Statement> = file.statements;
         // const env: DecompilerEnv = {
         //     blocks: blocksInfo,
         //     declaredFunctions: {},
@@ -21,8 +20,8 @@ namespace ts.pxtc.decompiler {
         //     opts: options || {}
         // };
 
-        let outLns = stmts
-            .map(emitStmt)
+        let outLns = file.getChildren()
+            .map(emitNode)
             .reduce((p, c) => p.concat(c), [])
 
         let output = outLns.join("\n");
@@ -32,14 +31,44 @@ namespace ts.pxtc.decompiler {
         return result
     }
 
-    // TODO(dz):
     const INDENT = "  "
-
-    function ind(lvl: number): (s: string) => string {
+    function indent(lvl: number): (s: string) => string {
         return s => `${INDENT.repeat(lvl)}${s}`
     }
+    let indent1 = indent(1)
 
+    function emitNode(s: ts.Node): string[] {
+        switch (s.kind) {
+            case ts.SyntaxKind.NewLineTrivia:
+                return ["FOO"]
+            case ts.SyntaxKind.SyntaxList:
+                return (s as ts.SyntaxList)._children
+                    .map(emitNode)
+                    .reduce((p, c) => p.concat(c), [])
+            case ts.SyntaxKind.EndOfFileToken:
+                return []
+            default:
+                return emitStmtWithNewlines(s as ts.Statement)
+        }
+    }
+
+    function emitStmtWithNewlines(s: ts.Statement): string[] {
+        let out: string[] = [];
+
+        let leadingNewlines = 0
+        if (s.getLeadingTriviaWidth() > 0) {
+            let leading = s.getFullText().slice(0, s.getLeadingTriviaWidth())
+            leadingNewlines = leading.split("\n").length - 2; // expect 1 newline, anything more is a blank line
+        }
+        for (let i = 0; i < leadingNewlines; i++)
+            out.push("")
+
+        out = out.concat(emitStmt(s))
+
+        return out;
+    }
     function emitStmt(s: ts.Statement): string[] {
+
         // TODO(dz): why does the type system not recognize this as discriminated unions?
         switch (s.kind) {
             case ts.SyntaxKind.VariableStatement:
@@ -70,7 +99,7 @@ namespace ts.pxtc.decompiler {
             .reduce((p, c) => p.concat(c), [])
             .filter(m => m)
         if (mems.length) {
-            out = out.concat(mems.map(ind(1)))
+            out = out.concat(mems.map(indent1))
         }
         out.push("") // leave newline after class
 
@@ -125,7 +154,7 @@ namespace ts.pxtc.decompiler {
             .reduce((p, c) => p.concat(c), [])
             .filter(s => s)
         if (stmts.length) {
-            out = out.concat(stmts.map(ind(1)))
+            out = out.concat(stmts.map(indent1))
         }
 
         return out
@@ -148,7 +177,7 @@ namespace ts.pxtc.decompiler {
     }
     function emitBinExp(s: ts.BinaryExpression): string {
         let left = emitExp(s.left)
-        let op = s.operatorToken.getText() // TODO
+        let op = s.operatorToken.getText() // TODO translate operators
         let right = emitExp(s.right)
         return `${left} ${op} ${right}`;
     }
@@ -179,7 +208,7 @@ namespace ts.pxtc.decompiler {
             case ts.SyntaxKind.CallExpression:
                 return emitCallExp(s as ts.CallExpression)
             default:
-                // TODO(dz) !!
+                // TODO handle more expressions
                 return s.getText()
         }
     }
