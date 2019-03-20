@@ -575,7 +575,6 @@ export class ProjectView
 
     public componentDidMount() {
         this.allEditors.forEach(e => e.prepare())
-        let restartingSim = false;
         simulator.init(document.getElementById("boardview"), {
             orphanException: brk => {
                 // TODO: start debugging session
@@ -1864,23 +1863,24 @@ export class ProjectView
     }
 
     toggleTrace(intervalSpeed?: number) {
-        let tracing = this.state.tracing;
+        const tracing = !!this.state.tracing;
+        const debugging = !!this.state.debugging;
         if (tracing) {
             this.editor.clearHighlightedStatements();
             simulator.setTraceInterval(0);
         } else {
             simulator.setTraceInterval(intervalSpeed || simulator.SLOW_TRACE_INTERVAL);
         }
-        this.setState({ tracing: !tracing }, () => this.startSimulator(true))
-        this.startSimulator(true);
+        this.setState({ tracing: !tracing, debugging: debugging && !tracing },
+            () => this.startSimulator(!tracing))
     }
 
     setTrace(enabled: boolean, intervalSpeed?: number) {
-        if (this.state.tracing !== enabled) {
+        if (!!this.state.tracing != enabled) {
             this.toggleTrace(intervalSpeed);
         }
         else if (this.state.tracing) {
-            simulator.setTraceInterval(intervalSpeed != undefined ? intervalSpeed : simulator.SLOW_TRACE_INTERVAL);
+            simulator.setTraceInterval(intervalSpeed || simulator.SLOW_TRACE_INTERVAL);
             this.startSimulator(true);
         }
     }
@@ -2010,10 +2010,11 @@ export class ProjectView
         return this.state.simState == pxt.editor.SimState.Running;
     }
 
-    restartSimulator(debug?: boolean) {
+    restartSimulator() {
+        const isDebug = this.state.tracing || this.state.debugging;
         if (this.state.simState == pxt.editor.SimState.Stopped
-            || simulator.driver.isDebug() != !!debug)
-            this.startSimulator(debug);
+            || simulator.driver.isDebug() != !!isDebug)
+            this.startSimulator();
         else {
             simulator.driver.restart(); // fast restart
         }
