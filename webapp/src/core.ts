@@ -154,7 +154,6 @@ export interface DialogOptions {
     header: string;
     body?: string;
     jsx?: JSX.Element;
-    htmlBody?: string;
     copyable?: string;
     size?: string; // defaults to "small"
     onLoaded?: (_: HTMLElement) => void;

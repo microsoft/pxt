@@ -2961,21 +2961,6 @@ function enableAnalytics() {
     pxt.tickEvent("editor.loaded", stats);
 }
 
-function showIcons() {
-    let usedIcons = [
-        "cancel", "certificate", "checkmark", "cloud", "cloud upload", "copy", "disk outline", "download",
-        "dropdown", "edit", "file outline", "find", "folder", "folder open", "help circle",
-        "keyboard", "lock", "play", "puzzle", "search", "setting", "settings",
-        "share alternate", "sign in", "sign out", "square", "stop", "translate", "trash", "undo", "upload",
-        "user", "wizard", "configure", "align left"
-    ]
-    core.confirmAsync({
-        header: "Icons",
-        htmlBody:
-            usedIcons.map(s => `<i style='font-size:2em' class="ui icon ${s}"></i>&nbsp;${s}&nbsp; `).join("\n")
-    })
-}
-
 function assembleCurrent() {
     compiler.compileAsync({ native: true })
         .then(() => compiler.assembleAsync(getEditor().editorFile.content))
@@ -3002,7 +2987,6 @@ let myexports: any = {
     getsrc,
     sim: simulator,
     apiAsync: core.apiAsync,
-    showIcons,
     assembleCurrent,
     log,
     cloudsync
