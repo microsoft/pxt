@@ -1535,9 +1535,9 @@ ${output}</xml>`;
             }));
 
             const statements = getStatementBlock(n.body);
-            
+
             env.localReporters.pop();
-           
+
             let r: StatementNode;
 
             r = mkStmt("function_definition");
