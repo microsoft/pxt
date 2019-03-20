@@ -24,3 +24,4 @@ paper.dvi
 paper.fls
 paper.fdb_latexmk
 paper.aux
+tests/**/*.local.*
