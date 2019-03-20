@@ -28,6 +28,10 @@ namespace ts.pxtc.decompiler {
                     return emitVarStmt(s as ts.VariableStatement)
                 case ts.SyntaxKind.ClassDeclaration:
                     return emitClassStmt(s as ts.ClassDeclaration)
+                case ts.SyntaxKind.ExpressionStatement:
+                    return emitExpStmt(s as ts.ExpressionStatement)
+                case ts.SyntaxKind.FunctionDeclaration:
+                    return emitFuncDeclStmt(s as ts.FunctionDeclaration)
                 default:
                     throw Error(`Not implemented: statement kind ${s.kind}`);
             }
@@ -41,7 +45,25 @@ namespace ts.pxtc.decompiler {
         // TODO map names from camel case to snake case
         let emitClassStmt = (s: ts.ClassDeclaration) => {
             // TODO inheritence
-            return `class ${s.name}:`
+            return `class ${s.name.getText()}:`
+        }
+        let emitExpStmt = (s: ts.ExpressionStatement) => {
+            // TODO
+            let exp = emitExp(s.expression)
+            return `${exp}`
+        }
+        let emitFuncDeclStmt = (s: ts.FunctionDeclaration) => {
+            // TODO
+            let params = s.parameters
+                .map(emitParamDecl)
+                .join(", ")
+            return `def ${s.name.getText()}(${params}):`
+        }
+        let emitParamDecl = (s: ts.ParameterDeclaration) => {
+            // TODO
+            let nm = s.name.getText()
+            let typ = s.type.getText()
+            return `${nm}:${typ}`
         }
         let emitVarDecl = (s: ts.VariableDeclaration) => {
             let decl = s.name.getText();

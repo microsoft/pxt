@@ -20,7 +20,7 @@ ship.bottom = 120
 controller.moveSprite(ship, 100, 100)
 info.setLife(3)
 
-def playerDamage(sprite, otherSprite):
+def playerDamage(sprite:Sprite, otherSprite:Sprite):
     scene.cameraShake(4, 500)
     otherSprite.destroy(effects.disintegrate)
     sprite.startEffect(effects.fire, 200)
