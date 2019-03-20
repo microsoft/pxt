@@ -660,6 +660,9 @@ namespace ts.pxtc.service {
             const bannedCategories = v.blocks ? v.blocks.bannedCategories : undefined;
             return decompile(v.options, v.fileName, false, bannedCategories);
         },
+        pydecompile: v => {
+            return pydecompile(v.options, v.fileName);
+        },
         assemble: v => {
             return {
                 words: processorInlineAssemble(host.opts.target, v.fileContent)

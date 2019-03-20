@@ -183,6 +183,10 @@ function decompileCoreAsync(opts: pxtc.CompileOptions, fileName: string): Promis
     return workerOpAsync("decompile", { options: opts, fileName: fileName, blocks: blocksOptions() })
 }
 
+function pydecompileCoreAsync(opts: pxtc.CompileOptions, fileName: string): Promise<pxtc.CompileResult> {
+    return workerOpAsync("pydecompile", { options: opts, fileName: fileName })
+}
+
 export function workerOpAsync(op: string, arg: pxtc.service.OpArg) {
     const startTm = Date.now()
     return pxt.worker.getWorker(pxt.webConfig.workerjs)

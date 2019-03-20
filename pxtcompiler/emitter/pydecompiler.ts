@@ -134,7 +134,6 @@ namespace ts.pxtc.decompiler {
         if (mems.length) {
             out = out.concat(mems.map(indent1))
         }
-        out.push("") // leave newline after class
 
         return out;
     }
@@ -170,7 +169,7 @@ namespace ts.pxtc.decompiler {
             return `${nm} = ${init}`
         }
         else {
-            // TODO can't do declerations without initilization in python
+            // can't do declerations without initilization in python
             return ""
         }
     }
@@ -218,7 +217,7 @@ namespace ts.pxtc.decompiler {
             let exp = emitExp(s.initializer);
             return `${decl} = ${exp}`
         } else {
-            // TODO can't do declerations without initilization in python
+            // can't do declerations without initilization in python
             return ""
         }
     }
