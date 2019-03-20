@@ -587,7 +587,6 @@ namespace pxt.py {
             let didx = args.defaults.length - nargs.length
             n.symInfo.parameters = nargs.map(a => {
                 let tp = compileType(a.annotation)
-                a.type = tp
                 let defl = ""
                 if (didx >= 0) {
                     defl = B.flattenNode([expr(args.defaults[didx])]).output
@@ -717,7 +716,6 @@ namespace pxt.py {
             const isMethod = !!ctx.currClass && !ctx.currFun
 
             const sym = addSymbolFor(isMethod ? SK.Method : SK.Function, n)
-            if (!n.retType) n.retType = sym.pyRetType
 
             const topLev = isTopLevel()
 
@@ -747,14 +745,14 @@ namespace pxt.py {
                 let fd = getClassField(ctx.currClass.symInfo, funname, false, true)
                 if (n.name == "__init__") {
                     nodes.push(B.mkText("constructor"))
-                    unifyClass(n, n.retType, ctx.currClass.symInfo)
+                    unifyClass(n, sym.pyRetType, ctx.currClass.symInfo)
                 } else {
                     if (funname == "__get__" || funname == "__set__") {
                         let vv = n.vars["value"]
                         if (funname == "__set__" && vv) {
                             let cf = getClassField(ctx.currClass.symInfo, "__get__")
                             if (cf.pyAST && cf.pyAST.kind == "FunctionDef")
-                                unify(n, vv.type, (cf.pyAST as FunctionDef).retType)
+                                unify(n, vv.type, cf.pyRetType)
                         }
                         funname = funname.replace(/_/g, "")
                     }
@@ -837,7 +835,7 @@ namespace pxt.py {
         Return: (n: py.Return) => {
             if (n.value) {
                 let f = ctx.currFun
-                if (f) unifyTypeOf(n.value, f.retType)
+                if (f) unifyTypeOf(n.value, f.symInfo.pyRetType)
                 return B.mkStmt(B.mkText("return "), expr(n.value))
             } else {
                 return B.mkStmt(B.mkText("return"))

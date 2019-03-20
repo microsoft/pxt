@@ -91,7 +91,6 @@ namespace pxt.py {
         kind: "Arg";
         arg: identifier;
         annotation?: Expr;
-        type?: Type;
     }
 
     export interface Arguments extends AST {
@@ -178,7 +177,6 @@ namespace pxt.py {
         body: Stmt[];
         decorator_list: Expr[];
         returns?: Expr;
-        retType?: Type;
         alwaysThrows?: boolean;
     }
     export interface AsyncFunctionDef extends Stmt {
