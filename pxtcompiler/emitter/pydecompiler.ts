@@ -45,7 +45,29 @@ namespace ts.pxtc.decompiler {
         // TODO map names from camel case to snake case
         let emitClassStmt = (s: ts.ClassDeclaration) => {
             // TODO inheritence
-            return `class ${s.name.getText()}:`
+            let out = `class ${s.name.getText()}:`
+
+            if (s.members.length) {
+                let mems = s.members.map(emitClassMem)
+                out += "\n"
+                out += mems
+                    .map(m => `\t${m}`)
+                    .join("\n")
+            }
+
+            return out;
+        }
+        let emitClassMem = (s: ts.ClassElement) => {
+            switch (s.kind) {
+                case ts.SyntaxKind.PropertyDeclaration:
+                    return emitPropDecl(s as ts.PropertyDeclaration)
+                default:
+                    return "UNKNOWN ClassElement " + s.kind
+            }
+        }
+        let emitPropDecl = (s: ts.PropertyDeclaration) => {
+            // TODO(dz)
+            return s.name.getText()
         }
         let emitExpStmt = (s: ts.ExpressionStatement) => {
             // TODO
