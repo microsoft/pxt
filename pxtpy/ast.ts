@@ -8,6 +8,8 @@ namespace pxt.py {
 
     export interface SymbolInfo extends pxtc.SymbolInfo {
         pyRetType?: Type;
+        pySymbolType?: Type;
+        pyInstanceType?: Type;
         members: SymbolInfo[]; // TODO needed?
         parameters: ParameterDesc[];
         pyAST?: AST;

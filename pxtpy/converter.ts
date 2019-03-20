@@ -89,46 +89,71 @@ namespace pxt.py {
         if (tp == "T" || tp == "U") // TODO hack!
             return mkType({ primType: "'" + tp })
 
-        let ai = lookupApi(tp + "@type") || lookupApi(tp)
-        if (!ai) {
+        let sym = lookupApi(tp + "@type") || lookupApi(tp)
+        if (!sym) {
             error(null, U.lf("unknown type '{0}' near '{1}'", tp, currErrorCtx || "???"))
             return mkType({ primType: tp })
         }
 
-        if (ai.kind == SK.EnumMember)
+        if (sym.kind == SK.EnumMember)
             return tpNumber
 
-        if (ai.kind == SK.Class || ai.kind == SK.Interface)
-            return mkType({ classType: ai })
+        // sym.pyInstanceType might not be initialized yet and we don't want to call symbolType() here to avoid infinite recursion
+        if (sym.kind == SK.Class || sym.kind == SK.Interface)
+            return sym.pyInstanceType || mkType({ classType: sym })
 
-        if (ai.kind == SK.Enum)
+        if (sym.kind == SK.Enum)
             return tpNumber
 
         error(null, U.lf("'{0}' is not a type near '{1}'", tp, currErrorCtx || "???"))
         return mkType({ primType: tp })
     }
 
-    function symbolType(s: SymbolInfo): Type {
-        if (isModule(s))
-            return mkType({ moduleType: s })
-        else if (s.kind == SK.Property || s.kind == SK.EnumMember)
-            return s.pyRetType
-        else if (s.kind == SK.Function)
-            return mkFunType(s.pyRetType, s.parameters.map(p => p.pyType))
-        else
-            return mkType({})
+    function symbolType(sym: SymbolInfo): Type {
+        if (!sym.pySymbolType) {
+            currErrorCtx = sym.qName
+
+            if (sym.parameters)
+                for (let p of sym.parameters) {
+                    if (!p.pyType)
+                        p.pyType = mapTsType(p.type)
+                }
+
+            const prevRetType = sym.pyRetType
+
+            if (isModule(sym)) {
+                sym.pyRetType = mkType({ moduleType: sym })
+            } else {
+                if (sym.retType)
+                    sym.pyRetType = mapTsType(sym.retType)
+                else if (sym.pyRetType) {
+                    // nothing to do
+                } else {
+                    U.oops("no type for: " + sym.qName)
+                    sym.pyRetType = mkType({})
+                }
+            }
+
+            if (prevRetType)
+                unify(sym.pyAST, prevRetType, sym.pyRetType)
+
+            if (sym.kind == SK.Function || sym.kind == SK.Method)
+                sym.pySymbolType = mkFunType(sym.pyRetType, sym.parameters.map(p => p.pyType))
+            else
+                sym.pySymbolType = sym.pyRetType
+
+            if (sym.kind == SK.Class || sym.kind == SK.Interface) {
+                sym.pyInstanceType = mkType({ classType: sym })
+            }
+
+            currErrorCtx = null
+        }
+        return sym.pySymbolType
     }
 
-    function mapTypes(sym: SymbolInfo) {
-        if (!sym || sym.pyRetType) return sym
-        currErrorCtx = sym.qName
-        if (!sym.retType && isModule(sym))
-            sym.pyRetType = symbolType(sym)
-        else
-            sym.pyRetType = mapTsType(sym.retType)
-        for (let p of sym.parameters || [])
-            p.pyType = mapTsType(p.type)
-        currErrorCtx = null
+    function fillTypes(sym: SymbolInfo) {
+        if (sym)
+            symbolType(sym)
         return sym
     }
 
@@ -138,7 +163,7 @@ namespace pxt.py {
 
     function lookupGlobalSymbol(name: string): SymbolInfo {
         if (!name) return null
-        return mapTypes(lookupApi(name))
+        return fillTypes(lookupApi(name))
     }
 
     function initApis(apisInfo: pxtc.ApisInfo) {
@@ -146,7 +171,7 @@ namespace pxt.py {
         externalApis = apisInfo.byQName as any
         for (let sym of U.values(externalApis)) {
             sym.members = []
-            mapTypes(sym) // TODO remove when done
+            fillTypes(sym) // TODO remove when done
         }
         if (currErrs)
             pxt.log(currErrs)
@@ -172,6 +197,11 @@ namespace pxt.py {
 
     function mkFunType(retTp: Type, argTypes: Type[]) {
         return mkType({ primType: "@fn" + argTypes.length, typeArgs: [retTp].concat(argTypes) })
+    }
+
+    function instanceType(sym: SymbolInfo) {
+        symbolType(sym)
+        return sym.pyInstanceType
     }
 
     function currentScope(): py.ScopeDef {
@@ -321,7 +351,7 @@ namespace pxt.py {
             t.classType = cd
             return
         }
-        unify(a, t, mkType({ classType: cd }))
+        unify(a, t, instanceType(cd))
     }
 
     function unifyTypeOf(e: Expr, t1: Type): void {
@@ -357,8 +387,8 @@ namespace pxt.py {
             name: m ? m[2] : qname,
             qName: qname,
             namespace: m ? m[1] : "",
+            attributes: {} as any,
             pyRetType: mkType(),
-            attributes: {} as any
         } as any
         internalApis[sym.qName] = sym
         return sym
@@ -529,11 +559,12 @@ namespace pxt.py {
         if (tpName) {
             let sym = lookupApi(tpName + "@type") || lookupApi(tpName)
             if (sym) {
-                if (sym.kind == SK.Class || sym.kind == SK.Interface)
-                    return mkType({ classType: sym })
-
+                symbolType(sym)
                 if (sym.kind == SK.Enum)
                     return tpNumber
+
+                if (sym.pyInstanceType)
+                    return sym.pyInstanceType
             }
             error(e, U.lf("cannot find type '{0}'", tpName))
         }
@@ -770,7 +801,7 @@ namespace pxt.py {
 
             const cv = defvar(n.name, { classdef: n })
             const sym = addSymbolFor(SK.Class, n)
-            unify(n, cv.type, mkType({ moduleType: sym }))
+            unify(n, cv.type, symbolType(sym))
 
             U.assert(!ctx.currClass)
             let topLev = isTopLevel()
