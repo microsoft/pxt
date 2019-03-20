@@ -26,7 +26,6 @@ import * as tutorial from "./tutorial";
 import * as editortoolbar from "./editortoolbar";
 import * as simtoolbar from "./simtoolbar";
 import * as dialogs from "./dialogs";
-import * as debug from "./debugger";
 import * as filelist from "./filelist";
 import * as container from "./container";
 import * as scriptsearch from "./scriptsearch";
@@ -575,7 +574,6 @@ export class ProjectView
 
     public componentDidMount() {
         this.allEditors.forEach(e => e.prepare())
-        let restartingSim = false;
         simulator.init(document.getElementById("boardview"), {
             orphanException: brk => {
                 // TODO: start debugging session
@@ -592,6 +590,7 @@ export class ProjectView
                     case pxsim.SimulatorState.Paused:
                     case pxsim.SimulatorState.Unloaded:
                     case pxsim.SimulatorState.Suspended:
+                    case pxsim.SimulatorState.Pending:
                     case pxsim.SimulatorState.Stopped:
                         this.setState({ simState: pxt.editor.SimState.Stopped });
                         break;
@@ -644,8 +643,8 @@ export class ProjectView
         if (!this.state.currFile.virtual) { // switching to serial should not reset the sim
             this.stopSimulator();
             if (simRunning || this.state.autoRun) {
-                simulator.driver.setStarting();
-                this.setState({ simState: pxt.editor.SimState.Starting });
+                simulator.setPending();
+                this.setState({ simState: pxt.editor.SimState.Pending });
             }
         }
         this.saveSettings();
@@ -1848,40 +1847,42 @@ export class ProjectView
     ////////////             Simulator            /////////////
     ///////////////////////////////////////////////////////////
 
-    startStopSimulator(clickTrigger?: boolean) {
+    startStopSimulator(opts?: pxt.editor.SimulatorStartOptions) {
         switch (this.state.simState) {
             case pxt.editor.SimState.Starting:
+            case pxt.editor.SimState.Pending:
                 // button smashing, do nothing
                 break;
             case pxt.editor.SimState.Running:
-                this.stopSimulator(false, clickTrigger);
+                this.stopSimulator(false, opts);
                 break;
             default:
                 this.maybeShowPackageErrors(true);
-                this.startSimulator(undefined, clickTrigger);
+                this.startSimulator(opts);
                 break;
         }
     }
 
     toggleTrace(intervalSpeed?: number) {
-        if (this.state.tracing) {
+        const tracing = !!this.state.tracing;
+        const debugging = !!this.state.debugging;
+        if (tracing) {
             this.editor.clearHighlightedStatements();
             simulator.setTraceInterval(0);
+        } else {
+            simulator.setTraceInterval(intervalSpeed || simulator.SLOW_TRACE_INTERVAL);
         }
-        else {
-            simulator.setTraceInterval(intervalSpeed != undefined ? intervalSpeed : simulator.SLOW_TRACE_INTERVAL);
-        }
-        this.setState({ tracing: !this.state.tracing })
-        this.restartSimulator();
+        this.setState({ tracing: !tracing, debugging: debugging && !tracing },
+            () => this.restartSimulator())
     }
 
     setTrace(enabled: boolean, intervalSpeed?: number) {
-        if (this.state.tracing !== enabled) {
+        if (!!this.state.tracing != enabled) {
             this.toggleTrace(intervalSpeed);
         }
         else if (this.state.tracing) {
-            simulator.setTraceInterval(intervalSpeed != undefined ? intervalSpeed : simulator.SLOW_TRACE_INTERVAL);
-            this.restartSimulator();
+            simulator.setTraceInterval(intervalSpeed || simulator.SLOW_TRACE_INTERVAL);
+            this.startSimulator();
         }
     }
 
@@ -2010,29 +2011,38 @@ export class ProjectView
         return this.state.simState == pxt.editor.SimState.Running;
     }
 
-    restartSimulator(debug?: boolean) {
+    restartSimulator() {
+        const isDebug = this.state.tracing || this.state.debugging;
         if (this.state.simState == pxt.editor.SimState.Stopped
-            || simulator.driver.isDebug() != !!debug)
-            this.startSimulator(debug);
+            || simulator.driver.isDebug() != !!isDebug)
+            this.startSimulator();
         else {
             simulator.driver.restart(); // fast restart
         }
-        this.blocksEditor.setBreakpointsFromBlocks();
+        // TODO: typescript breakpoints
+        if (isDebug)
+            this.blocksEditor.setBreakpointsFromBlocks();
+        else
+            this.blocksEditor.clearBreakpoints();
     }
 
-    startSimulator(debug?: boolean, clickTrigger?: boolean) {
+    startSimulator(opts?: pxt.editor.SimulatorStartOptions) {
         pxt.tickEvent('simulator.start');
+        const isDebug = this.state.debugging || this.state.tracing;
+        const isDebugMatch = simulator.driver.isDebug() == isDebug;
+        const clickTrigger = opts && opts.clickTrigger;
         pxt.debug(`start sim (autorun ${this.state.autoRun})`)
-        if (!this.shouldStartSimulator() && !debug) {
+        if (!this.shouldStartSimulator() && isDebugMatch) {
             pxt.log("Ignoring call to start simulator, either already running or we shouldn't start.");
             return Promise.resolve();
         }
         return this.saveFileAsync()
-            .then(() => this.runSimulator({ debug, clickTrigger }))
+            .then(() => this.runSimulator({ debug: isDebug, clickTrigger }))
     }
 
-    stopSimulator(unload?: boolean, clickTrigger?: boolean) {
+    stopSimulator(unload?: boolean, opts?: pxt.editor.SimulatorStartOptions) {
         pxt.tickEvent('simulator.stop')
+        const clickTrigger = opts && opts.clickTrigger;
         pxt.debug(`stop sim (autorun ${this.state.autoRun})`)
         if (this.runToken) {
             this.runToken.cancel()
@@ -2144,16 +2154,15 @@ export class ProjectView
         pxt.log("turning debugging mode to " + state);
         this.setState({ debugging: state, tracing: false }, () => {
             this.renderCore()
+            const blocks = this.blocksEditor.editor.getAllBlocks();
+            blocks.forEach(block => {
+                if (block.nextConnection && block.previousConnection) {
+                    block.enableBreakpoint(state);
+                }
+            });
+            this.blocksEditor.updateToolbox(state)
+            this.restartSimulator();
         });
-        let blocks = this.blocksEditor.editor.getAllBlocks();
-        blocks.forEach(block => {
-            if (block.nextConnection && block.previousConnection) {
-                block.enableBreakpoint(state);
-            }
-        });
-
-        this.blocksEditor.updateToolbox(state)
-        this.restartSimulator(state);
     }
 
     dbgPauseResume() {

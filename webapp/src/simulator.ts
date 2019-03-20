@@ -236,8 +236,8 @@ export function setDirty() { // running outdated code
     driver.setDirty();
 }
 
-export function setStarting() {
-    driver.setStarting();
+export function setPending() {
+    driver.setPending();
 }
 
 export function run(pkg: pxt.MainPackage, debug: boolean,

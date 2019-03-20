@@ -1,6 +1,8 @@
 namespace pxt.editor {
     export enum SimState {
         Stopped,
+        // waiting to be started
+        Pending,
         Starting,
         Running
     }
@@ -138,6 +140,10 @@ namespace pxt.editor {
         event?: "start" | "stop";
     }
 
+    export interface SimulatorStartOptions {
+        clickTrigger?: boolean;
+    }
+
     export interface IProjectView {
         state: IAppState;
         setState(st: IAppState): void;
@@ -195,10 +201,10 @@ namespace pxt.editor {
 
         anonymousPublishAsync(screenshotUri?: string): Promise<string>;
 
-        startStopSimulator(clickTrigger?: boolean): void;
-        stopSimulator(unload?: boolean): void;
-        restartSimulator(debug?: boolean): void;
-        startSimulator(debug?: boolean, clickTrigger?: boolean): void;
+        startStopSimulator(opts?: SimulatorStartOptions): void;
+        stopSimulator(unload?: boolean, opts?: SimulatorStartOptions): void;
+        restartSimulator(): void;
+        startSimulator(opts?: SimulatorStartOptions): void;
         runSimulator(): void;
         isSimulatorRunning(): boolean;
         expandSimulator(): void;
