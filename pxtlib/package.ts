@@ -35,7 +35,7 @@ namespace pxt {
         private resolvedVersion: string;
         public ignoreTests = false;
         public cppOnly = false;
-        public depends: string[];
+        public dependLinks: string[];
 
         constructor(public id: string, public _verspec: string, public parent: MainPackage, addedBy: Package) {
             if (addedBy) {
@@ -156,7 +156,7 @@ namespace pxt {
             return Promise.resolve(v)
         }
 
-        private downloadAsync(deps: string[]) {
+        private downloadAsync() {
             return this.resolveVersionAsync()
                 .then(verNo => {
                     if (this.invalid()) {
@@ -167,7 +167,7 @@ namespace pxt {
                         this.config && this.config.installedVersion == verNo)
                         return undefined;
                     pxt.debug('downloading ' + verNo)
-                    return this.host().downloadPackageAsync(this, this.depends)
+                    return this.host().downloadPackageAsync(this)
                         .then(() => {
                             const confStr = this.readFile(pxt.CONFIG_NAME)
                             if (!confStr)
@@ -422,7 +422,7 @@ namespace pxt {
             return dependencies;
         }
 
-        loadAsync(isInstall = false, targetVersion?: string, deps?: string[]): Promise<void> {
+        loadAsync(isInstall = false, targetVersion?: string): Promise<void> {
             if (this.isLoaded) return Promise.resolve();
 
             let initPromise = Promise.resolve()
@@ -440,7 +440,7 @@ namespace pxt {
             }
 
             if (isInstall)
-                initPromise = initPromise.then(() => this.downloadAsync(deps))
+                initPromise = initPromise.then(() => this.downloadAsync())
 
             if (appTarget.simulator && appTarget.simulator.dynamicBoardDefinition) {
                 if (this.level == 0)
@@ -647,8 +647,8 @@ namespace pxt {
         }
 
         installAllAsync(targetVersion?: string, deps?: string[]) {
-            this.depends = deps;
-            return this.loadAsync(true, targetVersion, deps);
+            this.dependLinks = deps;
+            return this.loadAsync(true, targetVersion);
         }
 
         sortedDeps(includeCpp = false) {
