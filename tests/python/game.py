@@ -1,3 +1,9 @@
+class Foo:
+  def qux2(self):
+    self.baz = 13
+  def qux(self):
+    self.baz = self.bar
+
 class SpriteKind(Enum):
     Player = 0
     Projectile = 1
@@ -11,7 +17,6 @@ ship.bottom = 120
 controller.moveSprite(ship, 100, 100)
 info.setLife(3)
 
-# test parameter type inference
 def playerDamage(sprite, otherSprite):
     scene.cameraShake(4, 500)
     otherSprite.destroy(effects.disintegrate)

@@ -405,6 +405,12 @@ namespace pxt.py {
         return n.symInfo
     }
 
+    // TODO optimize ?
+    function listClassFields(cd: ClassDef) {
+        let qn = cd.symInfo.qName
+        return U.values(internalApis).filter(e => e.namespace == qn && e.kind == SK.Property)
+    }
+
     function getClassField(ct: SymbolInfo, n: string, checkOnly = false, skipBases = false) {
         let qid = ct.qName + "." + n
         let f = lookupGlobalSymbol(qid)
@@ -742,7 +748,6 @@ namespace pxt.py {
             if (n.body.length >= 1 && n.body[0].kind == "Raise")
                 n.alwaysThrows = true
             if (isMethod) {
-                let fd = getClassField(ctx.currClass.symInfo, funname, false, true)
                 if (n.name == "__init__") {
                     nodes.push(B.mkText("constructor"))
                     unifyClass(n, sym.pyRetType, ctx.currClass.symInfo)
@@ -757,11 +762,10 @@ namespace pxt.py {
                         funname = funname.replace(/_/g, "")
                     }
                     if (!prefix) {
-                        prefix = funname[0] == "_" ? (fd.isProtected ? "protected" : "private") : "public"
+                        prefix = funname[0] == "_" ? (sym.isProtected ? "protected" : "private") : "public"
                     }
                     nodes.push(B.mkText(prefix + " "), quote(funname))
                 }
-                fd.pyAST = n
             } else {
                 U.assert(!prefix)
                 if (n.name[0] == "_" || topLev)
@@ -780,10 +784,11 @@ namespace pxt.py {
 
             let body = n.body.map(stmt)
             if (n.name == "__init__") {
-                for (let f of U.values(ctx.currClass.fields)) {
-                    if (f.initializer) {
+                for (let f of listClassFields(ctx.currClass)) {
+                    let p = f.pyAST as Assign
+                    if (p.value) {
                         body.push(
-                            B.mkStmt(B.mkText(`this.${quoteStr(f.name)} = `), expr(f.initializer))
+                            B.mkStmt(B.mkText(`this.${quoteStr(f.name)} = `), expr(p.value))
                         )
                     }
                 }
@@ -824,9 +829,9 @@ namespace pxt.py {
             let body = stmts(n.body)
             nodes.push(body)
 
-            let fieldDefs = U.values(n.fields)
-                .filter(f => !f.fundef && !f.isStatic && !f.isGetSet)
-                .map((f) => B.mkStmt(quote(f.name), typeAnnot(f.type)))
+            let fieldDefs = listClassFields(n)
+                .filter(f => f.kind == SK.Property && f.isInstance)
+                .map((f) => B.mkStmt(quote(f.name), typeAnnot(f.pyRetType)))
             body.children = fieldDefs.concat(body.children)
 
             return B.mkStmt(B.mkGroup(nodes))

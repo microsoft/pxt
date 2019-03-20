@@ -29,17 +29,6 @@ namespace pxt.py {
         tid: number;
     }
 
-    export interface FieldDesc {
-        name: string;
-        type: Type;
-        inClass: py.ClassDef;
-        fundef?: py.FunctionDef;
-        isGetSet?: boolean;
-        isStatic?: boolean;
-        isProtected?: boolean;
-        initializer?: py.Expr;
-    }
-
     export interface VarDescOptions {
         expandsTo?: string;
         isImportStar?: boolean;
@@ -194,7 +183,6 @@ namespace pxt.py {
         keywords: Keyword[];
         body: Stmt[];
         decorator_list: Expr[];
-        fields?: Map<FieldDesc>;
         baseClass?: ClassDef;
         isEnum?: boolean;
     }
