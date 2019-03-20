@@ -232,7 +232,7 @@ export class DebuggerToolbar extends data.Component<DebuggerToolbarProps, Debugg
 
     restartSimulator() {
         pxt.tickEvent('debugger.restart', undefined, { interactiveConsent: true });
-        this.props.parent.restartSimulator(true);
+        this.props.parent.restartSimulator();
     }
 
     exitDebugging() {

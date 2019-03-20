@@ -26,7 +26,6 @@ import * as tutorial from "./tutorial";
 import * as editortoolbar from "./editortoolbar";
 import * as simtoolbar from "./simtoolbar";
 import * as dialogs from "./dialogs";
-import * as debug from "./debugger";
 import * as filelist from "./filelist";
 import * as container from "./container";
 import * as scriptsearch from "./scriptsearch";
@@ -1847,17 +1846,17 @@ export class ProjectView
     ////////////             Simulator            /////////////
     ///////////////////////////////////////////////////////////
 
-    startStopSimulator(clickTrigger?: boolean) {
+    startStopSimulator(opts?: pxt.editor.SimulatorStartOptions) {
         switch (this.state.simState) {
             case pxt.editor.SimState.Starting:
                 // button smashing, do nothing
                 break;
             case pxt.editor.SimState.Running:
-                this.stopSimulator(false, clickTrigger);
+                this.stopSimulator(false, opts);
                 break;
             default:
                 this.maybeShowPackageErrors(true);
-                this.startSimulator(undefined, clickTrigger);
+                this.startSimulator(opts);
                 break;
         }
     }
@@ -1872,7 +1871,7 @@ export class ProjectView
             simulator.setTraceInterval(intervalSpeed || simulator.SLOW_TRACE_INTERVAL);
         }
         this.setState({ tracing: !tracing, debugging: debugging && !tracing },
-            () => this.startSimulator(!tracing))
+            () => this.startSimulator())
     }
 
     setTrace(enabled: boolean, intervalSpeed?: number) {
@@ -1881,7 +1880,7 @@ export class ProjectView
         }
         else if (this.state.tracing) {
             simulator.setTraceInterval(intervalSpeed || simulator.SLOW_TRACE_INTERVAL);
-            this.startSimulator(true);
+            this.startSimulator();
         }
     }
 
@@ -2021,19 +2020,22 @@ export class ProjectView
         this.blocksEditor.setBreakpointsFromBlocks();
     }
 
-    startSimulator(debug?: boolean, clickTrigger?: boolean) {
+    startSimulator(opts?: pxt.editor.SimulatorStartOptions) {
         pxt.tickEvent('simulator.start');
+        const dbg = this.state.debugging || this.state.tracing;
+        const clickTrigger = opts && opts.clickTrigger;
         pxt.debug(`start sim (autorun ${this.state.autoRun})`)
-        if (!this.shouldStartSimulator() && !debug) {
+        if (!this.shouldStartSimulator() && !dbg) {
             pxt.log("Ignoring call to start simulator, either already running or we shouldn't start.");
             return Promise.resolve();
         }
         return this.saveFileAsync()
-            .then(() => this.runSimulator({ debug, clickTrigger }))
+            .then(() => this.runSimulator({ debug: dbg, clickTrigger }))
     }
 
-    stopSimulator(unload?: boolean, clickTrigger?: boolean) {
+    stopSimulator(unload?: boolean, opts?: pxt.editor.SimulatorStartOptions) {
         pxt.tickEvent('simulator.stop')
+        const clickTrigger = opts && opts.clickTrigger;
         pxt.debug(`stop sim (autorun ${this.state.autoRun})`)
         if (this.runToken) {
             this.runToken.cancel()
@@ -2145,16 +2147,15 @@ export class ProjectView
         pxt.log("turning debugging mode to " + state);
         this.setState({ debugging: state, tracing: false }, () => {
             this.renderCore()
+            const blocks = this.blocksEditor.editor.getAllBlocks();
+            blocks.forEach(block => {
+                if (block.nextConnection && block.previousConnection) {
+                    block.enableBreakpoint(state);
+                }
+            });
+            this.blocksEditor.updateToolbox(state)
+            this.restartSimulator();
         });
-        let blocks = this.blocksEditor.editor.getAllBlocks();
-        blocks.forEach(block => {
-            if (block.nextConnection && block.previousConnection) {
-                block.enableBreakpoint(state);
-            }
-        });
-
-        this.blocksEditor.updateToolbox(state)
-        this.restartSimulator(state);
     }
 
     dbgPauseResume() {
