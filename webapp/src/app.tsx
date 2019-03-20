@@ -2022,7 +2022,7 @@ export class ProjectView
         // TODO: typescript breakpoints
         if (isDebug)
             this.blocksEditor.setBreakpointsFromBlocks();
-        else    
+        else
             this.blocksEditor.clearBreakpoints();
     }
 
