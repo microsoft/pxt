@@ -66,6 +66,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return (blockFile && pkg.mainEditorPkg().files[blockFile] != null)
     }
 
+    public openPython() {
+        // TODO:
+    }
+
     public openBlocks() {
         pxt.tickEvent("typescript.showBlocks");
         let initPromise = Promise.resolve();
