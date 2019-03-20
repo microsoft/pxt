@@ -216,8 +216,7 @@ namespace pxt.runner {
     }
 
     let previousMainPackage: pxt.MainPackage = undefined;
-    function loadPackageAsync(simOptions: string, code?: string, deps?: string[]) {
-        const id = simOptions;
+    function loadPackageAsync(id: string, code?: string, deps?: string[]) {
         const verspec = id ? /\w+:\w+/.test(id) ? id : "pub:" + id : "empty:tsprj";
         let host: pxt.Host;
         let downloadPackagePromise: Promise<void>;

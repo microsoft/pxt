@@ -167,7 +167,7 @@
                     highContrast: highContrast,
                     light: light,
                     fullScreen: fullScreen,
-                    deps: deps ? deps[1].split(",") : undefined,
+                    deps: deps ? deps[1].split(",") : undefined
                 };
                 console.log('simulating script')
                 pxt.runner.simulateAsync(sims, options).done(function() {
