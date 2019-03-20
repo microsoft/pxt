@@ -557,8 +557,8 @@ namespace pxsim {
             this.postDebuggerMessage("traceConfig", { interval: intervalMs });
         }
 
-        public variablesAsync(id: number): Promise<VariablesMessage> {
-            return this.postDebuggerMessageAsync("variables", { variablesReference: id } as DebugProtocol.VariablesArguments)
+        public variablesAsync(id: number, fields?: string[]): Promise<VariablesMessage> {
+            return this.postDebuggerMessageAsync("variables", { variablesReference: id, fields: fields } as DebugProtocol.VariablesArguments)
                 .then(msg => msg as VariablesMessage, e => undefined)
         }
 
