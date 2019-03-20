@@ -57,6 +57,7 @@ namespace ts.pxtc {
             case SK.GetAccessor:
             case SK.SetAccessor:
                 return SymbolKind.Property;
+            case SK.Constructor:
             case SK.FunctionDeclaration:
                 return SymbolKind.Function;
             case SK.VariableDeclaration:
@@ -186,7 +187,10 @@ namespace ts.pxtc {
                 attributes,
                 pkg,
                 extendsTypes,
-                retType: kind == SymbolKind.Module ? "" : typeOf(decl.type, decl, hasParams),
+                retType:
+                    stmt.kind == SyntaxKind.Constructor ? "void" :
+                        kind == SymbolKind.Module ? "" :
+                            typeOf(decl.type, decl, hasParams),
                 parameters: !hasParams ? null : Util.toArray(decl.parameters).map((p, i) => {
                     let n = getName(p)
                     let desc = attributes.paramHelp[n] || ""
@@ -233,7 +237,9 @@ namespace ts.pxtc {
                         name: n,
                         description: desc,
                         type: typeOf(p.type, p),
-                        initializer: p.initializer ? p.initializer.getText() : attributes.paramDefl[n],
+                        initializer:
+                            p.initializer ? p.initializer.getText() :
+                                attributes.paramDefl[n] || (p.questionToken ? "undefined" : undefined),
                         default: attributes.paramDefl[n],
                         properties: props,
                         handlerParameters: parameters,
@@ -959,8 +965,14 @@ namespace ts.pxtc.service {
             return "null";
         }) : [];
 
+        let fnName = ""
+        if (n.kind == SK.Constructor) {
+            fnName = checker ? getFullName(checker, n.symbol) : n.parent.name.getText();
+        } else {
+            fnName = n.name.getText();
+        }
 
-        return `${n.name.getText()}(${args.join(', ')})`;
+        return `${fnName}(${args.join(', ')})`;
 
         function getFunctionString(functionSignature: ts.Signature) {
             let functionArgument = "()";

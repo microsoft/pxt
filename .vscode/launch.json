@@ -26,6 +26,27 @@
 			"outFiles": []
 		},
 		{
+			"name": "pybuild",
+			"type": "node",
+			"request": "launch",
+			"program": "${workspaceRoot}/built/pxt.js",
+			"stopOnEntry": false,
+			"args": [
+				"build"
+			],
+			"cwd": "${workspaceRoot}/../pxt-arcade/projects/py",
+			"runtimeExecutable": null,
+			"runtimeArgs": [
+				"--nolazy"
+			],
+			"env": {
+				"NODE_ENV": "development"
+			},
+			"console": "integratedTerminal",
+			"sourceMaps": false,
+			"outFiles": []
+		},
+		{
 			"name": "console",
 			"type": "node",
 			"request": "launch",

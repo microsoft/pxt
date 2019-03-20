@@ -9,8 +9,6 @@ namespace pxt.py {
     }
 
     // global state
-    let moduleAst: Map<py.Module> = {}
-    let apisInfo: pxtc.ApisInfo
     let externalApis: pxt.Map<SymbolInfo> // slurped from libraries
     let internalApis: pxt.Map<SymbolInfo> // defined in Python
     let ctx: Ctx
@@ -20,6 +18,7 @@ namespace pxt.py {
     let currErrs = ""
     let autoImport = true
     let currErrorCtx = "???"
+    let verboseTypes = false
 
     function stmtTODO(v: py.Stmt) {
         return B.mkStmt(B.mkText("TODO: " + v.kind))
@@ -75,7 +74,7 @@ namespace pxt.py {
                 const retType = mapTsType(retTypeStr)
                 const argsStr = tp.slice(1, arrowIdx - 1)
                 const argsWords = argsStr ? argsStr.split(/, /) : []
-                const argTypes = argsWords.map(a => mapTsType(a.replace(/\w+: /, "")))
+                const argTypes = argsWords.map(a => mapTsType(a.replace(/\w+\??: /, "")))
                 return mkFunType(retType, argTypes)
             }
         }
@@ -90,35 +89,71 @@ namespace pxt.py {
         if (tp == "T" || tp == "U") // TODO hack!
             return mkType({ primType: "'" + tp })
 
-        let ai = lookupApi(tp + "@type") || lookupApi(tp)
-        if (!ai) {
+        let sym = lookupApi(tp + "@type") || lookupApi(tp)
+        if (!sym) {
             error(null, U.lf("unknown type '{0}' near '{1}'", tp, currErrorCtx || "???"))
             return mkType({ primType: tp })
         }
 
-        if (ai.kind == SK.EnumMember)
+        if (sym.kind == SK.EnumMember)
             return tpNumber
 
-        if (ai.kind == SK.Class || ai.kind == SK.Interface)
-            return mkType({ classType: ai })
+        // sym.pyInstanceType might not be initialized yet and we don't want to call symbolType() here to avoid infinite recursion
+        if (sym.kind == SK.Class || sym.kind == SK.Interface)
+            return sym.pyInstanceType || mkType({ classType: sym })
 
-        if (ai.kind == SK.Enum)
+        if (sym.kind == SK.Enum)
             return tpNumber
 
         error(null, U.lf("'{0}' is not a type near '{1}'", tp, currErrorCtx || "???"))
         return mkType({ primType: tp })
     }
 
-    function mapTypes(sym: SymbolInfo) {
-        if (!sym || sym.pyRetType) return sym
-        currErrorCtx = sym.qName
-        if (!sym.retType && isModule(sym))
-            sym.pyRetType = symbolType(sym)
-        else
-            sym.pyRetType = mapTsType(sym.retType)
-        for (let p of sym.parameters || [])
-            p.pyType = mapTsType(p.type)
-        currErrorCtx = null
+    function symbolType(sym: SymbolInfo): Type {
+        if (!sym.pySymbolType) {
+            currErrorCtx = sym.qName
+
+            if (sym.parameters)
+                for (let p of sym.parameters) {
+                    if (!p.pyType)
+                        p.pyType = mapTsType(p.type)
+                }
+
+            const prevRetType = sym.pyRetType
+
+            if (isModule(sym)) {
+                sym.pyRetType = mkType({ moduleType: sym })
+            } else {
+                if (sym.retType)
+                    sym.pyRetType = mapTsType(sym.retType)
+                else if (sym.pyRetType) {
+                    // nothing to do
+                } else {
+                    U.oops("no type for: " + sym.qName)
+                    sym.pyRetType = mkType({})
+                }
+            }
+
+            if (prevRetType)
+                unify(sym.pyAST, prevRetType, sym.pyRetType)
+
+            if (sym.kind == SK.Function || sym.kind == SK.Method)
+                sym.pySymbolType = mkFunType(sym.pyRetType, sym.parameters.map(p => p.pyType))
+            else
+                sym.pySymbolType = sym.pyRetType
+
+            if (sym.kind == SK.Class || sym.kind == SK.Interface) {
+                sym.pyInstanceType = mkType({ classType: sym })
+            }
+
+            currErrorCtx = null
+        }
+        return sym.pySymbolType
+    }
+
+    function fillTypes(sym: SymbolInfo) {
+        if (sym)
+            symbolType(sym)
         return sym
     }
 
@@ -128,14 +163,15 @@ namespace pxt.py {
 
     function lookupGlobalSymbol(name: string): SymbolInfo {
         if (!name) return null
-        return mapTypes(lookupApi(name))
+        return fillTypes(lookupApi(name))
     }
 
-    function initApis() {
+    function initApis(apisInfo: pxtc.ApisInfo) {
+        internalApis = {}
         externalApis = apisInfo.byQName as any
         for (let sym of U.values(externalApis)) {
             sym.members = []
-            mapTypes(sym) // TODO remove when done
+            fillTypes(sym) // TODO remove when done
         }
         if (currErrs)
             pxt.log(currErrs)
@@ -163,6 +199,11 @@ namespace pxt.py {
         return mkType({ primType: "@fn" + argTypes.length, typeArgs: [retTp].concat(argTypes) })
     }
 
+    function instanceType(sym: SymbolInfo) {
+        symbolType(sym)
+        return sym.pyInstanceType
+    }
+
     function currentScope(): py.ScopeDef {
         return ctx.currFun || ctx.currClass || ctx.currModule
     }
@@ -177,7 +218,7 @@ namespace pxt.py {
         if (!sym)
             error(a, U.lf("No module named '{0}'", name))
         else
-            unify(a, v.type, mkType({ moduleType: sym }))
+            unify(a, v.type, symbolType(sym))
         return v
     }
 
@@ -230,7 +271,7 @@ namespace pxt.py {
 
     function t2s(t: Type): string {
         t = find(t)
-
+        const suff = (s: string) => verboseTypes ? s : ""
         if (t.primType) {
             if (t.primType == "@array")
                 return t2s(t.typeArgs[0]) + "[]"
@@ -238,13 +279,13 @@ namespace pxt.py {
             if (U.startsWith(t.primType, "@fn"))
                 return "(" + t.typeArgs.slice(1).map(t => "_: " + t2s(t)).join(", ") + ") => " + t2s(t.typeArgs[0])
 
-            return t.primType
+            return t.primType + suff("/P")
         }
 
         if (t.classType)
-            return applyTypeMap(t.classType.qName)
+            return applyTypeMap(t.classType.qName) + suff("/C")
         else if (t.moduleType)
-            return applyTypeMap(t.moduleType.qName)
+            return applyTypeMap(t.moduleType.qName) + suff("/M")
         else
             return "?" + t.tid
     }
@@ -266,7 +307,13 @@ namespace pxt.py {
     function typeCtor(t: Type): any {
         if (t.primType) return t.primType
         else if (t.classType) return t.classType
-        else if (t.moduleType) return t.moduleType
+        else if (t.moduleType) {
+            // a class SymbolInfo can be used as both classType and moduleType
+            // but these are different constructors (one is instance, one is class itself)
+            if (!t.moduleType.moduleTypeMarker)
+                t.moduleType.moduleTypeMarker = {}
+            return t.moduleType.moduleTypeMarker
+        }
         return null
     }
 
@@ -304,7 +351,7 @@ namespace pxt.py {
             t.classType = cd
             return
         }
-        unify(a, t, mkType({ classType: cd }))
+        unify(a, t, instanceType(cd))
     }
 
     function unifyTypeOf(e: Expr, t1: Type): void {
@@ -332,28 +379,43 @@ namespace pxt.py {
     }
 
     function addSymbol(kind: SK, qname: string) {
+        let sym = internalApis[qname]
+        if (sym) return sym
         let m = /(.*)\.(.*)/.exec(qname)
-        let sym: SymbolInfo = {
+        sym = {
             kind: kind,
             name: m ? m[2] : qname,
             qName: qname,
             namespace: m ? m[1] : "",
+            attributes: {} as any,
             pyRetType: mkType(),
-            attributes: {} as any
         } as any
         internalApis[sym.qName] = sym
         return sym
     }
 
+    function addSymbolFor(k: SK, n: py.Symbol) {
+        if (!n.symInfo) {
+            let qn = getFullName(n)
+            if (U.endsWith(qn, ".__init__"))
+                qn = qn.slice(0, -9) + ".__constructor"
+            n.symInfo = addSymbol(k, qn)
+            n.symInfo.pyAST = n
+        }
+        return n.symInfo
+    }
+
+    // TODO optimize ?
+    function listClassFields(cd: ClassDef) {
+        let qn = cd.symInfo.qName
+        return U.values(internalApis).filter(e => e.namespace == qn && e.kind == SK.Property)
+    }
+
     function getClassField(ct: SymbolInfo, n: string, checkOnly = false, skipBases = false) {
         let qid = ct.qName + "." + n
         let f = lookupGlobalSymbol(qid)
-        if (f) {
-            if (f.isInstance) return f
-            if (!checkOnly)
-                error(null, U.lf("the field '{0}' of '{1}' is static", n, ct.qName))
-            return null
-        }
+        if (f)
+            return f
 
         if (!skipBases) {
             for (let b of ct.extendsTypes || []) {
@@ -375,9 +437,27 @@ namespace pxt.py {
 
     function getTypeField(t: Type, n: string, checkOnly = false) {
         t = find(t)
+
         let ct = t.classType
-        if (ct)
-            return getClassField(ct, n, checkOnly)
+
+        if (!ct && t.primType == "@array")
+            ct = lookupApi("Array")
+
+        if (ct) {
+            let f = getClassField(ct, n, checkOnly)
+            if (!f.isInstance)
+                error(null, U.lf("the field '{0}' of '{1}' is static", n, ct.qName))
+            return f
+        }
+
+        ct = t.moduleType
+        if (ct) {
+            let f = getClassField(ct, n, checkOnly)
+            if (f.isInstance)
+                error(null, U.lf("the field '{0}' of '{1}' is not static", n, ct.qName))
+            return f
+        }
+
         return null
     }
 
@@ -447,15 +527,6 @@ namespace pxt.py {
         }
     }
 
-    function symbolType(s: SymbolInfo): Type {
-        if (isModule(s))
-            return mkType({ moduleType: s })
-        else if (s.kind == SK.Property)
-            return s.pyRetType
-        else
-            return mkType({})
-    }
-
     function scope(f: () => B.JsNode) {
         const prevCtx = U.flatClone(ctx)
         let r: B.JsNode;
@@ -488,15 +559,28 @@ namespace pxt.py {
     }
 
     function compileType(e: Expr): Type {
-        // TODO
-        if (e.kind == "Name") {
-            return mkType({ primType: (e as Name).id })
-        } else {
-            return mkType({})
+        if (!e)
+            return mkType()
+        let tpName = getName(e)
+        if (tpName) {
+            let sym = lookupApi(tpName + "@type") || lookupApi(tpName)
+            if (sym) {
+                symbolType(sym)
+                if (sym.kind == SK.Enum)
+                    return tpNumber
+
+                if (sym.pyInstanceType)
+                    return sym.pyInstanceType
+            }
+            error(e, U.lf("cannot find type '{0}'", tpName))
         }
+
+        error(e, U.lf("invalid type syntax"))
+        return mkType({})
     }
 
-    function doArgs(args: py.Arguments, isMethod: boolean) {
+    function doArgs(n: FunctionDef, isMethod: boolean) {
+        const args = n.args
         U.assert(!args.kwonlyargs.length)
         let nargs = args.args.slice()
         if (isMethod) {
@@ -505,21 +589,35 @@ namespace pxt.py {
         } else {
             U.assert(!nargs[0] || nargs[0].arg != "self")
         }
-        let didx = args.defaults.length - nargs.length
-        let lst = nargs.map(a => {
-            let v = defvar(a.arg, { isParam: true })
-            if (!a.type && a.annotation) {
-                a.type = compileType(a.annotation)
-                unify(a, a.type, v.type)
+        if (!n.symInfo.parameters) {
+            let didx = args.defaults.length - nargs.length
+            n.symInfo.parameters = nargs.map(a => {
+                let tp = compileType(a.annotation)
+                let defl = ""
+                if (didx >= 0) {
+                    defl = B.flattenNode([expr(args.defaults[didx])]).output
+                    unify(a, tp, typeOf(args.defaults[didx]))
+                }
+                didx++
+                return {
+                    name: a.arg,
+                    description: "",
+                    type: "",
+                    initializer: defl,
+                    default: defl,
+                    pyType: tp
+                }
+            })
+        }
+
+
+        let lst = n.symInfo.parameters.map(p => {
+            let v = defvar(p.name, { isParam: true })
+            unify(n, v.type, p.pyType)
+            let res = [quote(p.name), typeAnnot(v.type)]
+            if (p.default) {
+                res.push(B.mkText(" = " + p.default))
             }
-            if (!a.type) a.type = v.type
-            let res = [quote(a.arg), typeAnnot(v.type)]
-            if (didx >= 0) {
-                res.push(B.mkText(" = "))
-                res.push(expr(args.defaults[didx]))
-                unify(a, a.type, typeOf(args.defaults[didx]))
-            }
-            didx++
             return B.mkGroup(res)
         })
 
@@ -614,24 +712,24 @@ namespace pxt.py {
             return scope(f);
         }
         catch (e) {
+            console.log(e)
             return B.mkStmt(todoComment(`conversion failed for ${(v as any).name || v.kind}`, []));
         }
     }
 
     const stmtMap: Map<(v: py.Stmt) => B.JsNode> = {
         FunctionDef: (n: py.FunctionDef) => guardedScope(n, () => {
-            let isMethod = !!ctx.currClass && !ctx.currFun
-            if (!isMethod)
-                defvar(n.name, { fundef: n })
+            const isMethod = !!ctx.currClass && !ctx.currFun
 
-            let topLev = isTopLevel()
+            const sym = addSymbolFor(isMethod ? SK.Method : SK.Function, n)
+
+            const topLev = isTopLevel()
 
             setupScope(n)
             ctx.currFun = n
-            if (!n.retType) n.retType = mkType()
             let prefix = ""
             let funname = n.name
-            let decs = n.decorator_list.filter(d => {
+            const remainingDecorators = n.decorator_list.filter(d => {
                 if (getName(d) == "property") {
                     prefix = "get"
                     return false
@@ -645,54 +743,29 @@ namespace pxt.py {
                 return true
             })
             let nodes = [
-                todoComment("decorators", decs.map(expr))
+                todoComment("decorators", remainingDecorators.map(expr))
             ]
+            if (n.body.length >= 1 && n.body[0].kind == "Raise")
+                n.alwaysThrows = true
             if (isMethod) {
-                let fd = getClassField(ctx.currClass.symInfo, funname, false, true)
-                if (n.body.length == 1 && n.body[0].kind == "Raise")
-                    n.alwaysThrows = true
                 if (n.name == "__init__") {
                     nodes.push(B.mkText("constructor"))
-                    unifyClass(n, n.retType, ctx.currClass.symInfo)
+                    unifyClass(n, sym.pyRetType, ctx.currClass.symInfo)
                 } else {
                     if (funname == "__get__" || funname == "__set__") {
-                        let i2cArg = "i2cDev"
-                        let vv = n.vars[i2cArg]
-                        vv = n.vars["value"]
+                        let vv = n.vars["value"]
                         if (funname == "__set__" && vv) {
                             let cf = getClassField(ctx.currClass.symInfo, "__get__")
                             if (cf.pyAST && cf.pyAST.kind == "FunctionDef")
-                                unify(n, vv.type, (cf.pyAST as FunctionDef).retType)
-                        }
-                        let nargs = n.args.args
-                        if (nargs[1].arg == "obj") {
-                            // rewrite
-                            nargs[1].arg = i2cArg
-                            if (nargs[nargs.length - 1].arg == "objtype") {
-                                nargs.pop()
-                                n.args.defaults.pop()
-                            }
-                            iterPy(n, e => {
-                                if (e.kind == "Attribute") {
-                                    let a = e as py.Attribute
-                                    if (a.attr == "i2c_device" && getName(a.value) == "obj") {
-                                        let nm = e as py.Name
-                                        nm.kind = "Name"
-                                        nm.id = i2cArg
-                                        delete a.attr
-                                        delete a.value
-                                    }
-                                }
-                            })
+                                unify(n, vv.type, cf.pyRetType)
                         }
                         funname = funname.replace(/_/g, "")
                     }
                     if (!prefix) {
-                        prefix = funname[0] == "_" ? (fd.isProtected ? "protected" : "private") : "public"
+                        prefix = funname[0] == "_" ? (sym.isProtected ? "protected" : "private") : "public"
                     }
                     nodes.push(B.mkText(prefix + " "), quote(funname))
                 }
-                fd.pyAST = n
             } else {
                 U.assert(!prefix)
                 if (n.name[0] == "_" || topLev)
@@ -701,15 +774,21 @@ namespace pxt.py {
                     nodes.push(B.mkText("export function "), quote(funname))
             }
             nodes.push(
-                doArgs(n.args, isMethod),
+                doArgs(n, isMethod),
                 n.returns ? typeAnnot(compileType(n.returns)) : B.mkText(""))
+
+            if (!isMethod) {
+                const v = defvar(n.name, { fundef: n })
+                unify(n, symbolType(sym), v.type)
+            }
 
             let body = n.body.map(stmt)
             if (n.name == "__init__") {
-                for (let f of U.values(ctx.currClass.fields)) {
-                    if (f.initializer) {
+                for (let f of listClassFields(ctx.currClass)) {
+                    let p = f.pyAST as Assign
+                    if (p.value) {
                         body.push(
-                            B.mkStmt(B.mkText(`this.${quoteStr(f.name)} = `), expr(f.initializer))
+                            B.mkStmt(B.mkText(`this.${quoteStr(f.name)} = `), expr(p.value))
                         )
                     }
                 }
@@ -722,7 +801,11 @@ namespace pxt.py {
 
         ClassDef: (n: py.ClassDef) => guardedScope(n, () => {
             setupScope(n)
-            defvar(n.name, { classdef: n })
+
+            const cv = defvar(n.name, { classdef: n })
+            const sym = addSymbolFor(SK.Class, n)
+            unify(n, cv.type, symbolType(sym))
+
             U.assert(!ctx.currClass)
             let topLev = isTopLevel()
             ctx.currClass = n
@@ -733,18 +816,22 @@ namespace pxt.py {
                 quote(n.name)
             ]
             if (n.bases.length > 0) {
-                nodes.push(B.mkText(" extends "))
-                nodes.push(B.mkCommaSep(n.bases.map(expr)))
-                let b = getClassDef(n.bases[0])
-                if (b)
-                    n.baseClass = b
+                if (getName(n.bases[0]) == "Enum") {
+                    n.isEnum = true
+                } else {
+                    nodes.push(B.mkText(" extends "))
+                    nodes.push(B.mkCommaSep(n.bases.map(expr)))
+                    let b = getClassDef(n.bases[0])
+                    if (b)
+                        n.baseClass = b
+                }
             }
             let body = stmts(n.body)
             nodes.push(body)
 
-            let fieldDefs = U.values(n.fields)
-                .filter(f => !f.fundef && !f.isStatic && !f.isGetSet)
-                .map((f) => B.mkStmt(quote(f.name), typeAnnot(f.type)))
+            let fieldDefs = listClassFields(n)
+                .filter(f => f.kind == SK.Property && f.isInstance)
+                .map((f) => B.mkStmt(quote(f.name), typeAnnot(f.pyRetType)))
             body.children = fieldDefs.concat(body.children)
 
             return B.mkStmt(B.mkGroup(nodes))
@@ -753,7 +840,7 @@ namespace pxt.py {
         Return: (n: py.Return) => {
             if (n.value) {
                 let f = ctx.currFun
-                if (f) unifyTypeOf(n.value, f.retType)
+                if (f) unifyTypeOf(n.value, f.symInfo.pyRetType)
                 return B.mkStmt(B.mkText("return "), expr(n.value))
             } else {
                 return B.mkStmt(B.mkText("return"))
@@ -1124,15 +1211,8 @@ namespace pxt.py {
         "ord": { n: ".charCodeAt(0)", t: tpNumber },
         "bytearray": { n: "pins.createBuffer", t: tpBuffer },
         "bytes": { n: "pins.createBufferFromArray", t: tpBuffer },
-        "ustruct.pack": { n: "pins.packBuffer", t: tpBuffer },
-        "ustruct.pack_into": { n: "pins.packIntoBuffer", t: tpVoid },
-        "ustruct.unpack": { n: "pins.unpackBuffer", t: mkArrayType(tpNumber) },
-        "ustruct.unpack_from": { n: "pins.unpackBuffer", t: mkArrayType(tpNumber) },
-        "ustruct.calcsize": { n: "pins.packedSize", t: tpNumber },
-        "pins.I2CDevice.read_into": { n: ".readInto", t: tpVoid },
         "bool": { n: "!!", t: tpBoolean },
         "Array.index": { n: ".indexOf", t: tpNumber },
-        "time.sleep": { n: "pause", t: tpVoid, scale: 1000 }
     }
 
     function isSuper(v: py.Expr) {
@@ -1233,25 +1313,27 @@ namespace pxt.py {
             return r
         },
         Call: (n: py.Call) => {
-            let cd = getClassDef(n.func)
+            let namedSymbol = lookupGlobalSymbol(getName(n.func))
+            let isClass = namedSymbol && namedSymbol.kind == SK.Class
+
+            let fun = namedSymbol
+
             let recvTp: Type
             let recv: py.Expr
             let methName: string
             let fd: py.FunctionDef
 
-            if (cd) {
-                if (cd.fields) {
-                    let ff = cd.fields["__init__"]
-                    if (ff)
-                        fd = ff.fundef
-                }
+            if (isClass) {
+                fun = lookupGlobalSymbol(namedSymbol.qName + ".__constructor")
             } else {
                 if (n.func.kind == "Attribute") {
                     let attr = n.func as py.Attribute
                     recv = attr.value
                     recvTp = typeOf(recv)
-                    methName = attr.attr
-                    let field = getTypeField(recvTp, methName)
+                    if (recvTp.classType) {
+                        methName = attr.attr
+                        fun = getTypeField(recvTp, methName)
+                    }
                     /*
                     if (field) {
                         if (isSuper(recv) || (isThis(recv) && field.inClass != ctx.currClass)) {
@@ -1262,127 +1344,94 @@ namespace pxt.py {
                         fd = field.fundef
                         */
                 }
-                if (!fd) {
-                    let name = getName(n.func)
-                    let v = lookupVar(name)
-                    if (v)
-                        fd = v.fundef
-                }
-            }
-
-            let allargs: B.JsNode[] = []
-            let fdargs = fd ? fd.args.args : []
-            if (fdargs[0] && fdargs[0].arg == "self")
-                fdargs = fdargs.slice(1)
-            for (let i = 0; i < n.args.length; ++i) {
-                let e = n.args[i]
-                allargs.push(expr(e))
-                if (fdargs[i] && fdargs[i].type) {
-                    unifyTypeOf(e, fdargs[i].type)
-                }
-            }
-
-            if (fd) {
-                unifyTypeOf(n, fd.retType)
             }
 
             let nm = getName(n.func)
-            let over = U.lookup(funMap, nm)
-            if (over) {
-                methName = ""
-                recv = null
-            }
+            if (fun && fun.pyAST && fun.pyAST.kind == "FunctionDef")
+                fd = fun.pyAST as py.FunctionDef
+            else {
+                let over = U.lookup(funMap, nm)
+                if (over) {
+                    methName = ""
+                    recv = null
+                }
 
-            if (methName) {
-                nm = t2s(recvTp) + "." + methName
-                over = U.lookup(funMap, nm)
-                if (!over && typeCtor(find(recvTp)) == "@array") {
-                    nm = "Array." + methName
+                if (methName) {
+                    nm = t2s(recvTp) + "." + methName
                     over = U.lookup(funMap, nm)
+                    if (!over && typeCtor(find(recvTp)) == "@array") {
+                        nm = "Array." + methName
+                        over = U.lookup(funMap, nm)
+                    }
+                }
+
+                if (over)
+                    fun = lookupGlobalSymbol(over.n)
+            }
+
+            if (!fun)
+                error(n, U.lf("can't find called function"))
+
+            let orderedArgs = n.args.slice()
+            let formals = fun ? fun.parameters : null
+            let allargs: B.JsNode[] = []
+            if (!formals) {
+                if (fun)
+                    error(n, U.lf("calling non-function"))
+            } else {
+                if (orderedArgs.length > formals.length)
+                    error(n, U.lf("too many arguments in call to '{0}'", fun.qName))
+
+                while (orderedArgs.length < formals.length)
+                    orderedArgs.push(null)
+                orderedArgs = orderedArgs.slice(0, formals.length)
+
+                for (let kw of n.keywords) {
+                    let idx = formals.findIndex(f => f.name == kw.arg)
+                    if (idx < 0)
+                        error(kw, U.lf("'{0}' doesn't have argument named '{1}'", fun.qName, kw.arg))
+                    else if (orderedArgs[idx] != null)
+                        error(kw, U.lf("argument '{0} already specified in call to '{1}'", kw.arg, fun.qName))
+                    else
+                        orderedArgs[idx] = kw.value
+                }
+
+                // skip optional args
+                for (let i = orderedArgs.length - 1; i >= 0; i--) {
+                    if (formals[i].initializer == "undefined" && orderedArgs[i] == null)
+                        orderedArgs.pop()
+                    else
+                        break
+                }
+
+                for (let i = 0; i < orderedArgs.length; ++i) {
+                    let arg = orderedArgs[i]
+                    if (arg == null && !formals[i].initializer) {
+                        error(n, U.lf("missing argument '{0}' in call to '{1}'", formals[i].name, fun.qName))
+                        allargs.push(B.mkText("NULL"))
+                    } else if (arg) {
+                        unifyTypeOf(arg, formals[i].pyType)
+                        allargs.push(expr(arg))
+                    } else {
+                        allargs.push(B.mkText(formals[i].initializer))
+                    }
                 }
             }
 
-            if (n.keywords.length > 0) {
-                if (fd && !fd.args.kwarg) {
-                    let formals = fdargs.slice(n.args.length)
-                    let defls = fd.args.defaults.slice()
-                    while (formals.length > 0) {
-                        let last = formals[formals.length - 1]
-                        if (n.keywords.some(k => k.arg == last.arg))
-                            break
-                        formals.pop()
-                        defls.pop()
-                    }
-                    while (defls.length > formals.length)
-                        defls.shift()
-                    while (defls.length < formals.length)
-                        defls.unshift(null)
+            if (fun)
+                unifyTypeOf(n, fun.pyRetType)
 
-                    let actual = U.toDictionary(n.keywords, k => k.arg)
-                    let idx = 0
-                    for (let formal of formals) {
-                        let ex = U.lookup(actual, formal.arg)
-                        if (ex)
-                            allargs.push(expr(ex.value))
-                        else {
-                            allargs.push(expr(defls[idx]))
-                        }
-                        idx++
-                    }
-                } else {
-                    let keywords = n.keywords.slice()
-                    if (keywords.length) {
-                        let kwargs = keywords.map(kk =>
-                            B.mkGroup([quote(kk.arg), B.mkText(": "), expr(kk.value)]))
-                        allargs.push(B.mkGroup([
-                            B.mkText("{"),
-                            B.mkCommaSep(kwargs),
-                            B.mkText("}")
-                        ]))
-                    }
-                }
-            }
-
+            /*
             if (nm == "super" && allargs.length == 0) {
                 if (ctx.currClass && ctx.currClass.baseClass)
                     unifyClass(n, n.tsType, ctx.currClass.baseClass.symInfo)
                 return B.mkText("super")
             }
-
-            if (over != null) {
-                if (recv)
-                    allargs.unshift(expr(recv))
-                let overName = over.n
-                if (over.t)
-                    unifyTypeOf(n, over.t)
-                if (over.scale) {
-                    allargs = allargs.map(a => {
-                        let s = "?"
-                        if (a.type == B.NT.Prefix && a.children.length == 0)
-                            s = a.op
-                        let n = parseFloat(s)
-                        if (!isNaN(n)) {
-                            return B.mkText((over.scale * n) + "")
-                        } else {
-                            return B.mkInfix(a, "*", B.mkText(over.scale + ""))
-                        }
-                    })
-                }
-                if (overName == "") {
-                    if (allargs.length == 1)
-                        return allargs[0]
-                } else if (overName[0] == ".") {
-                    if (allargs.length == 1)
-                        return B.mkInfix(allargs[0], ".", B.mkText(overName.slice(1)))
-                    else
-                        return B.mkInfix(allargs[0], ".", B.H.mkCall(overName.slice(1), allargs.slice(1)))
-                } else {
-                    return B.H.mkCall(overName, allargs)
-                }
-            }
+            */
 
             let fn = expr(n.func)
 
+            /*
             if (recvTp && recvTp.primType == "@array") {
                 if (methName == "append") {
                     methName = "push"
@@ -1390,6 +1439,7 @@ namespace pxt.py {
                 }
                 fn = B.mkInfix(expr(recv), ".", B.mkText(methName))
             }
+            */
 
             let nodes = [
                 fn,
@@ -1398,8 +1448,8 @@ namespace pxt.py {
                 B.mkText(")")
             ]
 
-            if (cd) {
-                nodes[0] = B.mkText(applyTypeMap(getFullName(cd)))
+            if (isClass) {
+                nodes[0] = B.mkText(applyTypeMap(namedSymbol.qName))
                 nodes.unshift(B.mkText("new "))
             }
 
@@ -1436,7 +1486,8 @@ namespace pxt.py {
                 else
                     error(n, U.lf("module '{0}' has no attribute '{1}'", part.moduleType.qName, n.attr))
             } else {
-                error(n, U.lf("unknown object type; cannot lookup attribute '{0}'", n.attr))
+                if (currIteration > 2)
+                    error(n, U.lf("unknown object type; cannot lookup attribute '{0}'", n.attr))
             }
             return B.mkInfix(expr(n.value), ".", B.mkText(quoteStr(n.attr)))
         },
@@ -1567,12 +1618,8 @@ namespace pxt.py {
     }
 
     export function py2ts(opts: pxtc.CompileOptions) {
-        moduleAst = {}
-        apisInfo = opts.apisInfo
-        if (!apisInfo)
-            U.oops()
-        internalApis = {}
-        initApis()
+        let modules: py.Module[] = []
+        initApis(opts.apisInfo)
 
         if (!opts.generatedFiles)
             opts.generatedFiles = []
@@ -1590,13 +1637,13 @@ namespace pxt.py {
                 let stmts = pxt.py.parse(src, sn, tokens)
                 //console.log(pxt.py.dump(stmts))
 
-                moduleAst[modname] = {
+                modules.push({
                     kind: "Module",
                     body: stmts,
                     name: modname,
                     source: src,
                     tsFilename: sn.replace(/\.py$/, ".ts")
-                } as any
+                } as any)
             } catch (e) {
                 // TODO
                 console.log("Parse error", e)
@@ -1606,9 +1653,10 @@ namespace pxt.py {
 
         for (let i = 0; i < 5; ++i) {
             currIteration = i
-            for (let m of U.values(moduleAst)) {
+            for (let m of modules) {
                 try {
                     toTS(m)
+                    // console.log(`after ${currIteration} - ${numUnifies}`)
                 } catch (e) {
                     console.log("Conv pass error", e);
                 }
@@ -1617,7 +1665,7 @@ namespace pxt.py {
 
         currIteration = 1000
         currErrs = ""
-        for (let m of U.values(moduleAst)) {
+        for (let m of modules) {
             try {
                 let nodes = toTS(m)
                 if (!nodes) continue

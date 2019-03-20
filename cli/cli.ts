@@ -3688,9 +3688,15 @@ function prepBuildOptionsAsync(mode: BuildOption, quick = false, ignoreTests = f
                 opts2.ast = true
                 opts2.target.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME
                 opts2.noEmit = true
+                // remove previously converted .ts files, so they don't end up in apisinfo
+                for (let f of opts2.sourceFiles) {
+                    if (U.endsWith(f, ".py"))
+                        opts2.fileSystem[f.slice(0, -3) + ".ts"] = " "
+                }
                 const res = pxtc.compile(opts2)
                 opts.apisInfo = pxtc.getApiInfo(opts2, res.ast)
-                // fs.writeFileSync("built/apisinfo.json", JSON.stringify(opts.apisInfo, null, 4))
+                if (process.env["PXT_SAVE_APISINFO"])
+                    fs.writeFileSync("built/apisinfo.json", JSON.stringify(opts.apisInfo, null, 4))
                 pxt.log("done pre-compiling apisInfo for Python")
             }
 

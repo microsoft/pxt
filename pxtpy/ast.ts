@@ -8,10 +8,13 @@ namespace pxt.py {
 
     export interface SymbolInfo extends pxtc.SymbolInfo {
         pyRetType?: Type;
+        pySymbolType?: Type;
+        pyInstanceType?: Type;
         members: SymbolInfo[]; // TODO needed?
         parameters: ParameterDesc[];
         pyAST?: AST;
         isProtected?: boolean;
+        moduleTypeMarker?: {};
     }
 
     export interface TypeOptions {
@@ -24,17 +27,6 @@ namespace pxt.py {
 
     export interface Type extends TypeOptions {
         tid: number;
-    }
-
-    export interface FieldDesc {
-        name: string;
-        type: Type;
-        inClass: py.ClassDef;
-        fundef?: py.FunctionDef;
-        isGetSet?: boolean;
-        isStatic?: boolean;
-        isProtected?: boolean;
-        initializer?: py.Expr;
     }
 
     export interface VarDescOptions {
@@ -88,7 +80,6 @@ namespace pxt.py {
         kind: "Arg";
         arg: identifier;
         annotation?: Expr;
-        type?: Type;
     }
 
     export interface Arguments extends AST {
@@ -175,7 +166,6 @@ namespace pxt.py {
         body: Stmt[];
         decorator_list: Expr[];
         returns?: Expr;
-        retType?: Type;
         alwaysThrows?: boolean;
     }
     export interface AsyncFunctionDef extends Stmt {
@@ -193,8 +183,8 @@ namespace pxt.py {
         keywords: Keyword[];
         body: Stmt[];
         decorator_list: Expr[];
-        fields?: Map<FieldDesc>;
         baseClass?: ClassDef;
+        isEnum?: boolean;
     }
     export interface Return extends Stmt {
         kind: "Return";
