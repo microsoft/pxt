@@ -3731,7 +3731,7 @@ function buildDalDTSAsync(c: commandParser.ParsedCommand) {
 
         p = p.then(() => buildCoreAsync({ mode: BuildOption.JustBuild }))
             .then(() => { });
-        return Promise.resolve();
+        return p;
     }
 
     if (fs.existsSync("pxtarget.json")) {
