@@ -27,27 +27,41 @@ namespace ts.pxtc.decompiler {
                 case ts.SyntaxKind.VariableStatement:
                     return emitVarStmt(s as ts.VariableStatement)
                 default:
-                    throw "Not implemented";
+                    throw Error("Not implemented");
             }
         }
         let emitVarStmt = (s: ts.VariableStatement) => {
+            // console.log("s.declarationList")
+            // console.log(s.declarationList)
+            let decls = s.declarationList.declarations;
+            return decls.map(emitVarDecl)
+        }
+        let emitVarDecl = (s: ts.VariableDeclaration) => {
+            let decl = s.name.getText();
+            if (s.initializer) {
+                let exp = emitExp(s.initializer);
+                return `${decl} = ${exp}`
+            } else {
+                // TODO can't forward declare variables in python (I think)
+                return ""
+            }
+        }
+        let emitExp = (s: ts.Expression) => {
+            // TODO
+            return s.getText();
         }
 
-        let printStmt = (s: ts.Statement) => {
-            console.log(s.getFullText())
-            console.log("s")
-            console.log(s)
-            // let foo = [s.kind, s.modifiers, s.symbol]
-            // console.log(foo)
-            // console.log("s.parent")
-            // console.log(s.parent)
-            // s.declarationList
-        }
-        stmts.forEach(printStmt)
+        let outLns = stmts.map(emitStmt)
+        // TODO VariableDeclarationList
 
-        let output: string = "";
+        let output: string = outLns.join("\n");
 
-        output += "print('Hello, world!')"
+        console.log("INPUT")
+        console.log(file.getText())
+        console.log("OUTPUT")
+        console.log(output)
+
+        // output += "print('Hello, world!')"
 
         result.outfiles[file.fileName.replace(/(\.py)?\.\w*$/i, '') + '.py'] = output;
 
