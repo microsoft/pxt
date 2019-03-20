@@ -270,7 +270,7 @@ namespace pxt.runner {
             let cfg = JSON.parse(epkg.files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
             pkg.dependLinks.forEach((dep: string) => {
                 if (dep.indexOf("=") > 0) {
-                    let ids =/(\S+)=(\S+:\S+)/.exec(dep);
+                    let ids = /(\S+)=(\S+:\S+)/.exec(dep);
                     let id = ids[1];
                     let ver = ids[2];
                     cfg.dependencies[id] = ver;

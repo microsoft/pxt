@@ -716,7 +716,7 @@ namespace pxt.runner {
                     </div>
                     </div></div>`)
                 let deps = options.package;
-                $sim.find("iframe").attr("src", getRunUrl(options) + "#nofooter=1&code=" + encodeURIComponent($c.text().trim()) + (deps ? "&deps=" + deps: ""));
+                $sim.find("iframe").attr("src", getRunUrl(options) + "#nofooter=1&code=" + encodeURIComponent($c.text().trim()) + (deps ? "&deps=" + deps : ""));
                 if (options.snippetReplaceParent) $c = $c.parent();
                 $c.replaceWith($sim);
             });
