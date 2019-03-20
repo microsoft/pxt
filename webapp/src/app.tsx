@@ -1868,11 +1868,10 @@ export class ProjectView
         if (tracing) {
             this.editor.clearHighlightedStatements();
             simulator.setTraceInterval(0);
+        } else {
+            simulator.setTraceInterval(intervalSpeed || simulator.SLOW_TRACE_INTERVAL);
         }
-        else {
-            simulator.setTraceInterval(intervalSpeed != undefined ? intervalSpeed : simulator.SLOW_TRACE_INTERVAL);
-        }
-        this.setState({ tracing: !tracing })
+        this.setState({ tracing: !tracing }, () => this.startSimulator(true))
         this.startSimulator(true);
     }
 
