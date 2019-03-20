@@ -23,8 +23,9 @@ info.setLife(3)
 def playerDamage(sprite:Sprite, otherSprite:Sprite):
     scene.cameraShake(4, 500)
     otherSprite.destroy(effects.disintegrate)
-    sprite.startEffect(effects.fire, 200)
-    info.changeLifeBy(-1)
+    if True:
+      sprite.startEffect(effects.fire, 200)
+      info.changeLifeBy(-1)
 sprites.onOverlap(SpriteKind.Player, SpriteKind.Enemy, playerDamage)
 
 def enemyDamage(sprite:Sprite, otherSprite:Sprite):

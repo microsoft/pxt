@@ -46,6 +46,8 @@ namespace ts.pxtc.decompiler {
                     .map(emitNode)
                     .reduce((p, c) => p.concat(c), [])
             case ts.SyntaxKind.EndOfFileToken:
+            case ts.SyntaxKind.OpenBraceToken:
+            case ts.SyntaxKind.CloseBraceToken:
                 return []
             default:
                 return emitStmtWithNewlines(s as ts.Statement)
@@ -68,7 +70,6 @@ namespace ts.pxtc.decompiler {
         return out;
     }
     function emitStmt(s: ts.Statement): string[] {
-
         // TODO(dz): why does the type system not recognize this as discriminated unions?
         switch (s.kind) {
             case ts.SyntaxKind.VariableStatement:
@@ -79,9 +80,36 @@ namespace ts.pxtc.decompiler {
                 return [emitExpStmt(s as ts.ExpressionStatement)]
             case ts.SyntaxKind.FunctionDeclaration:
                 return emitFuncDecl(s as ts.FunctionDeclaration)
+            case ts.SyntaxKind.IfStatement:
+                return emitIf(s as ts.IfStatement)
+            case ts.SyntaxKind.Block:
+                let block = s as ts.Block
+                return block.getChildren()
+                    .map(emitNode)
+                    .reduce((p, c) => p.concat(c), [])
             default:
                 throw Error(`Not implemented: statement kind ${s.kind}`);
         }
+    }
+    function emitIf(s: ts.IfStatement): string[] {
+        let cond = emitExp(s.expression)
+        let out = [`if ${cond}:`];
+
+        let th = emitStmt(s.thenStatement)
+            .map(indent1)
+        out = out.concat(th)
+
+        // TODO: handle else if
+        // TODO: confirm else works
+
+        if (s.elseStatement) {
+            out.push("else:")
+            let el = emitStmt(s.elseStatement)
+                .map(indent1)
+            out = out.concat(el)
+        }
+
+        return out;
     }
     function emitVarStmt(s: ts.VariableStatement): string[] {
         // console.log("s.declarationList")

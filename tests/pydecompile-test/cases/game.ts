@@ -31,8 +31,11 @@ info.setLife(3)
 function playerDamage(sprite: Sprite, otherSprite: Sprite) {
     scene.cameraShake(4, 500)
     otherSprite.destroy(effects.disintegrate)
-    sprite.startEffect(effects.fire, 200)
-    info.changeLifeBy(-1)
+    if (true) {
+        sprite.startEffect(effects.fire, 200)
+        info.changeLifeBy(-1)
+    }
+
 }
 
 sprites.onOverlap(SpriteKind.Player, SpriteKind.Enemy, playerDamage)
