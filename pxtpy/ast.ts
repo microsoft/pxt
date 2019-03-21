@@ -6,7 +6,7 @@ namespace pxt.py {
         pyType?: Type;
     }
 
-    export interface SymbolInfo extends pxtc.SymbolInfo {
+    export interface SymbolInfo extends pxtc.SymbolInfo, VarDescOptions {
         pyRetType?: Type;
         pySymbolType?: Type;
         pyInstanceType?: Type;
@@ -34,14 +34,7 @@ namespace pxt.py {
         isPlainImport?: boolean;
         isLocal?: boolean;
         isParam?: boolean;
-        fundef?: py.FunctionDef;
-        classdef?: py.ClassDef;
         isImport?: SymbolInfo;
-    }
-
-    export interface VarDesc extends VarDescOptions {
-        type: Type;
-        name: string;
     }
 
     // based on grammar at https://docs.python.org/3/library/ast.html
@@ -154,7 +147,7 @@ namespace pxt.py {
     }
 
     export interface ScopeDef extends Stmt {
-        vars?: Map<VarDesc>;
+        vars?: Map<SymbolInfo>;
         parent?: ScopeDef;
     }
 

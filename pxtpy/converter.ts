@@ -216,20 +216,23 @@ namespace pxt.py {
     }
 
     function addImport(a: AST, name: string, scope?: ScopeDef) {
-        const v = defvar(name, { isPlainImport: true }, scope)
         const sym = lookupGlobalSymbol(name)
         if (!sym)
             error(a, U.lf("No module named '{0}'", name))
-        else
-            unify(a, v.type, symbolType(sym))
-        return v
+        return sym
     }
 
     function defvar(n: string, opts: py.VarDescOptions, scope?: ScopeDef) {
-        let scopeDef = scope || currentScope()
-        let v = scopeDef.vars[n]
+        if (!scope)
+            scope = currentScope()
+        let v = scope.vars[n]
         if (!v) {
-            v = scopeDef.vars[n] = { type: mkType(), name: n }
+            let qn = getFullName(scope) + "." + n
+            if (isLocalScope(scope))
+                v = mkSymbol(SK.Variable, qn)
+            else
+                v = addSymbol(SK.Variable, qn)
+            scope.vars[n] = v
         }
         for (let k of Object.keys(opts)) {
             (v as any)[k] = (opts as any)[k]
@@ -245,6 +248,7 @@ namespace pxt.py {
         return t
     }
 
+    // TODO cache it?
     function getFullName(n: py.AST): string {
         let s = n as py.ScopeDef
         let pref = ""
@@ -381,29 +385,48 @@ namespace pxt.py {
         }
     }
 
-    function addSymbol(kind: SK, qname: string) {
-        let sym = internalApis[qname]
-        if (sym) return sym
+    function mkSymbol(kind: SK, qname: string): SymbolInfo {
         let m = /(.*)\.(.*)/.exec(qname)
-        sym = {
+        return {
             kind: kind,
             name: m ? m[2] : qname,
             qName: qname,
             namespace: m ? m[1] : "",
             attributes: {} as any,
-            pyRetType: mkType(),
+            pyRetType: mkType()
         } as any
+    }
+
+    function addSymbol(kind: SK, qname: string) {
+        let sym = internalApis[qname]
+        if (sym) return sym
+        sym = mkSymbol(kind, qname)
         internalApis[sym.qName] = sym
         return sym
     }
 
-    function addSymbolFor(k: SK, n: py.Symbol) {
+    function isLocalScope(scope: ScopeDef) {
+        while (scope) {
+            if (scope.kind == "FunctionDef")
+                return true
+            scope = scope.parent
+        }
+        return false
+    }
+
+    function addSymbolFor(k: SK, n: py.Symbol, scope?: ScopeDef) {
         if (!n.symInfo) {
             let qn = getFullName(n)
             if (U.endsWith(qn, ".__init__"))
                 qn = qn.slice(0, -9) + ".__constructor"
-            n.symInfo = addSymbol(k, qn)
-            n.symInfo.pyAST = n
+            scope = scope || currentScope()
+            if (isLocalScope(scope))
+                n.symInfo = mkSymbol(k, qn)
+            else
+                n.symInfo = addSymbol(k, qn)
+            const sym = n.symInfo
+            sym.pyAST = n
+            scope.vars[sym.name] = sym
         }
         return n.symInfo
     }
@@ -482,10 +505,9 @@ namespace pxt.py {
 
     function getClassDef(e: py.Expr) {
         let n = getName(e)
-        let v = lookupVar(n)
-        if (v)
-            return v.classdef
-        let s = lookupGlobalSymbol(n)
+        let s = lookupVar(n)
+        if (!s)
+            s = lookupGlobalSymbol(n)
         if (s && s.pyAST && s.pyAST.kind == "ClassDef")
             return s.pyAST as py.ClassDef
         return null
@@ -616,8 +638,8 @@ namespace pxt.py {
 
         let lst = n.symInfo.parameters.map(p => {
             let v = defvar(p.name, { isParam: true })
-            unify(n, v.type, p.pyType)
-            let res = [quote(p.name), typeAnnot(v.type)]
+            unify(n, symbolType(v), p.pyType)
+            let res = [quote(p.name), typeAnnot(p.pyType)]
             if (p.default) {
                 res.push(B.mkText(" = " + p.default))
             }
@@ -760,7 +782,7 @@ namespace pxt.py {
                         if (funname == "__set__" && vv) {
                             let cf = getClassField(ctx.currClass.symInfo, "__get__")
                             if (cf.pyAST && cf.pyAST.kind == "FunctionDef")
-                                unify(n, vv.type, cf.pyRetType)
+                                unify(n, vv.pyRetType, cf.pyRetType)
                         }
                         funname = funname.replace(/_/g, "")
                     }
@@ -780,10 +802,8 @@ namespace pxt.py {
                 doArgs(n, isMethod),
                 n.returns ? typeAnnot(compileType(n.returns)) : B.mkText(""))
 
-            if (!isMethod) {
-                const v = defvar(n.name, { fundef: n })
-                unify(n, symbolType(sym), v.type)
-            }
+            // make sure type is initialized
+            symbolType(sym)
 
             let body = n.body.map(stmt)
             if (n.name == "__init__") {
@@ -805,9 +825,7 @@ namespace pxt.py {
         ClassDef: (n: py.ClassDef) => guardedScope(n, () => {
             setupScope(n)
 
-            const cv = defvar(n.name, { classdef: n })
             const sym = addSymbolFor(SK.Class, n)
-            unify(n, cv.type, symbolType(sym))
 
             U.assert(!ctx.currClass)
             let topLev = isTopLevel()
@@ -1009,7 +1027,7 @@ namespace pxt.py {
                     let v = defvar(id, { isLocal: true })
                     id = quoteStr(id)
                     res.push(B.mkStmt(B.mkText("const " + id + " = "), devRef))
-                    unifyTypeOf(it.context_expr, v.type)
+                    unifyTypeOf(it.context_expr, v.pyRetType)
                     devRef = B.mkText(id)
                 }
                 res.push(B.mkStmt(B.mkInfix(devRef, ".", B.mkText("begin()"))))
@@ -1138,7 +1156,7 @@ namespace pxt.py {
             } else {
                 n.isdef = false
             }
-            unify(n, n.tsType, curr.type)
+            unify(n, n.tsType, curr.pyRetType)
         }
 
         if (n.isdef)
@@ -1526,7 +1544,7 @@ namespace pxt.py {
 
             let v = lookupVar(n.id)
             if (v) {
-                unify(n, n.tsType, v.type)
+                unify(n, n.tsType, symbolType(v))
                 if (v.isImport)
                     return quote(n.id) // it's import X = Y.Z.X, use X not Y.Z.X
             } else if (currIteration > 0) {
