@@ -352,7 +352,7 @@ declare interface Number {
      */
     //% help=math/to-string
     //% blockId=numberToString 
-    //% block="convert %number| to string"
+    //% block="convert %n| to string"
     //% blockNamespace="Math"
     //% weight=1
     //% shim=numops::toString
