@@ -77,3 +77,14 @@
 .debugger .ui.inverted.menu {
     background: @DebuggerBackgroundPrimaryColor !important;
 }
+
+/* Debug mode */
+.menubar .debugger-menu-item.centered {
+    position: fixed;
+    place-content: center;
+    right: 0;
+    left: 0;
+    margin-right: auto;
+    margin-left: auto;
+    min-height: inherit;
+}
