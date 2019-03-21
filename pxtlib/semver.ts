@@ -59,7 +59,7 @@ namespace pxt.semver {
     }
 
     export function tryParse(v: string): Version {
-        if (/\*/.test(v)) {
+        if ("*" === v) {
             return {
                 major: Number.MAX_SAFE_INTEGER,
                 minor: Number.MAX_SAFE_INTEGER,
