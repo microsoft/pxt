@@ -65,9 +65,11 @@ describe("pydecompiler", () => {
 
     // TODO(dz): starting with a smaller set
     // console.log(JSON.stringify(filenames))
-    // let incl = ["string_length", "game"]
-    // filenames = filenames
-    //     .filter(f => incl.some(s => f.indexOf(s) > 0))
+    // let whitelist = ["string_length", "game"]
+    let blacklist = ["shadowing"]
+    filenames = filenames
+        .filter(f => !blacklist.some(s => f.indexOf(s) > 0))
+    //     .filter(f => whitelist.some(s => f.indexOf(s) > 0))
 
     filenames.forEach(filename => {
         it("should decompile " + path.basename(filename), () => {

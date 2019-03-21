@@ -1,16 +1,13 @@
-let item = 1
-for (let i = 0; i < 4; i++) {
-    while (true || !(!(false))) {
-        for (let i = 0; i < item + 7; i++) {
+item = 1
+for i in range(4):
+    while True or not not False:
+        i = 0
+        while i < item + 7:
             item += 1
-            if (0 % 1 / 0 * 0 - 0 + 0 == 0 && (0 < 0 || (0 <= 0 || 0 > 0 || 0 >= 0))) {
+            if 0 % 1 / 0 * 0 - 0 + 0 == 0 and (0 < 0 or (0 <= 0 or 0 > 0 or 0 >= 0)):
                 item = 0
-            } else if (true || !(!(false))) {
+            elif True or not not False:
                 item += 1
-            } else {
+            else:
                 item = 2
-            }
-        }
-    }
-}
-
+            i += 1

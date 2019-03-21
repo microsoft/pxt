@@ -89,6 +89,8 @@ namespace ts.pxtc.decompiler {
                 return emitFuncDecl(s as ts.FunctionDeclaration)
             case ts.SyntaxKind.IfStatement:
                 return emitIf(s as ts.IfStatement)
+            case ts.SyntaxKind.ForStatement:
+                return emitForStmt(s as ts.ForStatement)
             case ts.SyntaxKind.Block:
                 let block = s as ts.Block
                 return block.getChildren()
@@ -97,6 +99,24 @@ namespace ts.pxtc.decompiler {
             default:
                 throw Error(`Not implemented: statement kind ${s.kind}`);
         }
+    }
+    function emitForStmt(s: ts.ForStatement): string[] {
+        // special case:
+        // for (let x = y; x < z; x++)
+        // ->
+        // for x in range(y, z):
+        // TODO:
+        // - ensure x and z can't be mutated in the loop body
+
+        // general case:
+        // for (<decls>; <cond>; <updates>)
+        // ->
+        // <decls>
+        // while <cond>:
+        //   # body
+        //   <updates>
+
+        return ["four!"]
     }
     function emitIf(s: ts.IfStatement): string[] {
         let [cond, condSup] = emitExp(s.expression)
@@ -273,6 +293,7 @@ namespace ts.pxtc.decompiler {
 
     let nextFnNum = 0
     function nextFnName() {
+        // TODO ensure uniqueness
         // TODO add sync lock
         return `function_${nextFnNum++}`
     }
