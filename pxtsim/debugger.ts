@@ -135,10 +135,12 @@ namespace pxsim {
             if (frame.fields && fields) {
                 // Fields of an object.
                 for (let k of fields) {
-                    r[k] = valToJSON(evalGetter(frame.vtable.iface[k.substring(k.lastIndexOf(".") + 1)], frame));
+                    k = k.substring(k.lastIndexOf(".") + 1);
+                    r[k] = valToJSON(evalGetter(frame.vtable.iface[k], frame));
                 }
-            } else if (frame.fields) {
-                for (let k of Object.keys(frame.fields)) {
+            }
+            if (frame.fields) {
+                for (let k of Object.keys(frame.fields).filter(field => !field.startsWith('_'))) {
                     r[k.replace(/___\d+$/, '')] = valToJSON(frame.fields[k])
                 }
             } else if (Array.isArray(frame.data)) {

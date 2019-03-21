@@ -108,7 +108,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
             let fieldsToGet: string[] = [];
             potentialKeys.forEach(key => {
                 let commentAttrs = allApis[key];
-                if (!key.endsWith("@set") && commentAttrs && commentAttrs.attributes.dbgDisplayName) {
+                if (!key.endsWith("@set") && commentAttrs && commentAttrs.attributes.callInDebugger) {
                     fieldsToGet.push(key);
                 }
             });
@@ -125,8 +125,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
                         } else {
                             let children: pxt.Map<Variable> = {};
                             Object.keys(msg.variables).forEach(variableName => {
-                                let variableDisplayName = (allApis[variableName] && allApis[variableName].attributes.dbgDisplayName) ? allApis[variableName].attributes.dbgDisplayName : variableName
-                                children[variableDisplayName] = { value: msg.variables[variableName] }
+                                children[variableName] = { value: msg.variables[variableName] }
                             })
                             v.children = children;
                         }

@@ -158,6 +158,7 @@ namespace ts.pxtc {
         advanced?: boolean;
         deprecated?: boolean;
         useEnumVal?: boolean; // for conversion from typescript to blocks with enumVal
+        callInDebugger?: boolean; // for getters, they will be invoked by the debugger.
         // On block
         subcategory?: string;
         group?: string;
@@ -717,7 +718,8 @@ namespace ts.pxtc {
         "enumIsBitMask",
         "enumIsHash",
         "decompileIndirectFixedInstances",
-        "topblock"
+        "topblock",
+        "callInDebugger",
     ];
 
     export function parseCommentString(cmt: string): CommentAttrs {
