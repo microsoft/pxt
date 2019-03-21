@@ -366,22 +366,37 @@ namespace pxt.py {
     }
 
     function unify(a: AST, t0: Type, t1: Type): void {
-        t0 = find(t0)
-        t1 = find(t1)
         if (t0 === t1)
             return
-        if (!canUnify(t0, t1)) {
-            typeError(a, t0, t1)
-            return
-        }
-        if (typeCtor(t0) && !typeCtor(t1))
-            return unify(a, t1, t0)
-        numUnifies++
-        t0.union = t1
 
-        if (t0.typeArgs && t1.typeArgs) {
-            for (let i = 0; i < Math.min(t0.typeArgs.length, t1.typeArgs.length); ++i)
-                unify(a, t0.typeArgs[i], t1.typeArgs[i])
+        t0 = find(t0)
+        t1 = find(t1)
+
+        if (t0 === t1)
+            return
+
+        const c0 = typeCtor(t0)
+        const c1 = typeCtor(t1)
+
+        if (c0 && c1) {
+            if (c0 === c1) {
+                t0.union = t1 // no type-state change here - actual change would be in arguments only
+                if (t0.typeArgs && t1.typeArgs) {
+                    for (let i = 0; i < Math.min(t0.typeArgs.length, t1.typeArgs.length); ++i)
+                        unify(a, t0.typeArgs[i], t1.typeArgs[i])
+                }
+                t0.union = t1
+            } else {
+                typeError(a, t0, t1)
+            }
+        } else if (c0 && !c1) {
+            unify(a, t1, t0)
+        } else {
+            // the type state actually changes here
+            numUnifies++
+            t0.union = t1
+            // detect late unifications
+            // if (currIteration > 2) error(a, `unify ${t2s(t0)} ${t2s(t1)}`)
         }
     }
 
@@ -1674,14 +1689,18 @@ namespace pxt.py {
 
         for (let i = 0; i < 5; ++i) {
             currIteration = i
+            let prevUnifies = numUnifies
             for (let m of modules) {
                 try {
                     toTS(m)
                     // console.log(`after ${currIteration} - ${numUnifies}`)
                 } catch (e) {
                     console.log("Conv pass error", e);
+                    numUnifies++
                 }
             }
+            if (numUnifies == prevUnifies)
+                break
         }
 
         currIteration = 1000
