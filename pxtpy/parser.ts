@@ -248,6 +248,7 @@ namespace pxt.py {
         let r = mkAST("For") as For
         expectKw("for")
         r.target = exprlist()
+        setStoreCtx(r.target)
         expectKw("in")
         r.iter = testlist()
         r.body = colon_suite()
@@ -958,6 +959,7 @@ namespace pxt.py {
             rr.push(r)
             expectKw("for")
             r.target = exprlist()
+            setStoreCtx(r.target)
             expectKw("in")
             r.iter = or_test()
             r.ifs = []

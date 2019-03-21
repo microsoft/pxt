@@ -3,6 +3,12 @@ class Foo:
     z = 12
     x = z * 3
     self.baz = x
+    for q in range(10):
+      x += q
+    lst = ["foo", "bar", "baz"]
+    lst = lst[1:2]
+    # TODO change to len(lst)
+    assert lst.length == 2, 201
   def qux(self):
     self.baz = self.bar
     self.blah = "hello"

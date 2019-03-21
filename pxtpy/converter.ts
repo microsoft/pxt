@@ -14,6 +14,8 @@ namespace pxt.py {
     let ctx: Ctx
     let currIteration = 0
     let typeId = 0
+    // this measures if we gained additional information about type state
+    // we run conversion several times, until we have all information possible
     let numUnifies = 0
     let currErrs = ""
     let autoImport = true
@@ -1414,6 +1416,7 @@ namespace pxt.py {
             if (!formals) {
                 if (fun)
                     error(n, U.lf("calling non-function"))
+                allargs = orderedArgs.map(expr)
             } else {
                 if (orderedArgs.length > formals.length)
                     error(n, U.lf("too many arguments in call to '{0}'", fun.qName))
