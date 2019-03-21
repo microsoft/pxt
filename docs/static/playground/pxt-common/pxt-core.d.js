@@ -351,8 +351,9 @@ declare interface Number {
      * Returns a string representation of a number.
      */
     //% help=math/to-string
-    //% blockId=numberToString block="convert $value to string"
-    //% blockNamespace=Math
+    //% blockId=numberToString 
+    //% block="convert %number| to string"
+    //% blockNamespace="Math"
     //% weight=1
     //% shim=numops::toString
     toString(): string;
