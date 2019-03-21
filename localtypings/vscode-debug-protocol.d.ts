@@ -519,7 +519,7 @@ declare namespace DebugProtocol {
         start?: number;
         /** The number of variables to return. If count is missing or 0, all variables are returned. */
         count?: number;
-        /** The variable's fields to get. If missing, all variables returned. */
+        /** The variable's fields to get. */
         fields?: string[];
     }
     /** Response to 'variables' request. */

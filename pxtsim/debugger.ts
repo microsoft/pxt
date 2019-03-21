@@ -156,21 +156,24 @@ namespace pxsim {
     }
 
     function evalGetter(fn: LabelFn, target: RefObject) {
-        let p: any = {
+        // This function evaluates a getter, and we assume it doesn't have any side effects.
+        let parentFrame: any = {
         };
 
-        let s: any = {
+        // We create a dummy stack frame
+        let stackFrame: any = {
             pc: 0,
             arg0: target,
             fn,
-            parent: p
+            parent: parentFrame
         };
 
-        while (s.fn) {
-            s = s.fn(s as any);
+        // And we evaluate the getter
+        while (stackFrame.fn) {
+            stackFrame = stackFrame.fn(stackFrame as any);
         }
 
-        return s.retval;
+        return stackFrame.retval;
     }
 
     export function getBreakpointMsg(s: pxsim.StackFrame, brkId: number): { msg: DebuggerBreakpointMessage, heap: Map<any> } {
