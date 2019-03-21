@@ -1,0 +1,1 @@
+testNamespace.enumArgument(testNamespace.numberArgumentOutput(0))

@@ -130,8 +130,10 @@ namespace ts.pxtc.decompiler {
         }
 
         // must be (let i = X; ...)
-        if (!s.initializer || s.initializer.kind !== ts.SyntaxKind.VariableDeclarationList)
-            return null;
+        if (!s.initializer)
+            return null
+        if (s.initializer.kind !== ts.SyntaxKind.VariableDeclarationList)
+            return null
 
         let initDecls = s.initializer as ts.VariableDeclarationList
         if (initDecls.declarations.length !== 1)
@@ -142,18 +144,20 @@ namespace ts.pxtc.decompiler {
 
         if (!ts.isNumericLiteral(decl.initializer)) {
             // TODO allow variables?
-            return null;
+            return null
         }
 
         let fromNum = decl.initializer.text
         if (!isNormalInteger(fromNum)) {
             // TODO allow floats?
-            return null;
+            return null
         }
 
         result.fromIncl = Number(fromNum)
 
         // must be (...; i < Y; ...)
+        if (!s.condition)
+            return null
         if (!ts.isBinaryExpression(s.condition))
             return null
         if (!ts.isIdentifier(s.condition.left))
@@ -161,17 +165,20 @@ namespace ts.pxtc.decompiler {
         if (s.condition.left.text != result.name)
             return null
         if (!ts.isNumericLiteral(s.condition.right))
-            return null;
+            return null
         let toNum = s.condition.right.text
         if (!isNormalInteger(toNum))
-            return null;
-        if (!s.condition || s.condition.operatorToken.kind !== SyntaxKind.LessThanToken)
-            return null;
-
+            return null
         result.toExcl = Number(toNum);
+        if (s.condition.operatorToken.kind === SyntaxKind.LessThanEqualsToken)
+            result.toExcl += 1
+        else if (s.condition.operatorToken.kind !== SyntaxKind.LessThanToken)
+            return null
 
         // must be (...; i++)
         // TODO allow += 1
+        if (!s.incrementor)
+            return null
         if (!ts.isPostfixUnaryExpression(s.incrementor))
             return null
         if (s.incrementor.operator !== SyntaxKind.PlusPlusToken)
@@ -179,7 +186,7 @@ namespace ts.pxtc.decompiler {
 
         // must be X < Y
         if (!(result.fromIncl < result.toExcl))
-            return null;
+            return null
 
         return result
     }
@@ -240,12 +247,15 @@ namespace ts.pxtc.decompiler {
         // body
         let body = emitStmt(s.statement)
             .map(indent1)
+        if (body.length === 0 && !s.incrementor)
+            body = [indent1("pass")]
         out = out.concat(body)
 
         // updater(s)
         if (s.incrementor) {
             let [inc, incSup] = emitExp(s.incrementor)
-            out = out.concat(incSup).concat([inc])
+            out = out.concat(incSup)
+                .concat([indent1(inc)])
         }
 
         return out
