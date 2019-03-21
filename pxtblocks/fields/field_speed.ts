@@ -65,14 +65,8 @@ namespace pxtblockly {
                 'class': 'sim-text inverted number'
             }) as SVGTextElement;
 
-            // labelContainer.setAttribute('class', 'blocklyFieldSliderLabel');
             const readout = document.createElement('span');
             readout.setAttribute('class', 'blocklyFieldSliderReadout');
-            // var label = document.createElement('span');
-            // label.setAttribute('class', 'blocklyFieldSliderLabelText');
-            // label.innerHTML = labelText;
-            // labelContainer.appendChild(label);
-            // labelContainer.appendChild(readout);
             return [labelContainer, readout];
         };
 
