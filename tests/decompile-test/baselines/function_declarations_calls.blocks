@@ -1,21 +1,31 @@
 <xml xmlns="http://www.w3.org/1999/xhtml">
-<block type="procedures_defnoreturn">
-<field name="NAME">hello</field>
+<block type="function_definition">
+<mutation name="hello" >
+</mutation>
+<statement name="STACK">
+</statement>
+</block>
+<block type="function_definition">
+<mutation name="bad" >
+<arg name="a" type="number" id="y48s4ytbwgdfi41r0fqn" />
+</mutation>
 <statement name="STACK">
 </statement>
 </block>
 <block type="pxt-on-start">
 <statement name="HANDLER">
-<block type="typescript_statement">
-<mutation numlines="1" line0="function bad&#40;a&#58; number&#41; &#123;&#125;" />
-<next>
-<block type="procedures_callnoreturn">
+<block type="function_call">
 <mutation name="hello" />
 <next>
-<block type="typescript_statement">
-<mutation numlines="1" line0="bad&#40;5&#41;&#59;" />
-</block>
-</next>
+<block type="function_call">
+<mutation name="bad" >
+<arg name="a" type="number" id="y48s4ytbwgdfi41r0fqn" />
+</mutation>
+<value name="y48s4ytbwgdfi41r0fqn">
+<shadow type="math_number">
+<field name="NUM">5</field>
+</shadow>
+</value>
 </block>
 </next>
 </block>
