@@ -551,7 +551,7 @@ class Chart {
     tooltip(timestamp: number, data: { series: TimeSeries, index: number, value: number }[]): string {
         return data.map(n => {
             const name = (n.series as any).timeSeries.__name;
-            return `<span>${name ? name + ': ' : ''}${n.value}</span>`;
+            return `<span>${name ? Util.htmlEscape(name) + ': ' : ''}${n.value}</span>`;
         }).join('<br/>');
     }
 
