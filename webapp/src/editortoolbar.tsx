@@ -61,7 +61,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
 
     startStopSimulator(view?: string) {
         pxt.tickEvent("editortools.startStopSimulator", { view: view, collapsed: this.getCollapsedState(), headless: this.getHeadlessState() }, { interactiveConsent: true });
-        this.props.parent.startStopSimulator(true);
+        this.props.parent.startStopSimulator({ clickTrigger: true });
     }
 
     restartSimulator(view?: string) {

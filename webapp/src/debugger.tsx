@@ -18,6 +18,7 @@ interface Variable {
 }
 
 interface DebuggerVariablesProps extends ISettingsProps {
+    apisByQName: pxt.Map<pxtc.SymbolInfo>;
 }
 
 export class DebuggerVariables extends data.Component<DebuggerVariablesProps, DebuggerVariablesState> {
@@ -100,15 +101,34 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
             this.setState({ variables: this.state.variables })
         } else {
             if (!v.value.id) return;
-            simulator.driver.variablesAsync(v.value.id)
+            // We filter the getters we want to call for this variable.
+            let allApis = this.props.apisByQName;
+            let matcher = new RegExp("^((.+\.)?" + v.value.type + ")\.");
+            let potentialKeys = Object.keys(allApis).filter(key => matcher.test(key));
+            let fieldsToGet: string[] = [];
+            potentialKeys.forEach(key => {
+                let commentAttrs = allApis[key];
+                if (!key.endsWith("@set") && commentAttrs && commentAttrs.attributes.callInDebugger) {
+                    fieldsToGet.push(key);
+                }
+            });
+            simulator.driver.variablesAsync(v.value.id, fieldsToGet)
                 .then((msg: pxsim.VariablesMessage) => {
                     if (msg) {
-                        v.children = pxt.Util.mapMap(msg.variables || {},
-                            (k, v) => {
-                                return {
-                                    value: msg.variables[k]
-                                }
-                            });
+                        if (v.value.type == "array") {
+                            v.children = pxt.Util.mapMap(msg.variables || {},
+                                (k, v) => {
+                                    return {
+                                        value: msg.variables[k]
+                                    }
+                                });
+                        } else {
+                            let children: pxt.Map<Variable> = {};
+                            Object.keys(msg.variables).forEach(variableName => {
+                                children[variableName] = { value: msg.variables[variableName] }
+                            })
+                            v.children = children;
+                        }
                         this.setState({ variables: this.state.variables })
                     }
                 })
@@ -161,7 +181,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
             })
         }
         depth = depth || 0;
-        let margin = depth * 1.5 + 'em';
+        let margin = depth * 0.75 + 'em';
         varNames.forEach(variable => {
             const v = variables[variable];
             const oldValue = DebuggerVariables.renderValue(v.prevValue);
@@ -232,7 +252,7 @@ export class DebuggerToolbar extends data.Component<DebuggerToolbarProps, Debugg
 
     restartSimulator() {
         pxt.tickEvent('debugger.restart', undefined, { interactiveConsent: true });
-        this.props.parent.restartSimulator(true);
+        this.props.parent.restartSimulator();
     }
 
     exitDebugging() {
