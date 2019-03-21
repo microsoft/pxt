@@ -140,9 +140,6 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
             opts.ast = true;
             opts.testMode = true;
             opts.ignoreFileResolutionErrors = true;
-            if (path.basename(f).indexOf("functions_v2") === 0) {
-                opts.useNewFunctions = true;
-            }
             const decompiled = pxtc.decompile(opts, "main.ts", true);
             if (decompiled.success) {
                 return decompiled.outfiles["main.blocks"];

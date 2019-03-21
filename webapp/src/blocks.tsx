@@ -604,13 +604,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     showFunctionsFlyout() {
-        if (pxt.appTarget.runtime &&
-            pxt.appTarget.runtime.functionsOptions &&
-            pxt.appTarget.runtime.functionsOptions.useNewFunctions) {
             this.showFlyoutInternal_(Blockly.Functions.flyoutCategory(this.editor), "functions");
-        } else {
-            this.showFlyoutInternal_(Blockly.Procedures.flyoutCategory(this.editor), "functions");
-        }
     }
 
     getViewState() {

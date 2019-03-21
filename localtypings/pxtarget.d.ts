@@ -89,7 +89,6 @@ declare namespace pxt {
         functionBlocks?: boolean;
         functionsOptions?: {
             extraFunctionEditorTypes?: FunctionEditorTypeInfo[];
-            useNewFunctions?: boolean;
         };
         logicBlocks?: boolean;
         loopsBlocks?: boolean;
@@ -430,7 +429,6 @@ declare namespace ts.pxtc {
         warnDiv?: boolean; // warn when emitting division operator
 
         alwaysDecompileOnStart?: boolean; // decompiler only
-        useNewFunctions?: boolean; // decompiler only; whether to decompile functions using the new functions implementation (functions with parameters)
         allowedArgumentTypes?: string[]; // decompiler-only; the types allowed for user-defined function arguments in blocks (unlisted types will cause grey blocks)
 
         embedMeta?: string;

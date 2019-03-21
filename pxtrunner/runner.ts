@@ -843,11 +843,10 @@ ${linkString}
                     .then(() => {
                         let blocksInfo = pxtc.getBlocksInfo(apis);
                         pxt.blocks.initializeAndInject(blocksInfo);
-                        const useNewFunctions = appTarget.runtime && appTarget.runtime.functionsOptions && appTarget.runtime.functionsOptions.useNewFunctions;
                         let bresp = pxtc.decompiler.decompileToBlocks(
                             blocksInfo,
                             program.getSourceFile("main.ts"),
-                            { snippetMode: options && options.snippetMode, useNewFunctions });
+                            { snippetMode: options && options.snippetMode});
                         if (bresp.diagnostics && bresp.diagnostics.length > 0)
                             bresp.diagnostics.forEach(diag => console.error(diag.messageText));
                         if (!bresp.success)
