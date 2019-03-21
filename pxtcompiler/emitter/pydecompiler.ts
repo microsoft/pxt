@@ -184,9 +184,6 @@ namespace ts.pxtc.decompiler {
         return result
     }
     function emitForStmt(s: ts.ForStatement): string[] {
-        let body = emitStmt(s.statement)
-            .map(indent1)
-
         let rangeItr = getSimpleForRange(s)
         if (rangeItr) {
             // special case ("repeat z times" block):
@@ -200,6 +197,9 @@ namespace ts.pxtc.decompiler {
                 ? `for ${name} in range(${toExcl}):`
                 : `for ${name} in range(${fromIncl}, ${toExcl}):`;
 
+            let body = emitStmt(s.statement)
+                .map(indent1)
+
             return [forStmt].concat(body)
         }
 
@@ -210,8 +210,30 @@ namespace ts.pxtc.decompiler {
         // while <cond>:
         //   # body
         //   <updates>
+        let out: string[] = []
 
-        return ["# TODO complicated for loop"]
+        // initializer(s)
+        if (ts.isVariableDeclarationList(s.initializer)) {
+            let decls = s.initializer.declarations
+                .map(emitVarDecl)
+                .reduce((p, c) => p.concat(c), [])
+            out = out.concat(decls)
+        } else {
+            let [exp, expSup] = emitExp(s.initializer)
+            out = out.concat(expSup.concat([exp]))
+        }
+
+        // condition(s)
+        let [cond, condSup] = emitExp(s.condition)
+        out = out.concat(condSup)
+        let whileStmt = `while ${cond}:`
+        out.push(whileStmt)
+
+        // body
+
+        // updater(s)
+
+        return out
         // throw Error("TODO complicated for loop")
     }
     function emitIf(s: ts.IfStatement): string[] {
@@ -361,10 +383,34 @@ namespace ts.pxtc.decompiler {
     function asExpRes(str: string): ExpRes {
         return [str, []]
     }
-    function emitOp(s: ts.BinaryOperator): string {
+    function emitOp(s: ts.BinaryOperator | ts.PrefixUnaryOperator | ts.PostfixUnaryOperator): string {
         switch (s) {
             case ts.SyntaxKind.BarBarToken:
                 return "or"
+            case ts.SyntaxKind.AmpersandAmpersandToken:
+                return "and"
+            case ts.SyntaxKind.ExclamationToken:
+                return "not"
+            case ts.SyntaxKind.LessThanToken:
+                return "<"
+            case ts.SyntaxKind.LessThanEqualsToken:
+                return "<="
+            case ts.SyntaxKind.GreaterThanToken:
+                return ">"
+            case ts.SyntaxKind.GreaterThanEqualsToken:
+                return ">="
+            case ts.SyntaxKind.EqualsEqualsEqualsToken:
+            case ts.SyntaxKind.EqualsEqualsToken:
+                // TODO distinguish === from == ?
+                return "=="
+            case ts.SyntaxKind.EqualsToken:
+                return "="
+            case ts.SyntaxKind.PlusToken:
+                return "+"
+            case ts.SyntaxKind.MinusToken:
+                return "-"
+            case ts.SyntaxKind.AsteriskToken:
+                return "*"
             default:
                 return "# TODO unknown op: " + s
         }
@@ -407,20 +453,31 @@ namespace ts.pxtc.decompiler {
 
         return [fnName, fnDef]
     }
-    function emitUnaryOp(s: ts.PrefixUnaryOperator | ts.PostfixUnaryOperator): string {
-        switch (s) {
-            case ts.SyntaxKind.ExclamationToken:
-                return "not"
-            default:
-                return "# TODO unknown unary operator: " + s
-        }
-    }
     function emitPreUnaryExp(s: ts.PrefixUnaryExpression): ExpRes {
-        let op = emitUnaryOp(s.operator);
+        let op = emitOp(s.operator);
         let [exp, expSup] = emitExp(s.operand)
         // TODO handle order-of-operations ? parenthesis?
         let res = `${op} ${exp}`
         return [res, expSup]
+    }
+    function emitArrayLitExp(s: ts.ArrayLiteralExpression): ExpRes {
+        let els = s.elements
+            .map(emitExp);
+        let sup = els
+            .map(([_, sup]) => sup)
+            .reduce((p, c) => p.concat(c), [])
+        let inner = els
+            .map(([e, _]) => e)
+            .join(", ")
+        let exp = `[${inner}]`
+        return [exp, sup]
+    }
+    function emitElAccessExp(s: ts.ElementAccessExpression): ExpRes {
+        let [left, leftSup] = emitExp(s.expression)
+        let [arg, argSup] = emitExp(s.argumentExpression)
+        let sup = leftSup.concat(argSup)
+        let exp = `${left}[${arg}]`
+        return [exp, sup]
     }
     function emitExp(s: ts.Expression): ExpRes {
         switch (s.kind) {
@@ -438,6 +495,10 @@ namespace ts.pxtc.decompiler {
                 let innerExp = (s as ts.ParenthesizedExpression).expression
                 let [inner, innerSup] = emitExp(innerExp)
                 return [`(${inner})`, innerSup]
+            case ts.SyntaxKind.ArrayLiteralExpression:
+                return emitArrayLitExp(s as ts.ArrayLiteralExpression)
+            case ts.SyntaxKind.ElementAccessExpression:
+                return emitElAccessExp(s as ts.ElementAccessExpression)
             case ts.SyntaxKind.TrueKeyword:
                 return asExpRes("True")
             case ts.SyntaxKind.FalseKeyword:
@@ -449,7 +510,6 @@ namespace ts.pxtc.decompiler {
             case ts.SyntaxKind.StringLiteral:
                 // TODO handle weird syntax?
                 return asExpRes(s.getText())
-            case ts.SyntaxKind.ArrayLiteralExpression:
             default:
                 // TODO handle more expressions
                 // return asExpRes(s.getText())
