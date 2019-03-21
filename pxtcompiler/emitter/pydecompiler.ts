@@ -206,6 +206,8 @@ namespace ts.pxtc.decompiler {
 
             let body = emitStmt(s.statement)
                 .map(indent1)
+            if (!body.length)
+                body = [indent1("pass")]
 
             return [forStmt].concat(body)
         }
@@ -563,6 +565,9 @@ namespace ts.pxtc.decompiler {
         let [inner, innerSup] = emitExp(s.expression)
         return [`(${inner})`, innerSup]
     }
+    function emitMultiLnStrLitExp(s: ts.NoSubstitutionTemplateLiteral): ExpRes {
+        return asExpRes(`"""${s.text}"""`)
+    }
     function emitExp(s: ts.Expression): ExpRes {
         switch (s.kind) {
             case ts.SyntaxKind.BinaryExpression:
@@ -585,6 +590,8 @@ namespace ts.pxtc.decompiler {
                 return emitArrayLitExp(s as ts.ArrayLiteralExpression)
             case ts.SyntaxKind.ElementAccessExpression:
                 return emitElAccessExp(s as ts.ElementAccessExpression)
+            case ts.SyntaxKind.NoSubstitutionTemplateLiteral:
+                return emitMultiLnStrLitExp(s as ts.NoSubstitutionTemplateLiteral)
             case ts.SyntaxKind.TrueKeyword:
                 return asExpRes("True")
             case ts.SyntaxKind.FalseKeyword:

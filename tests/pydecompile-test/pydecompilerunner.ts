@@ -103,7 +103,7 @@ function pydecompileTestAsync(filename: string) {
 
         return decompileAsyncWorker(filename, testPythonDir)
             .then(decompiled => {
-                const outFile = path.join(replaceFileExtension(filename, ".local.py"));
+                const outFile = path.join(replaceFileExtension(baselineFile, ".local.py"));
 
                 if (!baselineExists) {
                     fs.writeFileSync(outFile, decompiled)
