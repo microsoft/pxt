@@ -90,6 +90,7 @@ namespace pxsim {
         static toDebugString(o: any): string {
             if (o === null) return "null";
             if (o === undefined) return "undefined;"
+            if (o.vtable && o.vtable.name) return o.vtable.name;
             if (o.toDebugString) return o.toDebugString();
             if (typeof o == "string") return JSON.stringify(o);
             return o.toString();
@@ -530,7 +531,6 @@ namespace pxsim {
         export let dumpDmesg: any;
         export let getVTable: any;
         export let valType: any;
-        export let typeOf: any;
         export let lookupPin: any;
         export let deleteRefObject: any;
         export let popThreadContext: any;
@@ -545,7 +545,14 @@ namespace pxsim {
         export let RefRecord_gcsize: any;
         export let startPerfCounter: any;
         export let stopPerfCounter: any;
+        export let string_inline_ascii_vt: any;
+        export let string_inline_utf8_vt: any;
+        export let string_cons_vt: any;
+        export let string_skiplist16_vt: any;
 
+        export function typeOf(obj: any) {
+            return typeof obj;
+        }
     }
 
     // these can only be used from assembly - silence warnings

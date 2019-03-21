@@ -34,9 +34,13 @@ namespace pxt.usb {
     export let filters: USBDeviceFilter[] = [{
         classCode: 255,
         subclassCode: 42,
-    }]
+    }
+    ]
+
+    let isHF2 = true
 
     export function setFilters(f: USBDeviceFilter[]) {
+        isHF2 = false
         filters = f
     }
 
@@ -124,11 +128,24 @@ namespace pxt.usb {
         altIface: USBAlternateInterface;
         epIn: USBEndpoint;
         epOut: USBEndpoint;
+        readLoopStarted = false;
         onData = (v: Uint8Array) => { };
         onError = (e: Error) => { };
         onEvent = (v: Uint8Array) => { };
 
         constructor(public dev: USBDevice) {
+            (navigator as any).usb.addEventListener('disconnect', (event: any) => {
+                if (event.device == this.dev) {
+                    this.log("Device disconnected")
+                    this.clearDev()
+                }
+            });
+        }
+
+        private clearDev() {
+            this.dev = null
+            this.epIn = null
+            this.epOut = null
         }
 
         error(msg: string) {
@@ -150,7 +167,7 @@ namespace pxt.usb {
                     // just ignore errors closing, most likely device just disconnected
                 })
                 .then(() => {
-                    this.dev = null
+                    this.clearDev()
                     return Promise.delay(500)
                 })
         }
@@ -167,6 +184,8 @@ namespace pxt.usb {
         }
 
         sendPacketAsync(pkt: Uint8Array) {
+            if (!this.dev)
+                return Promise.reject(new Error("Disconnected"))
             Util.assert(pkt.length <= 64)
             if (!this.epOut) {
                 return this.dev.controlTransferOut({
@@ -178,7 +197,7 @@ namespace pxt.usb {
                 }, pkt).then(res => {
                     if (res.status != "ok")
                         this.error("USB CTRL OUT transfer failed")
-                    else
+                    else if (!isHF2)
                         this.recvOne()
                 })
             }
@@ -199,16 +218,27 @@ namespace pxt.usb {
         }
 
         private readLoop() {
+            if (this.readLoopStarted)
+                return
+            this.readLoopStarted = true
+            this.log("start read loop")
             let loop = (): void => {
                 if (!this.ready)
                     Promise.delay(300).then(loop)
                 else
                     this.recvPacketAsync()
                         .then(buf => {
-                            this.onData(buf)
-                            loop()
+                            if (buf[0]) {
+                                // we've got data; retry reading immedietly after processing it
+                                this.onData(buf)
+                                loop()
+                            } else {
+                                // throttle down if no data coming
+                                Promise.delay(500).then(loop)
+                            }
                         }, err => {
-                            this.onError(err)
+                            if (this.dev)
+                                this.onError(err)
                             Promise.delay(300).then(loop)
                         })
             }
@@ -225,7 +255,10 @@ namespace pxt.usb {
                 return arr
             }
 
-            if (!this.epIn)
+            if (!this.dev)
+                return Promise.reject(new Error("Disconnected"))
+
+            if (!this.epIn) {
                 return this.dev.controlTransferIn({
                     requestType: "class",
                     recipient: "interface",
@@ -233,12 +266,15 @@ namespace pxt.usb {
                     value: controlTransferInReport,
                     index: this.iface.interfaceNumber
                 }, 64).then(final)
+            }
 
             return this.dev.transferIn(this.epIn.endpointNumber, 64)
                 .then(final)
         }
 
         initAsync() {
+            if (!this.dev)
+                return Promise.reject(new Error("Disconnected"))
             let dev = this.dev
             this.log("open device")
             return dev.open()
@@ -283,7 +319,7 @@ namespace pxt.usb {
                 .then(() => {
                     this.log("device ready")
                     this.ready = true
-                    if (this.epIn)
+                    if (this.epIn || isHF2)
                         this.readLoop()
                 })
         }
@@ -340,18 +376,22 @@ namespace pxt.usb {
 
         return getDeviceAsync()
             .then((dev) => {
-                return Promise.resolve(true);
+                return true;
             })
             .catch(() => {
-                return Promise.resolve(false);
+                return false;
             });
     }
 
     function getDeviceAsync(): Promise<USBDevice> {
         return ((navigator as any).usb.getDevices() as Promise<USBDevice[]>)
             .then<USBDevice>((devs: USBDevice[]) => {
-                if (!devs || !devs.length)
-                    U.userError(U.lf("No USB device selected or connected; try pairing!"))
+                if (!devs || !devs.length) {
+                    let err: any = new Error(U.lf("No USB device selected or connected; try pairing!"))
+                    err.isUserError = true
+                    err.type = "devicenotfound"
+                    throw err;
+                }
                 return devs[0]
             })
     }
@@ -381,6 +421,16 @@ namespace pxt.usb {
     }
 
     export function isAvailable() {
-        return !!(navigator as any).usb
+        if (!!(navigator as any).usb) {
+            // Windows versions:
+            // 5.1 - XP, 6.0 - Vista, 6.1 - Win7, 6.2 - Win8, 6.3 - Win8.1, 10.0 - Win10
+            // If on Windows, and Windows is older 8.1, don't enable WebUSB,
+            // as it requires signed INF files.
+            let m = /Windows NT (\d+\.\d+)/.exec(navigator.userAgent)
+            if (m && parseFloat(m[1]) < 6.3)
+                return false
+            return true
+        }
+        return false
     }
 }

@@ -11,19 +11,33 @@
         Debugger
 *******************************/
 
+.debuggerToolbox.elements {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
 /* Debugger toolbar */
 .debugtoolbar {
-    position: absolute;
-    top: @mainMenuHeight;
+    // don't show the toolbar unless we're debugging.
+    display: none;
+}
+
+.debugging .debugtoolbar {
+    width: 100%;
     z-index: @debuggerToolsZIndex;
+    display: flex;
     .ui.menu {
-        box-shadow: 0 2px 8px #a8a8a8;
         border-radius: 0 !important;
-        border: 0 !important;
+        border-left: none;
+        display: flex;
+        width: 100%;
         .item {
             padding-left: 10px;
             padding-right: 10px;
-            border-radius: 0 !important;
+        }
+        .separator-after {
+            border-right: 1px solid #dddddd;
         }
     }
 }
@@ -38,11 +52,15 @@
 }
 
 /* Debugger toolbar buttons */
-.ui.button.dbg-btn .icon.blue {
-    color: #72BDFF !important;
+
+.ui.item.dbg-btn {
+    white-space: pre;
+}
+.ui.item.dbg-btn .icon.blue {
+    color: #0078D7!important;
 }
 
-.ui.button.dbg-btn .icon.red {
+.ui.item.dbg-btn .icon.red {
     color: #F6876D !important;
 }
 
@@ -50,36 +68,63 @@
     color: #87D282 !important;
 }
 
+.ui.item.link.dbg-btn.dbg-exit {
+    background-color: #cccccc;
+    color: rgb(255, 21, 0);
+}
+
 /* Debugger variables view */
 .ui.segment.debugvariables {
-    position: absolute;
-    right: 1rem;
-    top: 3.5rem;
-    margin-top: 0rem;
-    
+    table-layout: auto;
+    width: 100%;
+    display: none;
+
     .ui.middle.aligned.list {
         overflow-y: auto;
         max-height: 25rem;
     }
 
+    .transparent{
+        opacity: 0;
+    }
     .variable {
-        color: white;
+        padding: 0.15rem;
     }
-    .variable.changed {
-        outline: solid 2px yellow;
+    .variable.varname {
+        text-overflow: ellipsis;
+        max-width: 1rem;
+        overflow: hidden;
+        white-space: nowrap;
     }
-    .variable .varname {
-        font-weight: bold;
+    .variable.detail {
+        text-align: right;
     }
-    .variable .detail {
-        background:white;
-        color:black;
+    .varval.number {
+        color: @debugNumberVariable;
+    }
+    .varval.string {
+        color: @debugStringVariable
+    }
+    .varval.boolean {
+        color: @debugBooleanVariable;
+    }
+    .varval.array {
+        color: @debugArrayVariable;
+    }
+    .varval.Sprite {
+        color: @debugSpriteVariable;
     }
     .previousval {
         text-decoration: line-through;
         font-size: 90%;
         margin-left: 0.5rem;
     }
+}
+
+.debugging .ui.segment.debugvariables {
+    display: table;
+    margin: 0;
+    border: none;
 }
 
 .ui.segment.debugvariables.frozen {
@@ -100,11 +145,4 @@ div.simframe div.pause-overlay {
 /* Old debugger view */
 #root .debuggerview h4 {
     margin: 0.9em 0 0 0;
-}
-
-/* <= Tablet (Mobile + Tablet) */
-@media only screen and (max-width: @largestTabletScreen) {
-    .debugtoolbar {
-        top: @mobileMenuHeight;
-    }
 }

@@ -66,7 +66,7 @@ interface Array<T> {
       */
     //% help=arrays/slice
     //% helper=arraySlice weight=41 blockNamespace="arrays"
-    slice(start: number, end: number): T[];
+    slice(start?: number, end?: number): T[];
 
     /**
       * Remove elements from an array.
@@ -124,6 +124,12 @@ interface Array<T> {
       */
     //% helper=arrayFilter weight=40
     filter(callbackfn: (value: T, index: number) => boolean): T[];
+
+    /**
+      * Fills all the elements of an array from a start index to an end index with a static value. The end index is not included.
+      */
+    //% helper=arrayFill weight=39
+    fill(value: T, start?: number, end?: number): T[];
     
     /**
      * Returns the value of the first element in the array that satisfies the provided testing function. Otherwise undefined is returned.
@@ -278,6 +284,16 @@ declare interface String {
     //% help=text/includes
     //% blockId="string_includes" blockNamespace="text"
     includes(searchValue: string, start?: number): boolean;
+
+    /**
+     * Splits the string according to the separators
+     * @param separator 
+     * @param limit 
+     */
+    //% helper=stringSplit
+    //% help=text/split
+    //% blockId="string_split" blockNamespace="text"
+    split(separator?: string, limit?: number): string[];
 
     [index: number]: string;
 }

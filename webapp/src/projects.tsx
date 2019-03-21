@@ -179,10 +179,10 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
             signIn = this.getData("sync:username") || lf("Sign in")
         }
 
-        return <div ref="homeContainer" className={tabClasses}>
+        return <div ref="homeContainer" className={tabClasses} role="main">
             {showHeroBanner ?
                 <div className="ui segment getting-started-segment" style={{ backgroundImage: `url(${encodeURI(targetTheme.homeScreenHero)})` }} /> : undefined}
-            <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment mystuff-segment">
+            <div key={`mystuff_gallerysegment`} className="ui segment gallerysegment mystuff-segment" role="region" aria-label={lf("My Projects")}>
                 <div className="ui grid equal width padded heading">
                     <div className="column" style={{ zIndex: 1 }}>
                         {targetTheme.scriptManager ? <h2 role="button" className="ui header myproject-header" title={lf("See all projects")} tabIndex={0}
@@ -203,7 +203,7 @@ export class Projects extends data.Component<ISettingsProps, ProjectsState> {
                 </div>
             </div>
             {Object.keys(galleries).map(galleryName =>
-                <div key={`${galleryName}_gallerysegment`} className="ui segment gallerysegment">
+                <div key={`${galleryName}_gallerysegment`} className="ui segment gallerysegment" role="region" aria-label={pxt.Util.rlf(galleryName)}>
                     <h2 className="ui header heading">{pxt.Util.rlf(galleryName)} </h2>
                     <div className="content">
                         <ProjectsCarousel ref={`${selectedCategory == galleryName ? 'activeCarousel' : ''}`} key={`${galleryName}_carousel`} parent={this.props.parent} name={galleryName} path={galleries[galleryName]}
@@ -447,7 +447,6 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
             const headers = this.fetchLocalData()
             const showNewProject = pxt.appTarget.appTheme && !pxt.appTarget.appTheme.hideNewProjectButton;
             const showScriptManagerCard = targetTheme.scriptManager && headers.length > ProjectsCarousel.NUM_PROJECTS_HOMESCREEN;
-            const bundledcoresvgs = pxt.appTarget.bundledcoresvgs;
             return <carousel.Carousel bleedPercent={20}>
                 {showNewProject ? <div role="button" className="ui card link buttoncard newprojectcard" title={lf("Creates a new empty project")}
                     onClick={this.newProject} onKeyDown={sui.fireClickOnEnter} >
@@ -457,7 +456,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                     </div>
                 </div> : undefined}
                 {headers.slice(0, ProjectsCarousel.NUM_PROJECTS_HOMESCREEN).map((scr, index) => {
-                    const boardsvg = scr.board && bundledcoresvgs && bundledcoresvgs[scr.board];
+                    const boardsvg = pxt.bundledSvg(scr.board);
                     return <ProjectsCodeCard
                         key={'local' + scr.id + scr.recentUse}
                         // ref={(view) => { if (index === 1) this.latestProject = view }}
@@ -853,12 +852,13 @@ export interface ChooseHwDialogState {
 }
 
 export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialogState> {
+    private prevGalleries: pxt.CodeCard[] = [];
+
     constructor(props: ISettingsProps) {
         super(props);
         this.state = {
             visible: false
         }
-
         this.close = this.close.bind(this);
     }
 
@@ -874,11 +874,25 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
         this.setState({ visible: true });
     }
 
+    fetchGallery(): pxt.CodeCard[] {
+        const path = "/hardware";
+        let res = this.getData(`gallery:${encodeURIComponent(path)}`) as pxt.gallery.Gallery[];
+        if (res) {
+            if (res instanceof Error) {
+                // ignore
+            } else {
+                this.prevGalleries = pxt.Util.concat(res.map(g => g.cards))
+                    .filter(c => !!c.variant);
+            }
+        }
+        return this.prevGalleries || [];
+    }
+
     private setHwVariant(cfg: pxt.PackageConfig) {
         pxt.tickEvent("projects.choosehwvariant", { hwid: cfg.name }, { interactiveConsent: true });
         this.hide()
 
-        pxt.setHwVariant(cfg.name.replace(/.*---/, ""))
+        pxt.setHwVariant(cfg.name)
         let editor = this.props.parent
         editor.reloadHeaderAsync()
             .then(() => editor.compile())
@@ -887,20 +901,31 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
 
     renderCore() {
         const { visible } = this.state;
+        if (!visible) return <div />;
 
-        let variants = visible ? pxt.getHwVariants() : []
-        for (let v of variants) {
+        const variants = pxt.getHwVariants();
+        for (const v of variants) {
             if (!v.card)
                 v.card = {
                     name: v.description
                 }
-            let savedV = v
+            const savedV = v
             v.card.onClick = () => this.setHwVariant(savedV)
         }
+        let cards = this.fetchGallery();
+        for (const card of cards) {
+            const savedV = variants.find(variant => variant.name == card.variant);
+            if (savedV)
+                card.onClick = () => this.setHwVariant(savedV);
+            else {
+                pxt.reportError("hw", "invalid variant");
+            }
+        }
+        cards = cards.filter(card => !!card.onClick);
 
         /* tslint:disable:react-a11y-anchors */
         return (
-            <sui.Modal isOpen={visible} className="importdialog" size="small"
+            <sui.Modal isOpen={visible} className="hardwaredialog" size="large"
                 onClose={this.close} dimmer={true}
                 closeIcon={true} header={lf("Choose your hardware")}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
@@ -909,13 +934,24 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
                     <div className="ui cards centered" role="listbox">
                         {variants.map(cfg =>
                             <codecard.CodeCardView
-                                key={cfg.name}
+                                key={'variant' + cfg.name}
                                 name={cfg.card.name}
                                 ariaLabel={cfg.card.name}
                                 description={cfg.card.description}
+                                imageUrl={cfg.card.imageUrl}
                                 learnMoreUrl={cfg.card.learnMoreUrl}
-                                buyUrl={cfg.card.buyUrl}
                                 onClick={cfg.card.onClick}
+                            />
+                        )}
+                        {cards.map(card =>
+                            <codecard.CodeCardView
+                                key={'card' + card.name}
+                                name={card.name}
+                                ariaLabel={card.name}
+                                description={card.description}
+                                imageUrl={card.imageUrl}
+                                learnMoreUrl={card.url}
+                                onClick={card.onClick}
                             />
                         )}
                     </div>

@@ -136,8 +136,14 @@ namespace pxsim {
 
     export interface SimulatorScreenshotMessage extends SimulatorMessage {
         type: "screenshot";
-        title?: string;
-        data: string;
+        data: ImageData;
+        delay?: number;
+    }
+
+    export interface SimulatorRecorderMessage extends SimulatorMessage {
+        type: "recorder";
+        action: "start" | "stop";
+        width?: number;
     }
 
     export interface TutorialMessage extends SimulatorMessage {
@@ -237,15 +243,17 @@ namespace pxsim {
                 case "stop": stop(); break;
                 case "mute": mute((<SimulatorMuteMessage>data).mute); break;
                 case "print": print(); break;
+                case 'recorder': recorder(<SimulatorRecorderMessage>data); break;
+                case "screenshot": Runtime.postScreenshotAsync(<SimulatorScreenshotMessage>data).done(); break;
                 case "custom":
-                    if (handleCustomMessage) handleCustomMessage((<SimulatorCustomMessage>data));
+                    if (handleCustomMessage)
+                        handleCustomMessage((<SimulatorCustomMessage>data));
                     break;
                 case 'pxteditor':
                     break; //handled elsewhere
                 case 'debugger':
-                    if (runtime) {
+                    if (runtime)
                         runtime.handleDebuggerMsg(data as DebuggerMessage);
-                    }
                     break;
                 default: queue(data); break;
             }
@@ -292,6 +300,17 @@ namespace pxsim {
             runtime.board.receiveMessage(msg);
         }
 
+        function recorder(rec: SimulatorRecorderMessage) {
+            if (!runtime) return;
+            switch (rec.action) {
+                case "start":
+                    runtime.startRecording(rec.width);
+                    break;
+                case "stop":
+                    runtime.stopRecording();
+                    break;
+            }
+        }
     }
 
     /**

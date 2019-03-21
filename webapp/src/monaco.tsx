@@ -62,26 +62,40 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     public openBlocks() {
         pxt.tickEvent("typescript.showBlocks");
-        if (!this.currFile) return;
-        const header = this.parent.state.header;
-        if (header) {
-            header.editor = pxt.BLOCKS_PROJECT_NAME;
-            header.pubCurrent = false
+        let initPromise = Promise.resolve();
+
+        if (!this.currFile) {
+            const mainPkg = pkg.mainEditorPkg();
+            if (mainPkg && mainPkg.files["main.ts"]) {
+                initPromise = this.loadFileAsync(mainPkg.files["main.ts"]);
+            }
+            else {
+                return;
+            }
         }
 
-        let promise = Promise.resolve().then(() => {
-            if (!this.hasBlocks())
+        let promise = initPromise.then(() => {
+            const mainPkg = pkg.mainEditorPkg();
+            if (!this.hasBlocks() && !mainPkg && !mainPkg.files["main.blocks"])
                 return undefined;
 
+            if (this.feWidget) {
+                this.feWidget.close();
+                this.activeRangeID = null;
+            }
+
             let blockFile = this.currFile.getVirtualFileName();
-            if (!blockFile) {
-                let mainPkg = pkg.mainEditorPkg();
+            if (!this.hasBlocks()) {
                 if (!mainPkg || !mainPkg.files["main.blocks"]) {
+                    // Either the project isn't loaded, or it's ts-only
                     if (mainPkg) {
                         this.parent.setFile(mainPkg.files["main.ts"]);
                     }
                     return undefined;
                 }
+
+                // The current file doesn't have an associated blocks file, so switch
+                // to main.ts instead
                 this.currFile = mainPkg.files["main.ts"];
                 blockFile = this.currFile.getVirtualFileName();
             }
@@ -93,7 +107,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }
 
             // might be undefined
-            let mainPkg = pkg.mainEditorPkg();
             let xml: string;
 
             // it's a bit for a wild round trip:
@@ -131,18 +144,27 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     const oldWorkspace = values[0] as Blockly.Workspace;
                     const shouldDecompile = values[1] as boolean;
                     if (!shouldDecompile) return Promise.resolve();
-                    return compiler.decompileAsync(this.currFile.name, blocksInfo, oldWorkspace, blockFile)
+                    return compiler.compileAsync()
                         .then(resp => {
-                            if (!resp.success) {
-                                this.currFile.diagnostics = resp.diagnostics;
-                                let tooLarge = false;
-                                resp.diagnostics.forEach(d => tooLarge = (tooLarge || d.code === 9266 /* error code when script is too large */));
-                                return failedAsync(blockFile, tooLarge);
+                            if (resp.success) {
+                                return compiler.decompileAsync(this.currFile.name, blocksInfo, oldWorkspace, blockFile)
+                                    .then(resp => {
+                                        if (!resp.success) {
+                                            this.currFile.diagnostics = resp.diagnostics;
+                                            let tooLarge = false;
+                                            resp.diagnostics.forEach(d => tooLarge = (tooLarge || d.code === 9266 /* error code when script is too large */));
+                                            return failedAsync(blockFile, tooLarge);
+                                        }
+                                        xml = resp.outfiles[blockFile];
+                                        Util.assert(!!xml);
+                                        return mainPkg.setContentAsync(blockFile, xml)
+                                            .then(() => this.parent.setFile(mainPkg.files[blockFile]));
+                                    })
                             }
-                            xml = resp.outfiles[blockFile];
-                            Util.assert(!!xml);
-                            return mainPkg.setContentAsync(blockFile, xml)
-                                .then(() => this.parent.setFile(mainPkg.files[blockFile]));
+                            else {
+                                return failedAsync(blockFile, false)
+                            }
+
                         })
                 }).catch(e => {
                     pxt.reportException(e);
@@ -556,7 +578,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private setupFieldEditors() {
-        if (!this.hasFieldEditors) return;
+        if (!this.hasFieldEditors || pxt.shell.isReadOnly()) return;
         if (!this.fieldEditors) this.fieldEditors = new FieldEditorManager();
 
         pxt.appTarget.appTheme.monacoFieldEditors.forEach(name => {
@@ -874,6 +896,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.feWidget.heightInPx = viewZoneHeight;
         this.feWidget.showAsync(this.editor)
             .then(edit => {
+                this.activeRangeID = null;
                 if (edit) {
                     this.editModelAsync(edit.range, edit.replacement)
                         .then(newRange => this.indentRangeAsync(newRange));
@@ -882,7 +905,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     protected updateFieldEditors = pxt.Util.debounce(() => {
-        if (!this.hasFieldEditors) return;
+        if (!this.hasFieldEditors || pxt.shell.isReadOnly()) return;
         const model = this.editor.getModel();
         this.fieldEditors.clearRanges(this.editor);
 
@@ -1402,7 +1425,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         workspace.fireEvent({ type: 'ui', editor: 'ts', action: 'groupHelpClicked', data: { group } } as pxt.editor.events.UIEvent);
     }
 
-    private getMonacoBlock(fn: toolbox.BlockDefinition, ns: string, color: string, isDisabled?: boolean) {
+    private getMonacoBlock(fn: toolbox.BlockDefinition, ns: string, color: string, isDisabled?: boolean): HTMLDivElement {
         // Check if the block is built in, ignore it as it's already defined in snippets
         if (fn.attributes.blockBuiltin) {
             pxt.log("ignoring built in block: " + fn.attributes.blockId);
@@ -1459,15 +1482,17 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     let exactInstances = fixedInstances.filter(value =>
                         value.retType == nsInfo.qName)
                         .sort((v1, v2) => v1.name.localeCompare(v2.name));
-                    // second choice: use fixed instances whose retType extends type of nsInfo.name
-                    // e.g., nsInfo.name == AnalogPin and instance retType == PwmPin
-                    let extendedInstances = fixedInstances.filter(value =>
-                        getExtendsTypesFor(nsInfo.qName).indexOf(value.retType) !== -1)
-                        .sort((v1, v2) => v1.name.localeCompare(v2.name));
                     if (exactInstances.length) {
                         snippetPrefix = `${exactInstances[0].name}`
-                    } else if (extendedInstances.length) {
-                        snippetPrefix = `${extendedInstances[0].name}`
+                    } else {
+                        // second choice: use fixed instances whose retType extends type of nsInfo.name
+                        // e.g., nsInfo.name == AnalogPin and instance retType == PwmPin
+                        let extendedInstances = fixedInstances.filter(value =>
+                            getExtendsTypesFor(nsInfo.qName).indexOf(value.retType) !== -1)
+                            .sort((v1, v2) => v1.name.localeCompare(v2.name));
+                        if (extendedInstances.length) {
+                            snippetPrefix = `${extendedInstances[0].name}`
+                        }
                     }
                     isInstance = true;
                     addNamespace = true;
@@ -1643,6 +1668,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const newText = lines.map((line, index) => {
             if (index === 0) {
                 return line.trim();
+            }
+            else if (index === lines.length - 1) {
+                return createIndent(minIndent) + line.trim();
             }
             else {
                 return innerIndent + line.trim();

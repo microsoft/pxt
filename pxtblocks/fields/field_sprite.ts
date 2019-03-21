@@ -69,7 +69,7 @@ namespace pxtblockly {
             this.redrawPreview();
 
             this.updateEditable();
-            this.sourceBlock_.getSvgRoot().appendChild(this.fieldGroup_);
+            (this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot().appendChild(this.fieldGroup_);
 
             // Force a render.
             this.render_();
@@ -99,6 +99,9 @@ namespace pxtblockly {
             });
 
             this.editor.setActiveColor(this.params.initColor, true);
+            if (!this.params.sizes.some(s => s[0] === this.state.width && s[1] === this.state.height)) {
+                this.params.sizes.push([this.state.width, this.state.height]);
+            }
             this.editor.setSizePresets(this.params.sizes);
 
             goog.style.setHeight(contentDiv, this.editor.outerHeight() + 1);
@@ -129,7 +132,7 @@ namespace pxtblockly {
         }
 
         private isInFlyout() {
-            return (this.sourceBlock_.workspace.getParentSvg() as SVGElement).className.baseVal == "blocklyFlyout";
+            return ((this.sourceBlock_.workspace as Blockly.WorkspaceSvg).getParentSvg() as SVGElement).className.baseVal == "blocklyFlyout";
         }
 
         render_() {

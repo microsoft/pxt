@@ -42,15 +42,14 @@ namespace pxsim {
 
         constructor(private runtime: Runtime, private valueToArgs?: EventValueToActionArgs<T>) { }
 
-        private start(id: number | string, evid: number | string, create: boolean, background: boolean) {
-            let k = (background ? "back:" : "") + id + ":" + evid;
-            let queue = this.queues[k];
-            if (!queue) queue = this.queues[k] = new EventQueue<T>(this.runtime, this.valueToArgs);
-            return queue;
+        private start(id: number | string, evid: number | string, background: boolean, create: boolean = false) {
+            let key = (background ? "back" : "fore") + ":" + id + ":" + evid
+            if (!this.queues[key] && create) this.queues[key] = new EventQueue<T>(this.runtime, this.valueToArgs);;
+            return this.queues[key];
         }
 
         listen(id: number | string, evid: number | string, handler: RefAction) {
-            let q = this.start(id, evid, true, this.backgroundHandlerFlag);
+            let q = this.start(id, evid, this.backgroundHandlerFlag, true);
             if (this.backgroundHandlerFlag)
                 q.addHandler(handler);
             else
@@ -61,8 +60,22 @@ namespace pxsim {
         removeBackgroundHandler(handler: RefAction) {
             Object.keys(this.queues).forEach((k: string) => {
                 if (k.startsWith("back:"))
-                    this.queues[k].removeHandler(handler);
+                    this.queues[k].removeHandler(handler)
             });
+        }
+
+        // this handles ANY (0) semantics for id and evid
+        private getQueues(id: number | string, evid: number | string, bg: boolean) {
+            let ret = [ this.start(0, 0, bg) ]
+            if (id == 0 && evid == 0)
+                return ret
+            if (id == 0)
+                ret.push(this.start(0, evid, bg))
+            if (evid == 0)
+                ret.push(this.start(id, 0, bg))
+            if (id != 0 && evid != 0)
+                ret.push(this.start(id, evid, bg))
+            return ret
         }
 
         queue(id: number | string, evid: number | string, value: T = null) {
@@ -70,23 +83,18 @@ namespace pxsim {
             const notifyOne = this.notifyID && this.notifyOneID && id == this.notifyOneID;
             if (notifyOne)
                 id = this.notifyID;
-            let qBackground = this.start(id, evid, false, true);
-            let qForeground = this.start(id, evid, false, false);
-            if (qBackground || qForeground) {
-                this.lastEventValue = evid;
-                this.lastEventTimestampUs = U.perfNowUs();
-                let promise: Promise<void> = Promise.resolve();
-                if (qBackground)
-                    promise = qBackground.push(value, notifyOne);
-                // do the foreground handler after the background handlers
-                if (qForeground)
-                    promise.then(() => { qForeground.push(value, notifyOne) })
-            }
+            let queues = this.getQueues(id, evid, true).concat(this.getQueues(id, evid, false))
+            this.lastEventValue = evid;
+            this.lastEventTimestampUs = U.perfNowUs();
+            Promise.each(queues, (q) => {
+                if (q) return q.push(value, notifyOne);
+                else return Promise.resolve()
+            })
         }
 
         // only for foreground handlers
         wait(id: number | string, evid: number | string, cb: (value?: any) => void) {
-            let q = this.start(id, evid, true, false);
+            let q = this.start(id, evid, false, true);
             q.addAwaiter(cb);
         }
 
@@ -234,18 +242,35 @@ namespace pxsim {
         }
 
         const waveForms: OscillatorType[] = [null, "triangle", "sawtooth", "sine"]
+        let metallicBuffer: AudioBuffer
         let noiseBuffer: AudioBuffer
         let squareBuffer: AudioBuffer[] = []
 
-        function getNoiseBuffer() {
-            if (!noiseBuffer) {
-                // normalized to 100Hz
+        function getMetallicBuffer() {
+            if (!metallicBuffer) {
                 const bufferSize = 1024;
-                noiseBuffer = context().createBuffer(1, bufferSize, 100 * bufferSize);
-                const output = noiseBuffer.getChannelData(0);
+                metallicBuffer = context().createBuffer(1, bufferSize, context().sampleRate);
+                const output = metallicBuffer.getChannelData(0);
 
                 for (let i = 0; i < bufferSize; i++) {
                     output[i] = (((i * 7919) & 1023) / 512.0) - 1.0;
+                }
+            }
+            return metallicBuffer
+        }
+
+        function getNoiseBuffer() {
+            if (!noiseBuffer) {
+                const bufferSize = 100000;
+                noiseBuffer = context().createBuffer(1, bufferSize, context().sampleRate);
+                const output = noiseBuffer.getChannelData(0);
+
+                let x = 0xf01ba80;
+                for (let i = 0; i < bufferSize; i++) {
+                    x ^= x << 13;
+                    x ^= x >> 17;
+                    x ^= x << 5;
+                    output[i] = ((x & 1023) / 512.0) - 1.0;
                 }
             }
             return noiseBuffer
@@ -253,12 +278,11 @@ namespace pxsim {
 
         function getSquareBuffer(param: number) {
             if (!squareBuffer[param]) {
-                // normalized to 100Hz
-                const bufferSize = 100;
-                const buf = context().createBuffer(1, bufferSize, 100 * bufferSize);
+                const bufferSize = 1024;
+                const buf = context().createBuffer(1, bufferSize, context().sampleRate);
                 const output = buf.getChannelData(0);
                 for (let i = 0; i < bufferSize; i++) {
-                    output[i] = i < param ? 1 : -1;
+                    output[i] = i < (param / 100 * bufferSize) ? 1 : -1;
                 }
                 squareBuffer[param] = buf
             }
@@ -270,12 +294,13 @@ namespace pxsim {
         #define SW_SAWTOOTH 2
         #define SW_SINE 3 // TODO remove it? it takes space
         #define SW_NOISE 4
+        #define SW_REAL_NOISE 5
         #define SW_SQUARE_10 11
         #define SW_SQUARE_50 15
         */
 
 
-        /*        
+        /*
          struct SoundInstruction {
              uint8_t soundWave;
              uint8_t flags;
@@ -297,6 +322,8 @@ namespace pxsim {
 
             let buffer: AudioBuffer
             if (waveFormIdx == 4)
+                buffer = getMetallicBuffer()
+            else if (waveFormIdx == 5)
                 buffer = getNoiseBuffer()
             else if (11 <= waveFormIdx && waveFormIdx <= 15)
                 buffer = getSquareBuffer((waveFormIdx - 10) * 10)
@@ -306,7 +333,8 @@ namespace pxsim {
             let node = context().createBufferSource();
             node.buffer = buffer;
             node.loop = true;
-            node.playbackRate.value = hz / 100;
+            if (waveFormIdx != 5)
+                node.playbackRate.value = hz / (context().sampleRate / 1024);
 
             return node
         }
@@ -399,9 +427,9 @@ namespace pxsim {
 
                 idx += 10
 
-                ch.gain.gain.setValueAtTime(scaleVol(startVol), ctx.currentTime + timeOff)
+                ch.gain.gain.setValueAtTime(scaleVol(startVol), ctx.currentTime + (timeOff / 1000))
                 timeOff += duration
-                ch.gain.gain.linearRampToValueAtTime(scaleVol(endVol), ctx.currentTime + timeOff)
+                ch.gain.gain.linearRampToValueAtTime(scaleVol(endVol), ctx.currentTime + (timeOff / 1000))
 
                 return loopAsync()
             }

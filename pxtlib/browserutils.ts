@@ -128,7 +128,8 @@ namespace pxt.BrowserUtils {
 
     export function isLocalHost(): boolean {
         try {
-            return /^http:\/\/(localhost|127\.0\.0\.1):\d+\//.test(window.location.href)
+            return typeof window !== "undefined"
+                && /^http:\/\/(localhost|127\.0\.0\.1):\d+\//.test(window.location.href)
                 && !/nolocalhost=1/.test(window.location.href)
                 && !(pxt.webConfig && pxt.webConfig.isStatic);
         } catch (e) { return false; }
@@ -373,7 +374,30 @@ namespace pxt.BrowserUtils {
         });
     }
 
-    function resolveCdnUrl(path: string): string {
+    export function loadCanvasAsync(url: string): Promise<HTMLCanvasElement> {
+        return loadImageAsync(url)
+            .then(img => {
+                const canvas = document.createElement("canvas")
+                canvas.width = img.width
+                canvas.height = img.height
+                const ctx = canvas.getContext("2d")
+                ctx.drawImage(img, 0, 0);
+                return canvas;
+            })
+    }
+
+    export function imageDataToPNG(img: ImageData): string {
+        if (!img) return undefined;
+
+        const canvas = document.createElement("canvas")
+        canvas.width = img.width
+        canvas.height = img.height
+        const ctx = canvas.getContext("2d")
+        ctx.putImageData(img, 0, 0);
+        return canvas.toDataURL("image/png");
+    }
+
+    export function resolveCdnUrl(path: string): string {
         // don't expand full urls
         if (/^https?:\/\//i.test(path))
             return path;
@@ -414,18 +438,27 @@ namespace pxt.BrowserUtils {
         });
     }
 
+    let loadScriptPromises: pxt.Map<Promise<void>> = {};
     export function loadScriptAsync(path: string): Promise<void> {
         const url = resolveCdnUrl(path);
-        pxt.debug(`script: loading ${url}`);
-        return new Promise<void>((resolve, reject) => {
-            const script = document.createElement('script');
-            script.type = 'text/javascript';
-            script.src = url;
-            script.async = true;
-            script.addEventListener('load', () => resolve());
-            script.addEventListener('error', (e) => reject(e));
-            document.body.appendChild(script);
-        });
+        let p = loadScriptPromises[url];
+        if (!p) {
+            p = loadScriptPromises[url] = new Promise<void>((resolve, reject) => {
+                pxt.debug(`script: loading ${url}`);
+                const script = document.createElement('script');
+                script.type = 'text/javascript';
+                script.addEventListener('load', () => resolve());
+                script.addEventListener('error', (e) => {
+                    // might have had connection issue, allow to try later
+                    delete loadScriptPromises[url];
+                    reject(e);
+                });
+                script.src = url;
+                script.async = true;
+                document.body.appendChild(script);
+            });
+        }
+        return p;
     }
 
     export function loadAjaxAsync(url: string): Promise<string> {

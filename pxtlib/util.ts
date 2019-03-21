@@ -148,6 +148,17 @@ namespace ts.pxtc.Util {
         }
     }
 
+    export function blobReadAsDataURL(blob: Blob): Promise<string> {
+        if (!blob) return Promise.resolve(undefined);
+
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(<string>reader.result);
+            reader.onerror = e => reject(e);
+            reader.readAsDataURL(blob);
+        });
+    }
+
     export function fileReadAsBufferAsync(f: File): Promise<Uint8Array> { // ArrayBuffer
         if (!f)
             return Promise.resolve<Uint8Array>(null);
@@ -260,6 +271,14 @@ namespace ts.pxtc.Util {
             ptr += c.length
         }
         return r
+    }
+
+    export function jsonTryParse(s: string): any {
+        try {
+            return JSON.parse(s);
+        } catch (e) {
+            return undefined;
+        }
     }
 
     export function jsonMergeFrom(trg: any, src: any) {
@@ -649,7 +668,7 @@ namespace ts.pxtc.Util {
         return decodeURIComponent(escaped)
     }
 
-    export function toUTF8(str: string) {
+    export function toUTF8(str: string, cesu8?: boolean) {
         let res = "";
         if (!str) return res;
         for (let i = 0; i < str.length; ++i) {
@@ -658,7 +677,7 @@ namespace ts.pxtc.Util {
             else if (code <= 0x7ff) {
                 res += String.fromCharCode(0xc0 | (code >> 6), 0x80 | (code & 0x3f));
             } else {
-                if (0xd800 <= code && code <= 0xdbff) {
+                if (!cesu8 && 0xd800 <= code && code <= 0xdbff) {
                     let next = str.charCodeAt(++i);
                     if (!isNaN(next))
                         code = 0x10000 + ((code - 0xd800) << 10) + (next - 0xdc00);
@@ -857,22 +876,32 @@ namespace ts.pxtc.Util {
 
     }
 
-    export function normalizeLanguageCode(code: string): string {
+    export function normalizeLanguageCode(code: string): string[] {
         const langParts = /^(\w{2})-(\w{2}$)/i.exec(code);
         if (langParts && langParts[1] && langParts[2]) {
-            return `${langParts[1].toLowerCase()}-${langParts[2].toUpperCase()}`;
+            return [`${langParts[1].toLowerCase()}-${langParts[2].toUpperCase()}`, langParts[1].toLowerCase()];
         } else {
-            return code.toLowerCase();
+            return [code.toLowerCase()];
         }
     }
 
     export function isLocaleEnabled(code: string): boolean {
-        code = normalizeLanguageCode(code);
-        return pxt.appTarget.appTheme && pxt.appTarget.appTheme.availableLocales && pxt.appTarget.appTheme.availableLocales.indexOf(code) > -1;
+        let [lang, baseLang] = normalizeLanguageCode(code);
+        let appTheme = pxt.appTarget.appTheme;
+        if (appTheme && appTheme.availableLocales) {
+            if (appTheme.availableLocales.indexOf(lang) > -1) {
+                return true;
+            }
+            //check for base language if we didn't find the full language. Example: nl for nl-NL
+            if (baseLang && appTheme.availableLocales.indexOf(baseLang) > -1) {
+                return true;
+            }
+        }
+        return false;
     }
 
     export function updateLocalizationAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean, force?: boolean): Promise<void> {
-        code = normalizeLanguageCode(code);
+        code = normalizeLanguageCode(code)[0];
         if (code === userLanguage() || (!isLocaleEnabled(code) && !force))
             return Promise.resolve();
 
@@ -890,7 +919,7 @@ namespace ts.pxtc.Util {
     }
 
     export function downloadSimulatorLocalizationAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean, force?: boolean): Promise<pxt.Map<string>> {
-        code = normalizeLanguageCode(code);
+        code = normalizeLanguageCode(code)[0];
         if (code === userLanguage() || (!isLocaleEnabled(code) && !force))
             return Promise.resolve<pxt.Map<string>>(undefined);
 
@@ -898,7 +927,7 @@ namespace ts.pxtc.Util {
     }
 
     export function downloadTranslationsAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean): Promise<pxt.Map<string>> {
-        code = normalizeLanguageCode(code);
+        code = normalizeLanguageCode(code)[0];
         let translationsCacheId = `${code}/${live}`;
         if (translationsCache()[translationsCacheId]) {
             return Promise.resolve(translationsCache()[translationsCacheId]);

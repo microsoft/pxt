@@ -1,0 +1,37 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+  <variables>
+    <variable type="" id="c28DYzN@#JAY.5xe_U]@">receivedString</variable>
+    <variable type="" id="B!pMU.%[9dZ(+;QWruG2">item</variable>
+  </variables>
+  <block type="pxt-on-start" x="26" y="28">
+    <statement name="HANDLER">
+      <block type="variables_set">
+        <field name="VAR" id="c28DYzN@#JAY.5xe_U]@" variabletype="">receivedString</field>
+        <value name="VALUE">
+          <shadow type="math_number" id="i}:@XK`{D61_?Kv7e7)Q">
+            <field name="NUM">0</field>
+          </shadow>
+          <block type="text">
+            <field name="TEXT"></field>
+          </block>
+        </value>
+      </block>
+    </statement>
+  </block>
+  <block type="radio_on_string" x="31" y="228">
+    <field name="HANDLER_receivedString" id="c28DYzN@#JAY.5xe_U]@" variabletype="">receivedString</field>
+    <statement name="HANDLER">
+      <block type="variables_set">
+        <field name="VAR" id="c28DYzN@#JAY.5xe_U]@" variabletype="">receivedString</field>
+        <value name="VALUE">
+          <shadow type="math_number" id="i}:@XK`{D61_?Kv7e7)Q">
+            <field name="NUM">0</field>
+          </shadow>
+          <block type="text">
+            <field name="TEXT"></field>
+          </block>
+        </value>
+      </block>
+    </statement>
+  </block>
+</xml>

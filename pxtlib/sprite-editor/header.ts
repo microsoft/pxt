@@ -5,7 +5,6 @@ namespace pxtsprite {
     export interface SpriteHeaderHost {
         showGallery(): void;
         hideGallery(): void;
-        closeEditor(): void;
     }
 
     export class SpriteHeader {
@@ -14,8 +13,6 @@ namespace pxtsprite {
         toggle: Toggle;
         undoButton: Button;
         redoButton: Button;
-
-        closeButton: HTMLDivElement;
 
         constructor(protected host: SpriteHeaderHost) {
             this.div = document.createElement("div");
@@ -31,12 +28,6 @@ namespace pxtsprite {
                     this.host.showGallery();
                 }
             });
-
-            this.closeButton = makeCloseButton();
-            this.div.appendChild(this.closeButton);
-            this.closeButton.addEventListener("click", () => {
-                host.closeEditor();
-            });
         }
 
         getElement() {
@@ -45,8 +36,7 @@ namespace pxtsprite {
 
         layout() {
             this.toggle.layout();
-            const bounds = this.div.getBoundingClientRect();
-            this.toggle.translate((bounds.width - this.toggle.width()) / 2, (bounds.height - this.toggle.height()) / 2);
+            this.toggle.translate((TOTAL_HEIGHT - this.toggle.width()) / 2, (HEADER_HEIGHT - this.toggle.height()) / 2);
         }
     }
 }

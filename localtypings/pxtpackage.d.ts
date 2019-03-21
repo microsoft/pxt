@@ -41,6 +41,7 @@ declare namespace pxt {
         simFiles?: string[];
         testFiles?: string[];
         testDependencies?: pxt.Map<string>;
+        cppDependencies?: pxt.Map<string>;
         public?: boolean;
         binaryonly?: boolean;
         platformio?: PlatformIOConfig;
@@ -63,6 +64,7 @@ declare namespace pxt {
             excludePrefix?: string[];
         };
         features?: string[];
+        hidden?: boolean; // hide package from package selection dialog
     }
 
     interface PackageExtension {
@@ -140,6 +142,7 @@ declare namespace pxt {
 
         target?: string;
         className?: string;
+        variant?: string;
     }
 
     interface JRes {

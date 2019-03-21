@@ -172,8 +172,9 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         const features = this.state.features;
         return Object.keys(bundled).filter(k => !/prj$/.test(k))
             .map(k => JSON.parse(bundled[k]["pxt.json"]) as pxt.PackageConfig)
+            .filter(pk => !pk.hidden)
             .filter(pk => !query || pk.name.toLowerCase().indexOf(query.toLowerCase()) > -1) // search filter
-            .filter(pk => boards || !pkg.mainPkg.deps[pk.name]) // don't show package already referenced in extensions
+            .filter(pk => boards || !pkg.mainPkg.deps[pk.name] || pkg.mainPkg.deps[pk.name].cppOnly) // don't show package already referenced in extensions
             .filter(pk => !/---/.test(pk.name)) //filter any package with ---, these are part of common-packages such as core---linux or music---pwm
             .filter(pk => boards == !!pk.core) // show core in "boards" mode
             .filter(pk => !features || features.every(f => pk.features && pk.features.indexOf(f) > -1)); // ensure features are supported

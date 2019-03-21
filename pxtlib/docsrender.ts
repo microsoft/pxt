@@ -607,7 +607,8 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
         }
 
         pubinfo["body"] = html
-        pubinfo["name"] = pubinfo["title"] + " - " + pubinfo["targetname"]
+        // don't mangle target name in title, it is already in the sitename
+        pubinfo["name"] = pubinfo["title"] || ""
 
         for (let k of Object.keys(opts.theme)) {
             let v = (opts.theme as any)[k]

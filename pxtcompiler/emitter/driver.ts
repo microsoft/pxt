@@ -206,14 +206,85 @@ namespace ts.pxtc {
     }
 
     export function decompile(opts: CompileOptions, fileName: string, includeGreyBlockMessages = false, bannedCategories?: string[]) {
-        const resp = compile(opts);
-        if (!resp.success) return resp;
+        let program = getTSProgram(opts);
 
-        let file = resp.ast.getSourceFile(fileName);
-        const apis = getApiInfo(opts, resp.ast);
+        let file = program.getSourceFile(fileName);
+        annotate(program, fileName, target || (pxt.appTarget && pxt.appTarget.compile));
+        const apis = getApiInfo(opts, program);
         const blocksInfo = pxtc.getBlocksInfo(apis, bannedCategories);
-        const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, { snippetMode: false, alwaysEmitOnStart: opts.alwaysDecompileOnStart, includeGreyBlockMessages }, pxtc.decompiler.buildRenameMap(resp.ast, file))
+        const decompileOpts: decompiler.DecompileBlocksOptions = {
+            snippetMode: false,
+            alwaysEmitOnStart: opts.alwaysDecompileOnStart,
+            includeGreyBlockMessages,
+            useNewFunctions: opts.useNewFunctions,
+            allowedArgumentTypes: opts.allowedArgumentTypes || ["number", "boolean", "string"]
+        };
+        const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, decompileOpts, pxtc.decompiler.buildRenameMap(program, file));
         return bresp;
+    }
+
+    export function getTSProgram(opts: CompileOptions, old?: ts.Program) {
+        let outfiles: pxt.Map<string> = {};
+
+        let fileText: { [index: string]: string } = {};
+        for (let fileName in opts.fileSystem) {
+            fileText[normalizePath(fileName)] = opts.fileSystem[fileName];
+        }
+
+        let setParentNodes = true
+        let options = getTsCompilerOptions(opts)
+
+        let host: CompilerHost = {
+            getSourceFile: (fn, v, err) => {
+                fn = normalizePath(fn)
+                let text = ""
+                if (fileText.hasOwnProperty(fn)) {
+                    text = fileText[fn]
+                } else {
+                    if (err) err("File not found: " + fn)
+                }
+                if (text == null) {
+                    err("File not found: " + fn)
+                    text = ""
+                }
+                return createSourceFile(fn, text, v, setParentNodes)
+            },
+            fileExists: fn => {
+                fn = normalizePath(fn)
+                return fileText.hasOwnProperty(fn)
+            },
+            getCanonicalFileName: fn => fn,
+            getDefaultLibFileName: () => "no-default-lib.d.ts",
+            writeFile: (fileName, data, writeByteOrderMark, onError) => {
+                outfiles[fileName] = data
+            },
+            getCurrentDirectory: () => ".",
+            useCaseSensitiveFileNames: () => true,
+            getNewLine: () => "\n",
+            readFile: fn => {
+                fn = normalizePath(fn)
+                return fileText[fn] || "";
+            },
+            directoryExists: dn => true,
+            getDirectories: () => []
+        }
+
+        if (!opts.sourceFiles)
+            opts.sourceFiles = Object.keys(opts.fileSystem)
+
+        let tsFiles = opts.sourceFiles.filter(f => U.endsWith(f, ".ts"))
+        // ensure that main.ts is last of TS files
+        let tsFilesNoMain = tsFiles.filter(f => f != "main.ts")
+        let hasMain = false;
+        if (tsFiles.length > tsFilesNoMain.length) {
+            tsFiles = tsFilesNoMain
+            tsFiles.push("main.ts")
+            hasMain = true;
+        }
+        // TODO: ensure that main.ts is last???
+        const program = createProgram(tsFiles, options, host, old);
+        annotate(program, "main.ts", target || (pxt.appTarget && pxt.appTarget.compile));
+        return program;
     }
 
     function normalizePath(path: string): string {

@@ -130,6 +130,8 @@ namespace pxt.blocks {
 
         Blockly.Extensions.apply('inline-svgs', b, false);
 
+        addPlusButton();
+
         appendMutation(b, {
             mutationToDom: (el: Element) => {
                 // The reason we store the inputsInitialized variable separately from visibleOptions
@@ -152,7 +154,7 @@ namespace pxt.blocks {
                     if (!isNaN(val)) {
                         const delta = val - (state.getNumber(numVisibleAttr) || 0);
                         if (state.getBoolean(inputInitAttr)) {
-                            if (b.rendered) {
+                            if ((b as Blockly.BlockSvg).rendered) {
                                 updateShape(delta, true);
                             }
                             else {
@@ -172,7 +174,7 @@ namespace pxt.blocks {
         // hide the inputs in init() or domToMutation(). This will get executed after
         // the block is rendered
         setTimeout(() => {
-            if (b.rendered && !b.workspace.isDragging()) {
+            if ((b as Blockly.BlockSvg).rendered && !(b.workspace as Blockly.WorkspaceSvg).isDragging()) {
                 updateShape(0, undefined, true);
                 updateButtons();
             }
@@ -190,7 +192,7 @@ namespace pxt.blocks {
 
             if (!state.getBoolean(inputInitAttr) && visibleOptions > 0) {
                 initOptionalInputs();
-                if (!b.rendered) {
+                if (!(b as Blockly.BlockSvg).rendered) {
                     return;
                 }
             }
@@ -230,7 +232,7 @@ namespace pxt.blocks {
             }
 
             updateButtons();
-            if (!skipRender) b.render();
+            if (!skipRender) (b as Blockly.BlockSvg).render();
         }
 
         function addButton(name: string, uri: string, alt: string, delta: number) {
@@ -290,8 +292,11 @@ namespace pxt.blocks {
 
         function setInputVisible(input: Blockly.Input, visible: boolean) {
             // If the block isn't rendered, Blockly will crash
-            if (b.rendered) {
-                input.setVisible(visible);
+            if ((b as Blockly.BlockSvg).rendered) {
+                let renderList = input.setVisible(visible);
+                renderList.forEach((block: Blockly.BlockSvg) => {
+                    block.render();
+                });
             }
         }
     }

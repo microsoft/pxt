@@ -16,6 +16,13 @@ declare namespace pxsim {
         color: string;
         label: string;
     }
+    interface TouchPadDefinition extends BoxDefinition {
+        label: string; // pin name
+    }
+    interface ButtonDefinition extends BoxDefinition {
+        index?: number; // by button index
+        label?: string; // pin name
+    }
     interface BoardImageDefinition {
         image: string,
         outlineImage?: string,
@@ -23,6 +30,8 @@ declare namespace pxsim {
         height: number,
         pinDist: number,
         pinBlocks: PinBlockDefinition[],
+        buttons?: ButtonDefinition[];
+        touchPads?: TouchPadDefinition[];
         leds?: LEDDefinition[];
         reset?: BoxDefinition;
         useCrocClips?: boolean;
@@ -35,7 +44,8 @@ declare namespace pxsim {
         gpioPinBlocks?: string[][], // not used
         gpioPinMap: { [pin: string]: string },
         groundPins: string[],
-        threeVoltPins: string[],
+        threeVoltPins?: string[],
+        fiveVoltPins?: string[],
         attachPowerOnRight?: boolean,
         onboardComponents?: string[],
         pinStyles?: { [pin: string]: PinStyle },
@@ -199,6 +209,7 @@ declare namespace pxsim {
 
     export interface VariablesRequestMessage extends DebuggerMessage {
         variablesReference: string;
+        fields?: string[]
     }
 
     export interface VariablesMessage extends DebuggerMessage {

@@ -28,6 +28,19 @@ export interface SpawnOptions {
 export let targetDir: string = process.cwd();
 export let pxtCoreDir: string = path.join(__dirname, "..");
 
+export let cliFinalizers: (() => Promise<void>)[] = [];
+
+export function addCliFinalizer(f: () => Promise<void>) {
+    cliFinalizers.push(f)
+}
+
+export function runCliFinalizersAsync() {
+    let fins = cliFinalizers
+    cliFinalizers = []
+    return Promise.mapSeries(fins, f => f())
+        .then(() => { })
+}
+
 export function setTargetDir(dir: string) {
     targetDir = dir;
     (<any>module).paths.push(path.join(targetDir, "node_modules"));
@@ -311,7 +324,7 @@ export function pathToPtr(path: string) {
 }
 
 export function mkdirP(thePath: string) {
-    if (thePath == ".") return;
+    if (thePath == "." || !thePath) return;
     if (!fs.existsSync(thePath)) {
         mkdirP(path.dirname(thePath))
         fs.mkdirSync(thePath)
@@ -371,11 +384,12 @@ export function existsDirSync(name: string): boolean {
     }
 }
 
-export function writeFileSync(path: string, data: any, options?: { encoding?: string | null; mode?: number | string; flag?: string; } | string | null) {
-    fs.writeFileSync(path, data, options);
+export function writeFileSync(p: string, data: any, options?: { encoding?: string | null; mode?: number | string; flag?: string; } | string | null) {
+    mkdirP(path.dirname(p));
+    fs.writeFileSync(p, data, options);
     if (pxt.options.debug) {
-        const stats = fs.statSync(path);
-        pxt.log(`  + ${path} ${stats.size > 1000000 ? (stats.size / 1000000).toFixed(2) + ' m' : stats.size > 1000 ? (stats.size / 1000).toFixed(2) + 'k' : stats.size}b`)
+        const stats = fs.statSync(p);
+        pxt.log(`  + ${p} ${stats.size > 1000000 ? (stats.size / 1000000).toFixed(2) + ' m' : stats.size > 1000 ? (stats.size / 1000).toFixed(2) + 'k' : stats.size}b`)
     }
 }
 

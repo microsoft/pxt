@@ -76,7 +76,44 @@ namespace pxtsprite {
         }
 
         update(col: number, row: number) {
-            this.drawCore(col, row, (c, r) => this.mask.set(c, r));
+            // Interpolate (Draw a line) from startCol, startRow to col, row
+            this.interpolate(this.startCol, this.startRow, col, row);
+
+            this.startCol = col;
+            this.startRow = row;
+        }
+
+        // https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
+        protected interpolate(x0: number, y0: number, x1: number, y1: number) {
+            const dx = x1 - x0;
+            const dy = y1 - y0;
+            const draw = (c: number, r: number) => this.mask.set(c, r);
+            if (dx === 0) {
+                const startY = dy >= 0 ? y0 : y1;
+                const endY = dy >= 0 ? y1 : y0;
+                for (let y = startY; y <= endY; y++) {
+                    this.drawCore(x0, y, draw);
+                }
+                return;
+            }
+
+            const xStep = dx > 0 ? 1 : -1;
+            const yStep = dy > 0 ? 1 : -1;
+            const dErr = Math.abs(dy / dx);
+
+            let err = 0;
+            let y = y0;
+            for (let x = x0; xStep > 0 ? x <= x1 : x >= x1; x += xStep) {
+                this.drawCore(x, y, draw);
+                err += dErr;
+                while (err >= 0.5) {
+                    if (yStep > 0 ? y <= y1 : y >= y1) {
+                        this.drawCore(x, y, draw);
+                    }
+                    y += yStep;
+                    err -= 1;
+                }
+            }
         }
 
         drawCursor(col: number, row: number, draw: (c: number, r: number) => void) {

@@ -59,6 +59,16 @@ namespace ts.pxtc {
             argsFmt: ["T", "T", "T", "T"],
             value: 0
         },
+        "BufferMethods::getByte": {
+            name: "_pxt_buffer_get",
+            argsFmt: ["T", "T", "T"],
+            value: 0
+        },
+        "BufferMethods::setByte": {
+            name: "_pxt_buffer_set",
+            argsFmt: ["T", "T", "T", "I"],
+            value: 0
+        },
         "pxtrt::mapGetGeneric": {
             name: "_pxt_map_get",
             argsFmt: ["T", "T", "S"],
@@ -252,7 +262,7 @@ namespace ts.pxtc {
         return isStringLiteral(e) && (e as LiteralExpression).text == ""
     }
 
-    function isStatic(node: Declaration) {
+    export function isStatic(node: Declaration) {
         return node.modifiers && node.modifiers.some(m => m.kind == SK.StaticKeyword)
     }
 
@@ -330,7 +340,7 @@ namespace ts.pxtc {
     function getRefTagToValidate(tp: string): number {
         switch (tp) {
             case "_Buffer": return pxt.BuiltInType.BoxedBuffer
-            case "_Image": return pxt.BuiltInType.RefImage
+            case "_Image": return target.imageRefTag || pxt.BuiltInType.RefImage
             case "_Action": return pxt.BuiltInType.RefAction
             case "_RefCollection": return pxt.BuiltInType.RefCollection
             default:
@@ -507,7 +517,7 @@ namespace ts.pxtc {
         return !!(g && g.typeParameters && g.typeParameters.length);
     }
 
-    function checkType(t: Type): Type {
+    export function checkType(t: Type): Type {
         let ok = TypeFlags.String | TypeFlags.Number | TypeFlags.Boolean |
             TypeFlags.StringLiteral | TypeFlags.NumberLiteral | TypeFlags.BooleanLiteral |
             TypeFlags.Void | TypeFlags.Enum | TypeFlags.EnumLiteral | TypeFlags.Null | TypeFlags.Undefined |
@@ -549,7 +559,9 @@ namespace ts.pxtc {
         if (!r)
             return r
         if (isStringLiteral(node))
-            return r // skip checkType() - type is any for literal fragments
+            return r; // skip checkType() - type is any for literal fragments
+        // save for future use; this cuts around 10% of emit() time
+        (node as any).typeOverride = r
         return checkType(r)
     }
 
@@ -975,8 +987,13 @@ namespace ts.pxtc {
                     value: configEntries[k].value
                 })
             }
+            res.configData.sort((a, b) => a.key - b.key)
 
             catchErrors(rootFunction, finalEmit)
+        }
+
+        if (opts.ast) {
+            annotate(program, entryPoint, target);
         }
 
         return {
@@ -1240,74 +1257,78 @@ namespace ts.pxtc {
             if (inf.baseClassInfo)
                 inf.baseClassInfo.derivedClasses.push(inf)
 
-            scope(() => {
-                for (let m of inf.methods) {
-                    bin.numMethods++
-                    let minf = getFunctionInfo(m)
-                    if (isToString(m)) {
-                        inf.toStringMethod = lookupProc(m)
-                        inf.toStringMethod.info.usedAsIface = true
-                    }
-                    if (minf.virtualParent) {
-                        bin.numVirtMethods++
-                        let key = classFunctionKey(m)
-                        let done = false
-                        let proc = lookupProc(m)
-                        U.assert(!!proc)
-                        for (let i = 0; i < tbl.length; ++i) {
-                            if (classFunctionKey(tbl[i].action) == key) {
-                                tbl[i] = proc
-                                minf.virtualIndex = i
-                                done = true
-                            }
-                        }
-                        if (!done) {
-                            minf.virtualIndex = tbl.length
-                            tbl.push(proc)
-                        }
-                    }
-                }
-                inf.vtable = tbl
-                inf.itable = []
 
-                for (let fld of inf.allfields) {
-                    let fname = getName(fld)
-                    let finfo = fieldIndexCore(inf, fld, false)
-                    inf.itable.push({
-                        name: fname,
-                        info: (finfo.idx + 1) * 4,
-                        idx: getIfaceMemberId(fname),
-                        proc: null
-                    })
+            for (let m of inf.methods) {
+                bin.numMethods++
+                let minf = getFunctionInfo(m)
+                const attrs = parseComments(m)
+                if (isToString(m) && !attrs.shim) {
+                    inf.toStringMethod = lookupProc(m)
+                    inf.toStringMethod.info.usedAsIface = true
                 }
-
-                for (let curr = inf; curr; curr = curr.baseClassInfo) {
-                    for (let m of curr.methods) {
-                        const n = getName(m)
-                        if (isIfaceMemberUsed(n) || isUsed(m)) {
-                            const proc = lookupProc(m)
-                            const ex = inf.itable.find(e => e.name == n)
-                            const isSet = m.kind == SK.SetAccessor
-                            const isGet = m.kind == SK.GetAccessor
-                            if (ex) {
-                                if (isSet && !ex.setProc)
-                                    ex.setProc = proc
-                                else if (isGet && !ex.proc)
-                                    ex.proc = proc
-                            } else {
-                                inf.itable.push({
-                                    name: n,
-                                    info: 0,
-                                    idx: getIfaceMemberId(n),
-                                    proc: !isSet ? proc : null,
-                                    setProc: isSet ? proc : null
-                                })
-                            }
-                            proc.info.usedAsIface = true
+                if (minf.virtualParent) {
+                    bin.numVirtMethods++
+                    let key = classFunctionKey(m)
+                    let done = false
+                    let proc = lookupProc(m)
+                    U.assert(!!proc)
+                    for (let i = 0; i < tbl.length; ++i) {
+                        if (classFunctionKey(tbl[i].action) == key) {
+                            tbl[i] = proc
+                            minf.virtualIndex = i
+                            done = true
                         }
                     }
+                    if (!done) {
+                        minf.virtualIndex = tbl.length
+                        tbl.push(proc)
+                    }
                 }
-            })
+            }
+            inf.vtable = tbl
+            inf.itable = []
+
+            for (let fld of inf.allfields) {
+                let fname = getName(fld)
+                let finfo = fieldIndexCore(inf, fld, false)
+                inf.itable.push({
+                    name: fname,
+                    info: (finfo.idx + 1) * 4,
+                    idx: getIfaceMemberId(fname),
+                    proc: null
+                })
+            }
+
+            for (let curr = inf; curr; curr = curr.baseClassInfo) {
+                for (let m of curr.methods) {
+                    const n = getName(m)
+                    if (isIfaceMemberUsed(n) || isUsed(m)) {
+                        const attrs = parseComments(m);
+                        if (attrs.shim) continue;
+
+                        const proc = lookupProc(m)
+                        const ex = inf.itable.find(e => e.name == n)
+                        const isSet = m.kind == SK.SetAccessor
+                        const isGet = m.kind == SK.GetAccessor
+                        if (ex) {
+                            if (isSet && !ex.setProc)
+                                ex.setProc = proc
+                            else if (isGet && !ex.proc)
+                                ex.proc = proc
+                        } else {
+                            inf.itable.push({
+                                name: n,
+                                info: 0,
+                                idx: getIfaceMemberId(n),
+                                proc: !isSet ? proc : null,
+                                setProc: isSet ? proc : null
+                            })
+                        }
+                        proc.info.usedAsIface = true
+                    }
+                }
+            }
+
 
             return inf.vtable
         }
@@ -1360,20 +1381,6 @@ namespace ts.pxtc {
             }
         }
 
-        function isCtorField(p: ParameterDeclaration) {
-            if (!p.modifiers)
-                return false
-            if (p.parent.kind != SK.Constructor)
-                return false
-            for (let m of p.modifiers) {
-                if (m.kind == SK.PrivateKeyword ||
-                    m.kind == SK.PublicKeyword ||
-                    m.kind == SK.ProtectedKeyword)
-                    return true
-            }
-            return false
-        }
-
         function getClassInfo(t: Type, decl: ClassDeclaration = null) {
             if (!decl)
                 decl = <ClassDeclaration>t.symbol.valueDeclaration
@@ -1393,27 +1400,25 @@ namespace ts.pxtc {
                 classInfos[id] = info;
                 // only do it after storing our in case we run into cycles (which should be errors)
                 info.baseClassInfo = getBaseClassInfo(decl)
-                scope(() => {
-                    for (let mem of decl.members) {
-                        if (mem.kind == SK.PropertyDeclaration) {
-                            let pdecl = <PropertyDeclaration>mem
-                            info.allfields.push(pdecl)
-                        } else if (mem.kind == SK.Constructor) {
-                            for (let p of (mem as FunctionLikeDeclaration).parameters) {
-                                if (isCtorField(p))
-                                    info.allfields.push(p)
-                            }
-                        } else if (isClassFunction(mem)) {
-                            let minf = getFunctionInfo(mem as any)
-                            minf.parentClassInfo = info
-                            info.methods.push(mem as any)
+                for (let mem of decl.members) {
+                    if (mem.kind == SK.PropertyDeclaration) {
+                        let pdecl = <PropertyDeclaration>mem
+                        info.allfields.push(pdecl)
+                    } else if (mem.kind == SK.Constructor) {
+                        for (let p of (mem as FunctionLikeDeclaration).parameters) {
+                            if (isCtorField(p))
+                                info.allfields.push(p)
                         }
+                    } else if (isClassFunction(mem)) {
+                        let minf = getFunctionInfo(mem as any)
+                        minf.parentClassInfo = info
+                        info.methods.push(mem as any)
                     }
-                    if (info.baseClassInfo) {
-                        info.allfields = info.baseClassInfo.allfields.concat(info.allfields)
-                        computeVtableInfo(info)
-                    }
-                })
+                }
+                if (info.baseClassInfo) {
+                    info.allfields = info.baseClassInfo.allfields.concat(info.allfields)
+                    computeVtableInfo(info)
+                }
 
             }
             return info;
@@ -1690,13 +1695,6 @@ ${lbl}: .short 0xffff
                 return emitCallCore(node, node, [], null)
             }
             let attrs = parseComments(decl);
-            let callInfo: CallInfo = {
-                decl,
-                qName: getFullName(checker, decl.symbol),
-                args: [],
-                isExpression: true
-            };
-            (node as any).callInfo = callInfo;
             if (decl.kind == SK.EnumMember) {
                 let ev = attrs.enumval
                 if (!ev) {
@@ -1726,7 +1724,6 @@ ${lbl}: .short 0xffff
                     return emitCallCore(node, node, [], null, decl as any, node.expression)
                 } else {
                     let idx = fieldIndex(node)
-                    callInfo.args.push(node.expression)
                     return ir.op(EK.FieldAccess, [emitExpr(node.expression)], idx)
                 }
             } else if (isClassFunction(decl) || decl.kind == SK.MethodSignature) {
@@ -1757,7 +1754,9 @@ ${lbl}: .short 0xffff
             } else if (isInterfaceType(t)) {
                 attrs = parseCommentsOnSymbol(t.symbol)
                 indexer = assign ? attrs.indexerSet : attrs.indexerGet
-            } else if (t.flags & (TypeFlags.Any | TypeFlags.StructuredOrTypeVariable)) {
+            }
+
+            if (!indexer && (t.flags & (TypeFlags.Any | TypeFlags.StructuredOrTypeVariable))) {
                 indexer = assign ? "pxtrt::mapSetGeneric" : "pxtrt::mapGetGeneric"
                 stringOk = true
             }
@@ -2046,19 +2045,9 @@ ${lbl}: .short 0xffff
             let attrs = parseComments(decl)
             let hasRet = !(typeOf(node).flags & TypeFlags.Void)
             let args = callArgs.slice(0)
-            let callInfo: CallInfo = {
-                decl,
-                qName: decl ? getFullName(checker, decl.symbol) : "?",
-                args: args.slice(0),
-                isExpression: hasRet
-            };
-            (node as any).callInfo = callInfo
 
             if (isMethod && !recv && !isStatic(decl) && funcExpr.kind == SK.PropertyAccessExpression)
                 recv = (<PropertyAccessExpression>funcExpr).expression
-
-            if (callInfo.args.length == 0 && U.lookup(autoCreateFunctions, callInfo.qName))
-                callInfo.isAutoCreate = true
 
             if (res.usedArguments && attrs.trackArgs) {
                 let targs = recv ? [recv].concat(args) : args
@@ -2087,9 +2076,7 @@ ${lbl}: .short 0xffff
                 return r
             }
 
-            scope(() => {
-                addDefaultParametersAndTypeCheck(sig, args, attrs);
-            })
+            addDefaultParametersAndTypeCheck(sig, args, attrs);
 
             // first we handle a set of direct cases, note that
             // we are not recursing on funcExpr here, but looking
@@ -2123,7 +2110,6 @@ ${lbl}: .short 0xffff
                         isSuper = true
                     }
                     args.unshift(recv)
-                    callInfo.args.unshift(recv)
                 } else
                     unhandled(node, lf("strange method call"), 9241)
                 let info = getFunctionInfo(decl)
@@ -2195,7 +2181,6 @@ ${lbl}: .short 0xffff
                         // so the receiver is not needed, as we have already done
                         // the property lookup to get the lambda
                         args.shift()
-                        callInfo.args.shift()
                     }
                 } else if (decl.kind == SK.MethodSignature || (target.switches.slowMethods && !isStatic(decl) && !isSuper)) {
                     let name = getName(decl)
@@ -2215,7 +2200,6 @@ ${lbl}: .short 0xffff
 
             // here's where we will recurse to generate funcExpr
             args.unshift(funcExpr)
-            callInfo.args.unshift(funcExpr)
 
             return mkMethodCall(null, -1, null, args.map(x => emitExpr(x)))
         }
@@ -2705,14 +2689,16 @@ ${lbl}: .short 0xffff
             if (hasRet)
                 proc.emitLbl(lbl)
 
-            // once we have emitted code for this function,
-            // we should emit code for all decls that are used
-            // as a result
+            // nothing should be on work list in final pass - everything should be already marked as used
             assert(!bin.finalPass || usedWorkList.length == 0, "!bin.finalPass || usedWorkList.length == 0")
-            while (usedWorkList.length > 0) {
-                let f = usedWorkList.pop()
-                emit(f)
-            }
+
+            // otherwise, we emit everything that's left, but only at top level
+            // to avoid unbounded stack
+            if (proc.isRoot)
+                while (usedWorkList.length > 0) {
+                    let f = usedWorkList.pop()
+                    emit(f)
+                }
 
             return lit
         }
@@ -2762,9 +2748,12 @@ ${lbl}: .short 0xffff
 
             let lit: ir.Expr = null
 
-            scope(() => {
-                lit = emitFuncCore(node)
-            })
+            let prevProc = proc;
+            try {
+                lit = emitFuncCore(node);
+            } finally {
+                proc = prevProc;
+            }
 
             return lit
         }
@@ -3740,6 +3729,26 @@ ${lbl}: .short 0xffff
         function emitDebuggerStatement(node: Node) {
             emitBrk(node)
         }
+        function isLoop(node: Node) {
+            switch (node.kind) {
+                case SK.WhileStatement:
+                case SK.ForInStatement:
+                case SK.ForOfStatement:
+                case SK.ForStatement:
+                case SK.DoStatement:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+        function inLoop(node: Node) {
+            while (node) {
+                if (isLoop(node))
+                    return true
+                node = node.parent
+            }
+            return false
+        }
         function emitVariableDeclaration(node: VarOrParam): ir.Cell {
             if (node.name.kind === SK.ObjectBindingPattern) {
                 if (!node.initializer) {
@@ -3791,6 +3800,11 @@ ${lbl}: .short 0xffff
                 typeCheckSubtoSup(node.initializer, node)
                 proc.emitExpr(loc.storeByRef(emitExpr(node.initializer)))
                 currJres = null
+                proc.stackEmpty();
+            } else if (inLoop(node)) {
+                // the variable is declared in a loop - we need to clear it on each iteration
+                emitBrk(node)
+                proc.emitExpr(loc.storeByRef(emitLit(undefined)))
                 proc.stackEmpty();
             }
             return loc;
@@ -4121,7 +4135,7 @@ ${lbl}: .short 0xffff
     }
 
 
-    function isStringType(t: Type) {
+    export function isStringType(t: Type) {
         return checkPrimitiveType(t, TypeFlags.String | TypeFlags.StringLiteral, HasLiteralType.String);
     }
 
@@ -4220,6 +4234,20 @@ ${lbl}: .short 0xffff
             })
             return perfCounters
         }
+    }
+
+    export function isCtorField(p: ParameterDeclaration) {
+        if (!p.modifiers)
+            return false
+        if (p.parent.kind != SK.Constructor)
+            return false
+        for (let m of p.modifiers) {
+            if (m.kind == SK.PrivateKeyword ||
+                m.kind == SK.PublicKeyword ||
+                m.kind == SK.ProtectedKeyword)
+                return true
+        }
+        return false
     }
 
     function isNumberLikeType(type: Type) {

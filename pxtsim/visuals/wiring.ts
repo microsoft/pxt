@@ -457,10 +457,20 @@ namespace pxsim.visuals {
             return { endG: endG, end1: end1, end2: end2, wires: wires };
         }
 
+        public checkWire(start: Loc, end: Loc): boolean {
+            let startLoc = this.getLocCoord(start);
+            let endLoc = this.getLocCoord(end);
+            return !!startLoc && !!endLoc;
+        }
+
         public addWire(start: Loc, end: Loc, color: string): Wire {
             let startLoc = this.getLocCoord(start);
             let endLoc = this.getLocCoord(end);
-            let startStyle = this.getPinStyle(start);
+            if (!startLoc || !endLoc) {
+                console.debug(`unable to allocate wire for ${start} or ${end}`);
+                return undefined;
+            }
+            //let startStyle = this.getPinStyle(start);
             let endStyle = this.getPinStyle(end);
             let wireEls: Wire;
             if (end.type == "dalboard" && endStyle == "croc") {

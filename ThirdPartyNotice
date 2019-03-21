@@ -356,6 +356,9 @@ General Public License.
 336. string_decoder v1.1.1 (https://registry.npmjs.org/string_decoder/-/string_decoder-1.1.1.tgz)
 337. crypto-js v3.1.9-1 (https://registry.npmjs.org/crypto-js/-/crypto-js-3.1.9-1.tgz)
 338. react-tooltip v3.9.0 (https://registry.npmjs.org/react-tooltip/-/react-tooltip-3.9.0.tgz)
+339. webusb v1.0.14 (https://registry.npmjs.org/webusb/-/webusb-1.0.14.tgz)
+340. usb v1.5.0 (https://registry.npmjs.org/usb/-/usb-1.5.0.tgz)
+341. gif.js v0.2.0 (https://github.com/jnordberg/gif.js)
 
 
 %% JSONStream 1.3.2 NOTICES AND INFORMATION BEGIN HERE (https://registry.npmjs.org/JSONStream/-/JSONStream-1.3.2.tgz)
@@ -11022,3 +11025,76 @@ SOFTWARE.
 
 =========================================
 END OF react-tooltip NOTICES AND INFORMATION
+
+
+%% webusb 1.0.14 NOTICES AND INFORMATION BEGIN HERE (https://registry.npmjs.org/webusb/-/webusb-1.0.14.tgz)
+=========================================
+
+The MIT License (MIT)
+
+Copyright (c) 2017 Rob Moran
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+=========================================
+END OF webusb NOTICES AND INFORMATION
+
+
+
+%% usb 1.5.0 NOTICES AND INFORMATION BEGIN HERE (https://registry.npmjs.org/usb/-/usb-1.5.0.tgz)
+=========================================
+
+Copyright (c) 2012 Nonolith Labs, LLC
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+=========================================
+END OF usb NOTICES AND INFORMATION
+
+%% gifjs 0.2.0 NOTICES AND INFORMATION BEGIN HERE (https://github.com/jnordberg/gif.js/blob/master/LICENSE)
+=========================================
+
+The MIT License (MIT)
+
+Copyright (c) 2013-2018 Johan Nordberg
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+=========================================
+END OF gifjs NOTICES AND INFORMATION

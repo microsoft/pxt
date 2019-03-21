@@ -3,6 +3,7 @@ import * as data from "./data";
 import * as sui from "./sui";
 import * as core from "./core";
 import * as workspace from "./workspace";
+import * as compiler from "./compiler";
 
 import { SearchInput } from "./components/searchInput";
 import { ProjectsCodeCard } from "./projects";
@@ -60,6 +61,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
 
     show() {
         this.setState({ visible: true });
+        compiler.projectSearchClear();
     }
 
     fetchLocalData(): pxt.workspace.Header[] {
@@ -116,7 +118,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
 
     handleDelete() {
         let { selected } = this.state;
-        const headers = this.fetchLocalData();
+        const headers = this.getSortedHeaders();
         const selectedLength = Object.keys(selected).length;
         core.confirmDelete(selectedLength == 1 ? headers[parseInt(Object.keys(selected)[0])].name : selectedLength.toString(), () => {
             const promises: Promise<void>[] = [];
@@ -176,7 +178,8 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                 })
                 .then((clonedHeader) => workspace.saveAsync(clonedHeader, files))
                 .then(() => {
-                    data.clearCache();
+                    data.invalidate("headers:");
+                    data.invalidate(`headers:${this.state.searchFor}`);
                     this.setState({ selected: {}, markedNew: { '0': 1 }, sortedBy: 'time', sortedAsc: false });
                     setTimeout(() => {
                         this.setState({ markedNew: {} });
@@ -209,7 +212,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
 
     handleSelectAll = (event: any) => {
         let { selected } = this.state;
-        const headers = this.fetchLocalData();
+        const headers = this.getSortedHeaders();
         const selectedAll = headers.length > 0 && headers.length == Object.keys(selected).length;
         if (selectedAll) {
             // Deselect all if selected
@@ -265,8 +268,28 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
         const indexes = Object.keys(selected);
         if (indexes.length !== 1) return null; // Sanity check
         const index = parseInt(indexes[0]);
-        const headers = this.fetchLocalData();
+        const headers = this.getSortedHeaders();
         return headers[index];
+    }
+
+    private getSortedHeaders() {
+        const { sortedBy, sortedAsc } = this.state;
+        const headers = this.fetchLocalData() || [];
+        return headers.sort(this.getSortingFunction(sortedBy, sortedAsc))
+    }
+
+    private getSortingFunction(sortedBy: string, sortedAsc: boolean) {
+        const sortingFunction = (a: pxt.workspace.Header, b: pxt.workspace.Header) => {
+            if (sortedBy === 'time') {
+                return sortedAsc ?
+                    a.modificationTime - b.modificationTime :
+                    b.modificationTime - a.modificationTime;
+            }
+            return sortedAsc ?
+                a.name.localeCompare(b.name) :
+                b.name.localeCompare(a.name);
+        };
+        return sortingFunction;
     }
 
     renderCore() {
@@ -275,7 +298,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
 
         const darkTheme = pxt.appTarget.appTheme.baseTheme == 'dark';
 
-        let headers = this.fetchLocalData() || [];
+        let headers = this.getSortedHeaders() || [];
         headers = headers.filter(h => !h.isDeleted);
         const isSearching = false;
         const hasHeaders = !searchFor ? headers.length > 0 : true;
@@ -300,22 +323,12 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                         text={lf("Duplicate")} textClass="landscape only" title={lf("Duplicate Project")} onClick={this.handleDuplicate} />);
                 }
                 headerActions.push(<sui.Button key="delete" icon="trash" className="icon red"
-                    text={lf("Delete")} textClass="landscape only" title={lf("Delete Project")} onClick={this.handleDelete}/>);
+                    text={lf("Delete")} textClass="landscape only" title={lf("Delete Project")} onClick={this.handleDelete} />);
                 headerActions.push(<div key="divider" className="divider"></div>);
             }
             headerActions.push(<sui.Button key="view" icon={view == 'grid' ? 'th list' : 'grid layout'} className="icon"
                 title={`${view == 'grid' ? lf("List view") : lf("Grid view")}`} onClick={this.handleSwitchView} />)
         }
-        const sortingFunction = (a: pxt.workspace.Header, b: pxt.workspace.Header) => {
-            if (sortedBy === 'time') {
-                return sortedAsc ?
-                    a.modificationTime - b.modificationTime :
-                    b.modificationTime - a.modificationTime;
-            }
-            return sortedAsc ?
-                a.name.localeCompare(b.name) :
-                b.name.localeCompare(a.name);
-        };
         return (
             <sui.Modal isOpen={visible} className="scriptmanager" size="fullscreen"
                 onClose={this.close} dimmer={true} header={lf("My Projects")}
@@ -323,7 +336,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
             >
                 {!hasHeaders ? <div className="empty-content">
-                    <h2 className="ui center aligned header">
+                    <h2 className={`ui center aligned header ${darkTheme ? "inverted" : ""}`}>
                         <div className="content">
                             {lf("It's empty in here")}
                             <div className="sub header">{lf("Go back to create a new project")}</div>
@@ -335,14 +348,14 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                         <div className="sort-by">
                             <div className="ui compact buttons">
                                 <sui.DropdownMenu role="menuitem" text={sortedBy == 'time' ? lf("Last Modified") : lf("Name")} title={lf("Sort by dropdown")} className={`inline button ${darkTheme ? 'inverted' : ''}`}>
-                                    <sui.Item role="menuitem" icon={sortedBy == 'name' ? 'check' : undefined} className={sortedBy != 'name' ? 'no-icon' : ''} text={lf("Name")} tabIndex={-1} onClick={this.handleSortName} />
-                                    <sui.Item role="menuitem" icon={sortedBy == 'time' ? 'check' : undefined} className={sortedBy != 'time' ? 'no-icon' : ''} text={lf("Last Modified")} tabIndex={-1} onClick={this.handleSortTime} />
+                                    <sui.Item role="menuitem" icon={sortedBy == 'name' ? 'check' : undefined} className={`${sortedBy != 'name' ? 'no-icon' : ''} ${darkTheme ? 'inverted' : ''}`} text={lf("Name")} tabIndex={-1} onClick={this.handleSortName} />
+                                    <sui.Item role="menuitem" icon={sortedBy == 'time' ? 'check' : undefined} className={`${sortedBy != 'time' ? 'no-icon' : ''} ${darkTheme ? 'inverted' : ''}`} text={lf("Last Modified")} tabIndex={-1} onClick={this.handleSortTime} />
                                 </sui.DropdownMenu>
                                 <sui.Button icon={`arrow ${sortedAsc ? 'up' : 'down'}`} className={`${darkTheme ? 'inverted' : ''}`} onClick={this.handleSwitchSortDirection} title={lf("Switch sort order to {0}", !sortedAsc ? lf("ascending") : lf("descending"))} />
                             </div>
                         </div>
                         <div className={"ui cards"}>
-                            {headers.sort(sortingFunction).map((scr, index) => {
+                            {headers.sort(this.getSortingFunction(sortedBy, sortedAsc)).map((scr, index) => {
                                 const isMarkedNew = !!markedNew[index];
                                 const isSelected = !!selected[index];
                                 const showMarkedNew = isMarkedNew && !isSelected;
@@ -387,7 +400,7 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                                 </tr>
                             </thead>
                             <tbody>
-                                {headers.sort(sortingFunction).map((scr, index) => {
+                                {headers.sort(this.getSortingFunction(sortedBy, sortedAsc)).map((scr, index) => {
                                     const isMarkedNew = !!markedNew[index];
                                     const isSelected = !!selected[index];
                                     const showMarkedNew = isMarkedNew && !isSelected;

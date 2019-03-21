@@ -158,6 +158,7 @@ namespace ts.pxtc {
         advanced?: boolean;
         deprecated?: boolean;
         useEnumVal?: boolean; // for conversion from typescript to blocks with enumVal
+        callInDebugger?: boolean; // for getters, they will be invoked by the debugger.
         // On block
         subcategory?: string;
         group?: string;
@@ -679,7 +680,7 @@ namespace ts.pxtc {
             }))
             .then(() => apis)
             .finally(() => {
-                if (Object.keys(errors))
+                if (Object.keys(errors).length)
                     pxt.reportError(`loc.errors`, `invalid translation`, errors);
             })
     }
@@ -717,7 +718,8 @@ namespace ts.pxtc {
         "enumIsBitMask",
         "enumIsHash",
         "decompileIndirectFixedInstances",
-        "topblock"
+        "topblock",
+        "callInDebugger",
     ];
 
     export function parseCommentString(cmt: string): CommentAttrs {
@@ -1204,6 +1206,7 @@ namespace ts.pxtc {
         export const UF2_FLAG_NONE = 0x00000000
         export const UF2_FLAG_NOFLASH = 0x00000001
         export const UF2_FLAG_FILE = 0x00001000
+        export const UF2_FLAG_FAMILY_ID_PRESENT = 0x00002000
 
         export interface Block {
             flags: number;
@@ -1212,6 +1215,7 @@ namespace ts.pxtc {
             blockNo: number;
             numBlocks: number;
             fileSize: number;
+            familyId: number;
             filename?: string;
             data: Uint8Array;
         }
@@ -1229,6 +1233,8 @@ namespace ts.pxtc {
             if (payloadSize > 476)
                 payloadSize = 256
             let filename: string = null
+            let familyId = 0
+            let fileSize = 0
             if (flags & UF2_FLAG_FILE) {
                 let fnbuf = block.slice(32 + payloadSize)
                 let len = fnbuf.indexOf(0)
@@ -1236,14 +1242,21 @@ namespace ts.pxtc {
                     fnbuf = fnbuf.slice(0, len)
                 }
                 filename = U.fromUTF8(U.uint8ArrayToString(fnbuf))
+                fileSize = wordAt(28)
             }
+            
+            if (flags & UF2_FLAG_FAMILY_ID_PRESENT) {
+                familyId = wordAt(28)
+            }
+
             return {
                 flags,
                 targetAddr: wordAt(12),
                 payloadSize,
                 blockNo: wordAt(20),
                 numBlocks: wordAt(24),
-                fileSize: wordAt(28),
+                fileSize,
+                familyId,
                 data: block.slice(32, 32 + payloadSize),
                 filename
             }
@@ -1273,7 +1286,7 @@ namespace ts.pxtc {
                 let ptr = i * 512
                 let bl = parseBlock(blocks.slice(ptr, ptr + 512))
                 if (!bl) continue
-                if (endAddr && bl.targetAddr  + 256 > endAddr) break;
+                if (endAddr && bl.targetAddr + 256 > endAddr) break;
                 if (curraddr == -1) {
                     curraddr = bl.targetAddr
                     appstartaddr = curraddr
@@ -1333,15 +1346,19 @@ namespace ts.pxtc {
             ptrs: number[];
             filename?: string;
             filesize: number;
+            familyId: number;
         }
 
-        export function newBlockFile(): BlockFile {
+        export function newBlockFile(familyId?: string | number): BlockFile {
+            if (typeof familyId == "string")
+                familyId = parseInt(familyId)
             return {
                 currBlock: null,
                 currPtr: -1,
                 blocks: [],
                 ptrs: [],
-                filesize: 0
+                filesize: 0,
+                familyId: familyId || 0
             }
         }
 
@@ -1436,12 +1453,15 @@ namespace ts.pxtc {
                     currBlock = new Uint8Array(512)
                     if (f.filename)
                         flags |= UF2_FLAG_FILE
+                    else if (f.familyId)
+                        flags |= UF2_FLAG_FAMILY_ID_PRESENT
                     setWord(currBlock, 0, UF2_MAGIC_START0)
                     setWord(currBlock, 4, UF2_MAGIC_START1)
                     setWord(currBlock, 8, flags)
                     setWord(currBlock, 12, needAddr << 8)
                     setWord(currBlock, 16, 256)
                     setWord(currBlock, 20, f.blocks.length)
+                    setWord(currBlock, 28, f.familyId)
                     setWord(currBlock, 512 - 4, UF2_MAGIC_END)
                     if (f.filename) {
                         U.memcpy(currBlock, 32 + 256, U.stringToUint8Array(U.toUTF8(f.filename)))
@@ -1527,6 +1547,7 @@ namespace ts.pxtc.service {
 
     export interface ProjectSearchInfo {
         name: string;
+        id?: string;
     }
 
     export interface BlocksOptions {

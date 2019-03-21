@@ -22,7 +22,7 @@ namespace pxt.editor.experiments {
         })
         if (experiments.length && Object.keys(r).length) {
             pxt.tickEvent("experiments.loaded", r);
-            pxt.setAppTargetVariant(null);
+            pxt.reloadAppTargetVariant();
         }
     }
 
@@ -71,6 +71,24 @@ namespace pxt.editor.experiments {
                 name: "Bluetooth Download",
                 description: lf("Download code via Web Bluetooth"),
                 feedbackUrl: "https://github.com/Microsoft/pxt/issues/4807"
+            },
+            {
+                id: "simScreenshot",
+                name: lf("Simulator Screenshots"),
+                description: lf("Download screenshots of the simulator"),
+                feedbackUrl: "https://github.com/Microsoft/pxt/issues/5232"
+            },
+            {
+                id: "simGif",
+                name: lf("Simulator Gifs"),
+                description: lf("Download gifs of the simulator"),
+                feedbackUrl: "https://github.com/Microsoft/pxt/issues/5297"
+            },
+            {
+                id: "autoWebUSBDownload",
+                name: lf("WebUSB Download"),
+                description: lf("Automatically try to download via WebUSB"),
+                feedbackUrl: "https://github.com/Microsoft/pxt/issues/5344"
             }
         ].filter(experiment => ids.indexOf(experiment.id) > -1);
     }

@@ -156,8 +156,8 @@ namespace pxt.blocks {
         }
 
         // Should be set to modify a block after a mutator dialog is updated
-        public compose(topBlock: Blockly.Block): void {
-            const allBlocks = topBlock.getDescendants().map(subBlock => {
+        public compose(topBlock: Blockly.BlockSvg): void {
+            const allBlocks = topBlock.getDescendants(false).map(subBlock => {
                 return {
                     type: subBlock.type,
                     name: subBlock.inputList[0].name
@@ -169,7 +169,7 @@ namespace pxt.blocks {
         }
 
         // Should be set to initialize the workspace inside a mutator dialog and return the top block
-        public decompose(workspace: Blockly.Workspace): Blockly.Block {
+        public decompose(workspace: Blockly.WorkspaceSvg): Blockly.Block {
             // Initialize flyout workspace's top block and add sub-blocks based on visible parameters
             const topBlock = workspace.newBlock(this.topBlockType);
             topBlock.initSvg();
@@ -550,11 +550,11 @@ namespace pxt.blocks {
             const input = this.block.appendValueInput(ArrayMutator.valueInputPrefix + index).setCheck("Number");
 
             if (isNewField) {
-                const valueBlock = this.block.workspace.newBlock("math_number");
+                const valueBlock = this.block.workspace.newBlock("math_number") as Blockly.BlockSvg;
                 valueBlock.initSvg();
                 valueBlock.setShadow(true);
                 input.connection.connect(valueBlock.outputConnection);
-                this.block.workspace.render();
+                (this.block.workspace as Blockly.WorkspaceSvg).render();
                 this.count++;
             }
         }

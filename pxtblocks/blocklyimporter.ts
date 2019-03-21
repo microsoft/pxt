@@ -4,7 +4,7 @@
 namespace pxt.blocks {
 
     /**
-     * Converts a DOM into workspace without triggering any Blockly event
+     * Converts a DOM into workspace without triggering any Blockly event. Returns the new block ids
      * @param dom
      * @param workspace
      */
@@ -12,10 +12,27 @@ namespace pxt.blocks {
         pxt.tickEvent(`blocks.domtow`)
         try {
             Blockly.Events.disable();
-            return Blockly.Xml.domToWorkspace(dom, workspace);
+            const newBlockIds = Blockly.Xml.domToWorkspace(dom, workspace);
+            applyMetaComments(workspace);
+            return newBlockIds;
         } finally {
             Blockly.Events.enable();
         }
+    }
+
+    function applyMetaComments(workspace: Blockly.Workspace) {
+        // process meta comments
+        // @highlight -> highlight block
+        workspace.getAllBlocks()
+            .filter(b => !!b.comment && b.comment instanceof Blockly.Comment)
+            .forEach(b => {
+                const c = (<Blockly.Comment>b.comment).getText();
+                if (/@highlight/.test(c)) {
+                    const cc = c.replace(/@highlight/g, '').trim();
+                    b.setCommentText(cc || null);
+                    (workspace as Blockly.WorkspaceSvg).highlightBlock(b.id)
+                }
+            });
     }
 
     export function clearWithoutEvents(workspace: Blockly.Workspace) {
@@ -51,11 +68,11 @@ namespace pxt.blocks {
         return getChildrenWithAttr(parent, "block", "type", type);
     }
 
-    export function getChildrenWithAttr(parent:  Document | Element, tag: string, attr: string, value: string) {
+    export function getChildrenWithAttr(parent: Document | Element, tag: string, attr: string, value: string) {
         return Util.toArray(parent.getElementsByTagName(tag)).filter(b => b.getAttribute(attr) === value);
     }
 
-    export function getFirstChildWithAttr(parent:  Document | Element, tag: string, attr: string, value: string) {
+    export function getFirstChildWithAttr(parent: Document | Element, tag: string, attr: string, value: string) {
         const res = getChildrenWithAttr(parent, tag, attr, value);
         return res.length ? res[0] : undefined;
     }
@@ -64,7 +81,7 @@ namespace pxt.blocks {
      * Loads the xml into a off-screen workspace (not suitable for size computations)
      */
     export function loadWorkspaceXml(xml: string, skipReport = false) {
-        const workspace = new Blockly.Workspace();
+        const workspace = new Blockly.Workspace() as Blockly.WorkspaceSvg;
         try {
             const dom = Blockly.Xml.textToDom(xml);
             pxt.blocks.domToWorkspaceNoEvents(dom, workspace);

@@ -1,7 +1,7 @@
 namespace pxtsprite {
     import svg = pxt.svgUtil;
 
-    interface ButtonGroup {
+    export interface ButtonGroup {
         root: svg.Group;
         cx: number;
         cy: number;
@@ -120,12 +120,14 @@ namespace pxtsprite {
             // Draw the left option
             this.leftElement = this.root.group();
             this.leftText = mkText(this.props.leftText)
+                .appendClass("sprite-editor-text")
                 .fill(this.props.selectedTextColor);
             this.leftElement.appendChild(this.leftText);
 
             // Draw the right option
             this.rightElement = this.root.group();
             this.rightText = mkText(this.props.rightText)
+                .appendClass("sprite-editor-text")
                 .fill(this.props.unselectedTextColor);
             this.rightElement.appendChild(this.rightText);
 
@@ -236,8 +238,8 @@ namespace pxtsprite {
     export class TextButton extends Button {
         protected textEl: svg.Text;
 
-        constructor(root: svg.Group, cx: number, cy: number, text: string, className: string) {
-            super(root, cx, cy);
+        constructor(button: ButtonGroup, text: string, className: string) {
+            super(button.root, button.cx, button.cy);
 
             this.textEl = mkText(text)
                 .appendClass(className);
@@ -250,6 +252,50 @@ namespace pxtsprite {
         setText(text: string) {
             this.textEl.text(text);
             this.textEl.moveTo(this.cx, this.cy);
+        }
+
+        getComputedTextLength() {
+            try {
+                return this.textEl.el.getComputedTextLength();
+            }
+            catch (e) {
+                // Internet Explorer and Microsoft Edge throw if the element
+                // is not visible. The best we can do is approximate
+                return this.textEl.el.textContent.length * 8;
+            }
+        }
+    }
+
+    export class StandaloneTextButton extends TextButton {
+        protected padding = 30;
+
+        constructor(text: string, readonly height: number) {
+            super(drawSingleButton(65, height), text, "sprite-editor-text");
+            this.addClass("sprite-editor-label");
+        }
+
+        layout() {
+            const newBG = drawSingleButton(this.width(), this.height);
+
+            while (this.root.el.hasChildNodes()) {
+                this.root.el.removeChild(this.root.el.firstChild);
+            }
+
+            while (newBG.root.el.hasChildNodes()) {
+                const el = newBG.root.el.firstChild;
+                newBG.root.el.removeChild(el);
+                this.root.el.appendChild(el);
+            }
+
+            this.cx = newBG.cx;
+            this.cy = newBG.cy;
+
+            this.root.appendChild(this.textEl);
+            this.textEl.moveTo(this.cx, this.cy);
+        }
+
+        width() {
+            return this.getComputedTextLength() + this.padding * 2;
         }
     }
 
@@ -266,17 +312,19 @@ namespace pxtsprite {
 
     export function mkIconButton(icon: string, width: number, height = width + BUTTON_BOTTOM_BORDER_WIDTH - BUTTON_BORDER_WIDTH) {
         const g = drawSingleButton(width, height);
-        return new TextButton(g.root, g.cx, g.cy, icon, "sprite-editor-icon");
+        return new TextButton(g, icon, "sprite-editor-icon");
     }
 
     export function mkXIconButton(icon: string, width: number, height = width + BUTTON_BOTTOM_BORDER_WIDTH - BUTTON_BORDER_WIDTH) {
         const g = drawSingleButton(width, height);
-        return new TextButton(g.root, g.cx, g.cy, icon, "sprite-editor-xicon");
+        return new TextButton(g, icon, "sprite-editor-xicon");
     }
 
     export function mkTextButton(text: string, width: number, height: number) {
         const g = drawSingleButton(width, height);
-        return new TextButton(g.root, g.cx, g.cy, text, "sprite-editor-text");
+        const t = new TextButton(g, text, "sprite-editor-text");
+        t.addClass("sprite-editor-label");
+        return t;
     }
 
     /**
@@ -378,12 +426,12 @@ namespace pxtsprite {
             this.host = host;
             const [undo, redo] = buttonGroup(width, height, 2);
 
-            this.undo = new TextButton(undo.root, undo.cx, undo.cy, "\uf118", "sprite-editor-xicon");
+            this.undo = new TextButton(undo, "\uf118", "sprite-editor-xicon");
             this.undo.onClick(() => this.host.undo());
             this.root.appendChild(this.undo.getElement());
 
 
-            this.redo = new TextButton(redo.root, redo.cx, redo.cy, "\uf111", "sprite-editor-xicon");
+            this.redo = new TextButton(redo, "\uf111", "sprite-editor-xicon");
             this.redo.onClick(() => this.host.redo());
             this.root.appendChild(this.redo.getElement());
         }
@@ -548,6 +596,6 @@ namespace pxtsprite {
         return new svg.Text(text)
             .anchor("middle")
             .setAttribute("dominant-baseline", "middle")
-            .setAttribute("dy", (pxt.BrowserUtils.isIE() || pxt.BrowserUtils.isEdge()) ? "0.3em" : "0")
+            .setAttribute("dy", (pxt.BrowserUtils.isIE() || pxt.BrowserUtils.isEdge()) ? "0.3em" : "0.1em")
     }
 }

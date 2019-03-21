@@ -1,0 +1,46 @@
+/* Import all components */
+
+@import 'themes/default/globals/site.variables';
+@import 'themes/pxt/globals/site.variables';
+
+/* Reference import */
+
+@import (reference) "semantic.less";
+
+#functionEditorWorkspace {
+    width: 100%;
+    min-height: 200px;
+    margin: 0 0 0.8rem 0;
+}
+
+#functionEditorWorkspace .injectionDiv {
+    width: 100%;
+    min-height: 200px;
+}
+
+.ui.modal.createfunction > .content {
+    padding: 0 !important;
+}
+
+.ui.modal.createfunction span.ui.text.paramlabel {
+    margin: 0.8rem 1.5rem;
+}
+
+.ui.modal.createfunction .list button {
+    margin: 0.5rem;
+}
+
+/* Mobile */
+@media only screen and (max-width: @largestMobileScreen) {
+    .ui.modal.createfunction span.ui.text.paramlabel {
+        margin: 0.8rem 1rem 0.2rem 1rem;
+    }
+
+    .ui.modal.createfunction .list button {
+        margin: 0.3rem;
+    }
+
+    .ui.modal.createfunction .list {
+        margin-bottom: 0.5rem;
+    }
+}

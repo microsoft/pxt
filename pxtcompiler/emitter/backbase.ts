@@ -98,12 +98,38 @@ namespace ts.pxtc {
                 return `.short ${pxt.REFCNT_FLASH}, ${vt}>>${target.vtableShift}`
         }
 
-        string_literal(lbl: string, s: string) {
+        string_literal(lbl: string, strLit: string) {
+            const SKIP_INCR = 16
+            let vt = "pxt::string_inline_ascii_vt"
+            let utfLit = target.utf8 ? U.toUTF8(strLit, true) : strLit
+            if (utfLit !== strLit) {
+                if (utfLit.length > SKIP_INCR) {
+                    vt = "pxt::string_skiplist16_vt"
+                    let skipList: number[] = []
+                    let off = 0
+                    for (let i = 0; i + SKIP_INCR <= strLit.length; i += SKIP_INCR) {
+                        off += U.toUTF8(strLit.slice(i, i + SKIP_INCR), true).length
+                        skipList.push(off)
+                    }
+                    return `
+.balign 4
+${lbl}meta: ${this.obj_header(vt)}
+        .short ${utfLit.length}, ${strLit.length}
+        .word ${lbl}data
+${lbl}data:
+        .short ${skipList.map(s => s.toString()).join(", ")}
+${lbl}: .string ${asmStringLiteral(utfLit)}
+`
+                } else {
+                    vt = "pxt::string_inline_utf8_vt"
+                }
+            }
+
             return `
 .balign 4
-${lbl}meta: ${this.obj_header("pxt::string_vt")}
-        .short ${s.length}
-${lbl}: .string ${asmStringLiteral(s)}
+${lbl}meta: ${this.obj_header(vt)}
+        .short ${utfLit.length}
+${lbl}: .string ${asmStringLiteral(utfLit)}
 `
         }
 
@@ -1227,89 +1253,91 @@ ${baseLabel}_nochk:
             }
         }
 
-        private emitArrayMethods() {
-            for (let op of ["get", "set"]) {
+        private emitArrayMethod(op: string, isBuffer: boolean) {
+            this.write(`
+            .section code
+            _pxt_${isBuffer ? "buffer" : "array"}_${op}:
+            `)
+
+            this.loadVTable(false, "r4")
+
+            let classNo = this.builtInClassNo(!isBuffer ?
+                pxt.BuiltInType.RefCollection : pxt.BuiltInType.BoxedBuffer)
+            if (!target.switches.skipClassCheck)
+                this.checkSubtype(classNo, ".fail", "r4")
+
+            // on linux we use 32 bits for array size
+            const ldrSize = target.stackAlign || isBuffer ? "ldr" : "ldrh"
+
+            this.write(`
+                asrs r1, r1, #1
+                bcc .notint
+                ${ldrSize} r4, [r0, #${isBuffer ? 4 : 8}]
+                cmp r1, r4
+                bhs .oob
+            `)
+
+            let off = "r1"
+            if (isBuffer) {
+                off = "#8"
                 this.write(`
-                .section code
-                _pxt_array_${op}:
-                `)
-
-                this.loadVTable(false, "r4")
-                if (!target.switches.skipClassCheck)
-                    this.checkSubtype(this.builtInClassNo(pxt.BuiltInType.RefCollection), ".fail", "r4")
-
-                // on linux we use 32 bits for array size
-                const ldrSize = target.stackAlign ? "ldr" : "ldrh"
-
+                    adds r4, r0, r1
+                `);
+            } else {
                 this.write(`
-                    asrs r1, r1, #1
-                    bcc .notint
-                    ${ldrSize} r4, [r0, #8]
-                    cmp r1, r4
-                    bhs .oob
                     lsls r1, r1, #2
                     ldr r4, [r0, #4]
                 `);
+            }
 
-                if (target.gc) {
-                    if (op == "set") {
-                        this.write(`
-                            str r2, [r4, r1]
-                            bx lr
-                        `)
-                    } else {
-                        this.write(`
-                            ldr r0, [r4, r1]
-                            bx lr
-                        `)
-                    }
-                } else {
-                    if (op == "set") {
-                        this.write(`
-                            ldr r0, [r4, r1]
-                            str r2, [r4, r1]
-                            mov r4, r2
-                            push {lr}
-                            bl _pxt_decr
-                            mov r0, r4
-                            bl _pxt_incr
-                            pop {pc}
-                        `)
-                    } else {
-                        this.write(`
-                            ldr r0, [r4, r1]
-                            push {lr}
-                            bl _pxt_incr
-                            pop {pc}
-                        `)
-                    }
-                }
+            let suff = isBuffer ? "b" : ""
+            let conv = isBuffer && op == "get" ? "lsls r0, r0, #1\nadds r0, #1" : ""
 
-
+            if (op == "set") {
                 this.write(`
-                .notint:
-                    lsls r1, r1, #1
-                    push {r0, r2}
-                    mov r0, r1
-                    ${this.t.callCPP("pxt::toInt")}
-                    mov r1, r0
-                    pop {r0, r2}
-                ${op == "set" ? ".oob:" : ""}
-                    ${this.t.pushLR()}
-                    ${this.t.callCPP(`Array_::${op}At`)}
-                    ${this.t.popPC()}
-
-                .fail:
-                    bl pxt::failedCast
-                `)
-
-                if (op == "get") {
-                    this.write(`
-                        .oob:
-                            movs r0, #0 ; undefined
-                            bx lr
+                        str${suff} r2, [r4, ${off}]
+                        bx lr
                     `)
-                }
+            } else {
+                this.write(`
+                        ldr${suff} r0, [r4, ${off}]
+                        ${conv}
+                        bx lr
+                    `)
+            }
+
+            this.write(`
+            .notint:
+                lsls r1, r1, #1
+                push {r0, r2}
+                mov r0, r1
+                ${this.t.callCPP("pxt::toInt")}
+                mov r1, r0
+                pop {r0, r2}
+            ${op == "set" ? ".oob:" : ""}
+                ${this.t.pushLR()}
+                ${this.t.callCPP(`Array_::${op}At`)}
+                ${conv}
+                ${this.t.popPC()}
+
+            .fail:
+                bl pxt::failedCast
+            `)
+
+            if (op == "get") {
+                this.write(`
+                    .oob:
+                        movs r0, #${isBuffer ? 1 : 0} ; 0 or undefined
+                        bx lr
+                `)
+            }
+
+        }
+
+        private emitArrayMethods() {
+            for (let op of ["get", "set"]) {
+                this.emitArrayMethod(op, true)
+                this.emitArrayMethod(op, false)
             }
         }
 

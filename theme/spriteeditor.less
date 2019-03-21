@@ -103,6 +103,16 @@
     fill: #7f8c8d;
 }
 
+.sprite-editor-confirm-button {
+    .sprite-editor-button-bg {
+        fill: #294da0;
+    }
+
+    .sprite-editor-button-fg {
+        fill: #4B7BEC;
+    }
+}
+
 .sprite-editor-button.disabled {
     cursor: not-allowed;
 
@@ -140,12 +150,23 @@
 }
 
 .sprite-editor-button.selected {
+    /* Fixes a bug in Microsoft Edge where changing the fill alone would not
+     * trigger a re-render of the button for some reason. The position is already
+     * relative, but having this in the rule forces the render. */
+    position: relative;
+
     .sprite-editor-button-fg {
         fill: #495353;
     }
 }
 
 .sprite-editor-text {
+    font-family: @pageFont !important;
+    user-select: none;
+    cursor: auto;
+}
+
+.sprite-editor-label {
     fill: white;
 }
 
@@ -154,31 +175,6 @@
     border-radius: 4px;
     padding-top: 4px;
     position: relative;
-}
-
-
-.sprite-editor-dropdown .closeIcon {
-    position: absolute;
-    top: 0;
-    right: 0;
-    height: 4.5rem;
-    width: 4.5rem;
-    outline: none;
-    cursor: pointer;
-}
-
-.sprite-editor-dropdown .closeIcon .close {
-    position: absolute;
-    top: .5rem;
-    right: 1rem;
-    color: white;
-    border-radius: 50%;
-    font-size: 2.15rem;
-    transition: all .15s ease-out;
-    height: 2.15rem;
-    width: 2.15rem;
-    padding: 0;
-    line-height: 2.15rem;
 }
 
 .sprite-editor-glyph {

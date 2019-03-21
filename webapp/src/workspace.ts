@@ -202,22 +202,33 @@ export interface ScriptMeta {
 }
 
 // https://github.com/Microsoft/pxt-backend/blob/master/docs/sharing.md#anonymous-publishing
-export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptMeta) {
+export function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptMeta, screenshotUri?: string) {
     const saveId = {}
     h.saveId = saveId
+    let thumbnailBuffer: string;
+    let thumbnailMimeType: string;
+    if (screenshotUri) {
+        const m = /^data:(image\/(png|gif));base64,([a-zA-Z0-9+/]+=*)$/.exec(screenshotUri);
+        if (m) {
+            thumbnailBuffer = m[3];
+            thumbnailMimeType = m[1];
+        }
+    }
     const stext = JSON.stringify(text, null, 2) + "\n"
     const scrReq = {
         name: h.name,
         target: h.target,
         targetVersion: h.targetVersion,
-        description: meta.description,
+        description: meta.description || lf("Made with ❤️ in {0}.", pxt.appTarget.title || pxt.appTarget.name),
         editor: h.editor,
         text: text,
         meta: {
             versions: pxt.appTarget.versions,
             blocksHeight: meta.blocksHeight,
             blocksWidth: meta.blocksWidth
-        }
+        },
+        thumbnailBuffer,
+        thumbnailMimeType
     }
     pxt.debug(`publishing script; ${stext.length} bytes`)
     return Cloud.privatePostAsync("scripts", scrReq, /* forceLiveEndpoint */ true)
@@ -278,12 +289,11 @@ export function saveAsync(h: Header, text?: ScriptText, isCloud?: boolean): Prom
     }
 
     // check if we have dynamic boards, store board info for home page rendering
-    const bundledcoresvgs = pxt.appTarget.bundledcoresvgs;
-    if (text && bundledcoresvgs) {
-        const pxtjson = JSON.parse(text["pxt.json"] || "{}") as pxt.PackageConfig;
+    if (text && pxt.appTarget.simulator && pxt.appTarget.simulator.dynamicBoardDefinition) {
+        const pxtjson = ts.pxtc.Util.jsonTryParse(text["pxt.json"]) as pxt.PackageConfig;
         if (pxtjson && pxtjson.dependencies)
             h.board = Object.keys(pxtjson.dependencies)
-                .filter(p => !!bundledcoresvgs[p])[0];
+                .filter(p => !!pxt.bundledSvg(p))[0];
     }
 
     return headerQ.enqueue<void>(h.id, () =>
@@ -357,15 +367,17 @@ export function duplicateAsync(h: Header, text: ScriptText, rename?: boolean): P
     delete h._rev
     delete (h as any)._id
     return importAsync(h, text)
-        .then(() => h2)
+        .then(() => h)
 }
 
 export function createDuplicateName(h: Header) {
-    let names = U.toDictionary(allScripts, e => e.header.name)
+    let reducedName = h.name.indexOf("#") > -1 ?
+        h.name.substring(0, h.name.lastIndexOf('#')).trim() : h.name;
+    let names = U.toDictionary(allScripts.filter(e => !e.header.isDeleted), e => e.header.name)
     let n = 2
-    while (names.hasOwnProperty(h.name + " #" + n))
+    while (names.hasOwnProperty(reducedName + " #" + n))
         n++
-    return h.name + " #" + n;
+    return reducedName + " #" + n;
 }
 
 export function saveScreenshotAsync(h: Header, data: string, icon: string) {
@@ -661,6 +673,11 @@ export async function importGithubAsync(id: string) {
         })
 }
 
+export function downloadFilesByIdAsync(id: string): Promise<pxt.Map<string>> {
+    return Cloud.privateGetAsync(id, /* forceLiveEndpoint */ true)
+        .then((scr: Cloud.JsonScript) => getPublishedScriptAsync(scr.id));
+}
+
 export function installByIdAsync(id: string) {
     return Cloud.privateGetAsync(id, /* forceLiveEndpoint */ true)
         .then((scr: Cloud.JsonScript) =>
@@ -789,10 +806,14 @@ data.mountVirtualApi("headers", {
         return compiler.projectSearchAsync({ term: p, headers })
             .then((searchResults: pxtc.service.ProjectSearchInfo[]) => searchResults)
             .then(searchResults => {
-                return searchResults;
+                let searchResultsMap = U.toDictionary(searchResults || [], h => h.id)
+                return headers.filter(h => searchResultsMap[h.id]);
             });
     },
     expirationTime: p => 5 * 1000,
+    onInvalidated: () => {
+        compiler.projectSearchClear();
+    }
 })
 
 /*

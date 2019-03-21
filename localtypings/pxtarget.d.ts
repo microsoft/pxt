@@ -32,8 +32,9 @@ declare namespace pxt {
         id: string; // has to match ^[a-z]+$; used in URLs and domain names
         platformid?: string; // eg "codal"; used when search for gh packages ("for PXT/codal"); defaults to id
         nickname?: string; // friendly id used when generating files, folders, etc... id is used instead if missing
-        name: string;
-        description?: string;
+        name: string; // long name
+        description?: string; // description
+        thumbnailName?: string; // name imprited on thumbnails when using saveAsPNG
         corepkg: string;
         title?: string;
         cloud?: AppCloud;
@@ -73,12 +74,23 @@ declare namespace pxt {
         callName?: string;      // name of the block's function if changed in target
     }
 
+    interface FunctionEditorTypeInfo {
+        typeName?: string; // The actual type that gets emitted to ts
+        label?: string; // A user-friendly label for the type, e.g. "text" for the string type
+        icon?: string; // The className of a semantic icon, e.g. "calculator", "text width", etc
+        defaultName?: string; // The default argument name to use in the function declaration for this type
+    }
+
     interface RuntimeOptions {
         mathBlocks?: boolean;
         textBlocks?: boolean;
         listsBlocks?: boolean;
         variablesBlocks?: boolean;
         functionBlocks?: boolean;
+        functionsOptions?: {
+            extraFunctionEditorTypes?: FunctionEditorTypeInfo[];
+            useNewFunctions?: boolean;
+        };
         logicBlocks?: boolean;
         loopsBlocks?: boolean;
         onStartNamespace?: string; // default = loops
@@ -117,6 +129,7 @@ declare namespace pxt {
         workspaces?: boolean;
         packages?: boolean;
         sharing?: boolean; // uses cloud-based anonymous sharing
+        thumbnails?: boolean; // attach screenshots/thumbnail to published scripts
         importing?: boolean; // import url dialog
         embedding?: boolean;
         githubPackages?: boolean; // allow searching github for packages
@@ -125,7 +138,8 @@ declare namespace pxt {
     }
 
     interface AppSimulator {
-        autoRun?: boolean;
+        autoRun?: boolean; // enable autoRun in regular mode, not light mode
+        autoRunLight?: boolean; // force autorun in light mode
         stopOnChange?: boolean;
         hideRestart?: boolean;
         // moved to theme
@@ -223,7 +237,7 @@ declare namespace pxt {
         invertedToolbox?: boolean; // if true: use the blockly inverted toolbox
         invertedMonaco?: boolean; // if true: use the vs-dark monaco theme
         lightToc?: boolean; // if true: do NOT use inverted style in docs toc
-        blocklyOptions?: Blockly.Options; // Blockly options, see Configuration: https://developers.google.com/blockly/guides/get-started/web
+        blocklyOptions?: Blockly.WorkspaceOptions; // Blockly options, see Configuration: https://developers.google.com/blockly/guides/get-started/web
         hideFlyoutHeadings?: boolean; // Hide the flyout headings at the top of the flyout when on a mobile device.
         monacoColors?: pxt.Map<string>; // Monaco theme colors, see https://code.visualstudio.com/docs/getstarted/theme-color-reference
         simAnimationEnter?: string; // Simulator enter animation
@@ -299,6 +313,16 @@ declare namespace pxt {
         transparentEditorToolbar?: boolean; // make the editor toolbar float with a transparent background
         hideProjectRename?: boolean; // Temporary flag until we figure out a better way to show the name
         addNewTypeScriptFile?: boolean; // when enabled, the [+] explorer button asks for file name, instead of using "custom.ts"
+        simScreenshot?: boolean; // allows to download a screenshot of the simulator
+        simScreenshotKey?: string; // keyboard key name
+        simScreenshotMaxUriLength?: number; // maximum base64 encoded length to be uploaded
+        simGif?: boolean; // record gif of the simulator
+        simGifKey?: boolean; // shortcut to start stop
+        simGifTransparent?: string; // specify the gif transparency color
+        simGifQuality?: number; // generated gif quality (pixel sampling size) - 30 (poor) - 1 (best), default 16
+        simGifMaxFrames?: number; // maximum number of frames, default 64
+        simGifWidth?: number; // with in pixels for gif frames
+        autoWebUSBDownload?: boolean; // automatically prompt user for webusb download
     }
 
     interface SocialOptions {
@@ -312,6 +336,8 @@ declare namespace pxt {
         name: string;
         // needs to have one of `path` or `subitems`
         path?: string;
+        // force opening in separate window
+        popout?: boolean;
         tutorial?: boolean;
         subitems?: DocMenuEntry[];
     }
@@ -325,7 +351,6 @@ declare namespace pxt {
 
     interface TargetBundle extends AppTarget {
         bundledpkgs: Map<Map<string>>;   // @internal use only (cache)
-        bundledcoresvgs?: Map<string>;   // @internal use only (cache)
         bundleddirs: string[];
         versions: TargetVersions;        // @derived
     }
@@ -344,6 +369,7 @@ declare namespace ts.pxtc {
         noTreeShake?: boolean;
         inlineConversions?: boolean;
         noPeepHole?: boolean;
+        time?: boolean;
     }
 
     interface CompileTarget {
@@ -362,6 +388,7 @@ declare namespace ts.pxtc {
         driveName?: string;
         jsRefCounting?: boolean;
         gc?: boolean;
+        utf8?: boolean;
         switches: CompileSwitches;
         deployDrives?: string; // partial name of drives where the .hex file should be copied
         deployFileMarker?: string;
@@ -373,6 +400,7 @@ declare namespace ts.pxtc {
         ramSize?: number;
         patches?: pxt.Map<UpgradePolicy[]>; // semver range -> upgrade policies
         openocdScript?: string;
+        uf2Family?: string;
         onStartText?: boolean;
         stackAlign?: number; // 1 word (default), or 2
         hidSelectors?: HidSelector[];
@@ -380,6 +408,7 @@ declare namespace ts.pxtc {
         vmOpCodes?: pxt.Map<number>;
         vtableShift?: number; // defaults to 2, i.e., (1<<2) == 4 byte alignment of vtables, and thus 256k max program size; increase for chips with more flash!
         postProcessSymbols?: boolean;
+        imageRefTag?: number;
     }
 
     interface CompileOptions {
@@ -401,6 +430,8 @@ declare namespace ts.pxtc {
         warnDiv?: boolean; // warn when emitting division operator
 
         alwaysDecompileOnStart?: boolean; // decompiler only
+        useNewFunctions?: boolean; // decompiler only; whether to decompile functions using the new functions implementation (functions with parameters)
+        allowedArgumentTypes?: string[]; // decompiler-only; the types allowed for user-defined function arguments in blocks (unlisted types will cause grey blocks)
 
         embedMeta?: string;
         embedBlob?: string; // base64

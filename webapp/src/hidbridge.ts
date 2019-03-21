@@ -58,7 +58,7 @@ export function shouldUse() {
     return serial && serial.useHF2 && (pxt.BrowserUtils.isLocalHost() && !!Cloud.localToken || pxt.winrt.isWinRT());
 }
 
-function mkBridgeAsync(): Promise<pxt.HF2.PacketIO> {
+export function mkBridgeAsync(): Promise<pxt.HF2.PacketIO> {
     init()
     let raw = false
     if (pxt.appTarget.serial && pxt.appTarget.serial.rawHID)

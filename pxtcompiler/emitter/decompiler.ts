@@ -32,14 +32,17 @@ namespace ts.pxtc.decompiler {
     const maxCommentHeight = 360;
 
     const validStringRegex = /^[^\f\n\r\t\v\u00a0\u1680\u180e\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]*$/;
+    const arrayTypeRegex = /^(?:Array<(.+)>)|(?:(.+)\[\])$/;
 
     interface DecompilerEnv {
         blocks: BlocksInfo;
-        declaredFunctions: pxt.Map<boolean>;
+        declaredFunctions: pxt.Map<ts.FunctionDeclaration>;
+        functionParamIds: pxt.Map<pxt.Map<string>>; // Maps a function name to a map of paramName => paramId
         declaredEnums: pxt.Map<boolean>;
         attrs: (c: pxtc.CallInfo) => pxtc.CommentAttrs;
         compInfo: (c: pxtc.CallInfo) => pxt.blocks.BlockCompileInfo;
         localReporters: PropertyDesc[][]; // A stack of groups of locally scoped argument declarations, to determine whether an argument should decompile as a reporter or a variable
+        opts: DecompileBlocksOptions;
     }
 
     interface DecompileArgument {
@@ -127,11 +130,17 @@ namespace ts.pxtc.decompiler {
         shadowMutation?: pxt.Map<string>;
     }
 
+    interface MutationChild {
+        attributes: pxt.Map<string>;
+        nodeName: string;
+    }
+
     interface BlockNode extends BlocklyNode {
         type: string;
         inputs?: ValueNode[];
         fields?: FieldNode[]
         mutation?: pxt.Map<string>;
+        mutationChildren?: MutationChild[]; // Mutation child tags
     }
 
     interface ExpressionNode extends BlockNode {
@@ -327,6 +336,8 @@ namespace ts.pxtc.decompiler {
         snippetMode?: boolean; // do not emit "on start"
         alwaysEmitOnStart?: boolean; // emit "on start" even if empty
         errorOnGreyBlocks?: boolean; // fail on grey blocks (usefull when testing docs)
+        useNewFunctions?: boolean; // whether to decompile functions using the new functions implementation (functions with parameters)
+        allowedArgumentTypes?: string[]; // a whitelist of types that can be decompiled for user defined function arguments
 
         /*@internal*/
         includeGreyBlockMessages?: boolean; // adds error attributes to the mutations in typescript_statement blocks (for debug pruposes)
@@ -352,9 +363,11 @@ namespace ts.pxtc.decompiler {
             blocks: blocksInfo,
             declaredFunctions: {},
             declaredEnums: {},
+            functionParamIds: {},
             attrs: attrs,
             compInfo: compInfo,
-            localReporters: []
+            localReporters: [],
+            opts: options || {}
         };
         const fileText = file.getFullText();
         let output = ""
@@ -368,7 +381,7 @@ namespace ts.pxtc.decompiler {
 
         const checkTopNode = (topLevelNode: Node) => {
             if (topLevelNode.kind === SK.FunctionDeclaration && !checkStatement(topLevelNode, env, false, true)) {
-                env.declaredFunctions[getVariableName((topLevelNode as ts.FunctionDeclaration).name)] = true;
+                env.declaredFunctions[getVariableName((topLevelNode as ts.FunctionDeclaration).name)] = topLevelNode as ts.FunctionDeclaration;
             }
             else if (topLevelNode.kind === SK.EnumDeclaration && !checkStatement(topLevelNode, env, false, true)) {
                 const enumName = (topLevelNode as EnumDeclaration).name.text;
@@ -389,6 +402,18 @@ namespace ts.pxtc.decompiler {
         };
 
         ts.forEachChild(file, checkTopNode);
+
+        if (env.opts.useNewFunctions) {
+            // Generate fresh param IDs for all user-declared functions, needed when decompiling
+            // function definition and calls. IDs don't need to be crypto secure.
+            const genId = () => (Math.PI * Math.random()).toString(36).slice(2);
+            Object.keys(env.declaredFunctions).forEach(funcName => {
+                env.functionParamIds[funcName] = {};
+                env.declaredFunctions[funcName].parameters.forEach(p => {
+                    env.functionParamIds[funcName][p.name.getText()] = genId() + genId();
+                });
+            });
+        }
 
         if (enumMembers.length) {
             write("<variables>")
@@ -557,19 +582,31 @@ ${output}</xml>`;
             closeBlockTag();
         }
 
-        function emitMutation(mMap: pxt.Map<string>) {
+        function emitMutation(mMap: pxt.Map<string>, mChildren?: MutationChild[]) {
             write("<mutation ", "");
-            for (const key in mMap) {
+            Object.keys(mMap).forEach(key => {
                 if (mMap[key] !== undefined) {
                     write(`${key}="${mMap[key]}" `, "");
                 }
+            });
+            if (mChildren) {
+                write(">");
+                mChildren.forEach(c => {
+                    write(`<${c.nodeName} `, "");
+                    Object.keys(c.attributes).forEach(attrName => {
+                        write(`${attrName}="${c.attributes[attrName]}" `, "");
+                    });
+                    write("/>");
+                });
+                write("</mutation>");
+            } else {
+                write("/>");
             }
-            write("/>");
         }
 
         function emitBlockNodeCore(n: BlockNode) {
             if (n.mutation) {
-                emitMutation(n.mutation);
+                emitMutation(n.mutation, n.mutationChildren);
             }
 
             if (n.fields) {
@@ -1035,7 +1072,19 @@ ${output}</xml>`;
 
         function getTaggedTemplateExpression(t: ts.TaggedTemplateExpression): ExpressionNode {
             const callInfo: pxtc.CallInfo = (t as any).callInfo;
-            const api = env.blocks.apis.byQName[attrs(callInfo).blockIdentity];
+
+            let api: SymbolInfo;
+            const paramInfo = getParentParameterInfo(t);
+            if (paramInfo && paramInfo.shadowBlockId) {
+                const shadow = env.blocks.blocksById[paramInfo.shadowBlockId];
+                if (shadow && shadow.attributes.shim === "TD_ID") {
+                    api = shadow;
+                }
+            }
+            if (!api) {
+                api = env.blocks.apis.byQName[attrs(callInfo).blockIdentity];
+            }
+
             const comp = pxt.blocks.compileInfo(api);
 
             const r = mkExpr(api.attributes.blockId);
@@ -1046,6 +1095,22 @@ ${output}</xml>`;
             r.fields = [getField(comp.parameters[0].actualName, text)];
 
             return r;
+        }
+
+        function getParentParameterInfo(n: ts.Expression) {
+            if (n.parent && n.parent.kind === SK.CallExpression) {
+                const call = n.parent as CallExpression;
+                const info = (call as any).callInfo;
+                const index = call.arguments.indexOf(n);
+                if (info && index !== -1) {
+                    const blockInfo = blocksInfo.apis.byQName[info.qName];
+                    if (blockInfo) {
+                        const comp = pxt.blocks.compileInfo(blockInfo);
+                        return comp && comp.parameters[index];
+                    }
+                }
+            }
+            return undefined;
         }
 
         function getStatementBlock(n: ts.Node, next?: ts.Node[], parent?: ts.Node, asExpression = false, topLevel = false): StatementNode {
@@ -1378,12 +1443,10 @@ ${output}</xml>`;
 
         function getForOfStatement(n: ts.ForOfStatement): StatementNode {
             const initializer = n.initializer as ts.VariableDeclarationList;
-            const indexVar = (initializer.declarations[0].name as ts.Identifier).text;
             const renamed = getVariableName(initializer.declarations[0].name as ts.Identifier);
 
-            const r = mkStmt("controls_for_of");
-            r.inputs = [getValue("LIST", n.expression)];
-            r.fields = [getField("VAR", renamed)];
+            const r = mkStmt("pxt_controls_for_of");
+            r.inputs = [getValue("LIST", n.expression), getDraggableVariableBlock("VAR", renamed)];
             r.handlers = [{ name: "DO", statement: getStatementBlock(n.statement) }];
 
             return r
@@ -1467,9 +1530,44 @@ ${output}</xml>`;
 
         function getFunctionDeclaration(n: ts.FunctionDeclaration): StatementNode {
             const name = getVariableName(n.name);
+            if (env.opts.useNewFunctions) {
+                env.localReporters.push(n.parameters.map(p => {
+                    return {
+                        name: p.name.getText(),
+                        type: p.type.getText()
+                    } as PropertyDesc;
+                }));
+            }
             const statements = getStatementBlock(n.body);
-            const r = mkStmt("procedures_defnoreturn");
-            r.fields = [getField("NAME", name)];
+            if (env.opts.useNewFunctions) {
+                env.localReporters.pop();
+            }
+            let r: StatementNode;
+
+            if (env.opts.useNewFunctions) {
+                r = mkStmt("function_definition");
+                r.mutation = {
+                    name
+                };
+                if (n.parameters) {
+                    r.mutationChildren = [];
+                    n.parameters.forEach(p => {
+                        const paramName = p.name.getText();
+                        r.mutationChildren.push({
+                            nodeName: "arg",
+                            attributes: {
+                                name: paramName,
+                                type: p.type.getText(),
+                                id: env.functionParamIds[name][paramName]
+                            }
+                        });
+                    });
+                }
+            } else {
+                r = mkStmt("procedures_defnoreturn");
+                r.fields = [getField("NAME", name)];
+            }
+
             r.handlers = [{ name: "STACK", statement: statements }];
             return r;
         }
@@ -1534,8 +1632,32 @@ ${output}</xml>`;
                 if (!builtin) {
                     const name = getVariableName(node.expression as ts.Identifier);
                     if (env.declaredFunctions[name]) {
-                        const r = mkStmt("procedures_callnoreturn");
-                        r.mutation = { "name": name };
+                        let r: StatementNode;
+                        if (env.opts.useNewFunctions) {
+                            r = mkStmt("function_call");
+                            if (info.args.length) {
+                                r.mutationChildren = [];
+                                r.inputs = [];
+                                env.declaredFunctions[name].parameters.forEach((p, i) => {
+                                    const paramName = p.name.getText();
+                                    const argId = env.functionParamIds[name][paramName];
+                                    r.mutationChildren.push({
+                                        nodeName: "arg",
+                                        attributes: {
+                                            name: paramName,
+                                            type: p.type.getText(),
+                                            id: argId
+                                        }
+                                    });
+                                    const argBlock = getOutputBlock(info.args[i]);
+                                    const value = mkValue(argId, argBlock);
+                                    r.inputs.push(value);
+                                });
+                            }
+                        } else {
+                            r = mkStmt("procedures_callnoreturn");
+                        }
+                        r.mutation = { name };
                         return r;
                     }
                     else {
@@ -1556,7 +1678,6 @@ ${output}</xml>`;
                 //     return;
                 // }
             }
-
 
             const args = paramList(info, env.blocks);
             const api = env.blocks.apis.byQName[info.qName];
@@ -2259,11 +2380,14 @@ ${output}</xml>`;
             if (!attributes.blockId || !attributes.block) {
                 const builtin = pxt.blocks.builtinFunctionInfo[info.qName];
                 if (!builtin) {
-                    if (n.arguments.length === 0 && n.expression.kind === SK.Identifier) {
-                        if (!env.declaredFunctions[(n.expression as ts.Identifier).text]) {
+                    const argsOk = n.arguments.length === 0 || env.opts.useNewFunctions;
+                    if (argsOk && n.expression.kind === SK.Identifier) {
+                        const funcName = (n.expression as ts.Identifier).text;
+                        if (!env.declaredFunctions[funcName]) {
                             return Util.lf("Call statements must have a valid declared function");
-                        }
-                        else {
+                        } else if (env.declaredFunctions[funcName].parameters.length !== info.args.length) {
+                            return Util.lf("Function calls in blocks must have the same number of arguments as the function definition");
+                        } else {
                             return undefined;
                         }
                     }
@@ -2523,7 +2647,26 @@ ${output}</xml>`;
             }
 
             if (n.parameters.length > 0) {
-                return Util.lf("Functions with parameters not supported in blocks");
+                if (!env.opts.useNewFunctions) {
+                    return Util.lf("Functions with parameters not supported in blocks");
+                }
+
+                if (env.opts.allowedArgumentTypes) {
+                    for (const param of n.parameters) {
+                        if (param.initializer || param.questionToken) {
+                            return Util.lf("Function parameters cannot be optional");
+                        }
+
+                        const type = param.type ? param.type.getText() : undefined;
+                        if (!type) {
+                            return Util.lf("Function parameters must declare a type");
+                        }
+
+                        if (env.opts.allowedArgumentTypes.indexOf(normalizeType(type)) === -1) {
+                            return Util.lf("Only types that can be added in blocks can be used for function arguments");
+                        }
+                    }
+                }
             }
 
             let fail = false;
@@ -2684,7 +2827,7 @@ ${output}</xml>`;
             case SK.PropertyAccessExpression:
                 return checkPropertyAccessExpression(n as ts.PropertyAccessExpression, env);
             case SK.CallExpression:
-                return checkStatement(n, env, true);
+                return checkStatement(n, env, true, undefined);
             case SK.TaggedTemplateExpression:
                 return checkTaggedTemplateExpression(n as ts.TaggedTemplateExpression, env);
 
@@ -2990,5 +3133,13 @@ ${output}</xml>`;
 
     function isRoundingFunction(op: string) {
         return pxt.blocks.ROUNDING_FUNCTIONS.indexOf(op) !== -1;
+    }
+
+    function normalizeType(type: string) {
+        const match = arrayTypeRegex.exec(type);
+        if (match) {
+            return `${match[1] || match[2]}[]`
+        }
+        return type;
     }
 }

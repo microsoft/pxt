@@ -4,6 +4,7 @@
 /// <reference path="../built/pxteditor.d.ts" />
 /// <reference path="../built/pxtcompiler.d.ts" />
 /// <reference path="../built/pxtblocks.d.ts" />
+/// <reference path="../built/pxteditor.d.ts" />
 /// <reference path="../built/pxtsim.d.ts" />
 
 namespace pxt.runner {
@@ -69,6 +70,27 @@ namespace pxt.runner {
             return Promise.resolve(null as string)
         }
 
+        patchDependencies(cfg: pxt.PackageConfig, name: string, repoId: string): boolean {
+            if (!repoId) return false;
+            // check that the same package hasn't been added yet
+            const repo = pxt.github.parseRepoId(repoId);
+            if (!repo) return false;
+
+            for (const k of Object.keys(cfg.dependencies)) {
+                const v = cfg.dependencies[k];
+                const kv = pxt.github.parseRepoId(v);
+                if (kv && repo.fullName == kv.fullName) {
+                    if (pxt.semver.strcmp(repo.tag, kv.tag) < 0) {
+                        // we have a later tag, use this one
+                        cfg.dependencies[k] = repoId;
+                    }
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private githubPackageCache: pxt.Map<Map<string>> = {};
         downloadPackageAsync(pkg: pxt.Package) {
             let proto = pkg.verProtocol()
@@ -92,17 +114,24 @@ namespace pxt.runner {
                     } else if (proto == "docs") {
                         let files = emptyPrjFiles();
                         let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+                        // load all dependencies
                         pkg.verArgument().split(',').forEach(d => {
                             let m = /^([a-zA-Z0-9_-]+)(=(.+))?$/.exec(d);
-                            if (m)
+                            if (m) {
+                                if (m[3] && this.patchDependencies(cfg, m[1], m[3]))
+                                    return;
                                 cfg.dependencies[m[1]] = m[3] || "*"
-                            else
+                            } else
                                 console.warn(`unknown package syntax ${d}`)
                         });
+
                         if (!cfg.yotta) cfg.yotta = {};
                         cfg.yotta.ignoreConflicts = true;
                         files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4);
                         epkg.setFiles(files);
+                        return Promise.resolve();
+                    } else if (proto == "invalid") {
+                        pxt.log(`skipping invalid pkg ${pkg.id}`);
                         return Promise.resolve();
                     } else {
                         return Promise.reject(`Cannot download ${pkg.version()}; unknown protocol`)
@@ -369,24 +398,6 @@ namespace pxt.runner {
         }
     }
 
-    function initEditorExtensionsAsync(): Promise<void> {
-        let promise = Promise.resolve();
-        if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendFieldEditors) {
-            const opts: pxt.editor.FieldExtensionOptions = {};
-            promise = promise
-                .then(() => pxt.BrowserUtils.loadBlocklyAsync())
-                .then(() => pxt.BrowserUtils.loadScriptAsync("fieldeditors.js"))
-                .then(() => pxt.editor.initFieldExtensionsAsync(opts))
-                .then(res => {
-                    if (res.fieldEditors)
-                        res.fieldEditors.forEach(fi => {
-                            pxt.blocks.registerFieldEditor(fi.selector, fi.editor, fi.validator);
-                        })
-                })
-        }
-        return promise;
-    }
-
     export function startRenderServer() {
         pxt.tickEvent("renderer.ready");
 
@@ -422,7 +433,7 @@ namespace pxt.runner {
                 })
         }
 
-        initEditorExtensionsAsync()
+        pxt.editor.initEditorExtensionsAsync()
             .done(() => {
                 // notify parent that render engine is loaded
                 window.addEventListener("message", function (ev) {
@@ -540,7 +551,7 @@ namespace pxt.runner {
                 p.then(() => render(m[1], decodeURIComponent(m[2])));
             }
         }
-        let promise = initEditorExtensionsAsync();
+        let promise = pxt.editor.initEditorExtensionsAsync();
         promise.done(() => {
             window.addEventListener("message", receiveDocMessage, false);
             window.addEventListener("hashchange", () => {
@@ -794,11 +805,14 @@ ${linkString}
 
     export interface DecompileResult {
         package: pxt.MainPackage;
+        compileProgram?: ts.Program;
         compileJS?: pxtc.CompileResult;
         compileBlocks?: pxtc.CompileResult;
         apiInfo?: pxtc.ApisInfo;
         blocksSvg?: Element;
     }
+
+    let programCache: ts.Program;
 
     export function decompileToBlocksAsync(code: string, options?: blocks.BlocksRenderOptions): Promise<DecompileResult> {
         // code may be undefined or empty!!!
@@ -812,31 +826,44 @@ ${linkString}
                 if (code)
                     opts.fileSystem["main.ts"] = code;
                 opts.ast = true
-                let resp = pxtc.compile(opts)
-                if (resp.diagnostics && resp.diagnostics.length > 0)
-                    resp.diagnostics.forEach(diag => console.error(diag.messageText));
-                if (!resp.success)
-                    return Promise.resolve<DecompileResult>({ package: mainPkg, compileJS: resp });
+
+                let compileJS: pxtc.CompileResult = undefined;
+                let program: ts.Program;
+                if (options && options.forceCompilation) {
+                    compileJS = pxtc.compile(opts);
+                    program = compileJS && compileJS.ast;
+                } else {
+                    program = pxtc.getTSProgram(opts, programCache);
+                }
+                programCache = program;
 
                 // decompile to blocks
-                let apis = pxtc.getApiInfo(opts, resp.ast);
+                let apis = pxtc.getApiInfo(opts, program);
                 return ts.pxtc.localizeApisAsync(apis, mainPkg)
                     .then(() => {
                         let blocksInfo = pxtc.getBlocksInfo(apis);
                         pxt.blocks.initializeAndInject(blocksInfo);
+                        const useNewFunctions = appTarget.runtime && appTarget.runtime.functionsOptions && appTarget.runtime.functionsOptions.useNewFunctions;
                         let bresp = pxtc.decompiler.decompileToBlocks(
                             blocksInfo,
-                            resp.ast.getSourceFile("main.ts"),
-                            { snippetMode: options && options.snippetMode })
+                            program.getSourceFile("main.ts"),
+                            { snippetMode: options && options.snippetMode, useNewFunctions });
                         if (bresp.diagnostics && bresp.diagnostics.length > 0)
                             bresp.diagnostics.forEach(diag => console.error(diag.messageText));
                         if (!bresp.success)
-                            return <DecompileResult>{ package: mainPkg, compileJS: resp, compileBlocks: bresp, apiInfo: apis };
+                            return <DecompileResult>{
+                                package: mainPkg,
+                                compileProgram: program,
+                                compileJS,
+                                compileBlocks: bresp,
+                                apiInfo: apis
+                            };
                         pxt.debug(bresp.outfiles["main.blocks"])
                         const blocksSvg = pxt.blocks.render(bresp.outfiles["main.blocks"], options);
                         return <DecompileResult>{
                             package: mainPkg,
-                            compileJS: resp,
+                            compileProgram: program,
+                            compileJS,
                             compileBlocks: bresp,
                             apiInfo: apis,
                             blocksSvg
