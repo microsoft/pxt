@@ -5,34 +5,6 @@
 
 namespace pxt {
 
-    export class EditorPackage {
-        files: Map<string> = {};
-        id: string;
-
-        constructor(private ksPkg: pxt.Package, public topPkg: EditorPackage) {
-        }
-
-        getKsPkg() {
-            return this.ksPkg;
-        }
-
-        getPkgId() {
-            return this.ksPkg ? this.ksPkg.id : this.id;
-        }
-
-        isTopLevel() {
-            return this.ksPkg && this.ksPkg.level == 0;
-        }
-
-        setFiles(files: Map<string>) {
-            this.files = files;
-        }
-
-        getAllFiles() {
-            return Util.mapMap(this.files, (k, f) => f)
-        }
-    }
-
     export class Package {
         static getConfigAsync(pkgTargetVersion: string, id: string, fullVers: string): Promise<pxt.PackageConfig> {
             return Promise.resolve().then(() => {
@@ -64,7 +36,6 @@ namespace pxt {
         private resolvedVersion: string;
         public ignoreTests = false;
         public cppOnly = false;
-        public _editorPkg: EditorPackage;
 
         constructor(public id: string, public _verspec: string, public parent: MainPackage, addedBy: Package) {
             if (addedBy) {
@@ -185,7 +156,7 @@ namespace pxt {
             return Promise.resolve(v)
         }
 
-        private downloadAsync(deps?: string[]) {
+        private downloadAsync() {
             return this.resolveVersionAsync()
                 .then(verNo => {
                     if (this.invalid()) {
@@ -197,23 +168,6 @@ namespace pxt {
                         return undefined;
                     pxt.debug('downloading ' + verNo)
                     return this.host().downloadPackageAsync(this)
-                        .then(() => {
-                            if (deps) {
-                                let files = (this as any)._editorPkg.files;
-                                let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
-                                deps.forEach((dep: string) => {
-                                    if (dep.indexOf("=") > 0) {
-                                        let ids = /(\S+)=(\S+:\S+)/.exec(dep);
-                                        let id = ids[1];
-                                        let ver = ids[2];
-                                        cfg.dependencies[id] = ver;
-                                    } else {
-                                        cfg.dependencies[dep] = "*";
-                                    }
-                                });
-                                files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4);
-                            }
-                        })
                         .then(() => {
                             const confStr = this.readFile(pxt.CONFIG_NAME)
                             if (!confStr)
@@ -468,7 +422,7 @@ namespace pxt {
             return dependencies;
         }
 
-        loadAsync(isInstall = false, targetVersion?: string, deps?: string[]): Promise<void> {
+        loadAsync(isInstall = false, targetVersion?: string): Promise<void> {
             if (this.isLoaded) return Promise.resolve();
 
             let initPromise = Promise.resolve()
@@ -486,7 +440,7 @@ namespace pxt {
             }
 
             if (isInstall) {
-                initPromise = initPromise.then(() => this.downloadAsync(deps))
+                initPromise = initPromise.then(() => this.downloadAsync())
             }
 
             if (appTarget.simulator && appTarget.simulator.dynamicBoardDefinition) {
@@ -692,8 +646,8 @@ namespace pxt {
             this.deps[this.id] = this;
         }
 
-        installAllAsync(targetVersion?: string, deps?: string[]) {
-            return this.loadAsync(true, targetVersion, deps);
+        installAllAsync(targetVersion?: string) {
+            return this.loadAsync(true, targetVersion);
         }
 
         sortedDeps(includeCpp = false) {

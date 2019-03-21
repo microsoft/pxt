@@ -17,6 +17,33 @@ namespace pxt.runner {
         deps?: string[]
     }
 
+    class EditorPackage {
+        files: Map<string> = {};
+        id: string;
+
+        constructor(private ksPkg: pxt.Package, public topPkg: EditorPackage) {
+        }
+
+        getKsPkg() {
+            return this.ksPkg;
+        }
+
+        getPkgId() {
+            return this.ksPkg ? this.ksPkg.id : this.id;
+        }
+
+        isTopLevel() {
+            return this.ksPkg && this.ksPkg.level == 0;
+        }
+
+        setFiles(files: Map<string>) {
+            this.files = files;
+        }
+
+        getAllFiles() {
+            return Util.mapMap(this.files, (k, f) => f)
+        }
+    }
     class Host
         implements pxt.Host {
 
@@ -65,7 +92,7 @@ namespace pxt.runner {
         }
 
         private githubPackageCache: pxt.Map<Map<string>> = {};
-        downloadPackageAsync(pkg: pxt.Package) {
+        downloadPackageAsync(pkg: pxt.Package, deps?: string[]) {
             let proto = pkg.verProtocol()
             let cached: pxt.Map<string> = undefined;
             // cache resolve github packages
@@ -81,7 +108,24 @@ namespace pxt.runner {
                         return Promise.resolve()
                     }
                     if (proto == "empty") {
-                        epkg.setFiles(emptyPrjFiles())
+                        if (Object.keys(epkg.files).length == 0) {
+                            epkg.setFiles(emptyPrjFiles())
+                        }
+                        if (deps) {
+                            let files = getEditorPkg(pkg).files;
+                                let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+                                deps.forEach((dep: string) => {
+                                    if (dep.indexOf("=") > 0) {
+                                        let ids = /(\S+)=(\S+:\S+)/.exec(dep);
+                                        let id = ids[1];
+                                        let ver = ids[2];
+                                        cfg.dependencies[id] = ver;
+                                    } else {
+                                        cfg.dependencies[dep] = "*";
+                                    }
+                                });
+                                files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4);
+                        }
                         return Promise.resolve()
                     } else if (proto == "docs") {
                         let files = emptyPrjFiles();
@@ -114,15 +158,15 @@ namespace pxt.runner {
     export let mainPkg: pxt.MainPackage;
 
     function getEditorPkg(p: pxt.Package) {
-        let r: pxt.EditorPackage = p._editorPkg
+        let r: EditorPackage = (p as any)._editorPkg;
         if (r) return r
-        let top: pxt.EditorPackage = null
+        let top: EditorPackage = null
         if (p != mainPkg)
             top = getEditorPkg(mainPkg)
-        let newOne = new pxt.EditorPackage(p, top)
+        let newOne = new EditorPackage(p, top)
         if (p == mainPkg)
             newOne.topPkg = newOne;
-        p._editorPkg = newOne
+        (p as any)._editorPkg = newOne
         return newOne
     }
 
@@ -201,8 +245,8 @@ namespace pxt.runner {
             host = mainPkg.host();
             mainPkg = new pxt.MainPackage(host)
             mainPkg._verspec = id ? /\w+:\w+/.test(id) ? id : "pub:" + id : "empty:tsprj"
-            downloadPackagePromise = host.downloadPackageAsync(mainPkg);
-            installPromise = mainPkg.installAllAsync("", deps);
+            downloadPackagePromise = host.downloadPackageAsync(mainPkg, deps);
+            installPromise = mainPkg.installAllAsync();
             // cache previous package
             previousMainPackage = mainPkg;
         }
