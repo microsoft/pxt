@@ -215,7 +215,7 @@ declare interface String {
      */
     //% shim=String_::charAt weight=48
     //% help=text/char-at
-    //% blockId="string_charat" block="char from %this=text|at %index" blockNamespace="text"
+    //% blockId="string_get" block="char from %this=text|at %index" blockNamespace="text"
     charAt(index: number): string;
 
     /** Returns the length of a String object. */

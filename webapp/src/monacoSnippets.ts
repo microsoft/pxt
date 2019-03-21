@@ -484,7 +484,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                     snippetName: "charAt",
                     snippet: `"".charAt(0)`,
                     attributes: {
-                        blockId: 'string_charat',
+                        blockId: 'string_get',
                         jsDoc: lf("Returns the character at the given index")
                     },
                     retType: "string"
