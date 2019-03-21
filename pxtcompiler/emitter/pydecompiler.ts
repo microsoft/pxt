@@ -377,9 +377,9 @@ namespace ts.pxtc.decompiler {
     }
 
     ///
-    /// EXPRESIONS
+    /// EXPRESSIONS
     ///
-    type ExpRes = [/*expresion:*/string, /*supportingStatements:*/string[]]
+    type ExpRes = [/*expression:*/string, /*supportingStatements:*/string[]]
     function asExpRes(str: string): ExpRes {
         return [str, []]
     }
@@ -479,6 +479,10 @@ namespace ts.pxtc.decompiler {
         let exp = `${left}[${arg}]`
         return [exp, sup]
     }
+    function emitParenthesisExp(s: ts.ParenthesizedExpression): ExpRes {
+        let [inner, innerSup] = emitExp(s.expression)
+        return [`(${inner})`, innerSup]
+    }
     function emitExp(s: ts.Expression): ExpRes {
         switch (s.kind) {
             case ts.SyntaxKind.BinaryExpression:
@@ -492,9 +496,7 @@ namespace ts.pxtc.decompiler {
             case ts.SyntaxKind.PrefixUnaryExpression:
                 return emitPreUnaryExp(s as ts.PrefixUnaryExpression);
             case ts.SyntaxKind.ParenthesizedExpression:
-                let innerExp = (s as ts.ParenthesizedExpression).expression
-                let [inner, innerSup] = emitExp(innerExp)
-                return [`(${inner})`, innerSup]
+                return emitParenthesisExp(s as ts.ParenthesizedExpression)
             case ts.SyntaxKind.ArrayLiteralExpression:
                 return emitArrayLitExp(s as ts.ArrayLiteralExpression)
             case ts.SyntaxKind.ElementAccessExpression:
