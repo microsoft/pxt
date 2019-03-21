@@ -17,34 +17,6 @@ namespace pxt.runner {
         deps?: string[]
     }
 
-    class EditorPackage {
-        files: Map<string> = {};
-        id: string;
-
-        constructor(private ksPkg: pxt.Package, public topPkg: EditorPackage) {
-        }
-
-        getKsPkg() {
-            return this.ksPkg;
-        }
-
-        getPkgId() {
-            return this.ksPkg ? this.ksPkg.id : this.id;
-        }
-
-        isTopLevel() {
-            return this.ksPkg && this.ksPkg.level == 0;
-        }
-
-        setFiles(files: Map<string>) {
-            this.files = files;
-        }
-
-        getAllFiles() {
-            return Util.mapMap(this.files, (k, f) => f)
-        }
-    }
-
     class Host
         implements pxt.Host {
 
@@ -142,15 +114,15 @@ namespace pxt.runner {
     export let mainPkg: pxt.MainPackage;
 
     function getEditorPkg(p: pxt.Package) {
-        let r: EditorPackage = (p as any)._editorPkg
+        let r: pxt.EditorPackage = p._editorPkg
         if (r) return r
-        let top: EditorPackage = null
+        let top: pxt.EditorPackage = null
         if (p != mainPkg)
             top = getEditorPkg(mainPkg)
-        let newOne = new EditorPackage(p, top)
+        let newOne = new pxt.EditorPackage(p, top)
         if (p == mainPkg)
             newOne.topPkg = newOne;
-        (p as any)._editorPkg = newOne
+        p._editorPkg = newOne
         return newOne
     }
 

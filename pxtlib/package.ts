@@ -4,6 +4,35 @@
 /// <reference path="util.ts"/>
 
 namespace pxt {
+
+    export class EditorPackage {
+        files: Map<string> = {};
+        id: string;
+
+        constructor(private ksPkg: pxt.Package, public topPkg: EditorPackage) {
+        }
+
+        getKsPkg() {
+            return this.ksPkg;
+        }
+
+        getPkgId() {
+            return this.ksPkg ? this.ksPkg.id : this.id;
+        }
+
+        isTopLevel() {
+            return this.ksPkg && this.ksPkg.level == 0;
+        }
+
+        setFiles(files: Map<string>) {
+            this.files = files;
+        }
+
+        getAllFiles() {
+            return Util.mapMap(this.files, (k, f) => f)
+        }
+    }
+
     export class Package {
         static getConfigAsync(pkgTargetVersion: string, id: string, fullVers: string): Promise<pxt.PackageConfig> {
             return Promise.resolve().then(() => {
@@ -35,6 +64,7 @@ namespace pxt {
         private resolvedVersion: string;
         public ignoreTests = false;
         public cppOnly = false;
+        public _editorPkg: EditorPackage;
 
         constructor(public id: string, public _verspec: string, public parent: MainPackage, addedBy: Package) {
             if (addedBy) {
