@@ -2215,7 +2215,7 @@ namespace pxt.blocks {
         const customNames: pxsim.Map<string> = {};
 
         const functionOptions = pxt.appTarget.runtime && pxt.appTarget.runtime.functionsOptions;
-        if (functionOptions.extraFunctionEditorTypes) {
+        if (functionOptions && functionOptions.extraFunctionEditorTypes) {
             functionOptions.extraFunctionEditorTypes.forEach(t => {
                 iconsMap[t.typeName] = t.icon || pxt.blocks.defaultIconForArgType();
 
