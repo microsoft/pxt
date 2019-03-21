@@ -1,8 +1,6 @@
+someVar = 0 & 9
 
-let someVar = 0 & 9;
-
-for (;;) {
-    let someVar = 38;
-    someVar ++;
-    someVar = 7 ^ 6;
-}
+while True:
+  someVar2 = 38
+  someVar2 += 1
+  someVar2 = 7 ^ 6

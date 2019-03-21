@@ -1,10 +1,5 @@
-/// <reference path="./testBlocks/mb.ts" />
-
-class Foo {
-    x: number;
-    constructor() {
-        this.x = 0
-    }
-}
-let y = new Foo()
+class Foo:
+  def __init__(self):
+    self.x = 0
+y = Foo()
 basic.showNumber(y.x)

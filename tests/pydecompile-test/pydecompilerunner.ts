@@ -66,7 +66,12 @@ describe("pydecompiler", () => {
     // TODO(dz): starting with a smaller set
     // console.log(JSON.stringify(filenames))
     // let whitelist = ["string_length", "game"]
-    let blacklist = ["shadowing"]
+    let blacklist = [
+        // due to shadowing not being supported
+        "shadowing",
+        "always_decompile_renames",
+        "always_decompile_renames_expressions",
+    ]
     filenames = filenames
         .filter(f => !blacklist.some(s => f.indexOf(s) > 0))
     //     .filter(f => whitelist.some(s => f.indexOf(s) > 0))

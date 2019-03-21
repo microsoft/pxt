@@ -130,7 +130,7 @@ namespace ts.pxtc.decompiler {
         }
 
         // must be (let i = X; ...)
-        if (s.initializer.kind !== ts.SyntaxKind.VariableDeclarationList)
+        if (!s.initializer || s.initializer.kind !== ts.SyntaxKind.VariableDeclarationList)
             return null;
 
         let initDecls = s.initializer as ts.VariableDeclarationList
@@ -165,7 +165,7 @@ namespace ts.pxtc.decompiler {
         let toNum = s.condition.right.text
         if (!isNormalInteger(toNum))
             return null;
-        if (s.condition.operatorToken.kind !== SyntaxKind.LessThanToken)
+        if (!s.condition || s.condition.operatorToken.kind !== SyntaxKind.LessThanToken)
             return null;
 
         result.toExcl = Number(toNum);
@@ -204,28 +204,36 @@ namespace ts.pxtc.decompiler {
         }
 
         // general case:
-        // for (<decls>; <cond>; <updates>)
+        // for (<inits>; <cond>; <updates>)
         // ->
-        // <decls>
+        // <inits>
         // while <cond>:
         //   # body
         //   <updates>
         let out: string[] = []
 
         // initializer(s)
-        if (ts.isVariableDeclarationList(s.initializer)) {
-            let decls = s.initializer.declarations
-                .map(emitVarDecl)
-                .reduce((p, c) => p.concat(c), [])
-            out = out.concat(decls)
-        } else {
-            let [exp, expSup] = emitExp(s.initializer)
-            out = out.concat(expSup).concat([exp])
+        if (s.initializer) {
+            if (ts.isVariableDeclarationList(s.initializer)) {
+                let decls = s.initializer.declarations
+                    .map(emitVarDecl)
+                    .reduce((p, c) => p.concat(c), [])
+                out = out.concat(decls)
+            } else {
+                let [exp, expSup] = emitExp(s.initializer)
+                out = out.concat(expSup).concat([exp])
+            }
         }
 
         // condition(s)
-        let [cond, condSup] = emitExp(s.condition)
-        out = out.concat(condSup)
+        let cond: string;
+        if (s.condition) {
+            let [condStr, condSup] = emitExp(s.condition)
+            out = out.concat(condSup)
+            cond = condStr
+        } else {
+            cond = "True"
+        }
         let whileStmt = `while ${cond}:`
         out.push(whileStmt)
 
@@ -235,11 +243,12 @@ namespace ts.pxtc.decompiler {
         out = out.concat(body)
 
         // updater(s)
-        let [inc, incSup] = emitExp(s.incrementor)
-        out = out.concat(incSup).concat([inc])
+        if (s.incrementor) {
+            let [inc, incSup] = emitExp(s.incrementor)
+            out = out.concat(incSup).concat([inc])
+        }
 
         return out
-        // throw Error("TODO complicated for loop")
     }
     function emitIf(s: ts.IfStatement): string[] {
         let { supportStmts, ifStmt, rest } = emitIfHelper(s)
@@ -457,6 +466,14 @@ namespace ts.pxtc.decompiler {
                 // TODO handle ++ generally. Seperate prefix and postfix cases.
                 // This is tricky because it needs to return the value and the mutate after.
                 return "+= 1"
+            case ts.SyntaxKind.MinusMinusToken:
+                // TODO handle -- generally. Seperate prefix and postfix cases.
+                // This is tricky because it needs to return the value and the mutate after.
+                return "-= 1"
+            case ts.SyntaxKind.AmpersandToken:
+                return "&"
+            case ts.SyntaxKind.CaretToken:
+                return "^"
             default:
                 return "# TODO unknown op: " + s
         }
@@ -473,7 +490,7 @@ namespace ts.pxtc.decompiler {
         let right = s.name.getText()
         return [`${left}.${right}`, leftSup];
     }
-    function emitCallExp(s: ts.CallExpression): ExpRes {
+    function emitCallExp(s: ts.CallExpression | ts.NewExpression): ExpRes {
         let [fn, fnSup] = emitExp(s.expression)
         let argExps = s.arguments
             .map(emitExp)
@@ -544,6 +561,8 @@ namespace ts.pxtc.decompiler {
                 return emitDotExp(s as ts.PropertyAccessExpression)
             case ts.SyntaxKind.CallExpression:
                 return emitCallExp(s as ts.CallExpression)
+            case ts.SyntaxKind.NewExpression:
+                return emitCallExp(s as ts.NewExpression)
             case ts.SyntaxKind.FunctionExpression:
                 return emitFnExp(s as ts.FunctionExpression)
             case ts.SyntaxKind.PrefixUnaryExpression:
