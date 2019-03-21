@@ -110,7 +110,6 @@ namespace pxt.runner {
                     }
                     if (proto == "empty") {
                         epkg.setFiles(emptyPrjFiles())
-                        loadDependencies(pkg);
                         return Promise.resolve()
                     } else if (proto == "docs") {
                         let files = emptyPrjFiles();
@@ -231,7 +230,7 @@ namespace pxt.runner {
             mainPkg = new pxt.MainPackage(host)
             mainPkg._verspec = id ? /\w+:\w+/.test(id) ? id : "pub:" + id : "empty:tsprj"
             downloadPackagePromise = host.downloadPackageAsync(mainPkg);
-            installPromise = mainPkg.installAllAsync("",deps)
+            installPromise = mainPkg.installAllAsync("", deps);
             // cache previous package
             previousMainPackage = mainPkg;
         }
@@ -261,25 +260,6 @@ namespace pxt.runner {
                     showError(lf("Cannot load extension: {0}", e.message))
                 })
             });
-    }
-
-    function loadDependencies(pkg: pxt.Package) {
-        if (pkg.dependLinks) {
-            console.log("loading dependencices")
-            let epkg = getEditorPkg(pkg)
-            let cfg = JSON.parse(epkg.files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
-            pkg.dependLinks.forEach((dep: string) => {
-                if (dep.indexOf("=") > 0) {
-                    let ids = /(\S+)=(\S+:\S+)/.exec(dep);
-                    let id = ids[1];
-                    let ver = ids[2];
-                    cfg.dependencies[id] = ver;
-                } else {
-                    cfg.dependencies[dep] = "*";
-                }
-            });
-            epkg.files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4);
-        }
     }
 
     function getCompileOptionsAsync(hex?: boolean) {

@@ -35,7 +35,6 @@ namespace pxt {
         private resolvedVersion: string;
         public ignoreTests = false;
         public cppOnly = false;
-        public dependLinks: string[];
 
         constructor(public id: string, public _verspec: string, public parent: MainPackage, addedBy: Package) {
             if (addedBy) {
@@ -156,7 +155,7 @@ namespace pxt {
             return Promise.resolve(v)
         }
 
-        private downloadAsync() {
+        private downloadAsync(deps?: string[]) {
             return this.resolveVersionAsync()
                 .then(verNo => {
                     if (this.invalid()) {
@@ -168,6 +167,23 @@ namespace pxt {
                         return undefined;
                     pxt.debug('downloading ' + verNo)
                     return this.host().downloadPackageAsync(this)
+                        .then(() => {
+                            if (deps) {
+                                let files = (this as any)._editorPkg.files;
+                                let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+                                deps.forEach((dep: string) => {
+                                    if (dep.indexOf("=") > 0) {
+                                        let ids = /(\S+)=(\S+:\S+)/.exec(dep);
+                                        let id = ids[1];
+                                        let ver = ids[2];
+                                        cfg.dependencies[id] = ver;
+                                    } else {
+                                        cfg.dependencies[dep] = "*";
+                                    }
+                                });
+                                files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4);
+                            }
+                        })
                         .then(() => {
                             const confStr = this.readFile(pxt.CONFIG_NAME)
                             if (!confStr)
@@ -422,7 +438,7 @@ namespace pxt {
             return dependencies;
         }
 
-        loadAsync(isInstall = false, targetVersion?: string): Promise<void> {
+        loadAsync(isInstall = false, targetVersion?: string, deps?: string[]): Promise<void> {
             if (this.isLoaded) return Promise.resolve();
 
             let initPromise = Promise.resolve()
@@ -439,8 +455,9 @@ namespace pxt {
                 initPromise = initPromise.then(() => this.parseConfig(str))
             }
 
-            if (isInstall)
-                initPromise = initPromise.then(() => this.downloadAsync())
+            if (isInstall) {
+                initPromise = initPromise.then(() => this.downloadAsync(deps))
+            }
 
             if (appTarget.simulator && appTarget.simulator.dynamicBoardDefinition) {
                 if (this.level == 0)
@@ -505,7 +522,6 @@ namespace pxt {
                     }
                 })
             }
-
             return initPromise
                 .then(() => loadDepsRecursive(null, this))
                 .then(() => {
@@ -647,8 +663,7 @@ namespace pxt {
         }
 
         installAllAsync(targetVersion?: string, deps?: string[]) {
-            this.dependLinks = deps;
-            return this.loadAsync(true, targetVersion);
+            return this.loadAsync(true, targetVersion, deps);
         }
 
         sortedDeps(includeCpp = false) {
