@@ -250,6 +250,7 @@ function renderSnippets() {
                     projectClass: 'lang-project',
                     snippetReplaceParent: true,
                     simulator: true,
+                    showEdit: true,
                     hex: true,
                     hexName: path
                 });

@@ -784,6 +784,7 @@ ${linkString}
             projectClass: 'lang-project',
             snippetReplaceParent: true,
             simulator: true,
+            showEdit: true,
             hex: true,
             tutorial: !!options.tutorial,
             showJavaScript: editorLanguageMode == LanguageMode.TypeScript,
@@ -793,6 +794,7 @@ ${linkString}
             renderOptions.showEdit = false;
             renderOptions.simulator = false;
         }
+
         return pxt.runner.renderAsync(renderOptions).then(() => {
             // patch a elements
             $(content).find('a[href^="/"]').removeAttr('target').each((i, a) => {
