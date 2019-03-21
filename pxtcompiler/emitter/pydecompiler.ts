@@ -326,6 +326,8 @@ namespace ts.pxtc.decompiler {
                 return emitPropDecl(s as ts.PropertyDeclaration)
             case ts.SyntaxKind.MethodDeclaration:
                 return emitFuncDecl(s as ts.MethodDeclaration)
+            case ts.SyntaxKind.Constructor:
+                return emitFuncDecl(s as ts.ConstructorDeclaration)
             default:
                 return ["# unknown ClassElement " + s.kind]
         }
@@ -354,11 +356,12 @@ namespace ts.pxtc.decompiler {
             .filter(s => s)
         return stmts
     }
-    function emitFuncDecl(s: ts.FunctionDeclaration | ts.MethodDeclaration | ts.FunctionExpression, name: string = null): string[] {
+    function emitFuncDecl(s: ts.FunctionDeclaration | ts.MethodDeclaration | ts.FunctionExpression | ts.ConstructorDeclaration, name: string = null): string[] {
         // TODO
         let paramList: string[] = []
 
-        if (s.kind === ts.SyntaxKind.MethodDeclaration) {
+        if (s.kind === ts.SyntaxKind.MethodDeclaration ||
+            s.kind === ts.SyntaxKind.Constructor) {
             paramList.push("self")
         }
 
@@ -369,7 +372,15 @@ namespace ts.pxtc.decompiler {
 
         let out = []
 
-        let fnName = name || s.name.getText()
+        let fnName: string
+
+        if (s.kind === ts.SyntaxKind.Constructor) {
+            fnName = "__init__"
+        }
+        else {
+            fnName = name || s.name.getText()
+        }
+
         out.push(`def ${fnName}(${params}):`)
 
         let stmts = emitBlock(s.body)
@@ -560,7 +571,7 @@ namespace ts.pxtc.decompiler {
                 // TODO handle more expressions
                 // return asExpRes(s.getText())
                 // throw Error("Unknown expression: " + s.kind)
-                return [s.getText(), ["# unknown expression: " + s.kind]]
+                return [s.getText(), ["# unknown expression:  " + s.kind]]
         }
     }
 }
