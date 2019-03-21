@@ -34,12 +34,12 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
 
     startStopSimulator() {
         pxt.tickEvent('simulator.startstop', undefined, { interactiveConsent: true });
-        this.props.parent.startStopSimulator(true);
+        this.props.parent.startStopSimulator({ clickTrigger: true });
     }
 
     restartSimulator() {
         pxt.tickEvent('simulator.restart', undefined, { interactiveConsent: true });
-        this.props.parent.restartSimulator(this.props.parent.state.debugging);
+        this.props.parent.restartSimulator();
     }
 
     toggleTrace() {

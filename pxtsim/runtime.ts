@@ -319,7 +319,7 @@ namespace pxsim {
         private awaiters: ((v?: any) => void)[] = [];
         private lock: boolean;
         private _handlers: RefAction[] = [];
-        private _addRemoveLog: { act: RefAction, log: LogType}[] = [];
+        private _addRemoveLog: { act: RefAction, log: LogType }[] = [];
 
         constructor(public runtime: Runtime, private valueToArgs?: EventValueToActionArgs<T>) { }
 
@@ -384,9 +384,9 @@ namespace pxsim {
                 this._handlers = [a];
                 pxtcore.incr(a)
             } else {
-                this._addRemoveLog.push({act: a, log: LogType.UserSet});
+                this._addRemoveLog.push({ act: a, log: LogType.UserSet });
             }
-    }
+        }
 
         addHandler(a: RefAction) {
             if (!this.lock) {
@@ -397,7 +397,7 @@ namespace pxsim {
                     pxtcore.incr(a)
                 }
             } else {
-                this._addRemoveLog.push({act: a, log: LogType.BackAdd});
+                this._addRemoveLog.push({ act: a, log: LogType.BackAdd });
             }
         }
 
@@ -405,11 +405,11 @@ namespace pxsim {
             if (!this.lock) {
                 let index = this._handlers.indexOf(a)
                 if (index != -1) {
-                    this._handlers.splice(index,1)
+                    this._handlers.splice(index, 1)
                     pxtcore.decr(a)
                 }
             } else {
-                this._addRemoveLog.push({act: a, log: LogType.BackRemove});
+                this._addRemoveLog.push({ act: a, log: LogType.BackRemove });
             }
         }
 
@@ -818,7 +818,7 @@ namespace pxsim {
                         if (dbgHeap) {
                             const v = dbgHeap[vmsg.variablesReference];
                             if (v !== undefined)
-                                vars = dumpHeap(v, dbgHeap);
+                                vars = dumpHeap(v, dbgHeap, vmsg.fields);
                         }
                         Runtime.postMessage(<pxsim.VariablesMessage>{
                             type: "debugger",

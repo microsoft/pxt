@@ -83,7 +83,7 @@ namespace pxsim {
         }
     }
 
-    export function dumpHeap(v: any, heap: Map<any>): Variables {
+    export function dumpHeap(v: any, heap: Map<any>, fields?: string[]): Variables {
         function valToJSON(v: any) {
             switch (typeof v) {
                 case "string":
@@ -124,7 +124,7 @@ namespace pxsim {
                     throw new Error();
             }
         }
-        function frameVars(frame: any) {
+        function frameVars(frame: any, fields?: string[]) {
             const r: Variables = {}
             for (let k of Object.keys(frame)) {
                 // skip members starting with __
@@ -132,21 +132,48 @@ namespace pxsim {
                     r[k.replace(/___\d+$/, '')] = valToJSON(frame[k])
                 }
             }
-            if (frame.fields) {
+            if (frame.fields && fields) {
                 // Fields of an object.
-                for (let k of Object.keys(frame.fields)) {
+                for (let k of fields) {
+                    k = k.substring(k.lastIndexOf(".") + 1);
+                    r[k] = valToJSON(evalGetter(frame.vtable.iface[k], frame));
+                }
+            }
+            if (frame.fields) {
+                for (let k of Object.keys(frame.fields).filter(field => !field.startsWith('_'))) {
                     r[k.replace(/___\d+$/, '')] = valToJSON(frame.fields[k])
                 }
             } else if (Array.isArray(frame.data)) {
                 // This is an Array.
-               (frame.data as any[]).forEach((element, index) => {
+                (frame.data as any[]).forEach((element, index) => {
                     r[index] = valToJSON(element);
                 });
             }
             return r
         }
 
-        return frameVars(v);
+        return frameVars(v, fields);
+    }
+
+    function evalGetter(fn: LabelFn, target: RefObject) {
+        // This function evaluates a getter, and we assume it doesn't have any side effects.
+        let parentFrame: any = {
+        };
+
+        // We create a dummy stack frame
+        let stackFrame: any = {
+            pc: 0,
+            arg0: target,
+            fn,
+            parent: parentFrame
+        };
+
+        // And we evaluate the getter
+        while (stackFrame.fn) {
+            stackFrame = stackFrame.fn(stackFrame as any);
+        }
+
+        return stackFrame.retval;
     }
 
     export function getBreakpointMsg(s: pxsim.StackFrame, brkId: number): { msg: DebuggerBreakpointMessage, heap: Map<any> } {
@@ -365,7 +392,8 @@ namespace pxsim {
                 case SimulatorState.Stopped:
                     this.sendEvent(new protocol.TerminatedEvent())
                     break;
-                case SimulatorState.Unloaded:
+                //case SimulatorState.Unloaded:
+                //case SimulatorState.Pending:
                 default:
             }
         }

@@ -50,7 +50,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     setBreakpointsFromBlocks(): void {
         let breakpoints: number[] = []
         let map = this.breakpointsByBlock;
-        if (map) {
+        if (map && this.editor) {
             this.editor.getAllBlocks().forEach(block => {
                 if (map[block.id] && block.isBreakpointSet()) {
                     breakpoints.push(this.breakpointsByBlock[block.id]);
@@ -582,7 +582,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     updateToolbox(debugging: boolean) {
         let debuggerToolbox = debugging ? <div>
             <debug.DebuggerToolbar parent={this.parent} />
-            <debug.DebuggerVariables ref={this.handleDebuggerVariablesRef} parent={this.parent} />
+            <debug.DebuggerVariables ref={this.handleDebuggerVariablesRef} parent={this.parent} apisByQName={this.blockInfo.apis.byQName} />
         </div> : <div />;
         Util.assert(!!this.debuggerToolboxDiv)
         if (debugging) {
