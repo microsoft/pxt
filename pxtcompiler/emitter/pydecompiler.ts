@@ -31,6 +31,10 @@ namespace ts.pxtc.decompiler {
         return result
     }
 
+    // TODO map names from camel case to snake case
+    // TODO disallow keywords & builtins (e.g. "range", "print")
+    // TODO handle shadowing
+
     ///
     /// SUPPORT
     ///
@@ -91,6 +95,8 @@ namespace ts.pxtc.decompiler {
                 return emitIf(s as ts.IfStatement)
             case ts.SyntaxKind.ForStatement:
                 return emitForStmt(s as ts.ForStatement)
+            case ts.SyntaxKind.WhileStatement:
+                return emitWhileStmt(s as ts.WhileStatement)
             case ts.SyntaxKind.Block:
                 let block = s as ts.Block
                 return block.getChildren()
@@ -100,13 +106,102 @@ namespace ts.pxtc.decompiler {
                 throw Error(`Not implemented: statement kind ${s.kind}`);
         }
     }
+    function emitWhileStmt(s: ts.WhileStatement): string[] {
+        let [cond, condSup] = emitExp(s.expression)
+        let body = emitStmt(s.statement)
+            .map(indent1)
+        let whileStmt = `while ${cond}:`;
+        return condSup.concat([whileStmt]).concat(body)
+    }
+    type RangeItr = {
+        name: string,
+        fromIncl: number,
+        toExcl: number
+    }
+    function isNormalInteger(str: string) {
+        let asInt = Math.floor(Number(str));
+        return asInt !== Infinity && String(asInt) === str
+    }
+    function getSimpleForRange(s: ts.ForStatement): RangeItr | null {
+        let result: RangeItr = {
+            name: null,
+            fromIncl: Infinity,
+            toExcl: Infinity
+        }
+
+        // must be (let i = X; ...)
+        if (s.initializer.kind !== ts.SyntaxKind.VariableDeclarationList)
+            return null;
+
+        let initDecls = s.initializer as ts.VariableDeclarationList
+        if (initDecls.declarations.length !== 1)
+            return null
+
+        let decl = initDecls.declarations[0]
+        result.name = decl.name.getText()
+
+        if (!ts.isNumericLiteral(decl.initializer)) {
+            // TODO allow variables?
+            return null;
+        }
+
+        let fromNum = decl.initializer.text
+        if (!isNormalInteger(fromNum)) {
+            // TODO allow floats?
+            return null;
+        }
+
+        result.fromIncl = Number(fromNum)
+
+        // must be (...; i < Y; ...)
+        if (!ts.isBinaryExpression(s.condition))
+            return null
+        if (!ts.isIdentifier(s.condition.left))
+            return null
+        if (s.condition.left.text != result.name)
+            return null
+        if (!ts.isNumericLiteral(s.condition.right))
+            return null;
+        let toNum = s.condition.right.text
+        if (!isNormalInteger(toNum))
+            return null;
+        if (s.condition.operatorToken.kind !== SyntaxKind.LessThanToken)
+            return null;
+
+        result.toExcl = Number(toNum);
+
+        // must be (...; i++)
+        // TODO allow += 1
+        if (!ts.isPostfixUnaryExpression(s.incrementor))
+            return null
+        if (s.incrementor.operator !== SyntaxKind.PlusPlusToken)
+            return null
+
+        // must be X < Y
+        if (!(result.fromIncl < result.toExcl))
+            return null;
+
+        return result
+    }
     function emitForStmt(s: ts.ForStatement): string[] {
-        // special case:
-        // for (let x = y; x < z; x++)
-        // ->
-        // for x in range(y, z):
-        // TODO:
-        // - ensure x and z can't be mutated in the loop body
+        let body = emitStmt(s.statement)
+            .map(indent1)
+
+        let rangeItr = getSimpleForRange(s)
+        if (rangeItr) {
+            // special case ("repeat z times" block):
+            // for (let x = y; x < z; x++)
+            // ->
+            // for x in range(y, z):
+            // TODO ensure x and z can't be mutated in the loop body
+            let { name, fromIncl, toExcl } = rangeItr;
+
+            let forStmt = fromIncl === 0
+                ? `for ${name} in range(${toExcl}):`
+                : `for ${name} in range(${fromIncl}, ${toExcl}):`;
+
+            return [forStmt].concat(body)
+        }
 
         // general case:
         // for (<decls>; <cond>; <updates>)
@@ -116,7 +211,8 @@ namespace ts.pxtc.decompiler {
         //   # body
         //   <updates>
 
-        return ["four!"]
+        return ["# TODO complicated for loop"]
+        // throw Error("TODO complicated for loop")
     }
     function emitIf(s: ts.IfStatement): string[] {
         let [cond, condSup] = emitExp(s.expression)
@@ -144,7 +240,6 @@ namespace ts.pxtc.decompiler {
             .map(emitVarDecl)
             .reduce((p, c) => p.concat(c), [])
     }
-    // TODO map names from camel case to snake case
     function emitClassStmt(s: ts.ClassDeclaration): string[] {
         let out: string[] = []
 
@@ -187,7 +282,7 @@ namespace ts.pxtc.decompiler {
             case ts.SyntaxKind.MethodDeclaration:
                 return emitFuncDecl(s as ts.MethodDeclaration)
             default:
-                return ["UNKNOWN ClassElement " + s.kind]
+                return ["# unknown ClassElement " + s.kind]
         }
     }
     function emitPropDecl(s: ts.PropertyDeclaration): string[] {
@@ -266,9 +361,17 @@ namespace ts.pxtc.decompiler {
     function asExpRes(str: string): ExpRes {
         return [str, []]
     }
+    function emitOp(s: ts.BinaryOperator): string {
+        switch (s) {
+            case ts.SyntaxKind.BarBarToken:
+                return "or"
+            default:
+                return "# TODO unknown op: " + s
+        }
+    }
     function emitBinExp(s: ts.BinaryExpression): ExpRes {
         let [left, leftSup] = emitExp(s.left)
-        let op = s.operatorToken.getText() // TODO translate operators
+        let op = emitOp(s.operatorToken.kind)
         let [right, rightSup] = emitExp(s.right)
         let sup = leftSup.concat(rightSup)
         return [`${left} ${op} ${right}`, sup];
@@ -304,6 +407,21 @@ namespace ts.pxtc.decompiler {
 
         return [fnName, fnDef]
     }
+    function emitUnaryOp(s: ts.PrefixUnaryOperator | ts.PostfixUnaryOperator): string {
+        switch (s) {
+            case ts.SyntaxKind.ExclamationToken:
+                return "not"
+            default:
+                return "# TODO unknown unary operator: " + s
+        }
+    }
+    function emitPreUnaryExp(s: ts.PrefixUnaryExpression): ExpRes {
+        let op = emitUnaryOp(s.operator);
+        let [exp, expSup] = emitExp(s.operand)
+        // TODO handle order-of-operations ? parenthesis?
+        let res = `${op} ${exp}`
+        return [res, expSup]
+    }
     function emitExp(s: ts.Expression): ExpRes {
         switch (s.kind) {
             case ts.SyntaxKind.BinaryExpression:
@@ -314,6 +432,12 @@ namespace ts.pxtc.decompiler {
                 return emitCallExp(s as ts.CallExpression)
             case ts.SyntaxKind.FunctionExpression:
                 return emitFnExp(s as ts.FunctionExpression)
+            case ts.SyntaxKind.PrefixUnaryExpression:
+                return emitPreUnaryExp(s as ts.PrefixUnaryExpression);
+            case ts.SyntaxKind.ParenthesizedExpression:
+                let innerExp = (s as ts.ParenthesizedExpression).expression
+                let [inner, innerSup] = emitExp(innerExp)
+                return [`(${inner})`, innerSup]
             case ts.SyntaxKind.TrueKeyword:
                 return asExpRes("True")
             case ts.SyntaxKind.FalseKeyword:
@@ -323,11 +447,14 @@ namespace ts.pxtc.decompiler {
             case ts.SyntaxKind.Identifier:
             case ts.SyntaxKind.NumericLiteral:
             case ts.SyntaxKind.StringLiteral:
+                // TODO handle weird syntax?
+                return asExpRes(s.getText())
             case ts.SyntaxKind.ArrayLiteralExpression:
             default:
                 // TODO handle more expressions
-                return asExpRes(s.getText())
-            // throw Error("Unknown expression: " + s.kind)
+                // return asExpRes(s.getText())
+                // throw Error("Unknown expression: " + s.kind)
+                return [s.getText(), ["# unknown expression: " + s.kind]]
         }
     }
 }

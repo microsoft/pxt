@@ -1,6 +1,6 @@
 item = 1
 for i in range(4):
-    while True or not not False:
+    while True or not (not (False)):
         i = 0
         while i < item + 7:
             item += 1
