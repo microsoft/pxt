@@ -7,6 +7,8 @@ for (let i = 0; i < 4; i++) {
                 item = 0
             } else if (true || !(!(false))) {
                 item += 1
+            } else if (false) {
+                item -= 10
             } else {
                 item = 2
             }
