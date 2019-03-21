@@ -619,9 +619,18 @@ namespace ts.pxtc.service {
         }
     }
 
+    function addApiInfo(opts: CompileOptions) {
+        if (!opts.apisInfo && opts.target.preferredEditor == pxt.PYTHON_PROJECT_NAME) {
+            if (!lastApiInfo)
+                lastApiInfo = getApiInfo(opts, service.getProgram())
+            opts.apisInfo = lastApiInfo
+        }
+    }
+
     const operations: pxt.Map<(v: OpArg) => any> = {
         reset: () => {
             service.cleanupSemanticCache();
+            lastApiInfo = null
             host.setOpts(emptyOptions)
         },
 
@@ -654,6 +663,7 @@ namespace ts.pxtc.service {
         },
 
         compile: v => {
+            addApiInfo(v.options)
             return compile(v.options)
         },
         decompile: v => {
@@ -669,7 +679,10 @@ namespace ts.pxtc.service {
             }
         },
 
-        py2ts: v => (pxt as any).py.py2ts(v.options),
+        py2ts: v => {
+            addApiInfo(v.options)
+            return (pxt as any).py.py2ts(v.options)
+        },
 
         fileDiags: v => patchUpDiagnostics(fileDiags(v.fileName)),
 

@@ -123,8 +123,6 @@ export function assembleAsync(src: string) {
 }
 
 function compileCoreAsync(opts: pxtc.CompileOptions): Promise<pxtc.CompileResult> {
-    // we don't want any conversion to be run on the worker side
-    opts.target.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME
     return workerOpAsync("compile", { options: opts })
 }
 
@@ -133,8 +131,6 @@ export function py2tsAsync(): Promise<{ generated: pxt.Map<string> }> {
     return waitForFirstTypecheckAsync()
         .then(() => pkg.mainPkg.getCompileOptionsAsync(trg))
         .then(opts => {
-            U.assert(!!cachedApis)
-            opts.apisInfo = cachedApis
             opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
             return workerOpAsync("py2ts", { options: opts })
         })
