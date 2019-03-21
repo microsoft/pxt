@@ -19,6 +19,11 @@
 
 /* Debugger toolbar */
 .debugtoolbar {
+    // don't show the toolbar unless we're debugging.
+    display: none;
+}
+
+.debugging .debugtoolbar {
     width: 100%;
     z-index: @debuggerToolsZIndex;
     display: flex;

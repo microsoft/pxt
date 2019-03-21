@@ -582,7 +582,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     updateToolbox(debugging: boolean) {
         let debuggerToolbox = debugging ? <div>
             <debug.DebuggerToolbar parent={this.parent} />
-            <debug.DebuggerVariables ref={this.handleDebuggerVariablesRef} parent={this.parent} />
+            <debug.DebuggerVariables ref={this.handleDebuggerVariablesRef} parent={this.parent} apisByQName={this.blockInfo.apis.byQName} />
         </div> : <div />;
         Util.assert(!!this.debuggerToolboxDiv)
         if (debugging) {

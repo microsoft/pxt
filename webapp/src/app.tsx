@@ -1435,7 +1435,7 @@ export class ProjectView
         if (this.editor) this.editor.unloadFileAsync();
         // clear the hash
         pxt.BrowserUtils.changeHash("", true);
-        this.setState({ home: true, tracing: undefined, fullscreen: undefined, tutorialOptions: undefined, editorState: undefined });
+        this.setState({ home: true, tracing: undefined, fullscreen: undefined, tutorialOptions: undefined, editorState: undefined, debugging: undefined });
         this.allEditors.forEach(e => e.setVisible(false));
         this.homeLoaded();
         this.showPackageErrorsOnNextTypecheck();
