@@ -131,7 +131,7 @@ export class ProjectView
             collapseEditorTools: simcfg.headless,
             highContrast: isHighContrast,
             simState: pxt.editor.SimState.Stopped,
-            autoRun: true // always start simulator by default
+            autoRun: this.autoRunOnStart()
         };
         if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 19;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
@@ -144,6 +144,10 @@ export class ProjectView
         this.toggleGreenScreen = this.toggleGreenScreen.bind(this);
         this.toggleSimulatorFullscreen = this.toggleSimulatorFullscreen.bind(this);
         this.initScreenshots();
+    }
+
+    private autoRunOnStart() {
+        return pxt.appTarget.simulator && pxt.appTarget.simulator.autoRun
     }
 
     private initScreenshots() {
@@ -910,7 +914,8 @@ export class ProjectView
         if (pxt.appTarget.simulator && pxt.appTarget.simulator.aspectRatio)
             simulator.driver.preload(pxt.appTarget.simulator.aspectRatio);
         this.clearSerial()
-        this.setState({ autoRun: true }); // always start simulator once at least
+        // always start simulator once at least if autoRun is enabled
+        this.setState({ autoRun: this.autoRunOnStart() });
 
         // Merge current and new state but only if the new state members are undefined
         const oldEditorState = this.state.editorState;
