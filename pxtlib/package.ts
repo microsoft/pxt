@@ -184,19 +184,21 @@ namespace pxt {
                     pxt.debug('downloading ' + verNo)
                     return this.host().downloadPackageAsync(this)
                         .then(() => {
-                            const confStr = this.readFile(pxt.CONFIG_NAME)
-                            if (!confStr)
-                                U.userError(`extension ${this.id} is missing ${pxt.CONFIG_NAME}`)
-                            this.parseConfig(confStr);
-                            if (this.level != 0)
-                                this.config.installedVersion = this.version()
-                            this.saveConfig()
-                        })
-                        .then(() => {
+                            this.loadConfig();
                             pxt.debug(`installed ${this.id} /${verNo}`)
                         })
 
                 })
+        }
+
+        loadConfig() {
+            const confStr = this.readFile(pxt.CONFIG_NAME)
+            if (!confStr)
+                U.userError(`extension ${this.id} is missing ${pxt.CONFIG_NAME}`)
+            this.parseConfig(confStr);
+            if (this.level != 0)
+                this.config.installedVersion = this.version()
+            this.saveConfig()
         }
 
         protected validateConfig() {
