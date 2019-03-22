@@ -1,3 +1,4 @@
+#/ <reference path="./testBlocks/basic.ts" />
 
 x = testNamespace.createTestClass(5)
 
