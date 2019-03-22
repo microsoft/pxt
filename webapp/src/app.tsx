@@ -358,6 +358,14 @@ export class ProjectView
         if (this.textEditor) {
             this.textEditor.giveFocusOnLoading = giveFocusOnLoading;
         }
+
+        // make sure there's .py file
+        const mpkg = pkg.mainEditorPkg();
+        const mainpy = mpkg.files["main.py"];
+        if (!mainpy)
+            mpkg.setFile("main.py", "# ...");
+
+        // switch
         if (this.isBlocksActive()) {
             // TODO
             // this.blocksEditor.openTypeScript();
@@ -385,11 +393,9 @@ export class ProjectView
         }
         if (this.isBlocksActive()) {
             this.blocksEditor.openTypeScript();
-        } 
-        else if (this.isPythonActive()) {
+        } else if (this.isPythonActive()) {
             this.openTypeScriptAsync().done()
-        }
-        else this.setFile(pkg.mainEditorPkg().files["main.ts"])
+        } else this.setFile(pkg.mainEditorPkg().files["main.ts"])
     }
 
     openBlocks() {
