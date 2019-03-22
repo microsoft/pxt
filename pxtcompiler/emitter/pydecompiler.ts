@@ -65,13 +65,29 @@ namespace ts.pxtc.decompiler {
     function emitStmtWithNewlines(s: ts.Statement): string[] {
         let out: string[] = [];
 
-        let leadingNewlines = 0
         if (s.getLeadingTriviaWidth() > 0) {
             let leading = s.getFullText().slice(0, s.getLeadingTriviaWidth())
-            leadingNewlines = leading.split("\n").length - 2; // expect 1 newline, anything more is a blank line
+            let lns = leading.split("\n")
+            type TriviaLine = "unknown" | "blank" | ["comment", string]
+            const getTriviaLine = (s: string): TriviaLine => {
+                let trimmed = s.trim()
+                if (!trimmed)
+                    return "blank"
+                if (!trimmed.startsWith("//"))
+                    return "unknown"
+                let com = "#" + trimmed.slice(2, trimmed.length)
+                return ["comment", com]
+            }
+            let trivia = lns
+                .map(getTriviaLine)
+                .filter(s => s !== "unknown")
+                .map(s => s === "blank" ? "" : s[1])
+            if (trivia && !trivia[0])
+                trivia.shift()
+            if (trivia && !trivia[trivia.length - 1])
+                trivia.pop()
+            out = out.concat(trivia)
         }
-        for (let i = 0; i < leadingNewlines; i++)
-            out.push("")
 
         out = out.concat(emitStmt(s))
 
