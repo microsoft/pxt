@@ -467,10 +467,17 @@ export class ProjectView
     }
 
     openPythonAsync(): Promise<void> {
-        // always serialize to ts before reopening
         return this.saveTypeScriptAsync(false)
             .then(() => {
-                // TODO decompiler
+                return compiler.pyDecompileAsync("main.ts");
+            }).then(cres => {
+                if (cres && cres.success) {
+                    const mainpy = cres.outfiles["main.py"];
+                    return this.saveVirtualFile(pxt.PYTHON_PROJECT_NAME, mainpy, true);
+                } else {
+                    // TODO python
+                    return Promise.resolve();
+                }
             })
     }
 
@@ -1653,6 +1660,18 @@ export class ProjectView
         return this.blocksEditor.saveToTypeScript();
     }
 
+    private saveVirtualFile(prj: string, src: string, open: boolean): Promise<void> {
+        let mainPkg = pkg.mainEditorPkg();
+        let tsName = this.editorFile.getVirtualFileName(prj);
+        Util.assert(tsName != this.editorFile.name);
+        return mainPkg.setContentAsync(tsName, src).then(() => {
+            if (open) {
+                let f = mainPkg.files[tsName];
+                this.setFile(f);
+            }
+        });
+    }
+
     saveTypeScriptAsync(open = false): Promise<void> {
         if (!this.editor || !this.state.currFile || this.editorFile.epkg != pkg.mainEditorPkg() || this.reload)
             return Promise.resolve();
@@ -1664,16 +1683,7 @@ export class ProjectView
                 if (!src) return Promise.resolve();
                 // format before saving
                 // if (open) src = pxtc.format(src, 0).formatted;
-
-                let mainPkg = pkg.mainEditorPkg();
-                let tsName = this.editorFile.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME);
-                Util.assert(tsName != this.editorFile.name);
-                return mainPkg.setContentAsync(tsName, src).then(() => {
-                    if (open) {
-                        let f = mainPkg.files[tsName];
-                        this.setFile(f);
-                    }
-                });
+                return this.saveVirtualFile(pxt.JAVASCRIPT_PROJECT_NAME, src, open);
             });
         });
 

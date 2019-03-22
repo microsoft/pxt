@@ -208,7 +208,23 @@ function decompileCoreAsync(opts: pxtc.CompileOptions, fileName: string): Promis
     return workerOpAsync("decompile", { options: opts, fileName: fileName, blocks: blocksOptions() })
 }
 
-function pydecompileCoreAsync(opts: pxtc.CompileOptions, fileName: string): Promise<pxtc.CompileResult> {
+export function pyDecompileAsync(fileName: string): Promise<pxtc.CompileResult> {
+    let trg = pkg.mainPkg.getTargetOptions()
+    return pkg.mainPkg.getCompileOptionsAsync(trg)
+        .then(opts => {
+            opts.ast = true;
+            opts.testMode = true;
+            opts.alwaysDecompileOnStart = pxt.appTarget.runtime && pxt.appTarget.runtime.onStartUnDeletable;
+            return pyDecompileCoreAsync(opts, fileName)
+        })
+        .then(resp => {
+            pkg.mainEditorPkg().outputPkg.setFiles(resp.outfiles)
+            setDiagnostics(resp.diagnostics)
+            return resp
+        })
+}
+
+function pyDecompileCoreAsync(opts: pxtc.CompileOptions, fileName: string): Promise<pxtc.CompileResult> {
     return workerOpAsync("pydecompile", { options: opts, fileName: fileName })
 }
 
