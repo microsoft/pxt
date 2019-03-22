@@ -186,28 +186,42 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     public showConversionFailedDialog(blockFile: string, programTooLarge: boolean): Promise<void> {
+        const isPython = this.fileType == FileType.Python;
+        const tickLang = isPython ? "python" : "typescript";
+
         let bf = pkg.mainEditorPkg().files[blockFile];
         if (programTooLarge) {
-            pxt.tickEvent("typescript.programTooLarge");
+            pxt.tickEvent(`${tickLang}.programTooLarge`);
+        }
+        let body: string;
+        let disagreeLbl: string;
+        if (isPython) {
+            body = programTooLarge ?
+                lf("Your program is too large to convert into blocks. You can keep working in JavaScript or discard your changes and go back to the previous Blocks version.") :
+                lf("We are unable to convert your JavaScript code back to blocks. You can keep working in JavaScript or discard your changes and go back to the previous Blocks version.");
+            disagreeLbl = lf("Stay in JavaScript");
+        } else {
+            body = programTooLarge ?
+                lf("Your program is too large to convert into blocks. You can keep working in Python or discard your changes and go back to the previous Blocks version.") :
+                lf("We are unable to convert your Python code back to blocks. You can keep working in Python or discard your changes and go back to the previous Blocks version.");
+            disagreeLbl = lf("Stay in Python");
         }
         return core.confirmAsync({
             header: programTooLarge ? lf("Program too large") : lf("Oops, there is a problem converting your code."),
-            body: programTooLarge ?
-                lf("Your program is too large to convert into blocks. You can keep working in JavaScript or discard your changes and go back to the previous Blocks version.") :
-                lf("We are unable to convert your JavaScript code back to blocks. You can keep working in JavaScript or discard your changes and go back to the previous Blocks version."),
+            body,
             agreeLbl: lf("Discard and go to Blocks"),
             agreeClass: "cancel",
             agreeIcon: "cancel",
-            disagreeLbl: lf("Stay in JavaScript"),
+            disagreeLbl: disagreeLbl,
             disagreeClass: "positive",
             disagreeIcon: "checkmark",
             hideCancel: !bf
         }).then(b => {
             // discard
             if (!b) {
-                pxt.tickEvent("typescript.keepText", undefined, { interactiveConsent: true });
+                pxt.tickEvent(`${tickLang}.keepText`, undefined, { interactiveConsent: true });
             } else {
-                pxt.tickEvent("typescript.discardText", undefined, { interactiveConsent: true });
+                pxt.tickEvent(`${tickLang}.discardText`, undefined, { interactiveConsent: true });
                 this.parent.saveBlocksToTypeScriptAsync().then((src) => {
                     this.overrideFile(src);
                     this.parent.setFile(bf);
