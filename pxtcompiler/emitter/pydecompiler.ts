@@ -104,6 +104,8 @@ namespace ts.pxtc.decompiler {
                 return emitVarStmt(s as ts.VariableStatement)
             case ts.SyntaxKind.ClassDeclaration:
                 return emitClassStmt(s as ts.ClassDeclaration)
+            case ts.SyntaxKind.EnumDeclaration:
+                return emitEnumStmt(s as ts.EnumDeclaration)
             case ts.SyntaxKind.ExpressionStatement:
                 return emitExpStmt(s as ts.ExpressionStatement)
             case ts.SyntaxKind.FunctionDeclaration:
@@ -387,6 +389,32 @@ namespace ts.pxtc.decompiler {
         }
 
         return out;
+    }
+    function emitEnumStmt(s: ts.EnumDeclaration): string[] {
+        let out: string[] = []
+
+        out.push(`class ${s.name.getText()}(Enum):`)
+
+        let allInit = s.members
+            .every(m => !!m.initializer)
+        let noInit = !s.members
+            .every(m => !!m.initializer)
+
+        if (!allInit && !noInit)
+            throw Error("Unsupported enum decleration: has mixture of explicit and implicit initialization") // TODO
+
+        if (allInit) {
+            let memAndSup = s.members
+                .map(m => [m, emitExp(m.initializer)] as [EnumMember, ExpRes])
+            throw Error("Unsupported: explicit enum initialization") // TODO
+        }
+
+        let val = 0
+        for (let m of s.members) {
+            out.push(indent1(`${m.name.getText()} = ${val++}`))
+        }
+
+        return out
     }
     function isEnumMem(s: ts.ClassElement): boolean {
         if (s.kind !== ts.SyntaxKind.PropertyDeclaration)
