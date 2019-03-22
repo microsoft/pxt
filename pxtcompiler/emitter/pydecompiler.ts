@@ -173,6 +173,9 @@ namespace ts.pxtc.decompiler {
 
         result.fromIncl = fromNum
 
+        // body must not mutate loop variable
+        // TODO
+
         // must be (...; i < Y; ...)
         if (!s.condition)
             return null
@@ -205,7 +208,8 @@ namespace ts.pxtc.decompiler {
         // TODO allow += 1
         if (!s.incrementor)
             return null
-        if (!ts.isPostfixUnaryExpression(s.incrementor))
+        if (!ts.isPostfixUnaryExpression(s.incrementor)
+            && !ts.isPrefixUnaryExpression(s.incrementor))
             return null
         if (s.incrementor.operator !== SyntaxKind.PlusPlusToken)
             return null
@@ -306,9 +310,17 @@ namespace ts.pxtc.decompiler {
 
         // updater(s)
         if (s.incrementor) {
-            let [inc, incSup] = emitExp(s.incrementor)
-            out = out.concat(incSup)
-                .concat([indent1(inc)])
+            let unaryIncDec = tryEmitIncDecUnaryStmt(s.incrementor)
+            if (unaryIncDec) {
+                // special case: ++ or --
+                out = out.concat(unaryIncDec.map(indent1))
+            }
+            else {
+                // general case
+                let [inc, incSup] = emitExp(s.incrementor)
+                out = out.concat(incSup)
+                    .concat([indent1(inc)])
+            }
         }
 
         return out
@@ -414,14 +426,18 @@ namespace ts.pxtc.decompiler {
             return []
         }
     }
-    function tryEmitIncDecUnaryStmt(s: ts.ExpressionStatement): string[] {
-        // special case ++ or -- as a statement
-        let e = s.expression;
+    function isUnaryPlusPlusOrMinusMinus(e: ts.Expression): e is ts.PrefixUnaryExpression | ts.PostfixUnaryExpression {
         if (!ts.isPrefixUnaryExpression(e) &&
             !ts.isPostfixUnaryExpression(e))
-            return null
+            return false
         if (e.operator !== ts.SyntaxKind.MinusMinusToken &&
             e.operator !== ts.SyntaxKind.PlusPlusToken)
+            return false
+        return true
+    }
+    function tryEmitIncDecUnaryStmt(e: ts.Expression): string[] {
+        // special case ++ or -- as a statement
+        if (!isUnaryPlusPlusOrMinusMinus(e))
             return null
 
         let [operand, sup] = emitExp(e.operand)
@@ -433,7 +449,7 @@ namespace ts.pxtc.decompiler {
         return out
     }
     function emitExpStmt(s: ts.ExpressionStatement): string[] {
-        let unaryExp = tryEmitIncDecUnaryStmt(s);
+        let unaryExp = tryEmitIncDecUnaryStmt(s.expression);
         if (unaryExp)
             return unaryExp
 
@@ -692,42 +708,63 @@ namespace ts.pxtc.decompiler {
             return asExpRes("None")
         return asExpRes(id);
     }
-    function isConstExp(s: ts.Expression): boolean {
-        // TODO be more precise
+    function visitExp(s: ts.Expression, fn: (e: ts.Expression) => boolean): boolean {
+        let visitRecur = (s: ts.Expression) =>
+            visitExp(s, fn)
+
         if (ts.isBinaryExpression(s)) {
-            return isConstExp(s.left) && isConstExp(s.right)
+            return visitRecur(s.left) && visitRecur(s.right)
         } else if (ts.isPropertyAccessExpression(s)) {
-            return isConstExp(s.expression)
+            return visitRecur(s.expression)
         } else if (ts.isPrefixUnaryExpression(s) || ts.isPostfixUnaryExpression(s)) {
             return s.operator !== ts.SyntaxKind.PlusPlusToken
                 && s.operator !== ts.SyntaxKind.MinusMinusToken
-                && isConstExp(s.operand)
+                && visitRecur(s.operand)
         } else if (ts.isParenthesizedExpression(s)) {
-            return isConstExp(s.expression)
+            return visitRecur(s.expression)
         } else if (ts.isArrayLiteralExpression(s)) {
             return s.elements
-                .map(isConstExp)
+                .map(visitRecur)
                 .reduce((p, c) => p && c, true)
         } else if (ts.isElementAccessExpression(s)) {
-            return isConstExp(s.expression)
-                && (!s.argumentExpression || isConstExp(s.argumentExpression))
+            return visitRecur(s.expression)
+                && (!s.argumentExpression || visitRecur(s.argumentExpression))
         }
 
-        switch (s.kind) {
-            case ts.SyntaxKind.TrueKeyword:
-            case ts.SyntaxKind.FalseKeyword:
-            case ts.SyntaxKind.NullKeyword:
-            case ts.SyntaxKind.UndefinedKeyword:
-            case ts.SyntaxKind.NumericLiteral:
-            case ts.SyntaxKind.StringLiteral:
-            case ts.SyntaxKind.NoSubstitutionTemplateLiteral:
-                return true
-            case ts.SyntaxKind.Identifier:
-            case ts.SyntaxKind.ThisKeyword:
-                return false
+        return fn(s)
+    }
+    function isConstExp(s: ts.Expression): boolean {
+        let isConst = (s: ts.Expression): boolean => {
+            switch (s.kind) {
+                case ts.SyntaxKind.PropertyAccessExpression:
+                case ts.SyntaxKind.BinaryExpression:
+                case ts.SyntaxKind.ParenthesizedExpression:
+                case ts.SyntaxKind.ArrayLiteralExpression:
+                case ts.SyntaxKind.ElementAccessExpression:
+                case ts.SyntaxKind.TrueKeyword:
+                case ts.SyntaxKind.FalseKeyword:
+                case ts.SyntaxKind.NullKeyword:
+                case ts.SyntaxKind.UndefinedKeyword:
+                case ts.SyntaxKind.NumericLiteral:
+                case ts.SyntaxKind.StringLiteral:
+                case ts.SyntaxKind.NoSubstitutionTemplateLiteral:
+                    return true
+                case ts.SyntaxKind.CallExpression:
+                case ts.SyntaxKind.NewExpression:
+                case ts.SyntaxKind.FunctionExpression:
+                case ts.SyntaxKind.ArrowFunction:
+                case ts.SyntaxKind.Identifier:
+                case ts.SyntaxKind.ThisKeyword:
+                    return false
+                case ts.SyntaxKind.PrefixUnaryExpression:
+                case ts.SyntaxKind.PostfixUnaryExpression:
+                    let e = s as ts.PrefixUnaryExpression | ts.PostfixUnaryExpression
+                    return e.operator !== ts.SyntaxKind.PlusPlusToken
+                        && e.operator !== ts.SyntaxKind.MinusMinusToken
+            }
+            return false
         }
-
-        return false
+        return visitExp(s, isConst)
     }
     function emitExp(s: ts.Expression): ExpRes {
         switch (s.kind) {
