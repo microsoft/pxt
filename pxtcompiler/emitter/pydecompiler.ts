@@ -520,6 +520,10 @@ namespace ts.pxtc.decompiler {
             case ts.SyntaxKind.EqualsEqualsToken:
                 // TODO distinguish === from == ?
                 return "=="
+            case ts.SyntaxKind.ExclamationEqualsEqualsToken:
+            case ts.SyntaxKind.ExclamationEqualsToken:
+                // TODO distinguish !== from != ?
+                return "!="
             case ts.SyntaxKind.EqualsToken:
                 return "="
             case ts.SyntaxKind.PlusToken:
