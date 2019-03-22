@@ -34,6 +34,7 @@ namespace ts.pxtc.decompiler {
     // TODO map names from camel case to snake case
     // TODO disallow keywords & builtins (e.g. "range", "print")
     // TODO handle shadowing
+    // TODO handle types at initialization when ambiguous (e.g. x = [], x = None)
 
     ///
     /// SUPPORT
@@ -494,6 +495,12 @@ namespace ts.pxtc.decompiler {
                 return "&"
             case ts.SyntaxKind.CaretToken:
                 return "^"
+            case ts.SyntaxKind.LessThanLessThanToken:
+                return "<<"
+            case ts.SyntaxKind.GreaterThanGreaterThanToken:
+                return ">>"
+            case ts.SyntaxKind.GreaterThanGreaterThanGreaterThanToken:
+                throw Error("Unsupported operator: >>>")
             default:
                 return "# TODO unknown op: " + s
         }
