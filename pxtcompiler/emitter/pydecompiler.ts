@@ -118,8 +118,8 @@ namespace ts.pxtc.decompiler {
     }
     type RangeItr = {
         name: string,
-        fromIncl: number,
-        toExcl: number
+        fromIncl: string,
+        toExcl: string
     }
     function isNormalInteger(str: string) {
         let asInt = Math.floor(Number(str));
@@ -128,8 +128,8 @@ namespace ts.pxtc.decompiler {
     function getSimpleForRange(s: ts.ForStatement): RangeItr | null {
         let result: RangeItr = {
             name: null,
-            fromIncl: Infinity,
-            toExcl: Infinity
+            fromIncl: null,
+            toExcl: null
         }
 
         // must be (let i = X; ...)
@@ -145,18 +145,17 @@ namespace ts.pxtc.decompiler {
         let decl = initDecls.declarations[0]
         result.name = decl.name.getText()
 
-        if (!ts.isNumericLiteral(decl.initializer)) {
+        if (!isConstExp(decl.initializer)) {
             // TODO allow variables?
+            // TODO restrict to numbers?
             return null
         }
 
-        let fromNum = decl.initializer.text
-        if (!isNormalInteger(fromNum)) {
-            // TODO allow floats?
+        let [fromNum, fromNumSup] = emitExp(decl.initializer)
+        if (fromNumSup.length)
             return null
-        }
 
-        result.fromIncl = Number(fromNum)
+        result.fromIncl = fromNum
 
         // must be (...; i < Y; ...)
         if (!s.condition)
@@ -167,14 +166,22 @@ namespace ts.pxtc.decompiler {
             return null
         if (s.condition.left.text != result.name)
             return null
-        if (!ts.isNumericLiteral(s.condition.right))
+        if (!isConstExp(s.condition.right)) {
+            // TODO allow variables?
+            // TODO restrict to numbers?
             return null
-        let toNum = s.condition.right.text
-        if (!isNormalInteger(toNum))
+        }
+        let [toNum, toNumSup] = emitExp(s.condition.right)
+        if (toNumSup.length)
             return null
-        result.toExcl = Number(toNum);
-        if (s.condition.operatorToken.kind === SyntaxKind.LessThanEqualsToken)
-            result.toExcl += 1
+
+        result.toExcl = toNum
+        if (s.condition.operatorToken.kind === SyntaxKind.LessThanEqualsToken) {
+            if (isNormalInteger(toNum))
+                result.toExcl = "" + (Number(toNum) + 1)
+            else
+                result.toExcl += " + 1"
+        }
         else if (s.condition.operatorToken.kind !== SyntaxKind.LessThanToken)
             return null
 
@@ -231,7 +238,7 @@ namespace ts.pxtc.decompiler {
             // TODO ensure x and z can't be mutated in the loop body
             let { name, fromIncl, toExcl } = rangeItr;
 
-            let forStmt = fromIncl === 0
+            let forStmt = fromIncl === "0"
                 ? `for ${name} in range(${toExcl}):`
                 : `for ${name} in range(${fromIncl}, ${toExcl}):`;
 
@@ -652,6 +659,43 @@ namespace ts.pxtc.decompiler {
         if (id == "undefined")
             return asExpRes("None")
         return asExpRes(id);
+    }
+    function isConstExp(s: ts.Expression): boolean {
+        // TODO be more precise
+        if (ts.isBinaryExpression(s)) {
+            return isConstExp(s.left) && isConstExp(s.right)
+        } else if (ts.isPropertyAccessExpression(s)) {
+            return isConstExp(s.expression)
+        } else if (ts.isPrefixUnaryExpression(s) || ts.isPostfixUnaryExpression(s)) {
+            return s.operator !== ts.SyntaxKind.PlusPlusToken
+                && s.operator !== ts.SyntaxKind.MinusMinusToken
+                && isConstExp(s.operand)
+        } else if (ts.isParenthesizedExpression(s)) {
+            return isConstExp(s.expression)
+        } else if (ts.isArrayLiteralExpression(s)) {
+            return s.elements
+                .map(isConstExp)
+                .reduce((p, c) => p && c, true)
+        } else if (ts.isElementAccessExpression(s)) {
+            return isConstExp(s.expression)
+                && (!s.argumentExpression || isConstExp(s.argumentExpression))
+        }
+
+        switch (s.kind) {
+            case ts.SyntaxKind.TrueKeyword:
+            case ts.SyntaxKind.FalseKeyword:
+            case ts.SyntaxKind.NullKeyword:
+            case ts.SyntaxKind.UndefinedKeyword:
+            case ts.SyntaxKind.NumericLiteral:
+            case ts.SyntaxKind.StringLiteral:
+            case ts.SyntaxKind.NoSubstitutionTemplateLiteral:
+                return true
+            case ts.SyntaxKind.Identifier:
+            case ts.SyntaxKind.ThisKeyword:
+                return false
+        }
+
+        return false
     }
     function emitExp(s: ts.Expression): ExpRes {
         switch (s.kind) {
