@@ -377,8 +377,9 @@ namespace ts.pxtc.decompiler {
             .filter(s => s)
         return stmts
     }
-    function emitFuncDecl(s: ts.FunctionDeclaration | ts.MethodDeclaration | ts.FunctionExpression | ts.ConstructorDeclaration, name: string = null): string[] {
-        // TODO
+    function emitFuncDecl(s: ts.FunctionDeclaration | ts.MethodDeclaration | ts.FunctionExpression | ts.ConstructorDeclaration | ts.ArrowFunction, name: string = null): string[] {
+        // TODO emit lambda if no name and body is single line
+        // TODO helper function for determining if an expression can be a python expression
         let paramList: string[] = []
 
         if (s.kind === ts.SyntaxKind.MethodDeclaration ||
@@ -404,7 +405,14 @@ namespace ts.pxtc.decompiler {
 
         out.push(`def ${fnName}(${params}):`)
 
-        let stmts = emitBlock(s.body)
+        let stmts: string[]
+        if (ts.isBlock(s.body))
+            stmts = emitBlock(s.body)
+        else {
+            let [exp, sup] = emitExp(s.body)
+            stmts = stmts.concat(sup)
+            stmts.push(exp)
+        }
         if (stmts.length) {
             out = out.concat(stmts.map(indent1))
         } else {
@@ -521,7 +529,7 @@ namespace ts.pxtc.decompiler {
         // TODO add sync lock
         return `function_${nextFnNum++}`
     }
-    function emitFnExp(s: ts.FunctionExpression): ExpRes {
+    function emitFnExp(s: ts.FunctionExpression | ts.ArrowFunction): ExpRes {
         // TODO handle case if body is only 1 line
         let fnName = nextFnName()
         let fnDef = emitFuncDecl(s, fnName)
@@ -568,6 +576,12 @@ namespace ts.pxtc.decompiler {
     function emitMultiLnStrLitExp(s: ts.NoSubstitutionTemplateLiteral): ExpRes {
         return asExpRes(`"""${s.text}"""`)
     }
+    function emitIdentifierExp(s: ts.Identifier): ExpRes {
+        let id = s.text;
+        if (id == "undefined")
+            return asExpRes("None")
+        return asExpRes(id);
+    }
     function emitExp(s: ts.Expression): ExpRes {
         switch (s.kind) {
             case ts.SyntaxKind.BinaryExpression:
@@ -579,7 +593,8 @@ namespace ts.pxtc.decompiler {
             case ts.SyntaxKind.NewExpression:
                 return emitCallExp(s as ts.NewExpression)
             case ts.SyntaxKind.FunctionExpression:
-                return emitFnExp(s as ts.FunctionExpression)
+            case ts.SyntaxKind.ArrowFunction:
+                return emitFnExp(s as ts.FunctionExpression | ts.ArrowFunction)
             case ts.SyntaxKind.PrefixUnaryExpression:
                 return emitPreUnaryExp(s as ts.PrefixUnaryExpression);
             case ts.SyntaxKind.PostfixUnaryExpression:
@@ -598,7 +613,11 @@ namespace ts.pxtc.decompiler {
                 return asExpRes("False")
             case ts.SyntaxKind.ThisKeyword:
                 return asExpRes("self")
+            case ts.SyntaxKind.NullKeyword:
+            case ts.SyntaxKind.UndefinedKeyword:
+                return asExpRes("None")
             case ts.SyntaxKind.Identifier:
+                return emitIdentifierExp(s as ts.Identifier)
             case ts.SyntaxKind.NumericLiteral:
             case ts.SyntaxKind.StringLiteral:
                 // TODO handle weird syntax?
