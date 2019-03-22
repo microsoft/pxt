@@ -17,10 +17,11 @@ namespace pxt.py {
     // this measures if we gained additional information about type state
     // we run conversion several times, until we have all information possible
     let numUnifies = 0
-    let currErrs = ""
     let autoImport = true
     let currErrorCtx = "???"
     let verboseTypes = false
+    let lastStmt: Stmt
+    let diagnostics: pxtc.KsDiagnostic[]
 
     function stmtTODO(v: py.Stmt) {
         return B.mkStmt(B.mkText("TODO: " + v.kind))
@@ -185,8 +186,6 @@ namespace pxt.py {
             fillTypes(sym)
         }
 
-        if (currErrs)
-            pxt.log(currErrs)
         tpBuffer = mapTsType("Buffer")
     }
 
@@ -299,9 +298,27 @@ namespace pxt.py {
             return "?" + t.tid
     }
 
-    function error(a: py.AST, msg: string) {
+    function error(a: py.AST, code:number, msg: string) {
+        if (!a) a = lastStmt
+        let diag: pxtc.KsDiagnostic
+        
+        interface LocationInfo {
+            fileName: string;
+            start: number;
+            length: number;
+            line: number;
+            column: number;
+            endLine?: number;
+            endColumn?: number;
+        }
+
+        
         if (!ctx || !ctx.currModule) {
-            currErrs += msg + "\n"
+            diag = {
+                code,
+                category: pxtc.DiagnosticCategory.Error,
+                messageText: msg
+            }
         } else {
             const mod = ctx.currModule
             const pos = position(a ? a.startPos || 0 : 0, mod.source)
@@ -1607,6 +1624,7 @@ namespace pxt.py {
     }
 
     function stmt(e: py.Stmt): B.JsNode {
+        lastStmt = e
         let f = stmtMap[e.kind]
         if (!f) {
             U.oops(e.kind + " - unknown stmt")
@@ -1615,12 +1633,6 @@ namespace pxt.py {
         let cmts: string[] = (e._comments || []).map(c => c.value)
 
         let r = f(e)
-        if (currErrs) {
-            for (let err of currErrs.split("\n"))
-                if (err)
-                    cmts.push("ERROR: " + err)
-            currErrs = ""
-        }
         if (cmts.length) {
             r = B.mkGroup(cmts.map(c => B.mkStmt(B.H.mkComment(c))).concat(r))
         }
@@ -1665,8 +1677,16 @@ namespace pxt.py {
         })
     }
 
+    function resetPass(iter: number) {
+        currIteration = iter
+        diagnostics = []
+        numUnifies = 0
+        lastStmt = null
+    }
+
     export function py2ts(opts: pxtc.CompileOptions) {
         let modules: py.Module[] = []
+        diagnostics = []
         initApis(opts.apisInfo)
 
         if (!opts.generatedFiles)
@@ -1696,28 +1716,34 @@ namespace pxt.py {
                 // TODO
                 console.log("Parse error", e)
             }
-
         }
 
+        const generated: Map<string> = {}
+
+        if (diagnostics.some(d => d.category == pxtc.DiagnosticCategory.Error)) {
+            return {
+                generated,
+                diagnostics
+            }
+        }
+
+        const parseDiags = diagnostics
+
         for (let i = 0; i < 5; ++i) {
-            currIteration = i
-            let prevUnifies = numUnifies
+            resetPass(i)
             for (let m of modules) {
                 try {
                     toTS(m)
                     // console.log(`after ${currIteration} - ${numUnifies}`)
                 } catch (e) {
                     console.log("Conv pass error", e);
-                    numUnifies++
                 }
             }
-            if (numUnifies == prevUnifies)
+            if (numUnifies == 0)
                 break
         }
 
-        currIteration = 1000
-        currErrs = ""
-        let generated: Map<string> = {}
+        resetPass(1000)
         for (let m of modules) {
             try {
                 let nodes = toTS(m)
@@ -1733,7 +1759,8 @@ namespace pxt.py {
         }
 
         return {
-            generated
+            generated,
+            diagnostics: parseDiags.concat(diagnostics)
         }
     }
 
