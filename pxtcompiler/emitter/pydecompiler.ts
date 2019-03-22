@@ -310,8 +310,7 @@ namespace ts.pxtc.decompiler {
         let ifStmt = `if ${cond}:`
 
         let ifRest: string[] = []
-        let th = emitStmt(s.thenStatement)
-            .map(indent1)
+        let th = emitBody(s.thenStatement)
         ifRest = ifRest.concat(th)
 
         // TODO: handle else if
@@ -327,8 +326,7 @@ namespace ts.pxtc.decompiler {
             }
             else {
                 ifRest.push("else:")
-                let el = emitStmt(s.elseStatement)
-                    .map(indent1)
+                let el = emitBody(s.elseStatement)
                 ifRest = ifRest.concat(el)
             }
         }
