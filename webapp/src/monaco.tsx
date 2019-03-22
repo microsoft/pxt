@@ -769,11 +769,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (model) this.editor.setModel(model);
 
                 this.defineEditorTheme(hc);
-                const shouldShowToolbox = (
-                    mode == "typescript"
-                    && pxt.appTarget.appTheme.monacoToolbox
+                const shouldShowToolbox = pxt.appTarget.appTheme.monacoToolbox
                     && !readOnly
-                    && file.name == "main.ts");
+                    && ((mode == "typescript" && file.name == "main.ts")
+                        || (mode == "python" && file.name == "main.py"));
                 if (shouldShowToolbox) {
                     this.beginLoadToolbox(file, hc);
                 } else {
@@ -1238,8 +1237,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private showSearchFlyout() {
         let monacoBlocks: HTMLDivElement[] = [];
         const searchBlocks = this.toolbox.getSearchBlocks();
-
-        const monacoFlyout = this.getMonacoFlyout();
 
         const that = this;
         function getNamespaceColor(ns: string) {
