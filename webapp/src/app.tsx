@@ -109,6 +109,7 @@ export class ProjectView
     private lastChangeTime: number;
     private reload: boolean;
     private shouldTryDecompile: boolean;
+    private firstRun: boolean;
 
     private runToken: pxt.Util.CancellationToken;
 
@@ -910,6 +911,7 @@ export class ProjectView
         if (pxt.appTarget.simulator && pxt.appTarget.simulator.aspectRatio)
             simulator.driver.preload(pxt.appTarget.simulator.aspectRatio);
         this.clearSerial()
+        this.firstRun = true
         this.setState({ autoRun: true }); // always start simulator once at least
 
         // Merge current and new state but only if the new state members are undefined
@@ -2063,6 +2065,9 @@ export class ProjectView
     }
 
     runSimulator(opts: compiler.CompileOptions = {}): Promise<void> {
+        const emptyRun = this.firstRun && opts.background && pxt.appTarget.simulator && !!pxt.appTarget.simulator.emptyRunCode
+        this.firstRun = false
+
         pxt.debug(`run sim (autorun ${this.state.autoRun})`)
 
         if (this.runToken) this.runToken.cancel()
@@ -2090,7 +2095,7 @@ export class ProjectView
             this.setState({ simState: pxt.editor.SimState.Starting, autoRun: autoRun });
 
             const state = this.editor.snapshotState()
-            return compiler.compileAsync(opts)
+            return (emptyRun ? Promise.resolve(compiler.emptyCompileResult()) : compiler.compileAsync(opts))
                 .then(resp => {
                     if (cancellationToken.isCancelled()) return;
                     this.clearSerial();
