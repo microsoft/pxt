@@ -746,7 +746,8 @@ namespace pxt {
                 fileSystem: {},
                 target: target,
                 hexinfo: { hex: [] },
-                name: this.config ? this.config.name : ""
+                name: this.config ? this.config.name : "",
+                pySnippets: pxt.appTarget && pxt.appTarget.appTheme && pxt.appTarget.appTheme.python
             }
 
             const generateFile = (fn: string, cont: string) => {

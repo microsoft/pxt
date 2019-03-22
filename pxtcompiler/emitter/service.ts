@@ -118,7 +118,7 @@ namespace ts.pxtc {
         return decl.modifiers && decl.modifiers.some(m => m.kind == SK.ReadonlyKeyword)
     }
 
-    function createSymbolInfo(typechecker: TypeChecker, qName: string, stmt: Node): SymbolInfo {
+    function createSymbolInfo(typechecker: TypeChecker, qName: string, stmt: Node, opts: CompileOptions): SymbolInfo {
         function typeOf(tn: TypeNode, n: Node, stripParams = false) {
             let t = typechecker.getTypeAtLocation(n)
             if (!t) return "None"
@@ -247,8 +247,10 @@ namespace ts.pxtc {
                         isEnum
                     }
                 }),
-                snippet: service.getSnippet(decl, attributes)
+                snippet: service.getSnippet(decl, attributes),
             }
+            if (opts.pySnippets)
+                r.pySnippet = service.getSnippet(decl, attributes, true);
 
             if (stmt.kind === SK.GetAccessor ||
                 ((stmt.kind === SK.PropertyDeclaration || stmt.kind === SK.PropertySignature) && isReadonly(stmt as Declaration))) {
@@ -366,7 +368,7 @@ namespace ts.pxtc {
                 let qName = getFullName(typechecker, stmt.symbol)
                 if (stmt.kind == SK.SetAccessor)
                     qName += "@set" // otherwise we get a clash with the getter
-                let si = createSymbolInfo(typechecker, qName, stmt)
+                let si = createSymbolInfo(typechecker, qName, stmt, opts)
                 if (si) {
                     let existing = U.lookup(res.byQName, qName)
                     if (existing) {
@@ -478,7 +480,7 @@ namespace ts.pxtc {
         return typechecker.getFullyQualifiedName(symbol);
     }
 
-    export function fillCompletionEntries(program: Program, symbols: Symbol[], r: CompletionInfo, apiInfo: ApisInfo) {
+    export function fillCompletionEntries(program: Program, symbols: Symbol[], r: CompletionInfo, apiInfo: ApisInfo, opts: CompileOptions) {
         let typechecker = program.getTypeChecker()
 
         for (let s of symbols) {
@@ -493,7 +495,7 @@ namespace ts.pxtc {
             let decl = s.valueDeclaration || (s.declarations || [])[0]
             if (!decl) continue;
 
-            let si = createSymbolInfo(typechecker, qName, decl)
+            let si = createSymbolInfo(typechecker, qName, decl, opts)
             if (!si) continue;
 
             si.isContextual = true;
@@ -657,7 +659,7 @@ namespace ts.pxtc.service {
                 isTypeLocation: false // TODO
             }
 
-            fillCompletionEntries(program, data.symbols, r, lastApiInfo)
+            fillCompletionEntries(program, data.symbols, r, lastApiInfo, host.opts)
 
             return r;
         },
@@ -929,14 +931,14 @@ namespace ts.pxtc.service {
 . . . . .
 \``;
 
-    export function getSnippet(n: ts.SignatureDeclaration, attrs?: CommentAttrs): string {
+    export function getSnippet(n: ts.SignatureDeclaration, attrs?: CommentAttrs, python?: boolean): string {
         if (!ts.isFunctionLike(n)) {
             return undefined;
         }
         const checker = service ? service.getProgram().getTypeChecker() : undefined;
         const args = n.parameters ? n.parameters.filter(param => !param.initializer && !param.questionToken).map(param => {
             const typeNode = param.type;
-            if (!typeNode) return "null";
+            if (!typeNode) return python ? "None" : "null";
 
             const name = param.name.kind === SK.Identifier ? (param.name as ts.Identifier).text : undefined;
 
@@ -950,7 +952,7 @@ namespace ts.pxtc.service {
             switch (typeNode.kind) {
                 case SK.StringKeyword: return (name == "leds" ? defaultImgLit : `""`);
                 case SK.NumberKeyword: return "0";
-                case SK.BooleanKeyword: return "false";
+                case SK.BooleanKeyword: return python ? "False" : "false";
                 case SK.ArrayType: return "[]";
                 case SK.TypeReference:
                     // handled below
@@ -961,7 +963,7 @@ namespace ts.pxtc.service {
                     if (functionSignature) {
                         return getFunctionString(functionSignature);
                     }
-                    return `function () {}`;
+                    return python ? `def _():\n  pass` : `function () {}`;
             }
 
             const type = checker ? checker.getTypeAtLocation(param) : undefined;
@@ -972,7 +974,7 @@ namespace ts.pxtc.service {
                         if (sigs.length) {
                             return getFunctionString(sigs[0]);
                         }
-                        return `function () {}`;
+                        return python ? `def _():\n  pass` : `function () {}`;
                     }
                 }
                 if (type.flags & ts.TypeFlags.EnumLike) {
@@ -982,7 +984,7 @@ namespace ts.pxtc.service {
                     return "0";
                 }
             }
-            return "null";
+            return python ? "None" : "null";
         }) : [];
 
         let fnName = ""

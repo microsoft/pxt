@@ -432,6 +432,7 @@ declare namespace ts.pxtc {
         name?: string;
         warnDiv?: boolean; // warn when emitting division operator
         apisInfo?: ApisInfo;
+        pySnippets?: boolean;
 
         alwaysDecompileOnStart?: boolean; // decompiler only
         allowedArgumentTypes?: string[]; // decompiler-only; the types allowed for user-defined function arguments in blocks (unlisted types will cause grey blocks)
