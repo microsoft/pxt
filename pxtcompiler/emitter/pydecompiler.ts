@@ -594,18 +594,31 @@ namespace ts.pxtc.decompiler {
 
         return [fnName, fnDef]
     }
+    function getUnaryOpSpacing(s: ts.SyntaxKind): string {
+        switch (s) {
+            case ts.SyntaxKind.ExclamationToken: // not
+                return " "
+            case ts.SyntaxKind.PlusToken:
+            case ts.SyntaxKind.MinusToken:
+                return ""
+            default:
+                return " "
+        }
+    }
     function emitPreUnaryExp(s: ts.PrefixUnaryExpression): ExpRes {
         let op = emitOp(s.operator);
         let [exp, expSup] = emitExp(s.operand)
         // TODO handle order-of-operations ? parenthesis?
-        let res = `${op} ${exp}`
+        let space = getUnaryOpSpacing(s.operator)
+        let res = `${op}${space}${exp}`
         return [res, expSup]
     }
     function emitPostUnaryExp(s: ts.PostfixUnaryExpression): ExpRes {
         let op = emitOp(s.operator);
         let [exp, expSup] = emitExp(s.operand)
         // TODO handle order-of-operations ? parenthesis?
-        let res = `${exp} ${op}`
+        let space = getUnaryOpSpacing(s.operator)
+        let res = `${exp}${space}${op}`
         return [res, expSup]
     }
     function emitArrayLitExp(s: ts.ArrayLiteralExpression): ExpRes {
