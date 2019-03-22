@@ -43,9 +43,17 @@ namespace pxt.runner {
     }
 
     function appendJs($parent: JQuery, $js: JQuery, woptions: WidgetOptions) {
-        $parent.append($('<div class="ui content js"/>').append($js));
+        $parent.append($('<div class="ui content js"><div><i class="ui icon xicon js"/></div></div>').append($js));
         if (typeof hljs !== "undefined")
             $js.find('code.highlight').each(function (i, block) {
+                hljs.highlightBlock(block);
+            });
+    }
+
+    function appendPy($parent: JQuery, $py: JQuery, woptions: WidgetOptions) {
+        $parent.append($('<div class="ui content py"><div><i class="ui icon xicon python"/></div></div>').append($py));
+        if (typeof hljs !== "undefined")
+            $py.find('code.highlight').each(function (i, block) {
                 hljs.highlightBlock(block);
             });
     }
@@ -112,12 +120,12 @@ namespace pxt.runner {
         }
 
         if ($py) {
-            const $pyBtn = $(`<a class="item js" role="button" tabindex="0" aria-label="${"Python"}"><i role="presentation" aria-hidden="true" class="${PY_ICON}"></i></a>`).click(() => {
+            const $pyBtn = $(`<a class="item py" role="button" tabindex="0" aria-label="${"Python"}"><i role="presentation" aria-hidden="true" class="${PY_ICON}"></i></a>`).click(() => {
                 if ($c.find('.py')[0])
                     $c.find('.py').remove();
                 else {
-                    if ($svg) appendJs($svg.parent(), $py, woptions);
-                    else appendJs($c, $py, woptions);
+                    if ($svg) appendPy($svg.parent(), $py, woptions);
+                    else appendPy($c, $py, woptions);
                 }
             })
             $menu.append($pyBtn);
