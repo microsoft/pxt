@@ -542,7 +542,13 @@ namespace ts.pxtc.decompiler {
     function emitDotExp(s: ts.PropertyAccessExpression): ExpRes {
         let [left, leftSup] = emitExp(s.expression)
         let right = s.name.getText()
-        return [`${left}.${right}`, leftSup];
+        if (right === "length") {
+            // TODO confirm the type is correct!
+            return [`len(${left})`, leftSup]
+        }
+        else {
+            return [`${left}.${right}`, leftSup];
+        }
     }
     function emitCallExp(s: ts.CallExpression | ts.NewExpression): ExpRes {
         let [fn, fnSup] = emitExp(s.expression)
