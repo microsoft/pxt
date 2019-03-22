@@ -467,18 +467,24 @@ export class ProjectView
     }
 
     openPythonAsync(): Promise<void> {
-        return this.saveTypeScriptAsync(false)
+        const promise = this.saveTypeScriptAsync(false)
             .then(() => {
                 return compiler.pyDecompileAsync("main.ts");
             }).then(cres => {
                 if (cres && cres.success) {
                     const mainpy = cres.outfiles["main.py"];
-                    return this.saveVirtualFile(pxt.PYTHON_PROJECT_NAME, mainpy, true);
+                    return this.saveVirtualFileAsync(pxt.PYTHON_PROJECT_NAME, mainpy, true);
                 } else {
                     // TODO python
                     return Promise.resolve();
                 }
             })
+            .catch(e => {
+                pxt.reportException(e);
+                core.errorNotification(lf("Oops, something went wrong trying to convert your code."));
+            })
+        core.showLoadingAsync("switchtopython", lf("switching to Python..."), promise).done();
+        return promise;
     }
 
     openSimView() {
@@ -1660,13 +1666,13 @@ export class ProjectView
         return this.blocksEditor.saveToTypeScript();
     }
 
-    private saveVirtualFile(prj: string, src: string, open: boolean): Promise<void> {
-        let mainPkg = pkg.mainEditorPkg();
-        let tsName = this.editorFile.getVirtualFileName(prj);
-        Util.assert(tsName != this.editorFile.name);
-        return mainPkg.setContentAsync(tsName, src).then(() => {
+    private saveVirtualFileAsync(prj: string, src: string, open: boolean): Promise<void> {
+        const mainPkg = pkg.mainEditorPkg();
+        const fileName = this.editorFile.getVirtualFileName(prj);
+        Util.assert(fileName != this.editorFile.name);
+        return mainPkg.setContentAsync(fileName, src).then(() => {
             if (open) {
-                let f = mainPkg.files[tsName];
+                let f = mainPkg.files[fileName];
                 this.setFile(f);
             }
         });
@@ -1683,7 +1689,7 @@ export class ProjectView
                 if (!src) return Promise.resolve();
                 // format before saving
                 // if (open) src = pxtc.format(src, 0).formatted;
-                return this.saveVirtualFile(pxt.JAVASCRIPT_PROJECT_NAME, src, open);
+                return this.saveVirtualFileAsync(pxt.JAVASCRIPT_PROJECT_NAME, src, open);
             });
         });
 
