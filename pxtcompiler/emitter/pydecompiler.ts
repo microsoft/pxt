@@ -393,8 +393,29 @@ namespace ts.pxtc.decompiler {
             return []
         }
     }
+    function tryEmitIncDecUnaryStmt(s: ts.ExpressionStatement): string[] {
+        // special case ++ or -- as a statement
+        let e = s.expression;
+        if (!ts.isPrefixUnaryExpression(e) &&
+            !ts.isPostfixUnaryExpression(e))
+            return null
+        if (e.operator !== ts.SyntaxKind.MinusMinusToken &&
+            e.operator !== ts.SyntaxKind.PlusPlusToken)
+            return null
+
+        let [operand, sup] = emitExp(e.operand)
+        let incDec = e.operator === ts.SyntaxKind.MinusMinusToken ? " -= 1" : " += 1"
+
+        let out = sup
+        out.push(`${operand}${incDec}`)
+
+        return out
+    }
     function emitExpStmt(s: ts.ExpressionStatement): string[] {
-        // TODO
+        let unaryExp = tryEmitIncDecUnaryStmt(s);
+        if (unaryExp)
+            return unaryExp
+
         let [exp, expSup] = emitExp(s.expression)
         return expSup.concat([`${exp}`])
     }
@@ -511,13 +532,10 @@ namespace ts.pxtc.decompiler {
             case ts.SyntaxKind.SlashToken:
                 return "/"
             case ts.SyntaxKind.PlusPlusToken:
-                // TODO handle ++ generally. Seperate prefix and postfix cases.
-                // This is tricky because it needs to return the value and the mutate after.
-                return "+= 1"
             case ts.SyntaxKind.MinusMinusToken:
                 // TODO handle -- generally. Seperate prefix and postfix cases.
                 // This is tricky because it needs to return the value and the mutate after.
-                return "-= 1"
+                throw Error("Unsupported ++ and -- in an expression (not a statement or for loop)")
             case ts.SyntaxKind.AmpersandToken:
                 return "&"
             case ts.SyntaxKind.CaretToken:
