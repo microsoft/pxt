@@ -58,6 +58,30 @@ export interface CompileOptions {
     clickTrigger?: boolean;
 }
 
+export let emptyProgram =
+    `'use strict';
+__this.setupPerfCounters([]);
+entryPoint = function (s) {
+    // START
+    __this.kill()
+    return leave(s, s.r0)
+}
+setupDebugger(1)
+`
+
+export function emptyCompileResult(): pxtc.CompileResult {
+    return {
+        success: true,
+        diagnostics: [],
+        times: {},
+        breakpoints: [],
+        outfiles: {
+            "binary.js": emptyProgram
+                .replace("// START", pxt.appTarget.simulator.emptyRunCode || "")
+        },
+    }
+}
+
 export function compileAsync(options: CompileOptions = {}): Promise<pxtc.CompileResult> {
     let trg = pkg.mainPkg.getTargetOptions()
     trg.isNative = options.native
@@ -123,8 +147,6 @@ export function assembleAsync(src: string) {
 }
 
 function compileCoreAsync(opts: pxtc.CompileOptions): Promise<pxtc.CompileResult> {
-    // we don't want any conversion to be run on the worker side
-    opts.target.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME
     return workerOpAsync("compile", { options: opts })
 }
 
@@ -133,8 +155,6 @@ export function py2tsAsync(): Promise<{ generated: pxt.Map<string> }> {
     return waitForFirstTypecheckAsync()
         .then(() => pkg.mainPkg.getCompileOptionsAsync(trg))
         .then(opts => {
-            U.assert(!!cachedApis)
-            opts.apisInfo = cachedApis
             opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
             return workerOpAsync("py2ts", { options: opts })
         })
@@ -188,7 +208,23 @@ function decompileCoreAsync(opts: pxtc.CompileOptions, fileName: string): Promis
     return workerOpAsync("decompile", { options: opts, fileName: fileName, blocks: blocksOptions() })
 }
 
-function pydecompileCoreAsync(opts: pxtc.CompileOptions, fileName: string): Promise<pxtc.CompileResult> {
+export function pyDecompileAsync(fileName: string): Promise<pxtc.CompileResult> {
+    let trg = pkg.mainPkg.getTargetOptions()
+    return pkg.mainPkg.getCompileOptionsAsync(trg)
+        .then(opts => {
+            opts.ast = true;
+            opts.testMode = true;
+            opts.alwaysDecompileOnStart = pxt.appTarget.runtime && pxt.appTarget.runtime.onStartUnDeletable;
+            return pyDecompileCoreAsync(opts, fileName)
+        })
+        .then(resp => {
+            pkg.mainEditorPkg().outputPkg.setFiles(resp.outfiles)
+            setDiagnostics(resp.diagnostics)
+            return resp
+        })
+}
+
+function pyDecompileCoreAsync(opts: pxtc.CompileOptions, fileName: string): Promise<pxtc.CompileResult> {
     return workerOpAsync("pydecompile", { options: opts, fileName: fileName })
 }
 

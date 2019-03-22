@@ -7,11 +7,20 @@ class Foo:
       x += q
     lst = ["foo", "bar", "baz"]
     lst = lst[1:2]
-    # TODO change to len(lst)
-    assert lst.length == 2, 201
+    assert len(lst) == 2, 201
   def qux(self):
     self.baz = self.bar
     self.blah = "hello"
+    self._priv = 1
+    self._prot = self.baz
+  def _prot2(self):
+    pass
+
+class Bar(Foo):
+  def something(self):
+     super()._prot2()
+  def something2(self):
+     self._prot = 12
 
 class SpriteKind(Enum):
     Player = 0

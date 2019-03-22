@@ -223,7 +223,6 @@ namespace ts.pxtc {
             snippetMode: false,
             alwaysEmitOnStart: opts.alwaysDecompileOnStart,
             includeGreyBlockMessages,
-            useNewFunctions: opts.useNewFunctions,
             allowedArgumentTypes: opts.allowedArgumentTypes || ["number", "boolean", "string"]
         };
         const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, decompileOpts, pxtc.decompiler.buildRenameMap(program, file));

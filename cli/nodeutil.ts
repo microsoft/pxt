@@ -29,6 +29,19 @@ export interface SpawnOptions {
 export let targetDir: string = process.cwd();
 export let pxtCoreDir: string = path.join(__dirname, "..");
 
+export let cliFinalizers: (() => Promise<void>)[] = [];
+
+export function addCliFinalizer(f: () => Promise<void>) {
+    cliFinalizers.push(f)
+}
+
+export function runCliFinalizersAsync() {
+    let fins = cliFinalizers
+    cliFinalizers = []
+    return Promise.mapSeries(fins, f => f())
+        .then(() => { })
+}
+
 export function setTargetDir(dir: string) {
     targetDir = dir;
     (<any>module).paths.push(path.join(targetDir, "node_modules"));

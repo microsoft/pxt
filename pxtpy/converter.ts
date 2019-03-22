@@ -416,7 +416,10 @@ namespace pxt.py {
 
     function addSymbol(kind: SK, qname: string) {
         let sym = internalApis[qname]
-        if (sym) return sym
+        if (sym) {
+            sym.kind = kind
+            return sym
+        }
         sym = mkSymbol(kind, qname)
         internalApis[sym.qName] = sym
         return sym
@@ -478,8 +481,8 @@ namespace pxt.py {
         return null
     }
 
-    function getTypeField(t: Type, n: string, checkOnly = false) {
-        t = find(t)
+    function getTypeField(recv: Expr, n: string, checkOnly = false) {
+        let t = find(typeOf(recv))
 
         let ct = t.classType
 
@@ -488,15 +491,23 @@ namespace pxt.py {
 
         if (ct) {
             let f = getClassField(ct, n, checkOnly)
-            if (!f.isInstance)
-                error(null, U.lf("the field '{0}' of '{1}' is static", n, ct.qName))
+
+            if (f) {
+                if (!f.isInstance)
+                    error(null, U.lf("the field '{0}' of '{1}' is static", n, ct.qName))
+                if (isSuper(recv) ||
+                    (isThis(recv) && f.namespace != ctx.currClass.symInfo.qName)) {
+                    f.isProtected = true
+                }
+            }
+
             return f
         }
 
         ct = t.moduleType
         if (ct) {
             let f = getClassField(ct, n, checkOnly)
-            if (f.isInstance)
+            if (f && f.isInstance)
                 error(null, U.lf("the field '{0}' of '{1}' is not static", n, ct.qName))
             return f
         }
@@ -671,6 +682,12 @@ namespace pxt.py {
         return B.H.mkParenthesizedExpression(B.mkCommaSep(lst))
     }
 
+    function accessAnnot(f: SymbolInfo) {
+        if (f.name[0] != "_")
+            return B.mkText("")
+        return f.isProtected ? B.mkText("protected ") : B.mkText("private ")
+    }
+
     const numOps: Map<number> = {
         Sub: 1,
         Div: 1,
@@ -763,11 +780,12 @@ namespace pxt.py {
         FunctionDef: (n: py.FunctionDef) => guardedScope(n, () => {
             const isMethod = !!ctx.currClass && !ctx.currFun
 
-            const sym = addSymbolFor(isMethod ? SK.Method : SK.Function, n)
-
             const topLev = isTopLevel()
 
             setupScope(n)
+            const sym = addSymbolFor(isMethod ? SK.Method : SK.Function, n)
+
+            if (isMethod) sym.isInstance = true
             ctx.currFun = n
             let prefix = ""
             let funname = n.name
@@ -860,8 +878,10 @@ namespace pxt.py {
                     nodes.push(B.mkText(" extends "))
                     nodes.push(B.mkCommaSep(n.bases.map(expr)))
                     let b = getClassDef(n.bases[0])
-                    if (b)
+                    if (b) {
                         n.baseClass = b
+                        sym.extendsTypes = [b.symInfo.qName]
+                    }
                 }
             }
             let body = stmts(n.body)
@@ -869,7 +889,7 @@ namespace pxt.py {
 
             let fieldDefs = listClassFields(n)
                 .filter(f => f.kind == SK.Property && f.isInstance)
-                .map((f) => B.mkStmt(quote(f.name), typeAnnot(f.pyRetType)))
+                .map((f) => B.mkStmt(accessAnnot(f), quote(f.name), typeAnnot(f.pyRetType)))
             body.children = fieldDefs.concat(body.children)
 
             return B.mkStmt(B.mkGroup(nodes))
@@ -912,11 +932,11 @@ namespace pxt.py {
             if (nm && ctx.currClass && !ctx.currFun) {
                 // class fields can't be const
                 isConstCall = false;
-                let src = expr(n.value)
                 let fd = getClassField(ctx.currClass.symInfo, nm)
-                let attrTp = typeOf(n.value)
-                let getter = getTypeField(attrTp, "__get__", true)
                 /*
+                let src = expr(n.value)
+                let attrTp = typeOf(n.value)
+                let getter = getTypeField(n.value, "__get__", true)
                 if (getter) {
                     unify(n, fd.pyRetType, getter.pyRetType)
                     let implNm = "_" + nm
@@ -1246,6 +1266,7 @@ namespace pxt.py {
         "min": { n: "Math.min", t: tpNumber },
         "max": { n: "Math.max", t: tpNumber },
         "string.lower": { n: ".toLowerCase()", t: tpString },
+        "string.upper": { n: ".toUpperCase()", t: tpString },
         "ord": { n: ".charCodeAt(0)", t: tpNumber },
         "bytearray": { n: "pins.createBuffer", t: tpBuffer },
         "bytes": { n: "pins.createBufferFromArray", t: tpBuffer },
@@ -1359,7 +1380,6 @@ namespace pxt.py {
             let recvTp: Type
             let recv: py.Expr
             let methName: string
-            let fd: py.FunctionDef
 
             if (isClass) {
                 fun = lookupGlobalSymbol(namedSymbol.qName + ".__constructor")
@@ -1370,29 +1390,25 @@ namespace pxt.py {
                     recvTp = typeOf(recv)
                     if (recvTp.classType) {
                         methName = attr.attr
-                        fun = getTypeField(recvTp, methName)
+                        fun = getTypeField(recv, methName, true)
                     }
-                    /*
-                    if (field) {
-                        if (isSuper(recv) || (isThis(recv) && field.inClass != ctx.currClass)) {
-                            field.isProtected = true
-                        }
-                    }
-                    if (field && field.fundef)
-                        fd = field.fundef
-                        */
                 }
             }
 
+            let orderedArgs = n.args.slice()
+
             let nm = getName(n.func)
-            if (fun && fun.pyAST && fun.pyAST.kind == "FunctionDef")
-                fd = fun.pyAST as py.FunctionDef
-            else {
+
+            if (nm == "super" && orderedArgs.length == 0) {
+                if (ctx.currClass && ctx.currClass.baseClass)
+                    unifyClass(n, n.tsType, ctx.currClass.baseClass.symInfo)
+                return B.mkText("super")
+            }
+
+            if (!fun) {
                 let over = U.lookup(funMap, nm)
-                if (over) {
+                if (over)
                     methName = ""
-                    recv = null
-                }
 
                 if (methName) {
                     nm = t2s(recvTp) + "." + methName
@@ -1403,14 +1419,25 @@ namespace pxt.py {
                     }
                 }
 
-                if (over)
-                    fun = lookupGlobalSymbol(over.n)
+                methName = ""
+
+                if (over) {
+                    if (over.n[0] == "." && orderedArgs.length) {
+                        recv = orderedArgs.shift()
+                        recvTp = typeOf(recv)
+                        methName = over.n.slice(1)
+                        fun = getTypeField(recv, methName)
+                        if (fun && fun.kind == SK.Property)
+                            return B.mkInfix(expr(recv), ".", B.mkText(methName))
+                    } else {
+                        fun = lookupGlobalSymbol(over.n)
+                    }
+                }
             }
 
             if (!fun)
                 error(n, U.lf("can't find called function"))
 
-            let orderedArgs = n.args.slice()
             let formals = fun ? fun.parameters : null
             let allargs: B.JsNode[] = []
             if (!formals) {
@@ -1460,25 +1487,7 @@ namespace pxt.py {
             if (fun)
                 unifyTypeOf(n, fun.pyRetType)
 
-            /*
-            if (nm == "super" && allargs.length == 0) {
-                if (ctx.currClass && ctx.currClass.baseClass)
-                    unifyClass(n, n.tsType, ctx.currClass.baseClass.symInfo)
-                return B.mkText("super")
-            }
-            */
-
-            let fn = expr(n.func)
-
-            /*
-            if (recvTp && recvTp.primType == "@array") {
-                if (methName == "append") {
-                    methName = "push"
-                    unifyTypeOf(n.args[0], recvTp.typeArgs[0])
-                }
-                fn = B.mkInfix(expr(recv), ".", B.mkText(methName))
-            }
-            */
+            let fn = methName ? B.mkInfix(expr(recv), ".", B.mkText(methName)) : expr(n.func)
 
             let nodes = [
                 fn,
@@ -1516,7 +1525,7 @@ namespace pxt.py {
         Constant: (n: py.Constant) => exprTODO(n),
         Attribute: (n: py.Attribute) => {
             let part = typeOf(n.value)
-            let fd = getTypeField(part, n.attr)
+            let fd = getTypeField(n.value, n.attr)
             if (fd) unify(n, n.tsType, fd.pyRetType)
             else if (part.moduleType) {
                 let sym = lookupGlobalSymbol(part.moduleType.qName + "." + n.attr)

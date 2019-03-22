@@ -3489,7 +3489,6 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
             .then(() => pkg.getCompileOptionsAsync())
             .then(opts => {
                 opts.ast = true;
-                opts.useNewFunctions = pxt.appTarget.runtime && pxt.appTarget.runtime.functionsOptions && pxt.appTarget.runtime.functionsOptions.useNewFunctions;
                 const decompiled = pxtc.decompile(opts, "main.ts");
                 if (decompiled.success) {
                     resolve(decompiled.outfiles["main.blocks"]);
@@ -3589,13 +3588,9 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
                         const file = resp.ast.getSourceFile('main.ts');
                         const apis = pxtc.getApiInfo(opts, resp.ast);
                         const blocksInfo = pxtc.getBlocksInfo(apis);
-                        const useNewFunctions = pxt.appTarget.runtime &&
-                            pxt.appTarget.runtime.functionsOptions &&
-                            pxt.appTarget.runtime.functionsOptions.useNewFunctions;
                         const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, {
                             snippetMode: false,
-                            errorOnGreyBlocks: true,
-                            useNewFunctions
+                            errorOnGreyBlocks: true
                         });
                         const success = !!bresp.outfiles['main.blocks']
                         if (success) return addSuccess(name)
@@ -3731,6 +3726,12 @@ function gdbAsync(c: commandParser.ParsedCommand) {
     setBuildEngine();
     return mainPkg.loadAsync()
         .then(() => gdb.startAsync(c.args))
+}
+
+function hwAsync(c: commandParser.ParsedCommand) {
+    ensurePkgDir()
+    return mainPkg.loadAsync()
+        .then(() => gdb.hwAsync(c.args))
 }
 
 function dumplogAsync(c: commandParser.ParsedCommand) {
@@ -5772,6 +5773,14 @@ PXT_ASMDEBUG     - embed additional information in generated binary.asm file
     }, gdbAsync);
 
     p.defineCommand({
+        name: "hw",
+        help: "apply hardware operation (via BMP)",
+        argString: "reset|boot",
+        anyArgs: true,
+        advanced: true,
+    }, hwAsync);
+
+    p.defineCommand({
         name: "dmesg",
         help: "attempt to dump DMESG log using openocd",
         argString: "",
@@ -6022,6 +6031,7 @@ export function mainCli(targetDir: string, args: string[] = process.argv.slice(2
                 .then(() => {
                     if (readlineCount)
                         (process.stdin as any).unref();
+                    return nodeutil.runCliFinalizersAsync()
                 });
         });
 }

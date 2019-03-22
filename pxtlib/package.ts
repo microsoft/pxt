@@ -822,7 +822,6 @@ namespace pxt {
                     }
                     opts.jres = this.getJRes()
                     const functionOpts = pxt.appTarget.runtime && pxt.appTarget.runtime.functionsOptions;
-                    opts.useNewFunctions = functionOpts && functionOpts.useNewFunctions;
                     opts.allowedArgumentTypes = functionOpts && functionOpts.extraFunctionEditorTypes && functionOpts.extraFunctionEditorTypes.map(info => info.typeName).concat("number", "boolean", "string");
                     return opts;
                 })

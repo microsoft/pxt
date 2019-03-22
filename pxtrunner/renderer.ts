@@ -63,7 +63,7 @@ namespace pxt.runner {
         let $menu = $h.find('.right.menu');
 
         const theme = pxt.appTarget.appTheme || {};
-        if (woptions.showEdit && !theme.hideDocsEdit) { // edit button
+        if (woptions.showEdit && !theme.hideDocsEdit && decompileResult) { // edit button
             const $editBtn = $(`<a class="item" role="button" tabindex="0" aria-label="${lf("edit")}"><i role="presentation" aria-hidden="true" class="edit icon"></i></a>`).click(() => {
                 decompileResult.package.setPreferredEditor(options.showJavaScript ? pxt.JAVASCRIPT_PROJECT_NAME : pxt.BLOCKS_PROJECT_NAME)
                 decompileResult.package.compressToFileAsync()
@@ -664,7 +664,7 @@ namespace pxt.runner {
                 opts.run = false;
                 opts.showEdit = false;
             }
-            fillWithWidget(options, $(e).parent(), $(e), undefined, undefined, opts);
+            fillWithWidget(options, $(e).parent(), $(e), /* JQuery */ undefined, /* decompileResult */ undefined, opts);
         }
 
         $('code.lang-typescript').each((i, e) => {

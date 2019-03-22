@@ -2194,42 +2194,38 @@ namespace pxt.blocks {
             return xmlList;
         }
 
+        // Patch new functions flyout to add the heading
+        const oldFlyout = Blockly.Functions.flyoutCategory;
+        Blockly.Functions.flyoutCategory = (workspace) => {
+            const elems = oldFlyout(workspace);
+            const headingLabel = createFlyoutHeadingLabel(lf("Functions"),
+                pxt.toolbox.getNamespaceColor('functions'),
+                pxt.toolbox.getNamespaceIcon('functions'),
+                'blocklyFlyoutIconfunctions');
+            elems.unshift(headingLabel);
+            return elems;
+        };
+
+        // Configure function editor argument icons
+        const iconsMap: pxt.Map<string> = {
+            number: pxt.blocks.defaultIconForArgType("number"),
+            boolean: pxt.blocks.defaultIconForArgType("boolean"),
+            string: pxt.blocks.defaultIconForArgType("string")
+        };
+        const customNames: pxsim.Map<string> = {};
+
         const functionOptions = pxt.appTarget.runtime && pxt.appTarget.runtime.functionsOptions;
-        if (functionOptions) {
-            if (functionOptions.useNewFunctions) {
-                // Patch new functions flyout to add the heading
-                const oldFlyout = Blockly.Functions.flyoutCategory;
-                Blockly.Functions.flyoutCategory = (workspace) => {
-                    const elems = oldFlyout(workspace);
-                    const headingLabel = createFlyoutHeadingLabel(lf("Functions"),
-                        pxt.toolbox.getNamespaceColor('functions'),
-                        pxt.toolbox.getNamespaceIcon('functions'),
-                        'blocklyFlyoutIconfunctions');
-                    elems.unshift(headingLabel);
-                    return elems;
-                };
-            }
+        if (functionOptions && functionOptions.extraFunctionEditorTypes) {
+            functionOptions.extraFunctionEditorTypes.forEach(t => {
+                iconsMap[t.typeName] = t.icon || pxt.blocks.defaultIconForArgType();
 
-            // Configure function editor argument icons
-            const iconsMap: pxt.Map<string> = {
-                number: pxt.blocks.defaultIconForArgType("number"),
-                boolean: pxt.blocks.defaultIconForArgType("boolean"),
-                string: pxt.blocks.defaultIconForArgType("string")
-            };
-            const customNames: pxsim.Map<string> = {};
-
-            if (functionOptions.extraFunctionEditorTypes) {
-                functionOptions.extraFunctionEditorTypes.forEach(t => {
-                    iconsMap[t.typeName] = t.icon || pxt.blocks.defaultIconForArgType();
-
-                    if (t.defaultName) {
-                        customNames[t.typeName] = t.defaultName;
-                    }
-                });
-            }
-            Blockly.PXTBlockly.FunctionUtils.argumentIcons = iconsMap;
-            Blockly.PXTBlockly.FunctionUtils.argumentDefaultNames = customNames;
+                if (t.defaultName) {
+                    customNames[t.typeName] = t.defaultName;
+                }
+            });
         }
+        Blockly.PXTBlockly.FunctionUtils.argumentIcons = iconsMap;
+        Blockly.PXTBlockly.FunctionUtils.argumentDefaultNames = customNames;
 
         if (Blockly.Blocks["argument_reporter_custom"]) {
             // The logic for setting the output check relies on the internals of PXT
