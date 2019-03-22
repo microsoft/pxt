@@ -105,7 +105,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             pubCurrent: header.pubCurrent,
             sharingError: false,
             screenshotUri: undefined
-        }, thumbnails? () => this.props.parent.startSimulator() : undefined);
+        }, thumbnails ? (() => this.props.parent.startSimulator()) : undefined);
     }
 
     handleScreenshotMessage(msg: pxt.editor.ScreenshotData) {
