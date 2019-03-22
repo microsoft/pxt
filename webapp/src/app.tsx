@@ -360,19 +360,17 @@ export class ProjectView
             this.textEditor.giveFocusOnLoading = giveFocusOnLoading;
         }
 
-        // make sure there's .py file
-        const mpkg = pkg.mainEditorPkg();
-        const mainpy = mpkg.files["main.py"];
-        if (!mainpy)
-            mpkg.setFile("main.py", "# ...");
-
         // switch
         if (this.isBlocksActive()) {
-            // TODO
-            // this.blocksEditor.openTypeScript();
-            this.setFile(pkg.mainEditorPkg().files["main.py"])
-        }
-        else {
+            this.blocksEditor.openPython();
+        } else if (this.isJavaScriptActive()) {
+            this.openPythonAsync().done();
+        } else {
+            // make sure there's .py file
+            const mpkg = pkg.mainEditorPkg();
+            const mainpy = mpkg.files["main.py"];
+            if (!mainpy)
+                mpkg.setFile("main.py", "# ...");
             this.setFile(pkg.mainEditorPkg().files["main.py"])
         }
     }
@@ -466,6 +464,14 @@ export class ProjectView
 
     openTypeScriptAsync(): Promise<void> {
         return this.saveTypeScriptAsync(true);
+    }
+
+    openPythonAsync(): Promise<void> {
+        // always serialize to ts before reopening
+        return this.saveTypeScriptAsync(false)
+            .then(() => {
+                // TODO decompiler
+            })
     }
 
     openSimView() {

@@ -866,6 +866,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.parent.openTypeScriptAsync().done();
     }
 
+    openPython() {
+        pxt.tickEvent("blocks.showpython");
+        this.parent.closeFlyout();
+        this.parent.openPythonAsync().done();
+    }
+
     private cleanUpShadowBlocks() {
         const blocks = this.editor.getTopBlocks(false);
         blocks.filter(b => b.isShadow_).forEach(b => b.dispose(false));

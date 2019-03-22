@@ -164,6 +164,7 @@ namespace pxt.editor {
 
         switchTypeScript(): void;
         openTypeScriptAsync(): Promise<void>;
+        openPythonAsync(): Promise<void>;
         saveBlocksToTypeScriptAsync(): Promise<string>;
 
         saveFileAsync(): Promise<void>;
