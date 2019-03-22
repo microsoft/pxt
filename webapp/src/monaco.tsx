@@ -66,12 +66,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return (blockFile && pkg.mainEditorPkg().files[blockFile] != null)
     }
 
-    public openPython() {
-        // TODO:
-    }
-
     public openBlocks() {
-        pxt.tickEvent("typescript.showBlocks");
+        pxt.tickEvent(`typescript.showBlocks`);
         let initPromise = Promise.resolve();
 
         if (!this.currFile) {
@@ -85,9 +81,15 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
 
         let promise = initPromise.then(() => {
+            const isPython = this.fileType == FileType.Python;
+            const tickLang = isPython ? "python" : "typescript";
+            pxt.tickEvent(`${tickLang}.convertBlocks`);
+
             const mainPkg = pkg.mainEditorPkg();
-            if (!this.hasBlocks() && !mainPkg && !mainPkg.files["main.blocks"])
+            if (!this.hasBlocks() && !mainPkg && !mainPkg.files["main.blocks"]) {
+                pxt.debug(`cancelling convertion to blocks, but main.blocks is missing`);
                 return undefined;
+            }
 
             if (this.feWidget) {
                 this.feWidget.close();
@@ -95,6 +97,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }
 
             let blockFile = this.currFile.getVirtualFileName(pxt.BLOCKS_PROJECT_NAME);
+            let tsFile = isPython
+                ? this.currFile.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)
+                : this.currFile.name;
             if (!this.hasBlocks()) {
                 if (!mainPkg || !mainPkg.files["main.blocks"]) {
                     // Either the project isn't loaded, or it's ts-only
@@ -108,6 +113,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 // to main.ts instead
                 this.currFile = mainPkg.files["main.ts"];
                 blockFile = this.currFile.getVirtualFileName(pxt.BLOCKS_PROJECT_NAME);
+                tsFile = "main.ts";
             }
 
             const failedAsync = (file: string, programTooLarge = false) => {
@@ -124,7 +130,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             // 2) decompile js -> blocks then take the decompiled blocks -> js
             // 3) check that decompiled js == current js % white space
             let blocksInfo: pxtc.BlocksInfo;
-            return this.parent.saveFileAsync()
+            return this.saveToTypeScript() // make sure Python gets converted
+                .then(() => this.parent.saveFileAsync())
                 .then(() => this.parent.loadBlocklyAsync())
                 .then(() => compiler.getBlocksAsync())
                 .then((bi: pxtc.BlocksInfo) => {
@@ -137,8 +144,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                             return compiler.formatAsync(oldJs, 0).then((oldFormatted: any) => {
                                 return compiler.formatAsync(this.editor.getValue(), 0).then((newFormatted: any) => {
                                     if (oldFormatted.formatted == newFormatted.formatted) {
-                                        pxt.debug('js not changed, skipping decompile');
-                                        pxt.tickEvent("typescript.noChanges")
+                                        pxt.debug(`${tickLang} not changed, skipping decompile`);
+                                        pxt.tickEvent(`${tickLang}.noChanges`)
                                         this.parent.setFile(mainPkg.files[blockFile]);
                                         return [oldWorkspace, false]; // return false to indicate we don't want to decompile
                                     } else {
@@ -157,7 +164,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     return compiler.compileAsync()
                         .then(resp => {
                             if (resp.success) {
-                                return compiler.decompileAsync(this.currFile.name, blocksInfo, oldWorkspace, blockFile)
+                                return compiler.decompileAsync(tsFile, blocksInfo, oldWorkspace, blockFile)
                                     .then(resp => {
                                         if (!resp.success) {
                                             this.currFile.diagnostics = resp.diagnostics;
