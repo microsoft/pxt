@@ -492,6 +492,10 @@ namespace pxsim {
                             this.options.revealElement(frame);
                     }
                     break;
+                case 'status':
+                    if ((msg as SimulatorStateMessage).state == "killed")
+                        this.setState(SimulatorState.Stopped)
+                    break;
                 case 'simulator': this.handleSimulatorCommand(msg as pxsim.SimulatorCommandMessage); break; //handled elsewhere
                 case 'serial':
                 case 'pxteditor':

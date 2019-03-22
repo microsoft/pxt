@@ -58,6 +58,30 @@ export interface CompileOptions {
     clickTrigger?: boolean;
 }
 
+export let emptyProgram =
+    `'use strict';
+__this.setupPerfCounters([]);
+entryPoint = function (s) {
+    // START
+    __this.kill()
+    return leave(s, s.r0)
+}
+setupDebugger(1)
+`
+
+export function emptyCompileResult(): pxtc.CompileResult {
+    return {
+        success: true,
+        diagnostics: [],
+        times: {},
+        breakpoints: [],
+        outfiles: {
+            "binary.js": emptyProgram
+                .replace("// START", pxt.appTarget.simulator.emptyRunCode || "")
+        },
+    }
+}
+
 export function compileAsync(options: CompileOptions = {}): Promise<pxtc.CompileResult> {
     let trg = pkg.mainPkg.getTargetOptions()
     trg.isNative = options.native
