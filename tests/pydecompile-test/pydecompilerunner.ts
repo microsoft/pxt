@@ -71,6 +71,7 @@ describe("pydecompiler", () => {
         "shadowing",
         "always_decompile_renames",
         "always_decompile_renames_expressions",
+        "always_unsupported_operators", // >>>
     ]
     filenames = filenames
         .filter(f => !blacklist.some(s => f.indexOf(s) > 0))
@@ -115,15 +116,19 @@ function pydecompileTestAsync(filename: string) {
                 if (!compareBaselines(decompiled, baseline)) {
                     fs.writeFileSync(outFile, decompiled)
                     // TODO(dz)
-                    console.log("-- INPUT");
-                    console.log(fs.readFileSync(filename, 'utf8'))
-                    console.log("-- OUTPUT");
-                    console.log(fs.readFileSync(outFile, 'utf8'))
-                    console.log("-- DESIRED");
-                    console.log(baseline)
+                    // console.log("-- INPUT");
+                    // console.log(fs.readFileSync(filename, 'utf8'))
+                    // console.log("-- OUTPUT");
+                    // console.log(fs.readFileSync(outFile, 'utf8'))
+                    // console.log("-- DESIRED");
+                    // console.log(baseline)
                     fail(`${basename} did not match baseline, output written to ${outFile}`);
                 }
-            }, error => fail("Could not decompile: " + error.stack))
+            }, error => {
+                const outFile = path.join(replaceFileExtension(baselineFile, ".local.py"));
+                fs.writeFileSync(outFile, error.stack)
+                fail("Could not decompile: " + error.stack)
+            })
             .then(() => resolve(), reject);
     });
 }
