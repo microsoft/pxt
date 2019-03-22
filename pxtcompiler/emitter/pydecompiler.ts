@@ -96,6 +96,8 @@ namespace ts.pxtc.decompiler {
                 return emitIf(s as ts.IfStatement)
             case ts.SyntaxKind.ForStatement:
                 return emitForStmt(s as ts.ForStatement)
+            case ts.SyntaxKind.ForOfStatement:
+                return emitForOfStmt(s as ts.ForOfStatement)
             case ts.SyntaxKind.WhileStatement:
                 return emitWhileStmt(s as ts.WhileStatement)
             case ts.SyntaxKind.Block:
@@ -191,6 +193,34 @@ namespace ts.pxtc.decompiler {
 
         return result
     }
+    function emitBody(s: ts.Statement): string[] {
+        let body = emitStmt(s)
+            .map(indent1)
+        if (body.length < 1)
+            body = [indent1("pass")]
+        return body
+    }
+    function emitForOfStmt(s: ts.ForOfStatement): string[] {
+        if (!ts.isVariableDeclarationList(s.initializer))
+            throw Error("Unsupported expression in for..of initializer: " + s.initializer.getText()) // TOOD
+
+        let names = s.initializer.declarations
+            .map(d => d.name.getText())
+        if (names.length !== 1)
+            throw Error("Unsupported multiple declerations in for..of: " + s.initializer.getText()) // TODO
+        let name = names[0]
+
+        let [exp, expSup] = emitExp(s.expression)
+
+        let out = expSup
+        out.push(`for ${name} in ${exp}:`)
+
+        let body = emitBody(s.statement)
+
+        out = out.concat(body)
+
+        return out
+    }
     function emitForStmt(s: ts.ForStatement): string[] {
         let rangeItr = getSimpleForRange(s)
         if (rangeItr) {
@@ -205,10 +235,7 @@ namespace ts.pxtc.decompiler {
                 ? `for ${name} in range(${toExcl}):`
                 : `for ${name} in range(${fromIncl}, ${toExcl}):`;
 
-            let body = emitStmt(s.statement)
-                .map(indent1)
-            if (!body.length)
-                body = [indent1("pass")]
+            let body = emitBody(s.statement)
 
             return [forStmt].concat(body)
         }
