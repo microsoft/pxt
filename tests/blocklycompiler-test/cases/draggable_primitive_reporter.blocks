@@ -1,0 +1,43 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+  <variables>
+    <variable type="" id="kp;iJ:a}WgI=?D+za9b#">asdfsadf</variable>
+  </variables>
+  <block type="radio_on_number_2" x="0" y="0">
+    <value name="HANDLER_DRAG_PARAM_receivedNumber">
+      <shadow type="argument_reporter_number">
+        <field name="VALUE">receivedNumber</field>
+      </shadow>
+    </value>
+    <statement name="HANDLER">
+      <block type="device_show_number">
+        <value name="number">
+          <shadow type="math_number" id="()(l(2Af$zIB[dmq}du[">
+            <field name="NUM">0</field>
+          </shadow>
+          <block type="argument_reporter_number">
+            <field name="VALUE">receivedNumber</field>
+          </block>
+        </value>
+      </block>
+    </statement>
+  </block>
+  <block type="radio_on_string_2" x="3" y="158">
+    <value name="HANDLER_DRAG_PARAM_receivedString">
+      <shadow type="argument_reporter_string">
+        <field name="VALUE">receivedString</field>
+      </shadow>
+    </value>
+    <statement name="HANDLER">
+      <block type="device_print_message">
+        <value name="text">
+          <shadow type="text" id="k^a@`@4?MJU,L73Sc#2]">
+            <field name="TEXT">Hello!</field>
+          </shadow>
+          <block type="argument_reporter_string">
+            <field name="VALUE">receivedString</field>
+          </block>
+        </value>
+      </block>
+    </statement>
+  </block>
+</xml>
