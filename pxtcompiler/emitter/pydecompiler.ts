@@ -585,13 +585,26 @@ namespace ts.pxtc.decompiler {
     function emitDotExp(s: ts.PropertyAccessExpression): ExpRes {
         let [left, leftSup] = emitExp(s.expression)
         let right = s.name.getText()
+        // special: foo.length
         if (right === "length") {
             // TODO confirm the type is correct!
             return [`len(${left})`, leftSup]
         }
-        else {
-            return [`${left}.${right}`, leftSup];
+        // special: Math.fn
+        if (left === "Math") {
+            // TODO make this safer. This is syntactic matching, but we really need semantics
+            let mathFn = ""
+            if (right === "max") {
+                mathFn = "max"
+            } else if (right === "min") {
+                mathFn = "min"
+            } else {
+                throw Error(`Unsupported math fn: ${left}.${right}`);
+            }
+            return [mathFn, leftSup]
         }
+
+        return [`${left}.${right}`, leftSup];
     }
     function emitCallExp(s: ts.CallExpression | ts.NewExpression): ExpRes {
         let [fn, fnSup] = emitExp(s.expression)
@@ -673,6 +686,7 @@ namespace ts.pxtc.decompiler {
         return asExpRes(`"""${s.text}"""`)
     }
     function emitIdentifierExp(s: ts.Identifier): ExpRes {
+        // TODO disallow keywords and built-ins? Do variable renaming?
         let id = s.text;
         if (id == "undefined")
             return asExpRes("None")
