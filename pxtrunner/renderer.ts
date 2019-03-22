@@ -1,6 +1,9 @@
 /* tslint:disable:no-jquery-raw-elements TODO(tslint): get rid of jquery html() calls */
 
 namespace pxt.runner {
+    const JS_ICON = "icon xicon js";
+    const PY_ICON = "icon xicon python";
+    const BLOCKS_ICON = "puzzle icon"
 
     export interface ClientRenderOptions {
         snippetClass?: string;
@@ -51,12 +54,12 @@ namespace pxt.runner {
         options: ClientRenderOptions,
         $container: JQuery,
         $js: JQuery,
+        $py: JQuery,
         $svg: JQuery,
         decompileResult: DecompileResult,
         woptions: WidgetOptions = {}
     ) {
         const cdn = pxt.webConfig.commitCdnUrl
-        let images = cdn + "images"
         let $h = $('<div class="ui bottom attached tabular icon small compact menu hideprint">'
             + ' <div class="right icon menu"></div></div>');
         let $c = $('<div class="ui top attached segment codewidget"></div>');
@@ -78,7 +81,7 @@ namespace pxt.runner {
 
             // js menu
             if ($svg) {
-                const $svgBtn = $(`<a class="item blocks" role="button" tabindex="0" aria-label="${lf("Blocks")}"><i role="presentation" aria-hidden="true" class="puzzle icon"></i></a>`).click(() => {
+                const $svgBtn = $(`<a class="item blocks" role="button" tabindex="0" aria-label="${lf("Blocks")}"><i role="presentation" aria-hidden="true" class="${BLOCKS_ICON}"></i></a>`).click(() => {
                     if ($c.find('.blocks')[0])
                         $c.find('.blocks').remove();
                     else {
@@ -96,7 +99,7 @@ namespace pxt.runner {
             if (woptions.showJs) {
                 appendJs($c, $js, woptions);
             } else {
-                const $jsBtn = $(`<a class="item js" role="button" tabindex="0" aria-label="${"JavaScript"}"><i role="presentation" aria-hidden="true" class="align left icon"></i></a>`).click(() => {
+                const $jsBtn = $(`<a class="item js" role="button" tabindex="0" aria-label="${"JavaScript"}"><i role="presentation" aria-hidden="true" class="${JS_ICON}"></i></a>`).click(() => {
                     if ($c.find('.js')[0])
                         $c.find('.js').remove();
                     else {
@@ -106,6 +109,18 @@ namespace pxt.runner {
                 })
                 $menu.append($jsBtn);
             }
+        }
+
+        if ($py) {
+            const $pyBtn = $(`<a class="item js" role="button" tabindex="0" aria-label="${"Python"}"><i role="presentation" aria-hidden="true" class="${PY_ICON}"></i></a>`).click(() => {
+                if ($c.find('.py')[0])
+                    $c.find('.py').remove();
+                else {
+                    if ($svg) appendJs($svg.parent(), $py, woptions);
+                    else appendJs($c, $py, woptions);
+                }
+            })
+            $menu.append($pyBtn);
         }
 
         // runner menu
@@ -197,14 +212,16 @@ namespace pxt.runner {
         let snippetCount = 0;
         return renderNextSnippetAsync(options.snippetClass, (c, r) => {
             const s = r.compileBlocks && r.compileBlocks.success ? $(r.blocksSvg) : undefined;
+            const p = r.compilePython && r.compilePython.success && r.compilePython.outfiles["main.py"];
             const js = $('<code class="lang-typescript highlight"/>').text(c.text().trim());
+            const py = p ? $('<code class="lang-python highlight"/>').text(p.trim()) : undefined;
             if (options.snippetReplaceParent) c = c.parent();
             const compiled = r.compileJS && r.compileJS.success;
             // TODO should this use pxt.outputName() and not pxtc.BINARY_HEX
             const hex = options.hex && compiled && r.compileJS.outfiles[pxtc.BINARY_HEX]
                 ? r.compileJS.outfiles[pxtc.BINARY_HEX] : undefined;
             const hexname = `${appTarget.nickname || appTarget.id}-${options.hexName || ''}-${snippetCount++}.hex`;
-            fillWithWidget(options, c, js, s, r, {
+            fillWithWidget(options, c, js, py, s, r, {
                 showEdit: options.showEdit,
                 run: options.simulator,
                 hexname: hexname,
@@ -242,9 +259,10 @@ namespace pxt.runner {
             const s = xml ? $(pxt.blocks.render(xml)) : r.compileBlocks && r.compileBlocks.success ? $(r.blocksSvg) : undefined;
             let sig = info.decl.getText().replace(/^export/, '');
             sig = sig.slice(0, sig.indexOf('{')).trim() + ';';
-            let js = $('<code class="lang-typescript highlight"/>').text(sig);
+            const js = $('<code class="lang-typescript highlight"/>').text(sig);
+            const py = $('<code class="lang-python highlight"/>').text(sig);
             if (options.snippetReplaceParent) c = c.parent();
-            fillWithWidget(options, c, js, s, r, { showJs: true, hideGutter: true });
+            fillWithWidget(options, c, js, py, s, r, { showJs: true, hideGutter: true });
         }, { package: options.package, snippetMode: true, aspectRatio: options.blocksAspectRatio });
     }
 
@@ -664,7 +682,7 @@ namespace pxt.runner {
                 opts.run = false;
                 opts.showEdit = false;
             }
-            fillWithWidget(options, $(e).parent(), $(e), /* JQuery */ undefined, /* decompileResult */ undefined, opts);
+            fillWithWidget(options, $(e).parent(), $(e), /* py */ undefined, /* JQuery */ undefined, /* decompileResult */ undefined, opts);
         }
 
         $('code.lang-typescript').each((i, e) => {
