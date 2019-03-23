@@ -1478,7 +1478,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const snippet = isPython ? fn.pySnippet : fn.snippet;
         if (!snippet)
             return undefined;
-        const snippetName = (isPython ? fn.pySnippetName : undefined) || fn.snippetName || fn.name ;
+        const snippetName = (isPython ? fn.pySnippetName : undefined) || fn.snippetName || fn.name;
 
         let monacoBlockArea = document.createElement('div');
         monacoBlockArea.className = `monacoBlock ${isDisabled ? 'monacoDisabledBlock' : ''}`;
@@ -1655,7 +1655,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 monacoBlock.appendChild(instanceToken);
             }
             let methodToken = document.createElement('span');
-            methodToken.textContent =snippetName;
+            methodToken.textContent = snippetName;
             monacoBlock.appendChild(methodToken);
         }
         monacoBlock.appendChild(sigToken);
