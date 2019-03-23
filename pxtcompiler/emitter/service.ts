@@ -689,6 +689,12 @@ namespace ts.pxtc.service {
         fileDiags: v => patchUpDiagnostics(fileDiags(v.fileName)),
 
         allDiags: () => {
+            addApiInfo(host.opts)
+
+            let convDiag = runConversions(host.opts)
+            if (convDiag.length > 0)
+                return convDiag
+
             let global = service.getCompilerOptionsDiagnostics() || []
             let byFile = host.getScriptFileNames().map(fileDiags)
             let allD: ReadonlyArray<Diagnostic> = global.concat(Util.concat(byFile))

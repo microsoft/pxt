@@ -203,8 +203,6 @@ namespace pxt.py {
         return {
             startPos: t.startPos,
             endPos: t.endPos,
-            lineno: null,
-            col_offset: null,
             kind
         }
     }

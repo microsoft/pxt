@@ -39,8 +39,6 @@ namespace pxt.py {
 
     // based on grammar at https://docs.python.org/3/library/ast.html
     export interface AST {
-        lineno: number;
-        col_offset: number;
         startPos?: number;
         endPos?: number;
         kind: string;
