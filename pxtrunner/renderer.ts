@@ -42,20 +42,24 @@ namespace pxt.runner {
         $parent.append($('<div class="ui content blocks"/>').append($svg));
     }
 
-    function appendJs($parent: JQuery, $js: JQuery, woptions: WidgetOptions) {
-        $parent.append($('<div class="ui content js"><div><i class="ui icon xicon js"/></div></div>').append($js));
-        if (typeof hljs !== "undefined")
-            $js.find('code.highlight').each(function (i, block) {
+    function highlight($js: JQuery) {
+        if (typeof hljs !== "undefined") {
+            if ($js.hasClass("highlight"))
+                hljs.highlightBlock($js[0]);
+            else $js.find('code.highlight').each(function (i, block) {
                 hljs.highlightBlock(block);
             });
+        }
+    }
+
+    function appendJs($parent: JQuery, $js: JQuery, woptions: WidgetOptions) {
+        $parent.append($('<div class="ui content js"><div><i class="ui icon xicon js"/></div></div>').append($js));
+        highlight($js);
     }
 
     function appendPy($parent: JQuery, $py: JQuery, woptions: WidgetOptions) {
         $parent.append($('<div class="ui content py"><div><i class="ui icon xicon python"/></div></div>').append($py));
-        if (typeof hljs !== "undefined")
-            $py.find('code.highlight').each(function (i, block) {
-                hljs.highlightBlock(block);
-            });
+        highlight($py);
     }
 
     function fillWithWidget(
