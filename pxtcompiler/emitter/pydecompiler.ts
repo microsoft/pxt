@@ -20,13 +20,19 @@ namespace ts.pxtc.decompiler {
         //     opts: options || {}
         // };
 
-        let outLns = file.getChildren()
-            .map(emitNode)
-            .reduce((p, c) => p.concat(c), [])
+        try {
+            let outLns = file.getChildren()
+                .map(emitNode)
+                .reduce((p, c) => p.concat(c), [])
 
-        let output = outLns.join("\n");
+            let output = outLns.join("\n");
 
-        result.outfiles[file.fileName.replace(/(\.py)?\.\w*$/i, '') + '.py'] = output;
+            result.outfiles[file.fileName.replace(/(\.py)?\.\w*$/i, '') + '.py'] = output;
+        } catch (e) {
+            pxt.reportException(e);
+            // TODO better reporting
+            result.success = false;
+        }
 
         return result
     }
