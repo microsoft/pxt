@@ -150,7 +150,7 @@ function compileCoreAsync(opts: pxtc.CompileOptions): Promise<pxtc.CompileResult
     return workerOpAsync("compile", { options: opts })
 }
 
-export function py2tsAsync(): Promise<{ generated: pxt.Map<string> }> {
+export function py2tsAsync(): Promise<{ generated: pxt.Map<string>, diagnostics: pxtc.KsDiagnostic[] }> {
     let trg = pkg.mainPkg.getTargetOptions()
     return waitForFirstTypecheckAsync()
         .then(() => pkg.mainPkg.getCompileOptionsAsync(trg))
