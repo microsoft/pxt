@@ -94,8 +94,13 @@ namespace ts.pxtc {
             times: {},
         }
 
-        for (let pass of pxt.conversionPasses)
-            pass(opts)
+        for (let pass of pxt.conversionPasses) {
+            const diags = pass(opts)
+            U.pushRange(res.diagnostics, diags)
+        }
+
+        if (res.diagnostics.length > 0)
+            return res;
 
         let fileText: { [index: string]: string } = {};
         for (let fileName in opts.fileSystem) {

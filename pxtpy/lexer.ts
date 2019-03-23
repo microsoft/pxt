@@ -99,7 +99,7 @@ namespace pxt.py {
     let pos = 0, pos0 = 0
 
     export function position(startPos: number, source: string) {
-        let lineno = 1
+        let lineno = 0
         let lastnl = 0
         for (let i = 0; i < startPos; ++i) {
             if (source.charCodeAt(i) == 10) {
@@ -107,7 +107,7 @@ namespace pxt.py {
                 lastnl = i
             }
         }
-        return `(${lineno},${startPos - lastnl})`
+        return { line: lineno, column: startPos - lastnl - 1 }
     }
 
     export function tokenToString(t: Token) {
@@ -152,7 +152,8 @@ namespace pxt.py {
         s = s.replace(/\r/g, "")
             .replace(/\n/g, "\\n")
             .replace(/\t/g, "\\t")
-        let r = U.lf("{0} at {1}{2}", s, fn, position(t.startPos, source))
+        let p = position(t.startPos, source)
+        let r = U.lf("{0} at {1}({2},{3})", s, fn, p.line + 1, p.column + 1)
         if (pxt.options.debug)
             r += " " + tokenToString(t)
         return r

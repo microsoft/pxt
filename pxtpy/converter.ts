@@ -20,7 +20,8 @@ namespace pxt.py {
     let autoImport = true
     let currErrorCtx = "???"
     let verboseTypes = false
-    let lastStmt: Stmt
+    let lastAST: AST
+    let lastFile: string
     let diagnostics: pxtc.KsDiagnostic[]
 
     function stmtTODO(v: py.Stmt) {
@@ -94,7 +95,7 @@ namespace pxt.py {
 
         let sym = lookupApi(tp + "@type") || lookupApi(tp)
         if (!sym) {
-            error(null, U.lf("unknown type '{0}' near '{1}'", tp, currErrorCtx || "???"))
+            error(null, 9501, U.lf("unknown type '{0}' near '{1}'", tp, currErrorCtx || "???"))
             return mkType({ primType: tp })
         }
 
@@ -108,7 +109,7 @@ namespace pxt.py {
         if (sym.kind == SK.Enum)
             return tpNumber
 
-        error(null, U.lf("'{0}' is not a type near '{1}'", tp, currErrorCtx || "???"))
+        error(null, 9502, U.lf("'{0}' is not a type near '{1}'", tp, currErrorCtx || "???"))
         return mkType({ primType: tp })
     }
 
@@ -219,7 +220,7 @@ namespace pxt.py {
     function addImport(a: AST, name: string, scope?: ScopeDef) {
         const sym = lookupGlobalSymbol(name)
         if (!sym)
-            error(a, U.lf("No module named '{0}'", name))
+            error(a, 9503, U.lf("No module named '{0}'", name))
         return sym
     }
 
@@ -298,36 +299,42 @@ namespace pxt.py {
             return "?" + t.tid
     }
 
-    function error(a: py.AST, code:number, msg: string) {
-        if (!a) a = lastStmt
-        let diag: pxtc.KsDiagnostic
-        
-        interface LocationInfo {
-            fileName: string;
-            start: number;
-            length: number;
-            line: number;
-            column: number;
-            endLine?: number;
-            endColumn?: number;
-        }
-
-        
-        if (!ctx || !ctx.currModule) {
-            diag = {
+    function mkDiag(astNode: py.AST, category: pxtc.DiagnosticCategory, code: number, messageText: string): pxtc.KsDiagnostic {
+        if (!astNode) astNode = lastAST
+        if (!astNode || !ctx || !ctx.currModule) {
+            return {
+                fileName: lastFile,
+                start: 0,
+                length: 0,
+                line: undefined,
+                column: undefined,
                 code,
-                category: pxtc.DiagnosticCategory.Error,
-                messageText: msg
+                category,
+                messageText,
             }
         } else {
-            const mod = ctx.currModule
-            const pos = position(a ? a.startPos || 0 : 0, mod.source)
-            currErrs += U.lf("{0} near {1}{2}", msg, mod.tsFilename.replace(/\.ts/, ".py"), pos) + "\n"
+            return {
+                fileName: lastFile,
+                start: astNode.startPos,
+                length: astNode.endPos - astNode.startPos,
+                line: undefined,
+                column: undefined,
+                code,
+                category,
+                messageText,
+            }
         }
     }
 
+    // next free error 9517
+    function error(astNode: py.AST, code: number, msg: string) {
+        diagnostics.push(mkDiag(astNode, pxtc.DiagnosticCategory.Error, code, msg))
+        //const pos = position(astNode ? astNode.startPos || 0 : 0, mod.source)
+        //currErrs += U.lf("{0} near {1}{2}", msg, mod.tsFilename.replace(/\.ts/, ".py"), pos) + "\n"
+    }
+
     function typeError(a: py.AST, t0: Type, t1: Type) {
-        error(a, U.lf("types not comaptible: {0} and {1}", t2s(t0), t2s(t1)))
+        error(a, 9500, U.lf("types not comaptible: {0} and {1}", t2s(t0), t2s(t1)))
     }
 
     function typeCtor(t: Type): any {
@@ -511,7 +518,7 @@ namespace pxt.py {
 
             if (f) {
                 if (!f.isInstance)
-                    error(null, U.lf("the field '{0}' of '{1}' is static", n, ct.qName))
+                    error(null, 9504, U.lf("the field '{0}' of '{1}' is static", n, ct.qName))
                 if (isSuper(recv) ||
                     (isThis(recv) && f.namespace != ctx.currClass.symInfo.qName)) {
                     f.isProtected = true
@@ -525,7 +532,7 @@ namespace pxt.py {
         if (ct) {
             let f = getClassField(ct, n, checkOnly)
             if (f && f.isInstance)
-                error(null, U.lf("the field '{0}' of '{1}' is not static", n, ct.qName))
+                error(null, 9505, U.lf("the field '{0}' of '{1}' is not static", n, ct.qName))
             return f
         }
 
@@ -582,6 +589,7 @@ namespace pxt.py {
             currFun: null,
             currModule: m
         }
+        lastFile = m.tsFilename.replace(/\.ts$/, ".py")
     }
 
     function isModule(s: SymbolInfo) {
@@ -642,10 +650,10 @@ namespace pxt.py {
                 if (sym.pyInstanceType)
                     return sym.pyInstanceType
             }
-            error(e, U.lf("cannot find type '{0}'", tpName))
+            error(e, 9506, U.lf("cannot find type '{0}'", tpName))
         }
 
-        error(e, U.lf("invalid type syntax"))
+        error(e, 9507, U.lf("invalid type syntax"))
         return mkType({})
     }
 
@@ -1453,17 +1461,17 @@ namespace pxt.py {
             }
 
             if (!fun)
-                error(n, U.lf("can't find called function"))
+                error(n, 9508, U.lf("can't find called function"))
 
             let formals = fun ? fun.parameters : null
             let allargs: B.JsNode[] = []
             if (!formals) {
                 if (fun)
-                    error(n, U.lf("calling non-function"))
+                    error(n, 9509, U.lf("calling non-function"))
                 allargs = orderedArgs.map(expr)
             } else {
                 if (orderedArgs.length > formals.length)
-                    error(n, U.lf("too many arguments in call to '{0}'", fun.qName))
+                    error(n, 9510, U.lf("too many arguments in call to '{0}'", fun.qName))
 
                 while (orderedArgs.length < formals.length)
                     orderedArgs.push(null)
@@ -1472,9 +1480,9 @@ namespace pxt.py {
                 for (let kw of n.keywords) {
                     let idx = formals.findIndex(f => f.name == kw.arg)
                     if (idx < 0)
-                        error(kw, U.lf("'{0}' doesn't have argument named '{1}'", fun.qName, kw.arg))
+                        error(kw, 9511, U.lf("'{0}' doesn't have argument named '{1}'", fun.qName, kw.arg))
                     else if (orderedArgs[idx] != null)
-                        error(kw, U.lf("argument '{0} already specified in call to '{1}'", kw.arg, fun.qName))
+                        error(kw, 9512, U.lf("argument '{0} already specified in call to '{1}'", kw.arg, fun.qName))
                     else
                         orderedArgs[idx] = kw.value
                 }
@@ -1490,7 +1498,7 @@ namespace pxt.py {
                 for (let i = 0; i < orderedArgs.length; ++i) {
                     let arg = orderedArgs[i]
                     if (arg == null && !formals[i].initializer) {
-                        error(n, U.lf("missing argument '{0}' in call to '{1}'", formals[i].name, fun.qName))
+                        error(n, 9513, U.lf("missing argument '{0}' in call to '{1}'", formals[i].name, fun.qName))
                         allargs.push(B.mkText("NULL"))
                     } else if (arg) {
                         unifyTypeOf(arg, formals[i].pyType)
@@ -1549,10 +1557,10 @@ namespace pxt.py {
                 if (sym)
                     unifyTypeOf(n, symbolType(sym))
                 else
-                    error(n, U.lf("module '{0}' has no attribute '{1}'", part.moduleType.qName, n.attr))
+                    error(n, 9514, U.lf("module '{0}' has no attribute '{1}'", part.moduleType.qName, n.attr))
             } else {
                 if (currIteration > 2)
-                    error(n, U.lf("unknown object type; cannot lookup attribute '{0}'", n.attr))
+                    error(n, 9515, U.lf("unknown object type; cannot lookup attribute '{0}'", n.attr))
             }
             return B.mkInfix(expr(n.value), ".", B.mkText(quoteStr(n.attr)))
         },
@@ -1592,7 +1600,7 @@ namespace pxt.py {
                 if (v.isImport)
                     return quote(n.id) // it's import X = Y.Z.X, use X not Y.Z.X
             } else if (currIteration > 0) {
-                error(n, U.lf("name '{0}' is not defined", n.id))
+                error(n, 9516, U.lf("name '{0}' is not defined", n.id))
             }
 
             if (n.ctx.indexOf("Load") >= 0) {
@@ -1615,6 +1623,7 @@ namespace pxt.py {
     }
 
     function expr(e: py.Expr): B.JsNode {
+        lastAST = e
         let f = exprMap[e.kind]
         if (!f) {
             U.oops(e.kind + " - unknown expr")
@@ -1624,7 +1633,7 @@ namespace pxt.py {
     }
 
     function stmt(e: py.Stmt): B.JsNode {
-        lastStmt = e
+        lastAST = e
         let f = stmtMap[e.kind]
         if (!f) {
             U.oops(e.kind + " - unknown stmt")
@@ -1681,25 +1690,31 @@ namespace pxt.py {
         currIteration = iter
         diagnostics = []
         numUnifies = 0
-        lastStmt = null
+        lastAST = null
     }
 
     export function py2ts(opts: pxtc.CompileOptions) {
         let modules: py.Module[] = []
+        const generated: Map<string> = {}
         diagnostics = []
+
+        let pyFiles = opts.sourceFiles.filter(fn => U.endsWith(fn, ".py"))
+        if (pyFiles.length == 0)
+            return { generated, diagnostics }
+
+        lastFile = pyFiles[0] // make sure there's some location info for errors from API init
         initApis(opts.apisInfo)
 
         if (!opts.generatedFiles)
             opts.generatedFiles = []
 
-        for (const fn of opts.sourceFiles) {
-            if (!U.endsWith(fn, ".py"))
-                continue
+        for (const fn of pyFiles) {
             let sn = fn
             let modname = fn.replace(/\.py$/, "").replace(/.*\//, "")
             let src = opts.fileSystem[fn]
 
             try {
+                lastFile = fn
                 let tokens = pxt.py.lex(src)
                 //console.log(pxt.py.tokensToString(tokens))
                 let stmts = pxt.py.parse(src, sn, tokens)
@@ -1718,12 +1733,10 @@ namespace pxt.py {
             }
         }
 
-        const generated: Map<string> = {}
-
         if (diagnostics.some(d => d.category == pxtc.DiagnosticCategory.Error)) {
             return {
                 generated,
-                diagnostics
+                diagnostics: patchedDiags()
             }
         }
 
@@ -1758,16 +1771,39 @@ namespace pxt.py {
             }
         }
 
+        diagnostics = parseDiags.concat(diagnostics)
+
         return {
             generated,
-            diagnostics: parseDiags.concat(diagnostics)
+            diagnostics: patchedDiags()
+        }
+
+        function patchedDiags() {
+            for (let d of diagnostics) {
+                d.line = 0
+                d.column = 0
+                if (d.start || d.length) {
+                    const src = opts.fileSystem[d.fileName]
+                    let p = position(d.start, src)
+                    d.line = p.line
+                    d.column = p.column
+                    if (d.length > 0) {
+                        p = position(d.start + d.length - 1, src)
+                        d.endLine = p.line
+                        d.endColumn = p.column
+                    }
+                }
+            }
+            return diagnostics
         }
     }
 
     export function convert(opts: pxtc.CompileOptions) {
         if (opts.target.preferredEditor == pxt.PYTHON_PROJECT_NAME) {
-            py2ts(opts)
+            const r = py2ts(opts)
+            return r.diagnostics
         }
+        return []
     }
 
     pxt.conversionPasses.push(convert)
