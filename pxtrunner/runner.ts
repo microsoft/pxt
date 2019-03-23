@@ -810,6 +810,7 @@ ${linkString}
         compileProgram?: ts.Program;
         compileJS?: pxtc.CompileResult;
         compileBlocks?: pxtc.CompileResult;
+        compilePython?: pxtc.CompileResult;
         apiInfo?: pxtc.ApisInfo;
         blocksSvg?: Element;
     }
@@ -839,6 +840,10 @@ ${linkString}
                 }
                 programCache = program;
 
+                let compilePython: pxtc.CompileResult = undefined;
+                if (pxt.appTarget.appTheme.python)
+                    compilePython = ts.pxtc.decompiler.decompileToPython(program.getSourceFile("main.ts"));
+
                 // decompile to blocks
                 let apis = pxtc.getApiInfo(opts, program);
                 return ts.pxtc.localizeApisAsync(apis, mainPkg)
@@ -866,6 +871,7 @@ ${linkString}
                             compileProgram: program,
                             compileJS,
                             compileBlocks: bresp,
+                            compilePython,
                             apiInfo: apis,
                             blocksSvg
                         };
