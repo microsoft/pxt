@@ -941,7 +941,7 @@ namespace ts.pxtc.service {
         if (!ts.isFunctionLike(n)) {
             return undefined;
         }
-        const checker = service ? service.getProgram().getTypeChecker() : undefined;
+        const checker = service && !python ? service.getProgram().getTypeChecker() : undefined;
         const args = n.parameters ? n.parameters.filter(param => !param.initializer && !param.questionToken).map(param => {
             const typeNode = param.type;
             if (!typeNode) return python ? "None" : "null";
@@ -1013,16 +1013,16 @@ namespace ts.pxtc.service {
             let returnType = checker.getReturnTypeOfSignature(functionSignature);
 
             if (returnType.flags & ts.TypeFlags.NumberLike)
-                returnValue = "return 0;";
+                returnValue = "return 0";
             else if (returnType.flags & ts.TypeFlags.StringLike)
-                returnValue = "return \"\";";
+                returnValue = "return \"\"";
             else if (returnType.flags & (ts.TypeFlags.Boolean | ts.TypeFlags.BooleanLiteral))
-                returnValue = "return false;";
+                returnValue = python ? "return False" : "return false";
 
             let displayPartsStr = ts.displayPartsToString(displayParts);
             functionArgument = displayPartsStr.substr(0, displayPartsStr.lastIndexOf(":"));
 
-            return `function ${functionArgument} {\n    ${returnValue}\n}`
+            return python ? `def ${functionArgument}:\n  ${returnValue}\n` : `function ${functionArgument} {\n    ${returnValue}\n}`
         }
     }
 
