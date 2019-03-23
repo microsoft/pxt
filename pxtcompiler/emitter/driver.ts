@@ -85,6 +85,14 @@ namespace ts.pxtc {
         })
     }
 
+    export function runConversions(opts: CompileOptions) {
+        let diags: KsDiagnostic[] = []
+        for (let pass of pxt.conversionPasses) {
+            U.pushRange(diags, pass(opts))
+        }
+        return diags
+    }
+
     export function compile(opts: CompileOptions) {
         let startTime = Date.now()
         let res: CompileResult = {
@@ -94,8 +102,11 @@ namespace ts.pxtc {
             times: {},
         }
 
-        for (let pass of pxt.conversionPasses)
-            pass(opts)
+        const convDiag = runConversions(opts)
+        if (convDiag.length > 0) {
+            res.diagnostics = convDiag
+            return res;
+        }
 
         let fileText: { [index: string]: string } = {};
         for (let fileName in opts.fileSystem) {

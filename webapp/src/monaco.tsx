@@ -66,12 +66,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return (blockFile && pkg.mainEditorPkg().files[blockFile] != null)
     }
 
-    public openPython() {
-        // TODO:
-    }
-
     public openBlocks() {
-        pxt.tickEvent("typescript.showBlocks");
+        pxt.tickEvent(`typescript.showBlocks`);
         let initPromise = Promise.resolve();
 
         if (!this.currFile) {
@@ -85,9 +81,15 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
 
         let promise = initPromise.then(() => {
+            const isPython = this.fileType == FileType.Python;
+            const tickLang = isPython ? "python" : "typescript";
+            pxt.tickEvent(`${tickLang}.convertBlocks`);
+
             const mainPkg = pkg.mainEditorPkg();
-            if (!this.hasBlocks() && !mainPkg && !mainPkg.files["main.blocks"])
+            if (!this.hasBlocks() && !mainPkg && !mainPkg.files["main.blocks"]) {
+                pxt.debug(`cancelling convertion to blocks, but main.blocks is missing`);
                 return undefined;
+            }
 
             if (this.feWidget) {
                 this.feWidget.close();
@@ -95,6 +97,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }
 
             let blockFile = this.currFile.getVirtualFileName(pxt.BLOCKS_PROJECT_NAME);
+            let tsFile = isPython
+                ? this.currFile.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)
+                : this.currFile.name;
             if (!this.hasBlocks()) {
                 if (!mainPkg || !mainPkg.files["main.blocks"]) {
                     // Either the project isn't loaded, or it's ts-only
@@ -108,6 +113,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 // to main.ts instead
                 this.currFile = mainPkg.files["main.ts"];
                 blockFile = this.currFile.getVirtualFileName(pxt.BLOCKS_PROJECT_NAME);
+                tsFile = "main.ts";
             }
 
             const failedAsync = (file: string, programTooLarge = false) => {
@@ -124,7 +130,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             // 2) decompile js -> blocks then take the decompiled blocks -> js
             // 3) check that decompiled js == current js % white space
             let blocksInfo: pxtc.BlocksInfo;
-            return this.parent.saveFileAsync()
+            return this.saveToTypeScript() // make sure Python gets converted
+                .then(() => this.parent.saveFileAsync())
                 .then(() => this.parent.loadBlocklyAsync())
                 .then(() => compiler.getBlocksAsync())
                 .then((bi: pxtc.BlocksInfo) => {
@@ -137,8 +144,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                             return compiler.formatAsync(oldJs, 0).then((oldFormatted: any) => {
                                 return compiler.formatAsync(this.editor.getValue(), 0).then((newFormatted: any) => {
                                     if (oldFormatted.formatted == newFormatted.formatted) {
-                                        pxt.debug('js not changed, skipping decompile');
-                                        pxt.tickEvent("typescript.noChanges")
+                                        pxt.debug(`${tickLang} not changed, skipping decompile`);
+                                        pxt.tickEvent(`${tickLang}.noChanges`)
                                         this.parent.setFile(mainPkg.files[blockFile]);
                                         return [oldWorkspace, false]; // return false to indicate we don't want to decompile
                                     } else {
@@ -157,7 +164,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     return compiler.compileAsync()
                         .then(resp => {
                             if (resp.success) {
-                                return compiler.decompileAsync(this.currFile.name, blocksInfo, oldWorkspace, blockFile)
+                                return compiler.decompileAsync(tsFile, blocksInfo, oldWorkspace, blockFile)
                                     .then(resp => {
                                         if (!resp.success) {
                                             this.currFile.diagnostics = resp.diagnostics;
@@ -186,28 +193,42 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     public showConversionFailedDialog(blockFile: string, programTooLarge: boolean): Promise<void> {
+        const isPython = this.fileType == FileType.Python;
+        const tickLang = isPython ? "python" : "typescript";
+
         let bf = pkg.mainEditorPkg().files[blockFile];
         if (programTooLarge) {
-            pxt.tickEvent("typescript.programTooLarge");
+            pxt.tickEvent(`${tickLang}.programTooLarge`);
+        }
+        let body: string;
+        let disagreeLbl: string;
+        if (isPython) {
+            body = programTooLarge ?
+                lf("Your program is too large to convert into blocks. You can keep working in JavaScript or discard your changes and go back to the previous Blocks version.") :
+                lf("We are unable to convert your JavaScript code back to blocks. You can keep working in JavaScript or discard your changes and go back to the previous Blocks version.");
+            disagreeLbl = lf("Stay in JavaScript");
+        } else {
+            body = programTooLarge ?
+                lf("Your program is too large to convert into blocks. You can keep working in Python or discard your changes and go back to the previous Blocks version.") :
+                lf("We are unable to convert your Python code back to blocks. You can keep working in Python or discard your changes and go back to the previous Blocks version.");
+            disagreeLbl = lf("Stay in Python");
         }
         return core.confirmAsync({
             header: programTooLarge ? lf("Program too large") : lf("Oops, there is a problem converting your code."),
-            body: programTooLarge ?
-                lf("Your program is too large to convert into blocks. You can keep working in JavaScript or discard your changes and go back to the previous Blocks version.") :
-                lf("We are unable to convert your JavaScript code back to blocks. You can keep working in JavaScript or discard your changes and go back to the previous Blocks version."),
+            body,
             agreeLbl: lf("Discard and go to Blocks"),
             agreeClass: "cancel",
             agreeIcon: "cancel",
-            disagreeLbl: lf("Stay in JavaScript"),
+            disagreeLbl: disagreeLbl,
             disagreeClass: "positive",
             disagreeIcon: "checkmark",
             hideCancel: !bf
         }).then(b => {
             // discard
             if (!b) {
-                pxt.tickEvent("typescript.keepText", undefined, { interactiveConsent: true });
+                pxt.tickEvent(`${tickLang}.keepText`, undefined, { interactiveConsent: true });
             } else {
-                pxt.tickEvent("typescript.discardText", undefined, { interactiveConsent: true });
+                pxt.tickEvent(`${tickLang}.discardText`, undefined, { interactiveConsent: true });
                 this.parent.saveBlocksToTypeScriptAsync().then((src) => {
                     this.overrideFile(src);
                     this.parent.setFile(bf);
@@ -748,11 +769,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (model) this.editor.setModel(model);
 
                 this.defineEditorTheme(hc);
-                const shouldShowToolbox = (
-                    mode == "typescript"
-                    && pxt.appTarget.appTheme.monacoToolbox
+                const shouldShowToolbox = pxt.appTarget.appTheme.monacoToolbox
                     && !readOnly
-                    && file.name == "main.ts");
+                    && ((mode == "typescript" && file.name == "main.ts")
+                        || (mode == "python" && file.name == "main.py"));
                 if (shouldShowToolbox) {
                     this.beginLoadToolbox(file, hc);
                 } else {
@@ -1218,8 +1238,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let monacoBlocks: HTMLDivElement[] = [];
         const searchBlocks = this.toolbox.getSearchBlocks();
 
-        const monacoFlyout = this.getMonacoFlyout();
-
         const that = this;
         function getNamespaceColor(ns: string) {
             const nsinfo = that.blockInfo.apis.byQName[ns];
@@ -1456,10 +1474,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let monacoEditor = this;
         let monacoFlyout = this.getMonacoFlyout();
 
-        const snippet = fn.snippet;
-        if (!snippet) {
+        const isPython = this.fileType == FileType.Python;
+        const snippet = isPython ? fn.pySnippet : fn.snippet;
+        if (!snippet)
             return undefined;
-        }
+        const snippetName = (isPython ? fn.pySnippetName : undefined) || fn.snippetName || fn.name;
 
         let monacoBlockArea = document.createElement('div');
         monacoBlockArea.className = `monacoBlock ${isDisabled ? 'monacoDisabledBlock' : ''}`;
@@ -1636,7 +1655,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 monacoBlock.appendChild(instanceToken);
             }
             let methodToken = document.createElement('span');
-            methodToken.textContent = fn.snippetName || fn.name;
+            methodToken.textContent = snippetName;
             monacoBlock.appendChild(methodToken);
         }
         monacoBlock.appendChild(sigToken);

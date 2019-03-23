@@ -26,6 +26,8 @@ export interface BlockDefinition {
     type?: string;
     snippet?: string;
     snippetName?: string;
+    pySnippet?: string;
+    pySnippetName?: string;
     snippetOnly?: boolean;
     attributes: {
         block?: string;

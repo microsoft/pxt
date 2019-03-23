@@ -425,14 +425,24 @@ namespace pxt.editor {
         jsDoc?: string
 
         /**
-         * Snippet of code to insert when dragged into editor
+         * TypeScript snippet of code to insert when dragged into editor
          */
         snippet?: string;
 
         /**
-         * Name used for highlighting the snippet, uses name if not defined
+         * Python snippet of code to insert when dragged into editor
+         */
+        pySnippet?: string;
+
+        /**
+         * TypeScript name used for highlighting the snippet, uses name if not defined
          */
         snippetName?: string;
+
+        /**
+         * Python name used for highlighting the snippet, uses name if not defined
+         */
+        pySnippetName?: string;
 
         /**
          * Display just the snippet and nothing else. Should be set to true for

@@ -202,6 +202,7 @@ export class EditorPackage {
                 let cfg = <pxt.PackageConfig>JSON.parse(cfgFile.content)
                 update(cfg);
                 return cfgFile.setContentAsync(JSON.stringify(cfg, null, 4) + "\n")
+                    .then(() => this.ksPkg.loadConfig())
             } catch (e) { }
         }
 
@@ -256,10 +257,15 @@ export class EditorPackage {
         return this.updateConfigAsync(cfg => cfg.files = cfg.files.filter(f => f != n))
     }
 
-    setContentAsync(n: string, v: string) {
+    setContentAsync(n: string, v: string): Promise<void> {
         let f = this.files[n];
-        if (!f) f = this.setFile(n, v);
-        return f.setContentAsync(v);
+        let p = Promise.resolve();
+        if (!f) {
+            f = this.setFile(n, v);
+            p = p.then(() => this.updateConfigAsync(cfg => cfg.files.indexOf(n) < 0 ? cfg.files.push(n) : 0))
+                p.then(() => this.savePkgAsync())
+        }
+        return p.then(() => f.setContentAsync(v));
     }
 
     setFiles(files: pxt.Map<string>) {

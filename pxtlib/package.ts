@@ -184,19 +184,21 @@ namespace pxt {
                     pxt.debug('downloading ' + verNo)
                     return this.host().downloadPackageAsync(this)
                         .then(() => {
-                            const confStr = this.readFile(pxt.CONFIG_NAME)
-                            if (!confStr)
-                                U.userError(`extension ${this.id} is missing ${pxt.CONFIG_NAME}`)
-                            this.parseConfig(confStr);
-                            if (this.level != 0)
-                                this.config.installedVersion = this.version()
-                            this.saveConfig()
-                        })
-                        .then(() => {
+                            this.loadConfig();
                             pxt.debug(`installed ${this.id} /${verNo}`)
                         })
 
                 })
+        }
+
+        loadConfig() {
+            const confStr = this.readFile(pxt.CONFIG_NAME)
+            if (!confStr)
+                U.userError(`extension ${this.id} is missing ${pxt.CONFIG_NAME}`)
+            this.parseConfig(confStr);
+            if (this.level != 0)
+                this.config.installedVersion = this.version()
+            this.saveConfig()
         }
 
         protected validateConfig() {
@@ -744,7 +746,8 @@ namespace pxt {
                 fileSystem: {},
                 target: target,
                 hexinfo: { hex: [] },
-                name: this.config ? this.config.name : ""
+                name: this.config ? this.config.name : "",
+                pySnippets: pxt.appTarget && pxt.appTarget.appTheme && pxt.appTarget.appTheme.python
             }
 
             const generateFile = (fn: string, cont: string) => {

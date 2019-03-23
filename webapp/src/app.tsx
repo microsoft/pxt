@@ -467,18 +467,26 @@ export class ProjectView
     }
 
     openPythonAsync(): Promise<void> {
-        return this.saveTypeScriptAsync(false)
-            .then(() => {
-                return compiler.pyDecompileAsync("main.ts");
-            }).then(cres => {
+        const promise: Promise<void> = this.saveTypeScriptAsync(false)
+            .then(() => compiler.pyDecompileAsync("main.ts"))
+            .then(cres => {
                 if (cres && cres.success) {
                     const mainpy = cres.outfiles["main.py"];
-                    return this.saveVirtualFile(pxt.PYTHON_PROJECT_NAME, mainpy, true);
+                    return this.saveVirtualFileAsync(pxt.PYTHON_PROJECT_NAME, mainpy, true);
                 } else {
                     // TODO python
                     return Promise.resolve();
                 }
             })
+            .catch(e => {
+                pxt.reportException(e);
+                core.errorNotification(lf("Oops, something went wrong trying to convert your code."));
+            })
+        if (open)
+            return core.showLoadingAsync("switchtopython", lf("switching to Python..."),
+                promise);
+        else
+            return promise;
     }
 
     openSimView() {
@@ -825,8 +833,7 @@ export class ProjectView
 
     updateFileAsync(name: string, content: string, open?: boolean): Promise<void> {
         const p = pkg.mainEditorPkg();
-        p.setFile(name, content);
-        return p.updateConfigAsync(cfg => cfg.files.indexOf(name) < 0 ? cfg.files.push(name) : 0)
+        return p.setContentAsync(name, content)
             .then(() => {
                 if (open) this.setFile(p.lookupFile("this/" + name));
                 return p.savePkgAsync();
@@ -1660,13 +1667,13 @@ export class ProjectView
         return this.blocksEditor.saveToTypeScript();
     }
 
-    private saveVirtualFile(prj: string, src: string, open: boolean): Promise<void> {
-        let mainPkg = pkg.mainEditorPkg();
-        let tsName = this.editorFile.getVirtualFileName(prj);
-        Util.assert(tsName != this.editorFile.name);
-        return mainPkg.setContentAsync(tsName, src).then(() => {
+    private saveVirtualFileAsync(prj: string, src: string, open: boolean): Promise<void> {
+        const mainPkg = pkg.mainEditorPkg();
+        const fileName = this.editorFile.getVirtualFileName(prj);
+        Util.assert(fileName != this.editorFile.name);
+        return mainPkg.setContentAsync(fileName, src).then(() => {
             if (open) {
-                let f = mainPkg.files[tsName];
+                let f = mainPkg.files[fileName];
                 this.setFile(f);
             }
         });
@@ -1676,16 +1683,13 @@ export class ProjectView
         if (!this.editor || !this.state.currFile || this.editorFile.epkg != pkg.mainEditorPkg() || this.reload)
             return Promise.resolve();
 
-        let promise = Promise.resolve().then(() => {
-            return open ? this.textEditor.loadMonacoAsync() : Promise.resolve();
-        }).then(() => {
-            return this.editor.saveToTypeScript().then((src) => {
+        let promise = open ? this.textEditor.loadMonacoAsync() : Promise.resolve();
+        promise = promise
+            .then(() => this.editor.saveToTypeScript())
+            .then((src) => {
                 if (!src) return Promise.resolve();
-                // format before saving
-                // if (open) src = pxtc.format(src, 0).formatted;
-                return this.saveVirtualFile(pxt.JAVASCRIPT_PROJECT_NAME, src, open);
+                return this.saveVirtualFileAsync(pxt.JAVASCRIPT_PROJECT_NAME, src, open);
             });
-        });
 
         if (open) {
             return core.showLoadingAsync("switchtojs", lf("switching to JavaScript..."), promise, 0);

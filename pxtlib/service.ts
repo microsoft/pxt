@@ -69,6 +69,8 @@ namespace ts.pxtc {
         pkg?: string;
         snippet?: string;
         snippetName?: string;
+        pySnippet?: string;
+        pySnippetName?: string;
         blockFields?: ParsedBlockDef;
         isReadOnly?: boolean;
         combinedProperties?: string[];

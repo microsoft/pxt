@@ -761,6 +761,8 @@ function blockFromJson(b: pxt.editor.ToolboxBlockDefinition, currentWeight?: num
         snippet: b.snippet,
         snippetName: b.snippetName,
         snippetOnly: b.snippetOnly,
+        pySnippet: b.pySnippet,
+        pySnippetName: b.pySnippetName,
         attributes: {
             blockId: b.blockId,
             weight: currentWeight || b.weight,
@@ -779,6 +781,8 @@ function blockToJson(b: BlockDefinition): pxt.editor.ToolboxBlockDefinition {
         name: b.name,
         snippet: b.snippet,
         snippetName: b.snippetName,
+        pySnippet: b.pySnippet,
+        pySnippetName: b.pySnippetName,
         snippetOnly: b.snippetOnly,
         retType: b.retType,
         weight: b.attributes.weight,
