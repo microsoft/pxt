@@ -287,7 +287,8 @@ namespace pxt.runner {
             let sig = info.decl.getText().replace(/^export/, '');
             sig = sig.slice(0, sig.indexOf('{')).trim() + ';';
             const js = $('<code class="lang-typescript highlight"/>').text(sig);
-            const py = $('<code class="lang-python highlight"/>').text(sig);
+            // TODO python
+            const py: JQuery = undefined;// $('<code class="lang-python highlight"/>').text(sig);
             if (options.snippetReplaceParent) c = c.parent();
             fillWithWidget(options, c, js, py, s, r, { showJs: true, hideGutter: true });
         }, { package: options.package, snippetMode: true, aspectRatio: options.blocksAspectRatio });
