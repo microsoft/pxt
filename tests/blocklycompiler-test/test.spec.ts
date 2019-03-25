@@ -421,6 +421,10 @@ describe("blockly compiler", function () {
         it("should convert handler parameters to draggable variables", done => {
             blockTestAsync("draggable_parameters").then(done, done);
         });
+
+        it("should set the right check for primitive draggable parameters in blockly loader", done => {
+            blockTestAsync("draggable_primitive_reporter").then(done, done);
+        });
     });
 
     describe("compiling expandable blocks", () => {
