@@ -53,13 +53,22 @@ namespace pxt.runner {
     }
 
     function appendJs($parent: JQuery, $js: JQuery, woptions: WidgetOptions) {
-        $parent.append($('<div class="ui content js"><div><i class="ui icon xicon js"/></div></div>').append($js));
+        $parent.append($('<div class="ui content js"><div><i class="ui icon xicon js"/>JavaScript</div></div>').append($js));
         highlight($js);
     }
 
     function appendPy($parent: JQuery, $py: JQuery, woptions: WidgetOptions) {
-        $parent.append($('<div class="ui content py"><div><i class="ui icon xicon python"/></div></div>').append($py));
+        $parent.append($('<div class="ui content py"><div><i class="ui icon xicon python"/>Python</div></div>').append($py));
         highlight($py);
+    }
+
+    function snippetBtn(label: string, icon: string): JQuery {
+        const $btn = $(`<a class="item" role="button" tabindex="0"><i role="presentation" aria-hidden="true"></i><span class="ui desktop only"></span></a>`);
+        $btn.attr("aria-label", label);
+        $btn.attr("title", label);
+        $btn.find('i').attr("class", icon);
+        $btn.find('span').text(label);
+        return $btn;
     }
 
     function fillWithWidget(
@@ -79,7 +88,7 @@ namespace pxt.runner {
 
         const theme = pxt.appTarget.appTheme || {};
         if (woptions.showEdit && !theme.hideDocsEdit && decompileResult) { // edit button
-            const $editBtn = $(`<a class="item" role="button" tabindex="0" aria-label="${lf("edit")}"><i role="presentation" aria-hidden="true" class="edit icon"></i></a>`).click(() => {
+            const $editBtn = snippetBtn(lf("Edit"), "edit icon").click(() => {
                 decompileResult.package.setPreferredEditor(options.showJavaScript ? pxt.JAVASCRIPT_PROJECT_NAME : pxt.BLOCKS_PROJECT_NAME)
                 decompileResult.package.compressToFileAsync()
                     .done(buf => window.open(`${getEditUrl(options)}/#project:${ts.pxtc.encodeBase64(Util.uint8ArrayToString(buf))}`, 'pxt'))
@@ -93,7 +102,7 @@ namespace pxt.runner {
 
             // js menu
             if ($svg) {
-                const $svgBtn = $(`<a class="item blocks" role="button" tabindex="0" aria-label="${lf("Blocks")}"><i role="presentation" aria-hidden="true" class="${BLOCKS_ICON}"></i></a>`).click(() => {
+                const $svgBtn = snippetBtn(lf("Blocks"), BLOCKS_ICON).click(() => {
                     if ($c.find('.blocks')[0])
                         $c.find('.blocks').remove();
                     else {
@@ -111,7 +120,7 @@ namespace pxt.runner {
             if (woptions.showJs) {
                 appendJs($c, $js, woptions);
             } else {
-                const $jsBtn = $(`<a class="item js" role="button" tabindex="0" aria-label="${"JavaScript"}"><i role="presentation" aria-hidden="true" class="${JS_ICON}"></i></a>`).click(() => {
+                const $jsBtn = snippetBtn("JavaScript", JS_ICON).click(() => {
                     if ($c.find('.js')[0])
                         $c.find('.js').remove();
                     else {
@@ -124,7 +133,7 @@ namespace pxt.runner {
         }
 
         if ($py) {
-            const $pyBtn = $(`<a class="item py" role="button" tabindex="0" aria-label="${"Python"}"><i role="presentation" aria-hidden="true" class="${PY_ICON}"></i></a>`).click(() => {
+            const $pyBtn = snippetBtn("Python", PY_ICON).click(() => {
                 if ($c.find('.py')[0])
                     $c.find('.py').remove();
                 else {
@@ -137,7 +146,7 @@ namespace pxt.runner {
 
         // runner menu
         if (woptions.run && !theme.hideDocsSimulator) {
-            let $runBtn = $(`<a class="item" role="button" tabindex="0" aria-label="${lf("run")}"><i role="presentation" aria-hidden="true" class="play icon"></i></a>`).click(() => {
+            let $runBtn = snippetBtn(lf("Run"), "play icon").click(() => {
                 if ($c.find('.sim')[0])
                     $c.find('.sim').remove(); // remove previous simulators
                 else {
@@ -151,7 +160,7 @@ namespace pxt.runner {
         }
 
         if (woptions.hexname && woptions.hex) {
-            let $hexBtn = $(`<a class="item" role="button" tabindex="0" aria-label="${lf("download")}"><i role="presentation" aria-hidden="true" class="download icon"></i></a>`).click(() => {
+            let $hexBtn = snippetBtn(lf("Download"), "download icon").click(() => {
                 BrowserUtils.browserDownloadBinText(woptions.hex, woptions.hexname, pxt.appTarget.compile.hexMimeType);
             })
             $menu.append($hexBtn);
