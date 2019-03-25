@@ -276,12 +276,14 @@ export class ProjectView
         simulator.setState(this.state.header ? this.state.header.editor : '', this.state.tutorialOptions && !!this.state.tutorialOptions.tutorial)
         this.editor.resize();
 
+        let p = Promise.resolve();
         if (this.editor && this.editor.isReady) {
-            this.updateEditorFile();
+            p = p.then(() => this.updateEditorFileAsync());
         }
         if (this.state.debugging) {
-            this.blocksEditor.updateToolbox(true);
+            p = p.then(() => this.blocksEditor.updateToolbox(true));
         }
+        p.done();
     }
 
     fireResize() {
@@ -345,7 +347,7 @@ export class ProjectView
     }
 
     openPython(giveFocusOnLoading = true) {
-        if (this.updatingEditorFile) return; // already transitioning
+        if (this.state.updatingEditorFile) return; // already transitioning
 
         if (this.isPythonActive()) {
             if (this.state.embedSimView) {
@@ -376,7 +378,7 @@ export class ProjectView
     }
 
     openJavaScript(giveFocusOnLoading = true) {
-        if (this.updatingEditorFile) return; // already transitioning
+        if (this.state.updatingEditorFile) return; // already transitioning
 
         if (this.isJavaScriptActive()) {
             if (this.state.embedSimView) {
@@ -398,7 +400,7 @@ export class ProjectView
     }
 
     openBlocks() {
-        if (this.updatingEditorFile) return; // already transitioning
+        if (this.state.updatingEditorFile) return; // already transitioning
 
         if (this.isBlocksActive()) {
             if (this.state.embedSimView) this.setState({ embedSimView: false });
@@ -691,29 +693,27 @@ export class ProjectView
         return this.allEditors.filter(e => e.acceptsFile(f))[0]
     }
 
-    private updatingEditorFile = false;
-    private updateEditorFile(editorOverride: srceditor.Editor = null) {
-        if (!this.state.active)
+    private updateEditorFileAsync(editorOverride: srceditor.Editor = null) {
+        if (!this.state.active
+            || this.state.updatingEditorFile
+            || this.state.currFile == this.editorFile && !editorOverride)
             return undefined;
-        if (this.state.currFile == this.editorFile && !editorOverride)
-            return undefined;
-        if (this.updatingEditorFile)
-            return undefined;
-        this.updatingEditorFile = true;
-        const simRunning = this.state.simState != pxt.editor.SimState.Stopped;
-        if (!this.state.currFile.virtual) { // switching to serial should not reset the sim
-            this.stopSimulator();
-            if (simRunning || this.state.autoRun) {
-                simulator.setPending();
-                this.setState({ simState: pxt.editor.SimState.Pending });
-            }
-        }
-        this.saveSettings();
 
-        const hc = this.state.highContrast;
-        // save file before change
-        return this.saveFileAsync()
+        let simRunning = false;
+        return core.showLoadingAsync("updateeditorfile", lf("loading editor..."), this.setStateAsync({ updatingEditorFile: true })
             .then(() => {
+                simRunning = this.state.simState != pxt.editor.SimState.Stopped;
+                if (!this.state.currFile.virtual) { // switching to serial should not reset the sim
+                    this.stopSimulator();
+                    if (simRunning || this.state.autoRun) {
+                        simulator.setPending();
+                        this.setState({ simState: pxt.editor.SimState.Pending });
+                    }
+                }
+                this.saveSettings();
+                // save file before change
+                return this.saveFileAsync();
+            }).then(() => {
                 this.editorFile = this.state.currFile as pkg.File; // TODO
                 let previousEditor = this.editor;
                 this.prevEditorId = previousEditor.getId();
@@ -721,7 +721,7 @@ export class ProjectView
                 this.allEditors.forEach(e => e.setVisible(e == this.editor))
                 return previousEditor ? previousEditor.unloadFileAsync() : Promise.resolve();
             })
-            .then(() => { return this.editor.loadFileAsync(this.editorFile, hc); })
+            .then(() => { return this.editor.loadFileAsync(this.editorFile, this.state.highContrast); })
             .then(() => {
                 this.saveFileAsync().done(); // make sure state is up to date
                 if (this.editor == this.textEditor || this.editor == this.blocksEditor)
@@ -738,14 +738,14 @@ export class ProjectView
                 } as pxsim.SimulatorFileLoadedMessage)
 
                 if (this.state.showBlocks && this.editor == this.textEditor) this.textEditor.openBlocks();
-            }).finally(() => {
-                this.forceUpdate();
-                this.updatingEditorFile = false;
+            })
+            .finally(() => this.setStateAsync({ updatingEditorFile: false }))
+            .then(() => {
                 // if auto-run is not enable, restart the sim
                 // otherwise, autorun will launch it again
                 if (!this.state.currFile.virtual && simRunning && !this.state.autoRun)
                     this.startSimulator();
-            })
+            }));
     }
 
     /**
@@ -2280,7 +2280,7 @@ export class ProjectView
 
     editText() {
         if (this.editor != this.textEditor) {
-            this.updateEditorFile(this.textEditor).then(() => {
+            this.updateEditorFileAsync(this.textEditor).then(() => {
                 this.textEditor.editor.focus();
             });
             this.forceUpdate();
