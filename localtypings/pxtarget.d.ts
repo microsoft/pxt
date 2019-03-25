@@ -358,6 +358,15 @@ declare namespace pxt {
 }
 
 declare namespace ts.pxtc {
+
+    namespace ir {
+        const enum CallingConvention {
+            Plain,
+            Async,
+            Promise,
+        }
+    }
+    
     interface CompileSwitches {
         profile?: boolean;
         gcDebug?: boolean;

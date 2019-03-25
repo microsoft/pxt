@@ -1348,12 +1348,3 @@ namespace ts.pxtc.service {
         bannedCategories?: string[];
     }
 }
-
-namespace ts.pxtc.ir {
-
-    export enum CallingConvention {
-        Plain,
-        Async,
-        Promise,
-    }
-}
