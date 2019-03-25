@@ -1,11 +1,10 @@
-/// <reference path="./testBlocks/enums.ts" />
+#/ <reference path="./testBlocks/enums.ts" />
 
-let varEnumTest = 0;
+varEnumTest = 0
 
-enum PlainOldEnum {
-    A,
-    B,
-    C
-}
+class PlainOldEnum(Enum):
+  A = 0
+  B = 1
+  C = 2
 
 varEnumTest = PlainOldEnum.A

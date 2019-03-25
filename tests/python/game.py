@@ -28,6 +28,13 @@ class SpriteKind(Enum):
     Enemy = 2
     Food = 3
 
+ii = img("""
+. . . .
+. a . .
+. b b .
+""")
+hbuf = hex("a007")
+hbuf2 = b'\xB0\x07'
 asteroids = [sprites.space.spaceSmallAsteroid1, sprites.space.spaceSmallAsteroid0, sprites.space.spaceAsteroid0, sprites.space.spaceAsteroid1, sprites.space.spaceAsteroid4, sprites.space.spaceAsteroid3]
 ship = sprites.create(sprites.space.spaceRedShip, SpriteKind.Player)
 ship.setFlag(SpriteFlag.StayInScreen, True)

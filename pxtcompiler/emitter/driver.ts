@@ -103,6 +103,11 @@ namespace ts.pxtc {
         }
 
         const convDiag = runConversions(opts)
+
+        // save files first, in case we generated some .ts files that fail to compile
+        for (let f of opts.generatedFiles || [])
+            res.outfiles[f] = opts.fileSystem[f]
+
         if (convDiag.length > 0) {
             res.diagnostics = convDiag
             return res;
@@ -150,10 +155,6 @@ namespace ts.pxtc {
             directoryExists: dn => true,
             getDirectories: () => []
         }
-
-        // save files first, in case we generated some .ts files that fail to compile
-        for (let f of opts.generatedFiles || [])
-            res.outfiles[f] = opts.fileSystem[f]
 
         if (!opts.sourceFiles)
             opts.sourceFiles = Object.keys(opts.fileSystem)
