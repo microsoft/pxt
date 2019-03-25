@@ -113,15 +113,29 @@ namespace pxt.py {
         return mkType({ primType: tp })
     }
 
+    // img/hex literal
+    function isTaggedTemplate(sym: SymbolInfo) {
+        return sym.attributes.shim && sym.attributes.shim[0] == "@"
+    }
+
     function symbolType(sym: SymbolInfo): Type {
         if (!sym.pySymbolType) {
             currErrorCtx = sym.qName
 
-            if (sym.parameters)
+            if (sym.parameters) {
+                if (isTaggedTemplate(sym)) {
+                    sym.parameters = [{
+                        "name": "literal",
+                        "description": "",
+                        "type": "string",
+                        "options": {}
+                    }]
+                }
                 for (let p of sym.parameters) {
                     if (!p.pyType)
                         p.pyType = mapTsType(p.type)
                 }
+            }
 
             const prevRetType = sym.pyRetType
 
@@ -1333,6 +1347,13 @@ namespace pxt.py {
         return null
     }
 
+    function forceBackticks(n: B.JsNode) {
+        if (n.type == B.NT.Prefix && n.op[0] == "\"") {
+            return B.mkText(B.backtickLit(JSON.parse(n.op)))
+        }
+        return n
+    }
+
     const exprMap: Map<(v: py.Expr) => B.JsNode> = {
         BoolOp: (n: py.BoolOp) => {
             let r = expr(n.values[0])
@@ -1465,6 +1486,7 @@ namespace pxt.py {
 
             let formals = fun ? fun.parameters : null
             let allargs: B.JsNode[] = []
+
             if (!formals) {
                 if (fun)
                     error(n, 9509, U.lf("calling non-function"))
@@ -1499,7 +1521,7 @@ namespace pxt.py {
                     let arg = orderedArgs[i]
                     if (arg == null && !formals[i].initializer) {
                         error(n, 9513, U.lf("missing argument '{0}' in call to '{1}'", formals[i].name, fun.qName))
-                        allargs.push(B.mkText("NULL"))
+                        allargs.push(B.mkText("null"))
                     } else if (arg) {
                         unifyTypeOf(arg, formals[i].pyType)
                         allargs.push(expr(arg))
@@ -1520,6 +1542,9 @@ namespace pxt.py {
                 B.mkCommaSep(allargs),
                 B.mkText(")")
             ]
+
+            if (fun && allargs.length == 1 && isTaggedTemplate(fun))
+                nodes = [fn, B.mkText(" "), forceBackticks(allargs[0])]
 
             if (isClass) {
                 nodes[0] = B.mkText(applyTypeMap(namedSymbol.qName))
@@ -1730,13 +1755,6 @@ namespace pxt.py {
             } catch (e) {
                 // TODO
                 console.log("Parse error", e)
-            }
-        }
-
-        if (diagnostics.some(d => d.category == pxtc.DiagnosticCategory.Error)) {
-            return {
-                generated,
-                diagnostics: patchedDiags()
             }
         }
 
