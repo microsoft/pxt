@@ -108,8 +108,6 @@ namespace pxt {
         if (comp.utf8 === undefined)
             comp.utf8 = true
         if (!appTarget.appTheme) appTarget.appTheme = {}
-        if (appTarget.appTheme.python === undefined)
-            appTarget.appTheme.python = true // TODO remove before final merge
         if (!appTarget.appTheme.embedUrl)
             appTarget.appTheme.embedUrl = appTarget.appTheme.homeUrl
         let cs = appTarget.compileService
