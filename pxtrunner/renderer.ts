@@ -89,6 +89,7 @@ namespace pxt.runner {
         const theme = pxt.appTarget.appTheme || {};
         if (woptions.showEdit && !theme.hideDocsEdit && decompileResult) { // edit button
             const $editBtn = snippetBtn(lf("Edit"), "edit icon").click(() => {
+                pxt.tickEvent("docs.btn", { button: "edit" });
                 decompileResult.package.setPreferredEditor(options.showJavaScript ? pxt.JAVASCRIPT_PROJECT_NAME : pxt.BLOCKS_PROJECT_NAME)
                 decompileResult.package.compressToFileAsync()
                     .done(buf => window.open(`${getEditUrl(options)}/#project:${ts.pxtc.encodeBase64(Util.uint8ArrayToString(buf))}`, 'pxt'))
@@ -103,6 +104,7 @@ namespace pxt.runner {
             // js menu
             if ($svg) {
                 const $svgBtn = snippetBtn(lf("Blocks"), BLOCKS_ICON).click(() => {
+                    pxt.tickEvent("docs.btn", { button: "blocks" });
                     if ($c.find('.blocks')[0])
                         $c.find('.blocks').remove();
                     else {
@@ -121,6 +123,7 @@ namespace pxt.runner {
                 appendJs($c, $js, woptions);
             } else {
                 const $jsBtn = snippetBtn("JavaScript", JS_ICON).click(() => {
+                    pxt.tickEvent("docs.btn", { button: "js" });
                     if ($c.find('.js')[0])
                         $c.find('.js').remove();
                     else {
@@ -134,6 +137,7 @@ namespace pxt.runner {
 
         if ($py) {
             const $pyBtn = snippetBtn("Python", PY_ICON).click(() => {
+                pxt.tickEvent("docs.btn", { button: "py" });
                 if ($c.find('.py')[0])
                     $c.find('.py').remove();
                 else {
@@ -147,6 +151,7 @@ namespace pxt.runner {
         // runner menu
         if (woptions.run && !theme.hideDocsSimulator) {
             let $runBtn = snippetBtn(lf("Run"), "play icon").click(() => {
+                pxt.tickEvent("docs.btn", { button: "sim" });
                 if ($c.find('.sim')[0])
                     $c.find('.sim').remove(); // remove previous simulators
                 else {
@@ -161,6 +166,7 @@ namespace pxt.runner {
 
         if (woptions.hexname && woptions.hex) {
             let $hexBtn = snippetBtn(lf("Download"), "download icon").click(() => {
+                pxt.tickEvent("docs.btn", { button: "hex" });
                 BrowserUtils.browserDownloadBinText(woptions.hex, woptions.hexname, pxt.appTarget.compile.hexMimeType);
             })
             $menu.append($hexBtn);
