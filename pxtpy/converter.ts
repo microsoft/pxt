@@ -1808,7 +1808,7 @@ namespace pxt.py {
                     if (d.length > 0) {
                         p = position(d.start + d.length - 1, src)
                         d.endLine = p.line
-                        d.endColumn = p.column
+                        d.endColumn = p.column + 2 // not sure where the +2 is coming from, but it works out in monaco
                     }
                 }
             }
