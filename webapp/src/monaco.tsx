@@ -897,13 +897,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private forceDiagnosticsUpdate() {
-        if (this.fileType != FileType.TypeScript) return
+        if (this.fileType != FileType.TypeScript 
+            && this.fileType != FileType.Python) return
 
         let file = this.currFile
         let monacoErrors: monaco.editor.IMarkerData[] = []
 
         if (file && file.diagnostics) {
-            let model = monaco.editor.getModel(monaco.Uri.parse(`pkg:${file.getName()}`))
+            const model = monaco.editor.getModel(monaco.Uri.parse(`pkg:${file.getName()}`))
             for (let d of file.diagnostics) {
                 const addErrorMessage = (message: string) => {
                     monacoErrors.push({
@@ -915,7 +916,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         endColumn: d.endColumn == undefined ? endPos.column : d.endColumn
                     })
                 }
-                let endPos = model.getPositionAt(d.start + d.length);
+                const endPos = model.getPositionAt(d.start + d.length);
                 if (typeof d.messageText === 'string') {
                     addErrorMessage(d.messageText as string);
                 } else {
