@@ -348,7 +348,7 @@ namespace pxt.py {
     }
 
     function typeError(a: py.AST, t0: Type, t1: Type) {
-        error(a, 9500, U.lf("types not comaptible: {0} and {1}", t2s(t0), t2s(t1)))
+        error(a, 9500, U.lf("types not compatible: {0} and {1}", t2s(t0), t2s(t1)))
     }
 
     function typeCtor(t: Type): any {
