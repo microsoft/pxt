@@ -558,7 +558,12 @@ namespace ts.pxtc.decompiler {
         let decl = s.name.getText();
         if (s.initializer) {
             let [exp, expSup] = emitExp(s.initializer);
-            let declStmt = `${decl} = ${exp}`
+            let declStmt: string;
+            if (s.type) {
+                declStmt = `${decl}: ${s.type.getText()} = ${exp}`
+            } else {
+                declStmt = `${decl} = ${exp}`
+            }
             return expSup.concat(declStmt)
         } else {
             // can't do declerations without initilization in python
@@ -615,7 +620,7 @@ namespace ts.pxtc.decompiler {
                 return "/"
             case ts.SyntaxKind.PlusPlusToken:
             case ts.SyntaxKind.MinusMinusToken:
-                // TODO handle -- generally. Seperate prefix and postfix cases.
+                // TODO handle "--" & "++" generally. Seperate prefix and postfix cases.
                 // This is tricky because it needs to return the value and the mutate after.
                 throw Error("Unsupported ++ and -- in an expression (not a statement or for loop)")
             case ts.SyntaxKind.AmpersandToken:
