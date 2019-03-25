@@ -647,9 +647,9 @@ namespace ts.pxtc.decompiler {
             // TODO confirm the type is correct!
             return [`len(${left})`, leftSup]
         }
-        // special: Math.fn
+        // special casing
+        // TODO make this safer. This is syntactic matching, but we really need semantics
         if (left === "Math") {
-            // TODO make this safer. This is syntactic matching, but we really need semantics
             let mathFn = ""
             if (right === "max") {
                 mathFn = "max"
@@ -661,6 +661,10 @@ namespace ts.pxtc.decompiler {
                 throw Error(`Unsupported math fn: ${left}.${right}`);
             }
             return [mathFn, leftSup]
+        } else if (left === "console") {
+            if (right === "log") {
+                return ["print", leftSup]
+            }
         }
 
         return [`${left}.${right}`, leftSup];
