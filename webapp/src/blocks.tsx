@@ -93,7 +93,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
-    saveToTypeScript(): Promise<string> {
+    saveToTypeScriptAsync(): Promise<string> {
         if (!this.typeScriptSaveable) return Promise.resolve('');
         this.clearHighlightedStatements();
         try {

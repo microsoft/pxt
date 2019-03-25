@@ -473,7 +473,22 @@ export class ProjectView
     }
 
     openPythonAsync(): Promise<void> {
-        const promise: Promise<void> = this.saveTypeScriptAsync(false)
+        // convert python to typescript, if same as current source, skip decompilation
+        const tssrc = pkg.mainEditorPkg().files["main.ts"].content;
+        return this.textEditor.convertPythonToTypeScriptAsync()
+            .then(pysrc => {
+                if (pysrc == tssrc) {
+                    // decompiled python is same current typescript, go back to python without ts->py conversion
+                    pxt.debug(`ts -> py shortcut`)
+                    this.setFile(pkg.mainEditorPkg().files["main.py"]);
+                    return Promise.resolve();
+                }
+                else return this.convertTypeScriptToPythonAsync();
+            });
+    }
+
+    private convertTypeScriptToPythonAsync() {
+        let p = this.saveTypeScriptAsync(false)
             .then(() => compiler.pyDecompileAsync("main.ts"))
             .then(cres => {
                 if (cres && cres.success) {
@@ -489,10 +504,9 @@ export class ProjectView
                 core.errorNotification(lf("Oops, something went wrong trying to convert your code."));
             })
         if (open)
-            return core.showLoadingAsync("switchtopython", lf("switching to Python..."),
-                promise);
-        else
-            return promise;
+            p = core.showLoadingAsync("switchtopython", lf("switching to Python..."), p);
+
+        return p;
     }
 
     openSimView() {
@@ -1669,7 +1683,7 @@ export class ProjectView
     }
 
     saveBlocksToTypeScriptAsync(): Promise<string> {
-        return this.blocksEditor.saveToTypeScript();
+        return this.blocksEditor.saveToTypeScriptAsync();
     }
 
     private saveVirtualFileAsync(prj: string, src: string, open: boolean): Promise<void> {
@@ -1690,7 +1704,7 @@ export class ProjectView
 
         let promise = open ? this.textEditor.loadMonacoAsync() : Promise.resolve();
         promise = promise
-            .then(() => this.editor.saveToTypeScript())
+            .then(() => this.editor.saveToTypeScriptAsync())
             .then((src) => {
                 if (!src) return Promise.resolve();
                 return this.saveVirtualFileAsync(pxt.JAVASCRIPT_PROJECT_NAME, src, open);

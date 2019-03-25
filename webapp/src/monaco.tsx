@@ -130,7 +130,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             // 2) decompile js -> blocks then take the decompiled blocks -> js
             // 3) check that decompiled js == current js % white space
             let blocksInfo: pxtc.BlocksInfo;
-            return this.saveToTypeScript() // make sure Python gets converted
+            return this.saveToTypeScriptAsync() // make sure Python gets converted
                 .then(() => this.parent.saveFileAsync())
                 .then(() => this.parent.loadBlocklyAsync())
                 .then(() => compiler.getBlocksAsync())
@@ -314,10 +314,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
-    saveToTypeScript() {
-        if (this.fileType !== FileType.Python)
-            return Promise.resolve("")
-        let tsName = this.currFile.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)
+    saveToTypeScriptAsync() {
+        if (this.fileType == FileType.Python)
+            return this.convertPythonToTypeScriptAsync();
+        return Promise.resolve("")
+    }
+
+    convertPythonToTypeScriptAsync(): Promise<string> {
+        const tsName = this.currFile.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)
         return compiler.py2tsAsync()
             .then(res => {
                 if (res.generated[tsName])

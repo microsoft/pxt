@@ -52,14 +52,16 @@ export class File implements pxt.editor.IFile {
     getVirtualFileName(forPrj: string): string {
         const ext = this.name.replace(/.*\./, "");
         const basename = ext ? this.name.slice(0, -ext.length - 1) : this.name;
+        const isExtOk = /^blocks|py|ts$/.test(ext);
+        if (!isExtOk) return undefined;
 
         switch (forPrj) {
             case pxt.BLOCKS_PROJECT_NAME:
-                return ext == "ts" || ext == "py" ? basename + ".blocks" : undefined;
+                return basename + ".blocks";
             case pxt.JAVASCRIPT_PROJECT_NAME:
-                return ext == "blocks" || ext == "py" ? basename + ".ts" : undefined;
+                return basename + ".ts";
             case pxt.PYTHON_PROJECT_NAME:
-                return ext == "blocks" || ext == "ts" ? basename + ".py" : undefined;
+                return basename + ".py";
             default:
                 pxt.U.oops();
                 return undefined;
