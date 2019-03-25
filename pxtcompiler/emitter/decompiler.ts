@@ -1731,7 +1731,8 @@ ${output}</xml>`;
                     // are dropdown fields (not value inputs) so we want to decompile the
                     // inner enum value as a field and not the shim block as a value
                     const shimCall: pxtc.CallInfo = (e as any).callInfo;
-                    if (shimCall && attrs(shimCall).shim === "TD_ID") {
+                    const shimAttrs: CommentAttrs = shimCall && attrs(shimCall);
+                    if (shimAttrs && shimAttrs.shim === "TD_ID" && paramInfo.isEnum) {
                         e = unwrapNode(shimCall.args[0]) as ts.Expression;
                     }
                 }
