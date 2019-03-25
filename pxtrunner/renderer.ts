@@ -3,7 +3,7 @@
 namespace pxt.runner {
     const JS_ICON = "icon xicon js";
     const PY_ICON = "icon xicon python";
-    const BLOCKS_ICON = "puzzle icon"
+    const BLOCKS_ICON = "icon xicon blocks"
 
     export interface ClientRenderOptions {
         snippetClass?: string;
