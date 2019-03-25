@@ -110,6 +110,24 @@ namespace pxt.py {
         return { line: lineno, column: startPos - lastnl - 1 }
     }
 
+    export function patchPosition(d: pxtc.KsDiagnostic, src: string) {
+        if (!d.start && !d.length) {
+            d.start = 0
+            d.length = 0
+            d.line = 0
+            d.column = 0
+            return
+        }
+        let p = position(d.start, src)
+        d.line = p.line
+        d.column = p.column
+        if (d.length > 0) {
+            p = position(d.start + d.length - 1, src)
+            d.endLine = p.line
+            d.endColumn = p.column + 2 // not sure where the +2 is coming from, but it works out in monaco
+        }
+    }
+
     export function tokenToString(t: Token) {
         switch (t.type) {
             case TokenType.Id:
@@ -139,7 +157,7 @@ namespace pxt.py {
         }
     }
 
-    export function tokenToStringWithPos(t: Token, fn: string, source: string) {
+    export function friendlyTokenToString(t: Token, source: string) {
         let len = t.endPos - t.startPos
         let s = ""
         if (len == 0) {
@@ -152,11 +170,7 @@ namespace pxt.py {
         s = s.replace(/\r/g, "")
             .replace(/\n/g, "\\n")
             .replace(/\t/g, "\\t")
-        let p = position(t.startPos, source)
-        let r = U.lf("{0} at {1}({2},{3})", s, fn, p.line + 1, p.column + 1)
-        if (pxt.options.debug)
-            r += " " + tokenToString(t)
-        return r
+        return s
     }
 
     export function tokensToString(ts: Token[]) {
