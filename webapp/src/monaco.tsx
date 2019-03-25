@@ -897,7 +897,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private forceDiagnosticsUpdate() {
-        if (this.fileType != FileType.TypeScript 
+        if (this.fileType != FileType.TypeScript
             && this.fileType != FileType.Python) return
 
         let file = this.currFile
@@ -911,7 +911,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         severity: monaco.Severity.Error,
                         message: message,
                         startLineNumber: d.line + 1,
-                        startColumn: d.column,
+                        startColumn: d.column + 1,
                         endLineNumber: d.endLine == undefined ? endPos.lineNumber : d.endLine + 1,
                         endColumn: d.endColumn == undefined ? endPos.column : d.endColumn
                     })

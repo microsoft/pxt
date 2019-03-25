@@ -581,7 +581,7 @@ declare namespace ts.pxtc {
         value: any;
     }
 
-    enum SymbolKind {
+    const enum SymbolKind {
         None,
         Method,
         Property,
