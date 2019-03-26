@@ -487,39 +487,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 ev.preventDefault();
                 ev.stopPropagation();
 
-                let mouseTarget = this.editor.getTargetAtClientPoint(ev.clientX, ev.clientY);
-                let position = mouseTarget.position;
-                let model = this.editor.getModel();
-                let currPos = this.editor.getPosition();
-                let cursor = model.getOffsetAt(currPos)
-                if (!position) // IE11 fails to locate the mouse
-                    position = currPos;
-
-                insertText = (currPos.column > 1) ? '\n' + insertText :
-                    model.getWordUntilPosition(currPos) != undefined && model.getWordUntilPosition(currPos).word != '' ?
-                        insertText + '\n' : insertText;
-                if (insertText.indexOf('{{}}') > -1) {
-                    cursor += (insertText.indexOf('{{}}'));
-                    insertText = insertText.replace('{{}}', '');
-                } else
-                    cursor += (insertText.length);
-
-                this.editor.pushUndoStop();
-                this.editor.executeEdits("", [
-                    {
-                        identifier: { major: 0, minor: 0 },
-                        range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column),
-                        text: insertText,
-                        forceMoveMarkers: true,
-                        isAutoWhitespaceEdit: true
-                    }
-                ]);
-                this.beforeCompile();
-                this.editor.pushUndoStop();
-
-                let endPos = model.getPositionAt(cursor);
-                this.editor.setPosition(endPos);
-                this.editor.focus();
+                let p = insertText.startsWith("qName:")
+                    ? compiler.snippetAsync(insertText.substring("qName:".length), this.fileType == pxt.editor.FileType.Python)
+                    : Promise.resolve(insertText)
+                p.done(snippet => {
+                    let mouseTarget = this.editor.getTargetAtClientPoint(ev.clientX, ev.clientY);
+                    let position = mouseTarget.position;
+                    this.insertSnippet(position, snippet);
+                });
             });
 
 
@@ -532,6 +507,37 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.setupToolbox(editorArea);
             this.setupFieldEditors();
         })
+    }
+
+    private insertSnippet(position: monaco.Position, insertText: string) {
+        let currPos = this.editor.getPosition();
+        let model = this.editor.getModel();
+        if (!position) // IE11 fails to locate the mouse
+            position = currPos;
+
+        // always insert the text on the next lin
+        insertText += "\n";
+        position.lineNumber++;
+        position.column = 1;
+        // check existing content
+        if (position.lineNumber < model.getLineCount() && model.getLineContent(position.lineNumber)) // non-empty line
+            insertText = "\n" + insertText;
+
+        // update cursor
+        this.editor.pushUndoStop();
+        this.editor.executeEdits("", [
+            {
+                identifier: { major: 0, minor: 0 },
+                range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column),
+                text: insertText,
+                forceMoveMarkers: true,
+                isAutoWhitespaceEdit: true,
+
+            }
+        ]);
+        this.beforeCompile();
+        this.editor.pushUndoStop();
+        this.editor.focus();
     }
 
     protected dragCurrentPos = { x: 0, y: 0 };
@@ -1171,7 +1177,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private getBuiltinBlocks(ns: string, subns: string) {
         let cat = snippets.getBuiltinCategory(ns);
         let blocks = cat.blocks || [];
-        blocks.forEach(b => { b.noNamespace = true })
         if (!cat.custom && this.nsMap[ns]) blocks = blocks.concat(this.nsMap[ns].filter(block => !(block.attributes.blockHidden || block.attributes.deprecated)));
         return this.filterBlocks(subns, blocks);
     }
@@ -1469,9 +1474,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let monacoFlyout = this.getMonacoFlyout();
 
         const isPython = this.fileType == pxt.editor.FileType.Python;
-        const snippet = isPython ? fn.pySnippet : fn.snippet;
-        if (!snippet)
+        if (fn.snippet === undefined)
             return undefined;
+        const qName = fn.qName;
         const snippetName = (isPython ? fn.pySnippetName : undefined) || fn.snippetName || fn.name;
 
         let monacoBlockArea = document.createElement('div');
@@ -1483,80 +1488,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         monacoBlockArea.appendChild(monacoBlock);
 
         const comment = fn.attributes.jsDoc;
-
-        let snippetPrefix = fn.noNamespace ? "" : (fn.attributes.blockNamespace || fn.namespace);
-        let isInstance = false;
-        let addNamespace = false;
-        let namespaceToUse = "";
-
-        const element = fn as pxtc.SymbolInfo;
-        if (element.attributes.block) {
-            if (element.attributes.defaultInstance) {
-                snippetPrefix = element.attributes.defaultInstance;
-            }
-            else if (element.namespace) { // some blocks don't have a namespace such as parseInt
-                const nsInfo = this.blockInfo.apis.byQName[element.namespace];
-                if (nsInfo.attributes.fixedInstances) {
-                    let instances = Util.values(this.blockInfo.apis.byQName)
-                    let getExtendsTypesFor = function (name: string) {
-                        return instances
-                            .filter(v => v.extendsTypes)
-                            .filter(v => v.extendsTypes.reduce((x, y) => x || y.indexOf(name) != -1, false))
-                            .reduce((x, y) => x.concat(y.extendsTypes), [])
-                    }
-                    // if blockNamespace exists, e.g., "pins", use it for snippet
-                    // else use nsInfo.namespace, e.g., "motors"
-                    namespaceToUse = element.attributes.blockNamespace || nsInfo.namespace || "";
-                    // all fixed instances for this namespace
-                    let fixedInstances = instances.filter(value =>
-                        value.kind === pxtc.SymbolKind.Variable &&
-                        value.attributes.fixedInstance
-                    );
-                    // first try to get fixed instances whose retType matches nsInfo.name
-                    // e.g., DigitalPin
-                    let exactInstances = fixedInstances.filter(value =>
-                        value.retType == nsInfo.qName)
-                        .sort((v1, v2) => v1.name.localeCompare(v2.name));
-                    if (exactInstances.length) {
-                        snippetPrefix = `${exactInstances[0].name}`
-                    } else {
-                        // second choice: use fixed instances whose retType extends type of nsInfo.name
-                        // e.g., nsInfo.name == AnalogPin and instance retType == PwmPin
-                        let extendedInstances = fixedInstances.filter(value =>
-                            getExtendsTypesFor(nsInfo.qName).indexOf(value.retType) !== -1)
-                            .sort((v1, v2) => v1.name.localeCompare(v2.name));
-                        if (extendedInstances.length) {
-                            snippetPrefix = `${extendedInstances[0].name}`
-                        }
-                    }
-                    isInstance = true;
-                    addNamespace = true;
-                }
-                else if (element.kind == pxtc.SymbolKind.Method || element.kind == pxtc.SymbolKind.Property) {
-                    const params = pxt.blocks.compileInfo(element);
-                    snippetPrefix = params.thisParameter.defaultValue || params.thisParameter.definitionName;
-                    isInstance = true;
-                }
-                else if (nsInfo.kind === pxtc.SymbolKind.Class) {
-                    return undefined;
-                }
-            }
-        }
-
-        let sigToken = document.createElement('span');
-        if (!fn.snippetOnly) {
-            sigToken.className = 'sig';
-        }
-        // completion is a bit busted but looks better
-        sigToken.textContent = snippet
-            .replace(/^[^(]*\(/, '(')
-            .replace(/^\s*\{\{\}\}\n/gm, '')
-            .replace(/\{\n\}/g, '{}')
-            .replace(/(?:\{\{)|(?:\}\})/g, '');
-
         monacoBlock.title = comment;
 
         color = pxt.toolbox.convertColor(color);
+
+        const methodToken = document.createElement('span');
+        methodToken.textContent = fn.snippetOnly ? fn.snippet : snippetName;
+        monacoBlock.appendChild(methodToken);
 
         if (!isDisabled) {
             monacoBlock.draggable = true;
@@ -1564,40 +1502,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 pxt.tickEvent("monaco.toolbox.itemclick", undefined, { interactiveConsent: true });
                 monacoEditor.hideFlyout();
 
-                let model = monacoEditor.editor.getModel();
-                let currPos = monacoEditor.editor.getPosition();
-                let cursor = model.getOffsetAt(currPos)
-                let insertText = snippetPrefix ? `${snippetPrefix}.${snippet}` : snippet;
-                insertText = addNamespace ? `${firstWord(namespaceToUse)}.${insertText}` : insertText;
-                insertText = (currPos.column > 1) ? '\n' + insertText :
-                    model.getWordUntilPosition(currPos) != undefined && model.getWordUntilPosition(currPos).word != '' ?
-                        insertText + '\n' : insertText;
-
-                if (insertText.indexOf('{{}}') > -1) {
-                    cursor += (insertText.indexOf('{{}}'));
-                    insertText = insertText.replace('{{}}', '');
-                } else
-                    cursor += (insertText.length);
-
-                insertText = insertText.replace(/(?:\{\{)|(?:\}\})/g, '');
-                monacoEditor.editor.pushUndoStop();
-                monacoEditor.editor.executeEdits("", [
-                    {
-                        identifier: { major: 0, minor: 0 },
-                        range: new monaco.Range(currPos.lineNumber, currPos.column, currPos.lineNumber, currPos.column),
-                        text: insertText,
-                        forceMoveMarkers: false
-                    }
-                ]);
-                monacoEditor.beforeCompile();
-                monacoEditor.editor.pushUndoStop();
-                let endPos = model.getPositionAt(cursor);
-                monacoEditor.editor.setPosition(endPos);
-                monacoEditor.editor.focus();
-                //monacoEditor.editor.setSelection(new monaco.Range(currPos.lineNumber, currPos.column, endPos.lineNumber, endPos.column));
-
-                // Fire a create event
-                workspace.fireEvent({ type: 'create', editor: 'ts', blockId: fn.attributes.blockId } as pxt.editor.events.CreateEvent);
+                let snip = isPython ? fn.pySnippet : fn.snippet;
+                let p = snip ? Promise.resolve(snip) : compiler.snippetAsync(qName, isPython);
+                p.done(snippet => {
+                    let currPos = monacoEditor.editor.getPosition();
+                    this.insertSnippet(currPos, snippet);
+                    // Fire a create event
+                    workspace.fireEvent({ type: 'create', editor: 'ts', blockId: fn.attributes.blockId } as pxt.editor.events.CreateEvent);
+                });
             };
             monacoBlock.ondragstart = (e: DragEvent) => {
                 pxt.tickEvent("monaco.toolbox.itemdrag", undefined, { interactiveConsent: true });
@@ -1605,10 +1517,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     monacoFlyout.style.transform = "translateX(-9999px)";
                 });
 
-                let insertText = snippetPrefix ? `${snippetPrefix}.${snippet}` : snippet;
-                insertText = addNamespace ? `${firstWord(namespaceToUse)}.${insertText}` : insertText;
-                e.dataTransfer.setData('text', insertText); // IE11 only supports text
-
+                const snippet = isPython ? fn.pySnippet : fn.snippet;
+                if (!snippet)
+                    e.dataTransfer.setData('text', 'qName:' + qName); // IE11 only supports text
+                else
+                    e.dataTransfer.setData('text', snippet); // IE11 only supports text
                 // Fire a create event
                 workspace.fireEvent({ type: 'create', editor: 'ts', blockId: fn.attributes.blockId } as pxt.editor.events.CreateEvent);
             }
@@ -1640,19 +1553,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 unhighlightBlock();
             }
         }
-
-        if (!fn.snippetOnly) {
-            if (isInstance) {
-                const instanceToken = document.createElement('span');
-                instanceToken.textContent = snippetPrefix + '.';
-                instanceToken.className = 'sigPrefix';
-                monacoBlock.appendChild(instanceToken);
-            }
-            let methodToken = document.createElement('span');
-            methodToken.textContent = snippetName;
-            monacoBlock.appendChild(methodToken);
-        }
-        monacoBlock.appendChild(sigToken);
 
         // Draw the shape of the block
         monacoBlock.style.fontSize = `${monacoEditor.parent.settings.editorFontSize}px`;
@@ -1744,10 +1644,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
 function rangeToSelection(range: monaco.IRange): monaco.Selection {
     return new monaco.Selection(range.startLineNumber, range.startColumn, range.endLineNumber, range.endColumn);
-}
-
-function firstWord(s: string) {
-    return /[^\.]+/.exec(s)[0]
 }
 
 function createIndent(length: number) {

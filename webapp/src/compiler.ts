@@ -294,6 +294,10 @@ export function formatAsync(input: string, pos: number) {
     return workerOpAsync("format", { format: { input: input, pos: pos } });
 }
 
+export function snippetAsync(qName: string, python?: boolean) {
+    return workerOpAsync("snippet", { snippet: { qName, python } });
+}
+
 export function typecheckAsync() {
     let p = pkg.mainPkg.getCompileOptionsAsync()
         .then(opts => {

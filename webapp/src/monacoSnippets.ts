@@ -579,8 +579,7 @@ export function getPauseUntil() {
                 weight: opts.weight == null ? 0 : opts.weight,
                 jsDoc: lf("Pause execution of code until the given boolean expression is true"),
                 advanced: false
-            },
-            noNamespace: true
+            }
         };
     }
 
@@ -706,7 +705,6 @@ function blockFromJson(b: pxt.editor.ToolboxBlockDefinition, currentWeight?: num
             jsDoc: b.jsDoc,
             group: b.group,
         },
-        noNamespace: true,
         retType: b.retType,
         blockXml: b.blockXml
     }

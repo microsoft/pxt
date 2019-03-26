@@ -615,7 +615,7 @@ declare namespace ts.pxtc {
         EnumMember,
         Class,
         Interface,
-    }    
+    }
 
     interface SymbolInfo {
         attributes: CommentAttrs;
