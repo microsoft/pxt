@@ -497,7 +497,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
                 // always insert the text on the next lin
                 insertText += "\n";
-                position.lineNumber++;                
+                position.lineNumber++;
                 position.column = 1;
                 // check existing content
                 if (position.lineNumber < model.getLineCount() && model.getLineContent(position.lineNumber)) // non-empty line
@@ -512,7 +512,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         text: insertText,
                         forceMoveMarkers: true,
                         isAutoWhitespaceEdit: true,
-                        
+
                     }
                 ]);
                 this.beforeCompile();
@@ -1582,7 +1582,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             //    instanceToken.textContent = snippetPrefix + '.';
             //    instanceToken.className = 'sigPrefix';
             //    monacoBlock.appendChild(instanceToken);
-           // }
+            // }
             let methodToken = document.createElement('span');
             methodToken.textContent = snippetName;
             monacoBlock.appendChild(methodToken);
