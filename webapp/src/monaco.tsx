@@ -321,6 +321,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     convertPythonToTypeScriptAsync(): Promise<string> {
+        if (!this.currFile) return Promise.resolve("");
         const tsName = this.currFile.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)
         return compiler.py2tsAsync()
             .then(res => {
