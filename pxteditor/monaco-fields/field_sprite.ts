@@ -74,7 +74,8 @@ namespace pxt.editor {
         glyphCssClass: "sprite-editor-glyph sprite-focus-hover",
         heightInPixels: 510,
         matcher: {
-            searchString: "img`(?:[ a-fA-F0-9\\.]|\\n)+`",
+            // match both JS and python
+            searchString: "img\\s*(?:`|\\(\"\"\")(?:[ a-fA-F0-9\\.]|\\n)+\\s*(?:`|\"\"\"\\))",
             isRegex: true,
             matchCase: true,
             matchWholeWord: false
