@@ -363,7 +363,7 @@ namespace ts.pxtc {
                 let qName = getFullName(typechecker, stmt.symbol)
                 if (stmt.kind == SK.SetAccessor)
                     qName += "@set" // otherwise we get a clash with the getter
-                qNameToNode[qName] = stmt;                    
+                qNameToNode[qName] = stmt;
                 let si = createSymbolInfo(typechecker, qName, stmt, opts)
                 if (si) {
                     let existing = U.lookup(res.byQName, qName)
@@ -469,7 +469,7 @@ namespace ts.pxtc {
             if (si && stmt && ts.isFunctionLike(stmt)) {
                 si.snippet = ts.pxtc.service.getSnippet(res.byQName, si, stmt as FunctionLikeDeclaration, si.attributes);
                 if (opts.pySnippets)
-                    si.pySnippet = ts.pxtc.service.getSnippet(res.byQName, si, stmt as FunctionLikeDeclaration, si.attributes);
+                    si.pySnippet = ts.pxtc.service.getSnippet(res.byQName, si, stmt as FunctionLikeDeclaration, si.attributes, true);
             }
         }
 
@@ -948,6 +948,8 @@ namespace ts.pxtc.service {
         if (!ts.isFunctionLike(n)) {
             return undefined;
         }
+        let preStmt = "";
+
         const checker = service && !python ? service.getProgram().getTypeChecker() : undefined;
         const args = n.parameters ? n.parameters.filter(param => !param.initializer && !param.questionToken).map(param => {
             const typeNode = param.type;
@@ -976,7 +978,7 @@ namespace ts.pxtc.service {
                     if (functionSignature) {
                         return getFunctionString(functionSignature);
                     }
-                    return python ? `def _():\n  pass` : `function () {}`;
+                    return emitFn(name);
             }
 
             const type = checker ? checker.getTypeAtLocation(param) : undefined;
@@ -987,7 +989,7 @@ namespace ts.pxtc.service {
                         if (sigs.length) {
                             return getFunctionString(sigs[0]);
                         }
-                        return python ? `def _():\n  pass` : `function () {}`;
+                        return emitFn(name);
                     }
                 }
                 if (type.flags & ts.TypeFlags.EnumLike) {
@@ -1071,11 +1073,11 @@ namespace ts.pxtc.service {
         let insertText = snippetPrefix ? `${snippetPrefix}.${snippet}` : snippet;
         insertText = addNamespace ? `${firstWord(namespaceToUse)}.${insertText}` : insertText;
 
-        return insertText;
+        return preStmt + insertText;
 
         function firstWord(s: string) {
             return /[^\.]+/.exec(s)[0]
-        }        
+        }
 
         function getFunctionString(functionSignature: ts.Signature) {
             let functionArgument = "()";
@@ -1098,6 +1100,13 @@ namespace ts.pxtc.service {
             functionArgument = displayPartsStr.substr(0, displayPartsStr.lastIndexOf(":"));
 
             return python ? `def ${functionArgument}:\n  ${returnValue}\n` : `function ${functionArgument} {\n    ${returnValue}\n}`
+        }
+
+        function emitFn(n: string): string {
+            if (python) {
+                preStmt = `def ${n}():\n  pass\n`;
+                return n;
+            } else return `function () {}`;
         }
     }
 
