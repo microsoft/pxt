@@ -1073,6 +1073,9 @@ namespace ts.pxtc.service {
         let insertText = snippetPrefix ? `${snippetPrefix}.${snippet}` : snippet;
         insertText = addNamespace ? `${firstWord(namespaceToUse)}.${insertText}` : insertText;
 
+        if (attrs && attrs.blockSetVariable)
+            insertText = `${python ? "": "let "}${attrs.blockSetVariable} = ${insertText}`; 
+
         return preStmt + insertText;
 
         function firstWord(s: string) {

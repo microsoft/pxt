@@ -495,15 +495,15 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (!position) // IE11 fails to locate the mouse
                     position = currPos;
 
-                insertText = (currPos.column > 1) ? '\n' + insertText :
-                    model.getWordUntilPosition(currPos) != undefined && model.getWordUntilPosition(currPos).word != '' ?
-                        insertText + '\n' : insertText;
-                if (insertText.indexOf('{{}}') > -1) {
-                    cursor += (insertText.indexOf('{{}}'));
-                    insertText = insertText.replace('{{}}', '');
-                } else
-                    cursor += (insertText.length);
+                // always insert the text on the next lin
+                insertText += "\n";
+                position.lineNumber++;                
+                position.column = 1;
+                // check existing content
+                if (position.lineNumber < model.getLineCount() && model.getLineContent(position.lineNumber)) // non-empty line
+                    insertText = "\n" + insertText;
 
+                // update cursor
                 this.editor.pushUndoStop();
                 this.editor.executeEdits("", [
                     {
@@ -511,14 +511,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column),
                         text: insertText,
                         forceMoveMarkers: true,
-                        isAutoWhitespaceEdit: true
+                        isAutoWhitespaceEdit: true,
+                        
                     }
                 ]);
                 this.beforeCompile();
                 this.editor.pushUndoStop();
-
-                let endPos = model.getPositionAt(cursor);
-                this.editor.setPosition(endPos);
                 this.editor.focus();
             });
 
