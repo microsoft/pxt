@@ -462,6 +462,11 @@ namespace ts.pxtc {
         }
         toclose.forEach(closeSi)
 
+        if (legacyOnly) {
+            // conflicts with pins.map()
+            delete res.byQName["Array.map"]
+        }
+
         // fill in snippets
         for (let qName in res.byQName) {
             const si = res.byQName[qName];
@@ -471,11 +476,6 @@ namespace ts.pxtc {
                 if (opts.pySnippets)
                     si.pySnippet = ts.pxtc.service.getSnippet(res.byQName, si, stmt as FunctionLikeDeclaration, si.attributes, true);
             }
-        }
-
-        if (legacyOnly) {
-            // conflicts with pins.map()
-            delete res.byQName["Array.map"]
         }
 
         return res
