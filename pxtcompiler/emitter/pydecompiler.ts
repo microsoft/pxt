@@ -21,14 +21,7 @@ namespace ts.pxtc.decompiler {
         // };
 
         try {
-            resetEmitter()
-
-            let outLns = file.getChildren()
-                .map(emitNode)
-                .reduce((p, c) => p.concat(c), [])
-
-            let output = outLns.join("\n");
-
+            let output = emitFile(file)
             let outFilename = file.fileName.replace(/(\.py)?\.\w*$/i, '') + '.py'
             result.outfiles[outFilename] = output;
         } catch (e) {
@@ -67,6 +60,16 @@ namespace ts.pxtc.decompiler {
     ///
     /// NEWLINES & COMMENTS
     ///
+    function emitFile(s: ts.SourceFile): string {
+        resetEmitter()
+
+        let outLns = s.getChildren()
+            .map(emitNode)
+            .reduce((p, c) => p.concat(c), [])
+            .join("\n")
+
+        return outLns
+    }
     function emitNode(s: ts.Node): string[] {
         switch (s.kind) {
             case ts.SyntaxKind.SyntaxList:
