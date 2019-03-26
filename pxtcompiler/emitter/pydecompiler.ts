@@ -1,13 +1,4 @@
 namespace ts.pxtc.decompiler {
-    function emptyResult(): pxtc.CompileResult {
-        return {
-            blocksInfo: null,
-            outfiles: {},
-            diagnostics: [],
-            success: true,
-            times: {}
-        }
-    }
     // TODO(dz): code share with blocks decompiler ?
     export function decompileToPython(program: ts.Program, filename: string): pxtc.CompileResult {
         try {
@@ -22,53 +13,51 @@ namespace ts.pxtc.decompiler {
         }
     }
     export function decompileToPythonHelper(program: ts.Program, filename: string): pxtc.CompileResult {
-        // TODO take in ts.Program
         let result = emptyResult()
-        let file = program.getSourceFile(filename)
-        // TODO use program
-        let output = emitFile(file)
-        let outFilename = file.fileName.replace(/(\.py)?\.\w*$/i, '') + '.py'
+        let output = tsToPy(program, filename)
+        let outFilename = filename.replace(/(\.py)?\.\w*$/i, '') + '.py'
         result.outfiles[outFilename] = output;
         return result
     }
-
-    // TODO map names from camel case to snake case
-    // TODO disallow keywords & builtins (e.g. "range", "print")
-    // TODO handle shadowing
-    // TODO handle types at initialization when ambiguous (e.g. x = [], x = None)
-
-    ///
-    /// UTILS
-    ///
-    const INDENT = "  "
-    function indent(lvl: number): (s: string) => string {
-        return s => `${INDENT.repeat(lvl)}${s}`
+    function emptyResult(): pxtc.CompileResult {
+        return {
+            blocksInfo: null,
+            outfiles: {},
+            diagnostics: [],
+            success: true,
+            times: {}
+        }
     }
-    const indent1 = indent(1)
+}
 
-    ///
-    /// STATE
-    ///
-    // TODO use a class or injection so the state isn't global
-    // for now I'm resisting creating a class b/c I don't want the extra level of indentation >.<
+// TODO map names from camel case to snake case
+// TODO disallow keywords & builtins (e.g. "range", "print")
+// TODO handle shadowing
+// TODO handle types at initialization when ambiguous (e.g. x = [], x = None)
+
+///
+/// UTILS
+///
+const INDENT = "  "
+function indent(lvl: number): (s: string) => string {
+    return s => `${INDENT.repeat(lvl)}${s}`
+}
+const indent1 = indent(1)
+
+function tsToPy(program: ts.Program, filename: string): string {
+    // state
     let nextFnNum = 0
-    function resetEmitter() {
-        nextFnNum = 0
-    }
 
+    // ts->py 
+    let file = program.getSourceFile(filename)
+    let outLns = file.getChildren()
+        .map(emitNode)
+        .reduce((p, c) => p.concat(c), [])
+        .join("\n")
+    return outLns
     ///
     /// NEWLINES & COMMENTS
     ///
-    function emitFile(s: ts.SourceFile): string {
-        resetEmitter()
-
-        let outLns = s.getChildren()
-            .map(emitNode)
-            .reduce((p, c) => p.concat(c), [])
-            .join("\n")
-
-        return outLns
-    }
     function emitNode(s: ts.Node): string[] {
         switch (s.kind) {
             case ts.SyntaxKind.SyntaxList:
@@ -215,13 +204,13 @@ namespace ts.pxtc.decompiler {
             return null
 
         result.toExcl = toNum
-        if (s.condition.operatorToken.kind === SyntaxKind.LessThanEqualsToken) {
+        if (s.condition.operatorToken.kind === ts.SyntaxKind.LessThanEqualsToken) {
             if (isNormalInteger(toNum))
                 result.toExcl = "" + (Number(toNum) + 1)
             else
                 result.toExcl += " + 1"
         }
-        else if (s.condition.operatorToken.kind !== SyntaxKind.LessThanToken)
+        else if (s.condition.operatorToken.kind !== ts.SyntaxKind.LessThanToken)
             return null
 
         // must be (...; i++)
@@ -231,7 +220,7 @@ namespace ts.pxtc.decompiler {
         if (!ts.isPostfixUnaryExpression(s.incrementor)
             && !ts.isPrefixUnaryExpression(s.incrementor))
             return null
-        if (s.incrementor.operator !== SyntaxKind.PlusPlusToken)
+        if (s.incrementor.operator !== ts.SyntaxKind.PlusPlusToken)
             return null
 
         // must be X < Y
@@ -423,7 +412,7 @@ namespace ts.pxtc.decompiler {
 
         if (allInit) {
             let memAndSup = s.members
-                .map(m => [m, emitExp(m.initializer)] as [EnumMember, ExpRes])
+                .map(m => [m, emitExp(m.initializer)] as [ts.EnumMember, ExpRes])
             throw Error("Unsupported: explicit enum initialization") // TODO
         }
 
