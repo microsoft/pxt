@@ -435,6 +435,29 @@ namespace pxsim {
         return pxtcore.mkAction(0, s => _leave(s, f(s)))
     }
 
+    export class TimeoutScheduled {
+        constructor(id: number, fn: any, totalRuntime: number, timestampCall: number) {
+            this.id = id;
+            this.fn = fn;
+            this.totalRuntime = totalRuntime;
+            this.timestampCall = timestampCall;
+        }
+        id = -1;
+        fn = () => { };
+        totalRuntime = 0;
+        timestampCall = 0;
+    }
+
+    export class PausedTimeout {
+        constructor(fn: any, timeRemaining: number) {
+            this.fn = fn;
+            this.timeRemaining = timeRemaining;
+        }
+        fn = () => { };
+        timeRemaining = 0;
+    }
+
+
     export class Runtime {
         public board: BaseBoard;
         numGlobals = 1000;
@@ -450,12 +473,17 @@ namespace pxsim {
         recordingWidth: number = undefined;
         startTime = 0;
         startTimeUs = 0;
+        pausedTime = 0;
+        lastPauseTimestamp = 0;
         id: string;
         globals: any = {};
         currFrame: StackFrame;
         entry: LabelFn;
         loopLock: Object = null;
         loopLockWaitList: (() => void)[] = [];
+
+        timeoutsScheduled: TimeoutScheduled[] = []
+        timeoutsPausedOnBreakpoint: PausedTimeout[] = [];
 
         perfCounters: PerfCounter[]
         perfOffset = 0
@@ -487,7 +515,7 @@ namespace pxsim {
         }
 
         runningTime(): number {
-            return U.now() - this.startTime;
+            return U.now() - this.startTime - this.pausedTime;
         }
 
         runningTimeUs(): number {
@@ -692,6 +720,7 @@ namespace pxsim {
             }
 
             function maybeYield(s: StackFrame, pc: number, r0: any): boolean {
+                __this.cleanScheduledExpired()
                 yieldSteps = yieldMaxSteps;
                 let now = Date.now()
                 if (now - lastYield >= 20) {
@@ -739,10 +768,14 @@ namespace pxsim {
                 const { msg, heap } = getBreakpointMsg(s, brkId);
                 dbgHeap = heap;
                 Runtime.postMessage(msg)
+                breakAlways = false;
+                breakFrame = null;
+                runtime.pauseScheduled();
                 dbgResume = (m: DebuggerMessage) => {
                     dbgResume = null;
                     dbgHeap = null;
-                    if (__this.dead) return;
+                    if (__this.dead) return null;
+                    __this.resumeAllPausedScheduled();
                     runtime = __this;
                     U.assert(s.pc == retPC);
 
@@ -751,21 +784,21 @@ namespace pxsim {
 
                     switch (m.subtype) {
                         case "resume":
-                            break
+                            break;
                         case "stepover":
-                            breakAlways = true
-                            breakFrame = s
-                            break
+                            breakAlways = true;
+                            breakFrame = s;
+                            break;
                         case "stepinto":
-                            breakAlways = true
-                            break
+                            breakAlways = true;
+                            break;
                         case "stepout":
                             breakAlways = true;
                             breakFrame = s.parent || s;
                             break;
                     }
 
-                    return loop(s)
+                    return loop(s);
                 }
 
                 return null;
@@ -1053,6 +1086,47 @@ namespace pxsim {
             c.value += this.perfNow() - c.start;
             c.start = 0;
             c.numstops++;
+        }
+
+        // Wrapper for the setTimeout
+        schedule(fn: () => void, timeout: number): number {
+            // We call the timeout function and add its id to the timeouts scheduled.
+            if (timeout <= 0) return -1;
+            let id = setTimeout(fn, timeout);
+            runtime.timeoutsScheduled.push(new TimeoutScheduled(id, fn, timeout, Date.now()));
+            return id;
+        }
+
+        // On breakpoint, pause all timeouts
+        pauseScheduled() {
+            runtime.timeoutsScheduled.forEach(ts => {
+                clearTimeout(ts.id);
+                let elapsed = Date.now() - ts.timestampCall;
+                runtime.timeoutsPausedOnBreakpoint.push(new PausedTimeout(ts.fn, ts.totalRuntime - elapsed))
+            });
+            runtime.lastPauseTimestamp = Date.now();
+            runtime.timeoutsScheduled = [];
+        }
+
+        // When resuming after a breakpoint, restart all paused timeouts with their remaining time.
+        resumeAllPausedScheduled() {
+            // Takes the list of all fibers paused on a breakpoint and resumes them.
+            runtime.timeoutsPausedOnBreakpoint.forEach(pt => {
+                runtime.schedule(pt.fn, pt.timeRemaining);
+            });
+            if (runtime.lastPauseTimestamp) {
+                runtime.pausedTime += Date.now() - runtime.lastPauseTimestamp;
+                runtime.lastPauseTimestamp = 0;
+            }
+            runtime.timeoutsPausedOnBreakpoint = [];
+        }
+
+        // Removes from the timeouts scheduled list all the ones that had been fulfilled.
+        cleanScheduledExpired() {
+            runtime.timeoutsScheduled = runtime.timeoutsScheduled.filter(ts => {
+                let elapsed = Date.now() - ts.timestampCall;
+                return ts.totalRuntime > elapsed;
+            })
         }
     }
 
