@@ -1,0 +1,13 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="device_ring">
+<value name="note">
+<shadow type="device_note">
+<field name="name">Note.F</field>
+</shadow>
+</value>
+</block>
+</statement>
+</block>
+</xml>
