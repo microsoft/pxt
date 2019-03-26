@@ -1079,7 +1079,7 @@ namespace pxsim {
             // We call the timeout function and add its id to the timeouts scheduled.
             if (timeout <= 0) return -1;
             let id = setTimeout(fn, timeout);
-            this.timeoutsScheduled.push(new TimeoutScheduled(id, fn, timeout, Date.now()));
+            this.timeoutsScheduled.push(new TimeoutScheduled(id, fn, timeout, U.now()));
             return id;
         }
 
@@ -1087,12 +1087,12 @@ namespace pxsim {
         pauseScheduled() {
             this.timeoutsScheduled.forEach(ts => {
                 clearTimeout(ts.id);
-                let elapsed = Date.now() - ts.timestampCall;
+                let elapsed = U.now() - ts.timestampCall;
                 let timeRemaining = ts.totalRuntime - elapsed;
                 if (timeRemaining < 0) timeRemaining = 0;
                 this.timeoutsPausedOnBreakpoint.push(new PausedTimeout(ts.fn, timeRemaining))
             });
-            this.lastPauseTimestamp = Date.now();
+            this.lastPauseTimestamp = U.now();
             this.timeoutsScheduled = [];
         }
 
@@ -1103,7 +1103,7 @@ namespace pxsim {
                 this.schedule(pt.fn, pt.timeRemaining);
             });
             if (this.lastPauseTimestamp) {
-                this.pausedTime += Date.now() - this.lastPauseTimestamp;
+                this.pausedTime += U.now() - this.lastPauseTimestamp;
                 this.lastPauseTimestamp = 0;
             }
             this.timeoutsPausedOnBreakpoint = [];
@@ -1112,7 +1112,7 @@ namespace pxsim {
         // Removes from the timeouts scheduled list all the ones that had been fulfilled.
         cleanScheduledExpired() {
             this.timeoutsScheduled = this.timeoutsScheduled.filter(ts => {
-                let elapsed = Date.now() - ts.timestampCall;
+                let elapsed = U.now() - ts.timestampCall;
                 return ts.totalRuntime > elapsed;
             })
         }
