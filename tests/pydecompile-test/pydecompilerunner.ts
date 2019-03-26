@@ -163,14 +163,21 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
     return getOptsAsync(dependency)
         .then(opts => {
             const input = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
-            opts.fileSystem["main.ts"] = input;
+            let tsFile = "main.ts";
+            opts.fileSystem[tsFile] = input;
             opts.ast = true;
             opts.testMode = true;
             opts.ignoreFileResolutionErrors = true;
             if (path.basename(f).indexOf("functions_v2") === 0) {
                 opts.useNewFunctions = true;
             }
-            const decompiled = pxtc.pydecompile(opts, "main.ts");
+            // const decompiled = pxtc.pydecompile(opts, tsFile);
+
+            let program = pxtc.getTSProgram(opts);
+            let file = program.getSourceFile(tsFile);
+            // annotate(program, tsFile, target || (pxt.appTarget && pxt.appTarget.compile));
+            const decompiled = pxtc.decompiler.decompileToPythonHelper(file);
+
             if (decompiled.success) {
                 return decompiled.outfiles["main.py"];
             }

@@ -1,35 +1,31 @@
 namespace ts.pxtc.decompiler {
-    // TODO(dz): code share with blocks decompiler ?
-    export function decompileToPython(file: ts.SourceFile): pxtc.CompileResult {
-        let result: pxtc.CompileResult = {
+    function emptyResult(): pxtc.CompileResult {
+        return {
             blocksInfo: null,
             outfiles: {},
             diagnostics: [],
             success: true,
             times: {}
         }
-
-        // const env: DecompilerEnv = {
-        //     blocks: blocksInfo,
-        //     declaredFunctions: {},
-        //     declaredEnums: {},
-        //     functionParamIds: {},
-        //     attrs: attrs,
-        //     compInfo: compInfo,
-        //     localReporters: [],
-        //     opts: options || {}
-        // };
-
+    }
+    // TODO(dz): code share with blocks decompiler ?
+    export function decompileToPython(file: ts.SourceFile): pxtc.CompileResult {
         try {
-            let output = emitFile(file)
-            let outFilename = file.fileName.replace(/(\.py)?\.\w*$/i, '') + '.py'
-            result.outfiles[outFilename] = output;
+            let res = decompileToPythonHelper(file)
+            return res
         } catch (e) {
             pxt.reportException(e);
             // TODO better reporting
-            result.success = false;
+            let res = emptyResult()
+            res.success = false
+            return res
         }
-
+    }
+    export function decompileToPythonHelper(file: ts.SourceFile): pxtc.CompileResult {
+        let result = emptyResult()
+        let output = emitFile(file)
+        let outFilename = file.fileName.replace(/(\.py)?\.\w*$/i, '') + '.py'
+        result.outfiles[outFilename] = output;
         return result
     }
 
@@ -148,7 +144,7 @@ namespace ts.pxtc.decompiler {
     }
     function emitWhileStmt(s: ts.WhileStatement): string[] {
         let [cond, condSup] = emitExp(s.expression)
-        let body = emitStmt(s.statement)
+        let body = emitBody(s.statement)
             .map(indent1)
         let whileStmt = `while ${cond}:`;
         return condSup.concat([whileStmt]).concat(body)
