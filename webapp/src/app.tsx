@@ -132,7 +132,7 @@ export class ProjectView
             collapseEditorTools: simcfg.headless,
             highContrast: isHighContrast,
             simState: pxt.editor.SimState.Stopped,
-            autoRun: true // always start simulator by default
+            autoRun: this.autoRunOnStart()
         };
         if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 19;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
@@ -145,6 +145,10 @@ export class ProjectView
         this.toggleGreenScreen = this.toggleGreenScreen.bind(this);
         this.toggleSimulatorFullscreen = this.toggleSimulatorFullscreen.bind(this);
         this.initScreenshots();
+    }
+
+    private autoRunOnStart() {
+        return pxt.appTarget.simulator && (pxt.appTarget.simulator.autoRun || !!pxt.appTarget.simulator.emptyRunCode)
     }
 
     private initScreenshots() {
@@ -276,12 +280,14 @@ export class ProjectView
         simulator.setState(this.state.header ? this.state.header.editor : '', this.state.tutorialOptions && !!this.state.tutorialOptions.tutorial)
         this.editor.resize();
 
+        let p = Promise.resolve();
         if (this.editor && this.editor.isReady) {
-            this.updateEditorFile();
+            p = p.then(() => this.updateEditorFileAsync());
         }
         if (this.state.debugging) {
-            this.blocksEditor.updateToolbox(true);
+            p = p.then(() => this.blocksEditor.updateToolbox(true));
         }
+        p.done();
     }
 
     fireResize() {
@@ -345,7 +351,7 @@ export class ProjectView
     }
 
     openPython(giveFocusOnLoading = true) {
-        if (this.updatingEditorFile) return; // already transitioning
+        if (this.state.updatingEditorFile) return; // already transitioning
 
         if (this.isPythonActive()) {
             if (this.state.embedSimView) {
@@ -376,7 +382,7 @@ export class ProjectView
     }
 
     openJavaScript(giveFocusOnLoading = true) {
-        if (this.updatingEditorFile) return; // already transitioning
+        if (this.state.updatingEditorFile) return; // already transitioning
 
         if (this.isJavaScriptActive()) {
             if (this.state.embedSimView) {
@@ -398,7 +404,7 @@ export class ProjectView
     }
 
     openBlocks() {
-        if (this.updatingEditorFile) return; // already transitioning
+        if (this.state.updatingEditorFile) return; // already transitioning
 
         if (this.isBlocksActive()) {
             if (this.state.embedSimView) this.setState({ embedSimView: false });
@@ -467,7 +473,22 @@ export class ProjectView
     }
 
     openPythonAsync(): Promise<void> {
-        const promise: Promise<void> = this.saveTypeScriptAsync(false)
+        // convert python to typescript, if same as current source, skip decompilation
+        const tssrc = pkg.mainEditorPkg().files["main.ts"].content;
+        return this.textEditor.convertPythonToTypeScriptAsync()
+            .then(pysrc => {
+                if (pysrc == tssrc) {
+                    // decompiled python is same current typescript, go back to python without ts->py conversion
+                    pxt.debug(`ts -> py shortcut`)
+                    this.setFile(pkg.mainEditorPkg().files["main.py"]);
+                    return Promise.resolve();
+                }
+                else return this.convertTypeScriptToPythonAsync();
+            });
+    }
+
+    private convertTypeScriptToPythonAsync() {
+        let p = this.saveTypeScriptAsync(false)
             .then(() => compiler.pyDecompileAsync("main.ts"))
             .then(cres => {
                 if (cres && cres.success) {
@@ -483,10 +504,9 @@ export class ProjectView
                 core.errorNotification(lf("Oops, something went wrong trying to convert your code."));
             })
         if (open)
-            return core.showLoadingAsync("switchtopython", lf("switching to Python..."),
-                promise);
-        else
-            return promise;
+            p = core.showLoadingAsync("switchtopython", lf("switching to Python..."), p);
+
+        return p;
     }
 
     openSimView() {
@@ -691,29 +711,27 @@ export class ProjectView
         return this.allEditors.filter(e => e.acceptsFile(f))[0]
     }
 
-    private updatingEditorFile = false;
-    private updateEditorFile(editorOverride: srceditor.Editor = null) {
-        if (!this.state.active)
+    private updateEditorFileAsync(editorOverride: srceditor.Editor = null) {
+        if (!this.state.active
+            || this.state.updatingEditorFile
+            || this.state.currFile == this.editorFile && !editorOverride)
             return undefined;
-        if (this.state.currFile == this.editorFile && !editorOverride)
-            return undefined;
-        if (this.updatingEditorFile)
-            return undefined;
-        this.updatingEditorFile = true;
-        const simRunning = this.state.simState != pxt.editor.SimState.Stopped;
-        if (!this.state.currFile.virtual) { // switching to serial should not reset the sim
-            this.stopSimulator();
-            if (simRunning || this.state.autoRun) {
-                simulator.setPending();
-                this.setState({ simState: pxt.editor.SimState.Pending });
-            }
-        }
-        this.saveSettings();
 
-        const hc = this.state.highContrast;
-        // save file before change
-        return this.saveFileAsync()
+        let simRunning = false;
+        return core.showLoadingAsync("updateeditorfile", lf("loading editor..."), this.setStateAsync({ updatingEditorFile: true })
             .then(() => {
+                simRunning = this.state.simState != pxt.editor.SimState.Stopped;
+                if (!this.state.currFile.virtual) { // switching to serial should not reset the sim
+                    this.stopSimulator();
+                    if (simRunning || this.state.autoRun) {
+                        simulator.setPending();
+                        this.setState({ simState: pxt.editor.SimState.Pending });
+                    }
+                }
+                this.saveSettings();
+                // save file before change
+                return this.saveFileAsync();
+            }).then(() => {
                 this.editorFile = this.state.currFile as pkg.File; // TODO
                 let previousEditor = this.editor;
                 this.prevEditorId = previousEditor.getId();
@@ -721,7 +739,7 @@ export class ProjectView
                 this.allEditors.forEach(e => e.setVisible(e == this.editor))
                 return previousEditor ? previousEditor.unloadFileAsync() : Promise.resolve();
             })
-            .then(() => { return this.editor.loadFileAsync(this.editorFile, hc); })
+            .then(() => { return this.editor.loadFileAsync(this.editorFile, this.state.highContrast); })
             .then(() => {
                 this.saveFileAsync().done(); // make sure state is up to date
                 if (this.editor == this.textEditor || this.editor == this.blocksEditor)
@@ -738,14 +756,14 @@ export class ProjectView
                 } as pxsim.SimulatorFileLoadedMessage)
 
                 if (this.state.showBlocks && this.editor == this.textEditor) this.textEditor.openBlocks();
-            }).finally(() => {
-                this.forceUpdate();
-                this.updatingEditorFile = false;
+            })
+            .finally(() => this.setStateAsync({ updatingEditorFile: false }))
+            .then(() => {
                 // if auto-run is not enable, restart the sim
                 // otherwise, autorun will launch it again
                 if (!this.state.currFile.virtual && simRunning && !this.state.autoRun)
                     this.startSimulator();
-            })
+            }));
     }
 
     /**
@@ -975,7 +993,8 @@ export class ProjectView
             simulator.driver.preload(pxt.appTarget.simulator.aspectRatio);
         this.clearSerial()
         this.firstRun = true
-        this.setState({ autoRun: true }); // always start simulator once at least
+        // always start simulator once at least if autoRun is enabled
+        this.setState({ autoRun: this.autoRunOnStart() });
 
         // Merge current and new state but only if the new state members are undefined
         const oldEditorState = this.state.editorState;
@@ -1664,7 +1683,7 @@ export class ProjectView
     }
 
     saveBlocksToTypeScriptAsync(): Promise<string> {
-        return this.blocksEditor.saveToTypeScript();
+        return this.blocksEditor.saveToTypeScriptAsync();
     }
 
     private saveVirtualFileAsync(prj: string, src: string, open: boolean): Promise<void> {
@@ -1685,7 +1704,7 @@ export class ProjectView
 
         let promise = open ? this.textEditor.loadMonacoAsync() : Promise.resolve();
         promise = promise
-            .then(() => this.editor.saveToTypeScript())
+            .then(() => this.editor.saveToTypeScriptAsync())
             .then((src) => {
                 if (!src) return Promise.resolve();
                 return this.saveVirtualFileAsync(pxt.JAVASCRIPT_PROJECT_NAME, src, open);
@@ -2280,7 +2299,7 @@ export class ProjectView
 
     editText() {
         if (this.editor != this.textEditor) {
-            this.updateEditorFile(this.textEditor).then(() => {
+            this.updateEditorFileAsync(this.textEditor).then(() => {
                 this.textEditor.editor.focus();
             });
             this.forceUpdate();

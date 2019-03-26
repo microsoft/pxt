@@ -340,7 +340,7 @@ namespace pxt.py {
         }
     }
 
-    // next free error 9517
+    // next free error 9520; 9550-9599 reserved for parser
     function error(astNode: py.AST, code: number, msg: string) {
         diagnostics.push(mkDiag(astNode, pxtc.DiagnosticCategory.Error, code, msg))
         //const pos = position(astNode ? astNode.startPos || 0 : 0, mod.source)
@@ -348,7 +348,7 @@ namespace pxt.py {
     }
 
     function typeError(a: py.AST, t0: Type, t1: Type) {
-        error(a, 9500, U.lf("types not comaptible: {0} and {1}", t2s(t0), t2s(t1)))
+        error(a, 9500, U.lf("types not compatible: {0} and {1}", t2s(t0), t2s(t1)))
     }
 
     function typeCtor(t: Type): any {
@@ -673,13 +673,16 @@ namespace pxt.py {
 
     function doArgs(n: FunctionDef, isMethod: boolean) {
         const args = n.args
-        U.assert(!args.kwonlyargs.length)
+        if (args.kwonlyargs.length)
+            error(n, 9517, U.lf("keyword-only arguments not supported yet"))
         let nargs = args.args.slice()
         if (isMethod) {
-            U.assert(nargs[0].arg == "self")
+            if (nargs[0].arg != "self")
+                error(n, 9518, U.lf("first argument of method has to be called 'self'"))
             nargs.shift()
         } else {
-            U.assert(!nargs[0] || nargs[0].arg != "self")
+            if (nargs.some(a => a.arg == "self"))
+                error(n, 9519, U.lf("non-methods cannot have an argument called 'self'"))
         }
         if (!n.symInfo.parameters) {
             let didx = args.defaults.length - nargs.length
@@ -1742,12 +1745,14 @@ namespace pxt.py {
                 lastFile = fn
                 let tokens = pxt.py.lex(src)
                 //console.log(pxt.py.tokensToString(tokens))
-                let stmts = pxt.py.parse(src, sn, tokens)
+                let res = pxt.py.parse(src, sn, tokens)
                 //console.log(pxt.py.dump(stmts))
+
+                U.pushRange(diagnostics, res.diagnostics)
 
                 modules.push({
                     kind: "Module",
-                    body: stmts,
+                    body: res.stmts,
                     name: modname,
                     source: src,
                     tsFilename: sn.replace(/\.py$/, ".ts")
@@ -1798,19 +1803,7 @@ namespace pxt.py {
 
         function patchedDiags() {
             for (let d of diagnostics) {
-                d.line = 0
-                d.column = 0
-                if (d.start || d.length) {
-                    const src = opts.fileSystem[d.fileName]
-                    let p = position(d.start, src)
-                    d.line = p.line
-                    d.column = p.column
-                    if (d.length > 0) {
-                        p = position(d.start + d.length - 1, src)
-                        d.endLine = p.line
-                        d.endColumn = p.column
-                    }
-                }
+                patchPosition(d, opts.fileSystem[d.fileName])
             }
             return diagnostics
         }

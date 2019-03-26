@@ -130,7 +130,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             // 2) decompile js -> blocks then take the decompiled blocks -> js
             // 3) check that decompiled js == current js % white space
             let blocksInfo: pxtc.BlocksInfo;
-            return this.saveToTypeScript() // make sure Python gets converted
+            return this.saveToTypeScriptAsync() // make sure Python gets converted
                 .then(() => this.parent.saveFileAsync())
                 .then(() => this.parent.loadBlocklyAsync())
                 .then(() => compiler.getBlocksAsync())
@@ -204,14 +204,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let disagreeLbl: string;
         if (isPython) {
             body = programTooLarge ?
-                lf("Your program is too large to convert into blocks. You can keep working in JavaScript or discard your changes and go back to the previous Blocks version.") :
-                lf("We are unable to convert your JavaScript code back to blocks. You can keep working in JavaScript or discard your changes and go back to the previous Blocks version.");
-            disagreeLbl = lf("Stay in JavaScript");
-        } else {
-            body = programTooLarge ?
                 lf("Your program is too large to convert into blocks. You can keep working in Python or discard your changes and go back to the previous Blocks version.") :
                 lf("We are unable to convert your Python code back to blocks. You can keep working in Python or discard your changes and go back to the previous Blocks version.");
             disagreeLbl = lf("Stay in Python");
+        } else {
+            body = programTooLarge ?
+                lf("Your program is too large to convert into blocks. You can keep working in JavaScript or discard your changes and go back to the previous Blocks version.") :
+                lf("We are unable to convert your JavaScript code back to blocks. You can keep working in JavaScript or discard your changes and go back to the previous Blocks version.");
+            disagreeLbl = lf("Stay in JavaScript");
         }
         return core.confirmAsync({
             header: programTooLarge ? lf("Program too large") : lf("Oops, there is a problem converting your code."),
@@ -314,10 +314,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
-    saveToTypeScript() {
-        if (this.fileType !== FileType.Python)
-            return Promise.resolve("")
-        let tsName = this.currFile.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)
+    saveToTypeScriptAsync() {
+        if (this.fileType == FileType.Python)
+            return this.convertPythonToTypeScriptAsync();
+        return Promise.resolve("")
+    }
+
+    convertPythonToTypeScriptAsync(): Promise<string> {
+        const tsName = this.currFile.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)
         return compiler.py2tsAsync()
             .then(res => {
                 if (res.generated[tsName])
@@ -897,25 +901,26 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private forceDiagnosticsUpdate() {
-        if (this.fileType != FileType.TypeScript) return
+        if (this.fileType != FileType.TypeScript
+            && this.fileType != FileType.Python) return
 
         let file = this.currFile
         let monacoErrors: monaco.editor.IMarkerData[] = []
 
         if (file && file.diagnostics) {
-            let model = monaco.editor.getModel(monaco.Uri.parse(`pkg:${file.getName()}`))
+            const model = monaco.editor.getModel(monaco.Uri.parse(`pkg:${file.getName()}`))
             for (let d of file.diagnostics) {
                 const addErrorMessage = (message: string) => {
                     monacoErrors.push({
                         severity: monaco.Severity.Error,
                         message: message,
                         startLineNumber: d.line + 1,
-                        startColumn: d.column,
+                        startColumn: d.column + 1,
                         endLineNumber: d.endLine == undefined ? endPos.lineNumber : d.endLine + 1,
                         endColumn: d.endColumn == undefined ? endPos.column : d.endColumn
                     })
                 }
-                let endPos = model.getPositionAt(d.start + d.length);
+                const endPos = model.getPositionAt(d.start + d.length);
                 if (typeof d.messageText === 'string') {
                     addErrorMessage(d.messageText as string);
                 } else {

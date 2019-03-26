@@ -101,7 +101,7 @@ export class Editor implements pxt.editor.IEditor {
     setDiagnostics(file: pkg.File, snapshot: any): void { }
     setViewState(view: ViewState): void { }
 
-    saveToTypeScript(): Promise<string> {
+    saveToTypeScriptAsync(): Promise<string> {
         return Promise.resolve('');
     }
 

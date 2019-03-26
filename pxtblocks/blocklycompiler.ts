@@ -1545,14 +1545,13 @@ namespace pxt.blocks {
                 return eventWeight(a, e) - eventWeight(b, e)
             });
 
+            updateDisabledBlocks(e, w.getAllBlocks(), topblocks);
+
             trackAllVariables(topblocks, e);
 
             infer(e, w);
 
             const stmtsMain: JsNode[] = [];
-
-
-            updateDisabledBlocks(e, w.getAllBlocks(), topblocks);
 
             // compile workspace comments, add them to the top
             const topComments = w.getTopComments(true);

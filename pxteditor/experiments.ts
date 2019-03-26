@@ -81,7 +81,8 @@ namespace pxt.editor.experiments {
             {
                 id: "python",
                 name: lf("Static Python"),
-                description: lf("Use Static Python to code your device")
+                description: lf("Use Static Python to code your device"),
+                feedbackUrl: "https://github.com/Microsoft/pxt/issues/5390"
             },
             {
                 id: "simGif",

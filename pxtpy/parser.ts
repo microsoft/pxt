@@ -9,6 +9,9 @@ namespace pxt.py {
     let currComments: Token[]
     let indentStack: number[]
     let prevToken: Token
+    let diags: pxtc.KsDiagnostic[]
+    let traceParser = false
+    let traceLev = ""
 
     type Parse = () => AST
 
@@ -18,6 +21,12 @@ namespace pxt.py {
             value: val,
             startPos: 0,
             endPos: 0
+        }
+    }
+
+    function traceAST(tp: string, r: AST) {
+        if (traceParser) {
+            pxt.log(traceLev + tp + ": " + r.kind)
         }
     }
 
@@ -33,7 +42,7 @@ namespace pxt.py {
                 continue
             }
 
-            if (t.type == TokenType.Op)
+            if (inParens >= 0 && t.type == TokenType.Op)
                 switch (t.value) {
                     case "LParen":
                     case "LSquare":
@@ -47,10 +56,12 @@ namespace pxt.py {
                         break
                 }
 
-            if (t.type == TokenType.Error)
-                error(t.value)
+            if (t.type == TokenType.Error) {
+                error(9551, t.value)
+                continue
+            }
 
-            if (inParens) {
+            if (inParens > 0) {
                 if (t.type == TokenType.NewLine || t.type == TokenType.Indent)
                     continue
             } else {
@@ -76,7 +87,7 @@ namespace pxt.py {
                                 numPop++
                             } else {
                                 if (top != curr)
-                                    error(U.lf("inconsitent indentation"))
+                                    error(9552, U.lf("inconsitent indentation"))
                                 // in case there is more than one dedent, replicate current dedent token
                                 while (numPop > 1) {
                                     tokens.splice(nextToken, 0, t)
@@ -101,19 +112,42 @@ namespace pxt.py {
         // console.log(`TOK: ${tokenToString(peekToken())}`)
     }
 
-    function error(msg?: string) {
+    // next error 9574 (limit 9599)
+    function error(code?: number, msg?: string) {
         if (!msg) msg = U.lf("invalid syntax")
-        U.userError(U.lf("Python parse error: {0} near {1}", msg,
-            tokenToStringWithPos(peekToken(), filename, source)))
+        if (!code) code = 9550
+
+        const tok = peekToken()
+
+        const d: pxtc.KsDiagnostic = {
+            code,
+            category: pxtc.DiagnosticCategory.Error,
+            messageText: U.lf("{0} near {1}", msg, friendlyTokenToString(tok, source)),
+            fileName: filename,
+            start: tok.startPos,
+            length: tok.endPos ? tok.endPos - tok.startPos : 0,
+            line: 0,
+            column: 0
+        }
+        patchPosition(d, source)
+
+        if (traceParser)
+            pxt.log(`${traceLev}TS${code} ${d.messageText} at ${d.line + 1},${d.column + 1}`)
+
+        diags.push(d)
+
+        if (code != 9572 && diags.length > 100)
+            U.userError(U.lf("too many parse errors"))
     }
 
     function expect(tp: TokenType, val: string) {
-        let t = peekToken()
+        const t = peekToken()
         if (t.type != tp || t.value != val) {
-            error(U.lf("expecting {0}", tokenToString(fakeToken(tp, val))))
-        } else {
-            shiftToken()
+            error(9553, U.lf("expecting {0}", tokenToString(fakeToken(tp, val))))
+            if (t.type == TokenType.NewLine)
+                return // don't shift
         }
+        shiftToken()
     }
 
     function expectNewline() {
@@ -167,11 +201,6 @@ namespace pxt.py {
         "yield": yield_stmt,
     }
 
-    function notSupported() {
-        error(U.lf("not supported yet"))
-    }
-
-
     function colon_suite(): Stmt[] {
         expectOp("Colon")
         return suite()
@@ -179,18 +208,33 @@ namespace pxt.py {
 
     function suite(): Stmt[] {
         if (peekToken().type == TokenType.NewLine) {
+            const prevTr = traceLev
+            if (traceParser) {
+                pxt.log(traceLev + "{")
+                traceLev += "  "
+            }
+
             shiftToken()
+            let level = NaN
             if (peekToken().type != TokenType.Indent) {
-                error(U.lf("expecting indent"))
+                error(9554, U.lf("expecting indent"))
+            } else {
+                level = parseInt(peekToken().value)
             }
             shiftToken()
             let r = stmt()
             for (; ;) {
                 if (peekToken().type == TokenType.Dedent) {
+                    const isFinal = (isNaN(level) || parseInt(peekToken().value) < level)
                     shiftToken()
-                    break
+                    if (isFinal)
+                        break
                 }
                 U.pushRange(r, stmt())
+            }
+            if (traceParser) {
+                traceLev = prevTr
+                pxt.log(traceLev + "}")
             }
             return r
         } else {
@@ -518,7 +562,7 @@ namespace pxt.py {
         else
             r.module = null
         if (!r.level && !r.module)
-            error(U.lf("invalid syntax"))
+            error()
         expectKw("import")
 
         if (currentOp() == "Mult") {
@@ -630,7 +674,8 @@ namespace pxt.py {
             return finish(exprStmt)
         }
 
-        error(U.lf("unexpected token"))
+        error(9555, U.lf("unexpected token"))
+        shiftToken()
         return null
     }
 
@@ -649,10 +694,17 @@ namespace pxt.py {
             res.push(small_stmt())
         }
         expectNewline()
-        return res
+        return res.filter(s => !!s)
     }
 
     function stmt(): Stmt[] {
+        if (peekToken().type == TokenType.Indent) {
+            error(9573, U.lf("unexpected indent"))
+            shiftToken()
+        }
+
+        let prevErr = diags.length
+
         let decorators: Expr[] = []
         while (currentOp() == "MatMult") {
             shiftToken()
@@ -672,12 +724,32 @@ namespace pxt.py {
             r.decorator_list = decorators
             rr = [r]
         } else if (decorators.length) {
-            error(U.lf("decorators not allowed here"))
+            error(9556, U.lf("decorators not allowed here"))
         } else if (fn) rr = [fn()]
         else rr = simple_stmt()
 
         if (comments.length && rr.length)
             rr[0]._comments = comments
+
+        // there were errors in this stmt; skip tokens until newline to resync
+        let skp: string[] = []
+        if (diags.length > prevErr) {
+            inParens = -1
+            while (prevToken.type != TokenType.Dedent && prevToken.type != TokenType.NewLine) {
+                shiftToken()
+                if (traceParser)
+                    skp.push(tokenToString(peekToken()))
+                if (peekToken().type == TokenType.EOF)
+                    break
+            }
+            inParens = 0
+            if (traceParser)
+                pxt.log(traceLev + "skip: " + skp.join(", "))
+        }
+
+        if (traceParser)
+            for (let r of rr)
+                traceAST("stmt", r)
 
         return rr
     }
@@ -697,7 +769,7 @@ namespace pxt.py {
                 break
             if (o == "Mult") {
                 if (r.vararg)
-                    error(U.lf("multiple *arg"))
+                    error(9557, U.lf("multiple *arg"))
                 shiftToken()
                 if (peekToken().type == TokenType.Id)
                     r.vararg = pdef()
@@ -705,12 +777,12 @@ namespace pxt.py {
                     r.vararg = null
             } else if (o == "Pow") {
                 if (r.kwarg)
-                    error(U.lf("multiple **arg"))
+                    error(9558, U.lf("multiple **arg"))
                 shiftToken()
                 r.kwarg = pdef()
             } else {
                 if (r.kwarg)
-                    error(U.lf("arguments after **"))
+                    error(9559, U.lf("arguments after **"))
                 let a = pdef()
                 let defl: Expr = null
                 if (currentOp() == "Assign") {
@@ -725,7 +797,7 @@ namespace pxt.py {
                     if (defl)
                         r.defaults.push(defl)
                     else if (r.defaults.length)
-                        error(U.lf("non-default argument follows default argument"))
+                        error(9560, U.lf("non-default argument follows default argument"))
                 }
             }
 
@@ -990,11 +1062,12 @@ namespace pxt.py {
 
         let e = test()
         if (currentOp() == "Assign") {
-            if (e.kind != "Name")
-                error(U.lf("invalid keyword argument; did you mean ==?"))
+            if (e.kind != "Name") {
+                error(9561, U.lf("invalid keyword argument; did you mean ==?"))
+            }
             shiftToken()
             let r = mkAST("Keyword", t0) as Keyword
-            r.arg = (e as Name).id
+            r.arg = (e as Name).id || "???"
             r.value = test()
             return finish(r)
         } else if (currentKw() == "for") {
@@ -1035,7 +1108,7 @@ namespace pxt.py {
         function set(e: Expr) {
             if (currentKw() == "for") {
                 if (e.kind == "Starred")
-                    error(U.lf("iterable unpacking cannot be used in comprehension"))
+                    error(9562, U.lf("iterable unpacking cannot be used in comprehension"))
                 let r = mkAST("SetComp", t0) as SetComp
                 r.elt = e
                 r.generators = comp_for()
@@ -1069,7 +1142,7 @@ namespace pxt.py {
         function dict(key0: Expr, value0: Expr) {
             if (currentKw() == "for") {
                 if (!key0)
-                    error(U.lf("dict unpacking cannot be used in dict comprehension"))
+                    error(9563, U.lf("dict unpacking cannot be used in dict comprehension"))
                 let r = mkAST("DictComp", t0) as DictComp
                 r.key = key0
                 r.value = value0
@@ -1093,6 +1166,13 @@ namespace pxt.py {
 
             return finish(r)
         }
+    }
+
+    function shiftAndFake() {
+        let r = mkAST("NameConstant") as NameConstant
+        r.value = null
+        shiftToken()
+        return finish(r)
     }
 
     function atom(): Expr {
@@ -1133,8 +1213,8 @@ namespace pxt.py {
                 r.value = t.value == "True" ? true : t.value == "False" ? false : null
                 return finish(r)
             } else {
-                error(U.lf("expecting atom"))
-                return null
+                error(9564, U.lf("expecting atom"))
+                return shiftAndFake()
             }
         } else if (t.type == TokenType.Op) {
             let o = t.value
@@ -1145,12 +1225,12 @@ namespace pxt.py {
             } else if (o == "LBracket") {
                 return dictorsetmaker()
             } else {
-                error(U.lf("unexpected operator"))
-                return null
+                error(9565, U.lf("unexpected operator"))
+                return shiftAndFake()
             }
         } else {
-            error(U.lf("unexpected token"))
-            return null
+            error(9566, U.lf("unexpected token"))
+            return shiftAndFake()
         }
     }
 
@@ -1190,8 +1270,10 @@ namespace pxt.py {
             if (atListEnd()) {
                 return r
             } else {
-                if (!hasComma)
-                    error(U.lf("expecting {0}", category))
+                if (!hasComma) {
+                    error(9567, U.lf("expecting {0}", category))
+                    return r
+                }
             }
         }
     }
@@ -1232,8 +1314,10 @@ namespace pxt.py {
                 if (currentOp() == cl) {
                     break
                 } else {
-                    if (!hasComma)
-                        error(U.lf("expecting {0}", category))
+                    if (!hasComma) {
+                        error(9568, U.lf("expecting {0}", category))
+                        break
+                    }
                 }
             }
 
@@ -1284,7 +1368,7 @@ namespace pxt.py {
     function name() {
         let t = peekToken()
         if (t.type != TokenType.Id)
-            error(U.lf("expecting identifier"))
+            error(9569, U.lf("expecting identifier"))
         shiftToken()
         return t.value
     }
@@ -1298,7 +1382,7 @@ namespace pxt.py {
                 rkeywords.push(e as Keyword)
             else {
                 if (rkeywords.length)
-                    error(U.lf("positional argument follows keyword argument"))
+                    error(9570, U.lf("positional argument follows keyword argument"))
                 rargs.push(e as Expr)
             }
         }
@@ -1320,7 +1404,7 @@ namespace pxt.py {
             r.value = e
             let sl = parseParenthesizedList("RSquare", U.lf("subscript"), subscript)
             if (sl.length == 0)
-                error(U.lf("need non-empty index list"))
+                error(9571, U.lf("need non-empty index list"))
             else if (sl.length == 1)
                 r.slice = sl[0]
             else {
@@ -1472,17 +1556,25 @@ namespace pxt.py {
         nextToken = 0
         currComments = []
         indentStack = [0]
+        diags = []
+        let res: Stmt[] = []
 
-        prevToken = tokens[0]
-        skipTokens()
+        try {
+            prevToken = tokens[0]
+            skipTokens()
 
-        if (peekToken().type == TokenType.EOF)
-            return []
+            if (peekToken().type != TokenType.EOF) {
+                res = stmt()
+                while (peekToken().type != TokenType.EOF)
+                    U.pushRange(res, stmt())
+            }
+        } catch (e) {
+            error(9572, U.lf("exception: {0}", e.message))
+        }
 
-        let res = stmt()
-        while (peekToken().type != TokenType.EOF)
-            U.pushRange(res, stmt())
-
-        return res
+        return {
+            stmts: res,
+            diagnostics: diags
+        }
     }
 }

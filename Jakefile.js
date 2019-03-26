@@ -148,9 +148,7 @@ ju.catFiles("built/pxtblockly.js", expand(["webapp/public/blockly/blockly_compre
 compileDir("pxtrunner", ["built/pxtlib.js", "built/pxteditor.js", "built/pxtcompiler.js", "built/pxtsim.js", "built/pxtblockly.js"])
 compileDir("pxtsim", ["built/pxtlib.js"])
 compileDir("pxteditor", ["built/pxtlib.js", "built/pxtblockly.js"])
-compileDir("cli", ["built/pxtlib.js", "built/pxtsim.js", "built/pxtcompiler.js"
-    //    , "built/pxtpy.js" PRTODO add this back
-])
+compileDir("cli", ["built/pxtlib.js", "built/pxtsim.js", "built/pxtcompiler.js", "built/pxtpy.js"])
 compileDir("backendutils", ['pxtlib/commonutil.ts', 'pxtlib/docsrender.ts'])
 file("built/web/pxtweb.js", expand(["docfiles/pxtweb"]), { async: true }, function () { tscIn(this, "docfiles/pxtweb", "built") })
 

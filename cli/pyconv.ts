@@ -1969,8 +1969,8 @@ export function convertAsync(fns: string[], useInternal = false) {
                     let source = fs.readFileSync(f, "utf8")
                     let tokens = pxt.py.lex(source)
                     //console.log(pxt.py.tokensToString(tokens))
-                    let ast = pxt.py.parse(source, f, tokens)
-                    let custompy = pxt.py.dump(ast, true)
+                    let res = pxt.py.parse(source, f, tokens)
+                    let custompy = pxt.py.dump(res.stmts, true)
                     let realpy = pxt.py.dump(parsedPy[f].body, true)
                     let path = "tmp/"
                     if (custompy != realpy) {

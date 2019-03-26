@@ -69,6 +69,7 @@ namespace pxt.editor {
         tracing?: boolean;
         debugging?: boolean;
         bannerVisible?: boolean;
+        updatingEditorFile?: boolean;
 
         highContrast?: boolean;
         print?: boolean;
