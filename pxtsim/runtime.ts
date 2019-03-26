@@ -440,7 +440,7 @@ namespace pxsim {
     }
 
     export class PausedTimeout {
-        constructor(public fn: any, public timeRemaining: number) { }
+        constructor(public fn: Function, public timeRemaining: number) { }
     }
 
 
@@ -756,7 +756,7 @@ namespace pxsim {
                 Runtime.postMessage(msg)
                 breakAlways = false;
                 breakFrame = null;
-                runtime.pauseScheduled();
+                __this.pauseScheduled();
                 dbgResume = (m: DebuggerMessage) => {
                     dbgResume = null;
                     dbgHeap = null;
@@ -1075,7 +1075,7 @@ namespace pxsim {
         }
 
         // Wrapper for the setTimeout
-        schedule(fn: () => void, timeout: number): number {
+        schedule(fn: Function, timeout: number): number {
             // We call the timeout function and add its id to the timeouts scheduled.
             if (timeout <= 0) return -1;
             let id = setTimeout(fn, timeout);
@@ -1111,8 +1111,9 @@ namespace pxsim {
 
         // Removes from the timeouts scheduled list all the ones that had been fulfilled.
         cleanScheduledExpired() {
+            let now = U.now();
             this.timeoutsScheduled = this.timeoutsScheduled.filter(ts => {
-                let elapsed = U.now() - ts.timestampCall;
+                let elapsed = now - ts.timestampCall;
                 return ts.totalRuntime > elapsed;
             })
         }
