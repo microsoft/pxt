@@ -130,6 +130,8 @@ function tsToPy(prog: ts.Program, filename: string): string {
             return emitForOfStmt(s)
         } else if (ts.isWhileStatement(s)) {
             return emitWhileStmt(s)
+        } else if (ts.isReturnStatement(s)) {
+            return emitReturnStmt(s)
         } else if (ts.isBlock(s)) {
             return s.getChildren()
                 .map(emitNode)
@@ -137,6 +139,11 @@ function tsToPy(prog: ts.Program, filename: string): string {
         } else {
             throw Error(`Not implemented: statement kind ${s.kind}`);
         }
+    }
+    function emitReturnStmt(s: ts.ReturnStatement): string[] {
+        let [exp, expSup] = emitExp(s.expression)
+        let stmt = `return ${exp}`
+        return expSup.concat([stmt])
     }
     function emitWhileStmt(s: ts.WhileStatement): string[] {
         let [cond, condSup] = emitExp(s.expression)
@@ -530,7 +537,7 @@ function tsToPy(prog: ts.Program, filename: string): string {
 
         out.push(`def ${fnName}(${params}):`)
 
-        let stmts: string[]
+        let stmts: string[] = []
         if (ts.isBlock(s.body))
             stmts = emitBlock(s.body)
         else {
@@ -647,6 +654,7 @@ function tsToPy(prog: ts.Program, filename: string): string {
     }
     function emitBinExp(s: ts.BinaryExpression): ExpRes {
         // handle string concatenation
+        // TODO handle implicit type conversions more generally
         let isLStr = isStringType(s.left)
         let isRStr = isStringType(s.right)
         let isStrConcat = s.operatorToken.kind === ts.SyntaxKind.PlusToken
