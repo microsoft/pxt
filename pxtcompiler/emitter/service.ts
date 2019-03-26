@@ -580,8 +580,8 @@ namespace ts.pxtc.service {
     let service: LanguageService;
     let host: Host;
 
-    interface CachedApisInfo { 
-        apis: ApisInfo; 
+    interface CachedApisInfo {
+        apis: ApisInfo;
         decls: pxt.Map<Declaration>;
     }
 

@@ -1038,7 +1038,7 @@ namespace ts.pxtc {
                 filename = U.fromUTF8(U.uint8ArrayToString(fnbuf))
                 fileSize = wordAt(28)
             }
-            
+
             if (flags & UF2_FLAG_FAMILY_ID_PRESENT) {
                 familyId = wordAt(28)
             }
