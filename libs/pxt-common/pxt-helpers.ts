@@ -71,7 +71,7 @@ namespace helpers {
         for (let i = 0; i < len; ++i) {
             if (i > 0 && sep)
                 r += sep;
-            r += arr[i] || "";
+            r += (arr[i] === undefined || arr[i] === null) ? "" : arr[i];
         }
         return r;
     }
