@@ -468,9 +468,9 @@ namespace ts.pxtc {
             const si = res.byQName[qName];
             const stmt = qNameToNode[qName];
             if (si && stmt && ts.isFunctionLike(stmt)) {
-                si.snippet = ts.pxtc.service.getSnippet(res.byQName, si, stmt as FunctionLikeDeclaration, si.attributes);
+                si.snippet = ts.pxtc.service.getSnippet(res.byQName, si, stmt as FunctionLikeDeclaration);
                 if (opts.pySnippets)
-                    si.pySnippet = ts.pxtc.service.getSnippet(res.byQName, si, stmt as FunctionLikeDeclaration, si.attributes, true);
+                    si.pySnippet = ts.pxtc.service.getSnippet(res.byQName, si, stmt as FunctionLikeDeclaration, true);
             }
         }
 
@@ -940,12 +940,13 @@ namespace ts.pxtc.service {
 . . . . .
 \``;
 
-    export function getSnippet(apis: pxt.Map<SymbolInfo>, fn: SymbolInfo, n: ts.SignatureDeclaration, attrs?: CommentAttrs, python?: boolean): string {
+    export function getSnippet(apis: pxt.Map<SymbolInfo>, fn: SymbolInfo, n: ts.SignatureDeclaration, python?: boolean): string {
         if (!ts.isFunctionLike(n)) {
             return undefined;
         }
         let preStmt = "";
 
+        const attrs = fn.attributes;
         const checker = service && !python ? service.getProgram().getTypeChecker() : undefined;
         const args = n.parameters ? n.parameters.filter(param => !param.initializer && !param.questionToken).map(param => {
             const typeNode = param.type;
@@ -1074,8 +1075,9 @@ namespace ts.pxtc.service {
 
         return preStmt + insertText;
 
-        function firstWord(s: string) {
-            return /[^\.]+/.exec(s)[0]
+        function firstWord(s: string): string {
+            const i = s.indexOf('.');
+            return i < 0 ? s : s.substring(0, i);
         }
 
         function getFunctionString(functionSignature: ts.Signature) {
