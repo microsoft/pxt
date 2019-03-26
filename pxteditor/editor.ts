@@ -1,4 +1,16 @@
 namespace pxt.editor {
+    export const enum FileType {
+        Text = "text",
+        TypeScript = "typescript",
+        JavaScript = "javascript",
+        Markdown = "markdown",
+        Python = "python",
+        CPP = "cpp",
+        JSON = "json",
+        XML = "xml",
+        Asm = "asm"
+    }
+
     export enum SimState {
         Stopped,
         // waiting to be started

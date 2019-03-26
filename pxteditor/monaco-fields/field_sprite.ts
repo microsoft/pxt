@@ -8,13 +8,15 @@ namespace pxt.editor {
         private rejecter: (err?: any) => void;
 
         protected editor: pxtsprite.SpriteEditor;
+        protected fileType: pxt.editor.FileType;
         protected editrange: monaco.Range;
 
         getId() {
             return fieldEditorId;
         }
 
-        showEditorAsync(editrange: monaco.Range, host: MonacoFieldEditorHost): Promise<TextEdit> {
+        showEditorAsync(fileType: FileType, editrange: monaco.Range, host: MonacoFieldEditorHost): Promise<TextEdit> {
+            this.fileType = fileType;
             this.editrange = editrange;
             const contentDiv = host.contentDiv();
             const state = pxtsprite.imageLiteralToBitmap(host.getText(editrange));

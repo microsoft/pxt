@@ -17,18 +17,6 @@ import Util = pxt.Util;
 const MIN_EDITOR_FONT_SIZE = 10
 const MAX_EDITOR_FONT_SIZE = 40
 
-export enum FileType {
-    Text = "text",
-    TypeScript = "typescript",
-    JavaScript = "javascript",
-    Markdown = "markdown",
-    Python = "python",
-    CPP = "cpp",
-    JSON = "json",
-    XML = "xml",
-    Asm = "asm"
-}
-
 /**
  * These are internal APIs that will likely need to be changed if the Monaco
  * version changes. Monaco now supports language service based folding, so
@@ -48,7 +36,7 @@ interface FoldingController extends monaco.editor.IEditorContribution {
 export class Editor extends toolboxeditor.ToolboxEditor {
     editor: monaco.editor.IStandaloneCodeEditor;
     currFile: pkg.File;
-    fileType: FileType = FileType.Text;
+    fileType: pxt.editor.FileType = pxt.editor.FileType.Text;
     extraLibs: pxt.Map<monaco.IDisposable>;
     public nsMap: pxt.Map<toolbox.BlockDefinition[]>;
     private _loadMonacoPromise: Promise<void>;
@@ -81,7 +69,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
 
         let promise = initPromise.then(() => {
-            const isPython = this.fileType == FileType.Python;
+            const isPython = this.fileType == pxt.editor.FileType.Python;
             const tickLang = isPython ? "python" : "typescript";
             pxt.tickEvent(`${tickLang}.convertBlocks`);
 
@@ -193,7 +181,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     public showConversionFailedDialog(blockFile: string, programTooLarge: boolean): Promise<void> {
-        const isPython = this.fileType == FileType.Python;
+        const isPython = this.fileType == pxt.editor.FileType.Python;
         const tickLang = isPython ? "python" : "typescript";
 
         let bf = pkg.mainEditorPkg().files[blockFile];
@@ -315,7 +303,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     saveToTypeScriptAsync() {
-        if (this.fileType == FileType.Python)
+        if (this.fileType == pxt.editor.FileType.Python)
             return this.convertPythonToTypeScriptAsync();
         return Promise.resolve("")
     }
@@ -732,7 +720,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     loadFileAsync(file: pkg.File, hc?: boolean): Promise<void> {
-        let mode = FileType.Text;
+        let mode = pxt.editor.FileType.Text;
         this.currSource = file.content;
 
         let loading = document.createElement("div");
@@ -749,17 +737,17 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.updateFieldEditors();
 
                 let ext = file.getExtension()
-                let modeMap: pxt.Map<FileType> = {
-                    "cpp": FileType.CPP,
-                    "h": FileType.CPP,
-                    "json": FileType.JSON,
-                    "md": FileType.Markdown,
-                    "py": FileType.Python,
-                    "ts": FileType.TypeScript,
-                    "js": FileType.JavaScript,
-                    "svg": FileType.XML,
-                    "blocks": FileType.XML,
-                    "asm": FileType.Asm,
+                let modeMap: pxt.Map<pxt.editor.FileType> = {
+                    "cpp": pxt.editor.FileType.CPP,
+                    "h": pxt.editor.FileType.CPP,
+                    "json": pxt.editor.FileType.JSON,
+                    "md": pxt.editor.FileType.Markdown,
+                    "py": pxt.editor.FileType.Python,
+                    "ts": pxt.editor.FileType.TypeScript,
+                    "js": pxt.editor.FileType.JavaScript,
+                    "svg": pxt.editor.FileType.XML,
+                    "blocks": pxt.editor.FileType.XML,
+                    "asm": pxt.editor.FileType.Asm,
                 }
                 if (modeMap.hasOwnProperty(ext)) mode = modeMap[ext]
                 this.fileType = mode
@@ -790,7 +778,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.setValue(file.content)
                 this.setDiagnostics(file, this.snapshotState())
 
-                if (this.fileType == FileType.Markdown)
+                if (this.fileType == pxt.editor.FileType.Markdown)
                     this.parent.setSideMarkdown(file.content);
 
                 this.currFile.setForceChangeCallback((from: string, to: string) => {
@@ -901,8 +889,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private forceDiagnosticsUpdate() {
-        if (this.fileType != FileType.TypeScript
-            && this.fileType != FileType.Python) return
+        if (this.fileType != pxt.editor.FileType.TypeScript
+            && this.fileType != pxt.editor.FileType.Python) return
 
         let file = this.currFile
         let monacoErrors: monaco.editor.IMarkerData[] = []
@@ -941,7 +929,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
         this.feWidget = new ViewZoneEditorHost(fe, range, this.editor.getModel());
         this.feWidget.heightInPx = viewZoneHeight;
-        this.feWidget.showAsync(this.editor)
+        this.feWidget.showAsync(this.fileType, this.editor)
             .then(edit => {
                 this.activeRangeID = null;
                 if (edit) {
@@ -1479,7 +1467,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let monacoEditor = this;
         let monacoFlyout = this.getMonacoFlyout();
 
-        const isPython = this.fileType == FileType.Python;
+        const isPython = this.fileType == pxt.editor.FileType.Python;
         const snippet = isPython ? fn.pySnippet : fn.snippet;
         if (!snippet)
             return undefined;
