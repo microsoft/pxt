@@ -35,6 +35,7 @@ namespace pxt.py {
 
     let asciiParse: (() => void)[] = []
     let allOps: Map<string>
+    let revOps: Map<string>
 
     const eqOps: Map<string> = {
         "%": "Mod",
@@ -133,7 +134,7 @@ namespace pxt.py {
             case TokenType.Id:
                 return `id(${t.value})`
             case TokenType.Op:
-                return t.value
+                return "'" + revOps[t.value] + "'"
             case TokenType.Keyword:
                 return t.value
             case TokenType.Number:
@@ -526,6 +527,10 @@ namespace pxt.py {
             for (let k of Object.keys(eqOps)) {
                 allOps[k] = eqOps[k]
                 allOps[k + "="] = eqOps[k] + "Assign"
+            }
+            revOps = {}
+            for (let k of Object.keys(allOps)) {
+                revOps[allOps[k]] = k
             }
             for (let i = 0; i < 128; ++i) {
                 if (rx.isIdentifierStart(i))
