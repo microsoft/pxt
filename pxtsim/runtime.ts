@@ -436,25 +436,11 @@ namespace pxsim {
     }
 
     export class TimeoutScheduled {
-        constructor(id: number, fn: any, totalRuntime: number, timestampCall: number) {
-            this.id = id;
-            this.fn = fn;
-            this.totalRuntime = totalRuntime;
-            this.timestampCall = timestampCall;
-        }
-        id = -1;
-        fn = () => { };
-        totalRuntime = 0;
-        timestampCall = 0;
+        constructor(public id: number, public fn: Function, public totalRuntime: number, public timestampCall: number) { }
     }
 
     export class PausedTimeout {
-        constructor(fn: any, timeRemaining: number) {
-            this.fn = fn;
-            this.timeRemaining = timeRemaining;
-        }
-        fn = () => { };
-        timeRemaining = 0;
+        constructor(public fn: any, public timeRemaining: number) { }
     }
 
 
@@ -1093,37 +1079,39 @@ namespace pxsim {
             // We call the timeout function and add its id to the timeouts scheduled.
             if (timeout <= 0) return -1;
             let id = setTimeout(fn, timeout);
-            runtime.timeoutsScheduled.push(new TimeoutScheduled(id, fn, timeout, Date.now()));
+            this.timeoutsScheduled.push(new TimeoutScheduled(id, fn, timeout, Date.now()));
             return id;
         }
 
         // On breakpoint, pause all timeouts
         pauseScheduled() {
-            runtime.timeoutsScheduled.forEach(ts => {
+            this.timeoutsScheduled.forEach(ts => {
                 clearTimeout(ts.id);
                 let elapsed = Date.now() - ts.timestampCall;
-                runtime.timeoutsPausedOnBreakpoint.push(new PausedTimeout(ts.fn, ts.totalRuntime - elapsed))
+                let timeRemaining = ts.totalRuntime - elapsed;
+                if (timeRemaining < 0) timeRemaining = 0;
+                this.timeoutsPausedOnBreakpoint.push(new PausedTimeout(ts.fn, timeRemaining))
             });
-            runtime.lastPauseTimestamp = Date.now();
-            runtime.timeoutsScheduled = [];
+            this.lastPauseTimestamp = Date.now();
+            this.timeoutsScheduled = [];
         }
 
         // When resuming after a breakpoint, restart all paused timeouts with their remaining time.
         resumeAllPausedScheduled() {
             // Takes the list of all fibers paused on a breakpoint and resumes them.
-            runtime.timeoutsPausedOnBreakpoint.forEach(pt => {
-                runtime.schedule(pt.fn, pt.timeRemaining);
+            this.timeoutsPausedOnBreakpoint.forEach(pt => {
+                this.schedule(pt.fn, pt.timeRemaining);
             });
-            if (runtime.lastPauseTimestamp) {
-                runtime.pausedTime += Date.now() - runtime.lastPauseTimestamp;
-                runtime.lastPauseTimestamp = 0;
+            if (this.lastPauseTimestamp) {
+                this.pausedTime += Date.now() - this.lastPauseTimestamp;
+                this.lastPauseTimestamp = 0;
             }
-            runtime.timeoutsPausedOnBreakpoint = [];
+            this.timeoutsPausedOnBreakpoint = [];
         }
 
         // Removes from the timeouts scheduled list all the ones that had been fulfilled.
         cleanScheduledExpired() {
-            runtime.timeoutsScheduled = runtime.timeoutsScheduled.filter(ts => {
+            this.timeoutsScheduled = this.timeoutsScheduled.filter(ts => {
                 let elapsed = Date.now() - ts.timestampCall;
                 return ts.totalRuntime > elapsed;
             })
