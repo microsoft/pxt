@@ -10,6 +10,9 @@ namespace pxt.py {
     let indentStack: number[]
     let prevToken: Token
     let diags: pxtc.KsDiagnostic[]
+    let tokenIndices: number[]
+    let traceParser = true
+    let traceLev = ""
 
     type Parse = () => AST
 
@@ -19,6 +22,12 @@ namespace pxt.py {
             value: val,
             startPos: 0,
             endPos: 0
+        }
+    }
+
+    function traceAST(tp: string, r: AST) {
+        if (traceParser) {
+            pxt.log(traceLev + tp + ": " + r.kind)
         }
     }
 
@@ -34,7 +43,7 @@ namespace pxt.py {
                 continue
             }
 
-            if (t.type == TokenType.Op)
+            if (inParens >= 0 && t.type == TokenType.Op)
                 switch (t.value) {
                     case "LParen":
                     case "LSquare":
@@ -53,7 +62,7 @@ namespace pxt.py {
                 continue
             }
 
-            if (inParens) {
+            if (inParens > 0) {
                 if (t.type == TokenType.NewLine || t.type == TokenType.Indent)
                     continue
             } else {
@@ -101,10 +110,11 @@ namespace pxt.py {
             return
         nextToken++
         skipTokens()
+        tokenIndices.push(nextToken)
         // console.log(`TOK: ${tokenToString(peekToken())}`)
     }
 
-    // next error 9573 (limit 9599)
+    // next error 9574 (limit 9599)
     function error(code?: number, msg?: string) {
         if (!msg) msg = U.lf("invalid syntax")
         if (!code) code = 9550
@@ -123,6 +133,9 @@ namespace pxt.py {
         }
         patchPosition(d, source)
 
+        if (traceParser)
+            pxt.log(`${traceLev}TS${code} ${d.messageText} at ${d.line + 1},${d.column + 1}`)
+
         diags.push(d)
 
         if (code != 9572 && diags.length > 100)
@@ -131,8 +144,27 @@ namespace pxt.py {
 
     function expect(tp: TokenType, val: string) {
         let t = peekToken()
-        if (t.type != tp || t.value != val)
-            error(9553, U.lf("expecting {0}", tokenToString(fakeToken(tp, val))))
+        if (t.type != tp || t.value != val) {
+            t = null
+            /*
+            if (diags.length) {
+                for (let i = 1; i < 4; ++i) {
+                    const idx = tokenIndices[tokenIndices.length - i]
+                    if (idx != undefined) {
+                        t = tokens[idx]
+                        if (t.type == tp && t.value == val) {
+                            nextToken = idx
+                            break
+                        }
+                    }
+                    t = null
+                }
+            }
+            */
+
+            if (!t)
+                error(9553, U.lf("expecting {0}", tokenToString(fakeToken(tp, val))))
+        }
         shiftToken()
     }
 
@@ -194,18 +226,33 @@ namespace pxt.py {
 
     function suite(): Stmt[] {
         if (peekToken().type == TokenType.NewLine) {
+            const prevTr = traceLev
+            if (traceParser) {
+                pxt.log(traceLev + "{")
+                traceLev += "  "
+            }
+
             shiftToken()
+            let level = NaN
             if (peekToken().type != TokenType.Indent) {
                 error(9554, U.lf("expecting indent"))
+            } else {
+                level = parseInt(peekToken().value)
             }
             shiftToken()
             let r = stmt()
             for (; ;) {
                 if (peekToken().type == TokenType.Dedent) {
+                    const isFinal = (isNaN(level) || parseInt(peekToken().value) < level)
                     shiftToken()
-                    break
+                    if (isFinal)
+                        break
                 }
                 U.pushRange(r, stmt())
+            }
+            if (traceParser) {
+                traceLev = prevTr
+                pxt.log(traceLev + "}")
             }
             return r
         } else {
@@ -669,6 +716,13 @@ namespace pxt.py {
     }
 
     function stmt(): Stmt[] {
+        if (peekToken().type == TokenType.Indent) {
+            error(9573, U.lf("unexpected indent"))
+            shiftToken()
+        }
+
+        let prevErr = diags.length
+
         let decorators: Expr[] = []
         while (currentOp() == "MatMult") {
             shiftToken()
@@ -694,6 +748,26 @@ namespace pxt.py {
 
         if (comments.length && rr.length)
             rr[0]._comments = comments
+
+        // there were errors in this stmt; skip tokens until newline to resync
+        let skp: string[] = []
+        if (diags.length > prevErr) {
+            inParens = -1
+            while (prevToken.type != TokenType.Dedent && prevToken.type != TokenType.NewLine) {
+                shiftToken()
+                if (traceParser)
+                    skp.push(tokenToString(peekToken()))
+                if (peekToken().type == TokenType.EOF)
+                    break
+            }
+            inParens = 0
+            if (traceParser)
+                pxt.log(traceLev + "skip: " + skp.join(", "))
+        }
+
+        if (traceParser)
+            for (let r of rr)
+                traceAST("stmt", r)
 
         return rr
     }
@@ -1506,6 +1580,7 @@ namespace pxt.py {
         try {
             prevToken = tokens[0]
             skipTokens()
+            tokenIndices = [nextToken]
 
             if (peekToken().type != TokenType.EOF) {
                 res = stmt()

@@ -340,7 +340,7 @@ namespace pxt.py {
         }
     }
 
-    // next free error 9517; 9550-9599 reserved for parser
+    // next free error 9520; 9550-9599 reserved for parser
     function error(astNode: py.AST, code: number, msg: string) {
         diagnostics.push(mkDiag(astNode, pxtc.DiagnosticCategory.Error, code, msg))
         //const pos = position(astNode ? astNode.startPos || 0 : 0, mod.source)
@@ -673,13 +673,16 @@ namespace pxt.py {
 
     function doArgs(n: FunctionDef, isMethod: boolean) {
         const args = n.args
-        U.assert(!args.kwonlyargs.length)
+        if (args.kwonlyargs.length)
+            error(n, 9517, U.lf("keyword-only arguments not supported yet"))
         let nargs = args.args.slice()
         if (isMethod) {
-            U.assert(nargs[0].arg == "self")
+            if (nargs[0].arg != "self")
+                error(n, 9518, U.lf("first argument of method has to be called 'self'"))
             nargs.shift()
         } else {
-            U.assert(!nargs[0] || nargs[0].arg != "self")
+            if (nargs.some(a => a.arg == "self"))
+                error(n, 9519, U.lf("non-methods cannot have an argument called 'self'"))
         }
         if (!n.symInfo.parameters) {
             let didx = args.defaults.length - nargs.length
