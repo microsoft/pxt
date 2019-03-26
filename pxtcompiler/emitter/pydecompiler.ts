@@ -44,17 +44,21 @@ function indent(lvl: number): (s: string) => string {
 }
 const indent1 = indent(1)
 
-function tsToPy(program: ts.Program, filename: string): string {
+function tsToPy(prog: ts.Program, filename: string): string {
     // state
     let nextFnNum = 0
+    // helpers
+    let tc = prog.getTypeChecker()
 
     // ts->py 
-    let file = program.getSourceFile(filename)
-    let outLns = file.getChildren()
-        .map(emitNode)
-        .reduce((p, c) => p.concat(c), [])
-        .join("\n")
-    return outLns
+    {
+        let file = prog.getSourceFile(filename)
+        let outLns = file.getChildren()
+            .map(emitNode)
+            .reduce((p, c) => p.concat(c), [])
+            .join("\n")
+        return outLns
+    }
     ///
     /// NEWLINES & COMMENTS
     ///
@@ -634,11 +638,32 @@ function tsToPy(program: ts.Program, filename: string): string {
                 return "# TODO unknown op: " + s
         }
     }
+    function hasTypeFlag(t: ts.Type, fs: ts.TypeFlags) {
+        return (t.flags & fs) !== 0
+    }
+    function isStringType(s: ts.Expression): boolean {
+        let type = tc.getTypeAtLocation(s)
+        return hasTypeFlag(type, ts.TypeFlags.StringLike)
+    }
     function emitBinExp(s: ts.BinaryExpression): ExpRes {
+        // handle string concatination
+        let isLStr = isStringType(s.left)
+        let isRStr = isStringType(s.right)
+        let isStrConcat = s.operatorToken.kind === ts.SyntaxKind.PlusToken
+            && (isLStr || isRStr)
+        let wrap = (s: string) => `str(${s})`
+
         let [left, leftSup] = emitExp(s.left)
+        if (isStrConcat && !isLStr)
+            left = wrap(left)
+
         let op = emitOp(s.operatorToken.kind)
+
         let [right, rightSup] = emitExp(s.right)
+        if (isStrConcat && !isRStr)
+            right = wrap(right)
         let sup = leftSup.concat(rightSup)
+
         return [`${left} ${op} ${right}`, sup];
     }
     function emitDotExp(s: ts.PropertyAccessExpression): ExpRes {
@@ -672,6 +697,7 @@ function tsToPy(program: ts.Program, filename: string): string {
         return [`${left}.${right}`, leftSup];
     }
     function emitCallExp(s: ts.CallExpression | ts.NewExpression): ExpRes {
+        // TODO inspect type info to rewrite things like console.log, Math.max, etc.
         let [fn, fnSup] = emitExp(s.expression)
         let argExps = s.arguments
             .map(emitExp)
