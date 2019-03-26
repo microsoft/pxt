@@ -328,10 +328,6 @@ namespace ts.pxtc {
             return !!sym.attributes.block && !!sym.attributes.blockId;
         }
 
-        function capitalize(name: string) {
-            return name[0].toUpperCase() + name.slice(1);
-        }
-
         function compareSymbol(l: SymbolInfo, r: SymbolInfo): number {
             let c = -(hasBlock(l) ? 1 : -1) + (hasBlock(r) ? 1 : -1);
             if (c) return c;
