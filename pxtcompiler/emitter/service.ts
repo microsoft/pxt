@@ -1074,7 +1074,7 @@ namespace ts.pxtc.service {
         insertText = addNamespace ? `${firstWord(namespaceToUse)}.${insertText}` : insertText;
 
         if (attrs && attrs.blockSetVariable)
-            insertText = `${python ? "": "let "}${attrs.blockSetVariable} = ${insertText}`; 
+            insertText = `${python ? "" : "let "}${attrs.blockSetVariable} = ${insertText}`;
 
         return preStmt + insertText;
 
