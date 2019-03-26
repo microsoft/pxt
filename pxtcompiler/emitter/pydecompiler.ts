@@ -646,7 +646,7 @@ function tsToPy(prog: ts.Program, filename: string): string {
         return hasTypeFlag(type, ts.TypeFlags.StringLike)
     }
     function emitBinExp(s: ts.BinaryExpression): ExpRes {
-        // handle string concatination
+        // handle string concatenation
         let isLStr = isStringType(s.left)
         let isRStr = isStringType(s.right)
         let isStrConcat = s.operatorToken.kind === ts.SyntaxKind.PlusToken
