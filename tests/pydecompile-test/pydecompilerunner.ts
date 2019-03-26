@@ -174,9 +174,9 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
             // const decompiled = pxtc.pydecompile(opts, tsFile);
 
             let program = pxtc.getTSProgram(opts);
-            let file = program.getSourceFile(tsFile);
+            // TODO(dz): do we want / need to the annotations added for blockly decompile?
             // annotate(program, tsFile, target || (pxt.appTarget && pxt.appTarget.compile));
-            const decompiled = pxtc.decompiler.decompileToPythonHelper(file);
+            const decompiled = pxtc.decompiler.decompileToPythonHelper(program, tsFile);
 
             if (decompiled.success) {
                 return decompiled.outfiles["main.py"];

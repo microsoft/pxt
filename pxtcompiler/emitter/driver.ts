@@ -245,7 +245,6 @@ namespace ts.pxtc {
     export function pydecompile(opts: CompileOptions, fileName: string) {
         let program = getTSProgram(opts);
 
-        let file = program.getSourceFile(fileName);
         annotate(program, fileName, target || (pxt.appTarget && pxt.appTarget.compile));
         // const apis = getApiInfo(opts, program);
         // const blocksInfo = pxtc.getBlocksInfo(apis, bannedCategories);
@@ -256,7 +255,7 @@ namespace ts.pxtc {
         //     useNewFunctions: opts.useNewFunctions,
         //     allowedArgumentTypes: opts.allowedArgumentTypes || ["number", "boolean", "string"]
         // };
-        const bresp = pxtc.decompiler.decompileToPython(file);
+        const bresp = pxtc.decompiler.decompileToPython(program, fileName);
         return bresp;
     }
 

@@ -9,9 +9,9 @@ namespace ts.pxtc.decompiler {
         }
     }
     // TODO(dz): code share with blocks decompiler ?
-    export function decompileToPython(file: ts.SourceFile): pxtc.CompileResult {
+    export function decompileToPython(program: ts.Program, filename: string): pxtc.CompileResult {
         try {
-            let res = decompileToPythonHelper(file)
+            let res = decompileToPythonHelper(program, filename)
             return res
         } catch (e) {
             pxt.reportException(e);
@@ -21,8 +21,11 @@ namespace ts.pxtc.decompiler {
             return res
         }
     }
-    export function decompileToPythonHelper(file: ts.SourceFile): pxtc.CompileResult {
+    export function decompileToPythonHelper(program: ts.Program, filename: string): pxtc.CompileResult {
+        // TODO take in ts.Program
         let result = emptyResult()
+        let file = program.getSourceFile(filename)
+        // TODO use program
         let output = emitFile(file)
         let outFilename = file.fileName.replace(/(\.py)?\.\w*$/i, '') + '.py'
         result.outfiles[outFilename] = output;
