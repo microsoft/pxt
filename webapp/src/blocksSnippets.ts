@@ -656,8 +656,7 @@ export function getPauseUntil() {
                 blockNamespace: opts.category || "loops",
                 weight: opts.weight == null ? 0 : opts.weight
             },
-            blockXml: Blockly.Xml.domToText(pxt.blocks.mkPredicateBlock(pxtc.PAUSE_UNTIL_TYPE)),
-            noNamespace: true
+            blockXml: Blockly.Xml.domToText(pxt.blocks.mkPredicateBlock(pxtc.PAUSE_UNTIL_TYPE))
         };
     }
 
@@ -697,8 +696,7 @@ export function allBuiltinBlocks() {
             blockId: ts.pxtc.ON_START_TYPE,
             weight: pxt.appTarget.runtime.onStartWeight || 10
         },
-        blockXml: `<block type="pxt-on-start"></block>`,
-        noNamespace: true
+        blockXml: `<block type="pxt-on-start"></block>`
     };
     // Add pause until built in block
     const pauseUntil = getPauseUntil();
@@ -770,7 +768,6 @@ function blockFromJson(b: pxt.editor.ToolboxBlockDefinition, currentWeight?: num
             jsDoc: b.jsDoc,
             group: b.group,
         },
-        noNamespace: true,
         retType: b.retType,
         blockXml: b.blockXml
     }

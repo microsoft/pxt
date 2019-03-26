@@ -1171,7 +1171,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private getBuiltinBlocks(ns: string, subns: string) {
         let cat = snippets.getBuiltinCategory(ns);
         let blocks = cat.blocks || [];
-        blocks.forEach(b => { b.noNamespace = true })
         if (!cat.custom && this.nsMap[ns]) blocks = blocks.concat(this.nsMap[ns].filter(block => !(block.attributes.blockHidden || block.attributes.deprecated)));
         return this.filterBlocks(subns, blocks);
     }
@@ -1483,66 +1482,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         monacoBlockArea.appendChild(monacoBlock);
 
         const comment = fn.attributes.jsDoc;
-
-        let snippetPrefix = fn.noNamespace ? "" : (fn.attributes.blockNamespace || fn.namespace);
-        let isInstance = false;
-        let addNamespace = false;
-        let namespaceToUse = "";
-
-        const element = fn as pxtc.SymbolInfo;
-        if (element.attributes.block) {
-            if (element.attributes.defaultInstance) {
-                snippetPrefix = element.attributes.defaultInstance;
-            }
-            else if (element.namespace) { // some blocks don't have a namespace such as parseInt
-                const nsInfo = this.blockInfo.apis.byQName[element.namespace];
-                if (nsInfo.attributes.fixedInstances) {
-                    let instances = Util.values(this.blockInfo.apis.byQName)
-                    let getExtendsTypesFor = function (name: string) {
-                        return instances
-                            .filter(v => v.extendsTypes)
-                            .filter(v => v.extendsTypes.reduce((x, y) => x || y.indexOf(name) != -1, false))
-                            .reduce((x, y) => x.concat(y.extendsTypes), [])
-                    }
-                    // if blockNamespace exists, e.g., "pins", use it for snippet
-                    // else use nsInfo.namespace, e.g., "motors"
-                    namespaceToUse = element.attributes.blockNamespace || nsInfo.namespace || "";
-                    // all fixed instances for this namespace
-                    let fixedInstances = instances.filter(value =>
-                        value.kind === pxtc.SymbolKind.Variable &&
-                        value.attributes.fixedInstance
-                    );
-                    // first try to get fixed instances whose retType matches nsInfo.name
-                    // e.g., DigitalPin
-                    let exactInstances = fixedInstances.filter(value =>
-                        value.retType == nsInfo.qName)
-                        .sort((v1, v2) => v1.name.localeCompare(v2.name));
-                    if (exactInstances.length) {
-                        snippetPrefix = `${exactInstances[0].name}`
-                    } else {
-                        // second choice: use fixed instances whose retType extends type of nsInfo.name
-                        // e.g., nsInfo.name == AnalogPin and instance retType == PwmPin
-                        let extendedInstances = fixedInstances.filter(value =>
-                            getExtendsTypesFor(nsInfo.qName).indexOf(value.retType) !== -1)
-                            .sort((v1, v2) => v1.name.localeCompare(v2.name));
-                        if (extendedInstances.length) {
-                            snippetPrefix = `${extendedInstances[0].name}`
-                        }
-                    }
-                    isInstance = true;
-                    addNamespace = true;
-                }
-                else if (element.kind == pxtc.SymbolKind.Method || element.kind == pxtc.SymbolKind.Property) {
-                    const params = pxt.blocks.compileInfo(element);
-                    snippetPrefix = params.thisParameter.defaultValue || params.thisParameter.definitionName;
-                    isInstance = true;
-                }
-                else if (nsInfo.kind === pxtc.SymbolKind.Class) {
-                    return undefined;
-                }
-            }
-        }
-
         let sigToken = document.createElement('span');
         if (!fn.snippetOnly) {
             sigToken.className = 'sig';
@@ -1567,8 +1506,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 let model = monacoEditor.editor.getModel();
                 let currPos = monacoEditor.editor.getPosition();
                 let cursor = model.getOffsetAt(currPos)
-                let insertText = snippetPrefix ? `${snippetPrefix}.${snippet}` : snippet;
-                insertText = addNamespace ? `${firstWord(namespaceToUse)}.${insertText}` : insertText;
+                let insertText = snippet;
                 insertText = (currPos.column > 1) ? '\n' + insertText :
                     model.getWordUntilPosition(currPos) != undefined && model.getWordUntilPosition(currPos).word != '' ?
                         insertText + '\n' : insertText;
@@ -1605,9 +1543,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     monacoFlyout.style.transform = "translateX(-9999px)";
                 });
 
-                let insertText = snippetPrefix ? `${snippetPrefix}.${snippet}` : snippet;
-                insertText = addNamespace ? `${firstWord(namespaceToUse)}.${insertText}` : insertText;
-                e.dataTransfer.setData('text', insertText); // IE11 only supports text
+                e.dataTransfer.setData('text', snippet); // IE11 only supports text
 
                 // Fire a create event
                 workspace.fireEvent({ type: 'create', editor: 'ts', blockId: fn.attributes.blockId } as pxt.editor.events.CreateEvent);
@@ -1642,12 +1578,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
 
         if (!fn.snippetOnly) {
-            if (isInstance) {
-                const instanceToken = document.createElement('span');
-                instanceToken.textContent = snippetPrefix + '.';
-                instanceToken.className = 'sigPrefix';
-                monacoBlock.appendChild(instanceToken);
-            }
+            // TODO
+            //if (isInstance) {
+            //    const instanceToken = document.createElement('span');
+            //    instanceToken.textContent = snippetPrefix + '.';
+            //    instanceToken.className = 'sigPrefix';
+            //    monacoBlock.appendChild(instanceToken);
+           // }
             let methodToken = document.createElement('span');
             methodToken.textContent = snippetName;
             monacoBlock.appendChild(methodToken);
@@ -1744,10 +1681,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
 function rangeToSelection(range: monaco.IRange): monaco.Selection {
     return new monaco.Selection(range.startLineNumber, range.startColumn, range.endLineNumber, range.endColumn);
-}
-
-function firstWord(s: string) {
-    return /[^\.]+/.exec(s)[0]
 }
 
 function createIndent(length: number) {

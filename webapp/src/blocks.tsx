@@ -1136,7 +1136,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private getBuiltInBlocks(ns: string, subns: string) {
         let cat = snippets.getBuiltinCategory(ns);
         let blocks: toolbox.BlockDefinition[] = cat.blocks || [];
-        blocks.forEach(b => { b.noNamespace = true })
         if (!cat.custom && this.nsMap[ns]) {
             blocks = this.filterBlocks(subns, blocks.concat(this.nsMap[ns]));
         }
@@ -1158,8 +1157,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     blockId: ts.pxtc.ON_START_TYPE,
                     weight: pxt.appTarget.runtime.onStartWeight || 10
                 },
-                blockXml: `<block type="pxt-on-start"></block>`,
-                noNamespace: true
+                blockXml: `<block type="pxt-on-start"></block>`
             });
         }
         // Inject pause until block
