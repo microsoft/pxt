@@ -1474,7 +1474,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let monacoFlyout = this.getMonacoFlyout();
 
         const isPython = this.fileType == pxt.editor.FileType.Python;
-        if ((isPython ? fn.pySnippet : fn.snippet) === undefined)
+        if (fn.snippet === undefined)
             return undefined;
         const qName = fn.qName;
         const snippetName = (isPython ? fn.pySnippetName : undefined) || fn.snippetName || fn.name;
@@ -1518,7 +1518,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 });
 
                 const snippet = isPython ? fn.pySnippet : fn.snippet;
-                if (snippet !== undefined)
+                if (!snippet)
                     e.dataTransfer.setData('text', 'qName:' + qName); // IE11 only supports text
                 else
                     e.dataTransfer.setData('text', snippet); // IE11 only supports text
