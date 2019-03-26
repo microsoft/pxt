@@ -10,8 +10,7 @@ namespace pxt.py {
     let indentStack: number[]
     let prevToken: Token
     let diags: pxtc.KsDiagnostic[]
-    let tokenIndices: number[]
-    let traceParser = true
+    let traceParser = false
     let traceLev = ""
 
     type Parse = () => AST
@@ -110,7 +109,6 @@ namespace pxt.py {
             return
         nextToken++
         skipTokens()
-        tokenIndices.push(nextToken)
         // console.log(`TOK: ${tokenToString(peekToken())}`)
     }
 
@@ -143,27 +141,11 @@ namespace pxt.py {
     }
 
     function expect(tp: TokenType, val: string) {
-        let t = peekToken()
+        const t = peekToken()
         if (t.type != tp || t.value != val) {
-            t = null
-            /*
-            if (diags.length) {
-                for (let i = 1; i < 4; ++i) {
-                    const idx = tokenIndices[tokenIndices.length - i]
-                    if (idx != undefined) {
-                        t = tokens[idx]
-                        if (t.type == tp && t.value == val) {
-                            nextToken = idx
-                            break
-                        }
-                    }
-                    t = null
-                }
-            }
-            */
-
-            if (!t)
-                error(9553, U.lf("expecting {0}", tokenToString(fakeToken(tp, val))))
+            error(9553, U.lf("expecting {0}", tokenToString(fakeToken(tp, val))))
+            if (t.type == TokenType.NewLine)
+                return // don't shift
         }
         shiftToken()
     }
@@ -1580,7 +1562,6 @@ namespace pxt.py {
         try {
             prevToken = tokens[0]
             skipTokens()
-            tokenIndices = [nextToken]
 
             if (peekToken().type != TokenType.EOF) {
                 res = stmt()
