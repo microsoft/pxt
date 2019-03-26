@@ -1560,7 +1560,7 @@ export class ProjectView
 
         if (this.editor == this.textEditor)
             switch (this.textEditor.fileType) {
-                case monaco.FileType.Python:
+                case pxt.editor.FileType.Python:
                     return pxt.PYTHON_PROJECT_NAME;
                 default:
                     return pxt.JAVASCRIPT_PROJECT_NAME;
