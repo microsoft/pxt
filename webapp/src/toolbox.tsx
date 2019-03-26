@@ -21,6 +21,7 @@ export const enum CategoryNameID {
 
 // this is a supertype of pxtc.SymbolInfo (see partitionBlocks)
 export interface BlockDefinition {
+    qName?: string;
     name: string;
     namespace?: string;
     type?: string;

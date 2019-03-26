@@ -182,6 +182,7 @@ namespace ts.pxtc {
 
             let r: SymbolInfo = {
                 kind,
+                qName,
                 namespace: m ? m[1] : "",
                 name: m ? m[2] : qName,
                 attributes,
@@ -247,6 +248,7 @@ namespace ts.pxtc {
                         isEnum
                     }
                 }),
+                snippet: ts.isFunctionLike(stmt) ? null : undefined
             }
             if (stmt.kind === SK.GetAccessor ||
                 ((stmt.kind === SK.PropertyDeclaration || stmt.kind === SK.PropertySignature) && isReadonly(stmt as Declaration))) {
@@ -338,11 +340,15 @@ namespace ts.pxtc {
     }
 
     export function getApiInfo(opts: CompileOptions, program: Program, legacyOnly = false): ApisInfo {
+        return internalGetApiInfo(opts, program, legacyOnly).apis;
+    }
+
+    export function internalGetApiInfo(opts: CompileOptions, program: Program, legacyOnly = false) {
         const res: ApisInfo = {
             byQName: {},
             jres: opts.jres
         }
-        const qNameToNode: pxt.Map<Node> = {};
+        const qNameToNode: pxt.Map<Declaration> = {};
         const typechecker = program.getTypeChecker()
         const collectDecls = (stmt: Node) => {
             if (stmt.kind == SK.VariableStatement) {
@@ -359,7 +365,7 @@ namespace ts.pxtc {
                 let qName = getFullName(typechecker, stmt.symbol)
                 if (stmt.kind == SK.SetAccessor)
                     qName += "@set" // otherwise we get a clash with the getter
-                qNameToNode[qName] = stmt;
+                qNameToNode[qName] = stmt as Declaration;
                 let si = createSymbolInfo(typechecker, qName, stmt, opts)
                 if (si) {
                     let existing = U.lookup(res.byQName, qName)
@@ -463,18 +469,10 @@ namespace ts.pxtc {
             delete res.byQName["Array.map"]
         }
 
-        // fill in snippets
-        for (let qName in res.byQName) {
-            const si = res.byQName[qName];
-            const stmt = qNameToNode[qName];
-            if (si && stmt && ts.isFunctionLike(stmt)) {
-                si.snippet = ts.pxtc.service.getSnippet(res.byQName, si, stmt as FunctionLikeDeclaration);
-                if (opts.pySnippets)
-                    si.pySnippet = ts.pxtc.service.getSnippet(res.byQName, si, stmt as FunctionLikeDeclaration, true);
-            }
+        return {
+            apis: res,
+            decls: qNameToNode
         }
-
-        return res
     }
 
     export function getFullName(typechecker: TypeChecker, symbol: Symbol): string {
@@ -581,7 +579,13 @@ namespace ts.pxtc.service {
 
     let service: LanguageService;
     let host: Host;
-    let lastApiInfo: ApisInfo;
+
+    interface CachedApisInfo { 
+        apis: ApisInfo; 
+        decls: pxt.Map<Declaration>;
+    }
+
+    let lastApiInfo: CachedApisInfo;
     let lastBlocksInfo: BlocksInfo;
     let lastLocBlocksInfo: BlocksInfo;
     let lastFuse: Fuse<SearchInfo>;
@@ -618,7 +622,7 @@ namespace ts.pxtc.service {
             return lastLocBlocksInfo;
         } else {
             if (!lastBlocksInfo) {
-                lastBlocksInfo = getBlocksInfo(lastApiInfo, bannedCategories);
+                lastBlocksInfo = getBlocksInfo(lastApiInfo.apis, bannedCategories);
             }
             return lastBlocksInfo;
         }
@@ -627,8 +631,8 @@ namespace ts.pxtc.service {
     function addApiInfo(opts: CompileOptions) {
         if (!opts.apisInfo && opts.target.preferredEditor == pxt.PYTHON_PROJECT_NAME) {
             if (!lastApiInfo)
-                lastApiInfo = getApiInfo(opts, service.getProgram())
-            opts.apisInfo = lastApiInfo
+                lastApiInfo = internalGetApiInfo(opts, service.getProgram())
+            opts.apisInfo = lastApiInfo.apis
         }
     }
 
@@ -653,8 +657,6 @@ namespace ts.pxtc.service {
 
             if (!data) return {}
 
-            let typechecker = program.getTypeChecker()
-
             let r: CompletionInfo = {
                 entries: {},
                 isMemberCompletion: data.isMemberCompletion,
@@ -662,7 +664,7 @@ namespace ts.pxtc.service {
                 isTypeLocation: false // TODO
             }
 
-            fillCompletionEntries(program, data.symbols, r, lastApiInfo, host.opts)
+            fillCompletionEntries(program, data.symbols, r, lastApiInfo.apis, host.opts)
 
             return r;
         },
@@ -732,7 +734,17 @@ namespace ts.pxtc.service {
                 // Host was reset, don't load apis with empty options
                 return undefined;
             }
-            return lastApiInfo = getApiInfo(host.opts, service.getProgram());
+            lastApiInfo = internalGetApiInfo(host.opts, service.getProgram());
+            return lastApiInfo.apis;
+        },
+        snippet: v => {
+            const o = v.snippet;
+            if (!lastApiInfo) return undefined;
+            const fn = lastApiInfo.apis.byQName[o.qName];
+            const n = lastApiInfo.decls[o.qName];
+            if (!fn || !n || !ts.isFunctionLike(n))
+                return undefined;
+            return ts.pxtc.service.getSnippet(lastApiInfo.apis.byQName, fn, n as FunctionLikeDeclaration, !!o.python)
         },
         blocksInfo: v => blocksInfoOp(v as any),
         apiSearch: v => {
@@ -940,10 +952,7 @@ namespace ts.pxtc.service {
 . . . . .
 \``;
 
-    export function getSnippet(apis: pxt.Map<SymbolInfo>, fn: SymbolInfo, n: ts.SignatureDeclaration, python?: boolean): string {
-        if (!ts.isFunctionLike(n)) {
-            return undefined;
-        }
+    export function getSnippet(apis: pxt.Map<SymbolInfo>, fn: SymbolInfo, n: ts.FunctionLikeDeclaration, python?: boolean): string {
         let preStmt = "";
 
         const attrs = fn.attributes;

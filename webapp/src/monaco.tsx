@@ -487,37 +487,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 ev.preventDefault();
                 ev.stopPropagation();
 
-                let mouseTarget = this.editor.getTargetAtClientPoint(ev.clientX, ev.clientY);
-                let position = mouseTarget.position;
-                let model = this.editor.getModel();
-                let currPos = this.editor.getPosition();
-                let cursor = model.getOffsetAt(currPos)
-                if (!position) // IE11 fails to locate the mouse
-                    position = currPos;
-
-                // always insert the text on the next lin
-                insertText += "\n";
-                position.lineNumber++;
-                position.column = 1;
-                // check existing content
-                if (position.lineNumber < model.getLineCount() && model.getLineContent(position.lineNumber)) // non-empty line
-                    insertText = "\n" + insertText;
-
-                // update cursor
-                this.editor.pushUndoStop();
-                this.editor.executeEdits("", [
-                    {
-                        identifier: { major: 0, minor: 0 },
-                        range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column),
-                        text: insertText,
-                        forceMoveMarkers: true,
-                        isAutoWhitespaceEdit: true,
-
-                    }
-                ]);
-                this.beforeCompile();
-                this.editor.pushUndoStop();
-                this.editor.focus();
+                let p = insertText.startsWith("qName:")
+                    ? compiler.snippetAsync(insertText.substring("qName:".length), this.fileType == pxt.editor.FileType.Python)
+                    : Promise.resolve(insertText)
+                p.done(snippet => {
+                    let mouseTarget = this.editor.getTargetAtClientPoint(ev.clientX, ev.clientY);
+                    let position = mouseTarget.position;
+                    this.insertSnippet(position, snippet);
+                });
             });
 
 
@@ -530,6 +507,37 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.setupToolbox(editorArea);
             this.setupFieldEditors();
         })
+    }
+
+    private insertSnippet(position: monaco.Position, insertText: string) {
+        let currPos = this.editor.getPosition();
+        let model = this.editor.getModel();
+        if (!position) // IE11 fails to locate the mouse
+            position = currPos;
+
+        // always insert the text on the next lin
+        insertText += "\n";
+        position.lineNumber++;
+        position.column = 1;
+        // check existing content
+        if (position.lineNumber < model.getLineCount() && model.getLineContent(position.lineNumber)) // non-empty line
+            insertText = "\n" + insertText;
+
+        // update cursor
+        this.editor.pushUndoStop();
+        this.editor.executeEdits("", [
+            {
+                identifier: { major: 0, minor: 0 },
+                range: new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column),
+                text: insertText,
+                forceMoveMarkers: true,
+                isAutoWhitespaceEdit: true,
+
+            }
+        ]);
+        this.beforeCompile();
+        this.editor.pushUndoStop();
+        this.editor.focus();
     }
 
     protected dragCurrentPos = { x: 0, y: 0 };
@@ -1466,9 +1474,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let monacoFlyout = this.getMonacoFlyout();
 
         const isPython = this.fileType == pxt.editor.FileType.Python;
-        const snippet = isPython ? fn.pySnippet : fn.snippet;
-        if (!snippet)
+        if ((isPython ? fn.pySnippet : fn.snippet) === undefined)
             return undefined;
+        const qName = fn.qName;
         const snippetName = (isPython ? fn.pySnippetName : undefined) || fn.snippetName || fn.name;
 
         let monacoBlockArea = document.createElement('div');
@@ -1480,20 +1488,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         monacoBlockArea.appendChild(monacoBlock);
 
         const comment = fn.attributes.jsDoc;
-        let sigToken = document.createElement('span');
-        if (!fn.snippetOnly) {
-            sigToken.className = 'sig';
-        }
-        // completion is a bit busted but looks better
-        sigToken.textContent = snippet
-            .replace(/^[^(]*\(/, '(')
-            .replace(/^\s*\{\{\}\}\n/gm, '')
-            .replace(/\{\n\}/g, '{}')
-            .replace(/(?:\{\{)|(?:\}\})/g, '');
-
         monacoBlock.title = comment;
 
         color = pxt.toolbox.convertColor(color);
+
+        const methodToken = document.createElement('span');
+        methodToken.textContent = fn.snippetOnly ? fn.snippet : snippetName;
+        monacoBlock.appendChild(methodToken);
 
         if (!isDisabled) {
             monacoBlock.draggable = true;
@@ -1501,39 +1502,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 pxt.tickEvent("monaco.toolbox.itemclick", undefined, { interactiveConsent: true });
                 monacoEditor.hideFlyout();
 
-                let model = monacoEditor.editor.getModel();
-                let currPos = monacoEditor.editor.getPosition();
-                let cursor = model.getOffsetAt(currPos)
-                let insertText = snippet;
-                insertText = (currPos.column > 1) ? '\n' + insertText :
-                    model.getWordUntilPosition(currPos) != undefined && model.getWordUntilPosition(currPos).word != '' ?
-                        insertText + '\n' : insertText;
-
-                if (insertText.indexOf('{{}}') > -1) {
-                    cursor += (insertText.indexOf('{{}}'));
-                    insertText = insertText.replace('{{}}', '');
-                } else
-                    cursor += (insertText.length);
-
-                insertText = insertText.replace(/(?:\{\{)|(?:\}\})/g, '');
-                monacoEditor.editor.pushUndoStop();
-                monacoEditor.editor.executeEdits("", [
-                    {
-                        identifier: { major: 0, minor: 0 },
-                        range: new monaco.Range(currPos.lineNumber, currPos.column, currPos.lineNumber, currPos.column),
-                        text: insertText,
-                        forceMoveMarkers: false
-                    }
-                ]);
-                monacoEditor.beforeCompile();
-                monacoEditor.editor.pushUndoStop();
-                let endPos = model.getPositionAt(cursor);
-                monacoEditor.editor.setPosition(endPos);
-                monacoEditor.editor.focus();
-                //monacoEditor.editor.setSelection(new monaco.Range(currPos.lineNumber, currPos.column, endPos.lineNumber, endPos.column));
-
-                // Fire a create event
-                workspace.fireEvent({ type: 'create', editor: 'ts', blockId: fn.attributes.blockId } as pxt.editor.events.CreateEvent);
+                let snip = isPython ? fn.pySnippet : fn.snippet;
+                let p = snip ? Promise.resolve(snip) : compiler.snippetAsync(qName, isPython);
+                p.done(snippet => {
+                    let currPos = monacoEditor.editor.getPosition();
+                    this.insertSnippet(currPos, snippet);
+                    // Fire a create event
+                    workspace.fireEvent({ type: 'create', editor: 'ts', blockId: fn.attributes.blockId } as pxt.editor.events.CreateEvent);
+                });
             };
             monacoBlock.ondragstart = (e: DragEvent) => {
                 pxt.tickEvent("monaco.toolbox.itemdrag", undefined, { interactiveConsent: true });
@@ -1541,8 +1517,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     monacoFlyout.style.transform = "translateX(-9999px)";
                 });
 
-                e.dataTransfer.setData('text', snippet); // IE11 only supports text
-
+                const snippet = isPython ? fn.pySnippet : fn.snippet;
+                if (snippet !== undefined)
+                    e.dataTransfer.setData('text', 'qName:' + qName); // IE11 only supports text
+                else
+                    e.dataTransfer.setData('text', snippet); // IE11 only supports text
                 // Fire a create event
                 workspace.fireEvent({ type: 'create', editor: 'ts', blockId: fn.attributes.blockId } as pxt.editor.events.CreateEvent);
             }
@@ -1574,20 +1553,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 unhighlightBlock();
             }
         }
-
-        if (!fn.snippetOnly) {
-            // TODO
-            //if (isInstance) {
-            //    const instanceToken = document.createElement('span');
-            //    instanceToken.textContent = snippetPrefix + '.';
-            //    instanceToken.className = 'sigPrefix';
-            //    monacoBlock.appendChild(instanceToken);
-            // }
-            let methodToken = document.createElement('span');
-            methodToken.textContent = snippetName;
-            monacoBlock.appendChild(methodToken);
-        }
-        monacoBlock.appendChild(sigToken);
 
         // Draw the shape of the block
         monacoBlock.style.fontSize = `${monacoEditor.parent.settings.editorFontSize}px`;

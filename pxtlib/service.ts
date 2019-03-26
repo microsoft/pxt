@@ -1308,6 +1308,12 @@ namespace ts.pxtc.service {
         format?: FormatOptions;
         blocks?: BlocksOptions;
         projectSearch?: ProjectSearchOptions;
+        snippet?: SnippetOptions;
+    }
+
+    export interface SnippetOptions {
+        qName: string;
+        python?: boolean;
     }
 
     export interface SearchOptions {
