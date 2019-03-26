@@ -1,5 +1,5 @@
 namespace ts.pxtc.decompiler {
-    // TODO(dz): code share with blocks decompiler
+    // TODO(dz): code share with blocks decompiler ?
     export function decompileToPython(file: ts.SourceFile): pxtc.CompileResult {
         let result: pxtc.CompileResult = {
             blocksInfo: null,
@@ -21,9 +21,7 @@ namespace ts.pxtc.decompiler {
         // };
 
         try {
-            // reset
-            // TODO(dz) this should really be a class with proper constructor
-            nextFnNum = 0
+            resetEmitter()
 
             let outLns = file.getChildren()
                 .map(emitNode)
@@ -31,7 +29,8 @@ namespace ts.pxtc.decompiler {
 
             let output = outLns.join("\n");
 
-            result.outfiles[file.fileName.replace(/(\.py)?\.\w*$/i, '') + '.py'] = output;
+            let outFilename = file.fileName.replace(/(\.py)?\.\w*$/i, '') + '.py'
+            result.outfiles[outFilename] = output;
         } catch (e) {
             pxt.reportException(e);
             // TODO better reporting
@@ -47,7 +46,7 @@ namespace ts.pxtc.decompiler {
     // TODO handle types at initialization when ambiguous (e.g. x = [], x = None)
 
     ///
-    /// SUPPORT
+    /// UTILS
     ///
     const INDENT = "  "
     function indent(lvl: number): (s: string) => string {
@@ -56,7 +55,17 @@ namespace ts.pxtc.decompiler {
     const indent1 = indent(1)
 
     ///
-    /// NODES & CRUFT
+    /// STATE
+    ///
+    // TODO use a class or injection so the state isn't global
+    // for now I'm resisting creating a class b/c I don't want the extra level of indentation >.<
+    let nextFnNum = 0
+    function resetEmitter() {
+        nextFnNum = 0
+    }
+
+    ///
+    /// NEWLINES & COMMENTS
     ///
     function emitNode(s: ts.Node): string[] {
         switch (s.kind) {
@@ -108,33 +117,30 @@ namespace ts.pxtc.decompiler {
     /// STATEMENTS
     ///
     function emitStmt(s: ts.Statement): string[] {
-        // TODO(dz): why does the type system not recognize this as discriminated unions?
-        switch (s.kind) {
-            case ts.SyntaxKind.VariableStatement:
-                return emitVarStmt(s as ts.VariableStatement)
-            case ts.SyntaxKind.ClassDeclaration:
-                return emitClassStmt(s as ts.ClassDeclaration)
-            case ts.SyntaxKind.EnumDeclaration:
-                return emitEnumStmt(s as ts.EnumDeclaration)
-            case ts.SyntaxKind.ExpressionStatement:
-                return emitExpStmt(s as ts.ExpressionStatement)
-            case ts.SyntaxKind.FunctionDeclaration:
-                return emitFuncDecl(s as ts.FunctionDeclaration)
-            case ts.SyntaxKind.IfStatement:
-                return emitIf(s as ts.IfStatement)
-            case ts.SyntaxKind.ForStatement:
-                return emitForStmt(s as ts.ForStatement)
-            case ts.SyntaxKind.ForOfStatement:
-                return emitForOfStmt(s as ts.ForOfStatement)
-            case ts.SyntaxKind.WhileStatement:
-                return emitWhileStmt(s as ts.WhileStatement)
-            case ts.SyntaxKind.Block:
-                let block = s as ts.Block
-                return block.getChildren()
-                    .map(emitNode)
-                    .reduce((p, c) => p.concat(c), [])
-            default:
-                throw Error(`Not implemented: statement kind ${s.kind}`);
+        if (ts.isVariableStatement(s)) {
+            return emitVarStmt(s)
+        } else if (ts.isClassDeclaration(s)) {
+            return emitClassStmt(s)
+        } else if (ts.isEnumDeclaration(s)) {
+            return emitEnumStmt(s)
+        } else if (ts.isExpressionStatement(s)) {
+            return emitExpStmt(s)
+        } else if (ts.isFunctionDeclaration(s)) {
+            return emitFuncDecl(s)
+        } else if (ts.isIfStatement(s)) {
+            return emitIf(s)
+        } else if (ts.isForStatement(s)) {
+            return emitForStmt(s)
+        } else if (ts.isForOfStatement(s)) {
+            return emitForOfStmt(s)
+        } else if (ts.isWhileStatement(s)) {
+            return emitWhileStmt(s)
+        } else if (ts.isBlock(s)) {
+            return s.getChildren()
+                .map(emitNode)
+                .reduce((p, c) => p.concat(c), [])
+        } else {
+            throw Error(`Not implemented: statement kind ${s.kind}`);
         }
     }
     function emitWhileStmt(s: ts.WhileStatement): string[] {
@@ -686,8 +692,6 @@ namespace ts.pxtc.decompiler {
             .reduce((p, c) => p.concat(c), fnSup)
         return [`${fn}(${args})`, sup]
     }
-
-    let nextFnNum = 0
     function nextFnName() {
         // TODO ensure uniqueness
         // TODO add sync lock
