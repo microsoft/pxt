@@ -241,7 +241,7 @@ namespace pxt.docs {
             breadcrumbHtml = `
             <nav class="ui breadcrumb" aria-label="${lf("Breadcrumb")}">
                 ${breadcrumb.map((b, i) =>
-                    `<a class="${i == breadcrumb.length - 1 ? "active" : ""} section"
+                `<a class="${i == breadcrumb.length - 1 ? "active" : ""} section"
                         href="${html2Quote(b.href)}" aria-current="${i == breadcrumb.length - 1 ? "page" : ""}">${html2Quote(b.name)}</a>`)
                     .join('<i class="right chevron icon divider"></i>')}
             </nav>`;
@@ -514,6 +514,11 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
 
         // support for breaks which somehow don't work out of the box
         html = html.replace(/&lt;br\s*\/&gt;/ig, "<br/>");
+
+        // github will render images if referenced as ![](/docs/static/foo.png)
+        // we require /static/foo.png
+        html = html.replace(/(<img [^>]* src=")\/docs\/static\/([^">]+)"/g,
+            (f, pref, addr) => pref + '/static/' + addr + '"')
 
         let endBox = ""
 
