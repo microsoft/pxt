@@ -15,14 +15,14 @@ namespace pxtsprite {
         }
 
         set(col: number, row: number, value: number) {
-            if (col < this.width && row < this.height && col >= 0 && row  >= 0) {
+            if (col < this.width && row < this.height && col >= 0 && row >= 0) {
                 const index = this.coordToIndex(col, row);
                 this.setCore(index, value);
             }
         }
 
         get(col: number, row: number) {
-            if (col < this.width && row < this.height && col >= 0 && row  >= 0) {
+            if (col < this.width && row < this.height && col >= 0 && row >= 0) {
                 const index = this.coordToIndex(col, row);
                 return this.getCore(index);
             }
@@ -177,17 +177,36 @@ namespace pxtsprite {
         return result;
     }
 
-    export function bitmapToImageLiteral(bitmap: Bitmap): string {
-        let res = "img`";
+    export function bitmapToImageLiteral(bitmap: Bitmap, fileType: pxt.editor.FileType): string {
+        let res = '';
+        switch (fileType) {
+            case pxt.editor.FileType.Python:
+                res = "img(\"\"\"";
+                break;
+            default:
+                res = "img`";
+                break;
+        }
 
-        for (let r = 0; r < bitmap.height; r++) {
-            res += "\n"
-            for (let c = 0; c < bitmap.width; c++) {
-                res += hexChars[bitmap.get(c, r)] + " ";
+        if (bitmap) {
+            for (let r = 0; r < bitmap.height; r++) {
+                res += "\n"
+                for (let c = 0; c < bitmap.width; c++) {
+                    res += hexChars[bitmap.get(c, r)] + " ";
+                }
             }
         }
 
-        res += "\n`";
+        res += "\n";
+
+        switch (fileType) {
+            case pxt.editor.FileType.Python:
+                res += "\"\"\")";
+                break;
+            default:
+                res += "`";
+                break;
+        }
 
         return res;
     }

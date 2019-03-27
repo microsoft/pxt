@@ -5501,7 +5501,7 @@ PXT_ASMDEBUG     - embed additional information in generated binary.asm file
                 aliases: ["r"]
             },
             "githubpages": {
-                description: "Generate a web site compatiable with GitHub pages",
+                description: "Generate a web site compatible with GitHub pages",
                 aliases: ["ghpages", "gh"]
             },
             "output": {

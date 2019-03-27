@@ -1547,7 +1547,7 @@ namespace pxt.py {
             ]
 
             if (fun && allargs.length == 1 && isTaggedTemplate(fun))
-                nodes = [fn, B.mkText(" "), forceBackticks(allargs[0])]
+                nodes = [fn, forceBackticks(allargs[0])]
 
             if (isClass) {
                 nodes[0] = B.mkText(applyTypeMap(namedSymbol.qName))

@@ -357,6 +357,20 @@ declare namespace pxt {
     }
 }
 
+declare namespace pxt.editor {
+    const enum FileType {
+        Text = "text",
+        TypeScript = "typescript",
+        JavaScript = "javascript",
+        Markdown = "markdown",
+        Python = "python",
+        CPP = "cpp",
+        JSON = "json",
+        XML = "xml",
+        Asm = "asm"
+    }
+}
+
 declare namespace ts.pxtc {
 
     namespace ir {
@@ -601,7 +615,7 @@ declare namespace ts.pxtc {
         EnumMember,
         Class,
         Interface,
-    }    
+    }
 
     interface SymbolInfo {
         attributes: CommentAttrs;
