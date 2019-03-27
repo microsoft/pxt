@@ -15,11 +15,11 @@ controller.anyButton.onEvent(ControllerButtonEvent.Pressed, function_0)
 def function_1(sprite, otherSprite):
   game.over()
 sprites.onOverlap(SpriteKind.Player, SpriteKind.Projectile, function_1)
-projectile = None
-bottomImage = None
-topImage = None
+projectile: Sprite = None
+bottomImage: Image = None
+topImage: Image = None
 gap = 0
-mySprite = None
+mySprite: Sprite = None
 scene.setBackgroundColor(9)
 effects.blizzard.startScreenEffect()
 mySprite = sprites.create(img("""

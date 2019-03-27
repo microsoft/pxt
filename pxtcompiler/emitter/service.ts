@@ -227,6 +227,7 @@ namespace ts.pxtc {
 
             let r: SymbolInfo = {
                 kind,
+                qName,
                 namespace: m ? m[1] : "",
                 name: m ? m[2] : qName,
                 attributes,
@@ -292,7 +293,7 @@ namespace ts.pxtc {
                         isEnum
                     }
                 }),
-                snippet: service.getSnippet(decl, attributes),
+                snippet: ts.isFunctionLike(stmt) ? null : undefined
             }
 
             if (opts.pySnippets)
@@ -397,10 +398,6 @@ namespace ts.pxtc {
             return !!sym.attributes.block && !!sym.attributes.blockId;
         }
 
-        function capitalize(name: string) {
-            return name[0].toUpperCase() + name.slice(1);
-        }
-
         function compareSymbol(l: SymbolInfo, r: SymbolInfo): number {
             let c = -(hasBlock(l) ? 1 : -1) + (hasBlock(r) ? 1 : -1);
             if (c) return c;
@@ -411,14 +408,17 @@ namespace ts.pxtc {
     }
 
     export function getApiInfo(opts: CompileOptions, program: Program, legacyOnly = false): ApisInfo {
-        let res: ApisInfo = {
+        return internalGetApiInfo(opts, program, legacyOnly).apis;
+    }
+
+    export function internalGetApiInfo(opts: CompileOptions, program: Program, legacyOnly = false) {
+        const res: ApisInfo = {
             byQName: {},
             jres: opts.jres
         }
-
-        let typechecker = program.getTypeChecker()
-
-        let collectDecls = (stmt: Node) => {
+        const qNameToNode: pxt.Map<Declaration> = {};
+        const typechecker = program.getTypeChecker()
+        const collectDecls = (stmt: Node) => {
             if (stmt.kind == SK.VariableStatement) {
                 let vs = stmt as VariableStatement
                 vs.declarationList.declarations.forEach(collectDecls)
@@ -433,6 +433,7 @@ namespace ts.pxtc {
                 let qName = getFullName(typechecker, stmt.symbol)
                 if (stmt.kind == SK.SetAccessor)
                     qName += "@set" // otherwise we get a clash with the getter
+                qNameToNode[qName] = stmt as Declaration;
                 let si = createSymbolInfo(typechecker, qName, stmt, opts)
                 if (si) {
                     let existing = U.lookup(res.byQName, qName)
@@ -551,7 +552,10 @@ namespace ts.pxtc {
             delete res.byQName["Array.map"]
         }
 
-        return res
+        return {
+            apis: res,
+            decls: qNameToNode
+        }
     }
 
     export function getFullName(typechecker: TypeChecker, symbol: Symbol): string {
@@ -658,7 +662,13 @@ namespace ts.pxtc.service {
 
     let service: LanguageService;
     let host: Host;
-    let lastApiInfo: ApisInfo;
+
+    interface CachedApisInfo {
+        apis: ApisInfo;
+        decls: pxt.Map<Declaration>;
+    }
+
+    let lastApiInfo: CachedApisInfo;
     let lastBlocksInfo: BlocksInfo;
     let lastLocBlocksInfo: BlocksInfo;
     let lastFuse: Fuse<SearchInfo>;
@@ -695,7 +705,7 @@ namespace ts.pxtc.service {
             return lastLocBlocksInfo;
         } else {
             if (!lastBlocksInfo) {
-                lastBlocksInfo = getBlocksInfo(lastApiInfo, bannedCategories);
+                lastBlocksInfo = getBlocksInfo(lastApiInfo.apis, bannedCategories);
             }
             return lastBlocksInfo;
         }
@@ -704,8 +714,8 @@ namespace ts.pxtc.service {
     function addApiInfo(opts: CompileOptions) {
         if (!opts.apisInfo && opts.target.preferredEditor == pxt.PYTHON_PROJECT_NAME) {
             if (!lastApiInfo)
-                lastApiInfo = getApiInfo(opts, service.getProgram())
-            opts.apisInfo = lastApiInfo
+                lastApiInfo = internalGetApiInfo(opts, service.getProgram())
+            opts.apisInfo = lastApiInfo.apis
         }
     }
 
@@ -730,8 +740,6 @@ namespace ts.pxtc.service {
 
             if (!data) return {}
 
-            let typechecker = program.getTypeChecker()
-
             let r: CompletionInfo = {
                 entries: {},
                 isMemberCompletion: data.isMemberCompletion,
@@ -739,7 +747,7 @@ namespace ts.pxtc.service {
                 isTypeLocation: false // TODO
             }
 
-            fillCompletionEntries(program, data.symbols, r, lastApiInfo, host.opts)
+            fillCompletionEntries(program, data.symbols, r, lastApiInfo.apis, host.opts)
 
             return r;
         },
@@ -809,7 +817,17 @@ namespace ts.pxtc.service {
                 // Host was reset, don't load apis with empty options
                 return undefined;
             }
-            return lastApiInfo = getApiInfo(host.opts, service.getProgram());
+            lastApiInfo = internalGetApiInfo(host.opts, service.getProgram());
+            return lastApiInfo.apis;
+        },
+        snippet: v => {
+            const o = v.snippet;
+            if (!lastApiInfo) return undefined;
+            const fn = lastApiInfo.apis.byQName[o.qName];
+            const n = lastApiInfo.decls[o.qName];
+            if (!fn || !n || !ts.isFunctionLike(n))
+                return undefined;
+            return ts.pxtc.service.getSnippet(lastApiInfo.apis.byQName, fn, n as FunctionLikeDeclaration, !!o.python)
         },
         blocksInfo: v => blocksInfoOp(v as any),
         apiSearch: v => {
@@ -1017,10 +1035,10 @@ namespace ts.pxtc.service {
 . . . . .
 \``;
 
-    export function getSnippet(n: ts.SignatureDeclaration, attrs?: CommentAttrs, python?: boolean): string {
-        if (!ts.isFunctionLike(n)) {
-            return undefined;
-        }
+    export function getSnippet(apis: pxt.Map<SymbolInfo>, fn: SymbolInfo, n: ts.FunctionLikeDeclaration, python?: boolean): string {
+        let preStmt = "";
+
+        const attrs = fn.attributes;
         const checker = service && !python ? service.getProgram().getTypeChecker() : undefined;
         const args = n.parameters ? n.parameters.filter(param => !param.initializer && !param.questionToken).map(param => {
             const typeNode = param.type;
@@ -1049,7 +1067,7 @@ namespace ts.pxtc.service {
                     if (functionSignature) {
                         return getFunctionString(functionSignature);
                     }
-                    return python ? `def _():\n  pass` : `function () {}`;
+                    return emitFn(name);
             }
 
             const type = checker ? checker.getTypeAtLocation(param) : undefined;
@@ -1060,7 +1078,7 @@ namespace ts.pxtc.service {
                         if (sigs.length) {
                             return getFunctionString(sigs[0]);
                         }
-                        return python ? `def _():\n  pass` : `function () {}`;
+                        return emitFn(name);
                     }
                 }
                 if (type.flags & ts.TypeFlags.EnumLike) {
@@ -1080,7 +1098,79 @@ namespace ts.pxtc.service {
             fnName = n.name.getText();
         }
 
-        return `${fnName}(${args.join(', ')})`;
+        let snippetPrefix = (fn.attributes.blockNamespace || fn.namespace);
+        let isInstance = false;
+        let addNamespace = false;
+        let namespaceToUse = "";
+
+        const element = fn as pxtc.SymbolInfo;
+        if (element.attributes.block) {
+            if (element.attributes.defaultInstance) {
+                snippetPrefix = element.attributes.defaultInstance;
+            }
+            else if (element.namespace) { // some blocks don't have a namespace such as parseInt
+                const nsInfo = apis[element.namespace];
+                if (nsInfo.attributes.fixedInstances) {
+                    let instances = Util.values(apis)
+                    let getExtendsTypesFor = function (name: string) {
+                        return instances
+                            .filter(v => v.extendsTypes)
+                            .filter(v => v.extendsTypes.reduce((x, y) => x || y.indexOf(name) != -1, false))
+                            .reduce((x, y) => x.concat(y.extendsTypes), [])
+                    }
+                    // if blockNamespace exists, e.g., "pins", use it for snippet
+                    // else use nsInfo.namespace, e.g., "motors"
+                    namespaceToUse = element.attributes.blockNamespace || nsInfo.namespace || "";
+                    // all fixed instances for this namespace
+                    let fixedInstances = instances.filter(value =>
+                        value.kind === pxtc.SymbolKind.Variable &&
+                        value.attributes.fixedInstance
+                    );
+                    // first try to get fixed instances whose retType matches nsInfo.name
+                    // e.g., DigitalPin
+                    let exactInstances = fixedInstances.filter(value =>
+                        value.retType == nsInfo.qName)
+                        .sort((v1, v2) => v1.name.localeCompare(v2.name));
+                    if (exactInstances.length) {
+                        snippetPrefix = `${exactInstances[0].name}`
+                    } else {
+                        // second choice: use fixed instances whose retType extends type of nsInfo.name
+                        // e.g., nsInfo.name == AnalogPin and instance retType == PwmPin
+                        let extendedInstances = fixedInstances.filter(value =>
+                            getExtendsTypesFor(nsInfo.qName).indexOf(value.retType) !== -1)
+                            .sort((v1, v2) => v1.name.localeCompare(v2.name));
+                        if (extendedInstances.length) {
+                            snippetPrefix = `${extendedInstances[0].name}`
+                        }
+                    }
+                    isInstance = true;
+                    addNamespace = true;
+                }
+                else if (element.kind == pxtc.SymbolKind.Method || element.kind == pxtc.SymbolKind.Property) {
+                    const params = pxt.blocks.compileInfo(element);
+                    if (params.thisParameter)
+                        snippetPrefix = params.thisParameter.defaultValue || params.thisParameter.definitionName;
+                    isInstance = true;
+                }
+                else if (nsInfo.kind === pxtc.SymbolKind.Class) {
+                    return undefined;
+                }
+            }
+        }
+
+        let snippet = `${fnName}(${args.join(', ')})`;
+        let insertText = snippetPrefix ? `${snippetPrefix}.${snippet}` : snippet;
+        insertText = addNamespace ? `${firstWord(namespaceToUse)}.${insertText}` : insertText;
+
+        if (attrs && attrs.blockSetVariable)
+            insertText = `${python ? "" : "let "}${attrs.blockSetVariable} = ${insertText}`;
+
+        return preStmt + insertText;
+
+        function firstWord(s: string): string {
+            const i = s.indexOf('.');
+            return i < 0 ? s : s.substring(0, i);
+        }
 
         function getFunctionString(functionSignature: ts.Signature) {
             let functionArgument = "()";
@@ -1103,6 +1193,13 @@ namespace ts.pxtc.service {
             functionArgument = displayPartsStr.substr(0, displayPartsStr.lastIndexOf(":"));
 
             return python ? `def ${functionArgument}:\n  ${returnValue}\n` : `function ${functionArgument} {\n    ${returnValue}\n}`
+        }
+
+        function emitFn(n: string): string {
+            if (python) {
+                preStmt = `def ${n}():\n  pass\n`;
+                return n;
+            } else return `function () {}`;
         }
     }
 

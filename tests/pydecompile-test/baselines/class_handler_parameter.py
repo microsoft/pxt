@@ -1,6 +1,6 @@
-/// <reference path="./testBlocks/classHandlerParameter.ts" />
+#/ <reference path="./testBlocks/classHandlerParameter.ts" />
 
-let x = new game.Sprite();
-x.onOverlap(other => {
-
-});
+x = game.Sprite()
+def function_0(other):
+  pass
+x.onOverlap(function_0)

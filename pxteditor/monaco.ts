@@ -38,7 +38,8 @@ namespace pxt.vs {
                 let proto = "pkg:" + fp;
                 if (/\.(ts)$/.test(f) && fp != currFile) {
                     if (!(monaco.languages.typescript.typescriptDefaults as any).getExtraLibs()[fp]) {
-                        let content = pkg.readFile(f) || " ";
+                        // inserting a space creates syntax errors in Python
+                        let content = pkg.readFile(f) || "\n";
                         libs[fp] = monaco.languages.typescript.typescriptDefaults.addExtraLib(content, fp);
                     }
                     modelMap[fp] = "1";

@@ -1038,7 +1038,7 @@ namespace ts.pxtc {
                 filename = U.fromUTF8(U.uint8ArrayToString(fnbuf))
                 fileSize = wordAt(28)
             }
-            
+
             if (flags & UF2_FLAG_FAMILY_ID_PRESENT) {
                 familyId = wordAt(28)
             }
@@ -1308,6 +1308,12 @@ namespace ts.pxtc.service {
         format?: FormatOptions;
         blocks?: BlocksOptions;
         projectSearch?: ProjectSearchOptions;
+        snippet?: SnippetOptions;
+    }
+
+    export interface SnippetOptions {
+        qName: string;
+        python?: boolean;
     }
 
     export interface SearchOptions {

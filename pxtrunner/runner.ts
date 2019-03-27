@@ -842,7 +842,7 @@ ${linkString}
 
                 let compilePython: pxtc.CompileResult = undefined;
                 if (pxt.appTarget.appTheme.python)
-                    compilePython = ts.pxtc.decompiler.decompileToPython(program.getSourceFile("main.ts"));
+                    compilePython = ts.pxtc.decompiler.decompileToPython(program, "main.ts");
 
                 // decompile to blocks
                 let apis = pxtc.getApiInfo(opts, program);
@@ -853,7 +853,7 @@ ${linkString}
                         let bresp = pxtc.decompiler.decompileToBlocks(
                             blocksInfo,
                             program.getSourceFile("main.ts"),
-                            { snippetMode: options && options.snippetMode});
+                            { snippetMode: options && options.snippetMode });
                         if (bresp.diagnostics && bresp.diagnostics.length > 0)
                             bresp.diagnostics.forEach(diag => console.error(diag.messageText));
                         if (!bresp.success)

@@ -1,62 +1,83 @@
 namespace ts.pxtc.decompiler {
-    // TODO(dz): code share with blocks decompiler
-    export function decompileToPython(file: ts.SourceFile): pxtc.CompileResult {
-        let result: pxtc.CompileResult = {
+    // TODO(dz): code share with blocks decompiler ?
+    export function decompileToPython(program: ts.Program, filename: string): pxtc.CompileResult {
+        try {
+            let res = decompileToPythonHelper(program, filename)
+            return res
+        } catch (e) {
+            pxt.reportException(e);
+            // TODO better reporting
+            let res = emptyResult()
+            res.success = false
+            return res
+        }
+    }
+    export function decompileToPythonHelper(program: ts.Program, filename: string): pxtc.CompileResult {
+        let result = emptyResult()
+        let output = tsToPy(program, filename)
+        let outFilename = filename.replace(/(\.py)?\.\w*$/i, '') + '.py'
+        result.outfiles[outFilename] = output;
+        return result
+    }
+    function emptyResult(): pxtc.CompileResult {
+        return {
             blocksInfo: null,
             outfiles: {},
             diagnostics: [],
             success: true,
             times: {}
         }
+    }
+}
 
-        // const env: DecompilerEnv = {
-        //     blocks: blocksInfo,
-        //     declaredFunctions: {},
-        //     declaredEnums: {},
-        //     functionParamIds: {},
-        //     attrs: attrs,
-        //     compInfo: compInfo,
-        //     localReporters: [],
-        //     opts: options || {}
-        // };
+///
+/// UTILS
+///
+const INDENT = "  "
+function indent(lvl: number): (s: string) => string {
+    return s => `${INDENT.repeat(lvl)}${s}`
+}
+const indent1 = indent(1)
 
-        try {
-            // reset
-            // TODO(dz) this should really be a class with proper constructor
-            nextFnNum = 0
+// TODO map names from camel case to snake case
+// TODO disallow keywords & builtins (e.g. "range", "print")
+// TODO handle shadowing
+// TODO handle types at initialization when ambiguous (e.g. x = [], x = None)
 
-            let outLns = file.getChildren()
-                .map(emitNode)
-                .reduce((p, c) => p.concat(c), [])
+function tsToPy(prog: ts.Program, filename: string): string {
+    // state
+    let nextFnNum = 0
+    // helpers
+    let tc = prog.getTypeChecker()
 
-            let output = outLns.join("\n");
-
-            result.outfiles[file.fileName.replace(/(\.py)?\.\w*$/i, '') + '.py'] = output;
-        } catch (e) {
-            pxt.reportException(e);
-            // TODO better reporting
-            result.success = false;
-        }
-
-        return result
+    // ts->py 
+    {
+        let file = prog.getSourceFile(filename)
+        let outLns = file.getChildren()
+            .map(emitNode)
+            .reduce((p, c) => p.concat(c), [])
+            .join("\n")
+        return outLns
+    }
+    ///
+    /// TYPE UTILS
+    ///
+    function hasTypeFlag(t: ts.Type, fs: ts.TypeFlags) {
+        return (t.flags & fs) !== 0
+    }
+    function isType(s: ts.Expression, fs: ts.TypeFlags): boolean {
+        let type = tc.getTypeAtLocation(s)
+        return hasTypeFlag(type, fs)
+    }
+    function isStringType(s: ts.Expression): boolean {
+        return isType(s, ts.TypeFlags.StringLike)
+    }
+    function isNumberType(s: ts.Expression): boolean {
+        return isType(s, ts.TypeFlags.NumberLike)
     }
 
-    // TODO map names from camel case to snake case
-    // TODO disallow keywords & builtins (e.g. "range", "print")
-    // TODO handle shadowing
-    // TODO handle types at initialization when ambiguous (e.g. x = [], x = None)
-
     ///
-    /// SUPPORT
-    ///
-    const INDENT = "  "
-    function indent(lvl: number): (s: string) => string {
-        return s => `${INDENT.repeat(lvl)}${s}`
-    }
-    const indent1 = indent(1)
-
-    ///
-    /// NODES & CRUFT
+    /// NEWLINES & COMMENTS
     ///
     function emitNode(s: ts.Node): string[] {
         switch (s.kind) {
@@ -108,38 +129,45 @@ namespace ts.pxtc.decompiler {
     /// STATEMENTS
     ///
     function emitStmt(s: ts.Statement): string[] {
-        // TODO(dz): why does the type system not recognize this as discriminated unions?
-        switch (s.kind) {
-            case ts.SyntaxKind.VariableStatement:
-                return emitVarStmt(s as ts.VariableStatement)
-            case ts.SyntaxKind.ClassDeclaration:
-                return emitClassStmt(s as ts.ClassDeclaration)
-            case ts.SyntaxKind.EnumDeclaration:
-                return emitEnumStmt(s as ts.EnumDeclaration)
-            case ts.SyntaxKind.ExpressionStatement:
-                return emitExpStmt(s as ts.ExpressionStatement)
-            case ts.SyntaxKind.FunctionDeclaration:
-                return emitFuncDecl(s as ts.FunctionDeclaration)
-            case ts.SyntaxKind.IfStatement:
-                return emitIf(s as ts.IfStatement)
-            case ts.SyntaxKind.ForStatement:
-                return emitForStmt(s as ts.ForStatement)
-            case ts.SyntaxKind.ForOfStatement:
-                return emitForOfStmt(s as ts.ForOfStatement)
-            case ts.SyntaxKind.WhileStatement:
-                return emitWhileStmt(s as ts.WhileStatement)
-            case ts.SyntaxKind.Block:
-                let block = s as ts.Block
-                return block.getChildren()
-                    .map(emitNode)
-                    .reduce((p, c) => p.concat(c), [])
-            default:
-                throw Error(`Not implemented: statement kind ${s.kind}`);
+        if (ts.isVariableStatement(s)) {
+            return emitVarStmt(s)
+        } else if (ts.isClassDeclaration(s)) {
+            return emitClassStmt(s)
+        } else if (ts.isEnumDeclaration(s)) {
+            return emitEnumStmt(s)
+        } else if (ts.isExpressionStatement(s)) {
+            return emitExpStmt(s)
+        } else if (ts.isFunctionDeclaration(s)) {
+            return emitFuncDecl(s)
+        } else if (ts.isIfStatement(s)) {
+            return emitIf(s)
+        } else if (ts.isForStatement(s)) {
+            return emitForStmt(s)
+        } else if (ts.isForOfStatement(s)) {
+            return emitForOfStmt(s)
+        } else if (ts.isWhileStatement(s)) {
+            return emitWhileStmt(s)
+        } else if (ts.isReturnStatement(s)) {
+            return emitReturnStmt(s)
+        } else if (ts.isBlock(s)) {
+            return s.getChildren()
+                .map(emitNode)
+                .reduce((p, c) => p.concat(c), [])
+        } else {
+            throw Error(`Not implemented: statement kind ${s.kind}`);
         }
+    }
+    function emitReturnStmt(s: ts.ReturnStatement): string[] {
+        if (!s.expression)
+            return ['return']
+
+        let [exp, expSup] = emitExp(s.expression)
+        let stmt = `return ${exp}`
+        return expSup.concat([stmt])
     }
     function emitWhileStmt(s: ts.WhileStatement): string[] {
         let [cond, condSup] = emitExp(s.expression)
-        let body = emitStmt(s.statement)
+        let body = emitBody(s.statement)
             .map(indent1)
         let whileStmt = `while ${cond}:`;
         return condSup.concat([whileStmt]).concat(body)
@@ -173,7 +201,7 @@ namespace ts.pxtc.decompiler {
         let decl = initDecls.declarations[0]
         result.name = decl.name.getText()
 
-        if (!isConstExp(decl.initializer)) {
+        if (!isConstExp(decl.initializer) || !isNumberType(decl.initializer)) {
             // TODO allow variables?
             // TODO restrict to numbers?
             return null
@@ -197,7 +225,7 @@ namespace ts.pxtc.decompiler {
             return null
         if (s.condition.left.text != result.name)
             return null
-        if (!isConstExp(s.condition.right)) {
+        if (!isConstExp(s.condition.right) || !isNumberType(s.condition.right)) {
             // TODO allow variables?
             // TODO restrict to numbers?
             return null
@@ -207,13 +235,13 @@ namespace ts.pxtc.decompiler {
             return null
 
         result.toExcl = toNum
-        if (s.condition.operatorToken.kind === SyntaxKind.LessThanEqualsToken) {
+        if (s.condition.operatorToken.kind === ts.SyntaxKind.LessThanEqualsToken) {
             if (isNormalInteger(toNum))
                 result.toExcl = "" + (Number(toNum) + 1)
             else
                 result.toExcl += " + 1"
         }
-        else if (s.condition.operatorToken.kind !== SyntaxKind.LessThanToken)
+        else if (s.condition.operatorToken.kind !== ts.SyntaxKind.LessThanToken)
             return null
 
         // must be (...; i++)
@@ -223,7 +251,7 @@ namespace ts.pxtc.decompiler {
         if (!ts.isPostfixUnaryExpression(s.incrementor)
             && !ts.isPrefixUnaryExpression(s.incrementor))
             return null
-        if (s.incrementor.operator !== SyntaxKind.PlusPlusToken)
+        if (s.incrementor.operator !== ts.SyntaxKind.PlusPlusToken)
             return null
 
         // must be X < Y
@@ -415,7 +443,7 @@ namespace ts.pxtc.decompiler {
 
         if (allInit) {
             let memAndSup = s.members
-                .map(m => [m, emitExp(m.initializer)] as [EnumMember, ExpRes])
+                .map(m => [m, emitExp(m.initializer)] as [ts.EnumMember, ExpRes])
             throw Error("Unsupported: explicit enum initialization") // TODO
         }
 
@@ -502,7 +530,7 @@ namespace ts.pxtc.decompiler {
         return stmts
     }
     function emitFuncDecl(s: ts.FunctionDeclaration | ts.MethodDeclaration | ts.FunctionExpression | ts.ConstructorDeclaration | ts.ArrowFunction, name: string = null): string[] {
-        // TODO emit lambda if no name and body is single line
+        // TODO determine captured variables, then determine global and nonlocal directives
         // TODO helper function for determining if an expression can be a python expression
         let paramList: string[] = []
 
@@ -512,7 +540,7 @@ namespace ts.pxtc.decompiler {
         }
 
         paramList = paramList
-            .concat(s.parameters.map(emitParamDecl))
+            .concat(s.parameters.map(p => emitParamDecl(p)))
 
         let params = paramList.join(", ")
 
@@ -529,7 +557,7 @@ namespace ts.pxtc.decompiler {
 
         out.push(`def ${fnName}(${params}):`)
 
-        let stmts: string[]
+        let stmts: string[] = []
         if (ts.isBlock(s.body))
             stmts = emitBlock(s.body)
         else {
@@ -545,9 +573,9 @@ namespace ts.pxtc.decompiler {
 
         return out
     }
-    function emitParamDecl(s: ts.ParameterDeclaration): string {
+    function emitParamDecl(s: ts.ParameterDeclaration, inclTypesIfAvail = true): string {
         let nm = s.name.getText()
-        if (s.type) {
+        if (s.type && inclTypesIfAvail) {
             let typ = s.type.getText()
             return `${nm}:${typ}`
         } else {
@@ -558,7 +586,12 @@ namespace ts.pxtc.decompiler {
         let decl = s.name.getText();
         if (s.initializer) {
             let [exp, expSup] = emitExp(s.initializer);
-            let declStmt = `${decl} = ${exp}`
+            let declStmt: string;
+            if (s.type) {
+                declStmt = `${decl}: ${s.type.getText()} = ${exp}`
+            } else {
+                declStmt = `${decl} = ${exp}`
+            }
             return expSup.concat(declStmt)
         } else {
             // can't do declerations without initilization in python
@@ -615,7 +648,7 @@ namespace ts.pxtc.decompiler {
                 return "/"
             case ts.SyntaxKind.PlusPlusToken:
             case ts.SyntaxKind.MinusMinusToken:
-                // TODO handle -- generally. Seperate prefix and postfix cases.
+                // TODO handle "--" & "++" generally. Seperate prefix and postfix cases.
                 // This is tricky because it needs to return the value and the mutate after.
                 throw Error("Unsupported ++ and -- in an expression (not a statement or for loop)")
             case ts.SyntaxKind.AmpersandToken:
@@ -633,10 +666,25 @@ namespace ts.pxtc.decompiler {
         }
     }
     function emitBinExp(s: ts.BinaryExpression): ExpRes {
+        // handle string concatenation
+        // TODO handle implicit type conversions more generally
+        let isLStr = isStringType(s.left)
+        let isRStr = isStringType(s.right)
+        let isStrConcat = s.operatorToken.kind === ts.SyntaxKind.PlusToken
+            && (isLStr || isRStr)
+        let wrap = (s: string) => `str(${s})`
+
         let [left, leftSup] = emitExp(s.left)
+        if (isStrConcat && !isLStr)
+            left = wrap(left)
+
         let op = emitOp(s.operatorToken.kind)
+
         let [right, rightSup] = emitExp(s.right)
+        if (isStrConcat && !isRStr)
+            right = wrap(right)
         let sup = leftSup.concat(rightSup)
+
         return [`${left} ${op} ${right}`, sup];
     }
     function emitDotExp(s: ts.PropertyAccessExpression): ExpRes {
@@ -647,9 +695,9 @@ namespace ts.pxtc.decompiler {
             // TODO confirm the type is correct!
             return [`len(${left})`, leftSup]
         }
-        // special: Math.fn
+        // special casing
+        // TODO make this safer. This is syntactic matching, but we really need semantics
         if (left === "Math") {
-            // TODO make this safer. This is syntactic matching, but we really need semantics
             let mathFn = ""
             if (right === "max") {
                 mathFn = "max"
@@ -661,11 +709,16 @@ namespace ts.pxtc.decompiler {
                 throw Error(`Unsupported math fn: ${left}.${right}`);
             }
             return [mathFn, leftSup]
+        } else if (left === "console") {
+            if (right === "log") {
+                return ["print", leftSup]
+            }
         }
 
         return [`${left}.${right}`, leftSup];
     }
     function emitCallExp(s: ts.CallExpression | ts.NewExpression): ExpRes {
+        // TODO inspect type info to rewrite things like console.log, Math.max, etc.
         let [fn, fnSup] = emitExp(s.expression)
         let argExps = s.arguments
             .map(emitExp)
@@ -677,16 +730,29 @@ namespace ts.pxtc.decompiler {
             .reduce((p, c) => p.concat(c), fnSup)
         return [`${fn}(${args})`, sup]
     }
-
-    let nextFnNum = 0
     function nextFnName() {
         // TODO ensure uniqueness
         // TODO add sync lock
         return `function_${nextFnNum++}`
     }
     function emitFnExp(s: ts.FunctionExpression | ts.ArrowFunction): ExpRes {
-        // TODO handle case if body is only 1 line
-        let fnName = nextFnName()
+        // if the anonymous function is simple enough, use a lambda
+        if (ts.isExpression(s.body)) {
+            // TODO this speculation is only safe if emitExp is pure. It's not quite today (e.g. nextFnNumber)
+            let [fnBody, fnSup] = emitExp(s.body as ts.Expression)
+            if (fnSup.length === 0) {
+                let paramList = s.parameters
+                    .map(p => emitParamDecl(p, false))
+                    .join(", ");
+
+                let stmt = paramList.length
+                    ? `lambda ${paramList}: ${fnBody}`
+                    : `lambda: ${fnBody}`;
+                return asExpRes(stmt)
+            }
+        }
+
+        let fnName = s.name ? s.name.getText() : nextFnName()
         let fnDef = emitFuncDecl(s, fnName)
 
         return [fnName, fnDef]

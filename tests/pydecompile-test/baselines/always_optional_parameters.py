@@ -5,6 +5,6 @@ testNamespace.multipleDefaultArguments(40, 50)
 
 testNamespace.optionalArgument(40, 50)
 
-def function_1():
+def function_0():
   pass
-testNamespace.optionalArgumentWithCallback(function_1, 500)
+testNamespace.optionalArgumentWithCallback(function_0, 500)

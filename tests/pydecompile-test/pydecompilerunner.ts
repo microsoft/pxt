@@ -163,14 +163,21 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
     return getOptsAsync(dependency)
         .then(opts => {
             const input = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
-            opts.fileSystem["main.ts"] = input;
+            let tsFile = "main.ts";
+            opts.fileSystem[tsFile] = input;
             opts.ast = true;
             opts.testMode = true;
             opts.ignoreFileResolutionErrors = true;
             if (path.basename(f).indexOf("functions_v2") === 0) {
                 opts.useNewFunctions = true;
             }
-            const decompiled = pxtc.pydecompile(opts, "main.ts");
+            // const decompiled = pxtc.pydecompile(opts, tsFile);
+
+            let program = pxtc.getTSProgram(opts);
+            // TODO(dz): do we want / need to the annotations added for blockly decompile?
+            // annotate(program, tsFile, target || (pxt.appTarget && pxt.appTarget.compile));
+            const decompiled = pxtc.decompiler.decompileToPythonHelper(program, tsFile);
+
             if (decompiled.success) {
                 return decompiled.outfiles["main.py"];
             }
@@ -189,3 +196,97 @@ function getOptsAsync(dependency: string) {
     }
     return Promise.resolve(JSON.parse(JSON.stringify(cachedOpts))); // Clone cached options so that tests can individually modify their own options copy
 }
+
+// TODO handle built-ins:
+/*
+interface Array<T> {
+    length: number;
+    push(item: T): void;
+    concat(arr: T[]): T[];
+    pop(): T;
+    reverse(): void;
+    shift(): T;
+    unshift(value: T): number;
+    slice(start?: number, end?: number): T[];
+    splice(start: number, deleteCount: number): void;
+    join(sep: string): string;
+    some(callbackfn: (value: T, index: number) => boolean): boolean;
+    every(callbackfn: (value: T, index: number) => boolean): boolean;
+    sort(callbackfn?: (value1: T, value2: T) => number): T[];
+    map<U>(callbackfn: (value: T, index: number) => U): U[];
+    forEach(callbackfn: (value: T, index: number) => void): void;
+    filter(callbackfn: (value: T, index: number) => boolean): T[];
+    fill(value: T, start?: number, end?: number): T[];
+    find(callbackfn: (value: T, index: number) => boolean): T;
+    reduce<U>(callbackfn: (previousValue: U, currentValue: T, currentIndex: number) => U, initialValue: U): U;
+    removeElement(element: T): boolean;
+    removeAt(index: number): T;
+    insertAt(index: number, value: T): void;
+    indexOf(item: T, fromIndex?: number): number;
+    get(index: number): T;
+    set(index: number, value: T): void;
+    [n: number]: T;
+}
+declare interface String {
+    concat(other: string): string;
+    charAt(index: number): string;
+    length: number;
+    charCodeAt(index: number): number;
+    compare(that: string): number;
+    substr(start: number, length?: number): string;
+    slice(start: number, end?: number): string;
+    isEmpty(): boolean;
+    indexOf(searchValue: string, start?: number): number;
+    includes(searchValue: string, start?: number): boolean;
+    split(separator?: string, limit?: number): string[];
+    [index: number]: string;
+}
+declare function parseFloat(text: string): number;
+interface Object { }
+interface Function { }
+interface IArguments { }
+interface RegExp { }
+type TemplateStringsArray = Array<string>;
+type uint8 = number;
+type uint16 = number;
+type uint32 = number;
+type int8 = number;
+type int16 = number;
+type int32 = number;
+declare interface Boolean {
+    toString(): string;
+}
+declare namespace String {
+    function fromCharCode(code: number): string;
+}
+declare interface Number {
+    toString(): string;
+}
+declare namespace Array {
+    function isArray(obj: any): boolean;
+}
+declare namespace Object {
+    function keys(obj: any): string[];
+}
+declare namespace Math {
+    function pow(x: number, y: number): number;
+    function random(): number;
+    function randomRange(min: number, max: number): number;
+    function log(x: number): number;
+    function exp(x: number): number;
+    function sin(x: number): number;
+    function cos(x: number): number;
+    function tan(x: number): number;
+    function asin(x: number): number;
+    function acos(x: number): number;
+    function atan(x: number): number;
+    function atan2(y: number, x: number): number;
+    function sqrt(x: number): number;
+    function ceil(x: number): number;
+    function floor(x: number): number;
+    function trunc(x: number): number;
+    function round(x: number): number;
+    function imul(x: number, y: number): number;
+    function idiv(x: number, y: number): number;
+}
+ */

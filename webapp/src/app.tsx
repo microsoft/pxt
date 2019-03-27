@@ -1687,6 +1687,8 @@ export class ProjectView
     }
 
     private saveVirtualFileAsync(prj: string, src: string, open: boolean): Promise<void> {
+        // language service does not like empty file
+        src = src || "\n";
         const mainPkg = pkg.mainEditorPkg();
         const fileName = this.editorFile.getVirtualFileName(prj);
         Util.assert(fileName != this.editorFile.name);
@@ -1706,7 +1708,9 @@ export class ProjectView
         promise = promise
             .then(() => this.editor.saveToTypeScriptAsync())
             .then((src) => {
-                if (!src) return Promise.resolve();
+                if (src === undefined
+                    || this.editorFile.name == this.editorFile.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME))
+                    return Promise.resolve();
                 return this.saveVirtualFileAsync(pxt.JAVASCRIPT_PROJECT_NAME, src, open);
             });
 

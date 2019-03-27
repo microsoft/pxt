@@ -1,5 +1,5 @@
-/// <reference path="./testBlocks/basic.ts" />
+#/ <reference path="./testBlocks/basic.ts" />
 
-testNamespace.toStringArg("whatever");
-testNamespace.toStringArg("" + 5);
-testNamespace.toStringArg("whatever" + 5);
+testNamespace.toStringArg("whatever")
+testNamespace.toStringArg("" + str(5))
+testNamespace.toStringArg("whatever" + str(5))
