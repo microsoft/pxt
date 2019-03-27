@@ -47,6 +47,51 @@ namespace ts.pxtc {
         return '';
     }
 
+    export function snakify(s: string) {
+        const up = s.toUpperCase()
+        const lo = s.toLowerCase()
+
+        // if the name is all lowercase or all upper case don't do anything
+        if (s == up || s == lo)
+            return s
+
+        // if the name already has underscores (not as first character), leave it alone
+        if (s.lastIndexOf("_") > 0)
+            return s
+
+        const isUpper = (i: number) => s[i] != lo[i]
+        const isLower = (i: number) => s[i] != up[i]
+        //const isDigit = (i: number) => /\d/.test(s[i])
+
+        let r = ""
+        let i = 0
+        while (i < s.length) {
+            let upperMode = isUpper(i)
+            let j = i
+            while (j < s.length) {
+                if (upperMode && isLower(j)) {
+                    // ABCd -> AB_Cd
+                    if (j - i > 2) {
+                        j--
+                        break
+                    } else {
+                        // ABdefQ -> ABdef_Q
+                        upperMode = false
+                    }
+                }
+                // abcdE -> abcd_E
+                if (!upperMode && isUpper(j)) {
+                    break
+                }
+                j++
+            }
+            if (r) r += "_"
+            r += s.slice(i, j)
+            i = j
+        }
+        return r
+    }
+
     function getSymbolKind(node: Node) {
         switch (node.kind) {
             case SK.MethodDeclaration:
@@ -249,8 +294,28 @@ namespace ts.pxtc {
                 }),
                 snippet: service.getSnippet(decl, attributes),
             }
+
             if (opts.pySnippets)
                 r.pySnippet = service.getSnippet(decl, attributes, true);
+
+            switch (r.kind) {
+                case SymbolKind.EnumMember:
+                    r.pyName = snakify(r.name).toUpperCase()
+                    break
+                case SymbolKind.Variable:
+                case SymbolKind.Module:
+                case SymbolKind.Method:
+                case SymbolKind.Property:
+                case SymbolKind.Function:
+                    r.pyName = snakify(r.name).toLowerCase()
+                    break
+                case SymbolKind.Enum:
+                case SymbolKind.Class:
+                case SymbolKind.Interface:
+                default:
+                    r.pyName = r.name
+                    break
+            }
 
             if (stmt.kind === SK.GetAccessor ||
                 ((stmt.kind === SK.PropertyDeclaration || stmt.kind === SK.PropertySignature) && isReadonly(stmt as Declaration))) {
@@ -443,6 +508,21 @@ namespace ts.pxtc {
                 }
                 if (jr && jr.data && !si.attributes.jresURL) {
                     si.attributes.jresURL = "data:" + jr.mimeType + ";base64," + jr.data
+                }
+            }
+
+            if (si.pyName) {
+                if (si.namespace) {
+                    let par = res.byQName[si.namespace]
+                    if (par) {
+                        si.pyQName = par.pyQName + "." + si.pyName
+                    } else {
+                        // shouldn't happen
+                        pxt.log("namespace missing: " + si.namespace)
+                        si.pyQName = si.namespace + "." + si.pyName
+                    }
+                } else {
+                    si.pyQName = si.pyName
                 }
             }
         }

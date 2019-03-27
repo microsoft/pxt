@@ -636,6 +636,8 @@ declare namespace ts.pxtc {
         blockFields?: ParsedBlockDef;
         isReadOnly?: boolean;
         combinedProperties?: string[];
+        pyName?: string;
+        pyQName?: string;
     }
 
     interface ApisInfo {
