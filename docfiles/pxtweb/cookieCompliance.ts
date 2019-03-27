@@ -284,7 +284,7 @@ namespace pxt {
         try {
             return window && window.self !== window.top;
         } catch (e) {
-            return true;
+            return false;
         }
     }
     /**
