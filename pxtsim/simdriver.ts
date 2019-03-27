@@ -476,6 +476,7 @@ namespace pxsim {
             };
             msg.id = `${msg.options.theme}-${this.nextId()}`;
             frame.dataset['runid'] = this.runId;
+            frame.dataset['runtimeid'] = msg.id;
             frame.contentWindow.postMessage(msg, "*");
             this.setFrameState(frame);
             return true;
@@ -483,19 +484,30 @@ namespace pxsim {
 
         private handleMessage(msg: pxsim.SimulatorMessage, source?: Window) {
             switch (msg.type || '') {
-                case 'ready':
-                    let frameid = (msg as pxsim.SimulatorReadyMessage).frameid;
-                    let frame = document.getElementById(frameid) as HTMLIFrameElement;
+                case 'ready': {
+                    const frameid = (msg as pxsim.SimulatorReadyMessage).frameid;
+                    const frame = document.getElementById(frameid) as HTMLIFrameElement;
                     if (frame) {
                         this.startFrame(frame);
                         if (this.options.revealElement)
                             this.options.revealElement(frame);
                     }
                     break;
-                case 'status':
-                    if ((msg as SimulatorStateMessage).state == "killed")
-                        this.setState(SimulatorState.Stopped)
+                }
+                case 'status': {
+                    const frameid = (msg as pxsim.SimulatorReadyMessage).frameid;
+                    const frame = document.getElementById(frameid) as HTMLIFrameElement;
+                    if (frame) {
+                        const stmsg = msg as SimulatorStateMessage;
+                        switch (stmsg.state) {
+                            case "killed":
+                                if (stmsg.runtimeid == frame.dataset['runtimeid'])
+                                    this.setState(SimulatorState.Stopped);
+                                break;
+                        }
+                    }
                     break;
+                }
                 case 'simulator': this.handleSimulatorCommand(msg as pxsim.SimulatorCommandMessage); break; //handled elsewhere
                 case 'serial':
                 case 'pxteditor':
