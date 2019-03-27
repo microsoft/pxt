@@ -44,21 +44,39 @@ const indent1 = indent(1)
 // TODO handle shadowing
 // TODO handle types at initialization when ambiguous (e.g. x = [], x = None)
 
+interface Scope {
+}
+
 function tsToPy(prog: ts.Program, filename: string): string {
     // state
+    // TODO pass state explicitly
     let nextFnNum = 0
+    let env: Scope[] = []
+    let global: Scope = null
+
     // helpers
     let tc = prog.getTypeChecker()
 
     // ts->py 
     {
         let file = prog.getSourceFile(filename)
-        let outLns = file.getChildren()
-            .map(emitNode)
-            .reduce((p, c) => p.concat(c), [])
-            .join("\n")
-        return outLns
+        return emitFile(file)
     }
+    ///
+    /// ENVIRONMENT
+    ///
+    function pushScope(): Scope {
+        let e = mkScope()
+        env.push(e)
+        return e
+        function mkScope(): Scope {
+            return {}
+        }
+    }
+    function popScope(): Scope {
+        return env.pop()
+    }
+
     ///
     /// TYPE UTILS
     ///
@@ -77,8 +95,21 @@ function tsToPy(prog: ts.Program, filename: string): string {
     }
 
     ///
-    /// NEWLINES & COMMENTS
+    /// NEWLINES, COMMENTS, and WRAPPERS
     ///
+    function emitFile(file: ts.SourceFile): string {
+        // create global scope
+        // TODO populate global scope with built-ins?
+        global = pushScope()
+
+        // emit file
+        let outLns = file.getChildren()
+            .map(emitNode)
+            .reduce((p, c) => p.concat(c), [])
+            .join("\n")
+
+        return outLns
+    }
     function emitNode(s: ts.Node): string[] {
         switch (s.kind) {
             case ts.SyntaxKind.SyntaxList:
@@ -150,9 +181,7 @@ function tsToPy(prog: ts.Program, filename: string): string {
         } else if (ts.isReturnStatement(s)) {
             return emitReturnStmt(s)
         } else if (ts.isBlock(s)) {
-            return s.getChildren()
-                .map(emitNode)
-                .reduce((p, c) => p.concat(c), [])
+            return emitBlock(s)
         } else {
             throw Error(`Not implemented: statement kind ${s.kind}`);
         }
@@ -523,10 +552,13 @@ function tsToPy(prog: ts.Program, filename: string): string {
         return expSup.concat([`${exp}`])
     }
     function emitBlock(s: ts.Block): string[] {
-        let stmts = s.statements
-            .map(emitStmt)
+        pushScope()
+        let stmts = s.getChildren()
+            .map(emitNode)
             .reduce((p, c) => p.concat(c), [])
-            .filter(s => s)
+        stmts.unshift("# {") // TODO
+        stmts.push("# }")
+        popScope()
         return stmts
     }
     function emitFuncDecl(s: ts.FunctionDeclaration | ts.MethodDeclaration | ts.FunctionExpression | ts.ConstructorDeclaration | ts.ArrowFunction, name: string = null): string[] {
