@@ -563,17 +563,32 @@ namespace pxt.py {
                 s = s.parent
             } while (s && s.kind == "ClassDef")
         }
-        if (autoImport && lookupGlobalSymbol(n)) {
-            return addImport(currentScope(), n, ctx.currModule)
-        }
+        //if (autoImport && lookupGlobalSymbol(n)) {
+        //    return addImport(currentScope(), n, ctx.currModule)
+        //}
         return null
+    }
+
+    function lookupSymbol(n: string) {
+        if (!n)
+            return null
+
+        const firstDot = n.indexOf(".")
+        if (firstDot > 0) {
+            const v = lookupVar(n.slice(0, firstDot))
+            // expand name if needed
+            if (v && v.qName != v.name)
+                n = v.qName + n.slice(firstDot)
+        } else {
+            const v = lookupVar(n)
+            if (v) return v
+        }
+        return lookupGlobalSymbol(n)
     }
 
     function getClassDef(e: py.Expr) {
         let n = getName(e)
-        let s = lookupVar(n)
-        if (!s)
-            s = lookupGlobalSymbol(n)
+        let s = lookupSymbol(n)
         if (s && s.pyAST && s.pyAST.kind == "ClassDef")
             return s.pyAST as py.ClassDef
         return null
@@ -1223,7 +1238,7 @@ namespace pxt.py {
     function possibleDef(n: py.Name) {
         let id = n.id
         if (n.isdef === undefined) {
-            let curr = lookupVar(id)
+            let curr = lookupSymbol(id)
             if (!curr) {
                 if (ctx.currClass && !ctx.currFun) {
                     n.isdef = false // field
@@ -1421,7 +1436,7 @@ namespace pxt.py {
             return r
         },
         Call: (n: py.Call) => {
-            let namedSymbol = lookupGlobalSymbol(getName(n.func))
+            let namedSymbol = lookupSymbol(getName(n.func))
             let isClass = namedSymbol && namedSymbol.kind == SK.Class
 
             let fun = namedSymbol
@@ -1431,7 +1446,7 @@ namespace pxt.py {
             let methName: string
 
             if (isClass) {
-                fun = lookupGlobalSymbol(namedSymbol.qName + ".__constructor")
+                fun = lookupSymbol(namedSymbol.qName + ".__constructor")
             } else {
                 if (n.func.kind == "Attribute") {
                     let attr = n.func as py.Attribute
@@ -1622,7 +1637,7 @@ namespace pxt.py {
                 return B.mkText("this")
             }
 
-            let v = lookupVar(n.id)
+            let v = lookupSymbol(n.id)
             if (v) {
                 unify(n, n.tsType, symbolType(v))
                 if (v.isImport)
