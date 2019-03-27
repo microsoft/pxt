@@ -296,9 +296,6 @@ namespace ts.pxtc {
                 snippet: ts.isFunctionLike(stmt) ? null : undefined
             }
 
-            if (opts.pySnippets)
-                r.pySnippet = service.getSnippet(decl, attributes, true);
-
             switch (r.kind) {
                 case SymbolKind.EnumMember:
                     r.pyName = snakify(r.name).toUpperCase()
