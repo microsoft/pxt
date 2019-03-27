@@ -520,7 +520,7 @@ function tsToPy(prog: ts.Program, filename: string): string {
         }
 
         paramList = paramList
-            .concat(s.parameters.map(emitParamDecl))
+            .concat(s.parameters.map(p => emitParamDecl(p)))
 
         let params = paramList.join(", ")
 
@@ -553,9 +553,9 @@ function tsToPy(prog: ts.Program, filename: string): string {
 
         return out
     }
-    function emitParamDecl(s: ts.ParameterDeclaration): string {
+    function emitParamDecl(s: ts.ParameterDeclaration, inclTypesIfAvail = true): string {
         let nm = s.name.getText()
-        if (s.type) {
+        if (s.type && inclTypesIfAvail) {
             let typ = s.type.getText()
             return `${nm}:${typ}`
         } else {
@@ -723,7 +723,22 @@ function tsToPy(prog: ts.Program, filename: string): string {
         return `function_${nextFnNum++}`
     }
     function emitFnExp(s: ts.FunctionExpression | ts.ArrowFunction): ExpRes {
-        // TODO handle case if body is only 1 line
+        // if the anonymous function is simple enough, use a lambda
+        if (ts.isExpression(s.body)) {
+            // TODO this speculation is only safe if emitExp is pure. It's not quite today (e.g. nextFnNumber)
+            let [fnBody, fnSup] = emitExp(s.body as ts.Expression)
+            if (fnSup.length === 0) {
+                let paramList = s.parameters
+                    .map(p => emitParamDecl(p, false))
+                    .join(", ");
+
+                let stmt = paramList.length
+                    ? `lambda ${paramList}: ${fnBody}`
+                    : `lambda: ${fnBody}`;
+                return asExpRes(stmt)
+            }
+        }
+
         let fnName = nextFnName()
         let fnDef = emitFuncDecl(s, fnName)
 
