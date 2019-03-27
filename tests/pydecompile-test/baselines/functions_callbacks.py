@@ -1,14 +1,16 @@
-/// <reference path="./testBlocks/basic.ts" />
+#/ <reference path="./testBlocks/basic.ts" />
 
-testNamespace.withCallback(() => {})
+def function_0():
+  pass
+testNamespace.withCallback(function_0)
 
-testNamespace.withCallback(() => testNamespace.noArgument())
+testNamespace.withCallback(lambda: testNamespace.noArgument())
 
-testNamespace.withCallback(() => {
-    testNamespace.noArgument();
-    testNamespace.noArgument();
-})
+def function_1():
+  testNamespace.noArgument()
+  testNamespace.noArgument()
+testNamespace.withCallback(function_1)
 
-testNamespace.withCallbackAndArguments(TestEnum.testValue2, 10, () => {
-    testNamespace.noArgument();
-})
+def function_2():
+  testNamespace.noArgument()
+testNamespace.withCallbackAndArguments(TestEnum.testValue2, 10, function_2)

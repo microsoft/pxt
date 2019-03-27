@@ -1,5 +1,4 @@
-let test = getStuff();
-getStuff();
-function getStuff(): string {
-    return "Unknown";
-}
+test = getStuff()
+getStuff()
+def getStuff():
+  return "Unknown"

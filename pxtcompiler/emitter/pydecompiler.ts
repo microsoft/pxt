@@ -30,11 +30,6 @@ namespace ts.pxtc.decompiler {
     }
 }
 
-// TODO map names from camel case to snake case
-// TODO disallow keywords & builtins (e.g. "range", "print")
-// TODO handle shadowing
-// TODO handle types at initialization when ambiguous (e.g. x = [], x = None)
-
 ///
 /// UTILS
 ///
@@ -43,6 +38,11 @@ function indent(lvl: number): (s: string) => string {
     return s => `${INDENT.repeat(lvl)}${s}`
 }
 const indent1 = indent(1)
+
+// TODO map names from camel case to snake case
+// TODO disallow keywords & builtins (e.g. "range", "print")
+// TODO handle shadowing
+// TODO handle types at initialization when ambiguous (e.g. x = [], x = None)
 
 function tsToPy(prog: ts.Program, filename: string): string {
     // state
@@ -59,6 +59,23 @@ function tsToPy(prog: ts.Program, filename: string): string {
             .join("\n")
         return outLns
     }
+    ///
+    /// TYPE UTILS
+    ///
+    function hasTypeFlag(t: ts.Type, fs: ts.TypeFlags) {
+        return (t.flags & fs) !== 0
+    }
+    function isType(s: ts.Expression, fs: ts.TypeFlags): boolean {
+        let type = tc.getTypeAtLocation(s)
+        return hasTypeFlag(type, fs)
+    }
+    function isStringType(s: ts.Expression): boolean {
+        return isType(s, ts.TypeFlags.StringLike)
+    }
+    function isNumberType(s: ts.Expression): boolean {
+        return isType(s, ts.TypeFlags.NumberLike)
+    }
+
     ///
     /// NEWLINES & COMMENTS
     ///
@@ -141,6 +158,9 @@ function tsToPy(prog: ts.Program, filename: string): string {
         }
     }
     function emitReturnStmt(s: ts.ReturnStatement): string[] {
+        if (!s.expression)
+            return ['return']
+
         let [exp, expSup] = emitExp(s.expression)
         let stmt = `return ${exp}`
         return expSup.concat([stmt])
@@ -181,7 +201,7 @@ function tsToPy(prog: ts.Program, filename: string): string {
         let decl = initDecls.declarations[0]
         result.name = decl.name.getText()
 
-        if (!isConstExp(decl.initializer)) {
+        if (!isConstExp(decl.initializer) || !isNumberType(decl.initializer)) {
             // TODO allow variables?
             // TODO restrict to numbers?
             return null
@@ -205,7 +225,7 @@ function tsToPy(prog: ts.Program, filename: string): string {
             return null
         if (s.condition.left.text != result.name)
             return null
-        if (!isConstExp(s.condition.right)) {
+        if (!isConstExp(s.condition.right) || !isNumberType(s.condition.right)) {
             // TODO allow variables?
             // TODO restrict to numbers?
             return null
@@ -510,7 +530,7 @@ function tsToPy(prog: ts.Program, filename: string): string {
         return stmts
     }
     function emitFuncDecl(s: ts.FunctionDeclaration | ts.MethodDeclaration | ts.FunctionExpression | ts.ConstructorDeclaration | ts.ArrowFunction, name: string = null): string[] {
-        // TODO emit lambda if no name and body is single line
+        // TODO determine captured variables, then determine global and nonlocal directives
         // TODO helper function for determining if an expression can be a python expression
         let paramList: string[] = []
 
@@ -645,13 +665,6 @@ function tsToPy(prog: ts.Program, filename: string): string {
                 return "# TODO unknown op: " + s
         }
     }
-    function hasTypeFlag(t: ts.Type, fs: ts.TypeFlags) {
-        return (t.flags & fs) !== 0
-    }
-    function isStringType(s: ts.Expression): boolean {
-        let type = tc.getTypeAtLocation(s)
-        return hasTypeFlag(type, ts.TypeFlags.StringLike)
-    }
     function emitBinExp(s: ts.BinaryExpression): ExpRes {
         // handle string concatenation
         // TODO handle implicit type conversions more generally
@@ -739,7 +752,7 @@ function tsToPy(prog: ts.Program, filename: string): string {
             }
         }
 
-        let fnName = nextFnName()
+        let fnName = s.name ? s.name.getText() : nextFnName()
         let fnDef = emitFuncDecl(s, fnName)
 
         return [fnName, fnDef]

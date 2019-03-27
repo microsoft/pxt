@@ -1,17 +1,23 @@
-function shouldDecompile1() {}
+def shouldDecompile1():
+  pass
 
-function shouldDecompile2() { return; }
+def shouldDecompile2():
+  return
 
-function hasParameters(a: number) { }
+def hasParameters(a:number):
+  pass
 
-function hasReturnType() { return 5; }
+def hasReturnType():
+  return 5
 
-let x = function () {}
+def function_0():
+  pass
+x = function_0
 
-let y = function expressionFunction() {}
+def expressionFunction():
+  pass
+y = expressionFunction
 
-if (true) {
-    function scopedFunction() {
-
-    }
-}
+if True:
+  def scopedFunction():
+    pass
