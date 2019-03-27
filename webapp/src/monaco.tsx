@@ -313,6 +313,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const tsName = this.currFile.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)
         return compiler.py2tsAsync()
             .then(res => {
+                // TODO python use success
+                // any errors?
+                if (res.diagnostics && res.diagnostics.length)
+                    return undefined;
                 if (res.generated[tsName])
                     return res.generated[tsName]
                 return ""
