@@ -633,7 +633,7 @@ namespace pxsim {
                             let fi = s.funcInfo
                             stackTrace += `   at ${fi.functionName} (${fi.fileName}:${fi.line + 1}:${fi.column + 1})\n`
                         }
-                        console.error(stackTrace)
+                        if (brk.exceptionMessage) console.error(stackTrace);
                     } else {
                         console.error("debugger: trying to pause from " + this.state);
                     }
