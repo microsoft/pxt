@@ -572,7 +572,7 @@ namespace pxsim {
 
         export function pause(ms: number) {
             let cb = getResume();
-            setTimeout(() => { cb() }, ms)
+            runtime.schedule(() => { cb() }, ms)
         }
 
         export function runInBackground(a: RefAction) {
