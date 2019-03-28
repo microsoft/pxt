@@ -562,27 +562,29 @@ namespace ts.pxtc {
     }
 
     export function fillCompletionEntries(program: Program, symbols: Symbol[], r: CompletionInfo, apiInfo: ApisInfo, opts: CompileOptions) {
-        let typechecker = program.getTypeChecker()
+        const typechecker = program.getTypeChecker()
 
         for (let s of symbols) {
             let qName = getFullName(typechecker, s)
+            const gsi = Util.lookup(apiInfo.byQName, qName);
 
-            if (!r.isMemberCompletion && Util.lookup(apiInfo.byQName, qName))
+            // filter out symbols starting with __
+            if (gsi && /^__/.test(gsi.name))
+                continue;
+
+            if (!r.isMemberCompletion && gsi)
                 continue; // global symbol
 
             if (Util.lookup(r.entries, qName))
                 continue;
 
-            let decl = s.valueDeclaration || (s.declarations || [])[0]
+            const decl = s.valueDeclaration || (s.declarations || [])[0]
             if (!decl) continue;
 
-            let si = createSymbolInfo(typechecker, qName, decl, opts)
+            const si = createSymbolInfo(typechecker, qName, decl, opts)
             if (!si) continue;
 
             si.isContextual = true;
-
-            //let tmp = ts.getLocalSymbolForExportDefault(s)
-            //let name = typechecker.symbolToString(tmp || s)
 
             r.entries[qName] = si;
         }
@@ -732,12 +734,13 @@ namespace ts.pxtc.service {
                 host.setFile(v.fileName, v.fileContent);
             }
 
-            let program = service.getProgram() // this synchornizes host data as well
-            let data: InternalCompletionData = (service as any).getCompletionData(v.fileName, v.position);
+            const program = service.getProgram() // this synchornizes host data as well
+            // TODO python
+            const data: InternalCompletionData =  undefined; //(service as any).getCompletionData(v.fileName, v.position);
 
             if (!data) return {}
 
-            let r: CompletionInfo = {
+            const r: CompletionInfo = {
                 entries: {},
                 isMemberCompletion: data.isMemberCompletion,
                 isNewIdentifierLocation: data.isNewIdentifierLocation,

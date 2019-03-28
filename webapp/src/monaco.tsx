@@ -33,6 +33,58 @@ interface FoldingController extends monaco.editor.IEditorContribution {
 }
 
 
+class PythonCompletionProvider implements monaco.languages.CompletionItemProvider {
+    constructor(public editor: Editor) {
+    }
+
+    triggerCharacters?: string[] = ["."];
+
+    kindMap = {}
+    private tsKindToMonacoKind(s: pxtc.SymbolKind): monaco.languages.CompletionItemKind {
+        switch (s) {
+            case pxtc.SymbolKind.Method: return monaco.languages.CompletionItemKind.Method;
+            case pxtc.SymbolKind.Property: return monaco.languages.CompletionItemKind.Property;
+            case pxtc.SymbolKind.Function: return monaco.languages.CompletionItemKind.Function;
+            case pxtc.SymbolKind.Variable: return monaco.languages.CompletionItemKind.Variable;
+            case pxtc.SymbolKind.Module: return monaco.languages.CompletionItemKind.Module;
+            case pxtc.SymbolKind.Enum: return monaco.languages.CompletionItemKind.Class;
+            case pxtc.SymbolKind.EnumMember: return monaco.languages.CompletionItemKind.Enum;
+            case pxtc.SymbolKind.Class: return monaco.languages.CompletionItemKind.Class;
+            case pxtc.SymbolKind.Interface: return monaco.languages.CompletionItemKind.Interface;
+            default: return monaco.languages.CompletionItemKind.Text;
+        }
+    }
+
+    /**
+     * Provide completion items for the given position and document.
+     */
+    provideCompletionItems(model: monaco.editor.IReadOnlyModel, position: monaco.Position, token: monaco.CancellationToken):
+        monaco.languages.CompletionItem[] | monaco.Thenable<monaco.languages.CompletionItem[]> | monaco.languages.CompletionList | monaco.Thenable<monaco.languages.CompletionList> {
+        const offset = model.getOffsetAt(position);
+        const fileName = this.editor.currFile.name;
+        // TODO python
+        return compiler.completionsAsync(fileName, offset)
+            .then(completions => {
+                const items = pxt.Util.values(completions.entries).map(si => {
+                    return {
+                        label: si.name,
+                        kind: this.tsKindToMonacoKind(si.kind)
+                    } as monaco.languages.CompletionItem;
+                })
+                return items;
+            });
+    }
+    /**
+     * Given a completion item fill in more data, like [doc-comment](#CompletionItem.documentation)
+     * or [details](#CompletionItem.detail).
+     *
+     * The editor will only resolve a completion item once.
+     */
+    resolveCompletionItem(item: monaco.languages.CompletionItem, token: monaco.CancellationToken): monaco.languages.CompletionItem | monaco.Thenable<monaco.languages.CompletionItem> {
+        return item;
+    }
+}
+
 export class Editor extends toolboxeditor.ToolboxEditor {
     editor: monaco.editor.IStandaloneCodeEditor;
     currFile: pkg.File;
@@ -505,6 +557,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.editor.onDidFocusEditorText(() => {
                 this.hideFlyout();
             })
+
+            monaco.languages.registerCompletionItemProvider("python", new PythonCompletionProvider(this));
 
             this.editorViewZones = [];
 
