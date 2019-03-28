@@ -358,7 +358,7 @@ namespace pxsim {
                 })
             }).then(() => {
                 // if some events arrived while processing above then keep processing
-                if (this.events.length > 0) {
+                if (this.events.length > 0 && !runtime.pausedOnBreakpoint) {
                     return this.poke()
                 } else {
                     this.lock = false
@@ -470,6 +470,7 @@ namespace pxsim {
 
         timeoutsScheduled: TimeoutScheduled[] = []
         timeoutsPausedOnBreakpoint: PausedTimeout[] = [];
+        pausedOnBreakpoint: boolean = false;
 
         perfCounters: PerfCounter[]
         perfOffset = 0
@@ -745,6 +746,8 @@ namespace pxsim {
             }
 
             function breakpoint(s: StackFrame, retPC: number, brkId: number, r0: any): StackFrame {
+                let lock = {}
+                __this.loopLock = lock;
                 U.assert(!dbgResume)
                 U.assert(!dbgHeap)
 
@@ -783,8 +786,10 @@ namespace pxsim {
                             breakFrame = s.parent || s;
                             break;
                     }
-
-                    return loop(s);
+                    U.assert(__this.loopLock == lock)
+                    __this.loopLock = null;
+                    loop(s);
+                    flushLoopLock();
                 }
 
                 return null;
@@ -1076,15 +1081,25 @@ namespace pxsim {
 
         // Wrapper for the setTimeout
         schedule(fn: Function, timeout: number): number {
+            if (this.pausedOnBreakpoint) {
+                this.timeoutsPausedOnBreakpoint.push(new PausedTimeout(fn, timeout));
+                return -1;
+            }
             // We call the timeout function and add its id to the timeouts scheduled.
             if (timeout <= 0) return -1;
-            let id = setTimeout(fn, timeout);
-            this.timeoutsScheduled.push(new TimeoutScheduled(id, fn, timeout, U.now()));
+            let timestamp = U.now();
+            let removeAndExecute = () => {
+                this.timeoutsScheduled.filter(ts => ts.timestampCall !== timestamp);
+                fn();
+            }
+            let id = setTimeout(removeAndExecute, timeout);
+            this.timeoutsScheduled.push(new TimeoutScheduled(id, fn, timeout, timestamp));
             return id;
         }
 
         // On breakpoint, pause all timeouts
         pauseScheduled() {
+            this.pausedOnBreakpoint = true;
             this.timeoutsScheduled.forEach(ts => {
                 clearTimeout(ts.id);
                 let elapsed = U.now() - ts.timestampCall;
@@ -1099,6 +1114,7 @@ namespace pxsim {
         // When resuming after a breakpoint, restart all paused timeouts with their remaining time.
         resumeAllPausedScheduled() {
             // Takes the list of all fibers paused on a breakpoint and resumes them.
+            this.pausedOnBreakpoint = false;
             this.timeoutsPausedOnBreakpoint.forEach(pt => {
                 this.schedule(pt.fn, pt.timeRemaining);
             });
