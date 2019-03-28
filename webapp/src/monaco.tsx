@@ -1481,7 +1481,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (fn.snippet === undefined)
             return undefined;
         const qName = fn.qName;
-        const snippetName = (isPython ? fn.pySnippetName : undefined) || fn.snippetName || fn.name;
+        const snippetName = (isPython ? (fn.pySnippetName || fn.pyName) : undefined) || fn.snippetName || fn.name;
 
         let monacoBlockArea = document.createElement('div');
         monacoBlockArea.className = `monacoBlock ${isDisabled ? 'monacoDisabledBlock' : ''}`;

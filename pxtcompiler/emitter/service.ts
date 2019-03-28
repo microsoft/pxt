@@ -1033,10 +1033,11 @@ namespace ts.pxtc.service {
 \``;
 
     export function getSnippet(apis: pxt.Map<SymbolInfo>, fn: SymbolInfo, n: ts.FunctionLikeDeclaration, python?: boolean): string {
+        let findex = 0;
         let preStmt = "";
 
         const attrs = fn.attributes;
-        const checker = service && !python ? service.getProgram().getTypeChecker() : undefined;
+        const checker = service && service.getProgram().getTypeChecker();
         const args = n.parameters ? n.parameters.filter(param => !param.initializer && !param.questionToken).map(param => {
             const typeNode = param.type;
             if (!typeNode) return python ? "None" : "null";
@@ -1067,19 +1068,19 @@ namespace ts.pxtc.service {
                     return emitFn(name);
             }
 
-            const type = checker ? checker.getTypeAtLocation(param) : undefined;
+            const type = checker && checker.getTypeAtLocation(param);
             if (type) {
                 if (isObjectType(type)) {
                     if (type.objectFlags & ts.ObjectFlags.Anonymous) {
                         const sigs = checker.getSignaturesOfType(type, ts.SignatureKind.Call);
-                        if (sigs.length) {
+                        if (sigs && sigs.length) {
                             return getFunctionString(sigs[0]);
                         }
                         return emitFn(name);
                     }
                 }
                 if (type.flags & ts.TypeFlags.EnumLike) {
-                    return getDefaultEnumValue(type, checker);
+                    return getDefaultEnumValue(type);
                 }
                 if (type.flags & ts.TypeFlags.NumberLike) {
                     return "0";
@@ -1090,9 +1091,9 @@ namespace ts.pxtc.service {
 
         let fnName = ""
         if (n.kind == SK.Constructor) {
-            fnName = checker ? getFullName(checker, n.symbol) : n.parent.name.getText();
+            fnName = getSymbolName(n.symbol) || n.parent.name.getText();
         } else {
-            fnName = n.name.getText();
+            fnName = getSymbolName(n.symbol) || n.name.getText();
         }
 
         let snippetPrefix = (fn.attributes.blockNamespace || fn.namespace);
@@ -1129,7 +1130,7 @@ namespace ts.pxtc.service {
                         value.retType == nsInfo.qName)
                         .sort((v1, v2) => v1.name.localeCompare(v2.name));
                     if (exactInstances.length) {
-                        snippetPrefix = `${exactInstances[0].name}`
+                        snippetPrefix = `${getName(exactInstances[0])}`
                     } else {
                         // second choice: use fixed instances whose retType extends type of nsInfo.name
                         // e.g., nsInfo.name == AnalogPin and instance retType == PwmPin
@@ -1137,7 +1138,7 @@ namespace ts.pxtc.service {
                             getExtendsTypesFor(nsInfo.qName).indexOf(value.retType) !== -1)
                             .sort((v1, v2) => v1.name.localeCompare(v2.name));
                         if (extendedInstances.length) {
-                            snippetPrefix = `${extendedInstances[0].name}`
+                            snippetPrefix = `${getName(extendedInstances[0])}`
                         }
                     }
                     isInstance = true;
@@ -1164,6 +1165,20 @@ namespace ts.pxtc.service {
 
         return preStmt + insertText;
 
+        function getSymbolName(symbol: Symbol) {
+            if (checker) {
+                const qName = getFullName(checker, symbol);
+                const si = apis[qName];
+                if (si)
+                    return getName(si);
+            }
+            return undefined;
+        }
+
+        function getName(si: SymbolInfo) {
+            return python ? si.pyName : si.name;
+        }
+
         function firstWord(s: string): string {
             const i = s.indexOf('.');
             return i < 0 ? s : s.substring(0, i);
@@ -1189,37 +1204,42 @@ namespace ts.pxtc.service {
             let displayPartsStr = ts.displayPartsToString(displayParts);
             functionArgument = displayPartsStr.substr(0, displayPartsStr.lastIndexOf(":"));
 
-            return python ? `def ${functionArgument}:\n  ${returnValue}\n` : `function ${functionArgument} {\n    ${returnValue}\n}`
+            if (python) {
+                const n = "fn" + (findex++) + functionArgument;
+                preStmt += `def ${n}:\n  ${returnValue || "pass"}\n`;
+                return n.replace(/\(\)$/, '');
+            } else  return `function ${functionArgument} {\n    ${returnValue}\n}`;
         }
 
         function emitFn(n: string): string {
             if (python) {
-                preStmt = `def ${n}():\n  pass\n`;
+                n = snakify(n);
+                preStmt += `def ${n}():\n  pass\n`;
                 return n;
             } else return `function () {}`;
         }
-    }
 
-    function getDefaultEnumValue(t: Type, checker: TypeChecker) {
-        // Note: AFAIK this is NOT guranteed to get the same default as you get in
-        // blocks. That being said, it should get the first declared value. Only way
-        // to guarantee an API has the same default in blocks and in TS is to actually
-        // set a default on the parameter in its comment attributes
-        if (t.symbol && t.symbol.declarations && t.symbol.declarations.length) {
-            for (let i = 0; i < t.symbol.declarations.length; i++) {
-                const decl = t.symbol.declarations[i];
-                if (decl.kind === SK.EnumDeclaration) {
-                    const enumDeclaration = decl as EnumDeclaration;
-                    for (let j = 0; j < enumDeclaration.members.length; j++) {
-                        const member = enumDeclaration.members[i];
-                        if (member.name.kind === SK.Identifier) {
-                            return checker.getFullyQualifiedName(checker.getSymbolAtLocation(member.name));
+        function getDefaultEnumValue(t: Type) {
+            // Note: AFAIK this is NOT guranteed to get the same default as you get in
+            // blocks. That being said, it should get the first declared value. Only way
+            // to guarantee an API has the same default in blocks and in TS is to actually
+            // set a default on the parameter in its comment attributes
+            if (checker && t.symbol && t.symbol.declarations && t.symbol.declarations.length) {
+                for (let i = 0; i < t.symbol.declarations.length; i++) {
+                    const decl = t.symbol.declarations[i];
+                    if (decl.kind === SK.EnumDeclaration) {
+                        const enumDeclaration = decl as EnumDeclaration;
+                        for (let j = 0; j < enumDeclaration.members.length; j++) {
+                            const member = enumDeclaration.members[i];
+                            if (member.name.kind === SK.Identifier) {
+                                return checker.getFullyQualifiedName(checker.getSymbolAtLocation(member.name));
+                            }
                         }
                     }
                 }
             }
-        }
 
-        return "0";
+            return "0";
+        }
     }
 }
