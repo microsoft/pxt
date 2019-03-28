@@ -45,37 +45,82 @@ const indent1 = indent(1)
 // TODO handle types at initialization when ambiguous (e.g. x = [], x = None)
 
 interface Scope {
+    vars: pxt.Map<ts.Node>
 }
 
 function tsToPy(prog: ts.Program, filename: string): string {
     // state
     // TODO pass state explicitly
     let nextFnNum = 0
-    let env: Scope[] = []
-    let global: Scope = null
+    let global: Scope = { vars: {} } // TODO populate global scope
+    let env: Scope[] = [global]
 
     // helpers
     let tc = prog.getTypeChecker()
+    let lhost = new ts.pxtc.LSHost(prog)
+    // let ls = ts.createLanguageService(lhost) // TODO
+    let file = prog.getSourceFile(filename)
+    let renameMap = ts.pxtc.decompiler.buildRenameMap(prog, file)
 
     // ts->py 
-    {
-        let file = prog.getSourceFile(filename)
-        return emitFile(file)
-    }
+    return emitFile(file)
     ///
     /// ENVIRONMENT
     ///
     function pushScope(): Scope {
-        let e = mkScope()
-        env.push(e)
-        return e
-        function mkScope(): Scope {
-            return {}
+        let prevScope = env[0]
+        let newScope = cpyScope(prevScope) // TODO(dz) to copy or not to copy previous scope? Probably to not
+        env.unshift(newScope)
+        return newScope
+        function cpyScope(prev: Scope): Scope {
+            let newScopeVars = Object.assign({}, prev.vars)
+            let newScope = { vars: newScopeVars }
+            return newScope
         }
     }
     function popScope(): Scope {
-        return env.pop()
+        return env.shift()
     }
+    function getName(name: ts.Identifier | ts.BindingPattern | ts.PropertyName) {
+        if (!ts.isIdentifier(name))
+            throw Error("Unsupported advanced name format: " + name.getText())
+        // TODO de-dupe w/ blocks decompiler
+        if (renameMap) {
+            const rename = renameMap.getRenameForPosition(name.getStart());
+            if (rename) {
+                return rename.name;
+            }
+        }
+        return name.text;
+    }
+    // TODO
+    // function introVar(name: string, decl: ts.Node): string {
+    //     let scope = env[0]
+    //     let maxItr = 100
+    //     let newName = name
+    //     for (let i = 0; i < maxItr && newName in scope.vars; i++) {
+    //         let matches = newName.match(/\d+$/);
+    //         if (matches) {
+    //             let num = parseInt(matches[0], 10)
+    //             num++
+    //             newName = newName.replace(/\d+$/, num.toString())
+    //         } else {
+    //             newName += 1
+    //         }
+    //     }
+    //     if (newName in scope.vars)
+    //         throw Error("Implementation error: unable to find an alternative variable name for: " + newName)
+    //     if (newName !== name) {
+    //         // do rename
+    //         let locs = ls.findRenameLocations(filename, decl.pos + 1, false, false)
+    //         for (let l of locs) {
+    //             // ts.getNode
+
+    //         }
+    //     }
+    //     scope.vars[newName] = decl
+    //     return newName
+    // }
 
     ///
     /// TYPE UTILS
@@ -98,10 +143,6 @@ function tsToPy(prog: ts.Program, filename: string): string {
     /// NEWLINES, COMMENTS, and WRAPPERS
     ///
     function emitFile(file: ts.SourceFile): string {
-        // create global scope
-        // TODO populate global scope with built-ins?
-        global = pushScope()
-
         // emit file
         let outLns = file.getChildren()
             .map(emitNode)
@@ -228,7 +269,7 @@ function tsToPy(prog: ts.Program, filename: string): string {
             return null
 
         let decl = initDecls.declarations[0]
-        result.name = decl.name.getText()
+        result.name = getName(decl.name)
 
         if (!isConstExp(decl.initializer) || !isNumberType(decl.initializer)) {
             // TODO allow variables?
@@ -301,7 +342,7 @@ function tsToPy(prog: ts.Program, filename: string): string {
             throw Error("Unsupported expression in for..of initializer: " + s.initializer.getText()) // TOOD
 
         let names = s.initializer.declarations
-            .map(d => d.name.getText())
+            .map(d => getName(d.name))
         if (names.length !== 1)
             throw Error("Unsupported multiple declerations in for..of: " + s.initializer.getText()) // TODO
         let name = names[0]
@@ -442,10 +483,11 @@ function tsToPy(prog: ts.Program, filename: string): string {
         // TODO handle inheritence
 
         let isEnum = s.members.every(isEnumMem) // TODO hack?
+        let name = getName(s.name)
         if (isEnum)
-            out.push(`class ${s.name.getText()}(Enum):`)
+            out.push(`class ${name}(Enum):`)
         else
-            out.push(`class ${s.name.getText()}:`)
+            out.push(`class ${name}:`)
 
         let mems = s.members
             .map(emitClassMem)
@@ -460,7 +502,7 @@ function tsToPy(prog: ts.Program, filename: string): string {
     function emitEnumStmt(s: ts.EnumDeclaration): string[] {
         let out: string[] = []
 
-        out.push(`class ${s.name.getText()}(Enum):`)
+        out.push(`class ${getName(s.name)}(Enum):`)
 
         let allInit = s.members
             .every(m => !!m.initializer)
@@ -478,7 +520,7 @@ function tsToPy(prog: ts.Program, filename: string): string {
 
         let val = 0
         for (let m of s.members) {
-            out.push(indent1(`${m.name.getText()} = ${val++}`))
+            out.push(indent1(`${getName(m.name)} = ${val++}`))
         }
 
         return out
@@ -510,8 +552,7 @@ function tsToPy(prog: ts.Program, filename: string): string {
         }
     }
     function emitPropDecl(s: ts.PropertyDeclaration): string[] {
-        // TODO(dz)
-        let nm = s.name.getText()
+        let nm = getName(s.name)
         if (s.initializer) {
             let [init, initSup] = emitExp(s.initializer)
             return initSup.concat([`${nm} = ${init}`])
@@ -552,13 +593,17 @@ function tsToPy(prog: ts.Program, filename: string): string {
         return expSup.concat([`${exp}`])
     }
     function emitBlock(s: ts.Block): string[] {
-        pushScope()
         let stmts = s.getChildren()
             .map(emitNode)
             .reduce((p, c) => p.concat(c), [])
-        stmts.unshift("# {") // TODO
-        stmts.push("# }")
-        popScope()
+        // TODO figuring out variable scoping..
+        // let syms = tc.getSymbolsInScope(s, ts.SymbolFlags.Variable)
+        // let symTxt = "#ts@ " + syms.map(s => s.name).join(", ")
+        // stmts.unshift(symTxt)
+        // stmts.unshift("# {") // TODO
+        // let pyVars = "#py@ " + Object.keys(env[0].vars).join(", ")
+        // stmts.push(pyVars)
+        // stmts.push("# }")
         return stmts
     }
     function emitFuncDecl(s: ts.FunctionDeclaration | ts.MethodDeclaration | ts.FunctionExpression | ts.ConstructorDeclaration | ts.ArrowFunction, name: string = null): string[] {
@@ -584,10 +629,12 @@ function tsToPy(prog: ts.Program, filename: string): string {
             fnName = "__init__"
         }
         else {
-            fnName = name || s.name.getText()
+            fnName = name || getName(s.name)
         }
 
         out.push(`def ${fnName}(${params}):`)
+
+        pushScope() // functions start a new scope in python
 
         let stmts: string[] = []
         if (ts.isBlock(s.body))
@@ -603,10 +650,12 @@ function tsToPy(prog: ts.Program, filename: string): string {
             out.push(indent1("pass")) // cannot have an empty body
         }
 
+        popScope()
+
         return out
     }
     function emitParamDecl(s: ts.ParameterDeclaration, inclTypesIfAvail = true): string {
-        let nm = s.name.getText()
+        let nm = getName(s.name)
         if (s.type && inclTypesIfAvail) {
             let typ = s.type.getText()
             return `${nm}:${typ}`
@@ -615,20 +664,29 @@ function tsToPy(prog: ts.Program, filename: string): string {
         }
     }
     function emitVarDecl(s: ts.VariableDeclaration): string[] {
-        let decl = s.name.getText();
+        let out: string[] = []
+        let varNm = getName(s.name);
+        // out.push(`#let ${varNm}`) // TODO debug
+        // varNm = introVar(varNm, s.name)
         if (s.initializer) {
+            // TODO
+            // let syms = tc.getSymbolsInScope(s, ts.SymbolFlags.Variable)
+            // let symTxt = "#@ " + syms.map(s => s.name).join(", ")
+            // out.push(symTxt)
             let [exp, expSup] = emitExp(s.initializer);
+            out = out.concat(expSup)
             let declStmt: string;
             if (s.type) {
-                declStmt = `${decl}: ${s.type.getText()} = ${exp}`
+                declStmt = `${varNm}: ${s.type.getText()} = ${exp}`
             } else {
-                declStmt = `${decl} = ${exp}`
+                declStmt = `${varNm} = ${exp}`
             }
-            return expSup.concat(declStmt)
+            out.push(declStmt)
+            return out
         } else {
             // can't do declerations without initilization in python
-            return []
         }
+        return out
     }
 
     ///
@@ -721,7 +779,7 @@ function tsToPy(prog: ts.Program, filename: string): string {
     }
     function emitDotExp(s: ts.PropertyAccessExpression): ExpRes {
         let [left, leftSup] = emitExp(s.expression)
-        let right = s.name.getText()
+        let right = getName(s.name)
         // special: foo.length
         if (right === "length") {
             // TODO confirm the type is correct!
@@ -784,7 +842,7 @@ function tsToPy(prog: ts.Program, filename: string): string {
             }
         }
 
-        let fnName = s.name ? s.name.getText() : nextFnName()
+        let fnName = s.name ? getName(s.name) : nextFnName()
         let fnDef = emitFuncDecl(s, fnName)
 
         return [fnName, fnDef]
@@ -850,11 +908,13 @@ function tsToPy(prog: ts.Program, filename: string): string {
         return [exp, sup]
     }
     function emitIdentifierExp(s: ts.Identifier): ExpRes {
-        // TODO disallow keywords and built-ins? Do variable renaming?
-        let id = s.text;
-        if (id == "undefined")
+        // TODO disallow keywords and built-ins? 
+        // TODO why isn't undefined showing up as a keyword?
+        // let id = s.text;
+        if (s.text == "undefined")
             return asExpRes("None")
-        return asExpRes(id);
+        let name = getName(s)
+        return asExpRes(name);
     }
     function visitExp(s: ts.Expression, fn: (e: ts.Expression) => boolean): boolean {
         let visitRecur = (s: ts.Expression) =>
