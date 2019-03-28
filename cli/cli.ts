@@ -2275,6 +2275,8 @@ function renderDocs(builtPackaged: string, localDir: string) {
                 let str = buf.toString("utf8")
                 if (/\.md$/.test(f)) {
                     str = nodeutil.resolveMd(".", f.substr(5, f.length - 8));
+                    // patch any /static/... url to /docs/static/...
+                    str = str.replace(/\"\/static\//g, `"/docs/static/`);
                     nodeutil.writeFileSync(dd, str, { encoding: "utf8" });
                 }
                 let html = ""
