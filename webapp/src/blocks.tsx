@@ -50,7 +50,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     setBreakpointsFromBlocks(): void {
         let breakpoints: number[] = []
         let map = this.breakpointsByBlock;
-        if (map) {
+        if (map && this.editor) {
             this.editor.getAllBlocks().forEach(block => {
                 if (map[block.id] && block.isBreakpointSet()) {
                     breakpoints.push(this.breakpointsByBlock[block.id]);
@@ -582,7 +582,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     updateToolbox(debugging: boolean) {
         let debuggerToolbox = debugging ? <div>
             <debug.DebuggerToolbar parent={this.parent} />
-            <debug.DebuggerVariables ref={this.handleDebuggerVariablesRef} parent={this.parent} />
+            <debug.DebuggerVariables ref={this.handleDebuggerVariablesRef} parent={this.parent} apisByQName={this.blockInfo.apis.byQName} />
         </div> : <div />;
         Util.assert(!!this.debuggerToolboxDiv)
         if (debugging) {
@@ -600,17 +600,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     showVariablesFlyout() {
-        this.showFlyoutInternal_(Blockly.Variables.flyoutCategory(this.editor));
+        this.showFlyoutInternal_(Blockly.Variables.flyoutCategory(this.editor), "variables");
     }
 
     showFunctionsFlyout() {
-        if (pxt.appTarget.runtime &&
-            pxt.appTarget.runtime.functionsOptions &&
-            pxt.appTarget.runtime.functionsOptions.useNewFunctions) {
-            this.showFlyoutInternal_(Blockly.Functions.flyoutCategory(this.editor));
-        } else {
-            this.showFlyoutInternal_(Blockly.Procedures.flyoutCategory(this.editor));
-        }
+            this.showFlyoutInternal_(Blockly.Functions.flyoutCategory(this.editor), "functions");
     }
 
     getViewState() {
@@ -1047,6 +1041,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         super.clearCaches();
         this.clearFlyoutCaches();
         snippets.clearBuiltinBlockCache();
+        // note that we don't need to clear the flyout SVG cache since those 
+        // will regenerate themselves more precisely based on the hash of the
+        // input blocks xml.
     }
 
     clearFlyoutCaches() {
@@ -1204,18 +1201,19 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
 
         this.flyoutXmlList = [];
-        if (this.flyoutBlockXmlCache[ns + subns]) {
+        let cacheKey = ns + subns;
+        if (this.flyoutBlockXmlCache[cacheKey]) {
             pxt.debug("showing flyout with blocks from flyout blocks xml cache");
-            this.flyoutXmlList = this.flyoutBlockXmlCache[ns + subns];
-            this.showFlyoutInternal_(this.flyoutXmlList);
+            this.flyoutXmlList = this.flyoutBlockXmlCache[cacheKey];
+            this.showFlyoutInternal_(this.flyoutXmlList, cacheKey);
             return;
         }
 
         if (this.abstractShowFlyout(treeRow)) {
             // Cache blocks xml list for later
-            this.flyoutBlockXmlCache[ns + subns] = this.flyoutXmlList;
+            this.flyoutBlockXmlCache[cacheKey] = this.flyoutXmlList;
 
-            this.showFlyoutInternal_(this.flyoutXmlList);
+            this.showFlyoutInternal_(this.flyoutXmlList, cacheKey);
         }
     }
 
@@ -1273,7 +1271,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             label.setAttribute('text', lf("No search results..."));
             this.flyoutXmlList.push(label);
         }
-        this.showFlyoutInternal_(this.flyoutXmlList);
+        this.showFlyoutInternal_(this.flyoutXmlList, "search");
     }
 
     private showTopBlocksFlyout() {
@@ -1296,11 +1294,85 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.showFlyoutInternal_(this.flyoutXmlList);
     }
 
-    private showFlyoutInternal_(xmlList: Element[]) {
-        // Blockly internal methods to show a toolbox or a flyout
+    private blocksToString(xmlList: Element[]): string {
+        let xmlSerializer: XMLSerializer = null;
+        const serialize = (e: Element) => {
+            if (!e)
+                return "<!-- invalid block here! -->"
+            if (e.outerHTML)
+                return e.outerHTML
+            // The below code is only needed for IE 11 where outerHTML occassionally returns undefined :/
+            if (!xmlSerializer)
+                xmlSerializer = new XMLSerializer()
+            return xmlSerializer.serializeToString(e);
+        }
+        return xmlList
+            .map(serialize)
+            .reduce((p, c) => p + c, "")
+    }
+
+    private hashBlocks(xmlList: Element[]): number {
+        return pxt.Util.codalHash16(this.blocksToString(xmlList));
+    }
+
+    private swapFlyout(old: Blockly.VerticalFlyout, nw: Blockly.VerticalFlyout) {
+        // hide the old flyout
+        old.setVisible(false)
+
+        // set the "current" flyout
+        this.editor.toolbox_.flyout_ = nw;
+
+        // show the new flyout
+        nw.setVisible(true)
+
+        // reflow if scale changed
+        const flyoutWs = nw.workspace_ as Blockly.WorkspaceSvg;
+        const targetWs = nw.targetWorkspace_ as Blockly.WorkspaceSvg;
+        const scaleChange = flyoutWs.scale !== targetWs.scale;
+        if (scaleChange) {
+            nw.reflow();
+        }
+    }
+
+    private flyouts: pxt.Map<{ flyout: Blockly.VerticalFlyout, blocksHash: number }> = {};
+    private showFlyoutInternal_(xmlList: Element[], flyoutName: string = "default") {
         if (this.editor.toolbox_) {
-            this.editor.toolbox_.flyout_.show(xmlList);
-            (this.editor.toolbox_.flyout_ as Blockly.VerticalFlyout).scrollToStart();
+            const oldFlyout = this.editor.toolbox_.flyout_ as Blockly.VerticalFlyout;
+
+            // determine if the cached flyout exists and isn't stale
+            const hasCachedFlyout = flyoutName in this.flyouts
+            const cachedBlocksHash = hasCachedFlyout ? this.flyouts[flyoutName].blocksHash : 0;
+            const currentBlocksHash = this.hashBlocks(xmlList);
+            const isFlyoutUpToDate = cachedBlocksHash === currentBlocksHash && !!cachedBlocksHash
+
+            const mkFlyout = () => {
+                const workspace = this.editor.toolbox_.workspace_ as Blockly.WorkspaceSvg
+                const oldSvg = oldFlyout.svgGroup_;
+                const flyout = Blockly.Functions.createFlyout(workspace, oldSvg)
+                return flyout as Blockly.VerticalFlyout;
+            }
+
+            // get the flyout from the cache or make a new one
+            let newFlyout: Blockly.VerticalFlyout;
+            if (!hasCachedFlyout) {
+                newFlyout = mkFlyout();
+                this.flyouts[flyoutName] = { flyout: newFlyout, blocksHash: 0 };
+            } else {
+                newFlyout = this.flyouts[flyoutName].flyout;
+            }
+
+            // update the blocks hash
+            this.flyouts[flyoutName].blocksHash = currentBlocksHash;
+
+            // switch to the new flyout
+            this.swapFlyout(oldFlyout, newFlyout);
+
+            // if the flyout contents have changed, recreate the blocks
+            if (!isFlyoutUpToDate) {
+                newFlyout.show(xmlList);
+            }
+
+            newFlyout.scrollToStart();
         } else if ((this.editor as any).flyout_) {
             (this.editor as any).show(xmlList);
             (this.editor as any).scrollToStart();

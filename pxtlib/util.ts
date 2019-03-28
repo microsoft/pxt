@@ -893,11 +893,11 @@ namespace ts.pxtc.Util {
                 return true;
             }
             //check for base language if we didn't find the full language. Example: nl for nl-NL
-            if (baseLang && appTheme.availableLocales.indexOf(baseLang) > -1 ) {
-                    return true;
+            if (baseLang && appTheme.availableLocales.indexOf(baseLang) > -1) {
+                return true;
             }
         }
-        return  false;
+        return false;
     }
 
     export function updateLocalizationAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean, force?: boolean): Promise<void> {

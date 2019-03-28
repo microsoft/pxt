@@ -301,7 +301,7 @@
 @debugArrayVariable: #663905;
 @debugSpriteVariable: blue;
 
-@DebuggerBackgroundPrimaryColor: @green;
+@DebuggerBackgroundPrimaryColor: #e67e22;
 @DebuggerBackgroundSecondaryColor: lightgreen;
 
 @debuggerVariableExplorerBackground: white;

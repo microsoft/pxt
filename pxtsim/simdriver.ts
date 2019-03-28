@@ -20,6 +20,7 @@ namespace pxsim {
     export enum SimulatorState {
         Unloaded,
         Stopped,
+        Pending,
         Starting,
         Running,
         Paused,
@@ -87,7 +88,11 @@ namespace pxsim {
             if (this.state == pxsim.SimulatorState.Running) this.suspend();
         }
 
-        setStarting() {
+        setPending() {
+            this.setState(SimulatorState.Pending);
+        }
+
+        private setStarting() {
             this.setState(SimulatorState.Starting);
         }
 
@@ -136,6 +141,7 @@ namespace pxsim {
             const loader = icon.nextElementSibling as HTMLElement;
             // apply state
             switch (this.state) {
+                case SimulatorState.Pending:
                 case SimulatorState.Starting:
                     icon.style.display = '';
                     icon.className = '';
@@ -486,6 +492,10 @@ namespace pxsim {
                             this.options.revealElement(frame);
                     }
                     break;
+                case 'status':
+                    if ((msg as SimulatorStateMessage).state == "killed")
+                        this.setState(SimulatorState.Stopped)
+                    break;
                 case 'simulator': this.handleSimulatorCommand(msg as pxsim.SimulatorCommandMessage); break; //handled elsewhere
                 case 'serial':
                 case 'pxteditor':
@@ -557,8 +567,8 @@ namespace pxsim {
             this.postDebuggerMessage("traceConfig", { interval: intervalMs });
         }
 
-        public variablesAsync(id: number): Promise<VariablesMessage> {
-            return this.postDebuggerMessageAsync("variables", { variablesReference: id } as DebugProtocol.VariablesArguments)
+        public variablesAsync(id: number, fields?: string[]): Promise<VariablesMessage> {
+            return this.postDebuggerMessageAsync("variables", { variablesReference: id, fields: fields } as DebugProtocol.VariablesArguments)
                 .then(msg => msg as VariablesMessage, e => undefined)
         }
 
