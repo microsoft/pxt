@@ -65,7 +65,7 @@ class PythonCompletionProvider implements monaco.languages.CompletionItemProvide
         // TODO python
         return compiler.completionsAsync(fileName, offset)
             .then(completions => {
-                const items = pxt.Util.values(completions.entries).map(si => {
+                const items = pxt.Util.values(completions.entries || {}).map(si => {
                     return {
                         label: si.name,
                         kind: this.tsKindToMonacoKind(si.kind)
