@@ -8406,10 +8406,10 @@ declare module Blockly {
     
             /**
              * Class for a flyout.
-             * @param {!Object} workspaceOptions Dictionary of options for the workspace.
+             * @param {!Blockly.WorkspaceOptions} workspaceOptions Dictionary of options for the workspace.
              * @constructor
              */
-            constructor(workspaceOptions: Object);
+            constructor(workspaceOptions: Blockly.WorkspaceOptions);
     
             /**
              * @type {!Blockly.Workspace}
@@ -8554,6 +8554,27 @@ declare module Blockly {
             dragAngleRange_: number;
     
             /**
+             * The svg or g element that contains the flyout dom (excluding scrollbar).
+             * @type {SVGElement}
+             * @private
+             */
+            svgGroup_: SVGElement;
+    
+            /**
+             * Scrollbar for scrolling blocks.
+             * @type {Blockly.Scrollbar}
+             * @private
+             */
+            scrollbar_: Blockly.Scrollbar;
+    
+            /**
+             * The workspace this flyout puts blocks on
+             * @type {Blockly.WorkspaceSvg}
+             * @private
+             */
+            targetWorkspace_: Blockly.WorkspaceSvg;
+    
+            /**
              * Creates the flyout's DOM.  Only needs to be called once.  The flyout can
              * either exist as its own svg element or be a g element nested inside a
              * separate svg element.
@@ -8632,9 +8653,16 @@ declare module Blockly {
             positionAt_(width: number, height: number, x: number, y: number): void;
     
             /**
-             * Hide and empty the flyout.
+             * Hide the flyout.
+             * Note: this does not remove any flyout state like event listeners.
              */
             hide(): void;
+    
+            /**
+             * Delete any event listeners.
+             * @private
+             */
+            clearOldEventListeners_(): void;
     
             /**
              * Show and populate the flyout.
@@ -8981,11 +9009,11 @@ declare module Blockly {
     
             /**
              * Class for a flyout.
-             * @param {!Object} workspaceOptions Dictionary of options for the workspace.
+             * @param {!Blockly.WorkspaceOptions} workspaceOptions Dictionary of options for the workspace.
              * @extends {Blockly.Flyout}
              * @constructor
              */
-            constructor(workspaceOptions: Object);
+            constructor(workspaceOptions: Blockly.WorkspaceOptions);
     
             /**
              * Flyout should be laid out horizontally.
@@ -9091,11 +9119,11 @@ declare module Blockly {
     
             /**
              * Class for a flyout.
-             * @param {!Object} workspaceOptions Dictionary of options for the workspace.
+             * @param {!Blockly.WorkspaceOptions} workspaceOptions Dictionary of options for the workspace.
              * @extends {Blockly.Flyout}
              * @constructor
              */
-            constructor(workspaceOptions: Object);
+            constructor(workspaceOptions: Blockly.WorkspaceOptions);
     
             /**
              * Flyout should be laid out vertically.
@@ -13468,6 +13496,15 @@ declare module Blockly.Functions {
      * @return {boolean} True if the block is a function argument reporter.
      */
     function isFunctionArgumentReporter(block: Blockly.BlockSvg): boolean;
+
+    /**
+     * Create a flyout, creates the DOM elements for the flyout, and initializes the flyout.
+     * @param {!Blockly.Workspace} workspace The target and parent workspace for this flyout. The workspace's options will
+     *     be used to create the flyout's inner workspace.
+     * @param {!Element} siblingNode The flyout is added after this reference node. 
+     * @return {!Blockly.Flyout} The newly created flyout.
+     */
+    function createFlyout(workspace: Blockly.Workspace, siblingNode: Element): Blockly.Flyout;
 }
 
 declare module Blockly.pxtBlocklyUtils {
@@ -13823,6 +13860,13 @@ declare module Blockly {
              * @constructor
              */
             constructor(workspace: Blockly.Workspace, horizontal: boolean, opt_pair?: boolean, opt_class?: string);
+    
+            /**
+             * The svg element containing the scrollbar dom elements.
+             * @type {!SVGSVGElement}
+             * @private
+             */
+            svgGroup_: SVGSVGElement;
     
             /**
              * The upper left corner of the scrollbar's SVG group in CSS pixels relative

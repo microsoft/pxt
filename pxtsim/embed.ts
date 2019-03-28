@@ -223,9 +223,10 @@ namespace pxsim {
     }
 
     export namespace Embed {
+        export let frameid: string;
         export function start() {
             window.addEventListener("message", receiveMessage, false);
-            let frameid = window.location.hash.slice(1)
+            frameid = window.location.hash.slice(1)
             initAppcache();
             Runtime.postMessage(<SimulatorReadyMessage>{ type: 'ready', frameid: frameid });
         }

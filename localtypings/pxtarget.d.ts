@@ -89,7 +89,6 @@ declare namespace pxt {
         functionBlocks?: boolean;
         functionsOptions?: {
             extraFunctionEditorTypes?: FunctionEditorTypeInfo[];
-            useNewFunctions?: boolean;
         };
         logicBlocks?: boolean;
         loopsBlocks?: boolean;
@@ -141,6 +140,7 @@ declare namespace pxt {
         autoRun?: boolean; // enable autoRun in regular mode, not light mode
         autoRunLight?: boolean; // force autorun in light mode
         stopOnChange?: boolean;
+        emptyRunCode?: string; // when non-empty and autoRun is disabled, this code is run upon simulator first start
         hideRestart?: boolean;
         // moved to theme
         // enableTrace?: boolean;
@@ -300,7 +300,7 @@ declare namespace pxt {
         pairingButton?: boolean; // display a pairing button
         tagColors?: pxt.Map<string>; // optional colors for tags
         dontSuspendOnVisibility?: boolean; // we're inside an app, don't suspend the editor
-        disableFileAccessinMaciOs?:boolean; //Disable save & import of files in Mac and iOS, mainly used as embed webkit doesn't support these
+        disableFileAccessinMaciOs?: boolean; //Disable save & import of files in Mac and iOS, mainly used as embed webkit doesn't support these
         baseTheme?: string; // Use this to determine whether to show a light or dark theme, default is 'light', options are 'light', 'dark', or 'hc'
         scriptManager?: boolean; // Whether or not to enable the script manager. default: false
         monacoFieldEditors?: string[]; // A list of field editors to show in monaco. Currently only "image-editor" is supported
@@ -430,7 +430,6 @@ declare namespace ts.pxtc {
         warnDiv?: boolean; // warn when emitting division operator
 
         alwaysDecompileOnStart?: boolean; // decompiler only
-        useNewFunctions?: boolean; // decompiler only; whether to decompile functions using the new functions implementation (functions with parameters)
         allowedArgumentTypes?: string[]; // decompiler-only; the types allowed for user-defined function arguments in blocks (unlisted types will cause grey blocks)
 
         embedMeta?: string;

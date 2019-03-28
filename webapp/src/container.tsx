@@ -242,6 +242,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
     }
 
     print() {
+        pxt.tickEvent("menu.print");
         this.props.parent.printCode();
     }
 
@@ -274,12 +275,13 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
         const showSimCollapse = !readOnly && !isController && !!targetTheme.simCollapseInMenu;
         const showGreenScreen = (targetTheme.greenScreen || /greenscreen=1/i.test(window.location.href))
             && greenscreen.isSupported();
+        const showPrint = targetTheme.print && !pxt.BrowserUtils.isIE();
 
         return <sui.DropdownMenu role="menuitem" icon={'setting large'} title={lf("More...")} className="item icon more-dropdown-menuitem">
             <sui.Item role="menuitem" icon="options" text={lf("Project Settings")} onClick={this.openSettings} />
             {packages ? <sui.Item role="menuitem" icon="disk outline" text={lf("Extensions")} onClick={this.showPackageDialog} /> : undefined}
             {boards ? <sui.Item role="menuitem" icon="microchip" text={lf("Change Board")} onClick={this.showBoardDialog} /> : undefined}
-            {targetTheme.print ? <sui.Item role="menuitem" icon="print" text={lf("Print...")} onClick={this.print} /> : undefined}
+            {showPrint ? <sui.Item role="menuitem" icon="print" text={lf("Print...")} onClick={this.print} /> : undefined}
             {showSave ? <sui.Item role="menuitem" icon="save" text={lf("Save Project")} onClick={this.saveProject} /> : undefined}
             {!isController ? <sui.Item role="menuitem" icon="trash" text={lf("Delete Project")} onClick={this.removeProject} /> : undefined}
             {showSimCollapse ? <sui.Item role="menuitem" icon='toggle right' text={lf("Toggle the simulator")} onClick={this.toggleCollapse} /> : undefined}
@@ -428,7 +430,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
                         <img className="ui mini image" src={rightLogo} tabIndex={0} onClick={this.launchFullEditor} onKeyDown={sui.fireClickOnEnter} alt={`${targetTheme.boardName} Logo`} />
                     </span>
                 </div>}
-            {!inTutorial && !targetTheme.blocksOnly ? <div className="ui item link editor-menuitem">
+            {!inTutorial && !targetTheme.blocksOnly && !debugging ? <div className="ui item link editor-menuitem">
                 <div className="ui grid padded">
                     {sandbox ? <sui.Item className="sim-menuitem" role="menuitem" textClass="landscape only" text={lf("Simulator")} icon={simActive && isRunning ? "stop" : "play"} active={simActive} onClick={this.openSimView} title={!simActive ? lf("Show Simulator") : runTooltip} /> : undefined}
                     <sui.Item className="blocks-menuitem" role="menuitem" textClass="landscape only" text={lf("Blocks")} icon="xicon blocks" active={blockActive} onClick={this.openBlocks} title={lf("Convert code to Blocks")} />
@@ -437,6 +439,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
                 </div>
             </div> : undefined}
             {inTutorial ? <tutorial.TutorialMenuItem parent={this.props.parent} /> : undefined}
+            {debugging && !inTutorial ? <sui.MenuItem className="debugger-menu-item centered" icon="large bug" name="Debug Mode" /> : undefined}
             <div className="right menu">
                 {debugging ? <sui.ButtonMenuItem className="exit-debugmode-btn" role="menuitem" icon="external" text={lf("Exit Debug Mode")} textClass="landscape only" onClick={this.toggleDebug} /> : undefined}
                 {docMenu ? <container.DocsMenu parent={this.props.parent} /> : undefined}

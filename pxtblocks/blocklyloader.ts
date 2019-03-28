@@ -457,7 +457,7 @@ namespace pxt.blocks {
                 comp.handlerArgs.filter(a => !a.inBlockDef).forEach(arg => {
                     const i = block.appendValueInput("HANDLER_DRAG_PARAM_" + arg.name);
                     if (fn.attributes.draggableParameters == "reporter") {
-                        i.setCheck(arg.type);
+                        i.setCheck(getBlocklyCheckForType(arg.type, info));
                     } else {
                         i.setCheck("Variable");
                     }
@@ -571,7 +571,7 @@ namespace pxt.blocks {
 
                         if (isHandlerArg(pr)) {
                             inputName = "HANDLER_DRAG_PARAM_" + pr.name;
-                            inputCheck = fn.attributes.draggableParameters === "reporter" ? pr.type : "Variable";
+                            inputCheck = fn.attributes.draggableParameters === "reporter" ? getBlocklyCheckForType(pr.type, info) : "Variable";
                             return;
                         }
 
@@ -812,28 +812,50 @@ namespace pxt.blocks {
         };
     }
 
-    function setOutputCheck(block: Blockly.Block, retType: string, info: pxtc.BlocksInfo) {
-        switch (retType) {
-            case "number": block.setOutput(true, "Number"); break;
-            case "string": block.setOutput(true, "String"); break;
-            case "boolean": block.setOutput(true, "Boolean"); break;
-            case "void": break; // do nothing
-            //TODO
+    /**
+     * Converts a TypeScript type into an array of type checks for Blockly inputs/outputs. Use
+     * with block.setOutput() and input.setCheck().
+     *
+     * @returns An array of checks if the type is valid, undefined if there are no valid checks
+     *      (e.g. type is void), and null if all checks should be accepted (e.g. type is generic)
+     */
+    function getBlocklyCheckForType(type: string, info: pxtc.BlocksInfo) {
+        switch (type) {
+            // Blockly capitalizes primitive types for its builtin math/string/logic blocks
+            case "number": return ["Number"];
+            case "string": return ["String"];
+            case "boolean": return ["Boolean"];
+            case "void": return undefined
             default:
-                if (retType !== "T") {
-                    const opt_check = isArrayType(retType) ? ["Array"] : [];
+                if (type !== "T") {
+                    // We add "Array" to the front for array types so that they can be connected
+                    // to the blocks that accept any array (e.g. length, push, pop, etc)
+                    const opt_check = isArrayType(type) ? ["Array"] : [];
 
-                    const si_r = info.apis.byQName[retType];
+                    // Blockly has no concept of inheritance, so we need to add all
+                    // super classes to the check array
+                    const si_r = info.apis.byQName[type];
                     if (si_r && si_r.extendsTypes && 0 < si_r.extendsTypes.length) {
                         opt_check.push(...si_r.extendsTypes);
                     } else {
-                        opt_check.push(retType);
+                        opt_check.push(type);
                     }
 
-                    block.setOutput(true, opt_check);
+                    return opt_check;
                 } else {
-                    block.setOutput(true);
+                    // The type is generic, so accept any checks. This is mostly used with functions that
+                    // get values from arrays. This could be improved if we ever add proper type
+                    // inference for generic types
+                    return null;
                 }
+        }
+    }
+
+    function setOutputCheck(block: Blockly.Block, retType: string, info: pxtc.BlocksInfo) {
+        const check = getBlocklyCheckForType(retType, info);
+
+        if (check || check === null) {
+            block.setOutput(true, check);
         }
     }
 
@@ -2194,42 +2216,38 @@ namespace pxt.blocks {
             return xmlList;
         }
 
+        // Patch new functions flyout to add the heading
+        const oldFlyout = Blockly.Functions.flyoutCategory;
+        Blockly.Functions.flyoutCategory = (workspace) => {
+            const elems = oldFlyout(workspace);
+            const headingLabel = createFlyoutHeadingLabel(lf("Functions"),
+                pxt.toolbox.getNamespaceColor('functions'),
+                pxt.toolbox.getNamespaceIcon('functions'),
+                'blocklyFlyoutIconfunctions');
+            elems.unshift(headingLabel);
+            return elems;
+        };
+
+        // Configure function editor argument icons
+        const iconsMap: pxt.Map<string> = {
+            number: pxt.blocks.defaultIconForArgType("number"),
+            boolean: pxt.blocks.defaultIconForArgType("boolean"),
+            string: pxt.blocks.defaultIconForArgType("string")
+        };
+        const customNames: pxsim.Map<string> = {};
+
         const functionOptions = pxt.appTarget.runtime && pxt.appTarget.runtime.functionsOptions;
-        if (functionOptions) {
-            if (functionOptions.useNewFunctions) {
-                // Patch new functions flyout to add the heading
-                const oldFlyout = Blockly.Functions.flyoutCategory;
-                Blockly.Functions.flyoutCategory = (workspace) => {
-                    const elems = oldFlyout(workspace);
-                    const headingLabel = createFlyoutHeadingLabel(lf("Functions"),
-                        pxt.toolbox.getNamespaceColor('functions'),
-                        pxt.toolbox.getNamespaceIcon('functions'),
-                        'blocklyFlyoutIconfunctions');
-                    elems.unshift(headingLabel);
-                    return elems;
-                };
-            }
+        if (functionOptions && functionOptions.extraFunctionEditorTypes) {
+            functionOptions.extraFunctionEditorTypes.forEach(t => {
+                iconsMap[t.typeName] = t.icon || pxt.blocks.defaultIconForArgType();
 
-            // Configure function editor argument icons
-            const iconsMap: pxt.Map<string> = {
-                number: pxt.blocks.defaultIconForArgType("number"),
-                boolean: pxt.blocks.defaultIconForArgType("boolean"),
-                string: pxt.blocks.defaultIconForArgType("string")
-            };
-            const customNames: pxsim.Map<string> = {};
-
-            if (functionOptions.extraFunctionEditorTypes) {
-                functionOptions.extraFunctionEditorTypes.forEach(t => {
-                    iconsMap[t.typeName] = t.icon || pxt.blocks.defaultIconForArgType();
-
-                    if (t.defaultName) {
-                        customNames[t.typeName] = t.defaultName;
-                    }
-                });
-            }
-            Blockly.PXTBlockly.FunctionUtils.argumentIcons = iconsMap;
-            Blockly.PXTBlockly.FunctionUtils.argumentDefaultNames = customNames;
+                if (t.defaultName) {
+                    customNames[t.typeName] = t.defaultName;
+                }
+            });
         }
+        Blockly.PXTBlockly.FunctionUtils.argumentIcons = iconsMap;
+        Blockly.PXTBlockly.FunctionUtils.argumentDefaultNames = customNames;
 
         if (Blockly.Blocks["argument_reporter_custom"]) {
             // The logic for setting the output check relies on the internals of PXT
