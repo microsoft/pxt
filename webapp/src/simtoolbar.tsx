@@ -103,7 +103,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const screenshot = !!targetTheme.simScreenshot;
         const screenshotClass = !!parentState.screenshoting ? "loading" : "";
         if (isHeadless) return <div />;
-        const debugBtnEnabled = isRunning || (debugging && !isStarting);
+        const debugBtnEnabled = !isStarting && !isSimulatorPending;
         const runControlsEnabled = !debugging && !isStarting && !isSimulatorPending;
 
         const runTooltip = [lf("Start the simulator"), lf("Starting the simulator"), lf("Stop the simulator")][simState];
