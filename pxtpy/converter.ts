@@ -23,6 +23,8 @@ namespace pxt.py {
     let lastAST: AST
     let lastFile: string
     let diagnostics: pxtc.KsDiagnostic[]
+    let completionPosition: number
+    let completionNode: AST
 
     function stmtTODO(v: py.Stmt) {
         return B.mkStmt(B.mkText("TODO: " + v.kind))
@@ -1611,6 +1613,9 @@ namespace pxt.py {
             let part = typeOf(n.value)
             let fd = getTypeField(n.value, n.attr)
             let nm = n.attr
+            if (completionPosition != null && completionNode == null &&
+                n.startPos <= completionPosition && completionPosition <= n.endPos)
+                completionNode = n
             if (fd) {
                 unify(n, n.tsType, fd.pyRetType)
                 nm = fd.name
@@ -1767,6 +1772,8 @@ namespace pxt.py {
         lastFile = pyFiles[0] // make sure there's some location info for errors from API init
         initApis(opts.apisInfo)
 
+        completionPosition = null
+
         if (!opts.generatedFiles)
             opts.generatedFiles = []
 
@@ -1814,6 +1821,8 @@ namespace pxt.py {
         }
 
         resetPass(1000)
+        completionNode = null
+        completionPosition = opts.completionPosition
         for (let m of modules) {
             try {
                 let nodes = toTS(m)
@@ -1829,6 +1838,29 @@ namespace pxt.py {
         }
 
         diagnostics = parseDiags.concat(diagnostics)
+
+        if (completionPosition != null) {
+            opts.completionResult = []
+            if (completionNode && completionNode.kind == "Attribute") {
+                const attr = completionNode as Attribute
+                const tp = typeOf(attr.value)
+                const apis = U.values(externalApis).concat(U.values(internalApis))
+                if (tp.moduleType) {
+                    for (let v of apis) {
+                        if (!v.isInstance && v.namespace == tp.moduleType.qName) {
+                            opts.completionResult.push(v.qName)
+                        }
+                    }
+                } else if (tp.classType) {
+                    let types = tp.classType.extendsTypes.concat(tp.classType.qName)
+                    for (let v of apis) {
+                        if (v.isInstance && types.indexOf(v.namespace) >= 0) {
+                            opts.completionResult.push(v.qName)
+                        }
+                    }
+                }
+            }
+        }
 
         return {
             generated,

@@ -665,6 +665,9 @@ declare namespace ts.pxtc {
         warnDiv?: boolean; // warn when emitting division operator
         apisInfo?: ApisInfo;
 
+        completionPosition?: number;
+        completionResult?: string[];
+
         alwaysDecompileOnStart?: boolean; // decompiler only
         allowedArgumentTypes?: string[]; // decompiler-only; the types allowed for user-defined function arguments in blocks (unlisted types will cause grey blocks)
 

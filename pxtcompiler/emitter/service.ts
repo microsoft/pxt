@@ -730,28 +730,67 @@ namespace ts.pxtc.service {
         },
 
         getCompletions: v => {
+            let src: string = v.fileContent
             if (v.fileContent) {
                 host.setFile(v.fileName, v.fileContent);
             }
 
+            let dotIdx = -1
+            for (let i = v.position - 1; i >= 0; --i) {
+                if (src[i] == ".") {
+                    dotIdx = i
+                    break
+                }
+                if (!/\w/.test(src[i]))
+                    break
+            }
+
+            if (dotIdx == v.position - 1) {
+                // "foo.|" -> we add "_" as field name to minimize the risk of a parse error
+                src = src.slice(0, v.position) + "_" + src.slice(v.position)
+            }
+
             //console.log(v.fileContent.slice(v.position - 20, v.position) + "<X>" + v.fileContent.slice(v.position, v.position + 20))
-
-            const program = service.getProgram() // this synchornizes host data as well
-            // TODO python
-            //const data: InternalCompletionData =  undefined; //(service as any).getCompletionData(v.fileName, v.position);
-
-            //if (!data) return {}
 
             const r: CompletionInfo = {
                 entries: {},
-                isMemberCompletion: false,
+                isMemberCompletion: dotIdx != -1,
                 isNewIdentifierLocation: true,
                 isTypeLocation: false
             }
 
-            for (let si of U.values(lastApiInfo.apis.byQName)) {
-                if (!r.isMemberCompletion && si.kind == SymbolKind.Method || si.kind == SymbolKind.Property)
-                    continue
+            const isGlobalSymbol = (si: SymbolInfo) => {
+                switch (si.kind) {
+                    case SymbolKind.Enum:
+                    case SymbolKind.EnumMember:
+                    case SymbolKind.Variable:
+                    case SymbolKind.Function:
+                    case SymbolKind.Module:
+                        return true
+                    case SymbolKind.Property:
+                    case SymbolKind.Method:
+                        return !si.isInstance
+                    default:
+                        return false
+                }
+            }
+
+            let keys: string[] = []
+            if (r.isMemberCompletion) {
+                let opts = U.flatClone(host.opts)
+                opts.fileSystem[v.fileName] = src
+                addApiInfo(opts);
+                opts.completionPosition = dotIdx;
+                (pxt as any).py.py2ts(opts)
+                keys = opts.completionResult || []
+            } else {
+                keys = U.values(lastApiInfo.apis.byQName)
+                    .filter(isGlobalSymbol)
+                    .map(si => si.qName)
+            }
+
+            for (let nm of keys) {
+                const si = lastApiInfo.apis.byQName[nm]
                 r.entries[si.qName] = si
             }
             //fillCompletionEntries(program, data.symbols, r, lastApiInfo.apis, host.opts)
