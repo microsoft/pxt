@@ -94,7 +94,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     saveToTypeScriptAsync(): Promise<string> {
-        if (!this.typeScriptSaveable) return Promise.resolve('');
+        if (!this.typeScriptSaveable) return Promise.resolve(undefined);
         this.clearHighlightedStatements();
         try {
             return pxt.blocks.compileAsync(this.editor, this.blockInfo)
@@ -106,7 +106,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         } catch (e) {
             pxt.reportException(e)
             core.errorNotification(lf("Sorry, we were not able to convert this program."))
-            return Promise.resolve('');
+            return Promise.resolve(undefined);
         }
     }
 

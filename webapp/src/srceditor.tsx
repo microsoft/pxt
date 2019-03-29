@@ -101,8 +101,12 @@ export class Editor implements pxt.editor.IEditor {
     setDiagnostics(file: pkg.File, snapshot: any): void { }
     setViewState(view: ViewState): void { }
 
+    /**
+     * Serializes code to typescript.
+     * @returns undefined if there is nothing to save
+     */
     saveToTypeScriptAsync(): Promise<string> {
-        return Promise.resolve('');
+        return Promise.resolve(undefined);
     }
 
     highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage): boolean { return false; }
