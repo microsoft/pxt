@@ -517,6 +517,11 @@ declare namespace ts.pxtc {
         deprecated?: boolean;
         useEnumVal?: boolean; // for conversion from typescript to blocks with enumVal
         callInDebugger?: boolean; // for getters, they will be invoked by the debugger.
+        
+        // on class
+        snippet?: string; // value used to generate TS snippet
+        pySnippet?: string; // value used to generate python snippet
+
         // On block
         subcategory?: string;
         group?: string;

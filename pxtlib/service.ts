@@ -46,7 +46,7 @@ namespace ts.pxtc {
     }
 
     export interface CompletionInfo {
-        entries: pxt.Map<SymbolInfo>;
+        entries: SymbolInfo[];
         isMemberCompletion: boolean;
         isNewIdentifierLocation: boolean;
         isTypeLocation: boolean;
