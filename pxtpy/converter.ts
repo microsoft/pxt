@@ -23,8 +23,9 @@ namespace pxt.py {
     let lastAST: AST
     let lastFile: string
     let diagnostics: pxtc.KsDiagnostic[]
-    let completionPosition: number
-    let completionNode: AST
+    let compileOptions: pxtc.CompileOptions
+    let infoNode: AST
+    let infoScope: ScopeDef
 
     function stmtTODO(v: py.Stmt) {
         return B.mkStmt(B.mkText("TODO: " + v.kind))
@@ -66,6 +67,22 @@ namespace pxt.py {
         "boolean": tpBoolean,
         "void": tpVoid,
         "any": tpAny,
+    }
+
+    function cleanSymbol(s: SymbolInfo): pxtc.SymbolInfo {
+        let r = U.flatClone(s)
+        delete r.pyAST
+        delete r.pyInstanceType
+        delete r.pyRetType
+        delete r.pySymbolType
+        delete r.moduleTypeMarker
+        if (r.parameters)
+            r.parameters = r.parameters.map(p => {
+                p = U.flatClone(p)
+                delete p.pyType
+                return p
+            })
+        return r
     }
 
     function mapTsType(tp: string): Type {
@@ -1389,6 +1406,15 @@ namespace pxt.py {
         return n
     }
 
+    function handleCompletion(n: AST, tp: pxtc.InfoType) {
+        if (currIteration > 100 &&
+            infoNode == null && compileOptions.infoType == tp &&
+            n.startPos <= compileOptions.infoPosition && compileOptions.infoPosition <= n.endPos) {
+            infoNode = n
+            infoScope = currentScope()
+        }
+    }
+
     const exprMap: Map<(v: py.Expr) => B.JsNode> = {
         BoolOp: (n: py.BoolOp) => {
             let r = expr(n.values[0])
@@ -1613,9 +1639,7 @@ namespace pxt.py {
             let part = typeOf(n.value)
             let fd = getTypeField(n.value, n.attr)
             let nm = n.attr
-            if (completionPosition != null && completionNode == null &&
-                n.startPos <= completionPosition && completionPosition <= n.endPos)
-                completionNode = n
+            handleCompletion(n, "memberCompletion")
             if (fd) {
                 unify(n, n.tsType, fd.pyRetType)
                 nm = fd.name
@@ -1656,6 +1680,8 @@ namespace pxt.py {
         },
         Starred: (n: py.Starred) => B.mkGroup([B.mkText("... "), expr(n.value)]),
         Name: (n: py.Name) => {
+            handleCompletion(n, "identifierCompletion")
+
             // shortcut, but should work
             if (n.id == "self" && ctx.currClass) {
                 unifyClass(n, n.tsType, ctx.currClass.symInfo)
@@ -1772,7 +1798,7 @@ namespace pxt.py {
         lastFile = pyFiles[0] // make sure there's some location info for errors from API init
         initApis(opts.apisInfo)
 
-        completionPosition = null
+        compileOptions = opts
 
         if (!opts.generatedFiles)
             opts.generatedFiles = []
@@ -1821,8 +1847,7 @@ namespace pxt.py {
         }
 
         resetPass(1000)
-        completionNode = null
-        completionPosition = opts.completionPosition
+        infoNode = null
         for (let m of modules) {
             try {
                 let nodes = toTS(m)
@@ -1839,27 +1864,58 @@ namespace pxt.py {
 
         diagnostics = parseDiags.concat(diagnostics)
 
-        if (completionPosition != null) {
-            opts.completionResult = []
-            if (completionNode && completionNode.kind == "Attribute") {
-                const attr = completionNode as Attribute
+        const isGlobalSymbol = (si: SymbolInfo) => {
+            switch (si.kind) {
+                case SK.Enum:
+                case SK.EnumMember:
+                case SK.Variable:
+                case SK.Function:
+                case SK.Module:
+                    return true
+                case SK.Property:
+                case SK.Method:
+                    return !si.isInstance
+                default:
+                    return false
+            }
+        }
+
+        if (opts.infoType) {
+            let isMem = opts.infoType == "memberCompletion"
+            opts.infoSymbols = []
+            const apis = U.values(externalApis).concat(U.values(internalApis))
+            if (opts.infoType == "memberCompletion" && infoNode && infoNode.kind == "Attribute") {
+                const attr = infoNode as Attribute
                 const tp = typeOf(attr.value)
-                const apis = U.values(externalApis).concat(U.values(internalApis))
                 if (tp.moduleType) {
                     for (let v of apis) {
                         if (!v.isInstance && v.namespace == tp.moduleType.qName) {
-                            opts.completionResult.push(v.qName)
+                            opts.infoSymbols.push(v)
                         }
                     }
                 } else if (tp.classType) {
                     let types = tp.classType.extendsTypes.concat(tp.classType.qName)
                     for (let v of apis) {
                         if (v.isInstance && types.indexOf(v.namespace) >= 0) {
-                            opts.completionResult.push(v.qName)
+                            opts.infoSymbols.push(v)
                         }
                     }
                 }
             }
+            if (opts.infoType == "identifierCompletion" && infoNode) {
+                let existing: SymbolInfo[] = []
+                const addSym = (v: SymbolInfo) => {
+                    if (isGlobalSymbol(v) && existing.indexOf(v) < 0)
+                        opts.infoSymbols.push(v)
+                }
+                existing = opts.infoSymbols.slice()
+                for (let s = infoScope; s; s = s.parent) {
+                    if (s.vars)
+                        U.values(s.vars).forEach(addSym)
+                }
+                apis.forEach(addSym)
+            }
+            opts.infoSymbols = opts.infoSymbols.map(cleanSymbol)
         }
 
         return {

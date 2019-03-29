@@ -736,6 +736,7 @@ namespace ts.pxtc.service {
             }
             const python = /\.py$/.test(v.fileName);
             let dotIdx = -1
+            let complPosition = -1
             for (let i = v.position - 1; i >= 0; --i) {
                 if (src[i] == ".") {
                     dotIdx = i
@@ -743,12 +744,20 @@ namespace ts.pxtc.service {
                 }
                 if (!/\w/.test(src[i]))
                     break
+                if (complPosition == -1)
+                    complPosition = i
             }
 
             if (dotIdx == v.position - 1) {
                 // "foo.|" -> we add "_" as field name to minimize the risk of a parse error
                 src = src.slice(0, v.position) + "_" + src.slice(v.position)
+            } else if (complPosition == -1) {
+                src = src.slice(0, v.position) + "_" + src.slice(v.position)
+                complPosition = v.position
             }
+
+            if (dotIdx != -1)
+                complPosition = dotIdx
 
             //console.log(v.fileContent.slice(v.position - 20, v.position) + "<X>" + v.fileContent.slice(v.position, v.position + 20))
 
@@ -759,38 +768,15 @@ namespace ts.pxtc.service {
                 isTypeLocation: false
             }
 
-            const isGlobalSymbol = (si: SymbolInfo) => {
-                switch (si.kind) {
-                    case SymbolKind.Enum:
-                    case SymbolKind.EnumMember:
-                    case SymbolKind.Variable:
-                    case SymbolKind.Function:
-                    case SymbolKind.Module:
-                        return true
-                    case SymbolKind.Property:
-                    case SymbolKind.Method:
-                        return !si.isInstance
-                    default:
-                        return false
-                }
-            }
+            let opts = U.flatClone(host.opts)
+            opts.fileSystem[v.fileName] = src
+            addApiInfo(opts);
+            opts.infoPosition = complPosition;
+            opts.infoType = r.isMemberCompletion ? "memberCompletion" : "identifierCompletion";
+            (pxt as any).py.py2ts(opts)
+            let symbols = opts.infoSymbols || []
 
-            let keys: string[] = []
-            if (r.isMemberCompletion) {
-                let opts = U.flatClone(host.opts)
-                opts.fileSystem[v.fileName] = src
-                addApiInfo(opts);
-                opts.completionPosition = dotIdx;
-                (pxt as any).py.py2ts(opts)
-                keys = opts.completionResult || []
-            } else {
-                keys = U.values(lastApiInfo.apis.byQName)
-                    .filter(isGlobalSymbol)
-                    .map(si => si.qName)
-            }
-
-            for (let nm of keys) {
-                const si = lastApiInfo.apis.byQName[nm]
+            for (let si of symbols) {
                 if (
                     /^__/.test(si.name) || // ignore members starting with __
                     /^__/.test(si.namespace) || // ignore namespaces starting with _-
@@ -798,7 +784,7 @@ namespace ts.pxtc.service {
                     si.attributes.deprecated
                 ) continue; // ignore 
                 r.entries[si.qName] = si
-                const n = lastApiInfo.decls[nm];
+                const n = lastApiInfo.decls[si.qName];
                 if (isFunctionLike(n)) {
                     if (python)
                         si.pySnippet = getSnippet(lastApiInfo.apis.byQName, si, n, python);

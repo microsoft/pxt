@@ -380,7 +380,7 @@ declare namespace ts.pxtc {
             Promise,
         }
     }
-    
+
     interface CompileSwitches {
         profile?: boolean;
         gcDebug?: boolean;
@@ -643,7 +643,9 @@ declare namespace ts.pxtc {
     interface ApisInfo {
         byQName: pxt.Map<SymbolInfo>;
         jres?: pxt.Map<pxt.JRes>;
-    }    
+    }
+
+    type InfoType = "memberCompletion" | "identifierCompletion" | "signature" | "symbol"
 
     interface CompileOptions {
         fileSystem: pxt.Map<string>;
@@ -665,8 +667,10 @@ declare namespace ts.pxtc {
         warnDiv?: boolean; // warn when emitting division operator
         apisInfo?: ApisInfo;
 
-        completionPosition?: number;
-        completionResult?: string[];
+        infoPosition?: number;
+        infoType?: InfoType;
+        infoSymbols?: SymbolInfo[];
+        infoResult?: any;
 
         alwaysDecompileOnStart?: boolean; // decompiler only
         allowedArgumentTypes?: string[]; // decompiler-only; the types allowed for user-defined function arguments in blocks (unlisted types will cause grey blocks)
@@ -727,7 +731,7 @@ declare namespace pxt.tutorial {
         contentMd?: string;
         headerContentMd?: string;
     }
-    
+
     interface TutorialOptions {
         tutorial?: string; // tutorial        
         tutorialName?: string; // tutorial title
