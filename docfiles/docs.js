@@ -261,7 +261,7 @@ function renderSnippets() {
 
 function responsiveResize(){
     // Add Responsive Adjustments depending on screen size 
-    $( window ).resize(function() {
+    window.addEventListener('resize', evt => {
         // Size width 1144px
         if (window.innerWidth > 1143){
             $('.ui.sidebar').sidebar('hide');
