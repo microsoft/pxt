@@ -65,7 +65,8 @@ namespace helpers {
         return arr.removeAt(0);
     }
 
-    export function arrayJoin<T>(arr: T[], sep: string): string {
+    export function arrayJoin<T>(arr: T[], sep?: string): string {
+        sep = sep || ",";
         let r = "";
         let len = arr.length // caching this seems to match V8
         for (let i = 0; i < len; ++i) {
