@@ -744,7 +744,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     updateToolbox() {
         let appTheme = pxt.appTarget.appTheme;
-        if (!appTheme.monacoToolbox || pxt.shell.isReadOnly()) return;
+        if (!appTheme.monacoToolbox || pxt.shell.isReadOnly() || !this.editor) return;
         // Move the monaco editor to make room for the toolbox div
         //this.editor.getLayoutInfo().glyphMarginLeft = 200;
         this.editor.layout();

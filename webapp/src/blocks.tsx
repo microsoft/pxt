@@ -580,6 +580,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     updateToolbox() {
+        if (!this.debuggerToolboxDiv) return; // nothing to do here
+
         const debugging = !!this.parent.state.debugging;
         let debuggerToolbox = debugging ? <div>
             <debug.DebuggerToolbar parent={this.parent} />
@@ -605,7 +607,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     showFunctionsFlyout() {
-            this.showFlyoutInternal_(Blockly.Functions.flyoutCategory(this.editor), "functions");
+        this.showFlyoutInternal_(Blockly.Functions.flyoutCategory(this.editor), "functions");
     }
 
     getViewState() {
