@@ -113,12 +113,16 @@ namespace pxtsprite {
         return result;
     }
 
-    export function imageLiteralToBitmap(text: string): Bitmap {
+    export function imageLiteralToBitmap(text: string, defaultPattern?: string): Bitmap {
         // Strip the tagged template string business and the whitespace. We don't have to exhaustively
         // replace encoded characters because the compiler will catch any disallowed characters and throw
         // an error before the decompilation happens. 96 is backtick and 9 is tab
         text = text.replace(/[ `]|(?:&#96;)|(?:&#9;)|(?:img)/g, "").trim();
+        text = text.replace(/^["`\(\)]*/, '').replace(/["`\(\)]*$/, '');
         text = text.replace(/&#10;/g, "\n");
+
+        if (!text && defaultPattern)
+            text = defaultPattern;
 
         const rows = text.split("\n");
 

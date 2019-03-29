@@ -19,7 +19,24 @@ namespace pxt.editor {
             this.fileType = fileType;
             this.editrange = editrange;
             const contentDiv = host.contentDiv();
-            const state = pxtsprite.imageLiteralToBitmap(host.getText(editrange));
+            const state = pxtsprite.imageLiteralToBitmap(host.getText(editrange), `
+            . . . . . . . . . . . . . . . .
+            . . . . . . . . . . . . . . . .
+            . . . . . . . . . . . . . . . .
+            . . . . . . . . . . . . . . . .
+            . . . . . . . . . . . . . . . .
+            . . . . . . . . . . . . . . . .
+            . . . . . . . . . . . . . . . .
+            . . . . . . . . . . . . . . . .
+            . . . . . . . . . . . . . . . .
+            . . . . . . . . . . . . . . . .
+            . . . . . . . . . . . . . . . .
+            . . . . . . . . . . . . . . . .
+            . . . . . . . . . . . . . . . .
+            . . . . . . . . . . . . . . . .
+            . . . . . . . . . . . . . . . .
+            . . . . . . . . . . . . . . . .
+        `);
 
             this.editor = new pxtsprite.SpriteEditor(state, host.blocksInfo(), false);
             this.editor.render(contentDiv);
@@ -75,7 +92,7 @@ namespace pxt.editor {
         heightInPixels: 510,
         matcher: {
             // match both JS and python
-            searchString: "img\\s*(?:`|\\(\"\"\")(?:[ a-fA-F0-9\\.]|\\n)+\\s*(?:`|\"\"\"\\))",
+            searchString: "img\\s*(?:`|\\(\"\"\")(?:[ a-fA-F0-9\\.]|\\n)*\\s*(?:`|\"\"\"\\))",
             isRegex: true,
             matchCase: true,
             matchWholeWord: false
