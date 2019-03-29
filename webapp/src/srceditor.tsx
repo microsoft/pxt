@@ -120,4 +120,10 @@ export class Editor implements pxt.editor.IEditor {
 
     insertBreakpoint() {
     }
+
+    updateBreakpoints() {
+    }
+
+    updateToolbox() {
+    }
 }
