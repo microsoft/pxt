@@ -153,7 +153,7 @@ namespace pxsim {
                         ? this.stoppedClass : this.invalidatedClass);
                     if (!this.options.autoRun) {
                         icon.style.display = '';
-                        icon.className = 'video play icon';
+                        icon.className = 'videoplay xicon icon';
                     } else
                         icon.style.display = 'none';
                     loader.style.display = 'none';
@@ -259,7 +259,7 @@ namespace pxsim {
             wrapper.appendChild(frame);
 
             const i = document.createElement("i");
-            i.className = "video play icon";
+            i.className = "videoplay xicon icon";
             i.style.display = "none";
             i.onclick = (ev) => {
                 ev.preventDefault();
@@ -476,6 +476,7 @@ namespace pxsim {
             };
             msg.id = `${msg.options.theme}-${this.nextId()}`;
             frame.dataset['runid'] = this.runId;
+            frame.dataset['runtimeid'] = msg.id;
             frame.contentWindow.postMessage(msg, "*");
             this.setFrameState(frame);
             return true;
@@ -483,19 +484,30 @@ namespace pxsim {
 
         private handleMessage(msg: pxsim.SimulatorMessage, source?: Window) {
             switch (msg.type || '') {
-                case 'ready':
-                    let frameid = (msg as pxsim.SimulatorReadyMessage).frameid;
-                    let frame = document.getElementById(frameid) as HTMLIFrameElement;
+                case 'ready': {
+                    const frameid = (msg as pxsim.SimulatorReadyMessage).frameid;
+                    const frame = document.getElementById(frameid) as HTMLIFrameElement;
                     if (frame) {
                         this.startFrame(frame);
                         if (this.options.revealElement)
                             this.options.revealElement(frame);
                     }
                     break;
-                case 'status':
-                    if ((msg as SimulatorStateMessage).state == "killed")
-                        this.setState(SimulatorState.Stopped)
+                }
+                case 'status': {
+                    const frameid = (msg as pxsim.SimulatorReadyMessage).frameid;
+                    const frame = document.getElementById(frameid) as HTMLIFrameElement;
+                    if (frame) {
+                        const stmsg = msg as SimulatorStateMessage;
+                        switch (stmsg.state) {
+                            case "killed":
+                                if (stmsg.runtimeid == frame.dataset['runtimeid'])
+                                    this.setState(SimulatorState.Stopped);
+                                break;
+                        }
+                    }
                     break;
+                }
                 case 'simulator': this.handleSimulatorCommand(msg as pxsim.SimulatorCommandMessage); break; //handled elsewhere
                 case 'serial':
                 case 'pxteditor':
@@ -621,7 +633,7 @@ namespace pxsim {
                             let fi = s.funcInfo
                             stackTrace += `   at ${fi.functionName} (${fi.fileName}:${fi.line + 1}:${fi.column + 1})\n`
                         }
-                        console.error(stackTrace)
+                        if (brk.exceptionMessage) console.error(stackTrace);
                     } else {
                         console.error("debugger: trying to pause from " + this.state);
                     }

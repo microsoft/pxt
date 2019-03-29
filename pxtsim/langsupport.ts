@@ -36,6 +36,10 @@ namespace pxsim {
         return Object.keys(cfgKey)
     }
 
+    export function setConfigKey(key: string, id: number) {
+        cfgKey[key] = id;
+    }
+
     export function setConfig(id: number, val: number) {
         cfg[id] = val
     }
@@ -568,7 +572,7 @@ namespace pxsim {
 
         export function pause(ms: number) {
             let cb = getResume();
-            setTimeout(() => { cb() }, ms)
+            runtime.schedule(() => { cb() }, ms)
         }
 
         export function runInBackground(a: RefAction) {
