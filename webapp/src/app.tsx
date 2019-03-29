@@ -1639,7 +1639,8 @@ export class ProjectView
             pubCurrent: false,
             target: pxt.appTarget.id,
             targetVersion: pxt.appTarget.versions.target,
-            temporary: options.temporary
+            temporary: options.temporary,
+            tutorial: options.tutorial
         }, files)
             .then(hd => this.loadHeaderAsync(hd, { filters: options.filters }));
     }
@@ -2676,18 +2677,21 @@ export class ProjectView
             if (!md)
                 throw new Error("tutorial not found");
             tutorialmd = md;
+            const tutorialOptions = {
+                tutorial: tutorialId,
+                tutorialName: title,
+                tutorialReportId: reportId,
+                tutorialStep: 0,
+                tutorialReady: true,
+                tutorialStepInfo: pxt.tutorial.parseTutorialSteps(tutorialId, tutorialmd)
+            };
             return this.createProjectAsync({
                 name: title,
-                tutorial: {
-                    tutorial: tutorialId,
-                    tutorialName: title,
-                    tutorialReportId: reportId
-                },
+                tutorial: tutorialOptions,
                 dependencies
             }).then(() => autoChooseBoard ? this.autoChooseBoardAsync(features) : Promise.resolve());
         })
             .then(() => {
-                const stepInfo = pxt.tutorial.parseTutorialSteps(tutorialId, tutorialmd);
                 return tutorial.getUsedBlocksAsync(tutorialId, tutorialmd)
                     .then((usedBlocks) => {
                         let editorState: pxt.editor.EditorState = {
@@ -2699,18 +2703,9 @@ export class ProjectView
                                 defaultState: pxt.editor.FilterState.Hidden
                             }
                         }
-                        this.setState({
-                            editorState: editorState,
-                            tutorialOptions: {
-                                tutorial: tutorialId,
-                                tutorialName: title,
-                                tutorialReportId: reportId,
-                                tutorialStep: 0,
-                                tutorialReady: true,
-                                tutorialStepInfo: stepInfo
-                            }
-                        });
+                        this.setState({ editorState: editorState });
                         this.editor.filterToolbox(usedBlocks, true);
+                        const stepInfo = this.state.header.tutorial.tutorialStepInfo;
                         const fullscreen = stepInfo[0].fullscreen;
                         if (fullscreen) this.showTutorialHint();
                         else this.showLightbox();
@@ -2730,6 +2725,9 @@ export class ProjectView
     completeTutorial() {
         pxt.tickEvent("tutorial.complete");
         core.showLoading("leavingtutorial", lf("leaving tutorial..."));
+
+        // clear tutorial field
+        this.state.header.tutorial = undefined;
 
         if (pxt.BrowserUtils.isIE()) {
             // For some reason, going from a tutorial straight to the editor in
@@ -2760,7 +2758,6 @@ export class ProjectView
     exitTutorialAsync(removeProject?: boolean) {
         let curr = pkg.mainEditorPkg().header;
         curr.isDeleted = removeProject;
-        curr.tutorial = undefined;
         let files = pkg.mainEditorPkg().getAllFiles();
         return workspace.saveAsync(curr, files)
             .then(() => Promise.delay(500))
