@@ -716,3 +716,25 @@ declare namespace ts.pxtc {
         usageId: string;
     }
 }
+
+
+declare namespace pxt.tutorial {
+    interface TutorialStepInfo {
+        fullscreen?: boolean;
+        // no coding
+        unplugged?: boolean;
+        hasHint?: boolean;
+        contentMd?: string;
+        headerContentMd?: string;
+    }
+    
+    interface TutorialOptions {
+        tutorial?: string; // tutorial
+        tutorialName?: string; // tutorial title
+        tutorialReportId?: string; // if this tutorial was user generated, the report abuse id
+        tutorialStepInfo?: pxt.tutorial.TutorialStepInfo[];
+        tutorialStep?: number; // current tutorial page
+        tutorialReady?: boolean; // current tutorial page
+    }
+
+}

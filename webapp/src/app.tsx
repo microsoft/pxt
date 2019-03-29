@@ -933,7 +933,8 @@ export class ProjectView
                         this.setState({ tutorialOptions: undefined });
                         // Delete the project created for this tutorial
                         let curr = pkg.mainEditorPkg().header
-                        curr.isDeleted = true
+                        curr.isDeleted = true;
+                        curr.tutorial = undefined;
                         workspace.saveAsync(curr, {})
                             .then(() => {
                                 this.openHome();
@@ -982,7 +983,7 @@ export class ProjectView
         return undefined;
     }
 
-    loadHeaderAsync(h: pxt.workspace.Header, editorState?: pxt.editor.EditorState, inTutorial?: boolean): Promise<void> {
+    loadHeaderAsync(h: pxt.workspace.Header, editorState?: pxt.editor.EditorState): Promise<void> {
         if (!h)
             return Promise.resolve()
 
@@ -997,7 +998,8 @@ export class ProjectView
         this.clearSerial()
         this.firstRun = true
         // always start simulator once at least if autoRun is enabled
-        this.setState({ autoRun: this.autoRunOnStart() });
+        // always disable tracing
+        this.setState({ autoRun: this.autoRunOnStart(), tracing: undefined });
 
         // Merge current and new state but only if the new state members are undefined
         const oldEditorState = this.state.editorState;
@@ -1040,7 +1042,7 @@ export class ProjectView
                     home: false,
                     showFiles: h.githubId ? true : false,
                     editorState: editorState,
-                    tutorialOptions: inTutorial ? this.state.tutorialOptions : undefined,
+                    tutorialOptions: h.tutorial,
                     header: h,
                     projectName: h.name,
                     currFile: file,
@@ -1537,7 +1539,14 @@ export class ProjectView
         if (this.editor) this.editor.unloadFileAsync();
         // clear the hash
         pxt.BrowserUtils.changeHash("", true);
-        this.setState({ home: true, tracing: undefined, fullscreen: undefined, tutorialOptions: undefined, editorState: undefined, debugging: undefined });
+        this.setState({
+            home: true,
+            tracing: undefined,
+            fullscreen: undefined,
+            tutorialOptions: undefined,
+            editorState: undefined,
+            debugging: undefined
+        });
         this.allEditors.forEach(e => e.setVisible(false));
         this.homeLoaded();
         this.showPackageErrorsOnNextTypecheck();
@@ -1632,7 +1641,7 @@ export class ProjectView
             targetVersion: pxt.appTarget.versions.target,
             temporary: options.temporary
         }, files)
-            .then(hd => this.loadHeaderAsync(hd, { filters: options.filters }, options.inTutorial));
+            .then(hd => this.loadHeaderAsync(hd, { filters: options.filters }));
     }
 
     // in multiboard targets, allow use to pick a different board
@@ -2669,19 +2678,15 @@ export class ProjectView
             tutorialmd = md;
             return this.createProjectAsync({
                 name: title,
-                inTutorial: true,
+                tutorial: {
+                    tutorial: tutorialId,
+                    tutorialName: title,
+                    tutorialReportId: reportId
+                },
                 dependencies
             }).then(() => autoChooseBoard ? this.autoChooseBoardAsync(features) : Promise.resolve());
         })
             .then(() => {
-                this.setState({
-                    tutorialOptions: {
-                        tutorial: tutorialId,
-                        tutorialName: title,
-                        tutorialReportId: reportId
-                    },
-                    tracing: undefined
-                });
                 const stepInfo = pxt.tutorial.parseTutorialSteps(tutorialId, tutorialmd);
                 return tutorial.getUsedBlocksAsync(tutorialId, tutorialmd)
                     .then((usedBlocks) => {
@@ -2755,11 +2760,16 @@ export class ProjectView
     exitTutorialAsync(removeProject?: boolean) {
         let curr = pkg.mainEditorPkg().header;
         curr.isDeleted = removeProject;
+        curr.tutorial = undefined;
         let files = pkg.mainEditorPkg().getAllFiles();
         return workspace.saveAsync(curr, files)
             .then(() => Promise.delay(500))
             .finally(() => {
-                this.setState({ tutorialOptions: undefined, tracing: undefined, editorState: undefined });
+                this.setState({
+                    tutorialOptions: undefined,
+                    tracing: undefined,
+                    editorState: undefined
+                });
                 core.resetFocus();
             });
     }
