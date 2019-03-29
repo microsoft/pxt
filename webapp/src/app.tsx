@@ -1093,12 +1093,45 @@ export class ProjectView
 
                 // update recentUse on the header
                 return workspace.saveAsync(h)
-            }).finally(() => {
+            }).then(() => this.loadTutorialFiltersAsync())
+            .finally(() => {
                 // Editor is loaded
                 pxt.BrowserUtils.changeHash("#editor", true);
                 document.getElementById("root").focus(); // Clear the focus.
                 this.editorLoaded();
             })
+    }
+
+    private loadTutorialFiltersAsync(): Promise<void> {
+        const header = pkg.mainEditorPkg().header;
+        if (!header || !header.tutorial || !header.tutorial.tutorialMd) return Promise.resolve();
+
+        const t = header.tutorial;
+        return tutorial.getUsedBlocksAsync(t.tutorial, t.tutorialMd)
+            .then((usedBlocks) => {
+                let editorState: pxt.editor.EditorState = {
+                    searchBar: false
+                }
+                if (usedBlocks && Object.keys(usedBlocks).length > 0) {
+                    editorState.filters = {
+                        blocks: usedBlocks,
+                        defaultState: pxt.editor.FilterState.Hidden
+                    }
+                }
+                this.setState({ editorState: editorState });
+                this.editor.filterToolbox(usedBlocks, true);
+                const stepInfo = t.tutorialStepInfo;
+                const fullscreen = stepInfo[0].fullscreen;
+                if (fullscreen) this.showTutorialHint();
+                else this.showLightbox();
+            })
+            .catch(e => {
+                // Failed to decompile
+                pxt.tickEvent('tutorial.faileddecompile', { tutorialId: t.tutorial });
+                core.errorNotification(lf("Oops, an error occured as we were loading the tutorial."));
+                // Reset state (delete the current project and exit the tutorial)
+                this.exitTutorial(true);
+            });
     }
 
     removeProject() {
@@ -2676,14 +2709,14 @@ export class ProjectView
         return p.then(md => {
             if (!md)
                 throw new Error("tutorial not found");
-            tutorialmd = md;
             const tutorialOptions = {
                 tutorial: tutorialId,
                 tutorialName: title,
                 tutorialReportId: reportId,
                 tutorialStep: 0,
                 tutorialReady: true,
-                tutorialStepInfo: pxt.tutorial.parseTutorialSteps(tutorialId, tutorialmd)
+                tutorialStepInfo: pxt.tutorial.parseTutorialSteps(tutorialId, md),
+                tutorialMd: md
             };
             return this.createProjectAsync({
                 name: title,
@@ -2691,33 +2724,8 @@ export class ProjectView
                 dependencies
             }).then(() => autoChooseBoard ? this.autoChooseBoardAsync(features) : Promise.resolve());
         })
-            .then(() => {
-                return tutorial.getUsedBlocksAsync(tutorialId, tutorialmd)
-                    .then((usedBlocks) => {
-                        let editorState: pxt.editor.EditorState = {
-                            searchBar: false
-                        }
-                        if (usedBlocks && Object.keys(usedBlocks).length > 0) {
-                            editorState.filters = {
-                                blocks: usedBlocks,
-                                defaultState: pxt.editor.FilterState.Hidden
-                            }
-                        }
-                        this.setState({ editorState: editorState });
-                        this.editor.filterToolbox(usedBlocks, true);
-                        const stepInfo = this.state.header.tutorial.tutorialStepInfo;
-                        const fullscreen = stepInfo[0].fullscreen;
-                        if (fullscreen) this.showTutorialHint();
-                        else this.showLightbox();
-                    })
-                    .catch(e => {
-                        // Failed to decompile
-                        pxt.tickEvent('tutorial.faileddecompile', { tutorialId: tutorialId });
-                        core.errorNotification(lf("Oops, an error occured as we were loading the tutorial."));
-                        // Reset state (delete the current project and exit the tutorial)
-                        this.exitTutorial(true);
-                    })
-            }).catch((e) => {
+            .then(() => this.loadTutorialFiltersAsync())
+            .catch((e) => {
                 core.handleNetworkError(e);
             }).finally(() => core.hideLoading("tutorial"));
     }
