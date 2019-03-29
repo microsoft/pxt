@@ -134,6 +134,9 @@ declare namespace pxt {
         blocks?: number;
         javascript?: number;
 
+        tutorialStep?: number;
+        tutorialLength?: number;
+
         icon?: string;
         iconContent?: string; // Text instead of icon name
         iconColor?: string;

@@ -97,7 +97,7 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
                 {card.label || card.labelIcon ?
                     <label role={card.onLabelClicked ? 'button' : undefined} onClick={card.onLabelClicked}
                         className={`ui ${card.labelClass ? card.labelClass : "orange right ribbon"} label`}>
-                    {card.labelIcon ? <sui.Icon icon={card.labelIcon} /> : card.label}</label> : undefined}
+                        {card.labelIcon ? <sui.Icon icon={card.labelIcon} /> : card.label}</label> : undefined}
                 {card.typeScript ? <pre key="promots">{card.typeScript}</pre> : undefined}
                 {card.cardType != "file" && imageUrl ? <div className="ui imagewrapper">
                     <div className={`ui cardimage`} data-src={imageUrl} ref="lazyimage" />
@@ -116,6 +116,7 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
                     {card.description ? <div className="description tall">{renderMd(card.description)}</div> : null}
                 </div> : undefined}
             {card.time ? <div className="meta">
+                {card.tutorialLength ? <span className="ui tutorial-progress orange left floated label">{lf("{0}/{1} steps", (card.tutorialStep || 0) + 1, card.tutorialLength)}</span> : undefined}
                 {card.time ? <span key="date" className="date">{pxt.Util.timeSince(card.time)}</span> : null}
             </div> : undefined}
             {card.extracontent || card.learnMoreUrl || card.buyUrl || card.feedbackUrl ?
