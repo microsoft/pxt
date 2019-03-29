@@ -63,7 +63,6 @@ class PythonCompletionProvider implements monaco.languages.CompletionItemProvide
         const offset = model.getOffsetAt(position);
         const source = model.getValue();
         const fileName = this.editor.currFile.name;
-        // TODO python
         return compiler.completionsAsync(fileName, offset, source)
             .then(completions => {
                 const items = pxt.Util.values(completions.entries || {}).map(si => {
@@ -71,7 +70,7 @@ class PythonCompletionProvider implements monaco.languages.CompletionItemProvide
                         label: completions.isMemberCompletion ? si.pyName : si.pyQName,
                         kind: this.tsKindToMonacoKind(si.kind),
                         documentation: si.attributes.jsDoc,
-                        detail: si.parameters ? "(" + si.parameters.map(p => p.name).join(", ") + ")" : "", // TODO improve this
+                        detail: si.pySnippet
                     } as monaco.languages.CompletionItem;
                 })
                 return items;

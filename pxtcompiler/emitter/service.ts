@@ -734,7 +734,7 @@ namespace ts.pxtc.service {
             if (v.fileContent) {
                 host.setFile(v.fileName, v.fileContent);
             }
-
+            const python = /\.py$/.test(v.fileName);
             let dotIdx = -1
             for (let i = v.position - 1; i >= 0; --i) {
                 if (src[i] == ".") {
@@ -791,7 +791,20 @@ namespace ts.pxtc.service {
 
             for (let nm of keys) {
                 const si = lastApiInfo.apis.byQName[nm]
+                if (
+                    /^__/.test(si.name) || // ignore members starting with __
+                    /^__/.test(si.namespace) || // ignore namespaces starting with _-
+                    si.attributes.hidden ||
+                    si.attributes.deprecated
+                ) continue; // ignore 
                 r.entries[si.qName] = si
+                const n = lastApiInfo.decls[nm];
+                if (isFunctionLike(n)) {
+                    if (python)
+                        si.pySnippet = getSnippet(lastApiInfo.apis.byQName, si, n, python);
+                    else
+                        si.snippet = getSnippet(lastApiInfo.apis.byQName, si, n, python);
+                }
             }
             //fillCompletionEntries(program, data.symbols, r, lastApiInfo.apis, host.opts)
 
