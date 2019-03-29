@@ -116,7 +116,7 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
                     {card.description ? <div className="description tall">{renderMd(card.description)}</div> : null}
                 </div> : undefined}
             {card.time ? <div className="meta">
-                {card.tutorialLength ? <span className="ui tutorial-progress left label">{lf("{0}/{1} steps", card.tutorialStep || 0, card.tutorialLength)}</span> : undefined}
+                {card.tutorialLength ? <span className="ui tutorial-progress left floated label">{lf("{0}/{1} steps", (card.tutorialStep || 0) + 1, card.tutorialLength)}</span> : undefined}
                 {card.time ? <span key="date" className="date">{pxt.Util.timeSince(card.time)}</span> : null}
             </div> : undefined}
             {card.extracontent || card.learnMoreUrl || card.buyUrl || card.feedbackUrl ?
