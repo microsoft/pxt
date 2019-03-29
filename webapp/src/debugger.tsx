@@ -114,9 +114,9 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
             });
             simulator.driver.variablesAsync(v.value.id, fieldsToGet)
                 .then((msg: pxsim.VariablesMessage) => {
-                    if (msg) {
+                    if (msg && msg.variables) {
                         if (v.value.type == "array") {
-                            v.children = pxt.Util.mapMap(msg.variables || {},
+                            v.children = pxt.Util.mapMap(msg.variables,
                                 (k, v) => {
                                     return {
                                         value: msg.variables[k]

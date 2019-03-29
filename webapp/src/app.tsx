@@ -284,8 +284,11 @@ export class ProjectView
         if (this.editor && this.editor.isReady) {
             p = p.then(() => this.updateEditorFileAsync());
         }
-        if (this.state.debugging) {
-            p = p.then(() => this.blocksEditor.updateToolbox(true));
+        if (this.editor) {
+            p = p.then(() => {
+                this.editor.updateBreakpoints();
+                this.editor.updateToolbox()
+            });
         }
         p.done();
     }
@@ -1708,6 +1711,15 @@ export class ProjectView
         promise = promise
             .then(() => this.editor.saveToTypeScriptAsync())
             .then((src) => {
+                if (src === undefined && open) { // failed to convert
+                    return core.confirmAsync({
+                        header: lf("Oops, there is a problem converting your code."),
+                        body: lf("We are unable to convert your Python code back to JavaScript."),
+                        agreeLbl: lf("Done"),
+                        agreeClass: "cancel",
+                        agreeIcon: "cancel",
+                    }).then(b => { })
+                }
                 if (src === undefined
                     || this.editorFile.name == this.editorFile.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME))
                     return Promise.resolve();
@@ -2274,13 +2286,10 @@ export class ProjectView
         pxt.log("turning debugging mode to " + state);
         this.setState({ debugging: state, tracing: false }, () => {
             this.renderCore()
-            const blocks = this.blocksEditor.editor.getAllBlocks();
-            blocks.forEach(block => {
-                if (block.nextConnection && block.previousConnection) {
-                    block.enableBreakpoint(state);
-                }
-            });
-            this.blocksEditor.updateToolbox(state)
+            if (this.editor) {
+                this.editor.updateBreakpoints();
+                this.editor.updateToolbox();
+            }
             this.restartSimulator();
         });
     }

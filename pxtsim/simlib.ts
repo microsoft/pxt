@@ -79,6 +79,7 @@ namespace pxsim {
         }
 
         queue(id: number | string, evid: number | string, value: T = null) {
+            if (runtime.pausedOnBreakpoint) return;
             // special handling for notify one
             const notifyOne = this.notifyID && this.notifyOneID && id == this.notifyOneID;
             if (notifyOne)

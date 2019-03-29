@@ -636,6 +636,8 @@ declare namespace ts.pxtc {
         blockFields?: ParsedBlockDef;
         isReadOnly?: boolean;
         combinedProperties?: string[];
+        pyName?: string;
+        pyQName?: string;
     }
 
     interface ApisInfo {
@@ -662,7 +664,9 @@ declare namespace ts.pxtc {
         name?: string;
         warnDiv?: boolean; // warn when emitting division operator
         apisInfo?: ApisInfo;
-        pySnippets?: boolean;
+
+        completionPosition?: number;
+        completionResult?: string[];
 
         alwaysDecompileOnStart?: boolean; // decompiler only
         allowedArgumentTypes?: string[]; // decompiler-only; the types allowed for user-defined function arguments in blocks (unlisted types will cause grey blocks)

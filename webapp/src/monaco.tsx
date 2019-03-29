@@ -33,6 +33,60 @@ interface FoldingController extends monaco.editor.IEditorContribution {
 }
 
 
+class PythonCompletionProvider implements monaco.languages.CompletionItemProvider {
+    constructor(public editor: Editor) {
+    }
+
+    triggerCharacters?: string[] = ["."];
+
+    kindMap = {}
+    private tsKindToMonacoKind(s: pxtc.SymbolKind): monaco.languages.CompletionItemKind {
+        switch (s) {
+            case pxtc.SymbolKind.Method: return monaco.languages.CompletionItemKind.Method;
+            case pxtc.SymbolKind.Property: return monaco.languages.CompletionItemKind.Property;
+            case pxtc.SymbolKind.Function: return monaco.languages.CompletionItemKind.Function;
+            case pxtc.SymbolKind.Variable: return monaco.languages.CompletionItemKind.Variable;
+            case pxtc.SymbolKind.Module: return monaco.languages.CompletionItemKind.Module;
+            case pxtc.SymbolKind.Enum: return monaco.languages.CompletionItemKind.Class;
+            case pxtc.SymbolKind.EnumMember: return monaco.languages.CompletionItemKind.Enum;
+            case pxtc.SymbolKind.Class: return monaco.languages.CompletionItemKind.Class;
+            case pxtc.SymbolKind.Interface: return monaco.languages.CompletionItemKind.Interface;
+            default: return monaco.languages.CompletionItemKind.Text;
+        }
+    }
+
+    /**
+     * Provide completion items for the given position and document.
+     */
+    provideCompletionItems(model: monaco.editor.IReadOnlyModel, position: monaco.Position, token: monaco.CancellationToken):
+        monaco.languages.CompletionItem[] | monaco.Thenable<monaco.languages.CompletionItem[]> | monaco.languages.CompletionList | monaco.Thenable<monaco.languages.CompletionList> {
+        const offset = model.getOffsetAt(position);
+        const source = model.getValue();
+        const fileName = this.editor.currFile.name;
+        return compiler.completionsAsync(fileName, offset, source)
+            .then(completions => {
+                const items = pxt.Util.values(completions.entries || {}).map(si => {
+                    return {
+                        label: completions.isMemberCompletion ? si.pyName : si.pyQName,
+                        kind: this.tsKindToMonacoKind(si.kind),
+                        documentation: si.attributes.jsDoc,
+                        detail: si.pySnippet
+                    } as monaco.languages.CompletionItem;
+                })
+                return items;
+            });
+    }
+    /**
+     * Given a completion item fill in more data, like [doc-comment](#CompletionItem.documentation)
+     * or [details](#CompletionItem.detail).
+     *
+     * The editor will only resolve a completion item once.
+     */
+    resolveCompletionItem(item: monaco.languages.CompletionItem, token: monaco.CancellationToken): monaco.languages.CompletionItem | monaco.Thenable<monaco.languages.CompletionItem> {
+        return item;
+    }
+}
+
 export class Editor extends toolboxeditor.ToolboxEditor {
     editor: monaco.editor.IStandaloneCodeEditor;
     currFile: pkg.File;
@@ -107,7 +161,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             const failedAsync = (file: string, programTooLarge = false) => {
                 core.cancelAsyncLoading("switchtoblocks");
                 this.forceDiagnosticsUpdate();
-                return this.showConversionFailedDialog(file, programTooLarge);
+                return this.showBlockConversionFailedDialog(file, programTooLarge);
             }
 
             // might be undefined
@@ -180,7 +234,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         core.showLoadingAsync("switchtoblocks", lf("switching to blocks..."), promise).done();
     }
 
-    public showConversionFailedDialog(blockFile: string, programTooLarge: boolean): Promise<void> {
+    public showBlockConversionFailedDialog(blockFile: string, programTooLarge: boolean): Promise<void> {
         const isPython = this.fileType == pxt.editor.FileType.Python;
         const tickLang = isPython ? "python" : "typescript";
 
@@ -506,6 +560,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.hideFlyout();
             })
 
+            monaco.languages.registerCompletionItemProvider("python", new PythonCompletionProvider(this));
+
             this.editorViewZones = [];
 
             this.setupToolbox(editorArea);
@@ -686,9 +742,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.parent.setState({ hideEditorFloats: false });
     }
 
-    private updateToolbox() {
+    updateToolbox() {
         let appTheme = pxt.appTarget.appTheme;
-        if (!appTheme.monacoToolbox || pxt.shell.isReadOnly()) return;
+        if (!appTheme.monacoToolbox || pxt.shell.isReadOnly() || !this.editor) return;
         // Move the monaco editor to make room for the toolbox div
         //this.editor.getLayoutInfo().glyphMarginLeft = 200;
         this.editor.layout();
@@ -1481,7 +1537,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (fn.snippet === undefined)
             return undefined;
         const qName = fn.qName;
-        const snippetName = (isPython ? fn.pySnippetName : undefined) || fn.snippetName || fn.name;
+        const snippetName = (isPython ? (fn.pySnippetName || fn.pyName) : undefined) || fn.snippetName || fn.name;
 
         let monacoBlockArea = document.createElement('div');
         monacoBlockArea.className = `monacoBlock ${isDisabled ? 'monacoDisabledBlock' : ''}`;

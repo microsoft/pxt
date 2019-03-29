@@ -35,33 +35,35 @@ ii = img("""
 """)
 hbuf = hex("a007")
 hbuf2 = b'\xB0\x07'
-asteroids = [sprites.space.spaceSmallAsteroid1, sprites.space.spaceSmallAsteroid0, sprites.space.spaceAsteroid0, sprites.space.spaceAsteroid1, sprites.space.spaceAsteroid4, sprites.space.spaceAsteroid3]
-ship = sprites.create(sprites.space.spaceRedShip, SpriteKind.Player)
-ship.setFlag(SpriteFlag.StayInScreen, True)
+asteroids = [sprites.space.space_small_asteroid1, sprites.space.space_small_asteroid0, sprites.space.space_asteroid0, sprites.space.space_asteroid1, sprites.space.space_asteroid4, sprites.space.space_asteroid3]
+ship = sprites.create(sprites.space.space_red_ship, SpriteKind.Player)
+ship.set_flag(SpriteFlag.STAY_IN_SCREEN, True)
 ship.bottom = 120
-controller.moveSprite(ship, 100, 100)
-info.setLife(3)
+controller.move_sprite(ship, 100, 100)
+info.set_life(3)
 
-def playerDamage(sprite, otherSprite):
-    scene.cameraShake(4, 500)
-    otherSprite.destroy(effects.disintegrate)
-    sprite.startEffect(effects.fire, 200)
-    info.changeLifeBy(-1)
-sprites.onOverlap(SpriteKind.Player, SpriteKind.Enemy, playerDamage)
+def player_damage(sprite, other_sprite):
+    scene.camera_shake(4, 500)
+    other_sprite.destroy(effects.disintegrate)
+    sprite.start_effect(effects.fire, 200)
+    info.change_life_by(-1)
+sprites.on_overlap(SpriteKind.Player, SpriteKind.Enemy, player_damage)
+if False:
+  player_damage(ship, ship)
 
-def enemyDamage(sprite:Sprite, otherSprite:Sprite):
+def enemy_damage(sprite:Sprite, other_sprite:Sprite):
     sprite.destroy()
-    otherSprite.destroy(effects.disintegrate)
-    info.changeScoreBy(1)
-sprites.onOverlap(SpriteKind.Projectile, SpriteKind.Enemy, enemyDamage)
+    other_sprite.destroy(effects.disintegrate)
+    info.change_score_by(1)
+sprites.on_overlap(SpriteKind.Projectile, SpriteKind.Enemy, enemy_damage)
 
 def shoot():
-    projectile = sprites.createProjectileFromSprite(sprites.food.smallApple, ship, 0, -140)
-    projectile.startEffect(effects.coolRadial, 100) 
-controller.A.onEvent(ControllerButtonEvent.Pressed, shoot)
+    projectile = sprites.create_projectile_from_sprite(sprites.food.small_apple, ship, 0, -140)
+    projectile.start_effect(effects.cool_radial, 100) 
+controller.A.on_event(ControllerButtonEvent.PRESSED, shoot)
 
-def spawnEnemy():
-    projectile = sprites.createProjectileFromSide(asteroids[Math.randomRange(0, asteroids.length - 1)], 0, 75)
-    projectile.setKind(SpriteKind.Enemy)
-    projectile.x = Math.randomRange(10, 150)
-game.onUpdateInterval(500, spawnEnemy)
+def spawn_enemy():
+    projectile = sprites.create_projectile_from_side(asteroids[math.random_range(0, asteroids.length - 1)], 0, 75)
+    projectile.set_kind(SpriteKind.Enemy)
+    projectile.x = math.random_range(10, 150)
+game.on_update_interval(500, spawn_enemy)

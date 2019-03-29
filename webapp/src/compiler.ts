@@ -160,6 +160,14 @@ export function py2tsAsync(): Promise<{ generated: pxt.Map<string>, diagnostics:
         })
 }
 
+export function completionsAsync(fileName: string, position: number, fileContent?: string): Promise<pxtc.CompletionInfo> {
+    return workerOpAsync("getCompletions", {
+        fileName,
+        fileContent,
+        position
+    });
+}
+
 export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo, oldWorkspace?: Blockly.Workspace, blockFile?: string): Promise<pxtc.CompileResult> {
     let trg = pkg.mainPkg.getTargetOptions()
     return pkg.mainPkg.getCompileOptionsAsync(trg)

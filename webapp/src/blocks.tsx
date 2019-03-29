@@ -579,7 +579,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (!immediate) this.toolbox.showLoading();
     }
 
-    updateToolbox(debugging: boolean) {
+    updateToolbox() {
+        if (!this.debuggerToolboxDiv) return; // nothing to do here
+
+        const debugging = !!this.parent.state.debugging;
         let debuggerToolbox = debugging ? <div>
             <debug.DebuggerToolbar parent={this.parent} />
             <debug.DebuggerVariables ref={this.handleDebuggerVariablesRef} parent={this.parent} apisByQName={this.blockInfo.apis.byQName} />
@@ -604,7 +607,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     showFunctionsFlyout() {
-            this.showFlyoutInternal_(Blockly.Functions.flyoutCategory(this.editor), "functions");
+        this.showFlyoutInternal_(Blockly.Functions.flyoutCategory(this.editor), "functions");
     }
 
     getViewState() {
@@ -1546,5 +1549,17 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             button.callback();
         })
         return [pxt.blocks.createFlyoutButton(button.attributes.blockId, button.attributes.label)];
+    }
+
+    updateBreakpoints() {
+        if (!this.editor) return; // not loaded yet
+
+        const debugging = !!this.parent.state.debugging;
+        const blocks = this.editor.getAllBlocks();
+        blocks.forEach(block => {
+            if (block.nextConnection && block.previousConnection) {
+                block.enableBreakpoint(debugging);
+            }
+        });
     }
 }

@@ -71,7 +71,7 @@ namespace pxt {
     let exceptionLogger: TelemetryQueue<any, string, Map<string>>;
 
     export function initAnalyticsAsync() {
-        if (isNativeApp()) {
+        if (isNativeApp() || shouldHideCookieBanner()) {
             initializeAppInsightsInternal(true);
             return;
         }
@@ -271,6 +271,21 @@ namespace pxt {
         const isPxtElectron = hasWindow && !!(window as any).pxtElectron;
         const isCC = hasWindow && !!(window as any).ipcRenderer || /ipc=1/.test(location.hash) || /ipc=1/.test(location.search); // In WKWebview, ipcRenderer is injected later, so use the URL query
         return isUwp || isPxtElectron || isCC;
+    }
+    /**
+     * Checks whether we should hide the cookie banner
+     */
+    function shouldHideCookieBanner(): boolean {
+        //We don't want a cookie notification when embedded in editor controllers, we'll use the url to determine that
+        const noCookieBanner = isIFrame() && /nocookiebanner=1/i.test(window.location.href)
+        return noCookieBanner;
+    }
+    function isIFrame(): boolean {
+        try {
+            return window && window.self !== window.top;
+        } catch (e) {
+            return false;
+        }
     }
     /**
      * checks for sandbox
