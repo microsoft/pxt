@@ -337,7 +337,8 @@ namespace ts.pxtc {
 
         const files: pxt.Map<string> = {};
         const infos = Util.values(apiInfo.byQName);
-        const enumMembers = infos.filter(si => si.kind == SymbolKind.EnumMember).sort(compareSymbol);
+        const enumMembers = infos.filter(si => si.kind == SymbolKind.EnumMember)
+            .sort(compareSymbols);
 
         const locStrings: pxt.Map<string> = {};
         const jsdocStrings: pxt.Map<string> = {};
@@ -390,19 +391,39 @@ namespace ts.pxtc {
         mapLocs(locStrings, "");
         mapLocs(jsdocStrings, "-jsdoc");
         return files;
-
-        function hasBlock(sym: SymbolInfo): boolean {
-            return !!sym.attributes.block && !!sym.attributes.blockId;
-        }
-
-        function compareSymbol(l: SymbolInfo, r: SymbolInfo): number {
-            let c = -(hasBlock(l) ? 1 : -1) + (hasBlock(r) ? 1 : -1);
-            if (c) return c;
-            c = -(l.attributes.weight || 50) + (r.attributes.weight || 50);
-            if (c) return c;
-            return U.strcmp(l.name, r.name);
-        }
     }
+
+    export function hasBlock(sym: SymbolInfo): boolean {
+        return !!sym.attributes.block && !!sym.attributes.blockId;
+    }
+
+    let symbolKindWeight: pxt.Map<number>;
+    export function compareSymbols(l: SymbolInfo, r: SymbolInfo): number {
+        let c = -(hasBlock(l) ? 1 : -1) + (hasBlock(r) ? 1 : -1);
+        if (c) return c;
+
+        if (!symbolKindWeight) {
+            symbolKindWeight = {};
+            symbolKindWeight[SymbolKind.Variable] = 100;
+            symbolKindWeight[SymbolKind.Function] = 99;
+            symbolKindWeight[SymbolKind.Property] = 98;
+            symbolKindWeight[SymbolKind.Method] = 97;
+            symbolKindWeight[SymbolKind.Module] = 90
+            symbolKindWeight[SymbolKind.Class] = 89;
+            symbolKindWeight[SymbolKind.Enum] = 81;
+            symbolKindWeight[SymbolKind.EnumMember] = 80;
+        }
+
+        // favor functions
+        c = -(symbolKindWeight[l.kind] || 0) + (symbolKindWeight[r.kind] || 0);
+        if (c) return c;
+
+        c = -(l.attributes.weight || 50) + (r.attributes.weight || 50);
+        if (c) return c;
+
+        return U.strcmp(l.name, r.name);
+    }
+
 
     export function getApiInfo(opts: CompileOptions, program: Program, legacyOnly = false): ApisInfo {
         return internalGetApiInfo(opts, program, legacyOnly).apis;
@@ -561,6 +582,7 @@ namespace ts.pxtc {
         return typechecker.getFullyQualifiedName(symbol);
     }
 
+    /*
     export function fillCompletionEntries(program: Program, symbols: Symbol[], r: CompletionInfo, apiInfo: ApisInfo, opts: CompileOptions) {
         const typechecker = program.getTypeChecker()
 
@@ -588,7 +610,7 @@ namespace ts.pxtc {
 
             r.entries[qName] = si;
         }
-    }
+    }*/
 }
 
 
@@ -752,8 +774,9 @@ namespace ts.pxtc.service {
 
             //console.log(v.fileContent.slice(v.position - 20, v.position) + "<X>" + v.fileContent.slice(v.position, v.position + 20))
 
+            const entries: pxt.Map<SymbolInfo> = {};
             const r: CompletionInfo = {
-                entries: {},
+                entries: [],
                 isMemberCompletion: dotIdx != -1,
                 isNewIdentifierLocation: true,
                 isTypeLocation: false
@@ -791,13 +814,12 @@ namespace ts.pxtc.service {
 
             for (let nm of keys) {
                 const si = lastApiInfo.apis.byQName[nm]
-                if (
-                    /^__/.test(si.name) || // ignore members starting with __
+                if (/^__/.test(si.name) || // ignore members starting with __
                     /^__/.test(si.namespace) || // ignore namespaces starting with _-
                     si.attributes.hidden ||
                     si.attributes.deprecated
                 ) continue; // ignore 
-                r.entries[si.qName] = si
+                entries[si.qName] = si
                 const n = lastApiInfo.decls[nm];
                 if (isFunctionLike(n)) {
                     if (python)
@@ -807,6 +829,10 @@ namespace ts.pxtc.service {
                 }
             }
             //fillCompletionEntries(program, data.symbols, r, lastApiInfo.apis, host.opts)
+
+            // sort entries
+            r.entries = pxt.Util.values(entries);
+            r.entries.sort(compareSymbols);
 
             return r;
         },
