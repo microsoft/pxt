@@ -61,14 +61,17 @@ class PythonCompletionProvider implements monaco.languages.CompletionItemProvide
     provideCompletionItems(model: monaco.editor.IReadOnlyModel, position: monaco.Position, token: monaco.CancellationToken):
         monaco.languages.CompletionItem[] | monaco.Thenable<monaco.languages.CompletionItem[]> | monaco.languages.CompletionList | monaco.Thenable<monaco.languages.CompletionList> {
         const offset = model.getOffsetAt(position);
+        const source = model.getValue();
         const fileName = this.editor.currFile.name;
         // TODO python
-        return compiler.completionsAsync(fileName, offset)
+        return compiler.completionsAsync(fileName, offset, source)
             .then(completions => {
                 const items = pxt.Util.values(completions.entries || {}).map(si => {
                     return {
-                        label: si.name,
-                        kind: this.tsKindToMonacoKind(si.kind)
+                        label: completions.isMemberCompletion ? si.pyName : si.pyQName,
+                        kind: this.tsKindToMonacoKind(si.kind),
+                        documentation: si.attributes.jsDoc,
+                        detail: si.parameters ? "(" + si.parameters.map(p => p.name).join(", ") + ")" : "", // TODO improve this
                     } as monaco.languages.CompletionItem;
                 })
                 return items;

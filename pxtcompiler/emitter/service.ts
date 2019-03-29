@@ -714,7 +714,7 @@ namespace ts.pxtc.service {
         if (!opts.apisInfo && opts.target.preferredEditor == pxt.PYTHON_PROJECT_NAME) {
             if (!lastApiInfo)
                 lastApiInfo = internalGetApiInfo(opts, service.getProgram())
-            opts.apisInfo = lastApiInfo.apis
+            opts.apisInfo = U.clone(lastApiInfo.apis)
         }
     }
 
@@ -734,20 +734,27 @@ namespace ts.pxtc.service {
                 host.setFile(v.fileName, v.fileContent);
             }
 
+            //console.log(v.fileContent.slice(v.position - 20, v.position) + "<X>" + v.fileContent.slice(v.position, v.position + 20))
+
             const program = service.getProgram() // this synchornizes host data as well
             // TODO python
-            const data: InternalCompletionData =  undefined; //(service as any).getCompletionData(v.fileName, v.position);
+            //const data: InternalCompletionData =  undefined; //(service as any).getCompletionData(v.fileName, v.position);
 
-            if (!data) return {}
+            //if (!data) return {}
 
             const r: CompletionInfo = {
                 entries: {},
-                isMemberCompletion: data.isMemberCompletion,
-                isNewIdentifierLocation: data.isNewIdentifierLocation,
-                isTypeLocation: false // TODO
+                isMemberCompletion: false,
+                isNewIdentifierLocation: true,
+                isTypeLocation: false
             }
 
-            fillCompletionEntries(program, data.symbols, r, lastApiInfo.apis, host.opts)
+            for (let si of U.values(lastApiInfo.apis.byQName)) {
+                if (!r.isMemberCompletion && si.kind == SymbolKind.Method || si.kind == SymbolKind.Property)
+                    continue
+                r.entries[si.qName] = si
+            }
+            //fillCompletionEntries(program, data.symbols, r, lastApiInfo.apis, host.opts)
 
             return r;
         },
@@ -1211,7 +1218,7 @@ namespace ts.pxtc.service {
                 const n = "fn" + (findex++) + functionArgument;
                 preStmt += `def ${n}:\n  ${returnValue || "pass"}\n`;
                 return n.replace(/\(\)$/, '');
-            } else  return `function ${functionArgument} {\n    ${returnValue}\n}`;
+            } else return `function ${functionArgument} {\n    ${returnValue}\n}`;
         }
 
         function emitFn(n: string): string {
