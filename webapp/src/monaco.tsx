@@ -359,11 +359,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     saveToTypeScriptAsync() {
         if (this.fileType == pxt.editor.FileType.Python)
             return this.convertPythonToTypeScriptAsync();
-        return Promise.resolve("")
+        return Promise.resolve(undefined)
     }
 
     convertPythonToTypeScriptAsync(): Promise<string> {
-        if (!this.currFile) return Promise.resolve("");
+        if (!this.currFile) return Promise.resolve(undefined);
         const tsName = this.currFile.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)
         return compiler.py2tsAsync()
             .then(res => {
