@@ -1159,6 +1159,9 @@ namespace ts.pxtc.service {
             const type = checker && checker.getTypeAtLocation(param);
             if (type) {
                 if (isObjectType(type)) {
+                    const typeSymbol = apis[checker.getFullyQualifiedName(type.symbol)];
+                    const snip = typeSymbol && typeSymbol.attributes && (python ? typeSymbol.attributes.pySnippet : typeSymbol.attributes.snippet);
+                    if (snip) return snip;
                     if (type.objectFlags & ts.ObjectFlags.Anonymous) {
                         const sigs = checker.getSignaturesOfType(type, ts.SignatureKind.Call);
                         if (sigs && sigs.length) {
