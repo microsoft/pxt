@@ -959,6 +959,12 @@ declare module Blockly {
             isMovable(): boolean;
     
             /**
+             * Get whether we should persist this block as movable or not.
+             * @return {boolean} True if movable.
+             */
+            isMovablePersisted(): boolean;
+    
+            /**
              * Set whether this block is movable or not.
              * @param {boolean} movable True if movable.
              */
@@ -993,6 +999,12 @@ declare module Blockly {
              * @return {boolean} True if editable.
              */
             isEditable(): boolean;
+    
+            /**
+             * Get whether we should persist this block as editable.
+             * @return {boolean} True if editable.
+             */
+            isEditablePersisted(): boolean;
     
             /**
              * Set whether this block is editable or not.
@@ -16703,6 +16715,12 @@ declare module Blockly {
              * @return {?Blockly.VariableMap} The  variable map.
              */
             getVariableMap(): Blockly.VariableMap;
+    
+            /**
+             * Sets the debugMode option in the workspace.
+             * @param {boolean} debugMode value to set to this option.
+             */
+            setDebugModeOption(debugMode: boolean): void;
     } 
     
 }
