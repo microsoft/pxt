@@ -66,7 +66,10 @@ namespace helpers {
     }
 
     export function arrayJoin<T>(arr: T[], sep?: string): string {
-        sep = sep || ",";
+        if (sep === undefined || sep === null) {
+            sep = ",";
+        }
+
         let r = "";
         let len = arr.length // caching this seems to match V8
         for (let i = 0; i < len; ++i) {
