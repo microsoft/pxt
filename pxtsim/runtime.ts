@@ -626,10 +626,20 @@ namespace pxsim {
                 if (this.running) {
                     this.startTime = U.now();
                     this.startTimeUs = U.perfNowUs();
-                    Runtime.postMessage(<SimulatorStateMessage>{ type: 'status', runtimeid: this.id, state: 'running' });
+                    Runtime.postMessage(<SimulatorStateMessage>{
+                        type: 'status',
+                        frameid: Embed.frameid,
+                        runtimeid: this.id,
+                        state: 'running'
+                    });
                 } else {
                     this.stopRecording();
-                    Runtime.postMessage(<SimulatorStateMessage>{ type: 'status', runtimeid: this.id, state: 'killed' });
+                    Runtime.postMessage(<SimulatorStateMessage>{
+                        type: 'status',
+                        frameid: Embed.frameid,
+                        runtimeid: this.id,
+                        state: 'killed'
+                    });
                 }
                 if (this.stateChanged) this.stateChanged();
             }
