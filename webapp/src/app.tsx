@@ -1708,6 +1708,15 @@ export class ProjectView
         promise = promise
             .then(() => this.editor.saveToTypeScriptAsync())
             .then((src) => {
+                if (src === undefined && open) { // failed to convert
+                    return core.confirmAsync({
+                        header: lf("Oops, there is a problem converting your code."),
+                        body: lf("We are unable to convert your Python code back to JavaScript."),
+                        agreeLbl: lf("Done"),
+                        agreeClass: "cancel",
+                        agreeIcon: "cancel",
+                    }).then(b => { })
+                }
                 if (src === undefined
                     || this.editorFile.name == this.editorFile.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME))
                     return Promise.resolve();

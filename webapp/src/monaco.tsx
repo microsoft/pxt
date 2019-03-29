@@ -159,7 +159,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             const failedAsync = (file: string, programTooLarge = false) => {
                 core.cancelAsyncLoading("switchtoblocks");
                 this.forceDiagnosticsUpdate();
-                return this.showConversionFailedDialog(file, programTooLarge);
+                return this.showBlockConversionFailedDialog(file, programTooLarge);
             }
 
             // might be undefined
@@ -232,7 +232,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         core.showLoadingAsync("switchtoblocks", lf("switching to blocks..."), promise).done();
     }
 
-    public showConversionFailedDialog(blockFile: string, programTooLarge: boolean): Promise<void> {
+    public showBlockConversionFailedDialog(blockFile: string, programTooLarge: boolean): Promise<void> {
         const isPython = this.fileType == pxt.editor.FileType.Python;
         const tickLang = isPython ? "python" : "typescript";
 
