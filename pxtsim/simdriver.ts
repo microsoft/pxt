@@ -153,7 +153,7 @@ namespace pxsim {
                         ? this.stoppedClass : this.invalidatedClass);
                     if (!this.options.autoRun) {
                         icon.style.display = '';
-                        icon.className = 'video play icon';
+                        icon.className = 'videoplay xicon icon';
                     } else
                         icon.style.display = 'none';
                     loader.style.display = 'none';
@@ -259,7 +259,7 @@ namespace pxsim {
             wrapper.appendChild(frame);
 
             const i = document.createElement("i");
-            i.className = "video play icon";
+            i.className = "videoplay xicon icon";
             i.style.display = "none";
             i.onclick = (ev) => {
                 ev.preventDefault();
