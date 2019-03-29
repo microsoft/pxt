@@ -579,7 +579,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (!immediate) this.toolbox.showLoading();
     }
 
-    updateToolbox(debugging: boolean) {
+    updateToolbox() {
+        const debugging = !!this.parent.state.debugging;
         let debuggerToolbox = debugging ? <div>
             <debug.DebuggerToolbar parent={this.parent} />
             <debug.DebuggerVariables ref={this.handleDebuggerVariablesRef} parent={this.parent} apisByQName={this.blockInfo.apis.byQName} />
@@ -1546,5 +1547,17 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             button.callback();
         })
         return [pxt.blocks.createFlyoutButton(button.attributes.blockId, button.attributes.label)];
+    }
+
+    updateBreakpoints() {
+        if (!this.editor) return; // not loaded yet
+
+        const debugging = !!this.parent.state.debugging;
+        const blocks = this.editor.getAllBlocks();
+        blocks.forEach(block => {
+            if (block.nextConnection && block.previousConnection) {
+                block.enableBreakpoint(debugging);
+            }
+        });
     }
 }

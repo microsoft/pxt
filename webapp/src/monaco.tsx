@@ -743,7 +743,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.parent.setState({ hideEditorFloats: false });
     }
 
-    private updateToolbox() {
+    updateToolbox() {
         let appTheme = pxt.appTarget.appTheme;
         if (!appTheme.monacoToolbox || pxt.shell.isReadOnly()) return;
         // Move the monaco editor to make room for the toolbox div
