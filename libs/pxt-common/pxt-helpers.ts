@@ -65,14 +65,13 @@ namespace helpers {
         return arr.removeAt(0);
     }
 
-    export function arrayJoin<T>(arr: T[], sep?: string): string {
-        sep = sep || ",";
+    export function arrayJoin<T>(arr: T[], sep: string): string {
         let r = "";
         let len = arr.length // caching this seems to match V8
         for (let i = 0; i < len; ++i) {
             if (i > 0 && sep)
                 r += sep;
-            r += arr[i] == undefined ? "" : arr[i];
+            r += arr[i] || "";
         }
         return r;
     }
