@@ -82,7 +82,7 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
         const cardDiv = <div className={`ui card ${color} ${card.onClick ? "link" : ''} ${className ? className : ''}`}
             role={card.role} aria-selected={card.role === "option" ? "true" : undefined} aria-label={card.ariaLabel || card.title} title={card.title}
             onClick={clickHandler} tabIndex={card.onClick ? card.tabIndex || 0 : null} onKeyDown={card.onClick ? sui.fireClickOnEnter : null}>
-            {card.header || card.blocks || card.javascript || card.hardware || card.software || card.any ?
+            {card.header || card.blocks || card.javascript || card.hardware || card.software || card.any || card.tutorialLength ?
                 <div key="header" className={"ui content " + (card.responsive ? " tall desktop only" : "")}>
                     <div className="right floated meta">
                         {card.any ? (<sui.Icon key="costany" icon="ui grey circular label tiny">{card.any > 0 ? card.any : null} </sui.Icon>) : null}
@@ -90,6 +90,7 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
                         {repeat(card.javascript, (k) => <sui.Icon key={"costjs" + k} icon="align left blue" />)}
                         {repeat(card.hardware, (k) => <sui.Icon key={"costhardware" + k} icon="certificate black" />)}
                         {repeat(card.software, (k) => <sui.Icon key={"costsoftware" + k} icon="square teal" />)}
+                        {card.tutorialLength ? <span className="ui label">{lf("{0}/{1}", card.tutorialStep || 0, card.tutorialLength)}</span> : undefined}
                     </div>
                     {card.header}
                 </div> : null}
