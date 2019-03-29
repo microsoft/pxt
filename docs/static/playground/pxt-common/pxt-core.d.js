@@ -81,7 +81,7 @@ interface Array<T> {
       * @param sep the string separator
       */
     //% helper=arrayJoin weight=40
-    join(sep: string): string;
+    join(sep?: string): string;
     
     /**
       * Tests whether at least one element in the array passes the test implemented by the provided function.
