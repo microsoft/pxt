@@ -198,6 +198,24 @@ body {
     text-align: center;
 }
 
+#simulators .ui.embed .icon.xicon::before {
+    transform: translateX(-77%) translateY(-120%);
+    transition: opacity .25s ease,color .25s ease;
+}
+
+#simulators .ui.embed .icon.xicon::after {
+    background: rgba(0,0,0,.3);
+    transition: opacity .25s ease;
+}
+
+#simulators .ui.embed .icon.xicon:hover:before {
+    color: @green;
+}
+
+#simulators .ui.embed .icon.xicon:hover:after {
+    opacity: 0.6;
+}
+
 /* Simulator */
 div.simframe {
     border:none;
