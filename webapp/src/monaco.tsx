@@ -104,8 +104,27 @@ class SignatureHelper implements monaco.languages.SignatureHelpProvider {
      * Provide help for the signature at the given position and document.
      */
     provideSignatureHelp(model: monaco.editor.IReadOnlyModel, position: monaco.Position, token: monaco.CancellationToken): monaco.languages.SignatureHelp | monaco.Thenable<monaco.languages.SignatureHelp> {
-        // TODO python
-        return undefined;
+        const offset = model.getOffsetAt(position);
+        const source = model.getValue();
+        const fileName = this.editor.currFile.name;
+        return compiler.syntaxInfoAsync("signature", fileName, offset, source)
+            .then(r => {
+                let sym = r.symbols ? r.symbols[0] : null
+                if (!sym || !sym.parameters) return null;
+                const res: monaco.languages.SignatureHelp = {
+                    signatures: [{
+                        label: sym.name,
+                        documentation: sym.attributes.jsDoc,
+                        parameters: sym.parameters.map(p => ({
+                            label: p.name,
+                            documentation: p.name + ": " + p.type
+                        }))
+                    }],
+                    activeSignature: 0,
+                    activeParameter: r.auxResult
+                }
+                return res
+            });
     }
 }
 
@@ -120,7 +139,6 @@ class HoverProvider implements monaco.languages.HoverProvider {
      * to the word range at the position when omitted.
      */
     provideHover(model: monaco.editor.IReadOnlyModel, position: monaco.Position, token: monaco.CancellationToken): monaco.languages.Hover | monaco.Thenable<monaco.languages.Hover> {
-
         const offset = model.getOffsetAt(position);
         const source = model.getValue();
         const fileName = this.editor.currFile.name;

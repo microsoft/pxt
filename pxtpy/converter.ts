@@ -1408,10 +1408,14 @@ namespace pxt.py {
         return n
     }
 
+    function nodeInInfoRange(n: AST) {
+        return syntaxInfo && n.startPos <= syntaxInfo.position && syntaxInfo.position <= n.endPos
+    }
+
     function markInfoNode(n: AST, tp: pxtc.InfoType) {
         if (currIteration > 100 && syntaxInfo &&
             infoNode == null && (syntaxInfo.type == tp || syntaxInfo.type == "symbol") &&
-            n.startPos <= syntaxInfo.position && syntaxInfo.position <= n.endPos) {
+            nodeInInfoRange(n)) {
             infoNode = n
             infoScope = currentScope()
         }
@@ -1595,8 +1599,22 @@ namespace pxt.py {
                 }
             }
 
-            if (fun)
+            if (!infoNode && syntaxInfo && syntaxInfo.type == "signature" && nodeInInfoRange(n)) {
+                infoNode = n
+                infoScope = currentScope()
+                syntaxInfo.auxResult = 0
+                // foo, bar
+                for (let i = 0; i < orderedArgs.length; ++i) {
+                    if (orderedArgs[i] && syntaxInfo.position <= orderedArgs[i].endPos) {
+                        syntaxInfo.auxResult = i
+                    }
+                }
+            }
+
+            if (fun) {
                 unifyTypeOf(n, fun.pyRetType)
+                n.symbolInfo = fun
+            }
 
             let fn = methName ? B.mkInfix(expr(recv), ".", B.mkText(methName)) : expr(n.func)
 
@@ -1888,16 +1906,15 @@ namespace pxt.py {
             }
         }
 
-        if (syntaxInfo) {
-            syntaxInfo.symbols = []
+        if (syntaxInfo) syntaxInfo.symbols = []
+
+        if (syntaxInfo && infoNode) {
             const apis = U.values(externalApis).concat(U.values(internalApis))
 
-            if (infoNode) {
-                syntaxInfo.beginPos = infoNode.startPos
-                syntaxInfo.endPos = infoNode.endPos
-            }
+            syntaxInfo.beginPos = infoNode.startPos
+            syntaxInfo.endPos = infoNode.endPos
 
-            if (syntaxInfo.type == "memberCompletion" && infoNode && infoNode.kind == "Attribute") {
+            if (syntaxInfo.type == "memberCompletion" && infoNode.kind == "Attribute") {
                 const attr = infoNode as Attribute
                 const tp = typeOf(attr.value)
                 if (tp.moduleType) {
@@ -1914,8 +1931,7 @@ namespace pxt.py {
                         }
                     }
                 }
-            }
-            if (syntaxInfo.type == "identifierCompletion" && infoNode) {
+            } else if (syntaxInfo.type == "identifierCompletion") {
                 let existing: SymbolInfo[] = []
                 const addSym = (v: SymbolInfo) => {
                     if (isGlobalSymbol(v) && existing.indexOf(v) < 0)
@@ -1927,12 +1943,12 @@ namespace pxt.py {
                         U.values(s.vars).forEach(addSym)
                 }
                 apis.forEach(addSym)
-            }
-            if (syntaxInfo.type == "symbol" && infoNode) {
+            } else {
                 let sym = (infoNode as Expr).symbolInfo
                 if (sym)
                     syntaxInfo.symbols.push(sym)
             }
+
             syntaxInfo.symbols = syntaxInfo.symbols.map(cleanSymbol)
         }
 
