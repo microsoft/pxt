@@ -751,6 +751,22 @@ namespace ts.pxtc.service {
             host.setOpts(v.options)
         },
 
+        syntaxInfo: v => {
+            let src: string = v.fileContent
+            if (v.fileContent) {
+                host.setFile(v.fileName, v.fileContent);
+            }
+            let opts = U.flatClone(host.opts)
+            opts.fileSystem[v.fileName] = src
+            addApiInfo(opts);
+            opts.syntaxInfo = {
+                position: v.position,
+                type: v.infoType
+            };
+            (pxt as any).py.py2ts(opts)
+            return opts.syntaxInfo
+        },
+
         getCompletions: v => {
             let src: string = v.fileContent
             if (v.fileContent) {
@@ -794,10 +810,12 @@ namespace ts.pxtc.service {
             let opts = U.flatClone(host.opts)
             opts.fileSystem[v.fileName] = src
             addApiInfo(opts);
-            opts.infoPosition = complPosition;
-            opts.infoType = r.isMemberCompletion ? "memberCompletion" : "identifierCompletion";
+            opts.syntaxInfo = {
+                position: complPosition,
+                type: r.isMemberCompletion ? "memberCompletion" : "identifierCompletion"
+            };
             (pxt as any).py.py2ts(opts)
-            let symbols = opts.infoSymbols || []
+            let symbols = opts.syntaxInfo.symbols || []
 
             for (let si of symbols) {
                 if (

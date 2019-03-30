@@ -1302,6 +1302,7 @@ namespace ts.pxtc.service {
     export interface OpArg {
         fileName?: string;
         fileContent?: string;
+        infoType?: InfoType;
         position?: number;
         options?: CompileOptions;
         search?: SearchOptions;

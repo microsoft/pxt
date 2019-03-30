@@ -70,7 +70,7 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
                         label: this.python ? (completions.isMemberCompletion ? si.pyName : si.pyQName) : (completions.isMemberCompletion ? si.name : si.qName),
                         kind: this.tsKindToMonacoKind(si.kind),
                         documentation: si.attributes.jsDoc,
-                        detail: this.python ? si.pySnippet : si.pySnippet,
+                        detail: this.python ? si.pySnippet : si.snippet,
                         // force monaco to use our sorting
                         sortText: `${tosort(i)} ${this.python ? si.pySnippet : si.snippet}`
                     } as monaco.languages.CompletionItem;
@@ -79,9 +79,7 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
             });
 
         function tosort(i: number): string {
-            let s = i.toString();
-            while (s.length < 4) s = "0" + s;
-            return s;
+            return ("000" + i).slice(-4);
         }
     }
     /**
@@ -122,7 +120,20 @@ class HoverProvider implements monaco.languages.HoverProvider {
      * to the word range at the position when omitted.
      */
     provideHover(model: monaco.editor.IReadOnlyModel, position: monaco.Position, token: monaco.CancellationToken): monaco.languages.Hover | monaco.Thenable<monaco.languages.Hover> {
-        return undefined;
+
+        const offset = model.getOffsetAt(position);
+        const source = model.getValue();
+        const fileName = this.editor.currFile.name;
+        return compiler.syntaxInfoAsync("symbol", fileName, offset, source)
+            .then(r => {
+                let sym = r.symbols ? r.symbols[0] : null
+                if (!sym) return null;
+                const res: monaco.languages.Hover = {
+                    contents: [sym.pyQName + " " + sym.attributes.jsDoc],
+                    range: monaco.Range.fromPositions(model.getPositionAt(r.beginPos), model.getPositionAt(r.endPos))
+                }
+                return res
+            });
     }
 }
 

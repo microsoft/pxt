@@ -24,6 +24,7 @@ namespace pxt.py {
     let lastFile: string
     let diagnostics: pxtc.KsDiagnostic[]
     let compileOptions: pxtc.CompileOptions
+    let syntaxInfo: pxtc.SyntaxInfo
     let infoNode: AST
     let infoScope: ScopeDef
 
@@ -1284,6 +1285,7 @@ namespace pxt.py {
             } else {
                 n.isdef = false
             }
+            n.symbolInfo = curr
             unify(n, n.tsType, curr.pyRetType)
         }
 
@@ -1406,10 +1408,10 @@ namespace pxt.py {
         return n
     }
 
-    function handleCompletion(n: AST, tp: pxtc.InfoType) {
-        if (currIteration > 100 &&
-            infoNode == null && compileOptions.infoType == tp &&
-            n.startPos <= compileOptions.infoPosition && compileOptions.infoPosition <= n.endPos) {
+    function markInfoNode(n: AST, tp: pxtc.InfoType) {
+        if (currIteration > 100 && syntaxInfo &&
+            infoNode == null && (syntaxInfo.type == tp || syntaxInfo.type == "symbol") &&
+            n.startPos <= syntaxInfo.position && syntaxInfo.position <= n.endPos) {
             infoNode = n
             infoScope = currentScope()
         }
@@ -1636,16 +1638,19 @@ namespace pxt.py {
         Ellipsis: (n: py.Ellipsis) => exprTODO(n),
         Constant: (n: py.Constant) => exprTODO(n),
         Attribute: (n: py.Attribute) => {
+            let lhs = expr(n.value) // run it first, in case it wants to capture infoNode
             let part = typeOf(n.value)
             let fd = getTypeField(n.value, n.attr)
             let nm = n.attr
-            handleCompletion(n, "memberCompletion")
+            markInfoNode(n, "memberCompletion")
             if (fd) {
+                n.symbolInfo = fd
                 unify(n, n.tsType, fd.pyRetType)
                 nm = fd.name
             } else if (part.moduleType) {
                 let sym = lookupGlobalSymbol(part.moduleType.pyQName + "." + n.attr)
                 if (sym) {
+                    n.symbolInfo = sym
                     unifyTypeOf(n, symbolType(sym))
                     nm = sym.name
                 } else
@@ -1654,7 +1659,7 @@ namespace pxt.py {
                 if (currIteration > 2)
                     error(n, 9515, U.lf("unknown object type; cannot lookup attribute '{0}'", n.attr))
             }
-            return B.mkInfix(expr(n.value), ".", B.mkText(quoteStr(nm)))
+            return B.mkInfix(lhs, ".", B.mkText(quoteStr(nm)))
         },
         Subscript: (n: py.Subscript) => {
             if (n.slice.kind == "Index") {
@@ -1680,7 +1685,7 @@ namespace pxt.py {
         },
         Starred: (n: py.Starred) => B.mkGroup([B.mkText("... "), expr(n.value)]),
         Name: (n: py.Name) => {
-            handleCompletion(n, "identifierCompletion")
+            markInfoNode(n, "identifierCompletion")
 
             // shortcut, but should work
             if (n.id == "self" && ctx.currClass) {
@@ -1690,6 +1695,7 @@ namespace pxt.py {
 
             let v = lookupSymbol(n.id)
             if (v) {
+                n.symbolInfo = v
                 unify(n, n.tsType, symbolType(v))
                 if (v.isImport)
                     return quote(v.name) // it's import X = Y.Z.X, use X not Y.Z.X
@@ -1799,6 +1805,7 @@ namespace pxt.py {
         initApis(opts.apisInfo)
 
         compileOptions = opts
+        syntaxInfo = null
 
         if (!opts.generatedFiles)
             opts.generatedFiles = []
@@ -1848,6 +1855,7 @@ namespace pxt.py {
 
         resetPass(1000)
         infoNode = null
+        syntaxInfo = opts.syntaxInfo
         for (let m of modules) {
             try {
                 let nodes = toTS(m)
@@ -1880,42 +1888,52 @@ namespace pxt.py {
             }
         }
 
-        if (opts.infoType) {
-            let isMem = opts.infoType == "memberCompletion"
-            opts.infoSymbols = []
+        if (syntaxInfo) {
+            syntaxInfo.symbols = []
             const apis = U.values(externalApis).concat(U.values(internalApis))
-            if (opts.infoType == "memberCompletion" && infoNode && infoNode.kind == "Attribute") {
+
+            if (infoNode) {
+                syntaxInfo.beginPos = infoNode.startPos
+                syntaxInfo.endPos = infoNode.endPos
+            }
+
+            if (syntaxInfo.type == "memberCompletion" && infoNode && infoNode.kind == "Attribute") {
                 const attr = infoNode as Attribute
                 const tp = typeOf(attr.value)
                 if (tp.moduleType) {
                     for (let v of apis) {
                         if (!v.isInstance && v.namespace == tp.moduleType.qName) {
-                            opts.infoSymbols.push(v)
+                            syntaxInfo.symbols.push(v)
                         }
                     }
                 } else if (tp.classType) {
                     let types = tp.classType.extendsTypes.concat(tp.classType.qName)
                     for (let v of apis) {
                         if (v.isInstance && types.indexOf(v.namespace) >= 0) {
-                            opts.infoSymbols.push(v)
+                            syntaxInfo.symbols.push(v)
                         }
                     }
                 }
             }
-            if (opts.infoType == "identifierCompletion" && infoNode) {
+            if (syntaxInfo.type == "identifierCompletion" && infoNode) {
                 let existing: SymbolInfo[] = []
                 const addSym = (v: SymbolInfo) => {
                     if (isGlobalSymbol(v) && existing.indexOf(v) < 0)
-                        opts.infoSymbols.push(v)
+                        syntaxInfo.symbols.push(v)
                 }
-                existing = opts.infoSymbols.slice()
+                existing = syntaxInfo.symbols.slice()
                 for (let s = infoScope; s; s = s.parent) {
                     if (s.vars)
                         U.values(s.vars).forEach(addSym)
                 }
                 apis.forEach(addSym)
             }
-            opts.infoSymbols = opts.infoSymbols.map(cleanSymbol)
+            if (syntaxInfo.type == "symbol" && infoNode) {
+                let sym = (infoNode as Expr).symbolInfo
+                if (sym)
+                    syntaxInfo.symbols.push(sym)
+            }
+            syntaxInfo.symbols = syntaxInfo.symbols.map(cleanSymbol)
         }
 
         return {

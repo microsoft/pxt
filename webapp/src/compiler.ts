@@ -168,6 +168,15 @@ export function completionsAsync(fileName: string, position: number, fileContent
     });
 }
 
+export function syntaxInfoAsync(infoType: pxtc.InfoType, fileName: string, position: number, fileContent: string): Promise<pxtc.SyntaxInfo> {
+    return workerOpAsync("syntaxInfo", {
+        fileName,
+        fileContent,
+        position,
+        infoType
+    });
+}
+
 export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo, oldWorkspace?: Blockly.Workspace, blockFile?: string): Promise<pxtc.CompileResult> {
     let trg = pkg.mainPkg.getTargetOptions()
     return pkg.mainPkg.getCompileOptionsAsync(trg)
