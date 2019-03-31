@@ -1561,5 +1561,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 block.enableBreakpoint(debugging);
             }
         });
+        this.editor.setDebugModeOption(debugging);
     }
 }
