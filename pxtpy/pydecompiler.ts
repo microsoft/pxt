@@ -67,6 +67,7 @@ function tsToPy(prog: ts.Program, filename: string): string {
     ///
     /// ENVIRONMENT
     ///
+    // TODO(dz): it's possible this parallel constructions isn't necessary if we can get the info we need from the semantic info
     function pushScope(): Scope {
         let prevScope = env[0]
         let newScope = cpyScope(prevScope) // TODO(dz) to copy or not to copy previous scope? Probably to not
