@@ -66,6 +66,7 @@ declare namespace pxt {
         };
         features?: string[];
         hidden?: boolean; // hide package from package selection dialog
+        skipLocalization?: boolean;
     }
 
     interface PackageExtension {
@@ -133,6 +134,9 @@ declare namespace pxt {
         software?: number;
         blocks?: number;
         javascript?: number;
+
+        tutorialStep?: number;
+        tutorialLength?: number;
 
         icon?: string;
         iconContent?: string; // Text instead of icon name

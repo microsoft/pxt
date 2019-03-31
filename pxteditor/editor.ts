@@ -50,7 +50,7 @@ namespace pxt.editor {
         projectName?: string;
         suppressPackageWarning?: boolean;
 
-        tutorialOptions?: TutorialOptions;
+        tutorialOptions?: pxt.tutorial.TutorialOptions;
         lightbox?: boolean;
 
         simState?: SimState;
@@ -94,7 +94,7 @@ namespace pxt.editor {
         filesOverride?: pxt.Map<string>;
         filters?: ProjectFilters;
         temporary?: boolean;
-        inTutorial?: boolean;
+        tutorial?: pxt.tutorial.TutorialOptions;
         dependencies?: pxt.Map<string>;
         tsOnly?: boolean;
     }
@@ -117,15 +117,6 @@ namespace pxt.editor {
         Hidden = 0,
         Visible = 1,
         Disabled = 2
-    }
-
-    export interface TutorialOptions {
-        tutorial?: string; // tutorial
-        tutorialName?: string; // tutorial title
-        tutorialReportId?: string; // if this tutorial was user generated, the report abuse id
-        tutorialStepInfo?: pxt.tutorial.TutorialStepInfo[];
-        tutorialStep?: number; // current tutorial page
-        tutorialReady?: boolean; // current tutorial page
     }
 
     export interface ModalDialogButton {

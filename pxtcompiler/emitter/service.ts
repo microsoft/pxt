@@ -337,7 +337,8 @@ namespace ts.pxtc {
 
         const files: pxt.Map<string> = {};
         const infos = Util.values(apiInfo.byQName);
-        const enumMembers = infos.filter(si => si.kind == SymbolKind.EnumMember).sort(compareSymbol);
+        const enumMembers = infos.filter(si => si.kind == SymbolKind.EnumMember)
+            .sort(compareSymbols);
 
         const locStrings: pxt.Map<string> = {};
         const jsdocStrings: pxt.Map<string> = {};
@@ -390,19 +391,39 @@ namespace ts.pxtc {
         mapLocs(locStrings, "");
         mapLocs(jsdocStrings, "-jsdoc");
         return files;
-
-        function hasBlock(sym: SymbolInfo): boolean {
-            return !!sym.attributes.block && !!sym.attributes.blockId;
-        }
-
-        function compareSymbol(l: SymbolInfo, r: SymbolInfo): number {
-            let c = -(hasBlock(l) ? 1 : -1) + (hasBlock(r) ? 1 : -1);
-            if (c) return c;
-            c = -(l.attributes.weight || 50) + (r.attributes.weight || 50);
-            if (c) return c;
-            return U.strcmp(l.name, r.name);
-        }
     }
+
+    export function hasBlock(sym: SymbolInfo): boolean {
+        return !!sym.attributes.block && !!sym.attributes.blockId;
+    }
+
+    let symbolKindWeight: pxt.Map<number>;
+    export function compareSymbols(l: SymbolInfo, r: SymbolInfo): number {
+        let c = -(hasBlock(l) ? 1 : -1) + (hasBlock(r) ? 1 : -1);
+        if (c) return c;
+
+        if (!symbolKindWeight) {
+            symbolKindWeight = {};
+            symbolKindWeight[SymbolKind.Variable] = 100;
+            symbolKindWeight[SymbolKind.Function] = 99;
+            symbolKindWeight[SymbolKind.Property] = 98;
+            symbolKindWeight[SymbolKind.Method] = 97;
+            symbolKindWeight[SymbolKind.Module] = 90
+            symbolKindWeight[SymbolKind.Class] = 89;
+            symbolKindWeight[SymbolKind.Enum] = 81;
+            symbolKindWeight[SymbolKind.EnumMember] = 80;
+        }
+
+        // favor functions
+        c = -(symbolKindWeight[l.kind] || 0) + (symbolKindWeight[r.kind] || 0);
+        if (c) return c;
+
+        c = -(l.attributes.weight || 50) + (r.attributes.weight || 50);
+        if (c) return c;
+
+        return U.strcmp(l.name, r.name);
+    }
+
 
     export function getApiInfo(opts: CompileOptions, program: Program, legacyOnly = false): ApisInfo {
         return internalGetApiInfo(opts, program, legacyOnly).apis;
@@ -561,6 +582,7 @@ namespace ts.pxtc {
         return typechecker.getFullyQualifiedName(symbol);
     }
 
+    /*
     export function fillCompletionEntries(program: Program, symbols: Symbol[], r: CompletionInfo, apiInfo: ApisInfo, opts: CompileOptions) {
         const typechecker = program.getTypeChecker()
 
@@ -588,7 +610,7 @@ namespace ts.pxtc {
 
             r.entries[qName] = si;
         }
-    }
+    }*/
 }
 
 
@@ -729,6 +751,22 @@ namespace ts.pxtc.service {
             host.setOpts(v.options)
         },
 
+        syntaxInfo: v => {
+            let src: string = v.fileContent
+            if (v.fileContent) {
+                host.setFile(v.fileName, v.fileContent);
+            }
+            let opts = U.flatClone(host.opts)
+            opts.fileSystem[v.fileName] = src
+            addApiInfo(opts);
+            opts.syntaxInfo = {
+                position: v.position,
+                type: v.infoType
+            };
+            (pxt as any).py.py2ts(opts)
+            return opts.syntaxInfo
+        },
+
         getCompletions: v => {
             let src: string = v.fileContent
             if (v.fileContent) {
@@ -736,6 +774,7 @@ namespace ts.pxtc.service {
             }
             const python = /\.py$/.test(v.fileName);
             let dotIdx = -1
+            let complPosition = -1
             for (let i = v.position - 1; i >= 0; --i) {
                 if (src[i] == ".") {
                     dotIdx = i
@@ -743,62 +782,50 @@ namespace ts.pxtc.service {
                 }
                 if (!/\w/.test(src[i]))
                     break
+                if (complPosition == -1)
+                    complPosition = i
             }
 
             if (dotIdx == v.position - 1) {
                 // "foo.|" -> we add "_" as field name to minimize the risk of a parse error
                 src = src.slice(0, v.position) + "_" + src.slice(v.position)
+            } else if (complPosition == -1) {
+                src = src.slice(0, v.position) + "_" + src.slice(v.position)
+                complPosition = v.position
             }
+
+            if (dotIdx != -1)
+                complPosition = dotIdx
 
             //console.log(v.fileContent.slice(v.position - 20, v.position) + "<X>" + v.fileContent.slice(v.position, v.position + 20))
 
+            const entries: pxt.Map<SymbolInfo> = {};
             const r: CompletionInfo = {
-                entries: {},
+                entries: [],
                 isMemberCompletion: dotIdx != -1,
                 isNewIdentifierLocation: true,
                 isTypeLocation: false
             }
 
-            const isGlobalSymbol = (si: SymbolInfo) => {
-                switch (si.kind) {
-                    case SymbolKind.Enum:
-                    case SymbolKind.EnumMember:
-                    case SymbolKind.Variable:
-                    case SymbolKind.Function:
-                    case SymbolKind.Module:
-                        return true
-                    case SymbolKind.Property:
-                    case SymbolKind.Method:
-                        return !si.isInstance
-                    default:
-                        return false
-                }
-            }
+            let opts = U.flatClone(host.opts)
+            opts.fileSystem[v.fileName] = src
+            addApiInfo(opts);
+            opts.syntaxInfo = {
+                position: complPosition,
+                type: r.isMemberCompletion ? "memberCompletion" : "identifierCompletion"
+            };
+            (pxt as any).py.py2ts(opts)
+            let symbols = opts.syntaxInfo.symbols || []
 
-            let keys: string[] = []
-            if (r.isMemberCompletion) {
-                let opts = U.flatClone(host.opts)
-                opts.fileSystem[v.fileName] = src
-                addApiInfo(opts);
-                opts.completionPosition = dotIdx;
-                (pxt as any).py.py2ts(opts)
-                keys = opts.completionResult || []
-            } else {
-                keys = U.values(lastApiInfo.apis.byQName)
-                    .filter(isGlobalSymbol)
-                    .map(si => si.qName)
-            }
-
-            for (let nm of keys) {
-                const si = lastApiInfo.apis.byQName[nm]
+            for (let si of symbols) {
                 if (
                     /^__/.test(si.name) || // ignore members starting with __
                     /^__/.test(si.namespace) || // ignore namespaces starting with _-
                     si.attributes.hidden ||
                     si.attributes.deprecated
                 ) continue; // ignore 
-                r.entries[si.qName] = si
-                const n = lastApiInfo.decls[nm];
+                entries[si.qName] = si
+                const n = lastApiInfo.decls[si.qName];
                 if (isFunctionLike(n)) {
                     if (python)
                         si.pySnippet = getSnippet(lastApiInfo.apis.byQName, si, n, python);
@@ -807,6 +834,10 @@ namespace ts.pxtc.service {
                 }
             }
             //fillCompletionEntries(program, data.symbols, r, lastApiInfo.apis, host.opts)
+
+            // sort entries
+            r.entries = pxt.Util.values(entries);
+            r.entries.sort(compareSymbols);
 
             return r;
         },
@@ -1134,6 +1165,9 @@ namespace ts.pxtc.service {
             const type = checker && checker.getTypeAtLocation(param);
             if (type) {
                 if (isObjectType(type)) {
+                    const typeSymbol = apis[checker.getFullyQualifiedName(type.symbol)];
+                    const snip = typeSymbol && typeSymbol.attributes && (python ? typeSymbol.attributes.pySnippet : typeSymbol.attributes.snippet);
+                    if (snip) return snip;
                     if (type.objectFlags & ts.ObjectFlags.Anonymous) {
                         const sigs = checker.getSignaturesOfType(type, ts.SignatureKind.Call);
                         if (sigs && sigs.length) {

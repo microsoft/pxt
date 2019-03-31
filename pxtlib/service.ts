@@ -46,7 +46,7 @@ namespace ts.pxtc {
     }
 
     export interface CompletionInfo {
-        entries: pxt.Map<SymbolInfo>;
+        entries: SymbolInfo[];
         isMemberCompletion: boolean;
         isNewIdentifierLocation: boolean;
         isTypeLocation: boolean;
@@ -1302,6 +1302,7 @@ namespace ts.pxtc.service {
     export interface OpArg {
         fileName?: string;
         fileContent?: string;
+        infoType?: InfoType;
         position?: number;
         options?: CompileOptions;
         search?: SearchOptions;

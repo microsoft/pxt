@@ -33,8 +33,8 @@ interface FoldingController extends monaco.editor.IEditorContribution {
 }
 
 
-class PythonCompletionProvider implements monaco.languages.CompletionItemProvider {
-    constructor(public editor: Editor) {
+class CompletionProvider implements monaco.languages.CompletionItemProvider {
+    constructor(public editor: Editor, public python: boolean) {
     }
 
     triggerCharacters?: string[] = ["."];
@@ -65,16 +65,22 @@ class PythonCompletionProvider implements monaco.languages.CompletionItemProvide
         const fileName = this.editor.currFile.name;
         return compiler.completionsAsync(fileName, offset, source)
             .then(completions => {
-                const items = pxt.Util.values(completions.entries || {}).map(si => {
+                const items = (completions.entries || []).map((si, i) => {
                     return {
-                        label: completions.isMemberCompletion ? si.pyName : si.pyQName,
+                        label: this.python ? (completions.isMemberCompletion ? si.pyName : si.pyQName) : (completions.isMemberCompletion ? si.name : si.qName),
                         kind: this.tsKindToMonacoKind(si.kind),
                         documentation: si.attributes.jsDoc,
-                        detail: si.pySnippet
+                        detail: this.python ? si.pySnippet : si.snippet,
+                        // force monaco to use our sorting
+                        sortText: `${tosort(i)} ${this.python ? si.pySnippet : si.snippet}`
                     } as monaco.languages.CompletionItem;
                 })
                 return items;
             });
+
+        function tosort(i: number): string {
+            return ("000" + i).slice(-4);
+        }
     }
     /**
      * Given a completion item fill in more data, like [doc-comment](#CompletionItem.documentation)
@@ -84,6 +90,68 @@ class PythonCompletionProvider implements monaco.languages.CompletionItemProvide
      */
     resolveCompletionItem(item: monaco.languages.CompletionItem, token: monaco.CancellationToken): monaco.languages.CompletionItem | monaco.Thenable<monaco.languages.CompletionItem> {
         return item;
+    }
+}
+
+class SignatureHelper implements monaco.languages.SignatureHelpProvider {
+    signatureHelpTriggerCharacters: string[] = ["(", ","];
+
+    constructor(public editor: Editor, public python: boolean) {
+
+    }
+
+    /**
+     * Provide help for the signature at the given position and document.
+     */
+    provideSignatureHelp(model: monaco.editor.IReadOnlyModel, position: monaco.Position, token: monaco.CancellationToken): monaco.languages.SignatureHelp | monaco.Thenable<monaco.languages.SignatureHelp> {
+        const offset = model.getOffsetAt(position);
+        const source = model.getValue();
+        const fileName = this.editor.currFile.name;
+        return compiler.syntaxInfoAsync("signature", fileName, offset, source)
+            .then(r => {
+                let sym = r.symbols ? r.symbols[0] : null
+                if (!sym || !sym.parameters) return null;
+                const res: monaco.languages.SignatureHelp = {
+                    signatures: [{
+                        label: sym.name,
+                        documentation: sym.attributes.jsDoc,
+                        parameters: sym.parameters.map(p => ({
+                            label: p.name,
+                            documentation: p.name + ": " + p.type
+                        }))
+                    }],
+                    activeSignature: 0,
+                    activeParameter: r.auxResult
+                }
+                return res
+            });
+    }
+}
+
+class HoverProvider implements monaco.languages.HoverProvider {
+    constructor(public editor: Editor, public python: boolean) {
+
+    }
+
+    /**
+     * Provide a hover for the given position and document. Multiple hovers at the same
+     * position will be merged by the editor. A hover can have a range which defaults
+     * to the word range at the position when omitted.
+     */
+    provideHover(model: monaco.editor.IReadOnlyModel, position: monaco.Position, token: monaco.CancellationToken): monaco.languages.Hover | monaco.Thenable<monaco.languages.Hover> {
+        const offset = model.getOffsetAt(position);
+        const source = model.getValue();
+        const fileName = this.editor.currFile.name;
+        return compiler.syntaxInfoAsync("symbol", fileName, offset, source)
+            .then(r => {
+                let sym = r.symbols ? r.symbols[0] : null
+                if (!sym) return null;
+                const res: monaco.languages.Hover = {
+                    contents: [sym.pyQName + " " + sym.attributes.jsDoc],
+                    range: monaco.Range.fromPositions(model.getPositionAt(r.beginPos), model.getPositionAt(r.endPos))
+                }
+                return res
+            });
     }
 }
 
@@ -560,7 +628,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.hideFlyout();
             })
 
-            monaco.languages.registerCompletionItemProvider("python", new PythonCompletionProvider(this));
+            monaco.languages.registerCompletionItemProvider("python", new CompletionProvider(this, true));
+            monaco.languages.registerSignatureHelpProvider("python", new SignatureHelper(this, true));
+            monaco.languages.registerHoverProvider("python", new HoverProvider(this, true));
 
             this.editorViewZones = [];
 

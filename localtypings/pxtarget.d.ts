@@ -380,7 +380,7 @@ declare namespace ts.pxtc {
             Promise,
         }
     }
-    
+
     interface CompileSwitches {
         profile?: boolean;
         gcDebug?: boolean;
@@ -517,6 +517,11 @@ declare namespace ts.pxtc {
         deprecated?: boolean;
         useEnumVal?: boolean; // for conversion from typescript to blocks with enumVal
         callInDebugger?: boolean; // for getters, they will be invoked by the debugger.
+
+        // on class
+        snippet?: string; // value used to generate TS snippet
+        pySnippet?: string; // value used to generate python snippet
+
         // On block
         subcategory?: string;
         group?: string;
@@ -643,7 +648,18 @@ declare namespace ts.pxtc {
     interface ApisInfo {
         byQName: pxt.Map<SymbolInfo>;
         jres?: pxt.Map<pxt.JRes>;
-    }    
+    }
+
+    type InfoType = "memberCompletion" | "identifierCompletion" | "signature" | "symbol"
+    interface SyntaxInfo {
+        type: InfoType;
+        position: number;
+
+        symbols?: SymbolInfo[];
+        beginPos?: number;
+        endPos?: number;
+        auxResult?: any;
+    }
 
     interface CompileOptions {
         fileSystem: pxt.Map<string>;
@@ -665,8 +681,7 @@ declare namespace ts.pxtc {
         warnDiv?: boolean; // warn when emitting division operator
         apisInfo?: ApisInfo;
 
-        completionPosition?: number;
-        completionResult?: string[];
+        syntaxInfo?: SyntaxInfo;
 
         alwaysDecompileOnStart?: boolean; // decompiler only
         allowedArgumentTypes?: string[]; // decompiler-only; the types allowed for user-defined function arguments in blocks (unlisted types will cause grey blocks)
@@ -715,4 +730,27 @@ declare namespace ts.pxtc {
         usagePage: string;
         usageId: string;
     }
+}
+
+
+declare namespace pxt.tutorial {
+    interface TutorialStepInfo {
+        fullscreen?: boolean;
+        // no coding
+        unplugged?: boolean;
+        hasHint?: boolean;
+        contentMd?: string;
+        headerContentMd?: string;
+    }
+
+    interface TutorialOptions {
+        tutorial?: string; // tutorial        
+        tutorialName?: string; // tutorial title
+        tutorialReportId?: string; // if this tutorial was user generated, the report abuse id
+        tutorialStepInfo?: pxt.tutorial.TutorialStepInfo[];
+        tutorialStep?: number; // current tutorial page
+        tutorialReady?: boolean; // current tutorial page
+        tutorialMd?: string; // full tutorial markdown
+    }
+
 }

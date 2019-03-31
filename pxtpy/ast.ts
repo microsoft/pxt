@@ -53,6 +53,7 @@ namespace pxt.py {
     }
     export interface Expr extends AST {
         tsType?: Type;
+        symbolInfo?: SymbolInfo;
         _exprBrand: void;
     }
 
