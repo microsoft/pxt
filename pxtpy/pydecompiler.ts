@@ -1,4 +1,4 @@
-namespace ts.pxtc.decompiler {
+namespace pxt.py {
     // TODO(dz): code share with blocks decompiler ?
     export function decompileToPython(program: ts.Program, filename: string): pxtc.CompileResult {
         try {
@@ -827,7 +827,7 @@ function tsToPy(prog: ts.Program, filename: string): string {
     }
     function emitFnExp(s: ts.FunctionExpression | ts.ArrowFunction): ExpRes {
         // if the anonymous function is simple enough, use a lambda
-        if (ts.isExpression(s.body)) {
+        if (!ts.isBlock(s.body)) {
             // TODO this speculation is only safe if emitExp is pure. It's not quite today (e.g. nextFnNumber)
             let [fnBody, fnSup] = emitExp(s.body as ts.Expression)
             if (fnSup.length === 0) {

@@ -820,7 +820,8 @@ namespace ts.pxtc.service {
             return decompile(v.options, v.fileName, false, bannedCategories);
         },
         pydecompile: v => {
-            return pydecompile(v.options, v.fileName);
+            let program = getTSProgram(v.options);
+            return (pxt as any).py.decompileToPython(program, v.fileName);
         },
         assemble: v => {
             return {

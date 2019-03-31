@@ -842,7 +842,7 @@ ${linkString}
 
                 let compilePython: pxtc.CompileResult = undefined;
                 if (pxt.appTarget.appTheme.python)
-                    compilePython = ts.pxtc.decompiler.decompileToPython(program, "main.ts");
+                    compilePython = (pxt as any).py.decompileToPython(program, "main.ts");
 
                 // decompile to blocks
                 let apis = pxtc.getApiInfo(opts, program);
