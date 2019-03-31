@@ -66,6 +66,7 @@ declare namespace pxt {
         };
         features?: string[];
         hidden?: boolean; // hide package from package selection dialog
+        skipLocalization?: boolean;
     }
 
     interface PackageExtension {
