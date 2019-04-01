@@ -26,15 +26,23 @@ namespace pxt.py {
                 let fn = m.randomRange
                 let n = fn(0, 10)
             py:
-                # error: "Math" object doesn't exist ?
+                # error: "Math" object doesn't exist
                 # TODO is there a better way to handle this? Can we preform substitution of m -> Math first?
+
+            py:
+                r = random
+                fn = r.randomRange
+                n = fn(0, 10)
+            ts:
+                // error: "random" object doesn't exist
+                # TODO is there a better way to handle this? Can we preform substitution of r -> random first?
 
         observation: in ts2py (but not py2ts) we can access the full typescript language services and typechecker 
         since we know the input program compiles correctly (if it doesn't, surface an error saying the TS or blocks program 
         must be error-free before converting to PY)
         observation: in ts2py we can be certain when we're calling a builtin due to the above property
 
-        strategy:
+        strategy for both ts2py and py2ts:
             for each identifier
             if identifier is function or method
             if function / method is one of the builtin ones
