@@ -1,4 +1,8 @@
-for file in $(find . -name "*.gif"); do magick convert "$file[0]" "${file%.gif}.png"; done
+for file in $(find . -name "*.gif"); 
+do 
+    magick convert "$file[0]" "${file%.gif}.png";
+    ffmpeg -f gif -i "$file" -pix_fmt yuv420p -c:v libx264 -movflags +faststart -filter:v crop='floor(in_w/2)*2:floor(in_h/2)*2' "${file%.gif}.mp4";
+done
 find . -name '*.png' -size +200k -exec magick mogrify -format jpg {} +
 find . -name '*.png' -size +200k -delete
 find . -name '*.jpg' -exec magick mogrify -resize 800x600\> -strip -interlace Plane -sampling-factor 4:2:0 -quality 82% {} +
