@@ -92,7 +92,8 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const run = true; // !compileBtn || !pxt.appTarget.simulator.autoRun || !isBlocks;
         const restart = run && !simOpts.hideRestart;
         const trace = !!targetTheme.enableTrace;
-        const debug = targetTheme.debugger && !inTutorial;
+        // We hide debug button in Monaco because it's not implemented yet.
+        const debug = targetTheme.debugger && !inTutorial && !pxt.BrowserUtils.isIE() && this.props.parent.isBlocksEditor;
         const tracing = this.props.parent.state.tracing;
         const traceTooltip = tracing ? lf("Disable Slow-Mo") : lf("Slow-Mo")
         const debugging = parentState.debugging;
