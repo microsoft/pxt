@@ -142,6 +142,10 @@ namespace ts.pxtc {
         return !target.jsRefCounting && !target.isNative
     }
 
+    export function isStackMachine() {
+        return target.isNative && target.nativeType == NATIVE_TYPE_VM
+    }
+
     export function isThumb() {
         return target.isNative && (target.nativeType == NATIVE_TYPE_THUMB)
     }
@@ -1172,7 +1176,10 @@ namespace ts.pxtc {
                     bin.writeFile("yotta.json", JSON.stringify(opts.extinfo.yotta, null, 2));
                 if (opts.extinfo.platformio)
                     bin.writeFile("platformio.json", JSON.stringify(opts.extinfo.platformio, null, 2));
-                processorEmit(bin, opts, res)
+                if (opts.target.nativeType == NATIVE_TYPE_VM)
+                    vmEmit(bin, opts)
+                else
+                    processorEmit(bin, opts, res)
             } else {
                 jsEmit(bin)
             }
@@ -2686,7 +2693,7 @@ ${lbl}: .short 0xffff
             } else {
                 proc.emitClrs(lbl, null);
             }
-            if (hasRet)
+            if (hasRet || isStackMachine())
                 proc.emitLbl(lbl)
 
             // nothing should be on work list in final pass - everything should be already marked as used

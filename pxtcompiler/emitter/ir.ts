@@ -847,6 +847,9 @@ namespace ts.pxtc.ir {
         }
         complexArgs.reverse()
 
+        if (isStackMachine())
+            complexArgs = []
+
         let precomp: ir.Expr[] = []
         let flattened = topExpr.args.map(a => {
             let idx = complexArgs.indexOf(a)

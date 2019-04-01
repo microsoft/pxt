@@ -20,6 +20,7 @@ namespace ts.pxtc {
     export const BINARY_ELF = "binary.elf";
 
     export const NATIVE_TYPE_THUMB = "thumb";
+    export const NATIVE_TYPE_VM = "vm";
 
     export interface ParameterDesc {
         name: string;

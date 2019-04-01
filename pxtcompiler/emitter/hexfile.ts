@@ -933,7 +933,10 @@ ${hex.hexPrelude()}
     function mkProcessorFile(target: CompileTarget) {
         let b: assembler.File
 
-        b = new assembler.File(new thumb.ThumbProcessor())
+        if (target.nativeType == NATIVE_TYPE_VM)
+            b = new assembler.VMFile(new vm.VmProcessor(target))
+        else
+            b = new assembler.File(new thumb.ThumbProcessor())
 
         b.ei.testAssembler(); // just in case
 
