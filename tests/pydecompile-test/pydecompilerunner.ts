@@ -48,7 +48,7 @@ pxt.setAppTarget({
     corepkg: undefined
 });
 
-// TODO(dz): unify with decompilerrunner.ts
+// TODO: deduplicate this code with decompilerrunner.ts
 
 describe("pydecompiler", () => {
     let filenames: string[] = [];
@@ -63,18 +63,16 @@ describe("pydecompiler", () => {
         }
     };
 
-    // TODO(dz): starting with a smaller set
-    // console.log(JSON.stringify(filenames))
+    // FYI: uncomment these lines to whitelist or blacklist tests for easier development
     // let whitelist = ["string_length", "game"]
-    let blacklist = [
-        // due to shadowing not being supported
-        "shadowing",
-        "always_decompile_renames",
-        "always_decompile_renames_expressions",
-        "always_unsupported_operators", // >>>
-    ]
-    filenames = filenames
-        .filter(f => !blacklist.some(s => f.indexOf(s) > 0))
+    // let blacklist = [
+    //     "shadowing",
+    //     "always_decompile_renames",
+    //     "always_decompile_renames_expressions",
+    //     "always_unsupported_operators",
+    // ]
+    // filenames = filenames
+    //     .filter(f => !blacklist.some(s => f.indexOf(s) > 0))
     //     .filter(f => whitelist.some(s => f.indexOf(s) > 0))
 
     filenames.forEach(filename => {
