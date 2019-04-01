@@ -203,6 +203,7 @@ namespace pxsim {
             this.runOptions = msg;
             return Promise.resolve()
         }
+        public onDebuggerResume() { }
         public screenshotAsync(width?: number): Promise<ImageData> {
             return Promise.resolve(undefined);
         }
@@ -775,6 +776,7 @@ namespace pxsim {
                     dbgHeap = null;
                     if (__this.dead) return null;
                     __this.resumeAllPausedScheduled();
+                    __this.board.onDebuggerResume();
                     runtime = __this;
                     U.assert(s.pc == retPC);
 
