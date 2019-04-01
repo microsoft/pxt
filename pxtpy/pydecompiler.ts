@@ -1,5 +1,4 @@
 namespace pxt.py {
-    // TODO(dz): code share with blocks decompiler ?
     export function decompileToPython(program: ts.Program, filename: string): pxtc.CompileResult {
         try {
             let res = decompileToPythonHelper(program, filename)
@@ -67,16 +66,13 @@ function tsToPy(prog: ts.Program, filename: string): string {
     ///
     /// ENVIRONMENT
     ///
-    // TODO(dz): it's possible this parallel constructions isn't necessary if we can get the info we need from the TS semantic info
+    // TODO: it's possible this parallel scope construction isn't necessary if we can get the info we need from the TS semantic info
     function pushScope(): Scope {
-        let prevScope = env[0]
-        let newScope = cpyScope(prevScope) // TODO(dz) to copy or not to copy previous scope? Probably to not
+        let newScope = mkScope()
         env.unshift(newScope)
         return newScope
-        function cpyScope(prev: Scope): Scope {
-            let newScopeVars = Object.assign({}, prev.vars)
-            let newScope = { vars: newScopeVars }
-            return newScope
+        function mkScope(): Scope {
+            return { vars: {} }
         }
     }
     function popScope(): Scope {
@@ -85,7 +81,6 @@ function tsToPy(prog: ts.Program, filename: string): string {
     function getName(name: ts.Identifier | ts.BindingPattern | ts.PropertyName) {
         if (!ts.isIdentifier(name))
             throw Error("Unsupported advanced name format: " + name.getText())
-        // TODO de-dupe w/ blocks decompiler
         if (renameMap) {
             const rename = renameMap.getRenameForPosition(name.getStart());
             if (rename) {
@@ -94,7 +89,7 @@ function tsToPy(prog: ts.Program, filename: string): string {
         }
         return name.text;
     }
-    // TODO
+    // TODO decide on strategy for tracking variable scope(s)
     // function introVar(name: string, decl: ts.Node): string {
     //     let scope = env[0]
     //     let maxItr = 100
@@ -284,8 +279,7 @@ function tsToPy(prog: ts.Program, filename: string): string {
 
         result.fromIncl = fromNum
 
-        // body must not mutate loop variable
-        // TODO
+        // TODO body must not mutate loop variable
 
         // must be (...; i < Y; ...)
         if (!s.condition)
@@ -451,9 +445,6 @@ function tsToPy(prog: ts.Program, filename: string): string {
         let ifRest: string[] = []
         let th = emitBody(s.thenStatement)
         ifRest = ifRest.concat(th)
-
-        // TODO: handle else if
-        // TODO: confirm else works
 
         if (s.elseStatement) {
             if (ts.isIfStatement(s.elseStatement)) {
@@ -1018,9 +1009,103 @@ function tsToPy(prog: ts.Program, filename: string): string {
                 return asExpRes(s.getText())
             default:
                 // TODO handle more expressions
-                // return asExpRes(s.getText())
-                // throw Error("Unknown expression: " + s.kind)
-                return [s.getText(), ["# unknown expression:  " + s.kind]]
+                return [s.getText(), ["# unknown expression:  " + s.kind]] // uncomment for easier locating
+            // throw Error("Unknown expression: " + s.kind)
         }
     }
 }
+
+
+// TODO handle built-ins:
+/*
+interface Array<T> {
+    length: number;
+    push(item: T): void;
+    concat(arr: T[]): T[];
+    pop(): T;
+    reverse(): void;
+    shift(): T;
+    unshift(value: T): number;
+    slice(start?: number, end?: number): T[];
+    splice(start: number, deleteCount: number): void;
+    join(sep: string): string;
+    some(callbackfn: (value: T, index: number) => boolean): boolean;
+    every(callbackfn: (value: T, index: number) => boolean): boolean;
+    sort(callbackfn?: (value1: T, value2: T) => number): T[];
+    map<U>(callbackfn: (value: T, index: number) => U): U[];
+    forEach(callbackfn: (value: T, index: number) => void): void;
+    filter(callbackfn: (value: T, index: number) => boolean): T[];
+    fill(value: T, start?: number, end?: number): T[];
+    find(callbackfn: (value: T, index: number) => boolean): T;
+    reduce<U>(callbackfn: (previousValue: U, currentValue: T, currentIndex: number) => U, initialValue: U): U;
+    removeElement(element: T): boolean;
+    removeAt(index: number): T;
+    insertAt(index: number, value: T): void;
+    indexOf(item: T, fromIndex?: number): number;
+    get(index: number): T;
+    set(index: number, value: T): void;
+    [n: number]: T;
+}
+declare interface String {
+    concat(other: string): string;
+    charAt(index: number): string;
+    length: number;
+    charCodeAt(index: number): number;
+    compare(that: string): number;
+    substr(start: number, length?: number): string;
+    slice(start: number, end?: number): string;
+    isEmpty(): boolean;
+    indexOf(searchValue: string, start?: number): number;
+    includes(searchValue: string, start?: number): boolean;
+    split(separator?: string, limit?: number): string[];
+    [index: number]: string;
+}
+declare function parseFloat(text: string): number;
+interface Object { }
+interface Function { }
+interface IArguments { }
+interface RegExp { }
+type TemplateStringsArray = Array<string>;
+type uint8 = number;
+type uint16 = number;
+type uint32 = number;
+type int8 = number;
+type int16 = number;
+type int32 = number;
+declare interface Boolean {
+    toString(): string;
+}
+declare namespace String {
+    function fromCharCode(code: number): string;
+}
+declare interface Number {
+    toString(): string;
+}
+declare namespace Array {
+    function isArray(obj: any): boolean;
+}
+declare namespace Object {
+    function keys(obj: any): string[];
+}
+declare namespace Math {
+    function pow(x: number, y: number): number;
+    function random(): number;
+    function randomRange(min: number, max: number): number;
+    function log(x: number): number;
+    function exp(x: number): number;
+    function sin(x: number): number;
+    function cos(x: number): number;
+    function tan(x: number): number;
+    function asin(x: number): number;
+    function acos(x: number): number;
+    function atan(x: number): number;
+    function atan2(y: number, x: number): number;
+    function sqrt(x: number): number;
+    function ceil(x: number): number;
+    function floor(x: number): number;
+    function trunc(x: number): number;
+    function round(x: number): number;
+    function imul(x: number, y: number): number;
+    function idiv(x: number, y: number): number;
+}
+ */
