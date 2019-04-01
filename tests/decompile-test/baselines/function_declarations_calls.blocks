@@ -1,0 +1,34 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="function_definition">
+<mutation name="hello" >
+</mutation>
+<statement name="STACK">
+</statement>
+</block>
+<block type="function_definition">
+<mutation name="bad" >
+<arg name="a" type="number" id="xqo2xf5zg6f6htzfqbjy" />
+</mutation>
+<statement name="STACK">
+</statement>
+</block>
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="function_call">
+<mutation name="hello" />
+<next>
+<block type="function_call">
+<mutation name="bad" >
+<arg name="a" type="number" id="xqo2xf5zg6f6htzfqbjy" />
+</mutation>
+<value name="xqo2xf5zg6f6htzfqbjy">
+<shadow type="math_number">
+<field name="NUM">5</field>
+</shadow>
+</value>
+</block>
+</next>
+</block>
+</statement>
+</block>
+</xml>
