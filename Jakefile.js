@@ -97,6 +97,8 @@ setupTest('testlang', 'compile-test', 'compilerunner.js')
 setupTest('testerr', 'errors-test', 'errorrunner.js')
 setupTest('testfmt', 'format-test', 'formatrunner.js')
 setupTest('testpydecompiler', 'pydecompile-test', 'pydecompilerunner.js')
+// TODO(dz):
+setupTest('testtraces', 'trace-tests', 'tracerunner.js')
 
 
 task('testpkgconflicts', ['built/pxt.js'], { async: true }, function () {
