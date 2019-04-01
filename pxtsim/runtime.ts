@@ -358,7 +358,7 @@ namespace pxsim {
                 })
             }).then(() => {
                 // if some events arrived while processing above then keep processing
-                if (this.events.length > 0 && !runtime.pausedOnBreakpoint) {
+                if (this.events.length > 0) {
                     return this.poke()
                 } else {
                     this.lock = false
