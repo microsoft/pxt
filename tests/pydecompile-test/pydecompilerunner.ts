@@ -8,9 +8,11 @@ import * as chai from "chai";
 
 import { TestHost } from "../common/testHost";
 
-const casesDir = path.join(process.cwd(), "tests", "pydecompile-test", "cases");
+// uses the same test cases as the blocks decompiler tests
+const casesDir = path.join(process.cwd(), "tests", "decompile-test", "cases");
+const testPythonDir = path.relative(process.cwd(), path.join("tests", "decompile-test", "cases", "testBlocks"));
+
 const baselineDir = path.join(process.cwd(), "tests", "pydecompile-test", "baselines");
-const testPythonDir = path.relative(process.cwd(), path.join("tests", "pydecompile-test", "cases", "testBlocks"));
 
 function initGlobals() {
     let g = global as any
