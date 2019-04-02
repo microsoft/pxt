@@ -112,6 +112,13 @@ describe("ts compiler", () => {
                 this.timeout(10000)
                 let stsTrace = await compileAndRunStsAsync(filename)
                 console.log(stsTrace)
+                let tsTrace = compileAndRunTsAsync(filename)
+                console.log(tsTrace)
+                // TODO
+                // convert to py
+                // run py
+                // convert to ts
+                // run ts
                 return
             });
         });
@@ -123,16 +130,48 @@ function fail(msg: string) {
 }
 
 
-function compileAndRunTsAsync(filename: string): Promise<string> {
+function compileAndRunTsAsync(filename: string): string {
+    let compProg = compileTs(filename)
+
+    // console.log("compProg")
+    // console.log(compProg)
+
+    // TODO don't use eval?
+    let stout: string[] = []
+    let console: any = {}
+    console.log = function (str: string) {
+        stout.push(str)
+        return str
+    }
+    eval(compProg)
+
+    return stout.join("\n")
+}
+
+function compileTs(filename: string): string {
+    let fts = fs.readFileSync(filename, { flag: "r" }).toString()
+    // console.log("fts")
+    // console.log(fts)
+
     let cOpts: ts.CompilerOptions = {
         // TODO(dz): check these options
         noEmitOnError: true,
         noImplicitAny: true,
         target: ts.ScriptTarget.ES5,
-        module: ts.ModuleKind.CommonJS
+        module: ts.ModuleKind.ES2015,
+        // noLib: true,
+        // skipLibCheck: true
     }
-    let program = ts.createProgram([filename], cOpts);
-    let emitResult = program.emit();
+    const compilerHost = ts.createCompilerHost(cOpts);
+    compilerHost.getDefaultLibFileName = () => "node_modules/typescript/lib/lib.d.ts"
+    let program = ts.createProgram([filename], cOpts, compilerHost);
+    let jsFile: string
+    let emitResult = program.emit(program.getSourceFile(path.basename(filename)), (f) => {
+        jsFile = f
+    });
+    let jsOut: string
+    if (jsFile)
+        jsOut = fs.readFileSync(jsFile, { flag: "r" }).toString()
 
     let allDiagnostics = ts
         .getPreEmitDiagnostics(program)
@@ -143,15 +182,21 @@ function compileAndRunTsAsync(filename: string): Promise<string> {
         if (diagnostic.file) {
             let { line, character } = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start!);
             let message = ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n");
-            console.log(`${diagnostic.file.fileName} (${line + 1},${character + 1}): ${message}`);
+            diagMsgs.push(`${diagnostic.file.fileName} (${line + 1},${character + 1}): ${message}\n`)
         } else {
-            console.log(
-                `${ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n")}`
-            );
+            diagMsgs.push(`${ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n")}`)
         }
     });
 
-    let exitCode = emitResult.emitSkipped ? 1 : 0;
+    let failed = emitResult.emitSkipped || !jsOut
+    let res: string
+    if (failed) {
+        res = diagMsgs.join("\n")
+    }
+    else {
+        res = jsOut
+    }
+    return res
 }
 
 function compileAndRunStsAsync(filename: string): Promise<string> {
