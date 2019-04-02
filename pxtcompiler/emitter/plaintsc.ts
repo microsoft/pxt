@@ -1,13 +1,18 @@
 namespace ts.pxtc {
     let reportDiagnostic = reportDiagnosticSimply;
 
-    function reportDiagnostics(diagnostics: ReadonlyArray<Diagnostic>, host: CompilerHost): void {
+    function reportDiagnostics(diagnostics: ReadonlyArray<Diagnostic>): void {
         for (const diagnostic of diagnostics) {
-            reportDiagnostic(diagnostic, host);
+            reportDiagnostic(diagnostic);
         }
     }
 
-    function reportDiagnosticSimply(diagnostic: Diagnostic, host: CompilerHost): void {
+    function reportDiagnosticSimply(diagnostic: Diagnostic): void {
+        let output = getDiagnosticString(diagnostic)
+        sys.write(output);
+    }
+
+    export function getDiagnosticString(diagnostic: Diagnostic): string {
         let output = "";
 
         if (diagnostic.file) {
@@ -19,14 +24,17 @@ namespace ts.pxtc {
         const category = DiagnosticCategory[diagnostic.category].toLowerCase();
         output += `${category} TS${diagnostic.code}: ${flattenDiagnosticMessageText(diagnostic.messageText, sys.newLine)}${sys.newLine}`;
 
-        sys.write(output);
+        return output
     }
 
-    export function plainTsc(dir: string): Program {
+    export function plainTscCompileDir(dir: string): Program {
         const commandLine = parseCommandLine([]);
         let configFileName = findConfigFile(dir, sys.fileExists);
-
-        return performCompilation();
+        const configParseResult = parseConfigFile();
+        let program = plainTscCompileFiles(configParseResult.fileNames, configParseResult.options)
+        let diagnostics = getProgramDiagnostics(program)
+        diagnostics.forEach(reportDiagnostic)
+        return program
 
         function parseConfigFile(): ParsedCommandLine {
             let cachedConfigFileText = sys.readFile(configFileName);
@@ -34,45 +42,39 @@ namespace ts.pxtc {
             const result = parseConfigFileTextToJson(configFileName, cachedConfigFileText);
             const configObject = result.config;
             if (!configObject) {
-                reportDiagnostics([result.error], /* compilerHost */ undefined);
+                reportDiagnostics([result.error]);
                 sys.exit(ExitStatus.DiagnosticsPresent_OutputsSkipped);
                 return undefined;
             }
             const configParseResult = parseJsonConfigFileContent(configObject, sys, dir, commandLine.options, configFileName);
             if (configParseResult.errors.length > 0) {
-                reportDiagnostics(configParseResult.errors, /* compilerHost */ undefined);
+                reportDiagnostics(configParseResult.errors);
                 sys.exit(ExitStatus.DiagnosticsPresent_OutputsSkipped);
                 return undefined;
             }
 
             return configParseResult;
         }
-
-        function performCompilation() {
-            const configParseResult = parseConfigFile();
-            const compilerHost = createCompilerHost(configParseResult.options);
-            compilerHost.getDefaultLibFileName = () => "node_modules/typescript/lib/lib.d.ts"
-            return compile(configParseResult.fileNames, configParseResult.options, compilerHost);
-        }
     }
 
-    function compile(fileNames: string[], compilerOptions: CompilerOptions, compilerHost: CompilerHost) {
-        const program = createProgram(fileNames, compilerOptions, compilerHost);
-        compileProgram();
-        return program;
+    export function plainTscCompileFiles(fileNames: string[], compilerOpts: ts.CompilerOptions): Program {
+        const compilerHost = createCompilerHost(compilerOpts);
+        compilerHost.getDefaultLibFileName = () => "node_modules/typescript/lib/lib.d.ts"
+        let prog = createProgram(fileNames, compilerOpts, compilerHost);
+        return prog
 
-        function compileProgram() {
-            let diagnostics = program.getSyntacticDiagnostics();
+        //const emitOutput = program.emit();
+        //diagnostics = diagnostics.concat(emitOutput.diagnostics);
+    }
+
+    export function getProgramDiagnostics(program: ts.Program) {
+        let diagnostics = program.getSyntacticDiagnostics();
+        if (diagnostics.length === 0) {
+            diagnostics = program.getOptionsDiagnostics().concat(Util.toArray(program.getGlobalDiagnostics()));
             if (diagnostics.length === 0) {
-                diagnostics = program.getOptionsDiagnostics().concat(Util.toArray(program.getGlobalDiagnostics()));
-                if (diagnostics.length === 0) {
-                    diagnostics = program.getSemanticDiagnostics();
-                }
+                diagnostics = program.getSemanticDiagnostics();
             }
-            reportDiagnostics(diagnostics, compilerHost);
-
-            //const emitOutput = program.emit();
-            //diagnostics = diagnostics.concat(emitOutput.diagnostics);
         }
+        return diagnostics
     }
 }
