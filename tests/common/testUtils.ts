@@ -1,5 +1,6 @@
 /// <reference path="../../built/pxtlib.d.ts"/>
 /// <reference path="../../built/pxtcompiler.d.ts"/>
+/// <reference path="../../built/pxtpy.d.ts"/>
 
 import * as fs from 'fs';
 import * as path from 'path';
@@ -96,6 +97,26 @@ export function ts2pyAsync(f: string, dependency?: string): Promise<string> {
             }
             else {
                 return Promise.reject("Could not decompile " + f + JSON.stringify(decompiled.diagnostics, null, 4));
+            }
+        })
+}
+
+export function py2tsAsync(f: string, dependency?: string): Promise<string> {
+    return getTestCompileOptsAsync(dependency)
+        .then(opts => {
+            const input = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
+            let pyFile = "main.py";
+            opts.fileSystem[pyFile] = input;
+
+            let { generated, diagnostics } = pxt.py.py2ts(opts)
+
+            let success = diagnostics.length == 0
+
+            if (success) {
+                return opts.fileSystem["main.ts"];
+            }
+            else {
+                return Promise.reject("Could not compile " + f + JSON.stringify(diagnostics, null, 4));
             }
         })
 }

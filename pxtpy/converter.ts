@@ -1810,7 +1810,11 @@ namespace pxt.py {
         lastAST = null
     }
 
-    export function py2ts(opts: pxtc.CompileOptions) {
+    export interface Py2TsRes {
+        generated: Map<string>,
+        diagnostics: pxtc.KsDiagnostic[]
+    }
+    export function py2ts(opts: pxtc.CompileOptions): Py2TsRes {
         let modules: py.Module[] = []
         const generated: Map<string> = {}
         diagnostics = []

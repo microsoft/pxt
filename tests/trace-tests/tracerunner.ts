@@ -29,7 +29,6 @@ initGlobals();
 // Just needs to exist
 pxt.setAppTarget(util.testAppTarget);
 
-
 class CompileHost extends TestHost {
     private fileText: string;
     static langTestText: string;
@@ -91,6 +90,8 @@ describe("ts compiler", () => {
                 console.dir(pyFile)
                 let pyTrace = await runPyAsync(pyFile)
                 console.log(pyTrace)
+                let py2TsFile = await convertPy2Ts(pyFile)
+                console.dir(py2TsFile)
                 // convert to ts
                 // run ts
                 return
@@ -119,6 +120,13 @@ async function convertTs2Py(tsFile: string): Promise<string> {
     const pyFile = path.join(util.replaceFileExtension(tsFile, ".ts.py"));
     fs.writeFileSync(pyFile, pyCode)
     return pyFile
+}
+
+async function convertPy2Ts(pyFile: string): Promise<string> {
+    let tsCode = await util.py2tsAsync(pyFile)
+    const tsFile = path.join(util.replaceFileExtension(pyFile, ".py.ts"));
+    fs.writeFileSync(tsFile, tsCode)
+    return tsFile
 }
 
 function fail(msg: string) {
