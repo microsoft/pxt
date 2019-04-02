@@ -111,7 +111,8 @@ function fail(msg: string) {
 
 function emitJsFiles(prog: ts.Program, file?: ts.SourceFile): string[] {
     let jsFiles: string[] = []
-    prog.emit(file, (f) => {
+    prog.emit(file, (f, data) => {
+        fs.writeFileSync(f, data)
         jsFiles.push(f)
     });
     return jsFiles
