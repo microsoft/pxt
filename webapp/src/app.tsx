@@ -1757,7 +1757,7 @@ export class ProjectView
                 if (src === undefined && open) { // failed to convert
                     return core.confirmAsync({
                         header: lf("Oops, there is a problem converting your code."),
-                        body: lf("We are unable to convert your Python code back to JavaScript."),
+                        body: lf("We are unable to convert your code back to JavaScript."),
                         agreeLbl: lf("Done"),
                         agreeClass: "cancel",
                         agreeIcon: "cancel",
