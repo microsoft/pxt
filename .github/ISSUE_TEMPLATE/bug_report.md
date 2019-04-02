@@ -14,6 +14,10 @@ about: Create a report to help us improve
 - Issue tracker [Microsoft/pxt-adafruit](https://github.com/Microsoft/pxt-adafruit/issues/new?labels=bug).
 - Have a question? Check out the [Adafruit Support Forums](https://www.adafruit.com/support).
 
+**[Lego - EV3](https://makecode.mindstorms.com)**
+- Issue tracker [Microsoft/pxt-ev3](https://github.com/Microsoft/pxt-ev3/issues/new?labels=bug).
+- Need support? Check out the [Lego support site](https://www.lego.com/en-us/service).
+
 **Minecraft**
 - Running into issues with Code Connection, MakeCode for Minecraft, or Minecraft Education Edition? Post your question on [Minecraft EE Tech Support](https://education.minecraft.net/technical-support).
 - For help on setting up MakeCode and Minecraft, follow the [setup guide](https://minecraft.makecode.com/setup).
