@@ -103,7 +103,7 @@ export const buildEngines: Map<BuildEngine> = {
 
     dockermake: {
         updateEngineAsync: () => runBuildCmdAsync(nodeutil.addCmd("npm"), "install"),
-        buildAsync: () => runDockerAsync(["make"]),
+        buildAsync: () => runDockerAsync(["make", "-j8"]),
         setPlatformAsync: noopAsync,
         patchHexInfo: patchDockermakeHexInfo,
         prepBuildDirAsync: noopAsync,
