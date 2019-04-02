@@ -11,13 +11,26 @@ export function getFilesByExt(dir: string, ext: string): string[] {
         .map(f => path.join(dir, f))
 }
 
-export function initGlobals(useBluebird: boolean = false) {
-    if (useBluebird)
-        Promise = require("bluebird");
-    let g = global as any
-    g.pxt = pxt;
-    g.ts = ts;
-    g.pxtc = pxtc;
-    g.btoa = (str: string) => new Buffer(str, "binary").toString("base64");
-    g.atob = (str: string) => new Buffer(str, "base64").toString("binary");
+export const testAppTarget: pxt.TargetBundle = {
+    id: "core",
+    name: "Microsoft MakeCode",
+    title: "Microsoft MakeCode",
+    versions: undefined,
+    description: "A toolkit to build JavaScript Blocks editors.",
+    bundleddirs: [],
+    compile: {
+        isNative: false,
+        hasHex: false,
+        jsRefCounting: true,
+        switches: {}
+    },
+    bundledpkgs: {},
+    appTheme: {},
+    tsprj: undefined,
+    blocksprj: undefined,
+    runtime: {
+        pauseUntilBlock: { category: "Loops", color: "0x0000ff" },
+        bannedCategories: ["banned"]
+    },
+    corepkg: undefined
 }

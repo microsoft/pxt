@@ -7,6 +7,7 @@ import "mocha";
 import * as chai from "chai";
 
 import { TestHost } from "../common/testHost";
+import * as util from "../common/testUtils";
 
 // uses the same test cases as the blocks decompiler tests
 const casesDir = path.join(process.cwd(), "tests", "decompile-test", "cases");
@@ -26,43 +27,11 @@ function initGlobals() {
 initGlobals();
 
 // Just needs to exist
-pxt.setAppTarget({
-    id: "core",
-    name: "Microsoft MakeCode",
-    title: "Microsoft MakeCode",
-    versions: undefined,
-    description: "A toolkit to build JavaScript Blocks editors.",
-    bundleddirs: [],
-    compile: {
-        isNative: false,
-        hasHex: false,
-        jsRefCounting: true,
-        switches: {}
-    },
-    bundledpkgs: {},
-    appTheme: {},
-    tsprj: undefined,
-    blocksprj: undefined,
-    runtime: {
-        pauseUntilBlock: { category: "Loops", color: "0x0000ff" },
-        bannedCategories: ["banned"]
-    },
-    corepkg: undefined
-});
+pxt.setAppTarget(util.testAppTarget);
 
 // TODO: deduplicate this code with decompilerrunner.ts
 describe("pydecompiler", () => {
-    let filenames: string[] = [];
-    for (const file of fs.readdirSync(casesDir)) {
-        if (file[0] == ".") {
-            continue;
-        }
-
-        const filename = path.join(casesDir, file);
-        if (file.substr(-3) === ".ts") {
-            filenames.push(filename);
-        }
-    };
+    let filenames = util.getFilesByExt(casesDir, ".ts")
 
     // FYI: uncomment these lines to whitelist or blacklist tests for easier development
     // let whitelist = ["string_length", "game"]

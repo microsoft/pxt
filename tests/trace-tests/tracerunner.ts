@@ -8,6 +8,7 @@ import "mocha";
 import * as chai from "chai";
 
 import { TestHost } from "../common/testHost";
+import * as util from "../common/testUtils";
 
 const casesDir = path.join(process.cwd(), "tests", "trace-tests", "cases");
 
@@ -22,29 +23,10 @@ function initGlobals() {
     g.btoa = (str: string) => new Buffer(str, "binary").toString("base64");
     g.atob = (str: string) => new Buffer(str, "base64").toString("binary");
 }
-
 initGlobals();
 
 // Just needs to exist
-pxt.setAppTarget({
-    id: "core",
-    name: "Microsoft MakeCode",
-    title: "Microsoft MakeCode",
-    versions: undefined,
-    description: "A toolkit to build JavaScript Blocks editors.",
-    bundleddirs: [],
-    compile: {
-        isNative: false,
-        hasHex: false,
-        jsRefCounting: true,
-        switches: {}
-    },
-    bundledpkgs: {},
-    appTheme: {},
-    tsprj: undefined,
-    blocksprj: undefined,
-    corepkg: undefined
-});
+pxt.setAppTarget(util.testAppTarget);
 
 
 class CompileHost extends TestHost {

@@ -7,6 +7,7 @@ import "mocha";
 import * as chai from "chai";
 
 import { TestHost } from "../common/testHost";
+import * as util from "../common/testUtils";
 
 interface TestInfo {
     filename: string;
@@ -27,25 +28,7 @@ function initGlobals() {
 initGlobals();
 
 // Just needs to exist
-pxt.setAppTarget({
-    id: "core",
-    name: "Microsoft MakeCode",
-    title: "Microsoft MakeCode",
-    versions: undefined,
-    description: "A toolkit to build JavaScript Blocks editors.",
-    bundleddirs: [],
-    compile: {
-        isNative: false,
-        hasHex: false,
-        jsRefCounting: true,
-        switches: {}
-    },
-    bundledpkgs: {},
-    appTheme: {},
-    tsprj: undefined,
-    blocksprj: undefined,
-    corepkg: undefined
-});
+pxt.setAppTarget(util.testAppTarget);
 
 describe("ts compiler errors", () => {
     const filenames: string[] = [];

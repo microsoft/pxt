@@ -7,6 +7,7 @@ import "mocha";
 import * as chai from "chai";
 
 import { TestHost } from "../common/testHost";
+import * as util from "../common/testUtils";
 
 const casesDir = path.join(process.cwd(), "tests", "decompile-test", "cases");
 const baselineDir = path.join(process.cwd(), "tests", "decompile-test", "baselines");
@@ -24,29 +25,7 @@ function initGlobals() {
 initGlobals();
 
 // Just needs to exist
-pxt.setAppTarget({
-    id: "core",
-    name: "Microsoft MakeCode",
-    title: "Microsoft MakeCode",
-    versions: undefined,
-    description: "A toolkit to build JavaScript Blocks editors.",
-    bundleddirs: [],
-    compile: {
-        isNative: false,
-        hasHex: false,
-        jsRefCounting: true,
-        switches: {}
-    },
-    bundledpkgs: {},
-    appTheme: {},
-    tsprj: undefined,
-    blocksprj: undefined,
-    runtime: {
-        pauseUntilBlock: { category: "Loops", color: "0x0000ff" },
-        bannedCategories: ["banned"]
-    },
-    corepkg: undefined
-});
+pxt.setAppTarget(util.testAppTarget);
 
 describe("decompiler", () => {
     const filenames: string[] = [];
