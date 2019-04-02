@@ -11,7 +11,6 @@ import * as util from "../common/testUtils";
 
 // uses the same test cases as the blocks decompiler tests
 const casesDir = path.join(process.cwd(), "tests", "decompile-test", "cases");
-const testPythonDir = path.relative(process.cwd(), path.join("tests", "decompile-test", "cases", "testBlocks"));
 
 const baselineDir = path.join(process.cwd(), "tests", "pydecompile-test", "baselines");
 
@@ -70,7 +69,7 @@ function pydecompileTestAsync(filename: string) {
             baselineExists = false
         }
 
-        return util.ts2pyAsync(filename, testPythonDir)
+        return util.ts2pyAsync(filename)
             .then(decompiled => {
                 const outFile = path.join(util.replaceFileExtension(baselineFile, ".local.py"));
 

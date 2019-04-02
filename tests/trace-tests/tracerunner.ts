@@ -76,26 +76,17 @@ describe("ts compiler", () => {
     before(() => {
         pxsim.initCurrentRuntime = pxsim.initBareRuntime
     })
-    const filenames: string[] = [];
-    for (const file of fs.readdirSync(casesDir)) {
-        if (file[0] == ".") {
-            continue;
-        }
-
-        const filename = path.join(casesDir, file)
-        if (file.substr(-3) === ".ts") {
-            filenames.push(filename)
-        }
-    };
+    const tsFiles = util.getFilesByExt(casesDir, ".ts")
 
     describe("with floating point", () => {
-        filenames.forEach(filename => {
-            it("should compile and run " + path.basename(filename), async function () {
+        tsFiles.forEach(tsFile => {
+            it("should compile and run " + path.basename(tsFile), async function () {
                 this.timeout(10000)
-                let stsTrace = await compileAndRunStsAsync(filename)
+                let stsTrace = await compileAndRunStsAsync(tsFile)
                 console.log(stsTrace)
-                let tsTrace = compileAndRunTs(filename)
+                let tsTrace = compileAndRunTs(tsFile)
                 console.log(tsTrace)
+                let pyFile = convertTs2Py(tsFile)
                 // TODO
                 // convert to py
                 // run py
@@ -106,6 +97,13 @@ describe("ts compiler", () => {
         });
     });
 });
+
+async function convertTs2Py(tsFile: string): Promise<string> {
+    let pyCode = await util.ts2pyAsync(tsFile)
+    const pyFile = path.join(util.replaceFileExtension(tsFile, ".ts.py"));
+    fs.writeFileSync(pyFile, pyCode)
+    return pyFile
+}
 
 function fail(msg: string) {
     chai.assert(false, msg);

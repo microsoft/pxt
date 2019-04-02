@@ -62,7 +62,7 @@ export function replaceFileExtension(file: string, extension: string) {
 }
 
 let cachedOpts: pxt.Map<pxtc.CompileOptions> = {}
-export function getTestCompileOptsAsync(dependency: string): Promise<pxtc.CompileOptions> {
+export function getTestCompileOptsAsync(dependency?: string): Promise<pxtc.CompileOptions> {
     if (!cachedOpts[dependency]) {
         const pkg = new pxt.MainPackage(new TestHost("test-pkg", "// TODO", dependency ? [dependency] : [], true));
 
