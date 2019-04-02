@@ -180,6 +180,7 @@ declare namespace pxt {
         codalDefinitions?: any;
 
         dockerImage?: string;
+        dockerArgs?: string[];
 
         githubCorePackage?: string; // microsoft/pxt-microbit-core
         gittag: string;

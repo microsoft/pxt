@@ -319,10 +319,10 @@ function runPlatformioAsync(args: string[]) {
 function runDockerAsync(args: string[]) {
     let fullpath = process.cwd() + "/" + thisBuild.buildPath + "/"
     let cs = pxt.appTarget.compileService
+    let dargs = cs.dockerArgs || ["-u", "build"]
     return nodeutil.spawnAsync({
         cmd: "docker",
-        args: ["run", "--rm", "-v", fullpath + ":/src", "-w", "/src", "-u", "build",
-            cs.dockerImage].concat(args),
+        args: ["run", "--rm", "-v", fullpath + ":/src", "-w", "/src"].concat(dargs).concat([cs.dockerImage]).concat(args),
         cwd: thisBuild.buildPath
     })
 }
