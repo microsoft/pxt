@@ -303,6 +303,9 @@ namespace pxt.blocks {
 
     export function injectBlocks(blockInfo: pxtc.BlocksInfo): pxtc.SymbolInfo[] {
         cachedBlockInfo = blockInfo;
+
+        Blockly.pxtBlocklyUtils.whitelistDraggableBlockTypes(blockInfo.blocks.filter(fn => fn.attributes.duplicateShadowOnDrag).map(fn => fn.attributes.blockId));
+
         // inject Blockly with all block definitions
         return blockInfo.blocks
             .map(fn => {

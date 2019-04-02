@@ -167,6 +167,7 @@ namespace ts.pxtc {
         useLoc?: string; // The qName of another API whose localization will be used if this API is not translated and if both block definitions are identical
         topblock?: boolean;
         topblockWeight?: number;
+        duplicateShadowOnDrag?: boolean; // if true, duplicate the block when its shadow is dragged out (like function arguments)
         // On namepspace
         subcategories?: string[];
         groups?: string[];
@@ -720,6 +721,7 @@ namespace ts.pxtc {
         "decompileIndirectFixedInstances",
         "topblock",
         "callInDebugger",
+        "duplicateShadowOnDrag"
     ];
 
     export function parseCommentString(cmt: string): CommentAttrs {
@@ -1244,7 +1246,7 @@ namespace ts.pxtc {
                 filename = U.fromUTF8(U.uint8ArrayToString(fnbuf))
                 fileSize = wordAt(28)
             }
-            
+
             if (flags & UF2_FLAG_FAMILY_ID_PRESENT) {
                 familyId = wordAt(28)
             }
