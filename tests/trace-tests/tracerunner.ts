@@ -86,10 +86,9 @@ describe("ts compiler", () => {
                 console.log(stsTrace)
                 let tsTrace = compileAndRunTs(tsFile)
                 console.log(tsTrace)
-                let pyFile = convertTs2Py(tsFile)
-                // TODO
-                // convert to py
-                // run py
+                let pyFile = await convertTs2Py(tsFile)
+                let pyTrace = runPy(pyFile)
+                console.log(pyTrace)
                 // convert to ts
                 // run ts
                 return
@@ -97,6 +96,10 @@ describe("ts compiler", () => {
         });
     });
 });
+
+function runPy(pyFile: string): string {
+    return "foo"
+}
 
 async function convertTs2Py(tsFile: string): Promise<string> {
     let pyCode = await util.ts2pyAsync(tsFile)
