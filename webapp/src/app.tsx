@@ -2418,7 +2418,7 @@ export class ProjectView
             .then(() => this.saveFileAsync())
             .then(() => mpkg.filesToBePublishedAsync(true))
             .then(files => {
-                if (epkg.header.pubCurrent)
+                if (epkg.header.pubCurrent && !screenshotUri)
                     return Promise.resolve(epkg.header.pubId)
                 const meta: workspace.ScriptMeta = {
                     description: mpkg.config.description,
