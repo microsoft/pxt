@@ -85,10 +85,8 @@ function decompileTestAsync(filename: string) {
     });
 }
 
-let cachedOpts: pxtc.CompileOptions;
-
 function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
-    return getOptsAsync(dependency)
+    return util.getOptsAsync(dependency)
         .then(opts => {
             const input = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
             opts.fileSystem["main.ts"] = input;
@@ -103,14 +101,4 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
                 return Promise.reject("Could not decompile " + f + JSON.stringify(decompiled.diagnostics, null, 4));
             }
         })
-}
-
-function getOptsAsync(dependency: string) {
-    if (!cachedOpts) {
-        const pkg = new pxt.MainPackage(new TestHost("decompile-pkg", "// TODO", dependency ? [dependency] : [], true));
-
-        return pkg.getCompileOptionsAsync()
-            .then(opts => cachedOpts = opts);
-    }
-    return Promise.resolve(JSON.parse(JSON.stringify(cachedOpts))); // Clone cached options so that tests can individually modify their own options copy
 }

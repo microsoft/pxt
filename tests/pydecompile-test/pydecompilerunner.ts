@@ -59,7 +59,7 @@ function fail(msg: string) {
 function pydecompileTestAsync(filename: string) {
     return new Promise((resolve, reject) => {
         const basename = path.basename(filename);
-        const baselineFile = path.join(baselineDir, replaceFileExtension(basename, ".py"))
+        const baselineFile = path.join(baselineDir, util.replaceFileExtension(basename, ".py"))
 
         let baselineExists: boolean;
         try {
@@ -72,7 +72,7 @@ function pydecompileTestAsync(filename: string) {
 
         return decompileAsyncWorker(filename, testPythonDir)
             .then(decompiled => {
-                const outFile = path.join(replaceFileExtension(baselineFile, ".local.py"));
+                const outFile = path.join(util.replaceFileExtension(baselineFile, ".local.py"));
 
                 if (!baselineExists) {
                     fs.writeFileSync(outFile, decompiled)
@@ -94,10 +94,8 @@ function pydecompileTestAsync(filename: string) {
     });
 }
 
-let cachedOpts: pxtc.CompileOptions;
-
 function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
-    return getOptsAsync(dependency)
+    return util.getOptsAsync(dependency)
         .then(opts => {
             const input = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
             let tsFile = "main.ts";
@@ -105,10 +103,6 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
             opts.ast = true;
             opts.testMode = true;
             opts.ignoreFileResolutionErrors = true;
-            if (path.basename(f).indexOf("functions_v2") === 0) {
-                opts.useNewFunctions = true;
-            }
-            // const decompiled = pxtc.pydecompile(opts, tsFile);
 
             let program = pxtc.getTSProgram(opts);
             // TODO: if needed, we can re-use the CallInfo annotations the blockly decompiler can add
@@ -122,14 +116,4 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
                 return Promise.reject("Could not decompile " + f + JSON.stringify(decompiled.diagnostics, null, 4));
             }
         })
-}
-
-function getOptsAsync(dependency: string) {
-    if (!cachedOpts) {
-        const pkg = new pxt.MainPackage(new TestHost("decompile-pkg", "// TODO", dependency ? [dependency] : [], true));
-
-        return pkg.getCompileOptionsAsync()
-            .then(opts => cachedOpts = opts);
-    }
-    return Promise.resolve(JSON.parse(JSON.stringify(cachedOpts))); // Clone cached options so that tests can individually modify their own options copy
 }

@@ -4,6 +4,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
+import { TestHost } from "./testHost";
+
 export function getFilesByExt(dir: string, ext: string): string[] {
     return fs.readdirSync(dir)
         .filter(f => f[0] != ".")
@@ -57,4 +59,17 @@ export function compareBaselines(a: string, b: string): boolean {
 
 export function replaceFileExtension(file: string, extension: string) {
     return file && file.substr(0, file.length - path.extname(file).length) + extension;
+}
+
+let cachedOpts: pxt.Map<pxtc.CompileOptions> = {}
+export function getOptsAsync(dependency: string): Promise<pxtc.CompileOptions> {
+    if (!cachedOpts[dependency]) {
+        const pkg = new pxt.MainPackage(new TestHost("test-pkg", "// TODO", dependency ? [dependency] : [], true));
+
+        return pkg.getCompileOptionsAsync()
+            .then(opts => cachedOpts[dependency] = opts);
+    }
+    // Clone cached options so that tests can individually modify their own options copy
+    let opts = JSON.parse(JSON.stringify(cachedOpts[dependency]))
+    return Promise.resolve(opts);
 }
