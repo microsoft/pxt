@@ -81,41 +81,17 @@ function pydecompileTestAsync(filename: string) {
                 }
 
                 const baseline = fs.readFileSync(baselineFile, "utf8")
-                if (!compareBaselines(decompiled, baseline)) {
+                if (!util.compareBaselines(decompiled, baseline)) {
                     fs.writeFileSync(outFile, decompiled)
                     fail(`${basename} did not match baseline, output written to ${outFile}`);
                 }
             }, error => {
-                const outFile = path.join(replaceFileExtension(baselineFile, ".local.py"));
+                const outFile = path.join(util.replaceFileExtension(baselineFile, ".local.py"));
                 fs.writeFileSync(outFile, error.stack)
                 fail("Could not decompile: " + error.stack)
             })
             .then(() => resolve(), reject);
     });
-}
-
-function compareBaselines(a: string, b: string): boolean {
-    // Ignore whitespace
-    a = a.replace(/\s/g, "");
-    b = b.replace(/\s/g, "");
-
-    // Strip encoded carriage-return from grey blocks
-    a = a.replace(/&#13;/g, "");
-    b = b.replace(/&#13;/g, "");
-
-    // Ignore error messages in TS statement mutations
-    a = a.replace(/error="[^"]*"/g, "");
-    b = b.replace(/error="[^"]*"/g, "");
-
-    // Ignore IDs
-    a = a.replace(/id="[^"]*"/g, "");
-    b = b.replace(/id="[^"]*"/g, "");
-
-    return a === b;
-}
-
-function replaceFileExtension(file: string, extension: string) {
-    return file && file.substr(0, file.length - path.extname(file).length) + extension;
 }
 
 let cachedOpts: pxtc.CompileOptions;
