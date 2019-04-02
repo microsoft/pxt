@@ -3,6 +3,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { exec } from 'child_process';
 
 import "mocha";
 import * as chai from "chai";
@@ -87,7 +88,8 @@ describe("ts compiler", () => {
                 let tsTrace = compileAndRunTs(tsFile)
                 console.log(tsTrace)
                 let pyFile = await convertTs2Py(tsFile)
-                let pyTrace = runPy(pyFile)
+                console.dir(pyFile)
+                let pyTrace = await runPyAsync(pyFile)
                 console.log(pyTrace)
                 // convert to ts
                 // run ts
@@ -97,8 +99,19 @@ describe("ts compiler", () => {
     });
 });
 
-function runPy(pyFile: string): string {
-    return "foo"
+function runPyAsync(pyFile: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+        exec(`python3 ${pyFile}`, (err, stdout, stderr) => {
+            let trace = ""
+            if (stdout)
+                trace += stdout
+            if (stderr)
+                trace += stderr
+            if (err)
+                trace += `${err.name}: ${err.message}\n${err.stack}`
+            resolve(trace)
+        })
+    });
 }
 
 async function convertTs2Py(tsFile: string): Promise<string> {
