@@ -62,14 +62,40 @@ export function replaceFileExtension(file: string, extension: string) {
 }
 
 let cachedOpts: pxt.Map<pxtc.CompileOptions> = {}
-export function getOptsAsync(dependency: string): Promise<pxtc.CompileOptions> {
+export function getTestCompileOptsAsync(dependency: string): Promise<pxtc.CompileOptions> {
     if (!cachedOpts[dependency]) {
         const pkg = new pxt.MainPackage(new TestHost("test-pkg", "// TODO", dependency ? [dependency] : [], true));
 
         return pkg.getCompileOptionsAsync()
-            .then(opts => cachedOpts[dependency] = opts);
+            .then(opts => {
+                opts.ast = true;
+                opts.testMode = true;
+                opts.ignoreFileResolutionErrors = true;
+                return cachedOpts[dependency] = opts
+            });
     }
     // Clone cached options so that tests can individually modify their own options copy
     let opts = JSON.parse(JSON.stringify(cachedOpts[dependency]))
     return Promise.resolve(opts);
+}
+
+export function ts2pyAsync(f: string, dependency?: string): Promise<string> {
+    return getTestCompileOptsAsync(dependency)
+        .then(opts => {
+            const input = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
+            let tsFile = "main.ts";
+            opts.fileSystem[tsFile] = input;
+
+            let program = pxtc.getTSProgram(opts);
+            // TODO: if needed, we can re-use the CallInfo annotations the blockly decompiler can add
+            // annotate(program, tsFile, target || (pxt.appTarget && pxt.appTarget.compile));
+            const decompiled = (pxt as any).py.decompileToPythonHelper(program, tsFile);
+
+            if (decompiled.success) {
+                return decompiled.outfiles["main.py"];
+            }
+            else {
+                return Promise.reject("Could not decompile " + f + JSON.stringify(decompiled.diagnostics, null, 4));
+            }
+        })
 }

@@ -86,13 +86,10 @@ function decompileTestAsync(filename: string) {
 }
 
 function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
-    return util.getOptsAsync(dependency)
+    return util.getTestCompileOptsAsync(dependency)
         .then(opts => {
             const input = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
             opts.fileSystem["main.ts"] = input;
-            opts.ast = true;
-            opts.testMode = true;
-            opts.ignoreFileResolutionErrors = true;
             const decompiled = pxtc.decompile(opts, "main.ts", true);
             if (decompiled.success) {
                 return decompiled.outfiles["main.blocks"];

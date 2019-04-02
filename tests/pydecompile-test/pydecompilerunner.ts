@@ -70,7 +70,7 @@ function pydecompileTestAsync(filename: string) {
             baselineExists = false
         }
 
-        return decompileAsyncWorker(filename, testPythonDir)
+        return util.ts2pyAsync(filename, testPythonDir)
             .then(decompiled => {
                 const outFile = path.join(util.replaceFileExtension(baselineFile, ".local.py"));
 
@@ -92,28 +92,4 @@ function pydecompileTestAsync(filename: string) {
             })
             .then(() => resolve(), reject);
     });
-}
-
-function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
-    return util.getOptsAsync(dependency)
-        .then(opts => {
-            const input = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
-            let tsFile = "main.ts";
-            opts.fileSystem[tsFile] = input;
-            opts.ast = true;
-            opts.testMode = true;
-            opts.ignoreFileResolutionErrors = true;
-
-            let program = pxtc.getTSProgram(opts);
-            // TODO: if needed, we can re-use the CallInfo annotations the blockly decompiler can add
-            // annotate(program, tsFile, target || (pxt.appTarget && pxt.appTarget.compile));
-            const decompiled = (pxt as any).py.decompileToPythonHelper(program, tsFile);
-
-            if (decompiled.success) {
-                return decompiled.outfiles["main.py"];
-            }
-            else {
-                return Promise.reject("Could not decompile " + f + JSON.stringify(decompiled.diagnostics, null, 4));
-            }
-        })
 }
