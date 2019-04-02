@@ -23,6 +23,9 @@ about: Create a report to help us improve
 - For help on setting up MakeCode and Minecraft, follow the [setup guide](https://minecraft.makecode.com/setup).
 - File bug report in this repo.
 
+**[MakeCode Arcade](https://arcade.makecode.com)**
+- Issue tracker [Microsoft/pxt-arcade](https://github.com/Microsoft/pxt-arcade/issues/new?labels=bug).
+
 **[Chibitronics - Chibi Chip](https://makecode.chibitronics.com)**
 - Issue tracker [Microsoft/pxt-chibitronics](https://github.com/Microsoft/pxt-chibitronics/issues/new?labels=bug).
 
