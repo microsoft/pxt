@@ -67,7 +67,10 @@ export function getTestCompileOptsAsync(dependency?: string): Promise<pxtc.Compi
     if (!cachedOpts[dependency]) {
         const pkg = new pxt.MainPackage(new TestHost("test-pkg", "// TODO", dependency ? [dependency] : [], true));
 
-        return pkg.getCompileOptionsAsync()
+        const target = pkg.getTargetOptions();
+        target.isNative = false;
+
+        return pkg.getCompileOptionsAsync(target)
             .then(opts => {
                 opts.ast = true;
                 opts.testMode = true;
@@ -96,7 +99,7 @@ export function ts2pyAsync(f: string, dependency?: string): Promise<string> {
                 return decompiled.outfiles["main.py"];
             }
             else {
-                return Promise.reject("Could not decompile " + f + JSON.stringify(decompiled.diagnostics, null, 4));
+                return Promise.reject("Could not conver ts to py " + f + JSON.stringify(decompiled.diagnostics, null, 4));
             }
         })
 }
@@ -116,7 +119,20 @@ export function py2tsAsync(f: string, dependency?: string): Promise<string> {
                 return opts.fileSystem["main.ts"];
             }
             else {
-                return Promise.reject("Could not compile " + f + JSON.stringify(diagnostics, null, 4));
+                return Promise.reject("Could not convert py to ts " + f + JSON.stringify(diagnostics, null, 4));
+            }
+        })
+}
+
+export function stsAsync(f: string, dependency?: string): Promise<pxtc.CompileResult> {
+    return getTestCompileOptsAsync(dependency)
+        .then(opts => {
+            const compiled = pxtc.compile(opts);
+            if (compiled.success) {
+                return compiled
+            }
+            else {
+                return Promise.reject("Could not compile " + f + JSON.stringify(compiled.diagnostics, null, 4));
             }
         })
 }

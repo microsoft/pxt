@@ -72,28 +72,45 @@ console.log = function(s: string): void {
     }
 }
 
+function removeBySubstring(dir: string, sub: string) {
+    return fs.readdirSync(dir)
+        .filter(f => f.indexOf(sub) >= 0)
+        .map(f => path.join(dir, f))
+        .forEach(f => fs.unlinkSync(f))
+}
+
+function cleanup() {
+    removeBySubstring(casesDir, ".js")
+    removeBySubstring(casesDir, ".py.ts")
+    removeBySubstring(casesDir, ".ts.py")
+}
+
 describe("ts compiler", () => {
+    let tsFiles: string[]
     before(() => {
         pxsim.initCurrentRuntime = pxsim.initBareRuntime
     })
-    const tsFiles = util.getFilesByExt(casesDir, ".ts")
 
     describe("with floating point", () => {
+        cleanup() // TODO weird place to do clean up
+        tsFiles = util.getFilesByExt(casesDir, ".ts")
         tsFiles.forEach(tsFile => {
             it("should compile and run " + path.basename(tsFile), async function () {
                 this.timeout(10000)
                 let stsTrace = await compileAndRunStsAsync(tsFile)
-                console.log(stsTrace)
+                console.log("stsTrace: " + stsTrace)
                 let tsTrace = compileAndRunTs(tsFile)
-                console.log(tsTrace)
+                console.log("tsTrace: " + tsTrace)
                 let pyFile = await convertTs2Py(tsFile)
                 console.dir(pyFile)
                 let pyTrace = await runPyAsync(pyFile)
-                console.log(pyTrace)
+                console.log("pyTrace: " + pyTrace)
                 let py2TsFile = await convertPy2Ts(pyFile)
                 console.dir(py2TsFile)
-                // convert to ts
-                // run ts
+                let ts2Trace = compileAndRunTs(py2TsFile)
+                console.log(ts2Trace)
+                let sts2Trace = await compileAndRunStsAsync(py2TsFile)
+                console.log(sts2Trace)
                 return
             });
         });
@@ -185,21 +202,9 @@ function compileAndRunTs(filename: string): string {
 }
 
 function compileAndRunStsAsync(filename: string): Promise<string> {
-    const pkg = new pxt.MainPackage(new CompileHost(filename));
-
-    const target = pkg.getTargetOptions();
-    target.isNative = false;
-
-    return pkg.getCompileOptionsAsync(target)
-        .then(opts => {
-            opts.ast = true;
-            const compiled = pxtc.compile(opts);
-            if (compiled.success) {
-                return runStsAsync(compiled)
-            }
-            else {
-                return Promise.reject("Could not compile " + filename + JSON.stringify(compiled.diagnostics, null, 4));
-            }
+    return util.stsAsync(filename)
+        .then((compiled) => {
+            return runStsAsync(compiled)
         })
 }
 
