@@ -93,8 +93,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
-    saveToTypeScriptAsync(): Promise<string> {
-        if (!this.typeScriptSaveable) return Promise.resolve(undefined);
+    saveToTypeScript(): Promise<string> {
+        if (!this.typeScriptSaveable) return Promise.resolve('');
         this.clearHighlightedStatements();
         try {
             return pxt.blocks.compileAsync(this.editor, this.blockInfo)
@@ -106,7 +106,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         } catch (e) {
             pxt.reportException(e)
             core.errorNotification(lf("Sorry, we were not able to convert this program."))
-            return Promise.resolve(undefined);
+            return Promise.resolve('');
         }
     }
 
@@ -579,10 +579,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (!immediate) this.toolbox.showLoading();
     }
 
-    updateToolbox() {
-        if (!this.debuggerToolboxDiv) return; // nothing to do here
-
-        const debugging = !!this.parent.state.debugging;
+    updateToolbox(debugging: boolean) {
         let debuggerToolbox = debugging ? <div>
             <debug.DebuggerToolbar parent={this.parent} />
             <debug.DebuggerVariables ref={this.handleDebuggerVariablesRef} parent={this.parent} apisByQName={this.blockInfo.apis.byQName} />
@@ -607,7 +604,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     showFunctionsFlyout() {
-        this.showFlyoutInternal_(Blockly.Functions.flyoutCategory(this.editor), "functions");
+            this.showFlyoutInternal_(Blockly.Functions.flyoutCategory(this.editor), "functions");
     }
 
     getViewState() {
@@ -757,7 +754,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             b.setWarningText(null);
             b.setHighlightWarning(false);
         });
-        let tsfile = file.epkg.files[file.getVirtualFileName(pxt.JAVASCRIPT_PROJECT_NAME)];
+        let tsfile = file.epkg.files[file.getVirtualFileName()];
         if (!tsfile || !tsfile.diagnostics) return;
 
         // only show errors
@@ -867,12 +864,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         pxt.tickEvent("blocks.showjavascript");
         this.parent.closeFlyout();
         this.parent.openTypeScriptAsync().done();
-    }
-
-    openPython() {
-        pxt.tickEvent("blocks.showpython");
-        this.parent.closeFlyout();
-        this.parent.openPythonAsync().done();
     }
 
     private cleanUpShadowBlocks() {
@@ -1139,6 +1130,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private getBuiltInBlocks(ns: string, subns: string) {
         let cat = snippets.getBuiltinCategory(ns);
         let blocks: toolbox.BlockDefinition[] = cat.blocks || [];
+        blocks.forEach(b => { b.noNamespace = true })
         if (!cat.custom && this.nsMap[ns]) {
             blocks = this.filterBlocks(subns, blocks.concat(this.nsMap[ns]));
         }
@@ -1160,7 +1152,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     blockId: ts.pxtc.ON_START_TYPE,
                     weight: pxt.appTarget.runtime.onStartWeight || 10
                 },
-                blockXml: `<block type="pxt-on-start"></block>`
+                blockXml: `<block type="pxt-on-start"></block>`,
+                noNamespace: true
             });
         }
         // Inject pause until block
@@ -1549,18 +1542,5 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             button.callback();
         })
         return [pxt.blocks.createFlyoutButton(button.attributes.blockId, button.attributes.label)];
-    }
-
-    updateBreakpoints() {
-        if (!this.editor) return; // not loaded yet
-
-        const debugging = !!this.parent.state.debugging;
-        const blocks = this.editor.getAllBlocks();
-        blocks.forEach(block => {
-            if (block.nextConnection && block.previousConnection) {
-                block.enableBreakpoint(debugging);
-            }
-        });
-        this.editor.setDebugModeOption(debugging);
     }
 }

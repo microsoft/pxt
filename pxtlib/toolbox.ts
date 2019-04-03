@@ -33,6 +33,7 @@ namespace pxt.toolbox {
         topblocks: '\uf005'
     }
 
+    let toolboxStyle: HTMLStyleElement;
     let toolboxStyleBuffer: string = '';
     export function appendToolboxIconCss(className: string, i: string): void {
         if (toolboxStyleBuffer.indexOf(className) > -1) return;

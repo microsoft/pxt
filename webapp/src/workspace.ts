@@ -347,10 +347,6 @@ export function installAsync(h0: InstallHeader, text: ScriptText) {
     h.recentUse = U.nowSeconds()
     h.modificationTime = h.recentUse;
 
-    const cfg: pxt.PackageConfig = JSON.parse(text[pxt.CONFIG_NAME] || "{}")
-    if (cfg.preferredEditor)
-        h.editor = cfg.preferredEditor
-
     return importAsync(h, text)
         .then(() => h)
 }

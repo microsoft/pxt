@@ -17,7 +17,6 @@ export class ViewZoneEditorHost implements pxt.editor.MonacoFieldEditorHost, mon
 
     protected content: HTMLDivElement;
     protected wrapper: HTMLDivElement;
-    private fileType: pxt.editor.FileType;
     protected editor: monaco.editor.IStandaloneCodeEditor;
     protected blocks: pxtc.BlocksInfo;
     protected id: number;
@@ -51,8 +50,7 @@ export class ViewZoneEditorHost implements pxt.editor.MonacoFieldEditorHost, mon
         return this.content;
     }
 
-    showAsync(fileType: pxt.editor.FileType, editor: monaco.editor.IStandaloneCodeEditor): Promise<pxt.editor.TextEdit> {
-        this.fileType = fileType;
+    showAsync(editor: monaco.editor.IStandaloneCodeEditor): Promise<pxt.editor.TextEdit> {
         this.editor = editor;
         return compiler.getBlocksAsync()
             .then(bi => {
@@ -63,7 +61,7 @@ export class ViewZoneEditorHost implements pxt.editor.MonacoFieldEditorHost, mon
                 this.editor.setScrollPosition({
                     scrollTop: this.editor.getTopForLineNumber(this.afterLineNumber)
                 });
-                return this.fe.showEditorAsync(this.fileType, this.range, this)
+                return this.fe.showEditorAsync(this.range, this)
             })
             .finally(() => {
                 this.close();

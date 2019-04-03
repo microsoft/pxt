@@ -776,7 +776,6 @@ ${linkString}
             signatureClass: 'lang-sig',
             blocksClass: 'lang-block',
             blocksXmlClass: 'lang-blocksxml',
-            staticPythonClass: 'lang-spy',
             simulatorClass: 'lang-sim',
             linksClass: 'lang-cards',
             namespacesClass: 'lang-namespaces',
@@ -811,7 +810,6 @@ ${linkString}
         compileProgram?: ts.Program;
         compileJS?: pxtc.CompileResult;
         compileBlocks?: pxtc.CompileResult;
-        compilePython?: pxtc.CompileResult;
         apiInfo?: pxtc.ApisInfo;
         blocksSvg?: Element;
     }
@@ -841,10 +839,6 @@ ${linkString}
                 }
                 programCache = program;
 
-                let compilePython: pxtc.CompileResult = undefined;
-                if (pxt.appTarget.appTheme.python)
-                    compilePython = (pxt as any).py.decompileToPython(program, "main.ts");
-
                 // decompile to blocks
                 let apis = pxtc.getApiInfo(opts, program);
                 return ts.pxtc.localizeApisAsync(apis, mainPkg)
@@ -854,7 +848,7 @@ ${linkString}
                         let bresp = pxtc.decompiler.decompileToBlocks(
                             blocksInfo,
                             program.getSourceFile("main.ts"),
-                            { snippetMode: options && options.snippetMode });
+                            { snippetMode: options && options.snippetMode});
                         if (bresp.diagnostics && bresp.diagnostics.length > 0)
                             bresp.diagnostics.forEach(diag => console.error(diag.messageText));
                         if (!bresp.success)
@@ -872,7 +866,6 @@ ${linkString}
                             compileProgram: program,
                             compileJS,
                             compileBlocks: bresp,
-                            compilePython,
                             apiInfo: apis,
                             blocksSvg
                         };

@@ -21,15 +21,11 @@ export const enum CategoryNameID {
 
 // this is a supertype of pxtc.SymbolInfo (see partitionBlocks)
 export interface BlockDefinition {
-    qName?: string;
     name: string;
-    pyName?: string;
     namespace?: string;
     type?: string;
     snippet?: string;
     snippetName?: string;
-    pySnippet?: string;
-    pySnippetName?: string;
     snippetOnly?: boolean;
     attributes: {
         block?: string;
@@ -46,6 +42,7 @@ export interface BlockDefinition {
         subcategory?: string;
         topblockWeight?: number;
     };
+    noNamespace?: boolean;
     retType?: string;
     blockXml?: string;
     builtinBlock?: boolean;
@@ -61,6 +58,7 @@ export interface ButtonDefinition {
         weight?: number;
     }
     callback?: () => void;
+    noNamespace?: boolean;
 }
 
 export interface BuiltinCategoryDefinition {

@@ -2,7 +2,6 @@
 
 /// <reference path="../built/pxtlib.d.ts"/>
 /// <reference path="../built/pxtcompiler.d.ts"/>
-/// <reference path="../built/pxtpy.d.ts"/>
 /// <reference path="../built/pxtsim.d.ts"/>
 
 (global as any).pxt = pxt;
@@ -33,8 +32,6 @@ const rimraf: (f: string, opts: any, cb: (err: any, res: any) => void) => void =
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] !== "no";
 let forceLocalBuild = !!process.env["PXT_FORCE_LOCAL"];
 let forceBuild = false; // don't use cache
-
-Error.stackTraceLimit = 100;
 
 function parseBuildInfo(parsed?: commandParser.ParsedCommand) {
     const cloud = parsed && parsed.flags["cloudbuild"];
@@ -3678,25 +3675,6 @@ function prepBuildOptionsAsync(mode: BuildOption, quick = false, ignoreTests = f
                 opts.ast = true
             }
 
-            // this is suboptimal, but we need apisInfo for the python converter
-            if (opts.target.preferredEditor == pxt.PYTHON_PROJECT_NAME) {
-                pxt.log("pre-compiling apisInfo for Python")
-                const opts2 = U.clone(opts)
-                opts2.ast = true
-                opts2.target.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME
-                opts2.noEmit = true
-                // remove previously converted .ts files, so they don't end up in apisinfo
-                for (let f of opts2.sourceFiles) {
-                    if (U.endsWith(f, ".py"))
-                        opts2.fileSystem[f.slice(0, -3) + ".ts"] = " "
-                }
-                const res = pxtc.compile(opts2)
-                opts.apisInfo = pxtc.getApiInfo(opts2, res.ast)
-                if (process.env["PXT_SAVE_APISINFO"])
-                    fs.writeFileSync("built/apisinfo.json", JSON.stringify(opts.apisInfo, null, 4))
-                pxt.log("done pre-compiling apisInfo for Python")
-            }
-
             return opts;
         })
 }
@@ -5503,7 +5481,7 @@ PXT_ASMDEBUG     - embed additional information in generated binary.asm file
                 aliases: ["r"]
             },
             "githubpages": {
-                description: "Generate a web site compatible with GitHub pages",
+                description: "Generate a web site compatiable with GitHub pages",
                 aliases: ["ghpages", "gh"]
             },
             "output": {
@@ -5730,14 +5708,9 @@ PXT_ASMDEBUG     - embed additional information in generated binary.asm file
         name: "pyconv",
         help: "convert from python",
         argString: "<package-directory> <support-directory>...",
+        anyArgs: true,
         advanced: true,
-        flags: {
-            internal: {
-                description: "use internal Python parser",
-                aliases: ["i"]
-            }
-        }
-    }, c => pyconv.convertAsync(c.args, !!c.flags["internal"]))
+    }, c => pyconv.convertAsync(c.args))
 
     advancedCommand("thirdpartynotices", "refresh third party notices", thirdPartyNoticesAsync);
     p.defineCommand({
