@@ -776,6 +776,7 @@ ${linkString}
             signatureClass: 'lang-sig',
             blocksClass: 'lang-block',
             blocksXmlClass: 'lang-blocksxml',
+            staticPythonClass: 'lang-spy',
             simulatorClass: 'lang-sim',
             linksClass: 'lang-cards',
             namespacesClass: 'lang-namespaces',

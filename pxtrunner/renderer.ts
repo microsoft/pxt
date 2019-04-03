@@ -10,6 +10,7 @@ namespace pxt.runner {
         signatureClass?: string;
         blocksClass?: string;
         blocksXmlClass?: string;
+        staticPythonClass?: string; // typescript to be converted to static python
         projectClass?: string;
         blocksAspectRatio?: number;
         simulatorClass?: string;
@@ -32,6 +33,7 @@ namespace pxt.runner {
     export interface WidgetOptions {
         showEdit?: boolean;
         showJs?: boolean;
+        showPy?: boolean;
         hideGutter?: boolean;
         run?: boolean;
         hexname?: string;
@@ -80,7 +82,6 @@ namespace pxt.runner {
         decompileResult: DecompileResult,
         woptions: WidgetOptions = {}
     ) {
-        const cdn = pxt.webConfig.commitCdnUrl
         let $h = $('<div class="ui bottom attached tabular icon small compact menu hideprint">'
             + ' <div class="right icon menu"></div></div>');
         let $c = $('<div class="ui top attached segment codewidget"></div>');
@@ -97,55 +98,20 @@ namespace pxt.runner {
             $menu.append($editBtn);
         }
 
-        if (options.showJavaScript || !$svg) {
-            // blocks
+        if (options.showJavaScript || (!$svg && !$py)) {
+            // js
             $c.append($js);
-
-            // js menu
-            if ($svg) {
-                const $svgBtn = snippetBtn(lf("Blocks"), BLOCKS_ICON).click(() => {
-                    pxt.tickEvent("docs.btn", { button: "blocks" });
-                    if ($c.find('.blocks')[0])
-                        $c.find('.blocks').remove();
-                    else {
-                        if ($js) appendBlocks($js.parent(), $svg);
-                        else appendBlocks($c, $svg);
-                    }
-                })
-                $menu.append($svgBtn);
-            }
-        } else {
+            appendBlocksButton();
+            appendPyButton();
+        } else if ($svg) {
             // blocks
             $c.append($svg);
-
-            // js menu
-            if (woptions.showJs) {
-                appendJs($c, $js, woptions);
-            } else {
-                const $jsBtn = snippetBtn("JavaScript", JS_ICON).click(() => {
-                    pxt.tickEvent("docs.btn", { button: "js" });
-                    if ($c.find('.js')[0])
-                        $c.find('.js').remove();
-                    else {
-                        if ($svg) appendJs($svg.parent(), $js, woptions);
-                        else appendJs($c, $js, woptions);
-                    }
-                })
-                $menu.append($jsBtn);
-            }
-        }
-
-        if ($py) {
-            const $pyBtn = snippetBtn("Python", PY_ICON).click(() => {
-                pxt.tickEvent("docs.btn", { button: "py" });
-                if ($c.find('.py')[0])
-                    $c.find('.py').remove();
-                else {
-                    if ($svg) appendPy($svg.parent(), $py, woptions);
-                    else appendPy($c, $py, woptions);
-                }
-            })
-            $menu.append($pyBtn);
+            appendJsButton();
+            appendPyButton();
+        } else if ($py) {
+            $c.append($py);
+            appendBlocksButton();
+            appendJsButton();
         }
 
         // runner menu
@@ -178,6 +144,56 @@ namespace pxt.runner {
 
         // inject container
         $container.replaceWith(r as any);
+
+        function appendBlocksButton() {
+            if (!$svg) return;
+            const $svgBtn = snippetBtn(lf("Blocks"), BLOCKS_ICON).click(() => {
+                pxt.tickEvent("docs.btn", { button: "blocks" });
+                if ($c.find('.blocks')[0])
+                    $c.find('.blocks').remove();
+                else {
+                    if ($js) appendBlocks($js.parent(), $svg);
+                    else appendBlocks($c, $svg);
+                }
+            })
+            $menu.append($svgBtn);
+        }
+
+        function appendJsButton() {
+            if (!$js) return;
+            if (woptions.showJs)
+                appendJs($c, $js, woptions);
+            else {
+                const $jsBtn = snippetBtn("JavaScript", JS_ICON).click(() => {
+                    pxt.tickEvent("docs.btn", { button: "js" });
+                    if ($c.find('.js')[0])
+                        $c.find('.js').remove();
+                    else {
+                        if ($svg) appendJs($svg.parent(), $js, woptions);
+                        else appendJs($c, $js, woptions);
+                    }
+                })
+                $menu.append($jsBtn);
+            }
+        }
+
+        function appendPyButton() {
+            if (!$py) return;
+            if (woptions.showPy) {
+                appendPy($c, $py, woptions);
+            } else {
+                const $pyBtn = snippetBtn("Python", PY_ICON).click(() => {
+                    pxt.tickEvent("docs.btn", { button: "py" });
+                    if ($c.find('.py')[0])
+                        $c.find('.py').remove();
+                    else {
+                        if ($svg) appendPy($svg.parent(), $py, woptions);
+                        else appendPy($c, $py, woptions);
+                    }
+                })
+                $menu.append($pyBtn);
+            }
+        }
     }
 
     let renderQueue: {
@@ -290,7 +306,7 @@ namespace pxt.runner {
             // TODO python
             const py: JQuery = undefined;// $('<code class="lang-python highlight"/>').text(sig);
             if (options.snippetReplaceParent) c = c.parent();
-            fillWithWidget(options, c, js, py, s, r, { showJs: true, hideGutter: true });
+            fillWithWidget(options, c, js, py, s, r, { showJs: true, showPy: true, hideGutter: true });
         }, { package: options.package, snippetMode: true, aspectRatio: options.blocksAspectRatio });
     }
 
@@ -301,6 +317,21 @@ namespace pxt.runner {
             const segment = $('<div class="ui segment codewidget"/>').append(s);
             c.replaceWith(segment);
         }, { package: options.package, snippetMode: true, aspectRatio: options.blocksAspectRatio });
+    }
+
+    function renderStaticPythonAsync(options: ClientRenderOptions): Promise<void> {
+        const woptions: WidgetOptions = {
+            showEdit: !!options.showEdit,
+            run: !!options.simulator
+        }
+        return renderNextSnippetAsync(options.staticPythonClass, (c, r) => {
+            const s = r.compilePython;
+            if (s && s.success) {
+                const $js = c.clone().removeClass('lang-shadow').addClass('lang-typescript');
+                const $py = c.clone().removeClass('lang-shadow').addClass('lang-python').text(s.outfiles["main.py"]);
+                fillWithWidget(options, c.parent(), /* js */ $js, /* py */ $py, /* svg */ undefined, r, woptions);
+            }
+        }, { package: options.package, snippetMode: true });
     }
 
     function renderBlocksXmlAsync(opts: ClientRenderOptions): Promise<void> {
@@ -779,6 +810,7 @@ namespace pxt.runner {
             .then(() => renderSnippetsAsync(options))
             .then(() => renderBlocksAsync(options))
             .then(() => renderBlocksXmlAsync(options))
+            .then(() => renderStaticPythonAsync(options))
             .then(() => renderProjectAsync(options))
             .then(() => consumeRenderQueueAsync())
     }
