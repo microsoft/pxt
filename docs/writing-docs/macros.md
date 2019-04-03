@@ -141,6 +141,16 @@ If you need a rendering of typescript, javascript code, specify the language as 
     let x = 0;
     ```
 
+### spy
+
+If your editor support Static Python, you can specify a TypeScript snippet to be rendered as Static Python
+using the ``spy`` macro.
+
+    ```spy
+    let x = 0;
+    ```
+
+
 ### codecard
 
 Renders one or more codecards as JSON into cards

@@ -9,7 +9,6 @@ namespace pxt {
     export import U = pxtc.Util;
     export import Util = pxtc.Util;
 
-
     export interface TCPIO {
         onData: (v: Uint8Array) => void;
         onError: (e: Error) => void;
@@ -18,6 +17,9 @@ namespace pxt {
         error(msg: string): any;
         disconnectAsync(): Promise<void>;
     }
+
+    export type ConversionPass = (opts: pxtc.CompileOptions) => pxtc.KsDiagnostic[]
+    export let conversionPasses: ConversionPass[] = []
 
     export let mkTCPSocket: (host: string, port: number) => TCPIO;
 
@@ -324,10 +326,6 @@ namespace pxt {
         else if (!webConfig) webConfig = localWebConfig()
     }
 
-    export interface CompileTarget extends pxtc.CompileTarget {
-        preferredEditor?: string; // used to indicate preferred editor to show code in
-    }
-
     export interface Host {
         readFile(pkg: Package, filename: string, skipAdditionalFiles?: boolean): string;
         writeFile(pkg: Package, filename: string, contents: string, force?: boolean): void;
@@ -385,8 +383,9 @@ namespace pxt {
     export const CLOUD_ID = "pxt/"
     export const BLOCKS_PROJECT_NAME = "blocksprj";
     export const JAVASCRIPT_PROJECT_NAME = "tsprj";
+    export const PYTHON_PROJECT_NAME = "pyprj";
 
-    export function outputName(trg: CompileTarget = null) {
+    export function outputName(trg: pxtc.CompileTarget = null) {
         if (!trg) trg = appTarget.compile
         if (trg.useUF2)
             return ts.pxtc.BINARY_UF2
@@ -396,7 +395,7 @@ namespace pxt {
             return ts.pxtc.BINARY_HEX
     }
 
-    export function isOutputText(trg: CompileTarget = null) {
+    export function isOutputText(trg: pxtc.CompileTarget = null) {
         return outputName(trg) == ts.pxtc.BINARY_HEX
     }
 }

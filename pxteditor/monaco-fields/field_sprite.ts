@@ -8,16 +8,35 @@ namespace pxt.editor {
         private rejecter: (err?: any) => void;
 
         protected editor: pxtsprite.SpriteEditor;
+        protected fileType: pxt.editor.FileType;
         protected editrange: monaco.Range;
 
         getId() {
             return fieldEditorId;
         }
 
-        showEditorAsync(editrange: monaco.Range, host: MonacoFieldEditorHost): Promise<TextEdit> {
+        showEditorAsync(fileType: FileType, editrange: monaco.Range, host: MonacoFieldEditorHost): Promise<TextEdit> {
+            this.fileType = fileType;
             this.editrange = editrange;
             const contentDiv = host.contentDiv();
-            const state = pxtsprite.imageLiteralToBitmap(host.getText(editrange));
+            const state = pxtsprite.imageLiteralToBitmap(host.getText(editrange), `
+            . . . . . . . . . . . . . . . .
+            . . . . . . . . . . . . . . . .
+            . . . . . . . . . . . . . . . .
+            . . . . . . . . . . . . . . . .
+            . . . . . . . . . . . . . . . .
+            . . . . . . . . . . . . . . . .
+            . . . . . . . . . . . . . . . .
+            . . . . . . . . . . . . . . . .
+            . . . . . . . . . . . . . . . .
+            . . . . . . . . . . . . . . . .
+            . . . . . . . . . . . . . . . .
+            . . . . . . . . . . . . . . . .
+            . . . . . . . . . . . . . . . .
+            . . . . . . . . . . . . . . . .
+            . . . . . . . . . . . . . . . .
+            . . . . . . . . . . . . . . . .
+        `);
 
             this.editor = new pxtsprite.SpriteEditor(state, host.blocksInfo(), false);
             this.editor.render(contentDiv);
@@ -49,7 +68,7 @@ namespace pxt.editor {
             if (this.resolver) {
                 this.resolver({
                     range: this.editrange,
-                    replacement: pxtsprite.bitmapToImageLiteral(this.editor.bitmap())
+                    replacement: pxtsprite.bitmapToImageLiteral(this.editor.bitmap(), this.fileType)
                 });
 
                 this.editor.removeKeyListeners();
@@ -72,7 +91,8 @@ namespace pxt.editor {
         glyphCssClass: "sprite-editor-glyph sprite-focus-hover",
         heightInPixels: 510,
         matcher: {
-            searchString: "img`(?:[ a-fA-F0-9\\.]|\\n)+`",
+            // match both JS and python
+            searchString: "img\\s*(?:`|\\(\"\"\")(?:[ a-fA-F0-9\\.]|\\n)*\\s*(?:`|\"\"\"\\))",
             isRegex: true,
             matchCase: true,
             matchWholeWord: false
