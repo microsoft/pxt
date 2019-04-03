@@ -62,10 +62,56 @@ export function replaceFileExtension(file: string, extension: string) {
     return file && file.substr(0, file.length - path.extname(file).length) + extension;
 }
 
+export interface TestPackageOpts {
+    dependency?: string,
+    mainFile?: string,
+    stsPrelude?: string
+}
+
+// TODO merge into testHost?
+class CompileHost extends TestHost {
+    private fileText: string;
+    private stsPrelude: string;
+    static langTestText: string;
+
+    constructor(mainFile?: string, stsPrelude?: string, dependency?: string) {
+        super("test-pkg", "", dependency ? [dependency] : [], true);
+        if (mainFile)
+            this.fileText = fs.readFileSync(mainFile, "utf8");
+        else
+            this.fileText = "// no main function provided"
+        this.stsPrelude = stsPrelude || ""
+    }
+
+    readFile(module: pxt.Package, filename: string): string {
+        if (module.id === "this") {
+            if (filename === "pxt.json") {
+                return JSON.stringify({
+                    "name": this.name,
+                    "dependencies": { "bare": "file:../bare" },
+                    "description": "",
+                    "files": [
+                        "main.ts",
+                        "sts_prelude.ts"
+                    ]
+                })
+            }
+            else if (filename === "main.ts") {
+                return this.fileText;
+            } else if (filename === "sts_prelude.ts") {
+                return this.stsPrelude
+            }
+        }
+
+        return super.readFile(module, filename);
+    }
+}
+
 let cachedOpts: pxt.Map<pxtc.CompileOptions> = {}
-export function getTestCompileOptsAsync(dependency?: string): Promise<pxtc.CompileOptions> {
-    if (!cachedOpts[dependency]) {
-        const pkg = new pxt.MainPackage(new TestHost("test-pkg", "// TODO", dependency ? [dependency] : [], true));
+export function getTestCompileOptsAsync(summary: TestPackageOpts): Promise<pxtc.CompileOptions> {
+    let cacheKey = `${summary.dependency}${summary.mainFile}${summary.stsPrelude}`
+    if (!cachedOpts[cacheKey]) {
+        const pkg = new pxt.MainPackage(new CompileHost(summary.mainFile, summary.stsPrelude, summary.dependency));
 
         const target = pkg.getTargetOptions();
         target.isNative = false;
@@ -75,16 +121,16 @@ export function getTestCompileOptsAsync(dependency?: string): Promise<pxtc.Compi
                 opts.ast = true;
                 opts.testMode = true;
                 opts.ignoreFileResolutionErrors = true;
-                return cachedOpts[dependency] = opts
+                return cachedOpts[cacheKey] = opts
             });
     }
     // Clone cached options so that tests can individually modify their own options copy
-    let opts = JSON.parse(JSON.stringify(cachedOpts[dependency]))
+    let opts = JSON.parse(JSON.stringify(cachedOpts[cacheKey]))
     return Promise.resolve(opts);
 }
 
-export function ts2pyAsync(f: string, dependency?: string): Promise<string> {
-    return getTestCompileOptsAsync(dependency)
+export function ts2pyAsync(f: string): Promise<string> {
+    return getTestCompileOptsAsync({})
         .then(opts => {
             const input = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
             let tsFile = "main.ts";
@@ -104,8 +150,8 @@ export function ts2pyAsync(f: string, dependency?: string): Promise<string> {
         })
 }
 
-export function py2tsAsync(f: string, dependency?: string): Promise<string> {
-    return getTestCompileOptsAsync(dependency)
+export function py2tsAsync(f: string): Promise<string> {
+    return getTestCompileOptsAsync({})
         .then(opts => {
             const input = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
             let pyFile = "main.py";
@@ -124,8 +170,8 @@ export function py2tsAsync(f: string, dependency?: string): Promise<string> {
         })
 }
 
-export function stsAsync(f: string, dependency?: string): Promise<pxtc.CompileResult> {
-    return getTestCompileOptsAsync(dependency)
+export function stsAsync(f: string, stsPrelude?: string): Promise<pxtc.CompileResult> {
+    return getTestCompileOptsAsync({ mainFile: f, stsPrelude: stsPrelude })
         .then(opts => {
             const compiled = pxtc.compile(opts);
             if (compiled.success) {

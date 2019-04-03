@@ -30,48 +30,6 @@ initGlobals();
 pxt.setAppTarget(util.testAppTarget);
 
 // TODO we need to use CompileHost for compiling STS
-class CompileHost extends TestHost {
-    private fileText: string;
-    static langTestText: string;
-
-    constructor(public filename: string) {
-        super("trace-tests", "", [], true);
-        this.fileText = fs.readFileSync(filename, "utf8");
-    }
-
-    readFile(module: pxt.Package, filename: string): string {
-        if (module.id === "this") {
-            if (filename === "pxt.json") {
-                return JSON.stringify({
-                    "name": this.name,
-                    "dependencies": { "bare": "file:../bare" },
-                    "description": "",
-                    "files": [
-                        "main.ts",
-                        "sts_prelude.ts"
-                    ]
-                })
-            }
-            else if (filename === "main.ts") {
-                return this.fileText;
-            } else if (filename === "sts_prelude.ts") {
-                return `
-let console: any = {}
-console.log = function(s: string): void {
-    control.__log(s)
-    control.__log("\\n")
-    control.dmesg(s)
-    //serial.writeString(s)
-    //serial.writeString("\\n")
-    //pause(50);
-}
-                `
-            }
-        }
-
-        return super.readFile(module, filename);
-    }
-}
 
 function removeBySubstring(dir: string, sub: string) {
     return fs.readdirSync(dir)
@@ -203,7 +161,17 @@ function compileAndRunTs(filename: string): string {
 }
 
 function compileAndRunStsAsync(filename: string): Promise<string> {
-    return util.stsAsync(filename)
+    const prelude: string = `
+    let console: any = {}
+    console.log = function(s: string): void {
+        control.__log(s)
+        control.__log("\\n")
+        control.dmesg(s)
+        //serial.writeString(s)
+        //serial.writeString("\\n")
+        //pause(50);
+    }`
+    return util.stsAsync(filename, prelude)
         .then((compiled) => {
             return runStsAsync(compiled)
         })

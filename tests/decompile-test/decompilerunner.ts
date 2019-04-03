@@ -86,7 +86,7 @@ function decompileTestAsync(filename: string) {
 }
 
 function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
-    return util.getTestCompileOptsAsync(dependency)
+    return util.getTestCompileOptsAsync({ dependency: dependency })
         .then(opts => {
             const input = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
             opts.fileSystem["main.ts"] = input;
