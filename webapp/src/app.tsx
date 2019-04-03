@@ -187,7 +187,7 @@ export class ProjectView
         // (e.g. from the URL hash or from WinRT activation arguments)
         const skipStartScreen = pxt.appTarget.appTheme.allowParentController
             || pxt.shell.isControllerMode()
-            || window.location.hash == "#editor";
+            || /^#editor/.test(window.location.hash);
         return !isSandbox && !skipStartScreen && !isProjectRelatedHash(hash);
     }
 
@@ -3149,7 +3149,7 @@ let myexports: any = {
 export let ksVersion: string;
 
 function parseHash(): { cmd: string; arg: string } {
-    let hashM = /^#(\w+)(:([:\.\/\-\+\=\w]+))?$/.exec(window.location.hash)
+    let hashM = /^#(\w+)(:([:\.\/\-\+\=\w]+))?/.exec(window.location.hash)
     if (hashM) {
         return { cmd: hashM[1], arg: hashM[3] || '' };
     }

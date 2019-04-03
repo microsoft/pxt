@@ -303,6 +303,9 @@ namespace pxt.blocks {
 
     export function injectBlocks(blockInfo: pxtc.BlocksInfo): pxtc.SymbolInfo[] {
         cachedBlockInfo = blockInfo;
+
+        Blockly.pxtBlocklyUtils.whitelistDraggableBlockTypes(blockInfo.blocks.filter(fn => fn.attributes.duplicateShadowOnDrag).map(fn => fn.attributes.blockId));
+
         // inject Blockly with all block definitions
         return blockInfo.blocks
             .map(fn => {
@@ -512,7 +515,7 @@ namespace pxt.blocks {
         const body = fn.parameters ? fn.parameters.filter(pr => pr.type == "() => void" || pr.type == "Action")[0] : undefined;
         if (body || hasHandler) {
             block.appendStatementInput("HANDLER")
-                .setCheck("null");
+                .setCheck(null);
             block.setInputsInline(true);
         }
 
@@ -689,6 +692,8 @@ namespace pxt.blocks {
                                 else {
                                     inputCheck = "String"
                                 }
+                            } else if (pr.type == "any") {
+                                inputCheck = null;
                             } else {
                                 inputCheck = pr.type == "T" ? undefined : (isArrayType(pr.type) ? ["Array", pr.type] : pr.type);
                             }
@@ -825,6 +830,7 @@ namespace pxt.blocks {
             case "number": return ["Number"];
             case "string": return ["String"];
             case "boolean": return ["Boolean"];
+            case "any": return null;
             case "void": return undefined
             default:
                 if (type !== "T") {
