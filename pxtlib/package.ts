@@ -106,6 +106,22 @@ namespace pxt {
             this.host().writeFile(this, pxt.CONFIG_NAME, text)
         }
 
+        setPreferredEditor(editor: string) {
+            if (this.config.preferredEditor != editor) {
+                this.config.preferredEditor = editor
+                this.saveConfig()
+            }
+        }
+
+        getPreferredEditor() {
+            let editor = this.config.preferredEditor
+            if (!editor) {
+                editor = this.getFiles().indexOf("main.blocks") >= 0 ?
+                    pxt.BLOCKS_PROJECT_NAME : pxt.JAVASCRIPT_PROJECT_NAME
+            }
+            return editor
+        }
+
         parseJRes(allres: Map<JRes> = {}) {
             for (const f of this.getFiles()) {
                 if (U.endsWith(f, ".jres")) {
@@ -168,19 +184,21 @@ namespace pxt {
                     pxt.debug('downloading ' + verNo)
                     return this.host().downloadPackageAsync(this)
                         .then(() => {
-                            const confStr = this.readFile(pxt.CONFIG_NAME)
-                            if (!confStr)
-                                U.userError(`extension ${this.id} is missing ${pxt.CONFIG_NAME}`)
-                            this.parseConfig(confStr);
-                            if (this.level != 0)
-                                this.config.installedVersion = this.version()
-                            this.saveConfig()
-                        })
-                        .then(() => {
+                            this.loadConfig();
                             pxt.debug(`installed ${this.id} /${verNo}`)
                         })
 
                 })
+        }
+
+        loadConfig() {
+            const confStr = this.readFile(pxt.CONFIG_NAME)
+            if (!confStr)
+                U.userError(`extension ${this.id} is missing ${pxt.CONFIG_NAME}`)
+            this.parseConfig(confStr);
+            if (this.level != 0)
+                this.config.installedVersion = this.version()
+            this.saveConfig()
         }
 
         protected validateConfig() {
@@ -588,6 +606,9 @@ namespace pxt {
             const r: Map<string> = {};
             const theme = pxt.appTarget.appTheme || {};
 
+            if (this.config.skipLocalization)
+                return Promise.resolve(r);
+
             // live loc of bundled packages
             if (pxt.Util.localizeLive && this.id != "this" && pxt.appTarget.bundledpkgs[this.id]) {
                 pxt.debug(`loading live translations for ${this.id}`)
@@ -697,7 +718,7 @@ namespace pxt {
                 });
         }
 
-        getTargetOptions(): CompileTarget {
+        getTargetOptions(): pxtc.CompileTarget {
             let res = U.clone(appTarget.compile)
             U.assert(!!res)
             return res
@@ -722,7 +743,7 @@ namespace pxt {
             return this._jres
         }
 
-        getCompileOptionsAsync(target: CompileTarget = this.getTargetOptions()): Promise<pxtc.CompileOptions> {
+        getCompileOptionsAsync(target: pxtc.CompileTarget = this.getTargetOptions()): Promise<pxtc.CompileOptions> {
             let opts: pxtc.CompileOptions = {
                 sourceFiles: [],
                 fileSystem: {},
@@ -743,6 +764,7 @@ namespace pxt {
 
             return this.loadAsync()
                 .then(() => {
+                    opts.target.preferredEditor = this.getPreferredEditor()
                     pxt.debug(`building: ${this.sortedDeps().map(p => p.config.name).join(", ")}`)
                     let ext = cpp.getExtensionInfo(this)
                     if (ext.shimsDTS) generateFile("shims.d.ts", ext.shimsDTS)
@@ -768,7 +790,7 @@ namespace pxt {
                             status: "unpublished",
                             scriptId: this.config.installedVersion,
                             cloudId: pxt.CLOUD_ID + appTarget.id,
-                            editor: target.preferredEditor ? target.preferredEditor : (U.lookup(files, "main.blocks") ? pxt.BLOCKS_PROJECT_NAME : pxt.JAVASCRIPT_PROJECT_NAME),
+                            editor: this.getPreferredEditor(),
                             targetVersions: pxt.appTarget.versions
                         })
                         const programText = JSON.stringify(files)
@@ -794,7 +816,7 @@ namespace pxt {
                 .then(() => {
                     for (const pkg of this.sortedDeps()) {
                         for (const f of pkg.getFiles()) {
-                            if (/\.(ts|asm)$/.test(f)) {
+                            if (/\.(ts|asm|py)$/.test(f)) {
                                 let sn = f
                                 if (pkg.level > 0)
                                     sn = "pxt_modules/" + pkg.id + "/" + f
@@ -851,14 +873,14 @@ namespace pxt {
                 })
         }
 
-        saveToJsonAsync(editor?: string): Promise<pxt.cpp.HexFile> {
+        saveToJsonAsync(): Promise<pxt.cpp.HexFile> {
             return this.filesToBePublishedAsync(true)
                 .then(files => {
                     const project: pxt.cpp.HexFile = {
                         meta: {
                             cloudId: pxt.CLOUD_ID + pxt.appTarget.id,
                             targetVersions: pxt.appTarget.versions,
-                            editor: editor || pxt.BLOCKS_PROJECT_NAME,
+                            editor: this.getPreferredEditor(),
                             name: this.config.name
                         },
                         source: JSON.stringify(files, null, 2)
@@ -867,8 +889,8 @@ namespace pxt {
                 });
         }
 
-        compressToFileAsync(editor?: string): Promise<Uint8Array> {
-            return this.saveToJsonAsync(editor)
+        compressToFileAsync(): Promise<Uint8Array> {
+            return this.saveToJsonAsync()
                 .then(project => pxt.lzmaCompressAsync(JSON.stringify(project, null, 2)));
         }
 

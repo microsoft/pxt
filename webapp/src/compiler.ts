@@ -55,7 +55,6 @@ export interface CompileOptions {
     debug?: boolean;
     background?: boolean; // not explicitly requested by user (hint for simulator)
     forceEmit?: boolean;
-    preferredEditor?: string;
     clickTrigger?: boolean;
 }
 
@@ -86,7 +85,6 @@ export function emptyCompileResult(): pxtc.CompileResult {
 export function compileAsync(options: CompileOptions = {}): Promise<pxtc.CompileResult> {
     let trg = pkg.mainPkg.getTargetOptions()
     trg.isNative = options.native
-    trg.preferredEditor = options.preferredEditor;
     return pkg.mainPkg.getCompileOptionsAsync(trg)
         .then(opts => {
             if (options.debug) {
@@ -152,6 +150,33 @@ function compileCoreAsync(opts: pxtc.CompileOptions): Promise<pxtc.CompileResult
     return workerOpAsync("compile", { options: opts })
 }
 
+export function py2tsAsync(): Promise<{ generated: pxt.Map<string>, diagnostics: pxtc.KsDiagnostic[] }> {
+    let trg = pkg.mainPkg.getTargetOptions()
+    return waitForFirstTypecheckAsync()
+        .then(() => pkg.mainPkg.getCompileOptionsAsync(trg))
+        .then(opts => {
+            opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
+            return workerOpAsync("py2ts", { options: opts })
+        })
+}
+
+export function completionsAsync(fileName: string, position: number, fileContent?: string): Promise<pxtc.CompletionInfo> {
+    return workerOpAsync("getCompletions", {
+        fileName,
+        fileContent,
+        position
+    });
+}
+
+export function syntaxInfoAsync(infoType: pxtc.InfoType, fileName: string, position: number, fileContent: string): Promise<pxtc.SyntaxInfo> {
+    return workerOpAsync("syntaxInfo", {
+        fileName,
+        fileContent,
+        position,
+        infoType
+    });
+}
+
 export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo, oldWorkspace?: Blockly.Workspace, blockFile?: string): Promise<pxtc.CompileResult> {
     let trg = pkg.mainPkg.getTargetOptions()
     return pkg.mainPkg.getCompileOptionsAsync(trg)
@@ -200,8 +225,29 @@ function decompileCoreAsync(opts: pxtc.CompileOptions, fileName: string): Promis
     return workerOpAsync("decompile", { options: opts, fileName: fileName, blocks: blocksOptions() })
 }
 
+export function pyDecompileAsync(fileName: string): Promise<pxtc.CompileResult> {
+    let trg = pkg.mainPkg.getTargetOptions()
+    return pkg.mainPkg.getCompileOptionsAsync(trg)
+        .then(opts => {
+            opts.ast = true;
+            opts.testMode = true;
+            opts.alwaysDecompileOnStart = pxt.appTarget.runtime && pxt.appTarget.runtime.onStartUnDeletable;
+            return pyDecompileCoreAsync(opts, fileName)
+        })
+        .then(resp => {
+            pkg.mainEditorPkg().outputPkg.setFiles(resp.outfiles)
+            setDiagnostics(resp.diagnostics)
+            return resp
+        })
+}
+
+function pyDecompileCoreAsync(opts: pxtc.CompileOptions, fileName: string): Promise<pxtc.CompileResult> {
+    return workerOpAsync("pydecompile", { options: opts, fileName: fileName })
+}
+
 export function workerOpAsync(op: string, arg: pxtc.service.OpArg) {
     const startTm = Date.now()
+    pxt.debug("worker op: " + op)
     return pxt.worker.getWorker(pxt.webConfig.workerjs)
         .opAsync(op, arg)
         .then(res => {
@@ -210,6 +256,7 @@ export function workerOpAsync(op: string, arg: pxtc.service.OpArg) {
                 if (res.times)
                     console.log(res.times)
             }
+            pxt.debug("worker op done: " + op)
             return res
         })
 }
@@ -264,6 +311,10 @@ export function formatAsync(input: string, pos: number) {
     return workerOpAsync("format", { format: { input: input, pos: pos } });
 }
 
+export function snippetAsync(qName: string, python?: boolean) {
+    return workerOpAsync("snippet", { snippet: { qName, python } });
+}
+
 export function typecheckAsync() {
     let p = pkg.mainPkg.getCompileOptionsAsync()
         .then(opts => {
@@ -312,7 +363,7 @@ export function applyUpgradesAsync(): Promise<UpgradeResult> {
         });
     }
 
-    const upgradeOp = epkg.header.editor === pxt.JAVASCRIPT_PROJECT_NAME ? upgradeFromTSAsync : upgradeFromBlocksAsync;
+    const upgradeOp = epkg.header.editor !== pxt.BLOCKS_PROJECT_NAME ? upgradeFromTSAsync : upgradeFromBlocksAsync;
 
     let projectNeverCompiled = false;
 

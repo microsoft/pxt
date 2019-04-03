@@ -291,6 +291,11 @@ div.simframe > iframe {
     box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
     background: @editorToggleColor !important;
 }
+.active.item.python-menuitem ~ .toggle {
+    margin-left: 280px !important;
+    box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
+    background: @editorToggleColor !important;
+}
 
 /* Help card */
 #helpcard {
@@ -674,6 +679,11 @@ p.ui.font.small {
         box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
         background: @editorToggleColor !important;
     }
+    #root.sandbox .active.item.python-menuitem ~ .toggle {
+        margin-left: 120px !important;
+        box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
+        background: @editorToggleColor !important;
+    }
 
     .simView #boardview {
         padding-top: @sandboxMobileMenuHeight;
@@ -969,6 +979,9 @@ p.ui.font.small {
     .active.item.javascript-menuitem ~ .toggle {
         margin-left: 40px !important;
     }
+    .active.item.python-menuitem ~ .toggle {
+        margin-left: 80px !important;
+    }
     /* Top Menu */
     #maineditor {
         top: @mobileMenuHeight;
@@ -1162,6 +1175,11 @@ div.simframe.ui.embed {
     }
     .active.item.javascript-menuitem ~ .toggle {
         margin-left: 280px !important;
+        box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
+        background: @editorToggleColor !important;
+    }
+    .active.item.python-menuitem ~ .toggle {
+        margin-left: 420px !important;
         box-shadow: -2px 0px 0px rgba(0,0,0,0.1) !important;
         background: @editorToggleColor !important;
     }

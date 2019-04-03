@@ -320,6 +320,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         this.openSimView = this.openSimView.bind(this);
         this.openBlocks = this.openBlocks.bind(this);
         this.openJavaScript = this.openJavaScript.bind(this);
+        this.openPython = this.openPython.bind(this);
         this.exitTutorial = this.exitTutorial.bind(this);
         this.showReportAbuse = this.showReportAbuse.bind(this);
         this.toggleDebug = this.toggleDebug.bind(this);
@@ -367,6 +368,11 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         this.props.parent.openJavaScript();
     }
 
+    openPython() {
+        pxt.tickEvent("menu.python", undefined, { interactiveConsent: true });
+        this.props.parent.openPython();
+    }
+
     exitTutorial() {
         pxt.tickEvent("menu.exitTutorial", undefined, { interactiveConsent: true });
         this.props.parent.exitTutorial();
@@ -407,6 +413,7 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
         const simActive = this.props.parent.isEmbedSimActive();
         const blockActive = this.props.parent.isBlocksActive();
         const javascriptActive = this.props.parent.isJavaScriptActive();
+        const pythonActive = this.props.parent.isPythonActive();
 
         const runTooltip = isRunning ? lf("Stop the simulator") : lf("Start the simulator");
 
@@ -435,6 +442,8 @@ export class MainMenu extends data.Component<ISettingsProps, {}> {
                     {sandbox ? <sui.Item className="sim-menuitem" role="menuitem" textClass="landscape only" text={lf("Simulator")} icon={simActive && isRunning ? "stop" : "play"} active={simActive} onClick={this.openSimView} title={!simActive ? lf("Show Simulator") : runTooltip} /> : undefined}
                     <sui.Item className="blocks-menuitem" role="menuitem" textClass="landscape only" text={lf("Blocks")} icon="xicon blocks" active={blockActive} onClick={this.openBlocks} title={lf("Convert code to Blocks")} />
                     <sui.Item className="javascript-menuitem" role="menuitem" textClass="landscape only" text={"JavaScript"} icon="xicon js" active={javascriptActive} onClick={this.openJavaScript} title={lf("Convert code to JavaScript")} />
+                    {targetTheme.python ?
+                        <sui.Item className="python-menuitem" role="menuitem" textClass="landscape only" text={"Python"} icon="xicon python" active={pythonActive} onClick={this.openPython} title={lf("Convert code to Python")} /> : undefined}
                     <div className="ui item toggle"></div>
                 </div>
             </div> : undefined}

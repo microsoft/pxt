@@ -1,12 +1,4 @@
 namespace pxt.tutorial {
-    export interface TutorialStepInfo {
-        fullscreen?: boolean;
-        // no coding
-        unplugged?: boolean;
-        hasHint?: boolean;
-        contentMd?: string;
-        headerContentMd?: string;
-    }
 
     export function parseTutorialSteps(tutorialId: string, tutorialmd: string): TutorialStepInfo[] {
         // Download tutorial markdown
