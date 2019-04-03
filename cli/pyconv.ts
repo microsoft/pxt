@@ -1,56 +1,32 @@
-type Type = py.Type
+interface TypeOptions {
+    union?: Type;
+    classType?: py.ClassDef;
+    primType?: string;
+    arrayType?: Type;
+}
+
+interface Type extends TypeOptions {
+    tid: number;
+}
+
+interface FieldDesc {
+    name: string;
+    type: Type;
+    inClass: py.ClassDef;
+    fundef?: py.FunctionDef;
+    isGetSet?: boolean;
+    isStatic?: boolean;
+    isProtected?: boolean;
+    initializer?: py.Expr;
+}
+
 type Map<T> = pxt.Map<T>;
 
-import * as nodeutil from './nodeutil';
-import * as fs from 'fs';
-import U = pxt.Util;
-import B = pxt.blocks;
-
 namespace py {
-    export interface TypeOptions {
-        union?: Type;
-        classType?: py.ClassDef;
-        primType?: string;
-        arrayType?: Type;
-    }
-
-    export interface Type extends TypeOptions {
-        tid: number;
-    }
-
-    export interface FieldDesc {
-        name: string;
-        type: Type;
-        inClass: py.ClassDef;
-        fundef?: py.FunctionDef;
-        isGetSet?: boolean;
-        isStatic?: boolean;
-        isProtected?: boolean;
-        initializer?: py.Expr;
-    }
-
-    export interface VarDescOptions {
-        expandsTo?: string;
-        isImportStar?: boolean;
-        isPlainImport?: boolean;
-        isLocal?: boolean;
-        isParam?: boolean;
-        fundef?: py.FunctionDef;
-        classdef?: py.ClassDef;
-        isImport?: py.Module;
-    }
-
-    export interface VarDesc extends VarDescOptions {
-        type: Type;
-        name: string;
-    }
-
     // based on grammar at https://docs.python.org/3/library/ast.html
     export interface AST {
         lineno: number;
         col_offset: number;
-        startPos?: number;
-        endPos?: number;
         kind: string;
     }
     export interface Stmt extends AST {
@@ -383,7 +359,6 @@ namespace py {
     export interface Num extends Expr {
         kind: "Num";
         n: number;
-        ns: string;
     }
     export interface Str extends Expr {
         kind: "Str";
@@ -452,6 +427,11 @@ namespace py {
     }
 }
 
+
+import * as nodeutil from './nodeutil';
+import * as fs from 'fs';
+import U = pxt.Util;
+import B = pxt.blocks;
 
 /* tslint:disable:no-trailing-whitespace */
 const convPy = `
@@ -545,6 +525,22 @@ function lookupSymbol(name: string): py.Symbol {
     return null
 }
 
+interface VarDescOptions {
+    expandsTo?: string;
+    isImportStar?: boolean;
+    isPlainImport?: boolean;
+    isLocal?: boolean;
+    isParam?: boolean;
+    fundef?: py.FunctionDef;
+    classdef?: py.ClassDef;
+    isImport?: py.Module;
+}
+
+interface VarDesc extends VarDescOptions {
+    type: Type;
+    name: string;
+}
+
 interface Ctx {
     currModule: py.Module;
     currClass: py.ClassDef;
@@ -556,7 +552,7 @@ let currIteration = 0
 
 let typeId = 0
 let numUnifies = 0
-function mkType(o: py.TypeOptions = {}) {
+function mkType(o: TypeOptions = {}) {
     let r: Type = U.flatClone(o) as any
     r.tid = ++typeId
     return r
@@ -566,7 +562,7 @@ function currentScope(): py.ScopeDef {
     return ctx.currFun || ctx.currClass || ctx.currModule
 }
 
-function defvar(n: string, opts: py.VarDescOptions) {
+function defvar(n: string, opts: VarDescOptions) {
     let scopeDef = currentScope()
     let v = scopeDef.vars[n]
     if (!v) {
@@ -1919,79 +1915,10 @@ function iterPy(e: py.AST, f: (v: py.AST) => void) {
     })
 }
 
-function parseWithPythonAsync(files: string[]) {
-    return nodeutil.spawnWithPipeAsync({
-        cmd: process.env["PYTHON3"] || (/^win/i.test(process.platform) ? "py" : "python3"),
-        args: [],
-        input: convPy.replace("@files@", JSON.stringify(files)),
-        silent: true
-    })
-        .then(buf => {
-            pxt.debug(`analyzing python AST (${buf.length} bytes)`)
-            let js = JSON.parse(buf.toString("utf8"))
-            // nodeutil.writeFileSync("pyast.json", JSON.stringify(js, null, 2), { encoding: "utf8" })
-            const rec = (v: any): any => {
-                if (Array.isArray(v)) {
-                    for (let i = 0; i < v.length; ++i)
-                        v[i] = rec(v[i])
-                    return v
-                }
-                if (!v || !v.kind)
-                    return v
-                v.kind = U.lookup(nameMap, v.kind) || v.kind
-                if (U.lookup(simpleNames, v.kind))
-                    return v.kind
-                for (let k of Object.keys(v)) {
-                    v[k] = rec(v[k])
-                }
-                return v
-            }
-            js.kind = "FileSet"
-            js = rec(js)
-            delete js.kind
-            //nodeutil.writeFileSync("pyast2.json", JSON.stringify(js, null, 2), { encoding: "utf8" })
-            return js
-        })
-
-}
-
-export function convertAsync(fns: string[], useInternal = false) {
+export function convertAsync(fns: string[]) {
     let mainFiles: string[] = []
     while (/\.py$/.test(fns[0])) {
         mainFiles.push(fns.shift().replace(/\\/g, "/"))
-    }
-
-    if (useInternal) {
-        return parseWithPythonAsync(mainFiles)
-            .then(parsedPy => {
-                for (let f of mainFiles) {
-                    pxt.log(`parse: ${f}`)
-                    let source = fs.readFileSync(f, "utf8")
-                    let tokens = pxt.py.lex(source)
-                    //console.log(pxt.py.tokensToString(tokens))
-                    let res = pxt.py.parse(source, f, tokens)
-                    let custompy = pxt.py.dump(res.stmts, true)
-                    let realpy = pxt.py.dump(parsedPy[f].body, true)
-                    let path = "tmp/"
-                    if (custompy != realpy) {
-                        fs.writeFileSync(path + "pxtpy.txt", custompy)
-                        fs.writeFileSync(path + "realpy.txt", realpy)
-                        fs.writeFileSync(path + "realpy.json", JSON.stringify(parsedPy[f]))
-                        return nodeutil.spawnWithPipeAsync({
-                            cmd: "diff",
-                            args: ["-u", path + "pxtpy.txt", path + "realpy.txt"],
-                            input: "",
-                            silent: true,
-                            allowNonZeroExit: true
-                        })
-                            .then(buf => {
-                                fs.writeFileSync(path + "diff.patch", buf)
-                                console.log(`Differences at ${f}; files written in ${path}`)
-                            })
-                    }
-                }
-                return Promise.resolve()
-            })
     }
 
     let primFiles =
@@ -2031,8 +1958,36 @@ export function convertAsync(fns: string[], useInternal = false) {
     const pkgFilesKeys = Object.keys(pkgFiles);
     pxt.log(`files (${pkgFilesKeys.length}):\n   ${pkgFilesKeys.join('\n   ')}`);
 
-    return parseWithPythonAsync(pkgFilesKeys)
-        .then(js => {
+    return nodeutil.spawnWithPipeAsync({
+        cmd: process.env["PYTHON3"] || (/^win/i.test(process.platform) ? "py" : "python3"),
+        args: [],
+        input: convPy.replace("@files@", JSON.stringify(pkgFilesKeys)),
+        silent: true
+    })
+        .then(buf => {
+            pxt.debug(`analyzing python AST (${buf.length} bytes)`)
+            let js = JSON.parse(buf.toString("utf8"))
+            nodeutil.writeFileSync("pyast.json", JSON.stringify(js, null, 2), { encoding: "utf8" })
+            const rec = (v: any): any => {
+                if (Array.isArray(v)) {
+                    for (let i = 0; i < v.length; ++i)
+                        v[i] = rec(v[i])
+                    return v
+                }
+                if (!v || !v.kind)
+                    return v
+                v.kind = U.lookup(nameMap, v.kind) || v.kind
+                if (U.lookup(simpleNames, v.kind))
+                    return v.kind
+                for (let k of Object.keys(v)) {
+                    v[k] = rec(v[k])
+                }
+                return v
+            }
+            js.kind = "FileSet"
+            js = rec(js)
+            delete js.kind
+
             moduleAst = {}
             U.iterMap(js, (fn: string, js: py.Module) => {
                 let mname = pkgFiles[fn]

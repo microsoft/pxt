@@ -47,51 +47,6 @@ namespace ts.pxtc {
         return '';
     }
 
-    export function snakify(s: string) {
-        const up = s.toUpperCase()
-        const lo = s.toLowerCase()
-
-        // if the name is all lowercase or all upper case don't do anything
-        if (s == up || s == lo)
-            return s
-
-        // if the name already has underscores (not as first character), leave it alone
-        if (s.lastIndexOf("_") > 0)
-            return s
-
-        const isUpper = (i: number) => s[i] != lo[i]
-        const isLower = (i: number) => s[i] != up[i]
-        //const isDigit = (i: number) => /\d/.test(s[i])
-
-        let r = ""
-        let i = 0
-        while (i < s.length) {
-            let upperMode = isUpper(i)
-            let j = i
-            while (j < s.length) {
-                if (upperMode && isLower(j)) {
-                    // ABCd -> AB_Cd
-                    if (j - i > 2) {
-                        j--
-                        break
-                    } else {
-                        // ABdefQ -> ABdef_Q
-                        upperMode = false
-                    }
-                }
-                // abcdE -> abcd_E
-                if (!upperMode && isUpper(j)) {
-                    break
-                }
-                j++
-            }
-            if (r) r += "_"
-            r += s.slice(i, j)
-            i = j
-        }
-        return r
-    }
-
     function getSymbolKind(node: Node) {
         switch (node.kind) {
             case SK.MethodDeclaration:
@@ -102,7 +57,6 @@ namespace ts.pxtc {
             case SK.GetAccessor:
             case SK.SetAccessor:
                 return SymbolKind.Property;
-            case SK.Constructor:
             case SK.FunctionDeclaration:
                 return SymbolKind.Function;
             case SK.VariableDeclaration:
@@ -163,7 +117,7 @@ namespace ts.pxtc {
         return decl.modifiers && decl.modifiers.some(m => m.kind == SK.ReadonlyKeyword)
     }
 
-    function createSymbolInfo(typechecker: TypeChecker, qName: string, stmt: Node, opts: CompileOptions): SymbolInfo {
+    function createSymbolInfo(typechecker: TypeChecker, qName: string, stmt: Node): SymbolInfo {
         function typeOf(tn: TypeNode, n: Node, stripParams = false) {
             let t = typechecker.getTypeAtLocation(n)
             if (!t) return "None"
@@ -174,13 +128,8 @@ namespace ts.pxtc {
 
             // TypeScript 2.0.0+ will assign constant variables numeric literal types which breaks the
             // type checking we do in the blocks
-            // This can be a number literal '7' or a union type of them '0 | 1 | 2'
-            if (/^\d/.test(readableName)) {
+            if (!isNaN(Number(readableName))) {
                 return "number";
-            }
-
-            if (readableName == "this") {
-                return getFullName(typechecker, t.symbol);
             }
 
             return readableName;
@@ -227,16 +176,12 @@ namespace ts.pxtc {
 
             let r: SymbolInfo = {
                 kind,
-                qName,
                 namespace: m ? m[1] : "",
                 name: m ? m[2] : qName,
                 attributes,
                 pkg,
                 extendsTypes,
-                retType:
-                    stmt.kind == SyntaxKind.Constructor ? "void" :
-                        kind == SymbolKind.Module ? "" :
-                            typeOf(decl.type, decl, hasParams),
+                retType: kind == SymbolKind.Module ? "" : typeOf(decl.type, decl, hasParams),
                 parameters: !hasParams ? null : Util.toArray(decl.parameters).map((p, i) => {
                     let n = getName(p)
                     let desc = attributes.paramHelp[n] || ""
@@ -283,9 +228,7 @@ namespace ts.pxtc {
                         name: n,
                         description: desc,
                         type: typeOf(p.type, p),
-                        initializer:
-                            p.initializer ? p.initializer.getText() :
-                                attributes.paramDefl[n] || (p.questionToken ? "undefined" : undefined),
+                        initializer: p.initializer ? p.initializer.getText() : attributes.paramDefl[n],
                         default: attributes.paramDefl[n],
                         properties: props,
                         handlerParameters: parameters,
@@ -293,26 +236,7 @@ namespace ts.pxtc {
                         isEnum
                     }
                 }),
-                snippet: ts.isFunctionLike(stmt) ? null : undefined
-            }
-
-            switch (r.kind) {
-                case SymbolKind.EnumMember:
-                    r.pyName = snakify(r.name).toUpperCase()
-                    break
-                case SymbolKind.Variable:
-                case SymbolKind.Module:
-                case SymbolKind.Method:
-                case SymbolKind.Property:
-                case SymbolKind.Function:
-                    r.pyName = snakify(r.name).toLowerCase()
-                    break
-                case SymbolKind.Enum:
-                case SymbolKind.Class:
-                case SymbolKind.Interface:
-                default:
-                    r.pyName = r.name
-                    break
+                snippet: service.getSnippet(decl, attributes)
             }
 
             if (stmt.kind === SK.GetAccessor ||
@@ -337,8 +261,7 @@ namespace ts.pxtc {
 
         const files: pxt.Map<string> = {};
         const infos = Util.values(apiInfo.byQName);
-        const enumMembers = infos.filter(si => si.kind == SymbolKind.EnumMember)
-            .sort(compareSymbols);
+        const enumMembers = infos.filter(si => si.kind == SymbolKind.EnumMember).sort(compareSymbol);
 
         const locStrings: pxt.Map<string> = {};
         const jsdocStrings: pxt.Map<string> = {};
@@ -391,52 +314,33 @@ namespace ts.pxtc {
         mapLocs(locStrings, "");
         mapLocs(jsdocStrings, "-jsdoc");
         return files;
-    }
 
-    export function hasBlock(sym: SymbolInfo): boolean {
-        return !!sym.attributes.block && !!sym.attributes.blockId;
-    }
-
-    let symbolKindWeight: pxt.Map<number>;
-    export function compareSymbols(l: SymbolInfo, r: SymbolInfo): number {
-        let c = -(hasBlock(l) ? 1 : -1) + (hasBlock(r) ? 1 : -1);
-        if (c) return c;
-
-        if (!symbolKindWeight) {
-            symbolKindWeight = {};
-            symbolKindWeight[SymbolKind.Variable] = 100;
-            symbolKindWeight[SymbolKind.Function] = 99;
-            symbolKindWeight[SymbolKind.Property] = 98;
-            symbolKindWeight[SymbolKind.Method] = 97;
-            symbolKindWeight[SymbolKind.Module] = 90
-            symbolKindWeight[SymbolKind.Class] = 89;
-            symbolKindWeight[SymbolKind.Enum] = 81;
-            symbolKindWeight[SymbolKind.EnumMember] = 80;
+        function hasBlock(sym: SymbolInfo): boolean {
+            return !!sym.attributes.block && !!sym.attributes.blockId;
         }
 
-        // favor functions
-        c = -(symbolKindWeight[l.kind] || 0) + (symbolKindWeight[r.kind] || 0);
-        if (c) return c;
+        function capitalize(name: string) {
+            return name[0].toUpperCase() + name.slice(1);
+        }
 
-        c = -(l.attributes.weight || 50) + (r.attributes.weight || 50);
-        if (c) return c;
-
-        return U.strcmp(l.name, r.name);
+        function compareSymbol(l: SymbolInfo, r: SymbolInfo): number {
+            let c = -(hasBlock(l) ? 1 : -1) + (hasBlock(r) ? 1 : -1);
+            if (c) return c;
+            c = -(l.attributes.weight || 50) + (r.attributes.weight || 50);
+            if (c) return c;
+            return U.strcmp(l.name, r.name);
+        }
     }
-
 
     export function getApiInfo(opts: CompileOptions, program: Program, legacyOnly = false): ApisInfo {
-        return internalGetApiInfo(opts, program, legacyOnly).apis;
-    }
-
-    export function internalGetApiInfo(opts: CompileOptions, program: Program, legacyOnly = false) {
-        const res: ApisInfo = {
+        let res: ApisInfo = {
             byQName: {},
             jres: opts.jres
         }
-        const qNameToNode: pxt.Map<Declaration> = {};
-        const typechecker = program.getTypeChecker()
-        const collectDecls = (stmt: Node) => {
+
+        let typechecker = program.getTypeChecker()
+
+        let collectDecls = (stmt: Node) => {
             if (stmt.kind == SK.VariableStatement) {
                 let vs = stmt as VariableStatement
                 vs.declarationList.declarations.forEach(collectDecls)
@@ -451,36 +355,22 @@ namespace ts.pxtc {
                 let qName = getFullName(typechecker, stmt.symbol)
                 if (stmt.kind == SK.SetAccessor)
                     qName += "@set" // otherwise we get a clash with the getter
-                qNameToNode[qName] = stmt as Declaration;
-                let si = createSymbolInfo(typechecker, qName, stmt, opts)
+                let si = createSymbolInfo(typechecker, qName, stmt)
                 if (si) {
                     let existing = U.lookup(res.byQName, qName)
                     if (existing) {
-                        // we can have a function and an interface of the same name
-                        if (existing.kind == SymbolKind.Interface && si.kind != SymbolKind.Interface) {
-                            // save existing entry
-                            res.byQName[qName + "@type"] = existing
-                        } else if (existing.kind != SymbolKind.Interface && si.kind == SymbolKind.Interface) {
-                            res.byQName[qName + "@type"] = si
-                            si = existing
-                        } else {
-                            si.attributes = parseCommentString(
-                                existing.attributes._source + "\n" +
-                                si.attributes._source)
-                            if (existing.extendsTypes) {
-                                si.extendsTypes = si.extendsTypes || []
-                                existing.extendsTypes.forEach(t => {
-                                    if (si.extendsTypes.indexOf(t) === -1) {
-                                        si.extendsTypes.push(t);
-                                    }
-                                })
-                            }
+                        si.attributes = parseCommentString(
+                            existing.attributes._source + "\n" +
+                            si.attributes._source)
+                        if (existing.extendsTypes) {
+                            si.extendsTypes = si.extendsTypes || []
+                            existing.extendsTypes.forEach(t => {
+                                if (si.extendsTypes.indexOf(t) === -1) {
+                                    si.extendsTypes.push(t);
+                                }
+                            })
                         }
                     }
-                    if (stmt.parent &&
-                        (stmt.parent.kind == SK.ClassDeclaration || stmt.parent.kind == SK.InterfaceDeclaration) &&
-                        !isStatic(stmt as Declaration))
-                        si.isInstance = true
                     res.byQName[qName] = si
                 }
             }
@@ -529,21 +419,6 @@ namespace ts.pxtc {
                     si.attributes.jresURL = "data:" + jr.mimeType + ";base64," + jr.data
                 }
             }
-
-            if (si.pyName) {
-                if (si.namespace) {
-                    let par = res.byQName[si.namespace]
-                    if (par) {
-                        si.pyQName = par.pyQName + "." + si.pyName
-                    } else {
-                        // shouldn't happen
-                        pxt.log("namespace missing: " + si.namespace)
-                        si.pyQName = si.namespace + "." + si.pyName
-                    }
-                } else {
-                    si.pyQName = si.pyName
-                }
-            }
         }
 
         // transitive closure of inheritance
@@ -570,10 +445,7 @@ namespace ts.pxtc {
             delete res.byQName["Array.map"]
         }
 
-        return {
-            apis: res,
-            decls: qNameToNode
-        }
+        return res
     }
 
     export function getFullName(typechecker: TypeChecker, symbol: Symbol): string {
@@ -582,35 +454,32 @@ namespace ts.pxtc {
         return typechecker.getFullyQualifiedName(symbol);
     }
 
-    /*
-    export function fillCompletionEntries(program: Program, symbols: Symbol[], r: CompletionInfo, apiInfo: ApisInfo, opts: CompileOptions) {
-        const typechecker = program.getTypeChecker()
+    export function fillCompletionEntries(program: Program, symbols: Symbol[], r: CompletionInfo, apiInfo: ApisInfo) {
+        let typechecker = program.getTypeChecker()
 
         for (let s of symbols) {
             let qName = getFullName(typechecker, s)
-            const gsi = Util.lookup(apiInfo.byQName, qName);
 
-            // filter out symbols starting with __
-            if (gsi && /^__/.test(gsi.name))
-                continue;
-
-            if (!r.isMemberCompletion && gsi)
+            if (!r.isMemberCompletion && Util.lookup(apiInfo.byQName, qName))
                 continue; // global symbol
 
             if (Util.lookup(r.entries, qName))
                 continue;
 
-            const decl = s.valueDeclaration || (s.declarations || [])[0]
+            let decl = s.valueDeclaration || (s.declarations || [])[0]
             if (!decl) continue;
 
-            const si = createSymbolInfo(typechecker, qName, decl, opts)
+            let si = createSymbolInfo(typechecker, qName, decl)
             if (!si) continue;
 
             si.isContextual = true;
 
+            //let tmp = ts.getLocalSymbolForExportDefault(s)
+            //let name = typechecker.symbolToString(tmp || s)
+
             r.entries[qName] = si;
         }
-    }*/
+    }
 }
 
 
@@ -683,13 +552,7 @@ namespace ts.pxtc.service {
 
     let service: LanguageService;
     let host: Host;
-
-    interface CachedApisInfo {
-        apis: ApisInfo;
-        decls: pxt.Map<Declaration>;
-    }
-
-    let lastApiInfo: CachedApisInfo;
+    let lastApiInfo: ApisInfo;
     let lastBlocksInfo: BlocksInfo;
     let lastLocBlocksInfo: BlocksInfo;
     let lastFuse: Fuse<SearchInfo>;
@@ -726,24 +589,15 @@ namespace ts.pxtc.service {
             return lastLocBlocksInfo;
         } else {
             if (!lastBlocksInfo) {
-                lastBlocksInfo = getBlocksInfo(lastApiInfo.apis, bannedCategories);
+                lastBlocksInfo = getBlocksInfo(lastApiInfo, bannedCategories);
             }
             return lastBlocksInfo;
-        }
-    }
-
-    function addApiInfo(opts: CompileOptions) {
-        if (!opts.apisInfo && opts.target.preferredEditor == pxt.PYTHON_PROJECT_NAME) {
-            if (!lastApiInfo)
-                lastApiInfo = internalGetApiInfo(opts, service.getProgram())
-            opts.apisInfo = U.clone(lastApiInfo.apis)
         }
     }
 
     const operations: pxt.Map<(v: OpArg) => any> = {
         reset: () => {
             service.cleanupSemanticCache();
-            lastApiInfo = null
             host.setOpts(emptyOptions)
         },
 
@@ -751,108 +605,36 @@ namespace ts.pxtc.service {
             host.setOpts(v.options)
         },
 
-        syntaxInfo: v => {
-            let src: string = v.fileContent
-            if (v.fileContent) {
-                host.setFile(v.fileName, v.fileContent);
-            }
-            let opts = U.flatClone(host.opts)
-            opts.fileSystem[v.fileName] = src
-            addApiInfo(opts);
-            opts.syntaxInfo = {
-                position: v.position,
-                type: v.infoType
-            };
-            (pxt as any).py.py2ts(opts)
-            return opts.syntaxInfo
-        },
-
         getCompletions: v => {
-            let src: string = v.fileContent
             if (v.fileContent) {
                 host.setFile(v.fileName, v.fileContent);
             }
-            const python = /\.py$/.test(v.fileName);
-            let dotIdx = -1
-            let complPosition = -1
-            for (let i = v.position - 1; i >= 0; --i) {
-                if (src[i] == ".") {
-                    dotIdx = i
-                    break
-                }
-                if (!/\w/.test(src[i]))
-                    break
-                if (complPosition == -1)
-                    complPosition = i
+
+            let program = service.getProgram() // this synchornizes host data as well
+            let data: InternalCompletionData = (service as any).getCompletionData(v.fileName, v.position);
+
+            if (!data) return {}
+
+            let typechecker = program.getTypeChecker()
+
+            let r: CompletionInfo = {
+                entries: {},
+                isMemberCompletion: data.isMemberCompletion,
+                isNewIdentifierLocation: data.isNewIdentifierLocation,
+                isTypeLocation: false // TODO
             }
 
-            if (dotIdx == v.position - 1) {
-                // "foo.|" -> we add "_" as field name to minimize the risk of a parse error
-                src = src.slice(0, v.position) + "_" + src.slice(v.position)
-            } else if (complPosition == -1) {
-                src = src.slice(0, v.position) + "_" + src.slice(v.position)
-                complPosition = v.position
-            }
-
-            if (dotIdx != -1)
-                complPosition = dotIdx
-
-            //console.log(v.fileContent.slice(v.position - 20, v.position) + "<X>" + v.fileContent.slice(v.position, v.position + 20))
-
-            const entries: pxt.Map<SymbolInfo> = {};
-            const r: CompletionInfo = {
-                entries: [],
-                isMemberCompletion: dotIdx != -1,
-                isNewIdentifierLocation: true,
-                isTypeLocation: false
-            }
-
-            let opts = U.flatClone(host.opts)
-            opts.fileSystem[v.fileName] = src
-            addApiInfo(opts);
-            opts.syntaxInfo = {
-                position: complPosition,
-                type: r.isMemberCompletion ? "memberCompletion" : "identifierCompletion"
-            };
-            (pxt as any).py.py2ts(opts)
-            let symbols = opts.syntaxInfo.symbols || []
-
-            for (let si of symbols) {
-                if (
-                    /^__/.test(si.name) || // ignore members starting with __
-                    /^__/.test(si.namespace) || // ignore namespaces starting with _-
-                    si.attributes.hidden ||
-                    si.attributes.deprecated
-                ) continue; // ignore 
-                entries[si.qName] = si
-                const n = lastApiInfo.decls[si.qName];
-                if (isFunctionLike(n)) {
-                    if (python)
-                        si.pySnippet = getSnippet(lastApiInfo.apis.byQName, si, n, python);
-                    else
-                        si.snippet = getSnippet(lastApiInfo.apis.byQName, si, n, python);
-                }
-            }
-            //fillCompletionEntries(program, data.symbols, r, lastApiInfo.apis, host.opts)
-
-            // sort entries
-            r.entries = pxt.Util.values(entries);
-            r.entries.sort(compareSymbols);
+            fillCompletionEntries(program, data.symbols, r, lastApiInfo)
 
             return r;
         },
 
         compile: v => {
-            addApiInfo(v.options)
             return compile(v.options)
         },
         decompile: v => {
             const bannedCategories = v.blocks ? v.blocks.bannedCategories : undefined;
             return decompile(v.options, v.fileName, false, bannedCategories);
-        },
-        pydecompile: v => {
-            let program = getTSProgram(v.options);
-            return (pxt as any).py.decompileToPython(program, v.fileName);
         },
         assemble: v => {
             return {
@@ -860,20 +642,9 @@ namespace ts.pxtc.service {
             }
         },
 
-        py2ts: v => {
-            addApiInfo(v.options)
-            return (pxt as any).py.py2ts(v.options)
-        },
-
         fileDiags: v => patchUpDiagnostics(fileDiags(v.fileName)),
 
         allDiags: () => {
-            addApiInfo(host.opts)
-
-            let convDiag = runConversions(host.opts)
-            if (convDiag.length > 0)
-                return convDiag
-
             let global = service.getCompilerOptionsDiagnostics() || []
             let byFile = host.getScriptFileNames().map(fileDiags)
             let allD: ReadonlyArray<Diagnostic> = global.concat(Util.concat(byFile))
@@ -908,17 +679,7 @@ namespace ts.pxtc.service {
                 // Host was reset, don't load apis with empty options
                 return undefined;
             }
-            lastApiInfo = internalGetApiInfo(host.opts, service.getProgram());
-            return lastApiInfo.apis;
-        },
-        snippet: v => {
-            const o = v.snippet;
-            if (!lastApiInfo) return undefined;
-            const fn = lastApiInfo.apis.byQName[o.qName];
-            const n = lastApiInfo.decls[o.qName];
-            if (!fn || !n || !ts.isFunctionLike(n))
-                return undefined;
-            return ts.pxtc.service.getSnippet(lastApiInfo.apis.byQName, fn, n as FunctionLikeDeclaration, !!o.python)
+            return lastApiInfo = getApiInfo(host.opts, service.getProgram());
         },
         blocksInfo: v => blocksInfoOp(v as any),
         apiSearch: v => {
@@ -1126,15 +887,14 @@ namespace ts.pxtc.service {
 . . . . .
 \``;
 
-    export function getSnippet(apis: pxt.Map<SymbolInfo>, fn: SymbolInfo, n: ts.FunctionLikeDeclaration, python?: boolean): string {
-        let findex = 0;
-        let preStmt = "";
-
-        const attrs = fn.attributes;
-        const checker = service && service.getProgram().getTypeChecker();
+    export function getSnippet(n: ts.SignatureDeclaration, attrs?: CommentAttrs): string {
+        if (!ts.isFunctionLike(n)) {
+            return undefined;
+        }
+        const checker = service ? service.getProgram().getTypeChecker() : undefined;
         const args = n.parameters ? n.parameters.filter(param => !param.initializer && !param.questionToken).map(param => {
             const typeNode = param.type;
-            if (!typeNode) return python ? "None" : "null";
+            if (!typeNode) return "null";
 
             const name = param.name.kind === SK.Identifier ? (param.name as ts.Identifier).text : undefined;
 
@@ -1148,7 +908,7 @@ namespace ts.pxtc.service {
             switch (typeNode.kind) {
                 case SK.StringKeyword: return (name == "leds" ? defaultImgLit : `""`);
                 case SK.NumberKeyword: return "0";
-                case SK.BooleanKeyword: return python ? "False" : "false";
+                case SK.BooleanKeyword: return "false";
                 case SK.ArrayType: return "[]";
                 case SK.TypeReference:
                     // handled below
@@ -1159,132 +919,32 @@ namespace ts.pxtc.service {
                     if (functionSignature) {
                         return getFunctionString(functionSignature);
                     }
-                    return emitFn(name);
+                    return `function () {}`;
             }
 
-            const type = checker && checker.getTypeAtLocation(param);
+            const type = checker ? checker.getTypeAtLocation(param) : undefined;
             if (type) {
                 if (isObjectType(type)) {
-                    const typeSymbol = apis[checker.getFullyQualifiedName(type.symbol)];
-                    const snip = typeSymbol && typeSymbol.attributes && (python ? typeSymbol.attributes.pySnippet : typeSymbol.attributes.snippet);
-                    if (snip) return snip;
                     if (type.objectFlags & ts.ObjectFlags.Anonymous) {
                         const sigs = checker.getSignaturesOfType(type, ts.SignatureKind.Call);
-                        if (sigs && sigs.length) {
+                        if (sigs.length) {
                             return getFunctionString(sigs[0]);
                         }
-                        return emitFn(name);
+                        return `function () {}`;
                     }
                 }
                 if (type.flags & ts.TypeFlags.EnumLike) {
-                    return getDefaultEnumValue(type);
+                    return getDefaultEnumValue(type, checker);
                 }
                 if (type.flags & ts.TypeFlags.NumberLike) {
                     return "0";
                 }
             }
-            return python ? "None" : "null";
+            return "null";
         }) : [];
 
-        let fnName = ""
-        if (n.kind == SK.Constructor) {
-            fnName = getSymbolName(n.symbol) || n.parent.name.getText();
-        } else {
-            fnName = getSymbolName(n.symbol) || n.name.getText();
-        }
 
-        let snippetPrefix = (fn.attributes.blockNamespace || fn.namespace);
-        let isInstance = false;
-        let addNamespace = false;
-        let namespaceToUse = "";
-
-        const element = fn as pxtc.SymbolInfo;
-        if (element.attributes.block) {
-            if (element.attributes.defaultInstance) {
-                snippetPrefix = element.attributes.defaultInstance;
-                if (python)
-                    snippetPrefix = snakify(snippetPrefix);
-            }
-            else if (element.namespace) { // some blocks don't have a namespace such as parseInt
-                const nsInfo = apis[element.namespace];
-                if (nsInfo.attributes.fixedInstances) {
-                    let instances = Util.values(apis)
-                    let getExtendsTypesFor = function (name: string) {
-                        return instances
-                            .filter(v => v.extendsTypes)
-                            .filter(v => v.extendsTypes.reduce((x, y) => x || y.indexOf(name) != -1, false))
-                            .reduce((x, y) => x.concat(y.extendsTypes), [])
-                    }
-                    // if blockNamespace exists, e.g., "pins", use it for snippet
-                    // else use nsInfo.namespace, e.g., "motors"
-                    namespaceToUse = element.attributes.blockNamespace || nsInfo.namespace || "";
-                    // all fixed instances for this namespace
-                    let fixedInstances = instances.filter(value =>
-                        value.kind === pxtc.SymbolKind.Variable &&
-                        value.attributes.fixedInstance
-                    );
-                    // first try to get fixed instances whose retType matches nsInfo.name
-                    // e.g., DigitalPin
-                    let exactInstances = fixedInstances.filter(value =>
-                        value.retType == nsInfo.qName)
-                        .sort((v1, v2) => v1.name.localeCompare(v2.name));
-                    if (exactInstances.length) {
-                        snippetPrefix = `${getName(exactInstances[0])}`
-                    } else {
-                        // second choice: use fixed instances whose retType extends type of nsInfo.name
-                        // e.g., nsInfo.name == AnalogPin and instance retType == PwmPin
-                        let extendedInstances = fixedInstances.filter(value =>
-                            getExtendsTypesFor(nsInfo.qName).indexOf(value.retType) !== -1)
-                            .sort((v1, v2) => v1.name.localeCompare(v2.name));
-                        if (extendedInstances.length) {
-                            snippetPrefix = `${getName(extendedInstances[0])}`
-                        }
-                    }
-                    isInstance = true;
-                    addNamespace = true;
-                }
-                else if (element.kind == pxtc.SymbolKind.Method || element.kind == pxtc.SymbolKind.Property) {
-                    const params = pxt.blocks.compileInfo(element);
-                    if (params.thisParameter) {
-                        snippetPrefix = params.thisParameter.defaultValue || params.thisParameter.definitionName;
-                        if (python)
-                            snippetPrefix = snakify(snippetPrefix);
-                    }
-                    isInstance = true;
-                }
-                else if (nsInfo.kind === pxtc.SymbolKind.Class) {
-                    return undefined;
-                }
-            }
-        }
-
-        let snippet = `${fnName}(${args.join(', ')})`;
-        let insertText = snippetPrefix ? `${snippetPrefix}.${snippet}` : snippet;
-        insertText = addNamespace ? `${firstWord(namespaceToUse)}.${insertText}` : insertText;
-
-        if (attrs && attrs.blockSetVariable)
-            insertText = `${python ? "" : "let "}${python ? snakify(attrs.blockSetVariable) : attrs.blockSetVariable} = ${insertText}`;
-
-        return preStmt + insertText;
-
-        function getSymbolName(symbol: Symbol) {
-            if (checker) {
-                const qName = getFullName(checker, symbol);
-                const si = apis[qName];
-                if (si)
-                    return getName(si);
-            }
-            return undefined;
-        }
-
-        function getName(si: SymbolInfo) {
-            return python ? si.pyName : si.name;
-        }
-
-        function firstWord(s: string): string {
-            const i = s.indexOf('.');
-            return i < 0 ? s : s.substring(0, i);
-        }
+        return `${n.name.getText()}(${args.join(', ')})`;
 
         function getFunctionString(functionSignature: ts.Signature) {
             let functionArgument = "()";
@@ -1297,51 +957,39 @@ namespace ts.pxtc.service {
             let returnType = checker.getReturnTypeOfSignature(functionSignature);
 
             if (returnType.flags & ts.TypeFlags.NumberLike)
-                returnValue = "return 0";
+                returnValue = "return 0;";
             else if (returnType.flags & ts.TypeFlags.StringLike)
-                returnValue = "return \"\"";
+                returnValue = "return \"\";";
             else if (returnType.flags & (ts.TypeFlags.Boolean | ts.TypeFlags.BooleanLiteral))
-                returnValue = python ? "return False" : "return false";
+                returnValue = "return false;";
 
             let displayPartsStr = ts.displayPartsToString(displayParts);
             functionArgument = displayPartsStr.substr(0, displayPartsStr.lastIndexOf(":"));
 
-            if (python) {
-                const n = "fn" + (findex++) + functionArgument;
-                preStmt += `def ${n}:\n  ${returnValue || "pass"}\n`;
-                return n.replace(/\(\)$/, '');
-            } else return `function ${functionArgument} {\n    ${returnValue}\n}`;
+            return `function ${functionArgument} {\n    ${returnValue}\n}`
         }
+    }
 
-        function emitFn(n: string): string {
-            if (python) {
-                n = snakify(n);
-                preStmt += `def ${n}():\n  pass\n`;
-                return n;
-            } else return `function () {}`;
-        }
-
-        function getDefaultEnumValue(t: Type) {
-            // Note: AFAIK this is NOT guranteed to get the same default as you get in
-            // blocks. That being said, it should get the first declared value. Only way
-            // to guarantee an API has the same default in blocks and in TS is to actually
-            // set a default on the parameter in its comment attributes
-            if (checker && t.symbol && t.symbol.declarations && t.symbol.declarations.length) {
-                for (let i = 0; i < t.symbol.declarations.length; i++) {
-                    const decl = t.symbol.declarations[i];
-                    if (decl.kind === SK.EnumDeclaration) {
-                        const enumDeclaration = decl as EnumDeclaration;
-                        for (let j = 0; j < enumDeclaration.members.length; j++) {
-                            const member = enumDeclaration.members[i];
-                            if (member.name.kind === SK.Identifier) {
-                                return checker.getFullyQualifiedName(checker.getSymbolAtLocation(member.name));
-                            }
+    function getDefaultEnumValue(t: Type, checker: TypeChecker) {
+        // Note: AFAIK this is NOT guranteed to get the same default as you get in
+        // blocks. That being said, it should get the first declared value. Only way
+        // to guarantee an API has the same default in blocks and in TS is to actually
+        // set a default on the parameter in its comment attributes
+        if (t.symbol && t.symbol.declarations && t.symbol.declarations.length) {
+            for (let i = 0; i < t.symbol.declarations.length; i++) {
+                const decl = t.symbol.declarations[i];
+                if (decl.kind === SK.EnumDeclaration) {
+                    const enumDeclaration = decl as EnumDeclaration;
+                    for (let j = 0; j < enumDeclaration.members.length; j++) {
+                        const member = enumDeclaration.members[i];
+                        if (member.name.kind === SK.Identifier) {
+                            return checker.getFullyQualifiedName(checker.getSymbolAtLocation(member.name));
                         }
                     }
                 }
             }
-
-            return "0";
         }
+
+        return "0";
     }
 }

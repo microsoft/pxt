@@ -49,23 +49,14 @@ export class File implements pxt.editor.IFile {
         return ""
     }
 
-    getVirtualFileName(forPrj: string): string {
-        const ext = this.name.replace(/.*\./, "");
-        const basename = ext ? this.name.slice(0, -ext.length - 1) : this.name;
-        const isExtOk = /^blocks|py|ts$/.test(ext);
-        if (!isExtOk) return undefined;
-
-        switch (forPrj) {
-            case pxt.BLOCKS_PROJECT_NAME:
-                return basename + ".blocks";
-            case pxt.JAVASCRIPT_PROJECT_NAME:
-                return basename + ".ts";
-            case pxt.PYTHON_PROJECT_NAME:
-                return basename + ".py";
-            default:
-                pxt.U.oops();
-                return undefined;
-        }
+    static tsFileNameRx = /\.ts$/;
+    static blocksFileNameRx = /\.blocks$/;
+    getVirtualFileName(): string {
+        if (File.blocksFileNameRx.test(this.name))
+            return this.name.replace(File.blocksFileNameRx, '.ts');
+        if (File.tsFileNameRx.test(this.name))
+            return this.name.replace(File.tsFileNameRx, '.blocks');
+        return undefined;
     }
 
     weight() {
@@ -204,7 +195,6 @@ export class EditorPackage {
                 let cfg = <pxt.PackageConfig>JSON.parse(cfgFile.content)
                 update(cfg);
                 return cfgFile.setContentAsync(JSON.stringify(cfg, null, 4) + "\n")
-                    .then(() => this.ksPkg.loadConfig())
             } catch (e) { }
         }
 
@@ -259,15 +249,10 @@ export class EditorPackage {
         return this.updateConfigAsync(cfg => cfg.files = cfg.files.filter(f => f != n))
     }
 
-    setContentAsync(n: string, v: string): Promise<void> {
+    setContentAsync(n: string, v: string) {
         let f = this.files[n];
-        let p = Promise.resolve();
-        if (!f) {
-            f = this.setFile(n, v);
-            p = p.then(() => this.updateConfigAsync(cfg => cfg.files.indexOf(n) < 0 ? cfg.files.push(n) : 0))
-                p.then(() => this.savePkgAsync())
-        }
-        return p.then(() => f.setContentAsync(v));
+        if (!f) f = this.setFile(n, v);
+        return f.setContentAsync(v);
     }
 
     setFiles(files: pxt.Map<string>) {

@@ -81,8 +81,6 @@ async function listAsync(): Promise<Header[]> {
             time.sort((a, b) => b - a)
             let modTime = Math.round(time[0] / 1000) || U.nowSeconds()
             pkg.header = pxt.workspace.freshHeader(pkg.config.name, modTime)
-            if (pkg.config.preferredEditor)
-                pkg.header.editor = pkg.config.preferredEditor
             pkg.header.path = pkg.path
             // generate new header and save it
             await setAsync(pkg.header, null)

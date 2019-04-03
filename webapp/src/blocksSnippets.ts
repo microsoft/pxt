@@ -656,7 +656,8 @@ export function getPauseUntil() {
                 blockNamespace: opts.category || "loops",
                 weight: opts.weight == null ? 0 : opts.weight
             },
-            blockXml: Blockly.Xml.domToText(pxt.blocks.mkPredicateBlock(pxtc.PAUSE_UNTIL_TYPE))
+            blockXml: Blockly.Xml.domToText(pxt.blocks.mkPredicateBlock(pxtc.PAUSE_UNTIL_TYPE)),
+            noNamespace: true
         };
     }
 
@@ -696,7 +697,8 @@ export function allBuiltinBlocks() {
             blockId: ts.pxtc.ON_START_TYPE,
             weight: pxt.appTarget.runtime.onStartWeight || 10
         },
-        blockXml: `<block type="pxt-on-start"></block>`
+        blockXml: `<block type="pxt-on-start"></block>`,
+        noNamespace: true
     };
     // Add pause until built in block
     const pauseUntil = getPauseUntil();
@@ -759,8 +761,6 @@ function blockFromJson(b: pxt.editor.ToolboxBlockDefinition, currentWeight?: num
         snippet: b.snippet,
         snippetName: b.snippetName,
         snippetOnly: b.snippetOnly,
-        pySnippet: b.pySnippet,
-        pySnippetName: b.pySnippetName,
         attributes: {
             blockId: b.blockId,
             weight: currentWeight || b.weight,
@@ -768,6 +768,7 @@ function blockFromJson(b: pxt.editor.ToolboxBlockDefinition, currentWeight?: num
             jsDoc: b.jsDoc,
             group: b.group,
         },
+        noNamespace: true,
         retType: b.retType,
         blockXml: b.blockXml
     }
@@ -778,8 +779,6 @@ function blockToJson(b: BlockDefinition): pxt.editor.ToolboxBlockDefinition {
         name: b.name,
         snippet: b.snippet,
         snippetName: b.snippetName,
-        pySnippet: b.pySnippet,
-        pySnippetName: b.pySnippetName,
         snippetOnly: b.snippetOnly,
         retType: b.retType,
         weight: b.attributes.weight,

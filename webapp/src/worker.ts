@@ -1,6 +1,5 @@
 /// <reference path="../../built/pxtlib.d.ts"/>
 /// <reference path="../../built/pxtcompiler.d.ts"/>
-/// <reference path="../../built/pxtpy.d.ts"/>
 
 
 declare const importScripts: (...args: string[]) => void;

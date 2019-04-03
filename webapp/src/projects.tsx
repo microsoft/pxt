@@ -289,7 +289,7 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
     private hasFetchErrors = false;
     private latestProject: codecard.CodeCardView;
 
-    private static NUM_PROJECTS_HOMESCREEN = 8;
+    private static NUM_PROJECTS_HOMESCREEN = 10;
 
     constructor(props: ProjectsCarouselProps) {
         super(props)
@@ -417,8 +417,6 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                                 scr={scr} index={index}
                                 onCardClick={this.handleCardClick}
                                 cardType={scr.cardType}
-                                tutorialStep={scr.tutorialStep}
-                                tutorialLength={scr.tutorialLength}
                             />
                         )}
                     </carousel.Carousel>
@@ -470,8 +468,6 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                         url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}
                         scr={scr} index={index}
                         onCardClick={this.handleCardClick}
-                        tutorialStep={scr.tutorial && scr.tutorial.tutorialStep}
-                        tutorialLength={scr.tutorial && scr.tutorial.tutorialStepInfo.length}
                     />;
                 })}
                 {showScriptManagerCard ? <div role="button" className="ui card link buttoncard scriptmanagercard" title={lf("See all projects")}

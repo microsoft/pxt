@@ -22,10 +22,6 @@ namespace pxt.editor {
         virtual?: boolean; // gimmick to switch views
     }
 
-    export function isBlocks(f: IFile) {
-        return U.endsWith(f.name, ".blocks")
-    }
-
     export interface FileHistoryEntry {
         id: string;
         name: string;
@@ -50,7 +46,7 @@ namespace pxt.editor {
         projectName?: string;
         suppressPackageWarning?: boolean;
 
-        tutorialOptions?: pxt.tutorial.TutorialOptions;
+        tutorialOptions?: TutorialOptions;
         lightbox?: boolean;
 
         simState?: SimState;
@@ -69,7 +65,6 @@ namespace pxt.editor {
         tracing?: boolean;
         debugging?: boolean;
         bannerVisible?: boolean;
-        updatingEditorFile?: boolean;
 
         highContrast?: boolean;
         print?: boolean;
@@ -94,7 +89,7 @@ namespace pxt.editor {
         filesOverride?: pxt.Map<string>;
         filters?: ProjectFilters;
         temporary?: boolean;
-        tutorial?: pxt.tutorial.TutorialOptions;
+        inTutorial?: boolean;
         dependencies?: pxt.Map<string>;
         tsOnly?: boolean;
     }
@@ -117,6 +112,15 @@ namespace pxt.editor {
         Hidden = 0,
         Visible = 1,
         Disabled = 2
+    }
+
+    export interface TutorialOptions {
+        tutorial?: string; // tutorial
+        tutorialName?: string; // tutorial title
+        tutorialReportId?: string; // if this tutorial was user generated, the report abuse id
+        tutorialStepInfo?: pxt.tutorial.TutorialStepInfo[];
+        tutorialStep?: number; // current tutorial page
+        tutorialReady?: boolean; // current tutorial page
     }
 
     export interface ModalDialogButton {
@@ -149,14 +153,12 @@ namespace pxt.editor {
 
         openBlocks(): void;
         openJavaScript(giveFocusOnLoading?: boolean): void;
-        openPython(giveFocusOnLoading?: boolean): void;
         openSettings(): void;
         openSimView(): void;
         openPreviousEditor(): void;
 
         switchTypeScript(): void;
         openTypeScriptAsync(): Promise<void>;
-        openPythonAsync(): Promise<void>;
         saveBlocksToTypeScriptAsync(): Promise<string>;
 
         saveFileAsync(): Promise<void>;
@@ -249,7 +251,6 @@ namespace pxt.editor {
         isEmbedSimActive(): boolean;
         isBlocksActive(): boolean;
         isJavaScriptActive(): boolean;
-        isPythonActive(): boolean;
 
         editor: IEditor;
 
@@ -417,24 +418,14 @@ namespace pxt.editor {
         jsDoc?: string
 
         /**
-         * TypeScript snippet of code to insert when dragged into editor
+         * Snippet of code to insert when dragged into editor
          */
         snippet?: string;
 
         /**
-         * Python snippet of code to insert when dragged into editor
-         */
-        pySnippet?: string;
-
-        /**
-         * TypeScript name used for highlighting the snippet, uses name if not defined
+         * Name used for highlighting the snippet, uses name if not defined
          */
         snippetName?: string;
-
-        /**
-         * Python name used for highlighting the snippet, uses name if not defined
-         */
-        pySnippetName?: string;
 
         /**
          * Display just the snippet and nothing else. Should be set to true for

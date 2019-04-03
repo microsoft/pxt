@@ -336,14 +336,6 @@ export class Component<TProps, TState> extends React.Component<TProps, TState> {
         this.renderCoreOk = true;
         return this.renderCore();
     }
-
-    setStateAsync<K extends keyof TState>(state: Pick<TState, K>): Promise<void> {
-        return new Promise((resolve, reject) => {
-            this.setState(state, () => {
-                resolve();
-            })
-        })
-    }
 }
 
 export class PureComponent<TProps, TState> extends React.PureComponent<TProps, TState> {

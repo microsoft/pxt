@@ -31,13 +31,9 @@ namespace pxt.blocks {
 
     let placeholders: Map<Map<any>> = {};
 
-    export function backtickLit(s: string) {
-        return "`" + s.replace(/[\\`${}]/g, f => "\\" + f) + "`"
-    }
-
     export function stringLit(s: string) {
         if (s.length > 20 && /\n/.test(s))
-            return backtickLit(s)
+            return "`" + s.replace(/[\\`${}]/g, f => "\\" + f) + "`"
         else return JSON.stringify(s)
     }
 

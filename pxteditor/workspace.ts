@@ -16,8 +16,6 @@ namespace pxt.workspace {
         pubCurrent: boolean; // is this exactly pubId, or just based on it
         githubId?: string;
         githubCurrent?: boolean;
-        // in progress tutorial if any
-        tutorial?: pxt.tutorial.TutorialOptions;
     }
 
     export interface Header extends InstallHeader {
