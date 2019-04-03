@@ -1202,6 +1202,8 @@ namespace ts.pxtc.service {
         if (element.attributes.block) {
             if (element.attributes.defaultInstance) {
                 snippetPrefix = element.attributes.defaultInstance;
+                if (python)
+                    snippetPrefix = snakify(snippetPrefix);
             }
             else if (element.namespace) { // some blocks don't have a namespace such as parseInt
                 const nsInfo = apis[element.namespace];
@@ -1243,8 +1245,11 @@ namespace ts.pxtc.service {
                 }
                 else if (element.kind == pxtc.SymbolKind.Method || element.kind == pxtc.SymbolKind.Property) {
                     const params = pxt.blocks.compileInfo(element);
-                    if (params.thisParameter)
+                    if (params.thisParameter) {
                         snippetPrefix = params.thisParameter.defaultValue || params.thisParameter.definitionName;
+                        if (python)
+                            snippetPrefix = snakify(snippetPrefix);
+                    }
                     isInstance = true;
                 }
                 else if (nsInfo.kind === pxtc.SymbolKind.Class) {
@@ -1258,7 +1263,7 @@ namespace ts.pxtc.service {
         insertText = addNamespace ? `${firstWord(namespaceToUse)}.${insertText}` : insertText;
 
         if (attrs && attrs.blockSetVariable)
-            insertText = `${python ? "" : "let "}${attrs.blockSetVariable} = ${insertText}`;
+            insertText = `${python ? "" : "let "}${python ? snakify(attrs.blockSetVariable) : attrs.blockSetVariable} = ${insertText}`;
 
         return preStmt + insertText;
 
