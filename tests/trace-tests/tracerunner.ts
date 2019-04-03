@@ -29,6 +29,7 @@ initGlobals();
 // Just needs to exist
 pxt.setAppTarget(util.testAppTarget);
 
+// TODO we need to use CompileHost for compiling STS
 class CompileHost extends TestHost {
     private fileText: string;
     static langTestText: string;
