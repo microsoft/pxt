@@ -4,8 +4,6 @@ import * as Promise from "bluebird";
 
 const PouchDB = require("pouchdb");
 /* tslint:disable:no-submodule-imports TODO(tslint) */
-PouchDB.plugin(require('pouchdb-adapter-cordova-sqlite'));
-PouchDB.plugin(require('pouchdb-adapter-node-websql'));
 PouchDB.plugin(require('pouchdb-adapter-memory'));
 /* tslint:enable:no-submodule-imports */
 
