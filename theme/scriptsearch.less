@@ -15,6 +15,20 @@
         .ui.cardimage {
             height: 11rem;
         }
+        .content:not(.extra) {
+            .header {
+                white-space: nowrap;
+                text-overflow: ellipsis;
+                overflow: hidden;
+            }
+            .description {
+                height: 2.8em;
+                overflow: hidden;
+            }
+            .description.long  {
+                height: 14em;
+            }
+        }
     }
     /* Search input */
     .ui.search {
