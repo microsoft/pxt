@@ -4,7 +4,7 @@ import * as Promise from "bluebird";
 
 const PouchDB = require("pouchdb");
 /* tslint:disable:no-submodule-imports TODO(tslint) */
-require('pouchdb/extras/memory');
+PouchDB.plugin(require('pouchdb-adapter-memory'));
 /* tslint:enable:no-submodule-imports */
 
 (Promise as any).config({
