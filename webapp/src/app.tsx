@@ -2735,6 +2735,11 @@ export class ProjectView
         core.showLoading("leavingtutorial", lf("leaving tutorial..."));
 
         // clear tutorial field
+        const tutorial = this.state.header.tutorial;
+        this.state.header.tutorialCompleted = {
+            id: tutorial.tutorial,
+            steps: tutorial.tutorialStepInfo.length
+        }
         this.state.header.tutorial = undefined;
 
         if (pxt.BrowserUtils.isIE()) {

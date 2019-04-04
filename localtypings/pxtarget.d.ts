@@ -754,5 +754,10 @@ declare namespace pxt.tutorial {
         tutorialReady?: boolean; // current tutorial page
         tutorialMd?: string; // full tutorial markdown
     }
-
+    interface TutorialCompletionInfo {
+        // id of the tutorial
+        id: string;
+        // number of steps completed
+        steps: number;
+    }
 }
