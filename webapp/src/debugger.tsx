@@ -184,7 +184,6 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         let margin = depth * 0.75 + 'em';
         varNames.forEach(variable => {
             const v = variables[variable];
-            const oldValue = DebuggerVariables.renderValue(v.prevValue);
             const newValue = DebuggerVariables.renderValue(v.value);
             let type = this.variableType(v);
             const onClick = v.value && v.value.id ? () => this.toggle(v) : undefined;
@@ -210,7 +209,6 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
     renderCore() {
         const { variables, frozen } = this.state;
         const variableTableHeader = lf("Variables");
-        const valueTableHeader = lf("Type/Value");
 
         return <div className={`ui varExplorer`}>
             <div className="ui variableTableHeader">
