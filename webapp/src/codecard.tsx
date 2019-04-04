@@ -113,7 +113,7 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
             {card.shortName || card.name || card.description ?
                 <div className="content">
                     {card.shortName || card.name ? <div className="header">{card.shortName || card.name}</div> : null}
-                    {card.description ? <div className="description tall">{renderMd(card.description)}</div> : null}
+                    {card.description ? <div className={`description tall ${card.icon || card.iconContent || card.imageUrl ? "" : "long"}`}>{renderMd(card.description)}</div> : null}
                 </div> : undefined}
             {card.time ? <div className="meta">
                 {card.time ? <span key="date" className="date">{pxt.Util.timeSince(card.time)}</span> : null}
