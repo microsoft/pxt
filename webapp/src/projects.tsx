@@ -459,6 +459,12 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                 </div> : undefined}
                 {headers.slice(0, ProjectsCarousel.NUM_PROJECTS_HOMESCREEN).map((scr, index) => {
                     const boardsvg = pxt.bundledSvg(scr.board);
+                    const tutorialStep =
+                        (scr.tutorial && scr.tutorial.tutorialStep)
+                        || (scr.tutorialCompleted && (scr.tutorialCompleted.steps - 1));
+                    const tutoriallength =
+                        (scr.tutorial && scr.tutorial.tutorialStepInfo.length)
+                        || (scr.tutorialCompleted && (scr.tutorialCompleted.steps));
                     return <ProjectsCodeCard
                         key={'local' + scr.id + scr.recentUse}
                         // ref={(view) => { if (index === 1) this.latestProject = view }}
@@ -470,8 +476,8 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                         url={scr.pubId && scr.pubCurrent ? "/" + scr.pubId : ""}
                         scr={scr} index={index}
                         onCardClick={this.handleCardClick}
-                        tutorialStep={scr.tutorial && scr.tutorial.tutorialStep}
-                        tutorialLength={scr.tutorial && scr.tutorial.tutorialStepInfo.length}
+                        tutorialStep={tutorialStep}
+                        tutorialLength={tutoriallength}
                     />;
                 })}
                 {showScriptManagerCard ? <div role="button" className="ui card link buttoncard scriptmanagercard" title={lf("See all projects")}

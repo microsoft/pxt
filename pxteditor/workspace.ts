@@ -18,6 +18,8 @@ namespace pxt.workspace {
         githubCurrent?: boolean;
         // in progress tutorial if any
         tutorial?: pxt.tutorial.TutorialOptions;
+        // completed tutorial info if any
+        tutorialCompleted?: pxt.tutorial.TutorialCompletionInfo;
     }
 
     export interface Header extends InstallHeader {
