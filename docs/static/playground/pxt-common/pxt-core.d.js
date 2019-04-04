@@ -81,7 +81,7 @@ interface Array<T> {
       * @param sep the string separator
       */
     //% helper=arrayJoin weight=40
-    join(sep: string): string;
+    join(sep?: string): string;
     
     /**
       * Tests whether at least one element in the array passes the test implemented by the provided function.
@@ -333,16 +333,15 @@ declare interface Boolean {
 /**
  * Combine, split, and search text strings.
 */
-//% blockNamespace="Text"
+//% blockNamespace="text"
 declare namespace String {
 
     /**
      * Make a string from the given ASCII character code.
      */
     //% help=math/from-char-code
-    //% shim=String_::fromCharCode
-    //% weight=0
-    //% blockNamespace="Text" blockId="stringFromCharCode" block="text from char code %code" weight=1
+    //% shim=String_::fromCharCode weight=1
+    //% blockNamespace="text" blockId="stringFromCharCode" block="text from char code %code"
     function fromCharCode(code: number): string;
 }
 

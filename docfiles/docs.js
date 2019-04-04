@@ -242,6 +242,7 @@ function renderSnippets() {
                     snippetClass: 'lang-blocks',
                     signatureClass: 'lang-sig',
                     blocksClass: 'lang-block',
+                    staticPythonClass: 'lang-spy', 
                     shuffleClass: 'lang-shuffle',
                     simulatorClass: 'lang-sim',
                     linksClass: 'lang-cards',

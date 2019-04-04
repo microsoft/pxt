@@ -153,7 +153,7 @@ namespace pxsim {
                         ? this.stoppedClass : this.invalidatedClass);
                     if (!this.options.autoRun) {
                         icon.style.display = '';
-                        icon.className = 'video play icon';
+                        icon.className = 'videoplay xicon icon';
                     } else
                         icon.style.display = 'none';
                     loader.style.display = 'none';
@@ -259,7 +259,7 @@ namespace pxsim {
             wrapper.appendChild(frame);
 
             const i = document.createElement("i");
-            i.className = "video play icon";
+            i.className = "videoplay xicon icon";
             i.style.display = "none";
             i.onclick = (ev) => {
                 ev.preventDefault();
@@ -633,7 +633,7 @@ namespace pxsim {
                             let fi = s.funcInfo
                             stackTrace += `   at ${fi.functionName} (${fi.fileName}:${fi.line + 1}:${fi.column + 1})\n`
                         }
-                        console.error(stackTrace)
+                        if (brk.exceptionMessage) console.error(stackTrace);
                     } else {
                         console.error("debugger: trying to pause from " + this.state);
                     }

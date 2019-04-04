@@ -277,6 +277,7 @@ namespace pxt.editor {
                             pxt.debug(`pxteditor: ${req.action}`);
                             switch (req.action.toLowerCase()) {
                                 case "switchjavascript": return Promise.resolve().then(() => projectView.openJavaScript());
+                                case "switchpython": return Promise.resolve().then(() => projectView.openPython());
                                 case "switchblocks": return Promise.resolve().then(() => projectView.openBlocks());
                                 case "startsimulator": return Promise.resolve().then(() => projectView.startSimulator());
                                 case "restartsimulator": return Promise.resolve().then(() => projectView.restartSimulator());
