@@ -189,7 +189,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
             let type = this.variableType(v);
             const onClick = v.value && v.value.id ? () => this.toggle(v) : undefined;
 
-            r.push(<div key={(parent || "") + variable} className="item" onClick={onClick} onMouseOver={this.onMouseOverVariable}>
+            r.push(<div key={(parent || "") + variable} role="listitem" className="item" onClick={onClick} onMouseOver={this.onMouseOverVariable}>
                 <div className="variableAndValue">
                     <div className={`variable varname ${v.prevValue !== undefined ? "changed" : ""}`} title={variable}>
                         <i className={`${(v.children ? "down triangle icon" : "right triangle icon") + ((v.value && v.value.hasFields) ? "" : " transparent")}`} style={{ marginLeft: margin }} ></i>
