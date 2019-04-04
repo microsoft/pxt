@@ -461,12 +461,12 @@ export class ProjectsCarousel extends data.Component<ProjectsCarouselProps, Proj
                     const boardsvg = pxt.bundledSvg(scr.board);
                     const tutorialStep =
                         scr.tutorial ? scr.tutorial.tutorialStep
-                        : scr.tutorialCompleted ? scr.tutorialCompleted.steps - 1 
-                        : undefined;
+                            : scr.tutorialCompleted ? scr.tutorialCompleted.steps - 1
+                                : undefined;
                     const tutoriallength =
                         scr.tutorial ? scr.tutorial.tutorialStepInfo.length
-                        : scr.tutorialCompleted ? scr.tutorialCompleted.steps
-                        : undefined;
+                            : scr.tutorialCompleted ? scr.tutorialCompleted.steps
+                                : undefined;
                     return <ProjectsCodeCard
                         key={'local' + scr.id + scr.recentUse}
                         // ref={(view) => { if (index === 1) this.latestProject = view }}
