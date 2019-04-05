@@ -1488,10 +1488,22 @@ function buildEditorExtensionAsync(dirname: string, optionName: string) {
     if (pxt.appTarget.appTheme && (pxt.appTarget.appTheme as any)[optionName] &&
         fs.existsSync(path.join(dirname, "tsconfig.json"))) {
         const tsConfig = JSON.parse(fs.readFileSync(path.join(dirname, "tsconfig.json"), "utf8"));
+        let p: Promise<void>;
         if (tsConfig.compilerOptions.module)
-            return buildFolderAndBrowserifyAsync(dirname, true, dirname);
+            p = buildFolderAndBrowserifyAsync(dirname, true, dirname);
         else
-            return buildFolderAsync(dirname, true, dirname);
+            p = buildFolderAsync(dirname, true, dirname);
+        return p.then(() => {
+            const prepends = nodeutil.allFiles(path.join(dirname, "prepend"), 1, true)
+                .filter(f => /\.js$/.test(f));
+            if (prepends && prepends.length) {
+                const editorjs = path.join("built", dirname + ".js");
+                prepends.push(editorjs);
+                pxt.log(`bundling ${prepends.join(', ')}`);
+                const bundled = prepends.map(f => fs.readFileSync(f, "utf8")).join("\n");
+                fs.writeFileSync(editorjs, bundled, "utf8");
+            }
+        })
     }
     return Promise.resolve();
 }
