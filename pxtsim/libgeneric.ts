@@ -579,9 +579,17 @@ namespace pxsim {
             return 0 <= off && off < buf.data.length
         }
 
+        export function getUint8(buf: RefBuffer, off: number) {
+            return getByte(buf, off);
+        }
+
         export function getByte(buf: RefBuffer, off: number) {
             if (inRange(buf, off)) return buf.data[off]
             else return 0;
+        }
+
+        export function setUint8(buf: RefBuffer, off: number, v: number) {
+            setByte(buf, off, v);
         }
 
         export function setByte(buf: RefBuffer, off: number, v: number) {
