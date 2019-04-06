@@ -1,5 +1,12 @@
 # Microsoft MakeCode Blog
 
+## [MakeCode for the micro:bit – 2019 Beta Release](/blog/microbit/2019-beta)
+ 
+April 4th, 2019 by [Jaqster](https://github.com/jaqster)
+
+Believe it or not, we are getting ready to ship the **Summer 2019 release** of **MakeCode for the micro:bit**! Thank you to everyone who helped us identify bugs and suggest new features.
+**[Continue reading this blog post](/blog/microbit/2019-beta)**
+
 ## [Intro to CS with the micro:bit – free Educator Materials](/blog/microbit/csintro-educator)
  
 March 12th, 2019 by [Jaqster](https://github.com/jaqster)
