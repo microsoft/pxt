@@ -8,10 +8,11 @@ Functions to combine, split, and search text strings.
 "".substr(0, 0);
 parseFloat("");
 parseInt("");
+toString(0);
 ```
 
 ## See also
 
 [char at](/reference/text/char-at), [compare](/reference/text/compare),
 [substr](/reference/text/substr), [parse int](/reference/text/parse-int), 
-[parse float](/reference/text/parse-float)
+[parse float](/reference/text/parse-float), [to string](/reference/text/to-string)
