@@ -83,7 +83,7 @@ async function testTsOrPy(tsOrPyFile: string): Promise<void> {
                 if (!util.compareBaselines(outTrace, baseline)) {
                     fs.writeFileSync(errFile, outTrace)
                     return Promise.reject(new Error(
-                        `${fnName} incorrectly converted>\n${inFile}\nto\n:${outFile}\n` +
+                        `${fnName} incorrectly converted:\n${inFile}\nto:\n${outFile}\n` +
                         `Trace mismatch with baseline. Baseline:\n${baseline}\nIncorrect trace:\n${outTrace}\n` +
                         `Diff conversion with:\ncode --diff ${inFile} ${outFile}\n` +
                         `Diff traces with:\ncode --diff ${baselineFile} ${errFile}\n`))
@@ -259,9 +259,9 @@ function compileAndRunStsAsync(filename: string): Promise<string> {
         control.__log(s)
         control.__log("\\n")
         control.dmesg(s)
-        //serial.writeString(s)
-        //serial.writeString("\\n")
-        //pause(50);
+        // serial.writeString(s)
+        // serial.writeString("\\n")
+        // pause(100);
     }`
     return util.stsAsync(filename, prelude)
         .then((compiled) => {
@@ -287,6 +287,9 @@ function runStsAsync(res: pxtc.CompileResult): Promise<string> {
                     let smsg = msg as pxsim.SimulatorBulkSerialMessage
                     for (let m of smsg.data)
                         trace += `${m.data}\n`
+                } else if (msg.type === "status") {
+                } else {
+                    trace += `\nUNKNOWN: ${msg.type}\n`
                 }
             }
             r.run(() => {
