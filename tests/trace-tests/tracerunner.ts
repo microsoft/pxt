@@ -20,16 +20,18 @@ import { promisify } from 'util';
 const casesDir = path.join(process.cwd(), "tests", "trace-tests", "cases");
 
 describe("convert and compare traces between ts<->py ", () => {
-    let tsOrPyFiles: string[]
+    let tsAndPyFiles: string[]
     // before(() => {
     pxsim.initCurrentRuntime = pxsim.initBareRuntime
     cleanup()
     let tsFiles = util.getFilesByExt(casesDir, ".ts")
     let pyFiles = util.getFilesByExt(casesDir, ".py")
-    tsOrPyFiles = tsFiles.concat(pyFiles)
+    tsAndPyFiles = tsFiles.concat(pyFiles)
+    // TODO(dz):
+    console.log("ts & py files:" + JSON.stringify(tsAndPyFiles))
     // })
 
-    tsOrPyFiles.forEach(file => {
+    tsAndPyFiles.forEach(file => {
         it("should preserve semantics when converting between .ts and .py " + path.basename(file), async function () {
             this.timeout(10000)
             await testTsOrPy(file)
