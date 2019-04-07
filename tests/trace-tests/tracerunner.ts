@@ -10,11 +10,131 @@ import * as chai from "chai";
 
 import { TestHost } from "../common/testHost";
 import * as util from "../common/testUtils";
+import { resolve } from 'url';
+import { promisify } from 'util';
 
+// TODO: Split this file up. I (dazuniga) spent ~1hr trying to split this file into two pieces but I cannot figure out 
+// how to make that work with the way we're using jake & namespaces / modules
+
+// tests
 const casesDir = path.join(process.cwd(), "tests", "trace-tests", "cases");
 
-// TODO(dz): de-duplicate with compile-test
+describe("convert and compare traces between ts<->py ", () => {
+    let tsOrPyFiles: string[]
+    // before(() => {
+    pxsim.initCurrentRuntime = pxsim.initBareRuntime
+    cleanup()
+    let tsFiles = util.getFilesByExt(casesDir, ".ts")
+    let pyFiles = util.getFilesByExt(casesDir, ".py")
+    tsOrPyFiles = tsFiles.concat(pyFiles)
+    // })
 
+    tsOrPyFiles.forEach(file => {
+        it("should preserve semantics when converting between .ts and .py " + path.basename(file), async function () {
+            this.timeout(10000)
+            await testTsOrPy(file)
+            return
+        });
+    });
+});
+
+async function testTsOrPy(tsOrPyFile: string): Promise<void> {
+    let ext = path.extname(tsOrPyFile)
+    let isPy = ext === ".py"
+    let isTs = ext === ".ts"
+    if (!isPy && !isTs)
+        return Promise.reject("Invald non-.py, non-.ts file: " + tsOrPyFile)
+
+    let baselineFile: string;
+    let baseline: string;
+    let recordBaseline = (bl: string) => {
+        baseline = bl
+        baselineFile = tsOrPyFile + ".baseline"
+        fs.writeFileSync(baselineFile, baseline)
+    }
+    if (isPy) {
+        let pyFile = tsOrPyFile
+        recordBaseline(await PY(pyFile))
+        let tsFile = await testPy2Ts(pyFile)
+        await testSts(tsFile)
+        let pyFile2 = await testTs2Py(tsFile)
+    } else {
+        let tsFile = tsOrPyFile
+        recordBaseline(await TS(tsFile))
+        await testSts(tsFile)
+        let pyFile = await testTs2Py(tsFile)
+        let tsfile2 = await testPy2Ts(pyFile)
+        await testSts(tsfile2)
+    }
+
+    return;
+    async function testConversion(inFile: string, isPy: boolean): Promise<string> {
+        let convert = isPy ? PY2TS : TS2PY
+        let runConverted = isPy ? TS : PY
+        let fnName = isPy ? "py2ts" : "ts2py"
+        let errFile = inFile + `.${fnName}_error`;
+        return convert(inFile)
+            .error(r => {
+                fs.writeFileSync(errFile, JSON.stringify(r))
+                return `${fnName} failed to convert '${inFile}'. Error saved at:\n${errFile}\nError is:\n${r}`
+            })
+            .then(async outFile => {
+                let outTrace = await runConverted(outFile)
+                if (!util.compareBaselines(outTrace, baseline)) {
+                    fs.writeFileSync(errFile, outTrace)
+                    return Promise.reject(
+                        `${fnName} incorrectly converted>\n${inFile}\nto\n:${outFile}\n` +
+                        `Trace mismatch with baseline. Baseline:\n${baseline}\nIncorrect trace:\n${outTrace}\n` +
+                        `Diff conversion with:\ncode --diff ${inFile} ${outFile}\n` +
+                        `Diff traces with:\ncode --diff ${baselineFile} ${errFile}\n`)
+                }
+                return outFile
+            })
+    }
+    async function testPy2Ts(pyFile: string): Promise<string> {
+        return testConversion(pyFile, true)
+    }
+    async function testTs2Py(tsFile: string): Promise<string> {
+        return testConversion(tsFile, false)
+    }
+    async function testSts(tsFile: string): Promise<void> {
+        let errFile = tsFile + ".sts_error"
+        return STS(tsFile)
+            .error(r => {
+                fs.writeFileSync(errFile, JSON.stringify(r))
+                return `Static Typescript failed to run on '${tsFile}'. Error saved at:\n${errFile}\nError is:\n${r}`
+            })
+            .then(outTrace => {
+                if (!util.compareBaselines(outTrace, baseline)) {
+                    fs.writeFileSync(errFile, outTrace)
+                    return Promise.reject(
+                        `Static Typescript produced a different trace when run on:\n${tsFile}` +
+                        `Baseline:\n${baseline}\nIncorrect trace:\n${outTrace}\n` +
+                        `Diff traces with:\ncode --diff ${baselineFile} ${errFile}\n`)
+                }
+                return outTrace
+            })
+    }
+}
+
+// DSL for the tests
+function STS(tsFile: string): Promise</*trace*/string> {
+    return compileAndRunStsAsync(tsFile)
+}
+function TS(tsFile: string): Promise</*trace*/string> {
+    return Promise.resolve(compileAndRunTs(tsFile))
+}
+function PY(pyFile: string): Promise</*trace*/string> {
+    return runPyAsync(pyFile)
+}
+function TS2PY(tsFile: string): Promise</*file*/string> {
+    return convertTs2Py(tsFile)
+}
+function PY2TS(pyFile: string): Promise</*file*/string> {
+    return convertPy2Ts(pyFile)
+}
+
+// setup
 function initGlobals() {
     Promise = require("bluebird");
     let g = global as any
@@ -42,39 +162,11 @@ function cleanup() {
     removeBySubstring(casesDir, ".js")
     removeBySubstring(casesDir, ".py.ts")
     removeBySubstring(casesDir, ".ts.py")
+    removeBySubstring(casesDir, ".py2ts_error")
+    removeBySubstring(casesDir, ".ts2py_error")
+    removeBySubstring(casesDir, ".sts_error")
+    removeBySubstring(casesDir, ".baseline")
 }
-
-describe("ts compiler", () => {
-    let tsFiles: string[]
-    before(() => {
-        pxsim.initCurrentRuntime = pxsim.initBareRuntime
-    })
-
-    describe("with floating point", () => {
-        cleanup() // TODO weird place to do clean up
-        tsFiles = util.getFilesByExt(casesDir, ".ts")
-        tsFiles.forEach(tsFile => {
-            it("should compile and run " + path.basename(tsFile), async function () {
-                this.timeout(10000)
-                let stsTrace = await compileAndRunStsAsync(tsFile)
-                console.log("stsTrace: " + stsTrace)
-                let tsTrace = compileAndRunTs(tsFile)
-                console.log("tsTrace: " + tsTrace)
-                let pyFile = await convertTs2Py(tsFile)
-                console.dir(pyFile)
-                let pyTrace = await runPyAsync(pyFile)
-                console.log("pyTrace: " + pyTrace)
-                let py2TsFile = await convertPy2Ts(pyFile)
-                console.dir(py2TsFile)
-                let ts2Trace = compileAndRunTs(py2TsFile)
-                console.log(ts2Trace)
-                let sts2Trace = await compileAndRunStsAsync(py2TsFile)
-                console.log(sts2Trace)
-                return
-            });
-        });
-    });
-});
 
 function runPyAsync(pyFile: string): Promise<string> {
     return new Promise((resolve, reject) => {
