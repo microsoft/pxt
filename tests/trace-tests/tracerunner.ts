@@ -110,7 +110,7 @@ async function testTsOrPy(tsOrPyFile: string): Promise<void> {
                 if (!util.compareBaselines(outTrace, baseline)) {
                     fs.writeFileSync(errFile, outTrace)
                     return Promise.reject(new Error(
-                        `Static Typescript produced a different trace when run on:\n${tsFile}\n` +
+                        `Static Typescript produced a different trace than node.js when run on:\n${tsFile}\n` +
                         `Baseline:\n${baseline}\nIncorrect trace:\n${outTrace}\n` +
                         `Diff traces with:\ncode --diff ${baselineFile} ${errFile}\n`))
                 }
