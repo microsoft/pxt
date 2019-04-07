@@ -82,11 +82,11 @@ async function testTsOrPy(tsOrPyFile: string): Promise<void> {
                 let outTrace = await runConverted(outFile)
                 if (!util.compareBaselines(outTrace, baseline)) {
                     fs.writeFileSync(errFile, outTrace)
-                    return Promise.reject(
+                    return Promise.reject(new Error(
                         `${fnName} incorrectly converted>\n${inFile}\nto\n:${outFile}\n` +
                         `Trace mismatch with baseline. Baseline:\n${baseline}\nIncorrect trace:\n${outTrace}\n` +
                         `Diff conversion with:\ncode --diff ${inFile} ${outFile}\n` +
-                        `Diff traces with:\ncode --diff ${baselineFile} ${errFile}\n`)
+                        `Diff traces with:\ncode --diff ${baselineFile} ${errFile}\n`))
                 }
                 return outFile
             })
@@ -107,10 +107,10 @@ async function testTsOrPy(tsOrPyFile: string): Promise<void> {
             .then(outTrace => {
                 if (!util.compareBaselines(outTrace, baseline)) {
                     fs.writeFileSync(errFile, outTrace)
-                    return Promise.reject(
+                    return Promise.reject(new Error(
                         `Static Typescript produced a different trace when run on:\n${tsFile}` +
                         `Baseline:\n${baseline}\nIncorrect trace:\n${outTrace}\n` +
-                        `Diff traces with:\ncode --diff ${baselineFile} ${errFile}\n`)
+                        `Diff traces with:\ncode --diff ${baselineFile} ${errFile}\n`))
                 }
                 return outTrace
             })
