@@ -253,7 +253,7 @@ function compileAndRunTs(filename: string): string {
 }
 
 function compileAndRunStsAsync(filename: string): Promise<string> {
-    const prelude: string = `
+    const prelude = `
     let console: any = {}
     console.log = function(s: string): void {
         control.__log(s)
@@ -261,9 +261,12 @@ function compileAndRunStsAsync(filename: string): Promise<string> {
         control.dmesg(s)
         // serial.writeString(s)
         // serial.writeString("\\n")
-        // pause(100);
     }`
-    return util.stsAsync(filename, prelude)
+    // TODO(dz): why is this necessary? This doesn't seem right..
+    const postlude = `
+        pause(200);
+    `
+    return util.stsAsync({ mainFile: filename, stsPrelude: prelude, stsPostlude: postlude })
         .then((compiled) => {
             return runStsAsync(compiled)
         })

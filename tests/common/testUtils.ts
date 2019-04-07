@@ -66,21 +66,17 @@ export interface TestPackageOpts {
     dependency?: string,
     mainFile?: string,
     stsPrelude?: string
+    stsPostlude?: string
 }
 
 // TODO merge into testHost?
 class CompileHost extends TestHost {
     private fileText: string;
-    private stsPrelude: string;
     static langTestText: string;
 
-    constructor(mainFile?: string, stsPrelude?: string, dependency?: string) {
+    constructor(mainStr?: string, dependency?: string) {
         super("test-pkg", "", dependency ? [dependency] : [], true);
-        if (mainFile)
-            this.fileText = fs.readFileSync(mainFile, "utf8");
-        else
-            this.fileText = "// no main function provided"
-        this.stsPrelude = stsPrelude || ""
+        this.fileText = mainStr || "// no main function provided"
     }
 
     readFile(module: pxt.Package, filename: string): string {
@@ -92,14 +88,11 @@ class CompileHost extends TestHost {
                     "description": "",
                     "files": [
                         "main.ts",
-                        "sts_prelude.ts"
                     ]
                 })
             }
             else if (filename === "main.ts") {
                 return this.fileText;
-            } else if (filename === "sts_prelude.ts") {
-                return this.stsPrelude
             }
         }
 
@@ -109,9 +102,11 @@ class CompileHost extends TestHost {
 
 let cachedOpts: pxt.Map<pxtc.CompileOptions> = {}
 export function getTestCompileOptsAsync(summary: TestPackageOpts): Promise<pxtc.CompileOptions> {
-    let cacheKey = `${summary.dependency}${summary.mainFile}${summary.stsPrelude}`
+    let cacheKey = `${summary.dependency}${summary.mainFile}${summary.stsPrelude}${summary.stsPostlude}` // TODO hash these large strings?
     if (!cachedOpts[cacheKey]) {
-        const pkg = new pxt.MainPackage(new CompileHost(summary.mainFile, summary.stsPrelude, summary.dependency));
+        let mainStr = summary.mainFile ? fs.readFileSync(summary.mainFile, "utf8") : ""
+        mainStr = `${summary.stsPrelude}\n${mainStr}\n${summary.stsPostlude}\n`
+        const pkg = new pxt.MainPackage(new CompileHost(mainStr, summary.dependency));
 
         const target = pkg.getTargetOptions();
         target.isNative = false;
@@ -170,15 +165,16 @@ export function py2tsAsync(f: string): Promise<string> {
         })
 }
 
-export function stsAsync(f: string, stsPrelude?: string): Promise<pxtc.CompileResult> {
-    return getTestCompileOptsAsync({ mainFile: f, stsPrelude: stsPrelude })
+export function stsAsync(opts: TestPackageOpts): Promise<pxtc.CompileResult> {
+    let mainFile = opts.mainFile
+    return getTestCompileOptsAsync(opts)
         .then(opts => {
             const compiled = pxtc.compile(opts);
             if (compiled.success) {
                 return compiled
             }
             else {
-                return Promise.reject("Could not compile " + f + JSON.stringify(compiled.diagnostics, null, 4));
+                return Promise.reject("Could not compile " + mainFile + JSON.stringify(compiled.diagnostics, null, 4));
             }
         })
 }

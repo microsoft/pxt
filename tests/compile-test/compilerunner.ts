@@ -28,6 +28,7 @@ initGlobals();
 // Just needs to exist
 pxt.setAppTarget(util.testAppTarget);
 
+// TODO merge with CompileHost in testUtils.ts
 class CompileHost extends TestHost {
     private basename: string;
     private fileText: string;
