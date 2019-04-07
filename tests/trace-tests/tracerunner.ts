@@ -76,7 +76,7 @@ async function testTsOrPy(tsOrPyFile: string): Promise<void> {
         return convert(inFile)
             .error(r => {
                 fs.writeFileSync(errFile, JSON.stringify(r))
-                return `${fnName} failed to convert '${inFile}'. Error saved at:\n${errFile}\nError is:\n${r}`
+                return `${fnName} failed to convert '${inFile}'. Error saved at:\n${errFile}\nError is:\n${r}\n`
             })
             .then(async outFile => {
                 let outTrace = await runConverted(outFile)
@@ -102,13 +102,13 @@ async function testTsOrPy(tsOrPyFile: string): Promise<void> {
         return STS(tsFile)
             .error(r => {
                 fs.writeFileSync(errFile, JSON.stringify(r))
-                return `Static Typescript failed to run on '${tsFile}'. Error saved at:\n${errFile}\nError is:\n${r}`
+                return `Static Typescript failed to run on '${tsFile}'. Error saved at:\n${errFile}\nError is:\n${r}\n`
             })
             .then(outTrace => {
                 if (!util.compareBaselines(outTrace, baseline)) {
                     fs.writeFileSync(errFile, outTrace)
                     return Promise.reject(new Error(
-                        `Static Typescript produced a different trace when run on:\n${tsFile}` +
+                        `Static Typescript produced a different trace when run on:\n${tsFile}\n` +
                         `Baseline:\n${baseline}\nIncorrect trace:\n${outTrace}\n` +
                         `Diff traces with:\ncode --diff ${baselineFile} ${errFile}\n`))
                 }
