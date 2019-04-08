@@ -70,6 +70,24 @@ async function testTsOrPy(tsOrPyFile: string): Promise<void> {
     }
 
     return;
+    async function testPy2Ts(pyFile: string): Promise<string> {
+        return testConversion(pyFile, true)
+    }
+    async function testTs2Py(tsFile: string): Promise<string> {
+        return testConversion(tsFile, false)
+    }
+    // TODO(dz): figure out if this is possible with mocha..
+    // async function mochaTestConversion(inFile: string, isPy: boolean): Promise<string> {
+    //     let fnName = isPy ? "py2ts" : "ts2py"
+    //     return new Promise<string>((resolve, reject) => {
+    //         it(`should convert ${fnName} ${path.basename(inFile)}`, async (done) => {
+    //             let outProm = testConversion(inFile, isPy)
+    //             outProm
+    //                 .then(outFile => resolve(outFile), err => reject(err))
+    //                 .finally(() => done)
+    //         }).async = true
+    //     })
+    // }
     async function testConversion(inFile: string, isPy: boolean): Promise<string> {
         let convert = isPy ? PY2TS : TS2PY
         let runConverted = isPy ? TS : PY
@@ -85,19 +103,14 @@ async function testTsOrPy(tsOrPyFile: string): Promise<void> {
                 if (!util.compareBaselines(outTrace, baseline)) {
                     fs.writeFileSync(errFile, outTrace)
                     return Promise.reject(new Error(
-                        `${fnName} incorrectly converted:\n${inFile}\nto:\n${outFile}\n` +
+                        `${fnName} incorrectly converted:\n` +
+                        `${inFile}\n${fs.readFileSync(inFile, "utf8")}\nto:\n${outFile}\n${fs.readFileSync(outFile, "utf8")}\n` +
                         `Trace mismatch with baseline. Baseline:\n${baseline}\nIncorrect trace:\n${outTrace}\n` +
                         `Diff conversion with:\ncode --diff ${inFile} ${outFile}\n` +
                         `Diff traces with:\ncode --diff ${baselineFile} ${errFile}\n`))
                 }
                 return outFile
             })
-    }
-    async function testPy2Ts(pyFile: string): Promise<string> {
-        return testConversion(pyFile, true)
-    }
-    async function testTs2Py(tsFile: string): Promise<string> {
-        return testConversion(tsFile, false)
     }
     async function testSts(tsFile: string): Promise<void> {
         let errFile = tsFile + ".sts_error"
@@ -266,7 +279,7 @@ function compileAndRunStsAsync(filename: string): Promise<string> {
     }`
     // TODO(dz): why is this necessary? This doesn't seem right..
     const postlude = `
-        pause(200);
+        pause(300);
     `
     return util.stsAsync({ mainFile: filename, stsPrelude: prelude, stsPostlude: postlude })
         .then((compiled) => {
