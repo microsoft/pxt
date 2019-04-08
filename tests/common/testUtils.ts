@@ -73,10 +73,12 @@ export interface TestPackageOpts {
 class CompileHost extends TestHost {
     private fileText: string;
     static langTestText: string;
+    private mainPy: string // TODO(dz): we don't want this
 
-    constructor(mainStr?: string, dependency?: string) {
+    constructor(mainStr?: string, dependency?: string, pyStr?: string) {
         super("test-pkg", "", dependency ? [dependency] : [], true);
         this.fileText = mainStr || "// no main function provided"
+        this.mainPy = pyStr || "" // TODO(dz): we don't want this
     }
 
     readFile(module: pxt.Package, filename: string): string {
@@ -88,11 +90,15 @@ class CompileHost extends TestHost {
                     "description": "",
                     "files": [
                         "main.ts",
+                        "main.py", // TODO(dz): we don't want this
                     ]
                 })
             }
             else if (filename === "main.ts") {
                 return this.fileText;
+            }
+            else if (filename === "main.py") { // TODO(dz): we don't want this
+                return this.mainPy;
             }
         }
 
@@ -145,25 +151,35 @@ export function ts2pyAsync(f: string): Promise<string> {
         })
 }
 
-export function py2tsAsync(f: string): Promise<string> {
-    return getTestCompileOptsAsync({})
-        .then(opts => {
-            opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
-            const input = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
-            let pyFile = "main.py";
-            opts.fileSystem[pyFile] = input;
+export async function py2tsAsync(f: string): Promise<string> {
+    const input = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
+    // let mainStr = summary.mainFile ? fs.readFileSync(summary.mainFile, "utf8") : ""
+    // mainStr = `${summary.stsPrelude}\n${mainStr}\n${summary.stsPostlude}\n`
+    // const pkg = new pxt.MainPackage(new CompileHost(mainStr, summary.dependency));
+    const pkg = new pxt.MainPackage(new CompileHost("", "", input));
 
-            let { generated, diagnostics } = pxt.py.py2ts(opts)
+    const target = pkg.getTargetOptions();
+    target.isNative = false;
 
-            let success = diagnostics.length == 0
+    let opts = await pkg.getCompileOptionsAsync(target)
+    opts.ast = true;
+    opts.testMode = true;
+    opts.ignoreFileResolutionErrors = true;
+    opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
+    let pyFile = "main.py";
+    opts.fileSystem[pyFile] = input;
+    delete opts.fileSystem["main.ts"]
 
-            if (success) {
-                return opts.fileSystem["main.ts"];
-            }
-            else {
-                return Promise.reject("Could not convert py to ts " + f + JSON.stringify(diagnostics, null, 4));
-            }
-        })
+    let { generated, diagnostics } = pxt.py.py2ts(opts)
+
+    let success = diagnostics.length == 0
+
+    if (success) {
+        return opts.fileSystem["main.ts"];
+    }
+    else {
+        return Promise.reject("Could not convert py to ts " + f + JSON.stringify(diagnostics, null, 4));
+    }
 }
 
 export function stsAsync(opts: TestPackageOpts): Promise<pxtc.CompileResult> {
