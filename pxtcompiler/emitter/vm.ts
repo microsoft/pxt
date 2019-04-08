@@ -106,8 +106,8 @@ namespace ts.pxtc.vm {
                 "ldlit     $i1",
                 "callproc  $i1",
                 "jmp       $lbl",
-                "jmpfalse  $lbl",
-                "jmptrue   $lbl",
+                "jmpnz     $lbl",
+                "jmpz      $lbl",
                 "push",
                 "pop",
                 "callrt    $rt", // has to be last

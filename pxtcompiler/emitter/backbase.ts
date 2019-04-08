@@ -417,25 +417,20 @@ ${baseLabel}_nochk:
             } else {
                 let lbl = this.mkLbl("jmpz")
 
-                if (jmp.jmpMode == ir.JmpMode.IfJmpValEq) {
-                    this.emitExprInto(jmp.expr, "r1")
-                    this.write(this.t.cmp("r0", "r1"))
-                } else {
-                    this.emitExpr(jmp.expr)
+                this.emitExpr(jmp.expr)
 
-                    // TODO: remove ARM-specific code
-                    if (jmp.expr.exprKind == ir.EK.RuntimeCall &&
-                        (jmp.expr.data === "thumb::subs" || U.startsWith(jmp.expr.data, "_cmp_"))) {
-                        // no cmp required
-                    } else {
-                        this.write(this.t.cmp_zero("r0"))
-                    }
+                // TODO: remove ARM-specific code
+                if (jmp.expr.exprKind == ir.EK.RuntimeCall &&
+                    (jmp.expr.data === "thumb::subs" || U.startsWith(jmp.expr.data, "_cmp_"))) {
+                    // no cmp required
+                } else {
+                    this.write(this.t.cmp_zero("r0"))
                 }
 
                 if (jmp.jmpMode == ir.JmpMode.IfNotZero) {
                     this.write(this.t.beq(lbl)) // this is to *skip* the following 'b' instruction; beq itself has a very short range
                 } else {
-                    // IfZero or IfJmpValEq
+                    // IfZero
                     this.write(this.t.bne(lbl))
                 }
 
@@ -467,10 +462,6 @@ ${baseLabel}_nochk:
                     }
                 }
             }
-        }
-
-        private withRef(name: string, isRef: boolean) {
-            return name + (isRef ? "Ref" : "")
         }
 
         private emitExprInto(e: ir.Expr, reg: string) {

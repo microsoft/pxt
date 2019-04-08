@@ -162,8 +162,6 @@ namespace ts.pxtc.ir {
         Always = 1,
         IfZero,
         IfNotZero,
-        IfJmpValEq,
-        IfLambda
     }
 
     export class Stmt extends Node {
@@ -265,10 +263,6 @@ namespace ts.pxtc.ir {
                                 return `    if (! ${inner}) ${fin}`
                             case JmpMode.IfNotZero:
                                 return `    if (${inner}) ${fin}`
-                            case JmpMode.IfJmpValEq:
-                                return `    if (r0 == ${inner}) ${fin}`
-                            case JmpMode.IfLambda:
-                                return `    if (LAMBDA) return ${inner}`
                             default: throw oops();
                         }
                     case ir.SK.StackEmpty:

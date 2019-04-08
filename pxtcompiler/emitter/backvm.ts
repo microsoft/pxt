@@ -155,7 +155,12 @@ _start_${name}:
                 }
             }
 
-            write(`ret ${numLoc + proc.args.length}`)
+            // use this funny encoding to often fit the argument in 8 bits
+            let retarg = (numLoc & 0xf) | ((numLoc >> 4) << 8)
+            retarg |= (proc.args.length & 0xf) << 4
+            retarg |= (proc.args.length >> 4) << 16
+
+            write(`ret ${retarg} ; ${numLoc} locals, ${proc.args.length} args`)
         }
 
         function emitJmp(jmp: ir.Stmt) {
@@ -164,15 +169,6 @@ _start_${name}:
                 if (jmp.expr)
                     emitExpr(jmp.expr)
                 write(`jmp ${trg}`)
-            } else if (jmp.jmpMode == ir.JmpMode.IfLambda) {
-                if (jmp.expr)
-                    emitExpr(jmp.expr)
-                write(`retlmb ${numLoc * wordSize}`)
-            } else if (jmp.jmpMode == ir.JmpMode.IfJmpValEq) {
-                write(`push`)
-                emitExpr(jmp.expr)
-                write(`eq`)
-                write(`jmpnz ${trg}`)
             } else {
                 emitExpr(jmp.expr)
                 if (jmp.jmpMode == ir.JmpMode.IfNotZero) {
@@ -186,15 +182,11 @@ _start_${name}:
             }
         }
 
-        function withRef(name: string, isRef: boolean) {
-            return name + (isRef ? "Ref" : "")
-        }
-
         function cellref(cell: ir.Cell) {
             if (cell.isGlobal())
                 return (`glb ` + cell.index)
             else if (cell.iscap)
-                return (`cap ` + (cell.index * wordSize))
+                return (`cap ` + cell.index)
             else if (cell.isarg) {
                 let idx = proc.args.length - cell.index - 1
                 assert(idx >= 0, "arg#" + idx)
@@ -273,7 +265,7 @@ _start_${name}:
                 case EK.FieldAccess:
                     let info = e.data as FieldAccessInfo
                     // it does the decr itself, no mask
-                    return emitExpr(ir.rtcall(withRef("pxtrt::ldfld", info.isRef), [e.args[0], ir.numlit(info.idx)]))
+                    return emitExpr(ir.rtcall("pxtrt::ldfld", [e.args[0], ir.numlit(info.idx)]))
                 case EK.Store:
                     return emitStore(e.args[0], e.args[1])
                 case EK.RuntimeCall:
@@ -424,7 +416,7 @@ _start_${name}:
                 case EK.FieldAccess:
                     let info = trg.data as FieldAccessInfo
                     // it does the decr itself, no mask
-                    emitExpr(ir.rtcall(withRef("pxtrt::stfld", info.isRef), [trg.args[0], ir.numlit(info.idx), src]))
+                    emitExpr(ir.rtcall("pxtrt::stfld", [trg.args[0], ir.numlit(info.idx), src]))
                     break;
                 default: oops();
             }
