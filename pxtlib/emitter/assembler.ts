@@ -252,6 +252,7 @@ namespace ts.pxtc.assembler {
         public errors: InlineError[] = [];
         public buf: number[];
         private labels: pxt.Map<number> = {};
+        private equs: pxt.Map<number> = {};
         private userLabelsCache: pxt.Map<number>;
         private stackpointers: pxt.Map<number> = {};
         private stack = 0;
@@ -292,6 +293,10 @@ namespace ts.pxtc.assembler {
             // fast path
             if (/^\d+$/.test(s))
                 return parseInt(s, 10)
+
+            const minP = s.indexOf("-")
+            if (minP > 0)
+                return this.parseOneInt(s.slice(0, minP)) - this.parseOneInt(s.slice(minP + 1))
 
             let mul = 1
 
@@ -429,6 +434,9 @@ namespace ts.pxtc.assembler {
                 if (v != null) {
                     v = this.ei.postProcessAbsAddress(this, v)
                 }
+            } else if (this.equs.hasOwnProperty(scoped)) {
+                v = this.equs[scoped]
+                // no post-processing
             }
             if (v == null && direct) {
                 if (this.finalEmit)
@@ -645,6 +653,19 @@ namespace ts.pxtc.assembler {
                 case ".skip":
                 case ".space":
                     this.emitSpace(words);
+                    break;
+
+                case ".set":
+                case ".equ":
+                    if (!/^\w+$/.test(words[1]))
+                        this.directiveError(lf("expecting name"))
+                    const nums = this.parseNumbers(words.slice(words[2] == "," ? 2 : 1))
+                    if (nums.length != 1)
+                        this.directiveError(lf("expecting one value"))
+                    if (this.equs[words[1]] !== undefined &&
+                        this.equs[words[1]] != nums[0])
+                        this.directiveError(lf("redefinition of {0}", words[1]))
+                    this.equs[words[1]] = nums[0]
                     break;
 
                 case ".startaddr":
@@ -994,6 +1015,7 @@ namespace ts.pxtc.assembler {
 
         private clearLabels() {
             this.labels = {}
+            this.equs = {}
             this.commPtr = 0
         }
 
@@ -1066,23 +1088,6 @@ namespace ts.pxtc.assembler {
         constructor(ei: AbstractProcessor) {
             super(ei)
         }
-
-        public location() {
-            // the this.buf stores bytes here
-            return this.buf.length
-        }
-
-        protected emitShort(op: number) {
-            assert(0 <= op && op <= 0xffff);
-            this.buf.push(op & 0xff);
-            this.buf.push(op >> 8);
-        }
-
-        protected emitOpCode(op: number) {
-            assert(0 <= op && op <= 0xff);
-            this.buf.push(op);
-        }
-
     }
 
     // describes the encodings of various parts of an instruction

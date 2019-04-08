@@ -23,29 +23,49 @@ namespace ts.pxtc {
     /* tslint:disable:no-trailing-whitespace */
     export function vmEmit(bin: Binary, opts: CompileOptions) {
         let vmsource = `; VM start
-${hex.hexPrelude()}        
-    .hex 708E3B92C615A841C49866C975EE5197 ; magic number
-    .hex ${hex.hexTemplateHash()} ; hex template hash
-    .hex 0000000000000000 ; @SRCHASH@
-    .short ${bin.globalsWords}   ; num. globals
-    .short 0 ; patched with number of words resulting from assembly
-    .word 0 ; reserved
-    .word 0 ; reserved
-    .word 0 ; reserved
+${hex.hexPrelude()}
 `
+
         let snip = new ThumbSnippets()
 
+        let address = 0
+        function section(name: string, tp: number, body: () => void, alias?: string) {
+            if (!alias) alias = "_" + name
+            vmsource += `
+; --- ${name}
+.section code
+    .set ${name} = ${address}
+    .set ${alias} = ${address}
+_start_${name}:
+    .byte ${tp}, 0x00
+    .short 0x0000
+    .word _end_${name}-_start_${name}\n`
+            body()
+            vmsource += `\n.balign 8\n_end_${name}:\n`
+            address++
+        }
+
+        section("_info", 0x01, () => {
+            vmsource += `
+                .string "\nPXT64\n" ; magic; \0 added by assembler
+                .hex 5471fe2b5e213768 ; magic
+                .hex ${hex.hexTemplateHash()} ; hex template hash
+                .hex 0000000000000000 ; @SRCHASH@
+                .word ${bin.globalsWords}   ; num. globals
+                .word ${bin.nonPtrGlobals} ; non-ptr globals
+`
+        })
         bin.procs.forEach(p => {
-            vmsource += "\n" + irToVM(bin, p) + "\n"
+            section(p.label(), 0x20, () => irToVM(bin, p), p.label() + "_Lit")
         })
         bin.usedClassInfos.forEach(info => {
-            vmsource += vtableToVM(info, opts, bin)
+            section(info.id + "_VT", 0x21, () => vtableToVM(info, opts, bin))
         })
         U.iterMap(bin.hexlits, (k, v) => {
-            vmsource += snip.hex_literal(v, k)
+            section(k, 0x22, () => snip.hex_literal(v, k))
         })
         U.iterMap(bin.strings, (k, v) => {
-            vmsource += snip.string_literal(v, k)
+            section(k, 0x23, () => snip.string_literal(v, k))
         })
         vmsource += "\n; The end.\n"
         bin.writeFile(BINARY_ASM, vmsource)
@@ -106,13 +126,8 @@ ${hex.hexPrelude()}
                 writeRaw(`; main`)
             }
 
-            writeRaw(`${proc.label()}:`)
-            writeRaw(`${proc.label()}_Lit:`)
             numLoc = proc.locals.length + currTmps.length
-            if (numLoc == 0)
-                write(`locals0`)
-            else
-                write(`locals ${numLoc * wordSize} ; incl. ${currTmps.length} tmps`)
+            write(`pushmany ${numLoc} ; incl. ${currTmps.length} tmps`)
 
             for (let s of proc.body) {
                 switch (s.stmtKind) {
@@ -140,8 +155,7 @@ ${hex.hexPrelude()}
                 }
             }
 
-            let retArg = (numLoc * wordSize) | (proc.args.length << 8)
-            write(`ret 0x${retArg.toString(16)}`)
+            write(`ret ${numLoc + proc.args.length}`)
         }
 
         function emitJmp(jmp: ir.Stmt) {

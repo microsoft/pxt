@@ -10,13 +10,12 @@ namespace ts.pxtc.vm {
         emit(ln: assembler.Line): assembler.EmitResult {
             let tokens = ln.words;
             if (tokens[0] != this.name) return badNameError;
-            let opcode = this.opcode;
+            let opcode = 0
             let j = 1;
             let stack = 0;
             let numArgs: number[] = []
             let labelName: string = null
             let opcode2: number = null
-            let opcode3: number = null
 
             for (let i = 0; i < this.args.length; ++i) {
                 let formal = this.args[i]
@@ -36,19 +35,27 @@ namespace ts.pxtc.vm {
                     }
                     if (v == null) return emitErr("didn't understand it", actual);
 
+                    U.assert(v >= 0)
+
+                    if (formal == "$lbl") {
+                        v -= ln.bin.location() + 2
+                        v >>= 1
+                    }
+
                     numArgs.push(v)
 
                     v = enc.encode(v)
                     if (v == null) return emitErr("argument out of range or mis-aligned", actual);
 
-                    if (formal == "$i1") {
-                        assert(0 <= v && v <= 255)
-                        opcode2 = v
-                    } else if (formal == "$i2") {
-                        opcode2 = v & 0xff
-                        opcode3 = (v >> 8) & 0xff
+                    if (formal == "$rt") {
+                        opcode = (v + 128) | 0x8000
+                    } else if (v < 0 || v > 255) {
+                        if (formal == "$lbl")
+                            v -= 1 // account for bigger encoding in relative addresses
+                        opcode = ((v >> 9) & 0xffff) | 0xc000
+                        opcode2 = (this.opcode + (v << 7)) & 0xffff
                     } else {
-                        oops()
+                        opcode = (this.opcode + (v << 7)) & 0xffff
                     }
                 } else if (formal == actual) {
                     // skip
@@ -67,7 +74,6 @@ namespace ts.pxtc.vm {
                 stack: stack,
                 opcode,
                 opcode2,
-                opcode3,
                 numArgs: numArgs,
                 labelName: ln.bin.normalizeExternalLabel(labelName)
             }
@@ -79,22 +85,39 @@ namespace ts.pxtc.vm {
         constructor(target: CompileTarget) {
             super();
 
-            this.addEnc("$i1", "#0-255", v => this.inrange(255, v, v))
-            this.addEnc("$i2", "#0-65535", v => this.inrange(65535, v, v))
+            this.addEnc("$i1", "#0-8388607", v => this.inrange(8388607, v, v))
+            this.addEnc("$lbl", "LABEL", v => this.inminmax(-4194304, 4194303, v, v)).isLabel = true
+            this.addEnc("$rt", "SHIM", v => this.inrange(8388607, v, v)).isLabel = true
 
-            U.iterMap(target.vmOpCodes, (opnamefull, opcode) => {
-                let m = /(.*)_(\d+)/.exec(opnamefull)
-                let fmt = ""
-                if (m[1] == "call") fmt = "call $i1, $i2"
-                else if (m[2] == "0") fmt = m[1]
-                else if (m[2] == "1") fmt = m[1] + " $i1"
-                else if (m[2] == "2") fmt = m[1] + " $i2"
-                else oops()
-                let ins = new VmInstruction(this, fmt, opcode)
-                if (!this.instructions.hasOwnProperty(ins.name))
-                    this.instructions[ins.name] = [];
-                this.instructions[ins.name].push(ins)
-            })
+            const opcodes = [
+                "stloc     $i1",
+                "ldloc     $i1",
+                "stcap     $i1",
+                "ldcap     $i1",
+                "stglb     $i1",
+                "ldglb     $i1",
+                "ldint     $i1",
+                "ldintneg  $i1",
+                "ldspecial $i1",
+                "ldnumber  $i1",
+                "ret       $i1",
+                "popmany   $i1",
+                "pushmany  $i1",
+                "ldlit     $i1",
+                "callproc  $i1",
+                "jmp       $lbl",
+                "jmpfalse  $lbl",
+                "jmptrue   $lbl",
+                "push",
+                "pop",
+                "callrt    $rt", // has to be last
+            ]
+
+            let opId = 1
+            for (let opcode of opcodes) {
+                let ins = new VmInstruction(this, opcode, opId++)
+                this.instructions[ins.name] = [ins];
+            }
         }
 
         public testAssembler() {
@@ -104,7 +127,6 @@ namespace ts.pxtc.vm {
             return v + f.baseOffset;
         }
 
-        // absolute addresses come in divide by two
         public postProcessAbsAddress(f: assembler.File, v: number): number {
             return v;
         }
@@ -126,35 +148,37 @@ namespace ts.pxtc.vm {
         }
 
         public wordSize() {
-            return 2
+            return 8
         }
 
         public peephole(ln: assembler.Line, lnNext: assembler.Line, lnNext2: assembler.Line) {
-            let lnop = ln.getOp()
-            let lnop2 = ""
-
-            if (lnNext) {
-                lnop2 = lnNext.getOp()
-                let key = lnop + ";" + lnop2
-                let pc = this.file.peepCounts
-                pc[key] = (pc[key] || 0) + 1
-            }
-
-            if (lnop == "jmp" && ln.numArgs[0] == this.file.baseOffset + lnNext.location) {
-                // RULE: jmp .somewhere; .somewhere: -> .somewhere:
-                ln.update("")
-            } else if (lnop == "push" && (
-                lnop2 == "callproc" || lnop2 == "ldconst" ||
-                lnop2 == "stringlit" || lnop2 == "ldtmp")) {
-                ln.update("")
-                lnNext.update("push_" + lnop2 + " " + lnNext.words[1])
-            } else if (lnop == "push" && (lnop2 == "ldzero" || lnop2 == "ldone")) {
-                ln.update("")
-                lnNext.update("push_" + lnop2)
-            } else if (lnop == "ldtmp" && (lnop2 == "incr" || lnop2 == "decr")) {
-                ln.update("ldtmp_" + lnop2 + " " + ln.words[1])
-                lnNext.update("")
-            }
+            /*
+             let lnop = ln.getOp()
+             let lnop2 = ""
+ 
+             if (lnNext) {
+                 lnop2 = lnNext.getOp()
+                 let key = lnop + ";" + lnop2
+                 let pc = this.file.peepCounts
+                 pc[key] = (pc[key] || 0) + 1
+             }
+ 
+             if (lnop == "jmp" && ln.numArgs[0] == this.file.baseOffset + lnNext.location) {
+                 // RULE: jmp .somewhere; .somewhere: -> .somewhere:
+                 ln.update("")
+             } else if (lnop == "push" && (
+                 lnop2 == "callproc" || lnop2 == "ldconst" ||
+                 lnop2 == "stringlit" || lnop2 == "ldtmp")) {
+                 ln.update("")
+                 lnNext.update("push_" + lnop2 + " " + lnNext.words[1])
+             } else if (lnop == "push" && (lnop2 == "ldzero" || lnop2 == "ldone")) {
+                 ln.update("")
+                 lnNext.update("push_" + lnop2)
+             } else if (lnop == "ldtmp" && (lnop2 == "incr" || lnop2 == "decr")) {
+                 ln.update("ldtmp_" + lnop2 + " " + ln.words[1])
+                 lnNext.update("")
+             }
+             */
         }
 
 
