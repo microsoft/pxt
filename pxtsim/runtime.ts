@@ -2,6 +2,7 @@
 
 namespace pxsim {
     const MIN_MESSAGE_WAIT_MS = 200;
+    let tracePauseMs = 0;
     export namespace U {
         export function addClass(element: HTMLElement, classes: string) {
             if (!element) return;
@@ -698,7 +699,6 @@ namespace pxsim {
             let breakFrame: StackFrame = null // for step-over
             let lastYield = Date.now()
             let __this = this
-            let tracePauseMs = 0;
 
             function oops(msg: string) {
                 throw new Error("sim error: " + msg)
@@ -815,7 +815,7 @@ namespace pxsim {
                         subtype: "trace",
                         breakpointId: brkId,
                     } as TraceMessage)
-                    thread.pause(tracePauseMs)
+                    thread.pause(tracePauseMs || 1)
                 }
                 else {
                     thread.pause(0)
