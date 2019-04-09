@@ -48,7 +48,10 @@ namespace ts.pxtc.vm {
                     if (v == null) return emitErr("argument out of range or mis-aligned", actual);
 
                     if (formal == "$rt") {
-                        opcode = (v + 128) | 0x8000
+                        if (v != 33333 && v > 0x1000) {
+                            U.oops("label: " + actual + " v=" + v)
+                        }
+                        opcode = v | 0x8000
                     } else if (ln.isLong || v < 0 || v > 255) {
                         // keep it long for the final pass; otherwise labels may shift
                         ln.isLong = true
@@ -82,6 +85,30 @@ namespace ts.pxtc.vm {
         }
     }
 
+    export const opcodes = [
+        "stloc     $i1",
+        "ldloc     $i1",
+        "stcap     $i1",
+        "ldcap     $i1",
+        "stglb     $i1",
+        "ldglb     $i1",
+        "ldint     $i1",
+        "ldintneg  $i1",
+        "ldspecial $i1",
+        "ldnumber  $i1",
+        "ret       $i1",
+        "popmany   $i1",
+        "pushmany  $i1",
+        "ldlit     $i1",
+        "callind   $i1",
+        "callproc  $i1",
+        "jmp       $lbl",
+        "jmpnz     $lbl",
+        "jmpz      $lbl",
+        "push",
+        "pop",
+    ]
+
     export class VmProcessor extends pxtc.assembler.AbstractProcessor {
 
         constructor(target: CompileTarget) {
@@ -91,33 +118,8 @@ namespace ts.pxtc.vm {
             this.addEnc("$lbl", "LABEL", v => this.inminmax(-4194304, 4194303, v, v)).isLabel = true
             this.addEnc("$rt", "SHIM", v => this.inrange(8388607, v, v)).isLabel = true
 
-            const opcodes = [
-                "stloc     $i1",
-                "ldloc     $i1",
-                "stcap     $i1",
-                "ldcap     $i1",
-                "stglb     $i1",
-                "ldglb     $i1",
-                "ldint     $i1",
-                "ldintneg  $i1",
-                "ldspecial $i1",
-                "ldnumber  $i1",
-                "ret       $i1",
-                "popmany   $i1",
-                "pushmany  $i1",
-                "ldlit     $i1",
-                "callind   $i1",
-                "callproc  $i1",
-                "jmp       $lbl",
-                "jmpnz     $lbl",
-                "jmpz      $lbl",
-                "push",
-                "pop",
-                "callrt    $rt", // has to be last
-            ]
-
             let opId = 1
-            for (let opcode of opcodes) {
+            for (let opcode of opcodes.concat(["callrt $rt"])) {
                 let ins = new VmInstruction(this, opcode, opId++)
                 this.instructions[ins.name] = [ins];
             }

@@ -178,10 +178,9 @@ namespace ts.pxtc {
                 jmpStartAddr = -1
                 jmpStartIdx = -1
 
-                let idx = 128
                 for (let f of funs) {
                     funcInfo[f.name] = f
-                    f.value = idx++
+                    f.value = 0xffffff
                 }
 
                 return

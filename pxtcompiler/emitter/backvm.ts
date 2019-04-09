@@ -28,12 +28,15 @@ namespace ts.pxtc {
 ${hex.hexPrelude()}
 `
 
-        let snip = new ThumbSnippets()
-
         const ctx: EmitCtx = {
             dblText: [],
-            dbls: {}
+            dbls: {},
+            opcodeMap: {},
+            opcodes: vm.opcodes.map(o => "pxt::op_" + o.replace(/ .*/, ""))
         }
+
+        while (ctx.opcodes.length < 128)
+            ctx.opcodes.push(null)
 
         let address = 0
         function section(name: string, tp: number, body: () => string, aliases?: string[]) {
@@ -70,7 +73,8 @@ _start_${name}:
             section(p.label(), 0x20, () => irToVM(ctx, bin, p),
                 [p.label() + "_Lit", p.label() + "_nochk"])
         })
-        vmsource += "_code_end:\n_helpers_end:\n\n"
+        vmsource += "_code_end:\n\n"
+        vmsource += "_helpers_end:\n\n"
         bin.usedClassInfos.forEach(info => {
             section(info.id + "_VT", 0x21, () => vtableToVM(info, opts, bin))
         })
@@ -95,6 +99,14 @@ _start_${name}:
             `    .word ${d.key}, ${d.value}  ; ${d.name}=${d.value}`).join("\n")
             + "\n    .word 0, 0")
 
+        let s = ctx.opcodes.map(s => s == null ? "" : s).join("\0") + "\0"
+        let opcm = ""
+        while (s) {
+            let pref = s.slice(0, 64)
+            s = s.slice(64)
+            opcm += ".string " + asmStringLiteral(pref) + "\n"
+        }
+        section("opcodeMap", 0x02, () => opcm)
         vmsource += "_literals_end:\n"
 
         vmsource += "\n; The end.\n"
@@ -126,6 +138,8 @@ _start_${name}:
     interface EmitCtx {
         dblText: string[]
         dbls: pxt.Map<number>
+        opcodeMap: pxt.Map<number>;
+        opcodes: string[];
     }
 
 
@@ -239,15 +253,27 @@ _start_${name}:
             }
         }
 
+        function callRT(name: string) {
+            const inf = hex.lookupFunc(name)
+            if (!inf) U.oops("missing function: " + name)
+            let id = ctx.opcodeMap[inf.name]
+            if (id == null) {
+                id = ctx.opcodes.length
+                ctx.opcodes.push(inf.name)
+                inf.value = id
+            }
+            write(`callrt ${name}`)
+        }
+
         function emitInstanceOf(info: ClassInfo, tp: string) {
             push()
             write(`ldint ${info.classNo}`)
             push()
             write(`ldint ${info.lastSubtypeNo}`)
             if (tp == "bool")
-                write(`callrt pxt::instanceOf`)
+                callRT("pxt::instanceOf")
             else if (tp == "validate" || tp == "validateDecr") {
-                write(`callrt pxt::validateInstanceOf`)
+                callRT("pxt::validateInstanceOf")
             } else {
                 U.oops()
             }
@@ -424,7 +450,7 @@ _start_${name}:
             } else if (spec)
                 write(spec)
             else
-                write(`callrt ${name}`)
+                callRT(name)
 
             argDepth -= numPush
         }
@@ -469,7 +495,7 @@ _start_${name}:
                 write(`ldloc ${topExpr.args.length - 1}`)
                 write(`push`)
                 write(`ldint ${methIdx}`)
-                write(`callrt ${fetchAddr}`)
+                callRT(fetchAddr)
                 write(`callind ${topExpr.args.length}`)
             } else {
                 write(`callproc ${calledProc.label()}`)
