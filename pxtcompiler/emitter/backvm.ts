@@ -19,7 +19,7 @@ namespace ts.pxtc {
     }
 
     function vtableToVM(info: ClassInfo, opts: CompileOptions, bin: Binary) {
-        return vtableToAsm(info, opts, bin)
+        return vtableToAsm(info, opts, bin).replace(/_VT:/, "_VT_:")
     }
 
     /* tslint:disable:no-trailing-whitespace */
@@ -40,7 +40,7 @@ ${hex.hexPrelude()}
             ctx.opcodes.push(null)
 
         let address = 0
-        function section(name: string, tp: number, body: () => string, aliases?: string[]) {
+        function section(name: string, tp: number, body: () => string, aliases?: string[], aux = 0) {
             vmsource += `
 ; --- ${name}
 .section code
@@ -53,7 +53,7 @@ ${hex.hexPrelude()}
             vmsource += `
 _start_${name}:
     .byte ${tp}, 0x00
-    .short 0x0000
+    .short ${aux}
     .word _end_${name}-_start_${name}\n`
             vmsource += body()
             vmsource += `\n.balign 8\n_end_${name}:\n`
@@ -72,7 +72,8 @@ _start_${name}:
         )
         bin.procs.forEach(p => {
             section(p.label(), 0x20, () => irToVM(ctx, bin, p),
-                [p.label() + "_Lit", p.label() + "_nochk"])
+                [p.label() + "_Lit", p.label() + "_nochk"],
+                p.args.length)
         })
         vmsource += "_code_end:\n\n"
         vmsource += "_helpers_end:\n\n"
@@ -148,9 +149,9 @@ _start_${name}:
 
     function irToVM(ctx: EmitCtx, bin: Binary, proc: ir.Procedure): string {
         let resText = ""
-        let writeRaw = (s: string) => { resText += s + "\n"; }
-        let write = (s: string) => { resText += "    " + s + "\n"; }
-        let EK = ir.EK;
+        const writeRaw = (s: string) => { resText += s + "\n"; }
+        const write = (s: string) => { resText += "    " + s + "\n"; }
+        const EK = ir.EK;
         let alltmps: ir.Expr[] = []
         let currTmps: ir.Expr[] = []
         let final = false
@@ -169,6 +170,7 @@ _start_${name}:
         resText = ""
         for (let t of alltmps) t.currUses = 0
         final = true
+        U.assert(argDepth == 0)
         emitAll()
 
         return resText
@@ -281,6 +283,7 @@ _start_${name}:
             } else {
                 U.oops()
             }
+            argDepth -= 2
         }
 
         function emitExprInto(e: ir.Expr) {
@@ -450,11 +453,11 @@ _start_${name}:
             if (name == "langsupp::ignore") {
                 if (numPush)
                     write(`popmany ${numPush} ; ignore`)
-
-            } else if (spec)
+            } else if (spec) {
                 write(spec)
-            else
+            } else {
                 callRT(name)
+            }
 
             argDepth -= numPush
         }
