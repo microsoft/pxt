@@ -187,7 +187,7 @@ export class ProjectView
         // (e.g. from the URL hash or from WinRT activation arguments)
         const skipStartScreen = pxt.appTarget.appTheme.allowParentController
             || pxt.shell.isControllerMode()
-            || window.location.hash == "#editor";
+            || /^#editor/.test(window.location.hash);
         return !isSandbox && !skipStartScreen && !isProjectRelatedHash(hash);
     }
 
@@ -1757,7 +1757,7 @@ export class ProjectView
                 if (src === undefined && open) { // failed to convert
                     return core.confirmAsync({
                         header: lf("Oops, there is a problem converting your code."),
-                        body: lf("We are unable to convert your Python code back to JavaScript."),
+                        body: lf("We are unable to convert your code back to JavaScript."),
                         agreeLbl: lf("Done"),
                         agreeClass: "cancel",
                         agreeIcon: "cancel",
@@ -2418,7 +2418,7 @@ export class ProjectView
             .then(() => this.saveFileAsync())
             .then(() => mpkg.filesToBePublishedAsync(true))
             .then(files => {
-                if (epkg.header.pubCurrent)
+                if (epkg.header.pubCurrent && !screenshotUri)
                     return Promise.resolve(epkg.header.pubId)
                 const meta: workspace.ScriptMeta = {
                     description: mpkg.config.description,
@@ -2735,6 +2735,11 @@ export class ProjectView
         core.showLoading("leavingtutorial", lf("leaving tutorial..."));
 
         // clear tutorial field
+        const tutorial = this.state.header.tutorial;
+        this.state.header.tutorialCompleted = {
+            id: tutorial.tutorial,
+            steps: tutorial.tutorialStepInfo.length
+        }
         this.state.header.tutorial = undefined;
 
         if (pxt.BrowserUtils.isIE()) {
@@ -3149,7 +3154,7 @@ let myexports: any = {
 export let ksVersion: string;
 
 function parseHash(): { cmd: string; arg: string } {
-    let hashM = /^#(\w+)(:([:\.\/\-\+\=\w]+))?$/.exec(window.location.hash)
+    let hashM = /^#(\w+)(:([:\.\/\-\+\=\w]+))?/.exec(window.location.hash)
     if (hashM) {
         return { cmd: hashM[1], arg: hashM[3] || '' };
     }

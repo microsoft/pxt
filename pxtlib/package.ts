@@ -116,8 +116,25 @@ namespace pxt {
         getPreferredEditor() {
             let editor = this.config.preferredEditor
             if (!editor) {
-                editor = this.getFiles().indexOf("main.blocks") >= 0 ?
-                    pxt.BLOCKS_PROJECT_NAME : pxt.JAVASCRIPT_PROJECT_NAME
+                // older editors do not have this field set so we need to apply our
+                // language resolution logic here
+                // note that the preferredEditor field will be set automatically on the first save
+
+                // 1. no main.blocks in project, open javascript
+                const hasMainBlocks = this.getFiles().indexOf("main.blocks") >= 0;
+                if (!hasMainBlocks)
+                    return pxt.JAVASCRIPT_PROJECT_NAME;
+
+                // 2. if main.blocks is empty and main.ts is non-empty
+                //    open typescript
+                // https://github.com/Microsoft/pxt/blob/master/webapp/src/app.tsx#L1032
+                const mainBlocks = this.readFile("main.blocks");
+                const mainTs = this.readFile("main.ts");
+                if (!mainBlocks && mainTs)
+                    return pxt.JAVASCRIPT_PROJECT_NAME;
+
+                // 3. default ot blocks
+                return pxt.BLOCKS_PROJECT_NAME;
             }
             return editor
         }

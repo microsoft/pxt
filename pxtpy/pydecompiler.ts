@@ -815,6 +815,7 @@ function tsToPy(prog: ts.Program, filename: string): string {
     function nextFnName() {
         // TODO ensure uniqueness
         // TODO add sync lock
+        // TODO infer friendly name from context
         return `function_${nextFnNum++}`
     }
     function emitFnExp(s: ts.FunctionExpression | ts.ArrowFunction): ExpRes {

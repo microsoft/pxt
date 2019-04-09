@@ -9,8 +9,9 @@ namespace pxsim.svg {
 
     let pt: SVGPoint;
     export function cursorPoint(pt: SVGPoint, svg: SVGSVGElement, evt: MouseEvent): SVGPoint {
-        pt.x = evt.clientX;
-        pt.y = evt.clientY;
+        // clientX and clientY are not defined in iOS safari
+        pt.x = evt.clientX != null ? evt.clientX : evt.pageX;
+        pt.y = evt.clientY != null ? evt.clientY : evt.pageY;
         return pt.matrixTransform(svg.getScreenCTM().inverse());
     }
 

@@ -2,6 +2,7 @@
 
 namespace pxsim {
     const MIN_MESSAGE_WAIT_MS = 200;
+    let tracePauseMs = 0;
     export namespace U {
         export function addClass(element: HTMLElement, classes: string) {
             if (!element) return;
@@ -203,6 +204,7 @@ namespace pxsim {
             this.runOptions = msg;
             return Promise.resolve()
         }
+        public onDebuggerResume() { }
         public screenshotAsync(width?: number): Promise<ImageData> {
             return Promise.resolve(undefined);
         }
@@ -358,7 +360,7 @@ namespace pxsim {
                 })
             }).then(() => {
                 // if some events arrived while processing above then keep processing
-                if (this.events.length > 0 && !runtime.pausedOnBreakpoint) {
+                if (this.events.length > 0) {
                     return this.poke()
                 } else {
                     this.lock = false
@@ -697,7 +699,6 @@ namespace pxsim {
             let breakFrame: StackFrame = null // for step-over
             let lastYield = Date.now()
             let __this = this
-            let tracePauseMs = 0;
 
             function oops(msg: string) {
                 throw new Error("sim error: " + msg)
@@ -775,6 +776,7 @@ namespace pxsim {
                     dbgHeap = null;
                     if (__this.dead) return null;
                     __this.resumeAllPausedScheduled();
+                    __this.board.onDebuggerResume();
                     runtime = __this;
                     U.assert(s.pc == retPC);
 
@@ -813,7 +815,7 @@ namespace pxsim {
                         subtype: "trace",
                         breakpointId: brkId,
                     } as TraceMessage)
-                    thread.pause(tracePauseMs)
+                    thread.pause(tracePauseMs || 1)
                 }
                 else {
                     thread.pause(0)

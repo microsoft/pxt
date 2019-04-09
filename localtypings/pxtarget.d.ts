@@ -586,6 +586,8 @@ declare namespace ts.pxtc {
         paramFieldEditor?: pxt.Map<string>; //.fieldEditor
         paramShadowOptions?: pxt.Map<pxt.Map<string>>; //.shadowOptions.
         paramFieldEditorOptions?: pxt.Map<pxt.Map<string>>; //.fieldOptions.
+
+        duplicateShadowOnDrag?: boolean; // if true, duplicate the block when its shadow is dragged out (like function arguments)
     }
 
     interface ParameterDesc {
@@ -752,5 +754,10 @@ declare namespace pxt.tutorial {
         tutorialReady?: boolean; // current tutorial page
         tutorialMd?: string; // full tutorial markdown
     }
-
+    interface TutorialCompletionInfo {
+        // id of the tutorial
+        id: string;
+        // number of steps completed
+        steps: number;
+    }
 }
