@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="16px" height="20px" viewBox="0 0 16 20" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 53.2 (72643) - https://sketchapp.com -->
+    <title>icon</title>
+    <desc>Created with Sketch.</desc>
+    <g id="Explorations" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Print---option-B" transform="translate(-1342.000000, -257.000000)">
+            <g id="actions-bar" transform="translate(1124.000000, 253.000000)">
+                <g id="icon" transform="translate(216.000000, 4.000000)">
+                    <g>
+                        <rect id="Rectangle" x="0" y="0" width="20" height="20"></rect>
+                        <path d="M16.4303819,10.58 L10.0025346,16.92 L3.57468739,10.58 L4.68992903,9.48 L9.14075701,13.87 L9.14075701,7.10542736e-14 L10.859243,7.10542736e-14 L10.859243,13.87 L15.310071,9.48 L16.4303819,10.58 Z M2.5,18.335 L17.5,18.335 L17.5,20 L2.5,20 L2.5,18.335 Z" id="Combined-Shape" fill-rule="nonzero"></path>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

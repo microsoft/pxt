@@ -140,7 +140,7 @@ namespace pxt.runner {
 
         let r = [$c];
         // don't add menu if empty
-        if ($menu.children().length) r.push($h);
+        if ($menu.children().length) r.unshift($h);
 
         // inject container
         $container.replaceWith(r as any);

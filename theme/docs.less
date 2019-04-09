@@ -232,8 +232,137 @@
         margin-left: 6px; margin-top: 6px;
     }
     div.menu > a.item {
-        padding-left:64px !important;
+        padding-left: 1px!important;
+        padding: 1px;
+        margin-left: 29px;
+        margin-bottom: 6px;
     }
+
+    div.menu > a.item > i {
+        width: 26px;
+        height: 26px;
+        background-color: white;
+        padding-top: 3px;
+        padding-left: 0px;
+    }
+
+    div.menu > a.item > i:hover {
+        width: 26px;
+        height: 26px;
+        background-color: @primaryColor;
+        padding-top: 3px;
+        padding-left: 0px;
+    }
+
+    .icon-add-fill(@src, @fill-new) {
+        @data-uri: data-uri('image/svg+xml;charset=UTF-8', '@{src}');
+        @replace-default: escape('<path ');
+        @replace-new: escape('<path fill="@{fill-new}" ');
+        @replace-src: replace('@{data-uri}', @replace-default, @replace-new, 'g');
+        background-image: e(@replace-src);
+    }
+
+    /* Edit Icon */
+    div.menu > a.item > i.edit.icon {
+        background: no-repeat center;
+        .icon-add-fill('../docs/static/logo/icons/editor.svg', @primaryColor);
+    }
+
+    div.menu > a.item > i.edit.icon:before {
+        content: "";
+    }
+
+    /* Download Icon */
+    div.menu > a.item > i.download.icon {
+        background: no-repeat center;
+        .icon-add-fill('../docs/static/logo/icons/download.svg', @primaryColor);
+    }
+
+    div.menu > a.item > i.download.icon:before {
+        content: "";
+    }
+
+    /* Javascript Icon */
+    div.menu > a.item > i.icon.xicon.js {
+        background: no-repeat center;
+        border: 1px solid @primaryColor;
+        .icon-add-fill('../docs/static/logo/icons/javascript-v2.svg', @primaryColor);
+    }
+
+    div.menu > a.item > i.icon.xicon.js:hover {
+        background: no-repeat center;
+        background-color: @primaryColor;
+        background-image: data-uri('image/svg+xml;charset=UTF-8', '../docs/static/logo/icons/javascript-v1.svg')
+    }
+
+    div.menu > a.item > i.icon.xicon.js:before {
+        content: "" !important;
+    }
+
+    /* Python Icon */
+    div.menu > a.item > i.icon.xicon.python {
+        background: no-repeat center;
+        border: 1px solid @primaryColor;
+        .icon-add-fill('../docs/static/logo/icons/python-v2.svg', @primaryColor);
+    }
+
+    div.menu > a.item > i.icon.xicon.python:hover {
+        background: no-repeat center;
+        background-color: @primaryColor;
+        background-image: data-uri('image/svg+xml;charset=UTF-8', '../docs/static/logo/icons/python-v1.svg')
+    }
+
+    div.menu > a.item > i.icon.xicon.python:before {
+        content: "" !important;
+    }
+
+    /* Blocks Icon */
+    div.menu > a.item > i.icon.xicon.blocks {
+        background: no-repeat center;
+        border: 1px solid @primaryColor;
+        .icon-add-fill('../docs/static/logo/icons/blocks-v2.svg', @primaryColor);
+    }
+
+    div.menu > a.item > i.icon.xicon.blocks:hover {
+        background: no-repeat center;
+        background-color: @primaryColor;
+        background-image: data-uri('image/svg+xml;charset=UTF-8', '../docs/static/logo/icons/blocks-v1.svg')
+    }
+
+    div.menu > a.item > i.icon.xicon.blocks:before {
+        content: "" !important;
+    }
+
+     /* Play in Emulator Icon */
+    div.menu > a.item > i.play.icon{ 
+        background: no-repeat center;
+        border: 1px solid @primaryColor;
+        .icon-add-fill('../docs/static/logo/icons/emulator-v2.svg', @primaryColor);
+    }
+
+    div.menu > a.item > i.play.icon:hover {
+        background: no-repeat center;
+        background-color: @primaryColor;
+        background-image: data-uri('image/svg+xml;charset=UTF-8', '../docs/static/logo/icons/emulator-v1.svg')
+    }
+
+    div.menu > a.item > i.play.icon:before {
+        content: "" !important;
+    }
+
+    div.menu > a.item > i + span {
+        display: none;
+    }
+
+    .ui.bottom.tabular.menu {
+        border-top: 0px solid #d4d4d5;
+        margin-bottom: 0rem;
+    }
+
+    .ui.top.attached.segment.codewidget {
+        margin-top:0px;
+    }
+
     .ui.inverted.menu .item.bold {
         font-weight: bold;
         margin-left: -4px;

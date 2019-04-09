@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="32px" height="32px" viewBox="0 0 32 32" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 53.2 (72643) - https://sketchapp.com -->
+    <title>button copy 2</title>
+    <desc>Created with Sketch.</desc>
+    <g id="Explorations" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Message-Box-(color-options)" transform="translate(-120.000000, -120.000000)">
+            <g id="notes-copy-5" transform="translate(80.000000, 80.000000)">
+                <g id="button-copy-2" transform="translate(40.000000, 40.000000)">
+                    <g id="icon">
+                        <rect id="Rectangle" x="0" y="0" width="32" height="32"></rect>
+                        <path d="M16,0 C7.17788431,0 0,7.17788431 0,16 C0,24.8221157 7.17788431,32 16,32 C24.8221157,32 32,24.8221157 32,16 C32,7.17788431 24.8221157,0 16,0 Z M16,2.46153846 C23.4903852,2.46153846 29.5384615,8.509616 29.5384615,16 C29.5384615,23.4903852 23.4903852,29.5384615 16,29.5384615 C8.509616,29.5384615 2.46153846,23.4903852 2.46153846,16 C2.46153846,8.509616 8.509616,2.46153846 16,2.46153846 Z M23.7307692,10.1923077 L14.7692308,19.1538462 L9.5,13.8846154 L7.73076923,15.6538462 L13.8846154,21.8076923 L14.7692308,22.6538462 L15.6538462,21.8076923 L25.5,11.9615385 L23.7307692,10.1923077 Z" id="Shape" fill="#98D9BF" fill-rule="nonzero"></path>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>
