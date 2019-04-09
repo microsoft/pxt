@@ -226,7 +226,6 @@ function emitJsFiles(prog: ts.Program, file?: ts.SourceFile): string[] {
 
 function compileTsToJs(filename: string): ts.Program {
     let cOpts: ts.CompilerOptions = {
-        // TODO(dz): check these options
         noEmitOnError: true,
         noImplicitAny: true,
         target: ts.ScriptTarget.ES5,

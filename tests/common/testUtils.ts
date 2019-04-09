@@ -97,7 +97,6 @@ let cachedOpts: pxt.Map<pxtc.CompileOptions> = {}
 export function getTestCompileOptsAsync(tsMain: string = "// no main", dependency?: string, includeCommon = false): Promise<pxtc.CompileOptions> {
     let cacheKey = pxt.Util.codalHash16(tsMain + dependency)
     if (!cachedOpts[cacheKey]) {
-        // TODO(dz): includeCommon = false needed for tracetests, = true for decompiler tests
         const pkg = new pxt.MainPackage(new TestHost("test-pkg", tsMain, dependency ? [dependency] : [], includeCommon));
 
         const target = pkg.getTargetOptions();
