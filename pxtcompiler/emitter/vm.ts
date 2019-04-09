@@ -10,7 +10,7 @@ namespace ts.pxtc.vm {
         emit(ln: assembler.Line): assembler.EmitResult {
             let tokens = ln.words;
             if (tokens[0] != this.name) return badNameError;
-            let opcode = 0
+            let opcode = this.opcode
             let j = 1;
             let stack = 0;
             let numArgs: number[] = []
@@ -70,10 +70,6 @@ namespace ts.pxtc.vm {
             }
 
             if (tokens[j]) return emitErr("trailing tokens", tokens[j])
-
-            if (this.name == "call") {
-                opcode += numArgs[0]
-            }
 
             return {
                 stack: stack,

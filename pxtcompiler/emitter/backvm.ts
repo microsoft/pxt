@@ -105,7 +105,9 @@ _start_${name}:
         while (s) {
             let pref = s.slice(0, 64)
             s = s.slice(64)
-            opcm += ".string " + asmStringLiteral(pref) + "\n"
+            if (pref.length & 1)
+                pref += "\0"
+            opcm += ".hex " + U.toHex(U.stringToUint8Array(pref)) + "\n"
         }
         section("opcodeMap", 0x02, () => opcm)
         vmsource += "_literals_end:\n"

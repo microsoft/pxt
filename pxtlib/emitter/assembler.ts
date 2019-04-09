@@ -914,6 +914,8 @@ namespace ts.pxtc.assembler {
                     let lblname = this.scopedName(l.words[0])
                     this.prevLabel = lblname
                     if (this.finalEmit) {
+                        if (this.equs[lblname] != null)
+                            this.directiveError(lf(".equ redefined as label"))
                         let curr = this.labels[lblname]
                         if (curr == null)
                             oops()

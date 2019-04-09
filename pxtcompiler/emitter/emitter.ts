@@ -146,6 +146,10 @@ namespace ts.pxtc {
         return target.isNative && target.nativeType == NATIVE_TYPE_VM
     }
 
+    export function needsNumberConversions() {
+        return target.isNative && target.nativeType != NATIVE_TYPE_VM
+    }
+
     export function isThumb() {
         return target.isNative && (target.nativeType == NATIVE_TYPE_THUMB)
     }
@@ -166,22 +170,22 @@ namespace ts.pxtc {
     // everything else (except as indicated with CommentAttrs), operates and returns regular ints
 
     function fromInt(e: ir.Expr): ir.Expr {
-        if (!target.isNative) return e
+        if (!needsNumberConversions()) return e
         return ir.rtcall("pxt::fromInt", [e])
     }
 
     function fromBool(e: ir.Expr): ir.Expr {
-        if (!target.isNative) return e
+        if (!needsNumberConversions()) return e
         return ir.rtcall("pxt::fromBool", [e])
     }
 
     function fromFloat(e: ir.Expr): ir.Expr {
-        if (!target.isNative) return e
+        if (!needsNumberConversions()) return e
         return ir.rtcall("pxt::fromFloat", [e])
     }
 
     function fromDouble(e: ir.Expr): ir.Expr {
-        if (!target.isNative) return e
+        if (!needsNumberConversions()) return e
         return ir.rtcall("pxt::fromDouble", [e])
     }
 
@@ -3113,7 +3117,7 @@ ${lbl}: .short 0xffff
 
             let args2 = args.map((a, i) => {
                 let r = emitExpr(a)
-                if (!opts.target.isNative || isStackMachine())
+                if (!needsNumberConversions())
                     return r
                 let f = fmt[i + 1]
                 let isNumber = isNumberLike(a)
@@ -3614,7 +3618,7 @@ ${lbl}: .short 0xffff
 
             // TODO this should be changed to use standard indexer lookup and int handling
             let toInt = (e: ir.Expr) => {
-                return ir.rtcall("pxt::toInt", [e])
+                return needsNumberConversions() ? ir.rtcall("pxt::toInt", [e]) : e
             }
 
             // c = a[i]
