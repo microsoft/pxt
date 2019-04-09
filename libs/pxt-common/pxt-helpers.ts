@@ -195,6 +195,11 @@ namespace helpers {
         return out;
     }
 
+    export function arrayPickRandom<T>(arr: T[]): T {
+        const l = arr.length;
+        return arr[Math.randomRange(0, l - 1)];
+    }
+
     export function arraySlice<T>(arr: T[], start?: number, end?: number): T[] {
         // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/slice
         const res: T[] = [];

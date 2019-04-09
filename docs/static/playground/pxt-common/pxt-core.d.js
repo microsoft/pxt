@@ -188,11 +188,18 @@ interface Array<T> {
     /**
      * Store a value at a particular index
      * @param index the zero-based position in the list to store the value, eg: 0
-     * @param the value to insert, eg: 0
+     * @param value the value to insert, eg: 0
      */
     //% help=arrays/set
     //% shim=Array_::setAt weight=84
     set(index: number, value: T): void;
+
+    /**
+     * Return a random element from the array
+     */
+    //% helper=arrayPickRandom weight=1
+    //% blockId="array_pickRandom" block="random element from array %list" blockNamespace="arrays"
+    pickRandom(): T;
 
     [n: number]: T;
 }
