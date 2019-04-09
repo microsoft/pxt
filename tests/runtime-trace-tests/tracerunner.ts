@@ -32,7 +32,7 @@ initGlobals();
 pxt.setAppTarget(util.testAppTarget);
 
 // tests
-const casesDir = path.join(process.cwd(), "tests", "trace-tests", "cases");
+const casesDir = path.join(process.cwd(), "tests", "runtime-trace-tests", "cases");
 
 describe("convert between ts<->py ", () => {
     // TODO: can this be moved to a mocha before() block?
