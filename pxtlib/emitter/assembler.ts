@@ -473,7 +473,7 @@ namespace ts.pxtc.assembler {
             // this.pushError(lf("directive error: {0}", msg))
         }
 
-        private emitString(l: string) {
+        private emitString(l: string, utf16 = false) {
             function byteAt(s: string, i: number) { return (s.charCodeAt(i) || 0) & 0xff }
 
             let m = /^\s*([\w\.]+\s*:\s*)?.\w+\s+(".*")\s*$/.exec(l)
@@ -482,9 +482,15 @@ namespace ts.pxtc.assembler {
                 this.directiveError(lf("expecting string"))
             } else {
                 this.align(2);
-                // s.length + 1 to NUL terminate
-                for (let i = 0; i < s.length + 1; i += 2) {
-                    this.emitShort((byteAt(s, i + 1) << 8) | byteAt(s, i))
+                if (utf16) {
+                    for (let i = 0; i < s.length; i += 2) {
+                        this.emitShort(s.charCodeAt(i))
+                    }
+                } else {
+                    // s.length + 1 to NUL terminate
+                    for (let i = 0; i < s.length + 1; i += 2) {
+                        this.emitShort((byteAt(s, i + 1) << 8) | byteAt(s, i))
+                    }
                 }
             }
         }
@@ -585,6 +591,9 @@ namespace ts.pxtc.assembler {
                 case ".asciz":
                 case ".string":
                     this.emitString(l.text);
+                    break;
+                case ".utf16":
+                    this.emitString(l.text, true);
                     break;
                 case ".align":
                     expectOne();

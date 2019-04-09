@@ -546,6 +546,15 @@ namespace ts.pxtc {
         return t
     }
 
+    export function taggedSpecial(v: any) {
+        if (v === null) return taggedNull
+        else if (v === undefined) return taggedUndefined
+        else if (v === false) return taggedFalse
+        else if (v === true) return taggedTrue
+        else if (isNaN(v)) return taggedNaN
+        else return null
+    }
+
     function typeOf(node: Node) {
         let r: Type;
         if ((node as any).typeOverride)
@@ -1590,7 +1599,7 @@ ${lbl}: .short 0xffff
                 r = ir.rtcall("String_::mkEmpty", [])
             } else {
                 let lbl = bin.emitString(str)
-                r = ir.ptrlit(lbl + "meta", JSON.stringify(str))
+                r = ir.ptrlit(lbl, JSON.stringify(str))
             }
             r.isStringLiteral = true
             return r
@@ -3039,15 +3048,11 @@ ${lbl}: .short 0xffff
 
         function emitLit(v: number | boolean) {
             if (opts.target.isNative) {
-                if (v === null) return ir.numlit(taggedNull)
-                else if (v === undefined) return ir.numlit(taggedUndefined)
-                else if (v === false) return ir.numlit(taggedFalse)
-                else if (v === true) return ir.numlit(taggedTrue)
+                const numlit = taggedSpecial(v)
+                if (numlit != null) return ir.numlit(numlit)
                 else if (typeof v == "number") {
                     if (fitsTaggedInt(v as number)) {
                         return ir.numlit(((v as number) << 1) | 1)
-                    } else if (v != v) {
-                        return ir.numlit(taggedNaN)
                     } else {
                         let lbl = bin.emitDouble(v as number)
                         return ir.ptrlit(lbl, JSON.stringify(v))

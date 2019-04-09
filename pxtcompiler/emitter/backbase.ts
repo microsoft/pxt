@@ -113,12 +113,12 @@ namespace ts.pxtc {
                     }
                     return `
 .balign 4
-${lbl}meta: ${this.obj_header(vt)}
+${lbl}: ${this.obj_header(vt)}
         .short ${utfLit.length}, ${strLit.length}
         .word ${lbl}data
 ${lbl}data:
         .short ${skipList.map(s => s.toString()).join(", ")}
-${lbl}: .string ${asmStringLiteral(utfLit)}
+        .string ${asmStringLiteral(utfLit)}
 `
                 } else {
                     vt = "pxt::string_inline_utf8_vt"
@@ -127,9 +127,9 @@ ${lbl}: .string ${asmStringLiteral(utfLit)}
 
             return `
 .balign 4
-${lbl}meta: ${this.obj_header(vt)}
+${lbl}: ${this.obj_header(vt)}
         .short ${utfLit.length}
-${lbl}: .string ${asmStringLiteral(utfLit)}
+        .string ${asmStringLiteral(utfLit)}
 `
         }
 
@@ -138,14 +138,20 @@ ${lbl}: .string ${asmStringLiteral(utfLit)}
             return `
 .balign 4
 ${lbl}: ${this.obj_header("pxt::buffer_vt")}
-        .short ${data.length >> 1}, 0x0000
-        .hex ${data}${data.length % 4 == 0 ? "" : "00"}
+${hexLiteralAsm(data)}
 `
         }
 
         method_call(procid: ir.ProcId, topExpr: ir.Expr) {
             return ""
         }
+    }
+
+    export function hexLiteralAsm(data: string) {
+        return `
+                .word ${data.length >> 1}
+                .hex ${data}${data.length % 4 == 0 ? "" : "00"}
+        `
     }
 
     // helper for emit_int

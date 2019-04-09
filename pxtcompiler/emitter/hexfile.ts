@@ -880,7 +880,7 @@ ${hex.hexPrelude()}
         let idx = 0
         for (let d of bin.ifaceMembers) {
             let lbl = bin.emitString(d)
-            asmsource += `    .word ${lbl}meta  ; ${idx++} .${d}\n`
+            asmsource += `    .word ${lbl}  ; ${idx++} .${d}\n`
         }
         asmsource += `    .word 0\n`
         asmsource += "_vtables_end:\n\n"

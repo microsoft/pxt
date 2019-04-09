@@ -104,6 +104,7 @@ namespace ts.pxtc.vm {
                 "popmany   $i1",
                 "pushmany  $i1",
                 "ldlit     $i1",
+                "callind   $i1",
                 "callproc  $i1",
                 "jmp       $lbl",
                 "jmpnz     $lbl",

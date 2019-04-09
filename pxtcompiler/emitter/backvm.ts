@@ -1,8 +1,10 @@
 namespace ts.pxtc {
     const vmSpecOpcodes: pxt.Map<string> = {
+        /*
         "Number_::eq": "eq",
         "Number_::adds": "add",
         "Number_::subs": "sub",
+        */
     }
 
     const vmCallMap: pxt.Map<string> = {
@@ -28,8 +30,13 @@ ${hex.hexPrelude()}
 
         let snip = new ThumbSnippets()
 
+        const ctx: EmitCtx = {
+            dblText: [],
+            dbls: {}
+        }
+
         let address = 0
-        function section(name: string, tp: number, body: () => void, alias?: string) {
+        function section(name: string, tp: number, body: () => string, alias?: string) {
             if (!alias) alias = "_" + name
             vmsource += `
 ; --- ${name}
@@ -40,13 +47,12 @@ _start_${name}:
     .byte ${tp}, 0x00
     .short 0x0000
     .word _end_${name}-_start_${name}\n`
-            body()
+            vmsource += body()
             vmsource += `\n.balign 8\n_end_${name}:\n`
             address++
         }
 
-        section("_info", 0x01, () => {
-            vmsource += `
+        section("_info", 0x01, () => `
                 .string "\nPXT64\n" ; magic; \0 added by assembler
                 .hex 5471fe2b5e213768 ; magic
                 .hex ${hex.hexTemplateHash()} ; hex template hash
@@ -54,19 +60,37 @@ _start_${name}:
                 .word ${bin.globalsWords}   ; num. globals
                 .word ${bin.nonPtrGlobals} ; non-ptr globals
 `
-        })
+        )
         bin.procs.forEach(p => {
-            section(p.label(), 0x20, () => irToVM(bin, p), p.label() + "_Lit")
+            section(p.label(), 0x20, () => irToVM(ctx, bin, p), p.label() + "_Lit")
         })
+        vmsource += "_code_end:\n_helpers_end:\n\n"
         bin.usedClassInfos.forEach(info => {
             section(info.id + "_VT", 0x21, () => vtableToVM(info, opts, bin))
         })
+
+        let idx = 0
+        section("ifaceMemberNames", 0x05, () => bin.ifaceMembers.map(d =>
+            `    .word ${bin.emitString(d)}  ; ${idx++} .${d}`
+        ).join("\n"))
+
+        vmsource += "_vtables_end:\n\n"
+
         U.iterMap(bin.hexlits, (k, v) => {
-            section(k, 0x22, () => snip.hex_literal(v, k))
+            section(v, 0x22, () => hexLiteralAsm(k))
         })
         U.iterMap(bin.strings, (k, v) => {
-            section(k, 0x23, () => snip.string_literal(v, k))
+            section(v, 0x23, () => `.word ${k.length}\n.utf16 ${JSON.stringify(k)}`)
         })
+        section("numberLiterals", 0x03, () => ctx.dblText.join("\n"))
+
+        const cfg = bin.res.configData || []
+        section("configData", 0x04, () => cfg.map(d =>
+            `    .word ${d.key}, ${d.value}  ; ${d.name}=${d.value}`).join("\n")
+            + "\n    .word 0, 0")
+
+        vmsource += "_literals_end:\n"
+
         vmsource += "\n; The end.\n"
         bin.writeFile(BINARY_ASM, vmsource)
 
@@ -93,18 +117,25 @@ _start_${name}:
     }
     /* tslint:enable */
 
+    interface EmitCtx {
+        dblText: string[]
+        dbls: pxt.Map<number>
+    }
 
-    function irToVM(bin: Binary, proc: ir.Procedure): string {
+
+    function irToVM(ctx: EmitCtx, bin: Binary, proc: ir.Procedure): string {
         let resText = ""
         let writeRaw = (s: string) => { resText += s + "\n"; }
         let write = (s: string) => { resText += "    " + s + "\n"; }
         let EK = ir.EK;
-        let wordSize = 2
         let alltmps: ir.Expr[] = []
         let currTmps: ir.Expr[] = []
         let final = false
         let numBrk = 0
         let numLoc = 0
+        let argDepth = 0
+
+        const immMax = (1 << 23) - 1
 
         //console.log(proc.toString())
         proc.resolve()
@@ -190,29 +221,57 @@ _start_${name}:
             else if (cell.isarg) {
                 let idx = proc.args.length - cell.index - 1
                 assert(idx >= 0, "arg#" + idx)
-                return (`tmp ${(numLoc + 2 + idx) * wordSize}`)
+                return (`loc ${argDepth + numLoc + 1 + idx}`)
             }
             else {
                 let idx = cell.index + currTmps.length
                 //console.log(proc.locals.length, currTmps.length, cell.index)
                 assert(!final || idx < numLoc, "cell#" + idx)
                 assert(idx >= 0, "cell#" + idx)
-                return (`tmp ${idx * wordSize}`)
+                return (`loc ${argDepth + idx}`)
             }
         }
 
         function emitExprInto(e: ir.Expr) {
             switch (e.exprKind) {
                 case EK.NumberLiteral:
-                    if (e.data === 0)
-                        write(`ldzero`)
-                    else if (e.data === 1)
-                        write(`ldone`)
-                    else
-                        write(`ldconst ${e.data & 0xffff}`)
+                    const tagged = taggedSpecial(e.data)
+                    if (tagged != null)
+                        write(`ldspecial ${tagged} ; ${e.data}`)
+                    else {
+                        let n = e.data as number
+                        let n0 = 0, n1 = 0
+                        if ((n | 0) == n) {
+                            if (Math.abs(n) <= immMax) {
+                                if (n < 0)
+                                    write(`ldintneg ${-n}`)
+                                else
+                                    write(`ldint ${n}`)
+                                return
+                            } else {
+                                n0 = ((n << 1) | 1) >>> 0
+                                n1 = n < 0 ? 1 : 0
+                            }
+                        } else {
+                            let a = new Float64Array(1)
+                            a[0] = n
+                            let u = new Uint32Array(a.buffer)
+                            u[1] += 0x10000
+                            n0 = u[0]
+                            n1 = u[1]
+                        }
+                        let key = n0 + "," + n1
+                        let id = U.lookup(ctx.dbls, key)
+                        if (id == null) {
+                            id = ctx.dbls.length
+                            ctx.dblText.push(`.word ${n0}, ${n1}  ; ${id}: ${e.data}`)
+                            ctx.dbls[key] = id
+                        }
+                        write(`ldnumber ${id} ; ${e.data}`)
+                    }
                     return
                 case EK.PointerLiteral:
-                    write(`ldconst ${e.data}`)
+                    write(`ldlit ${e.data}`)
                     return
                 case EK.SharedRef:
                     let arg = e.args[0]
@@ -224,13 +283,14 @@ _start_${name}:
                         console.log(currTmps, arg)
                         assert(false)
                     }
-                    write(`ldtmp ${idx * wordSize}`)
+                    write(`ldloc ${idx + argDepth}`)
                     clearStack()
                     return
                 case EK.CellRef:
                     write("ld" + cellref(e.data))
                     let cell = e.data as ir.Cell
                     if (cell.isGlobal()) {
+                        // TODO
                         if (cell.bitSize == BitSize.Int8) {
                             write(`sgnext`)
                         } else if (cell.bitSize == BitSize.UInt8) {
@@ -255,12 +315,8 @@ _start_${name}:
                     write("; nop")
                     break
                 case EK.Incr:
-                    emitExpr(e.args[0])
-                    write("incr")
-                    break;
                 case EK.Decr:
-                    emitExpr(e.args[0])
-                    write("decr")
+                    U.oops()
                     break;
                 case EK.FieldAccess:
                     let info = e.data as FieldAccessInfo
@@ -307,46 +363,31 @@ _start_${name}:
                 } else {
                     currTmps[idx] = arg
                 }
-                write(`sttmp ${idx * wordSize}`)
+                write(`stloc ${idx + argDepth}`)
             }
+        }
+
+        function push() {
+            write(`push`)
+            argDepth++
         }
 
         function emitRtCall(topExpr: ir.Expr) {
             let name: string = topExpr.data
-            let m = /^(.*)\^(\d+)$/.exec(name)
-            let mask = 0
-            if (m) {
-                name = m[1]
-                mask = parseInt(m[2])
-            }
             name = U.lookup(vmCallMap, name) || name
-            assert(mask <= 0xf)
 
-            let info = ir.flattenArgs(topExpr)
-            assert(info.precomp.length == 0)
-            //info.precomp.forEach(emitExpr)
             clearStack()
 
-            if (name == "pxt::stringLiteral" &&
-                info.flattened.length == 1 &&
-                info.flattened[0].exprKind == EK.PointerLiteral) {
-                write(`stringlit ${info.flattened[0].data}`)
-                return
-            }
-
-            assert(info.flattened.length <= 4)
-            let maskStr = "0x" + (mask + info.flattened.length * 16).toString(16)
-
-            name = name.replace(/^thumb::/, "Number_::")
-
             let spec = U.lookup(vmSpecOpcodes, name)
+            let args = topExpr.args
+            let numPush = 0
 
-            if (mask) spec = null
-
-            for (let i = 0; i < info.flattened.length; ++i) {
-                emitExpr(info.flattened[i])
-                if (i < info.flattened.length - 1)
-                    write(`push`)
+            for (let i = 0; i < args.length; ++i) {
+                emitExpr(args[i])
+                if (i < args.length - 1) {
+                    push()
+                    numPush++
+                }
             }
 
             //let inf = hex.lookupFunc(name)
@@ -354,7 +395,9 @@ _start_${name}:
             if (spec)
                 write(spec)
             else
-                write(`call ${maskStr}, ${name}`)
+                write(`callrt ${name}`)
+
+            argDepth -= numPush
         }
 
 
@@ -374,9 +417,12 @@ _start_${name}:
             let calledProcId = topExpr.data as ir.ProcId
             let calledProc = calledProcId.proc
 
+            let numPush = 0
+
             for (let e of topExpr.args) {
                 emitExpr(e)
-                write(`push`)
+                push()
+                numPush++
             }
 
             let methIdx = -1
@@ -391,14 +437,16 @@ _start_${name}:
             }
 
             if (fetchAddr) {
-                write(`ldstack ${topExpr.args.length * wordSize - 1}`)
+                write(`ldloc ${topExpr.args.length - 1}`)
                 write(`push`)
-                write(`ldconst ${methIdx}`)
-                write(`call 0x20, ${fetchAddr}`)
-                write(`callind`)
+                write(`ldint ${methIdx}`)
+                write(`callrt ${fetchAddr}`)
+                write(`callind ${topExpr.args.length}`)
             } else {
                 write(`callproc ${calledProc.label()}`)
             }
+
+            argDepth -= numPush
         }
 
         function emitStore(trg: ir.Expr, src: ir.Expr) {
