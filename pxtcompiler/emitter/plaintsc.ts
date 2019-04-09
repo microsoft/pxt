@@ -12,13 +12,32 @@ namespace ts.pxtc {
         sys.write(output);
     }
 
-    export function getDiagnosticString(diagnostic: Diagnostic): string {
+    export function getDiagnosticString(diagnostic: KsDiagnostic | Diagnostic): string {
+        let ksDiagnostic: KsDiagnostic;
+        if ("file" in diagnostic) {
+            // convert ts.Diagnostic to KsDiagnostic
+            let tsDiag = diagnostic as ts.Diagnostic
+            const { line, character } = getLineAndCharacterOfPosition(tsDiag.file, tsDiag.start);
+            const relativeFileName = tsDiag.file.fileName;
+            ksDiagnostic = Object.assign({
+                fileName: relativeFileName,
+                line: line,
+                column: character
+            }, tsDiag)
+        } else {
+            ksDiagnostic = Object.assign({
+                fileName: undefined,
+                line: undefined,
+                column: undefined
+            }, diagnostic)
+        }
+        return getDiagnosticStringHelper(ksDiagnostic)
+    }
+    function getDiagnosticStringHelper(diagnostic: KsDiagnostic): string {
         let output = "";
 
-        if (diagnostic.file) {
-            const { line, character } = getLineAndCharacterOfPosition(diagnostic.file, diagnostic.start);
-            const relativeFileName = diagnostic.file.fileName;
-            output += `${relativeFileName}(${line + 1},${character + 1}): `;
+        if (diagnostic.fileName) {
+            output += `${diagnostic.fileName}(${diagnostic.line + 1},${diagnostic.column + 1}): `;
         }
 
         const category = DiagnosticCategory[diagnostic.category].toLowerCase();

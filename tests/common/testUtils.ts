@@ -129,7 +129,7 @@ export function ts2pyAsync(f: string): Promise<string> {
                 return decompiled.outfiles["main.py"];
             }
             else {
-                return Promise.reject("Could not conver ts to py " + f + JSON.stringify(decompiled.diagnostics, null, 4));
+                return Promise.reject(new Error("Could not conver ts to py " + f + JSON.stringify(decompiled.diagnostics, null, 4)));
             }
         })
 }
@@ -151,20 +151,22 @@ export function py2tsAsync(f: string): Promise<string> {
                 return opts.fileSystem["main.ts"];
             }
             else {
-                return Promise.reject("Could not convert py to ts " + f + JSON.stringify(diagnostics, null, 4));
+                return Promise.reject(new Error("Could not convert py to ts " + f + JSON.stringify(diagnostics, null, 4)))
             }
         })
 }
 
 export function stsAsync(tsMain: string): Promise<pxtc.CompileResult> {
-    return getTestCompileOptsAsync(tsMain, "bare")
+    // return getTestCompileOptsAsync(tsMain, "bare")
+    return getTestCompileOptsAsync(tsMain) // TODO(dz)
         .then(opts => {
             const compiled = pxtc.compile(opts);
             if (compiled.success) {
                 return compiled
             }
             else {
-                return Promise.reject("Could not compile:\n" + tsMain + "\n" + JSON.stringify(compiled.diagnostics, null, 4));
+                let errStr = compiled.diagnostics.map(pxtc.getDiagnosticString).join("")
+                return Promise.reject(new Error("Could not compile:\n" + tsMain + "\nbecause:\n" + errStr));
             }
         })
 }

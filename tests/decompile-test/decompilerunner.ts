@@ -94,7 +94,7 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
                 return decompiled.outfiles["main.blocks"];
             }
             else {
-                return Promise.reject("Could not decompile " + f + JSON.stringify(decompiled.diagnostics, null, 4));
+                return Promise.reject(new Error("Could not decompile " + f + JSON.stringify(decompiled.diagnostics, null, 4)));
             }
         })
 }

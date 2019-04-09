@@ -63,7 +63,7 @@ async function testTsOrPy(tsOrPyFile: string): Promise<void> {
     let isPy = ext === ".py"
     let isTs = ext === ".ts"
     if (!isPy && !isTs)
-        return Promise.reject("Invald non-.py, non-.ts file: " + tsOrPyFile)
+        return Promise.reject(new Error("Invald non-.py, non-.ts file: " + tsOrPyFile))
 
     let baselineFile: string;
     let baseline: string;
