@@ -19,9 +19,10 @@ import { promisify } from 'util';
 // tests
 const casesDir = path.join(process.cwd(), "tests", "trace-tests", "cases");
 
-describe("convert and compare traces between ts<->py ", () => {
+describe("convert between ts<->py ", () => {
+    // TODO: can this be moved to a mocha before() block?
     let tsAndPyFiles: string[]
-    // before(() => {
+
     pxsim.initCurrentRuntime = pxsim.initBareRuntime
     cleanup()
 
@@ -33,12 +34,8 @@ describe("convert and compare traces between ts<->py ", () => {
     tsAndPyFiles = tsFiles.concat(pyFiles)
         .filter(f => !isDisabled(f))
 
-    // TODO(dz):
-    console.log("ts & py files:" + JSON.stringify(tsAndPyFiles))
-    // })
-
     tsAndPyFiles.forEach(file => {
-        it("should preserve semantics when converting between .ts and .py " + path.basename(file), async function () {
+        it("should preserve the runtime semantics of " + path.basename(file), async function () {
             this.timeout(10000)
             await testTsOrPy(file)
             return
