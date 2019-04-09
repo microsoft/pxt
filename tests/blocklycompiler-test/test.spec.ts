@@ -298,7 +298,7 @@ describe("blockly compiler", function () {
             blockTestAsync("logic_all_operators").then(done, done);
         });
 
-        it("should handle non-number inputs", (done: () => void) => {
+        it("should handle non-number inputs in logic operators", (done: () => void) => {
             blockTestAsync("logic_non_numeric").then(done, done);
         });
     });
