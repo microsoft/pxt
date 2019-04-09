@@ -151,12 +151,13 @@ export function ts2pyAsync(f: string): Promise<string> {
         })
 }
 
-export async function py2tsAsync(f: string): Promise<string> {
-    const input = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
+export async function py2tsAsync(pyFile: string): Promise<string> {
+    const input = fs.readFileSync(pyFile, "utf8").replace(/\r\n/g, "\n");
     // let mainStr = summary.mainFile ? fs.readFileSync(summary.mainFile, "utf8") : ""
     // mainStr = `${summary.stsPrelude}\n${mainStr}\n${summary.stsPostlude}\n`
     // const pkg = new pxt.MainPackage(new CompileHost(mainStr, summary.dependency));
-    const pkg = new pxt.MainPackage(new CompileHost("", "", input));
+    let host = new CompileHost("", "", input)
+    const pkg = new pxt.MainPackage(host);
 
     const target = pkg.getTargetOptions();
     target.isNative = false;
@@ -166,9 +167,17 @@ export async function py2tsAsync(f: string): Promise<string> {
     opts.testMode = true;
     opts.ignoreFileResolutionErrors = true;
     opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
-    let pyFile = "main.py";
-    opts.fileSystem[pyFile] = input;
+    let pyMain = "main.py";
+    opts.fileSystem[pyMain] = input;
     delete opts.fileSystem["main.ts"]
+
+    // const compiled = pxtc.compile(opts);
+    // compiled.ast
+    // let h = new
+    // let ls = ts.createLanguageService(h)
+    let tsOpts = pxtc.getTsCompilerOptions(opts)
+    let prog = ts.createProgram([], tsOpts)
+    opts.apisInfo = pxtc.getApiInfo(opts, prog)
 
     let { generated, diagnostics } = pxt.py.py2ts(opts)
 
@@ -178,7 +187,7 @@ export async function py2tsAsync(f: string): Promise<string> {
         return opts.fileSystem["main.ts"];
     }
     else {
-        return Promise.reject("Could not convert py to ts " + f + JSON.stringify(diagnostics, null, 4));
+        return Promise.reject("Could not convert py to ts " + pyFile + JSON.stringify(diagnostics, null, 4));
     }
 }
 
