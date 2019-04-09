@@ -59,5 +59,6 @@ for i in range(5):
   print(i)
 ```
 which produces a different trace when run with python3 than the .ts file does when run with tsc+node.js.
+Notice that it only took a simple 4 line program and no baseline files or assert statements to create a test that tests correctness of ts2py, py2ts, and sts.
 
 This example is included as "TODO_scope_for_loop.ts". Note that files with "TODO_" will be ignored by the test runner.
