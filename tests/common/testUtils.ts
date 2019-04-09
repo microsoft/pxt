@@ -102,8 +102,8 @@ class CompileHost extends TestHost {
 
 let cachedOpts: pxt.Map<pxtc.CompileOptions> = {}
 export function getTestCompileOptsAsync(summary: TestPackageOpts): Promise<pxtc.CompileOptions> {
-    let cacheKey = `${summary.dependency}${summary.mainFile}${summary.stsPrelude}${summary.stsPostlude}` // TODO hash these large strings?
-    if (!cachedOpts[cacheKey] || true) { // TODO(dz): is this caching interfering?
+    let cacheKey = pxt.Util.codalHash16(`${summary.dependency}${summary.mainFile}${summary.stsPrelude}${summary.stsPostlude}`)
+    if (!cachedOpts[cacheKey]) {
         let mainStr = summary.mainFile ? fs.readFileSync(summary.mainFile, "utf8") : ""
         mainStr = `${summary.stsPrelude}\n${mainStr}\n${summary.stsPostlude}\n`
         const pkg = new pxt.MainPackage(new CompileHost(mainStr, summary.dependency));
@@ -120,8 +120,8 @@ export function getTestCompileOptsAsync(summary: TestPackageOpts): Promise<pxtc.
             });
     }
     // Clone cached options so that tests can individually modify their own options copy
-    // let opts = JSON.parse(JSON.stringify(cachedOpts[cacheKey]))
-    // return Promise.resolve(opts);
+    let opts = JSON.parse(JSON.stringify(cachedOpts[cacheKey]))
+    return Promise.resolve(opts);
 }
 
 export function ts2pyAsync(f: string): Promise<string> {

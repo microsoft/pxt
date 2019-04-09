@@ -36,7 +36,6 @@ function loadText(filename) {
 function setupTest(taskName, testFolder, testFile) {
     task(taskName, ['built/tests/' + testFolder + '/runner.js'], { async: true }, function () {
         let args = " built/tests/" + testFolder + "/runner.js --reporter dot";
-        args += " --bail" // TODO(dz): remove this option or make it optional
         if (os.platform() === "win32") {
             cmdIn(this, ".", path.resolve("node_modules/.bin/mocha.cmd") + args)
         }
@@ -98,7 +97,6 @@ setupTest('testlang', 'compile-test', 'compilerunner.js')
 setupTest('testerr', 'errors-test', 'errorrunner.js')
 setupTest('testfmt', 'format-test', 'formatrunner.js')
 setupTest('testpydecompiler', 'pydecompile-test', 'pydecompilerunner.js')
-// TODO(dz):
 setupTest('testtraces', 'runtime-trace-tests', 'tracerunner.js')
 
 
