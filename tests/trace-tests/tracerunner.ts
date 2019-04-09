@@ -183,10 +183,21 @@ function runProcAsync(progName: string, inputFile: string): Promise<string> {
 function runPyAsync(pyFile: string): Promise<string> {
     return runProcAsync("python3", pyFile)
 }
-function runJsAsync(jsFile: string): Promise<string> {
+function runNodeJsAsync(nodeArgs: string): Promise<string> {
     // Note: another option would be to use eval() but
-    // at least this way we get process isolation.
-    return runProcAsync("node", jsFile)
+    // at least this way we get process isolation. E.g.:
+    /*
+    let stout: string[] = []
+    let console: any = {}
+    console.log = function (str: string) {
+        stout.push(str)
+        return str
+    }
+    eval(js)
+
+    return stout.join("\n")
+    */
+    return runProcAsync("node", nodeArgs)
 }
 
 async function convertTs2Py(tsFile: string): Promise<string> {
@@ -235,7 +246,7 @@ async function compileAndRunTs(filename: string): Promise<string> {
         let jsFiles = emitJsFiles(prog, fileSrc)
         let nodejsCmdLine = jsFiles
             .join(", ")
-        let trace = await runJsAsync(nodejsCmdLine)
+        let trace = await runNodeJsAsync(nodejsCmdLine)
         return trace
     }
 }
