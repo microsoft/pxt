@@ -132,9 +132,9 @@ async function testTsOrPy(tsOrPyFile: string): Promise<void> {
     async function testSts(tsFile: string): Promise<void> {
         let errFile = tsFile + ".sts_error"
         return STS(tsFile)
-            .error(r => {
-                fs.writeFileSync(errFile, JSON.stringify(r))
-                return `Static Typescript failed to run on '${tsFile}'. Error saved at:\n${errFile}\nError is:\n${r}\n`
+            .catch(error => {
+                fs.writeFileSync(errFile, JSON.stringify(error))
+                return Promise.reject(new Error(`Static Typescript failed to run on:\n${tsFile}\nError saved at:\n${errFile}\nError is:\n${error}\n`))
             })
             .then(outTrace => {
                 if (!util.compareBaselines(outTrace, baseline)) {
