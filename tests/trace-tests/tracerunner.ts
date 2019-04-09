@@ -24,9 +24,15 @@ describe("convert and compare traces between ts<->py ", () => {
     // before(() => {
     pxsim.initCurrentRuntime = pxsim.initBareRuntime
     cleanup()
+
+    const isDisabled = (file: string): boolean =>
+        path.basename(file).indexOf("TODO") >= 0
+
     let tsFiles = util.getFilesByExt(casesDir, ".ts")
     let pyFiles = util.getFilesByExt(casesDir, ".py")
     tsAndPyFiles = tsFiles.concat(pyFiles)
+        .filter(f => !isDisabled(f))
+
     // TODO(dz):
     console.log("ts & py files:" + JSON.stringify(tsAndPyFiles))
     // })
