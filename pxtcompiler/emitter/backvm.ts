@@ -36,13 +36,17 @@ ${hex.hexPrelude()}
         }
 
         let address = 0
-        function section(name: string, tp: number, body: () => string, alias?: string) {
-            if (!alias) alias = "_" + name
+        function section(name: string, tp: number, body: () => string, aliases?: string[]) {
             vmsource += `
 ; --- ${name}
 .section code
     .set ${name} = ${address}
-    .set ${alias} = ${address}
+`
+            if (aliases) {
+                for (let alias of aliases)
+                    vmsource += `    .set ${alias} = ${address}\n`
+            }
+            vmsource += `
 _start_${name}:
     .byte ${tp}, 0x00
     .short 0x0000
@@ -63,7 +67,8 @@ _start_${name}:
 `
         )
         bin.procs.forEach(p => {
-            section(p.label(), 0x20, () => irToVM(ctx, bin, p), p.label() + "_Lit")
+            section(p.label(), 0x20, () => irToVM(ctx, bin, p),
+                [p.label() + "_Lit", p.label() + "_nochk"])
         })
         vmsource += "_code_end:\n_helpers_end:\n\n"
         bin.usedClassInfos.forEach(info => {
@@ -109,10 +114,10 @@ _start_${name}:
         */
 
         if (res.buf) {
-            let newBuf: number[] = []
-            for (let i = 0; i < res.buf.length; i += 2)
-                newBuf.push(res.buf[i] | (res.buf[i + 1] << 8))
-            const myhex = ts.pxtc.encodeBase64(hex.patchHex(bin, newBuf, false, true)[0])
+            let binstring = ""
+            for (let v of res.buf)
+                binstring += String.fromCharCode(v & 0xff, v >> 8)
+            const myhex = ts.pxtc.encodeBase64(binstring)
             bin.writeFile(pxt.outputName(target), myhex)
         }
     }
@@ -279,7 +284,7 @@ _start_${name}:
                         let key = n0 + "," + n1
                         let id = U.lookup(ctx.dbls, key)
                         if (id == null) {
-                            id = ctx.dbls.length
+                            id = ctx.dblText.length
                             ctx.dblText.push(`.word ${n0}, ${n1}  ; ${id}: ${e.data}`)
                             ctx.dbls[key] = id
                         }
@@ -341,7 +346,7 @@ _start_${name}:
                 case EK.FieldAccess:
                     let info = e.data as FieldAccessInfo
                     // it does the decr itself, no mask
-                    return emitExpr(ir.rtcall("pxtrt::ldfld", [e.args[0], ir.numlit(info.idx)]))
+                    return emitExpr(ir.rtcall("pxt::ldfld", [e.args[0], ir.numlit(info.idx)]))
                 case EK.Store:
                     return emitStore(e.args[0], e.args[1])
                 case EK.RuntimeCall:
@@ -412,7 +417,11 @@ _start_${name}:
 
             //let inf = hex.lookupFunc(name)
 
-            if (spec)
+            if (name == "langsupp::ignore") {
+                if (numPush)
+                    write(`popmany ${numPush} ; ignore`)
+
+            } else if (spec)
                 write(spec)
             else
                 write(`callrt ${name}`)
@@ -450,10 +459,10 @@ _start_${name}:
 
             if (calledProcId.ifaceIndex != null) {
                 methIdx = calledProcId.ifaceIndex
-                fetchAddr = "pxtrt::fetchMethodIface"
+                fetchAddr = "pxt::fetchMethodIface"
             } else if (calledProcId.virtualIndex != null) {
                 methIdx = calledProcId.virtualIndex + 2
-                fetchAddr = "pxtrt::fetchMethod"
+                fetchAddr = "pxt::fetchMethod"
             }
 
             if (fetchAddr) {
@@ -484,7 +493,7 @@ _start_${name}:
                 case EK.FieldAccess:
                     let info = trg.data as FieldAccessInfo
                     // it does the decr itself, no mask
-                    emitExpr(ir.rtcall("pxtrt::stfld", [trg.args[0], ir.numlit(info.idx), src]))
+                    emitExpr(ir.rtcall("pxt::stfld", [trg.args[0], ir.numlit(info.idx), src]))
                     break;
                 default: oops();
             }

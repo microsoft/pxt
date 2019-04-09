@@ -2589,7 +2589,7 @@ class Host
             }
         }
         check(p)
-        if (U.endsWith(filename, ".uf2"))
+        if (U.endsWith(filename, ".uf2") || U.endsWith(filename, ".pxt64"))
             nodeutil.writeFileSync(p, contents, { encoding: "base64" })
         else if (U.endsWith(filename, ".elf"))
             nodeutil.writeFileSync(p, contents, {

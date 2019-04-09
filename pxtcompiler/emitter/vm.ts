@@ -49,7 +49,9 @@ namespace ts.pxtc.vm {
 
                     if (formal == "$rt") {
                         opcode = (v + 128) | 0x8000
-                    } else if (v < 0 || v > 255) {
+                    } else if (ln.isLong || v < 0 || v > 255) {
+                        // keep it long for the final pass; otherwise labels may shift
+                        ln.isLong = true
                         if (formal == "$lbl")
                             v -= 1 // account for bigger encoding in relative addresses
                         opcode = ((v >> 9) & 0xffff) | 0xc000

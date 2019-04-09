@@ -3047,7 +3047,7 @@ ${lbl}: .short 0xffff
         }
 
         function emitLit(v: number | boolean) {
-            if (opts.target.isNative) {
+            if (opts.target.isNative && !isStackMachine()) {
                 const numlit = taggedSpecial(v)
                 if (numlit != null) return ir.numlit(numlit)
                 else if (typeof v == "number") {

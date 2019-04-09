@@ -473,7 +473,7 @@ namespace ts.pxtc.ir {
         }
 
         vtLabel() {
-            return this.label() + "_args"
+            return this.label() + (isStackMachine() ? "" : "_args")
         }
 
         label() {

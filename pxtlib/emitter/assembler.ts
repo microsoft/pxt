@@ -194,6 +194,7 @@ namespace ts.pxtc.assembler {
         public numArgs: number[];
         public opcode: number;
         public stack: number;
+        public isLong: boolean;
 
         constructor(public bin: File, public text: string) {
         }
@@ -434,14 +435,15 @@ namespace ts.pxtc.assembler {
                 if (v != null) {
                     v = this.ei.postProcessAbsAddress(this, v)
                 }
-            } else if (this.equs.hasOwnProperty(scoped)) {
+            }
+            if (v == null && this.equs.hasOwnProperty(scoped)) {
                 v = this.equs[scoped]
                 // no post-processing
             }
             if (v == null && direct) {
-                if (this.finalEmit)
+                if (this.finalEmit) {
                     this.directiveError(lf("unknown label: {0}", name));
-                else
+                } else
                     // use a number over 1 byte
                     v = 33333;
             }
@@ -483,7 +485,7 @@ namespace ts.pxtc.assembler {
             } else {
                 this.align(2);
                 if (utf16) {
-                    for (let i = 0; i < s.length; i += 2) {
+                    for (let i = 0; i < s.length; i++) {
                         this.emitShort(s.charCodeAt(i))
                     }
                 } else {
@@ -915,6 +917,9 @@ namespace ts.pxtc.assembler {
                         let curr = this.labels[lblname]
                         if (curr == null)
                             oops()
+                        if (this.errors.length == 0 && curr != this.location()) {
+                            oops(`invalid location: ${this.location()} != ${curr} at ${lblname}`)
+                        }
                         assert(this.errors.length > 0 || curr == this.location())
                         if (this.reallyFinalEmit) {
                             this.stackAtLabel[lblname] = this.stack
@@ -1025,7 +1030,6 @@ namespace ts.pxtc.assembler {
 
         private clearLabels() {
             this.labels = {}
-            this.equs = {}
             this.commPtr = 0
         }
 
