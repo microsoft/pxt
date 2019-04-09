@@ -129,7 +129,7 @@ namespace ts.pxtc.vm {
         }
 
         public postProcessRelAddress(f: assembler.File, v: number): number {
-            return v + f.baseOffset;
+            return v;
         }
 
         public postProcessAbsAddress(f: assembler.File, v: number): number {

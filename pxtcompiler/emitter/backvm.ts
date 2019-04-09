@@ -35,6 +35,7 @@ ${hex.hexPrelude()}
             opcodes: vm.opcodes.map(o => "pxt::op_" + o.replace(/ .*/, ""))
         }
 
+        ctx.opcodes.unshift(null)
         while (ctx.opcodes.length < 128)
             ctx.opcodes.push(null)
 
@@ -260,6 +261,7 @@ _start_${name}:
             if (id == null) {
                 id = ctx.opcodes.length
                 ctx.opcodes.push(inf.name)
+                ctx.opcodeMap[inf.name] = id
                 inf.value = id
             }
             write(`callrt ${name}`)
