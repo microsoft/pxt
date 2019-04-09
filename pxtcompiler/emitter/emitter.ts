@@ -3113,7 +3113,7 @@ ${lbl}: .short 0xffff
 
             let args2 = args.map((a, i) => {
                 let r = emitExpr(a)
-                if (!opts.target.isNative)
+                if (!opts.target.isNative || isStackMachine())
                     return r
                 let f = fmt[i + 1]
                 let isNumber = isNumberLike(a)

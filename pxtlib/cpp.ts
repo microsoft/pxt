@@ -75,6 +75,15 @@ namespace pxt.cpp {
         return null;
     }
 
+    const vmSkipFunctions: pxt.Map<number> = {
+        "pxt::toInt": 1,
+        "pxt::toDouble": 1,
+        "pxt::fromInt": 1,
+        "pxt::fromDouble": 1,
+        "pxt::toFloat": 1,
+        "pxt::fromFloat": 1,
+    }
+
     export function nsWriter(nskw = "namespace") {
         let text = ""
         let currNs = ""
@@ -180,6 +189,7 @@ namespace pxt.cpp {
         const isCodal = compileService.buildEngine == "codal" || compileService.buildEngine == "dockercodal"
         const isDockerMake = compileService.buildEngine == "dockermake"
         const isYotta = !isPlatformio && !isCodal && !isDockerMake
+        const isVM = compile.nativeType == pxtc.NATIVE_TYPE_VM
         if (isPlatformio)
             sourcePath = "/src/"
         else if (isCodal || isDockerMake)
@@ -187,6 +197,7 @@ namespace pxt.cpp {
 
         let pxtConfig = "// Configuration defines\n"
         let pointersInc = "\nPXT_SHIMS_BEGIN\n"
+        let pointerIncPre = ""
         let abiInc = ""
         let includesInc = `#include "pxt.h"\n`
         let thisErrors = ""
@@ -199,6 +210,7 @@ namespace pxt.cpp {
         let enumsDTS = nsWriter("declare namespace")
         let allErrors = ""
         let knownEnums: Map<boolean> = {}
+        let vmVisitedFunctions: Map<boolean> = {}
 
 
         const enumVals: Map<string> = {
@@ -528,6 +540,59 @@ namespace pxt.cpp {
                 }
             }
 
+            function generateVMWrapper(fi: pxtc.FuncInfo, argTypes: string[]) {
+                if (argTypes[0] == "FiberContext*")
+                    return "::" + fi.name // no wrapper
+
+                let wrap = "_wrp_" + fi.name.replace(/:/g, "_")
+                if (vmVisitedFunctions[fi.name])
+                    return wrap
+                vmVisitedFunctions[fi.name] = true
+                /*
+                void call_getConfig(FiberContext *ctx) {
+                    int a0 = toInt(ctx->sp[0]);
+                    int a1 = toInt(ctx->r0); // last argument in r0
+                    int r = getConfig(a0, a1);
+                    ctx->r0 = fromInt(r);
+                    ctx->sp += 1;
+                }
+                */
+                pointerIncPre += `\nvoid ${wrap}(FiberContext *ctx) {\n`
+                const numArgs = argTypes.length
+                let refs: string[] = []
+
+                for (let i = 0; i < numArgs; ++i) {
+                    const ind = fi.argsFmt[i + 1]
+                    const tp = argTypes[i]
+                    const conv =
+                        ind == "I" ? "toInt" :
+                            ind == "B" ? "numops::toBool" :
+                                ""
+                    const inp = i == numArgs - 1 ? "ctx->r0" : `ctx->sp[${numArgs - i - 2}]`
+                    pointerIncPre += `  ${tp} a${i} = (${tp}) ${conv}(${inp});\n`
+                    refs.push("a" + i)
+                }
+
+                const call = `::${fi.name}(${refs.join(", ")})`
+
+                if (fi.argsFmt[0] == "V") {
+                    pointerIncPre += `  ${call};\n`
+                    pointerIncPre += `  ctx->r0 = NULL;\n`
+                } else if (fi.argsFmt[0] == "I") {
+                    pointerIncPre += `  ctx->r0 = fromInt(${call});\n`
+                } else if (fi.argsFmt[0] == "B") {
+                    pointerIncPre += `  ctx->r0 = fromBool(${call});\n`
+                } else {
+                    pointerIncPre += `  ctx->r0 = (TValue)${call};\n`
+                }
+
+                if (numArgs > 1)
+                    pointerIncPre += `  ctx->sp += ${numArgs - 1};\n`
+                pointerIncPre += `}\n`
+
+                return wrap
+            }
+
             outp = ""
             inEnum = false
             enumVal = 0
@@ -580,7 +645,7 @@ namespace pxt.cpp {
                 }
 
                 m = /^PXT_ABI\((\w+)\)/.exec(ln)
-                if (m) {
+                if (m && !isVM) {
                     pointersInc += `PXT_FNPTR(::${m[1]}),\n`
                     abiInc += `extern "C" void ${m[1]}();\n`
                     res.functions.push({
@@ -606,12 +671,13 @@ namespace pxt.cpp {
                     let origArgs = m[4]
                     currAttrs = currAttrs.trim().replace(/ \w+\.defl=\w+/g, "")
                     let argsFmt = [mapRunTimeType(retTp)]
+                    let argTypes: string[] = []
                     let args = origArgs.split(/,/).filter(s => !!s).map(s => {
                         let r = parseArg(parsedAttrs, s)
                         argsFmt.push(mapRunTimeType(r.type))
+                        argTypes.push(r.type.replace(/ /g, ""))
                         return `${r.name}: ${mapType(r.type)}`
                     })
-                    let numArgs = args.length
                     let fi: pxtc.FuncInfo = {
                         name: currNs + "::" + funName,
                         argsFmt,
@@ -651,7 +717,13 @@ namespace pxt.cpp {
                     res.functions.push(fi)
                     if (isYotta)
                         pointersInc += "(uint32_t)(void*)::" + fi.name + ",\n"
-                    else
+                    else if (isVM) {
+                        if (!vmSkipFunctions[fi.name]) {
+                            const wrap = generateVMWrapper(fi, argTypes)
+                            const nargs = fi.argsFmt.length - 1
+                            pointersInc += `{ "${fi.name}", (OpFun)${wrap}, ${nargs} },\n`
+                        }
+                    } else
                         pointersInc += "PXT_FNPTR(::" + fi.name + "),\n"
                     return;
                 }
@@ -664,7 +736,8 @@ namespace pxt.cpp {
                         value: null
                     }
                     res.functions.push(fi)
-                    pointersInc += "PXT_FNPTR(&::" + fi.name + "),\n"
+                    if (!isVM)
+                        pointersInc += "PXT_FNPTR(&::" + fi.name + "),\n"
                     currAttrs = ""
                     return;
                 }
@@ -884,7 +957,8 @@ namespace pxt.cpp {
         if (compile.uf2Family)
             pxtConfig += `#define PXT_UF2_FAMILY ${compile.uf2Family}\n`
 
-        res.generatedFiles[sourcePath + "pointers.cpp"] = includesInc + protos.finish() + abiInc + pointersInc + "\nPXT_SHIMS_END\n"
+        res.generatedFiles[sourcePath + "pointers.cpp"] = includesInc + protos.finish() + abiInc +
+            pointerIncPre + pointersInc + "\nPXT_SHIMS_END\n"
         res.generatedFiles[sourcePath + "pxtconfig.h"] = pxtConfig
         pxt.debug(`pxtconfig.h: ${res.generatedFiles[sourcePath + "pxtconfig.h"]}`)
         if (isYotta) {
