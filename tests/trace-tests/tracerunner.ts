@@ -16,6 +16,21 @@ import { promisify } from 'util';
 // TODO: Split this file up. I (dazuniga) spent ~1hr trying to split this file into two pieces but I cannot figure out 
 // how to make that work with the way we're using jake & namespaces / modules
 
+// setup
+function initGlobals() {
+    Promise = require("bluebird");
+    let g = global as any
+    g.pxt = pxt;
+    g.ts = ts;
+    g.pxtc = pxtc;
+    g.btoa = (str: string) => new Buffer(str, "binary").toString("base64");
+    g.atob = (str: string) => new Buffer(str, "base64").toString("binary");
+}
+initGlobals();
+
+// Just needs to exist
+pxt.setAppTarget(util.testAppTarget);
+
 // tests
 const casesDir = path.join(process.cwd(), "tests", "trace-tests", "cases");
 
@@ -60,7 +75,7 @@ async function testTsOrPy(tsOrPyFile: string): Promise<void> {
     if (isPy) {
         let pyFile = tsOrPyFile
         recordBaseline(await PY(pyFile))
-        // TODO(dazuniga0: py2ts doesn't work in unit tests yet, once it does enable it here
+        // TODO(dazuniga): py2ts doesn't work in unit tests yet, once it does enable it here
         // let tsFile = await testPy2Ts(pyFile)
         // await testSts(tsFile)
         // let pyFile2 = await testTs2Py(tsFile)
@@ -69,12 +84,21 @@ async function testTsOrPy(tsOrPyFile: string): Promise<void> {
         recordBaseline(await TS(tsFile))
         await testSts(tsFile)
         let pyFile = await testTs2Py(tsFile)
-        // TODO(dazuniga0: py2ts doesn't work in unit tests yet, once it does enable it here
+        // TODO(dazuniga): py2ts doesn't work in unit tests yet, once it does enable it here
         // let tsfile2 = await testPy2Ts(pyFile)
         // await testSts(tsfile2)
     }
 
     return;
+    // DSL for the tests
+    type Trace = string
+    type File = string
+    function STS(tsFile: string): Promise<Trace> { return compileAndRunStsAsync(tsFile) }
+    function TS(tsFile: string): Promise<Trace> { return compileAndRunTs(tsFile) }
+    function PY(pyFile: string): Promise<Trace> { return runPyAsync(pyFile) }
+    function TS2PY(tsFile: string): Promise<File> { return convertTs2Py(tsFile) }
+    function PY2TS(pyFile: string): Promise<File> { return convertPy2Ts(pyFile) }
+    // Test functions & helpers
     async function testPy2Ts(pyFile: string): Promise<string> {
         return testConversion(pyFile, true)
     }
@@ -125,40 +149,6 @@ async function testTsOrPy(tsOrPyFile: string): Promise<void> {
     }
 }
 
-// DSL for the tests
-function STS(tsFile: string): Promise</*trace*/string> {
-    return compileAndRunStsAsync(tsFile)
-}
-function TS(tsFile: string): Promise</*trace*/string> {
-    return Promise.resolve(compileAndRunTs(tsFile))
-}
-function PY(pyFile: string): Promise</*trace*/string> {
-    return runPyAsync(pyFile)
-}
-function TS2PY(tsFile: string): Promise</*file*/string> {
-    return convertTs2Py(tsFile)
-}
-function PY2TS(pyFile: string): Promise</*file*/string> {
-    return convertPy2Ts(pyFile)
-}
-
-// setup
-function initGlobals() {
-    Promise = require("bluebird");
-    let g = global as any
-    g.pxt = pxt;
-    g.ts = ts;
-    g.pxtc = pxtc;
-    g.btoa = (str: string) => new Buffer(str, "binary").toString("base64");
-    g.atob = (str: string) => new Buffer(str, "base64").toString("binary");
-}
-initGlobals();
-
-// Just needs to exist
-pxt.setAppTarget(util.testAppTarget);
-
-// TODO we need to use CompileHost for compiling STS
-
 function removeBySubstring(dir: string, sub: string) {
     return fs.readdirSync(dir)
         .filter(f => f.indexOf(sub) >= 0)
@@ -176,9 +166,9 @@ function cleanup() {
     removeBySubstring(casesDir, ".baseline")
 }
 
-function runPyAsync(pyFile: string): Promise<string> {
+function runProcAsync(progName: string, inputFile: string): Promise<string> {
     return new Promise((resolve, reject) => {
-        exec(`python3 ${pyFile}`, (err, stdout, stderr) => {
+        exec(`${progName} ${inputFile}`, (err, stdout, stderr) => {
             let trace = ""
             if (stdout)
                 trace += stdout
@@ -189,6 +179,14 @@ function runPyAsync(pyFile: string): Promise<string> {
             resolve(trace)
         })
     });
+}
+function runPyAsync(pyFile: string): Promise<string> {
+    return runProcAsync("python3", pyFile)
+}
+function runJsAsync(jsFile: string): Promise<string> {
+    // Note: another option would be to use eval() but
+    // at least this way we get process isolation.
+    return runProcAsync("node", jsFile)
 }
 
 async function convertTs2Py(tsFile: string): Promise<string> {
@@ -203,10 +201,6 @@ async function convertPy2Ts(pyFile: string): Promise<string> {
     const tsFile = path.join(util.replaceFileExtension(pyFile, ".py.ts"));
     fs.writeFileSync(tsFile, tsCode)
     return tsFile
-}
-
-function fail(msg: string) {
-    chai.assert(false, msg);
 }
 
 function emitJsFiles(prog: ts.Program, file?: ts.SourceFile): string[] {
@@ -230,19 +224,7 @@ function compileTsToJs(filename: string): ts.Program {
     }
     return ts.pxtc.plainTscCompileFiles([filename], cOpts)
 }
-function evalJs(js: string): string {
-    // TODO don't use eval?
-    let stout: string[] = []
-    let console: any = {}
-    console.log = function (str: string) {
-        stout.push(str)
-        return str
-    }
-    eval(js)
-
-    return stout.join("\n")
-}
-function compileAndRunTs(filename: string): string {
+async function compileAndRunTs(filename: string): Promise<string> {
     let prog = compileTsToJs(filename)
     let diagnostics = ts.pxtc.getProgramDiagnostics(prog)
     let diagMsgs = diagnostics.map(ts.pxtc.getDiagnosticString)
@@ -251,11 +233,9 @@ function compileAndRunTs(filename: string): string {
     else {
         let fileSrc = prog.getSourceFile(path.basename(filename))
         let jsFiles = emitJsFiles(prog, fileSrc)
-        let js = jsFiles
-            .map(f => fs.readFileSync(f, { flag: "r" }))
-            .map(f => f.toString())
-            .join("\n\n")
-        let trace = evalJs(js)
+        let nodejsCmdLine = jsFiles
+            .join(", ")
+        let trace = await runJsAsync(nodejsCmdLine)
         return trace
     }
 }
