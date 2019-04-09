@@ -106,7 +106,7 @@ export function getTestCompileOptsAsync(summary: TestPackageOpts): Promise<pxtc.
     if (!cachedOpts[cacheKey]) {
         let mainStr = summary.mainFile ? fs.readFileSync(summary.mainFile, "utf8") : ""
         mainStr = `${summary.stsPrelude}\n${mainStr}\n${summary.stsPostlude}\n`
-        const pkg = new pxt.MainPackage(new CompileHost(mainStr, summary.dependency));
+        const pkg = new pxt.MainPackage(new TestHost("test-pkg", mainStr, summary.dependency ? [summary.dependency] : []));
 
         const target = pkg.getTargetOptions();
         target.isNative = false;
