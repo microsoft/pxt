@@ -62,13 +62,6 @@ export function replaceFileExtension(file: string, extension: string) {
     return file && file.substr(0, file.length - path.extname(file).length) + extension;
 }
 
-export interface TestPackageOpts {
-    dependency?: string,
-    mainFile?: string,
-    stsPrelude?: string
-    stsPostlude?: string
-}
-
 // TODO merge into testHost?
 class CompileHost extends TestHost {
     private fileText: string;
@@ -101,13 +94,11 @@ class CompileHost extends TestHost {
 }
 
 let cachedOpts: pxt.Map<pxtc.CompileOptions> = {}
-export function getTestCompileOptsAsync(summary: TestPackageOpts): Promise<pxtc.CompileOptions> {
-    let cacheKey = pxt.Util.codalHash16(`${summary.dependency}${summary.mainFile}${summary.stsPrelude}${summary.stsPostlude}`)
+export function getTestCompileOptsAsync(tsMain: string = "// no main", dependency?: string, includeCommon = false): Promise<pxtc.CompileOptions> {
+    let cacheKey = pxt.Util.codalHash16(tsMain + dependency)
     if (!cachedOpts[cacheKey]) {
-        let mainStr = summary.mainFile ? fs.readFileSync(summary.mainFile, "utf8") : ""
-        mainStr = `${summary.stsPrelude}\n${mainStr}\n${summary.stsPostlude}\n`
         // TODO(dz): includeCommon = false needed for tracetests, = true for decompiler tests
-        const pkg = new pxt.MainPackage(new TestHost("test-pkg", mainStr, summary.dependency ? [summary.dependency] : [], true));
+        const pkg = new pxt.MainPackage(new TestHost("test-pkg", tsMain, dependency ? [dependency] : [], includeCommon));
 
         const target = pkg.getTargetOptions();
         target.isNative = false;
@@ -126,16 +117,13 @@ export function getTestCompileOptsAsync(summary: TestPackageOpts): Promise<pxtc.
 }
 
 export function ts2pyAsync(f: string): Promise<string> {
-    return getTestCompileOptsAsync({})
+    const tsMain = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
+    return getTestCompileOptsAsync(tsMain)
         .then(opts => {
-            const input = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
-            let tsFile = "main.ts";
-            opts.fileSystem[tsFile] = input;
-
             let program = pxtc.getTSProgram(opts);
             // TODO: if needed, we can re-use the CallInfo annotations the blockly decompiler can add
             // annotate(program, tsFile, target || (pxt.appTarget && pxt.appTarget.compile));
-            const decompiled = (pxt as any).py.decompileToPythonHelper(program, tsFile);
+            const decompiled = (pxt as any).py.decompileToPythonHelper(program, "main.ts");
 
             if (decompiled.success) {
                 return decompiled.outfiles["main.py"];
@@ -147,7 +135,8 @@ export function ts2pyAsync(f: string): Promise<string> {
 }
 
 export function py2tsAsync(f: string): Promise<string> {
-    return getTestCompileOptsAsync({})
+    // TODO(dz): this doesn't work yet. Ask dazuniga and/or see dazuniga/py2ts_debug
+    return getTestCompileOptsAsync()
         .then(opts => {
             opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
             const input = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
@@ -167,16 +156,15 @@ export function py2tsAsync(f: string): Promise<string> {
         })
 }
 
-export function stsAsync(opts: TestPackageOpts): Promise<pxtc.CompileResult> {
-    let mainFile = opts.mainFile
-    return getTestCompileOptsAsync(opts)
+export function stsAsync(tsMain: string): Promise<pxtc.CompileResult> {
+    return getTestCompileOptsAsync(tsMain, null, true)
         .then(opts => {
             const compiled = pxtc.compile(opts);
             if (compiled.success) {
                 return compiled
             }
             else {
-                return Promise.reject("Could not compile " + mainFile + JSON.stringify(compiled.diagnostics, null, 4));
+                return Promise.reject("Could not compile:\n" + tsMain + "\n" + JSON.stringify(compiled.diagnostics, null, 4));
             }
         })
 }

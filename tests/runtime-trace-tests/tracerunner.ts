@@ -265,7 +265,9 @@ function compileAndRunStsAsync(filename: string): Promise<string> {
     const postlude = `
         pause(300);
     `
-    return util.stsAsync({ mainFile: filename, stsPrelude: prelude, stsPostlude: postlude })
+    let body = fs.readFileSync(filename, "utf8")
+    let tsMain = [prelude, body, postlude].join("\n")
+    return util.stsAsync(tsMain)
         .then((compiled) => {
             return runStsAsync(compiled)
         })
