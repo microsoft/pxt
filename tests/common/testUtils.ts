@@ -157,7 +157,7 @@ export function py2tsAsync(f: string): Promise<string> {
 }
 
 export function stsAsync(tsMain: string): Promise<pxtc.CompileResult> {
-    return getTestCompileOptsAsync(tsMain, null, true)
+    return getTestCompileOptsAsync(tsMain, "bare")
         .then(opts => {
             const compiled = pxtc.compile(opts);
             if (compiled.success) {
