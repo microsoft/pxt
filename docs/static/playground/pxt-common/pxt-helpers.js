@@ -196,8 +196,7 @@ namespace helpers {
     }
 
     export function arrayPickRandom<T>(arr: T[]): T {
-        const l = arr.length;
-        return arr[Math.randomRange(0, l - 1)];
+        return arr[Math.randomRange(0, arr.length - 1)];
     }
 
     export function arraySlice<T>(arr: T[], start?: number, end?: number): T[] {
