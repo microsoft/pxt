@@ -69,6 +69,7 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
         const sideUrl = url && /^\//.test(url) ? "#doc:" + url : url;
         const className = card.className;
         const cardType = card.cardType;
+        const tutorialDone = card.tutorialLength == card.tutorialStep + 1;
 
         const clickHandler = card.onClick ? (e: any) => {
             if (e.target && e.target.tagName == "A")
@@ -97,7 +98,7 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
                 {card.label || card.labelIcon ?
                     <label role={card.onLabelClicked ? 'button' : undefined} onClick={card.onLabelClicked}
                         className={`ui ${card.labelClass ? card.labelClass : "orange right ribbon"} label`}>
-                    {card.labelIcon ? <sui.Icon icon={card.labelIcon} /> : card.label}</label> : undefined}
+                        {card.labelIcon ? <sui.Icon icon={card.labelIcon} /> : card.label}</label> : undefined}
                 {card.typeScript ? <pre key="promots">{card.typeScript}</pre> : undefined}
                 {card.cardType != "file" && imageUrl ? <div className="ui imagewrapper">
                     <div className={`ui cardimage`} data-src={imageUrl} ref="lazyimage" />
@@ -113,13 +114,14 @@ export class CodeCardView extends data.Component<pxt.CodeCard, CodeCardState> {
             {card.shortName || card.name || card.description ?
                 <div className="content">
                     {card.shortName || card.name ? <div className="header">{card.shortName || card.name}</div> : null}
-                    {card.description ? <div className="description tall">{renderMd(card.description)}</div> : null}
+                    {card.description ? <div className={`description tall ${card.icon || card.iconContent || card.imageUrl ? "" : "long"}`}>{renderMd(card.description)}</div> : null}
                 </div> : undefined}
             {card.time ? <div className="meta">
+                {card.tutorialLength ? <span className={`ui tutorial-progress ${tutorialDone ? "green" : "orange"} left floated label`}><i className={`${tutorialDone ? "trophy" : "circle"} icon`}></i>&nbsp;{lf("{0}/{1}", (card.tutorialStep || 0) + 1, card.tutorialLength)}</span> : undefined}
                 {card.time ? <span key="date" className="date">{pxt.Util.timeSince(card.time)}</span> : null}
             </div> : undefined}
             {card.extracontent || card.learnMoreUrl || card.buyUrl || card.feedbackUrl ?
-                <div className="ui extra content widedesktop only">
+                <div className="ui extra content mobile hide">
                     {card.extracontent}
                     {card.buyUrl ?
                         <a className="learnmore left floated" href={card.buyUrl}

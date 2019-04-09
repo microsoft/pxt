@@ -29,8 +29,7 @@ export enum ShareRecordingState {
 export interface ShareEditorState {
     advancedMenu?: boolean;
     mode?: ShareMode;
-    currentPubId?: string;
-    pubCurrent?: boolean;
+    pubId?: string;
     visible?: boolean;
     sharingError?: boolean;
     loading?: boolean;
@@ -49,8 +48,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
     constructor(props: ShareEditorProps) {
         super(props);
         this.state = {
-            currentPubId: undefined,
-            pubCurrent: false,
+            pubId: undefined,
             visible: false,
             advancedMenu: false,
             screenshotUri: undefined,
@@ -102,7 +100,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             thumbnails,
             visible: true,
             mode: ShareMode.Code,
-            pubCurrent: header.pubCurrent,
+            pubId: undefined,
             sharingError: false,
             screenshotUri: undefined
         }, thumbnails ? (() => this.props.parent.startSimulator()) : undefined);
@@ -164,8 +162,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         return this.state.visible != nextState.visible
             || this.state.advancedMenu != nextState.advancedMenu
             || this.state.mode != nextState.mode
-            || this.state.pubCurrent != nextState.pubCurrent
-            || this.state.currentPubId != nextState.currentPubId
+            || this.state.pubId != nextState.pubId
             || this.state.sharingError != nextState.sharingError
             || this.state.projectName != nextState.projectName
             || this.state.projectNameChanged != nextState.projectNameChanged
@@ -292,14 +289,13 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
     }
 
     renderCore() {
-        const { visible, projectName: newProjectName, loading, recordingState, screenshotUri, thumbnails, recordError } = this.state;
+        const { visible, projectName: newProjectName, loading, recordingState, screenshotUri, thumbnails, recordError, pubId } = this.state;
         const targetTheme = pxt.appTarget.appTheme;
         const header = this.props.parent.state.header;
         const advancedMenu = !!this.state.advancedMenu;
         const hideEmbed = !!targetTheme.hideShareEmbed;
         const showSocialIcons = !!targetTheme.socialOptions && !pxt.BrowserUtils.isUwpEdge();
-
-        let ready = false;
+        const ready = !!pubId;
         let mode = this.state.mode;
         let url = '';
         let embed = '';
@@ -309,26 +305,24 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             if (!/\/$/.test(shareUrl)) shareUrl += '/';
             let rootUrl = pxt.appTarget.appTheme.embedUrl
             if (!/\/$/.test(rootUrl)) rootUrl += '/';
-            let currentPubId = (header ? header.pubId : undefined) || this.state.currentPubId;
             const verPrefix = pxt.webConfig.verprefix || '';
 
-            ready = (!!currentPubId && header.pubCurrent);
             if (ready) {
-                url = `${shareUrl}${currentPubId}`;
-                let editUrl = `${rootUrl}${verPrefix}#pub:${currentPubId}`;
+                url = `${shareUrl}${pubId}`;
+                let editUrl = `${rootUrl}${verPrefix}#pub:${pubId}`;
                 switch (mode) {
                     case ShareMode.Code:
-                        embed = pxt.docs.codeEmbedUrl(`${rootUrl}${verPrefix}`, header.pubId);
+                        embed = pxt.docs.codeEmbedUrl(`${rootUrl}${verPrefix}`, pubId);
                         break;
                     case ShareMode.Editor:
-                        embed = pxt.docs.embedUrl(`${rootUrl}${verPrefix}`, "pub", header.pubId);
+                        embed = pxt.docs.embedUrl(`${rootUrl}${verPrefix}`, "pub", pubId);
                         break;
                     case ShareMode.Simulator:
                         let padding = '81.97%';
                         // TODO: parts aspect ratio
                         if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio).toPrecision(4) + '%';
                         const runUrl = rootUrl + (pxt.webConfig.runUrl || `${verPrefix}--run`).replace(/^\//, '');
-                        embed = pxt.docs.runUrl(runUrl, padding, header.pubId);
+                        embed = pxt.docs.runUrl(runUrl, padding, pubId);
                         break;
                     case ShareMode.Url:
                         embed = editUrl;
@@ -345,12 +339,15 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                 p = this.props.parent.updateHeaderNameAsync(newProjectName);
             }
             p.then(() => this.props.parent.anonymousPublishAsync(screenshotUri))
-                .then(() => {
-                    this.setState({ pubCurrent: true });
+                .then((id) => {
+                    this.setState({ pubId: id });
                     this.forceUpdate();
                 })
                 .catch((e) => {
-                    this.setState({ sharingError: true });
+                    this.setState({
+                        pubId: undefined,
+                        sharingError: true
+                    });
                 });
             this.forceUpdate();
         }
@@ -379,7 +376,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         const light = !!pxt.options.light;
         const disclaimer = lf("You need to publish your project to share it or embed it in other web pages.") + " " +
             lf("You acknowledge having consent to publish this project.");
-        const screenshotDisabled = recordingState != ShareRecordingState.None;
+        const screenshotDisabled = actionLoading || recordingState != ShareRecordingState.None;
         const screenshotText = this.loanedSimulator && targetTheme.simScreenshotKey
             ? lf("Take Screenshot (shortcut: {0})", targetTheme.simScreenshotKey) : lf("Take Screenshot");
         const screenshot = !light && targetTheme.simScreenshot;
@@ -393,7 +390,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                 : (targetTheme.simGifKey ? lf("Start recording (shortcut: {0})", targetTheme.simGifKey)
                     : lf("Start recording"));
         const gifRecordingClass = isGifRecording ? "glow" : "";
-        const gifDisabled = false;
+        const gifDisabled = actionLoading;
         const gifLoading = recordingState == ShareRecordingState.GifLoading
             || isGifRendering;
         const screenshotMessage = recordError ? recordError
@@ -428,7 +425,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                             <label></label>
                             <div className="ui buttons landscape only">
                                 <sui.Button icon="refresh" title={lf("Restart")} ariaLabel={lf("Restart")} onClick={this.restartSimulator} disabled={screenshotDisabled} />
-                                {screenshot ? <sui.Button icon="camera" title={screenshotText} ariaLabel={screenshotText} onClick={this.handleScreenshotClick} disabled={screenshotDisabled} /> : undefined }
+                                {screenshot ? <sui.Button icon="camera" title={screenshotText} ariaLabel={screenshotText} onClick={this.handleScreenshotClick} disabled={screenshotDisabled} /> : undefined}
                                 {gif ? <sui.Button icon={gifIcon} title={gifTitle} loading={gifLoading} onClick={this.handleRecordClick} disabled={gifDisabled} /> : undefined}
                             </div>
                             {screenshotUri || screenshotMessage ?

@@ -116,6 +116,7 @@ export class Carousel extends data.Component<ICarouselProps, ICarouselState> {
 
     private onArrowClick(left: boolean) {
         const prevIndex = this.index;
+        const prevScroll = this.container.scrollLeft;
         this.setIndex(left ? this.index - this.actualPageLength : this.index + this.actualPageLength);
         if (left) {
             // Focus right most
@@ -126,6 +127,9 @@ export class Carousel extends data.Component<ICarouselProps, ICarouselState> {
             const nextElement = this.index > prevIndex + this.actualPageLength ? this.index : prevIndex + this.actualPageLength;
             if (this.childrenElements[nextElement]) (this.childrenElements[nextElement].firstChild as HTMLElement).focus();
         }
+
+        // Undo any scrolling caused by focus()
+        this.container.scrollLeft = prevScroll;
     }
 
     public componentDidMount() {

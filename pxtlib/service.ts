@@ -23,63 +23,6 @@ namespace ts.pxtc {
     export const NATIVE_TYPE_THUMB = "thumb";
     export const NATIVE_TYPE_VM = "vm";
 
-    export interface ParameterDesc {
-        name: string;
-        description: string;
-        type: string;
-        initializer?: string;
-        default?: string;
-        properties?: PropertyDesc[];
-        handlerParameters?: PropertyDesc[];
-        options?: pxt.Map<PropertyOption>;
-        isEnum?: boolean;
-    }
-
-    export interface PropertyDesc {
-        name: string;
-        type: string;
-    }
-
-    export interface PropertyOption {
-        value: any;
-    }
-
-    export enum SymbolKind {
-        None,
-        Method,
-        Property,
-        Function,
-        Variable,
-        Module,
-        Enum,
-        EnumMember,
-        Class,
-        Interface,
-    }
-
-    export interface SymbolInfo {
-        attributes: CommentAttrs;
-        name: string;
-        namespace: string;
-        kind: SymbolKind;
-        parameters: ParameterDesc[];
-        retType: string;
-        extendsTypes?: string[]; // for classes and interfaces
-        isContextual?: boolean;
-        qName?: string;
-        pkg?: string;
-        snippet?: string;
-        snippetName?: string;
-        blockFields?: ParsedBlockDef;
-        isReadOnly?: boolean;
-        combinedProperties?: string[];
-    }
-
-    export interface ApisInfo {
-        byQName: pxt.Map<SymbolInfo>;
-        jres?: pxt.Map<pxt.JRes>;
-    }
-
     export interface BlocksInfo {
         apis: ApisInfo;
         blocks: SymbolInfo[];
@@ -105,159 +48,10 @@ namespace ts.pxtc {
     }
 
     export interface CompletionInfo {
-        entries: pxt.Map<SymbolInfo>;
+        entries: SymbolInfo[];
         isMemberCompletion: boolean;
         isNewIdentifierLocation: boolean;
         isTypeLocation: boolean;
-    }
-
-
-    export interface CommentAttrs {
-        debug?: boolean; // requires ?dbg=1
-        shim?: string;
-        shimArgument?: string;
-        enumval?: string;
-        helper?: string;
-        help?: string;
-        async?: boolean;
-        promise?: boolean;
-        hidden?: boolean;
-        undeletable?: boolean;
-        callingConvention: ir.CallingConvention;
-        block?: string; // format of the block, used at namespace level for category name
-        blockId?: string; // unique id of the block
-        blockGap?: string; // pixels in toolbox after the block is inserted
-        blockExternalInputs?: boolean; // force external inputs. Deprecated; see inlineInputMode.
-        blockImportId?: string;
-        blockBuiltin?: boolean;
-        blockNamespace?: string;
-        blockIdentity?: string;
-        blockAllowMultiple?: boolean; // override single block behavior for events
-        blockHidden?: boolean; // not available directly in toolbox
-        blockImage?: boolean; // for enum variable, specifies that it should use an image from a predefined location
-        blockCombine?: boolean;
-        blockCombineShadow?: string;
-        blockSetVariable?: string; // show block with variable assigment in toolbox. Set equal to a name to control the var name
-        fixedInstances?: boolean;
-        fixedInstance?: boolean;
-        decompileIndirectFixedInstances?: boolean; // Attribute on TYPEs with fixedInstances set to indicate that expressions with that type may be decompiled even if not a fixed instance
-        constantShim?: boolean;
-        indexedInstanceNS?: string;
-        indexedInstanceShim?: string;
-        defaultInstance?: string;
-        autoCreate?: string;
-        noRefCounting?: boolean;
-        color?: string;
-        colorSecondary?: string;
-        colorTertiary?: string;
-        icon?: string;
-        jresURL?: string;
-        iconURL?: string;
-        imageLiteral?: number;
-        weight?: number;
-        parts?: string;
-        trackArgs?: number[];
-        advanced?: boolean;
-        deprecated?: boolean;
-        useEnumVal?: boolean; // for conversion from typescript to blocks with enumVal
-        callInDebugger?: boolean; // for getters, they will be invoked by the debugger.
-        // On block
-        subcategory?: string;
-        group?: string;
-        whenUsed?: boolean;
-        jres?: string;
-        useLoc?: string; // The qName of another API whose localization will be used if this API is not translated and if both block definitions are identical
-        topblock?: boolean;
-        topblockWeight?: number;
-        // On namepspace
-        subcategories?: string[];
-        groups?: string[];
-        groupIcons?: string[];
-        groupHelp?: string[];
-        labelLineWidth?: string;
-        handlerStatement?: boolean; // indicates a block with a callback that can be used as a statement
-        blockHandlerKey?: string; // optional field for explicitly declaring the handler key to use to compare duplicate events
-        afterOnStart?: boolean; // indicates an event that should be compiled after on start when converting to typescript
-
-        // on interfaces
-        indexerGet?: string;
-        indexerSet?: string;
-
-        mutate?: string;
-        mutateText?: string;
-        mutatePrefix?: string;
-        mutateDefaults?: string;
-        mutatePropertyEnum?: string;
-        inlineInputMode?: string; // can be inline, external, or auto
-        expandableArgumentMode?: string; // can be disabled, enabled, or toggle
-        draggableParameters?: string; // can be reporter or variable; defaults to variable
-
-
-        /* start enum-only attributes (i.e. a block with shim=ENUM_GET) */
-
-        enumName?: string; // The name of the enum as it will appear in the code
-        enumMemberName?: string; // If the name of the enum was "Colors", this would be "color"
-        enumStartValue?: number; // The lowest value to emit when going from blocks to TS
-        enumIsBitMask?: boolean; // If true then values will be emitted in the form "1 << n"
-        enumIsHash?: boolean; // if true, the name of the enum is normalized, then hashed to generate the value
-        enumPromptHint?: string; // The hint that will be displayed in the member creation prompt
-        enumInitialMembers?: string[]; // The initial enum values which will be given the lowest values available
-
-        /* end enum-only attributes */
-
-        optionalVariableArgs?: boolean;
-        toolboxVariableArgs?: string;
-
-        _name?: string;
-        _source?: string;
-        _def?: ParsedBlockDef;
-        _expandedDef?: ParsedBlockDef;
-        _untranslatedBlock?: string; // The block definition before it was translated
-        _shadowOverrides?: pxt.Map<string>;
-        jsDoc?: string;
-        paramHelp?: pxt.Map<string>;
-        // foo.defl=12 -> paramDefl: { foo: "12" }
-        paramDefl: pxt.Map<string>;
-
-        paramMin?: pxt.Map<string>; // min range
-        paramMax?: pxt.Map<string>; // max range
-        // Map for custom field editor parameters
-        paramFieldEditor?: pxt.Map<string>; //.fieldEditor
-        paramShadowOptions?: pxt.Map<pxt.Map<string>>; //.shadowOptions.
-        paramFieldEditorOptions?: pxt.Map<pxt.Map<string>>; //.fieldOptions.
-    }
-
-
-    export type BlockContentPart = BlockLabel | BlockParameter | BlockImage;
-    export type BlockPart = BlockContentPart | BlockBreak;
-
-    export interface BlockLabel {
-        kind: "label";
-        text: string;
-        style?: string[];
-        cssClass?: string;
-    }
-
-    export interface BlockParameter {
-        kind: "param";
-        ref: boolean;
-        name: string;
-        shadowBlockId?: string;
-        varName?: string;
-    }
-
-    export interface BlockBreak {
-        kind: "break";
-    }
-
-    export interface BlockImage {
-        kind: "image";
-        uri: string;
-    }
-
-    export interface ParsedBlockDef {
-        parts: ReadonlyArray<(BlockPart)>;
-        parameters: ReadonlyArray<BlockParameter>;
     }
 
     export interface LocationInfo {
@@ -722,6 +516,7 @@ namespace ts.pxtc {
         "decompileIndirectFixedInstances",
         "topblock",
         "callInDebugger",
+        "duplicateShadowOnDrag"
     ];
 
     export function parseCommentString(cmt: string): CommentAttrs {
@@ -1246,7 +1041,7 @@ namespace ts.pxtc {
                 filename = U.fromUTF8(U.uint8ArrayToString(fnbuf))
                 fileSize = wordAt(28)
             }
-            
+
             if (flags & UF2_FLAG_FAMILY_ID_PRESENT) {
                 familyId = wordAt(28)
             }
@@ -1510,12 +1305,19 @@ namespace ts.pxtc.service {
     export interface OpArg {
         fileName?: string;
         fileContent?: string;
+        infoType?: InfoType;
         position?: number;
         options?: CompileOptions;
         search?: SearchOptions;
         format?: FormatOptions;
         blocks?: BlocksOptions;
         projectSearch?: ProjectSearchOptions;
+        snippet?: SnippetOptions;
+    }
+
+    export interface SnippetOptions {
+        qName: string;
+        python?: boolean;
     }
 
     export interface SearchOptions {
@@ -1554,14 +1356,5 @@ namespace ts.pxtc.service {
 
     export interface BlocksOptions {
         bannedCategories?: string[];
-    }
-}
-
-namespace ts.pxtc.ir {
-
-    export enum CallingConvention {
-        Plain,
-        Async,
-        Promise,
     }
 }

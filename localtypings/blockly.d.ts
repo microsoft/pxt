@@ -13522,6 +13522,11 @@ declare module Blockly.Functions {
 declare module Blockly.pxtBlocklyUtils {
 
     /**
+     * Whitelist of blocks whose shadow blocks duplicate on drag
+     */
+    var _duplicateOnDragWhitelist: any /*missing*/;
+
+    /**
      * Measure some text using a canvas in-memory.
      * Does not exist in Blockly, but needed in scratch-blocks
      * @param {string} fontSize E.g., '10pt'
@@ -13544,6 +13549,14 @@ declare module Blockly.pxtBlocklyUtils {
      * @package
      */
     function isShadowArgumentReporter(block: Blockly.BlockSvg): boolean;
+
+    /**
+     * Sets a whitelist of blocks whose shadow blocks duplicate on drag (in addition
+     * to argument reporter blocks).
+     * @param {Array<string>} blockTypes a list of block
+     * @package
+     */
+    function whitelistDraggableBlockTypes(blockTypes: string[]): void;
 
     /**
      * Finds and returns an argument reporter of the given name, argument type

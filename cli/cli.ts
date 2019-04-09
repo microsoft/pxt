@@ -2,6 +2,7 @@
 
 /// <reference path="../built/pxtlib.d.ts"/>
 /// <reference path="../built/pxtcompiler.d.ts"/>
+/// <reference path="../built/pxtpy.d.ts"/>
 /// <reference path="../built/pxtsim.d.ts"/>
 
 (global as any).pxt = pxt;
@@ -32,6 +33,8 @@ const rimraf: (f: string, opts: any, cb: (err: any, res: any) => void) => void =
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] !== "no";
 let forceLocalBuild = !!process.env["PXT_FORCE_LOCAL"];
 let forceBuild = false; // don't use cache
+
+Error.stackTraceLimit = 100;
 
 function parseBuildInfo(parsed?: commandParser.ParsedCommand) {
     const cloud = parsed && parsed.flags["cloudbuild"];
@@ -1485,10 +1488,22 @@ function buildEditorExtensionAsync(dirname: string, optionName: string) {
     if (pxt.appTarget.appTheme && (pxt.appTarget.appTheme as any)[optionName] &&
         fs.existsSync(path.join(dirname, "tsconfig.json"))) {
         const tsConfig = JSON.parse(fs.readFileSync(path.join(dirname, "tsconfig.json"), "utf8"));
+        let p: Promise<void>;
         if (tsConfig.compilerOptions.module)
-            return buildFolderAndBrowserifyAsync(dirname, true, dirname);
+            p = buildFolderAndBrowserifyAsync(dirname, true, dirname);
         else
-            return buildFolderAsync(dirname, true, dirname);
+            p = buildFolderAsync(dirname, true, dirname);
+        return p.then(() => {
+            const prepends = nodeutil.allFiles(path.join(dirname, "prepend"), 1, true)
+                .filter(f => /\.js$/.test(f));
+            if (prepends && prepends.length) {
+                const editorjs = path.join("built", dirname + ".js");
+                prepends.push(editorjs);
+                pxt.log(`bundling ${prepends.join(', ')}`);
+                const bundled = prepends.map(f => fs.readFileSync(f, "utf8")).join("\n");
+                fs.writeFileSync(editorjs, bundled, "utf8");
+            }
+        })
     }
     return Promise.resolve();
 }
@@ -3675,6 +3690,25 @@ function prepBuildOptionsAsync(mode: BuildOption, quick = false, ignoreTests = f
                 opts.ast = true
             }
 
+            // this is suboptimal, but we need apisInfo for the python converter
+            if (opts.target.preferredEditor == pxt.PYTHON_PROJECT_NAME) {
+                pxt.log("pre-compiling apisInfo for Python")
+                const opts2 = U.clone(opts)
+                opts2.ast = true
+                opts2.target.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME
+                opts2.noEmit = true
+                // remove previously converted .ts files, so they don't end up in apisinfo
+                for (let f of opts2.sourceFiles) {
+                    if (U.endsWith(f, ".py"))
+                        opts2.fileSystem[f.slice(0, -3) + ".ts"] = " "
+                }
+                const res = pxtc.compile(opts2)
+                opts.apisInfo = pxtc.getApiInfo(opts2, res.ast)
+                if (process.env["PXT_SAVE_APISINFO"])
+                    fs.writeFileSync("built/apisinfo.json", JSON.stringify(opts.apisInfo, null, 4))
+                pxt.log("done pre-compiling apisInfo for Python")
+            }
+
             return opts;
         })
 }
@@ -5481,7 +5515,7 @@ PXT_ASMDEBUG     - embed additional information in generated binary.asm file
                 aliases: ["r"]
             },
             "githubpages": {
-                description: "Generate a web site compatiable with GitHub pages",
+                description: "Generate a web site compatible with GitHub pages",
                 aliases: ["ghpages", "gh"]
             },
             "output": {
@@ -5708,9 +5742,14 @@ PXT_ASMDEBUG     - embed additional information in generated binary.asm file
         name: "pyconv",
         help: "convert from python",
         argString: "<package-directory> <support-directory>...",
-        anyArgs: true,
         advanced: true,
-    }, c => pyconv.convertAsync(c.args))
+        flags: {
+            internal: {
+                description: "use internal Python parser",
+                aliases: ["i"]
+            }
+        }
+    }, c => pyconv.convertAsync(c.args, !!c.flags["internal"]))
 
     advancedCommand("thirdpartynotices", "refresh third party notices", thirdPartyNoticesAsync);
     p.defineCommand({

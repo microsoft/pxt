@@ -1,15 +1,26 @@
-# MakeCode Language: Static TypeScript
+# MakeCode Languages: Blocks, Static TypeScript and Static Python
 
-PXT programs are written in a subset of [TypeScript](https://www.typescriptlang.org)
-called Static TypeScript.  Currently, we are using TypeScript version 2.6.1.
-TypeScript itself is a superset of JavaScript, and many PXT programs,
-especially at the beginner's level, are also just plain JavaScript.
+MakeCode programs can be authored in **Blocks**, **Static TypeScript** or **Static Phyton**.
 
-PXT is meant for teaching programming first, and JavaScript second. For this
+Both Blocks and Static Python are converted to Static TypeScript before being compiled to lower-level languages.
+Blocks is implemented using Google Blockly.
+
+Static TypeScript is a subset of [TypeScript](https://www.typescriptlang.org). 
+Currently, we are using TypeScript version 2.6.1. TypeScript itself is a superset of JavaScript, 
+and many MakeCode programs, especially at the beginner's level, are also just plain JavaScript.
+
+MakeCode is meant for teaching programming first, and JavaScript second. For this
 reason, we have stayed away from concepts that are specific to JavaScript (for
 example, prototype inheritance), and instead focused on ones common to most
 modern programming languages (for example, loops, lexically scoped variables,
 functions, lambdas, classes).
+
+## ~ hint
+
+Static Python is not still in an Experimental phase 
+and might not be available in your editor.
+
+## ~
 
 ## Supported language features
 

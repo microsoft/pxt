@@ -253,6 +253,7 @@ declare namespace pxt {
         allowSimulatorTelemetry?: boolean; // allow the simulator to send telemetry messages
         hideEmbedEdit?: boolean; // hide the edit button in the embedded view
         blocksOnly?: boolean; // blocks only workspace
+        python?: boolean; // enable Python?
         hideDocsSimulator?: boolean; // do not show simulator button in docs
         hideDocsEdit?: boolean; // do not show edit button in docs
         hideMenuBar?: boolean; // Hides the main menu bar
@@ -357,7 +358,30 @@ declare namespace pxt {
     }
 }
 
+declare namespace pxt.editor {
+    const enum FileType {
+        Text = "text",
+        TypeScript = "typescript",
+        JavaScript = "javascript",
+        Markdown = "markdown",
+        Python = "python",
+        CPP = "cpp",
+        JSON = "json",
+        XML = "xml",
+        Asm = "asm"
+    }
+}
+
 declare namespace ts.pxtc {
+
+    namespace ir {
+        const enum CallingConvention {
+            Plain,
+            Async,
+            Promise,
+        }
+    }
+
     interface CompileSwitches {
         profile?: boolean;
         gcDebug?: boolean;
@@ -375,6 +399,7 @@ declare namespace ts.pxtc {
 
     interface CompileTarget {
         isNative: boolean; // false -> JavaScript for simulator
+        preferredEditor?: string; // used to indicate which way to run any source-level conversions (TS/Py/Blocks)
         nativeType?: string; // currently only "thumb"
         runtimeIsARM?: boolean; // when nativeType is "thumb" but runtime is compiled in ARM mode
         hasHex: boolean;
@@ -412,11 +437,239 @@ declare namespace ts.pxtc {
         imageRefTag?: number;
     }
 
+    type BlockContentPart = BlockLabel | BlockParameter | BlockImage;
+    type BlockPart = BlockContentPart | BlockBreak;
+
+    interface BlockLabel {
+        kind: "label";
+        text: string;
+        style?: string[];
+        cssClass?: string;
+    }
+
+    interface BlockParameter {
+        kind: "param";
+        ref: boolean;
+        name: string;
+        shadowBlockId?: string;
+        varName?: string;
+    }
+
+    interface BlockBreak {
+        kind: "break";
+    }
+
+    interface BlockImage {
+        kind: "image";
+        uri: string;
+    }
+
+    interface ParsedBlockDef {
+        parts: ReadonlyArray<(BlockPart)>;
+        parameters: ReadonlyArray<BlockParameter>;
+    }
+
+    interface CommentAttrs {
+        debug?: boolean; // requires ?dbg=1
+        shim?: string;
+        shimArgument?: string;
+        enumval?: string;
+        helper?: string;
+        help?: string;
+        async?: boolean;
+        promise?: boolean;
+        hidden?: boolean;
+        undeletable?: boolean;
+        callingConvention: ir.CallingConvention;
+        block?: string; // format of the block, used at namespace level for category name
+        blockId?: string; // unique id of the block
+        blockGap?: string; // pixels in toolbox after the block is inserted
+        blockExternalInputs?: boolean; // force external inputs. Deprecated; see inlineInputMode.
+        blockImportId?: string;
+        blockBuiltin?: boolean;
+        blockNamespace?: string;
+        blockIdentity?: string;
+        blockAllowMultiple?: boolean; // override single block behavior for events
+        blockHidden?: boolean; // not available directly in toolbox
+        blockImage?: boolean; // for enum variable, specifies that it should use an image from a predefined location
+        blockCombine?: boolean;
+        blockCombineShadow?: string;
+        blockSetVariable?: string; // show block with variable assigment in toolbox. Set equal to a name to control the var name
+        fixedInstances?: boolean;
+        fixedInstance?: boolean;
+        decompileIndirectFixedInstances?: boolean; // Attribute on TYPEs with fixedInstances set to indicate that expressions with that type may be decompiled even if not a fixed instance
+        constantShim?: boolean;
+        indexedInstanceNS?: string;
+        indexedInstanceShim?: string;
+        defaultInstance?: string;
+        autoCreate?: string;
+        noRefCounting?: boolean;
+        color?: string;
+        colorSecondary?: string;
+        colorTertiary?: string;
+        icon?: string;
+        jresURL?: string;
+        iconURL?: string;
+        imageLiteral?: number;
+        weight?: number;
+        parts?: string;
+        trackArgs?: number[];
+        advanced?: boolean;
+        deprecated?: boolean;
+        useEnumVal?: boolean; // for conversion from typescript to blocks with enumVal
+        callInDebugger?: boolean; // for getters, they will be invoked by the debugger.
+
+        // on class
+        snippet?: string; // value used to generate TS snippet
+        pySnippet?: string; // value used to generate python snippet
+
+        // On block
+        subcategory?: string;
+        group?: string;
+        whenUsed?: boolean;
+        jres?: string;
+        useLoc?: string; // The qName of another API whose localization will be used if this API is not translated and if both block definitions are identical
+        topblock?: boolean;
+        topblockWeight?: number;
+        // On namepspace
+        subcategories?: string[];
+        groups?: string[];
+        groupIcons?: string[];
+        groupHelp?: string[];
+        labelLineWidth?: string;
+        handlerStatement?: boolean; // indicates a block with a callback that can be used as a statement
+        blockHandlerKey?: string; // optional field for explicitly declaring the handler key to use to compare duplicate events
+        afterOnStart?: boolean; // indicates an event that should be compiled after on start when converting to typescript
+
+        // on interfaces
+        indexerGet?: string;
+        indexerSet?: string;
+
+        mutate?: string;
+        mutateText?: string;
+        mutatePrefix?: string;
+        mutateDefaults?: string;
+        mutatePropertyEnum?: string;
+        inlineInputMode?: string; // can be inline, external, or auto
+        expandableArgumentMode?: string; // can be disabled, enabled, or toggle
+        draggableParameters?: string; // can be reporter or variable; defaults to variable
+
+
+        /* start enum-only attributes (i.e. a block with shim=ENUM_GET) */
+
+        enumName?: string; // The name of the enum as it will appear in the code
+        enumMemberName?: string; // If the name of the enum was "Colors", this would be "color"
+        enumStartValue?: number; // The lowest value to emit when going from blocks to TS
+        enumIsBitMask?: boolean; // If true then values will be emitted in the form "1 << n"
+        enumIsHash?: boolean; // if true, the name of the enum is normalized, then hashed to generate the value
+        enumPromptHint?: string; // The hint that will be displayed in the member creation prompt
+        enumInitialMembers?: string[]; // The initial enum values which will be given the lowest values available
+
+        /* end enum-only attributes */
+
+        optionalVariableArgs?: boolean;
+        toolboxVariableArgs?: string;
+
+        _name?: string;
+        _source?: string;
+        _def?: ParsedBlockDef;
+        _expandedDef?: ParsedBlockDef;
+        _untranslatedBlock?: string; // The block definition before it was translated
+        _shadowOverrides?: pxt.Map<string>;
+        jsDoc?: string;
+        paramHelp?: pxt.Map<string>;
+        // foo.defl=12 -> paramDefl: { foo: "12" }
+        paramDefl: pxt.Map<string>;
+
+        paramMin?: pxt.Map<string>; // min range
+        paramMax?: pxt.Map<string>; // max range
+        // Map for custom field editor parameters
+        paramFieldEditor?: pxt.Map<string>; //.fieldEditor
+        paramShadowOptions?: pxt.Map<pxt.Map<string>>; //.shadowOptions.
+        paramFieldEditorOptions?: pxt.Map<pxt.Map<string>>; //.fieldOptions.
+
+        duplicateShadowOnDrag?: boolean; // if true, duplicate the block when its shadow is dragged out (like function arguments)
+    }
+
+    interface ParameterDesc {
+        name: string;
+        description: string;
+        type: string;
+        initializer?: string;
+        default?: string;
+        properties?: PropertyDesc[];
+        handlerParameters?: PropertyDesc[];
+        options?: pxt.Map<PropertyOption>;
+        isEnum?: boolean;
+    }
+
+    interface PropertyDesc {
+        name: string;
+        type: string;
+    }
+
+    interface PropertyOption {
+        value: any;
+    }
+
+    const enum SymbolKind {
+        None,
+        Method,
+        Property,
+        Function,
+        Variable,
+        Module,
+        Enum,
+        EnumMember,
+        Class,
+        Interface,
+    }
+
+    interface SymbolInfo {
+        attributes: CommentAttrs;
+        name: string;
+        namespace: string;
+        kind: SymbolKind;
+        parameters: ParameterDesc[];
+        retType: string;
+        extendsTypes?: string[]; // for classes and interfaces
+        isInstance?: boolean;
+        isContextual?: boolean;
+        qName?: string;
+        pkg?: string;
+        snippet?: string;
+        snippetName?: string;
+        pySnippet?: string;
+        pySnippetName?: string;
+        blockFields?: ParsedBlockDef;
+        isReadOnly?: boolean;
+        combinedProperties?: string[];
+        pyName?: string;
+        pyQName?: string;
+    }
+
+    interface ApisInfo {
+        byQName: pxt.Map<SymbolInfo>;
+        jres?: pxt.Map<pxt.JRes>;
+    }
+
+    type InfoType = "memberCompletion" | "identifierCompletion" | "signature" | "symbol"
+    interface SyntaxInfo {
+        type: InfoType;
+        position: number;
+
+        symbols?: SymbolInfo[];
+        beginPos?: number;
+        endPos?: number;
+        auxResult?: any;
+    }
+
     interface CompileOptions {
         fileSystem: pxt.Map<string>;
         target: CompileTarget;
         testMode?: boolean;
         sourceFiles?: string[];
+        generatedFiles?: string[];
         jres?: pxt.Map<pxt.JRes>;
         hexinfo: HexInfo;
         extinfo?: ExtensionInfo;
@@ -429,6 +682,9 @@ declare namespace ts.pxtc {
         computeUsedSymbols?: boolean;
         name?: string;
         warnDiv?: boolean; // warn when emitting division operator
+        apisInfo?: ApisInfo;
+
+        syntaxInfo?: SyntaxInfo;
 
         alwaysDecompileOnStart?: boolean; // decompiler only
         allowedArgumentTypes?: string[]; // decompiler-only; the types allowed for user-defined function arguments in blocks (unlisted types will cause grey blocks)
@@ -476,5 +732,33 @@ declare namespace ts.pxtc {
         pid: string;
         usagePage: string;
         usageId: string;
+    }
+}
+
+
+declare namespace pxt.tutorial {
+    interface TutorialStepInfo {
+        fullscreen?: boolean;
+        // no coding
+        unplugged?: boolean;
+        hasHint?: boolean;
+        contentMd?: string;
+        headerContentMd?: string;
+    }
+
+    interface TutorialOptions {
+        tutorial?: string; // tutorial        
+        tutorialName?: string; // tutorial title
+        tutorialReportId?: string; // if this tutorial was user generated, the report abuse id
+        tutorialStepInfo?: pxt.tutorial.TutorialStepInfo[];
+        tutorialStep?: number; // current tutorial page
+        tutorialReady?: boolean; // current tutorial page
+        tutorialMd?: string; // full tutorial markdown
+    }
+    interface TutorialCompletionInfo {
+        // id of the tutorial
+        id: string;
+        // number of steps completed
+        steps: number;
     }
 }

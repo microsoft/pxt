@@ -142,10 +142,7 @@ namespace pxtblockly {
         }
 
         getText() {
-            if (!this.state) {
-                return "img``";
-            }
-            return pxtsprite.bitmapToImageLiteral(this.state);
+            return pxtsprite.bitmapToImageLiteral(this.state, pxt.editor.FileType.TypeScript);
         }
 
         setText(newText: string) {
