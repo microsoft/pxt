@@ -169,6 +169,24 @@ namespace ts.pxtc {
 
             patchSegmentHex(hex)
 
+            if (target.nativeType == pxtc.NATIVE_TYPE_VM) {
+                bytecodeStartIdx = -1
+                bytecodeStartAddr = 0
+                bytecodeStartAddrPadded = 0
+                bytecodePaddingSize = 0
+
+                jmpStartAddr = -1
+                jmpStartIdx = -1
+
+                let idx = 128
+                for (let f of funs) {
+                    funcInfo[f.name] = f
+                    f.value = idx++
+                }
+
+                return
+            }
+
             if (hex.length <= 2) {
                 elfInfo = pxt.elf.parse(U.fromHex(hex[0]))
                 bytecodeStartIdx = -1

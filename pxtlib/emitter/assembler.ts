@@ -668,7 +668,8 @@ namespace ts.pxtc.assembler {
                 case ".equ":
                     if (!/^\w+$/.test(words[1]))
                         this.directiveError(lf("expecting name"))
-                    const nums = this.parseNumbers(words.slice(words[2] == "," ? 2 : 1))
+                    const nums = this.parseNumbers(words.slice(words[2] == "," || words[2] == "="
+                        ? 2 : 1))
                     if (nums.length != 1)
                         this.directiveError(lf("expecting one value"))
                     if (this.equs[words[1]] !== undefined &&

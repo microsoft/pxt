@@ -23,7 +23,7 @@ namespace ts.pxtc.vm {
                 if (formal[0] == "$") {
                     let enc = this.ei.encoders[formal]
                     let v: number = null
-                    if (enc.isImmediate) {
+                    if (enc.isImmediate || enc.isLabel) {
                         if (!actual)
                             return emitErr("expecting number", actual)
                         actual = actual.replace(/^#/, "")

@@ -53,7 +53,8 @@ _start_${name}:
         }
 
         section("_info", 0x01, () => `
-                .string "\nPXT64\n" ; magic; \0 added by assembler
+                ; magic - \\0 added by assembler
+                .string "\\nPXT64\\n"
                 .hex 5471fe2b5e213768 ; magic
                 .hex ${hex.hexTemplateHash()} ; hex template hash
                 .hex 0000000000000000 ; @SRCHASH@
@@ -214,9 +215,10 @@ _start_${name}:
         }
 
         function cellref(cell: ir.Cell) {
-            if (cell.isGlobal())
-                return (`glb ` + cell.index)
-            else if (cell.iscap)
+            if (cell.isGlobal()) {
+                U.assert((cell.index & 3) == 0)
+                return (`glb ` + (cell.index >> 2))
+            } else if (cell.iscap)
                 return (`cap ` + cell.index)
             else if (cell.isarg) {
                 let idx = proc.args.length - cell.index - 1
@@ -229,6 +231,20 @@ _start_${name}:
                 assert(!final || idx < numLoc, "cell#" + idx)
                 assert(idx >= 0, "cell#" + idx)
                 return (`loc ${argDepth + idx}`)
+            }
+        }
+
+        function emitInstanceOf(info: ClassInfo, tp: string) {
+            push()
+            write(`ldint ${info.classNo}`)
+            push()
+            write(`ldint ${info.lastSubtypeNo}`)
+            if (tp == "bool")
+                write(`callrt pxt::instanceOf`)
+            else if (tp == "validate" || tp == "validateDecr") {
+                write(`callrt pxt::validateInstanceOf`)
+            } else {
+                U.oops()
             }
         }
 
@@ -298,8 +314,12 @@ _start_${name}:
                         }
                     }
                     return
+                case EK.InstanceOf:
+                    emitExpr(e.args[0])
+                    emitInstanceOf(e.data, e.jsInfo)
+                    break
 
-                default: throw oops();
+                default: throw oops("kind: " + e.exprKind);
             }
         }
 
