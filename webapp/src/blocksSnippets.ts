@@ -155,11 +155,30 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                     </value>
                 </block>`
                 }, {
+                    name: "logic_compare_strings",
+                    attributes: {
+                        blockId: "logic_compare",
+                        group: lf("Comparison"),
+                        weight: 45
+                    },
+                    blockXml: `<block type="logic_compare" gap="8">
+                    <value name="A">
+                        <shadow type="text">
+                            <field name="TEXT"></field>
+                        </shadow>
+                    </value>
+                    <value name="B">
+                        <shadow type="text">
+                            <field name="TEXT"></field>
+                        </shadow>
+                    </value>
+                </block>`
+                }, {
                     name: "logic_operation_and",
                     attributes: {
                         blockId: "logic_operation",
                         group: lf("Boolean"),
-                        weight: 45
+                        weight: 44
                     },
                     blockXml: `<block type="logic_operation" gap="8">
                     <field name="OP">AND</field>
@@ -169,7 +188,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                     attributes: {
                         blockId: "logic_operation",
                         group: lf("Boolean"),
-                        weight: 44
+                        weight: 43
                     },
                     blockXml: `<block type="logic_operation" gap="8">
                     <field name="OP">OR</field>
@@ -179,7 +198,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                     attributes: {
                         blockId: "logic_negate",
                         group: lf("Boolean"),
-                        weight: 43
+                        weight: 42
                     },
                     blockXml: `<block type="logic_negate"></block>`
                 }, {
@@ -187,7 +206,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                     attributes: {
                         blockId: "logic_boolean",
                         group: lf("Boolean"),
-                        weight: 42
+                        weight: 41
                     },
                     blockXml: `<block type="logic_boolean" gap="8">
                     <field name="BOOL">TRUE</field>
@@ -197,7 +216,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                     attributes: {
                         blockId: "logic_boolean",
                         group: lf("Boolean"),
-                        weight: 41
+                        weight: 40
                     },
                     blockXml: `<block type="logic_boolean">
                     <field name="BOOL">FALSE</field>
