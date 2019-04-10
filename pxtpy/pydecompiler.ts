@@ -646,10 +646,26 @@ function tsToPy(prog: ts.Program, filename: string): string {
 
         return out
     }
+    function emitFuncType(s: ts.FunctionTypeNode): string {
+        let returnType = emitType(s.type)
+        let params = s.parameters
+            .map(p => p.type) // python type syntax doesn't allow names
+            .map(emitType)
+        return `Callable[[${params.join(", ")}], ${returnType}]`
+    }
     function emitType(s: ts.TypeNode): string {
         switch (s.kind) {
+            case ts.SyntaxKind.StringKeyword:
+                return "str"
+            case ts.SyntaxKind.NumberKeyword:
+                // Note, "real" python expects this to be "float" or "int", we're intentionally diverging here
+                return "number"
+            case ts.SyntaxKind.VoidKeyword:
+                return "None"
+            case ts.SyntaxKind.FunctionType:
+                return emitFuncType(s as ts.FunctionTypeNode)
             default:
-                return "TODO: Unknown TypeNode kind: " + s.kind
+                return `(TODO: Unknown TypeNode kind: ${s.kind})`
         }
         // // TODO translate type
         // return s.getText()
@@ -658,7 +674,7 @@ function tsToPy(prog: ts.Program, filename: string): string {
         let nm = getName(s.name)
         if (s.type && inclTypesIfAvail) {
             let typ = emitType(s.type)
-            return `${nm}:${typ}`
+            return `${nm}: ${typ}`
         } else {
             return nm
         }
