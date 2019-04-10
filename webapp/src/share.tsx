@@ -521,7 +521,9 @@ class SocialButton extends data.Component<SocialButtonProps, {}> {
                 break;
             }
             case "discourse": {
-                url = `${socialOptions.discourse || "https://forum.makecode.com/"}?title=${encodeURIComponent(shareUrl)}`;
+                url = `${socialOptions.discourse || "https://forum.makecode.com/"}?new-topic?title=${encodeURIComponent(shareUrl)}`;
+                if (socialOptions.discourseCategory)
+                    url += `&category=${encodeURIComponent(socialOptions.discourseCategory)}`;
                 break;
             }
         }
