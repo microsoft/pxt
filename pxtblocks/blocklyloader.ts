@@ -104,14 +104,46 @@ namespace pxt.blocks {
         const value = document.createElement("value");
         value.setAttribute("name", p.definitionName);
 
-        const shadow = document.createElement(isVariable ? "block" : "shadow");
+
+        const isArray = /(.*)\[\]$/.exec(p.type);
+
+        const shadow = document.createElement(isVariable || isArray ? "block" : "shadow");
+
         value.appendChild(shadow);
 
-        const typeInfo = typeDefaults[p.type];
+        const typeInfo = typeDefaults[isArray && isArray[1] || p.type];
 
-        shadow.setAttribute("type", shadowId || typeInfo && typeInfo.block || p.type);
+        shadow.setAttribute("type", isArray ? 'lists_create_with' : shadowId || typeInfo && typeInfo.block || p.type);
         shadow.setAttribute("colour", (Blockly as any).Colours.textField);
 
+        if (isArray) {
+            const mut = document.createElement('mutation');
+            mut.setAttribute("items", "3");
+            shadow.appendChild(mut);
+            for (let i = 0; i < 3; i++) {
+                const v2 = document.createElement("value");
+                v2.setAttribute("name", "ADD" + i);
+                const shadow2 = document.createElement("shadow");
+                shadow2.setAttribute("type", typeInfo.block);
+                const field = document.createElement("field");
+                field.setAttribute("name", typeInfo.field);
+                switch (isArray[1]) {
+                    case "number":
+                        field.appendChild(document.createTextNode("" + (i + 1)));
+                        break;
+                    case "string":
+                        field.appendChild(document.createTextNode(String.fromCharCode('a'.charCodeAt(0) + i)));
+                        break;
+                    case "boolean":
+                        field.appendChild(document.createTextNode("FALSE"));
+                        break;
+                }
+                shadow2.appendChild(field);
+                v2.appendChild(shadow2);
+                shadow.appendChild(v2);
+            }
+            return value;
+        }
         if (typeInfo && (!shadowId || typeInfo.block === shadowId || shadowId === "math_number_minmax")) {
             const field = document.createElement("field");
             shadow.appendChild(field);
@@ -245,7 +277,7 @@ namespace pxt.blocks {
         }
         if (fn.parameters) {
             comp.parameters.filter(pr => !pr.isOptional &&
-                (/^(string|number|boolean)$/.test(pr.type) || pr.shadowBlockId || pr.defaultValue))
+                (/^(string|number|boolean)(\[\])?$/.test(pr.type) || pr.shadowBlockId || pr.defaultValue))
                 .forEach(pr => {
                     block.appendChild(createShadowValue(info, pr));
                 })
