@@ -646,10 +646,14 @@ function tsToPy(prog: ts.Program, filename: string): string {
 
         return out
     }
+    function emitType(s: ts.TypeNode): string {
+        // TODO translate type
+        return s.getText()
+    }
     function emitParamDecl(s: ts.ParameterDeclaration, inclTypesIfAvail = true): string {
         let nm = getName(s.name)
         if (s.type && inclTypesIfAvail) {
-            let typ = s.type.getText()
+            let typ = emitType(s.type)
             return `${nm}:${typ}`
         } else {
             return nm
@@ -669,7 +673,8 @@ function tsToPy(prog: ts.Program, filename: string): string {
             out = out.concat(expSup)
             let declStmt: string;
             if (s.type) {
-                declStmt = `${varNm}: ${s.type.getText()} = ${exp}`
+                let translatedType = emitType(s.type)
+                declStmt = `${varNm}: ${translatedType} = ${exp}`
             } else {
                 declStmt = `${varNm} = ${exp}`
             }
