@@ -705,6 +705,18 @@ namespace pxsim {
 
 namespace pxsim.control {
     export function createBufferFromUTF8(str: string) {
-        return new pxsim.RefBuffer(U.stringToUint8Array(U.toUTF8(str)));
+        let bytes: number[] = [];
+
+        for (let i = 0; i < str.length; i++) {
+            if (str.charCodeAt(i) > 128) {
+                let char = encodeURIComponent(str[i]);
+                char.split("%").forEach(val => val && bytes.push(parseInt(val, 16)));
+            }
+            else {
+                bytes.push(str.charCodeAt(i));
+            }
+        }
+
+        return new pxsim.RefBuffer(new Uint8Array(bytes));
     }
 }
