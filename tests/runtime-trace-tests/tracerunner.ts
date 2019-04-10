@@ -41,13 +41,21 @@ describe("convert between ts<->py ", () => {
     pxsim.initCurrentRuntime = pxsim.initBareRuntime
     cleanup()
 
-    const isDisabled = (file: string): boolean =>
-        path.basename(file).indexOf("TODO") >= 0
-
     let tsFiles = util.getFilesByExt(casesDir, ".ts")
     let pyFiles = util.getFilesByExt(casesDir, ".py")
+
+    // optionally diable files using a "TODO_" prefix
+    const isDisabled = (file: string): boolean =>
+        path.basename(file).indexOf("TODO") >= 0
     tsAndPyFiles = tsFiles.concat(pyFiles)
         .filter(f => !isDisabled(f))
+
+    // optionally whitelist files using a "ONLY_" prefix
+    const isWhitelisted = (file: string): boolean =>
+        path.basename(file).indexOf("ONLY") >= 0
+    let whitelisted = tsAndPyFiles.filter(isWhitelisted)
+    if (whitelisted.length)
+        tsAndPyFiles = whitelisted
 
     tsAndPyFiles.forEach(file => {
         it("should preserve the runtime semantics of " + path.basename(file), async function () {

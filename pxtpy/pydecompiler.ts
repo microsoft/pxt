@@ -647,8 +647,12 @@ function tsToPy(prog: ts.Program, filename: string): string {
         return out
     }
     function emitType(s: ts.TypeNode): string {
-        // TODO translate type
-        return s.getText()
+        switch (s.kind) {
+            default:
+                return "TODO: Unknown TypeNode kind: " + s.kind
+        }
+        // // TODO translate type
+        // return s.getText()
     }
     function emitParamDecl(s: ts.ParameterDeclaration, inclTypesIfAvail = true): string {
         let nm = getName(s.name)
