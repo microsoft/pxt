@@ -447,7 +447,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                         {showSocialIcons ? <div className="social-icons">
                             <SocialButton url={url} ariaLabel="Facebook" type='facebook' heading={lf("Share on Facebook")} />
                             <SocialButton url={url} ariaLabel="Twitter" type='twitter' heading={lf("Share on Twitter")} />
-                            {socialOptions.discourse ? <SocialButton url={url} ariaLabel={lf("Post to Forum")} label={lf("Forum")} type='discourse' heading={lf("Share on Forum")} /> : undefined}
+                            {socialOptions.discourse ? <SocialButton url={url} icon={"keyboard"} ariaLabel={lf("Post to Forum")} label={lf("Forum")} type='discourse' heading={lf("Share on Forum")} /> : undefined}
                         </div> : undefined}
                     </div> : undefined}
                     {ready && !hideEmbed ? <div>
@@ -479,6 +479,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
 interface SocialButtonProps {
     url?: string;
     type?: "facebook" | "twitter" | "discourse";
+    icon?: string; // override type
     label?: string;
     ariaLabel?: string;
     heading?: string;
@@ -521,7 +522,8 @@ class SocialButton extends data.Component<SocialButtonProps, {}> {
                 break;
             }
             case "discourse": {
-                url = `${socialOptions.discourse || "https://forum.makecode.com/"}?new-topic?title=${encodeURIComponent(shareUrl)}`;
+                // https://meta.discourse.org/t/compose-a-new-pre-filled-topic-via-url/28074
+                url = `${socialOptions.discourse || "https://forum.makecode.com/"}new-topic?title=${encodeURIComponent(shareUrl)}`;
                 if (socialOptions.discourseCategory)
                     url += `&category=${encodeURIComponent(socialOptions.discourseCategory)}`;
                 break;
@@ -532,9 +534,9 @@ class SocialButton extends data.Component<SocialButtonProps, {}> {
     }
 
     renderCore() {
-        const { type, label, ariaLabel } = this.props;
+        const { type, label, ariaLabel, icon } = this.props;
         return <a role="button" className={`ui button large ${label ? "labeled": ""} icon ${type}`} tabIndex={0} aria-label={ariaLabel}
-            onClick={this.handleClick}><sui.Icon icon={type} />{label}</a>
+            onClick={this.handleClick}><sui.Icon icon={icon || type} />{label}</a>
     }
 }
 
