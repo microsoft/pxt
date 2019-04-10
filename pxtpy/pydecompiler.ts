@@ -32,7 +32,7 @@ namespace pxt.py {
 ///
 /// UTILS
 ///
-const INDENT = "  "
+const INDENT = "    "
 function indent(lvl: number): (s: string) => string {
     return s => `${INDENT.repeat(lvl)}${s}`
 }
