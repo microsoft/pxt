@@ -104,7 +104,6 @@ namespace pxt.blocks {
         const value = document.createElement("value");
         value.setAttribute("name", p.definitionName);
 
-
         const isArray = /(.*)\[\]$/.exec(p.type);
 
         const shadow = document.createElement(isVariable || isArray ? "block" : "shadow");
@@ -121,10 +120,10 @@ namespace pxt.blocks {
             mut.setAttribute("items", "3");
             shadow.appendChild(mut);
             for (let i = 0; i < 3; i++) {
-                const v2 = document.createElement("value");
-                v2.setAttribute("name", "ADD" + i);
-                const shadow2 = document.createElement("shadow");
-                shadow2.setAttribute("type", typeInfo.block);
+                const innerValue = document.createElement("value");
+                innerValue.setAttribute("name", "ADD" + i);
+                const innerShadow = document.createElement("shadow");
+                innerShadow.setAttribute("type", typeInfo.block);
                 const field = document.createElement("field");
                 field.setAttribute("name", typeInfo.field);
                 switch (isArray[1]) {
@@ -138,9 +137,9 @@ namespace pxt.blocks {
                         field.appendChild(document.createTextNode("FALSE"));
                         break;
                 }
-                shadow2.appendChild(field);
-                v2.appendChild(shadow2);
-                shadow.appendChild(v2);
+                innerShadow.appendChild(field);
+                innerValue.appendChild(innerShadow);
+                shadow.appendChild(innerValue);
             }
             return value;
         }
