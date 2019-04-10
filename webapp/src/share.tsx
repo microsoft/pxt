@@ -535,7 +535,7 @@ class SocialButton extends data.Component<SocialButtonProps, {}> {
 
     renderCore() {
         const { type, label, ariaLabel, icon } = this.props;
-        return <a role="button" className={`ui button large ${label ? "labeled": ""} icon ${type}`} tabIndex={0} aria-label={ariaLabel}
+        return <a role="button" className={`ui button large ${label ? "labeled" : ""} icon ${type}`} tabIndex={0} aria-label={ariaLabel}
             onClick={this.handleClick}><sui.Icon icon={icon || type} />{label}</a>
     }
 }
