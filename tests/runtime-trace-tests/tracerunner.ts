@@ -177,21 +177,14 @@ function cleanup() {
 
 function runProcAsync(cmd: string): Promise<string> {
     return new Promise((resolve, reject) => {
-        let trace = ""
-        let proc = exec(cmd, (err, stdout, stderr) => {
+        exec(cmd, (err, stdout, stderr) => {
+            let trace = ""
             if (stdout)
                 trace += stdout
             if (stderr)
                 trace += stderr
-            if (err)
-                trace += `${err.name}: ${err.message}\n${err.stack}`
             resolve(trace)
         })
-        // TODO(dz):
-        // proc.on("exit", (code, signal) => {
-        //     if (code != 0 || signal)
-        //         resolve(`Shell exec "${cmd}" exited with code "${code}" and signal "${signal}". Trace:\n${trace}`)
-        // })
     });
 }
 function runPyAsync(pyFile: string): Promise<string> {
@@ -203,11 +196,7 @@ number = Any
     `;
     let pyStr = `${prelude}\n${pyBody}`
     let escapedStr = `<<"EOF"\n${pyStr}\nEOF`
-    // .replace(/\\/g, `\\\\`)
-    // .replace(/\"/g, `\\"`)
-    // .replace(/\n/g, `\\\n`)
     let cmd = `python3 ${escapedStr}`
-    console.log(cmd)
     return runProcAsync(cmd)
 }
 function runNodeJsAsync(nodeArgs: string): Promise<string> {
