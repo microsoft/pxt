@@ -672,12 +672,19 @@ function tsToPy(prog: ts.Program, filename: string): string {
     }
     function emitParamDecl(s: ts.ParameterDeclaration, inclTypesIfAvail = true): string {
         let nm = getName(s.name)
+        let typePart = ""
         if (s.type && inclTypesIfAvail) {
             let typ = emitType(s.type)
-            return `${nm}: ${typ}`
-        } else {
-            return nm
+            typePart = `: ${typ}`
         }
+        let initPart = ""
+        if (s.initializer) {
+            let [initExp, initSup] = emitExp(s.initializer)
+            if (initSup.length)
+                throw new Error(`TODO: complex expression in parameter default value not supported. Expression: ${s.initializer.getText()}`)
+            initPart = ` = ${initExp}`
+        }
+        return `${nm}${typePart}${initPart}`
     }
     function emitVarDecl(s: ts.VariableDeclaration): string[] {
         let out: string[] = []
