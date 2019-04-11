@@ -54,6 +54,7 @@ namespace pxt.py {
     export interface Expr extends AST {
         tsType?: Type;
         symbolInfo?: SymbolInfo;
+        inCalledPosition?: boolean; // it's an f in f(...)
         _exprBrand: void;
     }
 
@@ -158,6 +159,7 @@ namespace pxt.py {
         decorator_list: Expr[];
         returns?: Expr;
         alwaysThrows?: boolean;
+        callers?: Expr[];
     }
     export interface AsyncFunctionDef extends Stmt {
         kind: "AsyncFunctionDef";
