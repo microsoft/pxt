@@ -78,7 +78,7 @@ function tsToPy(prog: ts.Program, filename: string): string {
     function popScope(): Scope {
         return env.shift()
     }
-    function getName(name: ts.Identifier | ts.BindingPattern | ts.PropertyName) {
+    function getName(name: ts.Identifier | ts.BindingPattern | ts.PropertyName | ts.EntityName) {
         if (!ts.isIdentifier(name))
             throw Error("Unsupported advanced name format: " + name.getText())
         if (renameMap) {
@@ -219,9 +219,16 @@ function tsToPy(prog: ts.Program, filename: string): string {
             return emitReturnStmt(s)
         } else if (ts.isBlock(s)) {
             return emitBlock(s)
+        } else if (ts.isTypeAliasDeclaration(s)) {
+            return emitTypeAliasDecl(s)
         } else {
             throw Error(`Not implemented: statement kind ${s.kind}`);
         }
+    }
+    function emitTypeAliasDecl(s: ts.TypeAliasDeclaration): string[] {
+        let typeStr = emitType(s.type)
+        let name = getName(s.name)
+        return [`${name} = ${typeStr}`]
     }
     function emitReturnStmt(s: ts.ReturnStatement): string[] {
         if (!s.expression)
@@ -663,10 +670,22 @@ function tsToPy(prog: ts.Program, filename: string): string {
             case ts.SyntaxKind.NumberKeyword:
                 // Note, "real" python expects this to be "float" or "int", we're intentionally diverging here
                 return "number"
+            case ts.SyntaxKind.BooleanKeyword:
+                return "bool"
             case ts.SyntaxKind.VoidKeyword:
                 return "None"
             case ts.SyntaxKind.FunctionType:
                 return emitFuncType(s as ts.FunctionTypeNode)
+            case ts.SyntaxKind.ArrayType: {
+                let t = s as ts.ArrayTypeNode
+                let elType = emitType(t.elementType)
+                return `List[${elType}]`
+            }
+            case ts.SyntaxKind.TypeReference: {
+                let t = s as ts.TypeReferenceNode
+                let nm = getName(t.typeName)
+                return `${nm}`
+            }
             default:
                 return `(TODO: Unknown TypeNode kind: ${s.kind})`
         }
@@ -1045,6 +1064,14 @@ function tsToPy(prog: ts.Program, filename: string): string {
         }
         return visitExp(s, isConst)
     }
+    function emitCondExp(s: ts.ConditionalExpression): ExpRes {
+        let [cond, condSup] = emitExp(s.condition)
+        let [tru, truSup] = emitExp(s.whenTrue)
+        let [fls, flsSup] = emitExp(s.whenFalse)
+        let sup = condSup.concat(truSup).concat(flsSup)
+        let exp = `${tru} if ${cond} else ${fls}`
+        return [exp, sup]
+    }
     function emitExp(s: ts.Expression): ExpRes {
         switch (s.kind) {
             case ts.SyntaxKind.BinaryExpression:
@@ -1086,6 +1113,8 @@ function tsToPy(prog: ts.Program, filename: string): string {
             case ts.SyntaxKind.StringLiteral:
                 // TODO handle weird syntax?
                 return asExpRes(s.getText())
+            case ts.SyntaxKind.ConditionalExpression:
+                return emitCondExp(s as ts.ConditionalExpression)
             default:
                 // TODO handle more expressions
                 return [s.getText(), ["# unknown expression:  " + s.kind]] // uncomment for easier locating

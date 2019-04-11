@@ -43,18 +43,6 @@ export function compareBaselines(a: string, b: string): boolean {
     a = a.replace(/\s/g, "");
     b = b.replace(/\s/g, "");
 
-    // Strip encoded carriage-return from grey blocks
-    a = a.replace(/&#13;/g, "");
-    b = b.replace(/&#13;/g, "");
-
-    // Ignore error messages in TS statement mutations
-    a = a.replace(/error="[^"]*"/g, "");
-    b = b.replace(/error="[^"]*"/g, "");
-
-    // Ignore IDs
-    a = a.replace(/id="[^"]*"/g, "");
-    b = b.replace(/id="[^"]*"/g, "");
-
     return a === b;
 }
 

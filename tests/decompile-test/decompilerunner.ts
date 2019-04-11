@@ -51,6 +51,22 @@ function fail(msg: string) {
     chai.assert(false, msg);
 }
 
+function compareBlocksBaselines(a: string, b: string): boolean {
+    // Strip encoded carriage-return from grey blocks
+    a = a.replace(/&#13;/g, "");
+    b = b.replace(/&#13;/g, "");
+
+    // Ignore error messages in TS statement mutations
+    a = a.replace(/error="[^"]*"/g, "");
+    b = b.replace(/error="[^"]*"/g, "");
+
+    // Ignore IDs
+    a = a.replace(/id="[^"]*"/g, "");
+    b = b.replace(/id="[^"]*"/g, "");
+
+    return util.compareBaselines(a, b)
+}
+
 function decompileTestAsync(filename: string) {
     return new Promise((resolve, reject) => {
         const basename = path.basename(filename);
@@ -76,7 +92,7 @@ function decompileTestAsync(filename: string) {
                 }
 
                 const baseline = fs.readFileSync(baselineFile, "utf8")
-                if (!util.compareBaselines(decompiled, baseline)) {
+                if (!compareBlocksBaselines(decompiled, baseline)) {
                     fs.writeFileSync(outFile, decompiled)
                     fail(`${basename} did not match baseline, output written to ${outFile}`);
                 }
