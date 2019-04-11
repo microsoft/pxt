@@ -332,7 +332,8 @@ declare namespace pxt {
         hashtags?: string;
         related?: string;
         discourse?: string; // URL to the discourse powered forum
-        discourseCategory?: string; 
+        discourseCategory?: string;
+        qrCode?: boolean;
     }
 
     interface DocMenuEntry {
