@@ -447,7 +447,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                         {showSocialIcons ? <div className="social-icons">
                             <SocialButton url={url} ariaLabel="Facebook" type='facebook' heading={lf("Share on Facebook")} />
                             <SocialButton url={url} ariaLabel="Twitter" type='twitter' heading={lf("Share on Twitter")} />
-                            {socialOptions.discourse ? <SocialButton url={url} icon={"keyboard"} ariaLabel={lf("Post to Forum")} label={lf("Forum")} type='discourse' heading={lf("Share on Forum")} /> : undefined}
+                            {socialOptions.discourse ? <SocialButton url={url} icon={"comments"} ariaLabel={lf("Post to Forum")} label={lf("Forum")} type='discourse' heading={lf("Share on Forum")} /> : undefined}
                         </div> : undefined}
                     </div> : undefined}
                     {ready && !hideEmbed ? <div>
