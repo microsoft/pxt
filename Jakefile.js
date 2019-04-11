@@ -35,7 +35,7 @@ function loadText(filename) {
 
 function setupTest(taskName, testFolder, testFile) {
     task(taskName, ['built/tests/' + testFolder + '/runner.js'], { async: true }, function () {
-        let args = " built/tests/" + testFolder + "/runner.js --reporter dot";
+        const args = " built/tests/" + testFolder + "/runner.js --reporter dot";
         if (os.platform() === "win32") {
             cmdIn(this, ".", path.resolve("node_modules/.bin/mocha.cmd") + args)
         }
