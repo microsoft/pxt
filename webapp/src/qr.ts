@@ -16,7 +16,7 @@ export function renderAsync(url: string): Promise<string> {
     return loadQrCodeJsAsync()
         .then(loaded => {
             if (!loaded) return undefined;
-            new QRCode(div, {
+            const c = new QRCode(div, {
                 text: url,
                 width: 256,
                 height: 256,
