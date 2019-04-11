@@ -348,11 +348,12 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             p.then(() => this.props.parent.anonymousPublishAsync(screenshotUri))
                 .then((id) => {
                     this.setState({ pubId: id, qrCodeUri: undefined });
-                    qr.renderAsync(`${shareUrl}${id}`)
-                        .then(qruri => {
-                            if (this.state.pubId == id) // race
-                                this.setState({ qrCodeUri: qruri });
-                        });
+                    if (pxt.appTarget.appTheme.socialOptions && pxt.appTarget.appTheme.socialOptions.qrCode)
+                        qr.renderAsync(`${shareUrl}${id}`)
+                            .then(qruri => {
+                                if (this.state.pubId == id) // race
+                                    this.setState({ qrCodeUri: qruri });
+                            });
                     this.forceUpdate();
                 })
                 .catch((e) => {
