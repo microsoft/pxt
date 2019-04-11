@@ -348,7 +348,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             p.then(() => this.props.parent.anonymousPublishAsync(screenshotUri))
                 .then((id) => {
                     this.setState({ pubId: id, qrCodeUri: undefined });
-                    if (pxt.appTarget.appTheme.socialOptions && pxt.appTarget.appTheme.socialOptions.qrCode)
+                    if (pxt.appTarget.appTheme.qrCode)
                         qr.renderAsync(`${shareUrl}${id}`)
                             .then(qruri => {
                                 if (this.state.pubId == id) // race
