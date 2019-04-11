@@ -1,0 +1,231 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="variables_set">
+<field name="VAR">a</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="text">
+<field name="TEXT">hello</field>
+</block>
+</value>
+<next>
+<block type="variables_set">
+<field name="VAR">b</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="text">
+<field name="TEXT">world</field>
+</block>
+</value>
+<next>
+<block type="controls_if">
+<mutation elseif="1" else="0" />
+<value name="IF0">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="logic_compare">
+<field name="OP">EQ</field>
+<value name="A">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="text">
+<field name="TEXT"></field>
+</block>
+</value>
+<value name="B">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="text">
+<field name="TEXT"></field>
+</block>
+</value>
+</block>
+</value>
+<value name="IF1">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="logic_compare">
+<field name="OP">NEQ</field>
+<value name="A">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="variables_get">
+<field name="VAR">a</field>
+</block>
+</value>
+<value name="B">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="variables_get">
+<field name="VAR">b</field>
+</block>
+</value>
+</block>
+</value>
+<statement name="DO0">
+</statement>
+<statement name="DO1">
+</statement>
+<next>
+<block type="controls_if">
+<mutation elseif="1" else="0" />
+<value name="IF0">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="logic_compare">
+<field name="OP">LT</field>
+<value name="A">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="variables_get">
+<field name="VAR">a</field>
+</block>
+</value>
+<value name="B">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="variables_get">
+<field name="VAR">b</field>
+</block>
+</value>
+</block>
+</value>
+<value name="IF1">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="logic_compare">
+<field name="OP">GTE</field>
+<value name="A">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="variables_get">
+<field name="VAR">a</field>
+</block>
+</value>
+<value name="B">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="variables_get">
+<field name="VAR">b</field>
+</block>
+</value>
+</block>
+</value>
+<statement name="DO0">
+</statement>
+<statement name="DO1">
+</statement>
+<next>
+<block type="controls_if">
+<mutation elseif="1" else="0" />
+<value name="IF0">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="logic_compare">
+<field name="OP">LTE</field>
+<value name="A">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="variables_get">
+<field name="VAR">a</field>
+</block>
+</value>
+<value name="B">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="variables_get">
+<field name="VAR">b</field>
+</block>
+</value>
+</block>
+</value>
+<value name="IF1">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="logic_compare">
+<field name="OP">GT</field>
+<value name="A">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="variables_get">
+<field name="VAR">a</field>
+</block>
+</value>
+<value name="B">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="variables_get">
+<field name="VAR">b</field>
+</block>
+</value>
+</block>
+</value>
+<statement name="DO0">
+</statement>
+<statement name="DO1">
+</statement>
+<next>
+<block type="controls_if">
+<mutation elseif="0" else="0" />
+<value name="IF0">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="logic_negate">
+<value name="BOOL">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="logic_operation">
+<field name="OP">AND</field>
+<value name="A">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="logic_compare">
+<field name="OP">EQ</field>
+<value name="A">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="variables_get">
+<field name="VAR">a</field>
+</block>
+</value>
+<value name="B">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="text">
+<field name="TEXT"></field>
+</block>
+</value>
+</block>
+</value>
+<value name="B">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="logic_negate">
+<value name="BOOL">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="logic_operation">
+<field name="OP">AND</field>
+<value name="A">
+<shadow type="logic_boolean"><field name="BOOL">TRUE</field></shadow>
+<block type="logic_compare">
+<field name="OP">EQ</field>
+<value name="A">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="variables_get">
+<field name="VAR">b</field>
+</block>
+</value>
+<value name="B">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="text">
+<field name="TEXT">world</field>
+</block>
+</value>
+</block>
+</value>
+<value name="B">
+<shadow type="logic_boolean">
+<field name="BOOL">TRUE</field>
+</shadow>
+</value>
+</block>
+</value>
+</block>
+</value>
+</block>
+</value>
+</block>
+</value>
+<statement name="DO0">
+</statement>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</statement>
+</block>
+</xml>
