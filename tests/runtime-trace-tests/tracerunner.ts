@@ -41,13 +41,21 @@ describe("convert between ts<->py ", () => {
     pxsim.initCurrentRuntime = pxsim.initBareRuntime
     cleanup()
 
-    const isDisabled = (file: string): boolean =>
-        path.basename(file).indexOf("TODO") >= 0
-
     let tsFiles = util.getFilesByExt(casesDir, ".ts")
     let pyFiles = util.getFilesByExt(casesDir, ".py")
+
+    // optionally diable files using a "TODO_" prefix
+    const isDisabled = (file: string): boolean =>
+        path.basename(file).indexOf("TODO") >= 0
     tsAndPyFiles = tsFiles.concat(pyFiles)
         .filter(f => !isDisabled(f))
+
+    // optionally whitelist files using a "ONLY_" prefix
+    const isWhitelisted = (file: string): boolean =>
+        path.basename(file).indexOf("ONLY") >= 0
+    let whitelisted = tsAndPyFiles.filter(isWhitelisted)
+    if (whitelisted.length)
+        tsAndPyFiles = whitelisted
 
     tsAndPyFiles.forEach(file => {
         it("should preserve the runtime semantics of " + path.basename(file), async function () {
@@ -167,22 +175,29 @@ function cleanup() {
     removeBySubstring(casesDir, ".baseline")
 }
 
-function runProcAsync(progName: string, inputFile: string): Promise<string> {
+function runProcAsync(cmd: string): Promise<string> {
     return new Promise((resolve, reject) => {
-        exec(`${progName} ${inputFile}`, (err, stdout, stderr) => {
+        exec(cmd, (err, stdout, stderr) => {
             let trace = ""
             if (stdout)
                 trace += stdout
             if (stderr)
                 trace += stderr
-            if (err)
-                trace += `${err.name}: ${err.message}\n${err.stack}`
             resolve(trace)
         })
     });
 }
 function runPyAsync(pyFile: string): Promise<string> {
-    return runProcAsync("python3", pyFile)
+    let pyBody = fs.readFileSync(pyFile, "utf8")
+    const prelude = `
+from typing import *
+number = Any
+# end prelude
+    `;
+    let pyStr = `${prelude}\n${pyBody}`
+    let escapedStr = `<<"EOF"\n${pyStr}\nEOF`
+    let cmd = `python3 ${escapedStr}`
+    return runProcAsync(cmd)
 }
 function runNodeJsAsync(nodeArgs: string): Promise<string> {
     // Note: another option would be to use eval() but
@@ -198,7 +213,7 @@ function runNodeJsAsync(nodeArgs: string): Promise<string> {
 
     return stout.join("\n")
     */
-    return runProcAsync("node", nodeArgs)
+    return runProcAsync(`node ${nodeArgs}`)
 }
 
 async function convertTs2Py(tsFile: string): Promise<string> {
@@ -253,17 +268,20 @@ async function compileAndRunTs(filename: string): Promise<string> {
 
 function compileAndRunStsAsync(filename: string): Promise<string> {
     const prelude = `
-    let console: any = {}
-    console.log = function(s: string): void {
-        control.__log(s)
-        control.__log("\\n")
-        control.dmesg(s)
-        // serial.writeString(s)
-        // serial.writeString("\\n")
-    }`
+let console: any = {}
+console.log = function(s: string): void {
+    control.__log(s)
+    control.__log("\\n")
+    control.dmesg(s)
+    // serial.writeString(s)
+    // serial.writeString("\\n")
+}
+// end prelude
+    `
     // TODO(dz): why is this necessary? This doesn't seem right..
     const postlude = `
-        pause(300);
+// start postlude
+pause(300);
     `
     let body = fs.readFileSync(filename, "utf8")
     let tsMain = [prelude, body, postlude].join("\n")

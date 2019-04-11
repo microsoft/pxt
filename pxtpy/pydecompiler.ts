@@ -32,7 +32,7 @@ namespace pxt.py {
 ///
 /// UTILS
 ///
-const INDENT = "  "
+const INDENT = "\t"
 function indent(lvl: number): (s: string) => string {
     return s => `${INDENT.repeat(lvl)}${s}`
 }
@@ -598,7 +598,7 @@ function tsToPy(prog: ts.Program, filename: string): string {
         // stmts.push("# }")
         return stmts
     }
-    function emitFuncDecl(s: ts.FunctionDeclaration | ts.MethodDeclaration | ts.FunctionExpression | ts.ConstructorDeclaration | ts.ArrowFunction, name: string = null): string[] {
+    function emitFuncDecl(s: ts.FunctionDeclaration | ts.MethodDeclaration | ts.FunctionExpression | ts.ConstructorDeclaration | ts.ArrowFunction, name: string = null, altParams?: ts.NodeArray<ts.ParameterDeclaration>): string[] {
         // TODO determine captured variables, then determine global and nonlocal directives
         // TODO helper function for determining if an expression can be a python expression
         let paramList: string[] = []
@@ -608,8 +608,11 @@ function tsToPy(prog: ts.Program, filename: string): string {
             paramList.push("self")
         }
 
-        paramList = paramList
-            .concat(s.parameters.map(p => emitParamDecl(p)))
+        let paramDeclDefs = altParams ? mergeParamDecls(s.parameters, altParams) : s.parameters
+
+        let paramDecls = paramDeclDefs
+            .map(d => emitParamDecl(d))
+        paramList = paramList.concat(paramDecls)
 
         let params = paramList.join(", ")
 
@@ -646,14 +649,45 @@ function tsToPy(prog: ts.Program, filename: string): string {
 
         return out
     }
+    function emitFuncType(s: ts.FunctionTypeNode): string {
+        let returnType = emitType(s.type)
+        let params = s.parameters
+            .map(p => p.type) // python type syntax doesn't allow names
+            .map(emitType)
+        return `Callable[[${params.join(", ")}], ${returnType}]`
+    }
+    function emitType(s: ts.TypeNode): string {
+        switch (s.kind) {
+            case ts.SyntaxKind.StringKeyword:
+                return "str"
+            case ts.SyntaxKind.NumberKeyword:
+                // Note, "real" python expects this to be "float" or "int", we're intentionally diverging here
+                return "number"
+            case ts.SyntaxKind.VoidKeyword:
+                return "None"
+            case ts.SyntaxKind.FunctionType:
+                return emitFuncType(s as ts.FunctionTypeNode)
+            default:
+                return `(TODO: Unknown TypeNode kind: ${s.kind})`
+        }
+        // // TODO translate type
+        // return s.getText()
+    }
     function emitParamDecl(s: ts.ParameterDeclaration, inclTypesIfAvail = true): string {
         let nm = getName(s.name)
+        let typePart = ""
         if (s.type && inclTypesIfAvail) {
-            let typ = s.type.getText()
-            return `${nm}:${typ}`
-        } else {
-            return nm
+            let typ = emitType(s.type)
+            typePart = `: ${typ}`
         }
+        let initPart = ""
+        if (s.initializer) {
+            let [initExp, initSup] = emitExp(s.initializer)
+            if (initSup.length)
+                throw new Error(`TODO: complex expression in parameter default value not supported. Expression: ${s.initializer.getText()}`)
+            initPart = ` = ${initExp}`
+        }
+        return `${nm}${typePart}${initPart}`
     }
     function emitVarDecl(s: ts.VariableDeclaration): string[] {
         let out: string[] = []
@@ -669,7 +703,8 @@ function tsToPy(prog: ts.Program, filename: string): string {
             out = out.concat(expSup)
             let declStmt: string;
             if (s.type) {
-                declStmt = `${varNm}: ${s.type.getText()} = ${exp}`
+                let translatedType = emitType(s.type)
+                declStmt = `${varNm}: ${translatedType} = ${exp}`
             } else {
                 declStmt = `${varNm} = ${exp}`
             }
@@ -799,11 +834,44 @@ function tsToPy(prog: ts.Program, filename: string): string {
 
         return [`${left}.${right}`, leftSup];
     }
+    function emitArgExp(s: ts.Expression, param?: ts.ParameterDeclaration): ExpRes {
+        // special case: if the argument is a function and the parameter it is being passed to is also a function type,
+        // then we want to pass along the parameter's function parameters to emitFnExp so that the argument will fit the
+        // parameter type. This is because TypeScript/Javascript allows passing a function with fewer parameters to an
+        // argument that is a function with more parameters.
+        // Key example: callbacks
+        // this code compiles in TS:
+        //      function onEvent(callback: (a: number) => void) { ... }
+        //      onEvent(function () { ... })
+        // yet in python this is not allowed, we have to add more parameters to the anonymous declaration to match like this:
+        //      onEvent(function (a: number) { ... })
+        // see "callback_num_args.ts" test case for more details.
+        if ((ts.isFunctionExpression(s) || ts.isArrowFunction(s)) && param) {
+            if (param.type && ts.isFunctionTypeNode(param.type)) {
+                let altParams = param.type.parameters
+                return emitFnExp(s, altParams)
+            }
+        }
+
+        return emitExp(s)
+    }
     function emitCallExp(s: ts.CallExpression | ts.NewExpression): ExpRes {
+        // get callee parameter info
+        let calleeType = tc.getTypeAtLocation(s.expression)
+        let calleeTypeNode = tc.typeToTypeNode(calleeType)
+        let calleeParameters: ts.ParameterDeclaration[] = []
+        if (ts.isFunctionTypeNode(calleeTypeNode)) {
+            calleeParameters = calleeTypeNode.parameters.map(a => a)
+            if (calleeParameters.length < s.arguments.length) {
+                throw Error("TODO: Unsupported call site where caller the arguments outnumber the callee parameters: " + s.getText())
+            }
+        }
+
         // TODO inspect type info to rewrite things like console.log, Math.max, etc.
         let [fn, fnSup] = emitExp(s.expression)
+
         let argExps = s.arguments
-            .map(emitExp)
+            .map((a, i) => emitArgExp(a, calleeParameters[i]))
         let args = argExps
             .map(([a, aSup]) => a)
             .join(", ")
@@ -818,13 +886,22 @@ function tsToPy(prog: ts.Program, filename: string): string {
         // TODO infer friendly name from context
         return `function_${nextFnNum++}`
     }
-    function emitFnExp(s: ts.FunctionExpression | ts.ArrowFunction): ExpRes {
+    function mergeParamDecls(primary: ts.NodeArray<ts.ParameterDeclaration>, alt: ts.NodeArray<ts.ParameterDeclaration>): ts.NodeArray<ts.ParameterDeclaration> {
+        // TODO handle name collisions        
+        let decls: ts.ParameterDeclaration[] = []
+        for (let i = 0; i < Math.max(primary.length, alt.length); i++) {
+            decls.push(primary[i] || alt[i])
+        }
+        return ts.createNodeArray(decls, false)
+    }
+    function emitFnExp(s: ts.FunctionExpression | ts.ArrowFunction, altParams?: ts.NodeArray<ts.ParameterDeclaration>): ExpRes {
         // if the anonymous function is simple enough, use a lambda
         if (!ts.isBlock(s.body)) {
             // TODO this speculation is only safe if emitExp is pure. It's not quite today (e.g. nextFnNumber)
             let [fnBody, fnSup] = emitExp(s.body as ts.Expression)
             if (fnSup.length === 0) {
-                let paramList = s.parameters
+                let paramDefs = altParams ? mergeParamDecls(s.parameters, altParams) : s.parameters
+                let paramList = paramDefs
                     .map(p => emitParamDecl(p, false))
                     .join(", ");
 
@@ -835,8 +912,9 @@ function tsToPy(prog: ts.Program, filename: string): string {
             }
         }
 
+        // otherwise emit a standard "def myFunction(...)" declaration
         let fnName = s.name ? getName(s.name) : nextFnName()
-        let fnDef = emitFuncDecl(s, fnName)
+        let fnDef = emitFuncDecl(s, fnName, altParams)
 
         return [fnName, fnDef]
     }
