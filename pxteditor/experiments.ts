@@ -99,7 +99,8 @@ namespace pxt.editor.experiments {
             {
                 id: "qrCode",
                 name: lf("Shared QR Code"),
-                description: lf("Generate a QR Code form the shared project url")
+                description: lf("Generate a QR Code form the shared project url"),
+                feedbackUrl: "https://github.com/Microsoft/pxt/issues/5456"
             }
         ].filter(experiment => ids.indexOf(experiment.id) > -1);
     }
