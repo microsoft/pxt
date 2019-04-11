@@ -405,10 +405,10 @@ namespace ts.pxtc {
         if (!symbolKindWeight) {
             symbolKindWeight = {};
             symbolKindWeight[SymbolKind.Variable] = 100;
+            symbolKindWeight[SymbolKind.Module] = 101;
             symbolKindWeight[SymbolKind.Function] = 99;
             symbolKindWeight[SymbolKind.Property] = 98;
             symbolKindWeight[SymbolKind.Method] = 97;
-            symbolKindWeight[SymbolKind.Module] = 90
             symbolKindWeight[SymbolKind.Class] = 89;
             symbolKindWeight[SymbolKind.Enum] = 81;
             symbolKindWeight[SymbolKind.EnumMember] = 80;
@@ -823,7 +823,7 @@ namespace ts.pxtc.service {
                     /^__/.test(si.namespace) || // ignore namespaces starting with _-
                     si.attributes.hidden ||
                     si.attributes.deprecated
-                ) continue; // ignore 
+                ) continue; // ignore
                 entries[si.qName] = si
                 const n = lastApiInfo.decls[si.qName];
                 if (isFunctionLike(n)) {
