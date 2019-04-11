@@ -78,7 +78,7 @@ function tsToPy(prog: ts.Program, filename: string): string {
     function popScope(): Scope {
         return env.shift()
     }
-    function getName(name: ts.Identifier | ts.BindingPattern | ts.PropertyName) {
+    function getName(name: ts.Identifier | ts.BindingPattern | ts.PropertyName | ts.EntityName) {
         if (!ts.isIdentifier(name))
             throw Error("Unsupported advanced name format: " + name.getText())
         if (renameMap) {
@@ -676,10 +676,16 @@ function tsToPy(prog: ts.Program, filename: string): string {
                 return "None"
             case ts.SyntaxKind.FunctionType:
                 return emitFuncType(s as ts.FunctionTypeNode)
-            case ts.SyntaxKind.ArrayType:
+            case ts.SyntaxKind.ArrayType: {
                 let t = s as ts.ArrayTypeNode
                 let elType = emitType(t.elementType)
                 return `List[${elType}]`
+            }
+            case ts.SyntaxKind.TypeReference: {
+                let t = s as ts.TypeReferenceNode
+                let nm = getName(t.typeName)
+                return `${nm}`
+            }
             default:
                 return `(TODO: Unknown TypeNode kind: ${s.kind})`
         }
