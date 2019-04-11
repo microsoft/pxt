@@ -458,7 +458,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                         <sui.Input id="projectUri" class="mini" readOnly={true} lines={1} value={url} copy={true} selectOnClick={true} aria-describedby="projectUriLabel" autoComplete={false} />
                         <label htmlFor="projectUri" id="projectUriLabel" className="accessible-hidden">{lf("This is the read-only internet address of your project.")}</label>
                         {qrCodeUri ?
-                            <img className="ui small image floated right" alt="QR Code of the saved program" src={qrCodeUri} />
+                            <img className="ui small image floated right" alt={lf("QR Code of the saved program")} src={qrCodeUri} />
                             : undefined}
                         {showSocialIcons ? <div className="social-icons">
                             <SocialButton url={url} ariaLabel="Facebook" type='facebook' heading={lf("Share on Facebook")} />
