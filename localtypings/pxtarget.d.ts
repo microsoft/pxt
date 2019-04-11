@@ -331,6 +331,8 @@ declare namespace pxt {
         orgTwitterHandle?: string;
         hashtags?: string;
         related?: string;
+        discourse?: string; // URL to the discourse powered forum
+        discourseCategory?: string; 
     }
 
     interface DocMenuEntry {

@@ -1,0 +1,99 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+    <variables>
+      <variable type="" id="O1UJJZ-Ig$2+U_N42uwY">Small</variable>
+    </variables>
+    <block type="pxt-on-start" x="0" y="0">
+      <statement name="HANDLER">
+        <block type="controls_if">
+          <value name="IF0">
+            <shadow type="logic_boolean" id="U/#7pR=*^8Vl;y%K8?Az">
+              <field name="BOOL">TRUE</field>
+            </shadow>
+            <block type="logic_compare">
+              <field name="OP">EQ</field>
+              <value name="A">
+                <shadow type="text">
+                  <field name="TEXT"></field>
+                </shadow>
+              </value>
+              <value name="B">
+                <shadow type="text">
+                  <field name="TEXT"></field>
+                </shadow>
+              </value>
+            </block>
+          </value>
+          <next>
+            <block type="variables_set">
+              <field name="VAR" id="O1UJJZ-Ig$2+U_N42uwY" variabletype="">Small</field>
+              <value name="VALUE">
+                <shadow type="math_number" id="i~MNekaF0iBM])6x.:(C">
+                  <field name="NUM">0</field>
+                </shadow>
+                <block type="text">
+                  <field name="TEXT">A</field>
+                </block>
+              </value>
+              <next>
+                <block type="controls_if">
+                  <value name="IF0">
+                    <shadow type="logic_boolean" id="U/#7pR=*^8Vl;y%K8?Az">
+                      <field name="BOOL">TRUE</field>
+                    </shadow>
+                    <block type="logic_compare">
+                      <field name="OP">LT</field>
+                      <value name="A">
+                        <shadow type="text" id="k;X/6cg6PP.?-j]Z/)P_">
+                          <field name="TEXT"></field>
+                        </shadow>
+                        <block type="variables_get">
+                          <field name="VAR" id="O1UJJZ-Ig$2+U_N42uwY" variabletype="">Small</field>
+                        </block>
+                      </value>
+                      <value name="B">
+                        <shadow type="text">
+                          <field name="TEXT">B</field>
+                        </shadow>
+                      </value>
+                    </block>
+                  </value>
+                  <next>
+                    <block type="controls_if">
+                      <value name="IF0">
+                        <shadow type="logic_boolean" id="{_ny0@$kBL7i}fw9t?kY">
+                          <field name="BOOL">TRUE</field>
+                        </shadow>
+                        <block type="logic_operation">
+                          <field name="OP">AND</field>
+                          <value name="A">
+                            <block type="logic_boolean">
+                              <field name="BOOL">TRUE</field>
+                            </block>
+                          </value>
+                          <value name="B">
+                            <block type="logic_compare">
+                              <field name="OP">EQ</field>
+                              <value name="A">
+                                <shadow type="text">
+                                  <field name="TEXT"></field>
+                                </shadow>
+                              </value>
+                              <value name="B">
+                                <shadow type="text">
+                                  <field name="TEXT"></field>
+                                </shadow>
+                              </value>
+                            </block>
+                          </value>
+                        </block>
+                      </value>
+                    </block>
+                  </next>
+                </block>
+              </next>
+            </block>
+          </next>
+        </block>
+      </statement>
+    </block>
+  </xml>
