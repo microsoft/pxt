@@ -468,7 +468,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                     </div> : undefined}
                     {ready && !hideEmbed ? <div>
                         <div className="ui divider"></div>
-                        <sui.Link icon={`chevron ${advancedMenu ? "down" : "right"}`} text={lf("Embed")} ariaExpanded={advancedMenu} onClick={this.toggleAdvancedMenu} />
+                        <sui.Link icon={`no-select chevron ${advancedMenu ? "down" : "right"}`} text={lf("Embed")} ariaExpanded={advancedMenu} onClick={this.toggleAdvancedMenu} />
                         {advancedMenu ?
                             <sui.Menu pointing secondary>
                                 {formats.map(f =>
