@@ -78,19 +78,26 @@ function tsToPy(prog: ts.Program, filename: string): string {
     function popScope(): Scope {
         return env.shift()
     }
-    function getName(name: ts.Identifier | ts.BindingPattern | ts.PropertyName | ts.EntityName) {
+    function getName(name: ts.Identifier | ts.BindingPattern | ts.PropertyName | ts.EntityName): string {
         if (!ts.isIdentifier(name))
             throw Error("Unsupported advanced name format: " + name.getText())
-        if (renameMap) {
+        let outName = name.text;
+        if (renameMap && name.getSourceFile()) {
             const rename = renameMap.getRenameForPosition(name.getStart());
             if (rename) {
-                return rename.name;
+                outName = rename.name;
             }
         }
-        return name.text;
+        takenNames[outName] = true
+        return outName
     }
     function getNewName(nameHint: string) {
-        return pxtc.decompiler.getNewName(nameHint, takenNames)
+        if (takenNames[nameHint]) {
+            return pxtc.decompiler.getNewName(nameHint, takenNames)
+        } else {
+            takenNames[nameHint] = true
+            return nameHint
+        }
     }
     // TODO decide on strategy for tracking variable scope(s)
     // function introVar(name: string, decl: ts.Node): string {
@@ -696,7 +703,14 @@ function tsToPy(prog: ts.Program, filename: string): string {
         // return s.getText()
     }
     function emitParamDecl(s: ts.ParameterDeclaration, inclTypesIfAvail = true): string {
-        let nm = getName(s.name)
+        let nm: string;
+        if (!(s as any).isUnused)
+            nm = getName(s.name)
+        else {
+            // some parameters are known to be used and these we want to make sure don't collide with any other names
+            // TODO this renaming should ideally happen upstream
+            nm = getNewName(getName(s.name))
+        }
         let typePart = ""
         if (s.type && inclTypesIfAvail) {
             let typ = emitType(s.type)
@@ -908,11 +922,19 @@ function tsToPy(prog: ts.Program, filename: string): string {
         // TODO infer friendly name from context
         return `function_${nextFnNum++}`
     }
-    function mergeParamDecls(primary: ts.NodeArray<ts.ParameterDeclaration>, alt: ts.NodeArray<ts.ParameterDeclaration>): ts.NodeArray<ts.ParameterDeclaration> {
-        // TODO handle name collisions        
-        let decls: ts.ParameterDeclaration[] = []
+    type ParameterDeclarationWithUsage = ts.ParameterDeclaration & { isUnused: boolean }
+    function mergeParamDecls(primary: ts.NodeArray<ts.ParameterDeclaration>, alt: ts.NodeArray<ts.ParameterDeclaration>): ts.NodeArray<ParameterDeclarationWithUsage> {
+        // Note: possible name collisions between primary and alt parameters is handled by marking
+        // alt parameters as "unused" so that we can generate them new names without renaming
+        let decls: ParameterDeclarationWithUsage[] = []
         for (let i = 0; i < Math.max(primary.length, alt.length); i++) {
-            decls.push(primary[i] || alt[i])
+            let p: ParameterDeclarationWithUsage;
+            if (primary[i]) {
+                p = Object.assign({ isUnused: false }, primary[i])
+            } else {
+                p = Object.assign({ isUnused: true }, alt[i])
+            }
+            decls.push(p)
         }
         return ts.createNodeArray(decls, false)
     }

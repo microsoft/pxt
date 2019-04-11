@@ -230,11 +230,7 @@ namespace ts.pxtc.decompiler {
 
         let names = collectNameCollisions();
 
-        if (allRenames.length) {
-            return [new RenameMap(allRenames), names];
-        }
-
-        return undefined;
+        return [new RenameMap(allRenames), names];
 
         function collectNameCollisions(): NamesSet {
             const takenNames: NamesSet = {};
