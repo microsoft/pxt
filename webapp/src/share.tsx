@@ -294,7 +294,8 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
         const header = this.props.parent.state.header;
         const advancedMenu = !!this.state.advancedMenu;
         const hideEmbed = !!targetTheme.hideShareEmbed;
-        const showSocialIcons = !!targetTheme.socialOptions && !pxt.BrowserUtils.isUwpEdge();
+        const socialOptions = targetTheme.socialOptions;
+        const showSocialIcons = !!socialOptions && !pxt.BrowserUtils.isUwpEdge();
         const ready = !!pubId;
         let mode = this.state.mode;
         let url = '';
@@ -446,6 +447,7 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                         {showSocialIcons ? <div className="social-icons">
                             <SocialButton url={url} ariaLabel="Facebook" type='facebook' heading={lf("Share on Facebook")} />
                             <SocialButton url={url} ariaLabel="Twitter" type='twitter' heading={lf("Share on Twitter")} />
+                            {socialOptions.discourse ? <SocialButton url={url} icon={"comments"} ariaLabel={lf("Post to Forum")} label={lf("Forum")} type='discourse' heading={lf("Share on Forum")} /> : undefined}
                         </div> : undefined}
                     </div> : undefined}
                     {ready && !hideEmbed ? <div>
@@ -476,7 +478,9 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
 
 interface SocialButtonProps {
     url?: string;
-    type?: "facebook" | "twitter";
+    type?: "facebook" | "twitter" | "discourse";
+    icon?: string; // override type
+    label?: string;
     ariaLabel?: string;
     heading?: string;
 }
@@ -493,36 +497,46 @@ class SocialButton extends data.Component<SocialButtonProps, {}> {
     handleClick(e: React.MouseEvent<any>) {
         const { type, url: shareUrl, heading } = this.props;
 
-        let twitterText = lf("Check out what I made!");
         const socialOptions = pxt.appTarget.appTheme.socialOptions;
-        if (socialOptions.twitterHandle && socialOptions.orgTwitterHandle) {
-            twitterText = lf("Check out what I made with @{0} and @{1}!", socialOptions.twitterHandle, socialOptions.orgTwitterHandle);
-        } else if (socialOptions.twitterHandle) {
-            twitterText = lf("Check out what I made with @{0}!", socialOptions.twitterHandle);
-        } else if (socialOptions.orgTwitterHandle) {
-            twitterText = lf("Check out what I made with @{0}!", socialOptions.orgTwitterHandle);
-        }
-        const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
-        const twitterUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}` +
-            `&text=${encodeURIComponent(twitterText)}` +
-            (socialOptions.hashtags ? `&hashtags=${encodeURIComponent(socialOptions.hashtags)}` : '') +
-            (socialOptions.related ? `&related=${encodeURIComponent(socialOptions.related)}` : '');
-
         pxt.tickEvent(`share.${type}`, undefined, { interactiveConsent: true })
 
         let url = '';
         switch (type) {
-            case "facebook": url = fbUrl; break;
-            case "twitter": url = twitterUrl; break;
+            case "facebook": {
+                url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+                break;
+            }
+            case "twitter": {
+                let twitterText = lf("Check out what I made!");
+                if (socialOptions.twitterHandle && socialOptions.orgTwitterHandle) {
+                    twitterText = lf("Check out what I made with @{0} and @{1}!", socialOptions.twitterHandle, socialOptions.orgTwitterHandle);
+                } else if (socialOptions.twitterHandle) {
+                    twitterText = lf("Check out what I made with @{0}!", socialOptions.twitterHandle);
+                } else if (socialOptions.orgTwitterHandle) {
+                    twitterText = lf("Check out what I made with @{0}!", socialOptions.orgTwitterHandle);
+                }
+                url = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}` +
+                    `&text=${encodeURIComponent(twitterText)}` +
+                    (socialOptions.hashtags ? `&hashtags=${encodeURIComponent(socialOptions.hashtags)}` : '') +
+                    (socialOptions.related ? `&related=${encodeURIComponent(socialOptions.related)}` : '');
+                break;
+            }
+            case "discourse": {
+                // https://meta.discourse.org/t/compose-a-new-pre-filled-topic-via-url/28074
+                url = `${socialOptions.discourse || "https://forum.makecode.com/"}new-topic?title=${encodeURIComponent(shareUrl)}`;
+                if (socialOptions.discourseCategory)
+                    url += `&category=${encodeURIComponent(socialOptions.discourseCategory)}`;
+                break;
+            }
         }
         pxt.BrowserUtils.popupWindow(url, heading, 600, 600);
         e.preventDefault();
     }
 
     renderCore() {
-        const { type, ariaLabel } = this.props;
-        return <a role="button" className={`ui button large icon ${type}`} tabIndex={0} aria-label={ariaLabel}
-            onClick={this.handleClick}><sui.Icon icon={type} /></a>
+        const { type, label, ariaLabel, icon } = this.props;
+        return <a role="button" className={`ui button large ${label ? "labeled" : ""} icon ${type}`} tabIndex={0} aria-label={ariaLabel}
+            onClick={this.handleClick}><sui.Icon icon={icon || type} />{label}</a>
     }
 }
 
