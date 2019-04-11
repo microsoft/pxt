@@ -16,6 +16,6 @@
         "sourceMap": false
     },
     "files": [
-        "formatrunner.ts"
+        "tracerunner.ts"
     ]
 }
