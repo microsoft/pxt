@@ -885,7 +885,8 @@ function tsToPy(prog: ts.Program, filename: string): string {
         if ((ts.isFunctionExpression(s) || ts.isArrowFunction(s)) && param) {
             if (param.type && ts.isFunctionTypeNode(param.type)) {
                 let altParams = param.type.parameters
-                return emitFnExp(s, altParams)
+                let fnNameHint = getName(param.name)
+                return emitFnExp(s, fnNameHint, altParams)
             }
         }
 
@@ -938,7 +939,7 @@ function tsToPy(prog: ts.Program, filename: string): string {
         }
         return ts.createNodeArray(decls, false)
     }
-    function emitFnExp(s: ts.FunctionExpression | ts.ArrowFunction, altParams?: ts.NodeArray<ts.ParameterDeclaration>): ExpRes {
+    function emitFnExp(s: ts.FunctionExpression | ts.ArrowFunction, nameHint?: string, altParams?: ts.NodeArray<ts.ParameterDeclaration>): ExpRes {
         // if the anonymous function is simple enough, use a lambda
         if (!ts.isBlock(s.body)) {
             // TODO this speculation is only safe if emitExp is pure. It's not quite today (e.g. nextFnName)
@@ -957,7 +958,7 @@ function tsToPy(prog: ts.Program, filename: string): string {
         }
 
         // otherwise emit a standard "def myFunction(...)" declaration
-        let fnName = s.name ? getName(s.name) : nextFnName()
+        let fnName = s.name ? getName(s.name) : getNewName(nameHint || "my_function")
         let fnDef = emitFuncDecl(s, fnName, altParams)
 
         return [fnName, fnDef]
