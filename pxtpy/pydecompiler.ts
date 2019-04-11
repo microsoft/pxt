@@ -1064,6 +1064,14 @@ function tsToPy(prog: ts.Program, filename: string): string {
         }
         return visitExp(s, isConst)
     }
+    function emitCondExp(s: ts.ConditionalExpression): ExpRes {
+        let [cond, condSup] = emitExp(s.condition)
+        let [tru, truSup] = emitExp(s.whenTrue)
+        let [fls, flsSup] = emitExp(s.whenFalse)
+        let sup = condSup.concat(truSup).concat(flsSup)
+        let exp = `${tru} if ${cond} else ${fls}`
+        return [exp, sup]
+    }
     function emitExp(s: ts.Expression): ExpRes {
         switch (s.kind) {
             case ts.SyntaxKind.BinaryExpression:
@@ -1105,6 +1113,8 @@ function tsToPy(prog: ts.Program, filename: string): string {
             case ts.SyntaxKind.StringLiteral:
                 // TODO handle weird syntax?
                 return asExpRes(s.getText())
+            case ts.SyntaxKind.ConditionalExpression:
+                return emitCondExp(s as ts.ConditionalExpression)
             default:
                 // TODO handle more expressions
                 return [s.getText(), ["# unknown expression:  " + s.kind]] // uncomment for easier locating
