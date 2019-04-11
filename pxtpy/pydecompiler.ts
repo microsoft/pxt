@@ -663,10 +663,16 @@ function tsToPy(prog: ts.Program, filename: string): string {
             case ts.SyntaxKind.NumberKeyword:
                 // Note, "real" python expects this to be "float" or "int", we're intentionally diverging here
                 return "number"
+            case ts.SyntaxKind.BooleanKeyword:
+                return "bool"
             case ts.SyntaxKind.VoidKeyword:
                 return "None"
             case ts.SyntaxKind.FunctionType:
                 return emitFuncType(s as ts.FunctionTypeNode)
+            case ts.SyntaxKind.ArrayType:
+                let t = s as ts.ArrayTypeNode
+                let elType = emitType(t.elementType)
+                return `List[${elType}]`
             default:
                 return `(TODO: Unknown TypeNode kind: ${s.kind})`
         }
