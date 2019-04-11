@@ -219,9 +219,16 @@ function tsToPy(prog: ts.Program, filename: string): string {
             return emitReturnStmt(s)
         } else if (ts.isBlock(s)) {
             return emitBlock(s)
+        } else if (ts.isTypeAliasDeclaration(s)) {
+            return emitTypeAliasDecl(s)
         } else {
             throw Error(`Not implemented: statement kind ${s.kind}`);
         }
+    }
+    function emitTypeAliasDecl(s: ts.TypeAliasDeclaration): string[] {
+        let typeStr = emitType(s.type)
+        let name = getName(s.name)
+        return [`${name} = ${typeStr}`]
     }
     function emitReturnStmt(s: ts.ReturnStatement): string[] {
         if (!s.expression)
