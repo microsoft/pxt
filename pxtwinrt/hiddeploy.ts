@@ -198,10 +198,6 @@ namespace pxt.winrt {
             });
             watchers.push(watcher);
         });
-        watchers.forEach((w) => {
-                if (!w.status) {
-                    w.start();
-                }
-            });
+        watchers.filter(w => !w.status).forEach((w) =>  w.start());
     }
 }
