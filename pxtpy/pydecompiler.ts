@@ -59,7 +59,7 @@ function tsToPy(prog: ts.Program, filename: string): string {
     let lhost = new ts.pxtc.LSHost(prog)
     // let ls = ts.createLanguageService(lhost) // TODO
     let file = prog.getSourceFile(filename)
-    let renameMap = ts.pxtc.decompiler.buildRenameMap(prog, file)
+    let [renameMap, takenNames] = ts.pxtc.decompiler.buildRenameMap(prog, file)
 
     // ts->py 
     return emitFile(file)
@@ -88,6 +88,9 @@ function tsToPy(prog: ts.Program, filename: string): string {
             }
         }
         return name.text;
+    }
+    function getNewName(nameHint: string) {
+        return pxtc.decompiler.getNewName(nameHint, takenNames)
     }
     // TODO decide on strategy for tracking variable scope(s)
     // function introVar(name: string, decl: ts.Node): string {
@@ -916,7 +919,7 @@ function tsToPy(prog: ts.Program, filename: string): string {
     function emitFnExp(s: ts.FunctionExpression | ts.ArrowFunction, altParams?: ts.NodeArray<ts.ParameterDeclaration>): ExpRes {
         // if the anonymous function is simple enough, use a lambda
         if (!ts.isBlock(s.body)) {
-            // TODO this speculation is only safe if emitExp is pure. It's not quite today (e.g. nextFnNumber)
+            // TODO this speculation is only safe if emitExp is pure. It's not quite today (e.g. nextFnName)
             let [fnBody, fnSup] = emitExp(s.body as ts.Expression)
             if (fnSup.length === 0) {
                 let paramDefs = altParams ? mergeParamDecls(s.parameters, altParams) : s.parameters
