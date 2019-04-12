@@ -14,7 +14,7 @@ namespace ts.pxtc {
 
     export function getDiagnosticString(diagnostic: KsDiagnostic | Diagnostic): string {
         let ksDiagnostic: KsDiagnostic;
-        if ("file" in diagnostic) {
+        if ("file" in diagnostic && diagnostic.file != undefined) {
             // convert ts.Diagnostic to KsDiagnostic
             let tsDiag = diagnostic as ts.Diagnostic
             const { line, character } = getLineAndCharacterOfPosition(tsDiag.file, tsDiag.start);
