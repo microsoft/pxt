@@ -866,11 +866,42 @@ function tsToPy(prog: ts.Program, filename: string): string {
 
         return [`${left}.${right}`, leftSup];
     }
-    function emitArgExp(s: ts.Expression, param?: ts.ParameterDeclaration): ExpRes {
-        // special case: if the argument is a function and the parameter it is being passed to is also a function type,
+    function getSimpleExpNameParts(s: ts.Expression): string[] {
+        if (ts.isPropertyAccessExpression(s))
+            return getSimpleExpNameParts(s.expression).concat([getName(s.name)])
+        else if (ts.isIdentifier(s))
+            return [getName(s)]
+        else // TODO handle more cases like indexing?
+            return []
+    }
+    function getNameHint(param?: ts.ParameterDeclaration, calleeExp?: ts.Expression, allParams?: ts.NodeArray<ts.ParameterDeclaration>, allArgs?: ReadonlyArray<ts.Expression>): string {
+        let calleePart: string = ""
+        if (calleeExp)
+            calleePart = getSimpleExpNameParts(calleeExp).join("_")
+
+        let prevParamPart: string = ""
+        if (allParams && allParams.length > 1 && allArgs && allArgs.length > 1) {
+            // special case: if first parameter is an enum, use it as part of the hint
+            // let firstParam = allParams[0]
+            let firstArg = allArgs[0]
+            let firstType = tc.getTypeAtLocation(firstArg)
+            if (hasTypeFlag(firstType, ts.TypeFlags.EnumLike)) {
+                prevParamPart = getSimpleExpNameParts(firstArg).join("_")
+            }
+        }
+
+        let paramPart: string = getName(param.name)
+
+        return [calleePart, prevParamPart, paramPart]
+            .filter(s => s)
+            .join("_") || "my_callback"
+    }
+    function emitArgExp(s: ts.Expression, param?: ts.ParameterDeclaration, calleeExp?: ts.Expression, allParams?: ts.NodeArray<ts.ParameterDeclaration>, allArgs?: ReadonlyArray<ts.Expression>): ExpRes {
+        // special case: function arguments to higher-order functions
+        // reason 1: if the argument is a function and the parameter it is being passed to is also a function type,
         // then we want to pass along the parameter's function parameters to emitFnExp so that the argument will fit the
         // parameter type. This is because TypeScript/Javascript allows passing a function with fewer parameters to an
-        // argument that is a function with more parameters.
+        // argument that is a function with more parameters while Python does not.
         // Key example: callbacks
         // this code compiles in TS:
         //      function onEvent(callback: (a: number) => void) { ... }
@@ -878,10 +909,11 @@ function tsToPy(prog: ts.Program, filename: string): string {
         // yet in python this is not allowed, we have to add more parameters to the anonymous declaration to match like this:
         //      onEvent(function (a: number) { ... })
         // see "callback_num_args.ts" test case for more details.
+        // reason 2: we want to generate good names, which requires context about the function it is being passed to an other parameters
         if ((ts.isFunctionExpression(s) || ts.isArrowFunction(s)) && param) {
             if (param.type && ts.isFunctionTypeNode(param.type)) {
                 let altParams = param.type.parameters
-                let fnNameHint = getName(param.name)
+                let fnNameHint = getNameHint(param, calleeExp, allParams, allArgs)
                 return emitFnExp(s, fnNameHint, altParams)
             }
         }
@@ -892,9 +924,9 @@ function tsToPy(prog: ts.Program, filename: string): string {
         // get callee parameter info
         let calleeType = tc.getTypeAtLocation(s.expression)
         let calleeTypeNode = tc.typeToTypeNode(calleeType)
-        let calleeParameters: ts.ParameterDeclaration[] = []
+        let calleeParameters: ts.NodeArray<ts.ParameterDeclaration> = ts.createNodeArray([])
         if (ts.isFunctionTypeNode(calleeTypeNode)) {
-            calleeParameters = calleeTypeNode.parameters.map(a => a)
+            calleeParameters = calleeTypeNode.parameters
             if (calleeParameters.length < s.arguments.length) {
                 throw Error("TODO: Unsupported call site where caller the arguments outnumber the callee parameters: " + s.getText())
             }
@@ -904,20 +936,14 @@ function tsToPy(prog: ts.Program, filename: string): string {
         let [fn, fnSup] = emitExp(s.expression)
 
         let argExps = s.arguments
-            .map((a, i) => emitArgExp(a, calleeParameters[i]))
+            .map((a, i, allArgs) => emitArgExp(a, calleeParameters[i], s.expression, calleeParameters, allArgs))
         let args = argExps
-            .map(([a, aSup]) => a)
+            .map(([a, _]) => a)
             .join(", ")
         let sup = argExps
-            .map(([a, aSup]) => aSup)
+            .map(([_, aSup]) => aSup)
             .reduce((p, c) => p.concat(c), fnSup)
         return [`${fn}(${args})`, sup]
-    }
-    function nextFnName() {
-        // TODO ensure uniqueness
-        // TODO add sync lock
-        // TODO infer friendly name from context
-        return `function_${nextFnNum++}`
     }
     type ParameterDeclarationExtended = ts.ParameterDeclaration & { altName?: string }
     function mergeParamDecls(primary: ts.NodeArray<ts.ParameterDeclaration>, alt: ts.NodeArray<ts.ParameterDeclaration>): ts.NodeArray<ParameterDeclarationExtended> {
