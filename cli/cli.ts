@@ -4982,11 +4982,12 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                         case "tutorial":
                             {
                                 const tutorialMd = nodeutil.resolveMd(docsRoot, card.url);
+                                const tutorial = pxt.tutorial.parseTutorial(tutorialMd);
                                 const pkgs: pxt.Map<string> = { "blocksprj": "*" };
                                 pxt.Util.jsonMergeFrom(pkgs, pxt.gallery.parsePackagesFromMarkdown(tutorialMd) || {});
                                 addSnippet(<CodeSnippet>{
                                     name: card.name,
-                                    code: pxt.tutorial.bundleTutorialCode(tutorialMd),
+                                    code: tutorial.code,
                                     type: "blocks",
                                     ext: "ts",
                                     packages: pkgs

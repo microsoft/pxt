@@ -17,29 +17,25 @@ type ISettingsProps = pxt.editor.ISettingsProps;
  */
 export function getUsedBlocksAsync(tutorialId: string, tutorialmd: string): Promise<pxt.Map<number>> {
     const code = pxt.tutorial.bundleTutorialCode(tutorialmd);
-    return Promise.resolve()
-        .then(() => {
-            if (code == '') return Promise.resolve({});
-
-            const usedBlocks: pxt.Map<number> = {};
-            return compiler.getBlocksAsync()
-                .then(blocksInfo => compiler.decompileSnippetAsync(code, blocksInfo))
-                .then(blocksXml => {
-                    if (blocksXml) {
-                        const headless = pxt.blocks.loadWorkspaceXml(blocksXml);
-                        const allblocks = headless.getAllBlocks();
-                        for (let bi = 0; bi < allblocks.length; ++bi) {
-                            const blk = allblocks[bi];
-                            usedBlocks[blk.type] = 1;
-                        }
-                        return usedBlocks;
-                    } else {
-                        throw new Error("Empty blocksXml, failed to decompile");
-                    }
-                }).catch(() => {
-                    pxt.log(`Failed to decompile tutorial: ${tutorialId}`);
-                    throw new Error(`Failed to decompile tutorial: ${tutorialId}`);
-                })
+    if (!code) return Promise.resolve({});
+    const usedBlocks: pxt.Map<number> = {};
+    return compiler.getBlocksAsync()
+        .then(blocksInfo => compiler.decompileSnippetAsync(code, blocksInfo))
+        .then(blocksXml => {
+            if (blocksXml) {
+                const headless = pxt.blocks.loadWorkspaceXml(blocksXml);
+                const allblocks = headless.getAllBlocks();
+                for (let bi = 0; bi < allblocks.length; ++bi) {
+                    const blk = allblocks[bi];
+                    usedBlocks[blk.type] = 1;
+                }
+                return usedBlocks;
+            } else {
+                throw new Error("Empty blocksXml, failed to decompile");
+            }
+        }).catch(() => {
+            pxt.log(`Failed to decompile tutorial: ${tutorialId}`);
+            throw new Error(`Failed to decompile tutorial: ${tutorialId}`);
         });
 }
 

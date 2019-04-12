@@ -1,6 +1,45 @@
 namespace pxt.tutorial {
+    export function parseTutorial(tutorialmd: string): TutorialInfo {
+        const steps = parseTutorialSteps(tutorialmd);
+        if (!steps)
+            return undefined; // error parsing steps
 
-    export function parseTutorialSteps(tutorialId: string, tutorialmd: string): TutorialStepInfo[] {
+        // collect code and infer editor
+        let editor = pxt.BLOCKS_PROJECT_NAME;
+        const regex = /```(sim|block|blocks|filterblocks|spy|typescript|ts|js|javascript)\s*\n([\s\S]*?)\n```/gmi;
+        let code = '';
+        // Concatenate all blocks in separate code blocks and decompile so we can detect what blocks are used (for the toolbox)
+        tutorialmd
+            .replace(/((?!.)\s)+/g, "\n")
+            .replace(regex, function(m0,m1,m2) {
+            switch(m1) {
+                case "block":
+                case "blocks":
+                case "filterblocks":
+                    editor = pxt.BLOCKS_PROJECT_NAME;
+                    break;
+                case "spy":
+                    editor = pxt.PYTHON_PROJECT_NAME;
+                    break;
+                case "typescript":
+                case "ts":
+                case "javascript":
+                case "js":
+                    editor = pxt.JAVASCRIPT_PROJECT_NAME;
+                    break;
+            }
+            code += "\n { \n " + m2 + "\n } \n";
+            return "";
+        });
+
+        return <pxt.tutorial.TutorialInfo>{
+            editor,
+            steps: parseTutorialSteps(tutorialmd),
+            code
+        };
+    }
+
+    function parseTutorialSteps(tutorialmd: string): TutorialStepInfo[] {
         // Download tutorial markdown
         let steps = tutorialmd.split(/^##[^#].*$/gmi);
         let newAuthoring = true;
@@ -10,8 +49,8 @@ namespace pxt.tutorial {
             newAuthoring = false;
         }
         if (steps[0].indexOf("# Not found") == 0) {
-            pxt.log(`Tutorial not found: ${tutorialId}`);
-            throw new Error(`Tutorial not found: ${tutorialId}`);
+            pxt.debug(`tutorial not found`);
+            return undefined;
         }
         let stepInfo: TutorialStepInfo[] = [];
         tutorialmd.replace(newAuthoring ? /^##[^#](.*)$/gmi : /^###[^#](.*)$/gmi, (f, s) => {
@@ -23,7 +62,8 @@ namespace pxt.tutorial {
             return ""
         });
 
-        if (steps.length < 1) return undefined; // Promise.resolve();
+        if (steps.length < 1) 
+            return undefined; // Promise.resolve();
         steps = steps.slice(1, steps.length); // Remove tutorial title
 
         for (let i = 0; i < steps.length; i++) {
@@ -34,18 +74,5 @@ namespace pxt.tutorial {
             stepInfo[i].hasHint = contentLines.length > 1;
         }
         return stepInfo;
-    }
-
-    export function bundleTutorialCode(tutorialmd: string): string {
-        tutorialmd = tutorialmd.replace(/((?!.)\s)+/g, "\n");
-
-        const regex = /```(sim|block|blocks|filterblocks|spy|typescript)\s*\n([\s\S]*?)\n```/gmi;
-        let code = '';
-        // Concatenate all blocks in separate code blocks and decompile so we can detect what blocks are used (for the toolbox)
-        tutorialmd.replace(regex, function(m0,m1,m2) {
-            code += "\n { \n " + m2 + "\n } \n";
-            return "";
-        });
-        return code;
     }
 }

@@ -2707,14 +2707,18 @@ export class ProjectView
 
         return p.then(md => {
             if (!md)
-                throw new Error("tutorial not found");
-            const tutorialOptions = {
+                throw new Error(lf("Tutorial not found"));
+            const tutorialInfo = pxt.tutorial.parseTutorial(md);
+            if (!tutorialInfo)
+                throw new Error(lf("Invalid tutorial format"));
+
+            const tutorialOptions: pxt.tutorial.TutorialOptions = {
                 tutorial: tutorialId,
                 tutorialName: title,
                 tutorialReportId: reportId,
                 tutorialStep: 0,
                 tutorialReady: true,
-                tutorialStepInfo: pxt.tutorial.parseTutorialSteps(tutorialId, md),
+                tutorialStepInfo: tutorialInfo.steps,
                 tutorialMd: md
             };
             return this.createProjectAsync({
