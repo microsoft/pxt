@@ -324,6 +324,7 @@ declare namespace pxt {
         simGifMaxFrames?: number; // maximum number of frames, default 64
         simGifWidth?: number; // with in pixels for gif frames
         autoWebUSBDownload?: boolean; // automatically prompt user for webusb download
+        qrCode?: boolean; // generate QR code for shared urls
     }
 
     interface SocialOptions {
@@ -332,7 +333,7 @@ declare namespace pxt {
         hashtags?: string;
         related?: string;
         discourse?: string; // URL to the discourse powered forum
-        discourseCategory?: string; 
+        discourseCategory?: string;
     }
 
     interface DocMenuEntry {

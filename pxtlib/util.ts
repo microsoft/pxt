@@ -876,15 +876,6 @@ namespace ts.pxtc.Util {
 
     }
 
-    export function normalizeLanguageCode(code: string): string[] {
-        const langParts = /^(\w{2})-(\w{2}$)/i.exec(code);
-        if (langParts && langParts[1] && langParts[2]) {
-            return [`${langParts[1].toLowerCase()}-${langParts[2].toUpperCase()}`, langParts[1].toLowerCase()];
-        } else {
-            return [code.toLowerCase()];
-        }
-    }
-
     export function isLocaleEnabled(code: string): boolean {
         let [lang, baseLang] = normalizeLanguageCode(code);
         let appTheme = pxt.appTarget.appTheme;
@@ -902,9 +893,14 @@ namespace ts.pxtc.Util {
 
     export function updateLocalizationAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean, force?: boolean): Promise<void> {
         code = normalizeLanguageCode(code)[0];
-        if (code === userLanguage() || (!isLocaleEnabled(code) && !force))
+        if (code === "en-US")
+            code = "en"; // special case for built-in language
+        if (code === userLanguage() || (!isLocaleEnabled(code) && !force)) {
+            pxt.debug(`loc: ${code} (using built-in)`)
             return Promise.resolve();
+        }
 
+        pxt.debug(`loc: ${code}`);
         return downloadTranslationsAsync(targetId, baseUrl, code, pxtBranch, targetBranch, live)
             .then((translations) => {
                 if (translations) {
