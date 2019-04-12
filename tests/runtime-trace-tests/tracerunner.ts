@@ -84,17 +84,17 @@ async function testTsOrPy(tsOrPyFile: string): Promise<void> {
         let pyFile = tsOrPyFile
         recordBaseline(await PY(pyFile))
         // TODO(dazuniga): py2ts doesn't work in unit tests yet, once it does enable it here
-        // let tsFile = await testPy2Ts(pyFile)
-        // await testSts(tsFile)
-        // let pyFile2 = await testTs2Py(tsFile)
+        let tsFile = await testPy2Ts(pyFile)
+        await testSts(tsFile)
+        let pyFile2 = await testTs2Py(tsFile)
     } else {
         let tsFile = tsOrPyFile
         recordBaseline(await TS(tsFile))
         await testSts(tsFile)
         let pyFile = await testTs2Py(tsFile)
         // TODO(dazuniga): py2ts doesn't work in unit tests yet, once it does enable it here
-        // let tsfile2 = await testPy2Ts(pyFile)
-        // await testSts(tsfile2)
+        let tsfile2 = await testPy2Ts(pyFile)
+        await testSts(tsfile2)
     }
 
     return;
@@ -281,6 +281,7 @@ console.log = function(s: string): void {
 // end prelude
     `
     // TODO(dz): why is this necessary? This doesn't seem right..
+    // without this pause(), a lot of the console output doesn't appear
     const postlude = `
 // start postlude
 pause(300);

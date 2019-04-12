@@ -50,42 +50,11 @@ export function replaceFileExtension(file: string, extension: string) {
     return file && file.substr(0, file.length - path.extname(file).length) + extension;
 }
 
-// TODO merge into testHost?
-class CompileHost extends TestHost {
-    private fileText: string;
-    static langTestText: string;
-
-    constructor(mainStr?: string, dependency?: string) {
-        super("test-pkg", "", dependency ? [dependency] : [], true);
-        this.fileText = mainStr || "// no main function provided"
-    }
-
-    readFile(module: pxt.Package, filename: string): string {
-        if (module.id === "this") {
-            if (filename === "pxt.json") {
-                return JSON.stringify({
-                    "name": this.name,
-                    "dependencies": { "bare": "file:../bare" },
-                    "description": "",
-                    "files": [
-                        "main.ts",
-                    ]
-                })
-            }
-            else if (filename === "main.ts") {
-                return this.fileText;
-            }
-        }
-
-        return super.readFile(module, filename);
-    }
-}
-
 let cachedOpts: pxt.Map<pxtc.CompileOptions> = {}
 export function getTestCompileOptsAsync(tsMain: string = "// no main", dependency?: string, includeCommon = false): Promise<pxtc.CompileOptions> {
     let cacheKey = pxt.Util.codalHash16(tsMain + dependency)
     if (!cachedOpts[cacheKey]) {
-        const pkg = new pxt.MainPackage(new TestHost("test-pkg", tsMain, dependency ? [dependency] : [], includeCommon));
+        const pkg = new pxt.MainPackage(new TestHost("test-pkg", { "main.ts": tsMain }, dependency ? [dependency] : [], includeCommon));
 
         const target = pkg.getTargetOptions();
         target.isNative = false;
