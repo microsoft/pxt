@@ -24,7 +24,6 @@ namespace pxt.tutorial {
         });
 
         if (steps.length < 1) return undefined; // Promise.resolve();
-        let options = steps[0];
         steps = steps.slice(1, steps.length); // Remove tutorial title
 
         for (let i = 0; i < steps.length; i++) {
@@ -40,7 +39,7 @@ namespace pxt.tutorial {
     export function bundleTutorialCode(tutorialmd: string): string {
         tutorialmd = tutorialmd.replace(/((?!.)\s)+/g, "\n");
 
-        const regex = /```(sim|block|blocks|filterblocks)\s*\n([\s\S]*?)\n```/gmi;
+        const regex = /```(sim|block|blocks|filterblocks|spy|typescript)\s*\n([\s\S]*?)\n```/gmi;
         let code = '';
         // Concatenate all blocks in separate code blocks and decompile so we can detect what blocks are used (for the toolbox)
         tutorialmd.replace(regex, function(m0,m1,m2) {
