@@ -19,7 +19,94 @@ namespace ts.pxtc {
     }
 
     function vtableToVM(info: ClassInfo, opts: CompileOptions, bin: Binary) {
-        return vtableToAsm(info, opts, bin).replace(/_VT:/, "_VT_:")
+        /*
+        uint16_t numbytes;
+        ValType objectType;
+        uint8_t magic;
+        uint32_t padding;
+        PVoid *ifaceTable;
+        BuiltInType classNo;
+        uint16_t reserved;
+        uint32_t ifaceHashMult;
+        uint32_t padding;
+        PVoid methods[2 or 4];
+        */
+
+        const ifaceInfo = computeHashMultiplier(info.itable.map(e => e.idx))
+        //if (info.itable.length == 0)
+        //    ifaceInfo.mult = 0
+
+        let ptrSz = target.shortPointers ? ".short" : ".word"
+        let s = `
+        .balign ${1 << opts.target.vtableShift}
+${info.id}_VT:
+        .short ${info.allfields.length * 4 + 4}  ; size in bytes
+        .byte ${pxt.ValTypeObject}, ${pxt.VTABLE_MAGIC} ; magic
+        ${ptrSz} ${info.id}_IfaceVT
+        .short ${info.classNo} ; class-id
+        .short 0 ; reserved
+        .word ${ifaceInfo.mult} ; hash-mult
+`;
+
+        let addPtr = (n: string) => {
+            if (n != "0") n += "@fn"
+            s += `        ${ptrSz} ${n}\n`
+        }
+
+        addPtr("pxt::RefRecord_destroy")
+        addPtr("pxt::RefRecord_print")
+        if (target.gc) {
+            addPtr("pxt::RefRecord_scan")
+            addPtr("pxt::RefRecord_gcsize")
+        }
+        let toStr = info.toStringMethod
+        addPtr(toStr ? toStr.vtLabel() : "0")
+
+        for (let m of info.vtable) {
+            addPtr(m.label() + "_nochk")
+        }
+
+        // See https://makecode.microbit.org/15593-01779-41046-40599 for Thumb binary search.
+        s += `
+        .balign ${target.shortPointers ? 2 : 4}
+${info.id}_IfaceVT:
+`
+
+        const descSize = 8
+        const zeroOffset = ifaceInfo.mapping.length * 2
+
+        let descs = ""
+        let offset = zeroOffset
+        let offsets: pxt.Map<number> = {}
+        for (let e of info.itable) {
+            offsets[e.idx + ""] = offset
+            descs += `  .short ${e.idx}, ${e.info} ; ${e.name}\n`
+            descs += `  .word ${e.proc ? e.proc.vtLabel() + "@fn" : e.info}\n`
+            offset += descSize
+            if (e.setProc) {
+                descs += `  .short ${e.idx}, 0 ; set ${e.name}\n`
+                descs += `  .word ${e.setProc.vtLabel()}@fn\n`
+                offset += descSize
+            }
+        }
+
+        descs += "  .word 0, 0 ; the end\n"
+        offset += descSize
+
+        let map = ifaceInfo.mapping
+
+        for (let i = 0; i < map.length; ++i) {
+            bin.itEntries++
+            if (map[i])
+                bin.itFullEntries++
+        }
+
+        // offsets are relative to the position in the array
+        s += "  .short " + U.toArray(map).map((e, i) => (offsets[e + ""] || zeroOffset) - (i * 2)).join(", ") + "\n"
+        s += descs
+
+        s += "\n"
+        return s
     }
 
     // keep in sync with vm.h

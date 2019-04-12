@@ -701,7 +701,7 @@ ${lbl}: ${snippets.obj_header("pxt::number_vt")}
     ]
 
     export const vtLookups = 3
-    function computeHashMultiplier(nums: number[]) {
+    export function computeHashMultiplier(nums: number[]) {
         let shift = 32
         U.assert(U.unique(nums, v => "" + v).length == nums.length, "non unique")
         for (let sz = 2; ; sz = sz << 1) {
