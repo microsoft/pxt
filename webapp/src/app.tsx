@@ -2326,7 +2326,6 @@ export class ProjectView
 
     toggleDebugging() {
         const state = !this.state.debugging;
-        pxt.log("turning debugging mode to " + state);
         this.setState({ debugging: state, tracing: false }, () => {
             this.renderCore()
             if (this.editor) {

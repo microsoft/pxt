@@ -218,26 +218,22 @@ namespace ts.pxtc.decompiler {
         }
     }
 
+    export type NamesSet = pxt.Map<boolean>
     /**
      * Uses the language service to ensure that there are no duplicate variable
      * names in the given file. All variables in Blockly are global, so this is
      * necessary to prevent local variables from colliding.
      */
-    export function buildRenameMap(p: Program, s: SourceFile): RenameMap {
+    export function buildRenameMap(p: Program, s: SourceFile): [RenameMap, NamesSet] {
         let service = ts.createLanguageService(new LSHost(p))
         const allRenames: RenameLocation[] = [];
 
-        collectNameCollisions();
+        let names = collectNameCollisions();
 
+        return [new RenameMap(allRenames), names];
 
-        if (allRenames.length) {
-            return new RenameMap(allRenames);
-        }
-
-        return undefined;
-
-        function collectNameCollisions(): void {
-            const takenNames: pxt.Map<boolean> = {};
+        function collectNameCollisions(): NamesSet {
+            const takenNames: NamesSet = {};
 
             checkChildren(s);
 
@@ -247,7 +243,7 @@ namespace ts.pxtc.decompiler {
                         const name = (child as ts.VariableDeclaration).name.getText();
 
                         if (takenNames[name]) {
-                            const newName = getNewName(name);
+                            const newName = getNewName(name, takenNames);
                             const renames = service.findRenameLocations(s.fileName, (child as ts.VariableDeclaration).name.pos + 1, false, false);
                             if (renames) {
                                 renames.forEach(r => {
@@ -267,31 +263,32 @@ namespace ts.pxtc.decompiler {
                 });
             }
 
-            function getNewName(name: string) {
+            return takenNames
+        }
+    }
 
-                // If the variable is a single lower case letter, try and rename it to a different letter (i.e. i -> j)
-                if (name.length === 1) {
-                    const charCode = name.charCodeAt(0);
-                    if (charCode >= lowerCaseAlphabetStartCode && charCode <= lowerCaseAlphabetEndCode) {
-                        const offset = charCode - lowerCaseAlphabetStartCode;
-                        for (let i = 1; i < 26; i++) {
-                            const newChar = String.fromCharCode(lowerCaseAlphabetStartCode + ((offset + i) % 26));
-                            if (!takenNames[newChar]) {
-                                takenNames[newChar] = true;
-                                return newChar;
-                            }
-                        }
+    export function getNewName(name: string, takenNames: NamesSet) {
+        // If the variable is a single lower case letter, try and rename it to a different letter (i.e. i -> j)
+        if (name.length === 1) {
+            const charCode = name.charCodeAt(0);
+            if (charCode >= lowerCaseAlphabetStartCode && charCode <= lowerCaseAlphabetEndCode) {
+                const offset = charCode - lowerCaseAlphabetStartCode;
+                for (let i = 1; i < 26; i++) {
+                    const newChar = String.fromCharCode(lowerCaseAlphabetStartCode + ((offset + i) % 26));
+                    if (!takenNames[newChar]) {
+                        takenNames[newChar] = true;
+                        return newChar;
                     }
                 }
+            }
+        }
 
-                // For all other names, add a number to the end. Start at 2 because it probably makes more sense for kids
-                for (let i = 2; ; i++) {
-                    const toTest = name + i;
-                    if (!takenNames[toTest]) {
-                        takenNames[toTest] = true;
-                        return toTest;
-                    }
-                }
+        // For all other names, add a number to the end. Start at 2 because it probably makes more sense for kids
+        for (let i = 2; ; i++) {
+            const toTest = name + i;
+            if (!takenNames[toTest]) {
+                takenNames[toTest] = true;
+                return toTest;
             }
         }
     }

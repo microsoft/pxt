@@ -192,6 +192,8 @@ function runPyAsync(pyFile: string): Promise<string> {
     const prelude = `
 from typing import *
 number = Any
+class Enum:
+    pass
 # end prelude
     `;
     let pyStr = `${prelude}\n${pyBody}`
