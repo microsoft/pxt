@@ -14,7 +14,7 @@ namespace ts.pxtc {
 
     export function getDiagnosticString(diagnostic: KsDiagnostic | Diagnostic): string {
         let ksDiagnostic: KsDiagnostic;
-        if ("file" in diagnostic && diagnostic.file != undefined) {
+        if (isTsDiagnostic(diagnostic)) {
             // convert ts.Diagnostic to KsDiagnostic
             let tsDiag = diagnostic as ts.Diagnostic
             const { line, character } = getLineAndCharacterOfPosition(tsDiag.file, tsDiag.start);
@@ -44,6 +44,10 @@ namespace ts.pxtc {
         output += `${category} TS${diagnostic.code}: ${flattenDiagnosticMessageText(diagnostic.messageText, sys.newLine)}${sys.newLine}`;
 
         return output
+    }
+
+    function isTsDiagnostic(a: KsDiagnostic | Diagnostic): a is Diagnostic {
+        return (DiagnosticCategory as any).file != undefined;
     }
 
     export function plainTscCompileDir(dir: string): Program {
