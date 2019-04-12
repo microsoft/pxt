@@ -95,8 +95,15 @@ export function py2tsAsync(f: string): Promise<string> {
     // TODO(dz): this doesn't work yet. Ask dazuniga and/or see dazuniga/py2ts_debug
     // TODO need apiInfo
     const input = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
-    return getTestCompileOptsAsync({ "main.py": input })
+    return getTestCompileOptsAsync({ "main.py": input, "main.ts": "// no main" })
         .then(opts => {
+            opts.target.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME
+            let stsCompRes = pxtc.compile(opts);
+            let apisInfo = pxtc.getApiInfo(opts, stsCompRes.ast, true)
+            if (!apisInfo || !apisInfo.byQName)
+                throw Error("Failed to get apisInfo")
+            opts.apisInfo = apisInfo
+
             opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
 
             let { generated, diagnostics } = pxt.py.py2ts(opts)
@@ -107,7 +114,8 @@ export function py2tsAsync(f: string): Promise<string> {
                 return opts.fileSystem["main.ts"];
             }
             else {
-                return Promise.reject(new Error("Could not convert py to ts " + f + JSON.stringify(diagnostics, null, 4)))
+                let errorStr = diagnostics.map(pxtc.getDiagnosticString).join()
+                return Promise.reject(new Error(`Could not convert py to ts ${f}\n${errorStr}`))
             }
         })
 }
