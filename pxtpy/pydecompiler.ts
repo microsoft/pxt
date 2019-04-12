@@ -59,7 +59,7 @@ function tsToPy(prog: ts.Program, filename: string): string {
     let lhost = new ts.pxtc.LSHost(prog)
     // let ls = ts.createLanguageService(lhost) // TODO
     let file = prog.getSourceFile(filename)
-    let [renameMap, takenNames] = ts.pxtc.decompiler.buildRenameMap(prog, file)
+    let [renameMap, globalNames] = ts.pxtc.decompiler.buildRenameMap(prog, file)
 
     // ts->py 
     return emitFile(file)
@@ -82,20 +82,23 @@ function tsToPy(prog: ts.Program, filename: string): string {
         if (!ts.isIdentifier(name))
             throw Error("Unsupported advanced name format: " + name.getText())
         let outName = name.text;
-        if (renameMap && name.getSourceFile()) {
+        let hasSrc = name.getSourceFile()
+        if (renameMap && hasSrc) {
             const rename = renameMap.getRenameForPosition(name.getStart());
             if (rename) {
                 outName = rename.name;
             }
         }
-        takenNames[outName] = true
         return outName
     }
-    function getNewName(nameHint: string) {
-        if (takenNames[nameHint]) {
-            return pxtc.decompiler.getNewName(nameHint, takenNames)
+    function getNewGlobalName(nameHint: string | ts.Identifier | ts.BindingPattern | ts.PropertyName | ts.EntityName) {
+        // TODO right now this uses a global name set, but really there should be options to allow shadowing
+        if (typeof nameHint !== "string")
+            nameHint = getName(nameHint)
+        if (globalNames[nameHint]) {
+            return pxtc.decompiler.getNewName(nameHint, globalNames)
         } else {
-            takenNames[nameHint] = true
+            globalNames[nameHint] = true
             return nameHint
         }
     }
@@ -702,15 +705,8 @@ function tsToPy(prog: ts.Program, filename: string): string {
         // // TODO translate type
         // return s.getText()
     }
-    function emitParamDecl(s: ts.ParameterDeclaration, inclTypesIfAvail = true): string {
-        let nm: string;
-        if (!(s as any).isUnused)
-            nm = getName(s.name)
-        else {
-            // some parameters are known to be used and these we want to make sure don't collide with any other names
-            // TODO this renaming should ideally happen upstream
-            nm = getNewName(getName(s.name))
-        }
+    function emitParamDecl(s: ParameterDeclarationExtended, inclTypesIfAvail = true): string {
+        let nm = s.altName || getName(s.name)
         let typePart = ""
         if (s.type && inclTypesIfAvail) {
             let typ = emitType(s.type)
@@ -923,17 +919,24 @@ function tsToPy(prog: ts.Program, filename: string): string {
         // TODO infer friendly name from context
         return `function_${nextFnNum++}`
     }
-    type ParameterDeclarationWithUsage = ts.ParameterDeclaration & { isUnused: boolean }
-    function mergeParamDecls(primary: ts.NodeArray<ts.ParameterDeclaration>, alt: ts.NodeArray<ts.ParameterDeclaration>): ts.NodeArray<ParameterDeclarationWithUsage> {
+    type ParameterDeclarationExtended = ts.ParameterDeclaration & { altName?: string }
+    function mergeParamDecls(primary: ts.NodeArray<ts.ParameterDeclaration>, alt: ts.NodeArray<ts.ParameterDeclaration>): ts.NodeArray<ParameterDeclarationExtended> {
         // Note: possible name collisions between primary and alt parameters is handled by marking
         // alt parameters as "unused" so that we can generate them new names without renaming
-        let decls: ParameterDeclarationWithUsage[] = []
+        let decls: ParameterDeclarationExtended[] = []
+        let paramNames: pxt.Map<boolean> = {}
         for (let i = 0; i < Math.max(primary.length, alt.length); i++) {
-            let p: ParameterDeclarationWithUsage;
+            let p: ParameterDeclarationExtended;
             if (primary[i]) {
-                p = Object.assign({ isUnused: false }, primary[i])
+                p = primary[i]
+                paramNames[getName(p.name)] = true
             } else {
-                p = Object.assign({ isUnused: true }, alt[i])
+                p = alt[i]
+                let name = getName(p.name)
+                if (paramNames[name]) {
+                    name = pxtc.decompiler.getNewName(name, paramNames)
+                    p = Object.assign({ altName: name }, alt[i])
+                }
             }
             decls.push(p)
         }
@@ -958,7 +961,7 @@ function tsToPy(prog: ts.Program, filename: string): string {
         }
 
         // otherwise emit a standard "def myFunction(...)" declaration
-        let fnName = s.name ? getName(s.name) : getNewName(nameHint || "my_function")
+        let fnName = s.name ? getName(s.name) : getNewGlobalName(nameHint || "my_function")
         let fnDef = emitFuncDecl(s, fnName, altParams)
 
         return [fnName, fnDef]
