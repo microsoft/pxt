@@ -72,8 +72,7 @@ _start_${name}:
         )
         bin.procs.forEach(p => {
             section(p.label(), 0x20, () => irToVM(ctx, bin, p),
-                [p.label() + "_Lit", p.label() + "_nochk"],
-                p.args.length)
+                [p.label() + "_Lit", p.label() + "_nochk"])
         })
         vmsource += "_code_end:\n\n"
         vmsource += "_helpers_end:\n\n"
@@ -181,6 +180,10 @@ _start_${name}:
             if (bin.procs[0] == proc) {
                 writeRaw(`; main`)
             }
+
+            write(`.short 0, ${proc.args.length}`)
+            write(`.short ${proc.captured.length}, 0`)
+            write(`.word 0, 0`) // space for fn pointer (64 bit)
 
             numLoc = proc.locals.length + currTmps.length
             write(`pushmany ${numLoc} ; incl. ${currTmps.length} tmps`)
