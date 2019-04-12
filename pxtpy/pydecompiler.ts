@@ -875,10 +875,14 @@ function tsToPy(prog: ts.Program, filename: string): string {
             return []
     }
     function getNameHint(param?: ts.ParameterDeclaration, calleeExp?: ts.Expression, allParams?: ts.NodeArray<ts.ParameterDeclaration>, allArgs?: ReadonlyArray<ts.Expression>): string {
+        // get words from the callee
         let calleePart: string = ""
         if (calleeExp)
-            calleePart = getSimpleExpNameParts(calleeExp).join("_")
+            calleePart = getSimpleExpNameParts(calleeExp)
+                .map(pxtc.snakify)
+                .join("_")
 
+        // get words from the previous parameter(s)/arg(s)
         let prevParamPart: string = ""
         if (allParams && allParams.length > 1 && allArgs && allArgs.length > 1) {
             // special case: if first parameter is an enum, use it as part of the hint
@@ -886,15 +890,42 @@ function tsToPy(prog: ts.Program, filename: string): string {
             let firstArg = allArgs[0]
             let firstType = tc.getTypeAtLocation(firstArg)
             if (hasTypeFlag(firstType, ts.TypeFlags.EnumLike)) {
-                prevParamPart = getSimpleExpNameParts(firstArg).join("_")
+                prevParamPart = getSimpleExpNameParts(firstArg)
+                    .map(pxtc.snakify)
+                    .join("_")
             }
         }
 
+        // get words from this parameter/arg
         let paramPart: string = getName(param.name)
 
-        return [calleePart, prevParamPart, paramPart]
+        // the full hint
+        let hint = [calleePart, prevParamPart, paramPart]
             .filter(s => s)
+            .map(pxtc.snakify)
+            .map(s => s.toLowerCase())
             .join("_") || "my_callback"
+
+        // sometimes the full hint is too long so we remove duplicate words
+        // e.g. controller_any_button_on_event_controller_button_event_pressed_callback
+        //   -> controller_any_button_on_event_pressed_callback
+        let allWords = hint.split("_")
+        if (allWords.length > 4) {
+            hint = dedupWords(allWords).join("_")
+        }
+
+        return hint
+        function dedupWords(words: string[]): string[] {
+            let usedWords: pxt.Map<boolean> = {}
+            let out: string[] = []
+            for (let w of words) {
+                if (w in usedWords)
+                    continue
+                usedWords[w] = true
+                out.push(w)
+            }
+            return out
+        }
     }
     function emitArgExp(s: ts.Expression, param?: ts.ParameterDeclaration, calleeExp?: ts.Expression, allParams?: ts.NodeArray<ts.ParameterDeclaration>, allArgs?: ReadonlyArray<ts.Expression>): ExpRes {
         // special case: function arguments to higher-order functions
