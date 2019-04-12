@@ -59,7 +59,7 @@ function tsToPy(prog: ts.Program, filename: string): string {
     let lhost = new ts.pxtc.LSHost(prog)
     // let ls = ts.createLanguageService(lhost) // TODO
     let file = prog.getSourceFile(filename)
-    let renameMap = ts.pxtc.decompiler.buildRenameMap(prog, file)
+    let [renameMap, globalNames] = ts.pxtc.decompiler.buildRenameMap(prog, file)
 
     // ts->py 
     return emitFile(file)
@@ -78,16 +78,29 @@ function tsToPy(prog: ts.Program, filename: string): string {
     function popScope(): Scope {
         return env.shift()
     }
-    function getName(name: ts.Identifier | ts.BindingPattern | ts.PropertyName | ts.EntityName) {
+    function getName(name: ts.Identifier | ts.BindingPattern | ts.PropertyName | ts.EntityName): string {
         if (!ts.isIdentifier(name))
             throw Error("Unsupported advanced name format: " + name.getText())
-        if (renameMap) {
+        let outName = name.text;
+        let hasSrc = name.getSourceFile()
+        if (renameMap && hasSrc) {
             const rename = renameMap.getRenameForPosition(name.getStart());
             if (rename) {
-                return rename.name;
+                outName = rename.name;
             }
         }
-        return name.text;
+        return outName
+    }
+    function getNewGlobalName(nameHint: string | ts.Identifier | ts.BindingPattern | ts.PropertyName | ts.EntityName) {
+        // TODO right now this uses a global name set, but really there should be options to allow shadowing
+        if (typeof nameHint !== "string")
+            nameHint = getName(nameHint)
+        if (globalNames[nameHint]) {
+            return pxtc.decompiler.getNewName(nameHint, globalNames)
+        } else {
+            globalNames[nameHint] = true
+            return nameHint
+        }
     }
     // TODO decide on strategy for tracking variable scope(s)
     // function introVar(name: string, decl: ts.Node): string {
@@ -692,8 +705,8 @@ function tsToPy(prog: ts.Program, filename: string): string {
         // // TODO translate type
         // return s.getText()
     }
-    function emitParamDecl(s: ts.ParameterDeclaration, inclTypesIfAvail = true): string {
-        let nm = getName(s.name)
+    function emitParamDecl(s: ParameterDeclarationExtended, inclTypesIfAvail = true): string {
+        let nm = s.altName || getName(s.name)
         let typePart = ""
         if (s.type && inclTypesIfAvail) {
             let typ = emitType(s.type)
@@ -853,11 +866,79 @@ function tsToPy(prog: ts.Program, filename: string): string {
 
         return [`${left}.${right}`, leftSup];
     }
-    function emitArgExp(s: ts.Expression, param?: ts.ParameterDeclaration): ExpRes {
-        // special case: if the argument is a function and the parameter it is being passed to is also a function type,
+    function getSimpleExpNameParts(s: ts.Expression, propertyNameOnly = false): string[] {
+        if (ts.isPropertyAccessExpression(s)) {
+            if (propertyNameOnly)
+                return [getName(s.name)]
+            else
+                return getSimpleExpNameParts(s.expression).concat([getName(s.name)])
+        }
+        else if (ts.isIdentifier(s))
+            return [getName(s)]
+        else // TODO handle more cases like indexing?
+            return []
+    }
+    function getNameHint(param?: ts.ParameterDeclaration, calleeExp?: ts.Expression, allParams?: ts.NodeArray<ts.ParameterDeclaration>, allArgs?: ReadonlyArray<ts.Expression>): string {
+        // get words from the callee
+        let calleePart: string = ""
+        if (calleeExp)
+            calleePart = getSimpleExpNameParts(calleeExp)
+                .map(pxtc.snakify)
+                .join("_")
+
+        // get words from the previous parameter(s)/arg(s)
+        let enumParamParts: string[] = []
+        if (allParams && allParams.length > 1 && allArgs && allArgs.length > 1) {
+            // special case: if there are enum parameters, use those as part of the hint
+            for (let i = 0; i < allParams.length && i < allArgs.length; i++) {
+                let arg = allArgs[i]
+                let argType = tc.getTypeAtLocation(arg)
+                if (hasTypeFlag(argType, ts.TypeFlags.EnumLike)) {
+                    let argParts = getSimpleExpNameParts(arg, /*propertyNameOnly*/true)
+                        .map(pxtc.snakify)
+                    enumParamParts = enumParamParts.concat(argParts)
+                }
+            }
+        }
+        let otherParamsPart = enumParamParts.join("_")
+
+        // get words from this parameter/arg
+        let paramPart: string = getName(param.name)
+
+        // the full hint
+        let hint = [calleePart, otherParamsPart, paramPart]
+            .filter(s => s)
+            .map(pxtc.snakify)
+            .map(s => s.toLowerCase())
+            .join("_") || "my_callback"
+
+        // sometimes the full hint is too long so we remove duplicate words
+        // e.g. controller_any_button_on_event_controller_button_event_pressed_callback
+        //   -> controller_any_button_on_event_pressed_callback
+        let allWords = hint.split("_")
+        if (allWords.length > 4) {
+            hint = dedupWords(allWords).join("_")
+        }
+
+        return hint
+        function dedupWords(words: string[]): string[] {
+            let usedWords: pxt.Map<boolean> = {}
+            let out: string[] = []
+            for (let w of words) {
+                if (w in usedWords)
+                    continue
+                usedWords[w] = true
+                out.push(w)
+            }
+            return out
+        }
+    }
+    function emitArgExp(s: ts.Expression, param?: ts.ParameterDeclaration, calleeExp?: ts.Expression, allParams?: ts.NodeArray<ts.ParameterDeclaration>, allArgs?: ReadonlyArray<ts.Expression>): ExpRes {
+        // special case: function arguments to higher-order functions
+        // reason 1: if the argument is a function and the parameter it is being passed to is also a function type,
         // then we want to pass along the parameter's function parameters to emitFnExp so that the argument will fit the
         // parameter type. This is because TypeScript/Javascript allows passing a function with fewer parameters to an
-        // argument that is a function with more parameters.
+        // argument that is a function with more parameters while Python does not.
         // Key example: callbacks
         // this code compiles in TS:
         //      function onEvent(callback: (a: number) => void) { ... }
@@ -865,10 +946,12 @@ function tsToPy(prog: ts.Program, filename: string): string {
         // yet in python this is not allowed, we have to add more parameters to the anonymous declaration to match like this:
         //      onEvent(function (a: number) { ... })
         // see "callback_num_args.ts" test case for more details.
+        // reason 2: we want to generate good names, which requires context about the function it is being passed to an other parameters
         if ((ts.isFunctionExpression(s) || ts.isArrowFunction(s)) && param) {
             if (param.type && ts.isFunctionTypeNode(param.type)) {
                 let altParams = param.type.parameters
-                return emitFnExp(s, altParams)
+                let fnNameHint = getNameHint(param, calleeExp, allParams, allArgs)
+                return emitFnExp(s, fnNameHint, altParams)
             }
         }
 
@@ -878,9 +961,9 @@ function tsToPy(prog: ts.Program, filename: string): string {
         // get callee parameter info
         let calleeType = tc.getTypeAtLocation(s.expression)
         let calleeTypeNode = tc.typeToTypeNode(calleeType)
-        let calleeParameters: ts.ParameterDeclaration[] = []
+        let calleeParameters: ts.NodeArray<ts.ParameterDeclaration> = ts.createNodeArray([])
         if (ts.isFunctionTypeNode(calleeTypeNode)) {
-            calleeParameters = calleeTypeNode.parameters.map(a => a)
+            calleeParameters = calleeTypeNode.parameters
             if (calleeParameters.length < s.arguments.length) {
                 throw Error("TODO: Unsupported call site where caller the arguments outnumber the callee parameters: " + s.getText())
             }
@@ -890,33 +973,42 @@ function tsToPy(prog: ts.Program, filename: string): string {
         let [fn, fnSup] = emitExp(s.expression)
 
         let argExps = s.arguments
-            .map((a, i) => emitArgExp(a, calleeParameters[i]))
+            .map((a, i, allArgs) => emitArgExp(a, calleeParameters[i], s.expression, calleeParameters, allArgs))
         let args = argExps
-            .map(([a, aSup]) => a)
+            .map(([a, _]) => a)
             .join(", ")
         let sup = argExps
-            .map(([a, aSup]) => aSup)
+            .map(([_, aSup]) => aSup)
             .reduce((p, c) => p.concat(c), fnSup)
         return [`${fn}(${args})`, sup]
     }
-    function nextFnName() {
-        // TODO ensure uniqueness
-        // TODO add sync lock
-        // TODO infer friendly name from context
-        return `function_${nextFnNum++}`
-    }
-    function mergeParamDecls(primary: ts.NodeArray<ts.ParameterDeclaration>, alt: ts.NodeArray<ts.ParameterDeclaration>): ts.NodeArray<ts.ParameterDeclaration> {
-        // TODO handle name collisions        
-        let decls: ts.ParameterDeclaration[] = []
+    type ParameterDeclarationExtended = ts.ParameterDeclaration & { altName?: string }
+    function mergeParamDecls(primary: ts.NodeArray<ts.ParameterDeclaration>, alt: ts.NodeArray<ts.ParameterDeclaration>): ts.NodeArray<ParameterDeclarationExtended> {
+        // Note: possible name collisions between primary and alt parameters is handled by marking
+        // alt parameters as "unused" so that we can generate them new names without renaming
+        let decls: ParameterDeclarationExtended[] = []
+        let paramNames: pxt.Map<boolean> = {}
         for (let i = 0; i < Math.max(primary.length, alt.length); i++) {
-            decls.push(primary[i] || alt[i])
+            let p: ParameterDeclarationExtended;
+            if (primary[i]) {
+                p = primary[i]
+                paramNames[getName(p.name)] = true
+            } else {
+                p = alt[i]
+                let name = getName(p.name)
+                if (paramNames[name]) {
+                    name = pxtc.decompiler.getNewName(name, paramNames)
+                    p = Object.assign({ altName: name }, alt[i])
+                }
+            }
+            decls.push(p)
         }
         return ts.createNodeArray(decls, false)
     }
-    function emitFnExp(s: ts.FunctionExpression | ts.ArrowFunction, altParams?: ts.NodeArray<ts.ParameterDeclaration>): ExpRes {
+    function emitFnExp(s: ts.FunctionExpression | ts.ArrowFunction, nameHint?: string, altParams?: ts.NodeArray<ts.ParameterDeclaration>): ExpRes {
         // if the anonymous function is simple enough, use a lambda
         if (!ts.isBlock(s.body)) {
-            // TODO this speculation is only safe if emitExp is pure. It's not quite today (e.g. nextFnNumber)
+            // TODO we're speculatively emitting this expression. This speculation is only safe if emitExp is pure, which it's not quite today (e.g. getNewGlobalName)
             let [fnBody, fnSup] = emitExp(s.body as ts.Expression)
             if (fnSup.length === 0) {
                 let paramDefs = altParams ? mergeParamDecls(s.parameters, altParams) : s.parameters
@@ -932,7 +1024,7 @@ function tsToPy(prog: ts.Program, filename: string): string {
         }
 
         // otherwise emit a standard "def myFunction(...)" declaration
-        let fnName = s.name ? getName(s.name) : nextFnName()
+        let fnName = s.name ? getName(s.name) : getNewGlobalName(nameHint || "my_function")
         let fnDef = emitFuncDecl(s, fnName, altParams)
 
         return [fnName, fnDef]
