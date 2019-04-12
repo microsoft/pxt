@@ -945,7 +945,7 @@ function tsToPy(prog: ts.Program, filename: string): string {
     function emitFnExp(s: ts.FunctionExpression | ts.ArrowFunction, nameHint?: string, altParams?: ts.NodeArray<ts.ParameterDeclaration>): ExpRes {
         // if the anonymous function is simple enough, use a lambda
         if (!ts.isBlock(s.body)) {
-            // TODO this speculation is only safe if emitExp is pure. It's not quite today (e.g. nextFnName)
+            // TODO we're speculatively emitting this expression. This speculation is only safe if emitExp is pure, which it's not quite today (e.g. getNewGlobalName)
             let [fnBody, fnSup] = emitExp(s.body as ts.Expression)
             if (fnSup.length === 0) {
                 let paramDefs = altParams ? mergeParamDecls(s.parameters, altParams) : s.parameters
