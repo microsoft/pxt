@@ -2,8 +2,10 @@
 /// <reference path="../../built/pxteditor.d.ts" />
 
 import * as React from "react";
+import * as ReactDOM from "react-dom";
 import * as pkg from "./package";
 import * as core from "./core";
+import * as debug from "./debugger";
 import * as toolboxeditor from "./toolboxeditor"
 import * as compiler from "./compiler"
 import * as sui from "./sui";
@@ -178,6 +180,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     protected foldFieldEditorRanges = true;
     protected activeRangeID: number;
     protected hasFieldEditors = !!(pxt.appTarget.appTheme.monacoFieldEditors && pxt.appTarget.appTheme.monacoFieldEditors.length);
+    protected debuggerToolbox: HTMLDivElement;
+    protected debugVariables: debug.DebuggerVariables;
+    protected potentialBreakpoints: pxtc.Breakpoint[];
 
     hasBlocks() {
         if (!this.currFile) return true
@@ -360,15 +365,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return compiler.decompileAsync(blockFile)
     }
 
-    private handleToolboxRef = (c: toolbox.Toolbox) => {
-        this.toolbox = c;
-    }
-
     display(): JSX.Element {
         return (
             <div id="monacoEditorArea" className="full-abs" style={{ direction: 'ltr' }}>
-                <div className={`monacoToolboxDiv ${this.toolbox && !this.toolbox.state.visible ? 'invisible' : ''}`}>
+                <div className={`monacoToolboxDiv ${(this.toolbox && !this.toolbox.state.visible && !this.parent.state.debugging) ? 'invisible' : ''}`}>
                     <toolbox.Toolbox ref={this.handleToolboxRef} editorname="monaco" parent={this} />
+                    <div id="debuggerToolbox" ref={this.handleDebugToolboxRef}></div>
                 </div>
                 <div id='monacoEditorInner' style={{ float: 'right' }} />
             </div>
@@ -828,6 +830,19 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         //this.editor.getLayoutInfo().glyphMarginLeft = 200;
         this.editor.layout();
 
+        const debugging = !!this.parent.state.debugging;
+        let debuggerToolbox = debugging ? <div>
+            <debug.DebuggerToolbar parent={this.parent} />
+            <debug.DebuggerVariables ref={this.handleDebuggerVariablesRef} parent={this.parent} apisByQName={this.blockInfo.apis.byQName} />
+        </div> : <div />;
+        Util.assert(!!this.debuggerToolbox)
+        if (debugging) {
+            this.toolbox.hide();
+        } else {
+            this.toolbox.show();
+        }
+        ReactDOM.render(debuggerToolbox, document.getElementById('debuggerToolbox'));
+
         if (this.toolbox)
             this.toolbox.setState({
                 loading: false,
@@ -1015,6 +1030,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.forceDiagnosticsUpdate()
     }
 
+    setBreakpointsMap(breakpoints: pxtc.Breakpoint[]): void {
+        if (this.parent.state.debugging) {
+            this.potentialBreakpoints = breakpoints;
+            this.fieldEditors.clearRanges(this.editor);
+        }
+    }
+
     private diagSnapshot: string[];
     private annotationLines: number[];
     private editorViewZones: number[];
@@ -1086,7 +1108,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     protected updateFieldEditors = pxt.Util.debounce(() => {
-        if (!this.hasFieldEditors || pxt.shell.isReadOnly()) return;
+        if (!this.hasFieldEditors || pxt.shell.isReadOnly() || this.parent.state.debugging) return;
         const model = this.editor.getModel();
         this.fieldEditors.clearRanges(this.editor);
 
@@ -1164,6 +1186,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (brk) {
             // center on statement
             this.editor.revealPositionInCenter(position);
+            if (this.parent.state.debugging && this.debugVariables) this.debugVariables.updateVariables(brk.globals);
         }
         return true;
     }
@@ -1171,6 +1194,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     clearHighlightedStatements() {
         if (this.editor && this.highlightDecorations)
             this.editor.deltaDecorations(this.highlightDecorations, []);
+        if (this.parent.state.debugging && this.debugVariables) this.debugVariables.clear();
     }
 
     private partitionBlocks() {
@@ -1778,6 +1802,18 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 isAutoWhitespaceEdit: true
             }], inverseOp => [rangeToSelection(inverseOp[0].range)]);
         });
+    }
+
+    private handleToolboxRef = (c: toolbox.Toolbox) => {
+        this.toolbox = c;
+    }
+
+    private handleDebugToolboxRef = (ref: HTMLDivElement) => {
+        this.debuggerToolbox = ref;
+    }
+
+    private handleDebuggerVariablesRef = (c: debug.DebuggerVariables) => {
+        this.debugVariables = c;
     }
 }
 

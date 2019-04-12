@@ -225,6 +225,47 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
             </tbody>
         </table>;
     }
+
+    updateVariables(globals: pxsim.Variables, filters?: string[]) {
+        if (!globals) {
+            // freeze the ui
+            this.update(true)
+            return;
+        }
+
+        if (filters) {
+            if (!filters.length) {
+                this.clear();
+                return;
+            }
+            else {
+                for (const variable of filters) {
+                    const value = getValueOfVariable(variable);
+                    this.set(variable, value);
+                }
+            }
+        }
+        else {
+            for (const variable of Object.keys(globals)) {
+                    this.set(variable.replace(/___\d+$/, ""), globals[variable]);
+            }
+        }
+
+        this.update();
+
+        function getValueOfVariable(name: string): pxsim.Variables {
+            // Variable names could have spaces.
+            let correctedName = name.replace(/\s/g, '_');
+            for (let k of Object.keys(globals)) {
+                let n = k.replace(/___\d+$/, "");
+                if (correctedName === n) {
+                    let v = globals[k]
+                    return v;
+                }
+            }
+            return undefined;
+        }
+    }
 }
 
 export interface DebuggerToolbarProps extends ISettingsProps {
