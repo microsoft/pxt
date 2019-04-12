@@ -97,6 +97,7 @@ namespace pxt.editor {
         tutorial?: pxt.tutorial.TutorialOptions;
         dependencies?: pxt.Map<string>;
         tsOnly?: boolean;
+        preferredEditor?: string; // preferred editor to open, pxt.BLOCKS_PROJECT_NAME, ...
     }
 
     export interface ExampleImportOptions {

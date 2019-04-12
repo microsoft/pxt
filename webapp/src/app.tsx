@@ -1107,7 +1107,7 @@ export class ProjectView
         if (!header || !header.tutorial || !header.tutorial.tutorialMd) return Promise.resolve();
 
         const t = header.tutorial;
-        return tutorial.getUsedBlocksAsync(t.tutorial, t.tutorialMd)
+        return tutorial.getUsedBlocksAsync(t.tutorialCode)
             .then((usedBlocks) => {
                 let editorState: pxt.editor.EditorState = {
                     searchBar: false
@@ -1663,11 +1663,13 @@ export class ProjectView
             cfg.files = cfg.files.filter(f => f != "main.blocks")
             delete files["main.blocks"]
         }
+        if (options.preferredEditor)
+            cfg.preferredEditor = options.preferredEditor;
         files["pxt.json"] = JSON.stringify(cfg, null, 4) + "\n";
         return workspace.installAsync({
             name: cfg.name,
             meta: {},
-            editor: options.prj.id,
+            editor: options.preferredEditor || options.prj.id,
             pubId: "",
             pubCurrent: false,
             target: pxt.appTarget.id,
@@ -2719,11 +2721,13 @@ export class ProjectView
                 tutorialStep: 0,
                 tutorialReady: true,
                 tutorialStepInfo: tutorialInfo.steps,
-                tutorialMd: md
+                tutorialMd: md,
+                tutorialCode: tutorialInfo.code
             };
             return this.createProjectAsync({
                 name: title,
                 tutorial: tutorialOptions,
+                preferredEditor: tutorialInfo.editor,
                 dependencies
             }).then(() => autoChooseBoard ? this.autoChooseBoardAsync(features) : Promise.resolve());
         })

@@ -15,8 +15,7 @@ type ISettingsProps = pxt.editor.ISettingsProps;
  * We'll run this step when we first start the tutorial to figure out what blocks are used so we can
  * filter the toolbox. 
  */
-export function getUsedBlocksAsync(tutorialId: string, tutorialmd: string): Promise<pxt.Map<number>> {
-    const code = pxt.tutorial.bundleTutorialCode(tutorialmd);
+export function getUsedBlocksAsync(code: string): Promise<pxt.Map<number>> {
     if (!code) return Promise.resolve({});
     const usedBlocks: pxt.Map<number> = {};
     return compiler.getBlocksAsync()
@@ -34,8 +33,8 @@ export function getUsedBlocksAsync(tutorialId: string, tutorialmd: string): Prom
                 throw new Error("Empty blocksXml, failed to decompile");
             }
         }).catch(() => {
-            pxt.log(`Failed to decompile tutorial: ${tutorialId}`);
-            throw new Error(`Failed to decompile tutorial: ${tutorialId}`);
+            pxt.debug(`failed to decompile tutorial`);
+            throw new Error(`Failed to decompile tutorial`);
         });
 }
 

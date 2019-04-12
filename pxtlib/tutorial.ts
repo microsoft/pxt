@@ -5,38 +5,51 @@ namespace pxt.tutorial {
             return undefined; // error parsing steps
 
         // collect code and infer editor
-        let editor = pxt.BLOCKS_PROJECT_NAME;
+        let editor: string = undefined;
         const regex = /```(sim|block|blocks|filterblocks|spy|typescript|ts|js|javascript)\s*\n([\s\S]*?)\n```/gmi;
         let code = '';
         // Concatenate all blocks in separate code blocks and decompile so we can detect what blocks are used (for the toolbox)
         tutorialmd
             .replace(/((?!.)\s)+/g, "\n")
-            .replace(regex, function(m0,m1,m2) {
-            switch(m1) {
-                case "block":
-                case "blocks":
-                case "filterblocks":
-                    editor = pxt.BLOCKS_PROJECT_NAME;
-                    break;
-                case "spy":
-                    editor = pxt.PYTHON_PROJECT_NAME;
-                    break;
-                case "typescript":
-                case "ts":
-                case "javascript":
-                case "js":
-                    editor = pxt.JAVASCRIPT_PROJECT_NAME;
-                    break;
-            }
-            code += "\n { \n " + m2 + "\n } \n";
-            return "";
-        });
+            .replace(regex, function (m0, m1, m2) {
+                switch (m1) {
+                    case "block":
+                    case "blocks":
+                    case "filterblocks":
+                        if (!checkTutorialEditor(pxt.BLOCKS_PROJECT_NAME))
+                            return undefined;
+                        break;
+                    case "spy":
+                        if (!checkTutorialEditor(pxt.PYTHON_PROJECT_NAME))
+                            return undefined;
+                        break;
+                    case "typescript":
+                    case "ts":
+                    case "javascript":
+                    case "js":
+                        if (!checkTutorialEditor(pxt.JAVASCRIPT_PROJECT_NAME))
+                            return undefined;
+                        break;
+                }
+                code += "\n { \n " + m2 + "\n } \n";
+                return "";
+            });
 
         return <pxt.tutorial.TutorialInfo>{
-            editor,
+            editor: editor || pxt.BLOCKS_PROJECT_NAME,
             steps: parseTutorialSteps(tutorialmd),
             code
         };
+
+        function checkTutorialEditor(expected: string) {
+            if (editor && editor != expected) {
+                pxt.debug(`tutorial ambiguous: contains snippets of different types`);
+                return false;
+            } else {
+                editor = expected;
+            }
+            return true;
+        }
     }
 
     function parseTutorialSteps(tutorialmd: string): TutorialStepInfo[] {
@@ -62,7 +75,7 @@ namespace pxt.tutorial {
             return ""
         });
 
-        if (steps.length < 1) 
+        if (steps.length < 1)
             return undefined; // Promise.resolve();
         steps = steps.slice(1, steps.length); // Remove tutorial title
 
