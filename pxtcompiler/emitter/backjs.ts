@@ -89,7 +89,7 @@ namespace ts.pxtc {
             jssource += vtableToJs(info)
         })
         if (bin.res.breakpoints)
-            jssource += `\nsetupDebugger(${bin.res.breakpoints.length})\n`
+            jssource += `\nsetupDebugger(${bin.res.breakpoints.length}, [${bin.globals.filter(c => c.isUserVariable).map(c => `"${c.uniqueName()}"`).join(",")}])\n`
         U.iterMap(bin.hexlits, (k, v) => {
             jssource += `var ${v} = pxsim.BufferMethods.createBufferFromHex("${k}")\n`
         })
