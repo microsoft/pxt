@@ -893,7 +893,7 @@ namespace ts.pxtc.Util {
 
     export function updateLocalizationAsync(targetId: string, baseUrl: string, code: string, pxtBranch: string, targetBranch: string, live?: boolean, force?: boolean): Promise<void> {
         code = normalizeLanguageCode(code)[0];
-        if (code === "en-US") 
+        if (code === "en-US")
             code = "en"; // special case for built-in language
         if (code === userLanguage() || (!isLocaleEnabled(code) && !force)) {
             pxt.debug(`loc: ${code} (using built-in)`)
