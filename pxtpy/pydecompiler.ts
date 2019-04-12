@@ -866,9 +866,13 @@ function tsToPy(prog: ts.Program, filename: string): string {
 
         return [`${left}.${right}`, leftSup];
     }
-    function getSimpleExpNameParts(s: ts.Expression): string[] {
-        if (ts.isPropertyAccessExpression(s))
-            return getSimpleExpNameParts(s.expression).concat([getName(s.name)])
+    function getSimpleExpNameParts(s: ts.Expression, propertyNameOnly = false): string[] {
+        if (ts.isPropertyAccessExpression(s)) {
+            if (propertyNameOnly)
+                return [getName(s.name)]
+            else
+                return getSimpleExpNameParts(s.expression).concat([getName(s.name)])
+        }
         else if (ts.isIdentifier(s))
             return [getName(s)]
         else // TODO handle more cases like indexing?
@@ -883,24 +887,26 @@ function tsToPy(prog: ts.Program, filename: string): string {
                 .join("_")
 
         // get words from the previous parameter(s)/arg(s)
-        let prevParamPart: string = ""
+        let enumParamParts: string[] = []
         if (allParams && allParams.length > 1 && allArgs && allArgs.length > 1) {
-            // special case: if first parameter is an enum, use it as part of the hint
-            // let firstParam = allParams[0]
-            let firstArg = allArgs[0]
-            let firstType = tc.getTypeAtLocation(firstArg)
-            if (hasTypeFlag(firstType, ts.TypeFlags.EnumLike)) {
-                prevParamPart = getSimpleExpNameParts(firstArg)
-                    .map(pxtc.snakify)
-                    .join("_")
+            // special case: if there are enum parameters, use those as part of the hint
+            for (let i = 0; i < allParams.length && i < allArgs.length; i++) {
+                let arg = allArgs[i]
+                let argType = tc.getTypeAtLocation(arg)
+                if (hasTypeFlag(argType, ts.TypeFlags.EnumLike)) {
+                    let argParts = getSimpleExpNameParts(arg, /*propertyNameOnly*/true)
+                        .map(pxtc.snakify)
+                    enumParamParts = enumParamParts.concat(argParts)
+                }
             }
         }
+        let otherParamsPart = enumParamParts.join("_")
 
         // get words from this parameter/arg
         let paramPart: string = getName(param.name)
 
         // the full hint
-        let hint = [calleePart, prevParamPart, paramPart]
+        let hint = [calleePart, otherParamsPart, paramPart]
             .filter(s => s)
             .map(pxtc.snakify)
             .map(s => s.toLowerCase())
