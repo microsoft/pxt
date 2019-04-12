@@ -36,44 +36,42 @@ namespace ts.pxtc {
         //if (info.itable.length == 0)
         //    ifaceInfo.mult = 0
 
-        let ptrSz = target.shortPointers ? ".short" : ".word"
+        const mapping = U.toArray(ifaceInfo.mapping)
+
+        while (mapping.length & 3)
+            mapping.push(0)
+
         let s = `
-        .balign ${1 << opts.target.vtableShift}
-${info.id}_VT:
+${info.id}_VT_start:
         .short ${info.allfields.length * 4 + 4}  ; size in bytes
         .byte ${pxt.ValTypeObject}, ${pxt.VTABLE_MAGIC} ; magic
-        ${ptrSz} ${info.id}_IfaceVT
+        .word ${mapping.length} ; entries in iface hashmap
+        .word ${info.id}_IfaceVT-${info.id}_VT_start, 0
         .short ${info.classNo} ; class-id
         .short 0 ; reserved
         .word ${ifaceInfo.mult} ; hash-mult
+        .word 0,0, 0,0, 0,0, 0,0 ; space for 4 native methods
 `;
 
         let addPtr = (n: string) => {
             if (n != "0") n += "@fn"
-            s += `        ${ptrSz} ${n}\n`
+            s += `        .word ${n}\n`
         }
 
-        addPtr("pxt::RefRecord_destroy")
-        addPtr("pxt::RefRecord_print")
-        if (target.gc) {
-            addPtr("pxt::RefRecord_scan")
-            addPtr("pxt::RefRecord_gcsize")
-        }
         let toStr = info.toStringMethod
         addPtr(toStr ? toStr.vtLabel() : "0")
 
         for (let m of info.vtable) {
-            addPtr(m.label() + "_nochk")
+            addPtr(m.label())
         }
 
-        // See https://makecode.microbit.org/15593-01779-41046-40599 for Thumb binary search.
         s += `
-        .balign ${target.shortPointers ? 2 : 4}
+        .balign 4
 ${info.id}_IfaceVT:
 `
 
-        const descSize = 8
-        const zeroOffset = ifaceInfo.mapping.length * 2
+        const descSize = 1
+        const zeroOffset = mapping.length >> 2
 
         let descs = ""
         let offset = zeroOffset
@@ -93,16 +91,13 @@ ${info.id}_IfaceVT:
         descs += "  .word 0, 0 ; the end\n"
         offset += descSize
 
-        let map = ifaceInfo.mapping
-
-        for (let i = 0; i < map.length; ++i) {
+        for (let i = 0; i < mapping.length; ++i) {
             bin.itEntries++
-            if (map[i])
+            if (mapping[i])
                 bin.itFullEntries++
         }
 
-        // offsets are relative to the position in the array
-        s += "  .short " + U.toArray(map).map((e, i) => (offsets[e + ""] || zeroOffset) - (i * 2)).join(", ") + "\n"
+        s += "  .short " + U.toArray(mapping).map((e, i) => offsets[e + ""] || zeroOffset).join(", ") + "\n"
         s += descs
 
         s += "\n"
@@ -119,6 +114,7 @@ ${info.id}_IfaceVT:
         NumberLiterals = 0x03,   // array of boxed doubles and ints
         ConfigData = 0x04,       // sorted array of pairs of int32s; zero-terminated
         IfaceMemberNames = 0x05, // array of 32 bit offsets, that point to string literals
+        VCallInfos = 0x06,       // array of pairs of offset (32b), method index (32b)
 
         // repetitive sections
         Function = 0x20,
@@ -136,7 +132,9 @@ ${hex.hexPrelude()}
             dblText: [],
             dbls: {},
             opcodeMap: {},
-            opcodes: vm.opcodes.map(o => "pxt::op_" + o.replace(/ .*/, ""))
+            opcodes: vm.opcodes.map(o => "pxt::op_" + o.replace(/ .*/, "")),
+            vcallMap: {},
+            vcallText: [],
         }
 
         ctx.opcodes.unshift(null)
@@ -176,7 +174,7 @@ _start_${name}:
         )
         bin.procs.forEach(p => {
             section(p.label(), SectionType.Function, () => irToVM(ctx, bin, p),
-                [p.label() + "_Lit", p.label() + "_nochk"])
+                [p.label() + "_Lit"])
         })
         vmsource += "_code_end:\n\n"
         vmsource += "_helpers_end:\n\n"
@@ -198,6 +196,7 @@ _start_${name}:
             section(v, SectionType.Literal, () => `.word ${k.length}\n.utf16 ${JSON.stringify(k)}`, [], pxt.BuiltInType.BoxedString)
         })
         section("numberLiterals", SectionType.NumberLiterals, () => ctx.dblText.join("\n"))
+        section("vcallInfo", SectionType.VCallInfos, () => ctx.vcallText.join("\n"))
 
         const cfg = bin.res.configData || []
         section("configData", SectionType.ConfigData, () => cfg.map(d =>
@@ -247,6 +246,8 @@ _start_${name}:
         dbls: pxt.Map<number>
         opcodeMap: pxt.Map<number>;
         opcodes: string[];
+        vcallText: string[];
+        vcallMap: pxt.Map<number>;
     }
 
 
@@ -318,12 +319,7 @@ _start_${name}:
                 }
             }
 
-            // use this funny encoding to often fit the argument in 8 bits
-            let retarg = (numLoc & 0xf) | ((numLoc >> 4) << 8)
-            retarg |= (proc.args.length & 0xf) << 4
-            retarg |= (proc.args.length >> 4) << 16
-
-            write(`ret ${retarg} ; ${numLoc} locals, ${proc.args.length} args`)
+            write(`ret ${proc.args.length}, ${numLoc}`)
         }
 
         function emitJmp(jmp: ir.Stmt) {
@@ -587,30 +583,30 @@ _start_${name}:
             let calledProc = calledProcId.proc
 
             let numPush = 0
+            const args = topExpr.args.slice()
+            const lambdaArg = calledProcId.virtualIndex == -1 ? args.shift() : null
 
-            for (let e of topExpr.args) {
+            for (let e of args) {
                 emitExpr(e)
                 push()
                 numPush++
             }
 
-            let methIdx = -1
-            let fetchAddr = ""
+            let nargs = args.length
 
-            if (calledProcId.ifaceIndex != null) {
-                methIdx = calledProcId.ifaceIndex
-                fetchAddr = "pxt::fetchMethodIface"
+            if (lambdaArg) {
+                emitExpr(lambdaArg)
+                write(`callind ${nargs}`)
+            } else if (calledProcId.ifaceIndex != null) {
+                write(`calliface ${nargs}, ${calledProcId.ifaceIndex}`)
             } else if (calledProcId.virtualIndex != null) {
-                methIdx = calledProcId.virtualIndex + 2
-                fetchAddr = "pxt::fetchMethod"
-            }
-
-            if (fetchAddr) {
-                write(`ldloc ${topExpr.args.length - 1}`)
-                write(`push`)
-                write(`ldint ${methIdx}`)
-                callRT(fetchAddr)
-                write(`callind ${topExpr.args.length}`)
+                if (!calledProcId.classInfo) console.log(calledProcId)
+                let key = calledProcId.classInfo.id + "," + calledProcId.virtualIndex
+                if (!ctx.vcallMap[key]) {
+                    ctx.vcallMap[key] = ctx.vcallText.length
+                    ctx.vcallText.push(`.word ${calledProcId.classInfo.id}_VT, ${calledProcId.virtualIndex}`)
+                }
+                write(`callmeth ${nargs}, ${ctx.vcallMap[key]}`)
             } else {
                 write(`callproc ${calledProc.label()}`)
             }

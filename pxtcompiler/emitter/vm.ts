@@ -16,6 +16,7 @@ namespace ts.pxtc.vm {
             let numArgs: number[] = []
             let labelName: string = null
             let opcode2: number = null
+            let i2: number = null
 
             for (let i = 0; i < this.args.length; ++i) {
                 let formal = this.args[i]
@@ -46,6 +47,10 @@ namespace ts.pxtc.vm {
 
                     v = enc.encode(v)
                     if (v == null) return emitErr("argument out of range or mis-aligned", actual);
+
+                    if (formal == "$i3") {
+                        v = i2 | (v << 6)
+                    }
 
                     if (formal == "$rt") {
                         if (v != 33333 && v > 0x1000) {
@@ -92,12 +97,14 @@ namespace ts.pxtc.vm {
         "ldintneg  $i1",
         "ldspecial $i1",
         "ldnumber  $i1",
-        "ret       $i1",
+        "ret       $i2, $i3",
         "popmany   $i1",
         "pushmany  $i1",
         "ldlit     $i1",
         "callind   $i1",
         "callproc  $i1",
+        "calliface $i2, $i3",
+        "callmeth  $i2, $i3",
         "jmp       $lbl",
         "jmpnz     $lbl",
         "jmpz      $lbl",
@@ -111,6 +118,8 @@ namespace ts.pxtc.vm {
             super();
 
             this.addEnc("$i1", "#0-8388607", v => this.inrange(8388607, v, v))
+            this.addEnc("$i2", "#0-31", v => this.inrange(31, v, v))
+            this.addEnc("$i3", "#0-262143", v => this.inrange(262143, v, v))
             this.addEnc("$lbl", "LABEL", v => this.inminmax(-4194304, 4194303, v, v)).isLabel = true
             this.addEnc("$rt", "SHIM", v => this.inrange(8388607, v, v)).isLabel = true
 
