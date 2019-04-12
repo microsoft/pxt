@@ -51,10 +51,11 @@ export function replaceFileExtension(file: string, extension: string) {
 }
 
 let cachedOpts: pxt.Map<pxtc.CompileOptions> = {}
-export function getTestCompileOptsAsync(tsMain: string = "// no main", dependency?: string, includeCommon = false): Promise<pxtc.CompileOptions> {
-    let cacheKey = pxt.Util.codalHash16(tsMain + dependency)
+export function getTestCompileOptsAsync(packageFiles: pxt.Map<string> = { "main.ts": "// no main" }, dependency?: string, includeCommon = false): Promise<pxtc.CompileOptions> {
+    let cacheStr = Object.keys(packageFiles).concat(pxt.Util.values(packageFiles)).join("~") + dependency
+    let cacheKey = pxt.Util.codalHash16(cacheStr)
     if (!cachedOpts[cacheKey]) {
-        const pkg = new pxt.MainPackage(new TestHost("test-pkg", { "main.ts": tsMain }, dependency ? [dependency] : [], includeCommon));
+        const pkg = new pxt.MainPackage(new TestHost("test-pkg", packageFiles, dependency ? [dependency] : [], includeCommon));
 
         const target = pkg.getTargetOptions();
         target.isNative = false;
@@ -74,7 +75,7 @@ export function getTestCompileOptsAsync(tsMain: string = "// no main", dependenc
 
 export function ts2pyAsync(f: string): Promise<string> {
     const tsMain = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
-    return getTestCompileOptsAsync(tsMain)
+    return getTestCompileOptsAsync({ "main.ts": tsMain })
         .then(opts => {
             let program = pxtc.getTSProgram(opts);
             // TODO: if needed, we can re-use the CallInfo annotations the blockly decompiler can add
@@ -92,12 +93,11 @@ export function ts2pyAsync(f: string): Promise<string> {
 
 export function py2tsAsync(f: string): Promise<string> {
     // TODO(dz): this doesn't work yet. Ask dazuniga and/or see dazuniga/py2ts_debug
-    return getTestCompileOptsAsync()
+    // TODO need apiInfo
+    const input = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
+    return getTestCompileOptsAsync({ "main.py": input })
         .then(opts => {
             opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
-            const input = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
-            let pyFile = "main.py";
-            opts.fileSystem[pyFile] = input;
 
             let { generated, diagnostics } = pxt.py.py2ts(opts)
 
@@ -113,7 +113,7 @@ export function py2tsAsync(f: string): Promise<string> {
 }
 
 export function stsAsync(tsMain: string): Promise<pxtc.CompileResult> {
-    return getTestCompileOptsAsync(tsMain, "bare")
+    return getTestCompileOptsAsync({ "main.ts": tsMain }, "bare")
         .then(opts => {
             const compiled = pxtc.compile(opts);
             if (compiled.success) {
