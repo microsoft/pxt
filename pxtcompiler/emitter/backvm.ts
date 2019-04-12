@@ -22,6 +22,23 @@ namespace ts.pxtc {
         return vtableToAsm(info, opts, bin).replace(/_VT:/, "_VT_:")
     }
 
+    // keep in sync with vm.h
+    enum SectionType {
+        Invalid = 0x00,
+
+        // singular sections
+        InfoHeader = 0x01,       // VMImageHeader
+        OpCodeMap = 0x02,        // \0-terminated names of opcodes and APIs (shims)
+        NumberLiterals = 0x03,   // array of boxed doubles and ints
+        ConfigData = 0x04,       // sorted array of pairs of int32s; zero-terminated
+        IfaceMemberNames = 0x05, // array of 32 bit offsets, that point to string literals
+
+        // repetitive sections
+        Function = 0x20,
+        Literal = 0x21, // aux field contains literal type (string, hex, image, ...)
+        VTable = 0x22,
+    }
+
     /* tslint:disable:no-trailing-whitespace */
     export function vmEmit(bin: Binary, opts: CompileOptions) {
         let vmsource = `; VM start
@@ -40,7 +57,7 @@ ${hex.hexPrelude()}
             ctx.opcodes.push(null)
 
         let address = 0
-        function section(name: string, tp: number, body: () => string, aliases?: string[], aux = 0) {
+        function section(name: string, tp: SectionType, body: () => string, aliases?: string[], aux = 0) {
             vmsource += `
 ; --- ${name}
 .section code
@@ -60,7 +77,7 @@ _start_${name}:
             address++
         }
 
-        section("_info", 0x01, () => `
+        section("_info", SectionType.InfoHeader, () => `
                 ; magic - \\0 added by assembler
                 .string "\\nPXT64\\n"
                 .hex 5471fe2b5e213768 ; magic
@@ -71,32 +88,32 @@ _start_${name}:
 `
         )
         bin.procs.forEach(p => {
-            section(p.label(), 0x20, () => irToVM(ctx, bin, p),
+            section(p.label(), SectionType.Function, () => irToVM(ctx, bin, p),
                 [p.label() + "_Lit", p.label() + "_nochk"])
         })
         vmsource += "_code_end:\n\n"
         vmsource += "_helpers_end:\n\n"
         bin.usedClassInfos.forEach(info => {
-            section(info.id + "_VT", 0x21, () => vtableToVM(info, opts, bin))
+            section(info.id + "_VT", SectionType.VTable, () => vtableToVM(info, opts, bin))
         })
 
         let idx = 0
-        section("ifaceMemberNames", 0x05, () => bin.ifaceMembers.map(d =>
+        section("ifaceMemberNames", SectionType.IfaceMemberNames, () => bin.ifaceMembers.map(d =>
             `    .word ${bin.emitString(d)}  ; ${idx++} .${d}`
         ).join("\n"))
 
         vmsource += "_vtables_end:\n\n"
 
         U.iterMap(bin.hexlits, (k, v) => {
-            section(v, 0x22, () => hexLiteralAsm(k))
+            section(v, SectionType.Literal, () => hexLiteralAsm(k), [], pxt.BuiltInType.BoxedBuffer)
         })
         U.iterMap(bin.strings, (k, v) => {
-            section(v, 0x23, () => `.word ${k.length}\n.utf16 ${JSON.stringify(k)}`)
+            section(v, SectionType.Literal, () => `.word ${k.length}\n.utf16 ${JSON.stringify(k)}`, [], pxt.BuiltInType.BoxedString)
         })
-        section("numberLiterals", 0x03, () => ctx.dblText.join("\n"))
+        section("numberLiterals", SectionType.NumberLiterals, () => ctx.dblText.join("\n"))
 
         const cfg = bin.res.configData || []
-        section("configData", 0x04, () => cfg.map(d =>
+        section("configData", SectionType.ConfigData, () => cfg.map(d =>
             `    .word ${d.key}, ${d.value}  ; ${d.name}=${d.value}`).join("\n")
             + "\n    .word 0, 0")
 
@@ -109,7 +126,7 @@ _start_${name}:
                 pref += "\0"
             opcm += ".hex " + U.toHex(U.stringToUint8Array(pref)) + "\n"
         }
-        section("opcodeMap", 0x02, () => opcm)
+        section("opcodeMap", SectionType.OpCodeMap, () => opcm)
         vmsource += "_literals_end:\n"
 
         vmsource += "\n; The end.\n"
