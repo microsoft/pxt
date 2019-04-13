@@ -497,6 +497,7 @@ declare namespace ts.pxtc {
         blockSetVariable?: string; // show block with variable assigment in toolbox. Set equal to a name to control the var name
         fixedInstances?: boolean;
         fixedInstance?: boolean;
+        expose?: boolean; // expose to VM despite being in pxt:: namespace
         decompileIndirectFixedInstances?: boolean; // Attribute on TYPEs with fixedInstances set to indicate that expressions with that type may be decompiled even if not a fixed instance
         constantShim?: boolean;
         indexedInstanceNS?: string;

@@ -75,13 +75,14 @@ namespace pxt.cpp {
         return null;
     }
 
-    const vmSkipFunctions: pxt.Map<number> = {
-        "pxt::toInt": 1,
-        "pxt::toDouble": 1,
-        "pxt::fromInt": 1,
-        "pxt::fromDouble": 1,
-        "pxt::toFloat": 1,
-        "pxt::fromFloat": 1,
+    // TODO check these
+    const vmKeepFunctions: pxt.Map<number> = {
+        "pxt::mkAction": 1,
+        "pxt::dumpPerfCounters": 1,
+        "pxt::deepSleep": 1,
+        "pxt::getConfig": 1,
+        "pxt::switch_eq": 1,
+        "pxt::instanceOf": 1,
     }
 
     export function nsWriter(nskw = "namespace") {
@@ -718,7 +719,10 @@ namespace pxt.cpp {
                     if (isYotta)
                         pointersInc += "(uint32_t)(void*)::" + fi.name + ",\n"
                     else if (isVM) {
-                        if (!vmSkipFunctions[fi.name]) {
+                        if (U.startsWith(fi.name, "pxt::op_") ||
+                            vmKeepFunctions[fi.name] ||
+                            parsedAttrs.expose ||
+                            !U.startsWith(fi.name, "pxt::")) {
                             const wrap = generateVMWrapper(fi, argTypes)
                             const nargs = fi.argsFmt.length - 1
                             pointersInc += `{ "${fi.name}", (OpFun)${wrap}, ${nargs} },\n`
