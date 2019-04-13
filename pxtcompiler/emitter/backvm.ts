@@ -43,7 +43,7 @@ namespace ts.pxtc {
 
         let s = `
 ${info.id}_VT_start:
-        .short ${info.allfields.length * 4 + 4}  ; size in bytes
+        .short ${info.allfields.length * 8 + 8}  ; size in bytes
         .byte ${pxt.ValTypeObject}, ${pxt.VTABLE_MAGIC} ; magic
         .short ${mapping.length} ; entries in iface hashmap
         .short ${info.lastSubtypeNo || info.classNo} ; last sub class-id
@@ -475,8 +475,9 @@ _start_${name}:
                     break;
                 case EK.FieldAccess:
                     let info = e.data as FieldAccessInfo
-                    // it does the decr itself, no mask
-                    return emitExpr(ir.rtcall("pxt::ldfld", [e.args[0], ir.numlit(info.idx)]))
+                    emitExpr(e.args[0])
+                    write(`ldfld ${info.idx}, ${info.classInfo.id}_VT`)
+                    break
                 case EK.Store:
                     return emitStore(e.args[0], e.args[1])
                 case EK.RuntimeCall:
@@ -536,6 +537,11 @@ _start_${name}:
             let spec = U.lookup(vmSpecOpcodes, name)
             let args = topExpr.args
             let numPush = 0
+
+            if (name == "pxt::mkClassInstance") {
+                write(`newobj ${args[0].data}`)
+                return                
+            }
 
             for (let i = 0; i < args.length; ++i) {
                 emitExpr(args[i])
@@ -616,8 +622,11 @@ _start_${name}:
                     break;
                 case EK.FieldAccess:
                     let info = trg.data as FieldAccessInfo
-                    // it does the decr itself, no mask
-                    emitExpr(ir.rtcall("pxt::stfld", [trg.args[0], ir.numlit(info.idx), src]))
+                    emitExpr(trg.args[0])
+                    push()
+                    emitExpr(src)
+                    write(`stfld ${info.idx}, ${info.classInfo.id}_VT`)
+                    argDepth--
                     break;
                 default: oops();
             }

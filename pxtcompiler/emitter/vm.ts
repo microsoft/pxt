@@ -57,7 +57,7 @@ namespace ts.pxtc.vm {
                     if (formal == "$i2" || formal == "$i4") {
                         i2 = v
                     } else if (formal == "$rt") {
-                        if (v != 33333 && v > 0x1000) {
+                        if (v != 11111 && v > 0x1000) {
                             U.oops("label: " + actual + " v=" + v)
                         }
                         opcode = v | 0x8000
@@ -95,6 +95,7 @@ namespace ts.pxtc.vm {
         "ldloc     $i1",
         "stfld     $i4, $i5",
         "ldfld     $i4, $i5",
+        "newobj    $i1",
         "stcap     $i1",
         "ldcap     $i1",
         "stglb     $i1",

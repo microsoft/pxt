@@ -445,7 +445,7 @@ namespace ts.pxtc.assembler {
                     this.directiveError(lf("unknown label: {0}", name));
                 } else
                     // use a number over 1 byte
-                    v = 33333;
+                    v = 11111;
             }
             return v;
         }
