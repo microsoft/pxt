@@ -18,7 +18,8 @@ type ISettingsProps = pxt.editor.ISettingsProps;
 export function getUsedBlocksAsync(code: string): Promise<pxt.Map<number>> {
     if (!code) return Promise.resolve({});
     const usedBlocks: pxt.Map<number> = {};
-    return compiler.getBlocksAsync()
+    return pxt.BrowserUtils.loadBlocklyAsync()
+        .then(() => compiler.getBlocksAsync())
         .then(blocksInfo => compiler.decompileSnippetAsync(code, blocksInfo))
         .then(blocksXml => {
             if (blocksXml) {
@@ -32,8 +33,8 @@ export function getUsedBlocksAsync(code: string): Promise<pxt.Map<number>> {
             } else {
                 throw new Error("Empty blocksXml, failed to decompile");
             }
-        }).catch(() => {
-            pxt.debug(`failed to decompile tutorial`);
+        }).catch((e) => {
+            pxt.reportException(e);
             throw new Error(`Failed to decompile tutorial`);
         });
 }
