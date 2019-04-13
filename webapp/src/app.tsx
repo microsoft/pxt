@@ -1019,8 +1019,11 @@ export class ProjectView
                 return compiler.newProjectAsync();
             }).then(() => compiler.applyUpgradesAsync())
             .then(() => {
-                let e = this.settings.fileHistory.filter(e => e.id == h.id)[0]
-                let main = pkg.getEditorPkg(pkg.mainPkg)
+                const e = this.settings.fileHistory.filter(e => e.id == h.id)[0]
+                const main = pkg.getEditorPkg(pkg.mainPkg)
+                // override preferred editor if specified
+                if (pkg.mainPkg.config.preferredEditor)
+                    h.editor = pkg.mainPkg.config.preferredEditor
                 let file = main.getMainFile();
                 if (e)
                     file = main.lookupFile(e.name) || file
@@ -1036,8 +1039,6 @@ export class ProjectView
                 if (file.name === "main.ts") {
                     this.shouldTryDecompile = true;
                 }
-                if (pkg.mainPkg.config.preferredEditor)
-                    h.editor = pkg.mainPkg.config.preferredEditor
                 this.setState({
                     home: false,
                     showFiles: h.githubId ? true : false,
@@ -1665,6 +1666,12 @@ export class ProjectView
         }
         if (options.preferredEditor)
             cfg.preferredEditor = options.preferredEditor;
+        // ensure a main.py is ready if this is the desired project
+        if (cfg.preferredEditor == pxt.PYTHON_PROJECT_NAME
+            && cfg.files.indexOf("main.py") < 0) {
+            cfg.files.push("main.py");
+            files["main.py"] = "\n";
+        }
         files["pxt.json"] = JSON.stringify(cfg, null, 4) + "\n";
         return workspace.installAsync({
             name: cfg.name,
