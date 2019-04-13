@@ -2378,7 +2378,13 @@ export class ProjectView
         this.importDialog.show();
     }
 
-    renderBlocksAsync(req: pxt.editor.EditorMessageRenderBlocksRequest): Promise<any> {
+    renderPythonAsync(req: pxt.editor.EditorMessageRenderPythonRequest): Promise<pxt.editor.EditorMessageRenderPythonResponse> {
+        return Promise.resolve({
+            python: req.ts
+        })
+    }
+
+    renderBlocksAsync(req: pxt.editor.EditorMessageRenderBlocksRequest): Promise<pxt.editor.EditorMessageRenderBlocksResponse> {
         return compiler.getBlocksAsync()
             .then(blocksInfo => compiler.decompileSnippetAsync(req.ts, blocksInfo))
             .then(resp => {

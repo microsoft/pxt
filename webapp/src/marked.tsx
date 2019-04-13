@@ -42,6 +42,24 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
     private renderSnippets(content: HTMLElement) {
         const { parent } = this.props;
 
+        pxt.Util.toArray(content.querySelectorAll(`.lang-spy`))
+            .forEach((langBlock: HTMLElement) => {
+                const code = langBlock.textContent;
+                const wrapperDiv = document.createElement('div');
+                pxsim.U.clear(langBlock);
+                langBlock.appendChild(wrapperDiv);
+                wrapperDiv.className = 'ui segment raised loading';
+                parent.renderPythonAsync({
+                    type: "pxteditor",
+                    action: "renderpython", ts: code
+                }).done(resp => {
+                    const preDiv = document.createElement('pre');
+                    preDiv.textContent = resp.python;
+                    wrapperDiv.appendChild(preDiv);
+                    pxsim.U.removeClass(wrapperDiv, 'loading');
+                });
+            });
+
         pxt.Util.toArray(content.querySelectorAll(`.lang-blocks`))
             .forEach((langBlock: HTMLElement) => {
                 // Can't use innerHTML here because it escapes certain characters (e.g. < and >)
@@ -60,9 +78,10 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                     pxsim.U.removeClass(wrapperDiv, 'loading');
                 } else {
                     parent.renderBlocksAsync({
+                        type: "pxteditor",
                         action: "renderblocks", ts: code
-                    } as pxt.editor.EditorMessageRenderBlocksRequest)
-                        .done((resp: any) => {
+                    })
+                        .done(resp => {
                             const svg = resp.svg;
                             if (svg) {
                                 svg.setAttribute('height', `${svg.getAttribute('viewBox').split(' ')[3]}px`);
