@@ -163,37 +163,39 @@ namespace ts.pxtc.vm {
         }
 
         public peephole(ln: assembler.Line, lnNext: assembler.Line, lnNext2: assembler.Line) {
+            let lnop = ln.getOp()
+            let lnop2 = ""
+
+            if (lnNext) {
+                lnop2 = lnNext.getOp()
+                let key = lnop + ";" + lnop2
+                let pc = this.file.peepCounts
+                pc[key] = (pc[key] || 0) + 1
+            }
+
+            if (lnop == "stloc" && lnop2 == "ldloc" && ln.numArgs[0] == lnNext.numArgs[0] && /LAST/.test(lnNext.text)) {
+                console.log(ln.numArgs)
+                ln.update("")
+                lnNext.update("")
+            }
+
             /*
-             let lnop = ln.getOp()
-             let lnop2 = ""
- 
-             if (lnNext) {
-                 lnop2 = lnNext.getOp()
-                 let key = lnop + ";" + lnop2
-                 let pc = this.file.peepCounts
-                 pc[key] = (pc[key] || 0) + 1
-             }
- 
-             if (lnop == "jmp" && ln.numArgs[0] == this.file.baseOffset + lnNext.location) {
-                 // RULE: jmp .somewhere; .somewhere: -> .somewhere:
-                 ln.update("")
-             } else if (lnop == "push" && (
-                 lnop2 == "callproc" || lnop2 == "ldconst" ||
-                 lnop2 == "stringlit" || lnop2 == "ldtmp")) {
-                 ln.update("")
-                 lnNext.update("push_" + lnop2 + " " + lnNext.words[1])
-             } else if (lnop == "push" && (lnop2 == "ldzero" || lnop2 == "ldone")) {
-                 ln.update("")
-                 lnNext.update("push_" + lnop2)
-             } else if (lnop == "ldtmp" && (lnop2 == "incr" || lnop2 == "decr")) {
-                 ln.update("ldtmp_" + lnop2 + " " + ln.words[1])
-                 lnNext.update("")
-             }
-             */
+            if (lnop == "jmp" && ln.numArgs[0] == this.file.baseOffset + lnNext.location) {
+                // RULE: jmp .somewhere; .somewhere: -> .somewhere:
+                ln.update("")
+            } else if (lnop == "push" && (
+                lnop2 == "callproc" || lnop2 == "ldconst" ||
+                lnop2 == "stringlit" || lnop2 == "ldtmp")) {
+                ln.update("")
+                lnNext.update("push_" + lnop2 + " " + lnNext.words[1])
+            } else if (lnop == "push" && (lnop2 == "ldzero" || lnop2 == "ldone")) {
+                ln.update("")
+                lnNext.update("push_" + lnop2)
+            } else if (lnop == "ldtmp" && (lnop2 == "incr" || lnop2 == "decr")) {
+                ln.update("ldtmp_" + lnop2 + " " + ln.words[1])
+                lnNext.update("")
+            }
+            */
         }
-
-
     }
-
-
 }

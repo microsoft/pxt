@@ -434,7 +434,7 @@ _start_${name}:
                         console.log(currTmps, arg)
                         assert(false)
                     }
-                    write(`ldloc ${idx + argDepth}`)
+                    write(`ldloc ${idx + argDepth}` + (arg.currUses == arg.totalUses ? " ; LAST" : ""))
                     clearStack()
                     return
                 case EK.CellRef:
