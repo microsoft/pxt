@@ -20,7 +20,7 @@ export function getUsedBlocksAsync(code: string): Promise<pxt.Map<number>> {
     const usedBlocks: pxt.Map<number> = {};
     return pxt.BrowserUtils.loadBlocklyAsync()
         .then(() => compiler.getBlocksAsync())
-        .then(blocksInfo => compiler.decompileSnippetAsync(code, blocksInfo))
+        .then(blocksInfo => compiler.decompileBlocksSnippetAsync(code, blocksInfo))
         .then(blocksXml => {
             if (blocksXml) {
                 const headless = pxt.blocks.loadWorkspaceXml(blocksXml);
