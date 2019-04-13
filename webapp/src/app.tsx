@@ -910,7 +910,10 @@ export class ProjectView
                             this.setState({
                                 editorState: {
                                     searchBar: false,
-                                    filters: { blocks: tt.toolboxSubset, defaultState: pxt.editor.FilterState.Hidden }
+                                    filters: {
+                                        blocks: tt.toolboxSubset,
+                                        defaultState: pxt.editor.FilterState.Hidden
+                                    }
                                 }
                             });
                             this.editor.filterToolbox(tt.showCategories);
