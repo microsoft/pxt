@@ -174,7 +174,6 @@ namespace ts.pxtc.vm {
             }
 
             if (lnop == "stloc" && lnop2 == "ldloc" && ln.numArgs[0] == lnNext.numArgs[0] && /LAST/.test(lnNext.text)) {
-                console.log(ln.numArgs)
                 ln.update("")
                 lnNext.update("")
             }

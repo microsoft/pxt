@@ -45,8 +45,8 @@ namespace ts.pxtc {
 ${info.id}_VT_start:
         .short ${info.allfields.length * 4 + 4}  ; size in bytes
         .byte ${pxt.ValTypeObject}, ${pxt.VTABLE_MAGIC} ; magic
-        .word ${mapping.length} ; entries in iface hashmap
-        .word ${info.id}_IfaceVT-${info.id}_VT_start, 0
+        .short ${mapping.length} ; entries in iface hashmap
+        .short ${info.lastSubtypeNo || info.classNo} ; last sub class-id
         .short ${info.classNo} ; class-id
         .short 0 ; reserved
         .word ${ifaceInfo.mult} ; hash-mult
@@ -218,14 +218,14 @@ _start_${name}:
         if (res.src)
             bin.writeFile(pxtc.BINARY_ASM, res.src)
 
-        /*
-        let pc = res.thumbFile.peepCounts
-        let keys = Object.keys(pc)
-        keys.sort((a, b) => pc[b] - pc[a])
-        for (let k of keys.slice(0, 50)) {
-            console.log(`${k}  ${pc[k]}`)
+        if (pxt.options.debug) {
+            let pc = res.thumbFile.peepCounts
+            let keys = Object.keys(pc)
+            keys.sort((a, b) => pc[b] - pc[a])
+            for (let k of keys.slice(0, 50)) {
+                console.log(`${k}  ${pc[k]}`)
+            }
         }
-        */
 
         if (res.buf) {
             let binstring = ""
