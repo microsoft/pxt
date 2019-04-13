@@ -27,7 +27,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     functionsDialog: CreateFunctionDialog = null;
 
     showCategories: boolean = true;
-    showSearch: boolean;
     breakpointsByBlock: pxt.Map<number>; // Map block id --> breakpoint ID
     breakpointsSet: number[]; // the IDs of the breakpoints set.
     debuggerToolboxDiv: JSX.Element;
@@ -689,11 +688,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.closeFlyout();
 
                 this.filterToolbox();
-                if (this.parent.state.editorState && this.parent.state.editorState.searchBar != undefined) {
-                    this.showSearch = this.parent.state.editorState.searchBar;
-                } else {
-                    this.showSearch = true;
-                }
                 if (this.parent.state.editorState && this.parent.state.editorState.hasCategories != undefined) {
                     this.showCategories = this.parent.state.editorState.hasCategories;
                 } else {
