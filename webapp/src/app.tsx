@@ -1108,7 +1108,8 @@ export class ProjectView
         if (!header || !header.tutorial || !header.tutorial.tutorialMd) return Promise.resolve();
 
         const t = header.tutorial;
-        return tutorial.getUsedBlocksAsync(t.tutorialCode)
+        return this.loadBlocklyAsync()
+            .then(() => tutorial.getUsedBlocksAsync(t.tutorialCode))
             .then((usedBlocks) => {
                 let editorState: pxt.editor.EditorState = {
                     searchBar: false

@@ -18,8 +18,7 @@ type ISettingsProps = pxt.editor.ISettingsProps;
 export function getUsedBlocksAsync(code: string): Promise<pxt.Map<number>> {
     if (!code) return Promise.resolve({});
     const usedBlocks: pxt.Map<number> = {};
-    return pxt.BrowserUtils.loadBlocklyAsync()
-        .then(() => compiler.getBlocksAsync())
+    return compiler.getBlocksAsync()
         .then(blocksInfo => compiler.decompileBlocksSnippetAsync(code, blocksInfo))
         .then(blocksXml => {
             if (blocksXml) {
