@@ -52,7 +52,9 @@ namespace ts.pxtc.vm {
                         v = i2 | (v << 6)
                     }
 
-                    if (formal == "$rt") {
+                    if (formal == "$i2") {
+                        i2 = v
+                    } else if (formal == "$rt") {
                         if (v != 33333 && v > 0x1000) {
                             U.oops("label: " + actual + " v=" + v)
                         }
@@ -104,7 +106,6 @@ namespace ts.pxtc.vm {
         "callind   $i1",
         "callproc  $i1",
         "calliface $i2, $i3",
-        "callmeth  $i2, $i3",
         "jmp       $lbl",
         "jmpnz     $lbl",
         "jmpz      $lbl",

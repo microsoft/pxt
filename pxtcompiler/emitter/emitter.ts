@@ -2119,7 +2119,7 @@ ${lbl}: .short 0xffff
                 assert(!bin.finalPass || !!baseCtor, "!bin.finalPass || !!baseCtor")
                 let ctorArgs = args.map((x) => emitExpr(x))
                 ctorArgs.unshift(emitThis(funcExpr))
-                return mkProcCallCore(baseCtor, null, ctorArgs)
+                return mkProcCallCore(baseCtor, ctorArgs)
             }
             if (isMethod) {
                 let isSuper = false
@@ -2149,7 +2149,7 @@ ${lbl}: .short 0xffff
                     if (info.decl.kind == SK.MethodDeclaration)
                         markFunctionUsed(info.decl)
                 }
-                if (info.virtualParent && !isSuper && !target.switches.slowMethods) {
+                if (info.virtualParent && !isSuper && !isStackMachine() && !target.switches.slowMethods) {
                     U.assert(!bin.finalPass || info.virtualIndex != null, "!bin.finalPass || info.virtualIndex != null")
                     let r = mkMethodCall(info.parentClassInfo, info.virtualIndex, null, args.map((x) => emitExpr(x)))
                     if (args[0].kind == SK.ThisKeyword)
@@ -2224,11 +2224,11 @@ ${lbl}: .short 0xffff
             return mkMethodCall(null, -1, null, args.map(x => emitExpr(x)))
         }
 
-        function mkProcCallCore(proc: ir.Procedure, vidx: number, args: ir.Expr[], ifaceIdx: number = null) {
+        function mkProcCallCore(proc: ir.Procedure, args: ir.Expr[]) {
             let data: ir.ProcId = {
                 proc: proc,
-                virtualIndex: vidx,
-                ifaceIndex: ifaceIdx
+                virtualIndex: null,
+                ifaceIndex: null
             }
             return ir.op(EK.ProcCall, args, data)
         }
@@ -2251,7 +2251,7 @@ ${lbl}: .short 0xffff
         function mkProcCall(decl: ts.Declaration, args: ir.Expr[]) {
             let proc = lookupProc(decl)
             assert(!!proc || !bin.finalPass, "!!proc || !bin.finalPass")
-            return mkProcCallCore(proc, null, args)
+            return mkProcCallCore(proc, args)
         }
 
         function layOutGlobals() {

@@ -114,7 +114,6 @@ ${info.id}_IfaceVT:
         NumberLiterals = 0x03,   // array of boxed doubles and ints
         ConfigData = 0x04,       // sorted array of pairs of int32s; zero-terminated
         IfaceMemberNames = 0x05, // array of 32 bit offsets, that point to string literals
-        VCallInfos = 0x06,       // array of pairs of offset (32b), method index (32b)
 
         // repetitive sections
         Function = 0x20,
@@ -133,8 +132,6 @@ ${hex.hexPrelude()}
             dbls: {},
             opcodeMap: {},
             opcodes: vm.opcodes.map(o => "pxt::op_" + o.replace(/ .*/, "")),
-            vcallMap: {},
-            vcallText: [],
         }
 
         ctx.opcodes.unshift(null)
@@ -196,7 +193,6 @@ _start_${name}:
             section(v, SectionType.Literal, () => `.word ${k.length}\n.utf16 ${JSON.stringify(k)}`, [], pxt.BuiltInType.BoxedString)
         })
         section("numberLiterals", SectionType.NumberLiterals, () => ctx.dblText.join("\n"))
-        section("vcallInfo", SectionType.VCallInfos, () => ctx.vcallText.join("\n"))
 
         const cfg = bin.res.configData || []
         section("configData", SectionType.ConfigData, () => cfg.map(d =>
@@ -246,8 +242,6 @@ _start_${name}:
         dbls: pxt.Map<number>
         opcodeMap: pxt.Map<number>;
         opcodes: string[];
-        vcallText: string[];
-        vcallMap: pxt.Map<number>;
     }
 
 
@@ -280,7 +274,7 @@ _start_${name}:
         return resText
 
         function emitAll() {
-            writeRaw(`;\n; Proc: ${proc.getName()}\n;`)
+            writeRaw(`;\n; Proc: ${proc.getFullName()}\n;`)
             write(".section code")
             if (bin.procs[0] == proc) {
                 writeRaw(`; main`)
@@ -344,13 +338,13 @@ _start_${name}:
         function cellref(cell: ir.Cell) {
             if (cell.isGlobal()) {
                 U.assert((cell.index & 3) == 0)
-                return (`glb ` + (cell.index >> 2))
+                return (`glb ` + (cell.index >> 2) + ` ; ${cell.getName()}`)
             } else if (cell.iscap)
-                return (`cap ` + cell.index)
+                return (`cap ` + cell.index + ` ; ${cell.getName()}`)
             else if (cell.isarg) {
                 let idx = proc.args.length - cell.index - 1
                 assert(idx >= 0, "arg#" + idx)
-                return (`loc ${argDepth + numLoc + 1 + idx}`)
+                return (`loc ${argDepth + numLoc + 1 + idx} ; ${cell.getName()}`)
             }
             else {
                 let idx = cell.index + currTmps.length
@@ -600,13 +594,7 @@ _start_${name}:
             } else if (calledProcId.ifaceIndex != null) {
                 write(`calliface ${nargs}, ${calledProcId.ifaceIndex}`)
             } else if (calledProcId.virtualIndex != null) {
-                if (!calledProcId.classInfo) console.log(calledProcId)
-                let key = calledProcId.classInfo.id + "," + calledProcId.virtualIndex
-                if (!ctx.vcallMap[key]) {
-                    ctx.vcallMap[key] = ctx.vcallText.length
-                    ctx.vcallText.push(`.word ${calledProcId.classInfo.id}_VT, ${calledProcId.virtualIndex}`)
-                }
-                write(`callmeth ${nargs}, ${ctx.vcallMap[key]}`)
+                U.oops()
             } else {
                 write(`callproc ${calledProc.label()}`)
             }
