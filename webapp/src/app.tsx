@@ -2379,9 +2379,10 @@ export class ProjectView
     }
 
     renderPythonAsync(req: pxt.editor.EditorMessageRenderPythonRequest): Promise<pxt.editor.EditorMessageRenderPythonResponse> {
-        return Promise.resolve({
-            python: req.ts
-        })
+        return compiler.decompilePythonSnippetAsync(req.ts)
+            .then(resp => {
+                return { python: resp };
+            });
     }
 
     renderBlocksAsync(req: pxt.editor.EditorMessageRenderBlocksRequest): Promise<pxt.editor.EditorMessageRenderBlocksResponse> {

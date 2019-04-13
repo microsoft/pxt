@@ -240,6 +240,28 @@ export function pyDecompileAsync(fileName: string): Promise<pxtc.CompileResult> 
         })
 }
 
+export function decompilePythonSnippetAsync(code: string): Promise<string> {
+    const snippetTs = "main.ts";
+    const snippetPy = "main.py";
+    let trg = pkg.mainPkg.getTargetOptions()
+    return pkg.mainPkg.getCompileOptionsAsync(trg)
+        .then(opts => {
+            opts.fileSystem[snippetTs] = code;
+            opts.fileSystem[snippetPy] = "";
+
+            if (opts.sourceFiles.indexOf(snippetTs) === -1) {
+                opts.sourceFiles.push(snippetTs);
+            }
+            if (opts.sourceFiles.indexOf(snippetPy) === -1) {
+                opts.sourceFiles.push(snippetPy);
+            }
+            opts.ast = true;
+            return pyDecompileCoreAsync(opts, snippetTs)
+        }).then(resp => {
+            return resp.outfiles[snippetPy]
+        })
+}
+
 function pyDecompileCoreAsync(opts: pxtc.CompileOptions, fileName: string): Promise<pxtc.CompileResult> {
     return workerOpAsync("pydecompile", { options: opts, fileName: fileName })
 }
