@@ -913,7 +913,7 @@ export class ProjectView
                                     filters: { blocks: tt.toolboxSubset, defaultState: pxt.editor.FilterState.Hidden }
                                 }
                             });
-                            this.editor.filterToolbox(tt.toolboxSubset, tt.showCategories);
+                            this.editor.filterToolbox(tt.showCategories);
                         }
                         let tutorialOptions = this.state.tutorialOptions;
                         tutorialOptions.tutorialReady = true;
@@ -1121,7 +1121,7 @@ export class ProjectView
                     }
                 }
                 this.setState({ editorState: editorState });
-                this.editor.filterToolbox(usedBlocks, true);
+                this.editor.filterToolbox(true);
                 const stepInfo = t.tutorialStepInfo;
                 const fullscreen = stepInfo[0].fullscreen;
                 if (fullscreen) this.showTutorialHint();
