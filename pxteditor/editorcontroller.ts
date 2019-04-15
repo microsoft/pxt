@@ -345,6 +345,14 @@ namespace pxt.editor {
                                             })
                                         });
                                 }
+                                case "renderpython": {
+                                    const rendermsg = data as EditorMessageRenderPythonRequest;
+                                    return Promise.resolve()
+                                        .then(() => projectView.renderPythonAsync(rendermsg))
+                                        .then(r => {
+                                            resp = r.python;
+                                        });
+                                }
                                 case "toggletrace": {
                                     const togglemsg = data as EditorMessageToggleTraceRequest;
                                     return Promise.resolve()

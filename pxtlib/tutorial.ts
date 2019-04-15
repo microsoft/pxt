@@ -90,10 +90,15 @@ namespace pxt.tutorial {
     }
 
     export function highlight(pre: HTMLPreElement): void {
-        const text = pre.textContent;
+        let text = pre.textContent;
         if (!/@highlight/.test(text)) // shortcut, nothing to do
             return;
 
+        // collapse image python/js literales
+        text = text.replace(/img\s*\(\s*"{3}(.|\n)*"{3}\s*\)/g, `""" """`);
+        text = text.replace(/img\s*\(\s*`(.|\n)*`\s*\)/g, "img` `");
+
+        // render lines
         pre.textContent = ""; // clear up and rebuild
         const lines = text.split('\n');
         for (let i = 0; i < lines.length; ++i) {
@@ -104,15 +109,6 @@ namespace pxt.tutorial {
                 if (line !== undefined) {
                     const span = document.createElement("span");
                     span.className = "highlight-line";
-                    if (/\"{3}$/.test(line)) { // python literal
-                        for (; i < lines.length; ++i) {
-                            line += '\n' + lines[i + 1];
-                            if (/\"{3}/.test(lines[i + 1])) {
-                                i++;
-                                break;
-                            }
-                        }
-                    }
                     span.textContent = line;
                     pre.appendChild(span);
                 }
