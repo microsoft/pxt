@@ -226,7 +226,8 @@ namespace pxt.py {
             fillTypes(sym)
         }
 
-        tpBuffer = mapTsType("Buffer")
+        // TODO(dz):
+        // tpBuffer = mapTsType("Buffer")
     }
 
     function mkType(o: py.TypeOptions = {}) {
