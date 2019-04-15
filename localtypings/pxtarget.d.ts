@@ -739,6 +739,12 @@ declare namespace ts.pxtc {
 
 
 declare namespace pxt.tutorial {
+    interface TutorialInfo {
+        editor: string; // preferred editor or blocks by default 
+        steps: TutorialStepInfo[];
+        code: string; // all code
+    }
+
     interface TutorialStepInfo {
         fullscreen?: boolean;
         // no coding
@@ -756,6 +762,7 @@ declare namespace pxt.tutorial {
         tutorialStep?: number; // current tutorial page
         tutorialReady?: boolean; // current tutorial page
         tutorialMd?: string; // full tutorial markdown
+        tutorialCode?: string; // all tutorial code bundled
     }
     interface TutorialCompletionInfo {
         // id of the tutorial
