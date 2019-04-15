@@ -47,8 +47,8 @@ namespace pxt.tutorial {
                 return false;
             } else {
                 editor = expected;
+                return true;
             }
-            return true;
         }
     }
 
