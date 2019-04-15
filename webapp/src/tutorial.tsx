@@ -188,6 +188,7 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
         this.previousTutorialStep = this.previousTutorialStep.bind(this);
         this.nextTutorialStep = this.nextTutorialStep.bind(this);
         this.finishTutorial = this.finishTutorial.bind(this);
+        this.toggleExpanded = this.toggleExpanded.bind(this);
     }
 
     previousTutorialStep() {
@@ -282,6 +283,15 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
         md.MarkedContent.clearBlockSnippetCache();
     }
 
+    toggleExpanded(ev: React.MouseEvent<HTMLDivElement>) {
+        ev.stopPropagation();
+        ev.preventDefault();
+        const options = this.props.parent.state.tutorialOptions;
+        const { tutorialStepExpanded } = options;
+        this.props.parent.setTutorialInstructionsExpanded(!tutorialStepExpanded);
+        return false;
+    }
+
     private hasHint() {
         const options = this.props.parent.state.tutorialOptions;
         const { tutorialReady, tutorialStepInfo, tutorialStep } = options;
@@ -297,10 +307,11 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
 
     renderCore() {
         const options = this.props.parent.state.tutorialOptions;
-        const { tutorialReady, tutorialStepInfo, tutorialStep } = options;
+        const { tutorialReady, tutorialStepInfo, tutorialStep, tutorialStepExpanded } = options;
         if (!tutorialReady) return <div />
-        //const tutorialCardContent = tutorialStepInfo[tutorialStep].headerContentMd;
-        const tutorialCardContent = tutorialStepInfo[tutorialStep].contentMd;
+        const tutorialCardContent = tutorialStepExpanded
+            ? tutorialStepInfo[tutorialStep].contentMd
+            : tutorialStepInfo[tutorialStep].headerContentMd;
         let tutorialAriaLabel = '';
 
         const currentStep = tutorialStep;
@@ -309,22 +320,22 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
         const hasNext = tutorialReady && currentStep != maxSteps - 1;
         const hasFinish = currentStep == maxSteps - 1;
         const hasHint = this.hasHint();
-        const expanded = true;
 
         if (hasHint) {
             tutorialAriaLabel += lf("Press Space or Enter to show a hint.");
         }
 
         const isRtl = pxt.Util.isUserLanguageRtl();
-        return <div id="tutorialcard" className={`ui ${tutorialReady ? 'tutorialReady' : ''}`} >
+        return <div id="tutorialcard" className={`ui ${tutorialStepExpanded ? 'tutorialExpanded' : ''} ${tutorialReady ? 'tutorialReady' : ''}`} >
             <div className='ui buttons'>
                 {hasPrevious ? <sui.Button icon={`${isRtl ? 'right' : 'left'} chevron`} className={`prevbutton left attached green ${!hasPrevious ? 'disabled' : ''}`} text={lf("Back")} textClass="landscape only" ariaLabel={lf("Go to the previous step of the tutorial.")} onClick={this.previousTutorialStep} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                 <div className="ui segment attached tutorialsegment">
                     <div ref="tutorialmessage" className={`tutorialmessage`} role="alert" aria-label={tutorialAriaLabel} tabIndex={hasHint ? 0 : -1}
-                        onClick={this.showHint} onKeyDown={sui.fireClickOnEnter}>
+                        onClick={this.toggleExpanded} onKeyDown={sui.fireClickOnEnter}>
                         <div className="content">
                             <md.MarkedContent markdown={tutorialCardContent} parent={this.props.parent} />
-                            {hasHint && !expanded ? <sui.Button tabIndex={0} text={lf("More...")} onClick={this.showHint} onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                            {hasHint && !tutorialStepExpanded ? <sui.Button tabIndex={0} text={lf("More...")} onClick={this.toggleExpanded} onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                            {tutorialStepExpanded ? <sui.Button tabIndex={0} text={lf("Less...")} onClick={this.toggleExpanded} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                         </div>
                     </div>
                     <sui.Button ref="tutorialok" id="tutorialOkButton" className="large green okbutton showlightbox" text={lf("Ok")} onClick={this.closeLightbox} onKeyDown={sui.fireClickOnEnter} />

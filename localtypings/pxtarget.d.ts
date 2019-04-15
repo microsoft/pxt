@@ -761,6 +761,7 @@ declare namespace pxt.tutorial {
         tutorialStepInfo?: pxt.tutorial.TutorialStepInfo[];
         tutorialStep?: number; // current tutorial page
         tutorialReady?: boolean; // current tutorial page
+        tutorialStepExpanded?: boolean; // display full step in dialog
         tutorialMd?: string; // full tutorial markdown
         tutorialCode?: string; // all tutorial code bundled
     }

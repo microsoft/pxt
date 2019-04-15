@@ -6,16 +6,21 @@
 @import (reference) "semantic.less";
 
 @inlineBlockColor: #D83B01;
-@tutorialCardHeight: 22rem;
 @highlightLineColor: #fcfc90;
+@tutorialCardHeight: 9rem;
+@tutorialCardExpandedHeight: 20rem;
 
 /*******************************
       Tutorial mode
 *******************************/
-
 .tutorial #maineditor .full-abs {
     top: calc(@tutorialCardHeight - 0.5rem);
 }
+
+.tutorial.tutorialExpanded #maineditor .full-abs {
+    top: calc(@tutorialCardExpandedHeight - 0.5rem);
+}
+
 .tutorial #maineditor #monacoEditor {
     top: 0rem;
 }
@@ -41,13 +46,17 @@
     padding-right: 1.3rem !important;
 }
 
-#tutorialcard {
+.tutorial #tutorialcard {
     position: relative;
     z-index: 1;
     height: @tutorialCardHeight;
     width: 100%;
     padding-left: 1rem;
     padding-right: 1rem;
+}
+
+.tutorial.tutorialExpanded #tutorialcard {
+    height: @tutorialCardExpandedHeight;
 }
 
 #root.dimmable.dimmed #tutorialcard.tutorialReady {
@@ -106,33 +115,46 @@ body#docs.tutorial {
     padding: 0.5rem;
 }
 
-#tutorialcard .ui.buttons {
+.tutorial #tutorialcard .ui.buttons {
     width: 100%;
     height: calc(@tutorialCardHeight - 1.5rem);
+}
+
+.tutorial.tutorialExpanded #tutorialcard .ui.buttons {
+    height: calc(@tutorialCardExpandedHeight - 1.5rem);
 }
 
 #tutorialcard .ui.tutorialsegment {
     width: 100%;
 }
 
-#tutorialcard .tutorialmessage .content {
+.tutorial #tutorialcard .tutorialmessage .content {
     width: 100%;
     font-size: 12pt;
     height: calc(@tutorialCardHeight - 2rem);
     overflow: auto;
     cursor:pointer;
 }
+
+.tutorial.tutorialExpanded #tutorialcard .tutorialmessage .content {
+    height: calc(@tutorialCardExpandedHeight - 2rem);
+}
+
 #tutorialcard .tutorialmessage .content p {
     line-height: 30px !important;
     color: @tutorialSegmentColor;
 }
 
-#tutorialcard .tutorialmessage {
+.tutorial #tutorialcard .tutorialmessage {
     width: 100%;
     padding: 0.5rem;
     padding-left: 0.5rem;
     height: calc(@tutorialCardHeight - 1.5rem);
     margin-bottom: 1rem;
+}
+
+.tutorial.tutorialExpanded #tutorialcard .tutorialmessage {
+    height: calc(@tutorialCardExpandedHeight - 1.5rem);
 }
 
 #root.dimmable.dimmed .ui.segment.message {

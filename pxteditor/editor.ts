@@ -194,6 +194,7 @@ namespace pxt.editor {
 
         openHome(): void;
         setTutorialStep(step: number): void;
+        setTutorialInstructionsExpanded(value: boolean): void;
         exitTutorial(): void;
         completeTutorial(): void;
         showTutorialHint(): void;

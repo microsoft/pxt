@@ -877,6 +877,12 @@ export class ProjectView
         else sd.collapse();
     }
 
+    setTutorialInstructionsExpanded(value: boolean): void {
+        const tutorialOptions = this.state.tutorialOptions;
+        tutorialOptions.tutorialStepExpanded = value;
+        this.setState({ tutorialOptions: tutorialOptions });
+    }
+
     setTutorialStep(step: number) {
         // save and typecheck
         this.typecheckNow();
@@ -887,6 +893,7 @@ export class ProjectView
             tc.setPopout();
             let tutorialOptions = this.state.tutorialOptions;
             tutorialOptions.tutorialStep = step;
+            tutorialOptions.tutorialStepExpanded = false;
             this.setState({ tutorialOptions: tutorialOptions });
             const fullscreen = tutorialOptions.tutorialStepInfo[step].fullscreen;
             if (fullscreen) this.showTutorialHint();
@@ -2921,6 +2928,7 @@ export class ProjectView
         const sideDocs = !(sandbox || targetTheme.hideSideDocs);
         const tutorialOptions = this.state.tutorialOptions;
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
+        const inTutorialExpanded = inTutorial && tutorialOptions.tutorialStepExpanded;
         const inDebugMode = this.state.debugging;
         const inHome = this.state.home && !sandbox;
         const inEditor = !!this.state.header && !inHome;
@@ -2953,6 +2961,7 @@ export class ProjectView
             pxt.shell.layoutTypeClass(),
             inHome ? 'inHome' : '',
             inTutorial ? 'tutorial' : '',
+            inTutorialExpanded ? 'tutorialExpanded' : '',
             inDebugMode ? 'debugger' : '',
             pxt.options.light ? 'light' : '',
             pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : '',
