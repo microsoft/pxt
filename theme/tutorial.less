@@ -129,7 +129,7 @@ body#docs.tutorial {
 #tutorialcard .tutorialmessage {
     width: 100%;
     padding: 0.5rem;
-    padding-left: 7rem;
+    padding-left: 4rem;
     height: calc(@tutorialCardHeight - 1.5rem);
     margin-bottom: 1rem;
 }
@@ -174,36 +174,6 @@ i.icon.avatar-image {
         max-height: 50vh;
     }
 }
-
-
-/******************************
-    Hint button
-******************************/
-
-#tutorialcard .ui.button.hintbutton {
-    position: absolute;
-    top: 1rem;
-    left: 4rem;
-    font-size: 0.8rem;
-    border-radius: 0.28571429rem;
-    padding: 0.4rem;
-	background-color: @primaryColor;
-    color: white;
-}
-
-#tutorialcard .ui.button.hintbutton:after{
-	content: ' ';
-	position: absolute;
-	width: 0;
-	height: 0;
-    left: -10px;
-	right: auto;
-    top: 0px;
-	bottom: auto;
-	border: 10px solid;
-	border-color: @primaryColor transparent transparent transparent;
-}
-
 
 /******************************
     Inline Blocks and Buttons
@@ -275,9 +245,6 @@ code.lang-filterblocks {
 /* Mobile */
 @media only screen and (max-width: @largestMobileScreen) {
     #tutorialcard .ui.tutorialsegment .avatar-image {
-        display: none;
-    }
-    #tutorialcard .ui.button.hintbutton {
         display: none;
     }
     #tutorialcard .ui.button.prevbutton {

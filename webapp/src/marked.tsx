@@ -8,6 +8,7 @@ type ISettingsProps = pxt.editor.ISettingsProps;
 
 interface MarkedContentProps extends ISettingsProps {
     markdown: string;
+    className?: string;
 }
 
 interface MarkedContentState {
@@ -153,6 +154,7 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
     }
 
     renderCore() {
-        return <div ref="marked-content" />;
+        const { className } = this.props;
+        return <div ref="marked-content" className={className || ""} />;
     }
 }
