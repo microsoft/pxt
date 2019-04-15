@@ -20,7 +20,7 @@ export function getUsedBlocksAsync(code: string): Promise<pxt.Map<number>> {
     const usedBlocks: pxt.Map<number> = {};
     return compiler.getBlocksAsync()
         .then(blocksInfo => {
-            pxt.blocks.initialize(blocksInfo);
+            pxt.blocks.initializeAndInject(blocksInfo);
             return compiler.decompileBlocksSnippetAsync(code, blocksInfo);
         }).then(blocksXml => {
             if (blocksXml) {
