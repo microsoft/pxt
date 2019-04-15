@@ -88,4 +88,28 @@ namespace pxt.tutorial {
         }
         return stepInfo;
     }
+
+    export function highlight(pre: HTMLPreElement): void {
+        const text = pre.textContent;
+        if (!/@highlight/.test(text)) // shortcut, nothing to do
+            return;
+
+        pre.textContent = ""; // clear up and rebuild
+        const lines = text.split('\n');
+        for (let i = 0; i < lines.length; ++i) {
+            let line = lines[i];
+            if (/@highlight/.test(line)) {
+                // highlight next line
+                line = lines[++i];
+                if (line !== undefined) {
+                    const span = document.createElement("span");
+                    span.className = "highlight-line";
+                    span.textContent = line;
+                    pre.appendChild(span);
+                }
+            } else {
+                pre.appendChild(document.createTextNode(line + '\n'));
+            }
+        }
+    }
 }
