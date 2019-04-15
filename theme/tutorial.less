@@ -6,6 +6,7 @@
 @import (reference) "semantic.less";
 
 @inlineBlockColor: #D83B01;
+@highlightLineColor: #fcfc90;
 
 /*******************************
       Tutorial mode
@@ -232,6 +233,10 @@ code.lang-filterblocks {
 
 span.highlight-line {
     font-weight: bold;
+    white-space: pre-wrap;
+    background: @highlightLineColor;
+    display: block;
+    padding: 0.5rem;
 }
 
 /*******************************

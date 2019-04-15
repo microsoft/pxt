@@ -104,6 +104,15 @@ namespace pxt.tutorial {
                 if (line !== undefined) {
                     const span = document.createElement("span");
                     span.className = "highlight-line";
+                    if (/\"{3}$/.test(line)) { // python literal
+                        for (; i < lines.length; ++i) {
+                            line += '\n' + lines[i + 1];
+                            if (/\"{3}/.test(lines[i + 1])) {
+                                i++;
+                                break;
+                            }
+                        }
+                    }
                     span.textContent = line;
                     pre.appendChild(span);
                 }
