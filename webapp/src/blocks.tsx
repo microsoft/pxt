@@ -27,8 +27,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     functionsDialog: CreateFunctionDialog = null;
 
     showCategories: boolean = true;
-    filters: pxt.editor.ProjectFilters;
-    showSearch: boolean;
     breakpointsByBlock: pxt.Map<number>; // Map block id --> breakpoint ID
     breakpointsSet: number[]; // the IDs of the breakpoints set.
     debuggerToolboxDiv: JSX.Element;
@@ -689,19 +687,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 pxt.blocks.clearWithoutEvents(this.editor);
                 this.closeFlyout();
 
-                if (this.currFile && this.currFile != file) {
-                    this.filterToolbox(null);
-                }
-                if (this.parent.state.editorState && this.parent.state.editorState.filters) {
-                    this.filterToolbox(this.parent.state.editorState.filters);
-                } else {
-                    this.filters = null;
-                }
-                if (this.parent.state.editorState && this.parent.state.editorState.searchBar != undefined) {
-                    this.showSearch = this.parent.state.editorState.searchBar;
-                } else {
-                    this.showSearch = true;
-                }
+                this.filterToolbox();
                 if (this.parent.state.editorState && this.parent.state.editorState.hasCategories != undefined) {
                     this.showCategories = this.parent.state.editorState.hasCategories;
                 } else {
@@ -976,8 +962,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
-    filterToolbox(filters?: pxt.editor.ProjectFilters, showCategories?: boolean) {
-        this.filters = filters;
+    filterToolbox(showCategories?: boolean) {
         this.showCategories = showCategories;
         this.refreshToolbox();
     }

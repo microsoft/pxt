@@ -97,6 +97,7 @@ namespace pxt.editor {
         tutorial?: pxt.tutorial.TutorialOptions;
         dependencies?: pxt.Map<string>;
         tsOnly?: boolean;
+        preferredEditor?: string; // preferred editor to open, pxt.BLOCKS_PROJECT_NAME, ...
     }
 
     export interface ExampleImportOptions {
@@ -237,7 +238,8 @@ namespace pxt.editor {
         loadBlocklyAsync(): Promise<void>;
         isBlocksEditor(): boolean;
         isTextEditor(): boolean;
-        renderBlocksAsync(req: EditorMessageRenderBlocksRequest): Promise<any>;
+        renderBlocksAsync(req: EditorMessageRenderBlocksRequest): Promise<EditorMessageRenderBlocksResponse>;
+        renderPythonAsync(req: EditorMessageRenderPythonRequest): Promise<EditorMessageRenderPythonResponse>;
 
         toggleHighContrast(): void;
         toggleGreenScreen(): void;
