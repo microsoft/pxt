@@ -838,7 +838,6 @@ namespace pxt.blocks {
      */
     export function initialize(blockInfo: pxtc.BlocksInfo) {
         init();
-        initTooltip(blockInfo);
         initJresIcons(blockInfo);
     }
 
@@ -866,6 +865,7 @@ namespace pxt.blocks {
         initDrag();
         initDebugger();
         initComments();
+        initTooltip();
 
         // PXT is in charge of disabling, don't record undo for disabled events
         (Blockly.Block as any).prototype.setDisabled = function (disabled: any) {
@@ -2453,7 +2453,7 @@ namespace pxt.blocks {
         Blockly.Msg.WORKSPACE_COMMENT_DEFAULT_TEXT = '';
     }
 
-    function initTooltip(blockInfo: pxtc.BlocksInfo) {
+    function initTooltip() {
 
         const renderTip = (el: any) => {
             if (el.disabled)
