@@ -1108,7 +1108,8 @@ export class ProjectView
 
     private loadTutorialFiltersAsync(): Promise<void> {
         const header = pkg.mainEditorPkg().header;
-        if (!header || !header.tutorial || !header.tutorial.tutorialMd) return Promise.resolve();
+        if (!header || !header.tutorial || !header.tutorial.tutorialMd)
+            return Promise.resolve();
 
         const t = header.tutorial;
         return this.loadBlocklyAsync()
@@ -2747,12 +2748,11 @@ export class ProjectView
                 tutorial: tutorialOptions,
                 preferredEditor: tutorialInfo.editor,
                 dependencies
-            }).then(() => autoChooseBoard ? this.autoChooseBoardAsync(features) : Promise.resolve());
-        })
-            .then(() => this.loadTutorialFiltersAsync())
-            .catch((e) => {
-                core.handleNetworkError(e);
-            }).finally(() => core.hideLoading("tutorial"));
+            });
+        }).then(() => autoChooseBoard ? this.autoChooseBoardAsync(features) : Promise.resolve()
+        ).catch((e) => {
+            core.handleNetworkError(e);
+        }).finally(() => core.hideLoading("tutorial"));
     }
 
     completeTutorial() {

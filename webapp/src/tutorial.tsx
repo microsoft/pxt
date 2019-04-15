@@ -19,10 +19,16 @@ export function getUsedBlocksAsync(code: string): Promise<pxt.Map<number>> {
     if (!code) return Promise.resolve({});
     const usedBlocks: pxt.Map<number> = {};
     return compiler.getBlocksAsync()
-        .then(blocksInfo => compiler.decompileBlocksSnippetAsync(code, blocksInfo))
-        .then(blocksXml => {
+        .then(blocksInfo => {
+            pxt.blocks.initialize(blocksInfo);
+            return compiler.decompileBlocksSnippetAsync(code, blocksInfo);
+        }).then(blocksXml => {
             if (blocksXml) {
                 const headless = pxt.blocks.loadWorkspaceXml(blocksXml);
+                if (!headless) {
+                    pxt.debug(`used blocks xml failed to load\n${blocksXml}`);
+                    throw new Error("blocksXml failed to load");
+                }
                 const allblocks = headless.getAllBlocks();
                 for (let bi = 0; bi < allblocks.length; ++bi) {
                     const blk = allblocks[bi];
