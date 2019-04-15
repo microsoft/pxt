@@ -298,7 +298,8 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
         const options = this.props.parent.state.tutorialOptions;
         const { tutorialReady, tutorialStepInfo, tutorialStep } = options;
         if (!tutorialReady) return <div />
-        const tutorialCardContent = tutorialStepInfo[tutorialStep].headerContentMd;
+        //const tutorialCardContent = tutorialStepInfo[tutorialStep].headerContentMd;
+        const tutorialCardContent = tutorialStepInfo[tutorialStep].contentMd;
         let tutorialAriaLabel = '';
 
         const currentStep = tutorialStep;
@@ -307,6 +308,7 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
         const hasNext = tutorialReady && currentStep != maxSteps - 1;
         const hasFinish = currentStep == maxSteps - 1;
         const hasHint = this.hasHint();
+        const expanded = true;
 
         if (hasHint) {
             tutorialAriaLabel += lf("Press Space or Enter to show a hint.");
@@ -317,12 +319,11 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
             <div className='ui buttons'>
                 {hasPrevious ? <sui.Button icon={`${isRtl ? 'right' : 'left'} chevron`} className={`prevbutton left attached green ${!hasPrevious ? 'disabled' : ''}`} text={lf("Back")} textClass="landscape only" ariaLabel={lf("Go to the previous step of the tutorial.")} onClick={this.previousTutorialStep} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                 <div className="ui segment attached tutorialsegment">
-                    <div role="button" className='avatar-image' onClick={this.showHint} onKeyDown={sui.fireClickOnEnter}></div>
                     <div ref="tutorialmessage" className={`tutorialmessage`} role="alert" aria-label={tutorialAriaLabel} tabIndex={hasHint ? 0 : -1}
                         onClick={this.showHint} onKeyDown={sui.fireClickOnEnter}>
                         <div className="content">
-                            <md.MarkedContent className="ui segment" markdown={tutorialCardContent} parent={this.props.parent} />
-                            {hasHint ? <sui.Button tabIndex={0} text={lf("More...")} onClick={this.showHint} onKeyDown={sui.fireClickOnEnter} /> : undefined}
+                            <md.MarkedContent markdown={tutorialCardContent} parent={this.props.parent} />
+                            {hasHint && !expanded ? <sui.Button tabIndex={0} text={lf("More...")} onClick={this.showHint} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                         </div>
                     </div>
                     <sui.Button ref="tutorialok" id="tutorialOkButton" className="large green okbutton showlightbox" text={lf("Ok")} onClick={this.closeLightbox} onKeyDown={sui.fireClickOnEnter} />
