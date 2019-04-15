@@ -6,13 +6,14 @@
 @import (reference) "semantic.less";
 
 @inlineBlockColor: #D83B01;
+@tutorialCardHeight: 10rem;
 
 /*******************************
       Tutorial mode
 *******************************/
 
 .tutorial #maineditor .full-abs {
-    top: 5.5rem;
+    top: calc(@tutorialCardHeight - 0.5rem);
 }
 .tutorial #maineditor #monacoEditor {
     top: 0rem;
@@ -20,8 +21,8 @@
 /* Tutorial Mode */
 .menubar .ui.menu .item.tutorial-menuitem {
     background: rgba(27, 28, 29, 0.3) !important;
-    margin: calc(0.45rem);
-    padding: calc(0.45rem);
+    margin: 0.45rem;
+    padding: 0.45rem;
     border-radius: 0.5rem !important;
 }
 .menubar .ui.menu .item.tutorial-menuitem > .step-label {
@@ -42,7 +43,7 @@
 #tutorialcard {
     position: relative;
     z-index: 1;
-    height: 6rem;
+    height: @tutorialCardHeight;
     width: 100%;
     padding-left: 1rem;
     padding-right: 1rem;
@@ -106,7 +107,7 @@ body#docs.tutorial {
 
 #tutorialcard .ui.buttons {
     width: 100%;
-    height: 4.5rem;
+    height: calc(@tutorialCardHeight - 1.5rem);
 }
 
 #tutorialcard .ui.tutorialsegment {
@@ -116,7 +117,7 @@ body#docs.tutorial {
 #tutorialcard .tutorialmessage .content {
     width: 100%;
     font-size: 12pt;
-    height: 4rem;
+    height: calc(@tutorialCardHeight - 2rem);
     overflow: auto;
     cursor:pointer;
 }
@@ -129,7 +130,7 @@ body#docs.tutorial {
     width: 100%;
     padding: 0.5rem;
     padding-left: 7rem;
-    height: 4.5rem;
+    height: calc(@tutorialCardHeight - 1.5rem);
     margin-bottom: 1rem;
 }
 
@@ -181,7 +182,7 @@ i.icon.avatar-image {
 
 #tutorialcard .ui.button.hintbutton {
     position: absolute;
-    bottom: 2rem;
+    top: 1rem;
     left: 4rem;
     font-size: 0.8rem;
     border-radius: 0.28571429rem;
