@@ -1,34 +1,6 @@
 namespace pxt.py {
     // TODO handle translating built-ins to and from python
     /*
-    Naive approach, string translation:
-        console.log <-> print
-        
-    Question: how to handle 'random.randint' ?
-
-    Idea:
-        define alias mappings. E.g.
-            let print = console.log
-        translate program from py 2 ts
-        then once it compiles WITH the aliases
-        do a translation using the type-checked symbols
-        then remove the aliases and recompile
-    Refinement:
-        logically, that's what we want
-        but instead of emitting text and parsing that, what's the end result?
-        feed these type definitions into pxtc
-    Alternative, the aliases could be part of the python side?
-        
-
-    Question: what if we have this TS code:
-        function print(...) { ... }
-        print("foobar")
-
-    You can't translate this to PY...
-    Or you could, but you couldn't compile it to TS
-    */
-
-    /*
         examples:
             ts:
                 let a = [1,2]
