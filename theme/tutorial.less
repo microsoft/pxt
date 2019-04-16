@@ -7,8 +7,8 @@
 
 @inlineBlockColor: #D83B01;
 @highlightLineColor: #fcfc90;
-@tutorialCardHeight: 9rem;
-@tutorialCardExpandedHeight: 20rem;
+@tutorialCardHeight: 11rem;
+@tutorialCardExpandedHeight: 22rem;
 
 /*******************************
       Tutorial mode
@@ -137,13 +137,16 @@ body#docs.tutorial {
 .tutorial #tutorialcard .tutorialmessage .content {
     width: 100%;
     font-size: 12pt;
-    height: calc(@tutorialCardHeight - 2rem);
-    overflow: auto;
+    height: calc(@tutorialCardHeight - 5rem);
+    margin-bottom: 0.5rem;
+    overflow-y: hidden;
+    overflow-x: auto;
     cursor:pointer;
 }
 
 .tutorial.tutorialExpanded #tutorialcard .tutorialmessage .content {
-    height: calc(@tutorialCardExpandedHeight - 2rem);
+    height: calc(@tutorialCardExpandedHeight - 5rem);
+    overflow-y: auto;
 }
 
 #tutorialcard .tutorialmessage .content p {
