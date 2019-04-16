@@ -107,7 +107,12 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                         .done(resp => {
                             const svg = resp.svg;
                             if (svg) {
-                                svg.setAttribute('height', `${svg.getAttribute('viewBox').split(' ')[3]}px`);
+                                const viewBox = svg.getAttribute('viewBox').split(' ').map(parseFloat);
+                                const width = viewBox[2];
+                                let height = viewBox[3];
+                                if (width > 480 || height > 128)
+                                    height = (height * 0.8) | 0;
+                                svg.setAttribute('height', `${height}px`);
                                 // SVG serialization is broken on IE (SVG namespace issue), don't cache on IE
                                 if (!pxt.BrowserUtils.isIE()) MarkedContent.blockSnippetCache[code] = Blockly.Xml.domToText(svg);
                                 wrapperDiv.appendChild(svg);
