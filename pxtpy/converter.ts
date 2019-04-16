@@ -196,7 +196,13 @@ namespace pxt.py {
     }
 
     function lookupApi(name: string) {
-        return U.lookup(internalApis, name) || U.lookup(externalApis, name)
+        if (name == "console.log") {
+            console.log(`### lookupApi console.log. in ext: ${name in externalApis}`)
+
+        }
+        let int = U.lookup(internalApis, name)
+        let ext = U.lookup(externalApis, name)
+        return int || ext
     }
 
     function lookupGlobalSymbol(name: string): SymbolInfo {
@@ -204,26 +210,29 @@ namespace pxt.py {
         return fillTypes(lookupApi(name))
     }
 
-    function initApis(apisInfo: pxtc.ApisInfo) {
+    function initApis(apisInfo: pxtc.ApisInfo, tsShadowFiles: string[]) {
         internalApis = {}
         externalApis = {}
 
+        let tsShadowFilesSet = U.toDictionary(tsShadowFiles, t => t)
         for (let sym of U.values(apisInfo.byQName)) {
             // sym.pkg == null - from main package - skip these
             // TODO(dz): need to be more granular about filtering out pacakges
-            if (sym.pkg == null) {
+            if (sym.fileName in tsShadowFilesSet) {
                 console.log("skipping symbol: ")
                 console.dir(sym)
+                continue
             }
-            if (sym.pkg != null) {
-                let sym2 = sym as SymbolInfo
 
-                if (sym2.extendsTypes)
-                    sym2.extendsTypes = sym2.extendsTypes.filter(e => e != sym2.qName)
+            let sym2 = sym as SymbolInfo
 
-                externalApis[sym2.pyQName] = sym2
-                externalApis[sym2.qName] = sym2
-            }
+            if (sym2.extendsTypes)
+                sym2.extendsTypes = sym2.extendsTypes.filter(e => e != sym2.qName)
+
+            console.log(`Adding ext symbol: ${sym2.pyQName}, ${sym2.qName}`)
+
+            externalApis[sym2.pyQName] = sym2
+            externalApis[sym2.qName] = sym2
         }
 
         // TODO this is for testing mostly; we can do this lazily
@@ -1604,6 +1613,7 @@ namespace pxt.py {
             console.log(`### converter 1597`)
             if (!fun)
                 error(n, 9508, U.lf("can't find called function"))
+            console.log(`### converter 1616`)
 
             let formals = fun ? fun.parameters : null
             let allargs: B.JsNode[] = []
@@ -1770,6 +1780,7 @@ namespace pxt.py {
                 return B.mkText("this")
             }
 
+            // TODO(dz): check override symbols
             let v = lookupSymbol(n.id)
             if (v) {
                 n.symbolInfo = v
@@ -1882,9 +1893,14 @@ namespace pxt.py {
         let pyFiles = opts.sourceFiles.filter(fn => U.endsWith(fn, ".py"))
         if (pyFiles.length == 0)
             return { generated, diagnostics }
+        let pyFilesSet = U.toDictionary(pyFiles, p => p)
+        // find .ts files that are copies of / shadowed by the .py files
+        let tsShadowFiles = opts.sourceFiles
+            .filter(fn => U.endsWith(fn, ".ts"))
+            .filter(fn => fn.substr(0, fn.length - ".ts".length) in pyFilesSet)
 
         lastFile = pyFiles[0] // make sure there's some location info for errors from API init
-        initApis(opts.apisInfo)
+        initApis(opts.apisInfo, tsShadowFiles)
 
         compileOptions = opts
         syntaxInfo = null

@@ -230,6 +230,7 @@ namespace ts.pxtc {
                 qName,
                 namespace: m ? m[1] : "",
                 name: m ? m[2] : qName,
+                fileName: stmt.getSourceFile().fileName,
                 attributes,
                 pkg,
                 extendsTypes,
