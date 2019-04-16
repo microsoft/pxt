@@ -210,6 +210,11 @@ namespace pxt.py {
 
         for (let sym of U.values(apisInfo.byQName)) {
             // sym.pkg == null - from main package - skip these
+            // TODO(dz): need to be more granular about filtering out pacakges
+            if (sym.pkg == null) {
+                console.log("skipping symbol: ")
+                console.dir(sym)
+            }
             if (sym.pkg != null) {
                 let sym2 = sym as SymbolInfo
 
