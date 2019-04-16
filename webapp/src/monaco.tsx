@@ -10,11 +10,13 @@ import * as toolboxeditor from "./toolboxeditor"
 import * as compiler from "./compiler"
 import * as sui from "./sui";
 import * as snippets from "./monacoSnippets"
+import * as simulator from "./simulator";
 import * as toolbox from "./toolbox";
 import * as workspace from "./workspace";
 import { ViewZoneEditorHost, FieldEditorManager } from "./monacoFieldEditorHost";
 
 import Util = pxt.Util;
+import { MonacoBreakpoint } from "./monacoDebugger";
 
 const MIN_EDITOR_FONT_SIZE = 10
 const MAX_EDITOR_FONT_SIZE = 40
@@ -171,8 +173,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     currFile: pkg.File;
     fileType: pxt.editor.FileType = pxt.editor.FileType.Text;
     extraLibs: pxt.Map<monaco.IDisposable>;
-    public nsMap: pxt.Map<toolbox.BlockDefinition[]>;
-    private _loadMonacoPromise: Promise<void>;
+    nsMap: pxt.Map<toolbox.BlockDefinition[]>;
     giveFocusOnLoading: boolean = false;
 
     protected fieldEditors: FieldEditorManager;
@@ -182,7 +183,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     protected hasFieldEditors = !!(pxt.appTarget.appTheme.monacoFieldEditors && pxt.appTarget.appTheme.monacoFieldEditors.length);
     protected debuggerToolbox: HTMLDivElement;
     protected debugVariables: debug.DebuggerVariables;
-    protected potentialBreakpoints: pxtc.Breakpoint[];
+    protected breakpoints: MonacoBreakpoint[];
+
+    private loadMonacoPromise: Promise<void>;
+    private diagSnapshot: string[];
+    private annotationLines: number[];
+    private editorViewZones: number[];
 
     hasBlocks() {
         if (!this.currFile) return true
@@ -368,7 +374,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     display(): JSX.Element {
         return (
             <div id="monacoEditorArea" className="full-abs" style={{ direction: 'ltr' }}>
-                <div className={`monacoToolboxDiv ${(this.toolbox && !this.toolbox.state.visible && !this.parent.state.debugging) ? 'invisible' : ''}`}>
+                <div className={`monacoToolboxDiv ${(this.toolbox && !this.toolbox.state.visible && !this.isDebugging()) ? 'invisible' : ''}`}>
                     <toolbox.Toolbox ref={this.handleToolboxRef} editorname="monaco" parent={this} />
                     <div id="debuggerToolbox" ref={this.handleDebugToolboxRef}></div>
                 </div>
@@ -457,7 +463,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     setHighContrast(hc: boolean) {
-        if (this._loadMonacoPromise) this.defineEditorTheme(hc, true);
+        if (this.loadMonacoPromise) this.defineEditorTheme(hc, true);
     }
 
     beforeCompile() {
@@ -493,9 +499,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     public loadMonacoAsync(): Promise<void> {
-        if (!this._loadMonacoPromise)
-            this._loadMonacoPromise = this.createLoadMonacoPromise();
-        return this._loadMonacoPromise;
+        if (!this.loadMonacoPromise)
+            this.loadMonacoPromise = this.createLoadMonacoPromise();
+        return this.loadMonacoPromise;
     }
 
     private createLoadMonacoPromise(): Promise<void> {
@@ -778,27 +784,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             if (e.target.type !== monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) {
                 return;
             }
-            const line = e.target.position.lineNumber;
-            const model = this.editor.getModel();
-            const decorations = model.getDecorationsInRange(new monaco.Range(line, model.getLineMinColumn(line), line, model.getLineMaxColumn(line)));
-            if (decorations.length) {
-                const lineInfo = this.fieldEditors.getInfoForLine(line);
-                if (lineInfo) {
-                    if (this.feWidget && this.activeRangeID != null && lineInfo.id === this.activeRangeID) {
-                        this.feWidget.close();
-                        this.activeRangeID = null;
-                        return;
-                    }
-                    else {
-                        this.activeRangeID = lineInfo.id;
-                    }
-
-                    const fe = this.fieldEditors.getFieldEditorById(lineInfo.owner);
-                    if (fe) {
-                        this.showFieldEditor(lineInfo.range, new fe.proto(), fe.heightInPixels || 500);
-                    }
-                }
-            }
+            this.handleGutterClick(e);
         });
     }
 
@@ -830,7 +816,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         //this.editor.getLayoutInfo().glyphMarginLeft = 200;
         this.editor.layout();
 
-        const debugging = !!this.parent.state.debugging;
+        const debugging = this.isDebugging();
         let debuggerToolbox = debugging ? <div>
             <debug.DebuggerToolbar parent={this.parent} />
             <debug.DebuggerVariables ref={this.handleDebuggerVariablesRef} parent={this.parent} apisByQName={this.blockInfo.apis.byQName} />
@@ -913,7 +899,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (modeMap.hasOwnProperty(ext)) mode = modeMap[ext]
                 this.fileType = mode
 
-                const readOnly = file.isReadonly() || pxt.shell.isReadOnly();
+                const readOnly = file.isReadonly() || pxt.shell.isReadOnly() || this.isDebugging();
                 this.editor.updateOptions({ readOnly: readOnly });
 
                 let proto = "pkg:" + file.getName();
@@ -938,6 +924,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
                 this.setValue(file.content)
                 this.setDiagnostics(file, this.snapshotState())
+                this.refreshBreakpoints();
 
                 if (this.fileType == pxt.editor.FileType.Markdown)
                     this.parent.setSideMarkdown(file.content);
@@ -1023,6 +1010,37 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.editor.setScrollPosition(pos as monaco.editor.INewScrollPosition)
     }
 
+    setBreakpointsMap(breakpoints: pxtc.Breakpoint[]): void {
+        if (this.isDebugging()) {
+            if (!this.breakpoints || this.breakpoints.length != breakpoints.length) {
+                this.breakpoints = breakpoints.map(loc => new MonacoBreakpoint(loc, this.editor));
+            }
+            else {
+                // The simulator got restarted
+                this.sendBreakpoints();
+            }
+
+            this.fieldEditors.clearRanges(this.editor);
+            if (this.feWidget) {
+                this.feWidget.close();
+            }
+
+            this.editor.updateOptions({
+                readOnly: true
+            });
+        }
+        else {
+
+            this.editor.updateOptions({
+                readOnly: pxt.shell.isReadOnly() || (this.currFile && this.currFile.isReadonly())
+            });
+
+            this.refreshBreakpoints();
+            this.updateFieldEditors();
+            this.breakpoints = undefined;
+        }
+    }
+
     setDiagnostics(file: pkg.File, snapshot: string[]) {
         Util.assert(this.editor != undefined); // Guarded
         Util.assert(this.currFile == file)
@@ -1030,20 +1048,27 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.forceDiagnosticsUpdate()
     }
 
-    setBreakpointsMap(breakpoints: pxtc.Breakpoint[]): void {
-        if (this.parent.state.debugging) {
-            this.potentialBreakpoints = breakpoints;
-            this.fieldEditors.clearRanges(this.editor);
-        }
-    }
-
-    private diagSnapshot: string[];
-    private annotationLines: number[];
-    private editorViewZones: number[];
-
     updateDiagnostics() {
         if (this.needsDiagUpdate())
             this.forceDiagnosticsUpdate();
+    }
+
+    private sendBreakpoints() {
+        if (this.breakpoints) {
+            simulator.driver.setBreakpoints(this.breakpoints.filter(bp => bp.isActive()).map(bp => bp.simulatorID()));
+        }
+    }
+
+    private refreshBreakpoints() {
+        if (this.breakpoints) {
+            if (!this.isDebugging() || !this.currFile || this.currFile.name !== "main.ts") {
+                this.breakpoints.forEach(bp => bp.dispose());
+            }
+            else {
+                this.breakpoints.forEach(bp => bp.updateDecoration());
+                this.sendBreakpoints();
+            }
+        }
     }
 
     private needsDiagUpdate() {
@@ -1108,7 +1133,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     protected updateFieldEditors = pxt.Util.debounce(() => {
-        if (!this.hasFieldEditors || pxt.shell.isReadOnly() || this.parent.state.debugging) return;
+        if (!this.hasFieldEditors || pxt.shell.isReadOnly() || this.isDebugging()) return;
         const model = this.editor.getModel();
         this.fieldEditors.clearRanges(this.editor);
 
@@ -1186,7 +1211,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (brk) {
             // center on statement
             this.editor.revealPositionInCenter(position);
-            if (this.parent.state.debugging && this.debugVariables) this.debugVariables.updateVariables(brk.globals);
+            if (this.isDebugging() && this.debugVariables) {
+                this.debugVariables.updateVariables(brk.globals);
+                this.resize();
+            }
         }
         return true;
     }
@@ -1194,7 +1222,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     clearHighlightedStatements() {
         if (this.editor && this.highlightDecorations)
             this.editor.deltaDecorations(this.highlightDecorations, []);
-        if (this.parent.state.debugging && this.debugVariables) this.debugVariables.clear();
+        if (this.isDebugging() && this.debugVariables) this.debugVariables.clear();
     }
 
     private partitionBlocks() {
@@ -1394,6 +1422,54 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const filters = this.parent.state.editorState ? this.parent.state.editorState.filters : undefined;
         const categoryState = filters ? (filters.namespaces && filters.namespaces[ns] != undefined ? filters.namespaces[ns] : filters.defaultState) : undefined;
         this.createMonacoBlocks(this, monacoFlyout, ns, blocks, color, filters, categoryState);
+    }
+
+    protected handleGutterClick(e: monaco.editor.IEditorMouseEvent) {
+        const line = e.target.position.lineNumber;
+
+        if (this.isDebugging()) {
+            // Set/unset the nearest breakpoint;
+            if (this.breakpoints) {
+                let closestBreakpoint: MonacoBreakpoint;
+                let closestDistance: number;
+
+                this.breakpoints.forEach(bp => {
+                    const distance = bp.distanceFromLine(line);
+                    if (closestDistance === undefined || distance < closestDistance) {
+                        closestBreakpoint = bp;
+                        closestDistance = distance;
+                    }
+                });
+
+                if (closestDistance < 5) {
+                    closestBreakpoint.toggle();
+                    this.sendBreakpoints();
+                }
+            }
+        }
+        else {
+            // Open/close any field editors in range
+            const model = this.editor.getModel();
+            const decorations = model.getDecorationsInRange(new monaco.Range(line, model.getLineMinColumn(line), line, model.getLineMaxColumn(line)));
+            if (decorations.length) {
+                const lineInfo = this.fieldEditors.getInfoForLine(line);
+                if (lineInfo) {
+                    if (this.feWidget && this.activeRangeID != null && lineInfo.id === this.activeRangeID) {
+                        this.feWidget.close();
+                        this.activeRangeID = null;
+                        return;
+                    }
+                    else {
+                        this.activeRangeID = lineInfo.id;
+                    }
+
+                    const fe = this.fieldEditors.getFieldEditorById(lineInfo.owner);
+                    if (fe) {
+                        this.showFieldEditor(lineInfo.range, new fe.proto(), fe.heightInPixels || 500);
+                    }
+                }
+            }
+        }
     }
 
     private showSearchFlyout() {
@@ -1804,6 +1880,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         });
     }
 
+    private isDebugging() {
+        return this.parent.state.debugging;
+    }
+
     private handleToolboxRef = (c: toolbox.Toolbox) => {
         this.toolbox = c;
     }
@@ -1814,6 +1894,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private handleDebuggerVariablesRef = (c: debug.DebuggerVariables) => {
         this.debugVariables = c;
+        this.resize();
     }
 }
 
