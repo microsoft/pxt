@@ -16,9 +16,6 @@ declare namespace console {
     function log(text: string): void;
 }
 
-// export function Foobar(): void { }
-// declare interface Foobar {
-//     toString(): string;
-// }
-
-// TODO(dz)
+//% indexerGet=BufferMethods::getByte indexerSet=BufferMethods::setByte
+declare interface Buffer {
+}

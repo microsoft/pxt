@@ -216,11 +216,8 @@ namespace pxt.py {
 
         let tsShadowFilesSet = U.toDictionary(tsShadowFiles, t => t)
         for (let sym of U.values(apisInfo.byQName)) {
-            // sym.pkg == null - from main package - skip these
-            // TODO(dz): need to be more granular about filtering out pacakges
+            // if the symbol comes from a .ts file that matches one of the .py files we're compiling - skip these
             if (sym.fileName in tsShadowFilesSet) {
-                console.log("skipping symbol: ")
-                console.dir(sym)
                 continue
             }
 
@@ -228,8 +225,6 @@ namespace pxt.py {
 
             if (sym2.extendsTypes)
                 sym2.extendsTypes = sym2.extendsTypes.filter(e => e != sym2.qName)
-
-            console.log(`Adding ext symbol: ${sym2.pyQName}, ${sym2.qName}`)
 
             externalApis[sym2.pyQName] = sym2
             externalApis[sym2.qName] = sym2
@@ -240,8 +235,7 @@ namespace pxt.py {
             fillTypes(sym)
         }
 
-        // TODO(dz):
-        // tpBuffer = mapTsType("Buffer")
+        tpBuffer = mapTsType("Buffer")
     }
 
     function mkType(o: py.TypeOptions = {}) {
@@ -1392,6 +1386,7 @@ namespace pxt.py {
         scale?: number;
     }
 
+    // TODO: handle built-in mapping in a bi-directional way
     const funMap: Map<FunOverride> = {
         "memoryview": { n: "", t: tpBuffer },
         "const": { n: "", t: tpNumber },
@@ -1407,7 +1402,7 @@ namespace pxt.py {
         "bytes": { n: "pins.createBufferFromArray", t: tpBuffer },
         "bool": { n: "!!", t: tpBoolean },
         "Array.index": { n: ".indexOf", t: tpNumber },
-        "print": { n: "console.log", t: tpVoid }, // TODO(dz)
+        "print": { n: "console.log", t: tpVoid },
     }
 
     function isSuper(v: py.Expr) {
@@ -1780,21 +1775,13 @@ namespace pxt.py {
                 return B.mkText("this")
             }
 
-            // TODO(dz): check override symbols
-
             let v = lookupSymbol(n.id)
             if (!v) {
-                console.log("can't find name: " + n.id)
-                // check override
-                // if (n.tsType && n.tsType.primType && U.startsWith(n.tsType.primType, "@fn")) {
-                console.log("can't find fn: " + n.id)
+                // check if the symbol has an override py<->ts mapping
                 let over = U.lookup(funMap, n.id)
                 if (over) {
-                    console.log("found override: ")
-                    console.dir(over)
                     v = lookupSymbol(over.n)
                 }
-                // }
             }
             if (v) {
                 n.symbolInfo = v
@@ -1923,7 +1910,6 @@ namespace pxt.py {
             opts.generatedFiles = []
 
         for (const fn of pyFiles) {
-            // TODO(dz): we read python files here
             let sn = fn
             let modname = fn.replace(/\.py$/, "").replace(/.*\//, "")
             let src = opts.fileSystem[fn]
@@ -1976,7 +1962,6 @@ namespace pxt.py {
                 let res = B.flattenNode(nodes)
                 opts.sourceFiles.push(m.tsFilename)
                 opts.generatedFiles.push(m.tsFilename)
-                // TODO(dz): we write ts output here
                 opts.fileSystem[m.tsFilename] = res.output
                 generated[m.tsFilename] = res.output
             } catch (e) {

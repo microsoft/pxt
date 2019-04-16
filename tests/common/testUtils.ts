@@ -92,8 +92,6 @@ export function ts2pyAsync(f: string): Promise<string> {
 }
 
 export function py2tsAsync(f: string): Promise<string> {
-    // TODO(dz): this doesn't work yet. Ask dazuniga and/or see dazuniga/py2ts_debug
-    // TODO need apiInfo
     const input = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
     return getTestCompileOptsAsync({ "main.py": input, "main.ts": "// no main" }, null, true)
         .then(opts => {
@@ -104,20 +102,9 @@ export function py2tsAsync(f: string): Promise<string> {
                 throw Error("Failed to get apisInfo")
             opts.apisInfo = apisInfo
 
-            console.log("PLAIN API INFO:")
-            let consoleApiInfo = Object.keys(opts.apisInfo.byQName)
-                .filter(k => k.indexOf("console") >= 0)
-                .join(",")
-            console.dir(consoleApiInfo)
-
             opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
 
             let { generated, diagnostics } = pxt.py.py2ts(opts)
-            console.log("AFTER API INFO:")
-            consoleApiInfo = Object.keys(opts.apisInfo.byQName)
-                .filter(k => k.indexOf("console") >= 0)
-                .join(",")
-            console.dir(consoleApiInfo)
 
             let success = diagnostics.length == 0
 
