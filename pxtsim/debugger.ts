@@ -83,7 +83,7 @@ namespace pxsim {
         }
     }
 
-    export function dumpHeap(v: any, heap: Map<any>, fields?: string[]): Variables {
+    export function dumpHeap(v: any, heap: Map<any>, fields?: string[], filters?: string[]): Variables {
         function valToJSON(v: any) {
             switch (typeof v) {
                 case "string":
@@ -128,7 +128,7 @@ namespace pxsim {
             const r: Variables = {}
             for (let k of Object.keys(frame)) {
                 // skip members starting with __
-                if (!/^__/.test(k) && /___\d+$/.test(k)) {
+                if (!/^__/.test(k) && /___\d+$/.test(k) && (!filters || filters.indexOf(k) !== -1)) {
                     r[k.replace(/___\d+$/, '')] = valToJSON(frame[k])
                 }
             }
@@ -176,14 +176,14 @@ namespace pxsim {
         return stackFrame.retval;
     }
 
-    export function getBreakpointMsg(s: pxsim.StackFrame, brkId: number): { msg: DebuggerBreakpointMessage, heap: Map<any> } {
+    export function getBreakpointMsg(s: pxsim.StackFrame, brkId: number, userGlobals?: string[]): { msg: DebuggerBreakpointMessage, heap: Map<any> } {
         const heap: pxsim.Map<any> = {};
 
         const msg: DebuggerBreakpointMessage = {
             type: "debugger",
             subtype: "breakpoint",
             breakpointId: brkId,
-            globals: dumpHeap(runtime.globals, heap),
+            globals: dumpHeap(runtime.globals, heap, undefined, userGlobals),
             stackframes: [],
         }
 

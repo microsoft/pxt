@@ -2289,7 +2289,7 @@ export class ProjectView
                         if (!cancellationToken.isCancelled()) {
                             simulator.run(pkg.mainPkg, opts.debug, resp, this.state.mute, this.state.highContrast, pxt.options.light, opts.clickTrigger)
                             this.blocksEditor.setBreakpointsMap(resp.breakpoints);
-                            this.blocksEditor.setBreakpointsFromBlocks();
+                            this.textEditor.setBreakpointsMap(resp.breakpoints);
                             if (!cancellationToken.isCancelled()) {
                                 // running state is set by the simulator once the iframe is loaded
                                 this.setState({ showParts: simulator.driver.runOptions.parts.length > 0 })
