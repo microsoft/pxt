@@ -196,13 +196,7 @@ namespace pxt.py {
     }
 
     function lookupApi(name: string) {
-        if (name == "console.log") {
-            console.log(`### lookupApi console.log. in ext: ${name in externalApis}`)
-
-        }
-        let int = U.lookup(internalApis, name)
-        let ext = U.lookup(externalApis, name)
-        return int || ext
+        return U.lookup(internalApis, name) || U.lookup(externalApis, name)
     }
 
     function lookupGlobalSymbol(name: string): SymbolInfo {
@@ -1535,9 +1529,7 @@ namespace pxt.py {
             n.func.inCalledPosition = true
 
             let nm = getName(n.func)
-            console.log(`### getName(n.func): ${nm}`)
             let namedSymbol = lookupSymbol(nm)
-            console.log(`### namedSymbol: ${namedSymbol}`)
             let isClass = namedSymbol && namedSymbol.kind == SK.Class
 
             let fun = namedSymbol
@@ -1547,7 +1539,6 @@ namespace pxt.py {
             let methName: string
 
             if (isClass) {
-                console.log(`### converter 1539`)
                 fun = lookupSymbol(namedSymbol.pyQName + ".__constructor")
             } else {
                 if (n.func.kind == "Attribute") {
@@ -1556,7 +1547,6 @@ namespace pxt.py {
                     recvTp = typeOf(recv)
                     if (recvTp.classType) {
                         methName = attr.attr
-                        console.log(`### converter 1548`)
                         fun = getTypeField(recv, methName, true)
                         if (fun) methName = fun.name
                     }
@@ -1572,7 +1562,6 @@ namespace pxt.py {
             }
 
             if (!fun) {
-                console.log(`### converter.ts 1565`)
                 let over = U.lookup(funMap, nm)
                 if (over)
                     methName = ""
@@ -1593,22 +1582,17 @@ namespace pxt.py {
                         recv = orderedArgs.shift()
                         recvTp = typeOf(recv)
                         methName = over.n.slice(1)
-                        console.log(`### converter.ts 1582`)
                         fun = getTypeField(recv, methName)
                         if (fun && fun.kind == SK.Property)
                             return B.mkInfix(expr(recv), ".", B.mkText(methName))
                     } else {
-                        console.log(`### converter.ts 1586`)
                         fun = lookupGlobalSymbol(over.n)
-                        console.log(`### converter.ts 1596, fun: ${fun}, over.n: ${over.n}`)
                     }
                 }
             }
 
-            console.log(`### converter 1597`)
             if (!fun)
                 error(n, 9508, U.lf("can't find called function"))
-            console.log(`### converter 1616`)
 
             let formals = fun ? fun.parameters : null
             let allargs: B.JsNode[] = []
