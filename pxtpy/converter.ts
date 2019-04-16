@@ -1393,6 +1393,7 @@ namespace pxt.py {
         "bytes": { n: "pins.createBufferFromArray", t: tpBuffer },
         "bool": { n: "!!", t: tpBoolean },
         "Array.index": { n: ".indexOf", t: tpNumber },
+        "print": { n: "console.log", t: tpVoid }, // TODO(dz)
     }
 
     function isSuper(v: py.Expr) {
@@ -1524,7 +1525,10 @@ namespace pxt.py {
         Call: (n: py.Call) => {
             n.func.inCalledPosition = true
 
-            let namedSymbol = lookupSymbol(getName(n.func))
+            let nm = getName(n.func)
+            console.log(`### getName(n.func): ${nm}`)
+            let namedSymbol = lookupSymbol(nm)
+            console.log(`### namedSymbol: ${namedSymbol}`)
             let isClass = namedSymbol && namedSymbol.kind == SK.Class
 
             let fun = namedSymbol
@@ -1534,6 +1538,7 @@ namespace pxt.py {
             let methName: string
 
             if (isClass) {
+                console.log(`### converter 1539`)
                 fun = lookupSymbol(namedSymbol.pyQName + ".__constructor")
             } else {
                 if (n.func.kind == "Attribute") {
@@ -1542,6 +1547,7 @@ namespace pxt.py {
                     recvTp = typeOf(recv)
                     if (recvTp.classType) {
                         methName = attr.attr
+                        console.log(`### converter 1548`)
                         fun = getTypeField(recv, methName, true)
                         if (fun) methName = fun.name
                     }
@@ -1550,8 +1556,6 @@ namespace pxt.py {
 
             let orderedArgs = n.args.slice()
 
-            let nm = getName(n.func)
-
             if (nm == "super" && orderedArgs.length == 0) {
                 if (ctx.currClass && ctx.currClass.baseClass)
                     unifyClass(n, n.tsType, ctx.currClass.baseClass.symInfo)
@@ -1559,6 +1563,7 @@ namespace pxt.py {
             }
 
             if (!fun) {
+                console.log(`### converter.ts 1565`)
                 let over = U.lookup(funMap, nm)
                 if (over)
                     methName = ""
@@ -1579,15 +1584,19 @@ namespace pxt.py {
                         recv = orderedArgs.shift()
                         recvTp = typeOf(recv)
                         methName = over.n.slice(1)
+                        console.log(`### converter.ts 1582`)
                         fun = getTypeField(recv, methName)
                         if (fun && fun.kind == SK.Property)
                             return B.mkInfix(expr(recv), ".", B.mkText(methName))
                     } else {
+                        console.log(`### converter.ts 1586`)
                         fun = lookupGlobalSymbol(over.n)
+                        console.log(`### converter.ts 1596, fun: ${fun}, over.n: ${over.n}`)
                     }
                 }
             }
 
+            console.log(`### converter 1597`)
             if (!fun)
                 error(n, 9508, U.lf("can't find called function"))
 
@@ -1879,6 +1888,7 @@ namespace pxt.py {
             opts.generatedFiles = []
 
         for (const fn of pyFiles) {
+            // TODO(dz): we read python files here
             let sn = fn
             let modname = fn.replace(/\.py$/, "").replace(/.*\//, "")
             let src = opts.fileSystem[fn]
@@ -1931,6 +1941,7 @@ namespace pxt.py {
                 let res = B.flattenNode(nodes)
                 opts.sourceFiles.push(m.tsFilename)
                 opts.generatedFiles.push(m.tsFilename)
+                // TODO(dz): we write ts output here
                 opts.fileSystem[m.tsFilename] = res.output
                 generated[m.tsFilename] = res.output
             } catch (e) {

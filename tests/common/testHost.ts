@@ -17,11 +17,16 @@ export class TestHost implements pxt.Host {
         if (TestHost.files[module.id] && TestHost.files[module.id][filename]) {
             return TestHost.files[module.id][filename]
         }
+        console.log(`## READ FILE: ${filename}`) // TODO(dz)
+        if (filename == "pxt-core.d.ts") {
+            //throw new Error("TODO(dz):")
+        }
         if (module.id == "this") {
             if (filename == "pxt.json") {
                 let commonFiles = this.includeCommon ? [
                     "pxt-core.d.ts",
-                    "pxt-helpers.ts"
+                    "pxt-helpers.ts",
+                    "pxt-test-core.d.ts",
                 ] : []
                 let packageFileNames = Object.keys(this.packageFiles)
                 return JSON.stringify({
@@ -74,6 +79,12 @@ export class TestHost implements pxt.Host {
         }
         else if (filename === "pxt-helpers.ts") {
             const contents = fs.readFileSync(path.resolve("libs", "pxt-common", "pxt-helpers.ts"), 'utf8');
+            this.writeFile(module, filename, contents);
+            return contents;
+        }
+        // TODO(dz): there should be a better way to handle these files
+        else if (filename === "pxt-test-core.d.ts") {
+            const contents = fs.readFileSync(path.resolve("libs", "pxt-common", "pxt-test-core.d.ts"), 'utf8');
             this.writeFile(module, filename, contents);
             return contents;
         }

@@ -52,7 +52,7 @@ export function replaceFileExtension(file: string, extension: string) {
 
 let cachedOpts: pxt.Map<pxtc.CompileOptions> = {}
 export function getTestCompileOptsAsync(packageFiles: pxt.Map<string> = { "main.ts": "// no main" }, dependency?: string, includeCommon = false): Promise<pxtc.CompileOptions> {
-    let cacheStr = Object.keys(packageFiles).concat(pxt.Util.values(packageFiles)).join("~") + dependency
+    let cacheStr = Object.keys(packageFiles).concat(pxt.Util.values(packageFiles)).join("~") + dependency + includeCommon
     let cacheKey = pxt.Util.codalHash16(cacheStr)
     if (!cachedOpts[cacheKey]) {
         const pkg = new pxt.MainPackage(new TestHost("test-pkg", packageFiles, dependency ? [dependency] : [], includeCommon));
@@ -95,18 +95,29 @@ export function py2tsAsync(f: string): Promise<string> {
     // TODO(dz): this doesn't work yet. Ask dazuniga and/or see dazuniga/py2ts_debug
     // TODO need apiInfo
     const input = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
-    return getTestCompileOptsAsync({ "main.py": input, "main.ts": "// no main" })
+    return getTestCompileOptsAsync({ "main.py": input, "main.ts": "// no main" }, null, true)
         .then(opts => {
             opts.target.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME
             let stsCompRes = pxtc.compile(opts);
-            let apisInfo = pxtc.getApiInfo(opts, stsCompRes.ast, true)
+            let apisInfo = pxtc.getApiInfo(opts, stsCompRes.ast)
             if (!apisInfo || !apisInfo.byQName)
                 throw Error("Failed to get apisInfo")
             opts.apisInfo = apisInfo
 
+            console.log("PLAIN API INFO:")
+            let consoleApiInfo = Object.keys(opts.apisInfo.byQName)
+                .filter(k => k.indexOf("console") >= 0)
+                .join(",")
+            console.dir(consoleApiInfo)
+
             opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
 
             let { generated, diagnostics } = pxt.py.py2ts(opts)
+            console.log("AFTER API INFO:")
+            consoleApiInfo = Object.keys(opts.apisInfo.byQName)
+                .filter(k => k.indexOf("console") >= 0)
+                .join(",")
+            console.dir(consoleApiInfo)
 
             let success = diagnostics.length == 0
 
