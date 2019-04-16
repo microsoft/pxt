@@ -143,16 +143,18 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
 
         const header = tutorialFullscreen ? tutorialName : lf("Hint");
 
-        const hide = () => this.setState({ visible: false });
+        const hide = () => {
+            this.props.parent.setTutorialInstructionsExpanded(true);
+            this.setState({ visible: false });
+        }
         const next = () => {
-            hide();
+            this.setState({ visible: false });
             const nextStep = tutorialStep + 1;
             options.tutorialStep = nextStep;
             pxt.tickEvent(`tutorial.hint.next`, { tutorial: options.tutorial, step: nextStep });
             this.props.parent.setTutorialStep(nextStep);
         }
 
-        const isRtl = pxt.Util.isUserLanguageRtl();
         const actions: sui.ModalButton[] = [{
             label: lf("Ok"),
             onclick: tutorialUnplugged ? next : hide,
