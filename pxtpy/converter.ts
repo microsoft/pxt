@@ -1781,7 +1781,21 @@ namespace pxt.py {
             }
 
             // TODO(dz): check override symbols
+
             let v = lookupSymbol(n.id)
+            if (!v) {
+                console.log("can't find name: " + n.id)
+                // check override
+                // if (n.tsType && n.tsType.primType && U.startsWith(n.tsType.primType, "@fn")) {
+                console.log("can't find fn: " + n.id)
+                let over = U.lookup(funMap, n.id)
+                if (over) {
+                    console.log("found override: ")
+                    console.dir(over)
+                    v = lookupSymbol(over.n)
+                }
+                // }
+            }
             if (v) {
                 n.symbolInfo = v
                 unify(n, n.tsType, symbolType(v))
