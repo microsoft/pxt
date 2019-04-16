@@ -955,7 +955,7 @@ namespace pxt.py {
             if (n.name == "__init__") {
                 for (let f of listClassFields(ctx.currClass)) {
                     let p = f.pyAST as Assign
-                    if (p.value) {
+                    if (p && p.value) {
                         body.push(
                             B.mkStmt(B.mkText(`this.${quoteStr(f.pyName)} = `), expr(p.value))
                         )
