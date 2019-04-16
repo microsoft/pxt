@@ -83,7 +83,6 @@ async function testTsOrPy(tsOrPyFile: string): Promise<void> {
     if (isPy) {
         let pyFile = tsOrPyFile
         recordBaseline(await PY(pyFile))
-        // TODO(dazuniga): py2ts doesn't work in unit tests yet, once it does enable it here
         let tsFile = await testPy2Ts(pyFile)
         await testSts(tsFile)
         let pyFile2 = await testTs2Py(tsFile)
@@ -92,7 +91,6 @@ async function testTsOrPy(tsOrPyFile: string): Promise<void> {
         recordBaseline(await TS(tsFile))
         await testSts(tsFile)
         let pyFile = await testTs2Py(tsFile)
-        // TODO(dazuniga): py2ts doesn't work in unit tests yet, once it does enable it here
         let tsfile2 = await testPy2Ts(pyFile)
         await testSts(tsfile2)
     }
