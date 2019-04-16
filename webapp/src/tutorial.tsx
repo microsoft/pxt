@@ -263,6 +263,7 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
         }
     }
 
+    private lastStep = -1;
     componentDidUpdate(prevProps: ISettingsProps, prevState: TutorialCardState) {
         const tutorialCard = this.refs['tutorialmessage'] as HTMLElement;
         const tutorialOkRef = this.refs["tutorialok"] as sui.Button;
@@ -278,11 +279,21 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
             okButton.removeEventListener('keydown', this.okButtonKeyDown);
             tutorialCard.focus();
         }
+        const step = this.props.parent.state.tutorialOptions.tutorialStep;
+        if (step != this.lastStep) {
+            const animationClasses = `fade ${step > this.lastStep ? "right" : "left"} in visible transition animating`;
+            tutorialCard.style.animationDuration = '500ms';
+            this.lastStep = step;
+            pxsim.U.addClass(tutorialCard, animationClasses);
+            Promise.resolve().delay(500)
+                .then(() => pxsim.U.removeClass(tutorialCard, animationClasses));
+        }
     }
 
     componentWillUnmount() {
         // Clear the markdown cache when we unmount
         md.MarkedContent.clearBlockSnippetCache();
+        this.lastStep = -1;
     }
 
     toggleExpanded(ev: React.MouseEvent<HTMLDivElement>) {

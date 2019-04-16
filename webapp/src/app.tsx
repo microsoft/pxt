@@ -897,7 +897,7 @@ export class ProjectView
             this.setState({ tutorialOptions: tutorialOptions });
             const fullscreen = tutorialOptions.tutorialStepInfo[step].fullscreen;
             if (fullscreen) this.showTutorialHint();
-            else this.showLightbox();
+            //else this.showLightbox();
             // Hide flyouts and popouts
             this.editor.closeFlyout();
         }
@@ -931,9 +931,9 @@ export class ProjectView
                         this.setState({ tutorialOptions: tutorialOptions });
                         const fullscreen = tutorialOptions.tutorialStepInfo[0].fullscreen;
                         if (fullscreen) this.showTutorialHint();
-                        else {
-                            this.showLightbox();
-                        }
+                        //else {
+                        //    this.showLightbox();
+                        //}
                         core.hideLoading("tutorial");
                         break;
                     case 'error':
@@ -1136,7 +1136,7 @@ export class ProjectView
                 const stepInfo = t.tutorialStepInfo;
                 const fullscreen = stepInfo[0].fullscreen;
                 if (fullscreen) this.showTutorialHint();
-                else this.showLightbox();
+                //else this.showLightbox();
             })
             .catch(e => {
                 // Failed to decompile
