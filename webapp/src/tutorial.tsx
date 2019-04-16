@@ -281,7 +281,7 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
         }
         const step = this.props.parent.state.tutorialOptions.tutorialStep;
         if (step != this.lastStep) {
-            const animationClasses = `fade ${step > this.lastStep ? "right" : "left"} in visible transition animating`;
+            const animationClasses = `fade ${step < this.lastStep ? "right" : "left"} in visible transition animating`;
             tutorialCard.style.animationDuration = '500ms';
             this.lastStep = step;
             pxsim.U.addClass(tutorialCard, animationClasses);
