@@ -151,13 +151,13 @@ namespace pxt.blocks {
      * Patch to transform old function blocks to new ones, and rename child nodes
      */
     function patchFunctionBlocks(dom: Element, info: pxtc.BlocksInfo) {
-        var functionNodes = pxt.U.toArray(dom.querySelectorAll("block[type=procedures_defnoreturn]"));
+        let functionNodes = pxt.U.toArray(dom.querySelectorAll("block[type=procedures_defnoreturn]"));
         functionNodes.forEach(node => {
             node.setAttribute("type", "function_definition");
             node.querySelector("field[name=NAME]").setAttribute("name", "function_name");
         })
 
-        var functionCallNodes = pxt.U.toArray(dom.querySelectorAll("block[type=procedures_callnoreturn]"));
+        let functionCallNodes = pxt.U.toArray(dom.querySelectorAll("block[type=procedures_callnoreturn]"));
         functionCallNodes.forEach(node => {
             node.setAttribute("type", "function_call");
             node.querySelector("field[name=NAME]").setAttribute("name", "function_name");
