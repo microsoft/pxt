@@ -30,11 +30,39 @@ namespace pxt.blocks {
     export const optionalDummyInputPrefix = "0_optional_dummy";
     export const optionalInputWithFieldPrefix = "0_optional_field";
 
-    // Matches arrays and tuple types
-    const arrayTypeRegex = /^(?:Array<.+>)|(?:.+\[\])|(?:\[.+\])$/;
-    export function isArrayType(type: string) {
-        return arrayTypeRegex.test(type);
+    // Matches arrays
+    export function isArrayType(type: string): string {
+        const arrayTypeRegex = /^(?:Array<(.+)>)|(?:(.+)\[\])|(?:\[.+\])$/;
+        let parsed = arrayTypeRegex.exec(type);
+        if (parsed) {
+            // Is an array, returns what type it is an array of
+            if (parsed[1]) {
+                // Is an array with form Array<type>
+                return parsed[1];
+            } else {
+                // Is an array with form type[]
+                return parsed[2];
+            }
+        } else {
+            // Not an array
+            return undefined;
+        }
     }
+
+    // Matches tuples
+    export function isTupleType(type: string): string[] {
+        const tupleTypeRegex = /^\[(.+)\]$/;
+        let parsed = tupleTypeRegex.exec(type);
+        if (parsed) {
+            // Returns an array containing the types of the tuple
+            return parsed[1].split(/,\s*/);
+        } else {
+            // Not a tuple
+            return undefined;
+        }
+    }
+
+    const primitiveTypeRegex = /^(string|number|boolean)$/;
 
     type NamedField = { field: Blockly.Field, name?: string };
 
@@ -104,14 +132,46 @@ namespace pxt.blocks {
         const value = document.createElement("value");
         value.setAttribute("name", p.definitionName);
 
-        const shadow = document.createElement(isVariable ? "block" : "shadow");
+        const isArray = isArrayType(p.type);
+
+        const shadow = document.createElement(isVariable || isArray ? "block" : "shadow");
+
         value.appendChild(shadow);
 
-        const typeInfo = typeDefaults[p.type];
+        const typeInfo = typeDefaults[isArray || p.type];
 
-        shadow.setAttribute("type", shadowId || typeInfo && typeInfo.block || p.type);
+        shadow.setAttribute("type", shadowId || (isArray ? 'lists_create_with' : typeInfo && typeInfo.block || p.type));
         shadow.setAttribute("colour", (Blockly as any).Colours.textField);
 
+        // if an array of booleans, numbers, or strings
+        if (isArray && typeInfo && !shadowId) {
+            const mut = document.createElement('mutation');
+            mut.setAttribute("items", "3");
+            shadow.appendChild(mut);
+            for (let i = 0; i < 3; i++) {
+                const innerValue = document.createElement("value");
+                innerValue.setAttribute("name", "ADD" + i);
+                const innerShadow = document.createElement("shadow");
+                innerShadow.setAttribute("type", typeInfo.block);
+                const field = document.createElement("field");
+                field.setAttribute("name", typeInfo.field);
+                switch (isArray) {
+                    case "number":
+                        field.appendChild(document.createTextNode("" + (i + 1)));
+                        break;
+                    case "string":
+                        field.appendChild(document.createTextNode(String.fromCharCode('a'.charCodeAt(0) + i)));
+                        break;
+                    case "boolean":
+                        field.appendChild(document.createTextNode("FALSE"));
+                        break;
+                }
+                innerShadow.appendChild(field);
+                innerValue.appendChild(innerShadow);
+                shadow.appendChild(innerValue);
+            }
+            return value;
+        }
         if (typeInfo && (!shadowId || typeInfo.block === shadowId || shadowId === "math_number_minmax")) {
             const field = document.createElement("field");
             shadow.appendChild(field);
@@ -245,7 +305,10 @@ namespace pxt.blocks {
         }
         if (fn.parameters) {
             comp.parameters.filter(pr => !pr.isOptional &&
-                (/^(string|number|boolean)$/.test(pr.type) || pr.shadowBlockId || pr.defaultValue))
+                (primitiveTypeRegex.test(pr.type)
+                    || primitiveTypeRegex.test(isArrayType(pr.type))
+                    || pr.shadowBlockId
+                    || pr.defaultValue))
                 .forEach(pr => {
                     block.appendChild(createShadowValue(info, pr));
                 })
@@ -775,7 +838,6 @@ namespace pxt.blocks {
      */
     export function initialize(blockInfo: pxtc.BlocksInfo) {
         init();
-        initTooltip(blockInfo);
         initJresIcons(blockInfo);
     }
 
@@ -803,6 +865,7 @@ namespace pxt.blocks {
         initDrag();
         initDebugger();
         initComments();
+        initTooltip();
 
         // PXT is in charge of disabling, don't record undo for disabled events
         (Blockly.Block as any).prototype.setDisabled = function (disabled: any) {
@@ -2390,7 +2453,7 @@ namespace pxt.blocks {
         Blockly.Msg.WORKSPACE_COMMENT_DEFAULT_TEXT = '';
     }
 
-    function initTooltip(blockInfo: pxtc.BlocksInfo) {
+    function initTooltip() {
 
         const renderTip = (el: any) => {
             if (el.disabled)

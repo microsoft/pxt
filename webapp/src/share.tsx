@@ -3,6 +3,7 @@ import * as data from "./data";
 import * as sui from "./sui";
 import * as simulator from "./simulator";
 import * as screenshot from "./screenshot";
+import * as qr from "./qr";
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -39,6 +40,7 @@ export interface ShareEditorState {
     screenshotUri?: string;
     recordingState?: ShareRecordingState;
     recordError?: string;
+    qrCodeUri?: string;
 }
 
 export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorState> {
@@ -83,7 +85,8 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             projectName: undefined,
             projectNameChanged: false,
             recordingState: ShareRecordingState.None,
-            recordError: undefined
+            recordError: undefined,
+            qrCodeUri: undefined
         });
     }
 
@@ -102,7 +105,8 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             mode: ShareMode.Code,
             pubId: undefined,
             sharingError: false,
-            screenshotUri: undefined
+            screenshotUri: undefined,
+            qrCodeUri: undefined
         }, thumbnails ? (() => this.props.parent.startSimulator()) : undefined);
     }
 
@@ -168,7 +172,9 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             || this.state.projectNameChanged != nextState.projectNameChanged
             || this.state.loading != nextState.loading
             || this.state.recordingState != nextState.recordingState
-            || this.state.screenshotUri != nextState.screenshotUri;
+            || this.state.screenshotUri != nextState.screenshotUri
+            || this.state.qrCodeUri != nextState.qrCodeUri
+            ;
     }
 
     private toggleAdvancedMenu() {
@@ -289,24 +295,25 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
     }
 
     renderCore() {
-        const { visible, projectName: newProjectName, loading, recordingState, screenshotUri, thumbnails, recordError, pubId } = this.state;
+        const { visible, projectName: newProjectName, loading, recordingState, screenshotUri, thumbnails, recordError, pubId, qrCodeUri } = this.state;
         const targetTheme = pxt.appTarget.appTheme;
         const header = this.props.parent.state.header;
         const advancedMenu = !!this.state.advancedMenu;
         const hideEmbed = !!targetTheme.hideShareEmbed;
-        const showSocialIcons = !!targetTheme.socialOptions && !pxt.BrowserUtils.isUwpEdge();
+        const socialOptions = targetTheme.socialOptions;
+        const showSocialIcons = !!socialOptions && !pxt.BrowserUtils.isUwpEdge();
         const ready = !!pubId;
         let mode = this.state.mode;
         let url = '';
         let embed = '';
 
-        if (header) {
-            let shareUrl = pxt.appTarget.appTheme.shareUrl || "https://makecode.com/";
-            if (!/\/$/.test(shareUrl)) shareUrl += '/';
-            let rootUrl = pxt.appTarget.appTheme.embedUrl
-            if (!/\/$/.test(rootUrl)) rootUrl += '/';
-            const verPrefix = pxt.webConfig.verprefix || '';
+        let shareUrl = pxt.appTarget.appTheme.shareUrl || "https://makecode.com/";
+        if (!/\/$/.test(shareUrl)) shareUrl += '/';
+        let rootUrl = pxt.appTarget.appTheme.embedUrl
+        if (!/\/$/.test(rootUrl)) rootUrl += '/';
+        const verPrefix = pxt.webConfig.verprefix || '';
 
+        if (header) {
             if (ready) {
                 url = `${shareUrl}${pubId}`;
                 let editUrl = `${rootUrl}${verPrefix}#pub:${pubId}`;
@@ -340,13 +347,20 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
             }
             p.then(() => this.props.parent.anonymousPublishAsync(screenshotUri))
                 .then((id) => {
-                    this.setState({ pubId: id });
+                    this.setState({ pubId: id, qrCodeUri: undefined });
+                    if (pxt.appTarget.appTheme.qrCode)
+                        qr.renderAsync(`${shareUrl}${id}`)
+                            .then(qruri => {
+                                if (this.state.pubId == id) // race
+                                    this.setState({ qrCodeUri: qruri });
+                            });
                     this.forceUpdate();
                 })
                 .catch((e) => {
                     this.setState({
                         pubId: undefined,
-                        sharingError: true
+                        sharingError: true,
+                        qrCodeUri: undefined
                     });
                 });
             this.forceUpdate();
@@ -443,14 +457,18 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
                         <p>{lf("Your project is ready! Use the address below to share your projects.")}</p>
                         <sui.Input id="projectUri" class="mini" readOnly={true} lines={1} value={url} copy={true} selectOnClick={true} aria-describedby="projectUriLabel" autoComplete={false} />
                         <label htmlFor="projectUri" id="projectUriLabel" className="accessible-hidden">{lf("This is the read-only internet address of your project.")}</label>
+                        {qrCodeUri ?
+                            <img className="ui tiny image floated right" alt={lf("QR Code of the saved program")} src={qrCodeUri} />
+                            : undefined}
                         {showSocialIcons ? <div className="social-icons">
                             <SocialButton url={url} ariaLabel="Facebook" type='facebook' heading={lf("Share on Facebook")} />
                             <SocialButton url={url} ariaLabel="Twitter" type='twitter' heading={lf("Share on Twitter")} />
+                            {socialOptions.discourse ? <SocialButton url={url} icon={"comments"} ariaLabel={lf("Post to Forum")} type='discourse' heading={lf("Share on Forum")} /> : undefined}
                         </div> : undefined}
                     </div> : undefined}
                     {ready && !hideEmbed ? <div>
                         <div className="ui divider"></div>
-                        <sui.Link icon={`chevron ${advancedMenu ? "down" : "right"}`} text={lf("Embed")} ariaExpanded={advancedMenu} onClick={this.toggleAdvancedMenu} />
+                        <sui.Link icon={`no-select chevron ${advancedMenu ? "down" : "right"}`} text={lf("Embed")} ariaExpanded={advancedMenu} onClick={this.toggleAdvancedMenu} />
                         {advancedMenu ?
                             <sui.Menu pointing secondary>
                                 {formats.map(f =>
@@ -476,7 +494,9 @@ export class ShareEditor extends data.Component<ShareEditorProps, ShareEditorSta
 
 interface SocialButtonProps {
     url?: string;
-    type?: "facebook" | "twitter";
+    type?: "facebook" | "twitter" | "discourse";
+    icon?: string; // override type
+    label?: string;
     ariaLabel?: string;
     heading?: string;
 }
@@ -493,36 +513,46 @@ class SocialButton extends data.Component<SocialButtonProps, {}> {
     handleClick(e: React.MouseEvent<any>) {
         const { type, url: shareUrl, heading } = this.props;
 
-        let twitterText = lf("Check out what I made!");
         const socialOptions = pxt.appTarget.appTheme.socialOptions;
-        if (socialOptions.twitterHandle && socialOptions.orgTwitterHandle) {
-            twitterText = lf("Check out what I made with @{0} and @{1}!", socialOptions.twitterHandle, socialOptions.orgTwitterHandle);
-        } else if (socialOptions.twitterHandle) {
-            twitterText = lf("Check out what I made with @{0}!", socialOptions.twitterHandle);
-        } else if (socialOptions.orgTwitterHandle) {
-            twitterText = lf("Check out what I made with @{0}!", socialOptions.orgTwitterHandle);
-        }
-        const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
-        const twitterUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}` +
-            `&text=${encodeURIComponent(twitterText)}` +
-            (socialOptions.hashtags ? `&hashtags=${encodeURIComponent(socialOptions.hashtags)}` : '') +
-            (socialOptions.related ? `&related=${encodeURIComponent(socialOptions.related)}` : '');
-
         pxt.tickEvent(`share.${type}`, undefined, { interactiveConsent: true })
 
         let url = '';
         switch (type) {
-            case "facebook": url = fbUrl; break;
-            case "twitter": url = twitterUrl; break;
+            case "facebook": {
+                url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+                break;
+            }
+            case "twitter": {
+                let twitterText = lf("Check out what I made!");
+                if (socialOptions.twitterHandle && socialOptions.orgTwitterHandle) {
+                    twitterText = lf("Check out what I made with @{0} and @{1}!", socialOptions.twitterHandle, socialOptions.orgTwitterHandle);
+                } else if (socialOptions.twitterHandle) {
+                    twitterText = lf("Check out what I made with @{0}!", socialOptions.twitterHandle);
+                } else if (socialOptions.orgTwitterHandle) {
+                    twitterText = lf("Check out what I made with @{0}!", socialOptions.orgTwitterHandle);
+                }
+                url = `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}` +
+                    `&text=${encodeURIComponent(twitterText)}` +
+                    (socialOptions.hashtags ? `&hashtags=${encodeURIComponent(socialOptions.hashtags)}` : '') +
+                    (socialOptions.related ? `&related=${encodeURIComponent(socialOptions.related)}` : '');
+                break;
+            }
+            case "discourse": {
+                // https://meta.discourse.org/t/compose-a-new-pre-filled-topic-via-url/28074
+                url = `${socialOptions.discourse || "https://forum.makecode.com/"}new-topic?title=${encodeURIComponent(shareUrl)}`;
+                if (socialOptions.discourseCategory)
+                    url += `&category=${encodeURIComponent(socialOptions.discourseCategory)}`;
+                break;
+            }
         }
         pxt.BrowserUtils.popupWindow(url, heading, 600, 600);
         e.preventDefault();
     }
 
     renderCore() {
-        const { type, ariaLabel } = this.props;
-        return <a role="button" className={`ui button large icon ${type}`} tabIndex={0} aria-label={ariaLabel}
-            onClick={this.handleClick}><sui.Icon icon={type} /></a>
+        const { type, label, ariaLabel, icon } = this.props;
+        return <a role="button" className={`ui button large ${label ? "labeled" : ""} icon ${type}`} tabIndex={0} aria-label={ariaLabel}
+            onClick={this.handleClick}><sui.Icon icon={icon || type} />{label}</a>
     }
 }
 

@@ -910,10 +910,13 @@ export class ProjectView
                             this.setState({
                                 editorState: {
                                     searchBar: false,
-                                    filters: { blocks: tt.toolboxSubset, defaultState: pxt.editor.FilterState.Hidden }
+                                    filters: {
+                                        blocks: tt.toolboxSubset,
+                                        defaultState: pxt.editor.FilterState.Hidden
+                                    }
                                 }
                             });
-                            this.editor.filterToolbox(tt.toolboxSubset, tt.showCategories);
+                            this.editor.filterToolbox(tt.showCategories);
                         }
                         let tutorialOptions = this.state.tutorialOptions;
                         tutorialOptions.tutorialReady = true;
@@ -1019,8 +1022,11 @@ export class ProjectView
                 return compiler.newProjectAsync();
             }).then(() => compiler.applyUpgradesAsync())
             .then(() => {
-                let e = this.settings.fileHistory.filter(e => e.id == h.id)[0]
-                let main = pkg.getEditorPkg(pkg.mainPkg)
+                const e = this.settings.fileHistory.filter(e => e.id == h.id)[0]
+                const main = pkg.getEditorPkg(pkg.mainPkg)
+                // override preferred editor if specified
+                if (pkg.mainPkg.config.preferredEditor)
+                    h.editor = pkg.mainPkg.config.preferredEditor
                 let file = main.getMainFile();
                 if (e)
                     file = main.lookupFile(e.name) || file
@@ -1036,8 +1042,6 @@ export class ProjectView
                 if (file.name === "main.ts") {
                     this.shouldTryDecompile = true;
                 }
-                if (pkg.mainPkg.config.preferredEditor)
-                    h.editor = pkg.mainPkg.config.preferredEditor
                 this.setState({
                     home: false,
                     showFiles: h.githubId ? true : false,
@@ -1104,10 +1108,12 @@ export class ProjectView
 
     private loadTutorialFiltersAsync(): Promise<void> {
         const header = pkg.mainEditorPkg().header;
-        if (!header || !header.tutorial || !header.tutorial.tutorialMd) return Promise.resolve();
+        if (!header || !header.tutorial || !header.tutorial.tutorialMd)
+            return Promise.resolve();
 
         const t = header.tutorial;
-        return tutorial.getUsedBlocksAsync(t.tutorial, t.tutorialMd)
+        return this.loadBlocklyAsync()
+            .then(() => tutorial.getUsedBlocksAsync(t.tutorialCode))
             .then((usedBlocks) => {
                 let editorState: pxt.editor.EditorState = {
                     searchBar: false
@@ -1119,7 +1125,7 @@ export class ProjectView
                     }
                 }
                 this.setState({ editorState: editorState });
-                this.editor.filterToolbox(usedBlocks, true);
+                this.editor.filterToolbox(true);
                 const stepInfo = t.tutorialStepInfo;
                 const fullscreen = stepInfo[0].fullscreen;
                 if (fullscreen) this.showTutorialHint();
@@ -1663,11 +1669,19 @@ export class ProjectView
             cfg.files = cfg.files.filter(f => f != "main.blocks")
             delete files["main.blocks"]
         }
+        if (options.preferredEditor)
+            cfg.preferredEditor = options.preferredEditor;
+        // ensure a main.py is ready if this is the desired project
+        if (cfg.preferredEditor == pxt.PYTHON_PROJECT_NAME
+            && cfg.files.indexOf("main.py") < 0) {
+            cfg.files.push("main.py");
+            files["main.py"] = "\n";
+        }
         files["pxt.json"] = JSON.stringify(cfg, null, 4) + "\n";
         return workspace.installAsync({
             name: cfg.name,
             meta: {},
-            editor: options.prj.id,
+            editor: options.preferredEditor || options.prj.id,
             pubId: "",
             pubCurrent: false,
             target: pxt.appTarget.id,
@@ -2326,7 +2340,6 @@ export class ProjectView
 
     toggleDebugging() {
         const state = !this.state.debugging;
-        pxt.log("turning debugging mode to " + state);
         this.setState({ debugging: state, tracing: false }, () => {
             this.renderCore()
             if (this.editor) {
@@ -2370,9 +2383,16 @@ export class ProjectView
         this.importDialog.show();
     }
 
-    renderBlocksAsync(req: pxt.editor.EditorMessageRenderBlocksRequest): Promise<any> {
+    renderPythonAsync(req: pxt.editor.EditorMessageRenderPythonRequest): Promise<pxt.editor.EditorMessageRenderPythonResponse> {
+        return compiler.decompilePythonSnippetAsync(req.ts)
+            .then(resp => {
+                return { python: resp };
+            });
+    }
+
+    renderBlocksAsync(req: pxt.editor.EditorMessageRenderBlocksRequest): Promise<pxt.editor.EditorMessageRenderBlocksResponse> {
         return compiler.getBlocksAsync()
-            .then(blocksInfo => compiler.decompileSnippetAsync(req.ts, blocksInfo))
+            .then(blocksInfo => compiler.decompileBlocksSnippetAsync(req.ts, blocksInfo))
             .then(resp => {
                 const svg = pxt.blocks.render(resp, {
                     snippetMode: true,
@@ -2708,26 +2728,31 @@ export class ProjectView
 
         return p.then(md => {
             if (!md)
-                throw new Error("tutorial not found");
-            const tutorialOptions = {
+                throw new Error(lf("Tutorial not found"));
+            const tutorialInfo = pxt.tutorial.parseTutorial(md);
+            if (!tutorialInfo)
+                throw new Error(lf("Invalid tutorial format"));
+
+            const tutorialOptions: pxt.tutorial.TutorialOptions = {
                 tutorial: tutorialId,
                 tutorialName: title,
                 tutorialReportId: reportId,
                 tutorialStep: 0,
                 tutorialReady: true,
-                tutorialStepInfo: pxt.tutorial.parseTutorialSteps(tutorialId, md),
-                tutorialMd: md
+                tutorialStepInfo: tutorialInfo.steps,
+                tutorialMd: md,
+                tutorialCode: tutorialInfo.code
             };
             return this.createProjectAsync({
                 name: title,
                 tutorial: tutorialOptions,
+                preferredEditor: tutorialInfo.editor,
                 dependencies
-            }).then(() => autoChooseBoard ? this.autoChooseBoardAsync(features) : Promise.resolve());
-        })
-            .then(() => this.loadTutorialFiltersAsync())
-            .catch((e) => {
-                core.handleNetworkError(e);
-            }).finally(() => core.hideLoading("tutorial"));
+            });
+        }).then(() => autoChooseBoard ? this.autoChooseBoardAsync(features) : Promise.resolve()
+        ).catch((e) => {
+            core.handleNetworkError(e);
+        }).finally(() => core.hideLoading("tutorial"));
     }
 
     completeTutorial() {

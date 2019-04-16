@@ -157,7 +157,9 @@ namespace pxt.winrt {
         if (pxt.appTarget && pxt.appTarget.compile && pxt.appTarget.compile.hidSelectors) {
             pxt.appTarget.compile.hidSelectors.forEach((s) => {
                 const sel = whid.getDeviceSelector(parseInt(s.usagePage), parseInt(s.usageId), parseInt(s.vid), parseInt(s.pid));
-                hidSelectors.push(sel);
+                if (hidSelectors.indexOf(sel) < 0) {
+                    hidSelectors.push(sel);
+                }
             });
         }
         hidSelectors.forEach((s) => {
@@ -196,6 +198,6 @@ namespace pxt.winrt {
             });
             watchers.push(watcher);
         });
-        watchers.forEach((w) => w.start());
+        watchers.filter(w => !w.status).forEach((w) =>  w.start());
     }
 }

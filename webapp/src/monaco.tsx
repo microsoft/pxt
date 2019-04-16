@@ -66,13 +66,20 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
         return compiler.completionsAsync(fileName, offset, source)
             .then(completions => {
                 const items = (completions.entries || []).map((si, i) => {
+                    const snippet = this.python ? si.pySnippet : si.snippet;
+                    const label = this.python
+                        ? (completions.isMemberCompletion ? si.pyName : si.pyQName)
+                        : (completions.isMemberCompletion ? si.name : si.qName);
+                    const documentation = pxt.Util.rlf(si.attributes.jsDoc);
+                    const block = pxt.Util.rlf(si.attributes.block);
                     return {
-                        label: this.python ? (completions.isMemberCompletion ? si.pyName : si.pyQName) : (completions.isMemberCompletion ? si.name : si.qName),
+                        label,
                         kind: this.tsKindToMonacoKind(si.kind),
-                        documentation: si.attributes.jsDoc,
+                        documentation,
                         detail: this.python ? si.pySnippet : si.snippet,
                         // force monaco to use our sorting
-                        sortText: `${tosort(i)} ${this.python ? si.pySnippet : si.snippet}`
+                        sortText: `${tosort(i)} ${snippet}`,
+                        filterText: `${label} ${documentation} ${block}`
                     } as monaco.languages.CompletionItem;
                 })
                 return items;
@@ -111,13 +118,14 @@ class SignatureHelper implements monaco.languages.SignatureHelpProvider {
             .then(r => {
                 let sym = r.symbols ? r.symbols[0] : null
                 if (!sym || !sym.parameters) return null;
+                const documentation = pxt.Util.rlf(sym.attributes.jsDoc);
                 const res: monaco.languages.SignatureHelp = {
                     signatures: [{
                         label: sym.name,
-                        documentation: sym.attributes.jsDoc,
+                        documentation,
                         parameters: sym.parameters.map(p => ({
-                            label: p.name,
-                            documentation: p.name + ": " + p.type
+                            label: `${p.name}: ${p.type}`,
+                            documentation: pxt.Util.rlf(p.description)
                         }))
                     }],
                     activeSignature: 0,
@@ -146,8 +154,9 @@ class HoverProvider implements monaco.languages.HoverProvider {
             .then(r => {
                 let sym = r.symbols ? r.symbols[0] : null
                 if (!sym) return null;
+                const documentation = pxt.Util.rlf(sym.attributes.jsDoc);
                 const res: monaco.languages.Hover = {
-                    contents: [sym.pyQName + " " + sym.attributes.jsDoc],
+                    contents: [`**${sym.pyQName}**`, documentation],
                     range: monaco.Range.fromPositions(model.getPositionAt(r.beginPos), model.getPositionAt(r.endPos))
                 }
                 return res
@@ -1492,12 +1501,18 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             const w1 = (f1.attributes.weight || 50) + (f1.attributes.advanced ? 0 : 1000);
             return w2 > w1 ? 1 : -1;
         }).map(fn => {
-            let monacoBlockDisabled = false;
-            const fnState = filters ? (filters.fns && filters.fns[fn.name] != undefined ? filters.fns[fn.name] : (categoryState != undefined ? categoryState : filters.defaultState)) : undefined;
-            monacoBlockDisabled = fnState == pxt.editor.FilterState.Disabled;
+            let fnState = filters.defaultState;
+            if (filters && filters.fns && filters.fns[fn.name] !== undefined) {
+                fnState = filters.fns[fn.name];
+            } else if (filters && filters.blocks && fn.attributes.blockId && filters.blocks[fn.attributes.blockId] !== undefined) {
+                fnState = filters.blocks[fn.attributes.blockId];
+            } else if (categoryState !== undefined) {
+                fnState = categoryState;
+            }
             if (fnState == pxt.editor.FilterState.Hidden) return undefined;
 
-            return monacoEditor.getMonacoBlock(fn, ns, color, monacoBlockDisabled); // try this
+            const monacoBlockDisabled = fnState == pxt.editor.FilterState.Disabled;
+            return monacoEditor.getMonacoBlock(fn, ns, color, monacoBlockDisabled);
         })
         monacoEditor.attachMonacoBlockAccessibility(monacoBlocks);
     }

@@ -184,23 +184,21 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         let margin = depth * 0.75 + 'em';
         varNames.forEach(variable => {
             const v = variables[variable];
-            const oldValue = DebuggerVariables.renderValue(v.prevValue);
             const newValue = DebuggerVariables.renderValue(v.value);
             let type = this.variableType(v);
             const onClick = v.value && v.value.id ? () => this.toggle(v) : undefined;
 
-            r.push(<tr key={(parent || "") + variable} className="item" onClick={onClick} onMouseOver={this.onMouseOverVariable}>
-                <td className={`variable varname ${v.prevValue !== undefined ? "changed" : ""}`} title={variable}>
-                    <i className={`${(v.children ? "down triangle icon" : "right triangle icon") + ((v.value && v.value.hasFields) ? "" : " transparent")}`} style={{ marginLeft: margin }} ></i>
-                    <span>{variable + ':'}</span>
-                </td>
-                <td style={{ padding: 0.2 }} title={this.shouldShowValueOnHover(type) ? newValue : ""}>
-                    <div className="variable detail">
-                        <span className={`varval ${type}`}>{DebuggerVariables.capLength(newValue)}</span>
-                        <span className="previousval">{(oldValue !== "undefined" && oldValue !== newValue) ? `${DebuggerVariables.capLength(oldValue)}` : ''}</span>
+            r.push(<div key={(parent || "") + variable} role="listitem" className="item" onClick={onClick} onMouseOver={this.onMouseOverVariable}>
+                <div className="variableAndValue">
+                    <div className={`variable varname ${v.prevValue !== undefined ? "changed" : ""}`} title={variable}>
+                        <i className={`${(v.children ? "down triangle icon" : "right triangle icon") + ((v.value && v.value.hasFields) ? "" : " transparent")}`} style={{ marginLeft: margin }} ></i>
+                        <span>{variable + ':'}</span>
                     </div>
-                </td>
-            </tr>
+                    <div className="variable detail" style={{ padding: 0.2 }} title={this.shouldShowValueOnHover(type) ? newValue : ""}>
+                        <span className={`varval ${type}`}>{DebuggerVariables.capLength(newValue)}</span>
+                    </div>
+                </div>
+            </div>
             );
             if (v.children)
                 r = r.concat(this.renderVariables(v.children, variable, depth + 1));
@@ -210,20 +208,16 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
 
     renderCore() {
         const { variables, frozen } = this.state;
-        const variableTableHeader = lf("Variable");
-        const valueTableHeader = lf("Type/Value");
+        const variableTableHeader = lf("Variables");
 
-        return <table className={`ui segment debugvariables ${frozen ? "frozen" : ""} ui collapsing basic striped table`}>
-            <thead>
-                <tr>
-                    <th>{variableTableHeader}</th>
-                    <th>{valueTableHeader}</th>
-                </tr>
-            </thead>
-            <tbody>
-                {(Object.keys(variables).length == 0) ? <tr /> : this.renderVariables(variables)}
-            </tbody>
-        </table>;
+        return <div className={`ui varExplorer`}>
+            <div className="ui variableTableHeader">
+                {variableTableHeader}
+            </div>
+            <div className={`ui segment debugvariables ${frozen ? "frozen" : ""} ui collapsing basic striped table`}>
+                {(Object.keys(variables).length == 0) ? <div /> : this.renderVariables(variables)}
+            </div>
+        </div>;
     }
 }
 

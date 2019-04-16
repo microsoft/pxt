@@ -14,7 +14,8 @@
 /* Top bar menu */
 .menubar .debugger-menu-item.centered {
     position: fixed;
-    place-content: center;
+    align-content: center;
+    justify-content: center;
     right: 0;
     left: 0;
     margin-right: auto;
@@ -100,14 +101,34 @@
 }
 
 /* Debugger variables view */
+.ui.varExplorer {
+    width: 100%;
+    .ui.variableTableHeader {
+        padding-top: 1rem;
+        padding-bottom: 0.5rem;
+        padding-left: 1rem;
+        border: none;
+        font-family: @pageFont;
+        font-size: larger;
+        color: black;
+    }
+}
 .ui.segment.debugvariables {
-    table-layout: auto;
     width: 100%;
     display: none;
+    max-width: 100%;
 
     .ui.middle.aligned.list {
         overflow-y: auto;
         max-height: 25rem;
+    }
+    .item {
+        max-width: 100%;
+    }
+    .variableAndValue {
+        display: flex;
+        padding-right: 0.4rem;
+        padding-left: 0.4rem;
     }
 
     .transparent{
@@ -118,12 +139,16 @@
     }
     .variable.varname {
         text-overflow: ellipsis;
-        max-width: 1rem;
         overflow: hidden;
         white-space: nowrap;
+        flex-grow: 2;
     }
     .variable.detail {
+        overflow: hidden;
         text-align: right;
+        max-width: 50%;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
     .varval.number {
         color: @debugNumberVariable;
@@ -148,13 +173,20 @@
 }
 
 .debugging .ui.segment.debugvariables {
-    display: table;
+    display: block;
     margin: 0;
     border: none;
 }
 
+.ui.segment.debugvariables:not(.frozen) .item:nth-child(even) {
+    background-color: @debugVariableEven;
+}
+.ui.segment.debugvariables:not(.frozen) .item:nth-child(odd) {
+    background-color: @debugVariableOdd;
+}
+
 .ui.segment.debugvariables.frozen {
-    background: #eee;
+    background: @debugVariableFrozen;
 }
 /* sim overlay */
 div.simframe div.pause-overlay {

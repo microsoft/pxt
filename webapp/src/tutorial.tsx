@@ -15,31 +15,32 @@ type ISettingsProps = pxt.editor.ISettingsProps;
  * We'll run this step when we first start the tutorial to figure out what blocks are used so we can
  * filter the toolbox. 
  */
-export function getUsedBlocksAsync(tutorialId: string, tutorialmd: string): Promise<pxt.Map<number>> {
-    const code = pxt.tutorial.bundleTutorialCode(tutorialmd);
-    return Promise.resolve()
-        .then(() => {
-            if (code == '') return Promise.resolve({});
-
-            const usedBlocks: pxt.Map<number> = {};
-            return compiler.getBlocksAsync()
-                .then(blocksInfo => compiler.decompileSnippetAsync(code, blocksInfo))
-                .then(blocksXml => {
-                    if (blocksXml) {
-                        const headless = pxt.blocks.loadWorkspaceXml(blocksXml);
-                        const allblocks = headless.getAllBlocks();
-                        for (let bi = 0; bi < allblocks.length; ++bi) {
-                            const blk = allblocks[bi];
-                            usedBlocks[blk.type] = 1;
-                        }
-                        return usedBlocks;
-                    } else {
-                        throw new Error("Empty blocksXml, failed to decompile");
-                    }
-                }).catch(() => {
-                    pxt.log(`Failed to decompile tutorial: ${tutorialId}`);
-                    throw new Error(`Failed to decompile tutorial: ${tutorialId}`);
-                })
+export function getUsedBlocksAsync(code: string): Promise<pxt.Map<number>> {
+    if (!code) return Promise.resolve({});
+    const usedBlocks: pxt.Map<number> = {};
+    return compiler.getBlocksAsync()
+        .then(blocksInfo => {
+            pxt.blocks.initializeAndInject(blocksInfo);
+            return compiler.decompileBlocksSnippetAsync(code, blocksInfo);
+        }).then(blocksXml => {
+            if (blocksXml) {
+                const headless = pxt.blocks.loadWorkspaceXml(blocksXml);
+                if (!headless) {
+                    pxt.debug(`used blocks xml failed to load\n${blocksXml}`);
+                    throw new Error("blocksXml failed to load");
+                }
+                const allblocks = headless.getAllBlocks();
+                for (let bi = 0; bi < allblocks.length; ++bi) {
+                    const blk = allblocks[bi];
+                    usedBlocks[blk.type] = 1;
+                }
+                return usedBlocks;
+            } else {
+                throw new Error("Empty blocksXml, failed to decompile");
+            }
+        }).catch((e) => {
+            pxt.reportException(e);
+            throw new Error(`Failed to decompile tutorial`);
         });
 }
 

@@ -92,14 +92,7 @@ function reportDiagnostics(diagnostics: pxtc.KsDiagnostic[]): void {
 }
 
 function reportDiagnosticSimply(diagnostic: pxtc.KsDiagnostic): void {
-    let output = "";
-
-    if (diagnostic.fileName) {
-        output += `${diagnostic.fileName}(${diagnostic.line + 1},${diagnostic.column + 1}): `;
-    }
-
-    const category = ts.DiagnosticCategory[diagnostic.category].toLowerCase();
-    output += `${category} TS${diagnostic.code}: ${ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n")}`;
+    let output = pxtc.getDiagnosticString(diagnostic)
     pxt.log(output);
 }
 
@@ -3175,7 +3168,7 @@ function simshimAsync() {
         pxt.debug("no sim/tsconfig.json; skipping")
         return Promise.resolve();
     }
-    let prog = pxtc.plainTsc(path.resolve(simDir()))
+    let prog = pxtc.plainTscCompileDir(path.resolve(simDir()))
     let shims = pxt.simshim(prog, path.parse)
     let filename = "sims.d.ts"
     for (const s of Object.keys(shims)) {
@@ -4989,11 +4982,12 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                         case "tutorial":
                             {
                                 const tutorialMd = nodeutil.resolveMd(docsRoot, card.url);
+                                const tutorial = pxt.tutorial.parseTutorial(tutorialMd);
                                 const pkgs: pxt.Map<string> = { "blocksprj": "*" };
                                 pxt.Util.jsonMergeFrom(pkgs, pxt.gallery.parsePackagesFromMarkdown(tutorialMd) || {});
                                 addSnippet(<CodeSnippet>{
                                     name: card.name,
-                                    code: pxt.tutorial.bundleTutorialCode(tutorialMd),
+                                    code: tutorial.code,
                                     type: "blocks",
                                     ext: "ts",
                                     packages: pkgs

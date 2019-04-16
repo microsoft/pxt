@@ -32,7 +32,7 @@ namespace pxt.py {
 ///
 /// UTILS
 ///
-const INDENT = "  "
+const INDENT = "\t"
 function indent(lvl: number): (s: string) => string {
     return s => `${INDENT.repeat(lvl)}${s}`
 }
@@ -59,7 +59,7 @@ function tsToPy(prog: ts.Program, filename: string): string {
     let lhost = new ts.pxtc.LSHost(prog)
     // let ls = ts.createLanguageService(lhost) // TODO
     let file = prog.getSourceFile(filename)
-    let renameMap = ts.pxtc.decompiler.buildRenameMap(prog, file)
+    let [renameMap, globalNames] = ts.pxtc.decompiler.buildRenameMap(prog, file)
 
     // ts->py 
     return emitFile(file)
@@ -78,16 +78,29 @@ function tsToPy(prog: ts.Program, filename: string): string {
     function popScope(): Scope {
         return env.shift()
     }
-    function getName(name: ts.Identifier | ts.BindingPattern | ts.PropertyName) {
+    function getName(name: ts.Identifier | ts.BindingPattern | ts.PropertyName | ts.EntityName): string {
         if (!ts.isIdentifier(name))
             throw Error("Unsupported advanced name format: " + name.getText())
-        if (renameMap) {
+        let outName = name.text;
+        let hasSrc = name.getSourceFile()
+        if (renameMap && hasSrc) {
             const rename = renameMap.getRenameForPosition(name.getStart());
             if (rename) {
-                return rename.name;
+                outName = rename.name;
             }
         }
-        return name.text;
+        return outName
+    }
+    function getNewGlobalName(nameHint: string | ts.Identifier | ts.BindingPattern | ts.PropertyName | ts.EntityName) {
+        // TODO right now this uses a global name set, but really there should be options to allow shadowing
+        if (typeof nameHint !== "string")
+            nameHint = getName(nameHint)
+        if (globalNames[nameHint]) {
+            return pxtc.decompiler.getNewName(nameHint, globalNames)
+        } else {
+            globalNames[nameHint] = true
+            return nameHint
+        }
     }
     // TODO decide on strategy for tracking variable scope(s)
     // function introVar(name: string, decl: ts.Node): string {
@@ -219,9 +232,16 @@ function tsToPy(prog: ts.Program, filename: string): string {
             return emitReturnStmt(s)
         } else if (ts.isBlock(s)) {
             return emitBlock(s)
+        } else if (ts.isTypeAliasDeclaration(s)) {
+            return emitTypeAliasDecl(s)
         } else {
             throw Error(`Not implemented: statement kind ${s.kind}`);
         }
+    }
+    function emitTypeAliasDecl(s: ts.TypeAliasDeclaration): string[] {
+        let typeStr = emitType(s.type)
+        let name = getName(s.name)
+        return [`${name} = ${typeStr}`]
     }
     function emitReturnStmt(s: ts.ReturnStatement): string[] {
         if (!s.expression)
@@ -598,7 +618,7 @@ function tsToPy(prog: ts.Program, filename: string): string {
         // stmts.push("# }")
         return stmts
     }
-    function emitFuncDecl(s: ts.FunctionDeclaration | ts.MethodDeclaration | ts.FunctionExpression | ts.ConstructorDeclaration | ts.ArrowFunction, name: string = null): string[] {
+    function emitFuncDecl(s: ts.FunctionDeclaration | ts.MethodDeclaration | ts.FunctionExpression | ts.ConstructorDeclaration | ts.ArrowFunction, name: string = null, altParams?: ts.NodeArray<ts.ParameterDeclaration>): string[] {
         // TODO determine captured variables, then determine global and nonlocal directives
         // TODO helper function for determining if an expression can be a python expression
         let paramList: string[] = []
@@ -608,8 +628,11 @@ function tsToPy(prog: ts.Program, filename: string): string {
             paramList.push("self")
         }
 
-        paramList = paramList
-            .concat(s.parameters.map(p => emitParamDecl(p)))
+        let paramDeclDefs = altParams ? mergeParamDecls(s.parameters, altParams) : s.parameters
+
+        let paramDecls = paramDeclDefs
+            .map(d => emitParamDecl(d))
+        paramList = paramList.concat(paramDecls)
 
         let params = paramList.join(", ")
 
@@ -646,14 +669,57 @@ function tsToPy(prog: ts.Program, filename: string): string {
 
         return out
     }
-    function emitParamDecl(s: ts.ParameterDeclaration, inclTypesIfAvail = true): string {
-        let nm = getName(s.name)
-        if (s.type && inclTypesIfAvail) {
-            let typ = s.type.getText()
-            return `${nm}:${typ}`
-        } else {
-            return nm
+    function emitFuncType(s: ts.FunctionTypeNode): string {
+        let returnType = emitType(s.type)
+        let params = s.parameters
+            .map(p => p.type) // python type syntax doesn't allow names
+            .map(emitType)
+        return `Callable[[${params.join(", ")}], ${returnType}]`
+    }
+    function emitType(s: ts.TypeNode): string {
+        switch (s.kind) {
+            case ts.SyntaxKind.StringKeyword:
+                return "str"
+            case ts.SyntaxKind.NumberKeyword:
+                // Note, "real" python expects this to be "float" or "int", we're intentionally diverging here
+                return "number"
+            case ts.SyntaxKind.BooleanKeyword:
+                return "bool"
+            case ts.SyntaxKind.VoidKeyword:
+                return "None"
+            case ts.SyntaxKind.FunctionType:
+                return emitFuncType(s as ts.FunctionTypeNode)
+            case ts.SyntaxKind.ArrayType: {
+                let t = s as ts.ArrayTypeNode
+                let elType = emitType(t.elementType)
+                return `List[${elType}]`
+            }
+            case ts.SyntaxKind.TypeReference: {
+                let t = s as ts.TypeReferenceNode
+                let nm = getName(t.typeName)
+                return `${nm}`
+            }
+            default:
+                return `(TODO: Unknown TypeNode kind: ${s.kind})`
         }
+        // // TODO translate type
+        // return s.getText()
+    }
+    function emitParamDecl(s: ParameterDeclarationExtended, inclTypesIfAvail = true): string {
+        let nm = s.altName || getName(s.name)
+        let typePart = ""
+        if (s.type && inclTypesIfAvail) {
+            let typ = emitType(s.type)
+            typePart = `: ${typ}`
+        }
+        let initPart = ""
+        if (s.initializer) {
+            let [initExp, initSup] = emitExp(s.initializer)
+            if (initSup.length)
+                throw new Error(`TODO: complex expression in parameter default value not supported. Expression: ${s.initializer.getText()}`)
+            initPart = ` = ${initExp}`
+        }
+        return `${nm}${typePart}${initPart}`
     }
     function emitVarDecl(s: ts.VariableDeclaration): string[] {
         let out: string[] = []
@@ -669,7 +735,8 @@ function tsToPy(prog: ts.Program, filename: string): string {
             out = out.concat(expSup)
             let declStmt: string;
             if (s.type) {
-                declStmt = `${varNm}: ${s.type.getText()} = ${exp}`
+                let translatedType = emitType(s.type)
+                declStmt = `${varNm}: ${translatedType} = ${exp}`
             } else {
                 declStmt = `${varNm} = ${exp}`
             }
@@ -799,32 +866,153 @@ function tsToPy(prog: ts.Program, filename: string): string {
 
         return [`${left}.${right}`, leftSup];
     }
+    function getSimpleExpNameParts(s: ts.Expression, propertyNameOnly = false): string[] {
+        if (ts.isPropertyAccessExpression(s)) {
+            if (propertyNameOnly)
+                return [getName(s.name)]
+            else
+                return getSimpleExpNameParts(s.expression).concat([getName(s.name)])
+        }
+        else if (ts.isIdentifier(s))
+            return [getName(s)]
+        else // TODO handle more cases like indexing?
+            return []
+    }
+    function getNameHint(param?: ts.ParameterDeclaration, calleeExp?: ts.Expression, allParams?: ts.NodeArray<ts.ParameterDeclaration>, allArgs?: ReadonlyArray<ts.Expression>): string {
+        // get words from the callee
+        let calleePart: string = ""
+        if (calleeExp)
+            calleePart = getSimpleExpNameParts(calleeExp)
+                .map(pxtc.snakify)
+                .join("_")
+
+        // get words from the previous parameter(s)/arg(s)
+        let enumParamParts: string[] = []
+        if (allParams && allParams.length > 1 && allArgs && allArgs.length > 1) {
+            // special case: if there are enum parameters, use those as part of the hint
+            for (let i = 0; i < allParams.length && i < allArgs.length; i++) {
+                let arg = allArgs[i]
+                let argType = tc.getTypeAtLocation(arg)
+                if (hasTypeFlag(argType, ts.TypeFlags.EnumLike)) {
+                    let argParts = getSimpleExpNameParts(arg, /*propertyNameOnly*/true)
+                        .map(pxtc.snakify)
+                    enumParamParts = enumParamParts.concat(argParts)
+                }
+            }
+        }
+        let otherParamsPart = enumParamParts.join("_")
+
+        // get words from this parameter/arg
+        let paramPart: string = getName(param.name)
+
+        // the full hint
+        let hint = [calleePart, otherParamsPart, paramPart]
+            .filter(s => s)
+            .map(pxtc.snakify)
+            .map(s => s.toLowerCase())
+            .join("_") || "my_callback"
+
+        // sometimes the full hint is too long so we remove duplicate words
+        // e.g. controller_any_button_on_event_controller_button_event_pressed_callback
+        //   -> controller_any_button_on_event_pressed_callback
+        let allWords = hint.split("_")
+        if (allWords.length > 4) {
+            hint = dedupWords(allWords).join("_")
+        }
+
+        return hint
+        function dedupWords(words: string[]): string[] {
+            let usedWords: pxt.Map<boolean> = {}
+            let out: string[] = []
+            for (let w of words) {
+                if (w in usedWords)
+                    continue
+                usedWords[w] = true
+                out.push(w)
+            }
+            return out
+        }
+    }
+    function emitArgExp(s: ts.Expression, param?: ts.ParameterDeclaration, calleeExp?: ts.Expression, allParams?: ts.NodeArray<ts.ParameterDeclaration>, allArgs?: ReadonlyArray<ts.Expression>): ExpRes {
+        // special case: function arguments to higher-order functions
+        // reason 1: if the argument is a function and the parameter it is being passed to is also a function type,
+        // then we want to pass along the parameter's function parameters to emitFnExp so that the argument will fit the
+        // parameter type. This is because TypeScript/Javascript allows passing a function with fewer parameters to an
+        // argument that is a function with more parameters while Python does not.
+        // Key example: callbacks
+        // this code compiles in TS:
+        //      function onEvent(callback: (a: number) => void) { ... }
+        //      onEvent(function () { ... })
+        // yet in python this is not allowed, we have to add more parameters to the anonymous declaration to match like this:
+        //      onEvent(function (a: number) { ... })
+        // see "callback_num_args.ts" test case for more details.
+        // reason 2: we want to generate good names, which requires context about the function it is being passed to an other parameters
+        if ((ts.isFunctionExpression(s) || ts.isArrowFunction(s)) && param) {
+            if (param.type && ts.isFunctionTypeNode(param.type)) {
+                let altParams = param.type.parameters
+                let fnNameHint = getNameHint(param, calleeExp, allParams, allArgs)
+                return emitFnExp(s, fnNameHint, altParams)
+            }
+        }
+
+        return emitExp(s)
+    }
     function emitCallExp(s: ts.CallExpression | ts.NewExpression): ExpRes {
+        // get callee parameter info
+        let calleeType = tc.getTypeAtLocation(s.expression)
+        let calleeTypeNode = tc.typeToTypeNode(calleeType)
+        let calleeParameters: ts.NodeArray<ts.ParameterDeclaration> = ts.createNodeArray([])
+        if (ts.isFunctionTypeNode(calleeTypeNode)) {
+            calleeParameters = calleeTypeNode.parameters
+            if (calleeParameters.length < s.arguments.length) {
+                throw Error("TODO: Unsupported call site where caller the arguments outnumber the callee parameters: " + s.getText())
+            }
+        }
+
         // TODO inspect type info to rewrite things like console.log, Math.max, etc.
         let [fn, fnSup] = emitExp(s.expression)
+
         let argExps = s.arguments
-            .map(emitExp)
+            .map((a, i, allArgs) => emitArgExp(a, calleeParameters[i], s.expression, calleeParameters, allArgs))
         let args = argExps
-            .map(([a, aSup]) => a)
+            .map(([a, _]) => a)
             .join(", ")
         let sup = argExps
-            .map(([a, aSup]) => aSup)
+            .map(([_, aSup]) => aSup)
             .reduce((p, c) => p.concat(c), fnSup)
         return [`${fn}(${args})`, sup]
     }
-    function nextFnName() {
-        // TODO ensure uniqueness
-        // TODO add sync lock
-        // TODO infer friendly name from context
-        return `function_${nextFnNum++}`
+    type ParameterDeclarationExtended = ts.ParameterDeclaration & { altName?: string }
+    function mergeParamDecls(primary: ts.NodeArray<ts.ParameterDeclaration>, alt: ts.NodeArray<ts.ParameterDeclaration>): ts.NodeArray<ParameterDeclarationExtended> {
+        // Note: possible name collisions between primary and alt parameters is handled by marking
+        // alt parameters as "unused" so that we can generate them new names without renaming
+        let decls: ParameterDeclarationExtended[] = []
+        let paramNames: pxt.Map<boolean> = {}
+        for (let i = 0; i < Math.max(primary.length, alt.length); i++) {
+            let p: ParameterDeclarationExtended;
+            if (primary[i]) {
+                p = primary[i]
+                paramNames[getName(p.name)] = true
+            } else {
+                p = alt[i]
+                let name = getName(p.name)
+                if (paramNames[name]) {
+                    name = pxtc.decompiler.getNewName(name, paramNames)
+                    p = Object.assign({ altName: name }, alt[i])
+                }
+            }
+            decls.push(p)
+        }
+        return ts.createNodeArray(decls, false)
     }
-    function emitFnExp(s: ts.FunctionExpression | ts.ArrowFunction): ExpRes {
+    function emitFnExp(s: ts.FunctionExpression | ts.ArrowFunction, nameHint?: string, altParams?: ts.NodeArray<ts.ParameterDeclaration>): ExpRes {
         // if the anonymous function is simple enough, use a lambda
         if (!ts.isBlock(s.body)) {
-            // TODO this speculation is only safe if emitExp is pure. It's not quite today (e.g. nextFnNumber)
+            // TODO we're speculatively emitting this expression. This speculation is only safe if emitExp is pure, which it's not quite today (e.g. getNewGlobalName)
             let [fnBody, fnSup] = emitExp(s.body as ts.Expression)
             if (fnSup.length === 0) {
-                let paramList = s.parameters
+                let paramDefs = altParams ? mergeParamDecls(s.parameters, altParams) : s.parameters
+                let paramList = paramDefs
                     .map(p => emitParamDecl(p, false))
                     .join(", ");
 
@@ -835,8 +1023,9 @@ function tsToPy(prog: ts.Program, filename: string): string {
             }
         }
 
-        let fnName = s.name ? getName(s.name) : nextFnName()
-        let fnDef = emitFuncDecl(s, fnName)
+        // otherwise emit a standard "def myFunction(...)" declaration
+        let fnName = s.name ? getName(s.name) : getNewGlobalName(nameHint || "my_function")
+        let fnDef = emitFuncDecl(s, fnName, altParams)
 
         return [fnName, fnDef]
     }
@@ -967,6 +1156,14 @@ function tsToPy(prog: ts.Program, filename: string): string {
         }
         return visitExp(s, isConst)
     }
+    function emitCondExp(s: ts.ConditionalExpression): ExpRes {
+        let [cond, condSup] = emitExp(s.condition)
+        let [tru, truSup] = emitExp(s.whenTrue)
+        let [fls, flsSup] = emitExp(s.whenFalse)
+        let sup = condSup.concat(truSup).concat(flsSup)
+        let exp = `${tru} if ${cond} else ${fls}`
+        return [exp, sup]
+    }
     function emitExp(s: ts.Expression): ExpRes {
         switch (s.kind) {
             case ts.SyntaxKind.BinaryExpression:
@@ -1008,6 +1205,8 @@ function tsToPy(prog: ts.Program, filename: string): string {
             case ts.SyntaxKind.StringLiteral:
                 // TODO handle weird syntax?
                 return asExpRes(s.getText())
+            case ts.SyntaxKind.ConditionalExpression:
+                return emitCondExp(s as ts.ConditionalExpression)
             default:
                 // TODO handle more expressions
                 return [s.getText(), ["# unknown expression:  " + s.kind]] // uncomment for easier locating

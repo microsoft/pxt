@@ -237,7 +237,8 @@ namespace ts.pxtc {
             includeGreyBlockMessages,
             allowedArgumentTypes: opts.allowedArgumentTypes || ["number", "boolean", "string"]
         };
-        const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, decompileOpts, pxtc.decompiler.buildRenameMap(program, file));
+        let [renameMap, _] = pxtc.decompiler.buildRenameMap(program, file)
+        const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, decompileOpts, renameMap);
         return bresp;
     }
 

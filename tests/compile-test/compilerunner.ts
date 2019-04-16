@@ -8,7 +8,7 @@ import "mocha";
 import * as chai from "chai";
 
 import { TestHost } from "../common/testHost";
-
+import * as util from "../common/testUtils";
 
 const casesDir = path.join(process.cwd(), "tests", "compile-test", "lang-test0");
 const bareDir = path.relative(process.cwd(), path.join("tests", "compile-test", "bare"));
@@ -26,27 +26,9 @@ function initGlobals() {
 initGlobals();
 
 // Just needs to exist
-pxt.setAppTarget({
-    id: "core",
-    name: "Microsoft MakeCode",
-    title: "Microsoft MakeCode",
-    versions: undefined,
-    description: "A toolkit to build JavaScript Blocks editors.",
-    bundleddirs: [],
-    compile: {
-        isNative: false,
-        hasHex: false,
-        jsRefCounting: true,
-        switches: {}
-    },
-    bundledpkgs: {},
-    appTheme: {},
-    tsprj: undefined,
-    blocksprj: undefined,
-    corepkg: undefined
-});
+pxt.setAppTarget(util.testAppTarget);
 
-
+// TODO(dz): merge with CompileHost in testUtils.ts
 class CompileHost extends TestHost {
     private basename: string;
     private fileText: string;
@@ -66,14 +48,14 @@ class CompileHost extends TestHost {
         if (module.id === "this") {
             if (filename === "pxt.json") {
                 return JSON.stringify({
-                        "name": this.name,
-                        "dependencies": { "bare": "file:" + bareDir },
-                        "description": "",
-                        "files": [
-                            "lang-test0.ts",
-                            "main.ts",
-                        ]
-                    })
+                    "name": this.name,
+                    "dependencies": { "bare": "file:" + bareDir },
+                    "description": "",
+                    "files": [
+                        "lang-test0.ts",
+                        "main.ts",
+                    ]
+                })
             }
             else if (filename === "main.ts") {
                 return this.fileText;
@@ -106,7 +88,7 @@ describe("ts compiler", () => {
 
     describe("with floating point", () => {
         filenames.forEach(filename => {
-            it("should compile and run " + path.basename(filename), function() {
+            it("should compile and run " + path.basename(filename), function () {
                 this.timeout(10000)
                 return compileTestAsync(filename)
             });
