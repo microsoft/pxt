@@ -1313,7 +1313,7 @@ namespace ts.pxtc {
                 let finfo = fieldIndexCore(inf, fld, false)
                 inf.itable.push({
                     name: fname,
-                    info: (finfo.idx + 1) * 4,
+                    info: (finfo.idx + 1) * (isStackMachine() ? 1 : 4),
                     idx: getIfaceMemberId(fname),
                     proc: null
                 })
@@ -1821,6 +1821,8 @@ ${lbl}: .short 0xffff
         }
 
         function markFunctionUsed(decl: EmittableAsCall) {
+            if (isStackMachine() && isClassFunction(decl))
+                getIfaceMemberId(getName(decl), true)
             getFunctionInfo(decl).isUsed = true
             markUsed(decl)
         }

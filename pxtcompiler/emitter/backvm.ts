@@ -50,20 +50,8 @@ ${info.id}_VT_start:
         .short ${info.classNo} ; class-id
         .short 0 ; reserved
         .word ${ifaceInfo.mult} ; hash-mult
-        .word 0,0, 0,0, 0,0, 0,0 ; space for 4 native methods
+        .word 0,0, 0,0, 0,0, 0,0 ; space for 4 (VM_NUM_CPP_METHODS) native methods
 `;
-
-        let addPtr = (n: string) => {
-            if (n != "0") n += "@fn"
-            s += `        .word ${n}\n`
-        }
-
-        let toStr = info.toStringMethod
-        addPtr(toStr ? toStr.vtLabel() : "0")
-
-        for (let m of info.vtable) {
-            addPtr(m.label())
-        }
 
         s += `
         .balign 4
