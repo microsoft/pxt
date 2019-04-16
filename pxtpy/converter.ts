@@ -1086,7 +1086,7 @@ namespace pxt.py {
                     return B.mkGroup(res)
                 } else 
                 */
-                if (currIteration < 2) {
+                if (currIteration == 0) {
                     return B.mkText("/* skip for now */")
                 }
                 unifyTypeOf(n.targets[0], fd.pyRetType)
