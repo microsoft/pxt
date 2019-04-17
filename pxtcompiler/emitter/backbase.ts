@@ -147,9 +147,9 @@ ${hexLiteralAsm(data)}
         }
     }
 
-    export function hexLiteralAsm(data: string) {
+    export function hexLiteralAsm(data: string, suff = "") {
         return `
-                .word ${data.length >> 1}
+                .word ${data.length >> 1}${suff}
                 .hex ${data}${data.length % 4 == 0 ? "" : "00"}
         `
     }

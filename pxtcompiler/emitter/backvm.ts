@@ -168,19 +168,29 @@ _start_${name}:
         })
 
         let idx = 0
-        section("ifaceMemberNames", SectionType.IfaceMemberNames, () => bin.ifaceMembers.map(d =>
-            `    .word ${bin.emitString(d)}  ; ${idx++} .${d}`
-        ).join("\n"))
+        section("ifaceMemberNames", SectionType.IfaceMemberNames, () =>
+            `    .word ${bin.ifaceMembers.length}, 0 ; num. entries\n` + bin.ifaceMembers.map(d =>
+                `    .word ${bin.emitString(d)}, 0  ; ${idx++} .${d}`
+            ).join("\n"))
 
         vmsource += "_vtables_end:\n\n"
 
         U.iterMap(bin.hexlits, (k, v) => {
-            section(v, SectionType.Literal, () => hexLiteralAsm(k), [], pxt.BuiltInType.BoxedBuffer)
+            section(v, SectionType.Literal, () =>
+                hexLiteralAsm(k, ", 0"), [], pxt.BuiltInType.BoxedBuffer)
         })
-        U.iterMap(bin.strings, (k, v) => {
+
+        // ifaceMembers are already sorted alphabetically
+        // here we make sure that the pointers to them are also sorted alphabetically
+        // by emitting them in order and before everything else
+        const keys = U.unique(bin.ifaceMembers.concat(Object.keys(bin.strings)), s => s)
+        keys.forEach(k => {
             k = U.toUTF8(k, true)
-            section(v, SectionType.Literal, () => `.word ${k.length}\n.string ${JSON.stringify(k)}`, [], pxt.BuiltInType.BoxedString)
+            section(bin.strings[k], SectionType.Literal, () =>
+                `.word ${k.length}\n.string ${JSON.stringify(k)}`,
+                [], pxt.BuiltInType.BoxedString)
         })
+
         section("numberLiterals", SectionType.NumberLiterals, () => ctx.dblText.join("\n"))
 
         const cfg = bin.res.configData || []
