@@ -182,9 +182,9 @@ _start_${name}:
         // by emitting them in order and before everything else
         const keys = U.unique(bin.ifaceMembers.concat(Object.keys(bin.strings)), s => s)
         keys.forEach(k => {
-            k = U.toUTF8(k, true)
+            let ku = U.toUTF8(k, true)
             section(bin.strings[k], SectionType.Literal, () =>
-                `.word ${k.length}\n.string ${JSON.stringify(k)}`,
+                `.word ${ku.length}\n.string ${JSON.stringify(ku)}`,
                 [], pxt.BuiltInType.BoxedString)
         })
 
