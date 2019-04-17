@@ -698,6 +698,7 @@ namespace pxsim {
             let dbgResume: ResumeFn;
             let breakFrame: StackFrame = null // for step-over
             let lastYield = Date.now()
+            let userGlobals: string[];
             let __this = this
 
             function oops(msg: string) {
@@ -742,10 +743,11 @@ namespace pxsim {
                 return false
             }
 
-            function setupDebugger(numBreakpoints: number) {
+            function setupDebugger(numBreakpoints: number, userCodeGlobals?: string[]) {
                 breakpoints = new Uint8Array(numBreakpoints)
                 // start running and let user put a breakpoint on start
                 // breakAlways = true
+                userGlobals = userCodeGlobals;
             }
 
             function isBreakFrame(s: StackFrame) {
@@ -765,7 +767,7 @@ namespace pxsim {
                 s.pc = retPC;
                 s.r0 = r0;
 
-                const { msg, heap } = getBreakpointMsg(s, brkId);
+                const { msg, heap } = getBreakpointMsg(s, brkId, userGlobals);
                 dbgHeap = heap;
                 Runtime.postMessage(msg)
                 breakAlways = false;
@@ -891,7 +893,7 @@ namespace pxsim {
                         __this.errorHandler(e)
                     else {
                         console.error("Simulator crashed, no error handler", e.stack)
-                        const { msg } = getBreakpointMsg(p, p.lastBrkId)
+                        const { msg } = getBreakpointMsg(p, p.lastBrkId, userGlobals)
                         msg.exceptionMessage = e.message
                         msg.exceptionStack = e.stack
                         Runtime.postMessage(msg)
