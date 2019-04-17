@@ -119,7 +119,6 @@ The first file, ``radio-strings.json``, contains strings for the text of the ``r
 
 There's also a ``docs`` folder under each target folder for the all documentation pages specific to that target.
 
-
 ## Translation roles
 
 ### Translator
@@ -156,6 +155,10 @@ The following table provides a quick guide to which parts of MakeCode the transl
 | [webstrings.json](https://crowdin.com/translate/kindscript/588/en-en) | Localized strings for parts of the [MakeCode.com](https://makecode.com/docs) website |
 | [core/docs](https://crowdin.com/project/kindscript/en#/core/docs) | Documentation about developing new MakeCode targets, creating extensions, authoring documents, and the MakeCode blog |
 | [core/common-docs](https://crowdin.com/project/kindscript/en#/core/common-docs) | Documentation shared by all MakeCode targets. Describes use of the editor, coding concepts, and reference for the base blocks |
+
+## MakeCode extensions
+
+[Extensions](/extensions) provide additional code blocks for features and functions in a target editor that aren't there by default. A user adds an extension to the editor in an extensions dialog selected from the **Settings** menu. Extensions are created by anyone, not just the MakeCode team. Extensions can have their own documentation and have localization files you can edit. Translations for extensions are not part of the MakeCode Crowdin project. An extension is hosted in a GitHub repository and you will need to have a GitHub account to help with localizing an extension's strings or documents. Extension localization is described [here](/extensions/localization).
 
 ## Tips and guidance
 
