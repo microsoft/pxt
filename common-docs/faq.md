@@ -46,10 +46,14 @@ When you share a project it's saved to the public cloud for MakeCode. Anyone can
 
 When you download the program for your project, the name you gave the project becomes part of the download file. If you decide to rename the download file, the name you chose for the project, not the current filename, is used and displayed by the editor.
 
-## I don't see my question here. What's next?
+## I just added / approved a new translation in Crowdin, when will it show up?
 
-Can't find your question? Please see our [support](/support) page.
+Translations are managed by the [Crowdin](https://crowdin.com/project/kindscript) site. There's a scheduled process which checks for new translations in Crowdin and brings them down to the website serving a MakeCode editor. The process usually takes 10 - 30 minutes from when a new translation is approved to when it will appear in an online editor.
 
 ## Where is the "Add Package" button?
 
 Packages were renamed to **Extensions** to align with other code editors. You will now find the **Extensions** menu selection that replaces the **Add Package** button.
+
+## I don't see my question here. What's next?
+
+Can't find your question? Please see our [support](/support) page.

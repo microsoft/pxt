@@ -162,6 +162,10 @@ The following table provides a quick guide to which parts of MakeCode the transl
 
 ## Tips and guidance
 
+### Publishing new translations
+
+Once a translation is approved by a proofreader it is published to the "live" website for MakeCode.com or the target editor. There's a scheduled process which checks for new translations in Crowdin and brings them down to the website serving a MakeCode editor. There is a period of delay from when a new translation is approved and when it will appear on the site. This is generally between 10 - 30 minutes.
+
 ### Live Translations
 
 To test your changes "live", use **beta** build and the ``?liveforcelang=CODE`` hash argument where ``CODE`` is your language ISO code. For example, to see the french translations:
