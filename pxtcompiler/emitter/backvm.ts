@@ -340,7 +340,7 @@ _start_${name}:
             else if (cell.isarg) {
                 let idx = proc.args.length - cell.index - 1
                 assert(idx >= 0, "arg#" + idx)
-                return (`loc ${argDepth + numLoc + 1 + idx} ; ${cell.getName()}`)
+                return (`loc ${argDepth + numLoc + 2 + idx} ; ${cell.getName()}`)
             }
             else {
                 let idx = cell.index + currTmps.length
