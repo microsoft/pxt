@@ -1,10 +1,7 @@
 namespace ts.pxtc {
     const vmSpecOpcodes: pxt.Map<string> = {
-        /*
-        "Number_::eq": "eq",
-        "Number_::adds": "add",
-        "Number_::subs": "sub",
-        */
+        "pxtrt::mapSetGeneric": "mapset",
+        "pxtrt::mapGetGeneric": "mapget",
     }
 
     const vmCallMap: pxt.Map<string> = {

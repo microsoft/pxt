@@ -116,6 +116,8 @@ namespace ts.pxtc.vm {
         "jmp       $lbl",
         "jmpnz     $lbl",
         "jmpz      $lbl",
+        "mapget",
+        "mapset",
         "push",
         "pop",
     ]
