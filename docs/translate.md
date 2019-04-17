@@ -155,6 +155,13 @@ To test your changes "live", use **beta** build and the ``?liveforcelang=CODE`` 
 Note that there may be a delay of up to 24 hours before your changes in Crowdin make it into the "live" view.
 Also, the language will only be available in the editor's language selection if the target has enabled that locale - which is why you need to use the hash mentioned above.
 
+### Tutorials
+
+Tutorials are markdown pages that follow a very specific format. This is so that the tutorial engine can read the individual sections and build a proper list of steps for them. Be aware that there are some macros that are unique to tutorials and you should not translate them. These are:
+
+* ``@fullscreen``
+* ``@unplugged``
+
 ### Block localization guidance
 
 * Do not capitalize blocks
