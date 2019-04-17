@@ -44,6 +44,7 @@ namespace pxt.runner {
             return Util.mapMap(this.files, (k, f) => f)
         }
     }
+
     class Host
         implements pxt.Host {
 
@@ -98,6 +99,7 @@ namespace pxt.runner {
             // cache resolve github packages
             if (proto == "github")
                 cached = this.githubPackageCache[pkg._verspec];
+
             let epkg = getEditorPkg(pkg)
             return (cached ? Promise.resolve(cached) : pkg.commonDownloadAsync())
                 .then(resp => {
@@ -129,6 +131,7 @@ namespace pxt.runner {
                                 return;
                             }
                         });
+
                         if (!cfg.yotta) cfg.yotta = {};
                         cfg.yotta.ignoreConflicts = true;
                         files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4);
@@ -158,7 +161,7 @@ namespace pxt.runner {
     }
 
     function getEditorPkg(p: pxt.Package) {
-        let r: EditorPackage = (p as any)._editorPkg;
+        let r: EditorPackage = (p as any)._editorPkg
         if (r) return r
         let top: EditorPackage = null
         if (p != mainPkg)
@@ -246,7 +249,7 @@ namespace pxt.runner {
             mainPkg = new pxt.MainPackage(host)
             mainPkg._verspec = id ? /\w+:\w+/.test(id) ? id : "pub:" + id : "empty:tsprj"
             downloadPackagePromise = host.downloadPackageAsync(mainPkg, dependencies);
-            installPromise = mainPkg.installAllAsync();
+            installPromise = mainPkg.installAllAsync()
             // cache previous package
             previousMainPackage = mainPkg;
         }

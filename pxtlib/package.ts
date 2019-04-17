@@ -4,7 +4,6 @@
 /// <reference path="util.ts"/>
 
 namespace pxt {
-
     export class Package {
         static getConfigAsync(pkgTargetVersion: string, id: string, fullVers: string): Promise<pxt.PackageConfig> {
             return Promise.resolve().then(() => {
@@ -439,9 +438,8 @@ namespace pxt {
                 initPromise = initPromise.then(() => this.parseConfig(str))
             }
 
-            if (isInstall) {
+            if (isInstall)
                 initPromise = initPromise.then(() => this.downloadAsync())
-            }
 
             if (appTarget.simulator && appTarget.simulator.dynamicBoardDefinition) {
                 if (this.level == 0)
@@ -506,6 +504,7 @@ namespace pxt {
                     }
                 })
             }
+
             return initPromise
                 .then(() => loadDepsRecursive(null, this))
                 .then(() => {
