@@ -96,7 +96,6 @@ namespace ts.pxtc.vm {
         "stfld     $i4, $i5",
         "ldfld     $i4, $i5",
         "newobj    $i1",
-        "stcap     $i1",
         "ldcap     $i1",
         "stglb     $i1",
         "ldglb     $i1",
