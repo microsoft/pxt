@@ -2134,6 +2134,11 @@ export class ProjectView
         this.setState({ mute: !this.state.mute });
     }
 
+    setMute(on: boolean) {
+        simulator.mute(on);
+        this.setState({ mute: on });
+    }
+
     openInstructions() {
         const running = this.state.simState != pxt.editor.SimState.Stopped;
         if (running) this.stopSimulator();

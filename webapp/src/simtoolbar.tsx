@@ -16,6 +16,10 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         this.state = {
         }
 
+        // iOS requires interactive consent to use audio
+        if (pxt.BrowserUtils.isIOS())
+            this.props.parent.setMute(true);
+
         this.toggleTrace = this.toggleTrace.bind(this);
         this.toggleMute = this.toggleMute.bind(this);
         this.restartSimulator = this.restartSimulator.bind(this);
