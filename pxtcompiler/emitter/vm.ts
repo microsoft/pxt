@@ -110,6 +110,8 @@ namespace ts.pxtc.vm {
         "callind   $i1",
         "callproc  $i1",
         "calliface $i2, $i3",
+        "callget   $i1",
+        "callset   $i1",
         "jmp       $lbl",
         "jmpnz     $lbl",
         "jmpz      $lbl",

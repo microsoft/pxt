@@ -529,7 +529,7 @@ _start_${name}:
 
             if (name == "pxt::mkClassInstance") {
                 write(`newobj ${args[0].data}`)
-                return                
+                return
             }
 
             for (let i = 0; i < args.length; ++i) {
@@ -587,7 +587,15 @@ _start_${name}:
                 emitExpr(lambdaArg)
                 write(`callind ${nargs}`)
             } else if (calledProcId.ifaceIndex != null) {
-                write(`calliface ${nargs}, ${calledProcId.ifaceIndex}`)
+                if (/Set/.test(calledProcId.mapMethod)) {
+                    write(`callset ${calledProcId.ifaceIndex}`)
+                    U.assert(nargs == 2)
+                }
+                else if (/Get/.test(calledProcId.mapMethod)) {
+                    write(`callget ${calledProcId.ifaceIndex}`)
+                    U.assert(nargs == 1)
+                } else
+                    write(`calliface ${nargs}, ${calledProcId.ifaceIndex}`)
             } else if (calledProcId.virtualIndex != null) {
                 U.oops()
             } else {
