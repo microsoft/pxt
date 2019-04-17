@@ -144,7 +144,6 @@ export class TutorialHint extends data.Component<ISettingsProps, TutorialHintSta
         const header = tutorialFullscreen ? tutorialName : lf("Hint");
 
         const hide = () => {
-            this.props.parent.setTutorialInstructionsExpanded(true);
             this.setState({ visible: false });
         }
         const next = () => {

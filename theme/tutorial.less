@@ -7,7 +7,7 @@
 
 @inlineBlockColor: #D83B01;
 @highlightLineColor: #fcfc90;
-@tutorialCardHeight: 11rem;
+@tutorialCardHeight: 9rem;
 @tutorialCardExpandedHeight: 22rem;
 
 /*******************************
@@ -292,7 +292,15 @@ span.highlight-line {
 
 /* thin screen */
 @media only screen and (max-height: @tallEditorBreakpoint) {
-    #tutorialcard .ui.button.prevbutton {
+    .tutorial #tutorialcard .content {
+        font-size: 10pt;
+    }
+
+    .tutorial #tutorialcard .ui.button.prevbutton {
         display: none;
+    }
+
+    .modal.hintdialog img.ui.centered.image {
+        max-height:12rem;
     }
 }

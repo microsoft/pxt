@@ -51,7 +51,7 @@
 @extensionPermissionZIndex: @extensionFrameZIndex+1;
 
 /* Tutorial */
-@tutorialLightboxCardZIndex: @dimmerZIndex+1;
+@tutorialLightboxCardZIndex: @editorToolsZIndex+1;
 
 /* Home screen */
 @homeScreenZIndex: (@dimmerZIndex)-1; /* Just below the dimmer */
