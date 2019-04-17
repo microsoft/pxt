@@ -2032,7 +2032,6 @@ namespace pxt.blocks {
         Blockly.Blocks['procedures_callnoreturn'] = {
             init: function () {
                 let nameField = new pxtblockly.FieldProcedure('');
-                nameField.setSourceBlock(this);
                 this.appendDummyInput('TOPROW')
                     .appendField(proceduresCallDef.block['PROCEDURES_CALLNORETURN_TITLE'])
                     .appendField(nameField, 'NAME');

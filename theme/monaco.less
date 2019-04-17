@@ -47,6 +47,11 @@
     color: #FFB900 !important;
 }
 
+/* The view lines in the monaco editor sometimes ignore the editor width and cause a scrollbar to appear */
+.monaco-editor.vs {
+    overflow-x: hidden;
+}
+
 /* Monaco Editor Main tokens */
 .monaco-editor .highlight-statement {
     background-color: #b8b8fd;

@@ -191,7 +191,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
             r.push(<div key={(parent || "") + variable} role="listitem" className="item" onClick={onClick} onMouseOver={this.onMouseOverVariable}>
                 <div className="variableAndValue">
                     <div className={`variable varname ${v.prevValue !== undefined ? "changed" : ""}`} title={variable}>
-                        <i className={`${(v.children ? "down triangle icon" : "right triangle icon") + ((v.value && v.value.hasFields) ? "" : " transparent")}`} style={{ marginLeft: margin }} ></i>
+                        <i className={`${(v.children ? "small down triangle icon" : "small right triangle icon") + ((v.value && v.value.hasFields) ? "" : " transparent")}`} style={{ marginLeft: margin }} ></i>
                         <span>{variable + ':'}</span>
                     </div>
                     <div className="variable detail" style={{ padding: 0.2 }} title={this.shouldShowValueOnHover(type) ? newValue : ""}>
@@ -218,6 +218,47 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
                 {(Object.keys(variables).length == 0) ? <div /> : this.renderVariables(variables)}
             </div>
         </div>;
+    }
+
+    updateVariables(globals: pxsim.Variables, filters?: string[]) {
+        if (!globals) {
+            // freeze the ui
+            this.update(true)
+            return;
+        }
+
+        if (filters) {
+            if (!filters.length) {
+                this.clear();
+                return;
+            }
+            else {
+                for (const variable of filters) {
+                    const value = getValueOfVariable(variable);
+                    this.set(variable, value);
+                }
+            }
+        }
+        else {
+            for (const variable of Object.keys(globals)) {
+                    this.set(variable.replace(/___\d+$/, ""), globals[variable]);
+            }
+        }
+
+        this.update();
+
+        function getValueOfVariable(name: string): pxsim.Variables {
+            // Variable names could have spaces.
+            let correctedName = name.replace(/\s/g, '_');
+            for (let k of Object.keys(globals)) {
+                let n = k.replace(/___\d+$/, "");
+                if (correctedName === n) {
+                    let v = globals[k]
+                    return v;
+                }
+            }
+            return undefined;
+        }
     }
 }
 
@@ -310,7 +351,7 @@ export class DebuggerToolbar extends data.Component<DebuggerToolbarProps, Debugg
             // Debugger Toolbar for the monaco editor.
             return <div className="debugtoolbar" role="complementary" aria-label={lf("Debugger toolbar")}>
                 {!isDebugging ? undefined :
-                    <div className={`ui compact menu icon`}>
+                    <div className={`ui compact borderless menu icon`}>
                         <sui.Item key='dbgpauseresume' className={`dbg-btn dbg-pause-resume ${dbgStepDisabledClass} ${isDebuggerRunning ? "pause" : "play"}`} icon={`${isDebuggerRunning ? "pause blue" : "play green"}`} title={dbgPauseResumeTooltip} onClick={this.dbgPauseResume} />
                         <sui.Item key='dbgstepover' className={`dbg-btn dbg-step-over ${dbgStepDisabledClass}`} icon={`xicon stepover ${isDebuggerRunning ? "disabled" : "blue"}`} title={dbgStepOverTooltip} onClick={this.dbgStepOver} />
                         <sui.Item key='dbgstepinto' className={`dbg-btn dbg-step-into ${dbgStepDisabledClass}`} icon={`xicon stepinto ${isDebuggerRunning ? "disabled" : ""}`} title={dbgStepIntoTooltip} onClick={this.dbgStepInto} />
