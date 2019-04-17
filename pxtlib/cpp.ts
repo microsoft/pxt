@@ -80,6 +80,13 @@ namespace pxt.cpp {
         "pxt::dumpPerfCounters": 1,
         "pxt::deepSleep": 1,
         "pxt::getConfig": 1,
+
+        "pxtrt::mkMap": 1,
+        "pxtrt::mapSet": 1,
+        "pxtrt::stclo": 1,
+        "pxtrt::mklocRef": 1,
+        "pxtrt::stlocRef": 1,
+        "pxtrt::ldlocRef": 1,
     }
 
     export function nsWriter(nskw = "namespace") {
@@ -562,11 +569,24 @@ namespace pxt.cpp {
                 for (let i = 0; i < numArgs; ++i) {
                     const ind = fi.argsFmt[i + 1]
                     const tp = argTypes[i]
-                    const conv =
+                    let conv =
                         ind == "I" ? "toInt" :
                             ind == "B" ? "numops::toBool" :
                                 ""
                     const inp = i == numArgs - 1 ? "ctx->r0" : `ctx->sp[${numArgs - i - 2}]`
+
+                    switch (tp) {
+                        case "TValue":
+                        case "TNumber":
+                            break
+                        case "Action":
+                            conv = "asRefAction"
+                            break
+                        default:
+                            if (!conv) conv = "as" + tp.replace(/\*/g, "")
+                            break
+                    }
+
                     pointerIncPre += `  ${tp} a${i} = (${tp}) ${conv}(${inp});\n`
                     refs.push("a" + i)
                 }
@@ -719,7 +739,7 @@ namespace pxt.cpp {
                         if (U.startsWith(fi.name, "pxt::op_") ||
                             vmKeepFunctions[fi.name] ||
                             parsedAttrs.expose ||
-                            !U.startsWith(fi.name, "pxt::")) {
+                            (!U.startsWith(fi.name, "pxt::") && !U.startsWith(fi.name, "pxtrt::"))) {
                             const wrap = generateVMWrapper(fi, argTypes)
                             const nargs = fi.argsFmt.length - 1
                             pointersInc += `{ "${fi.name}", (OpFun)${wrap}, ${nargs} },\n`
