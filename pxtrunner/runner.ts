@@ -99,8 +99,8 @@ namespace pxt.runner {
             // cache resolve github packages
             if (proto == "github")
                 cached = this.githubPackageCache[pkg._verspec];
-
             let epkg = getEditorPkg(pkg)
+
             return (cached ? Promise.resolve(cached) : pkg.commonDownloadAsync())
                 .then(resp => {
                     if (resp) {
