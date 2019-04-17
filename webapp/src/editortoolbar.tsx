@@ -166,7 +166,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                 {compileBtn ? <EditorToolbarButton className={`primary download-button download-button-full ${downloadButtonClasses}`} icon={downloadIcon} title={compileTooltip} ariaLabel={lf("Download your code")} onButtonClick={this.compile} view='mobile' /> : undefined}
                             </div>
                         </div> : undefined}
-                        <div className={`column right aligned ${targetTheme.bigRunButton ? 'sixteen' : 'ten'} wide`}>
+                        <div id="editorToolbarArea" className={`column right aligned ${targetTheme.bigRunButton ? 'sixteen' : 'ten'} wide`}>
                             {!readOnly ?
                                 <div className="ui icon small buttons">
                                     {showSave ? <EditorToolbarButton icon='save' className={`editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onButtonClick={this.saveFile} view='mobile' /> : undefined}
@@ -244,7 +244,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                         {showSave ? <div className="column four wide">
                             <EditorToolbarButton icon='save' className={`small editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onButtonClick={this.saveFile} view='tablet' />
                         </div> : undefined}
-                        <div className={`column ${showSave ? 'six' : 'ten'} wide right aligned`}>
+                        <div id="editorToolbarArea" className={`column ${showSave ? 'six' : 'ten'} wide right aligned`}>
                             {showUndoRedo ?
                                 <div className="ui icon small buttons">
                                     <EditorToolbarButton icon='xicon undo' className={`editortools-btn undo-editortools-btn ${!hasUndo ? 'disabled' : ''}`} ariaLabel={lf("{0}, {1}", lf("Undo"), !hasUndo ? lf("Disabled") : "")} title={lf("Undo")} onButtonClick={this.undo} view='tablet' />
@@ -284,7 +284,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                     </div>
                                 </div> : undefined}
                                 {showProjectRename ?
-                                    <div className="row" style={compileBtn ? { paddingTop: 0 } : {}}>
+                                    <div id="projectNameArea" className="row" style={compileBtn ? { paddingTop: 0 } : {}}>
                                         <div className="column">
                                             <div className={`ui item large right ${showSave ? "labeled" : ""} fluid input projectname-input projectname-tablet`} title={lf("Pick a name for your project")}>
                                                 <label htmlFor="fileNameInput1" id="fileNameInputLabel1" className="accessible-hidden">{lf("Type a name for your project")}</label>
@@ -300,7 +300,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                     </div> : undefined}
                             </div>
                         </div>
-                        <div className="six wide column right aligned">
+                        <div id="editor" className="six wide column right aligned">
                             <div className="ui grid right aligned">
                                 {showUndoRedo || showZoomControls ?
                                     <div className="row">
@@ -347,7 +347,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                     }
                     </div>
                     {showProjectRename ?
-                        <div className="column left aligned">
+                        <div id="projectNameArea" className="column left aligned">
                             <div className={`ui right ${showSave ? "labeled" : ""} input projectname-input projectname-computer`} title={lf("Pick a name for your project")}>
                                 <label htmlFor="fileNameInput2" id="fileNameInputLabel2" className="accessible-hidden">{lf("Type a name for your project")}</label>
                                 <EditorToolbarSaveInput id="fileNameInput2" view='computer'
@@ -359,7 +359,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                 {showSave ? <EditorToolbarButton icon='save' className={`small right attached editortools-btn save-editortools-btn ${saveButtonClasses}`} title={lf("Save")} ariaLabel={lf("Save the project")} onButtonClick={this.saveFile} view='computer' /> : undefined}
                             </div>
                         </div> : undefined}
-                    <div className="column right aligned">
+                    <div id="editorToolbarArea" className="column right aligned">
                         {showUndoRedo ?
                             <div className="ui icon small buttons">
                                 <EditorToolbarButton icon='xicon undo' className={`editortools-btn undo-editortools-btn ${!hasUndo ? 'disabled' : ''}`} ariaLabel={lf("{0}, {1}", lf("Undo"), !hasUndo ? lf("Disabled") : "")} title={lf("Undo")} onButtonClick={this.undo} view='computer' />
