@@ -105,18 +105,6 @@ body#docs.tutorial {
     background: @tutorialSegmentBackground;
 }
 
-#tutorialcard .ui.tutorialsegment .avatar-image {
-    position: absolute;
-    top: 0.7rem;
-    left: 0.7rem;
-    width: 3rem;
-    height: 3rem;
-    background-repeat: no-repeat;
-    background-size: contain;
-    background-image: @avatarImage;
-    cursor:pointer;
-}
-
 #tutorialcard {
     padding: 0.5rem;
 }
@@ -190,12 +178,6 @@ body#docs.tutorial {
 
 #tutorialcard .ui.button.okbutton {
     border-radius: 0.28571429rem;
-}
-
-i.icon.avatar-image {
-    background-repeat: no-repeat;
-    background-size: contain;
-    background-image: @avatarImage;
 }
 
 /* Tutorial blocks */
@@ -284,9 +266,6 @@ span.highlight-line {
 
 /* Mobile */
 @media only screen and (max-width: @largestMobileScreen) {
-    #tutorialcard .ui.tutorialsegment .avatar-image {
-        display: none;
-    }
     #tutorialcard .ui.button.prevbutton {
         display: none;
     }
@@ -309,4 +288,11 @@ span.highlight-line {
 /* Mobile */
 @media only screen and (max-width: @largestMobileScreen) {
 
+}
+
+/* thin screen */
+@media only screen and (max-height: @tallEditorBreakpoint) {
+    #tutorialcard .ui.button.prevbutton {
+        display: none;
+    }
 }
