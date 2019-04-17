@@ -114,15 +114,8 @@ namespace pxt.runner {
                         if (dependencies) {
                             const files = getEditorPkg(pkg).files;
                             const cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
-                            dependencies.forEach((dep: string) => {
-                                if (dep.indexOf("=") > 0) {
-                                    const ids = /(\S+)=(\S+:\S+)/.exec(dep);
-                                    const id = ids[1];
-                                    const ver = ids[2];
-                                    cfg.dependencies[id] = ver;
-                                } else {
-                                    cfg.dependencies[dep] = "*";
-                                }
+                            dependencies.forEach((d: string) => {
+                                addPackageToConfig(cfg, d);
                             });
                             files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4);
                         }
@@ -132,13 +125,9 @@ namespace pxt.runner {
                         let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
                         // load all dependencies
                         pkg.verArgument().split(',').forEach(d => {
-                            let m = /^([a-zA-Z0-9_-]+)(=(.+))?$/.exec(d);
-                            if (m) {
-                                if (m[3] && this.patchDependencies(cfg, m[1], m[3]))
-                                    return;
-                                cfg.dependencies[m[1]] = m[3] || "*"
-                            } else
-                                console.warn(`unknown package syntax ${d}`)
+                            if (!addPackageToConfig(cfg, d)) {
+                                return;
+                            }
                         });
                         if (!cfg.yotta) cfg.yotta = {};
                         cfg.yotta.ignoreConflicts = true;
@@ -156,6 +145,17 @@ namespace pxt.runner {
     }
 
     export let mainPkg: pxt.MainPackage;
+
+    function addPackageToConfig(cfg: pxt.PackageConfig, dep: string) {
+        let m = /^([a-zA-Z0-9_-]+)(=(.+))?$/.exec(dep);
+        if (m) {
+            if (m[3] && this && this.patchDependencies(cfg, m[1], m[3]))
+                return false;
+            cfg.dependencies[m[1]] = m[3] || "*"
+        } else
+            console.warn(`unknown package syntax ${dep}`)
+        return true;
+    }
 
     function getEditorPkg(p: pxt.Package) {
         let r: EditorPackage = (p as any)._editorPkg;
