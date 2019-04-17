@@ -362,6 +362,7 @@ export class EditorPackage {
     }
 
     lookupFile(name: string) {
+        if (name.indexOf("pxt_modules/") === 0) name = name.slice(12);
         return this.filterFiles(f => f.getName() == name)[0]
     }
 }
