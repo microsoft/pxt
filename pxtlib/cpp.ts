@@ -75,14 +75,11 @@ namespace pxt.cpp {
         return null;
     }
 
-    // TODO check these
     const vmKeepFunctions: pxt.Map<number> = {
         "pxt::mkAction": 1,
         "pxt::dumpPerfCounters": 1,
         "pxt::deepSleep": 1,
         "pxt::getConfig": 1,
-        "pxt::switch_eq": 1,
-        "pxt::instanceOf": 1,
     }
 
     export function nsWriter(nskw = "namespace") {

@@ -368,18 +368,13 @@ _start_${name}:
         }
 
         function emitInstanceOf(info: ClassInfo, tp: string) {
-            push()
-            write(`ldint ${info.classNo}`)
-            push()
-            write(`ldint ${info.lastSubtypeNo}`)
-            if (tp == "bool")
-                callRT("pxt::instanceOf")
-            else if (tp == "validate" || tp == "validateDecr") {
-                callRT("pxt::validateInstanceOf")
+            if (tp == "bool") {
+                write(`checkinst ${info.id}_VT`)
+            } else if (tp == "validate" || tp == "validateDecr") {
+                U.oops()
             } else {
                 U.oops()
             }
-            argDepth -= 2
         }
 
         function emitExprInto(e: ir.Expr) {

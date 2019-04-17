@@ -112,6 +112,7 @@ namespace ts.pxtc.vm {
         "calliface $i2, $i3",
         "callget   $i1",
         "callset   $i1",
+        "checkinst $i1",
         "jmp       $lbl",
         "jmpnz     $lbl",
         "jmpz      $lbl",

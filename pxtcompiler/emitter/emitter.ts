@@ -2960,7 +2960,7 @@ ${lbl}: .short 0xffff
         }
 
         function mapIntOpName(n: string) {
-            if (opts.target.isNative && isThumb()) {
+            if (isThumb()) {
                 switch (n) {
                     case "numops::adds":
                     case "numops::subs":
@@ -2969,6 +2969,14 @@ ${lbl}: .short 0xffff
                     case "numops::orrs":
                         return "@nomask@" + n
                 }
+            }
+
+            if (isStackMachine()) {
+                switch (n) {
+                    case "pxt::switch_eq":
+                        return "numops::eq"
+                }
+
             }
 
             return n
