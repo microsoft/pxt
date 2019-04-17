@@ -91,8 +91,11 @@ async function testTsOrPy(tsOrPyFile: string): Promise<void> {
         recordBaseline(await TS(tsFile))
         await testSts(tsFile)
         let pyFile = await testTs2Py(tsFile)
-        let tsfile2 = await testPy2Ts(pyFile)
-        await testSts(tsfile2)
+        // TODO: py2ts needs to implement more features before we can run the full test suite. Specifically at least:
+        // - AnnAssign
+        // - types: str, List[]
+        // let tsfile2 = await testPy2Ts(pyFile)
+        // await testSts(tsfile2)
     }
 
     return;
