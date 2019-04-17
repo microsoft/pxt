@@ -211,7 +211,7 @@ namespace pxt.py {
         let tsShadowFilesSet = U.toDictionary(tsShadowFiles, t => t)
         for (let sym of U.values(apisInfo.byQName)) {
             // if the symbol comes from a .ts file that matches one of the .py files we're compiling - skip these
-            if (sym.fileName in tsShadowFilesSet) {
+            if (tsShadowFilesSet[sym.fileName]) {
                 continue
             }
 
