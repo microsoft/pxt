@@ -67,7 +67,7 @@ function setupSidebar() {
     $('#togglesidebar').on('keydown', handleEnterKey);
     $('.ui.sidebar')
         .sidebar({
-            dimPage: true,
+            dimPage: false,
             onShow: function () {
                 togglesidebar.setAttribute("aria-expanded", "true");
                 document.getElementsByClassName("sidebar").item(0).getElementsByClassName("focused").item(0).focus();

@@ -231,7 +231,7 @@ namespace pxt.docs {
         }
 
         params["menu"] = (theme.docMenu || []).map(e => recMenu(e, 0)).join("\n")
-        params["TOC"] = TOC.map(e => recTOC(e, 0)).join("\n")
+        params["TOC"] = TOC.map(e => recTOC(e, 1)).join("\n")
 
         if (theme.appStoreID)
             params["appstoremeta"] = `<meta name="apple-itunes-app" content="app-id=${U.htmlEscape(theme.appStoreID)}"/>`
