@@ -40,7 +40,7 @@ function setDiagnostics(diagnostics: pxtc.KsDiagnostic[]) {
 let lastErrorCounts: string = "";
 function reportDiagnosticErrors(errors: pxtc.KsDiagnostic[]) {
     // report to analytics;
-    if (errors) {
+    if (errors && errors.length) {
         const counts: pxt.Map<number> = {};
         errors.filter(err => err.code).forEach(err => counts[err.code] = (counts[err.code] || 0) + 1);
         const errorCounts = JSON.stringify(errors);
