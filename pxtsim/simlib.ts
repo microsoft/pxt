@@ -199,7 +199,7 @@ namespace pxsim {
         // for playing WAV
         let audio: HTMLAudioElement;
 
-        export function context(): AudioContext {
+        function context(): AudioContext {
             if (!_context) _context = freshContext();
             return _context;
         }
