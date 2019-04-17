@@ -164,7 +164,8 @@ Tutorials are markdown pages that follow a very specific format. This is so that
 
 ### Block localization guidance
 
-* Do not capitalize blocks
-* Do not translate ``%variable`` names
+* Do not capitalize words in blocks
+* Do not translate any ``%variable`` or ``$variable`` names
 * Do not reorder parameters
-* Maintain the same structure of ``|`` and ``%variables%``
+* Maintain the same order and spacing of all ``|`` and ``%variable`` names in the block text
+> Note: If the order of the ``%variable`` names reads poorly in the translated language, it's possible change the order if there are no ``|`` symbols and you use ``$`` instead of ``%`` as a prefix for the variable.
