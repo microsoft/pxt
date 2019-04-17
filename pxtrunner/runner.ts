@@ -112,19 +112,19 @@ namespace pxt.runner {
                             epkg.setFiles(emptyPrjFiles())
                         }
                         if (dependencies) {
-                            let files = getEditorPkg(pkg).files;
-                                let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
-                                dependencies.forEach((dep: string) => {
-                                    if (dep.indexOf("=") > 0) {
-                                        let ids = /(\S+)=(\S+:\S+)/.exec(dep);
-                                        let id = ids[1];
-                                        let ver = ids[2];
-                                        cfg.dependencies[id] = ver;
-                                    } else {
-                                        cfg.dependencies[dep] = "*";
-                                    }
-                                });
-                                files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4);
+                            const files = getEditorPkg(pkg).files;
+                            const cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+                            dependencies.forEach((dep: string) => {
+                                if (dep.indexOf("=") > 0) {
+                                    const ids = /(\S+)=(\S+:\S+)/.exec(dep);
+                                    const id = ids[1];
+                                    const ver = ids[2];
+                                    cfg.dependencies[id] = ver;
+                                } else {
+                                    cfg.dependencies[dep] = "*";
+                                }
+                            });
+                            files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4);
                         }
                         return Promise.resolve()
                     } else if (proto == "docs") {
