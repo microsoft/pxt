@@ -4,6 +4,8 @@ import * as sui from "./sui";
 import * as data from "./data";
 import * as simulator from "./simulator";
 
+const MAX_VARIABLE_LENGTH = 20;
+
 type ISettingsProps = pxt.editor.ISettingsProps;
 
 interface DebuggerVariablesState {
@@ -22,9 +24,6 @@ interface DebuggerVariablesProps extends ISettingsProps {
 }
 
 export class DebuggerVariables extends data.Component<DebuggerVariablesProps, DebuggerVariablesState> {
-
-    private static MAX_VARIABLE_CHARS = 20;
-
     private nextVariables: pxt.Map<pxsim.Variables> = {};
 
     constructor(props: DebuggerVariablesProps) {
@@ -32,7 +31,6 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         this.state = {
             variables: {}
         }
-        this.onMouseOverVariable = this.onMouseOverVariable.bind(this);
         this.toggleDebugging = this.toggleDebugging.bind(this);
     }
 
@@ -43,41 +41,6 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
 
     set(name: string, value: pxsim.Variables) {
         this.nextVariables[name] = value;
-    }
-
-    static renderValue(v: any): string {
-        let sv = '';
-        let type = typeof v;
-        switch (type) {
-            case "undefined": sv = "undefined"; break;
-            case "number": sv = v + ""; break;
-            case "boolean": sv = v + ""; break;
-            case "string": sv = JSON.stringify(v); break;
-            case "object":
-                if (v == null) sv = "null";
-                else if (v.text) sv = v.text;
-                else if (v.id && v.preview) return v.preview;
-                else if (v.id !== undefined) sv = "(object)"
-                else sv = "(unknown)"
-                break;
-        }
-        return sv;
-    }
-
-    static capLength(varstr: string) {
-        let remaining = DebuggerVariables.MAX_VARIABLE_CHARS - 3; // acount for ...
-        let hasQuotes = false;
-        if (varstr.indexOf('"') == 0) {
-            remaining -= 2;
-            hasQuotes = true;
-            varstr = varstr.substring(1, varstr.length - 1);
-        }
-        if (varstr.length > remaining)
-            varstr = varstr.substring(0, remaining) + '...';
-        if (hasQuotes) {
-            varstr = '"' + varstr + '"'
-        }
-        return varstr;
     }
 
     update(frozen = false) {
@@ -94,116 +57,8 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         this.nextVariables = {};
     }
 
-    private toggle(v: Variable) {
-        // We have to take care of the logic for nested looped variables. Currently they break this implementation.
-        if (v.children) {
-            delete v.children;
-            this.setState({ variables: this.state.variables })
-        } else {
-            if (!v.value.id) return;
-            // We filter the getters we want to call for this variable.
-            let allApis = this.props.apisByQName;
-            let matcher = new RegExp("^((.+\.)?" + v.value.type + ")\.");
-            let potentialKeys = Object.keys(allApis).filter(key => matcher.test(key));
-            let fieldsToGet: string[] = [];
-            potentialKeys.forEach(key => {
-                let commentAttrs = allApis[key];
-                if (!key.endsWith("@set") && commentAttrs && commentAttrs.attributes.callInDebugger) {
-                    fieldsToGet.push(key);
-                }
-            });
-            simulator.driver.variablesAsync(v.value.id, fieldsToGet)
-                .then((msg: pxsim.VariablesMessage) => {
-                    if (msg && msg.variables) {
-                        if (v.value.type == "array") {
-                            v.children = pxt.Util.mapMap(msg.variables,
-                                (k, v) => {
-                                    return {
-                                        value: msg.variables[k]
-                                    }
-                                });
-                        } else {
-                            let children: pxt.Map<Variable> = {};
-                            Object.keys(msg.variables).forEach(variableName => {
-                                children[variableName] = { value: msg.variables[variableName] }
-                            })
-                            v.children = children;
-                        }
-                        this.setState({ variables: this.state.variables })
-                    }
-                })
-        }
-    }
-
-    private variableType(variable: Variable): string {
-        let val = variable.value;
-        if (val == null) return "undefined";
-        let type = typeof val
-        switch (type) {
-            case "string":
-            case "number":
-            case "boolean":
-                return type;
-            case "object":
-                if (val.type) return val.type;
-                if (val.preview) return val.preview;
-                if (val.text) return val.text;
-                return "object";
-            default:
-                return "unknown";
-        }
-    }
-
-    private shouldShowValueOnHover(type: string): boolean {
-        switch (type) {
-            case "string":
-            case "number":
-            case "boolean":
-            case "array":
-                return true;
-            default:
-                return false;
-        }
-    }
-
     toggleDebugging(): void {
         this.props.parent.toggleDebugging();
-    }
-
-    private onMouseOverVariable(): void { };
-
-    private renderVariables(variables: pxt.Map<Variable>, parent?: string, depth?: number): JSX.Element[] {
-        let r: JSX.Element[] = [];
-        let varNames = Object.keys(variables);
-        if (!parent) {
-            varNames = varNames.sort((var_a, var_b) => {
-                return this.variableType(variables[var_a]).localeCompare(this.variableType(variables[var_b])) || var_a.toLowerCase().localeCompare(var_b.toLowerCase());
-            })
-        }
-        depth = depth || 0;
-        let margin = depth * 0.75 + 'em';
-        varNames.forEach(variable => {
-            const v = variables[variable];
-            const newValue = DebuggerVariables.renderValue(v.value);
-            let type = this.variableType(v);
-            const onClick = v.value && v.value.id ? () => this.toggle(v) : undefined;
-
-            r.push(<div key={(parent || "") + variable} role="listitem" className="item" onClick={onClick} onMouseOver={this.onMouseOverVariable}>
-                <div className="variableAndValue">
-                    <div className={`variable varname ${v.prevValue !== undefined ? "changed" : ""}`} title={variable}>
-                        <i className={`${(v.children ? "small down triangle icon" : "small right triangle icon") + ((v.value && v.value.hasFields) ? "" : " transparent")}`} style={{ marginLeft: margin }} ></i>
-                        <span>{variable + ':'}</span>
-                    </div>
-                    <div className="variable detail" style={{ padding: 0.2 }} title={this.shouldShowValueOnHover(type) ? newValue : ""}>
-                        <span className={`varval ${type}`}>{DebuggerVariables.capLength(newValue)}</span>
-                    </div>
-                </div>
-            </div>
-            );
-            if (v.children)
-                r = r.concat(this.renderVariables(v.children, variable, depth + 1));
-        })
-        return r;
     }
 
     renderCore() {
@@ -258,6 +113,81 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
                 }
             }
             return undefined;
+        }
+    }
+
+    private renderVariables(variables: pxt.Map<Variable>, parent?: string, depth?: number): JSX.Element[] {
+        let r: JSX.Element[] = [];
+        let varNames = Object.keys(variables);
+        if (!parent) {
+            varNames = varNames.sort((var_a, var_b) => {
+                return variableType(variables[var_a]).localeCompare(variableType(variables[var_b])) || var_a.toLowerCase().localeCompare(var_b.toLowerCase());
+            })
+        }
+        depth = depth || 0;
+        let margin = depth * 0.75 + 'em';
+        varNames.forEach(variable => {
+            const v = variables[variable];
+            const newValue = renderValue(v.value);
+            let type = variableType(v);
+            const onClick = v.value && v.value.id ? () => this.toggle(v) : undefined;
+
+            r.push(<div key={(parent || "") + variable} role="listitem" className="item" onClick={onClick}>
+                <div className="variableAndValue">
+                    <div className={`variable varname ${v.prevValue !== undefined ? "changed" : ""}`} title={variable}>
+                        <i className={`${(v.children ? "small down triangle icon" : "small right triangle icon") + ((v.value && v.value.hasFields) ? "" : " transparent")}`} style={{ marginLeft: margin }} ></i>
+                        <span>{variable + ':'}</span>
+                    </div>
+                    <div className="variable detail" style={{ padding: 0.2 }} title={shouldShowValueOnHover(type) ? newValue : ""}>
+                        <span className={`varval ${type}`}>{truncateLength(newValue)}</span>
+                    </div>
+                </div>
+            </div>
+            );
+            if (v.children)
+                r = r.concat(this.renderVariables(v.children, variable, depth + 1));
+        })
+        return r;
+    }
+
+    private toggle(v: Variable) {
+        // We have to take care of the logic for nested looped variables. Currently they break this implementation.
+        if (v.children) {
+            delete v.children;
+            this.setState({ variables: this.state.variables })
+        } else {
+            if (!v.value.id) return;
+            // We filter the getters we want to call for this variable.
+            let allApis = this.props.apisByQName;
+            let matcher = new RegExp("^((.+\.)?" + v.value.type + ")\.");
+            let potentialKeys = Object.keys(allApis).filter(key => matcher.test(key));
+            let fieldsToGet: string[] = [];
+            potentialKeys.forEach(key => {
+                let commentAttrs = allApis[key];
+                if (!key.endsWith("@set") && commentAttrs && commentAttrs.attributes.callInDebugger) {
+                    fieldsToGet.push(key);
+                }
+            });
+            simulator.driver.variablesAsync(v.value.id, fieldsToGet)
+                .then((msg: pxsim.VariablesMessage) => {
+                    if (msg && msg.variables) {
+                        if (v.value.type == "array") {
+                            v.children = pxt.Util.mapMap(msg.variables,
+                                (k, v) => {
+                                    return {
+                                        value: msg.variables[k]
+                                    }
+                                });
+                        } else {
+                            let children: pxt.Map<Variable> = {};
+                            Object.keys(msg.variables).forEach(variableName => {
+                                children[variableName] = { value: msg.variables[variableName] }
+                            })
+                            v.children = children;
+                        }
+                        this.setState({ variables: this.state.variables })
+                    }
+                })
         }
     }
 }
@@ -369,5 +299,71 @@ export class DebuggerToolbar extends data.Component<DebuggerToolbarProps, Debugg
                 </div>
             </div>;
         }
+    }
+}
+
+function renderValue(v: any): string {
+    let sv = '';
+    let type = typeof v;
+    switch (type) {
+        case "undefined": sv = "undefined"; break;
+        case "number": sv = v + ""; break;
+        case "boolean": sv = v + ""; break;
+        case "string": sv = JSON.stringify(v); break;
+        case "object":
+            if (v == null) sv = "null";
+            else if (v.text) sv = v.text;
+            else if (v.id && v.preview) return v.preview;
+            else if (v.id !== undefined) sv = "(object)"
+            else sv = "(unknown)"
+            break;
+    }
+    return sv;
+}
+
+function truncateLength(varstr: string) {
+    let remaining = MAX_VARIABLE_LENGTH - 3; // acount for ...
+    let hasQuotes = false;
+    if (varstr.indexOf('"') == 0) {
+        remaining -= 2;
+        hasQuotes = true;
+        varstr = varstr.substring(1, varstr.length - 1);
+    }
+    if (varstr.length > remaining)
+        varstr = varstr.substring(0, remaining) + '...';
+    if (hasQuotes) {
+        varstr = '"' + varstr + '"'
+    }
+    return varstr;
+}
+
+function variableType(variable: Variable): string {
+    let val = variable.value;
+    if (val == null) return "undefined";
+    let type = typeof val
+    switch (type) {
+        case "string":
+        case "number":
+        case "boolean":
+            return type;
+        case "object":
+            if (val.type) return val.type;
+            if (val.preview) return val.preview;
+            if (val.text) return val.text;
+            return "object";
+        default:
+            return "unknown";
+    }
+}
+
+function shouldShowValueOnHover(type: string): boolean {
+    switch (type) {
+        case "string":
+        case "number":
+        case "boolean":
+        case "array":
+            return true;
+        default:
+            return false;
     }
 }
