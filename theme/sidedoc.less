@@ -165,7 +165,7 @@
     }
 }
 
-@media only screen and (max-height: @tallEditorBreakpoint) {
+@media only screen and (max-height: @tallEditorBreakpoint) and (min-width: @largestMobileScreen) {
     .sideDocs #sidedocs {
         top: calc(@thinMenuHeight + 1rem);
         padding-bottom: calc(@thinMenuHeight + @editorToolsHeight + 2rem);

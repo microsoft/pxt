@@ -74,7 +74,7 @@
 }
 
 /* Thin screen */
-@media only screen and (max-height: @tallEditorBreakpoint) {
+@media only screen and (max-height: @tallEditorBreakpoint) and (min-width: @largestMobileScreen) {
     .menubar .ui.menu.accessibleMenu, #accessibleMenu {
         height: @thinMenuHeight !important;
         min-height: @thinMenuHeight !important;

@@ -714,7 +714,8 @@ p.ui.font.small {
 }
 
 /* Scren heights */
-@media only screen and (max-height: @tallEditorBreakpoint) {
+/** Thin **/
+@media only screen and (max-height: @tallEditorBreakpoint) and (min-width: @largestMobileScreen) {
     .ui.tall.only {
         display:none !important;
     }
@@ -1054,7 +1055,7 @@ p.ui.font.small {
 }
 
 
-@media only screen and (max-height: @tallEditorBreakpoint) {
+@media only screen and (max-height: @tallEditorBreakpoint) and (min-width: @largestMobileScreen) {
     /* Top Menu */
     #maineditor {
         top: @thinMenuHeight;
