@@ -140,6 +140,7 @@
 @mainMenuHeight: 4.0rem;
 @mobileMenuHeight: 3.5rem;
 @sandboxMobileMenuHeight: 3.0rem;
+@thinMenuHeight: 3rem;
 
 @tutorialSelectedMenuColor: @primaryColor;
 @editorToggleColor: white;

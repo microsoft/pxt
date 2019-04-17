@@ -717,6 +717,9 @@ p.ui.font.small {
     .ui.tall.only {
         display:none !important;
     }
+    .simView #boardview {
+        padding-top: @thinMenuHeight;
+    }
 }
 @media only screen and (min-height: @thinEditorBreakpoint) {
     .ui.thin.only {
@@ -1046,6 +1049,18 @@ p.ui.font.small {
     }
     .fullscreensim .simtoolbar .ui.button {
         font-size: 1rem;
+    }
+}
+
+
+@media only screen and (max-height: @tallEditorBreakpoint) {
+    /* Top Menu */
+    #maineditor {
+        top: @thinMenuHeight;
+    }
+    #filelist {
+        top: @thinMenuHeight;
+        padding: 0.5rem 1.5rem;
     }
 }
 
