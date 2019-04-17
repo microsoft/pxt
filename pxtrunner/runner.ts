@@ -14,7 +14,7 @@ namespace pxt.runner {
         highContrast?: boolean;
         light?: boolean;
         fullScreen?: boolean;
-        deps?: string[]
+        dependencies?: string[]
     }
 
     class EditorPackage {
@@ -92,7 +92,7 @@ namespace pxt.runner {
         }
 
         private githubPackageCache: pxt.Map<Map<string>> = {};
-        downloadPackageAsync(pkg: pxt.Package, deps?: string[]) {
+        downloadPackageAsync(pkg: pxt.Package, dependencies?: string[]) {
             let proto = pkg.verProtocol()
             let cached: pxt.Map<string> = undefined;
             // cache resolve github packages
@@ -111,10 +111,10 @@ namespace pxt.runner {
                         if (Object.keys(epkg.files).length == 0) {
                             epkg.setFiles(emptyPrjFiles())
                         }
-                        if (deps) {
+                        if (dependencies) {
                             let files = getEditorPkg(pkg).files;
                                 let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
-                                deps.forEach((dep: string) => {
+                                dependencies.forEach((dep: string) => {
                                     if (dep.indexOf("=") > 0) {
                                         let ids = /(\S+)=(\S+:\S+)/.exec(dep);
                                         let id = ids[1];
@@ -231,7 +231,7 @@ namespace pxt.runner {
     }
 
     let previousMainPackage: pxt.MainPackage = undefined;
-    function loadPackageAsync(id: string, code?: string, deps?: string[]) {
+    function loadPackageAsync(id: string, code?: string, dependencies?: string[]) {
         const verspec = id ? /\w+:\w+/.test(id) ? id : "pub:" + id : "empty:tsprj";
         let host: pxt.Host;
         let downloadPackagePromise: Promise<void>;
@@ -245,7 +245,7 @@ namespace pxt.runner {
             host = mainPkg.host();
             mainPkg = new pxt.MainPackage(host)
             mainPkg._verspec = id ? /\w+:\w+/.test(id) ? id : "pub:" + id : "empty:tsprj"
-            downloadPackagePromise = host.downloadPackageAsync(mainPkg, deps);
+            downloadPackagePromise = host.downloadPackageAsync(mainPkg, dependencies);
             installPromise = mainPkg.installAllAsync();
             // cache previous package
             previousMainPackage = mainPkg;
@@ -313,7 +313,7 @@ namespace pxt.runner {
     }
 
     export function simulateAsync(container: HTMLElement, simOptions: SimulateOptions) {
-        return loadPackageAsync(simOptions.id, simOptions.code, simOptions.deps)
+        return loadPackageAsync(simOptions.id, simOptions.code, simOptions.dependencies)
             .then(() => compileAsync(false, opts => {
                 if (simOptions.code) opts.fileSystem["main.ts"] = simOptions.code;
             }))
