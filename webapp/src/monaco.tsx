@@ -1601,20 +1601,18 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             const w1 = (f1.attributes.weight || 50) + (f1.attributes.advanced ? 0 : 1000);
             return w2 > w1 ? 1 : -1;
         }).map(fn => {
-            let monacoBlockDisabled = false;
-            if (filters) {
-                let fnState = filters.defaultState;
-                if (filters && filters.fns && filters.fns[fn.name] !== undefined) {
-                    fnState = filters.fns[fn.name];
-                } else if (filters && filters.blocks && fn.attributes.blockId && filters.blocks[fn.attributes.blockId] !== undefined) {
-                    fnState = filters.blocks[fn.attributes.blockId];
-                } else if (categoryState !== undefined) {
-                    fnState = categoryState;
-                }
-                if (fnState == pxt.editor.FilterState.Hidden) return undefined;
-
-                monacoBlockDisabled = fnState == pxt.editor.FilterState.Disabled;
+            let fnState = filters ? filters.defaultState || pxt.editor.FilterState.Visible;
+            if (filters && filters.fns && filters.fns[fn.name] !== undefined) {
+                fnState = filters.fns[fn.name];
+            } else if (filters && filters.blocks && fn.attributes.blockId && filters.blocks[fn.attributes.blockId] !== undefined) {
+                fnState = filters.blocks[fn.attributes.blockId];
+            } else if (categoryState !== undefined) {
+                fnState = categoryState;
             }
+            if (fnState == pxt.editor.FilterState.Hidden) return undefined;
+
+            const monacoBlockDisabled = fnState == pxt.editor.FilterState.Disabled;
+            return monacoEditor.getMonacoBlock(fn, ns, color, monacoBlockDisabled);
         })
         monacoEditor.attachMonacoBlockAccessibility(monacoBlocks);
     }
