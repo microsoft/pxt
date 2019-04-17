@@ -178,7 +178,8 @@ _start_${name}:
             section(v, SectionType.Literal, () => hexLiteralAsm(k), [], pxt.BuiltInType.BoxedBuffer)
         })
         U.iterMap(bin.strings, (k, v) => {
-            section(v, SectionType.Literal, () => `.word ${k.length}\n.utf16 ${JSON.stringify(k)}`, [], pxt.BuiltInType.BoxedString)
+            k = U.toUTF8(k, true)
+            section(v, SectionType.Literal, () => `.word ${k.length}\n.string ${JSON.stringify(k)}`, [], pxt.BuiltInType.BoxedString)
         })
         section("numberLiterals", SectionType.NumberLiterals, () => ctx.dblText.join("\n"))
 
