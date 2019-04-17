@@ -1601,7 +1601,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             const w1 = (f1.attributes.weight || 50) + (f1.attributes.advanced ? 0 : 1000);
             return w2 > w1 ? 1 : -1;
         }).map(fn => {
-            let fnState = filters.defaultState;
+            let fnState = filters ? filters.defaultState : pxt.editor.FilterState.Visible;
             if (filters && filters.fns && filters.fns[fn.name] !== undefined) {
                 fnState = filters.fns[fn.name];
             } else if (filters && filters.blocks && fn.attributes.blockId && filters.blocks[fn.attributes.blockId] !== undefined) {
