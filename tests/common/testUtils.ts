@@ -118,8 +118,8 @@ export function py2tsAsync(f: string): Promise<string> {
         })
 }
 
-export function stsAsync(tsMain: string): Promise<pxtc.CompileResult> {
-    return getTestCompileOptsAsync({ "main.ts": tsMain }, "bare")
+export function stsAsync(packageFiles: pxt.Map<string>): Promise<pxtc.CompileResult> {
+    return getTestCompileOptsAsync(packageFiles, "bare")
         .then(opts => {
             const compiled = pxtc.compile(opts);
             if (compiled.success) {
@@ -127,7 +127,7 @@ export function stsAsync(tsMain: string): Promise<pxtc.CompileResult> {
             }
             else {
                 let errStr = compiled.diagnostics.map(pxtc.getDiagnosticString).join("")
-                return Promise.reject(new Error("Static Typescript could not compile:\n" + tsMain + "\nbecause:\n" + errStr));
+                return Promise.reject(new Error("Static Typescript could not compile:\n" + JSON.stringify(packageFiles) + "\nbecause:\n" + errStr));
             }
         })
 }
