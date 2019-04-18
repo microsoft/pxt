@@ -97,7 +97,7 @@ export function py2tsAsync(f: string): Promise<string> {
         .then(opts => {
             opts.target.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME
             let stsCompRes = pxtc.compile(opts);
-            let apisInfo = pxtc.getApiInfo(opts, stsCompRes.ast)
+            let apisInfo = pxtc.getApiInfo(stsCompRes.ast, opts.jres)
             if (!apisInfo || !apisInfo.byQName)
                 throw Error("Failed to get apisInfo")
             opts.apisInfo = apisInfo

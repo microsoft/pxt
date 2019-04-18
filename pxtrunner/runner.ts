@@ -846,7 +846,7 @@ ${linkString}
                     compilePython = (pxt as any).py.decompileToPython(program, "main.ts");
 
                 // decompile to blocks
-                let apis = pxtc.getApiInfo(opts, program);
+                let apis = pxtc.getApiInfo(program, opts.jres);
                 return ts.pxtc.localizeApisAsync(apis, mainPkg)
                     .then(() => {
                         let blocksInfo = pxtc.getBlocksInfo(apis);
@@ -889,7 +889,7 @@ ${linkString}
             .then(opts => {
                 opts.ast = true
                 const resp = pxtc.compile(opts)
-                const apis = pxtc.getApiInfo(opts, resp.ast);
+                const apis = pxtc.getApiInfo(resp.ast, opts.jres);
                 return ts.pxtc.localizeApisAsync(apis, mainPkg)
                     .then(() => {
                         const blocksInfo = pxtc.getBlocksInfo(apis);

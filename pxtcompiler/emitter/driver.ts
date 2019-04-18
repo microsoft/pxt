@@ -229,7 +229,7 @@ namespace ts.pxtc {
 
         let file = program.getSourceFile(fileName);
         annotate(program, fileName, target || (pxt.appTarget && pxt.appTarget.compile));
-        const apis = getApiInfo(opts, program);
+        const apis = getApiInfo(program, opts.jres);
         const blocksInfo = pxtc.getBlocksInfo(apis, bannedCategories);
         const decompileOpts: decompiler.DecompileBlocksOptions = {
             snippetMode: false,

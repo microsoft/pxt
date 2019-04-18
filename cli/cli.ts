@@ -3238,7 +3238,7 @@ function getApiInfoAsync() {
     return prepBuildOptionsAsync(BuildOption.GenDocs)
         .then(opts => {
             let res = pxtc.compile(opts);
-            return pxtc.getApiInfo(opts, res.ast, true)
+            return pxtc.getApiInfo(res.ast, opts.jres, true)
         })
 }
 
@@ -3696,7 +3696,7 @@ function prepBuildOptionsAsync(mode: BuildOption, quick = false, ignoreTests = f
                         opts2.fileSystem[f.slice(0, -3) + ".ts"] = " "
                 }
                 const res = pxtc.compile(opts2)
-                opts.apisInfo = pxtc.getApiInfo(opts2, res.ast)
+                opts.apisInfo = pxtc.getApiInfo(res.ast, opts2.jres)
                 if (process.env["PXT_SAVE_APISINFO"])
                     fs.writeFileSync("built/apisinfo.json", JSON.stringify(opts.apisInfo, null, 4))
                 pxt.log("done pre-compiling apisInfo for Python")
@@ -3837,7 +3837,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
             pxt.log(`package built; written to ${pxt.outputName()}`);
 
             if (res.usedSymbols && compileOptions.computeUsedSymbols) {
-                const apiInfo = pxtc.getApiInfo(compileOptions, res.ast)
+                const apiInfo = pxtc.getApiInfo(res.ast, compileOptions.jres)
                 for (let k of Object.keys(res.usedSymbols)) {
                     res.usedSymbols[k] = apiInfo.byQName[k] || null
                 }
@@ -3848,7 +3848,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
 
             switch (buildOpts.mode) {
                 case BuildOption.GenDocs:
-                    const apiInfo = pxtc.getApiInfo(compileOptions, res.ast)
+                    const apiInfo = pxtc.getApiInfo(res.ast, compileOptions.jres)
                     // keeps apis from this module only
                     for (const infok in apiInfo.byQName) {
                         const info = apiInfo.byQName[infok];
