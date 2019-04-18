@@ -425,7 +425,6 @@ namespace pxsim {
                 fnArgs: opts.fnArgs,
                 code: js,
                 partDefinitions: opts.partDefinitions,
-                mute: opts.mute,
                 highContrast: opts.highContrast,
                 light: opts.light,
                 cdnUrl: opts.cdnUrl,

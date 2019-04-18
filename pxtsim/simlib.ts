@@ -220,7 +220,7 @@ namespace pxsim {
             _mute = mute;
             stopAll();
             const ctx = context();
-            if (!mute && ctx)
+            if (!mute && ctx && ctx.state === "suspended")
                 ctx.resume();
         }
 
