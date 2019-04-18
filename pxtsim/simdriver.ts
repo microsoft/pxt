@@ -317,6 +317,8 @@ namespace pxsim {
         }
 
         public mute(mute: boolean) {
+            if (this._currentRuntime)
+                this._currentRuntime.mute = mute;
             this.postMessage({ type: 'mute', mute: mute } as pxsim.SimulatorMuteMessage);
         }
 
@@ -425,6 +427,7 @@ namespace pxsim {
                 fnArgs: opts.fnArgs,
                 code: js,
                 partDefinitions: opts.partDefinitions,
+                mute: opts.mute,
                 highContrast: opts.highContrast,
                 light: opts.light,
                 cdnUrl: opts.cdnUrl,
