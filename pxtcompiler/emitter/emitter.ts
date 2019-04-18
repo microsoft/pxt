@@ -3045,7 +3045,7 @@ ${lbl}: .short 0xffff
         function valueToInt(e: ir.Expr): number {
             if (e.exprKind == ir.EK.NumberLiteral) {
                 let v = e.data
-                if (opts.target.isNative) {
+                if (opts.target.isNative && !isStackMachine()) {
                     if (v == taggedNull || v == taggedUndefined || v == taggedFalse)
                         return 0
                     if (v == taggedTrue)

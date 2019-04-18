@@ -276,8 +276,8 @@ _start_${name}:
                 writeRaw(`; main`)
             }
 
-            write(`.short 0, ${proc.args.length}`)
-            write(`.short ${proc.captured.length}, 0`)
+            write(`.short 0, ${proc.args.length} ; #args`)
+            write(`.short ${proc.captured.length}, 0 ; #cap`)
             write(`.word 0, 0`) // space for fn pointer (64 bit)
 
             numLoc = proc.locals.length + currTmps.length
