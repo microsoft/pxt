@@ -582,6 +582,9 @@ namespace pxt.cpp {
                         case "Action":
                             conv = "asRefAction"
                             break
+                        case "String":
+                            conv = "numops::toString"
+                            break
                         default:
                             if (!conv) conv = "as" + tp.replace(/\*/g, "")
                             break
