@@ -271,14 +271,6 @@ async function compileAndRunTs(filename: string): Promise<string> {
 
 function compileAndRunStsAsync(filename: string): Promise<string> {
     const prelude = `
-let console: any = {}
-console.log = function(s: string): void {
-    control.__log(s)
-    control.__log("\\n")
-    control.dmesg(s)
-    // serial.writeString(s)
-    // serial.writeString("\\n")
-}
 // end prelude
     `
     // TODO(dz): why is this necessary? This doesn't seem right..

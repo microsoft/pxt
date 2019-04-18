@@ -93,7 +93,7 @@ export function ts2pyAsync(f: string): Promise<string> {
 
 export function py2tsAsync(f: string): Promise<string> {
     const input = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
-    return getTestCompileOptsAsync({ "main.py": input, "main.ts": "// no main" }, null, true)
+    return getTestCompileOptsAsync({ "main.py": input, "main.ts": "// no main" }, "bare", true)
         .then(opts => {
             opts.target.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME
             let stsCompRes = pxtc.compile(opts);

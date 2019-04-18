@@ -1,16 +1,16 @@
 namespace control {
     //% shim=serial::writeString
-    export function __log(s: string) {
+    export function __log(s: any) {
     }
 
-    export function dmesg(s: string) {
+    export function dmesg(s: any) {
         // ignore
     }
 }
 
 //% async
 //% shim=basic::pause
-function pause(ms: number): void {}
+function pause(ms: number): void { }
 
 namespace control {
     /**
@@ -26,6 +26,29 @@ namespace control {
      * Schedules code that run in the background.
      */
     //% blockId="control_in_background" block="run in background" blockGap=8 shim=control::inBackground
-    export function runInBackground(a: () => void): void
-    { }
+    export function runInBackground(a: () => void): void { }
+}
+
+/**
+ * Reading and writing data to the console output.
+ */
+//% weight=12 color=#002050 icon="\uf120"
+//% advanced=true
+namespace console {
+    /**
+     * Write a line of text to the console output.
+     * @param value to send
+     */
+    //% weight=90
+    //% help=console/log blockGap=8 text.shadowOptions.toString=true
+    //% blockId=console_log block="console|log %text"
+    export function log(value: any): void {
+        control.__log(value)
+        control.__log("\n")
+        control.dmesg(value)
+    }
+}
+
+//% indexerGet=BufferMethods::getByte indexerSet=BufferMethods::setByte
+interface Buffer {
 }
