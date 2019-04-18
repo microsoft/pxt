@@ -115,6 +115,7 @@ namespace pxsim {
         numFields: number;
         toStringMethod?: LabelFn;
         classNo: number;
+        iface?: Map<any>;
     }
 
     export class RefRecord extends RefObject {

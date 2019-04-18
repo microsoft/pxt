@@ -719,6 +719,10 @@ namespace pxsim {
             }
 
             function maybeYield(s: StackFrame, pc: number, r0: any): boolean {
+                // If code is running on a breakpoint, it's because we are evaluating getters;
+                // no need to yield in that case.
+                if (__this.pausedOnBreakpoint) return false;
+
                 __this.cleanScheduledExpired()
                 yieldSteps = yieldMaxSteps;
                 let now = Date.now()

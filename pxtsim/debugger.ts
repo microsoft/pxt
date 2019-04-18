@@ -83,70 +83,71 @@ namespace pxsim {
         }
     }
 
-    export function dumpHeap(v: any, heap: Map<any>, fields?: string[], filters?: string[]): Variables {
-        function valToJSON(v: any) {
-            switch (typeof v) {
-                case "string":
-                case "number":
-                case "boolean":
-                    return v;
-                case "function":
+    function valToJSON(v: any, heap: Map<any>) {
+        switch (typeof v) {
+            case "string":
+            case "number":
+            case "boolean":
+                return v;
+            case "function":
+                return {
+                    text: "(function)",
+                    type: "function",
+                }
+            case "undefined":
+                return null;
+            case "object":
+                if (!v) return null;
+                if (v instanceof RefObject) {
+                    if (heap) heap[(v as RefObject).id] = v;
+                    let preview = RefObject.toDebugString(v);
+                    let type = preview.startsWith('[') ? "array" : preview;
                     return {
-                        text: "(function)",
-                        type: "function",
+                        id: (v as RefObject).id,
+                        preview: preview,
+                        hasFields: (v as any).fields !== null || preview.startsWith('['),
+                        type: type,
                     }
-                case "undefined":
-                    return null;
-                case "object":
-                    if (!v) return null;
-                    if (v instanceof RefObject) {
-                        heap[(v as RefObject).id] = v;
-                        let preview = RefObject.toDebugString(v);
-                        let type = preview.startsWith('[') ? "array" : preview;
-                        return {
-                            id: (v as RefObject).id,
-                            preview: preview,
-                            hasFields: (v as any).fields !== null || preview.startsWith('['),
-                            type: type,
-                        }
-                    }
-                    if (v._width && v._height) {
-                        return {
-                            text: v._width + 'x' + v._height,
-                            type: "image",
-                        }
-                    }
+                }
+                if (v._width && v._height) {
                     return {
-                        text: "(object)",
-                        type: "object",
+                        text: v._width + 'x' + v._height,
+                        type: "image",
                     }
-                default:
-                    throw new Error();
-            }
+                }
+                return {
+                    text: "(object)",
+                    type: "object",
+                }
+            default:
+                throw new Error();
         }
+    }
+
+    export function dumpHeap(v: any, heap: Map<any>, fields?: string[], filters?: string[]): Variables {
         function frameVars(frame: any, fields?: string[]) {
             const r: Variables = {}
             for (let k of Object.keys(frame)) {
                 // skip members starting with __
                 if (!/^__/.test(k) && /___\d+$/.test(k) && (!filters || filters.indexOf(k) !== -1)) {
-                    r[k.replace(/___\d+$/, '')] = valToJSON(frame[k])
+                    r[k.replace(/___\d+$/, '')] = valToJSON(frame[k], heap)
                 }
             }
             if (frame.fields && fields) {
                 // Fields of an object.
                 for (let k of fields) {
                     k = k.substring(k.lastIndexOf(".") + 1);
-                    r[k] = valToJSON(evalGetter(frame.vtable.iface[k], frame));
+                    r[k] = valToJSON(evalGetter(frame.vtable.iface[k], frame), heap);
                 }
             }
             if (frame.fields) {
                 for (let k of Object.keys(frame.fields).filter(field => !field.startsWith('_'))) {
-                    r[k.replace(/___\d+$/, '')] = valToJSON(frame.fields[k])
+                    r[k.replace(/___\d+$/, '')] = valToJSON(frame.fields[k], heap)
                 }
             } else if (Array.isArray(frame.data)) {
                 // This is an Array.
                 (frame.data as any[]).forEach((element, index) => {
-                    r[index] = valToJSON(element);
+                    r[index] = valToJSON(element, heap);
                 });
             }
             return r
@@ -188,17 +189,40 @@ namespace pxsim {
         }
 
         while (s != null) {
-            let info = s.fn ? (s.fn as any).info : null
+            let info = getInfoForFrame(s, heap);
             if (info)
-                msg.stackframes.push({
-                    locals: dumpHeap(s, heap),
-                    funcInfo: info,
-                    breakpointId: s.lastBrkId
-                })
+                msg.stackframes.push(info)
             s = s.parent
         }
 
         return { msg, heap };
+    }
+
+    function getInfoForFrame(s: pxsim.StackFrame, heap: any): StackFrameInfo {
+        let info = s.fn ? (s.fn as any).info : null
+        if (info) {
+            let argInfo: FunctionArgumentsInfo = {
+                thisParam: valToJSON((s as any).argL, heap),
+                params: []
+            };
+
+            if (info.argumentNames) {
+                const args = info.argumentNames as string[];
+                argInfo.params = args.map((paramName, index) => ({
+                    name: paramName,
+                    value: valToJSON((s as any)["arg" + index], heap)
+                }));
+            }
+
+            return {
+                locals: dumpHeap(s, heap),
+                funcInfo: info,
+                breakpointId: s.lastBrkId,
+                arguments: argInfo
+            };
+        }
+
+        return undefined;
     }
 
 
