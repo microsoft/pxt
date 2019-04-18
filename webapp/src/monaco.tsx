@@ -16,7 +16,7 @@ import * as workspace from "./workspace";
 import { ViewZoneEditorHost, FieldEditorManager } from "./monacoFieldEditorHost";
 
 import Util = pxt.Util;
-import { MonacoBreakpoint } from "./monacoDebugger";
+import { BreakpointCollection } from "./monacoDebugger";
 
 const MIN_EDITOR_FONT_SIZE = 10
 const MAX_EDITOR_FONT_SIZE = 40
@@ -183,12 +183,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     protected hasFieldEditors = !!(pxt.appTarget.appTheme.monacoFieldEditors && pxt.appTarget.appTheme.monacoFieldEditors.length);
     protected debuggerToolbox: HTMLDivElement;
     protected debugVariables: debug.DebuggerVariables;
-    protected breakpoints: MonacoBreakpoint[];
+    protected breakpoints: BreakpointCollection;
 
     private loadMonacoPromise: Promise<void>;
     private diagSnapshot: string[];
     private annotationLines: number[];
     private editorViewZones: number[];
+    private highlightDecorations: string[] = [];
 
     hasBlocks() {
         if (!this.currFile) return true
@@ -376,7 +377,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             <div id="monacoEditorArea" className="full-abs" style={{ direction: 'ltr' }}>
                 <div className={`monacoToolboxDiv ${(this.toolbox && !this.toolbox.state.visible && !this.isDebugging()) ? 'invisible' : ''}`}>
                     <toolbox.Toolbox ref={this.handleToolboxRef} editorname="monaco" parent={this} />
-                    <div id="debuggerToolbox" ref={this.handleDebugToolboxRef}></div>
+                    <div id="monacoDebuggerToolbox" ref={this.handleDebugToolboxRef}></div>
                 </div>
                 <div id='monacoEditorInner' style={{ float: 'right' }} />
             </div>
@@ -827,7 +828,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         } else {
             this.toolbox.show();
         }
-        ReactDOM.render(debuggerToolbox, document.getElementById('debuggerToolbox'));
+        ReactDOM.render(debuggerToolbox, document.getElementById('monacoDebuggerToolbox'));
 
         if (this.toolbox)
             this.toolbox.setState({
@@ -924,7 +925,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
                 this.setValue(file.content)
                 this.setDiagnostics(file, this.snapshotState())
-                this.refreshBreakpoints();
+
+                if (this.breakpoints) {
+                    this.breakpoints.loadBreakpointsForFile(file, this.editor);
+                }
 
                 if (this.fileType == pxt.editor.FileType.Markdown)
                     this.parent.setSideMarkdown(file.content);
@@ -1012,32 +1016,31 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     setBreakpointsMap(breakpoints: pxtc.Breakpoint[]): void {
         if (this.isDebugging()) {
-            if (!this.breakpoints || this.breakpoints.length != breakpoints.length) {
-                this.breakpoints = breakpoints.map(loc => new MonacoBreakpoint(loc, this.editor));
+            if (!this.breakpoints) {
+                this.breakpoints = new BreakpointCollection(breakpoints);
+                this.breakpoints.loadBreakpointsForFile(this.currFile, this.editor);
             }
             else {
                 // The simulator got restarted
                 this.sendBreakpoints();
             }
 
-            this.fieldEditors.clearRanges(this.editor);
-            if (this.feWidget) {
-                this.feWidget.close();
-            }
-
-            this.editor.updateOptions({
-                readOnly: true
-            });
+            if (this.fieldEditors) this.fieldEditors.clearRanges(this.editor);
+            if (this.feWidget) this.feWidget.close();
+            if (this.editor) this.editor.updateOptions({ readOnly: true });
         }
         else {
+            if (this.editor) {
+                this.editor.updateOptions({
+                    readOnly: pxt.shell.isReadOnly() || (this.currFile && this.currFile.isReadonly())
+                });
+            }
 
-            this.editor.updateOptions({
-                readOnly: pxt.shell.isReadOnly() || (this.currFile && this.currFile.isReadonly())
-            });
-
-            this.refreshBreakpoints();
+            if (this.breakpoints) {
+                this.breakpoints.dispose();
+                this.breakpoints = undefined;
+            }
             this.updateFieldEditors();
-            this.breakpoints = undefined;
         }
     }
 
@@ -1055,19 +1058,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private sendBreakpoints() {
         if (this.breakpoints) {
-            simulator.driver.setBreakpoints(this.breakpoints.filter(bp => bp.isActive()).map(bp => bp.simulatorID()));
-        }
-    }
-
-    private refreshBreakpoints() {
-        if (this.breakpoints) {
-            if (!this.isDebugging() || !this.currFile || this.currFile.name !== "main.ts") {
-                this.breakpoints.forEach(bp => bp.dispose());
-            }
-            else {
-                this.breakpoints.forEach(bp => bp.updateDecoration());
-                this.sendBreakpoints();
-            }
+            simulator.driver.setBreakpoints(this.breakpoints.getActiveBreakpoints());
         }
     }
 
@@ -1133,7 +1124,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     protected updateFieldEditors = pxt.Util.debounce(() => {
-        if (!this.hasFieldEditors || pxt.shell.isReadOnly() || this.isDebugging()) return;
+        if (!this.hasFieldEditors || !this.editor || pxt.shell.isReadOnly() || this.isDebugging()) return;
         const model = this.editor.getModel();
         this.fieldEditors.clearRanges(this.editor);
 
@@ -1194,11 +1185,20 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return Promise.resolve();
     }
 
-    private highlightDecorations: string[] = [];
     highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage) {
-        if (!stmt) this.clearHighlightedStatements();
-        if (!stmt || !this.currFile || this.currFile.name != stmt.fileName || !this.editor)
+        if (!stmt) {
+            this.clearHighlightedStatements();
             return false;
+        }
+        else if (!this.editor) {
+            return false;
+        }
+
+        const mainPkg = pkg.mainEditorPkg()
+        if (this.currFile.name !== stmt.fileName && this.isDebugging() && mainPkg.lookupFile(stmt.fileName)) {
+            this.parent.setFile(mainPkg.lookupFile(stmt.fileName))
+        }
+
         let position = this.editor.getModel().getPositionAt(stmt.start);
         let end = this.editor.getModel().getPositionAt(stmt.start + stmt.length);
         if (!position || !end) return false;
@@ -1208,14 +1208,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 options: { inlineClassName: 'highlight-statement' }
             },
         ]);
+
         if (brk) {
             // center on statement
             this.editor.revealPositionInCenter(position);
             if (this.isDebugging() && this.debugVariables) {
-                this.debugVariables.updateVariables(brk.globals);
+                this.debugVariables.updateVariables(brk.globals, brk.stackframes);
                 this.resize();
             }
         }
+
         return true;
     }
 
@@ -1430,24 +1432,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (this.isDebugging()) {
             // Set/unset the nearest breakpoint;
             if (this.breakpoints) {
-                let closestBreakpoint: MonacoBreakpoint;
-                let closestDistance: number;
-
-                this.breakpoints.forEach(bp => {
-                    const distance = bp.distanceFromLine(line);
-                    if (closestDistance === undefined || distance < closestDistance) {
-                        closestBreakpoint = bp;
-                        closestDistance = distance;
-                    }
-                });
-
-                if (closestDistance < 5) {
-                    closestBreakpoint.toggle();
-                    this.sendBreakpoints();
-                }
+                this.breakpoints.toggleBreakpointAt(line);
+                this.sendBreakpoints();
             }
         }
-        else {
+        else if (this.fieldEditors) {
             // Open/close any field editors in range
             const model = this.editor.getModel();
             const decorations = model.getDecorationsInRange(new monaco.Range(line, model.getLineMinColumn(line), line, model.getLineMaxColumn(line)));
@@ -1872,7 +1861,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.editor.setSelection(afterRange);
 
                 // Clear ranges because the model changed
-                this.fieldEditors.clearRanges(this.editor);
+                if (this.fieldEditors) this.fieldEditors.clearRanges(this.editor);
                 resolve(afterRange);
             });
 
@@ -1895,7 +1884,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private handleDebugToolboxRef = (ref: HTMLDivElement) => {
-        this.debuggerToolbox = ref;
+        if (ref) {
+            this.debuggerToolbox = ref;
+            if (this.isDebugging()) this.updateToolbox();
+        }
     }
 
     private handleDebuggerVariablesRef = (c: debug.DebuggerVariables) => {

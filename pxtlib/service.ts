@@ -66,6 +66,7 @@ namespace ts.pxtc {
 
     export interface FunctionLocationInfo extends LocationInfo {
         functionName: string;
+        argumentNames?: string[];
     }
 
     export interface KsDiagnostic extends LocationInfo {

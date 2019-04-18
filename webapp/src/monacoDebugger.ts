@@ -1,6 +1,8 @@
 /// <reference path="../../localtypings/monaco.d.ts" />
 /// <reference path="../../built/pxteditor.d.ts" />
 
+import * as pkg from "./package";
+
 export class MonacoBreakpoint implements monaco.IDisposable {
     protected active: boolean;
     protected decoration: string;
@@ -19,7 +21,6 @@ export class MonacoBreakpoint implements monaco.IDisposable {
         else {
             this.range = new monaco.Range(start.lineNumber, start.column, start.lineNumber, model.getLineMaxColumn(start.lineNumber));
         }
-
 
         this.updateDecoration();
     }
@@ -68,5 +69,91 @@ export class MonacoBreakpoint implements monaco.IDisposable {
             }
         ]);
         this.decoration = dec[0];
+    }
+}
+
+export class BreakpointCollection implements monaco.IDisposable {
+    protected fileToBreakpoint: pxt.Map<pxtc.Breakpoint[]>;
+    protected loadedBreakpoints: MonacoBreakpoint[];
+    protected activeBreakpoints: number[];
+
+    constructor(allBreakpoints: pxtc.Breakpoint[]) {
+        this.fileToBreakpoint = {};
+        this.activeBreakpoints = [];
+
+        for (const bp of allBreakpoints) {
+            if (!this.fileToBreakpoint[bp.fileName]) this.fileToBreakpoint[bp.fileName] = [];
+            this.fileToBreakpoint[bp.fileName].push(bp);
+        }
+    }
+
+    loadBreakpointsForFile(file: pkg.File, editor: monaco.editor.IStandaloneCodeEditor) {
+        if (this.loadedBreakpoints) this.loadedBreakpoints.forEach(bp => bp.dispose());
+
+        if (!file) return;
+
+        const fileBreakpoints = this.fileToBreakpoint[file.name];
+
+        if (fileBreakpoints) {
+            this.loadedBreakpoints = fileBreakpoints.map(bp => {
+                const mbp = new MonacoBreakpoint(bp, editor);
+                if (this.activeBreakpoints.indexOf(bp.id) != -1) mbp.setActive(true);
+
+                return mbp
+            });
+        }
+    }
+
+    toggleBreakpointAt(lineNo: number) {
+        const bp = this.getBreakpointForLine(lineNo);
+        if (bp) {
+            bp.toggle();
+
+            if (bp.isActive()) {
+                this.activeBreakpoints.push(bp.source.id);
+            }
+            else {
+                this.activeBreakpoints = this.activeBreakpoints.filter(id => id != bp.source.id);
+            }
+        }
+    }
+
+    refreshDecorations() {
+        if (this.loadedBreakpoints) this.loadedBreakpoints.forEach(bp => bp.updateDecoration());
+    }
+
+    clearDecorations() {
+        if (this.loadedBreakpoints) this.loadedBreakpoints.forEach(bp => bp.dispose());
+    }
+
+    getActiveBreakpoints() {
+        return this.activeBreakpoints;
+    }
+
+    dispose() {
+        if (this.loadedBreakpoints) {
+            this.loadedBreakpoints.forEach(bp => bp.dispose());
+            this.loadedBreakpoints = undefined;
+        }
+        this.activeBreakpoints = undefined;
+        this.fileToBreakpoint = undefined;
+    }
+
+    protected getBreakpointForLine(lineNo: number) {
+        if (!this.loadedBreakpoints || !this.loadedBreakpoints.length) return undefined;
+
+        let closestBreakpoint: MonacoBreakpoint;
+        let closestDistance: number;
+
+        for (const bp of this.loadedBreakpoints) {
+            const distance = bp.distanceFromLine(lineNo);
+            if (closestDistance === undefined || distance < closestDistance) {
+                closestBreakpoint = bp;
+                closestDistance = distance;
+            }
+        }
+
+        if (closestDistance < 5) return closestBreakpoint;
+        return undefined;
     }
 }
