@@ -22,6 +22,7 @@ namespace pxt.py {
         moduleType?: SymbolInfo; // class/static member type
         primType?: string;
         typeArgs?: Type[];
+        anyType?: boolean;
     }
 
     export interface Type extends TypeOptions {

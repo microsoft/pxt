@@ -447,6 +447,12 @@ namespace pxt.py {
         if (t0 === t1)
             return
 
+        if (t0.primType === "any") {
+            // TODO(dz): consult with Michal about this.
+            t0.union = t1
+            return
+        }
+
         const c0 = typeCtor(t0)
         const c1 = typeCtor(t1)
 
