@@ -377,7 +377,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             <div id="monacoEditorArea" className="full-abs" style={{ direction: 'ltr' }}>
                 <div className={`monacoToolboxDiv ${(this.toolbox && !this.toolbox.state.visible && !this.isDebugging()) ? 'invisible' : ''}`}>
                     <toolbox.Toolbox ref={this.handleToolboxRef} editorname="monaco" parent={this} />
-                    <div id="debuggerToolbox" ref={this.handleDebugToolboxRef}></div>
+                    <div id="monacoDebuggerToolbox" ref={this.handleDebugToolboxRef}></div>
                 </div>
                 <div id='monacoEditorInner' style={{ float: 'right' }} />
             </div>
@@ -828,7 +828,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         } else {
             this.toolbox.show();
         }
-        ReactDOM.render(debuggerToolbox, document.getElementById('debuggerToolbox'));
+        ReactDOM.render(debuggerToolbox, document.getElementById('monacoDebuggerToolbox'));
 
         if (this.toolbox)
             this.toolbox.setState({
@@ -1030,15 +1030,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.feWidget.close();
             }
 
-            this.editor.updateOptions({
-                readOnly: true
-            });
+            if (this.editor) this.editor.updateOptions({ readOnly: true });
         }
         else {
-
-            this.editor.updateOptions({
-                readOnly: pxt.shell.isReadOnly() || (this.currFile && this.currFile.isReadonly())
-            });
+            if (this.editor) {
+                this.editor.updateOptions({
+                    readOnly: pxt.shell.isReadOnly() || (this.currFile && this.currFile.isReadonly())
+                });
+            }
 
             if (this.breakpoints) {
                 this.breakpoints.dispose();
@@ -1217,7 +1216,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             // center on statement
             this.editor.revealPositionInCenter(position);
             if (this.isDebugging() && this.debugVariables) {
-                this.debugVariables.updateVariables(brk.globals);
+                this.debugVariables.updateVariables(brk.globals, brk.stackframes);
                 this.resize();
             }
         }
@@ -1888,7 +1887,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private handleDebugToolboxRef = (ref: HTMLDivElement) => {
-        this.debuggerToolbox = ref;
+        if (ref) {
+            this.debuggerToolbox = ref;
+            if (this.isDebugging()) this.updateToolbox();
+        }
     }
 
     private handleDebuggerVariablesRef = (c: debug.DebuggerVariables) => {

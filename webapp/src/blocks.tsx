@@ -768,7 +768,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage): boolean {
         if (!this.compilationResult || this.delayLoadXml || this.loadingXml)
             return false;
-        this.updateDebuggerVariables(brk ? brk.globals : undefined);
+        this.updateDebuggerVariables(brk);
         if (stmt) {
             let bid = pxt.blocks.findBlockId(this.compilationResult.sourceMap, { start: stmt.line, length: stmt.endLine - stmt.line });
             if (bid) {
@@ -807,12 +807,18 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.debugVariables = c;
     }
 
-    updateDebuggerVariables(globals: pxsim.Variables) {
+    updateDebuggerVariables(brk: pxsim.DebuggerBreakpointMessage) {
         if (!this.parent.state.debugging) return;
 
         if (this.debugVariables) {
             const visibleVars = Blockly.Variables.allUsedVarModels(this.editor).map((variable: any) => variable.name as string);
-            this.debugVariables.updateVariables(globals, visibleVars)
+
+            if (brk) {
+                this.debugVariables.updateVariables(brk.globals, brk.stackframes, visibleVars)
+            }
+            else {
+                this.debugVariables.updateVariables(null, null, visibleVars)
+            }
         }
     }
 
