@@ -90,6 +90,8 @@ export class BreakpointCollection implements monaco.IDisposable {
     loadBreakpointsForFile(file: pkg.File, editor: monaco.editor.IStandaloneCodeEditor) {
         if (this.loadedBreakpoints) this.loadedBreakpoints.forEach(bp => bp.dispose());
 
+        if (!file) return;
+
         const fileBreakpoints = this.fileToBreakpoint[file.name];
 
         if (fileBreakpoints) {
