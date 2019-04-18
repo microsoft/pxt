@@ -345,7 +345,7 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
                     <div ref="tutorialmessage" className={`tutorialmessage`} role="alert" aria-label={tutorialAriaLabel} tabIndex={hasHint ? 0 : -1}
                         onClick={this.toggleExpanded} onKeyDown={sui.fireClickOnEnter}>
                         <div className="content">
-                            <md.MarkedContent markdown={tutorialCardContent} parent={this.props.parent} />
+                            <md.MarkedContent className="no-select" markdown={tutorialCardContent} parent={this.props.parent} />
                         </div>
                         {hasHint && !tutorialStepExpanded ? <sui.Button className="fluid compact attached bottom" icon="chevron down" tabIndex={0} text={lf("More...")} onClick={this.toggleExpanded} onKeyDown={sui.fireClickOnEnter} /> : undefined}
                         {tutorialStepExpanded ? <sui.Button className="fluid compact attached bottom" icon="chevron up" tabIndex={0} text={lf("Less...")} onClick={this.toggleExpanded} onKeyDown={sui.fireClickOnEnter} /> : undefined}
