@@ -2151,7 +2151,11 @@ ${lbl}: .short 0xffff
                     if (info.decl.kind == SK.MethodDeclaration)
                         markFunctionUsed(info.decl)
                 }
-                if (info.virtualParent && !isSuper && !isStackMachine() && !target.switches.slowMethods) {
+
+                const needsVCall = info.virtualParent && !isSuper
+                const forceIfaceCall = !!isStackMachine() || !!target.switches.slowMethods
+
+                if (needsVCall && !forceIfaceCall) {
                     U.assert(!bin.finalPass || info.virtualIndex != null, "!bin.finalPass || info.virtualIndex != null")
                     let r = mkMethodCall(info.parentClassInfo, info.virtualIndex, null, args.map((x) => emitExpr(x)))
                     if (args[0].kind == SK.ThisKeyword)
@@ -2204,7 +2208,7 @@ ${lbl}: .short 0xffff
                         // the property lookup to get the lambda
                         args.shift()
                     }
-                } else if (decl.kind == SK.MethodSignature || (target.switches.slowMethods && !isStatic(decl) && !isSuper)) {
+                } else if (needsVCall || decl.kind == SK.MethodSignature || (target.switches.slowMethods && !isStatic(decl) && !isSuper)) {
                     let name = getName(decl)
                     return mkMethodCall(null, null, getIfaceMemberId(name, true), args.map((x) => emitExpr(x)))
                 } else {
@@ -3463,6 +3467,8 @@ ${lbl}: .short 0xffff
             }
             if (!inner)
                 inner = emitExpr(expr)
+            if (isStackMachine())
+                return inner
             // in all cases decr is internal, so no mask
             return ir.rtcall("numops::toBoolDecr", [inner])
         }
