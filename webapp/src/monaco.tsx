@@ -16,7 +16,7 @@ import * as workspace from "./workspace";
 import { ViewZoneEditorHost, FieldEditorManager } from "./monacoFieldEditorHost";
 
 import Util = pxt.Util;
-import { MonacoBreakpoint, BreakpointCollection } from "./monacoDebugger";
+import { BreakpointCollection } from "./monacoDebugger";
 
 const MIN_EDITOR_FONT_SIZE = 10
 const MAX_EDITOR_FONT_SIZE = 40
@@ -1025,11 +1025,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.sendBreakpoints();
             }
 
-            this.fieldEditors && this.fieldEditors.clearRanges(this.editor);
-            if (this.feWidget) {
-                this.feWidget.close();
-            }
-
+            if (this.fieldEditors) this.fieldEditors.clearRanges(this.editor);
+            if (this.feWidget) this.feWidget.close();
             if (this.editor) this.editor.updateOptions({ readOnly: true });
         }
         else {
