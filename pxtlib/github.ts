@@ -556,7 +556,10 @@ namespace pxt.github {
                     tag: rid.tag,
                     status
                 };
-            }).catch(err => undefined);
+            }).catch(err => {
+                pxt.reportException(err);
+                return undefined;
+            });
     }
 
     export function searchAsync(query: string, config: pxt.PackagesConfig): Promise<GitRepo[]> {
