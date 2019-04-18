@@ -8,12 +8,6 @@ const MAX_VARIABLE_LENGTH = 20;
 
 type ISettingsProps = pxt.editor.ISettingsProps;
 
-type StackFrame = {
-    locals: pxsim.Variables;
-    funcInfo: pxtc.FunctionLocationInfo;
-    breakpointId: number;
-};
-
 interface ScopeVariables {
     title: string;
     variables: Variable[];
@@ -78,7 +72,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         // Add in the local variables.
         // TODO: Handle callstack
         if (stackFrames && stackFrames.length) {
-            variables.concat(stackFrames[0].variables);
+            variables = stackFrames[0].variables.concat(variables);
         }
 
         return <div className={`ui varExplorer`}>
@@ -91,7 +85,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         </div>;
     }
 
-    updateVariables(globals: pxsim.Variables, stackFrames: StackFrame[], filters?: string[]) {
+    updateVariables(globals: pxsim.Variables, stackFrames: pxsim.StackFrameInfo[], filters?: string[]) {
         if (!globals) {
             // freeze the ui
             this.update(true)
@@ -111,10 +105,10 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
                 const key = getKeyForFrame(sf);
 
                 for (const frame of oldFrames) {
-                    if (frame.key === key) return updateScope(frame, sf.locals)
+                    if (frame.key === key) return updateScope(frame, sf.locals, getArgArray(sf.arguments));
                 }
 
-                return updateScope({ key, title: sf.funcInfo.functionName, variables: [] }, sf.locals)
+                return updateScope({ key, title: sf.funcInfo.functionName, variables: [] }, sf.locals, getArgArray(sf.arguments))
             });
         }
 
@@ -123,6 +117,13 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
             stackFrames: updatedFrames || [],
             frozen: false
         });
+
+        function getArgArray(info: pxsim.FunctionArgumentsInfo): Variable[] {
+            if (info) {
+                return [{ name: "this", value: info.thisParam }, ...info.params]
+            }
+            return []
+        }
     }
 
     private renderVariables(variables: Variable[], parent?: string, depth?: number): JSX.Element[] {
@@ -297,8 +298,12 @@ export class DebuggerToolbar extends data.Component<DebuggerToolbarProps, Debugg
     }
 }
 
-function updateScope(lastScope: ScopeVariables, newVars: pxsim.Variables): ScopeVariables {
-    const current = Object.keys(newVars).map(varName => ({ name: fixVarName(varName), value: newVars[varName] }));
+function updateScope(lastScope: ScopeVariables, newVars: pxsim.Variables, params?: Variable[]): ScopeVariables {
+    let current = Object.keys(newVars).map(varName => ({ name: fixVarName(varName), value: newVars[varName] }));
+
+    if (params) {
+        current = params.concat(current);
+    }
 
     return {
         ...lastScope,
@@ -398,6 +403,6 @@ function shouldShowValueOnHover(type: string): boolean {
     }
 }
 
-function getKeyForFrame(sf: StackFrame) {
+function getKeyForFrame(sf: pxsim.StackFrameInfo) {
     return sf.funcInfo.functionName + ";" + sf.funcInfo.fileName + ";" + sf.funcInfo.start;
 }

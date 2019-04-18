@@ -197,6 +197,8 @@ switch (step) {
         writeRaw(`} } }`)
         let info = nodeLocationInfo(proc.action) as FunctionLocationInfo
         info.functionName = proc.getName()
+        info.argumentNames = proc.args && proc.args.map(a => a.getName());
+
         writeRaw(`${proc.label()}.info = ${JSON.stringify(info)}`)
         if (proc.isRoot)
             writeRaw(`${proc.label()}.continuations = [ ${asyncContinuations.join(",")} ]`)

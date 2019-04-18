@@ -1025,7 +1025,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.sendBreakpoints();
             }
 
-            this.fieldEditors.clearRanges(this.editor);
+            this.fieldEditors && this.fieldEditors.clearRanges(this.editor);
             if (this.feWidget) {
                 this.feWidget.close();
             }
@@ -1127,7 +1127,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     protected updateFieldEditors = pxt.Util.debounce(() => {
-        if (!this.hasFieldEditors || pxt.shell.isReadOnly() || this.isDebugging()) return;
+        if (!this.hasFieldEditors || !this.editor || pxt.shell.isReadOnly() || this.isDebugging()) return;
         const model = this.editor.getModel();
         this.fieldEditors.clearRanges(this.editor);
 
@@ -1439,7 +1439,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.sendBreakpoints();
             }
         }
-        else {
+        else if (this.fieldEditors) {
             // Open/close any field editors in range
             const model = this.editor.getModel();
             const decorations = model.getDecorationsInRange(new monaco.Range(line, model.getLineMinColumn(line), line, model.getLineMaxColumn(line)));
@@ -1864,7 +1864,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.editor.setSelection(afterRange);
 
                 // Clear ranges because the model changed
-                this.fieldEditors.clearRanges(this.editor);
+                if (this.fieldEditors) this.fieldEditors.clearRanges(this.editor);
                 resolve(afterRange);
             });
 
