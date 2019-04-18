@@ -115,8 +115,9 @@ namespace pxt.runner {
                 else {
                     let padding = '81.97%';
                     if (pxt.appTarget.simulator) padding = (100 / pxt.appTarget.simulator.aspectRatio) + '%';
-                    let deps = options.package ? "&deps=" + encodeURIComponent(options.package) : "";
-                    let $embed = $(`<div class="ui card sim"><div class="ui content"><div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${getRunUrl(options) + "#nofooter=1&code=" + encodeURIComponent($js.text())}${deps}" allowfullscreen="allowfullscreen" sandbox="allow-popups allow-forms allow-scripts allow-same-origin" frameborder="0"></iframe></div></div></div>`);
+                    const deps = options.package ? "&deps=" + encodeURIComponent(options.package) : "";
+                    const url = getRunUrl(options) + "#nofooter=1&code=" + encodeURIComponent($js.text()) + deps;
+                    let $embed = $(`<div class="ui card sim"><div class="ui content"><div style="position:relative;height:0;padding-bottom:${padding};overflow:hidden;"><iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="${url}" allowfullscreen="allowfullscreen" sandbox="allow-popups allow-forms allow-scripts allow-same-origin" frameborder="0"></iframe></div></div></div>`);
                     $c.append($embed);
                 }
             })
@@ -715,8 +716,9 @@ namespace pxt.runner {
                     <iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" allowfullscreen="allowfullscreen" frameborder="0" sandbox="allow-popups allow-forms allow-scripts allow-same-origin"></iframe>
                     </div>
                     </div></div>`)
-                let deps = options.package;
-                $sim.find("iframe").attr("src", getRunUrl(options) + "#nofooter=1&code=" + encodeURIComponent($c.text().trim()) + (deps ? "&deps=" + deps : ""));
+                const deps = options.package ? "&deps=" + encodeURIComponent(options.package) : "";
+                const url = getRunUrl(options) + "#nofooter=1&code=" + encodeURIComponent($c.text().trim()) + deps;
+                $sim.find("iframe").attr("src", url);
                 if (options.snippetReplaceParent) $c = $c.parent();
                 $c.replaceWith($sim);
             });
