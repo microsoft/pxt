@@ -214,6 +214,7 @@ namespace pxt.editor {
         toggleTrace(intervalSpeed?: number): void;
         setTrace(enabled: boolean, intervalSpeed?: number): void;
         toggleMute(): void;
+        setMute(on: boolean): void;
         openInstructions(): void;
         closeFlyout(): void;
         printCode(): void;

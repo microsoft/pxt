@@ -2130,8 +2130,12 @@ export class ProjectView
     }
 
     toggleMute() {
-        simulator.mute(!this.state.mute);
-        this.setState({ mute: !this.state.mute });
+        this.setMute(!this.state.mute);
+    }
+
+    setMute(on: boolean) {
+        simulator.mute(on);
+        this.setState({ mute: on });
     }
 
     openInstructions() {

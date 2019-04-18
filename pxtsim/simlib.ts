@@ -219,6 +219,9 @@ namespace pxsim {
         export function mute(mute: boolean) {
             _mute = mute;
             stopAll();
+            const ctx = context();
+            if (!mute && ctx && ctx.state === "suspended")
+                ctx.resume();
         }
 
         function stopTone() {
