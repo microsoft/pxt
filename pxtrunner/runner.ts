@@ -113,7 +113,7 @@ namespace pxt.runner {
                         if (Object.keys(epkg.files).length == 0) {
                             epkg.setFiles(emptyPrjFiles())
                         }
-                        if (dependencies) {
+                        if (dependencies && dependencies.length) {
                             const files = getEditorPkg(pkg).files;
                             const cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
                             dependencies.forEach((d: string) => {
