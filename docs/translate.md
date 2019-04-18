@@ -20,9 +20,11 @@ On the Crowdin [home page](https://crowdin.com/project/kindscript) are the all o
 
 ![Enabled languages](/static/translation/languages.jpg)
 
-When you select a language, you see a folder view of the translation files for both the common parts of MakeCode and for each target editor.
+When you select a language, you see a folder view of the translation files for both the common parts of MakeCode and for each target editor. Each language has an identical folder view and the same number of files having the same names.
 
 ![Folder view within a language](/static/translation/folder-view.jpg)
+
+The source language for all of the files is English and that's the language the files are in when uploaded to Crowdin. During the translation process, Crowdin keeps a database of all the current and suggested translations for each part of a translation file.
 
 ## File types
 
@@ -117,7 +119,6 @@ The first file, ``radio-strings.json``, contains strings for the text of the ``r
 
 There's also a ``docs`` folder under each target folder for the all documentation pages specific to that target.
 
-
 ## Translation roles
 
 ### Translator
@@ -134,17 +135,36 @@ Over in the translation editor you type in your suggested translation and press 
 
 ![Translation editor example](/static/translation/translate-editor.jpg)
 
-Once your translation is saved, it moves down into the suggested translations list. There could be other translation suggestions listed there too.
+Once your translation is saved, it moves down into the suggested translations list. There could be other translation suggestions listed there too. You can review those to help form your new translation or possibly someone else has come up with a better one. If some part of a string your working on was already translated, Crowdin may offer a suggestion using some of the previous translated text.
 
 ![Translation suggestions list](/static/translation/translate-suggestions.jpg)
 
 ### Proofreader
 
-Proofreaders review new translations and approve or disapprove suggestions. A suggestion is approved by  pressing the **Approve** button (a checkmark) next to it.
+Proofreaders review new translations and approve or disapprove suggestions. A suggestion is approved by pressing the **Approve** button (a checkmark) next to it.
 
 ![Translation suggestions list](/static/translation/translate-approve.jpg)
 
+## Translation file summary
+
+The following table provides a quick guide to which parts of MakeCode the translation files and folders relate. The links here are to the [English](https://crowdin.com/project/kindscript/en#) source files just to show you the location of the files in the folder structure. Of course, you will translate in your selected language instead.
+
+| File / Folder | Description |
+| - | - |
+| [strings.json](https://crowdin.com/project/kindscript/32/en-en) | MakeCode editor webapp UI elements |
+| [webstrings.json](https://crowdin.com/translate/kindscript/588/en-en) | Localized strings for parts of the [MakeCode.com](https://makecode.com/docs) website |
+| [core/docs](https://crowdin.com/project/kindscript/en#/core/docs) | Documentation about developing new MakeCode targets, creating extensions, authoring documents, and the MakeCode blog |
+| [core/common-docs](https://crowdin.com/project/kindscript/en#/core/common-docs) | Documentation shared by all MakeCode targets. Describes use of the editor, coding concepts, and reference for the base blocks |
+
+## MakeCode extensions
+
+[Extensions](/extensions) provide additional code blocks for features and functions in a target editor that aren't there by default. A user adds an extension to the editor in an extensions dialog selected from the **Settings** menu. Extensions are created by anyone, not just the MakeCode team. Extensions can have their own documentation and have localization files you can edit. Translations for extensions are not part of the MakeCode Crowdin project. An extension is hosted in a GitHub repository and you will need to have a GitHub account to help with localizing an extension's strings or documents. Extension localization is described [here](/extensions/localization).
+
 ## Tips and guidance
+
+### Publishing new translations
+
+Once a translation is approved by a proofreader it is published to the "live" website for MakeCode.com or the target editor. There's a scheduled process which checks for new translations in Crowdin and brings them down to the website serving a MakeCode editor. There is a period of delay from when a new translation is approved and when it will appear on the site. This is generally between 10 - 30 minutes.
 
 ### Live Translations
 
