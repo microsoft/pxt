@@ -3593,7 +3593,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
                     if (/^block/.test(snippet.type)) {
                         //Similar to pxtc.decompile but allows us to get blocksInfo for round trip
                         const file = resp.ast.getSourceFile('main.ts');
-                        const apis = pxtc.getApiInfo(opts, resp.ast);
+                        const apis = pxtc.getApiInfo(resp.ast, opts.jres);
                         const blocksInfo = pxtc.getBlocksInfo(apis);
                         const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, {
                             snippetMode: false,
