@@ -87,6 +87,7 @@ namespace pxt.cpp {
         "pxtrt::mklocRef": 1,
         "pxtrt::stlocRef": 1,
         "pxtrt::ldlocRef": 1,
+        "pxtrt::panic": 1,
     }
 
     export function nsWriter(nskw = "namespace") {
@@ -565,6 +566,9 @@ namespace pxt.cpp {
                 pointerIncPre += `\nvoid ${wrap}(FiberContext *ctx) {\n`
                 const numArgs = argTypes.length
                 let refs: string[] = []
+                let needsStackSave = false
+
+                let allConvs = ""
 
                 for (let i = 0; i < numArgs; ++i) {
                     const ind = fi.argsFmt[i + 1]
@@ -574,6 +578,7 @@ namespace pxt.cpp {
                             ind == "B" ? "numops::toBool" :
                                 ""
                     const inp = i == numArgs - 1 ? "ctx->r0" : `ctx->sp[${numArgs - i - 2}]`
+                    let argPref = ""
 
                     switch (tp) {
                         case "TValue":
@@ -583,16 +588,23 @@ namespace pxt.cpp {
                             conv = "asRefAction"
                             break
                         case "String":
-                            conv = "numops::toString"
+                            conv = "convertToString"
+                            argPref = "ctx, "
+                            needsStackSave = true
                             break
                         default:
                             if (!conv) conv = "as" + tp.replace(/\*/g, "")
                             break
                     }
 
-                    pointerIncPre += `  ${tp} a${i} = (${tp}) ${conv}(${inp});\n`
+                    allConvs += `  ${tp} a${i} = (${tp}) ${conv}(${argPref}${inp});\n`
                     refs.push("a" + i)
                 }
+
+                if (needsStackSave)
+                    pointerIncPre += "  auto prevSP = ctx->sp;\n"
+
+                pointerIncPre += allConvs
 
                 const call = `::${fi.name}(${refs.join(", ")})`
 
@@ -606,6 +618,9 @@ namespace pxt.cpp {
                 } else {
                     pointerIncPre += `  ctx->r0 = (TValue)${call};\n`
                 }
+
+                if (needsStackSave)
+                    pointerIncPre += "  ctx->sp = prevSP;\n"
 
                 if (numArgs > 1)
                     pointerIncPre += `  ctx->sp += ${numArgs - 1};\n`
