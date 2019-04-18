@@ -880,7 +880,14 @@ export class ProjectView
     setTutorialInstructionsExpanded(value: boolean): void {
         const tutorialOptions = this.state.tutorialOptions;
         tutorialOptions.tutorialStepExpanded = value;
-        this.setState({ tutorialOptions: tutorialOptions });
+        this.setState(
+            { tutorialOptions: tutorialOptions },
+            () => {
+                if (this.editor == this.blocksEditor)
+                    this.blocksEditor.hideFlyout()
+                else if (this.editor == this.textEditor)
+                    this.textEditor.hideFlyout()
+            });
     }
 
     setTutorialStep(step: number) {
