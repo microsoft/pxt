@@ -631,6 +631,7 @@ declare namespace ts.pxtc {
         attributes: CommentAttrs;
         name: string;
         namespace: string;
+        fileName: string;
         kind: SymbolKind;
         parameters: ParameterDesc[];
         retType: string;

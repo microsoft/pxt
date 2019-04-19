@@ -204,21 +204,24 @@ namespace pxt.py {
         return fillTypes(lookupApi(name))
     }
 
-    function initApis(apisInfo: pxtc.ApisInfo) {
+    function initApis(apisInfo: pxtc.ApisInfo, tsShadowFiles: string[]) {
         internalApis = {}
         externalApis = {}
 
+        let tsShadowFilesSet = U.toDictionary(tsShadowFiles, t => t)
         for (let sym of U.values(apisInfo.byQName)) {
-            // sym.pkg == null - from main package - skip these
-            if (sym.pkg != null) {
-                let sym2 = sym as SymbolInfo
-
-                if (sym2.extendsTypes)
-                    sym2.extendsTypes = sym2.extendsTypes.filter(e => e != sym2.qName)
-
-                externalApis[sym2.pyQName] = sym2
-                externalApis[sym2.qName] = sym2
+            // if the symbol comes from a .ts file that matches one of the .py files we're compiling - skip these
+            if (tsShadowFilesSet.hasOwnProperty(sym.fileName)) {
+                continue
             }
+
+            let sym2 = sym as SymbolInfo
+
+            if (sym2.extendsTypes)
+                sym2.extendsTypes = sym2.extendsTypes.filter(e => e != sym2.qName)
+
+            externalApis[sym2.pyQName] = sym2
+            externalApis[sym2.qName] = sym2
         }
 
         // TODO this is for testing mostly; we can do this lazily
@@ -443,6 +446,11 @@ namespace pxt.py {
 
         if (t0 === t1)
             return
+
+        if (t0.primType === "any") {
+            t0.union = t1
+            return
+        }
 
         const c0 = typeCtor(t0)
         const c1 = typeCtor(t1)
@@ -952,7 +960,7 @@ namespace pxt.py {
             if (n.name == "__init__") {
                 for (let f of listClassFields(ctx.currClass)) {
                     let p = f.pyAST as Assign
-                    if (p.value) {
+                    if (p && p.value) {
                         body.push(
                             B.mkStmt(B.mkText(`this.${quoteStr(f.pyName)} = `), expr(p.value))
                         )
@@ -1377,6 +1385,7 @@ namespace pxt.py {
         scale?: number;
     }
 
+    // TODO: handle built-in mapping in a bi-directional way
     const funMap: Map<FunOverride> = {
         "memoryview": { n: "", t: tpBuffer },
         "const": { n: "", t: tpNumber },
@@ -1392,6 +1401,7 @@ namespace pxt.py {
         "bytes": { n: "pins.createBufferFromArray", t: tpBuffer },
         "bool": { n: "!!", t: tpBoolean },
         "Array.index": { n: ".indexOf", t: tpNumber },
+        "print": { n: "console.log", t: tpVoid },
     }
 
     function isSuper(v: py.Expr) {
@@ -1523,7 +1533,8 @@ namespace pxt.py {
         Call: (n: py.Call) => {
             n.func.inCalledPosition = true
 
-            let namedSymbol = lookupSymbol(getName(n.func))
+            let nm = getName(n.func)
+            let namedSymbol = lookupSymbol(nm)
             let isClass = namedSymbol && namedSymbol.kind == SK.Class
 
             let fun = namedSymbol
@@ -1548,8 +1559,6 @@ namespace pxt.py {
             }
 
             let orderedArgs = n.args.slice()
-
-            let nm = getName(n.func)
 
             if (nm == "super" && orderedArgs.length == 0) {
                 if (ctx.currClass && ctx.currClass.baseClass)
@@ -1756,6 +1765,13 @@ namespace pxt.py {
             }
 
             let v = lookupSymbol(n.id)
+            if (!v) {
+                // check if the symbol has an override py<->ts mapping
+                let over = U.lookup(funMap, n.id)
+                if (over) {
+                    v = lookupSymbol(over.n)
+                }
+            }
             if (v) {
                 n.symbolInfo = v
                 unify(n, n.tsType, symbolType(v))
@@ -1867,9 +1883,14 @@ namespace pxt.py {
         let pyFiles = opts.sourceFiles.filter(fn => U.endsWith(fn, ".py"))
         if (pyFiles.length == 0)
             return { generated, diagnostics }
+        let pyFilesSet = U.toDictionary(pyFiles, p => p)
+        // find .ts files that are copies of / shadowed by the .py files
+        let tsShadowFiles = opts.sourceFiles
+            .filter(fn => U.endsWith(fn, ".ts"))
+            .filter(fn => fn.substr(0, fn.length - ".ts".length) in pyFilesSet)
 
         lastFile = pyFiles[0] // make sure there's some location info for errors from API init
-        initApis(opts.apisInfo)
+        initApis(opts.apisInfo, tsShadowFiles)
 
         compileOptions = opts
         syntaxInfo = null

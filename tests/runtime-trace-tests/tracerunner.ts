@@ -83,16 +83,17 @@ async function testTsOrPy(tsOrPyFile: string): Promise<void> {
     if (isPy) {
         let pyFile = tsOrPyFile
         recordBaseline(await PY(pyFile))
-        // TODO(dazuniga): py2ts doesn't work in unit tests yet, once it does enable it here
-        // let tsFile = await testPy2Ts(pyFile)
-        // await testSts(tsFile)
-        // let pyFile2 = await testTs2Py(tsFile)
+        let tsFile = await testPy2Ts(pyFile)
+        await testSts(tsFile)
+        let pyFile2 = await testTs2Py(tsFile)
     } else {
         let tsFile = tsOrPyFile
         recordBaseline(await TS(tsFile))
         await testSts(tsFile)
         let pyFile = await testTs2Py(tsFile)
-        // TODO(dazuniga): py2ts doesn't work in unit tests yet, once it does enable it here
+        // TODO: py2ts needs to implement more features before we can run the full test suite. Specifically at least:
+        // - AnnAssign
+        // - types: str, List[]
         // let tsfile2 = await testPy2Ts(pyFile)
         // await testSts(tsfile2)
     }
@@ -270,17 +271,10 @@ async function compileAndRunTs(filename: string): Promise<string> {
 
 function compileAndRunStsAsync(filename: string): Promise<string> {
     const prelude = `
-let console: any = {}
-console.log = function(s: string): void {
-    control.__log(s)
-    control.__log("\\n")
-    control.dmesg(s)
-    // serial.writeString(s)
-    // serial.writeString("\\n")
-}
 // end prelude
     `
     // TODO(dz): why is this necessary? This doesn't seem right..
+    // without this pause(), a lot of the console output doesn't appear
     const postlude = `
 // start postlude
 pause(300);

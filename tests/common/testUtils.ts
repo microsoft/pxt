@@ -50,42 +50,12 @@ export function replaceFileExtension(file: string, extension: string) {
     return file && file.substr(0, file.length - path.extname(file).length) + extension;
 }
 
-// TODO merge into testHost?
-class CompileHost extends TestHost {
-    private fileText: string;
-    static langTestText: string;
-
-    constructor(mainStr?: string, dependency?: string) {
-        super("test-pkg", "", dependency ? [dependency] : [], true);
-        this.fileText = mainStr || "// no main function provided"
-    }
-
-    readFile(module: pxt.Package, filename: string): string {
-        if (module.id === "this") {
-            if (filename === "pxt.json") {
-                return JSON.stringify({
-                    "name": this.name,
-                    "dependencies": { "bare": "file:../bare" },
-                    "description": "",
-                    "files": [
-                        "main.ts",
-                    ]
-                })
-            }
-            else if (filename === "main.ts") {
-                return this.fileText;
-            }
-        }
-
-        return super.readFile(module, filename);
-    }
-}
-
 let cachedOpts: pxt.Map<pxtc.CompileOptions> = {}
-export function getTestCompileOptsAsync(tsMain: string = "// no main", dependency?: string, includeCommon = false): Promise<pxtc.CompileOptions> {
-    let cacheKey = pxt.Util.codalHash16(tsMain + dependency)
+export function getTestCompileOptsAsync(packageFiles: pxt.Map<string> = { "main.ts": "// no main" }, dependency?: string, includeCommon = false): Promise<pxtc.CompileOptions> {
+    let cacheStr = Object.keys(packageFiles).concat(pxt.Util.values(packageFiles)).join("~") + dependency + includeCommon
+    let cacheKey = pxt.Util.codalHash16(cacheStr)
     if (!cachedOpts[cacheKey]) {
-        const pkg = new pxt.MainPackage(new TestHost("test-pkg", tsMain, dependency ? [dependency] : [], includeCommon));
+        const pkg = new pxt.MainPackage(new TestHost("test-pkg", packageFiles, dependency ? [dependency] : [], includeCommon));
 
         const target = pkg.getTargetOptions();
         target.isNative = false;
@@ -105,7 +75,7 @@ export function getTestCompileOptsAsync(tsMain: string = "// no main", dependenc
 
 export function ts2pyAsync(f: string): Promise<string> {
     const tsMain = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
-    return getTestCompileOptsAsync(tsMain)
+    return getTestCompileOptsAsync({ "main.ts": tsMain })
         .then(opts => {
             let program = pxtc.getTSProgram(opts);
             // TODO: if needed, we can re-use the CallInfo annotations the blockly decompiler can add
@@ -122,13 +92,17 @@ export function ts2pyAsync(f: string): Promise<string> {
 }
 
 export function py2tsAsync(f: string): Promise<string> {
-    // TODO(dz): this doesn't work yet. Ask dazuniga and/or see dazuniga/py2ts_debug
-    return getTestCompileOptsAsync()
+    const input = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
+    return getTestCompileOptsAsync({ "main.py": input, "main.ts": "// no main" }, "bare", true)
         .then(opts => {
+            opts.target.preferredEditor = pxt.JAVASCRIPT_PROJECT_NAME
+            let stsCompRes = pxtc.compile(opts);
+            let apisInfo = pxtc.getApiInfo(stsCompRes.ast, opts.jres)
+            if (!apisInfo || !apisInfo.byQName)
+                throw Error("Failed to get apisInfo")
+            opts.apisInfo = apisInfo
+
             opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
-            const input = fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
-            let pyFile = "main.py";
-            opts.fileSystem[pyFile] = input;
 
             let { generated, diagnostics } = pxt.py.py2ts(opts)
 
@@ -138,13 +112,14 @@ export function py2tsAsync(f: string): Promise<string> {
                 return opts.fileSystem["main.ts"];
             }
             else {
-                return Promise.reject(new Error("Could not convert py to ts " + f + JSON.stringify(diagnostics, null, 4)))
+                let errorStr = diagnostics.map(pxtc.getDiagnosticString).join()
+                return Promise.reject(new Error(`Could not convert py to ts ${f}\n${errorStr}`))
             }
         })
 }
 
 export function stsAsync(tsMain: string): Promise<pxtc.CompileResult> {
-    return getTestCompileOptsAsync(tsMain, "bare")
+    return getTestCompileOptsAsync({ "main.ts": tsMain }, "bare")
         .then(opts => {
             const compiled = pxtc.compile(opts);
             if (compiled.success) {

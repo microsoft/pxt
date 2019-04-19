@@ -35,7 +35,7 @@ class CompileHost extends TestHost {
     static langTestText: string;
 
     constructor(public filename: string) {
-        super("compile-test", "", [], true);
+        super("compile-test", { "main.ts": "" }, [], true);
         this.basename = path.basename(filename);
         this.fileText = fs.readFileSync(filename, "utf8");
 
