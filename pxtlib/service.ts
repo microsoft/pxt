@@ -274,6 +274,7 @@ namespace ts.pxtc {
                     },
                     name: tp,
                     namespace: s.namespace,
+                    fileName: s.fileName,
                     qName: `${mkey}.${tp}`,
                     pkg: s.pkg,
                     kind: SymbolKind.Property,

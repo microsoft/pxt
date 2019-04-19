@@ -48,13 +48,13 @@ class BlocklyCompilerTestHost implements pxt.Host {
     static createTestHostAsync() {
         if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendFieldEditors && pxt.editor.initFieldExtensionsAsync) {
             return pxt.editor.initFieldExtensionsAsync({})
-            .then(res => {
-                if (res.fieldEditors)
-                    res.fieldEditors.forEach(fi => {
-                        pxt.blocks.registerFieldEditor(fi.selector, fi.editor, fi.validator);
-                    })
-            })
-            .then(() => new BlocklyCompilerTestHost())
+                .then(res => {
+                    if (res.fieldEditors)
+                        res.fieldEditors.forEach(fi => {
+                            pxt.blocks.registerFieldEditor(fi.selector, fi.editor, fi.validator);
+                        })
+                })
+                .then(() => new BlocklyCompilerTestHost())
         }
 
         return Promise.resolve(new BlocklyCompilerTestHost())
@@ -125,7 +125,7 @@ function getBlocksInfoAsync(): Promise<pxtc.BlocksInfo> {
                 return Promise.reject("Could not compile");
 
             // decompile to blocks
-            let apis = pxtc.getApiInfo(opts, resp.ast);
+            let apis = pxtc.getApiInfo(resp.ast, opts.jres);
             let blocksInfo = pxtc.getBlocksInfo(apis);
             pxt.blocks.initializeAndInject(blocksInfo);
 
@@ -253,12 +253,12 @@ function initAsync() {
     init = true;
     if (pxt.appTarget.appTheme && pxt.appTarget.appTheme.extendFieldEditors && pxt.editor.initFieldExtensionsAsync) {
         return pxt.editor.initFieldExtensionsAsync({})
-        .then(res => {
-            if (res.fieldEditors)
-                res.fieldEditors.forEach(fi => {
-                    pxt.blocks.registerFieldEditor(fi.selector, fi.editor, fi.validator);
-                })
-        })
+            .then(res => {
+                if (res.fieldEditors)
+                    res.fieldEditors.forEach(fi => {
+                        pxt.blocks.registerFieldEditor(fi.selector, fi.editor, fi.validator);
+                    })
+            })
     }
     return Promise.resolve();
 }
@@ -269,7 +269,7 @@ function encode(testcase: string) {
 }
 
 if (testJSON.libsTests && testJSON.libsTests.length) {
-    describe("block tests in target", function() {
+    describe("block tests in target", function () {
         this.timeout(5000);
         for (const test of testJSON.libsTests) {
             describe("for package " + test.packageName, () => {
@@ -281,7 +281,7 @@ if (testJSON.libsTests && testJSON.libsTests.length) {
     });
 }
 if (testJSON.commonTests && testJSON.commonTests.length) {
-    describe("block tests in common-packages", function() {
+    describe("block tests in common-packages", function () {
         this.timeout(5000);
         for (const test of testJSON.commonTests) {
             describe("for package " + test.packageName, () => {
