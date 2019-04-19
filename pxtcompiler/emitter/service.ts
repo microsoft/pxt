@@ -1304,7 +1304,7 @@ namespace ts.pxtc.service {
                 let n = fnName || "fn";
                 if (functionCount++ > 0) n += functionCount;
                 n = snakify(n).toLowerCase();
-                preStmt += `def ${n}${functionArgument}:\n  ${returnValue || "pass"}\n`;
+                preStmt += `def ${n}${functionArgument}:\n    ${returnValue || "pass"}\n`;
                 return n;
             } else {
                 let functionArgument = "()";
@@ -1320,7 +1320,7 @@ namespace ts.pxtc.service {
         function emitFn(n: string): string {
             if (python) {
                 if (n) n = snakify(n).toLowerCase();
-                preStmt += `def ${n}():\n  pass\n`;
+                preStmt += `def ${n}():\n    pass\n`;
                 return n;
             } else return `function () {}`;
         }
