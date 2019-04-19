@@ -39,45 +39,49 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         return params;
     }
 
+    private startRenderLangSnippet(langBlock: HTMLElement): HTMLDivElement {
+        const preBlock = langBlock.parentElement as HTMLPreElement; // pre parent of the code
+        const parentBlock = preBlock.parentElement as HTMLDivElement; // parent containing all text
+
+        const wrapperDiv = document.createElement('div');
+        wrapperDiv.className = 'ui segment raised loading';
+        parentBlock.insertBefore(wrapperDiv, preBlock);
+        parentBlock.removeChild(preBlock);
+
+        return wrapperDiv;
+    }
+
+    private finishRenderLangSnippet(wrapperDiv: HTMLDivElement, code: string) {
+        const preDiv = document.createElement('pre') as HTMLPreElement;
+        preDiv.textContent = code;
+        pxt.tutorial.highlight(preDiv);
+        wrapperDiv.appendChild(preDiv);
+        pxsim.U.removeClass(wrapperDiv, 'loading');
+    }
+
     private renderSnippets(content: HTMLElement) {
         const { parent } = this.props;
 
         pxt.Util.toArray(content.querySelectorAll(`code.lang-typescript`))
             .forEach((langBlock: HTMLElement) => {
                 const code = langBlock.textContent;
-                const wrapperDiv = document.createElement('div');
-                pxsim.U.clear(langBlock);
-                langBlock.appendChild(wrapperDiv);
-                wrapperDiv.className = 'ui segment raised';
-                const preDiv = document.createElement('pre') as HTMLPreElement;
-                preDiv.textContent = code;
-                pxt.tutorial.highlight(preDiv);
-                wrapperDiv.appendChild(preDiv);
+                const wrapperDiv = this.startRenderLangSnippet(langBlock);
+                this.finishRenderLangSnippet(wrapperDiv, code);
             });
 
         pxt.Util.toArray(content.querySelectorAll(`code.lang-spy`))
             .forEach((langBlock: HTMLElement) => {
                 const code = langBlock.textContent;
-                const wrapperDiv = document.createElement('div');
-                pxsim.U.clear(langBlock);
-                langBlock.appendChild(wrapperDiv);
-                wrapperDiv.className = 'ui segment raised loading';
+                const wrapperDiv = this.startRenderLangSnippet(langBlock);
                 if (MarkedContent.blockSnippetCache[code]) {
-                    const preDiv = document.createElement('pre') as HTMLPreElement;
-                    preDiv.textContent = MarkedContent.blockSnippetCache[code];
-                    pxt.tutorial.highlight(preDiv);
-                    wrapperDiv.appendChild(preDiv);
-                    pxsim.U.removeClass(wrapperDiv, 'loading');
+                    this.finishRenderLangSnippet(wrapperDiv, MarkedContent.blockSnippetCache[code]);
                 } else {
                     parent.renderPythonAsync({
                         type: "pxteditor",
                         action: "renderpython", ts: code
                     }).done(resp => {
-                        const preDiv = document.createElement('pre') as HTMLPreElement;
-                        preDiv.textContent = resp.python;
-                        pxt.tutorial.highlight(preDiv);
-                        wrapperDiv.appendChild(preDiv);
-                        pxsim.U.removeClass(wrapperDiv, 'loading');
+                        MarkedContent.blockSnippetCache[code] = resp.python;
+                        this.finishRenderLangSnippet(wrapperDiv, MarkedContent.blockSnippetCache[code]);
                     });
                 }
             });
