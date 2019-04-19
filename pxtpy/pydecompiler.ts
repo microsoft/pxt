@@ -60,7 +60,6 @@ namespace pxt.py {
         let file = prog.getSourceFile(filename)
         let [renameMap, globalNames] = ts.pxtc.decompiler.buildRenameMap(prog, file)
         let symbols = pxtc.getApiInfo(prog)
-        // console.dir(symbols) // TODO(dz)
 
         // ts->py 
         return emitFile(file)
@@ -79,6 +78,13 @@ namespace pxt.py {
         function popScope(): Scope {
             return env.shift()
         }
+        function getPyName(dotExp: ts.PropertyAccessExpression): string {
+            let tsExp = dotExp.getText()
+            let sym = symbols.byQName[tsExp]
+            if (sym && sym.pyQName)
+                return sym.pyQName
+            return null
+        }
         function getName(name: ts.Identifier | ts.BindingPattern | ts.PropertyName | ts.EntityName): string {
             if (!ts.isIdentifier(name))
                 throw Error("Unsupported advanced name format: " + name.getText())
@@ -90,6 +96,8 @@ namespace pxt.py {
                     outName = rename.name;
                 }
             }
+            if (symbols.byQName[outName])
+                outName = symbols.byQName[outName].pyQName
             return outName
         }
         function getNewGlobalName(nameHint: string | ts.Identifier | ts.BindingPattern | ts.PropertyName | ts.EntityName) {
@@ -838,6 +846,11 @@ namespace pxt.py {
             return [`${left} ${op} ${right}`, sup];
         }
         function emitDotExp(s: ts.PropertyAccessExpression): ExpRes {
+            // short-circuit if the dot expression is a well-known symbol
+            let pyName = getPyName(s)
+            if (pyName)
+                return asExpRes(pyName)
+
             let [left, leftSup] = emitExp(s.expression)
             let right = getName(s.name)
             // special: foo.length
