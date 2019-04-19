@@ -589,15 +589,16 @@ _start_${name}:
                 emitExpr(lambdaArg)
                 write(`callind ${nargs}`)
             } else if (calledProcId.ifaceIndex != null) {
+                let idx = calledProcId.ifaceIndex + " ; ." + bin.ifaceMembers[calledProcId.ifaceIndex]
                 if (/Set/.test(calledProcId.mapMethod)) {
-                    write(`callset ${calledProcId.ifaceIndex}`)
+                    write(`callset ${idx}`)
                     U.assert(nargs == 2)
                 }
                 else if (/Get/.test(calledProcId.mapMethod)) {
-                    write(`callget ${calledProcId.ifaceIndex}`)
+                    write(`callget ${idx}`)
                     U.assert(nargs == 1)
                 } else
-                    write(`calliface ${nargs}, ${calledProcId.ifaceIndex}`)
+                    write(`calliface ${nargs}, ${idx}`)
             } else if (calledProcId.virtualIndex != null) {
                 U.oops()
             } else {
