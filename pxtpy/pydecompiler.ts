@@ -992,7 +992,10 @@ namespace pxt.py {
             // reason 2: we want to generate good names, which requires context about the function it is being passed to an other parameters
             if ((ts.isFunctionExpression(s) || ts.isArrowFunction(s)) && param) {
                 if (param.type && ts.isFunctionTypeNode(param.type)) {
-                    let altParams = param.type.parameters
+                    // TODO(dz): uncomment to support reason #1 above. I've disabled this for now because it generates uglier
+                    // code if we don't have support in py2ts to reverse this
+                    // let altParams = param.type.parameters
+                    let altParams = null
                     let fnNameHint = getNameHint(param, calleeExp, allParams, allArgs)
                     return emitFnExp(s, fnNameHint, altParams)
                 }
