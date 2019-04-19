@@ -43,6 +43,7 @@ namespace ts.pxtc.decompiler {
         compInfo: (c: pxtc.CallInfo) => pxt.blocks.BlockCompileInfo;
         localReporters: PropertyDesc[][]; // A stack of groups of locally scoped argument declarations, to determine whether an argument should decompile as a reporter or a variable
         opts: DecompileBlocksOptions;
+        renameMap?: RenameMap;
     }
 
     interface DecompileArgument {
@@ -185,7 +186,7 @@ namespace ts.pxtc.decompiler {
     }
 
     export class RenameMap {
-        constructor(private renames: RenameLocation[]) {
+        constructor(private renames: RenameLocation[], public globals: Node[]) {
             this.renames.sort((a, b) => a.span.start - b.span.start);
         }
 
@@ -227,10 +228,10 @@ namespace ts.pxtc.decompiler {
     export function buildRenameMap(p: Program, s: SourceFile): [RenameMap, NamesSet] {
         let service = ts.createLanguageService(new LSHost(p))
         const allRenames: RenameLocation[] = [];
-
+        const globals: Node[] = [];
         let names = collectNameCollisions();
-
-        return [new RenameMap(allRenames), names];
+        const renameMap = new RenameMap(allRenames, globals);
+        return [renameMap, names];
 
         function collectNameCollisions(): NamesSet {
             const takenNames: NamesSet = {};
@@ -239,6 +240,7 @@ namespace ts.pxtc.decompiler {
 
             function checkChildren(n: Node): void {
                 ts.forEachChild(n, (child) => {
+                    let def: DefinitionInfo[] = service.getDefinitionAtPosition(s.fileName, child.end);
                     if (child.kind === SK.VariableDeclaration && (child as ts.VariableDeclaration).name.kind === SK.Identifier) {
                         const name = (child as ts.VariableDeclaration).name.getText();
 
@@ -257,6 +259,12 @@ namespace ts.pxtc.decompiler {
                         }
                         else {
                             takenNames[name] = true;
+                        }
+                    } else if (child.kind === SK.Identifier && !takenNames[(child as Identifier).escapedText.toString()]) {
+                        if (def && def.length) {
+                            if (def[0].kind === "let" || def[0].kind === "const") {
+                                globals.push(child);
+                            }
                         }
                     }
                     checkChildren(child);
@@ -326,7 +334,8 @@ namespace ts.pxtc.decompiler {
             attrs: attrs,
             compInfo: compInfo,
             localReporters: [],
-            opts: options || {}
+            opts: options || {},
+            renameMap: renameMap
         };
         const fileText = file.getFullText();
         let output = ""
@@ -1134,9 +1143,6 @@ ${output}</xml>`;
                         break;
                     case SK.DebuggerStatement:
                         stmt = getDebuggerStatementBlock(node);
-                        break;
-                    case SK.EmptyStatement:
-                        stmt = undefined; // don't generate blocks for empty statements
                         break;
                     case SK.EnumDeclaration:
                         // If the enum declaration made it past the checker then it is emitted elsewhere
@@ -2138,7 +2144,6 @@ ${output}</xml>`;
             case SK.EnumDeclaration:
                 return checkEnumDeclaration(node as ts.EnumDeclaration, topLevel);
             case SK.DebuggerStatement:
-            case SK.EmptyStatement:
                 return undefined;
         }
 
@@ -2764,7 +2769,13 @@ ${output}</xml>`;
             case SK.NoSubstitutionTemplateLiteral:
                 return checkStringLiteral(n as ts.StringLiteral);
             case SK.Identifier:
-                return isUndefined(n) ? Util.lf("Undefined is not supported in blocks") : undefined;
+                if (isUndefined(n)) {
+                    return Util.lf("Undefined is not supported in blocks");
+                } else if (isDeclaredElsewhere(n, env)) {
+                    return Util.lf("Variable is declared in another file");
+                } else {
+                    return undefined;
+                }
             case SK.BinaryExpression:
                 const op1 = (n as BinaryExpression).operatorToken.getText();
                 return ops[op1] ? undefined : Util.lf("Could not find operator {0}", op1);
@@ -2906,6 +2917,14 @@ ${output}</xml>`;
 
     function isUndefined(node: ts.Node) {
         return node && node.kind === SK.Identifier && (node as ts.Identifier).text === "undefined";
+    }
+
+    function isDeclaredElsewhere(node: ts.Node, env: DecompilerEnv) {
+        if (env.renameMap && env.renameMap.globals && env.renameMap.globals) {
+            return env.renameMap.globals.some(globalVar => globalVar === node);
+        } else {
+            return false;
+        }
     }
 
     function hasStatementInput(info: CallInfo, attributes: CommentAttrs): boolean {
