@@ -580,8 +580,10 @@ declare namespace ts.pxtc {
         _shadowOverrides?: pxt.Map<string>;
         jsDoc?: string;
         paramHelp?: pxt.Map<string>;
-        // foo.defl=12 -> paramDefl: { foo: "12" }
+        // foo.defl=12 -> paramDefl: { foo: "12" }; eg.: 12 in arg description will also go here
         paramDefl: pxt.Map<string>;
+        // this lists arguments that have .defl as opposed to just eg.: stuff
+        explicitDefaults?: string[];
 
         paramMin?: pxt.Map<string>; // min range
         paramMax?: pxt.Map<string>; // max range

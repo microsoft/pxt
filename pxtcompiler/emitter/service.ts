@@ -286,7 +286,8 @@ namespace ts.pxtc {
                         type: typeOf(p.type, p),
                         initializer:
                             p.initializer ? p.initializer.getText() :
-                                attributes.paramDefl[n] || (p.questionToken ? "undefined" : undefined),
+                                getExplicitDefault(attributes, n) ||
+                                (p.questionToken ? "undefined" : undefined),
                         default: attributes.paramDefl[n],
                         properties: props,
                         handlerParameters: parameters,
