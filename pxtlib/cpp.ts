@@ -193,7 +193,7 @@ namespace pxt.cpp {
 
         const isPlatformio = !!compileService.platformioIni;
         const isCodal = compileService.buildEngine == "codal" || compileService.buildEngine == "dockercodal"
-        const isDockerMake = compileService.buildEngine == "dockermake"
+        const isDockerMake = compileService.buildEngine == "dockermake" || compileService.buildEngine == "dockercross"
         const isYotta = !isPlatformio && !isCodal && !isDockerMake
         const isVM = compile.nativeType == pxtc.NATIVE_TYPE_VM
         if (isPlatformio)
@@ -1029,8 +1029,8 @@ int main() {
             add("PXT_CPP", ".cpp")
             add("PXT_S", ".s")
             add("PXT_HEADERS", ".h")
-            inc += "PXT_SOURCES = $(PXT_C) $(PXT_S) $(PXT_CPP)\n"
-            inc += "PXT_OBJS = $(addprefix bld/, $(PXT_C:.c=.o) $(PXT_S:.s=.o) $(PXT_CPP:.cpp=.o))\n"
+            inc += "PXT_SOURCES := $(PXT_C) $(PXT_S) $(PXT_CPP)\n"
+            inc += "PXT_OBJS := $(addprefix bld/, $(PXT_C:.c=.o) $(PXT_S:.s=.o) $(PXT_CPP:.cpp=.o))\n"
             res.generatedFiles["/Makefile"] = makefile
             res.generatedFiles["/Makefile.inc"] = inc
 

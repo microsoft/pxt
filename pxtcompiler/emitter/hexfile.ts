@@ -167,8 +167,6 @@ namespace ts.pxtc {
 
             hex = hexinfo.hex;
 
-            patchSegmentHex(hex)
-
             if (target.nativeType == pxtc.NATIVE_TYPE_VM) {
                 bytecodeStartIdx = -1
                 bytecodeStartAddr = 0
@@ -185,6 +183,8 @@ namespace ts.pxtc {
 
                 return
             }
+
+            patchSegmentHex(hex)
 
             if (hex.length <= 2) {
                 elfInfo = pxt.elf.parse(U.fromHex(hex[0]))
