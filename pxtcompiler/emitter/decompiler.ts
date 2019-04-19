@@ -1135,6 +1135,9 @@ ${output}</xml>`;
                     case SK.DebuggerStatement:
                         stmt = getDebuggerStatementBlock(node);
                         break;
+                    case SK.EmptyStatement:
+                        stmt = undefined; // don't generate blocks for empty statements
+                        break;
                     case SK.EnumDeclaration:
                         // If the enum declaration made it past the checker then it is emitted elsewhere
                         return getNext();
@@ -2135,6 +2138,7 @@ ${output}</xml>`;
             case SK.EnumDeclaration:
                 return checkEnumDeclaration(node as ts.EnumDeclaration, topLevel);
             case SK.DebuggerStatement:
+            case SK.EmptyStatement:
                 return undefined;
         }
 
