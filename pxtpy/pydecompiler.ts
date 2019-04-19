@@ -60,7 +60,6 @@ namespace pxt.py {
         let file = prog.getSourceFile(filename)
         let [renameMap, globalNames] = ts.pxtc.decompiler.buildRenameMap(prog, file)
         let symbols = pxtc.getApiInfo(prog)
-        // console.dir(symbols) // TODO(dz)
 
         // ts->py 
         return emitFile(file)
@@ -79,7 +78,20 @@ namespace pxt.py {
         function popScope(): Scope {
             return env.shift()
         }
+        function tryGetPyName(exp: ts.BindingPattern | ts.PropertyName | ts.EntityName | ts.PropertyAccessExpression): string {
+            if (!exp.getSourceFile())
+                return null
+            let tsExp = exp.getText()
+            let sym = symbols.byQName[tsExp]
+            let isFromUserPackage = sym && sym.pkg == null
+            if (sym && !isFromUserPackage && sym.pyQName)
+                return sym.pyQName
+            return null
+        }
         function getName(name: ts.Identifier | ts.BindingPattern | ts.PropertyName | ts.EntityName): string {
+            let pyName = tryGetPyName(name)
+            if (pyName)
+                return pyName
             if (!ts.isIdentifier(name))
                 throw Error("Unsupported advanced name format: " + name.getText())
             let outName = name.text;
@@ -619,7 +631,8 @@ namespace pxt.py {
             // stmts.push("# }")
             return stmts
         }
-        function emitFuncDecl(s: ts.FunctionDeclaration | ts.MethodDeclaration | ts.FunctionExpression | ts.ConstructorDeclaration | ts.ArrowFunction, name: string = null, altParams?: ts.NodeArray<ts.ParameterDeclaration>): string[] {
+        function emitFuncDecl(s: ts.FunctionDeclaration | ts.MethodDeclaration | ts.FunctionExpression | ts.ConstructorDeclaration | ts.ArrowFunction,
+            name: string = null, altParams?: ts.NodeArray<ts.ParameterDeclaration>, skipTypes?: boolean): string[] {
             // TODO determine captured variables, then determine global and nonlocal directives
             // TODO helper function for determining if an expression can be a python expression
             let paramList: string[] = []
@@ -632,7 +645,7 @@ namespace pxt.py {
             let paramDeclDefs = altParams ? mergeParamDecls(s.parameters, altParams) : s.parameters
 
             let paramDecls = paramDeclDefs
-                .map(d => emitParamDecl(d))
+                .map(d => emitParamDecl(d, !skipTypes))
             paramList = paramList.concat(paramDecls)
 
             let params = paramList.join(", ")
@@ -838,6 +851,11 @@ namespace pxt.py {
             return [`${left} ${op} ${right}`, sup];
         }
         function emitDotExp(s: ts.PropertyAccessExpression): ExpRes {
+            // short-circuit if the dot expression is a well-known symbol
+            let pyName = tryGetPyName(s)
+            if (pyName)
+                return asExpRes(pyName)
+
             let [left, leftSup] = emitExp(s.expression)
             let right = getName(s.name)
             // special: foo.length
@@ -871,15 +889,17 @@ namespace pxt.py {
 
             return [`${left}.${right}`, leftSup];
         }
-        function getSimpleExpNameParts(s: ts.Expression, propertyNameOnly = false): string[] {
+        function getSimpleExpNameParts(s: ts.Expression, skipNamespaces = false): string[] {
+            // TODO(dz): Impl skip namespaces properly. Right now we just skip the left-most part of a property access
             if (ts.isPropertyAccessExpression(s)) {
-                if (propertyNameOnly)
-                    return [getName(s.name)]
-                else
-                    return getSimpleExpNameParts(s.expression).concat([getName(s.name)])
+                let nmPart = [getName(s.name)]
+                if (skipNamespaces && ts.isIdentifier(s.expression))
+                    return nmPart
+                return getSimpleExpNameParts(s.expression, skipNamespaces).concat(nmPart)
             }
-            else if (ts.isIdentifier(s))
+            else if (ts.isIdentifier(s)) {
                 return [getName(s)]
+            }
             else // TODO handle more cases like indexing?
                 return []
         }
@@ -887,7 +907,7 @@ namespace pxt.py {
             // get words from the callee
             let calleePart: string = ""
             if (calleeExp)
-                calleePart = getSimpleExpNameParts(calleeExp)
+                calleePart = getSimpleExpNameParts(calleeExp, /*skipNamespaces*/true)
                     .map(pxtc.snakify)
                     .join("_")
 
@@ -899,7 +919,7 @@ namespace pxt.py {
                     let arg = allArgs[i]
                     let argType = tc.getTypeAtLocation(arg)
                     if (hasTypeFlag(argType, ts.TypeFlags.EnumLike)) {
-                        let argParts = getSimpleExpNameParts(arg, /*propertyNameOnly*/true)
+                        let argParts = getSimpleExpNameParts(arg, /*skipNamespaces*/true)
                             .map(pxtc.snakify)
                         enumParamParts = enumParamParts.concat(argParts)
                     }
@@ -907,8 +927,10 @@ namespace pxt.py {
             }
             let otherParamsPart = enumParamParts.join("_")
 
-            // get words from this parameter/arg
-            let paramPart: string = getName(param.name)
+            // get words from this parameter/arg as last resort
+            let paramPart: string = ""
+            if (!calleePart && !otherParamsPart)
+                paramPart = getName(param.name)
 
             // the full hint
             let hint = [calleePart, otherParamsPart, paramPart]
@@ -917,15 +939,24 @@ namespace pxt.py {
                 .map(s => s.toLowerCase())
                 .join("_") || "my_callback"
 
-            // sometimes the full hint is too long so we remove duplicate words
+            // sometimes the full hint is too long so shorten them using some heuristics
+            // 1. remove duplicate words
             // e.g. controller_any_button_on_event_controller_button_event_pressed_callback
             //   -> controller_any_button_on_event_pressed_callback
             let allWords = hint.split("_")
             if (allWords.length > 4) {
-                hint = dedupWords(allWords).join("_")
+                allWords = dedupWords(allWords)
+            }
+            // 2. remove less-informative words
+            let lessUsefulWords = pxt.U.toDictionary(["any", "on", "event"], s => s)
+            while (allWords.length > 2) {
+                let newWords = removeOne(allWords, lessUsefulWords)
+                if (newWords.length == allWords.length)
+                    break
+                allWords = newWords
             }
 
-            return hint
+            return allWords.join("_")
             function dedupWords(words: string[]): string[] {
                 let usedWords: pxt.Map<boolean> = {}
                 let out: string[] = []
@@ -933,6 +964,18 @@ namespace pxt.py {
                     if (w in usedWords)
                         continue
                     usedWords[w] = true
+                    out.push(w)
+                }
+                return out
+            }
+            function removeOne(words: string[], exclude: pxt.Map<string>): string[] {
+                let out: string[] = []
+                let oneExcluded = false
+                for (let w of words) {
+                    if (w in exclude && !oneExcluded) {
+                        oneExcluded = true
+                        continue
+                    }
                     out.push(w)
                 }
                 return out
@@ -954,9 +997,12 @@ namespace pxt.py {
             // reason 2: we want to generate good names, which requires context about the function it is being passed to an other parameters
             if ((ts.isFunctionExpression(s) || ts.isArrowFunction(s)) && param) {
                 if (param.type && ts.isFunctionTypeNode(param.type)) {
-                    let altParams = param.type.parameters
+                    // TODO(dz): uncomment to support reason #1 above. I've disabled this for now because it generates uglier
+                    // code if we don't have support in py2ts to reverse this
+                    // let altParams = param.type.parameters
+                    let altParams = null
                     let fnNameHint = getNameHint(param, calleeExp, allParams, allArgs)
-                    return emitFnExp(s, fnNameHint, altParams)
+                    return emitFnExp(s, fnNameHint, altParams, true)
                 }
             }
 
@@ -1010,7 +1056,7 @@ namespace pxt.py {
             }
             return ts.createNodeArray(decls, false)
         }
-        function emitFnExp(s: ts.FunctionExpression | ts.ArrowFunction, nameHint?: string, altParams?: ts.NodeArray<ts.ParameterDeclaration>): ExpRes {
+        function emitFnExp(s: ts.FunctionExpression | ts.ArrowFunction, nameHint?: string, altParams?: ts.NodeArray<ts.ParameterDeclaration>, skipType?: boolean): ExpRes {
             // if the anonymous function is simple enough, use a lambda
             if (!ts.isBlock(s.body)) {
                 // TODO we're speculatively emitting this expression. This speculation is only safe if emitExp is pure, which it's not quite today (e.g. getNewGlobalName)
@@ -1030,7 +1076,7 @@ namespace pxt.py {
 
             // otherwise emit a standard "def myFunction(...)" declaration
             let fnName = s.name ? getName(s.name) : getNewGlobalName(nameHint || "my_function")
-            let fnDef = emitFuncDecl(s, fnName, altParams)
+            let fnDef = emitFuncDecl(s, fnName, altParams, skipType)
 
             return [fnName, fnDef]
         }
