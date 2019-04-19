@@ -448,7 +448,6 @@ namespace pxt.py {
             return
 
         if (t0.primType === "any") {
-            // TODO(dz): consult with Michal about this.
             t0.union = t1
             return
         }
