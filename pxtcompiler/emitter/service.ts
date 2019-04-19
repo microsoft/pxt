@@ -1139,6 +1139,9 @@ namespace ts.pxtc.service {
             fnName = getSymbolName(n.symbol) || n.name.getText();
         }
 
+        if (python)
+            fnName = snakify(fnName).toLowerCase();
+
         const attrs = fn.attributes;
         const checker = service && service.getProgram().getTypeChecker();
         const args = n.parameters ? n.parameters.filter(param => !param.initializer && !param.questionToken).map(param => {
@@ -1306,7 +1309,7 @@ namespace ts.pxtc.service {
                 let n = fnName || "fn";
                 if (functionCount++ > 0) n += functionCount;
                 n = snakify(n).toLowerCase();
-                preStmt += `def ${n}${functionArgument}:\n  ${returnValue || "pass"}\n`;
+                preStmt += `def ${n}${functionArgument}:\n\t${returnValue || "pass"}\n`;
                 return n;
             } else {
                 let functionArgument = "()";
@@ -1322,7 +1325,7 @@ namespace ts.pxtc.service {
         function emitFn(n: string): string {
             if (python) {
                 if (n) n = snakify(n).toLowerCase();
-                preStmt += `def ${n}():\n  pass\n`;
+                preStmt += `def ${n}():\n\tpass\n`;
                 return n;
             } else return `function () {}`;
         }
