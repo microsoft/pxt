@@ -155,7 +155,7 @@ export function showAboutDialogAsync(projectView: pxt.editor.IProjectView) {
 
     pxt.targetConfigAsync()
         .then(config => {
-            const isElectron = pxt.BrowserUtils.isPxtElectron();
+            const isPxtElectron = pxt.BrowserUtils.isPxtElectron();
             const electronManifest = config && config.electronManifest;
             return core.confirmAsync({
                 header: lf("About"),
@@ -164,7 +164,7 @@ export function showAboutDialogAsync(projectView: pxt.editor.IProjectView) {
                 agreeClass: "positive",
                 buttons,
                 jsx: <div>
-                    {isElectron ?
+                    {isPxtElectron ?
                         (!pxt.Cloud.isOnline() || !electronManifest)
                             ? <p>{lf("Please connect to internet to check for updates")}</p>
                             : pxt.semver.strcmp(pxt.appTarget.versions.target, electronManifest.latest) < 0
