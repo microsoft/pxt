@@ -34,3 +34,11 @@ class Sprites {
 }
 let sprites = new Sprites()
 sprites.onOverlap(SpriteKind.Player, SpriteKind.Projectile, () => { });
+
+class Player {
+    public onChat(msg: string, handler: (a: number, b: number) => boolean) {
+        console.log(handler(3, 5) ? "t" : "f")
+    }
+}
+let player = new Player()
+player.onChat("run", function () { return true })
