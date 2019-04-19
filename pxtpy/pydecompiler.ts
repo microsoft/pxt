@@ -864,6 +864,10 @@ namespace pxt.py {
                     return ["print", leftSup]
                 }
             }
+            else {
+                // snakify
+                right = pxtc.snakify(right).toLowerCase();
+            }
 
             return [`${left}.${right}`, leftSup];
         }
