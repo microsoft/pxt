@@ -631,7 +631,8 @@ namespace pxt.py {
             // stmts.push("# }")
             return stmts
         }
-        function emitFuncDecl(s: ts.FunctionDeclaration | ts.MethodDeclaration | ts.FunctionExpression | ts.ConstructorDeclaration | ts.ArrowFunction, name: string = null, altParams?: ts.NodeArray<ts.ParameterDeclaration>): string[] {
+        function emitFuncDecl(s: ts.FunctionDeclaration | ts.MethodDeclaration | ts.FunctionExpression | ts.ConstructorDeclaration | ts.ArrowFunction,
+            name: string = null, altParams?: ts.NodeArray<ts.ParameterDeclaration>, skipTypes?: boolean): string[] {
             // TODO determine captured variables, then determine global and nonlocal directives
             // TODO helper function for determining if an expression can be a python expression
             let paramList: string[] = []
@@ -644,7 +645,7 @@ namespace pxt.py {
             let paramDeclDefs = altParams ? mergeParamDecls(s.parameters, altParams) : s.parameters
 
             let paramDecls = paramDeclDefs
-                .map(d => emitParamDecl(d))
+                .map(d => emitParamDecl(d, !skipTypes))
             paramList = paramList.concat(paramDecls)
 
             let params = paramList.join(", ")
@@ -1001,7 +1002,7 @@ namespace pxt.py {
                     // let altParams = param.type.parameters
                     let altParams = null
                     let fnNameHint = getNameHint(param, calleeExp, allParams, allArgs)
-                    return emitFnExp(s, fnNameHint, altParams)
+                    return emitFnExp(s, fnNameHint, altParams, true)
                 }
             }
 
@@ -1055,7 +1056,7 @@ namespace pxt.py {
             }
             return ts.createNodeArray(decls, false)
         }
-        function emitFnExp(s: ts.FunctionExpression | ts.ArrowFunction, nameHint?: string, altParams?: ts.NodeArray<ts.ParameterDeclaration>): ExpRes {
+        function emitFnExp(s: ts.FunctionExpression | ts.ArrowFunction, nameHint?: string, altParams?: ts.NodeArray<ts.ParameterDeclaration>, skipType?: boolean): ExpRes {
             // if the anonymous function is simple enough, use a lambda
             if (!ts.isBlock(s.body)) {
                 // TODO we're speculatively emitting this expression. This speculation is only safe if emitExp is pure, which it's not quite today (e.g. getNewGlobalName)
@@ -1075,7 +1076,7 @@ namespace pxt.py {
 
             // otherwise emit a standard "def myFunction(...)" declaration
             let fnName = s.name ? getName(s.name) : getNewGlobalName(nameHint || "my_function")
-            let fnDef = emitFuncDecl(s, fnName, altParams)
+            let fnDef = emitFuncDecl(s, fnName, altParams, skipType)
 
             return [fnName, fnDef]
         }
