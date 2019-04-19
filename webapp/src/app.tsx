@@ -570,9 +570,14 @@ export class ProjectView
 
     private autoRunBlocksSimulator = pxtc.Util.debounce(
         () => {
-            if (Util.now() - this.lastChangeTime < 1000) return;
-            if (!this.state.active)
+            if (Util.now() - this.lastChangeTime < 1000) {
+                pxt.debug(`sim: skip auto, debounced`)
                 return;
+            }
+            if (!this.state.active) {
+                pxt.debug(`sim: skip blocks auto, !active`)
+                return;
+            }
             this.runSimulator({ debug: !!this.state.debugging, background: true });
         },
         1000, true);
@@ -2233,7 +2238,7 @@ export class ProjectView
     stopSimulator(unload?: boolean, opts?: pxt.editor.SimulatorStartOptions) {
         pxt.tickEvent('simulator.stop')
         const clickTrigger = opts && opts.clickTrigger;
-        pxt.debug(`stop sim (autorun ${this.state.autoRun})`)
+        pxt.debug(`sim: stop (autorun ${this.state.autoRun})`)
         if (this.runToken) {
             this.runToken.cancel()
             this.runToken = null
@@ -2256,7 +2261,7 @@ export class ProjectView
         const emptyRun = this.firstRun && opts.background && pxt.appTarget.simulator && !!pxt.appTarget.simulator.emptyRunCode
         this.firstRun = false
 
-        pxt.debug(`run sim (autorun ${this.state.autoRun})`)
+        pxt.debug(`sim: start run (autorun ${this.state.autoRun})`)
 
         if (this.runToken) this.runToken.cancel()
         let cancellationToken = new pxt.Util.CancellationToken();
@@ -2282,17 +2287,20 @@ export class ProjectView
                 ? !!pxt.appTarget.simulator.autoRunLight
                 : !!pxt.appTarget.simulator.autoRun);
             const autoRun = (this.state.autoRun || !!opts.clickTrigger) && simAutoRun;
-            this.setState({ simState: pxt.editor.SimState.Starting, autoRun: autoRun });
-
             const state = this.editor.snapshotState()
-            return (emptyRun ? Promise.resolve(compiler.emptyCompileResult()) : compiler.compileAsync(opts))
+            return this.setStateAsync({ simState: pxt.editor.SimState.Starting, autoRun: autoRun })
+                .then(() => (emptyRun ? Promise.resolve(compiler.emptyCompileResult()) : compiler.compileAsync(opts)))
                 .then(resp => {
-                    if (cancellationToken.isCancelled()) return;
+                    if (cancellationToken.isCancelled()) {
+                        pxt.debug(`sim: cancelled`);
+                        return;
+                    }
                     this.clearSerial();
                     this.editor.setDiagnostics(this.editorFile, state)
 
                     if (resp.outfiles[pxtc.BINARY_JS]) {
                         if (!cancellationToken.isCancelled()) {
+                            pxt.debug(`sim: run`)
                             simulator.run(pkg.mainPkg, opts.debug, resp, this.state.mute, this.state.highContrast, pxt.options.light, opts.clickTrigger)
                             this.blocksEditor.setBreakpointsMap(resp.breakpoints);
                             this.textEditor.setBreakpointsMap(resp.breakpoints);
@@ -2300,6 +2308,7 @@ export class ProjectView
                                 // running state is set by the simulator once the iframe is loaded
                                 this.setState({ showParts: simulator.driver.runOptions.parts.length > 0 })
                             } else {
+                                pxt.debug(`sim: cancelled 2`)
                                 simulator.stop();
                                 this.setState({ simState: pxt.editor.SimState.Stopped });
                             }
