@@ -1,9 +1,9 @@
 namespace control {
     //% shim=serial::writeString
-    export function __log(s: any) {
+    export function __log(s: string) {
     }
 
-    export function dmesg(s: any) {
+    export function dmesg(s: string) {
         // ignore
     }
 }
@@ -43,9 +43,10 @@ namespace console {
     //% help=console/log blockGap=8 text.shadowOptions.toString=true
     //% blockId=console_log block="console|log %text"
     export function log(value: any): void {
-        control.__log(value)
+        let s: string = value + ""
+        control.__log(s)
         control.__log("\n")
-        control.dmesg(value)
+        control.dmesg(s)
     }
 }
 
