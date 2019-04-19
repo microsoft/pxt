@@ -78,14 +78,20 @@ namespace pxt.py {
         function popScope(): Scope {
             return env.shift()
         }
-        function getPyName(dotExp: ts.PropertyAccessExpression): string {
-            let tsExp = dotExp.getText()
+        function tryGetPyName(exp: ts.BindingPattern | ts.PropertyName | ts.EntityName | ts.PropertyAccessExpression): string {
+            if (!exp.getSourceFile())
+                return null
+            let tsExp = exp.getText()
             let sym = symbols.byQName[tsExp]
-            if (sym && sym.pyQName)
+            let isFromUserPackage = sym && sym.pkg == null
+            if (sym && !isFromUserPackage && sym.pyQName)
                 return sym.pyQName
             return null
         }
         function getName(name: ts.Identifier | ts.BindingPattern | ts.PropertyName | ts.EntityName): string {
+            let pyName = tryGetPyName(name)
+            if (pyName)
+                return pyName
             if (!ts.isIdentifier(name))
                 throw Error("Unsupported advanced name format: " + name.getText())
             let outName = name.text;
@@ -96,8 +102,6 @@ namespace pxt.py {
                     outName = rename.name;
                 }
             }
-            if (symbols.byQName[outName])
-                outName = symbols.byQName[outName].pyQName
             return outName
         }
         function getNewGlobalName(nameHint: string | ts.Identifier | ts.BindingPattern | ts.PropertyName | ts.EntityName) {
@@ -847,7 +851,7 @@ namespace pxt.py {
         }
         function emitDotExp(s: ts.PropertyAccessExpression): ExpRes {
             // short-circuit if the dot expression is a well-known symbol
-            let pyName = getPyName(s)
+            let pyName = tryGetPyName(s)
             if (pyName)
                 return asExpRes(pyName)
 
@@ -884,15 +888,17 @@ namespace pxt.py {
 
             return [`${left}.${right}`, leftSup];
         }
-        function getSimpleExpNameParts(s: ts.Expression, propertyNameOnly = false): string[] {
+        function getSimpleExpNameParts(s: ts.Expression, skipNamespaces = false): string[] {
+            // TODO(dz): Impl skip namespaces properly. Right now we just skip the left-most part of a property access
             if (ts.isPropertyAccessExpression(s)) {
-                if (propertyNameOnly)
-                    return [getName(s.name)]
-                else
-                    return getSimpleExpNameParts(s.expression).concat([getName(s.name)])
+                let nmPart = [getName(s.name)]
+                if (skipNamespaces && ts.isIdentifier(s.expression))
+                    return nmPart
+                return getSimpleExpNameParts(s.expression, skipNamespaces).concat(nmPart)
             }
-            else if (ts.isIdentifier(s))
+            else if (ts.isIdentifier(s)) {
                 return [getName(s)]
+            }
             else // TODO handle more cases like indexing?
                 return []
         }
@@ -900,7 +906,7 @@ namespace pxt.py {
             // get words from the callee
             let calleePart: string = ""
             if (calleeExp)
-                calleePart = getSimpleExpNameParts(calleeExp)
+                calleePart = getSimpleExpNameParts(calleeExp, /*skipNamespaces*/true)
                     .map(pxtc.snakify)
                     .join("_")
 
@@ -912,7 +918,7 @@ namespace pxt.py {
                     let arg = allArgs[i]
                     let argType = tc.getTypeAtLocation(arg)
                     if (hasTypeFlag(argType, ts.TypeFlags.EnumLike)) {
-                        let argParts = getSimpleExpNameParts(arg, /*propertyNameOnly*/true)
+                        let argParts = getSimpleExpNameParts(arg, /*skipNamespaces*/true)
                             .map(pxtc.snakify)
                         enumParamParts = enumParamParts.concat(argParts)
                     }
@@ -920,8 +926,10 @@ namespace pxt.py {
             }
             let otherParamsPart = enumParamParts.join("_")
 
-            // get words from this parameter/arg
-            let paramPart: string = getName(param.name)
+            // get words from this parameter/arg as last resort
+            let paramPart: string = ""
+            if (!calleePart && !otherParamsPart)
+                paramPart = getName(param.name)
 
             // the full hint
             let hint = [calleePart, otherParamsPart, paramPart]
@@ -930,15 +938,24 @@ namespace pxt.py {
                 .map(s => s.toLowerCase())
                 .join("_") || "my_callback"
 
-            // sometimes the full hint is too long so we remove duplicate words
+            // sometimes the full hint is too long so shorten them using some heuristics
+            // 1. remove duplicate words
             // e.g. controller_any_button_on_event_controller_button_event_pressed_callback
             //   -> controller_any_button_on_event_pressed_callback
             let allWords = hint.split("_")
             if (allWords.length > 4) {
-                hint = dedupWords(allWords).join("_")
+                allWords = dedupWords(allWords)
+            }
+            // 2. remove less-informative words
+            let lessUsefulWords = pxt.U.toDictionary(["any", "on", "event"], s => s)
+            while (allWords.length > 2) {
+                let newWords = removeOne(allWords, lessUsefulWords)
+                if (newWords.length == allWords.length)
+                    break
+                allWords = newWords
             }
 
-            return hint
+            return allWords.join("_")
             function dedupWords(words: string[]): string[] {
                 let usedWords: pxt.Map<boolean> = {}
                 let out: string[] = []
@@ -946,6 +963,18 @@ namespace pxt.py {
                     if (w in usedWords)
                         continue
                     usedWords[w] = true
+                    out.push(w)
+                }
+                return out
+            }
+            function removeOne(words: string[], exclude: pxt.Map<string>): string[] {
+                let out: string[] = []
+                let oneExcluded = false
+                for (let w of words) {
+                    if (w in exclude && !oneExcluded) {
+                        oneExcluded = true
+                        continue
+                    }
                     out.push(w)
                 }
                 return out
