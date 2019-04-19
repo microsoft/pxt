@@ -155,7 +155,8 @@ export function showAboutDialogAsync(projectView: pxt.editor.IProjectView) {
 
     pxt.targetConfigAsync()
         .then(config => {
-            const em = pxt.BrowserUtils.isPxtElectron() && config && config.electronManifest;
+            const isElectron = pxt.BrowserUtils.isPxtElectron();
+            const electronManifest = config && config.electronManifest;
             return core.confirmAsync({
                 header: lf("About"),
                 hideCancel: true,
@@ -163,10 +164,12 @@ export function showAboutDialogAsync(projectView: pxt.editor.IProjectView) {
                 agreeClass: "positive",
                 buttons,
                 jsx: <div>
-                    {em ?
-                        pxt.semver.strcmp(pxt.appTarget.versions.target, em.latest) < 0
-                            ? <p>{lf("An update {0} for {1} is available", em.latest, pxt.appTarget.title)}</p>
-                            : <p>{lf("{0} is up to date", pxt.appTarget.title)}</p>
+                    {isElectron ?
+                        (!pxt.Cloud.isOnline() || !electronManifest)
+                            ? <p>{lf("Please connect to internet to check for updates")}</p>
+                            : pxt.semver.strcmp(pxt.appTarget.versions.target, electronManifest.latest) < 0
+                                ? <p>{lf("An update {0} for {1} is available", electronManifest.latest, pxt.appTarget.title)}</p>
+                                : <p>{lf("{0} is up to date", pxt.appTarget.title)}</p>
                         : undefined}
                     {githubUrl && versions ?
                         renderVersionLink(pxt.appTarget.name, versions.target, `${githubUrl}/releases/tag/v${versions.target}`)
