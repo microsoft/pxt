@@ -82,7 +82,7 @@ function showUploadInstructionsAsync(fn: string, url: string, confirmAsync: (opt
         hideCancel: true,
         hideAgree: true,
         buttons: [downloadAgain ? {
-            label: userDownload ? lf("Download") : fn,
+            label: userDownload ? lf("Download") : lf("Click to download again"),
             icon: "download",
             class: `${userDownload ? "primary" : "lightgrey"}`,
             url,
