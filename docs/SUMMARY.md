@@ -27,7 +27,7 @@
     * [Extension versioning](/extensions/versioning)
     * [Extension localization](/extensions/localization)
     * [Extension approval](/extensions/approval)
-    * [Extension extensions](/extensions/extensions)
+    * [Editor extensions](/extensions/extensions)
     * [GitHub Extension Authoring](/extensions/github-authoring)
 * [Writing Docs](/writing-docs)
     * [Macros](/writing-docs/macros)
