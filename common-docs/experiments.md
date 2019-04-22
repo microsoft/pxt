@@ -15,3 +15,5 @@ Depending on the type of feature the experiment is providing, you will work with
 ## Feedback
 
 On each experiment selection is a feedback link for you tell us how the feature worked or to make a suggestion if you want. Any feedback is welcome, thanks!
+
+* All active experiments: https://github.com/Microsoft/pxt/labels/Experiment

@@ -92,14 +92,7 @@ function reportDiagnostics(diagnostics: pxtc.KsDiagnostic[]): void {
 }
 
 function reportDiagnosticSimply(diagnostic: pxtc.KsDiagnostic): void {
-    let output = "";
-
-    if (diagnostic.fileName) {
-        output += `${diagnostic.fileName}(${diagnostic.line + 1},${diagnostic.column + 1}): `;
-    }
-
-    const category = ts.DiagnosticCategory[diagnostic.category].toLowerCase();
-    output += `${category} TS${diagnostic.code}: ${ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n")}`;
+    let output = pxtc.getDiagnosticString(diagnostic)
     pxt.log(output);
 }
 
@@ -3175,7 +3168,7 @@ function simshimAsync() {
         pxt.debug("no sim/tsconfig.json; skipping")
         return Promise.resolve();
     }
-    let prog = pxtc.plainTsc(path.resolve(simDir()))
+    let prog = pxtc.plainTscCompileDir(path.resolve(simDir()))
     let shims = pxt.simshim(prog, path.parse)
     let filename = "sims.d.ts"
     for (const s of Object.keys(shims)) {
@@ -3245,7 +3238,7 @@ function getApiInfoAsync() {
     return prepBuildOptionsAsync(BuildOption.GenDocs)
         .then(opts => {
             let res = pxtc.compile(opts);
-            return pxtc.getApiInfo(opts, res.ast, true)
+            return pxtc.getApiInfo(res.ast, opts.jres, true)
         })
 }
 
@@ -3600,7 +3593,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
                     if (/^block/.test(snippet.type)) {
                         //Similar to pxtc.decompile but allows us to get blocksInfo for round trip
                         const file = resp.ast.getSourceFile('main.ts');
-                        const apis = pxtc.getApiInfo(opts, resp.ast);
+                        const apis = pxtc.getApiInfo(resp.ast, opts.jres);
                         const blocksInfo = pxtc.getBlocksInfo(apis);
                         const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, {
                             snippetMode: false,
@@ -3703,7 +3696,7 @@ function prepBuildOptionsAsync(mode: BuildOption, quick = false, ignoreTests = f
                         opts2.fileSystem[f.slice(0, -3) + ".ts"] = " "
                 }
                 const res = pxtc.compile(opts2)
-                opts.apisInfo = pxtc.getApiInfo(opts2, res.ast)
+                opts.apisInfo = pxtc.getApiInfo(res.ast, opts2.jres)
                 if (process.env["PXT_SAVE_APISINFO"])
                     fs.writeFileSync("built/apisinfo.json", JSON.stringify(opts.apisInfo, null, 4))
                 pxt.log("done pre-compiling apisInfo for Python")
@@ -3844,7 +3837,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
             pxt.log(`package built; written to ${pxt.outputName()}`);
 
             if (res.usedSymbols && compileOptions.computeUsedSymbols) {
-                const apiInfo = pxtc.getApiInfo(compileOptions, res.ast)
+                const apiInfo = pxtc.getApiInfo(res.ast, compileOptions.jres)
                 for (let k of Object.keys(res.usedSymbols)) {
                     res.usedSymbols[k] = apiInfo.byQName[k] || null
                 }
@@ -3855,7 +3848,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
 
             switch (buildOpts.mode) {
                 case BuildOption.GenDocs:
-                    const apiInfo = pxtc.getApiInfo(compileOptions, res.ast)
+                    const apiInfo = pxtc.getApiInfo(res.ast, compileOptions.jres)
                     // keeps apis from this module only
                     for (const infok in apiInfo.byQName) {
                         const info = apiInfo.byQName[infok];
@@ -4989,11 +4982,12 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                         case "tutorial":
                             {
                                 const tutorialMd = nodeutil.resolveMd(docsRoot, card.url);
+                                const tutorial = pxt.tutorial.parseTutorial(tutorialMd);
                                 const pkgs: pxt.Map<string> = { "blocksprj": "*" };
                                 pxt.Util.jsonMergeFrom(pkgs, pxt.gallery.parsePackagesFromMarkdown(tutorialMd) || {});
                                 addSnippet(<CodeSnippet>{
                                     name: card.name,
-                                    code: pxt.tutorial.bundleTutorialCode(tutorialMd),
+                                    code: tutorial.code,
                                     type: "blocks",
                                     ext: "ts",
                                     packages: pkgs

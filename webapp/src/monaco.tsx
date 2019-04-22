@@ -2,17 +2,21 @@
 /// <reference path="../../built/pxteditor.d.ts" />
 
 import * as React from "react";
+import * as ReactDOM from "react-dom";
 import * as pkg from "./package";
 import * as core from "./core";
+import * as debug from "./debugger";
 import * as toolboxeditor from "./toolboxeditor"
 import * as compiler from "./compiler"
 import * as sui from "./sui";
 import * as snippets from "./monacoSnippets"
+import * as simulator from "./simulator";
 import * as toolbox from "./toolbox";
 import * as workspace from "./workspace";
 import { ViewZoneEditorHost, FieldEditorManager } from "./monacoFieldEditorHost";
 
 import Util = pxt.Util;
+import { BreakpointCollection } from "./monacoDebugger";
 
 const MIN_EDITOR_FONT_SIZE = 10
 const MAX_EDITOR_FONT_SIZE = 40
@@ -66,13 +70,20 @@ class CompletionProvider implements monaco.languages.CompletionItemProvider {
         return compiler.completionsAsync(fileName, offset, source)
             .then(completions => {
                 const items = (completions.entries || []).map((si, i) => {
+                    const snippet = this.python ? si.pySnippet : si.snippet;
+                    const label = this.python
+                        ? (completions.isMemberCompletion ? si.pyName : si.pyQName)
+                        : (completions.isMemberCompletion ? si.name : si.qName);
+                    const documentation = pxt.Util.rlf(si.attributes.jsDoc);
+                    const block = pxt.Util.rlf(si.attributes.block);
                     return {
-                        label: this.python ? (completions.isMemberCompletion ? si.pyName : si.pyQName) : (completions.isMemberCompletion ? si.name : si.qName),
+                        label,
                         kind: this.tsKindToMonacoKind(si.kind),
-                        documentation: si.attributes.jsDoc,
+                        documentation,
                         detail: this.python ? si.pySnippet : si.snippet,
                         // force monaco to use our sorting
-                        sortText: `${tosort(i)} ${this.python ? si.pySnippet : si.snippet}`
+                        sortText: `${tosort(i)} ${snippet}`,
+                        filterText: `${label} ${documentation} ${block}`
                     } as monaco.languages.CompletionItem;
                 })
                 return items;
@@ -111,13 +122,14 @@ class SignatureHelper implements monaco.languages.SignatureHelpProvider {
             .then(r => {
                 let sym = r.symbols ? r.symbols[0] : null
                 if (!sym || !sym.parameters) return null;
+                const documentation = pxt.Util.rlf(sym.attributes.jsDoc);
                 const res: monaco.languages.SignatureHelp = {
                     signatures: [{
                         label: sym.name,
-                        documentation: sym.attributes.jsDoc,
+                        documentation,
                         parameters: sym.parameters.map(p => ({
-                            label: p.name,
-                            documentation: p.name + ": " + p.type
+                            label: `${p.name}: ${p.type}`,
+                            documentation: pxt.Util.rlf(p.description)
                         }))
                     }],
                     activeSignature: 0,
@@ -146,8 +158,9 @@ class HoverProvider implements monaco.languages.HoverProvider {
             .then(r => {
                 let sym = r.symbols ? r.symbols[0] : null
                 if (!sym) return null;
+                const documentation = pxt.Util.rlf(sym.attributes.jsDoc);
                 const res: monaco.languages.Hover = {
-                    contents: [sym.pyQName + " " + sym.attributes.jsDoc],
+                    contents: [`**${sym.pyQName}**`, documentation],
                     range: monaco.Range.fromPositions(model.getPositionAt(r.beginPos), model.getPositionAt(r.endPos))
                 }
                 return res
@@ -160,8 +173,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     currFile: pkg.File;
     fileType: pxt.editor.FileType = pxt.editor.FileType.Text;
     extraLibs: pxt.Map<monaco.IDisposable>;
-    public nsMap: pxt.Map<toolbox.BlockDefinition[]>;
-    private _loadMonacoPromise: Promise<void>;
+    nsMap: pxt.Map<toolbox.BlockDefinition[]>;
     giveFocusOnLoading: boolean = false;
 
     protected fieldEditors: FieldEditorManager;
@@ -169,6 +181,15 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     protected foldFieldEditorRanges = true;
     protected activeRangeID: number;
     protected hasFieldEditors = !!(pxt.appTarget.appTheme.monacoFieldEditors && pxt.appTarget.appTheme.monacoFieldEditors.length);
+    protected debuggerToolbox: HTMLDivElement;
+    protected debugVariables: debug.DebuggerVariables;
+    protected breakpoints: BreakpointCollection;
+
+    private loadMonacoPromise: Promise<void>;
+    private diagSnapshot: string[];
+    private annotationLines: number[];
+    private editorViewZones: number[];
+    private highlightDecorations: string[] = [];
 
     hasBlocks() {
         if (!this.currFile) return true
@@ -351,15 +372,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return compiler.decompileAsync(blockFile)
     }
 
-    private handleToolboxRef = (c: toolbox.Toolbox) => {
-        this.toolbox = c;
-    }
-
     display(): JSX.Element {
         return (
             <div id="monacoEditorArea" className="full-abs" style={{ direction: 'ltr' }}>
-                <div className={`monacoToolboxDiv ${this.toolbox && !this.toolbox.state.visible ? 'invisible' : ''}`}>
+                <div className={`monacoToolboxDiv ${(this.toolbox && !this.toolbox.state.visible && !this.isDebugging()) ? 'invisible' : ''}`}>
                     <toolbox.Toolbox ref={this.handleToolboxRef} editorname="monaco" parent={this} />
+                    <div id="monacoDebuggerToolbox" ref={this.handleDebugToolboxRef}></div>
                 </div>
                 <div id='monacoEditorInner' style={{ float: 'right' }} />
             </div>
@@ -446,7 +464,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     setHighContrast(hc: boolean) {
-        if (this._loadMonacoPromise) this.defineEditorTheme(hc, true);
+        if (this.loadMonacoPromise) this.defineEditorTheme(hc, true);
     }
 
     beforeCompile() {
@@ -482,9 +500,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     public loadMonacoAsync(): Promise<void> {
-        if (!this._loadMonacoPromise)
-            this._loadMonacoPromise = this.createLoadMonacoPromise();
-        return this._loadMonacoPromise;
+        if (!this.loadMonacoPromise)
+            this.loadMonacoPromise = this.createLoadMonacoPromise();
+        return this.loadMonacoPromise;
     }
 
     private createLoadMonacoPromise(): Promise<void> {
@@ -767,27 +785,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             if (e.target.type !== monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) {
                 return;
             }
-            const line = e.target.position.lineNumber;
-            const model = this.editor.getModel();
-            const decorations = model.getDecorationsInRange(new monaco.Range(line, model.getLineMinColumn(line), line, model.getLineMaxColumn(line)));
-            if (decorations.length) {
-                const lineInfo = this.fieldEditors.getInfoForLine(line);
-                if (lineInfo) {
-                    if (this.feWidget && this.activeRangeID != null && lineInfo.id === this.activeRangeID) {
-                        this.feWidget.close();
-                        this.activeRangeID = null;
-                        return;
-                    }
-                    else {
-                        this.activeRangeID = lineInfo.id;
-                    }
-
-                    const fe = this.fieldEditors.getFieldEditorById(lineInfo.owner);
-                    if (fe) {
-                        this.showFieldEditor(lineInfo.range, new fe.proto(), fe.heightInPixels || 500);
-                    }
-                }
-            }
+            this.handleGutterClick(e);
         });
     }
 
@@ -818,6 +816,19 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         // Move the monaco editor to make room for the toolbox div
         //this.editor.getLayoutInfo().glyphMarginLeft = 200;
         this.editor.layout();
+
+        const debugging = this.isDebugging();
+        let debuggerToolbox = debugging ? <div>
+            <debug.DebuggerToolbar parent={this.parent} />
+            <debug.DebuggerVariables ref={this.handleDebuggerVariablesRef} parent={this.parent} apisByQName={this.blockInfo.apis.byQName} />
+        </div> : <div />;
+        Util.assert(!!this.debuggerToolbox)
+        if (debugging) {
+            this.toolbox.hide();
+        } else {
+            this.toolbox.show();
+        }
+        ReactDOM.render(debuggerToolbox, document.getElementById('monacoDebuggerToolbox'));
 
         if (this.toolbox)
             this.toolbox.setState({
@@ -889,7 +900,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (modeMap.hasOwnProperty(ext)) mode = modeMap[ext]
                 this.fileType = mode
 
-                const readOnly = file.isReadonly() || pxt.shell.isReadOnly();
+                const readOnly = file.isReadonly() || pxt.shell.isReadOnly() || this.isDebugging();
                 this.editor.updateOptions({ readOnly: readOnly });
 
                 let proto = "pkg:" + file.getName();
@@ -914,6 +925,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
                 this.setValue(file.content)
                 this.setDiagnostics(file, this.snapshotState())
+
+                if (this.breakpoints) {
+                    this.breakpoints.loadBreakpointsForFile(file, this.editor);
+                }
 
                 if (this.fileType == pxt.editor.FileType.Markdown)
                     this.parent.setSideMarkdown(file.content);
@@ -999,6 +1014,36 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.editor.setScrollPosition(pos as monaco.editor.INewScrollPosition)
     }
 
+    setBreakpointsMap(breakpoints: pxtc.Breakpoint[]): void {
+        if (this.isDebugging()) {
+            if (!this.breakpoints) {
+                this.breakpoints = new BreakpointCollection(breakpoints);
+                this.breakpoints.loadBreakpointsForFile(this.currFile, this.editor);
+            }
+            else {
+                // The simulator got restarted
+                this.sendBreakpoints();
+            }
+
+            if (this.fieldEditors) this.fieldEditors.clearRanges(this.editor);
+            if (this.feWidget) this.feWidget.close();
+            if (this.editor) this.editor.updateOptions({ readOnly: true });
+        }
+        else {
+            if (this.editor) {
+                this.editor.updateOptions({
+                    readOnly: pxt.shell.isReadOnly() || (this.currFile && this.currFile.isReadonly())
+                });
+            }
+
+            if (this.breakpoints) {
+                this.breakpoints.dispose();
+                this.breakpoints = undefined;
+            }
+            this.updateFieldEditors();
+        }
+    }
+
     setDiagnostics(file: pkg.File, snapshot: string[]) {
         Util.assert(this.editor != undefined); // Guarded
         Util.assert(this.currFile == file)
@@ -1006,13 +1051,15 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.forceDiagnosticsUpdate()
     }
 
-    private diagSnapshot: string[];
-    private annotationLines: number[];
-    private editorViewZones: number[];
-
     updateDiagnostics() {
         if (this.needsDiagUpdate())
             this.forceDiagnosticsUpdate();
+    }
+
+    private sendBreakpoints() {
+        if (this.breakpoints) {
+            simulator.driver.setBreakpoints(this.breakpoints.getActiveBreakpoints());
+        }
     }
 
     private needsDiagUpdate() {
@@ -1077,7 +1124,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     protected updateFieldEditors = pxt.Util.debounce(() => {
-        if (!this.hasFieldEditors || pxt.shell.isReadOnly()) return;
+        if (!this.hasFieldEditors || !this.editor || pxt.shell.isReadOnly() || this.isDebugging()) return;
         const model = this.editor.getModel();
         this.fieldEditors.clearRanges(this.editor);
 
@@ -1138,11 +1185,20 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         return Promise.resolve();
     }
 
-    private highlightDecorations: string[] = [];
     highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage) {
-        if (!stmt) this.clearHighlightedStatements();
-        if (!stmt || !this.currFile || this.currFile.name != stmt.fileName || !this.editor)
+        if (!stmt) {
+            this.clearHighlightedStatements();
             return false;
+        }
+        else if (!this.editor) {
+            return false;
+        }
+
+        const mainPkg = pkg.mainEditorPkg()
+        if (this.currFile.name !== stmt.fileName && this.isDebugging() && mainPkg.lookupFile(stmt.fileName)) {
+            this.parent.setFile(mainPkg.lookupFile(stmt.fileName))
+        }
+
         let position = this.editor.getModel().getPositionAt(stmt.start);
         let end = this.editor.getModel().getPositionAt(stmt.start + stmt.length);
         if (!position || !end) return false;
@@ -1152,16 +1208,23 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 options: { inlineClassName: 'highlight-statement' }
             },
         ]);
+
         if (brk) {
             // center on statement
             this.editor.revealPositionInCenter(position);
+            if (this.isDebugging() && this.debugVariables) {
+                this.debugVariables.updateVariables(brk.globals, brk.stackframes);
+                this.resize();
+            }
         }
+
         return true;
     }
 
     clearHighlightedStatements() {
         if (this.editor && this.highlightDecorations)
             this.editor.deltaDecorations(this.highlightDecorations, []);
+        if (this.isDebugging() && this.debugVariables) this.debugVariables.clear();
     }
 
     private partitionBlocks() {
@@ -1363,6 +1426,41 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.createMonacoBlocks(this, monacoFlyout, ns, blocks, color, filters, categoryState);
     }
 
+    protected handleGutterClick(e: monaco.editor.IEditorMouseEvent) {
+        const line = e.target.position.lineNumber;
+
+        if (this.isDebugging()) {
+            // Set/unset the nearest breakpoint;
+            if (this.breakpoints) {
+                this.breakpoints.toggleBreakpointAt(line);
+                this.sendBreakpoints();
+            }
+        }
+        else if (this.fieldEditors) {
+            // Open/close any field editors in range
+            const model = this.editor.getModel();
+            const decorations = model.getDecorationsInRange(new monaco.Range(line, model.getLineMinColumn(line), line, model.getLineMaxColumn(line)));
+            if (decorations.length) {
+                const lineInfo = this.fieldEditors.getInfoForLine(line);
+                if (lineInfo) {
+                    if (this.feWidget && this.activeRangeID != null && lineInfo.id === this.activeRangeID) {
+                        this.feWidget.close();
+                        this.activeRangeID = null;
+                        return;
+                    }
+                    else {
+                        this.activeRangeID = lineInfo.id;
+                    }
+
+                    const fe = this.fieldEditors.getFieldEditorById(lineInfo.owner);
+                    if (fe) {
+                        this.showFieldEditor(lineInfo.range, new fe.proto(), fe.heightInPixels || 500);
+                    }
+                }
+            }
+        }
+    }
+
     private showSearchFlyout() {
         let monacoBlocks: HTMLDivElement[] = [];
         const searchBlocks = this.toolbox.getSearchBlocks();
@@ -1492,12 +1590,18 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             const w1 = (f1.attributes.weight || 50) + (f1.attributes.advanced ? 0 : 1000);
             return w2 > w1 ? 1 : -1;
         }).map(fn => {
-            let monacoBlockDisabled = false;
-            const fnState = filters ? (filters.fns && filters.fns[fn.name] != undefined ? filters.fns[fn.name] : (categoryState != undefined ? categoryState : filters.defaultState)) : undefined;
-            monacoBlockDisabled = fnState == pxt.editor.FilterState.Disabled;
+            let fnState = filters ? filters.defaultState : pxt.editor.FilterState.Visible;
+            if (filters && filters.fns && filters.fns[fn.name] !== undefined) {
+                fnState = filters.fns[fn.name];
+            } else if (filters && filters.blocks && fn.attributes.blockId && filters.blocks[fn.attributes.blockId] !== undefined) {
+                fnState = filters.blocks[fn.attributes.blockId];
+            } else if (categoryState !== undefined) {
+                fnState = categoryState;
+            }
             if (fnState == pxt.editor.FilterState.Hidden) return undefined;
 
-            return monacoEditor.getMonacoBlock(fn, ns, color, monacoBlockDisabled); // try this
+            const monacoBlockDisabled = fnState == pxt.editor.FilterState.Disabled;
+            return monacoEditor.getMonacoBlock(fn, ns, color, monacoBlockDisabled);
         })
         monacoEditor.attachMonacoBlockAccessibility(monacoBlocks);
     }
@@ -1757,7 +1861,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.editor.setSelection(afterRange);
 
                 // Clear ranges because the model changed
-                this.fieldEditors.clearRanges(this.editor);
+                if (this.fieldEditors) this.fieldEditors.clearRanges(this.editor);
                 resolve(afterRange);
             });
 
@@ -1769,6 +1873,26 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 isAutoWhitespaceEdit: true
             }], inverseOp => [rangeToSelection(inverseOp[0].range)]);
         });
+    }
+
+    private isDebugging() {
+        return this.parent.state.debugging;
+    }
+
+    private handleToolboxRef = (c: toolbox.Toolbox) => {
+        this.toolbox = c;
+    }
+
+    private handleDebugToolboxRef = (ref: HTMLDivElement) => {
+        if (ref) {
+            this.debuggerToolbox = ref;
+            if (this.isDebugging()) this.updateToolbox();
+        }
+    }
+
+    private handleDebuggerVariablesRef = (c: debug.DebuggerVariables) => {
+        this.debugVariables = c;
+        this.resize();
     }
 }
 

@@ -397,7 +397,8 @@ div.simframe > iframe {
 }
 
 /* Icon and text */
-.ui.item.link > .icon-and-text.icon ~ .ui.text,
+.ui.item.link.dbg-btn > .icon-and-text.icon ~ .ui.text,
+.ui.item.link > .icon-and-text.icon ~ .ui.text.exit-debugmode-btn,
 .ui.item.icon > .icon-and-text.icon ~ .ui.text,
 .ui.button.icon > .icon-and-text.icon ~ .ui.text {
     margin-left: 0.5em !important;
@@ -592,6 +593,10 @@ Field editors
 .social-icons a.twitter {
     color: white;
     background-color: #00aced;
+}
+.social-icons a.discourse {
+    color: white;
+    background-color: @primaryColor;
 }
 
 /*******************************

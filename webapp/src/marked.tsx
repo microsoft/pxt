@@ -42,7 +42,47 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
     private renderSnippets(content: HTMLElement) {
         const { parent } = this.props;
 
-        pxt.Util.toArray(content.querySelectorAll(`.lang-blocks`))
+        pxt.Util.toArray(content.querySelectorAll(`code.lang-typescript`))
+            .forEach((langBlock: HTMLElement) => {
+                const code = langBlock.textContent;
+                const wrapperDiv = document.createElement('div');
+                pxsim.U.clear(langBlock);
+                langBlock.appendChild(wrapperDiv);
+                wrapperDiv.className = 'ui segment raised';
+                const preDiv = document.createElement('pre') as HTMLPreElement;
+                preDiv.textContent = code;
+                pxt.tutorial.highlight(preDiv);
+                wrapperDiv.appendChild(preDiv);
+            });
+
+        pxt.Util.toArray(content.querySelectorAll(`code.lang-spy`))
+            .forEach((langBlock: HTMLElement) => {
+                const code = langBlock.textContent;
+                const wrapperDiv = document.createElement('div');
+                pxsim.U.clear(langBlock);
+                langBlock.appendChild(wrapperDiv);
+                wrapperDiv.className = 'ui segment raised loading';
+                if (MarkedContent.blockSnippetCache[code]) {
+                    const preDiv = document.createElement('pre') as HTMLPreElement;
+                    preDiv.textContent = MarkedContent.blockSnippetCache[code];
+                    pxt.tutorial.highlight(preDiv);
+                    wrapperDiv.appendChild(preDiv);
+                    pxsim.U.removeClass(wrapperDiv, 'loading');
+                } else {
+                    parent.renderPythonAsync({
+                        type: "pxteditor",
+                        action: "renderpython", ts: code
+                    }).done(resp => {
+                        const preDiv = document.createElement('pre') as HTMLPreElement;
+                        preDiv.textContent = resp.python;
+                        pxt.tutorial.highlight(preDiv);
+                        wrapperDiv.appendChild(preDiv);
+                        pxsim.U.removeClass(wrapperDiv, 'loading');
+                    });
+                }
+            });
+
+        pxt.Util.toArray(content.querySelectorAll(`code.lang-blocks`))
             .forEach((langBlock: HTMLElement) => {
                 // Can't use innerHTML here because it escapes certain characters (e.g. < and >)
                 // Also can't use innerText because IE strips out the newlines from the code
@@ -60,9 +100,10 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                     pxsim.U.removeClass(wrapperDiv, 'loading');
                 } else {
                     parent.renderBlocksAsync({
+                        type: "pxteditor",
                         action: "renderblocks", ts: code
-                    } as pxt.editor.EditorMessageRenderBlocksRequest)
-                        .done((resp: any) => {
+                    })
+                        .done(resp => {
                             const svg = resp.svg;
                             if (svg) {
                                 svg.setAttribute('height', `${svg.getAttribute('viewBox').split(' ')[3]}px`);

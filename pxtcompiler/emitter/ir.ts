@@ -290,11 +290,20 @@ namespace ts.pxtc.ir {
         _isLocal = false;
         _isGlobal = false;
         _debugType = "?";
+        isUserVariable = false;
         bitSize = BitSize.None;
 
         constructor(public index: number, public def: Declaration, public info: VariableAddInfo) {
-            if (def && info) {
-                setCellProps(this)
+            if (def) {
+                const s = getSourceFileOfNode(def);
+                if (s && s.fileName) {
+                    if (!/^pxt_modules\//.test(s.fileName)) {
+                        this.isUserVariable = true
+                    }
+                }
+                if (info) {
+                    setCellProps(this)
+                }
             }
         }
 

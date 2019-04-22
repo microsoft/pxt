@@ -27,8 +27,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     functionsDialog: CreateFunctionDialog = null;
 
     showCategories: boolean = true;
-    filters: pxt.editor.ProjectFilters;
-    showSearch: boolean;
     breakpointsByBlock: pxt.Map<number>; // Map block id --> breakpoint ID
     breakpointsSet: number[]; // the IDs of the breakpoints set.
     debuggerToolboxDiv: JSX.Element;
@@ -45,6 +43,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             if (blockId) map[blockId] = breakpoint.id;
         });
         this.breakpointsByBlock = map;
+        this.setBreakpointsFromBlocks();
     }
 
     setBreakpointsFromBlocks(): void {
@@ -689,19 +688,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 pxt.blocks.clearWithoutEvents(this.editor);
                 this.closeFlyout();
 
-                if (this.currFile && this.currFile != file) {
-                    this.filterToolbox(null);
-                }
-                if (this.parent.state.editorState && this.parent.state.editorState.filters) {
-                    this.filterToolbox(this.parent.state.editorState.filters);
-                } else {
-                    this.filters = null;
-                }
-                if (this.parent.state.editorState && this.parent.state.editorState.searchBar != undefined) {
-                    this.showSearch = this.parent.state.editorState.searchBar;
-                } else {
-                    this.showSearch = true;
-                }
+                this.filterToolbox();
                 if (this.parent.state.editorState && this.parent.state.editorState.hasCategories != undefined) {
                     this.showCategories = this.parent.state.editorState.hasCategories;
                 } else {
@@ -781,7 +768,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage): boolean {
         if (!this.compilationResult || this.delayLoadXml || this.loadingXml)
             return false;
-        this.updateDebuggerVariables(brk ? brk.globals : undefined);
+        this.updateDebuggerVariables(brk);
         if (stmt) {
             let bid = pxt.blocks.findBlockId(this.compilationResult.sourceMap, { start: stmt.line, length: stmt.endLine - stmt.line });
             if (bid) {
@@ -820,47 +807,24 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.debugVariables = c;
     }
 
-    clearDebuggerVariables() {
-        if (this.debugVariables) this.debugVariables.clear();
-    }
-
-    updateDebuggerVariables(globals: pxsim.Variables) {
+    updateDebuggerVariables(brk: pxsim.DebuggerBreakpointMessage) {
         if (!this.parent.state.debugging) return;
-        if (!globals) {
-            // freeze the ui
-            if (this.debugVariables) this.debugVariables.update(true);
-            return;
-        }
-        const vars = Blockly.Variables.allUsedVarModels(this.editor).map((variable: any) => variable.name as string);
-        if (!vars.length) {
-            if (this.debugVariables) this.debugVariables.clear();
-            return;
-        }
 
-        for (const variable of vars) {
-            const value = getValueOfVariable(variable);
-            if (this.debugVariables) this.debugVariables.set(variable, value);
-        }
+        if (this.debugVariables) {
+            const visibleVars = Blockly.Variables.allUsedVarModels(this.editor).map((variable: any) => variable.name as string);
 
-        if (this.debugVariables) this.debugVariables.update();
-
-        function getValueOfVariable(name: string): pxsim.Variables {
-            // Variable names could have spaces.
-            let correctedName = name.replace(/\s/g, '_');
-            for (let k of Object.keys(globals)) {
-                let n = k.replace(/___\d+$/, "");
-                if (correctedName === n) {
-                    let v = globals[k]
-                    return v;
-                }
+            if (brk) {
+                this.debugVariables.updateVariables(brk.globals, brk.stackframes, visibleVars)
             }
-            return undefined;
+            else {
+                this.debugVariables.updateVariables(null, null, visibleVars)
+            }
         }
     }
 
     clearHighlightedStatements() {
         this.editor.highlightBlock(null);
-        this.clearDebuggerVariables();
+        if (this.debugVariables) this.debugVariables.clear();
     }
 
     openTypeScript() {
@@ -976,8 +940,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
-    filterToolbox(filters?: pxt.editor.ProjectFilters, showCategories?: boolean) {
-        this.filters = filters;
+    filterToolbox(showCategories?: boolean) {
         this.showCategories = showCategories;
         this.refreshToolbox();
     }
@@ -1050,7 +1013,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         super.clearCaches();
         this.clearFlyoutCaches();
         snippets.clearBuiltinBlockCache();
-        // note that we don't need to clear the flyout SVG cache since those 
+        // note that we don't need to clear the flyout SVG cache since those
         // will regenerate themselves more precisely based on the hash of the
         // input blocks xml.
     }

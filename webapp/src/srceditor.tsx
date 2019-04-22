@@ -119,7 +119,7 @@ export class Editor implements pxt.editor.IEditor {
         return true
     }
 
-    filterToolbox(filters?: pxt.editor.ProjectFilters, showCategories?: boolean) {
+    filterToolbox(showCategories?: boolean) {
     }
 
     insertBreakpoint() {

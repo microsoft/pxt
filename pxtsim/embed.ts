@@ -236,9 +236,9 @@ namespace pxsim {
             // TODO: test origins
 
             let data: SimulatorMessage = event.data || {};
-            let type = data.type || '';
+            let type = data.type;
             if (!type) return;
-            switch (type || '') {
+            switch (type) {
                 case "run": run(<SimulatorRunMessage>data); break;
                 case "instructions": pxsim.instructions.renderInstructions(<SimulatorInstructionsMessage>data); break;
                 case "stop": stop(); break;

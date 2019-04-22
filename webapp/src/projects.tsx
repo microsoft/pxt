@@ -944,17 +944,6 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
             >
                 <div className="group">
                     <div className="ui cards centered" role="listbox">
-                        {variants.map(cfg =>
-                            <codecard.CodeCardView
-                                key={'variant' + cfg.name}
-                                name={cfg.card.name}
-                                ariaLabel={cfg.card.name}
-                                description={cfg.card.description}
-                                imageUrl={cfg.card.imageUrl}
-                                learnMoreUrl={cfg.card.learnMoreUrl}
-                                onClick={cfg.card.onClick}
-                            />
-                        )}
                         {cards.map(card =>
                             <codecard.CodeCardView
                                 key={'card' + card.name}
@@ -964,6 +953,17 @@ export class ChooseHwDialog extends data.Component<ISettingsProps, ChooseHwDialo
                                 imageUrl={card.imageUrl}
                                 learnMoreUrl={card.url}
                                 onClick={card.onClick}
+                            />
+                        )}
+                        {variants.map(cfg =>
+                            <codecard.CodeCardView
+                                key={'variant' + cfg.name}
+                                name={cfg.card.name}
+                                ariaLabel={cfg.card.name}
+                                description={cfg.card.description}
+                                imageUrl={cfg.card.imageUrl}
+                                learnMoreUrl={cfg.card.learnMoreUrl}
+                                onClick={cfg.card.onClick}
                             />
                         )}
                     </div>

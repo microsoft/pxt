@@ -16,6 +16,10 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         this.state = {
         }
 
+        // iOS requires interactive consent to use audio
+        if (pxt.BrowserUtils.isIOS())
+            this.props.parent.setMute(true);
+
         this.toggleTrace = this.toggleTrace.bind(this);
         this.toggleMute = this.toggleMute.bind(this);
         this.restartSimulator = this.restartSimulator.bind(this);
@@ -93,11 +97,12 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const restart = run && !simOpts.hideRestart;
         const trace = !!targetTheme.enableTrace;
         // We hide debug button in Monaco because it's not implemented yet.
-        const debug = targetTheme.debugger && !inTutorial && !pxt.BrowserUtils.isIE() && this.props.parent.isBlocksEditor();
+        const debug = targetTheme.debugger && !inTutorial && !pxt.BrowserUtils.isIE();
         const tracing = this.props.parent.state.tracing;
         const traceTooltip = tracing ? lf("Disable Slow-Mo") : lf("Slow-Mo")
         const debugging = parentState.debugging;
-        const fullscreen = run && !inTutorial && !simOpts.hideFullscreen && !sandbox;
+        // we need to escape full screen from a tutorial!
+        const fullscreen = run && !simOpts.hideFullscreen && !sandbox;
         const audio = run && targetTheme.hasAudio;
         const isHeadless = simOpts.headless;
         const collapse = !!targetTheme.pairingButton;

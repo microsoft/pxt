@@ -324,6 +324,7 @@ declare namespace pxt {
         simGifMaxFrames?: number; // maximum number of frames, default 64
         simGifWidth?: number; // with in pixels for gif frames
         autoWebUSBDownload?: boolean; // automatically prompt user for webusb download
+        qrCode?: boolean; // generate QR code for shared urls
     }
 
     interface SocialOptions {
@@ -331,6 +332,8 @@ declare namespace pxt {
         orgTwitterHandle?: string;
         hashtags?: string;
         related?: string;
+        discourse?: string; // URL to the discourse powered forum
+        discourseCategory?: string;
     }
 
     interface DocMenuEntry {
@@ -577,8 +580,10 @@ declare namespace ts.pxtc {
         _shadowOverrides?: pxt.Map<string>;
         jsDoc?: string;
         paramHelp?: pxt.Map<string>;
-        // foo.defl=12 -> paramDefl: { foo: "12" }
+        // foo.defl=12 -> paramDefl: { foo: "12" }; eg.: 12 in arg description will also go here
         paramDefl: pxt.Map<string>;
+        // this lists arguments that have .defl as opposed to just eg.: stuff
+        explicitDefaults?: string[];
 
         paramMin?: pxt.Map<string>; // min range
         paramMax?: pxt.Map<string>; // max range
@@ -628,6 +633,7 @@ declare namespace ts.pxtc {
         attributes: CommentAttrs;
         name: string;
         namespace: string;
+        fileName: string;
         kind: SymbolKind;
         parameters: ParameterDesc[];
         retType: string;
@@ -736,6 +742,12 @@ declare namespace ts.pxtc {
 
 
 declare namespace pxt.tutorial {
+    interface TutorialInfo {
+        editor: string; // preferred editor or blocks by default 
+        steps: TutorialStepInfo[];
+        code: string; // all code
+    }
+
     interface TutorialStepInfo {
         fullscreen?: boolean;
         // no coding
@@ -753,6 +765,7 @@ declare namespace pxt.tutorial {
         tutorialStep?: number; // current tutorial page
         tutorialReady?: boolean; // current tutorial page
         tutorialMd?: string; // full tutorial markdown
+        tutorialCode?: string; // all tutorial code bundled
     }
     interface TutorialCompletionInfo {
         // id of the tutorial

@@ -6,6 +6,8 @@ import * as path from 'path';
 import "mocha";
 import * as chai from "chai";
 
+import * as util from "../common/testUtils";
+
 const casesDir = path.join(process.cwd(), "tests", "format-test", "cases");
 const baselineDir = path.join(process.cwd(), "tests", "format-test", "baselines");
 
@@ -21,25 +23,7 @@ function initGlobals() {
 initGlobals();
 
 // Just needs to exist
-pxt.setAppTarget({
-    id: "core",
-    name: "Microsoft MakeCode",
-    title: "Microsoft MakeCode",
-    versions: undefined,
-    description: "A toolkit to build JavaScript Blocks editors.",
-    bundleddirs: [],
-    compile: {
-        isNative: false,
-        hasHex: false,
-        jsRefCounting: true,
-        switches: {}
-    },
-    bundledpkgs: {},
-    appTheme: {},
-    tsprj: undefined,
-    blocksprj: undefined,
-    corepkg: undefined
-});
+pxt.setAppTarget(util.testAppTarget);
 
 describe("ts formatting", () => {
     const filenames: string[] = [];

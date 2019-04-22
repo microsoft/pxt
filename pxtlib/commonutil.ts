@@ -49,8 +49,8 @@ namespace ts.pxtc.Util {
     let _localizeLang: string = "en";
     let _localizeStrings: pxt.Map<string> = {};
     let _translationsCache: pxt.Map<pxt.Map<string>> = {};
-    let _didSetlocalizations = false;
-    let _didReportLocalizationsNotSet = false;
+    //let _didSetlocalizations = false;
+    //let _didReportLocalizationsNotSet = false;
     export let localizeLive = false;
 
     /**
@@ -65,8 +65,18 @@ namespace ts.pxtc.Util {
     export function userLanguage(): string {
         return _localizeLang;
     }
+
+    export function normalizeLanguageCode(code: string): string[] {
+        const langParts = /^(\w{2})-(\w{2}$)/i.exec(code);
+        if (langParts && langParts[1] && langParts[2]) {
+            return [`${langParts[1].toLowerCase()}-${langParts[2].toUpperCase()}`, langParts[1].toLowerCase()];
+        } else {
+            return [(code || "en").toLowerCase()];
+        }
+    }
+
     export function setUserLanguage(localizeLang: string) {
-        _localizeLang = localizeLang;
+        _localizeLang = normalizeLanguageCode(localizeLang)[0];
     }
 
     export function isUserLanguageRtl(): boolean {
@@ -90,7 +100,7 @@ namespace ts.pxtc.Util {
     }
 
     export function setLocalizedStrings(strs: pxt.Map<string>) {
-        _didSetlocalizations = true;
+        //_didSetlocalizations = true;
         _localizeStrings = strs;
     }
 

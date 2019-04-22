@@ -129,7 +129,7 @@ namespace pxtsprite {
             });
 
             this.sidebar = new SideBar(['url("#alpha-background")'].concat(this.colors), this, this.group);
-            this.sidebar.setColor(1);
+            this.sidebar.setColor(this.colors.length >= 3 ? 3 : 1);
 
             this.header = new SpriteHeader(this);
             this.gallery = new Gallery(blocksInfo);

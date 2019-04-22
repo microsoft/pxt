@@ -163,7 +163,7 @@ namespace ts.pxtc {
         return decl.modifiers && decl.modifiers.some(m => m.kind == SK.ReadonlyKeyword)
     }
 
-    function createSymbolInfo(typechecker: TypeChecker, qName: string, stmt: Node, opts: CompileOptions): SymbolInfo {
+    function createSymbolInfo(typechecker: TypeChecker, qName: string, stmt: Node): SymbolInfo {
         function typeOf(tn: TypeNode, n: Node, stripParams = false) {
             let t = typechecker.getTypeAtLocation(n)
             if (!t) return "None"
@@ -230,6 +230,7 @@ namespace ts.pxtc {
                 qName,
                 namespace: m ? m[1] : "",
                 name: m ? m[2] : qName,
+                fileName: stmt.getSourceFile().fileName,
                 attributes,
                 pkg,
                 extendsTypes,
@@ -285,7 +286,8 @@ namespace ts.pxtc {
                         type: typeOf(p.type, p),
                         initializer:
                             p.initializer ? p.initializer.getText() :
-                                attributes.paramDefl[n] || (p.questionToken ? "undefined" : undefined),
+                                getExplicitDefault(attributes, n) ||
+                                (p.questionToken ? "undefined" : undefined),
                         default: attributes.paramDefl[n],
                         properties: props,
                         handlerParameters: parameters,
@@ -405,10 +407,10 @@ namespace ts.pxtc {
         if (!symbolKindWeight) {
             symbolKindWeight = {};
             symbolKindWeight[SymbolKind.Variable] = 100;
+            symbolKindWeight[SymbolKind.Module] = 101;
             symbolKindWeight[SymbolKind.Function] = 99;
             symbolKindWeight[SymbolKind.Property] = 98;
             symbolKindWeight[SymbolKind.Method] = 97;
-            symbolKindWeight[SymbolKind.Module] = 90
             symbolKindWeight[SymbolKind.Class] = 89;
             symbolKindWeight[SymbolKind.Enum] = 81;
             symbolKindWeight[SymbolKind.EnumMember] = 80;
@@ -425,14 +427,14 @@ namespace ts.pxtc {
     }
 
 
-    export function getApiInfo(opts: CompileOptions, program: Program, legacyOnly = false): ApisInfo {
-        return internalGetApiInfo(opts, program, legacyOnly).apis;
+    export function getApiInfo(program: Program, jres?: pxt.Map<pxt.JRes>, legacyOnly = false): ApisInfo {
+        return internalGetApiInfo(program, jres, legacyOnly).apis;
     }
 
-    export function internalGetApiInfo(opts: CompileOptions, program: Program, legacyOnly = false) {
+    export function internalGetApiInfo(program: Program, jres?: pxt.Map<pxt.JRes>, legacyOnly = false) {
         const res: ApisInfo = {
             byQName: {},
-            jres: opts.jres
+            jres: jres
         }
         const qNameToNode: pxt.Map<Declaration> = {};
         const typechecker = program.getTypeChecker()
@@ -452,7 +454,7 @@ namespace ts.pxtc {
                 if (stmt.kind == SK.SetAccessor)
                     qName += "@set" // otherwise we get a clash with the getter
                 qNameToNode[qName] = stmt as Declaration;
-                let si = createSymbolInfo(typechecker, qName, stmt, opts)
+                let si = createSymbolInfo(typechecker, qName, stmt)
                 if (si) {
                     let existing = U.lookup(res.byQName, qName)
                     if (existing) {
@@ -521,7 +523,7 @@ namespace ts.pxtc {
             let jrname = si.attributes.jres
             if (jrname) {
                 if (jrname == "true") jrname = qName
-                let jr = U.lookup(opts.jres || {}, jrname)
+                let jr = U.lookup(jres || {}, jrname)
                 if (jr && jr.icon && !si.attributes.iconURL) {
                     si.attributes.iconURL = jr.icon
                 }
@@ -603,7 +605,7 @@ namespace ts.pxtc {
             const decl = s.valueDeclaration || (s.declarations || [])[0]
             if (!decl) continue;
 
-            const si = createSymbolInfo(typechecker, qName, decl, opts)
+            const si = createSymbolInfo(typechecker, qName, decl)
             if (!si) continue;
 
             si.isContextual = true;
@@ -735,7 +737,7 @@ namespace ts.pxtc.service {
     function addApiInfo(opts: CompileOptions) {
         if (!opts.apisInfo && opts.target.preferredEditor == pxt.PYTHON_PROJECT_NAME) {
             if (!lastApiInfo)
-                lastApiInfo = internalGetApiInfo(opts, service.getProgram())
+                lastApiInfo = internalGetApiInfo(service.getProgram(), opts.jres)
             opts.apisInfo = U.clone(lastApiInfo.apis)
         }
     }
@@ -823,7 +825,7 @@ namespace ts.pxtc.service {
                     /^__/.test(si.namespace) || // ignore namespaces starting with _-
                     si.attributes.hidden ||
                     si.attributes.deprecated
-                ) continue; // ignore 
+                ) continue; // ignore
                 entries[si.qName] = si
                 const n = lastApiInfo.decls[si.qName];
                 if (isFunctionLike(n)) {
@@ -908,7 +910,7 @@ namespace ts.pxtc.service {
                 // Host was reset, don't load apis with empty options
                 return undefined;
             }
-            lastApiInfo = internalGetApiInfo(host.opts, service.getProgram());
+            lastApiInfo = internalGetApiInfo(service.getProgram(), host.opts.jres);
             return lastApiInfo.apis;
         },
         snippet: v => {

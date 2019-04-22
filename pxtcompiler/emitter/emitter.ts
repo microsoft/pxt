@@ -266,6 +266,14 @@ namespace ts.pxtc {
         return node.modifiers && node.modifiers.some(m => m.kind == SK.StaticKeyword)
     }
 
+    export function getExplicitDefault(attrs: CommentAttrs, name: string) {
+        if (!attrs.explicitDefaults)
+            return null
+        if (attrs.explicitDefaults.indexOf(name) < 0)
+            return null
+        return attrs.paramDefl[name]
+    }
+
     function classFunctionPref(node: Node) {
         if (!node) return null;
         switch (node.kind) {
@@ -1949,7 +1957,7 @@ ${lbl}: .short 0xffff
                         p.valueDeclaration.kind == SK.Parameter) {
                         let prm = <ParameterDeclaration>p.valueDeclaration
                         if (!prm.initializer) {
-                            let defl = attrs.paramDefl[getName(prm)]
+                            let defl = getExplicitDefault(attrs, getName(prm))
                             let expr = defl ? emitLit(parseInt(defl)) : null
                             if (expr == null) {
                                 expr = emitLit(undefined)
