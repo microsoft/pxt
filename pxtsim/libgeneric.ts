@@ -576,7 +576,8 @@ namespace pxsim {
         }
 
         function inRange(buf: RefBuffer, off: number) {
-            return buf && 0 <= off && off < buf.data.length
+            pxtrt.nullCheck(buf)
+            return 0 <= off && off < buf.data.length
         }
 
         export function getUint8(buf: RefBuffer, off: number) {
