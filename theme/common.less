@@ -959,7 +959,7 @@ p.ui.font.small {
     div.simframe:not(:first-child) {
         display:none;
     }
-    .simulator {
+    #simulator {
         flex-direction: row;
         display: flex !important;
     }
@@ -1141,8 +1141,8 @@ div.simframe.ui.embed {
 }
 
 .sandbox {
-    .simulator, #editortools {
-        display: none;
+    #simulator, #editortools {
+        display: none !important;
     }
 
     #maineditor {
