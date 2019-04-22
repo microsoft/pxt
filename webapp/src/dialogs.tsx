@@ -168,7 +168,7 @@ export function showAboutDialogAsync(projectView: pxt.editor.IProjectView) {
                         (!pxt.Cloud.isOnline() || !electronManifest)
                             ? <p>{lf("Please connect to internet to check for updates")}</p>
                             : pxt.semver.strcmp(pxt.appTarget.versions.target, electronManifest.latest) < 0
-                                ? <p>{lf("An update {0} for {1} is available", electronManifest.latest, pxt.appTarget.title)}</p>
+                                ? <a href="/offline-app">{lf("An update {0} for {1} is available", electronManifest.latest, pxt.appTarget.title)}</a>
                                 : <p>{lf("{0} is up to date", pxt.appTarget.title)}</p>
                         : undefined}
                     {githubUrl && versions ?
