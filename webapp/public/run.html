@@ -86,7 +86,7 @@
     <div id='loading' style='font-size: 25px; font-family:monospace; margin: 20% auto; width: 200px;'>
         loading...
     </div>
-    <div id="simulators">
+    <div id="simulators" className="simulator">
     </div>
     <footer id="footer" style="display:none;">
     </footer>
@@ -122,7 +122,7 @@
 
         if (fullScreen) {
             document.getElementById("injected-style").textContent =
-                "#simulators {\n"
+                ".simulator {\n"
                 + "    height: 100%;\n"
                 + "}\n"
                 + "div.simframe {\n"

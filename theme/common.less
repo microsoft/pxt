@@ -136,7 +136,7 @@ body {
 }
 
 /* File list / Simulator layout */
-#simulator {
+.simulator {
     height: 100%;
 }
 #filelist, #downloadArea {
@@ -194,25 +194,25 @@ body {
     background: rgba(0,0,0,0.05);
 }
 
-#simulators {
+.simulator {
     text-align: center;
 }
 
-#simulators .ui.embed .icon.xicon::before {
+.simulator .ui.embed .icon.xicon::before {
     transform: translateX(-77%) translateY(-120%);
     transition: opacity .25s ease,color .25s ease;
 }
 
-#simulators .ui.embed .icon.xicon::after {
+.simulator .ui.embed .icon.xicon::after {
     background: rgba(0,0,0,.3);
     transition: opacity .25s ease;
 }
 
-#simulators .ui.embed .icon.xicon:hover:before {
+.simulator .ui.embed .icon.xicon:hover:before {
     color: @green;
 }
 
-#simulators .ui.embed .icon.xicon:hover:after {
+.simulator .ui.embed .icon.xicon:hover:after {
     opacity: 0.6;
 }
 
@@ -761,7 +761,7 @@ p.ui.font.small {
         background: -moz-linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* For Firefox 3.6 to 15 */
         background: linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* Standard syntax */
     }
-    #simulator .hidefullscreen,
+    .simulator .hidefullscreen,
     .menubar .ui.item:not(.logo),
     #maineditor,
     #editortools,
@@ -783,7 +783,7 @@ p.ui.font.small {
         right: auto;
         display: block !important;
     }
-    #simulators {
+    .simulator {
         position: relative;
         padding: 3rem 1rem 3rem;
         width: 100%;
@@ -959,7 +959,7 @@ p.ui.font.small {
     div.simframe:not(:first-child) {
         display:none;
     }
-    #simulators {
+    .simulator {
         flex-direction: row;
         display: flex !important;
     }
@@ -1106,7 +1106,7 @@ p.ui.font.small {
     z-index: @sandboxFooterZIndex;
 }
 
-.simView #simulators {
+.simView .simulator {
     position: absolute;
     top: @mainMenuHeight;
     bottom: 4rem;
@@ -1141,7 +1141,7 @@ div.simframe.ui.embed {
 }
 
 .sandbox {
-    #simulators, #simulator, #editortools {
+    .simulator, #editortools {
         display: none;
     }
 
@@ -1155,7 +1155,7 @@ div.simframe.ui.embed {
         display: none;
     }
 
-    #simulators {
+    .simulator {
         flex-direction: row;
         display: flex !important;
     }
@@ -1202,7 +1202,7 @@ div.simframe.ui.embed {
 }
 
 .sandbox.simView {
-    #simulators, #simulator, #editortools {
+    .simulator, #editortools {
         display: inherit;
     }
 
