@@ -44,7 +44,7 @@ namespace ts.pxtc {
                         break;
                     case SyntaxKind.Identifier:
                         const decl: Declaration = getDecl(child);
-                        if (decl.getSourceFile().fileName !== "main.ts" && decl.kind == SyntaxKind.VariableDeclaration) {
+                        if (decl && decl.getSourceFile().fileName !== "main.ts" && decl.kind == SyntaxKind.VariableDeclaration) {
                             const info: IdentifierInfo = {
                                 isGlobal: true
                             };
