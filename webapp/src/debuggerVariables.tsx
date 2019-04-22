@@ -23,6 +23,7 @@ interface DebuggerVariablesProps  {
     apis: pxt.Map<pxtc.SymbolInfo>;
     breakpoint?: pxsim.DebuggerBreakpointMessage;
     filters?: string[]
+    activeFrame?: number;
 }
 
 interface DebuggerVariablesState {
@@ -80,8 +81,8 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
 
         // Add in the local variables.
         // TODO: Handle callstack
-        if (stackFrames && stackFrames.length) {
-            variables = stackFrames[0].variables.concat(variables);
+        if (stackFrames && stackFrames.length && this.props.activeFrame !== undefined) {
+            variables = stackFrames[this.props.activeFrame].variables.concat(variables);
         }
 
         return <DebuggerTable header={variableTableHeader} frozen={frozen}>

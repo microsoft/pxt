@@ -834,6 +834,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             ref={this.handleDebugToolboxRef}
             parent={this.parent}
             apis={this.blockInfo.apis.byQName}
+            openLocation={this.revealBreakpointLocation}
             showCallStack /> : <div />;
 
         if (debugging) {
@@ -1206,6 +1207,24 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.parent.setFile(mainPkg.lookupFile(stmt.fileName))
         }
 
+        if (!this.highilightStatementCore(stmt, !!brk)) {
+            return false;
+        }
+
+        if (brk && this.isDebugging() && this.debuggerToolbox) {
+            if (this.isDebugging() && this.debuggerToolbox) {
+                this.debuggerToolbox.setState({
+                    lastBreakpoint: brk,
+                    currentFrame: 0
+                });
+                this.resize();
+            }
+        }
+
+        return true;
+    }
+
+    protected highilightStatementCore(stmt: pxtc.LocationInfo, centerOnLocation = false) {
         let position = this.editor.getModel().getPositionAt(stmt.start);
         let end = this.editor.getModel().getPositionAt(stmt.start + stmt.length);
         if (!position || !end) return false;
@@ -1216,16 +1235,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             },
         ]);
 
-        if (brk) {
-            // center on statement
-            this.editor.revealPositionInCenter(position);
-            if (this.isDebugging() && this.debuggerToolbox) {
-                this.debuggerToolbox.setState({
-                    lastBreakpoint: brk
-                });
-                this.resize();
-            }
-        }
+        if (centerOnLocation) this.editor.revealPositionInCenter(position);
 
         return true;
     }
@@ -1467,6 +1477,26 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 }
             }
         }
+    }
+
+    protected revealBreakpointLocation = (id: number) => {
+        if (!this.breakpoints) return;
+
+        const loc = this.breakpoints.getLocationOfBreakpoint(id);
+        if (!loc) return;
+
+
+        if (this.currFile.name !== loc.fileName) {
+            const mainPkg = pkg.mainEditorPkg()
+            if (mainPkg.lookupFile(loc.fileName)) {
+                this.parent.setFile(mainPkg.lookupFile(loc.fileName))
+            }
+        }
+        else {
+            this.highilightStatementCore(loc, true);
+        }
+
+        if (this.debuggerToolbox) this.debuggerToolbox.setActiveFrame(id);
     }
 
     private showSearchFlyout() {
