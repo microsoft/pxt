@@ -227,6 +227,7 @@ namespace ts.pxtc.decompiler {
     export function buildRenameMap(p: Program, s: SourceFile): [RenameMap, NamesSet] {
         let service = ts.createLanguageService(new LSHost(p))
         const allRenames: RenameLocation[] = [];
+
         let names = collectNameCollisions();
 
         return [new RenameMap(allRenames), names];
@@ -325,7 +326,7 @@ namespace ts.pxtc.decompiler {
             attrs: attrs,
             compInfo: compInfo,
             localReporters: [],
-            opts: options || {},
+            opts: options || {}
         };
         const fileText = file.getFullText();
         let output = ""
