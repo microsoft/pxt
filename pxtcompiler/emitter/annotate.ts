@@ -42,14 +42,13 @@ namespace ts.pxtc {
                     case SyntaxKind.BinaryExpression:
                         annotateBinaryExpression(child as ts.BinaryExpression);
                         break;
-                    case SK.Identifier:
-                        const decl = getDecl(child);
-                        if (decl.getSourceFile().fileName !== "main.ts") {
+                    case SyntaxKind.Identifier:
+                        const decl: Declaration = getDecl(child);
+                        if (decl.getSourceFile().fileName !== "main.ts" && decl.kind == SyntaxKind.VariableDeclaration) {
                             const info: IdentifierInfo = {
                                 isGlobal: true
                             };
                             (child as any).identifierInfo = info;
-                            console.log(child.getFullText() + " is global");
                         }
                         break;
 
