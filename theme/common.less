@@ -136,7 +136,7 @@ body {
 }
 
 /* File list / Simulator layout */
-.simulator {
+#simulator {
     height: 100%;
 }
 #filelist, #downloadArea {
@@ -194,7 +194,7 @@ body {
     background: rgba(0,0,0,0.05);
 }
 
-.simulator {
+#simulators {
     text-align: center;
 }
 
@@ -761,7 +761,7 @@ p.ui.font.small {
         background: -moz-linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* For Firefox 3.6 to 15 */
         background: linear-gradient(@fullscreenBackgroundGradientStart 50%, @fullscreenBackgroundGradientEnd); /* Standard syntax */
     }
-    .simulator .hidefullscreen,
+    #simulator .hidefullscreen,
     .menubar .ui.item:not(.logo),
     #maineditor,
     #editortools,
@@ -783,7 +783,7 @@ p.ui.font.small {
         right: auto;
         display: block !important;
     }
-    .simulator {
+    #simulators {
         position: relative;
         padding: 3rem 1rem 3rem;
         width: 100%;
@@ -959,7 +959,7 @@ p.ui.font.small {
     div.simframe:not(:first-child) {
         display:none;
     }
-    #simulator {
+    #simulators {
         flex-direction: row;
         display: flex !important;
     }
@@ -1106,7 +1106,7 @@ p.ui.font.small {
     z-index: @sandboxFooterZIndex;
 }
 
-.simView .simulator {
+.simView #simulators {
     position: absolute;
     top: @mainMenuHeight;
     bottom: 4rem;
@@ -1141,8 +1141,8 @@ div.simframe.ui.embed {
 }
 
 .sandbox {
-    #simulator, #editortools {
-        display: none !important;
+    #simulators, #simulator #editortools {
+        display: none;
     }
 
     #maineditor {
@@ -1155,7 +1155,7 @@ div.simframe.ui.embed {
         display: none;
     }
 
-    .simulator {
+    #simulators {
         flex-direction: row;
         display: flex !important;
     }
