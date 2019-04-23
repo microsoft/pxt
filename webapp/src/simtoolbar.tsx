@@ -121,7 +121,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const collapseTooltip = lf("Hide the simulator");
         const screenshotTooltip = targetTheme.simScreenshotKey ? lf("Take Screenshot (shortcut {0})", targetTheme.simScreenshotKey) : lf("Take Screenshot");
 
-        return <aside className={"ui item grid centered simtoolbar" + (sandbox ? "" : " portrait hide")} role="complementary" aria-label={lf("Simulator toolbar")}>
+        return <aside className={"ui item grid centered simtoolbar" + (sandbox ? "" : " portrait ")} role="complementary" aria-label={lf("Simulator toolbar")}>
             <div className={`ui icon tiny buttons`} style={{ padding: "0" }}>
                 {make ? <sui.Button disabled={debugging} icon='configure' className="secondary" title={makeTooltip} onClick={this.openInstructions} /> : undefined}
                 {run ? <sui.Button disabled={!runControlsEnabled} key='runbtn' className={`play-button ${(isRunning || debugging) ? "stop" : "play"}`} icon={(isRunning || debugging) ? "stop" : "play green"} title={runTooltip} onClick={this.startStopSimulator} /> : undefined}
@@ -129,10 +129,10 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
                 {run && debug ? <sui.Button disabled={!debugBtnEnabled} key='debugbtn' className={`debug-button ${debugging ? "orange" : ""}`} icon="icon bug" title={debugTooltip} onClick={this.toggleDebug} /> : undefined}
                 {trace ? <sui.Button key='trace' className={`trace-button ${tracing ? 'orange' : ''}`} icon="xicon turtle" title={traceTooltip} onClick={this.toggleTrace} /> : undefined}
             </div>
-            <div className={`ui icon tiny buttons`} style={{ padding: "0" }}>
+            <div className={`ui icon tiny buttons computer only`} style={{ padding: "0" }}>
                 {audio ? <sui.Button key='mutebtn' className={`mute-button ${isMuted ? 'red' : ''}`} icon={`${isMuted ? 'volume off' : 'volume up'}`} title={muteTooltip} onClick={this.toggleMute} /> : undefined}
             </div>
-            <div className={`ui icon tiny buttons`} style={{ padding: "0" }}>
+            <div className={`ui icon tiny buttons computer only`} style={{ padding: "0" }}>
                 {screenshot ? <sui.Button disabled={!isRunning} key='screenshotbtn' className={`screenshot-button ${screenshotClass}`} icon={`icon camera left`} title={screenshotTooltip} onClick={this.takeScreenshot} /> : undefined}
                 {collapse && !isFullscreen ? <sui.Button key='collapsebtn' className={`collapse-button`} icon={`icon toggle left`} title={collapseTooltip} onClick={this.toggleSimulatorCollapse} /> : undefined}
                 {fullscreen ? <sui.Button key='fullscreenbtn' className={`fullscreen-button`} icon={`xicon ${isFullscreen ? 'fullscreencollapse' : 'fullscreen'}`} title={fullscreenTooltip} onClick={this.toggleSimulatorFullscreen} /> : undefined}
