@@ -48,7 +48,6 @@ namespace pxt.py {
     function tsToPy(prog: ts.Program, filename: string): string {
         // state
         // TODO pass state explicitly
-        let nextFnNum = 0
         let global: Scope = { vars: {} } // TODO populate global scope
         let env: Scope[] = [global]
 
@@ -89,7 +88,7 @@ namespace pxt.py {
                 return null
             let tsExp = exp.getText()
             let sym = symbols.byQName[tsExp]
-            let isFromUserPackage = sym && sym.pkg == null
+            let isFromUserPackage = sym && !sym.pkg
             if (sym && !isFromUserPackage && sym.pyQName)
                 return sym.pyQName
             return null
