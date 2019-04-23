@@ -436,6 +436,8 @@ class Host
         } else if (proto == "embed") {
             epkg.setFiles(pxt.getEmbeddedScript(pkg.verArgument()))
             return Promise.resolve()
+        } else if (proto == "pkg") {
+            return Promise.resolve();
         } else if (proto == "invalid") {
             pxt.log(`skipping invalid pkg ${pkg.id}`);
             return Promise.resolve();

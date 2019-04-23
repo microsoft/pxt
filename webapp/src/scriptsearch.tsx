@@ -339,6 +339,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
 
     importExtensionFile() {
         pxt.tickEvent("extensions.import", undefined, { interactiveConsent: true });
+        this.hide();
         this.props.parent.showImportFileDialog({ extension: true });
     }
 

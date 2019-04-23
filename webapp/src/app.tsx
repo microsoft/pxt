@@ -1268,7 +1268,7 @@ export class ProjectView
     importProjectFile(file: File, options?: pxt.editor.ImportFileOptions) {
         if (!file) return;
         ts.pxtc.Util.fileReadAsBufferAsync(file)
-            .then(buf => this.importProjectCoreAsync(buf))
+            .then(buf => this.importProjectCoreAsync(buf, options))
     }
 
     importPNGFile(file: File, options?: pxt.editor.ImportFileOptions) {
@@ -1276,7 +1276,7 @@ export class ProjectView
         ts.pxtc.Util.fileReadAsBufferAsync(file)
             .then(buf => screenshot.decodeBlobAsync("data:image/png;base64," +
                 btoa(pxt.Util.uint8ArrayToString(buf))))
-            .then(buf => this.importProjectCoreAsync(buf))
+            .then(buf => this.importProjectCoreAsync(buf, options))
     }
 
     importAssetFile(file: File) {
@@ -1331,7 +1331,7 @@ export class ProjectView
                         if (!cfg.dependencies)
                             cfg.dependencies = {};
                         cfg.dependencies[n] = `pkg:./${fn}`;
-                    })
+                    }).then(() => mpkg.savePkgAsync())
                     .done(() => this.reloadHeaderAsync());
                 }
             }
@@ -2616,7 +2616,7 @@ export class ProjectView
         dialogs.showImportFileDialogAsync(options).done(res => {
             if (res) {
                 pxt.tickEvent("app.open.file");
-                this.importFile(res);
+                this.importFile(res, options);
             }
         });
     }
