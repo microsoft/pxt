@@ -59,7 +59,10 @@ namespace pxt.py {
         // TODO(dz):
         // let reservedWords = pxt.U.toSet(getReservedNmes(), s => s)
         let [renameMap, globalNames] = ts.pxtc.decompiler.buildRenameMap(prog, file)
-        let symbols = pxtc.getApiInfo(prog)
+        let allSymbols = pxtc.getApiInfo(prog)
+        let symbols = pxt.U.mapMap(allSymbols.byQName,
+            // filter out symbols from the .ts corrisponding to this file
+            (k, v) => v.fileName == filename ? undefined : v)
 
         // ts->py 
         return emitFile(file)
@@ -80,17 +83,17 @@ namespace pxt.py {
         }
         function getReservedNmes(): string[] {
             // TODO(dz) get full list
-            const reservedNames = "def list print".split(" ").filter(s => s)
-            return reservedNames
+            const reservedNames = "def list print"
+            return reservedNames.split(" ").filter(s => s)
         }
         function tryGetPyName(exp: ts.BindingPattern | ts.PropertyName | ts.EntityName | ts.PropertyAccessExpression): string {
             if (!exp.getSourceFile())
                 return null
             let tsExp = exp.getText()
-            let sym = symbols.byQName[tsExp]
-            let isFromUserPackage = sym && !sym.pkg
-            if (sym && !isFromUserPackage && sym.pyQName)
+            let sym = symbols[tsExp]
+            if (sym && sym.pyQName) {
                 return sym.pyQName
+            }
             return null
         }
         function getName(name: ts.Identifier | ts.BindingPattern | ts.PropertyName | ts.EntityName): string {
@@ -888,10 +891,6 @@ namespace pxt.py {
                 if (right === "log") {
                     return ["print", leftSup]
                 }
-            }
-            else {
-                // snakify
-                right = pxtc.snakify(right).toLowerCase();
             }
 
             return [`${left}.${right}`, leftSup];
