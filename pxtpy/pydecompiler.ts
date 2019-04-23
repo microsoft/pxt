@@ -247,6 +247,8 @@ namespace pxt.py {
                 return emitBlock(s)
             } else if (ts.isTypeAliasDeclaration(s)) {
                 return emitTypeAliasDecl(s)
+            } else if (ts.isEmptyStatement(s)) {
+                return []
             } else {
                 throw Error(`Not implemented: statement kind ${s.kind}`);
             }
