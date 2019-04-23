@@ -229,6 +229,7 @@ function setupBlocklyAsync() {
                 })
         })
     }
+    setupLangPicker();
     return promise;
 }
 
@@ -257,6 +258,72 @@ function renderSnippets() {
                 });
             }).done();
     });
+}
+
+function getCookieLang() {    
+    const cookiePropRegex = new RegExp(`${pxt.Util.escapeForRegex(pxt.Util.pxtLangCookieId)}=(.*?)(?:;|$)`)
+    const cookieValue = cookiePropRegex.exec(document.cookie);
+    return cookieValue && cookieValue[1] || null;
+}
+
+function setCookieLang(langId) {
+    if (!pxt.Util.allLanguages[langId]) {
+        return;
+    }
+    if (langId !== getCookieLang()) {
+        pxt.tickEvent(`menu.lang.setcookielang.${langId}`);
+        const expiration = new Date();
+        expiration.setTime(expiration.getTime() + (pxt.Util.langCookieExpirationDays * 24 * 60 * 60 * 1000));
+        document.cookie = `${pxt.Util.pxtLangCookieId}=${langId}; expires=${expiration.toUTCString()}`;
+    }
+}
+
+function languageOption(code) {
+    let locale = pxt.Util.allLanguages[code];
+    return `<div class="ui card link card-selected langoption" data-lang="${code}" role="link" aria-label="${locale.englishName}" 
+        tabindex="0"><div class="content"><div class="header">${locale.localizedName}</div>
+        <div class="description tall">${locale.englishName}</div></div></div>`
+}
+
+function setupLangPicker() {
+
+    let availableLocales = pxt.appTarget.appTheme.availableLocales;
+    let locales;
+    let initialLang = pxt.Util.normalizeLanguageCode(getCookieLang())[0];
+    if (pxt.appTarget.appTheme && availableLocales) {
+
+        locales = availableLocales.map(e => languageOption(e)).join("\n");
+        document.querySelector("#availablelocales").innerHTML = locales;
+   
+        document.querySelector("#langpicker").onclick = function() { 
+            $('.ui.modal').modal('show'); 
+        };
+
+        document.querySelector(".closeIcon").onclick = function() { 
+            $('.ui.modal').modal('hide'); 
+        };
+
+        let langOptions = document.querySelectorAll(".langoption");
+
+        for(var x=0; x<langOptions.length; x++) {
+            langOptions[x].addEventListener("click", function(e) {
+                let langId = e.currentTarget.dataset.lang;
+                if (!pxt.Util.allLanguages[langId]) {
+                    return;
+                }
+                setCookieLang(langId);
+                if (langId !== initialLang) {
+                    pxt.tickEvent(`menu.lang.changelang.${langId}`);
+                    // In react app before reload we are using pxt.winrt.releaseAllDevicesAsync()
+                    // In docs we currently don't have access to pxt.winrt
+                    location.reload(); 
+                } else {
+                    pxt.tickEvent(`menu.lang.samelang.${langId}`);
+                    $('.ui.modal').modal('hide');
+                }
+            });
+        }
+    }
 }
 
 $(document).ready(function () {

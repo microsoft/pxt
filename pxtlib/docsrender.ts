@@ -4,7 +4,7 @@
 namespace pxt.docs {
     declare var require: any;
     import U = pxtc.Util;
-
+    
     let markedInstance: typeof marked;
 
     let stdboxes: Map<string> = {
@@ -230,6 +230,15 @@ namespace pxt.docs {
             return injectHtml(templ, mparams, ["ITEMS"])
         }
 
+        let availableLocales = theme.selectLanguage && theme.availableLocales && theme.availableLocales.length ?
+        theme.availableLocales : ["en"]
+
+        params["selectLang"] = lf("Select Language");
+        params["crowdin"] = theme.crowdinProject ?
+            `<p><br/><br/><a href="https://crowdin.com/project/${theme.crowdinProject}" 
+            target="_blank" rel="noopener noreferrer" aria-label=${lf("Help us translate")}>${lf("Help us translate")}</a>
+            </p>` : `<p></p>`
+
         params["menu"] = (theme.docMenu || []).map(e => recMenu(e, 0)).join("\n")
         params["TOC"] = TOC.map(e => recTOC(e, 0)).join("\n")
 
@@ -309,8 +318,8 @@ namespace pxt.docs {
 
         let style = '';
         if (theme.accentColor) style += `
-.ui.accent { color: ${theme.accentColor}; }
-.ui.inverted.accent { background: ${theme.accentColor}; }
+        .ui.accent { color: ${theme.accentColor}; }
+        .ui.inverted.accent { background: ${theme.accentColor}; }
 `
         params["targetstyle"] = style;
         params["tocclass"] = theme.lightToc ? "lighttoc" : "inverted";
@@ -336,7 +345,10 @@ namespace pxt.docs {
             "appstoremeta",
             "sidebarToggle",
             "searchBar1",
-            "searchBar2"
+            "searchBar2",
+            "availableLocales",
+            "selectLang",
+            "crowdin"
         ])
 
         // Normalize any path URL with any version path in the current URL
