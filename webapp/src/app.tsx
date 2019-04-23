@@ -3003,7 +3003,7 @@ export class ProjectView
                 {inTutorial ? <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
                     <tutorial.TutorialCard ref="tutorialcard" parent={this} />
                 </div> : undefined}
-                <div id="simulator">
+                <div id="simulator" className="simulator">
                     <div id="filelist" className="ui items">
                         <div id="boardview" className={`ui vertical editorFloat`} role="region" aria-label={lf("Simulator")}>
                         </div>
