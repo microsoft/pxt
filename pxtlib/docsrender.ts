@@ -4,7 +4,7 @@
 namespace pxt.docs {
     declare var require: any;
     import U = pxtc.Util;
-    
+
     let markedInstance: typeof marked;
 
     let stdboxes: Map<string> = {
@@ -235,7 +235,7 @@ namespace pxt.docs {
 
         params["selectLang"] = lf("Select Language");
         params["crowdin"] = theme.crowdinProject ?
-            `<p><br/><br/><a href="https://crowdin.com/project/${theme.crowdinProject}" 
+            `<p><br/><br/><a href="https://crowdin.com/project/${theme.crowdinProject}"
             target="_blank" rel="noopener noreferrer" aria-label=${lf("Help us translate")}>${lf("Help us translate")}</a>
             </p>` : `<p></p>`
 
