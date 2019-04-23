@@ -117,7 +117,7 @@ export const buildEngines: Map<BuildEngine> = {
         updateEngineAsync: () => runBuildCmdAsync(nodeutil.addCmd("npm"), "install"),
         buildAsync: () => runDockerAsync(["make"]),
         setPlatformAsync: noopAsync,
-        patchHexInfo: patchDockermakeHexInfo,
+        patchHexInfo: patchDockerCrossHexInfo,
         prepBuildDirAsync: noopAsync,
         buildPath: "built/dockercross",
         moduleConfig: "package.json",
@@ -170,6 +170,13 @@ function patchCodalHexInfo(extInfo: pxtc.ExtensionInfo) {
 }
 
 function patchDockermakeHexInfo(extInfo: pxtc.ExtensionInfo) {
+    let hexPath = thisBuild.buildPath + "/bld/pxt-app.hex"
+    return {
+        hex: fs.readFileSync(hexPath, "utf8").split(/\r?\n/)
+    }
+}
+
+function patchDockerCrossHexInfo(extInfo: pxtc.ExtensionInfo) {
     let hexPath = thisBuild.buildPath + "/bld/all.tgz.b64"
     return {
         hex: fs.readFileSync(hexPath, "utf8").split(/\r?\n/)
