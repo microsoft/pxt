@@ -73,7 +73,7 @@ namespace pxt {
         }
 
         commonDownloadAsync(): Promise<Map<string>> {
-            let proto = this.verProtocol()
+            const proto = this.verProtocol()
             if (proto == "pub") {
                 return Cloud.downloadScriptFilesAsync(this.verArgument())
             } else if (proto == "github") {
@@ -81,10 +81,16 @@ namespace pxt {
                     .then(config => pxt.github.downloadPackageAsync(this.verArgument(), config))
                     .then(resp => resp.files)
             } else if (proto == "embed") {
-                let resp = pxt.getEmbeddedScript(this.verArgument())
+                const resp = pxt.getEmbeddedScript(this.verArgument())
                 return Promise.resolve(resp)
-            } else
-                return Promise.resolve(null as Map<string>)
+            } else if (proto == "pkg") {
+                // the package source is serialized in a file in the package itself
+                const pkgFilesSrc = this.readFile(this.verArgument());
+                const pkgFilesJson = ts.pxtc.Util.jsonTryParse(pkgFilesSrc) as Map<string>;
+                if (!pkgFilesJson)
+                    pxt.log(`unable to find ${this.verArgument()}`)
+                return Promise.resolve(pkgFilesJson)
+            } else return Promise.resolve(null as Map<string>)
         }
 
         host() { return this.parent._host }

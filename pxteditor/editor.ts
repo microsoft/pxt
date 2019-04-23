@@ -141,6 +141,10 @@ namespace pxt.editor {
         clickTrigger?: boolean;
     }
 
+    export interface ImportFileOptions {
+        extension?: boolean;
+    }
+
     export interface IProjectView {
         state: IAppState;
         setState(st: IAppState): void;
@@ -266,7 +270,7 @@ namespace pxt.editor {
         showAboutDialog(): void;
 
         showImportUrlDialog(): void;
-        showImportFileDialog(): void;
+        showImportFileDialog(options?: ImportFileOptions): void;
         showImportGithubDialog(): void;
 
         showResetDialog(): void;

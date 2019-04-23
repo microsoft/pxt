@@ -28,7 +28,7 @@ namespace pxt.winrt {
         return typeof Windows !== "undefined";
     }
 
-    export function initAsync(importHexImpl?: (hex: pxt.cpp.HexFile, createNewIfFailed?: boolean) => void) {
+    export function initAsync(importHexImpl?: (hex: pxt.cpp.HexFile, options?: pxt.editor.ImportFileOptions) => void) {
         if (!isWinRT() || pxt.BrowserUtils.isIFrame()) return Promise.resolve();
 
         const uiCore = Windows.UI.Core;
@@ -67,7 +67,7 @@ namespace pxt.winrt {
 
     export function loadActivationProject() {
         return initialActivationDeferred.promise
-            .then((args) => fileActivationHandler(args, /* createNewIfFailed */ true));
+            .then((args) => fileActivationHandler(args, /* openHomeIfFailed */ true));
     }
 
     export function hasActivationProjectAsync() {
@@ -138,9 +138,9 @@ namespace pxt.winrt {
     }
 
     let initialActivationDeferred: Promise.Resolver<ActivationArgs>;
-    let importHex: (hex: pxt.cpp.HexFile, createNewIfFailed?: boolean) => void;
+    let importHex: (hex: pxt.cpp.HexFile, options?: pxt.editor.ImportFileOptions) => void;
 
-    function fileActivationHandler(args: ActivationArgs, createNewIfFailed = false) {
+    function fileActivationHandler(args: ActivationArgs, openHomeIfFailed = false) {
         if (args.kind === Windows.ApplicationModel.Activation.ActivationKind.file) {
             let info = args as Windows.UI.WebUI.WebUIFileActivatedEventArgs;
             let file: Windows.Storage.IStorageItem = info.files.getAt(0);
@@ -156,7 +156,7 @@ namespace pxt.winrt {
                         dataReader.close();
                         return pxt.cpp.unpackSourceFromHexAsync(new Uint8Array(ar));
                     })
-                    .then((hex) => importHex(hex, createNewIfFailed));
+                    .then((hex) => importHex(hex, { openHomeIfFailed }));
             }
         }
     }
