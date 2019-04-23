@@ -1314,6 +1314,30 @@ export class ProjectView
             }
         }
 
+        if (options && options.extension) {
+            pxt.tickEvent("import.extension");
+            const files = ts.pxtc.Util.jsonTryParse(data.source);
+            if (files) {
+                const n = data.meta.name;
+                const fn = `${data.meta.name}.json`;
+                // insert file into package
+                const mpkg = pkg.mainEditorPkg();
+                if (mpkg) {
+                    pxt.debug(`adding ${fn} to package`);
+                    // save file
+                    mpkg.setFile(fn, data.source);
+                    // patch dependencies
+                    const pxtjson = mpkg.updateConfigAsync(cfg => {
+                        if (!cfg.dependencies)
+                            cfg.dependencies = {};
+                        cfg.dependencies[n] = `pkg:./${fn}`;
+                    })
+                    .done(() => this.reloadHeaderAsync());
+                }
+            }
+            return;
+        }
+
         const importer = this.hexFileImporters.filter(fi => fi.canImport(data))[0];
         if (importer) {
             pxt.tickEvent("import." + importer.id);
@@ -1376,7 +1400,7 @@ export class ProjectView
             this.importProjectFile(file, options);
         } else if (this.isAssetFile(file.name)) {
             // assets need to go before PNG source import below, since target might want PNG assets
-            this.importAssetFile(file, options)
+            this.importAssetFile(file)
         } else if (this.isPNGFile(file.name)) {
             this.importPNGFile(file, options);
         } else {
