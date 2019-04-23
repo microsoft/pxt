@@ -840,6 +840,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (debugging) {
             this.toolbox.hide();
         } else {
+            this.debuggerToolbox = null;
             this.toolbox.show();
         }
 
@@ -1212,13 +1213,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
 
         if (brk && this.isDebugging() && this.debuggerToolbox) {
-            if (this.isDebugging() && this.debuggerToolbox) {
-                this.debuggerToolbox.setState({
-                    lastBreakpoint: brk,
-                    currentFrame: 0
-                });
-                this.resize();
-            }
+            this.debuggerToolbox.setBreakpoint(brk);
+            this.resize();
         }
 
         return true;
@@ -1243,6 +1239,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     clearHighlightedStatements() {
         if (this.editor && this.highlightDecorations)
             this.editor.deltaDecorations(this.highlightDecorations, []);
+        if (this.debuggerToolbox)
+            this.debuggerToolbox.setBreakpoint(null);
     }
 
     private partitionBlocks() {
@@ -1479,7 +1477,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
-    protected revealBreakpointLocation = (id: number) => {
+    protected revealBreakpointLocation = (id: number, frameIndex: number) => {
         if (!this.breakpoints) return;
 
         const loc = this.breakpoints.getLocationOfBreakpoint(id);
@@ -1496,7 +1494,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.highilightStatementCore(loc, true);
         }
 
-        if (this.debuggerToolbox) this.debuggerToolbox.setActiveFrame(id);
+        if (this.debuggerToolbox) this.debuggerToolbox.setState({ currentFrame: frameIndex });
     }
 
     private showSearchFlyout() {

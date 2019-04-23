@@ -589,6 +589,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (debugging) {
             this.toolbox.hide();
         } else {
+            this.debuggerToolbox = null;
             this.toolbox.show();
         }
         ReactDOM.render(debuggerToolbox, container);
@@ -808,15 +809,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (this.debuggerToolbox) {
             const visibleVars = Blockly.Variables.allUsedVarModels(this.editor).map((variable: any) => variable.name as string);
 
-            this.debuggerToolbox.setState({
-                lastBreakpoint: brk,
-                varFilters: visibleVars
-            });
+            this.debuggerToolbox.setBreakpoint(brk, visibleVars);
         }
     }
 
     clearHighlightedStatements() {
         this.editor.highlightBlock(null);
+        if (this.debuggerToolbox) this.debuggerToolbox.setBreakpoint(null);
     }
 
     openTypeScript() {

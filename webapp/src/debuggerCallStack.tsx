@@ -1,12 +1,11 @@
 import * as React from "react";
-import { getKeyForFrame } from "./debuggerVariables";
 import { DebuggerTable, DebuggerTableRow } from "./debuggerTable";
 
 
 export interface DebuggerCallStackProps {
     stackframes: pxsim.StackFrameInfo[];
     activeFrame?: number;
-    openLocation?: (breakpoint: number) => void;
+    openLocation?: (breakpoint: number, frameIndex: number) => void;
 }
 
 export interface DebuggerCallStackState {
@@ -20,13 +19,18 @@ export class DebuggerCallStack extends React.Component<DebuggerCallStackProps, D
     render() {
         return (
             <DebuggerTable header={lf("Call Stack")}>
-                {this.props.stackframes.map((sf, index) =>
-                    <DebuggerTableRow key={getKeyForFrame(sf.funcInfo)}
-                        refID={getKeyForFrame(sf.funcInfo)}
+                {this.props.stackframes.map((sf, index) => {
+                    if (!sf.breakpointId) return null;
+
+                    const key = sf.breakpointId + "_" + index
+
+                    return <DebuggerTableRow key={key}
+                        refID={key}
                         onClick={this.handleRowClick}
                         leftText={sf.funcInfo.functionName}
                         rightText={`${sf.funcInfo.fileName}:${sf.funcInfo.line}`}
                         icon={index === this.props.activeFrame ? "arrow right" : undefined} />
+                    }
                 )}
             </DebuggerTable>
         );
@@ -35,11 +39,11 @@ export class DebuggerCallStack extends React.Component<DebuggerCallStackProps, D
     protected handleRowClick = (e: React.SyntheticEvent<HTMLDivElement>, component: DebuggerTableRow) => {
         if (!this.props.openLocation) return;
 
-        const stackFrame = this.props.stackframes.filter(sf => getKeyForFrame(sf.funcInfo) === component.props.refID)[0];
+        const [id, index] = (component.props.refID as string).split("_").map(n => parseInt(n));
+        const stackFrame = this.props.stackframes[index];
 
-        if (stackFrame) {
-            this.props.openLocation(stackFrame.breakpointId);
-            this.setState({ activeFrame: this.props.stackframes.indexOf(stackFrame) });
+        if (stackFrame && stackFrame.breakpointId === id) {
+            this.props.openLocation(stackFrame.breakpointId, index);
         }
     }
 }

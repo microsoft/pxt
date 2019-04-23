@@ -21,6 +21,7 @@ interface Variable {
 
 interface DebuggerVariablesProps  {
     apis: pxt.Map<pxtc.SymbolInfo>;
+    sequence: number;
     breakpoint?: pxsim.DebuggerBreakpointMessage;
     filters?: string[]
     activeFrame?: number;
@@ -30,6 +31,7 @@ interface DebuggerVariablesState {
     globalFrame: ScopeVariables;
     stackFrames: ScopeVariables[];
     nextID: number;
+    renderedSequence?: number;
 
     frozen?: boolean;
 }
@@ -63,14 +65,13 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
     }
 
     componentDidUpdate(prevProps: DebuggerVariablesProps) {
-        if ((prevProps.breakpoint && prevProps.breakpoint.breakpointId) !== (this.props.breakpoint && this.props.breakpoint.breakpointId)) {
-
-            if (this.props.breakpoint) {
+        if (this.props.breakpoint) {
+            if (this.props.sequence != this.state.renderedSequence) {
                 this.updateVariables(this.props.breakpoint.globals, this.props.breakpoint.stackframes, this.props.filters);
             }
-            else {
-                this.setState({ frozen: true })
-            }
+        }
+        else if (!this.state.frozen) {
+            this.setState({ frozen: true });
         }
     }
 
@@ -135,8 +136,8 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
         if (stackFrames) {
             const oldFrames = this.state.stackFrames;
 
-            updatedFrames = stackFrames.map(sf => {
-                const key = getKeyForFrame(sf.funcInfo);
+            updatedFrames = stackFrames.map((sf, index) => {
+                const key = sf.breakpointId + "_" + index;
 
                 for (const frame of oldFrames) {
                     if (frame.key === key) return updateScope(frame, sf.locals, getArgArray(sf.arguments));
@@ -152,12 +153,18 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
             globalFrame: updatedGlobals,
             stackFrames: updatedFrames || [],
             nextID: nextId,
+            renderedSequence: this.props.sequence,
             frozen: false
         });
 
         function getArgArray(info: pxsim.FunctionArgumentsInfo): Variable[] {
             if (info) {
-                return [{ name: "this", value: info.thisParam }, ...info.params]
+                if (info.thisParam != null) {
+                    return [{ name: "this", value: info.thisParam }, ...info.params]
+                }
+                else {
+                    return info.params;
+                }
             }
             return []
         }
@@ -171,6 +178,8 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
     }
 
     protected handleComponentClick = (e: React.SyntheticEvent<HTMLDivElement>, component: DebuggerTableRow) => {
+        if (this.state.frozen) return;
+
         const id = component.props.refID;
 
         for (const v of this.getFullVariableList()) {
@@ -205,7 +214,7 @@ export class DebuggerVariables extends data.Component<DebuggerVariablesProps, De
             delete v.children;
             this.setState({ globalFrame: this.state.globalFrame })
         } else {
-            if (!v.value.id) return;
+            if (!v.value || !v.value.id) return;
             // We filter the getters we want to call for this variable.
             let allApis = this.props.apis;
             let matcher = new RegExp("^((.+\.)?" + v.value.type + ")\.");
@@ -334,8 +343,4 @@ function shouldShowValueOnHover(type: string): boolean {
         default:
             return false;
     }
-}
-
-export function getKeyForFrame(funcInfo: pxtc.FunctionLocationInfo) {
-    return funcInfo.functionName + ";" + funcInfo.fileName + ";" + funcInfo.start;
 }
