@@ -265,7 +265,7 @@ export class EditorPackage {
         if (!f) {
             f = this.setFile(n, v);
             p = p.then(() => this.updateConfigAsync(cfg => cfg.files.indexOf(n) < 0 ? cfg.files.push(n) : 0))
-                p.then(() => this.savePkgAsync())
+            p.then(() => this.savePkgAsync())
         }
         return p.then(() => f.setContentAsync(v));
     }
@@ -440,7 +440,9 @@ class Host
             // TODO don't take dependency on mainPkg!
             const filesSrc = mainPkg.readFile(pkg.verArgument().replace(/^\.\//, ''));
             const files = ts.pxtc.Util.jsonTryParse(filesSrc);
-            epkg.setFiles(files);
+            if (files)
+                epkg.setFiles(files);
+            else pxt.log(`failed to resolve ${pkg.version()}`);
             return Promise.resolve();
         } else if (proto == "invalid") {
             pxt.log(`skipping invalid pkg ${pkg.id}`);
