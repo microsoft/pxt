@@ -356,7 +356,8 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
         const disableFileAccessinMaciOs = pxt.appTarget.appTheme.disableFileAccessinMaciOs && (pxt.BrowserUtils.isIOS() || pxt.BrowserUtils.isMac());
         const showImportFile = mode == ScriptSearchMode.Extensions
             && pxt.appTarget.appTheme.importExtensionFiles
-            && !disableFileAccessinMaciOs;
+            && !disableFileAccessinMaciOs
+            && !searchFor;
 
         const compareConfig = (a: pxt.PackageConfig, b: pxt.PackageConfig) => {
             // core first
@@ -507,7 +508,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                 ariaLabel={lf("Open files from your computer")}
                                 role="button"
                                 key={'import'}
-                                icon="upload"
+                                icon="upload ui cardimage"
                                 iconColor="secondary"
                                 name={lf("Import File...")}
                                 description={lf("Open files from your computer")}
