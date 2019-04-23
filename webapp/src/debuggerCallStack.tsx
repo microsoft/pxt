@@ -29,7 +29,8 @@ export class DebuggerCallStack extends React.Component<DebuggerCallStackProps, D
                         onClick={this.handleRowClick}
                         leftText={sf.funcInfo.functionName}
                         rightText={`${sf.funcInfo.fileName}:${sf.funcInfo.line}`}
-                        icon={index === this.props.activeFrame ? "arrow right" : undefined} />
+                        icon={index === this.props.activeFrame ? "arrow right" : undefined}
+                        rowClass="callstack-row" />
                     }
                 )}
             </DebuggerTable>

@@ -29,13 +29,14 @@ export interface DebuggerTableRowProps {
     leftTitle?: string;
     leftClass?: string;
     depth?: number;
+    rowClass?: string;
 
     onClick?: (e: React.SyntheticEvent<HTMLDivElement>, component: DebuggerTableRow) => void;
 }
 
 export class DebuggerTableRow extends React.Component<DebuggerTableRowProps> {
     render() {
-        return <div role="listitem" className="item" onClick={this.props.onClick ? this.clickHandler : undefined}>
+        return <div role="listitem" className={`item ${this.props.rowClass || ""}`} onClick={this.props.onClick ? this.clickHandler : undefined}>
             <div className="variableAndValue">
                 <div className={`variable varname ${this.props.leftClass || ""}`} title={this.props.leftTitle} style={this.props.depth ? { marginLeft: (this.props.depth * 0.75) + "em" } : undefined}>
                     { <i className={`ui icon small ${this.props.icon || "invisible"}`} /> }
