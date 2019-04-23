@@ -729,7 +729,7 @@ export class ProjectView
         return core.showLoadingAsync("updateeditorfile", lf("loading editor..."), this.setStateAsync({ updatingEditorFile: true })
             .then(() => {
                 simRunning = this.state.simState != pxt.editor.SimState.Stopped;
-                if (!this.state.currFile.virtual) { // switching to serial should not reset the sim
+                if (!this.state.currFile.virtual && !this.state.debugging) { // switching to serial should not reset the sim
                     this.stopSimulator();
                     if (simRunning || this.state.autoRun) {
                         simulator.setPending();

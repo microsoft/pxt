@@ -107,7 +107,7 @@ export function compileAsync(options: CompileOptions = {}): Promise<pxtc.Compile
         .then(opts => {
             if (options.debug) {
                 opts.breakpoints = true;
-                opts.justMyCode = true;
+                opts.justMyCode = !pxt.appTarget.appTheme.debugExtensionCode;
                 opts.testMode = true;
             }
             if (options.trace) {

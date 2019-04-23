@@ -326,6 +326,7 @@ declare namespace pxt {
         autoWebUSBDownload?: boolean; // automatically prompt user for webusb download
         qrCode?: boolean; // generate QR code for shared urls
         importExtensionFiles?: boolean; // import extensions from files
+        debugExtensionCode?: boolean; // debug extension and libs code in the Monaco debugger
     }
 
     interface SocialOptions {
@@ -744,7 +745,7 @@ declare namespace ts.pxtc {
 
 declare namespace pxt.tutorial {
     interface TutorialInfo {
-        editor: string; // preferred editor or blocks by default 
+        editor: string; // preferred editor or blocks by default
         steps: TutorialStepInfo[];
         code: string; // all code
     }
@@ -759,7 +760,7 @@ declare namespace pxt.tutorial {
     }
 
     interface TutorialOptions {
-        tutorial?: string; // tutorial        
+        tutorial?: string; // tutorial
         tutorialName?: string; // tutorial title
         tutorialReportId?: string; // if this tutorial was user generated, the report abuse id
         tutorialStepInfo?: pxt.tutorial.TutorialStepInfo[];
