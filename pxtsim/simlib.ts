@@ -66,7 +66,7 @@ namespace pxsim {
 
         // this handles ANY (0) semantics for id and evid
         private getQueues(id: number | string, evid: number | string, bg: boolean) {
-            let ret = [ this.start(0, 0, bg) ]
+            let ret = [this.start(0, 0, bg)]
             if (id == 0 && evid == 0)
                 return ret
             if (id == 0)
@@ -364,12 +364,26 @@ namespace pxsim {
             }
         }
 
-        function muteAllChannels() {
+        let instrStopId = 1
+        export function muteAllChannels() {
+            instrStopId++
             while (channels.length)
                 channels[0].remove()
         }
 
+        export function queuePlayInstructions(when: number, b: RefBuffer) {
+            const prevStop = instrStopId
+            Promise.delay(when)
+                .then(() => {
+                    if (prevStop != instrStopId)
+                        return Promise.resolve()
+                    return playInstructionsAsync(b)
+                })
+                .done()
+        }
+
         export function playInstructionsAsync(b: RefBuffer) {
+            const prevStop = instrStopId
             let ctx = context();
 
             let idx = 0
@@ -402,7 +416,7 @@ namespace pxsim {
                 const startVol = BufferMethods.getNumber(b, BufferMethods.NumberFormat.UInt16LE, idx + 6)
                 const endVol = BufferMethods.getNumber(b, BufferMethods.NumberFormat.UInt16LE, idx + 8)
 
-                if (!ctx)
+                if (!ctx || prevStop != instrStopId)
                     return Promise.delay(duration)
 
                 if (currWave != soundWaveIdx || currFreq != freq) {
