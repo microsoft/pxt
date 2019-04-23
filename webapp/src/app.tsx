@@ -1220,30 +1220,30 @@ export class ProjectView
         return false
     }
 
-    importProjectCoreAsync(buf: Uint8Array) {
+    importProjectCoreAsync(buf: Uint8Array, options?: pxt.editor.ImportFileOptions) {
         return (buf[0] == '{'.charCodeAt(0) ?
             Promise.resolve(pxt.U.uint8ArrayToString(buf)) :
             pxt.lzmaDecompressAsync(buf))
             .then(contents => {
                 let data = JSON.parse(contents) as pxt.cpp.HexFile;
-                this.importHex(data);
+                this.importHex(data, options);
             }).catch(e => {
                 core.warningNotification(lf("Sorry, we could not import this project."))
                 this.openHome();
             });
     }
 
-    importHexFile(file: File) {
+    importHexFile(file: File, options?: pxt.editor.ImportFileOptions) {
         if (!file) return;
         pxt.cpp.unpackSourceFromHexFileAsync(file)
-            .then(data => this.importHex(data))
+            .then(data => this.importHex(data, options))
             .catch(e => {
                 pxt.reportException(e);
                 core.warningNotification(lf("Sorry, we could not recognize this file."))
             });
     }
 
-    importBlocksFiles(file: File) {
+    importBlocksFiles(file: File, options?: pxt.editor.ImportFileOptions) {
         if (!file) return;
         ts.pxtc.Util.fileReadAsTextAsync(file)
             .done(contents => {
@@ -1254,7 +1254,7 @@ export class ProjectView
             })
     }
 
-    importTypescriptFile(file: File) {
+    importTypescriptFile(file: File, options?: pxt.editor.ImportFileOptions) {
         if (!file) return;
         ts.pxtc.Util.fileReadAsTextAsync(file)
             .done(contents => {
@@ -1265,18 +1265,18 @@ export class ProjectView
             })
     }
 
-    importProjectFile(file: File) {
+    importProjectFile(file: File, options?: pxt.editor.ImportFileOptions) {
         if (!file) return;
         ts.pxtc.Util.fileReadAsBufferAsync(file)
-            .then(buf => this.importProjectCoreAsync(buf))
+            .then(buf => this.importProjectCoreAsync(buf, options))
     }
 
-    importPNGFile(file: File) {
+    importPNGFile(file: File, options?: pxt.editor.ImportFileOptions) {
         if (!file) return;
         ts.pxtc.Util.fileReadAsBufferAsync(file)
             .then(buf => screenshot.decodeBlobAsync("data:image/png;base64," +
                 btoa(pxt.Util.uint8ArrayToString(buf))))
-            .then(buf => this.importProjectCoreAsync(buf))
+            .then(buf => this.importProjectCoreAsync(buf, options))
     }
 
     importAssetFile(file: File) {
@@ -1288,14 +1288,13 @@ export class ProjectView
             .done()
     }
 
-    importHex(data: pxt.cpp.HexFile, createNewIfFailed: boolean = false) {
-        const targetId = pxt.appTarget.id;
+    importHex(data: pxt.cpp.HexFile, options?: pxt.editor.ImportFileOptions) {
         if (!data || !data.meta) {
             if (data && (data as any)[pxt.CONFIG_NAME]) {
                 data = cloudsync.reconstructMeta(data as any)
             } else {
                 core.warningNotification(lf("Sorry, we could not recognize this file."))
-                if (createNewIfFailed) this.openHome();
+                if (options && options.openHomeIfFailed) this.openHome();
                 return;
             }
         }
@@ -1309,10 +1308,34 @@ export class ProjectView
             const checkAsync = this.tryCheckTargetVersionAsync(data.meta.targetVersions && data.meta.targetVersions.target);
             if (checkAsync) {
                 checkAsync.done(() => {
-                    if (createNewIfFailed) this.newProject();
+                    if (options && options.openHomeIfFailed) this.newProject();
                 });
                 return;
             }
+        }
+
+        if (options && options.extension) {
+            pxt.tickEvent("import.extension");
+            const files = ts.pxtc.Util.jsonTryParse(data.source);
+            if (files) {
+                const n = data.meta.name;
+                const fn = `${data.meta.name}.json`;
+                // insert file into package
+                const mpkg = pkg.mainEditorPkg();
+                if (mpkg) {
+                    pxt.debug(`adding ${fn} to package`);
+                    // save file
+                    mpkg.setContentAsync(fn, data.source)
+                        .then(() => mpkg.updateConfigAsync(cfg => {
+                            if (!cfg.dependencies)
+                                cfg.dependencies = {};
+                            cfg.dependencies[n] = `pkg:${fn}`;
+                        }))
+                        .then(() => mpkg.savePkgAsync())
+                        .done(() => this.reloadHeaderAsync());
+                }
+            }
+            return;
         }
 
         const importer = this.hexFileImporters.filter(fi => fi.canImport(data))[0];
@@ -1326,13 +1349,13 @@ export class ProjectView
                         pxt.reportException(e, { importer: importer.id });
                         core.hideLoading("importhex");
                         core.errorNotification(lf("Oops, something went wrong when importing your project"));
-                        if (createNewIfFailed) this.openHome();
+                        if (options && options.openHomeIfFailed) this.openHome();
                     }));
         }
         else {
             core.warningNotification(lf("Sorry, we could not import this project."))
             pxt.tickEvent("warning.importfailed");
-            if (createNewIfFailed) this.openHome();
+            if (options && options.openHomeIfFailed) this.openHome();
         }
     }
 
@@ -1365,21 +1388,21 @@ export class ProjectView
         );
     }
 
-    importFile(file: File) {
+    importFile(file: File, options?: pxt.editor.ImportFileOptions) {
         if (!file || pxt.shell.isReadOnly()) return;
         if (this.isHexFile(file.name)) {
-            this.importHexFile(file)
+            this.importHexFile(file, options)
         } else if (this.isBlocksFile(file.name)) {
-            this.importBlocksFiles(file)
+            this.importBlocksFiles(file, options)
         } else if (this.isTypescriptFile(file.name)) {
-            this.importTypescriptFile(file);
+            this.importTypescriptFile(file, options);
         } else if (this.isProjectFile(file.name)) {
-            this.importProjectFile(file);
+            this.importProjectFile(file, options);
         } else if (this.isAssetFile(file.name)) {
             // assets need to go before PNG source import below, since target might want PNG assets
             this.importAssetFile(file)
         } else if (this.isPNGFile(file.name)) {
-            this.importPNGFile(file);
+            this.importPNGFile(file, options);
         } else {
             const importer = this.resourceImporters.filter(fi => fi.canImport(file))[0];
             if (importer) {
@@ -1390,11 +1413,11 @@ export class ProjectView
         }
     }
 
-    importProjectFromFileAsync(buf: Uint8Array): Promise<void> {
+    importProjectFromFileAsync(buf: Uint8Array, options?: pxt.editor.ImportFileOptions): Promise<void> {
         return pxt.lzmaDecompressAsync(buf)
             .then((project) => {
                 let hexFile = JSON.parse(project) as pxt.cpp.HexFile;
-                return this.importHex(hexFile);
+                return this.importHex(hexFile, options);
             }).catch(() => {
                 return this.newProject();
             })
@@ -2589,11 +2612,11 @@ export class ProjectView
         });
     }
 
-    showImportFileDialog() {
-        dialogs.showImportFileDialogAsync().done(res => {
+    showImportFileDialog(options?: pxt.editor.ImportFileOptions) {
+        dialogs.showImportFileDialogAsync(options).done(res => {
             if (res) {
                 pxt.tickEvent("app.open.file");
-                this.importFile(res);
+                this.importFile(res, options);
             }
         });
     }
@@ -3468,7 +3491,7 @@ document.addEventListener("DOMContentLoaded", () => {
     pxt.hex.showLoading = (msg) => core.showLoading("hexcloudcompiler", msg);
     pxt.hex.hideLoading = () => core.hideLoading("hexcloudcompiler");
     pxt.docs.requireMarked = () => require("marked");
-    const importHex = (hex: pxt.cpp.HexFile, createNewIfFailed = false) => theEditor.importHex(hex, createNewIfFailed);
+    const importHex = (hex: pxt.cpp.HexFile, options?: pxt.editor.ImportFileOptions) => theEditor.importHex(hex, options);
 
     const hm = /^(https:\/\/[^/]+)/.exec(window.location.href)
     if (hm) Cloud.apiRoot = hm[1] + "/api/"

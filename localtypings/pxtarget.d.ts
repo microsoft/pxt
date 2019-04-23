@@ -325,6 +325,7 @@ declare namespace pxt {
         simGifWidth?: number; // with in pixels for gif frames
         autoWebUSBDownload?: boolean; // automatically prompt user for webusb download
         qrCode?: boolean; // generate QR code for shared urls
+        importExtensionFiles?: boolean; // import extensions from files
     }
 
     interface SocialOptions {
