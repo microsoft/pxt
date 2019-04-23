@@ -38,7 +38,6 @@ namespace pxt.py {
     const indent1 = indent(1)
 
     // TODO map names from camel case to snake case
-    // TODO disallow keywords & builtins (e.g. "range", "print")
     // TODO handle shadowing
     // TODO handle types at initialization when ambiguous (e.g. x = [], x = None)
 
@@ -58,6 +57,8 @@ namespace pxt.py {
         let lhost = new ts.pxtc.LSHost(prog)
         // let ls = ts.createLanguageService(lhost) // TODO
         let file = prog.getSourceFile(filename)
+        // TODO(dz):
+        // let reservedWords = pxt.U.toSet(getReservedNmes(), s => s)
         let [renameMap, globalNames] = ts.pxtc.decompiler.buildRenameMap(prog, file)
         let symbols = pxtc.getApiInfo(prog)
 
@@ -77,6 +78,11 @@ namespace pxt.py {
         }
         function popScope(): Scope {
             return env.shift()
+        }
+        function getReservedNmes(): string[] {
+            // TODO(dz) get full list
+            const reservedNames = "def list print".split(" ").filter(s => s)
+            return reservedNames
         }
         function tryGetPyName(exp: ts.BindingPattern | ts.PropertyName | ts.EntityName | ts.PropertyAccessExpression): string {
             if (!exp.getSourceFile())
