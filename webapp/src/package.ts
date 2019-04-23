@@ -437,6 +437,10 @@ class Host
             epkg.setFiles(pxt.getEmbeddedScript(pkg.verArgument()))
             return Promise.resolve()
         } else if (proto == "pkg") {
+            // TODO don't take dependency on mainPkg!
+            const filesSrc = mainPkg.readFile(pkg.verArgument().replace(/^\.\//, ''));
+            const files = ts.pxtc.Util.jsonTryParse(filesSrc);
+            epkg.setFiles(files);
             return Promise.resolve();
         } else if (proto == "invalid") {
             pxt.log(`skipping invalid pkg ${pkg.id}`);

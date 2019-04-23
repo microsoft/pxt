@@ -1325,14 +1325,14 @@ export class ProjectView
                 if (mpkg) {
                     pxt.debug(`adding ${fn} to package`);
                     // save file
-                    mpkg.setFile(fn, data.source);
-                    // patch dependencies
-                    const pxtjson = mpkg.updateConfigAsync(cfg => {
-                        if (!cfg.dependencies)
-                            cfg.dependencies = {};
-                        cfg.dependencies[n] = `pkg:./${fn}`;
-                    }).then(() => mpkg.savePkgAsync())
-                    .done(() => this.reloadHeaderAsync());
+                    mpkg.setContentAsync(fn, data.source)
+                        .then(() => mpkg.updateConfigAsync(cfg => {
+                            if (!cfg.dependencies)
+                                cfg.dependencies = {};
+                            cfg.dependencies[n] = `pkg:${fn}`;
+                        }))
+                        .then(() => mpkg.savePkgAsync())
+                        .done(() => this.reloadHeaderAsync());
                 }
             }
             return;
