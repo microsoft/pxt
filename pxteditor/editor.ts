@@ -143,6 +143,7 @@ namespace pxt.editor {
 
     export interface ImportFileOptions {
         extension?: boolean;
+        openHomeIfFailed?: boolean;
     }
 
     export interface IProjectView {
