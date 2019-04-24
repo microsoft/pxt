@@ -1138,7 +1138,7 @@ namespace pxt.py {
                     B.mkText("; "),
                     r.args.length >= 3 ?
                         B.mkInfix(ref, "+=", expr(r.args[2])) :
-                        B.mkInfix(null, "++", ref),
+                        B.mkPostfix([ref], "++"),
                     B.mkText(")"),
                     stmts(n.body))
             }

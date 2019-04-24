@@ -3653,8 +3653,53 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
                             return a === b;
                         }
 
-                        if (!compareBaselines(ts1, ts2)) {
+                        // if (!compareBaselines(ts1, ts2)) {
+                        // console.log("TS mismatch :/")
+
+                        let getLines = (s: string): string[] =>
+                            [s.split("\n")
+                                // ignore function names
+                                .map(l => {
+                                    let m: RegExpExecArray;
+                                    do {
+                                        m = /function(.+)\(/.exec(l)
+                                        if (m && m.length > 1) {
+                                            l = l.replace(`function${m[1]}`, "function")
+                                        }
+                                    } while (m && m.length > 1)
+                                    return l
+                                })
+                                // ignore whitespace
+                                .map(l => l.replace(/\s/g, ""))
+                                // ignore linebreak differences
+                                .map(l => l.replace(/\n/g, ""))
+                                // ignore semi-colons
+                                .map(l => l.replace(/\;/g, ""))
+                                // ignore blank lines
+                                .filter(l => l)
+                                .join("")]
+
+                        let lns1 = getLines(ts1)
+                        let lns2 = getLines(ts2)
+                        let mismatch = lns1.length != lns2.length
+                        for (let i = 0; i < lns1.length && i < lns2.length; i++) {
+                            let l1 = lns1[i]
+                            let l2 = lns2[i]
+                            if (l1 != l2) {
+                                // TODO(dz): yay!
+                                console.log(`Mismatch on line ${i + 1}. Original:`)
+                                console.log(l1)
+                                console.log("decompiled->compiled:")
+                                console.log(l2)
+                                mismatch = true
+                                break
+                            }
+                        }
+
+                        if (mismatch) {
                             console.log("TS mismatch :/")
+                            // TODO(dz): generate diags
+                            return addFailure(fn, [])
                         } else {
                             console.log("TS same :)")
                         }
