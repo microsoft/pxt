@@ -30,12 +30,7 @@ TypeScript `any` type is supported in the runtime with dynamic member lookup
 (though it still uses compact C++-like memory layout for classes).
 Some of this have not been fully implemented or exposed to the user yet though.
 
-The main disadvantage are some limitations in compatibility with the full Python language.
-The MPY parser handles the whole of Python, and thus missing features
-are due to things not yet implemented in the converter, or limitations
-of the runtime (as is to be expected on an embedded platform).
-All of these have arguably low educational value - the precise details of member
-lookup are of limited usefulness when explaining what a for loop is.
+The disadvantage is some limitations in compatibility with the full Python language.
 
 The main missing feature (from both STS and MPY) is `eval`,
 and this one is very unlikely to ever change.
