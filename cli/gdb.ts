@@ -30,7 +30,7 @@ function getBMPSerialPortsAsync(): Promise<string[]> {
                         const pid = parseInt(m[3], 16)
                         const mi = parseInt(m[4], 16)
                         if (vid == 0x1d50 && pid == 0x6018 && mi == 0) {
-                            res.push(comp)
+                            res.push("\\\\.\\" + comp)
                         }
                     }
                 })
