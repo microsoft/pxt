@@ -1129,6 +1129,8 @@ namespace ts.pxtc.service {
 \``;
 
     export function getSnippet(apis: pxt.Map<SymbolInfo>, fn: SymbolInfo, n: ts.FunctionLikeDeclaration, python?: boolean): string {
+        const PY_INDENT: string = (pxt as any).py.INDENT;
+
         let findex = 0;
         let preStmt = "";
 
@@ -1309,7 +1311,7 @@ namespace ts.pxtc.service {
                 let n = fnName || "fn";
                 if (functionCount++ > 0) n += functionCount;
                 n = snakify(n).toLowerCase();
-                preStmt += `def ${n}${functionArgument}:\n\t${returnValue || "pass"}\n`;
+                preStmt += `def ${n}${functionArgument}:\n${PY_INDENT}${returnValue || "pass"}\n`;
                 return n;
             } else {
                 let functionArgument = "()";
@@ -1325,7 +1327,7 @@ namespace ts.pxtc.service {
         function emitFn(n: string): string {
             if (python) {
                 if (n) n = snakify(n).toLowerCase();
-                preStmt += `def ${n}():\n\tpass\n`;
+                preStmt += `def ${n}():\n${PY_INDENT}pass\n`;
                 return n;
             } else return `function () {}`;
         }
