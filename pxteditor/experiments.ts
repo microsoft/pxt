@@ -106,6 +106,11 @@ namespace pxt.editor.experiments {
                 id: "importExtensionFiles",
                 name: lf("Import Extension Files"),
                 description: lf("Import Extensions from compiled project files")
+            },
+            {
+                id: "debugExtensionCode",
+                name: lf("Debug Extension Code"),
+                description: lf("Use the JavaScript debugger to debug extension code")
             }
         ].filter(experiment => ids.indexOf(experiment.id) > -1);
     }

@@ -191,6 +191,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private annotationLines: number[];
     private editorViewZones: number[];
     private highlightDecorations: string[] = [];
+    private highlightedBreakpoint: number;
 
     hasBlocks() {
         if (!this.currFile) return true
@@ -827,7 +828,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
 
         const container = document.getElementById('monacoDebuggerToolbox');
-        if (!container) return;
+        if (!container || !this.blockInfo) return;
 
         const debugging = this.isDebugging();
         const debuggerToolbox = debugging ? <DebuggerToolbox
@@ -937,6 +938,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
                 if (this.breakpoints) {
                     this.breakpoints.loadBreakpointsForFile(file, this.editor);
+                    const loc = this.breakpoints.getLocationOfBreakpoint(this.highlightedBreakpoint);
+                    if (loc && loc.fileName === file.getTypeScriptName()) {
+                        this.highilightStatementCore(loc, true);
+                    }
                 }
 
                 if (this.fileType == pxt.editor.FileType.Markdown)
@@ -1197,20 +1202,21 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage) {
         if (!stmt) {
             this.clearHighlightedStatements();
+            if (this.debuggerToolbox) this.debuggerToolbox.setBreakpoint(null);
             return false;
         }
         else if (!this.editor) {
             return false;
         }
 
-        const mainPkg = pkg.mainEditorPkg()
-        if (this.currFile.name !== stmt.fileName && this.isDebugging() && mainPkg.lookupFile(stmt.fileName)) {
-            this.parent.setFile(mainPkg.lookupFile(stmt.fileName))
+        if (this.currFile.getTypeScriptName() !== stmt.fileName && this.isDebugging() && lookupFile(stmt.fileName)) {
+            this.parent.setFile(lookupFile(stmt.fileName))
         }
-
-        if (!this.highilightStatementCore(stmt, !!brk)) {
+        else if (!this.highilightStatementCore(stmt, !!brk)) {
             return false;
         }
+
+        this.highlightedBreakpoint = brk.breakpointId;
 
         if (brk && this.isDebugging() && this.debuggerToolbox) {
             this.debuggerToolbox.setBreakpoint(brk);
@@ -1239,8 +1245,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     clearHighlightedStatements() {
         if (this.editor && this.highlightDecorations)
             this.editor.deltaDecorations(this.highlightDecorations, []);
-        if (this.debuggerToolbox)
-            this.debuggerToolbox.setBreakpoint(null);
     }
 
     private partitionBlocks() {
@@ -1483,11 +1487,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const loc = this.breakpoints.getLocationOfBreakpoint(id);
         if (!loc) return;
 
+        this.highlightedBreakpoint = id;
 
-        if (this.currFile.name !== loc.fileName) {
+        if (this.currFile.getTypeScriptName() !== loc.fileName) {
             const mainPkg = pkg.mainEditorPkg()
-            if (mainPkg.lookupFile(loc.fileName)) {
-                this.parent.setFile(mainPkg.lookupFile(loc.fileName))
+            if (lookupFile(loc.fileName)) {
+                this.parent.setFile(lookupFile(loc.fileName))
             }
         }
         else {
@@ -1935,4 +1940,15 @@ function createIndent(length: number) {
     let res = '';
     for (let i = 0; i < length; i++) res += " ";
     return res;
+}
+
+function lookupFile(file: string): pkg.File {
+    const mPkg = pkg.mainEditorPkg();
+    if (mPkg.files[file]) return mPkg.files[file];
+
+    const found = mPkg.lookupFile(file);
+
+    if (found) return found;
+
+    return undefined;
 }

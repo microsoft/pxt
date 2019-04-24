@@ -24,11 +24,14 @@ export class DebuggerCallStack extends React.Component<DebuggerCallStackProps, D
 
                     const key = sf.breakpointId + "_" + index
 
+                    let fileName = sf.funcInfo.fileName as string;
+                    if (fileName.indexOf("pxt_modules/") === 0) fileName = fileName.slice(12);
+
                     return <DebuggerTableRow key={key}
                         refID={key}
                         onClick={this.handleRowClick}
                         leftText={sf.funcInfo.functionName}
-                        rightText={`${sf.funcInfo.fileName}:${sf.funcInfo.line}`}
+                        rightText={`${fileName}:${sf.funcInfo.line}`}
                         icon={index === this.props.activeFrame ? "arrow right" : undefined}
                         rowClass="callstack-row" />
                     }
