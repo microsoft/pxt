@@ -1,14 +1,51 @@
-# Python Converter
+# Python Support
 
-**This is work in progress**
+**Python support in MakeCode is experimental**
 
-The Python to TypeScript converter doesn't support all of Python language.
-This document describes the differences and tracks various TODOs.
+We currently refer to TypeScript version supported by MakeCode as MakeCode TypeScript (MTS)
+and, consequently, our Python is called MakeCode Python (MPY).
+These names may change in future.
+
+Python support in MakeCode works by converting MPY source code into STS and vice versa.
+The translation is mostly 1:1 (that is for every statement of STS you usually get
+one statement of MPY and vice versa).
+The code generated in both directions is meant to be human readable.
+The API surface stays largely the same between STS and MPY, except that camel case
+like `onChatCommand` are converted into snake case eg `on_chat_command` where
+appropriate (that is excluding class and enum names; enum members are converted
+to upper snake case).
+
+This approach has the following advantages:
+* the blocks to code and code to blocks is supported for both STS and MPY
+  (in case of MPY there is an intermediate conversion to STS)
+* the same high-performance runtime is used across STS and MPY
+  (it's typically 10-100x faster than embedded interpreters)
+* documentation can be converted automatically
+* as the MPY->STS converter infers types, the MPY editor supports
+  smart autocompletion, contextual doc-comment display, etc.
+* features like debugger are easily shared between MPY and STS
+
+The main disadvantage are some limitations in compatibility with the full Python language.
+The MPY parser handles the whole of Python, and thus missing features
+are due to things not yet implemented in the converter, or limitations
+of the runtime (as is to be expected on an embedded platform).
+All of these have arguably low educational value - the precise details of member
+lookup are of limited usefulness when explaining what a for loop is.
+
+The main missing feature (from both STS and MPY) is `eval`,
+and this one is very unlikely to ever change.
+
+Currently, MPY auto-imports all STS namespaces (that is one can say
+`pins.D7.digitalWrite(True)` without saying `import pins` first).
+This is mostly due to MakeCode libraries using a large number of namespaces
+even in simple programs (as they map directly to block categories).
+
 
 ## Not supported
 
+The following are currently not supported.
+
 *  `-*- coding: encoding -*-` (only UTF8 is supported)
-* leading tabs in lines are not allowed at all
 * class private names `__*` are not mangled
 * complex and imaginary numbers
 * big integers
