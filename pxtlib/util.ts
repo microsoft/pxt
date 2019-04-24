@@ -417,6 +417,12 @@ namespace ts.pxtc.Util {
         return r
     }
 
+    export function toSet<T>(arr: T[], f: (t: T) => string): pxt.Map<boolean> {
+        let r: pxt.Map<boolean> = {}
+        arr.forEach(e => { r[f(e)] = true })
+        return r
+    }
+
     export interface ArrayLike<T> {
         [index: number]: T;
         length: number;
