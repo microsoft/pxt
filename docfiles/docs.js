@@ -280,9 +280,29 @@ function setCookieLang(langId) {
 
 function languageOption(code) {
     let locale = pxt.Util.allLanguages[code];
-    return `<div class="ui card link card-selected langoption" data-lang="${code}" role="link" aria-label="${locale.englishName}" 
-        tabindex="0"><div class="content"><div class="header">${locale.localizedName}</div>
-        <div class="description tall">${locale.englishName}</div></div></div>`
+
+    var headerEl = document.createElement('div');
+    headerEl.className = 'header';
+    headerEl.textContent = locale.localizedName;
+
+    var descriptionEl = document.createElement('div');
+    descriptionEl.classList.add('description', 'tall');
+    descriptionEl.textContent = locale.englishName;
+
+    var contentEl = document.createElement('div');
+    contentEl.className = 'content';
+    contentEl.appendChild(headerEl);
+    contentEl.appendChild(descriptionEl);
+
+    var cardEl = document.createElement('div');
+    cardEl.classList.add('ui','card','link','card-selected','langoption');
+    cardEl.dataset.lang = code;
+    cardEl.setAttribute('role', 'link');
+    cardEl.setAttribute('aria-label', locale.englishName);
+    cardEl.setAttribute('tab-index', '0');
+    cardEl.appendChild(contentEl);
+
+    return cardEl;
 }
 
 function setupLangPicker() {
@@ -290,10 +310,11 @@ function setupLangPicker() {
     let availableLocales = pxt.appTarget.appTheme.availableLocales;
     let locales;
     let initialLang = pxt.Util.normalizeLanguageCode(getCookieLang())[0];
-    if (pxt.appTarget.appTheme && availableLocales) {
+    if (pxt.appTarget.appTheme && availableLocales && pxt.appTarget.appTheme.selectLanguage) {
 
-        locales = availableLocales.map(e => languageOption(e)).join("\n");
-        document.querySelector("#availablelocales").innerHTML = locales;
+        let localesContainer = document.querySelector("#availablelocales");
+        locales = availableLocales.map(e => languageOption(e));
+        locales.forEach(card => localesContainer.appendChild(card));
    
         document.querySelector("#langpicker").onclick = function() { 
             $('.ui.modal').modal('show'); 
