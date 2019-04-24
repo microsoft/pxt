@@ -37,7 +37,6 @@ namespace pxt.py {
     }
     const indent1 = indent(1)
 
-    // TODO map names from camel case to snake case
     // TODO handle shadowing
     // TODO handle types at initialization when ambiguous (e.g. x = [], x = None)
 
@@ -961,6 +960,9 @@ namespace pxt.py {
                     break
                 allWords = newWords
             }
+            // 3. if there is only one word, add "on_" prefix
+            if (allWords.length == 1)
+                allWords = ["on", allWords[0]]
 
             return allWords.join("_")
             function dedupWords(words: string[]): string[] {
