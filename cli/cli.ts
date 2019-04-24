@@ -3538,7 +3538,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
         })
         infos.forEach(info => pxt.log(`${f}:(${info.line},${info.start}): ${info.category} ${info.messageText}`));
     }
-    return Promise.map(snippets.reduce((p, c, i) => i < 30 || true ? p.concat([c]) : p, []), (snippet: CodeSnippet) => {
+    return Promise.map(snippets, (snippet: CodeSnippet) => {
         const name = snippet.name;
         const fn = snippet.file || snippet.name;
         pxt.log(`  ${fn} (${snippet.type})`);
