@@ -867,7 +867,10 @@ namespace pxt.py {
             // player.onChat("while",function(num1){while(num1<10){}})
             // -> py -> ts ->
             // player.onChat("while",function(num1:any;/**TODO:type**/){while(num1<10){;}})
-            return B.mkText(": any /** TODO: type **/")
+            // work around using any:
+            // return B.mkText(": any /** TODO: type **/")
+            // but for now we can just omit the type and most of the type it'll be inferable
+            return B.mkText("")
         }
         return B.mkText(": " + t2s(t))
     }
