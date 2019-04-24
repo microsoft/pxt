@@ -55,7 +55,6 @@ namespace pxt.py {
         let lhost = new ts.pxtc.LSHost(prog)
         // let ls = ts.createLanguageService(lhost) // TODO
         let file = prog.getSourceFile(filename)
-        // TODO(dz):
         let reservedWords = pxt.U.toSet(getReservedNmes(), s => s)
         let [renameMap, globalNames] = ts.pxtc.decompiler.buildRenameMap(prog, file, reservedWords)
         let allSymbols = pxtc.getApiInfo(prog)

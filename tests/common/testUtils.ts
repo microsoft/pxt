@@ -102,8 +102,7 @@ export function py2tsAsync(f: string): Promise<string> {
                 throw Error("Failed to get apisInfo")
             opts.apisInfo = apisInfo
 
-            // TODO(dz):
-            // opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
+            opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
 
             let { generated, diagnostics } = pxt.py.py2ts(opts)
 
