@@ -5,7 +5,6 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as pkg from "./package";
 import * as core from "./core";
-import * as debug from "./debugger";
 import * as toolboxeditor from "./toolboxeditor"
 import * as compiler from "./compiler"
 import * as sui from "./sui";
@@ -17,6 +16,8 @@ import { ViewZoneEditorHost, FieldEditorManager } from "./monacoFieldEditorHost"
 
 import Util = pxt.Util;
 import { BreakpointCollection } from "./monacoDebugger";
+import { DebuggerCallStack } from "./debuggerCallStack";
+import { DebuggerToolbox } from "./debuggerToolbox";
 
 const MIN_EDITOR_FONT_SIZE = 10
 const MAX_EDITOR_FONT_SIZE = 40
@@ -181,15 +182,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     protected foldFieldEditorRanges = true;
     protected activeRangeID: number;
     protected hasFieldEditors = !!(pxt.appTarget.appTheme.monacoFieldEditors && pxt.appTarget.appTheme.monacoFieldEditors.length);
-    protected debuggerToolbox: HTMLDivElement;
-    protected debugVariables: debug.DebuggerVariables;
+    protected callStackView: DebuggerCallStack;
     protected breakpoints: BreakpointCollection;
+    protected debuggerToolbox: DebuggerToolbox;
 
     private loadMonacoPromise: Promise<void>;
     private diagSnapshot: string[];
     private annotationLines: number[];
     private editorViewZones: number[];
     private highlightDecorations: string[] = [];
+    private highlightedBreakpoint: number;
 
     hasBlocks() {
         if (!this.currFile) return true
@@ -377,7 +379,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             <div id="monacoEditorArea" className="full-abs" style={{ direction: 'ltr' }}>
                 <div className={`monacoToolboxDiv ${(this.toolbox && !this.toolbox.state.visible && !this.isDebugging()) ? 'invisible' : ''}`}>
                     <toolbox.Toolbox ref={this.handleToolboxRef} editorname="monaco" parent={this} />
-                    <div id="monacoDebuggerToolbox" ref={this.handleDebugToolboxRef}></div>
+                    <div id="monacoDebuggerToolbox"></div>
                 </div>
                 <div id='monacoEditorInner' style={{ float: 'right' }} />
             </div>
@@ -817,25 +819,33 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         //this.editor.getLayoutInfo().glyphMarginLeft = 200;
         this.editor.layout();
 
-        const debugging = this.isDebugging();
-        let debuggerToolbox = debugging ? <div>
-            <debug.DebuggerToolbar parent={this.parent} />
-            <debug.DebuggerVariables ref={this.handleDebuggerVariablesRef} parent={this.parent} apisByQName={this.blockInfo.apis.byQName} />
-        </div> : <div />;
-        Util.assert(!!this.debuggerToolbox)
-        if (debugging) {
-            this.toolbox.hide();
-        } else {
-            this.toolbox.show();
-        }
-        ReactDOM.render(debuggerToolbox, document.getElementById('monacoDebuggerToolbox'));
-
-        if (this.toolbox)
+        if (this.toolbox) {
             this.toolbox.setState({
                 loading: false,
                 categories: this.getAllCategories(),
                 showSearchBox: this.shouldShowSearch()
             })
+        }
+
+        const container = document.getElementById('monacoDebuggerToolbox');
+        if (!container || !this.blockInfo) return;
+
+        const debugging = this.isDebugging();
+        const debuggerToolbox = debugging ? <DebuggerToolbox
+            ref={this.handleDebugToolboxRef}
+            parent={this.parent}
+            apis={this.blockInfo.apis.byQName}
+            openLocation={this.revealBreakpointLocation}
+            showCallStack /> : <div />;
+
+        if (debugging) {
+            this.toolbox.hide();
+        } else {
+            this.debuggerToolbox = null;
+            this.toolbox.show();
+        }
+
+        ReactDOM.render(debuggerToolbox, container);
     }
 
     private getFoldingController(): FoldingController {
@@ -928,6 +938,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
                 if (this.breakpoints) {
                     this.breakpoints.loadBreakpointsForFile(file, this.editor);
+                    const loc = this.breakpoints.getLocationOfBreakpoint(this.highlightedBreakpoint);
+                    if (loc && loc.fileName === file.getTypeScriptName()) {
+                        this.highilightStatementCore(loc, true);
+                    }
                 }
 
                 if (this.fileType == pxt.editor.FileType.Markdown)
@@ -1188,17 +1202,31 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     highlightStatement(stmt: pxtc.LocationInfo, brk?: pxsim.DebuggerBreakpointMessage) {
         if (!stmt) {
             this.clearHighlightedStatements();
+            if (this.debuggerToolbox) this.debuggerToolbox.setBreakpoint(null);
             return false;
         }
         else if (!this.editor) {
             return false;
         }
 
-        const mainPkg = pkg.mainEditorPkg()
-        if (this.currFile.name !== stmt.fileName && this.isDebugging() && mainPkg.lookupFile(stmt.fileName)) {
-            this.parent.setFile(mainPkg.lookupFile(stmt.fileName))
+        if (this.currFile.getTypeScriptName() !== stmt.fileName && this.isDebugging() && lookupFile(stmt.fileName)) {
+            this.parent.setFile(lookupFile(stmt.fileName))
+        }
+        else if (!this.highilightStatementCore(stmt, !!brk)) {
+            return false;
         }
 
+        this.highlightedBreakpoint = brk.breakpointId;
+
+        if (brk && this.isDebugging() && this.debuggerToolbox) {
+            this.debuggerToolbox.setBreakpoint(brk);
+            this.resize();
+        }
+
+        return true;
+    }
+
+    protected highilightStatementCore(stmt: pxtc.LocationInfo, centerOnLocation = false) {
         let position = this.editor.getModel().getPositionAt(stmt.start);
         let end = this.editor.getModel().getPositionAt(stmt.start + stmt.length);
         if (!position || !end) return false;
@@ -1209,14 +1237,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             },
         ]);
 
-        if (brk) {
-            // center on statement
-            this.editor.revealPositionInCenter(position);
-            if (this.isDebugging() && this.debugVariables) {
-                this.debugVariables.updateVariables(brk.globals, brk.stackframes);
-                this.resize();
-            }
-        }
+        if (centerOnLocation) this.editor.revealPositionInCenter(position);
 
         return true;
     }
@@ -1224,7 +1245,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     clearHighlightedStatements() {
         if (this.editor && this.highlightDecorations)
             this.editor.deltaDecorations(this.highlightDecorations, []);
-        if (this.isDebugging() && this.debugVariables) this.debugVariables.clear();
     }
 
     private partitionBlocks() {
@@ -1459,6 +1479,27 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 }
             }
         }
+    }
+
+    protected revealBreakpointLocation = (id: number, frameIndex: number) => {
+        if (!this.breakpoints) return;
+
+        const loc = this.breakpoints.getLocationOfBreakpoint(id);
+        if (!loc) return;
+
+        this.highlightedBreakpoint = id;
+
+        if (this.currFile.getTypeScriptName() !== loc.fileName) {
+            const mainPkg = pkg.mainEditorPkg()
+            if (lookupFile(loc.fileName)) {
+                this.parent.setFile(lookupFile(loc.fileName))
+            }
+        }
+        else {
+            this.highilightStatementCore(loc, true);
+        }
+
+        if (this.debuggerToolbox) this.debuggerToolbox.setState({ currentFrame: frameIndex });
     }
 
     private showSearchFlyout() {
@@ -1883,16 +1924,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.toolbox = c;
     }
 
-    private handleDebugToolboxRef = (ref: HTMLDivElement) => {
+    private handleDebugToolboxRef = (ref: DebuggerToolbox) => {
         if (ref) {
             this.debuggerToolbox = ref;
             if (this.isDebugging()) this.updateToolbox();
         }
-    }
-
-    private handleDebuggerVariablesRef = (c: debug.DebuggerVariables) => {
-        this.debugVariables = c;
-        this.resize();
     }
 }
 
@@ -1904,4 +1940,15 @@ function createIndent(length: number) {
     let res = '';
     for (let i = 0; i < length; i++) res += " ";
     return res;
+}
+
+function lookupFile(file: string): pkg.File {
+    const mPkg = pkg.mainEditorPkg();
+    if (mPkg.files[file]) return mPkg.files[file];
+
+    const found = mPkg.lookupFile(file);
+
+    if (found) return found;
+
+    return undefined;
 }

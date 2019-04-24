@@ -2764,7 +2764,13 @@ ${output}</xml>`;
             case SK.NoSubstitutionTemplateLiteral:
                 return checkStringLiteral(n as ts.StringLiteral);
             case SK.Identifier:
-                return isUndefined(n) ? Util.lf("Undefined is not supported in blocks") : undefined;
+                if (isUndefined(n)) {
+                    return Util.lf("Undefined is not supported in blocks");
+                } else if (isDeclaredElsewhere(n as Identifier)) {
+                    return Util.lf("Variable is declared in another file");
+                } else {
+                    return undefined;
+                }
             case SK.BinaryExpression:
                 const op1 = (n as BinaryExpression).operatorToken.getText();
                 return ops[op1] ? undefined : Util.lf("Could not find operator {0}", op1);
@@ -2906,6 +2912,10 @@ ${output}</xml>`;
 
     function isUndefined(node: ts.Node) {
         return node && node.kind === SK.Identifier && (node as ts.Identifier).text === "undefined";
+    }
+
+    function isDeclaredElsewhere(node: ts.Identifier) {
+        return (node as any).identifierInfo && (node as any).identifierInfo.isGlobal;
     }
 
     function hasStatementInput(info: CallInfo, attributes: CommentAttrs): boolean {

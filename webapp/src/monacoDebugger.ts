@@ -92,7 +92,7 @@ export class BreakpointCollection implements monaco.IDisposable {
 
         if (!file) return;
 
-        const fileBreakpoints = this.fileToBreakpoint[file.name];
+        const fileBreakpoints = this.fileToBreakpoint[file.getTypeScriptName()];
 
         if (fileBreakpoints) {
             this.loadedBreakpoints = fileBreakpoints.map(bp => {
@@ -137,6 +137,18 @@ export class BreakpointCollection implements monaco.IDisposable {
         }
         this.activeBreakpoints = undefined;
         this.fileToBreakpoint = undefined;
+    }
+
+    getLocationOfBreakpoint(id: number): pxtc.LocationInfo {
+        for (const file of Object.keys(this.fileToBreakpoint)) {
+            const bps = this.fileToBreakpoint[file];
+
+            for (const bp of bps) {
+                if (bp.id === id) return bp;
+            }
+        }
+
+        return undefined;
     }
 
     protected getBreakpointForLine(lineNo: number) {
