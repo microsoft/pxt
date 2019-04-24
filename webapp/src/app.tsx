@@ -2303,6 +2303,10 @@ export class ProjectView
             if (this.state.tracing)
                 opts.trace = true;
 
+            if (opts.debug) {
+                opts.debugExtensionCode = pxt.appTarget.appTheme.debugExtensionCode && !this.isBlocksActive()
+            }
+
             this.syncPreferredEditor()
 
             simulator.stop(false, true);
