@@ -32,6 +32,10 @@ body {
   min-width: 0;
 }
 
+pre {
+    tab-size: 4;
+}
+
 /* Main Layout */
 #allcontent {
     height: 100%;
@@ -814,6 +818,48 @@ p.ui.font.small {
     }
 }
 
+/***********************************
+   Headless Simtoolbar (Minecraft)
+************************************/
+
+#root.headless {
+    #filelist {
+        display: block;
+        bottom: 0 !important;
+    }
+
+    #filelist .simtoolbar.item {
+        margin: 1rem 0;
+    }
+
+    i.green.icon {
+        color: rgba(0,0,0,.6)!important;
+    }
+}
+
+#root.headless.collapsedEditorTools {
+    #filelist {
+        position: absolute;
+        width: auto;
+        top: auto;
+        left: 5rem;
+        background: none transparent;
+        min-width: inherit;
+        max-width: inherit;
+    }
+
+    #boardview {
+        display: none;
+    }
+}
+
+#root.headless:not(.collapsedEditorTools) {
+    #filelist {
+        left: 0;
+        z-index: 40;
+    }
+}
+
 /*******************************
         Media Adjustments
 *******************************/
@@ -913,16 +959,63 @@ p.ui.font.small {
         position:absolute;
         padding: 0;
         margin: 1em;
-        bottom:0rem !important;
-        left:4rem !important;
-        top:auto;
-        width:auto;
+        bottom: 4rem !important;
+        top: auto;
+        width: auto;
         min-width: inherit;
         max-width: inherit;
         background: transparent !important;
+        overflow: visible;
+    }
+    .collapsedEditorTools #filelist {
+        display: none;
     }
     #filelistOverlay {
         display: block;
+        top: auto;
+        left: 4rem; /* match left pos of #boardview */
+        bottom: -3rem;
+        width: 10rem; /* match width of div.simframe */
+        height: 9rem;
+    }
+    #root:not(.fullscreensim):not(.headless) {
+        #boardview {
+            position: absolute;
+            left: 4rem;
+        }
+        #filelist .simtoolbar {
+            margin: 0.5em 0;
+        }
+        #filelist .simtoolbar > div:not(:first-child),
+        #filelist .simtoolbar > .buttons > .button {
+            display: none;
+        }
+        #filelist .simtoolbar > .buttons > .play-button,
+        #filelist .simtoolbar > .buttons > .restart-button {
+            display: block;
+        }
+        #filelist .simtoolbar > div:first-child {
+            flex-direction: column;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        #filelist .simtoolbar > div:first-child > button {
+            border-radius: 0;
+            font-size: .92857143rem;
+        }
+        #editortools .left .buttons:first-child {
+            position: absolute;
+            bottom: 0;
+        }
+    }
+    #root.headless {
+        #filelist {
+            left: 5rem!important;
+            z-index: 42!important;
+        }
+    }
+    #root.collapsedEditorTools #editortools .left .buttons:first-child {
+        bottom: auto; // undo bottom positioning for collapsed toolbar
     }
     #maineditor {
         left: 0;

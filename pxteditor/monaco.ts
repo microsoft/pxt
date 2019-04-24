@@ -136,6 +136,7 @@ namespace pxt.vs {
                 enabled: false
             },
             autoIndent: true,
+            useTabStops: true,
             dragAndDrop: true,
             matchBrackets: true,
             occurrencesHighlight: false,

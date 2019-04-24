@@ -323,7 +323,7 @@ export class TutorialCard extends data.Component<ISettingsProps, TutorialCardSta
                     <div ref="tutorialmessage" className={`tutorialmessage`} role="alert" aria-label={tutorialAriaLabel} tabIndex={hasHint ? 0 : -1}
                         onClick={this.showHint} onKeyDown={sui.fireClickOnEnter}>
                         <div className="content">
-                            <md.MarkedContent markdown={tutorialCardContent} parent={this.props.parent} />
+                            <md.MarkedContent className="no-select" markdown={tutorialCardContent} parent={this.props.parent} />
                         </div>
                     </div>
                     <sui.Button ref="tutorialok" id="tutorialOkButton" className="large green okbutton showlightbox" text={lf("Ok")} onClick={this.closeLightbox} onKeyDown={sui.fireClickOnEnter} />

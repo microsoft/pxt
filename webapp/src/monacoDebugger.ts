@@ -92,7 +92,7 @@ export class BreakpointCollection implements monaco.IDisposable {
 
         if (!file) return;
 
-        const fileBreakpoints = this.fileToBreakpoint[file.name];
+        const fileBreakpoints = this.fileToBreakpoint[file.getTypeScriptName()];
 
         if (fileBreakpoints) {
             this.loadedBreakpoints = fileBreakpoints.map(bp => {

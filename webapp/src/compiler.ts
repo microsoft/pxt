@@ -71,6 +71,7 @@ export interface CompileOptions {
     trace?: boolean;
     native?: boolean;
     debug?: boolean;
+    debugExtensionCode?: boolean;
     background?: boolean; // not explicitly requested by user (hint for simulator)
     forceEmit?: boolean;
     clickTrigger?: boolean;
@@ -107,7 +108,7 @@ export function compileAsync(options: CompileOptions = {}): Promise<pxtc.Compile
         .then(opts => {
             if (options.debug) {
                 opts.breakpoints = true;
-                opts.justMyCode = true;
+                opts.justMyCode = !options.debugExtensionCode;
                 opts.testMode = true;
             }
             if (options.trace) {

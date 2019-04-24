@@ -1129,8 +1129,20 @@ namespace ts.pxtc.service {
 \``;
 
     export function getSnippet(apis: pxt.Map<SymbolInfo>, fn: SymbolInfo, n: ts.FunctionLikeDeclaration, python?: boolean): string {
+        const PY_INDENT: string = (pxt as any).py.INDENT;
+
         let findex = 0;
         let preStmt = "";
+
+        let fnName = ""
+        if (n.kind == SK.Constructor) {
+            fnName = getSymbolName(n.symbol) || n.parent.name.getText();
+        } else {
+            fnName = getSymbolName(n.symbol) || n.name.getText();
+        }
+
+        if (python)
+            fnName = snakify(fnName).toLowerCase();
 
         const attrs = fn.attributes;
         const checker = service && service.getProgram().getTypeChecker();
@@ -1188,24 +1200,18 @@ namespace ts.pxtc.service {
             return python ? "None" : "null";
         }) : [];
 
-        let fnName = ""
-        if (n.kind == SK.Constructor) {
-            fnName = getSymbolName(n.symbol) || n.parent.name.getText();
-        } else {
-            fnName = getSymbolName(n.symbol) || n.name.getText();
-        }
-
         let snippetPrefix = (fn.attributes.blockNamespace || fn.namespace);
         let isInstance = false;
         let addNamespace = false;
         let namespaceToUse = "";
+        let functionCount = 0;
 
         const element = fn as pxtc.SymbolInfo;
         if (element.attributes.block) {
             if (element.attributes.defaultInstance) {
                 snippetPrefix = element.attributes.defaultInstance;
-                if (python)
-                    snippetPrefix = snakify(snippetPrefix);
+                if (python && snippetPrefix)
+                    snippetPrefix = snakify(snippetPrefix).toLowerCase();
             }
             else if (element.namespace) { // some blocks don't have a namespace such as parseInt
                 const nsInfo = apis[element.namespace];
@@ -1249,8 +1255,8 @@ namespace ts.pxtc.service {
                     const params = pxt.blocks.compileInfo(element);
                     if (params.thisParameter) {
                         snippetPrefix = params.thisParameter.defaultValue || params.thisParameter.definitionName;
-                        if (python)
-                            snippetPrefix = snakify(snippetPrefix);
+                        if (python && snippetPrefix)
+                            snippetPrefix = snakify(snippetPrefix).toLowerCase();
                     }
                     isInstance = true;
                 }
@@ -1265,7 +1271,7 @@ namespace ts.pxtc.service {
         insertText = addNamespace ? `${firstWord(namespaceToUse)}.${insertText}` : insertText;
 
         if (attrs && attrs.blockSetVariable)
-            insertText = `${python ? "" : "let "}${python ? snakify(attrs.blockSetVariable) : attrs.blockSetVariable} = ${insertText}`;
+            insertText = `${python ? "" : "let "}${python ? snakify(attrs.blockSetVariable).toLowerCase() : attrs.blockSetVariable} = ${insertText}`;
 
         return preStmt + insertText;
 
@@ -1289,12 +1295,7 @@ namespace ts.pxtc.service {
         }
 
         function getFunctionString(functionSignature: ts.Signature) {
-            let functionArgument = "()";
             let returnValue = "";
-
-            let displayParts = (ts as any).mapToDisplayParts((writer: ts.DisplayPartsSymbolWriter) => {
-                checker.getSymbolDisplayBuilder().buildSignatureDisplay(functionSignature, writer);
-            });
 
             let returnType = checker.getReturnTypeOfSignature(functionSignature);
 
@@ -1305,20 +1306,28 @@ namespace ts.pxtc.service {
             else if (returnType.flags & (ts.TypeFlags.Boolean | ts.TypeFlags.BooleanLiteral))
                 returnValue = python ? "return False" : "return false";
 
-            let displayPartsStr = ts.displayPartsToString(displayParts);
-            functionArgument = displayPartsStr.substr(0, displayPartsStr.lastIndexOf(":"));
-
             if (python) {
-                const n = "fn" + (findex++) + functionArgument;
-                preStmt += `def ${n}:\n  ${returnValue || "pass"}\n`;
-                return n.replace(/\(\)$/, '');
-            } else return `function ${functionArgument} {\n    ${returnValue}\n}`;
+                let functionArgument = `(${functionSignature.parameters.map(p => p.name).join(', ')})`;
+                let n = fnName || "fn";
+                if (functionCount++ > 0) n += functionCount;
+                n = snakify(n).toLowerCase();
+                preStmt += `def ${n}${functionArgument}:\n${PY_INDENT}${returnValue || "pass"}\n`;
+                return n;
+            } else {
+                let functionArgument = "()";
+                let displayParts = (ts as any).mapToDisplayParts((writer: ts.DisplayPartsSymbolWriter) => {
+                    checker.getSymbolDisplayBuilder().buildSignatureDisplay(functionSignature, writer);
+                });
+                let displayPartsStr = ts.displayPartsToString(displayParts);
+                functionArgument = displayPartsStr.substr(0, displayPartsStr.lastIndexOf(":"));
+                return `function ${functionArgument} {\n    ${returnValue}\n}`;
+            }
         }
 
         function emitFn(n: string): string {
             if (python) {
-                n = snakify(n);
-                preStmt += `def ${n}():\n  pass\n`;
+                if (n) n = snakify(n).toLowerCase();
+                preStmt += `def ${n}():\n${PY_INDENT}pass\n`;
                 return n;
             } else return `function () {}`;
         }

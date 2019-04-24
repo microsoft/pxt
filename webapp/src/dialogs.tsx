@@ -670,7 +670,7 @@ export function showImportGithubDialogAsync() {
         })).then(() => res)
 }
 
-export function showImportFileDialogAsync() {
+export function showImportFileDialogAsync(options?: pxt.editor.ImportFileOptions) {
     let input: HTMLInputElement;
     let exts = [pxt.appTarget.compile.saveAsPNG ? ".png" : ".mkcd"];
     if (pxt.appTarget.compile.hasHex) {

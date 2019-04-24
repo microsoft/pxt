@@ -31,7 +31,7 @@ namespace pxt.py {
     ///
     /// UTILS
     ///
-    const INDENT = "\t"
+    export const INDENT = "    "
     function indent(lvl: number): (s: string) => string {
         return s => `${INDENT.repeat(lvl)}${s}`
     }
