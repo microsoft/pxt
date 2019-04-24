@@ -2380,7 +2380,7 @@ class SnippetHost implements pxt.Host {
     files: Map<Map<string>> = {}
     cache: pxt.Map<string> = {};
 
-    constructor(public name: string, public main: string, public extraDependencies: pxt.Map<string>, private includeCommon = false) { }
+    constructor(public name: string, public packageFiles: Map<string>, public extraDependencies: pxt.Map<string>, private includeCommon = false) { }
 
     resolve(module: pxt.Package, filename: string): string {
         pxt.log(`resolve ${module.id}. ${filename}`)
@@ -2396,6 +2396,11 @@ class SnippetHost implements pxt.Host {
         }
         if (module.id == "this") {
             if (filename == "pxt.json") {
+                let commonFiles = this.includeCommon ? [
+                    "pxt-core.d.ts",
+                    "pxt-helpers.ts",
+                ] : []
+                let packageFileNames = Object.keys(this.packageFiles)
                 return JSON.stringify(<pxt.PackageConfig>{
                     "name": this.name.replace(/[^a-zA-z0-9]/g, ''),
                     "dependencies": this.dependencies(),
@@ -2404,17 +2409,11 @@ class SnippetHost implements pxt.Host {
                     "yotta": {
                         "ignoreConflicts": true
                     },
-                    "files": this.includeCommon ? [
-                        "main.ts",
-                        "pxt-core.d.ts",
-                        "pxt-helpers.ts"
-                    ] : [
-                            "main.ts",
-                        ]
+                    "files": packageFileNames.concat(commonFiles)
                 })
             }
-            else if (filename == "main.ts") {
-                return this.main
+            else if (filename in this.packageFiles) {
+                return this.packageFiles[filename]
             }
         } else if (pxt.appTarget.bundledpkgs[module.id] && filename === pxt.CONFIG_NAME) {
             return pxt.appTarget.bundledpkgs[module.id][pxt.CONFIG_NAME];
@@ -3431,7 +3430,7 @@ function testPkgConflictsAsync() {
 
         const dep: pxt.Map<string> = {};
         tc.dependencies.forEach(d => dep[d] = "*");
-        let mainPkg = new pxt.MainPackage(new SnippetHost("package conflict tests", tc.main, dep));
+        let mainPkg = new pxt.MainPackage(new SnippetHost("package conflict tests", { "main.ts": tc.main }, dep));
         tc.expectedConflicts = tc.expectedConflicts.sort();
         tc.expectedInUse = tc.expectedInUse.sort();
 
@@ -3490,7 +3489,8 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
         const dep: pxt.Map<string> = {};
         if (dependency)
             dep[dependency] = "*";
-        const pkg = new pxt.MainPackage(new SnippetHost("decompile-pkg", input, dep, true));
+        let inPackages = { "main.ts": input, "main.py": "" }
+        const pkg = new pxt.MainPackage(new SnippetHost("decompile-pkg", inPackages, dep, true));
 
         pkg.installAllAsync()
             .then(() => pkg.getCompileOptionsAsync())
@@ -3508,6 +3508,7 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
 }
 
 function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> {
+    console.log(`### TESTING ${snippets.length} CodeSnippets`)
     pxt.github.forceProxy = true; // avoid throttling in CI machines
     let filenameMatch: RegExp;
     try {
@@ -3537,7 +3538,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
         })
         infos.forEach(info => pxt.log(`${f}:(${info.line},${info.start}): ${info.category} ${info.messageText}`));
     }
-    return Promise.map(snippets, (snippet: CodeSnippet) => {
+    return Promise.map(snippets.reduce((p, c, i) => i < 30 || true ? p.concat([c]) : p, []), (snippet: CodeSnippet) => {
         const name = snippet.name;
         const fn = snippet.file || snippet.name;
         pxt.log(`  ${fn} (${snippet.type})`);
@@ -3563,7 +3564,8 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
             return Promise.resolve();
         }
 
-        const host = new SnippetHost("snippet" + name, snippet.code, snippet.packages);
+        let inFiles = { "main.ts": snippet.code, "main.py": "", "main.blocks": "" }
+        const host = new SnippetHost("snippet" + name, inFiles, snippet.packages);
         host.cache = cache;
         const pkg = new pxt.MainPackage(host);
         return pkg.installAllAsync()
@@ -3594,14 +3596,71 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
                         //Similar to pxtc.decompile but allows us to get blocksInfo for round trip
                         const file = resp.ast.getSourceFile('main.ts');
                         const apis = pxtc.getApiInfo(resp.ast, opts.jres);
+                        opts.apisInfo = apis
+                        let ts1 = opts.fileSystem["main.ts"]
+
+                        // decompile to blocks
                         const blocksInfo = pxtc.getBlocksInfo(apis);
                         const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, {
                             snippetMode: false,
                             errorOnGreyBlocks: true
                         });
-                        const success = !!bresp.outfiles['main.blocks']
-                        if (success) return addSuccess(name)
-                        else return addFailure(fn, bresp.diagnostics)
+                        let blockSucces = !!bresp.outfiles['main.blocks']
+                        if (!blockSucces) {
+                            console.log("ts2blocks error")
+                            return addFailure(fn, bresp.diagnostics)
+                        }
+
+                        // decompile to python
+                        // TODO(dz): pretty refactor
+                        let program = pxtc.getTSProgram(opts);
+                        const decompiled = pxt.py.decompileToPythonHelper(program, "main.ts");
+                        let pySuccess = !!decompiled.outfiles['main.py'] && decompiled.success
+                        if (!pySuccess) {
+                            console.log("ts2py error")
+                            return addFailure(fn, decompiled.diagnostics)
+                        }
+                        opts.fileSystem['main.py'] = decompiled.outfiles['main.py']
+
+                        let py = decompiled.outfiles['main.py']
+                        // console.log("###### TS1")
+                        // console.log(ts1)
+                        // console.log("###### PY")
+                        // console.log(py)
+                        // console.log("######")
+
+                        // py to ts
+                        opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
+                        // opts.fileSystem["main.ts"] = ""
+                        let ts2Res = pxt.py.py2ts(opts)
+
+                        let ts2 = ts2Res.generated["main.ts"];
+
+                        if (!ts2) {
+                            console.log("py2ts error!")
+                            console.dir(ts2Res)
+                            let errs = ts2Res.diagnostics.map(pxtc.getDiagnosticString).join()
+                            if (errs)
+                                console.log(errs)
+                            return addFailure(fn, ts2Res.diagnostics)
+                        }
+
+                        let compareBaselines = (a: string, b: string): boolean => {
+                            // Ignore whitespace
+                            a = a.replace(/\s/g, "");
+                            b = b.replace(/\s/g, "");
+
+                            return a === b;
+                        }
+
+                        if (!compareBaselines(ts1, ts2)) {
+                            console.log("TS mismatch :/")
+                        } else {
+                            console.log("TS same :)")
+                        }
+
+
+                        return addSuccess(name)
                     }
                     else {
                         return addSuccess(fn)
@@ -4894,6 +4953,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
             entry.subitems.forEach(checkTOCEntry);
     }
 
+    // check over TOCs
     nodeutil.allFiles("docs", 5).filter(f => /SUMMARY\.md$/.test(f))
         .forEach(summaryFile => {
             const summaryPath = path.join(path.dirname(summaryFile), 'SUMMARY').replace(/^docs[\/\\]/, '');
