@@ -25,6 +25,11 @@ This approach has the following advantages:
   smart autocompletion, contextual doc-comment display, etc.
 * features like debugger are easily shared between MPY and STS
 
+The type annotations are technically optional in both STS and MPY -
+TypeScript `any` type is supported in the runtime with dynamic member lookup
+(though it still uses compact C++-like memory layout for classes).
+Some of this have not been fully implemented or exposed to the user yet though.
+
 The main disadvantage are some limitations in compatibility with the full Python language.
 The MPY parser handles the whole of Python, and thus missing features
 are due to things not yet implemented in the converter, or limitations
