@@ -900,6 +900,11 @@ export async function startAsync(gdbArgs: string[]) {
         monResetHalt = "run"
     }
 
+    let mapsrc = ""
+    if (/docker/.test(buildengine.thisBuild.buildPath)) {
+        mapsrc = "set substitute-path /src " + buildengine.thisBuild.buildPath
+    }
+
     let toolPaths = getOpenOcdPath()
 
     if (!bmpMode) {
@@ -917,6 +922,7 @@ export async function startAsync(gdbArgs: string[]) {
     fs.writeFileSync("built/openocd.gdb",
         `
 ${trg}
+${mapsrc}
 define rst
   set confirm off
   ${goToApp}
