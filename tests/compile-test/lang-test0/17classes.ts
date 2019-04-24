@@ -40,6 +40,17 @@ function testToString() {
 testToString()
 testClass()
 
+
+class CtorOptional {
+    constructor(opts?: string) {
+    }
+}
+function testCtorOptional() {
+    let co = new CtorOptional();
+    let co2 = new CtorOptional("");
+}
+testCtorOptional();
+
 namespace ClassInit {
     const seven = 7
     class FooInit {
