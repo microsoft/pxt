@@ -189,9 +189,11 @@ function setupSemantic() {
         }).appendTo(outer);
     });
 
-    $('#printbtn').on("click", function () {
-        window.print();
-    })
+    $('#printbtn').dropdown({
+        action: function(text, value) {
+            printDocument(value);
+        }
+      });
 
     if (/browsers$/i.test(window.location.href))
         $('.ui.footer').append($('<div class="ui center aligned small container"/>').text('user agent: ' + navigator.userAgent))
@@ -257,6 +259,34 @@ function renderSnippets() {
                 });
             }).done();
     });
+}
+
+function printDocument(type) {
+    let isColorPrint = document.getElementById('print-color');
+    if (type === 'color') {
+        if (!isColorPrint){
+            let printFile = document.location.origin + "/docfiles/printcolor.css";
+            let printLink = document.createElement("link");
+            printLink.setAttribute("rel", "stylesheet");
+            printLink.setAttribute("type", "text/css");
+            printLink.setAttribute("id", "print-color");
+            printLink.setAttribute("href", printFile);
+            printLink.addEventListener('load', function(){
+                window.print();
+                $('#printbtn').dropdown("hide");
+            })
+            document.getElementsByTagName("head").item(0).appendChild(printLink);
+        } else {
+            window.print();
+            $('#printbtn').dropdown("hide");
+        }
+    } else if (type === 'outlines') {
+        if (isColorPrint) {
+        document.getElementsByTagName("head").item(0).removeChild(isColorPrint);
+        }
+        window.print();
+        $('#printbtn').dropdown("hide");
+    }  
 }
 
 $(document).ready(function () {

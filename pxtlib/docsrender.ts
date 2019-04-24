@@ -282,10 +282,20 @@ namespace pxt.docs {
 
         // Add print button
         const printBtnHtml = `
-            <button id="printbtn" class="circular ui icon right floated button hideprint" title="${lf("Print this page")}">
+        <div id="printbtn" class="circular ui icon top right floated pointing dropdown button hideprint" title="${lf("Print this page")}">
                 <i class="icon print"></i>
-            </button>
-        `
+                <div class="menu">
+                <div class="item" data-value="color">
+                    <h4>${lf("Color")}</h4>
+                    <p>${lf("Print the page as-is in color")}</p>
+                </div>
+                <div class="item" data-value="outlines">
+                    <h4>${lf("Outlines")}</h4>
+                    <p>${lf("Best for black & white print")}</p>
+                </div>
+                </div>
+        </div>`
+
         params['printBtn'] = printBtnHtml;
 
         // Add sidebar toggle
