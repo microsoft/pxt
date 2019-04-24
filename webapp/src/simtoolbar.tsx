@@ -106,7 +106,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const audio = run && targetTheme.hasAudio;
         const isHeadless = simOpts.headless;
         const collapse = !!targetTheme.pairingButton;
-        const screenshot = !!targetTheme.simScreenshot;
+        const screenshot = !!targetTheme.simScreenshot && !inTutorial;
         const screenshotClass = !!parentState.screenshoting ? "loading" : "";
         const debugBtnEnabled = !isStarting && !isSimulatorPending;
         const runControlsEnabled = !debugging && !isStarting && !isSimulatorPending;
