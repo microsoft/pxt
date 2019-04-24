@@ -3001,9 +3001,9 @@ export class ProjectView
         let rootClassList = [
             "ui",
             lightbox ? 'dimmable dimmed' : 'dimmable',
-            shouldHideEditorFloats ? " hideEditorFloats" : '',
-            shouldCollapseEditorTools ? " collapsedEditorTools" : '',
-            transparentEditorToolbar ? " transparentEditorTools" : '',
+            shouldHideEditorFloats ? "hideEditorFloats" : '',
+            shouldCollapseEditorTools ? "collapsedEditorTools" : '',
+            transparentEditorToolbar ? "transparentEditorTools" : '',
             this.state.fullscreen ? 'fullscreensim' : '',
             this.state.highContrast ? 'hc' : '',
             showSideDoc ? 'sideDocs' : '',
@@ -3022,6 +3022,7 @@ export class ProjectView
             isApp ? "app" : "",
             greenScreen ? "greenscreen" : "",
             logoWide ? "logo-wide" : "",
+            isHeadless ? "headless" : "",
             'full-abs'
         ];
         const rootClasses = sui.cx(rootClassList);
@@ -3060,7 +3061,7 @@ export class ProjectView
                                 <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={this.openDeviceSerial} />
                             </div> : undefined}
                         {sandbox || isBlocks || this.editor == this.serialEditor ? undefined : <filelist.FileList parent={this} />}
-                        <div id="filelistOverlay" role="button" title={lf("Open in fullscreen")} onClick={this.toggleSimulatorFullscreen}></div>
+                        {!isHeadless && <div id="filelistOverlay" role="button" title={lf("Open in fullscreen")} onClick={this.toggleSimulatorFullscreen}></div>}
                     </div>
                 </div>
                 <div id="maineditor" className={(sandbox ? "sandbox" : "") + (inDebugMode ? "debugging" : "")} role="main" aria-hidden={inHome}>

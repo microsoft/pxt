@@ -823,6 +823,48 @@ p.ui.font.small {
     }
 }
 
+/***********************************
+   Headless Simtoolbar (Minecraft)
+************************************/
+
+#root.headless {
+    #filelist {
+        display: block;
+        bottom: 0 !important;
+    }
+
+    #filelist .simtoolbar.item {
+        margin: 1rem 0;
+    }
+
+    i.green.icon {
+        color: rgba(0,0,0,.6)!important;
+    }
+}
+
+#root.headless.collapsedEditorTools {
+    #filelist {
+        position: absolute;
+        width: auto;
+        top: auto;
+        left: 5rem;
+        background: none transparent;
+        min-width: inherit;
+        max-width: inherit;
+    }
+
+    #boardview {
+        display: none;
+    }
+}
+
+#root.headless:not(.collapsedEditorTools) {
+    #filelist {
+        left: 0;
+        z-index: 40;
+    }
+}
+
 /*******************************
         Media Adjustments
 *******************************/
@@ -941,7 +983,7 @@ p.ui.font.small {
         width: 10rem; /* match width of div.simframe */
         height: 9rem;
     }
-    #root:not(.fullscreensim) {
+    #root:not(.fullscreensim):not(.headless) {
         #boardview {
             position: absolute;
             left: 4rem;
@@ -969,6 +1011,12 @@ p.ui.font.small {
         #editortools .left .buttons:first-child {
             position: absolute;
             bottom: 0;
+        }
+    }
+    #root.headless {
+        #filelist {
+            left: 5rem!important;
+            z-index: 42!important;
         }
     }
     #root.collapsedEditorTools #editortools .left .buttons:first-child {
