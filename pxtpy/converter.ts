@@ -861,8 +861,14 @@ namespace pxt.py {
 
     function typeAnnot(t: Type) {
         let s = t2s(t)
-        if (s[0] == "?")
-            return B.mkText(": any; /** TODO: type **/")
+        if (s[0] == "?") {
+            // TODO(dz):
+            // example from minecraft doc snippet:
+            // player.onChat("while",function(num1){while(num1<10){}})
+            // -> py -> ts ->
+            // player.onChat("while",function(num1:any;/**TODO:type**/){while(num1<10){;}})
+            return B.mkText(": any /** TODO: type **/")
+        }
         return B.mkText(": " + t2s(t))
     }
 
