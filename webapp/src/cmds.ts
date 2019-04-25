@@ -234,13 +234,6 @@ export function init(): void {
     }
 
     const shouldUseWebUSB = pxt.usb.isEnabled && pxt.appTarget.compile.useUF2;
-
-    if (shouldUseWebUSB && !tryPairedDevice) {
-        pxt.usb.isPairedAsync().then(paired => {
-            if (paired) setWebUSBPaired(true);
-        });
-    }
-
     if (isNativeHost()) {
         pxt.debug(`deploy: webkit host`);
         pxt.commands.deployCoreAsync = nativeHostDeployCoreAsync;
@@ -286,7 +279,7 @@ export function init(): void {
         pxt.commands.deployCoreAsync = localhostDeployCoreAsync;
     } else { // in browser
         pxt.debug(`deploy: browser`);
-        pxt.commands.deployCoreAsync = browserDownloadDeployCoreAsync;
+        pxt.commands.deployCoreAsync = shouldUseWebUSB ? checkWebUSBThenDownloadAsync : browserDownloadDeployCoreAsync;
     }
 }
 
@@ -294,4 +287,14 @@ export function setWebUSBPaired(enabled: boolean) {
     if (tryPairedDevice === enabled) return;
     tryPairedDevice = enabled;
     init();
+}
+
+function checkWebUSBThenDownloadAsync(resp: pxtc.CompileResult) {
+    return pxt.usb.isPairedAsync().then(paired => {
+        if (paired) {
+            setWebUSBPaired(true);
+            return hidDeployCoreAsync(resp);
+        }
+        return browserDownloadDeployCoreAsync(resp);
+    });
 }
