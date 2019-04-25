@@ -191,7 +191,7 @@ function setupSemantic() {
 
     $('#printbtn').dropdown({
         action: function(text, value) {
-            printDocument(value);
+           printDocument(value);
         }
       });
 
@@ -261,29 +261,38 @@ function renderSnippets() {
     });
 }
 
+function setupPrintStyles() {
+    if (!window.printStyles){
+        let stylesSheet = Array.from(document.styleSheets).find(x => String(x.href).indexOf("semantic") !== -1);
+        let rules = Array.from(stylesSheet.cssRules).filter((x,i) => { if (String(x.media).indexOf("only print") !== -1){
+            return x;
+        }});
+        window.printStyles = [...rules];
+    }
+}
+
 function printDocument(type) {
-    let isColorPrint = document.getElementById('print-color');
+    let stylesSheet = Array.from(document.styleSheets).find(x => String(x.href).indexOf("semantic") !== -1);
     if (type === 'color') {
-        if (!isColorPrint){
-            let printFile = document.location.origin + "/docfiles/printcolor.css";
-            let printLink = document.createElement("link");
-            printLink.setAttribute("rel", "stylesheet");
-            printLink.setAttribute("type", "text/css");
-            printLink.setAttribute("id", "print-color");
-            printLink.setAttribute("href", printFile);
-            printLink.addEventListener('load', function(){
-                window.print();
-                $('#printbtn').dropdown("hide");
-            })
-            document.getElementsByTagName("head").item(0).appendChild(printLink);
-        } else {
-            window.print();
-            $('#printbtn').dropdown("hide");
-        }
+        let rules = Array.from(stylesSheet.cssRules).filter((x,i) => { if (String(x.media).indexOf("only print") !== -1){
+            return x;
+        }});
+        window.printStyles = [...rules];
+
+        window.printStyles.forEach(x => {
+            let index = Array.from(stylesSheet.cssRules).indexOf(x);
+            stylesSheet.deleteRule(index);
+        });
+
+        window.print();
+        $('#printbtn').dropdown("hide");
+                  
     } else if (type === 'outlines') {
-        if (isColorPrint) {
-        document.getElementsByTagName("head").item(0).removeChild(isColorPrint);
+        if (window.printStyles){
+        window.printStyles.forEach(x => stylesSheet.insertRule(x.cssText, 0));
+        window.printStyles = null;
         }
+
         window.print();
         $('#printbtn').dropdown("hide");
     }  

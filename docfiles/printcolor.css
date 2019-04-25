@@ -1,8 +1,0 @@
-@media only print {
-    #docs .blocklyBlockBackground, .blocklyLedOff {
-        stroke-width: 2px !important;
-        stroke: green !important;
-        fill: yellow !important;        
-      }
-    
-}
