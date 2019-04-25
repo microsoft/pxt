@@ -261,26 +261,18 @@ function renderSnippets() {
     });
 }
 
-function setupPrintStyles() {
-    if (!window.printStyles){
-        let stylesSheet = Array.from(document.styleSheets).find(x => String(x.href).indexOf("semantic") !== -1);
-        let rules = Array.from(stylesSheet.cssRules).filter((x,i) => { if (String(x.media).indexOf("only print") !== -1){
-            return x;
-        }});
-        window.printStyles = [...rules];
-    }
-}
-
 function printDocument(type) {
-    let stylesSheet = Array.from(document.styleSheets).find(x => String(x.href).indexOf("semantic") !== -1);
+    let stylesSheet = [].slice.call(document.styleSheets).filter(function(x) { return String(x.href).indexOf("semantic") !== -1; })[0];
     if (type === 'color') {
-        let rules = Array.from(stylesSheet.cssRules).filter((x,i) => { if (String(x.media).indexOf("only print") !== -1){
-            return x;
+        let rules = [].slice.call(stylesSheet.cssRules).filter(function(x,i) { 
+            if (String(x.media).indexOf("only print") !== -1) {
+                return x;
         }});
-        window.printStyles = [...rules];
 
-        window.printStyles.forEach(x => {
-            let index = Array.from(stylesSheet.cssRules).indexOf(x);
+        window.printStyles = rules;
+
+        window.printStyles.forEach(function(x) {
+            let index = [].slice.call(stylesSheet.cssRules).indexOf(x);
             stylesSheet.deleteRule(index);
         });
 
@@ -288,9 +280,9 @@ function printDocument(type) {
         $('#printbtn').dropdown("hide");
                   
     } else if (type === 'outlines') {
-        if (window.printStyles){
-        window.printStyles.forEach(x => stylesSheet.insertRule(x.cssText, 0));
-        window.printStyles = null;
+        if (window.printStyles) {
+            window.printStyles.forEach(function(x) { stylesSheet.insertRule(x.cssText, 0); });
+            window.printStyles = null;
         }
 
         window.print();
