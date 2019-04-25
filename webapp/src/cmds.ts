@@ -6,6 +6,8 @@ import * as hidbridge from "./hidbridge";
 import * as webusb from "./webusb";
 import Cloud = pxt.Cloud;
 
+let tryPairedDevice = false;
+
 function browserDownloadAsync(text: string, name: string, contentType: string): Promise<void> {
     pxt.BrowserUtils.browserDownloadBinText(
         text,
@@ -232,6 +234,13 @@ export function init(): void {
     }
 
     const shouldUseWebUSB = pxt.usb.isEnabled && pxt.appTarget.compile.useUF2;
+
+    if (shouldUseWebUSB && !tryPairedDevice) {
+        pxt.usb.isPairedAsync().then(paired => {
+            if (paired) setWebUSBEnabled(true);
+        });
+    }
+
     if (isNativeHost()) {
         pxt.debug(`deploy: webkit host`);
         pxt.commands.deployCoreAsync = nativeHostDeployCoreAsync;
@@ -269,7 +278,7 @@ export function init(): void {
         pxt.debug(`deploy: electron`);
         pxt.commands.deployCoreAsync = electron.driveDeployAsync;
         pxt.commands.electronDeployAsync = electron.driveDeployAsync;
-    } else if (!shouldUseWebUSB && hidbridge.shouldUse() && !pxt.appTarget.serial.noDeploy && !forceHexDownload) {
+    } else if ((tryPairedDevice && shouldUseWebUSB) || !shouldUseWebUSB && hidbridge.shouldUse() && !pxt.appTarget.serial.noDeploy && !forceHexDownload) {
         pxt.debug(`deploy: hid`);
         pxt.commands.deployCoreAsync = hidDeployCoreAsync;
     } else if (pxt.BrowserUtils.isLocalHost() && Cloud.localToken && !forceHexDownload) { // local node.js
@@ -279,4 +288,10 @@ export function init(): void {
         pxt.debug(`deploy: browser`);
         pxt.commands.deployCoreAsync = browserDownloadDeployCoreAsync;
     }
+}
+
+export function setWebUSBEnabled(enabled: boolean) {
+    if (tryPairedDevice === enabled) return;
+    tryPairedDevice = enabled;
+    init();
 }
