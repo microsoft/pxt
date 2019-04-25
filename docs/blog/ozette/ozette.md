@@ -34,7 +34,6 @@ We'll be posting more soon on the technology behind Project Ozette, but offer th
 JACDAC's [physical layer](https://jacdac.org/#physical-layer-specifications) uses the built-in UART module common to most microcontrollers as its communication mechanism, but instead of separate wires for transmission and reception, JACDAC uses just one wire for both.
 This allows JACDAC to work over stereo audio cables, which also
 can provide power and ground (in addition to data).
-
 Stereo audio cables, Y- and multi- splitters are plentiful, 
 making it easy to create arbitrary single-bus networks. We've
 used these as the basis for our first wearable prototypes,
@@ -44,14 +43,12 @@ the fashion beads shown below
 
 ### JACDAC: the control layer
 
-JACDAC abstracts devices by a set of interfaces rather than hardware registers so that service code can be shared across different implementations. It uses dynamic addressing so that multiples of the same device can be connected simultaneously and it offers various communication abstractions to cater for an ever-diverse set of use scenarios for devices. Two common communication
-paradigms enabled by JACDAC are:
-- *Single Host, Many Client* – A single Host can have multiple Clients, like a Server can have multiple clients in a traditional Client-Server architecture;
-- *Many Host, Many Client* – Combining Hosts and Clients in Broadcast mode enables multicast communications.
-
+JACDAC abstracts devices by a set of interfaces rather than hardware registers so that service code can be shared across different implementations. It uses dynamic addressing so that multiples of the same device can be connected simultaneously and it offers various communication abstractions to cater for an ever-diverse set of use scenarios for devices. 
 JACDAC's [control layer](https://jacdac.org/#control-layer) is written in (MakeCode's subset of) TypeScript and can run in the browser and on microcontrollers. This layer takes care of
 device address allocation/collisions, packet routing, and advertisement of services (which expose APIs for programmers
 to access, actuate and network with other devices on the bus).
 
 ### Debugging JACDAC-based microcontrollers over WebUSB
 
+It's easy to layer the JACDAC control plane on other physical transports. We have done this for WebUSB
+to enable a simple web-based [JACDAC debugger](https://jacdac.org/debug).
