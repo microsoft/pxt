@@ -1,29 +1,33 @@
-# Project Ozette
-
-The MakeCode team draws its strength from diversity - our membership spans Microsoft
-Developer Division ([DevDiv](https://developer.microsoft.com/), 
-which brings you cool tools like [VS Code](https://code.visualstudio.com/)) and Microsoft 
-Research ([MSR](https://research.microsoft.com/), which pushes the state-of-the-art in 
-new directions). 
+# Project Ozette: Programming Webs of Microcontrollers
 
 As you know, the MakeCode team is primarily a bunch of web-heads who fell in love with
-microcontrollers. Since 2016, we've been focused on bringing 
-the tech we love about the world of the web to the world of microcontrollers. This started
-by writing a compiler (in TypeScript) from a large subset of TypeScript to ARM instructions, 
-as well as incorporating the web-first Blockly and Monaco editors as MakeCode's primary
-ways to program (though we also support C++).  If you didn't know, we've recently significantly
-expanded the subset of TypeScript supported by the MakeCode compiler and rewritten the
-MakeCode runtime with support for garbage collection ([Read more about the MakeCode compiler](XYZ)).
+microcontrollers. Since early 2016, we've been focused on bringing 
+the web tech we love to the world of microcontrollers. This started
+by writing a compiler (in TypeScript) from a large subset of TypeScript to ARM machine code, 
+as well as incorporating the Blockly and Monaco editors as MakeCode's primary
+ways to program microcontrollers from the web browser.
 
-To date, MakeCode has been used primarily to program single devices, such as the
-[micro:bit](https://makecode.microbit.org), 
+To date, MakeCode has been used primarily to program single devices, 
+such as the [micro:bit](https://makecode.microbit.org), 
 [Adafruit Circuit Playground Express](https://makecode.adafruit.com), 
 and [Arduino-style boards](https://maker.makecode.com).
 
-Over the last year, the MSR team, along with interns James Devine and Teddy Seyed, 
-has been leveraging MakeCode and designing new technologies to make it easier
-to program a network of microcontroller-based devices.  This work is done under
-the umbrella of MSR's [Project Ozette](https://research.microsoft.com/projects/ozette).
+Over the last year, the Microsoft Research (MSR) subteam of MakeCode, 
+along with our superstar interns James Devine and Teddy Seyed, 
+has been designing new technologies to make it easier
+to program a network (web) of microcontroller-based devices.
+This work is done as part of MSR's 
+[Project Ozette](https://research.microsoft.com/projects/ozette).
 
+There are three new technologies we are designing and developing as part of Ozette:
+- [JACDAC](https://jacdac.org), a bus-based plug-and-play protocol for microcontrollers; the control layer 
+of JACDAC is written in TypeScript and can run in the browser and the microcontroller;
+- *physical transports for JACDAC*, including JACDAC over stereo audio cables and an JACDAC over WebUSB;
+- *JACDAC-enabled boards* with stereo audio jacks for plug-and-play networking.
 
-** spanning the world of web services and the web of microcontrollers **
+Our first demonstration of these technologies working together is taking place
+on May 3, 2019 at the [Brooklyn Fashion Academy](https://www.bklynlibrary.org/bklyn-fashion-academy)
+for their fashion show [On the Runway: Homage to Future Fashion](https://www.eventbrite.com/e/bklyn-fashion-academy-presents-on-the-runway-homage-to-future-fashion-show-tickets-59616896743).
+We are providing wearable technology for the fashion designers to incorporate into their
+creations.
+
