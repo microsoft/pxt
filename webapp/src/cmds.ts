@@ -237,7 +237,7 @@ export function init(): void {
 
     if (shouldUseWebUSB && !tryPairedDevice) {
         pxt.usb.isPairedAsync().then(paired => {
-            if (paired) setWebUSBEnabled(true);
+            if (paired) setWebUSBPaired(true);
         });
     }
 
@@ -290,7 +290,7 @@ export function init(): void {
     }
 }
 
-export function setWebUSBEnabled(enabled: boolean) {
+export function setWebUSBPaired(enabled: boolean) {
     if (tryPairedDevice === enabled) return;
     tryPairedDevice = enabled;
     init();
