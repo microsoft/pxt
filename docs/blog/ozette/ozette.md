@@ -39,7 +39,7 @@ making it easy to create arbitrary single-bus networks. We've
 used these as the basis for our first wearable prototypes,
 the fashion beads shown below
 
-![JACDAC fashion beads](/static/blog/ozette/beads.png)
+![JACDAC fashion beads](/static/blog/ozette/beads.jpg)
 
 ### JACDAC: the control layer
 
