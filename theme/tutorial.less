@@ -227,6 +227,25 @@ span.highlight-line {
     padding: 0.5rem;
 }
 
+#tutorialcard .prevbutton, #tutorialcard .nextbutton {
+    background: @tutorialSegmentBackground;
+    z-index: 2;
+
+    > i, > span {
+        display: block;
+        margin: 0 auto 0.5em !important;
+        color: @mainMenuTutorialBackground;
+    }
+}
+
+#tutorialcard .prevbutton:hover, #tutorialcard .nextbutton:hover {
+    background-color: #cacbcd;
+
+    > i, > span, > i.orange {
+        color: @black!important;
+    }
+}
+
 /*******************************
         Tutorial Hint
 *******************************/
