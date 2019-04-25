@@ -286,12 +286,10 @@ namespace pxt.docs {
                 <i class="icon print"></i>
                 <div class="menu">
                 <div class="item" data-value="color">
-                    <h4>${lf("Color")}</h4>
-                    <p>${lf("Print the page as-is in color")}</p>
+                    <p>${lf("Color")}</p>
                 </div>
                 <div class="item" data-value="outlines">
-                    <h4>${lf("Outlines")}</h4>
-                    <p>${lf("Best for black & white print")}</p>
+                    <p>${lf("Black & White")}</p>
                 </div>
                 </div>
         </div>`
