@@ -40,7 +40,7 @@ We have done this for WebUSB to enable a simple web-based [JACDAC debugger](http
 
 ### JACDAC: the control layer
 
-JACDAC's [control layer](https://jacdac.org/#control-layer) is defined by Control Packets sent over the JACDAC bus.  We have implemented this protocol in TypeScript (see [jacdac-ts](https://github.com/jacdac/jacdac-ts), so it can run in the browser and on microcontrollers (implementations in other languages are forthcoming).
+JACDAC's [control layer](https://jacdac.org/#control-layer) is defined by Control Packets sent over the JACDAC bus.  We have implemented this protocol in TypeScript (see [jacdac-ts](https://github.com/jacdac/jacdac-ts)), so it can run in the browser and on microcontrollers (implementations in other languages are forthcoming).
 
 JACDAC abstracts devices by a set of interfaces rather than hardware registers so that service code can be shared across different implementations. It uses dynamic addressing so that multiples of the same device can be connected simultaneously and it offers various communication abstractions to cater for an ever-diverse set of use scenarios for devices. 
 The control layer takes care of
