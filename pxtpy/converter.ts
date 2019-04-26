@@ -1665,8 +1665,15 @@ namespace pxt.py {
                 syntaxInfo.auxResult = 0
                 // foo, bar
                 for (let i = 0; i < orderedArgs.length; ++i) {
-                    if (orderedArgs[i] && syntaxInfo.position <= orderedArgs[i].endPos) {
-                        syntaxInfo.auxResult = i
+                    syntaxInfo.auxResult = i
+                    let arg = orderedArgs[i]
+                    if (!arg) {
+                        // if we can't parse this next argument, but the cursor is beyond the 
+                        // previous arguments, assume it's here
+                        break
+                    }
+                    if (arg.startPos <= syntaxInfo.position && syntaxInfo.position <= arg.endPos) {
+                        break
                     }
                 }
             }
