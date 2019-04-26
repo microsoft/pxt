@@ -18,7 +18,7 @@ to program, configure and debug a network (or web) of microcontroller-based devi
 This work is part of MSR's 
 [Project Ozette](https://www.microsoft.com/en-us/research/project/ozette/).
 There are three new technologies we are designing and developing as part of Ozette:
-- [JACDAC](https://jacdac.org), a bus-based plug-and-play protocol for microcontrollers; 
+- [JACDAC](https://jacdac.org), a bus-based plug-and-play protocol for microcontrollers (written in TypeScript, so it works in browsers and on microcontrollers); 
 - *physical transports for JACDAC*, including JACDAC over stereo audio cables and JACDAC over WebUSB;
 - *JACDAC-enabled boards* with stereo audio jacks for plug-and-play networking.
 
