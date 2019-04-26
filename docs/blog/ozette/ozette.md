@@ -25,9 +25,16 @@ There are three new technologies we are designing and developing as part of Ozet
 Our first demonstration of these technologies working together is taking place
 on May 3, 2019 at the [Brooklyn Fashion Academy](https://www.bklynlibrary.org/bklyn-fashion-academy)
 for their fashion show [On the Runway: Homage to Future Fashion](https://www.eventbrite.com/e/bklyn-fashion-academy-presents-on-the-runway-homage-to-future-fashion-show-tickets-59616896743).
-We are providing wearable technology for the fashion designers to incorporate into their creations.
+We are providing wearable technology (fashion beads) for the  designers to incorporate into their creations:
+
+![JACDAC fashion beads](/static/blog/ozette/beads.jpg)
 
 We'll be posting more soon on the technology behind Project Ozette, but offer the following taste for now.
+
+### JACDAC in MakeCode
+
+Currently, we are experimenting with JACDAC in [MakeCode Maker](https://maker.makecode.com)
+with a set of prototype [fashion beads](https://maker.makecode.com/boards/beads).
 
 ### JACDAC: the physical layer
 
@@ -37,9 +44,7 @@ can provide power and ground (in addition to data).
 Stereo audio cables, Y- and multi- splitters are plentiful, 
 making it easy to create arbitrary single-bus networks. We've
 used these as the basis for our first wearable prototypes,
-the fashion beads shown below
-
-![JACDAC fashion beads](/static/blog/ozette/beads.jpg)
+the fashion beads shown above.
 
 ### JACDAC: the control layer
 
@@ -48,7 +53,9 @@ JACDAC's [control layer](https://jacdac.org/#control-layer) is written in (MakeC
 device address allocation/collisions, packet routing, and advertisement of services (which expose APIs for programmers
 to access, actuate and network with other devices on the bus).
 
-### Debugging JACDAC-based microcontrollers over WebUSB
+### Debugging with JACDAC over WebUSB
 
 It's easy to layer the JACDAC control plane on other physical transports. We have done this for WebUSB
-to enable a simple web-based [JACDAC debugger](https://jacdac.org/debug).
+to enable a simple web-based [JACDAC debugger](https://jacdac.org/debug)
+
+
