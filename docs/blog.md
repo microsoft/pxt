@@ -1,5 +1,13 @@
 # Microsoft MakeCode Blog
 
+## [Project Ozette: Programming Webs of Microcontrollers](/blog/ozette/ozette)
+
+April 26th, 2019 by [Tom Ball](https://www.microsoft.com/en-us/research/people/tball)
+
+As you know, the MakeCode team is primarily a bunch of web-heads who fell in love with
+microcontrollers. Since early 2016, we've been bringing web technology to the world of microcontrollers.
+**[Continue reading this blog post](/blog/ozette/ozette)**
+
 ## [MakeCode for the micro:bit – 2019 Beta Release](/blog/microbit/2019-beta)
  
 April 5th, 2019 by [Jaqster](https://github.com/jaqster)
