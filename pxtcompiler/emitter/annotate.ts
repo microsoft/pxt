@@ -20,7 +20,7 @@ namespace ts.pxtc {
         const oldTarget = pxtc.target;
         pxtc.target = compileTarget;
 
-        let src = program.getSourceFiles().filter(f => Util.endsWith(f.fileName, entryPoint))[0];
+        let src = program.getSourceFiles().filter(f => f.fileName === entryPoint)[0];
         let checker = program.getTypeChecker();
 
         recurse(src);

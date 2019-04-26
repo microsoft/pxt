@@ -2380,7 +2380,7 @@ class SnippetHost implements pxt.Host {
     files: Map<Map<string>> = {}
     cache: pxt.Map<string> = {};
 
-    constructor(public name: string, public main: string, public extraDependencies: pxt.Map<string>, private includeCommon = false) { }
+    constructor(public name: string, public packageFiles: Map<string>, public extraDependencies: pxt.Map<string>, private includeCommon = false) { }
 
     resolve(module: pxt.Package, filename: string): string {
         pxt.log(`resolve ${module.id}. ${filename}`)
@@ -2396,6 +2396,11 @@ class SnippetHost implements pxt.Host {
         }
         if (module.id == "this") {
             if (filename == "pxt.json") {
+                let commonFiles = this.includeCommon ? [
+                    "pxt-core.d.ts",
+                    "pxt-helpers.ts",
+                ] : []
+                let packageFileNames = Object.keys(this.packageFiles)
                 return JSON.stringify(<pxt.PackageConfig>{
                     "name": this.name.replace(/[^a-zA-z0-9]/g, ''),
                     "dependencies": this.dependencies(),
@@ -2404,17 +2409,11 @@ class SnippetHost implements pxt.Host {
                     "yotta": {
                         "ignoreConflicts": true
                     },
-                    "files": this.includeCommon ? [
-                        "main.ts",
-                        "pxt-core.d.ts",
-                        "pxt-helpers.ts"
-                    ] : [
-                            "main.ts",
-                        ]
+                    "files": packageFileNames.concat(commonFiles)
                 })
             }
-            else if (filename == "main.ts") {
-                return this.main
+            else if (filename in this.packageFiles) {
+                return this.packageFiles[filename]
             }
         } else if (pxt.appTarget.bundledpkgs[module.id] && filename === pxt.CONFIG_NAME) {
             return pxt.appTarget.bundledpkgs[module.id][pxt.CONFIG_NAME];
@@ -3431,7 +3430,7 @@ function testPkgConflictsAsync() {
 
         const dep: pxt.Map<string> = {};
         tc.dependencies.forEach(d => dep[d] = "*");
-        let mainPkg = new pxt.MainPackage(new SnippetHost("package conflict tests", tc.main, dep));
+        let mainPkg = new pxt.MainPackage(new SnippetHost("package conflict tests", { "main.ts": tc.main }, dep));
         tc.expectedConflicts = tc.expectedConflicts.sort();
         tc.expectedInUse = tc.expectedInUse.sort();
 
@@ -3490,7 +3489,8 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
         const dep: pxt.Map<string> = {};
         if (dependency)
             dep[dependency] = "*";
-        const pkg = new pxt.MainPackage(new SnippetHost("decompile-pkg", input, dep, true));
+        let inPackages = { "main.ts": input, "main.py": "" }
+        const pkg = new pxt.MainPackage(new SnippetHost("decompile-pkg", inPackages, dep, true));
 
         pkg.installAllAsync()
             .then(() => pkg.getCompileOptionsAsync())
@@ -3508,6 +3508,7 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
 }
 
 function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> {
+    console.log(`### TESTING ${snippets.length} CodeSnippets`)
     pxt.github.forceProxy = true; // avoid throttling in CI machines
     let filenameMatch: RegExp;
     try {
@@ -3563,7 +3564,8 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
             return Promise.resolve();
         }
 
-        const host = new SnippetHost("snippet" + name, snippet.code, snippet.packages);
+        let inFiles = { "main.ts": snippet.code, "main.py": "", "main.blocks": "" }
+        const host = new SnippetHost("snippet" + name, inFiles, snippet.packages);
         host.cache = cache;
         const pkg = new pxt.MainPackage(host);
         return pkg.installAllAsync()
@@ -3594,14 +3596,32 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
                         //Similar to pxtc.decompile but allows us to get blocksInfo for round trip
                         const file = resp.ast.getSourceFile('main.ts');
                         const apis = pxtc.getApiInfo(resp.ast, opts.jres);
+                        opts.apisInfo = apis
+
+                        // ensure decompile to blocks works
                         const blocksInfo = pxtc.getBlocksInfo(apis);
                         const bresp = pxtc.decompiler.decompileToBlocks(blocksInfo, file, {
                             snippetMode: false,
                             errorOnGreyBlocks: true
                         });
-                        const success = !!bresp.outfiles['main.blocks']
-                        if (success) return addSuccess(name)
-                        else return addFailure(fn, bresp.diagnostics)
+                        let blockSucces = !!bresp.outfiles['main.blocks']
+                        if (!blockSucces) {
+                            return addFailure(fn, bresp.diagnostics)
+                        }
+
+                        // ensure decompile to python works
+                        let program = pxtc.getTSProgram(opts);
+                        const decompiled = pxt.py.decompileToPythonHelper(program, "main.ts");
+                        let pySuccess = !!decompiled.outfiles['main.py'] && decompiled.success
+                        if (!pySuccess) {
+                            return addFailure(fn, decompiled.diagnostics)
+                        }
+
+                        // NOTE: neither of these decompile steps checks that the resulting code is correct or that
+                        // when the code is compiled back to ts it'll behave the same. This could be validated in
+                        // the future.
+
+                        return addSuccess(name)
                     }
                     else {
                         return addSuccess(fn)
@@ -4894,6 +4914,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
             entry.subitems.forEach(checkTOCEntry);
     }
 
+    // check over TOCs
     nodeutil.allFiles("docs", 5).filter(f => /SUMMARY\.md$/.test(f))
         .forEach(summaryFile => {
             const summaryPath = path.join(path.dirname(summaryFile), 'SUMMARY').replace(/^docs[\/\\]/, '');
