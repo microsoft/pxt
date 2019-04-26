@@ -31,14 +31,12 @@ namespace pxt.py {
     ///
     /// UTILS
     ///
-    const INDENT = "\t"
+    export const INDENT = "    "
     function indent(lvl: number): (s: string) => string {
         return s => `${INDENT.repeat(lvl)}${s}`
     }
     const indent1 = indent(1)
 
-    // TODO map names from camel case to snake case
-    // TODO disallow keywords & builtins (e.g. "range", "print")
     // TODO handle shadowing
     // TODO handle types at initialization when ambiguous (e.g. x = [], x = None)
 
@@ -49,7 +47,6 @@ namespace pxt.py {
     function tsToPy(prog: ts.Program, filename: string): string {
         // state
         // TODO pass state explicitly
-        let nextFnNum = 0
         let global: Scope = { vars: {} } // TODO populate global scope
         let env: Scope[] = [global]
 
@@ -58,8 +55,12 @@ namespace pxt.py {
         let lhost = new ts.pxtc.LSHost(prog)
         // let ls = ts.createLanguageService(lhost) // TODO
         let file = prog.getSourceFile(filename)
-        let [renameMap, globalNames] = ts.pxtc.decompiler.buildRenameMap(prog, file)
-        let symbols = pxtc.getApiInfo(prog)
+        let reservedWords = pxt.U.toSet(getReservedNmes(), s => s)
+        let [renameMap, globalNames] = ts.pxtc.decompiler.buildRenameMap(prog, file, reservedWords)
+        let allSymbols = pxtc.getApiInfo(prog)
+        let symbols = pxt.U.mapMap(allSymbols.byQName,
+            // filter out symbols from the .ts corrisponding to this file
+            (k, v) => v.fileName == filename ? undefined : v)
 
         // ts->py 
         return emitFile(file)
@@ -78,14 +79,44 @@ namespace pxt.py {
         function popScope(): Scope {
             return env.shift()
         }
+        function getReservedNmes(): string[] {
+            const reservedNames = ['ArithmeticError', 'AssertionError', 'AttributeError',
+                'BaseException', 'BlockingIOError', 'BrokenPipeError', 'BufferError', 'BytesWarning',
+                'ChildProcessError', 'ConnectionAbortedError', 'ConnectionError',
+                'ConnectionRefusedError', 'ConnectionResetError', 'DeprecationWarning', 'EOFError',
+                'Ellipsis', 'EnvironmentError', 'Exception', 'False', 'FileExistsError',
+                'FileNotFoundError', 'FloatingPointError', 'FutureWarning', 'GeneratorExit', 'IOError',
+                'ImportError', 'ImportWarning', 'IndentationError', 'IndexError',
+                'InterruptedError', 'IsADirectoryError', 'KeyError', 'KeyboardInterrupt', 'LookupError',
+                'MemoryError', 'NameError', 'None', 'NotADirectoryError', 'NotImplemented',
+                'NotImplementedError', 'OSError', 'OverflowError', 'PendingDeprecationWarning',
+                'PermissionError', 'ProcessLookupError', 'RecursionError', 'ReferenceError',
+                'ResourceWarning', 'RuntimeError', 'RuntimeWarning', 'StopAsyncIteration',
+                'StopIteration', 'SyntaxError', 'SyntaxWarning', 'SystemError', 'SystemExit',
+                'TabError', 'TimeoutError', 'True', 'TypeError', 'UnboundLocalError',
+                'UnicodeDecodeError', 'UnicodeEncodeError', 'UnicodeError', 'UnicodeTranslateError',
+                'UnicodeWarning', 'UserWarning', 'ValueError', 'Warning', 'ZeroDivisionError', '_',
+                '__build_class__', '__debug__', '__doc__', '__import__', '__loader__', '__name__',
+                '__package__', '__spec__', 'abs', 'all', 'any', 'ascii', 'bin', 'bool',
+                'bytearray', 'bytes', 'callable', 'chr', 'classmethod', 'compile', 'complex',
+                'copyright', 'credits', 'delattr', 'dict', 'dir', 'divmod', 'enumerate', 'eval',
+                'exec', 'exit', 'filter', 'float', 'format', 'frozenset', 'getattr',
+                'globals', 'hasattr', 'hash', 'help', 'hex', 'id', 'input', 'int',
+                'isinstance', 'issubclass', 'iter', 'len', 'license', 'list', 'locals', 'map',
+                'max', 'memoryview', 'min', 'next', 'object', 'oct', 'open', 'ord', 'pow',
+                'print', 'property', 'quit', 'range', 'repr', 'reversed', 'round', 'set',
+                'setattr', 'slice', 'sorted', 'staticmethod', 'str', 'sum', 'super', 'tuple',
+                'type', 'vars', 'zip']
+            return reservedNames;
+        }
         function tryGetPyName(exp: ts.BindingPattern | ts.PropertyName | ts.EntityName | ts.PropertyAccessExpression): string {
             if (!exp.getSourceFile())
                 return null
             let tsExp = exp.getText()
-            let sym = symbols.byQName[tsExp]
-            let isFromUserPackage = sym && sym.pkg == null
-            if (sym && !isFromUserPackage && sym.pyQName)
+            let sym = symbols[tsExp]
+            if (sym && sym.pyQName) {
                 return sym.pyQName
+            }
             return null
         }
         function getName(name: ts.Identifier | ts.BindingPattern | ts.PropertyName | ts.EntityName): string {
@@ -247,6 +278,8 @@ namespace pxt.py {
                 return emitBlock(s)
             } else if (ts.isTypeAliasDeclaration(s)) {
                 return emitTypeAliasDecl(s)
+            } else if (ts.isEmptyStatement(s)) {
+                return []
             } else {
                 throw Error(`Not implemented: statement kind ${s.kind}`);
             }
@@ -882,10 +915,6 @@ namespace pxt.py {
                     return ["print", leftSup]
                 }
             }
-            else {
-                // snakify
-                right = pxtc.snakify(right).toLowerCase();
-            }
 
             return [`${left}.${right}`, leftSup];
         }
@@ -955,6 +984,9 @@ namespace pxt.py {
                     break
                 allWords = newWords
             }
+            // 3. if there is only one word, add "on_" prefix
+            if (allWords.length == 1)
+                allWords = ["on", allWords[0]]
 
             return allWords.join("_")
             function dedupWords(words: string[]): string[] {

@@ -2358,10 +2358,12 @@ ${lbl}: .short 0xffff
                 if (ctor) {
                     obj = sharedDef(obj)
                     markUsed(ctor)
-                    let args = node.arguments.slice(0)
+                    // arguments undefined on .ctor with optional args
+                    let args = (node.arguments || []).slice(0)
                     let ctorAttrs = parseComments(ctor)
 
-                    let sig = checker.getResolvedSignature(node)
+                    // unused?
+                    // let sig = checker.getResolvedSignature(node)
                     // TODO: can we have overloeads?
                     addDefaultParametersAndTypeCheck(checker.getResolvedSignature(node), args, ctorAttrs)
                     let compiled = args.map((x) => emitExpr(x))

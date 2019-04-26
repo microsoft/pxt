@@ -30,7 +30,7 @@ function getBMPSerialPortsAsync(): Promise<string[]> {
                         const pid = parseInt(m[3], 16)
                         const mi = parseInt(m[4], 16)
                         if (vid == 0x1d50 && pid == 0x6018 && mi == 0) {
-                            res.push(comp)
+                            res.push("\\\\.\\" + comp)
                         }
                     }
                 })
@@ -900,6 +900,11 @@ export async function startAsync(gdbArgs: string[]) {
         monResetHalt = "run"
     }
 
+    let mapsrc = ""
+    if (/docker/.test(buildengine.thisBuild.buildPath)) {
+        mapsrc = "set substitute-path /src " + buildengine.thisBuild.buildPath
+    }
+
     let toolPaths = getOpenOcdPath()
 
     if (!bmpMode) {
@@ -917,6 +922,7 @@ export async function startAsync(gdbArgs: string[]) {
     fs.writeFileSync("built/openocd.gdb",
         `
 ${trg}
+${mapsrc}
 define rst
   set confirm off
   ${goToApp}

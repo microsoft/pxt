@@ -224,7 +224,7 @@ namespace ts.pxtc.decompiler {
      * names in the given file. All variables in Blockly are global, so this is
      * necessary to prevent local variables from colliding.
      */
-    export function buildRenameMap(p: Program, s: SourceFile): [RenameMap, NamesSet] {
+    export function buildRenameMap(p: Program, s: SourceFile, takenNames: NamesSet = {}): [RenameMap, NamesSet] {
         let service = ts.createLanguageService(new LSHost(p))
         const allRenames: RenameLocation[] = [];
 
@@ -233,7 +233,6 @@ namespace ts.pxtc.decompiler {
         return [new RenameMap(allRenames), names];
 
         function collectNameCollisions(): NamesSet {
-            const takenNames: NamesSet = {};
 
             checkChildren(s);
 

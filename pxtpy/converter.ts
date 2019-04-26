@@ -861,8 +861,17 @@ namespace pxt.py {
 
     function typeAnnot(t: Type) {
         let s = t2s(t)
-        if (s[0] == "?")
-            return B.mkText(": any; /** TODO: type **/")
+        if (s[0] == "?") {
+            // TODO:
+            // example from minecraft doc snippet:
+            // player.onChat("while",function(num1){while(num1<10){}})
+            // -> py -> ts ->
+            // player.onChat("while",function(num1:any;/**TODO:type**/){while(num1<10){;}})
+            // work around using any:
+            // return B.mkText(": any /** TODO: type **/")
+            // but for now we can just omit the type and most of the type it'll be inferable
+            return B.mkText("")
+        }
         return B.mkText(": " + t2s(t))
     }
 
@@ -1138,7 +1147,7 @@ namespace pxt.py {
                     B.mkText("; "),
                     r.args.length >= 3 ?
                         B.mkInfix(ref, "+=", expr(r.args[2])) :
-                        B.mkInfix(null, "++", ref),
+                        B.mkPostfix([ref], "++"),
                     B.mkText(")"),
                     stmts(n.body))
             }
@@ -1656,8 +1665,15 @@ namespace pxt.py {
                 syntaxInfo.auxResult = 0
                 // foo, bar
                 for (let i = 0; i < orderedArgs.length; ++i) {
-                    if (orderedArgs[i] && syntaxInfo.position <= orderedArgs[i].endPos) {
-                        syntaxInfo.auxResult = i
+                    syntaxInfo.auxResult = i
+                    let arg = orderedArgs[i]
+                    if (!arg) {
+                        // if we can't parse this next argument, but the cursor is beyond the 
+                        // previous arguments, assume it's here
+                        break
+                    }
+                    if (arg.startPos <= syntaxInfo.position && syntaxInfo.position <= arg.endPos) {
+                        break
                     }
                 }
             }
