@@ -1,9 +1,9 @@
 # Project Ozette: Programming Webs of Microcontrollers
 
 As you know, the MakeCode team is primarily a bunch of web-heads who fell in love with
-microcontrollers. Since early 2016, we've been bringing web technology to the world of microcontrollers. This started
-by writing a compiler from a [large subset](/language) of [TypeScript](http://www.typescriptlang.org/) 
-to ARM machine code (the compiler is written in TypeScript as well so it runs in the browser), 
+microcontrollers. Since early 2016, we've been bringing web technology to the world of microcontrollers. This started with the [BBC micro:bit](https://microbit.org) and a browser-based 
+compiler from a [large subset](/language) of [TypeScript](http://www.typescriptlang.org/) 
+to ARM machine code (the compiler is written in TypeScript too), 
 as well as incorporating the [Blockly](https://developers.google.com/blockly/) and [Monaco](https://microsoft.github.io/monaco-editor/index.html) 
 editors as MakeCode's primary ways to program microcontrollers from the web browser.
 To date, MakeCode has been used primarily to program single devices, 
