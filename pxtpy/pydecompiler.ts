@@ -747,6 +747,7 @@ namespace pxt.py {
                     return `${nm}`
                 }
                 default:
+                    pxt.tickEvent("depython.todo", { kind: s.kind })
                     return `(TODO: Unknown TypeNode kind: ${s.kind})`
             }
             // // TODO translate type
@@ -858,6 +859,7 @@ namespace pxt.py {
                 case ts.SyntaxKind.GreaterThanGreaterThanGreaterThanToken:
                     throw Error("Unsupported operator: >>>")
                 default:
+                    pxt.tickEvent("depython.todo", { op: s })
                     return "# TODO unknown op: " + s
             }
         }
@@ -1048,6 +1050,7 @@ namespace pxt.py {
             if (ts.isFunctionTypeNode(calleeTypeNode)) {
                 calleeParameters = calleeTypeNode.parameters
                 if (calleeParameters.length < s.arguments.length) {
+                    pxt.tickEvent("depython.todo", { kind: s.kind })
                     throw Error("TODO: Unsupported call site where caller the arguments outnumber the callee parameters: " + s.getText())
                 }
             }

@@ -29,10 +29,12 @@ namespace pxt.py {
     let infoScope: ScopeDef
 
     function stmtTODO(v: py.Stmt) {
+        pxt.tickEvent("python.todo", { kind: v.kind })
         return B.mkStmt(B.mkText("TODO: " + v.kind))
     }
 
     function exprTODO(v: py.Expr) {
+        pxt.tickEvent("python.todo", { kind: v.kind })
         return B.mkText(" {TODO: " + v.kind + "} ")
     }
 
