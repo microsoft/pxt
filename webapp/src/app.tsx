@@ -1838,6 +1838,7 @@ export class ProjectView
             if (res) {
                 return pxt.usb.pairAsync()
                     .then(() => {
+                        cmds.setWebUSBPaired(true);
                         core.infoNotification(lf("Device paired! Try downloading now."))
                     }, (err: Error) => {
                         core.errorNotification(lf("Failed to pair the device: {0}", err.message))
@@ -2021,6 +2022,7 @@ export class ProjectView
         pxt.tickEvent(`compile.devicenotfound`);
         const ext = pxt.outputName().replace(/[^.]*/, "");
         const fn = pkg.genFileName(ext);
+        cmds.setWebUSBPaired(false);
         return core.dialogAsync({
             header: lf("Oops, we couldn't find your {0}", pxt.appTarget.appTheme.boardName),
             body: lf("Please make sure your {0} is connected and try again.", pxt.appTarget.appTheme.boardName),
