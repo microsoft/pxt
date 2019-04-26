@@ -59,5 +59,6 @@ the fashion beads shown above.
 ### JACDAC in MakeCode
 
 Currently, we are experimenting with JACDAC in [MakeCode Maker](https://maker.makecode.com)
-with a set of prototype [fashion beads](https://maker.makecode.com/boards/beads).
+with the set of beads shown above. We have implemented a number of [JACDAC drivers](https://github.com/Microsoft/pxt-common-packages/tree/master/libs/jacdac-drivers) in TypeScript, in addition to
+the control layer protocol
 
