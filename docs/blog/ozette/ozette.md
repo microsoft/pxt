@@ -1,3 +1,5 @@
+![Picture of fashion beacs conencted together](/static/blog/ozette/networked.jpg)
+
 # Project Ozette: Programming Webs of Microcontrollers
 
 As you know, the MakeCode team is primarily a bunch of web-heads who fell in love with
