@@ -61,6 +61,8 @@ namespace ts.pxtc.vm {
                             U.oops("label: " + actual + " v=" + v)
                         }
                         opcode = v | 0x8000
+                        if (this.name == "callrt.p")
+                            opcode |= 0x2000
                     } else if (ln.isLong || v < 0 || v > 255) {
                         // keep it long for the final pass; otherwise labels may shift
                         ln.isLong = true
@@ -90,6 +92,8 @@ namespace ts.pxtc.vm {
         }
     }
 
+    export const withPush: pxt.Map<boolean> = {}
+
     export const opcodes = [
         "stloc     $i1",
         "ldloc     $i1",
@@ -103,21 +107,21 @@ namespace ts.pxtc.vm {
         "ldintneg  $i1",
         "ldspecial $i1",
         "ldnumber  $i1",
+        "ldlit     $i1",
+        "checkinst $i1",
+        "mapget",
+        "mapset", // last one with .p variant
         "ret       $i2, $i3",
         "popmany   $i1",
         "pushmany  $i1",
-        "ldlit     $i1",
         "callind   $i1",
         "callproc  $i1",
         "calliface $i2, $i3",
         "callget   $i1",
         "callset   $i1",
-        "checkinst $i1",
         "jmp       $lbl",
         "jmpnz     $lbl",
         "jmpz      $lbl",
-        "mapget",
-        "mapset",
         "push",
         "pop",
     ]
@@ -136,9 +140,21 @@ namespace ts.pxtc.vm {
             this.addEnc("$rt", "SHIM", v => this.inrange(8388607, v, v)).isLabel = true
 
             let opId = 1
+            let hasPush = true
             for (let opcode of opcodes.concat(["callrt $rt"])) {
-                let ins = new VmInstruction(this, opcode, opId++)
+                let ins = new VmInstruction(this, opcode, opId)
                 this.instructions[ins.name] = [ins];
+
+                if (hasPush) {
+                    ins = new VmInstruction(this, opcode.replace(/\w+/, f => f + ".p"), opId | (1 << 6))
+                    this.instructions[ins.name] = [ins];
+                    withPush[ins.name] = true
+                }
+
+                if (ins.name == "mapset")
+                    hasPush = false
+
+                opId++
             }
         }
 
@@ -184,8 +200,12 @@ namespace ts.pxtc.vm {
                 pc[key] = (pc[key] || 0) + 1
             }
 
-            if (lnop == "stloc" && lnop2 == "ldloc" && ln.numArgs[0] == lnNext.numArgs[0] && /LAST/.test(lnNext.text)) {
-                ln.update("")
+            if (lnop == "stloc" && lnop2 == "ldloc" && ln.numArgs[0] == lnNext.numArgs[0]) {
+                if (/LAST/.test(lnNext.text))
+                    ln.update("")
+                lnNext.update("")
+            } else if (withPush[lnop] && lnop2 == "push") {
+                ln.update(ln.text.replace(/\w+/, f => f + ".p"))
                 lnNext.update("")
             }
 
