@@ -1150,6 +1150,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private flyoutXmlList: Element[] = [];
     public showFlyout(treeRow: toolbox.ToolboxCategory) {
         const { nameid: ns, subns } = treeRow;
+        const inTutorial = this.parent.state.tutorialOptions
+            && !!this.parent.state.tutorialOptions.tutorial;
 
         if (ns == 'search') {
             this.showSearchFlyout();
@@ -1162,7 +1164,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
 
         this.flyoutXmlList = [];
-        let cacheKey = ns + subns;
+        let cacheKey = ns + subns + (inTutorial ? "tutorialexpanded" : "");
         if (this.flyoutBlockXmlCache[cacheKey]) {
             pxt.debug("showing flyout with blocks from flyout blocks xml cache");
             this.flyoutXmlList = this.flyoutBlockXmlCache[cacheKey];
