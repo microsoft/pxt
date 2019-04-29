@@ -783,7 +783,8 @@ function uploadTargetAsync(label: string) {
 export function uploadTargetReleaseAsync(parsed?: commandParser.ParsedCommand) {
     parseBuildInfo(parsed);
     const label = parsed.args[0];
-    return internalBuildTargetAsync()
+    const rebundle = !!parsed.flags["rebundle"];
+    return (rebundle ? rebundleAsync() : internalBuildTargetAsync())
         .then(() => {
             return uploadTargetAsync(label);
         });
@@ -5697,6 +5698,9 @@ PXT_ASMDEBUG     - embed additional information in generated binary.asm file
             force: {
                 description: "skip cache lookup and force build",
                 aliases: ["f"]
+            },
+            rebundle: {
+                description: "skip build and just rebundle",
             }
         }
     }, uploadTargetReleaseAsync);

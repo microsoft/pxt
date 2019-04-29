@@ -29,10 +29,12 @@ namespace pxt.py {
     let infoScope: ScopeDef
 
     function stmtTODO(v: py.Stmt) {
+        pxt.tickEvent("python.todo", { kind: v.kind })
         return B.mkStmt(B.mkText("TODO: " + v.kind))
     }
 
     function exprTODO(v: py.Expr) {
+        pxt.tickEvent("python.todo", { kind: v.kind })
         return B.mkText(" {TODO: " + v.kind + "} ")
     }
 
@@ -1665,8 +1667,15 @@ namespace pxt.py {
                 syntaxInfo.auxResult = 0
                 // foo, bar
                 for (let i = 0; i < orderedArgs.length; ++i) {
-                    if (orderedArgs[i] && syntaxInfo.position <= orderedArgs[i].endPos) {
-                        syntaxInfo.auxResult = i
+                    syntaxInfo.auxResult = i
+                    let arg = orderedArgs[i]
+                    if (!arg) {
+                        // if we can't parse this next argument, but the cursor is beyond the 
+                        // previous arguments, assume it's here
+                        break
+                    }
+                    if (arg.startPos <= syntaxInfo.position && syntaxInfo.position <= arg.endPos) {
+                        break
                     }
                 }
             }

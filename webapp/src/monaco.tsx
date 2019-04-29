@@ -124,14 +124,16 @@ class SignatureHelper implements monaco.languages.SignatureHelpProvider {
                 let sym = r.symbols ? r.symbols[0] : null
                 if (!sym || !sym.parameters) return null;
                 const documentation = pxt.Util.rlf(sym.attributes.jsDoc);
+                let paramInfo: monaco.languages.ParameterInformation[] =
+                    sym.parameters.map(p => ({
+                        label: `${p.name}: ${p.type}`,
+                        documentation: pxt.Util.rlf(p.description)
+                    }))
                 const res: monaco.languages.SignatureHelp = {
                     signatures: [{
-                        label: sym.name,
+                        label: `${sym.name}(${paramInfo.map(p => p.label).join(", ")})`,
                         documentation,
-                        parameters: sym.parameters.map(p => ({
-                            label: `${p.name}: ${p.type}`,
-                            documentation: pxt.Util.rlf(p.description)
-                        }))
+                        parameters: paramInfo
                     }],
                     activeSignature: 0,
                     activeParameter: r.auxResult
@@ -796,7 +798,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.hideFlyout();
     }
 
-    private hideFlyout() {
+    public hideFlyout() {
         // Hide the flyout
         let flyout = document.getElementById('monacoFlyoutWidget');
         if (flyout) {

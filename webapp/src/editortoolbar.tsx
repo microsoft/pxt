@@ -213,7 +213,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                 {compileBtn && <EditorToolbarButton className={`primary download-button download-button-full ${downloadButtonClasses}`} icon={downloadIcon} title={compileTooltip} ariaLabel={lf("Download your code")} onButtonClick={this.compile} view='mobile' />}
                             </div>
                         </div>}
-                        <div className={`column right aligned ${targetTheme.bigRunButton ? 'sixteen' : 'ten'} wide`}>
+                        <div id="editorToolbarArea" className={`column right aligned ${targetTheme.bigRunButton ? 'sixteen' : 'ten'} wide`}>
                             {!readOnly &&
                                 <div className="ui icon small buttons">
                                     {this.getSaveInput(mobile, showSave)}
@@ -309,7 +309,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                                     </div>}
                             </div>
                         </div>
-                        <div className="six wide column right aligned">
+                        <div id="editor" className="six wide column right aligned">
                             <div className="ui grid right aligned">
                                 {(showUndoRedo || showZoomControls) &&
                                     <div className="row">
@@ -344,12 +344,12 @@ export class EditorToolbar extends data.Component<ISettingsProps, {}> {
                     }
                     </div>
                     {showProjectRename &&
-                        <div className="column left aligned">
+                        <div id="projectNameArea" className="column left aligned">
                             <div className={`ui right ${showSave ? "labeled" : ""} input projectname-input projectname-computer`} title={lf("Pick a name for your project")}>
                                 {this.getSaveInput(computer, showSave, "fileNameInput2", projectName)}
                             </div>
                         </div>}
-                    <div className="column right aligned">
+                    <div id="editorToolbarArea" className="column right aligned">
                         {showUndoRedo && <div className="ui icon small buttons">{this.getUndoRedo(computer)}</div>}
                         {showZoomControls && <div className="ui icon small buttons">{this.getZoomControl(computer)}</div>}
                         {targetTheme.bigRunButton &&
