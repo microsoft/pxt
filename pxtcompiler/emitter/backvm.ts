@@ -249,7 +249,6 @@ _start_${name}:
         let alltmps: ir.Expr[] = []
         let currTmps: ir.Expr[] = []
         let final = false
-        let numBrk = 0
         let numLoc = 0
         let argDepth = 0
 
@@ -260,7 +259,6 @@ _start_${name}:
         // console.log("OPT", proc.toString())
 
         emitAll()
-        bin.numStmts = numBrk
         resText = ""
         for (let t of alltmps) t.currUses = 0
         final = true
@@ -303,7 +301,6 @@ _start_${name}:
                         writeRaw(`${s.lblName}:`)
                         break;
                     case ir.SK.Breakpoint:
-                        numBrk++
                         break;
                     default: oops();
                 }
