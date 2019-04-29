@@ -145,7 +145,7 @@ namespace ts.pxtc.vm {
                 let ins = new VmInstruction(this, opcode, opId)
                 this.instructions[ins.name] = [ins];
 
-                if (hasPush) {
+                if (hasPush || ins.name == "callrt") {
                     withPush[ins.name] = true
                     ins = new VmInstruction(this, opcode.replace(/\w+/, f => f + ".p"), opId | (1 << 6))
                     this.instructions[ins.name] = [ins];
