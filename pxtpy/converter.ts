@@ -1059,10 +1059,10 @@ namespace pxt.py {
                 )
         },
         Assign: (n: py.Assign) => {
-            return stmtTODO(n)
+            return convertAssign(n)
         },
         AnnAssign: (n: py.AnnAssign) => {
-            return stmtTODO(n)
+            return convertAssign(n)
         },
         For: (n: py.For) => {
             U.assert(n.orelse.length == 0)
