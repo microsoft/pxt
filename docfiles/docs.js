@@ -191,12 +191,54 @@ function setupSemantic() {
 
     $('#printbtn').dropdown({
         action: function(text, value) {
-           printDocument(value);
+           
+            // Blocky selectors
+            var blocklyBlockBackground = document.querySelectorAll('.blocklyBlockBackground');
+            var blocklyPath = document.querySelectorAll('.blocklyPath');
+            var blocklyLedOff = document.querySelectorAll('.blocklyLedOff');
+            var blocklyDropdownText = document.querySelectorAll('.blocklyDropdownText');
+            var blocklyText = document.querySelectorAll('.blocklyText');
+            var blocklyLedOn = document.querySelectorAll('.blocklyLedOn');
+            var uiimage = document.querySelectorAll('.ui.image');
+            
+            var collections = [ blocklyBlockBackground, blocklyPath, blocklyLedOff, blocklyDropdownText, blocklyText, blocklyLedOn, uiimage]
+
+            switch (value) {
+                case 'color': 
+                    collections.forEach(function(elements) {
+                        if (elements.length != 0){
+                            addRemovePrintColorClass(elements, 'add');
+                        }
+                    });                       
+                    break;
+                case 'outlines':
+                    collections.forEach(function(elements) {
+                        if (elements.length != 0){
+                            addRemovePrintColorClass(elements, 'remove');
+                        }
+                    });
+                    break;
+                default:
+                    console.log('print');
+           } 
+           
+           window.print();
+           $('#printbtn').dropdown("hide");
         }
       });
 
     if (/browsers$/i.test(window.location.href))
         $('.ui.footer').append($('<div class="ui center aligned small container"/>').text('user agent: ' + navigator.userAgent))
+}
+
+function addRemovePrintColorClass(elements,operation) {
+    [].forEach.call(elements, function(el){
+        if (operation === 'add'){
+            el.classList.add("print-color");
+        } else if (operation === 'remove'){
+            el.classList.remove("print-color"); 
+        }
+    });
 }
 
 function setupBlocklyAsync() {
@@ -259,35 +301,6 @@ function renderSnippets() {
                 });
             }).done();
     });
-}
-
-function printDocument(type) {
-    let stylesSheet = [].slice.call(document.styleSheets).filter(function(x) { return String(x.href).indexOf("semantic") !== -1; })[0];
-    if (type === 'color') {
-        let rules = [].slice.call(stylesSheet.cssRules).filter(function(x,i) { 
-            if (String(x.media).indexOf("only print") !== -1) {
-                return x;
-        }});
-
-        window.printStyles = rules;
-
-        window.printStyles.forEach(function(x) {
-            let index = [].slice.call(stylesSheet.cssRules).indexOf(x);
-            stylesSheet.deleteRule(index);
-        });
-
-        window.print();
-        $('#printbtn').dropdown("hide");
-                  
-    } else if (type === 'outlines') {
-        if (window.printStyles) {
-            window.printStyles.forEach(function(x) { stylesSheet.insertRule(x.cssText, 0); });
-            window.printStyles = null;
-        }
-
-        window.print();
-        $('#printbtn').dropdown("hide");
-    }  
 }
 
 $(document).ready(function () {

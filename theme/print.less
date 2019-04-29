@@ -3,7 +3,6 @@
 *******************************/
 
 @media only print {
-    *,
     *:before,
     *:after,
     *:first-letter,
@@ -66,8 +65,13 @@
             box-shadow: none !important;
         }
         /* images */
-        .ui.image {
-            max-width: 60%;
+        .ui.image:not(.print-color){
+            max-width: 0%;
+            background: none !important;
+            color: #000 !important;
+            box-shadow: none !important;
+            text-shadow: none !important;
+            overflow: visible !important;
         }
 
         .mainbody .ui.segment, pre {
@@ -97,20 +101,20 @@
     }
 
     /** blockly **/
-    .blocklyPath {
+    .blocklyPath:not(.print-color) {
         stroke-width: 3px !important;
         stroke: black !important;
         fill: white !important;
     }
-    .blocklyBlockBackground, .blocklyLedOff {
+    .blocklyBlockBackground:not(.print-color), .blocklyLedOff:not(.print-color) {
         stroke-width: 2px !important;
         stroke: black !important;
         fill: white !important;        
     }
-    .blocklyText, .blocklyDropdownText {
+    .blocklyText:not(.print-color), .blocklyDropdownText:not(.print-color) {
         fill: black !important;
     }
-    .blocklyLedOn {
+    .blocklyLedOn:not(.print-color) {
         stroke-width: 2px !important;
         stroke: black !important;
         fill: black !important;
