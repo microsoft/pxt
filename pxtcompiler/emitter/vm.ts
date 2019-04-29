@@ -146,12 +146,12 @@ namespace ts.pxtc.vm {
                 this.instructions[ins.name] = [ins];
 
                 if (hasPush) {
+                    withPush[ins.name] = true
                     ins = new VmInstruction(this, opcode.replace(/\w+/, f => f + ".p"), opId | (1 << 6))
                     this.instructions[ins.name] = [ins];
-                    withPush[ins.name] = true
                 }
 
-                if (ins.name == "mapset")
+                if (ins.name == "mapset.p")
                     hasPush = false
 
                 opId++
