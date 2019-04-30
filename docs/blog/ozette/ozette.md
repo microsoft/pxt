@@ -1,4 +1,4 @@
-![Picture of fashion beacs conencted together](/static/blog/ozette/networked.jpg)
+![Picture of fashion beads connected together](/static/blog/ozette/networked.jpg)
 
 # Project Ozette: Programming Webs of Microcontrollers
 
