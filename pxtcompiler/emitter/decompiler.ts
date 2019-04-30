@@ -1360,28 +1360,24 @@ ${output}</xml>`;
 
         function checkConditionalExpression(n: ts.WhileStatement | ts.IfStatement) {
             const expr: Expression = n.expression;
-            return checkExpression(expr);
-
-            function checkExpression(expr: Expression): string {
-                switch (expr.kind) {
-                    case SK.TrueKeyword:
-                    case SK.FalseKeyword:
-                    case SK.Identifier:
+            switch (expr.kind) {
+                case SK.TrueKeyword:
+                case SK.FalseKeyword:
+                case SK.Identifier:
+                    return undefined;
+                case SK.BinaryExpression:
+                    return checkBooleanBinaryExpression(expr as BinaryExpression);
+                case SK.CallExpression:
+                    return checkBooleanCallExpression(expr as CallExpression);
+                case SK.PrefixUnaryExpression:
+                    if ((expr as PrefixUnaryExpression).operator === SK.ExclamationToken) {
                         return undefined;
-                    case SK.BinaryExpression:
-                        return checkBinaryExpression(expr as BinaryExpression);
-                    case SK.CallExpression:
-                        return checkCallExpression(expr as CallExpression);
-                    case SK.PrefixUnaryExpression:
-                        if ((expr as PrefixUnaryExpression).operator === SK.ExclamationToken) {
-                            return undefined;
-                        } // else fall through
-                    default:
-                        return Util.lf("Conditions must evaluate to booleans or identifiers");
-                }
+                    } // else fall through
+                default:
+                    return Util.lf("Conditions must evaluate to booleans or identifiers");
             }
 
-            function checkBinaryExpression(n: BinaryExpression): string {
+            function checkBooleanBinaryExpression(n: BinaryExpression) {
                 switch (n.operatorToken.kind) {
                     case SK.EqualsEqualsToken:
                     case SK.EqualsEqualsEqualsToken:
@@ -1391,7 +1387,7 @@ ${output}</xml>`;
                     case SK.LessThanEqualsToken:
                     case SK.GreaterThanToken:
                     case SK.GreaterThanEqualsToken:
-                    // TODO: && / || should check against non boolean l / r (e.g. not `1 || 2`)
+                    // TODO: &&, ||, ! should check against non boolean l / r (e.g. not `1 || 2`)
                     // https://github.com/Microsoft/pxt-arcade/issues/946
                     case SK.AmpersandAmpersandToken:
                     case SK.BarBarToken:
@@ -1401,10 +1397,15 @@ ${output}</xml>`;
                 }
             }
 
-            function checkCallExpression(n: CallExpression) {
+            function checkBooleanCallExpression(n: CallExpression) {
                 // TODO: need to tag callExpressions in emitter or otherwise identify CEs that evaluate to boolean
-                if (0) return Util.lf("Only functions that return booleans are allowed as conditions");
-                return undefined;
+                if (1) {
+                    return undefined;
+                }
+                // if ((n as any).exprInfo) {  // exprInfo is not currently defined on the call expression properly
+                //     return undefined;
+                // }
+                return Util.lf("Only functions that return booleans are allowed as conditions");
             }
         }
 

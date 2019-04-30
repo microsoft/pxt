@@ -394,6 +394,10 @@ namespace ts.pxtc {
         rightType: string;
     }
 
+    export interface CallExpressionInfo {
+        type: string;
+    }
+
     let lf = assembler.lf;
     let checker: TypeChecker;
     export let target: CompileTarget;
@@ -1995,8 +1999,13 @@ ${lbl}: .short 0xffff
         }
 
         function emitCallExpression(node: CallExpression): ir.Expr {
-            let sig = checker.getResolvedSignature(node)
-            return emitCallCore(node, node.expression, node.arguments, sig)
+            const sig = checker.getResolvedSignature(node);
+            const callExprType = typeOf(node);
+            if (isBooleanType(callExprType)) {
+                (node as any).exprInfo = { type: checker.typeToString(callExprType) } as CallExpressionInfo;
+            }
+            const ret = emitCallCore(node, node.expression, node.arguments, sig);
+            return ret;
         }
 
         function emitCallCore(
