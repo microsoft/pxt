@@ -1110,7 +1110,7 @@ namespace pxsim {
                     const bus = this.board.bus;
                     if (bus)
                         bus.queueIdle();
-                });
+                }, 20);
             }
         }
 
