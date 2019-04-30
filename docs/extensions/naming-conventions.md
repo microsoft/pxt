@@ -10,7 +10,7 @@ As much as possible, please try to follow these conventions and consider excepti
 MakeCode follows the usual TypeScript naming conventions.
 
 * API and function names are typically all in English. Only the display text for blocks is translated.
-* Names are "contracted" meaning the individual words in a name are adjacent rather than being separated by a `_` or other non-alphanumeric character..
+* Names are "contracted" meaning the individual words in a name are adjacent rather than being separated by a `_` or other non-alphanumeric character.
 > Form names as ``myName`` and not like ``my_Name``.
 * **Namespaces**, **function**, **function parameters**, **methods**, **fields** are camel cased. Single word names are all lowercase.
 > Style: ``aaaBbbCcc``<br/>
