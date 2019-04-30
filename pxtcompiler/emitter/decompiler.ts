@@ -1366,12 +1366,14 @@ ${output}</xml>`;
                 case SK.Identifier:
                     return undefined;
                 case SK.BinaryExpression:
-                    return checkIsBinaryExpression(expr as BinaryExpression);
+                    return checkBinaryExpression(expr as BinaryExpression);
+                case SK.CallExpression:
+                    return checkCallExpression(expr as CallExpression);
                 default:
-                    return Util.lf("TODO error");
+                    return Util.lf("Conditions must evaluate to booleans or identifiers");
             }
 
-            function checkIsBinaryExpression(n: BinaryExpression) {
+            function checkBinaryExpression(n: BinaryExpression) {
                 switch (n.operatorToken.kind) {
                     case SK.EqualsEqualsToken:
                     case SK.EqualsEqualsEqualsToken:
@@ -1384,10 +1386,16 @@ ${output}</xml>`;
                         return undefined;
                     case SK.AmpersandAmpersandToken:
                     case SK.BarBarToken:
-                        return undefined; // todo check that these evaluate?
+                        return undefined; // todo check that these evaluate to boolean (e.g. not `1 || 2`)
                     default:
-                        return Util.lf("TODO error");
+                        return Util.lf("Binary expressions in conditionals must evaluate to booleans");
                 }
+            }
+
+            function checkCallExpression(n: CallExpression) {
+                // todo: need to tag callExpressions in emitter or otherwise identify CEs that evaluate to boolean
+                if (0) return Util.lf("Only functions that return booleans are allowed as conditions");
+                return undefined;
             }
         }
 
