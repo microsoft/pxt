@@ -21,8 +21,8 @@ namespace pxsim {
         return res;
     }
 
-    export class EventBusGeneric<T> {
-        private queues: Map<EventQueue<T>> = {};
+    export class EventBus {
+        private queues: Map<EventQueue> = {};
         private notifyID: number;
         private notifyOneID: number;
         private schedulerID: number;
@@ -35,7 +35,7 @@ namespace pxsim {
 
         constructor(
             private runtime: Runtime,
-            private valueToArgs?: EventValueToActionArgs<T>
+            private valueToArgs?: EventValueToActionArgs
         ) {
             this.schedulerID = 15; // DEVICE_ID_SCHEDULER
             this.idleEventID = 2; // DEVICE_SCHEDULER_EVT_IDLE
@@ -55,13 +55,13 @@ namespace pxsim {
             this.idleEventID = idleEventID;
         }
 
-        private start(id: number | string, evid: number | string, background: boolean, create: boolean = false) {
+        private start(id: EventIDType, evid: EventIDType, background: boolean, create: boolean = false) {
             let key = (background ? "back" : "fore") + ":" + id + ":" + evid
             if (!this.queues[key] && create) this.queues[key] = new EventQueue<T>(this.runtime, this.valueToArgs);;
             return this.queues[key];
         }
 
-        listen(id: number | string, evid: number | string, handler: RefAction) {
+        listen(id: EventIDType, evid: EventIDType, handler: RefAction) {
             let q = this.start(id, evid, this.backgroundHandlerFlag, true);
             if (this.backgroundHandlerFlag)
                 q.addHandler(handler);
@@ -127,12 +127,6 @@ namespace pxsim {
         getLastEventTime() {
             return 0xffffffff & (this.lastEventTimestampUs - runtime.startTimeUs);
         }
-    }
-
-    export class EventBus extends EventBusGeneric<number> {
-        // queue(id: number | string, evid: number | string, value: number = 0) {
-        //     super.queue(id, evid, value);
-        // }
     }
 
     export interface AnimationOptions {

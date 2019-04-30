@@ -309,23 +309,25 @@ namespace pxsim {
         }
     }
 
-    export type EventValueToActionArgs<T> = (value: T) => any[];
+    export type EventValueToActionArgs = (value: EventIDType) => any[];
 
     enum LogType {
         UserSet, BackAdd, BackRemove
     }
 
-    export class EventQueue<T> {
+    export type EventIDType = number | string;
+
+    export class EventQueue {
         max: number = 5;
-        events: T[] = [];
+        events: EventIDType[] = [];
         private awaiters: ((v?: any) => void)[] = [];
         private lock: boolean;
         private _handlers: RefAction[] = [];
         private _addRemoveLog: { act: RefAction, log: LogType }[] = [];
 
-        constructor(public runtime: Runtime, private valueToArgs?: EventValueToActionArgs<T>) { }
+        constructor(public runtime: Runtime, private valueToArgs?: EventValueToActionArgs) { }
 
-        public push(e: T, notifyOne: boolean): Promise<void> {
+        public push(e: EventIDType, notifyOne: boolean): Promise<void> {
             if (this.awaiters.length > 0) {
                 if (notifyOne) {
                     const aw = this.awaiters.shift();
@@ -1105,7 +1107,9 @@ namespace pxsim {
             if (this.idleTimer === undefined) {
                 this.idleTimer = setInterval(() => {
                     if (!this.running || this.pausedOnBreakpoint) return;
-                    this.board.bus.queueIdle();
+                    const bus = this.board.bus;
+                    if (bus)
+                        bus.queueIdle();
                 });
             }
         }
