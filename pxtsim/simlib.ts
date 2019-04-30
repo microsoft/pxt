@@ -57,7 +57,7 @@ namespace pxsim {
 
         private start(id: EventIDType, evid: EventIDType, background: boolean, create: boolean = false) {
             let key = (background ? "back" : "fore") + ":" + id + ":" + evid
-            if (!this.queues[key] && create) this.queues[key] = new EventQueue<T>(this.runtime, this.valueToArgs);;
+            if (!this.queues[key] && create) this.queues[key] = new EventQueue(this.runtime, this.valueToArgs);
             return this.queues[key];
         }
 
@@ -78,7 +78,7 @@ namespace pxsim {
         }
 
         // this handles ANY (0) semantics for id and evid
-        private getQueues(id: number | string, evid: number | string, bg: boolean) {
+        private getQueues(id: EventIDType, evid: EventIDType, bg: boolean) {
             let ret = [this.start(0, 0, bg)]
             if (id == 0 && evid == 0)
                 return ret
@@ -91,7 +91,7 @@ namespace pxsim {
             return ret
         }
 
-        queue(id: number | string, evid: number | string, value: T = null) {
+        queue(id: EventIDType, evid: EventIDType, value: EventIDType = null) {
             if (runtime.pausedOnBreakpoint) return;
             // special handle for idle, start the idle timeout
             if (this.schedulerID && id == this.idleEventID)
