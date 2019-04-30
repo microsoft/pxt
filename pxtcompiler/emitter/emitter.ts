@@ -3036,6 +3036,20 @@ ${lbl}: .short 0xffff
                     if (typeof v == "number")
                         return v
                 }
+            } else if (e.exprKind == ir.EK.RuntimeCall && e.args.length == 2) {
+                let v0 = valueToInt(e.args[0])
+                let v1 = valueToInt(e.args[1])
+                if (v0 === undefined || v1 === undefined)
+                    return undefined
+                switch (e.data) {
+                    case "numops::orrs":
+                        return v0 | v1;
+                    case "numops::adds":
+                        return v0 + v1;
+                    default:
+                        console.log(e)
+                        return undefined;
+                }
             }
             return undefined
         }

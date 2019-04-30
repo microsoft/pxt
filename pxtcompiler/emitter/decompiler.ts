@@ -20,7 +20,7 @@ namespace ts.pxtc.decompiler {
     /**
      * Max number of blocks before we bail out of decompilation
      */
-    const MAX_BLOCKS = 1000;
+    const MAX_BLOCKS = 1500;
 
     const lowerCaseAlphabetStartCode = 97;
     const lowerCaseAlphabetEndCode = 122;
@@ -466,7 +466,6 @@ ${output}</xml>`;
         }
 
         function mkStmt(type: string): StatementNode {
-            countBlock();
             return {
                 kind: "statement",
                 type
@@ -474,7 +473,6 @@ ${output}</xml>`;
         }
 
         function mkExpr(type: string): ExpressionNode {
-            countBlock();
             return {
                 kind: "expr",
                 type
@@ -482,11 +480,6 @@ ${output}</xml>`;
         }
 
         function mkValue(name: string, value: ExpressionNode | TextNode, shadowType?: string, shadowMutation?: pxt.Map<string>): ValueNode {
-            if (shadowType && value.kind === "expr" && (value as ExpressionNode).type !== shadowType) {
-                // Count the shadow block that will be emitted
-                countBlock();
-            }
-
             if ((!shadowType || shadowType === numberType) && shadowMutation && shadowMutation['min'] && shadowMutation['max']) {
                 // Convert a number to a number with a slider (math_number_minmax) if min and max shadow options are defined
                 shadowType = minmaxNumberType;
@@ -653,7 +646,11 @@ ${output}</xml>`;
             }
             else {
                 const node = n as ExpressionNode;
-                const tag = shadow || node.isShadow ? "shadow" : "block";
+                const isShadow = shadow || node.isShadow;
+                const tag = isShadow ? "shadow" : "block";
+                if (!isShadow) {
+                    countBlock();
+                }
 
                 write(`<${tag} type="${U.htmlEscape(node.type)}">`)
                 emitBlockNodeCore(node);
@@ -662,6 +659,7 @@ ${output}</xml>`;
         }
 
         function openBlockTag(type: string) {
+            countBlock();
             write(`<block type="${U.htmlEscape(type)}">`)
         }
 
@@ -1310,7 +1308,6 @@ ${output}</xml>`;
                         return getVariableSetOrChangeBlock(n.left as ts.Identifier, n.right, true);
                 case SK.MinusEqualsToken:
                     const r = mkStmt("variables_change");
-                    countBlock();
                     r.inputs = [mkValue("VALUE", negateNumericNode(n.right), numberType)];
                     r.fields = [getField("VAR", getVariableName(n.left as ts.Identifier))];
 
@@ -1380,7 +1377,6 @@ ${output}</xml>`;
                         getValue("A", condition.right, numberType),
                         getValue("B", 1, numberType)
                     ];
-                    countBlock();
                     r.inputs.push(mkValue("TO", ex, wholeNumberType));
                 }
                 else if (condition.operatorToken.kind === SK.LessThanEqualsToken) {
@@ -1633,7 +1629,6 @@ ${output}</xml>`;
             const api = env.blocks.apis.byQName[info.qName];
             const comp = pxt.blocks.compileInfo(api);
 
-            countBlock();
             const r = {
                 kind: asExpression ? "expr" : "statement",
                 type: attributes.blockId
@@ -1879,7 +1874,6 @@ ${output}</xml>`;
                 case SK.BinaryExpression:
                     const op = e as BinaryExpression;
                     if (op.operatorToken.kind == SK.PlusToken && (op.right as any).text == "1") {
-                        countBlock();
                         return getOutputBlock(op.left);
                     }
                 default:
@@ -1981,6 +1975,7 @@ ${output}</xml>`;
 
         function maybeEmitEmptyOnStart() {
             if (options.alwaysEmitOnStart) {
+                countBlock();
                 write(`<block type="${ts.pxtc.ON_START_TYPE}"></block>`);
             }
         }

@@ -882,6 +882,19 @@ export class ProjectView
         else sd.collapse();
     }
 
+    setTutorialInstructionsExpanded(value: boolean): void {
+        const tutorialOptions = this.state.tutorialOptions;
+        tutorialOptions.tutorialStepExpanded = value;
+        this.setState(
+            { tutorialOptions: tutorialOptions },
+            () => {
+                if (this.editor == this.blocksEditor)
+                    this.blocksEditor.hideFlyout()
+                else if (this.editor == this.textEditor)
+                    this.textEditor.hideFlyout()
+            });
+    }
+
     setTutorialStep(step: number) {
         // save and typecheck
         this.typecheckNow();
@@ -892,10 +905,11 @@ export class ProjectView
             tc.setPopout();
             let tutorialOptions = this.state.tutorialOptions;
             tutorialOptions.tutorialStep = step;
+            tutorialOptions.tutorialStepExpanded = false;
             this.setState({ tutorialOptions: tutorialOptions });
             const fullscreen = tutorialOptions.tutorialStepInfo[step].fullscreen;
             if (fullscreen) this.showTutorialHint();
-            else this.showLightbox();
+            //else this.showLightbox();
             // Hide flyouts and popouts
             this.editor.closeFlyout();
         }
@@ -929,9 +943,9 @@ export class ProjectView
                         this.setState({ tutorialOptions: tutorialOptions });
                         const fullscreen = tutorialOptions.tutorialStepInfo[0].fullscreen;
                         if (fullscreen) this.showTutorialHint();
-                        else {
-                            this.showLightbox();
-                        }
+                        //else {
+                        //    this.showLightbox();
+                        //}
                         core.hideLoading("tutorial");
                         break;
                     case 'error':
@@ -1134,7 +1148,7 @@ export class ProjectView
                 const stepInfo = t.tutorialStepInfo;
                 const fullscreen = stepInfo[0].fullscreen;
                 if (fullscreen) this.showTutorialHint();
-                else this.showLightbox();
+                //else this.showLightbox();
             })
             .catch(e => {
                 // Failed to decompile
@@ -1838,6 +1852,7 @@ export class ProjectView
             if (res) {
                 return pxt.usb.pairAsync()
                     .then(() => {
+                        cmds.setWebUSBPaired(true);
                         core.infoNotification(lf("Device paired! Try downloading now."))
                     }, (err: Error) => {
                         core.errorNotification(lf("Failed to pair the device: {0}", err.message))
@@ -2021,6 +2036,7 @@ export class ProjectView
         pxt.tickEvent(`compile.devicenotfound`);
         const ext = pxt.outputName().replace(/[^.]*/, "");
         const fn = pkg.genFileName(ext);
+        cmds.setWebUSBPaired(false);
         return core.dialogAsync({
             header: lf("Oops, we couldn't find your {0}", pxt.appTarget.appTheme.boardName),
             body: lf("Please make sure your {0} is connected and try again.", pxt.appTarget.appTheme.boardName),
@@ -2963,6 +2979,7 @@ export class ProjectView
         const sideDocs = !(sandbox || targetTheme.hideSideDocs);
         const tutorialOptions = this.state.tutorialOptions;
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
+        const inTutorialExpanded = inTutorial && tutorialOptions.tutorialStepExpanded;
         const inDebugMode = this.state.debugging;
         const inHome = this.state.home && !sandbox;
         const inEditor = !!this.state.header && !inHome;
@@ -2995,6 +3012,7 @@ export class ProjectView
             pxt.shell.layoutTypeClass(),
             inHome ? 'inHome' : '',
             inTutorial ? 'tutorial' : '',
+            inTutorialExpanded ? 'tutorialExpanded' : '',
             inDebugMode ? 'debugger' : '',
             pxt.options.light ? 'light' : '',
             pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : '',
