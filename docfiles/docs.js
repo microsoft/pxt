@@ -191,32 +191,13 @@ function setupSemantic() {
 
     $('#printbtn').dropdown({
         action: function(text, value) {
-           
-            // Blocky selectors
-            var blocklyBlockBackground = document.querySelectorAll('.blocklyBlockBackground');
-            var blocklyPath = document.querySelectorAll('.blocklyPath');
-            var blocklyLedOff = document.querySelectorAll('.blocklyLedOff');
-            var blocklyDropdownText = document.querySelectorAll('.blocklyDropdownText');
-            var blocklyText = document.querySelectorAll('.blocklyText');
-            var blocklyLedOn = document.querySelectorAll('.blocklyLedOn');
-            var uiimage = document.querySelectorAll('.ui.image');
-            
-            var collections = [ blocklyBlockBackground, blocklyPath, blocklyLedOff, blocklyDropdownText, blocklyText, blocklyLedOn, uiimage]
-
+        
             switch (value) {
                 case 'color': 
-                    collections.forEach(function(elements) {
-                        if (elements.length != 0){
-                            addRemovePrintColorClass(elements, true);
-                        }
-                    });                       
+                document.querySelector('body').classList.add("print-color");                      
                     break;
                 case 'bw':
-                    collections.forEach(function(elements) {
-                        if (elements.length != 0){
-                            addRemovePrintColorClass(elements, false);
-                        }
-                    });
+                document.querySelector('body').classList.remove("print-color");
                     break;
                 default:
                     console.log('print');
@@ -229,16 +210,6 @@ function setupSemantic() {
 
     if (/browsers$/i.test(window.location.href))
         $('.ui.footer').append($('<div class="ui center aligned small container"/>').text('user agent: ' + navigator.userAgent))
-}
-
-function addRemovePrintColorClass(elements, operation) {
-    [].forEach.call(elements, function(el){
-        if (operation === true){
-            el.classList.add("print-color");
-        } else if (operation === false){
-            el.classList.remove("print-color"); 
-        }
-    });
 }
 
 function setupBlocklyAsync() {
