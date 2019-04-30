@@ -207,14 +207,14 @@ function setupSemantic() {
                 case 'color': 
                     collections.forEach(function(elements) {
                         if (elements.length != 0){
-                            addRemovePrintColorClass(elements, 'add');
+                            addRemovePrintColorClass(elements, true);
                         }
                     });                       
                     break;
-                case 'outlines':
+                case 'bw':
                     collections.forEach(function(elements) {
                         if (elements.length != 0){
-                            addRemovePrintColorClass(elements, 'remove');
+                            addRemovePrintColorClass(elements, false);
                         }
                     });
                     break;
@@ -231,11 +231,11 @@ function setupSemantic() {
         $('.ui.footer').append($('<div class="ui center aligned small container"/>').text('user agent: ' + navigator.userAgent))
 }
 
-function addRemovePrintColorClass(elements,operation) {
+function addRemovePrintColorClass(elements, operation) {
     [].forEach.call(elements, function(el){
-        if (operation === 'add'){
+        if (operation === true){
             el.classList.add("print-color");
-        } else if (operation === 'remove'){
+        } else if (operation === false){
             el.classList.remove("print-color"); 
         }
     });

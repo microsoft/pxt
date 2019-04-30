@@ -288,7 +288,7 @@ namespace pxt.docs {
                 <div class="item" data-value="color">
                     <p>${lf("Color")}</p>
                 </div>
-                <div class="item" data-value="outlines">
+                <div class="item" data-value="bw">
                     <p>${lf("Black & White")}</p>
                 </div>
                 </div>
