@@ -1320,7 +1320,7 @@ ${output}</xml>`;
 
         function getWhileStatement(n: ts.WhileStatement): StatementNode {
             const r = mkStmt("device_while");
-            r.inputs = [getValue("COND", n.expression, booleanType)];
+            r.inputs = [getConditionalInput("COND", n)];
             r.handlers = [{ name: "DO", statement: getStatementBlock(n.statement) }];
             return r;
         }
@@ -1337,7 +1337,7 @@ ${output}</xml>`;
             r.handlers = [];
 
             flatif.ifStatements.forEach((stmt, i) => {
-                r.inputs.push(getValue("IF" + i, stmt.expression, booleanType));
+                r.inputs.push(getConditionalInput("IF" + i, stmt as ts.IfStatement));
                 r.handlers.push({ name: "DO" + i, statement: getStatementBlock(stmt.thenStatement) });
             });
 
@@ -1346,6 +1346,49 @@ ${output}</xml>`;
             }
 
             return r;
+        }
+
+        function getConditionalInput(name: string, stmt: ts.IfStatement | ts.WhileStatement) {
+            const err = checkConditionalExpression(stmt);
+            if (err) {
+                const expr = getTypeScriptExpressionBlock(stmt.expression);
+                return mkValue(name, expr, booleanType)
+            } else {
+                return getValue(name, stmt.expression, booleanType);
+            }
+        }
+
+        function checkConditionalExpression(n: ts.WhileStatement | ts.IfStatement) {
+            const expr: Expression = n.expression;
+            switch (expr.kind) {
+                case SK.TrueKeyword:
+                case SK.FalseKeyword:
+                case SK.Identifier:
+                    return undefined;
+                case SK.BinaryExpression:
+                    return checkIsBinaryExpression(expr as BinaryExpression);
+                default:
+                    return Util.lf("TODO error");
+            }
+
+            function checkIsBinaryExpression(n: BinaryExpression) {
+                switch (n.operatorToken.kind) {
+                    case SK.EqualsEqualsToken:
+                    case SK.EqualsEqualsEqualsToken:
+                    case SK.ExclamationEqualsToken:
+                    case SK.ExclamationEqualsEqualsToken:
+                    case SK.LessThanToken:
+                    case SK.LessThanEqualsToken:
+                    case SK.GreaterThanToken:
+                    case SK.GreaterThanEqualsToken:
+                        return undefined;
+                    case SK.AmpersandAmpersandToken:
+                    case SK.BarBarToken:
+                        return undefined; // todo check that these evaluate?
+                    default:
+                        return Util.lf("TODO error");
+                }
+            }
         }
 
         function getForStatement(n: ts.ForStatement): StatementNode {
