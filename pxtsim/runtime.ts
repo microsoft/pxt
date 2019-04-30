@@ -185,8 +185,15 @@ namespace pxsim {
 
     const SERIAL_BUFFER_LENGTH = 16;
     export class BaseBoard {
-        public runOptions: SimulatorRunMessage;
-        public messageListeners: MessageListener[] = [];
+        id: string;
+        bus: pxsim.EventBus;
+        runOptions: SimulatorRunMessage;
+        messageListeners: MessageListener[] = [];
+
+        constructor() {
+            this.id = "b" + Math.round(Math.random() * 2147483647);
+            this.bus = new pxsim.EventBus(runtime);
+        }
 
         public updateView() { }
         public receiveMessage(msg: SimulatorMessage) {
@@ -249,11 +256,6 @@ namespace pxsim {
     }
 
     export class CoreBoard extends BaseBoard {
-        id: string;
-
-        // the bus
-        bus: pxsim.EventBus;
-
         // updates
         updateSubscribers: (() => void)[];
 
@@ -264,8 +266,6 @@ namespace pxsim {
 
         constructor() {
             super()
-            this.id = "b" + Math.round(Math.random() * 2147483647);
-            this.bus = new pxsim.EventBus(runtime);
 
             // updates
             this.updateSubscribers = []
@@ -455,6 +455,7 @@ namespace pxsim {
 
         dead = false;
         running = false;
+        idleTimer: number = undefined;
         recording = false;
         recordingTimer = 0;
         recordingLastImageData: ImageData = undefined;
@@ -572,6 +573,7 @@ namespace pxsim {
             this.dead = true
             // TODO fix this
             this.stopRecording();
+            this.stopIdle();
             this.setRunning(false);
         }
 
@@ -651,6 +653,7 @@ namespace pxsim {
                     });
                 } else {
                     this.stopRecording();
+                    this.stopIdle();
                     Runtime.postMessage(<SimulatorStateMessage>{
                         type: 'status',
                         frameid: Embed.frameid,
@@ -1096,6 +1099,24 @@ namespace pxsim {
             c.start = 0;
             c.numstops++;
         }
+
+        startIdle() {
+            // schedules handlers to run every 20ms
+            if (this.idleTimer === undefined) {
+                this.idleTimer = setInterval(() => {
+                    if (!this.running || this.pausedOnBreakpoint) return;
+                    this.board.bus.queueIdle();
+                });
+            }
+        }
+
+        stopIdle() {
+            if (this.idleTimer !== undefined) {
+                clearInterval(this.idleTimer);
+                this.idleTimer = undefined;
+            }
+        }
+
 
         // Wrapper for the setTimeout
         schedule(fn: Function, timeout: number): number {

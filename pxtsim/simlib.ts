@@ -25,11 +25,21 @@ namespace pxsim {
         private queues: Map<EventQueue<T>> = {};
         private notifyID: number;
         private notifyOneID: number;
+        private schedulerID: number;
+        private idleEventID: number;
         private lastEventValue: string | number;
         private lastEventTimestampUs: number;
         private backgroundHandlerFlag: boolean = false;
 
         public nextNotifyEvent = 1024;
+
+        constructor(
+            private runtime: Runtime, 
+            private valueToArgs?: EventValueToActionArgs<T>
+            ) {
+                this.schedulerID = 15; // DEVICE_ID_SCHEDULER
+                this.idleEventID = 2; // DEVICE_SCHEDULER_EVT_IDLE
+            }
 
         public setBackgroundHandlerFlag() {
             this.backgroundHandlerFlag = true;
@@ -40,7 +50,10 @@ namespace pxsim {
             this.notifyOneID = notifyOneID;
         }
 
-        constructor(private runtime: Runtime, private valueToArgs?: EventValueToActionArgs<T>) { }
+        public setIdle(schedulerID: number, idleEventID: number) {
+            this.schedulerID = schedulerID;
+            this.idleEventID = idleEventID;
+        }
 
         private start(id: number | string, evid: number | string, background: boolean, create: boolean = false) {
             let key = (background ? "back" : "fore") + ":" + id + ":" + evid
@@ -80,6 +93,9 @@ namespace pxsim {
 
         queue(id: number | string, evid: number | string, value: T = null) {
             if (runtime.pausedOnBreakpoint) return;
+            // special handle for idle, start the idle timeout
+            if (this.schedulerID && id == this.idleEventID)
+                this.runtime.startIdle();
             // special handling for notify one
             const notifyOne = this.notifyID && this.notifyOneID && id == this.notifyOneID;
             if (notifyOne)
@@ -91,6 +107,11 @@ namespace pxsim {
                 if (q) return q.push(value, notifyOne);
                 else return Promise.resolve()
             })
+        }
+
+        queueIdle() {
+            if (this.schedulerID && this.idleEventID)
+                this.queue(this.schedulerID, this.idleEventID);
         }
 
         // only for foreground handlers
