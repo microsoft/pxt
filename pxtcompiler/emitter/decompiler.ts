@@ -1362,23 +1362,26 @@ ${output}</xml>`;
             const expr: Expression = n.expression;
             return checkExpression(expr);
 
-            function checkExpression(expr: Expression) {
+            function checkExpression(expr: Expression): string {
                 switch (expr.kind) {
                     case SK.TrueKeyword:
                     case SK.FalseKeyword:
-                    case SK.ExclamationToken:
                     case SK.Identifier:
                         return undefined;
                     case SK.BinaryExpression:
                         return checkBinaryExpression(expr as BinaryExpression);
                     case SK.CallExpression:
                         return checkCallExpression(expr as CallExpression);
+                    case SK.PrefixUnaryExpression:
+                        if ((expr as PrefixUnaryExpression).operator === SK.ExclamationToken) {
+                            return undefined;
+                        } // else fall through
                     default:
                         return Util.lf("Conditions must evaluate to booleans or identifiers");
                 }
             }
 
-            function checkBinaryExpression(n: BinaryExpression) {
+            function checkBinaryExpression(n: BinaryExpression): string {
                 switch (n.operatorToken.kind) {
                     case SK.EqualsEqualsToken:
                     case SK.EqualsEqualsEqualsToken:
@@ -1388,17 +1391,18 @@ ${output}</xml>`;
                     case SK.LessThanEqualsToken:
                     case SK.GreaterThanToken:
                     case SK.GreaterThanEqualsToken:
-                        return undefined;
+                    // TODO: && / || should check against non boolean l / r (e.g. not `1 || 2`)
+                    // https://github.com/Microsoft/pxt-arcade/issues/946
                     case SK.AmpersandAmpersandToken:
                     case SK.BarBarToken:
-                        return undefined; // todo check that these evaluate to boolean (e.g. not `1 || 2`)
+                        return undefined;
                     default:
                         return Util.lf("Binary expressions in conditionals must evaluate to booleans");
                 }
             }
 
             function checkCallExpression(n: CallExpression) {
-                // todo: need to tag callExpressions in emitter or otherwise identify CEs that evaluate to boolean
+                // TODO: need to tag callExpressions in emitter or otherwise identify CEs that evaluate to boolean
                 if (0) return Util.lf("Only functions that return booleans are allowed as conditions");
                 return undefined;
             }
