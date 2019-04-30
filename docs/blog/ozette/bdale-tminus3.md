@@ -7,7 +7,7 @@
 We are in one of the library's workspaces, filled with spools of thread, sewing machines, scissors, tech, and garments in various stages of preparation by 20 designers.
 Each of the designers is creating a collection of several garments, one of which must incorporate wearable technology. 
 
-MSR intern [Teddy Seyed](http://teddyseyed.com/) (University of Calgar, Canada) is the mastermind of this
+MSR intern [Teddy Seyed](http://teddyseyed.com/) (University of Calgary, Canada) is the mastermind of this
 first application of Project Ozette, as he has extensive experience working in the world of fashion technology (in fact, he was the one who reached out to the organizers and got this party started).
 Teddy has been in Brooklyn for almost two weeks, after more than four months of preparation in Redmond, Washington. Here he is, working with one of the designers:
 
