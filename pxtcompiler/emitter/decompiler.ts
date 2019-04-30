@@ -1360,7 +1360,7 @@ ${output}</xml>`;
 
         function checkConditionalExpression(n: ts.WhileStatement | ts.IfStatement) {
             const expr: Expression = n.expression;
-            checkExpression(expr);
+            return checkExpression(expr);
 
             function checkExpression(expr: Expression) {
                 switch (expr.kind) {
