@@ -1360,17 +1360,22 @@ ${output}</xml>`;
 
         function checkConditionalExpression(n: ts.WhileStatement | ts.IfStatement) {
             const expr: Expression = n.expression;
-            switch (expr.kind) {
-                case SK.TrueKeyword:
-                case SK.FalseKeyword:
-                case SK.Identifier:
-                    return undefined;
-                case SK.BinaryExpression:
-                    return checkBinaryExpression(expr as BinaryExpression);
-                case SK.CallExpression:
-                    return checkCallExpression(expr as CallExpression);
-                default:
-                    return Util.lf("Conditions must evaluate to booleans or identifiers");
+            checkExpression(expr);
+
+            function checkExpression(expr: Expression) {
+                switch (expr.kind) {
+                    case SK.TrueKeyword:
+                    case SK.FalseKeyword:
+                    case SK.ExclamationToken:
+                    case SK.Identifier:
+                        return undefined;
+                    case SK.BinaryExpression:
+                        return checkBinaryExpression(expr as BinaryExpression);
+                    case SK.CallExpression:
+                        return checkCallExpression(expr as CallExpression);
+                    default:
+                        return Util.lf("Conditions must evaluate to booleans or identifiers");
+                }
             }
 
             function checkBinaryExpression(n: BinaryExpression) {
