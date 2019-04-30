@@ -34,12 +34,12 @@ namespace pxsim {
         public nextNotifyEvent = 1024;
 
         constructor(
-            private runtime: Runtime, 
+            private runtime: Runtime,
             private valueToArgs?: EventValueToActionArgs<T>
-            ) {
-                this.schedulerID = 15; // DEVICE_ID_SCHEDULER
-                this.idleEventID = 2; // DEVICE_SCHEDULER_EVT_IDLE
-            }
+        ) {
+            this.schedulerID = 15; // DEVICE_ID_SCHEDULER
+            this.idleEventID = 2; // DEVICE_SCHEDULER_EVT_IDLE
+        }
 
         public setBackgroundHandlerFlag() {
             this.backgroundHandlerFlag = true;
