@@ -382,7 +382,6 @@ namespace pxt.py {
     }
 
     function typeError(a: py.AST, t0: Type, t1: Type) {
-        throw new Error(U.lf("types not compatible: {0} and {1}", t2s(t0), t2s(t1)))
         error(a, 9500, U.lf("types not compatible: {0} and {1}", t2s(t0), t2s(t1)))
     }
 
@@ -1252,20 +1251,7 @@ namespace pxt.py {
         let annotation: Expr;
         let value: Expr;
         let target: Expr;
-        // TODO handle "simple" AnnAssign param
         // TODO handle more than 1 target
-        // interface Assign extends Symbol {
-        //     kind: "Assign";
-        //     targets: Expr[];
-        //     value: Expr;
-        // }
-        // interface AnnAssign extends Stmt {
-        //     kind: "AnnAssign";
-        //     target: Expr;
-        //     annotation: Expr;
-        //     value?: Expr;
-        //     simple: int; // 'simple' indicates that we annotate simple name without parens
-        // }
         if (n.kind === "Assign") {
             if (n.targets.length != 1)
                 return stmtTODO(n)
