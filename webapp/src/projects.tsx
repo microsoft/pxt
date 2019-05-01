@@ -568,6 +568,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             clickLabel = lf("Start Tutorial");
         }
         else if (cardType == "codeExample" || cardType == "example") clickLabel = lf("Open Example");
+        else if (cardType == "forumLink") clickLabel = lf("Open in Forum");
         else if (cardType == "template") clickLabel = lf("New Project");
         else if (youTubeId) clickLabel = lf("Play Video");
 
