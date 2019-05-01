@@ -1641,10 +1641,6 @@ namespace pxt.py {
                 methName = ""
 
                 if (over) {
-                    if (over.n == "console.log") {
-                        console.log("PRINT -> CONSOLE.LOG")
-                        console.dir(n)
-                    }
                     if (over.n[0] == "." && orderedArgs.length) {
                         recv = orderedArgs.shift()
                         recvTp = typeOf(recv)
@@ -1704,7 +1700,6 @@ namespace pxt.py {
                         if (arg.kind == "Name" && shouldInlineFunction(arg.symbolInfo)) {
                             allargs.push(emitFunctionDef(arg.symbolInfo.pyAST as FunctionDef, true))
                         } else {
-                            // TODO(dz)
                             allargs.push(expr(arg))
                         }
                     } else {
@@ -1954,7 +1949,6 @@ namespace pxt.py {
         diagnostics: pxtc.KsDiagnostic[]
     }
     export function py2ts(opts: pxtc.CompileOptions): Py2TsRes {
-        console.log("#### COMPILING NEW FILE")
         let modules: py.Module[] = []
         const generated: Map<string> = {}
         diagnostics = []
