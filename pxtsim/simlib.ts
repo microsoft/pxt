@@ -21,15 +21,25 @@ namespace pxsim {
         return res;
     }
 
-    export class EventBusGeneric<T> {
-        private queues: Map<EventQueue<T>> = {};
+    export class EventBus {
+        private queues: Map<EventQueue> = {};
         private notifyID: number;
         private notifyOneID: number;
+        private schedulerID: number;
+        private idleEventID: number;
         private lastEventValue: string | number;
         private lastEventTimestampUs: number;
         private backgroundHandlerFlag: boolean = false;
 
         public nextNotifyEvent = 1024;
+
+        constructor(
+            private runtime: Runtime,
+            private valueToArgs?: EventValueToActionArgs
+        ) {
+            this.schedulerID = 15; // DEVICE_ID_SCHEDULER
+            this.idleEventID = 2; // DEVICE_SCHEDULER_EVT_IDLE
+        }
 
         public setBackgroundHandlerFlag() {
             this.backgroundHandlerFlag = true;
@@ -40,15 +50,18 @@ namespace pxsim {
             this.notifyOneID = notifyOneID;
         }
 
-        constructor(private runtime: Runtime, private valueToArgs?: EventValueToActionArgs<T>) { }
+        public setIdle(schedulerID: number, idleEventID: number) {
+            this.schedulerID = schedulerID;
+            this.idleEventID = idleEventID;
+        }
 
-        private start(id: number | string, evid: number | string, background: boolean, create: boolean = false) {
+        private start(id: EventIDType, evid: EventIDType, background: boolean, create: boolean = false) {
             let key = (background ? "back" : "fore") + ":" + id + ":" + evid
-            if (!this.queues[key] && create) this.queues[key] = new EventQueue<T>(this.runtime, this.valueToArgs);;
+            if (!this.queues[key] && create) this.queues[key] = new EventQueue(this.runtime, this.valueToArgs);
             return this.queues[key];
         }
 
-        listen(id: number | string, evid: number | string, handler: RefAction) {
+        listen(id: EventIDType, evid: EventIDType, handler: RefAction) {
             let q = this.start(id, evid, this.backgroundHandlerFlag, true);
             if (this.backgroundHandlerFlag)
                 q.addHandler(handler);
@@ -65,7 +78,7 @@ namespace pxsim {
         }
 
         // this handles ANY (0) semantics for id and evid
-        private getQueues(id: number | string, evid: number | string, bg: boolean) {
+        private getQueues(id: EventIDType, evid: EventIDType, bg: boolean) {
             let ret = [this.start(0, 0, bg)]
             if (id == 0 && evid == 0)
                 return ret
@@ -78,8 +91,11 @@ namespace pxsim {
             return ret
         }
 
-        queue(id: number | string, evid: number | string, value: T = null) {
+        queue(id: EventIDType, evid: EventIDType, value: EventIDType = null) {
             if (runtime.pausedOnBreakpoint) return;
+            // special handle for idle, start the idle timeout
+            if (this.schedulerID && id == this.idleEventID)
+                this.runtime.startIdle();
             // special handling for notify one
             const notifyOne = this.notifyID && this.notifyOneID && id == this.notifyOneID;
             if (notifyOne)
@@ -91,6 +107,11 @@ namespace pxsim {
                 if (q) return q.push(value, notifyOne);
                 else return Promise.resolve()
             })
+        }
+
+        queueIdle() {
+            if (this.schedulerID && this.idleEventID)
+                this.queue(this.schedulerID, this.idleEventID);
         }
 
         // only for foreground handlers
@@ -106,12 +127,6 @@ namespace pxsim {
         getLastEventTime() {
             return 0xffffffff & (this.lastEventTimestampUs - runtime.startTimeUs);
         }
-    }
-
-    export class EventBus extends EventBusGeneric<number> {
-        // queue(id: number | string, evid: number | string, value: number = 0) {
-        //     super.queue(id, evid, value);
-        // }
     }
 
     export interface AnimationOptions {
