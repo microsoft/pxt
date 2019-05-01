@@ -357,7 +357,7 @@ namespace ts.pxtc {
     }
 
     export interface CallInfo {
-        decl: Declaration;
+        decl: TypedDecl;
         qName: string;
         args: Expression[];
         isExpression: boolean;
@@ -392,10 +392,6 @@ namespace ts.pxtc {
     export interface BinaryExpressionInfo {
         leftType: string;
         rightType: string;
-    }
-
-    export interface CallExpressionInfo {
-        type: string;
     }
 
     let lf = assembler.lf;
@@ -2000,12 +1996,7 @@ ${lbl}: .short 0xffff
 
         function emitCallExpression(node: CallExpression): ir.Expr {
             const sig = checker.getResolvedSignature(node);
-            const callExprType = typeOf(node);
-            if (isBooleanType(callExprType)) {
-                (node as any).exprInfo = { type: checker.typeToString(callExprType) } as CallExpressionInfo;
-            }
-            const ret = emitCallCore(node, node.expression, node.arguments, sig);
-            return ret;
+            return emitCallCore(node, node.expression, node.arguments, sig);
         }
 
         function emitCallCore(
@@ -2020,6 +2011,7 @@ ${lbl}: .short 0xffff
                 decl = getDecl(funcExpr) as EmittableAsCall;
             let isMethod = false
             let isProperty = false
+
             if (decl) {
                 switch (decl.kind) {
                     // we treat properties via calls

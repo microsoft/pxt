@@ -1398,13 +1398,12 @@ ${output}</xml>`;
             }
 
             function checkBooleanCallExpression(n: CallExpression) {
-                // TODO: need to tag callExpressions in emitter or otherwise identify CEs that evaluate to boolean
-                if (1) {
+                const callInfo: pxtc.CallInfo  = (n.expression as any).callInfo;
+                const type = callInfo.decl.type;
+
+                if (type && type.kind === SK.BooleanKeyword) {
                     return undefined;
                 }
-                // if ((n as any).exprInfo) {  // exprInfo is not currently defined on the call expression properly
-                //     return undefined;
-                // }
                 return Util.lf("Only functions that return booleans are allowed as conditions");
             }
         }
