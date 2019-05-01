@@ -1,1 +1,1 @@
-print("hi, planet!")
+print(123)

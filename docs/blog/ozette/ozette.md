@@ -37,6 +37,10 @@ We are providing wearable technology (fashion beads) for the  designers to incor
 
 We'll be posting more soon on the technology behind Project Ozette, but offer the following taste for now.
 
+### Counting Down to the Show
+
+- [Project Ozette: BKLYN or Bust (T minus 3 days)](/blog/ozette/bdale-tminus3)
+
 ### Debugging with JACDAC over WebUSB
 
 It's easy to layer the JACDAC control protocol on top of different physical transport protocols. 
@@ -65,5 +69,4 @@ the fashion beads shown above.
 Currently, we are experimenting with JACDAC in [MakeCode Maker](https://maker.makecode.com)
 with the set of beads shown above. We have implemented a number of [JACDAC drivers](https://github.com/Microsoft/pxt-common-packages/tree/master/libs/jacdac-drivers) in TypeScript, in addition to
 the control layer protocol.
-
 
