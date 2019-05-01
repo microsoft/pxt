@@ -3351,13 +3351,9 @@ async function importGithubProject(id: string) {
 }
 
 function loadHeaderBySharedId(id: string) {
-    const existing = workspace.getHeaders()
-        .filter(h => h.pubCurrent && h.pubId == id)[0]
     core.showLoading("loadingheader", lf("loading project..."));
-    (existing
-        ? theEditor.loadHeaderAsync(existing, null)
-        : workspace.installByIdAsync(id)
-            .then(hd => theEditor.loadHeaderAsync(hd, null)))
+    workspace.installByIdAsync(id)
+        .then(hd => theEditor.loadHeaderAsync(hd, null))
         .catch(core.handleNetworkError)
         .finally(() => core.hideLoading("loadingheader"));
 }
