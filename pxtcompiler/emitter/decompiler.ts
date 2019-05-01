@@ -1398,7 +1398,7 @@ ${output}</xml>`;
             }
 
             function checkBooleanCallExpression(n: CallExpression) {
-                const callInfo: pxtc.CallInfo  = (n.expression as any).callInfo;
+                const callInfo: pxtc.CallInfo = (n.expression as any).callInfo;
                 const type = callInfo.decl.type;
 
                 if (type && type.kind === SK.BooleanKeyword) {
