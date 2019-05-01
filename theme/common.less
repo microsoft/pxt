@@ -101,6 +101,7 @@ pre {
 @editorToolsHeight: 10rem;
 @editorToolsCollapsedHeight: 4.7rem;
 @editorToolsCollapsedMobileHeight: 3.4rem;
+@editorToolsThinHeight: 3rem;
 #editortools {
     position: fixed;
     top: auto;
@@ -637,7 +638,7 @@ p.ui.font.small {
 
 @media only screen and (min-width: @largeMonitorBreakpoint) and (min-height:30em) {
     .ui.widedesktop.only {
-        display:inherit !important;
+        display:unset !important;
     }
     .ui.widedesktop.hide {
         display:none !important;
@@ -667,7 +668,7 @@ p.ui.font.small {
 /* Tablet only */
 @media only screen and (min-width: @tabletBreakpoint) and (max-width: @largestTabletScreen) {
     .ui.tablet.only {
-        display:inherit !important;
+        display:unset !important;
     }
 }
 
@@ -699,7 +700,7 @@ p.ui.font.small {
     }
 
     .ui.portrait.only {
-        display:inherit !important;
+        display:unset !important;
     }
     .ui.portrait.hide {
         display:none !important;
@@ -709,7 +710,7 @@ p.ui.font.small {
 /* Mobile only */
 @media only screen and (max-width: @largestMobileScreen) {
     .ui.mobile.only {
-        display:inherit !important;
+        display:unset !important;
     }
     .ui.mobile.hide {
         display:none !important;
@@ -717,9 +718,13 @@ p.ui.font.small {
 }
 
 /* Scren heights */
-@media only screen and (max-height: @tallEditorBreakpoint) {
+/** Thin **/
+@media only screen and (max-height: @tallEditorBreakpoint) and (min-width: @largestMobileScreen) {
     .ui.tall.only {
         display:none !important;
+    }
+    .simView #boardview {
+        padding-top: @thinMenuHeight;
     }
 }
 @media only screen and (min-height: @thinEditorBreakpoint) {
@@ -814,7 +819,7 @@ p.ui.font.small {
         font-size: 1.7rem;
     }
     div.simframe:not(:first-child) {
-        display: inherit;
+        display: unset;
     }
 }
 
@@ -1140,6 +1145,34 @@ p.ui.font.small {
     }
     .fullscreensim .simtoolbar .ui.button {
         font-size: 1rem;
+    }
+}
+
+
+@media only screen and (max-height: @tallEditorBreakpoint) and (min-width: @largestMobileScreen) {
+    /* Top Menu */
+    #maineditor {
+        top: @thinMenuHeight;
+    }
+    #filelist {
+        top: @thinMenuHeight;
+        padding: 0.5rem 1.5rem;
+    }
+    #editortools {
+        height: @editorToolsThinHeight; 
+    }
+    #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #filelist {
+        bottom: @editorToolsThinHeight;
+    }    
+    #editortools .ui.button {
+        padding: .5em;
+    }
+    #downloadArea {
+        padding-top: 0;
+    }
+    #editorToolbarArea, #projectNameArea {
+        padding-top: 0.5rem;
+        font-size: 0.8em;
     }
 }
 

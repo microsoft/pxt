@@ -915,7 +915,7 @@ export async function startAsync(gdbArgs: string[]) {
 
     let binfo = getBootInfo()
 
-    let goToApp = binfo.addr ? `set {int}(${binfo.addr}) = ${binfo.boot}` : ""
+    let goToApp = binfo.addr ? `set {int}(${binfo.addr}) = ${binfo.app}` : ""
     let goToBl = binfo.addr ? `set {int}(${binfo.addr}) = ${binfo.boot}` : ""
 
     // use / not \ for paths on Windows; otherwise gdb has issue starting openocd
