@@ -579,7 +579,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             className: 'huge positive'
         }]
 
-        const isLink = !cardType && (youTubeId || url) || cardType === "forumLink";
+        const isLink = (!isCodeCardType(cardType) || cardType === "forumLink") && (youTubeId || url);
         const linkHref = (youTubeId && !url) ? `https://youtu.be/${youTubeId}` :
             ((/^https:\/\//i.test(url)) || (/^\//i.test(url)) ? url : '');
 
@@ -618,6 +618,23 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                 </div>
             </div>
         </div>;
+
+        function isCodeCardType(value: string): value is pxt.CodeCardType {
+            switch (value) {
+                case "file":
+                case "example":
+                case "codeExample":
+                case "tutorial":
+                case "side":
+                case "template":
+                case "package":
+                case "hw":
+                case "forumLink":
+                    return true;
+                default:
+                    return false;
+            }
+        }
     }
 }
 
