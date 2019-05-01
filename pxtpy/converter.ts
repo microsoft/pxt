@@ -1338,21 +1338,30 @@ namespace pxt.py {
             return B.mkStmt(B.mkText(pref), B.mkInfix(expr(target), "=", expr(value)))
         }
         if (!pref && target.kind == "Tuple") {
-            let res = [
-                B.mkStmt(B.mkText("const tmp = "), expr(value))
-            ]
             let tup = target as py.Tuple
-            tup.elts.forEach((e, i) => {
-                res.push(
-                    B.mkStmt(B.mkInfix(expr(e), "=", B.mkText("tmp[" + i + "]")))
-                )
-            })
-            return B.mkGroup(res)
+            let targs = [B.mkText("let "), B.mkText("[")]
+            let nonNames = tup.elts.filter(e => e.kind !== "Name")
+            if (nonNames.length)
+                return stmtTODO(n)
+            let tupNames = tup.elts
+                .map(e => e as py.Name)
+                .map(convertName)
+            function convertName(n: py.Name) {
+                // TODO resuse with Name expr
+                markInfoNode(n, "identifierCompletion")
+                typeOf(n)
+                let v = lookupName(n)
+                return possibleDef(n, /*excludeLet*/true)
+            }
+            targs.push(B.mkCommaSep(tupNames))
+            targs.push(B.mkText("]"))
+            let res = B.mkStmt(B.mkInfix(B.mkGroup(targs), "=", expr(value)))
+            return res
         }
         return B.mkStmt(B.mkText(pref), B.mkInfix(expr(target), "=", expr(value)))
     }
 
-    function possibleDef(n: py.Name) {
+    function possibleDef(n: py.Name, excludeLet: boolean = false) {
         let id = n.id
         if (n.isdef === undefined) {
             let curr = lookupSymbol(id)
@@ -1371,8 +1380,9 @@ namespace pxt.py {
             unify(n, n.tsType, curr.pyRetType)
         }
 
-        if (n.isdef)
+        if (n.isdef && !excludeLet) {
             return B.mkGroup([B.mkText("let "), quote(id)])
+        }
         else
             return quote(id)
     }
@@ -1818,22 +1828,9 @@ namespace pxt.py {
                 return B.mkText("this")
             }
 
-            let v = lookupSymbol(n.id)
-            if (!v) {
-                // check if the symbol has an override py<->ts mapping
-                let over = U.lookup(funMap, n.id)
-                if (over) {
-                    v = lookupSymbol(over.n)
-                }
-            }
-            if (v) {
-                n.symbolInfo = v
-                unify(n, n.tsType, symbolType(v))
-                if (v.isImport)
-                    return quote(v.name) // it's import X = Y.Z.X, use X not Y.Z.X
-                addCaller(n, v)
-            } else if (currIteration > 0) {
-                error(n, 9516, U.lf("name '{0}' is not defined", n.id))
+            let v = lookupName(n)
+            if (v && v.isImport) {
+                return quote(v.name) // it's import X = Y.Z.X, use X not Y.Z.X
             }
 
             if (n.ctx.indexOf("Load") >= 0) {
@@ -1843,6 +1840,27 @@ namespace pxt.py {
         },
         List: mkArrayExpr,
         Tuple: mkArrayExpr,
+    }
+
+    function lookupName(n: py.Name): SymbolInfo {
+        let v = lookupSymbol(n.id)
+        if (!v) {
+            // check if the symbol has an override py<->ts mapping
+            let over = U.lookup(funMap, n.id)
+            if (over) {
+                v = lookupSymbol(over.n)
+            }
+        }
+        if (v) {
+            n.symbolInfo = v
+            unify(n, n.tsType, symbolType(v))
+            if (v.isImport)
+                return v
+            addCaller(n, v)
+        } else if (currIteration > 0) {
+            error(n, 9516, U.lf("name '{0}' is not defined", n.id))
+        }
+        return v
     }
 
     function mkArrayExpr(n: py.List | py.Tuple) {
