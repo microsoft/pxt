@@ -1,4 +1,3 @@
-
 namespace ts.pxtc.decompiler {
     export enum DecompileParamKeys {
         // Field editor should decompile literal expressions in addition to
@@ -761,18 +760,28 @@ ${output}</xml>`;
                 return getTextJoin(n);
             }
 
+            const leftName = npp.leftName || "A";
+            const rightName = npp.rightName || "B";
+
+            let leftValue: ValueNode;
+            let rightValue: ValueNode;
+
+            if (op === "&&" || op === "||") {
+                leftValue = getConditionalInput(leftName, n.left);
+                rightValue = getConditionalInput(rightName, n.right);
+            } else  {
+                leftValue = getValue(leftName, n.left, numberType);
+                rightValue = getValue(rightName, n.right, numberType);
+            }
+
             const result = mkExpr(npp.type);
             result.fields = [];
-            result.inputs = [];
 
             if (npp.op) {
                 result.fields.push(getField("OP", npp.op))
             }
 
-            const shadowType = (op === "&&" || op === "||") ? booleanType : numberType;
-
-            result.inputs.push(getValue(npp.leftName || "A", n.left, shadowType));
-            result.inputs.push(getValue(npp.rightName || "B", n.right, shadowType));
+            result.inputs = [leftValue, rightValue];
 
             return result;
 
@@ -928,7 +937,7 @@ ${output}</xml>`;
             switch (node.operator) {
                 case SK.ExclamationToken:
                     const r = mkExpr("logic_negate");
-                    r.inputs = [getValue("BOOL", node.operand, booleanType)]
+                    r.inputs = [getConditionalInput("BOOL", node.operand)];
                     return r;
                 case SK.PlusToken:
                     return getOutputBlock(node.operand);
@@ -1320,7 +1329,7 @@ ${output}</xml>`;
 
         function getWhileStatement(n: ts.WhileStatement): StatementNode {
             const r = mkStmt("device_while");
-            r.inputs = [getConditionalInput("COND", n)];
+            r.inputs = [getConditionalInput("COND", n.expression)];
             r.handlers = [{ name: "DO", statement: getStatementBlock(n.statement) }];
             return r;
         }
@@ -1337,7 +1346,7 @@ ${output}</xml>`;
             r.handlers = [];
 
             flatif.ifStatements.forEach((stmt, i) => {
-                r.inputs.push(getConditionalInput("IF" + i, stmt as ts.IfStatement));
+                r.inputs.push(getConditionalInput("IF" + i, (stmt as ts.IfStatement).expression));
                 r.handlers.push({ name: "DO" + i, statement: getStatementBlock(stmt.thenStatement) });
             });
 
@@ -1348,29 +1357,30 @@ ${output}</xml>`;
             return r;
         }
 
-        function getConditionalInput(name: string, stmt: ts.IfStatement | ts.WhileStatement) {
-            const err = checkConditionalExpression(stmt);
+        function getConditionalInput(name: string, expr: Expression) {
+            const err = checkConditionalExpression(expr);
             if (err) {
-                const expr = getTypeScriptExpressionBlock(stmt.expression);
-                return mkValue(name, expr, booleanType)
+                const tsExpr = getTypeScriptExpressionBlock(expr);
+                return mkValue(name, tsExpr, booleanType)
             } else {
-                return getValue(name, stmt.expression, booleanType);
+                return getValue(name, expr, booleanType);
             }
         }
 
-        function checkConditionalExpression(n: ts.WhileStatement | ts.IfStatement) {
-            const expr = unwrapNode(n.expression);
-            switch (expr.kind) {
+        function checkConditionalExpression(expr: Expression) {
+            const unwrappedExpr = unwrapNode(expr);
+
+            switch (unwrappedExpr.kind) {
                 case SK.TrueKeyword:
                 case SK.FalseKeyword:
                 case SK.Identifier:
                     return undefined;
                 case SK.BinaryExpression:
-                    return checkBooleanBinaryExpression(expr as BinaryExpression);
+                    return checkBooleanBinaryExpression(unwrappedExpr as BinaryExpression);
                 case SK.CallExpression:
-                    return checkBooleanCallExpression(expr as CallExpression);
+                    return checkBooleanCallExpression(unwrappedExpr as CallExpression);
                 case SK.PrefixUnaryExpression:
-                    if ((expr as PrefixUnaryExpression).operator === SK.ExclamationToken) {
+                    if ((unwrappedExpr as PrefixUnaryExpression).operator === SK.ExclamationToken) {
                         return undefined;
                     } // else fall through
                 default:
