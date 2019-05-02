@@ -3539,6 +3539,8 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
         })
         infos.forEach(info => pxt.log(`${f}:(${info.line},${info.start}): ${info.category} ${info.messageText}`));
     }
+    // TODO(dz)
+    // snippets = snippets.filter(s => s.file.indexOf("courses-csintro-conditionals-activity-2-1") >= 0)
     return Promise.map(snippets, (snippet: CodeSnippet) => {
         const name = snippet.name;
         const fn = snippet.file || snippet.name;
@@ -5074,7 +5076,6 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
     nodeutil.mkdirP("temp");
     nodeutil.writeFileSync("temp/noSUMMARY.md", noTOCs.sort().map(p => `${Array(p.split(/[\/\\]/g).length - 1).join('     ')}* [${pxt.Util.capitalize(p.split(/[\/\\]/g).reverse()[0].split('-').join(' '))}](${p})`).join('\n'), { encoding: "utf8" });
 
-    let p = Promise.resolve();
     // test targetconfig
     if (nodeutil.fileExistsSync("targetconfig.json")) {
         const targetConfig = nodeutil.readJson("targetconfig.json") as pxt.TargetConfig;
@@ -5124,6 +5125,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
     }
 
     pxt.log(`checked ${checked} files: ${broken} broken links, ${noTOCs.length} not in SUMMARY, ${snippets.length} snippets`);
+    let p = Promise.resolve();
     if (compileSnippets)
         p = p.then(() => testSnippetsAsync(snippets, re));
     return p.then(() => {
