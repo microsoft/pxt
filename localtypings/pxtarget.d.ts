@@ -571,6 +571,13 @@ declare namespace ts.pxtc {
 
         /* end enum-only attributes */
 
+
+        isKind?: boolean; // annotation for built-in kinds in library code
+        kindMemberName?: string; // The name a member of the kind as it will appear in the blocks editor. If the kind was "Colors" this would be "color"
+        kindNamespace?: string; // defaults to blockNamespace or the namesapce of this API
+        kindCreateFunction?: string; // defaults to kindNamespace.create()
+        kindPromptHint?: string; // Defaults to "Create a new kind..."
+
         optionalVariableArgs?: boolean;
         toolboxVariableArgs?: string;
 

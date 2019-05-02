@@ -26,6 +26,7 @@ namespace ts.pxtc {
         blocks: SymbolInfo[];
         blocksById: pxt.Map<SymbolInfo>;
         enumsByName: pxt.Map<EnumInfo>;
+        kindsByName: pxt.Map<KindInfo>;
     }
 
     export interface EnumInfo {
@@ -37,6 +38,15 @@ namespace ts.pxtc {
         firstValue?: number;
         initialMembers: string[];
         promptHint: string;
+    }
+
+    export interface KindInfo {
+        name: string;
+        memberName: string;
+        createFunctionName: string;
+        blockId: string;
+        promptHint: string;
+        initialMembers: string[];
     }
 
     export interface CompletionEntry {
@@ -228,6 +238,7 @@ namespace ts.pxtc {
         const combinedGet: pxt.Map<SymbolInfo> = {}
         const combinedChange: pxt.Map<SymbolInfo> = {}
         const enumsByName: pxt.Map<EnumInfo> = {};
+        const kindsByName: pxt.Map<KindInfo> = {};
 
         function addCombined(rtp: string, s: SymbolInfo) {
             const isGet = rtp == "get"
@@ -350,6 +361,34 @@ namespace ts.pxtc {
                 };
             }
 
+            if (s.attributes.shim === "KIND_GET" && s.attributes.blockId) {
+                const kindNamespace = s.attributes.kindNamespace || s.attributes.blockNamespace || s.namespace;
+
+                if (kindsByName[kindNamespace]) {
+                    console.warn(`More than one block defined for kind ${kindNamespace}`);
+                    continue;
+                }
+
+                const initialMembers: string[] = [];
+                if (info.byQName[kindNamespace]) {
+                    for (const api of pxtc.Util.values(info.byQName)) {
+                        if (api.namespace === kindNamespace && api.attributes.isKind) {
+                            initialMembers.push(api.name);
+                        }
+                    }
+                }
+
+
+                kindsByName[kindNamespace] = {
+                    blockId: s.attributes.blockId,
+                    name: kindNamespace,
+                    memberName: s.attributes.kindMemberName || kindNamespace,
+                    initialMembers: initialMembers,
+                    promptHint: s.attributes.enumPromptHint || Util.lf("Create a new kind..."),
+                    createFunctionName: s.attributes.kindCreateFunction || "create"
+                };
+            }
+
             if (s.attributes.blockCombine) {
                 if (!/@set/.test(s.name)) {
                     addCombined("get", s)
@@ -409,7 +448,8 @@ namespace ts.pxtc {
             apis: info,
             blocks,
             blocksById: pxt.Util.toDictionary(blocks, b => b.attributes.blockId),
-            enumsByName
+            enumsByName,
+            kindsByName
         }
 
         function filterCategories(banned: string[]) {
