@@ -3661,12 +3661,27 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
                         let getLines = (s: string): string[] =>
                             [s.split("\n")
                                 // ignore function names
+                                // e.g. function foobar() {}
+                                //   => function () {}
                                 .map(l => {
                                     let m: RegExpExecArray;
                                     do {
                                         m = /function(.+)\(/.exec(l)
                                         if (m && m.length > 1) {
                                             l = l.replace(`function${m[1]}`, "function")
+                                        }
+                                    } while (m && m.length > 1)
+                                    return l
+                                })
+                                // ignore type annotations on assignment statements (these tend to get erased)
+                                // e.g. let foo: number = 7
+                                //   => let foo = 7
+                                .map(l => {
+                                    let m: RegExpExecArray;
+                                    do {
+                                        m = /let .+:(.+)=\(/.exec(l)
+                                        if (m && m.length > 1) {
+                                            l = l.replace(`:${m[1]}=`, "=")
                                         }
                                     } while (m && m.length > 1)
                                     return l
