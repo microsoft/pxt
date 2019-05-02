@@ -3610,12 +3610,98 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
                             return addFailure(fn, bresp.diagnostics)
                         }
 
-                        // ensure decompile to python works
+                        // decompile to python
+                        // TODO(dz): pretty refactor
+                        let ts1 = opts.fileSystem["main.ts"]
                         let program = pxtc.getTSProgram(opts);
                         const decompiled = pxt.py.decompileToPythonHelper(program, "main.ts");
                         let pySuccess = !!decompiled.outfiles['main.py'] && decompiled.success
                         if (!pySuccess) {
+                            console.log("ts2py error")
                             return addFailure(fn, decompiled.diagnostics)
+                        }
+                        opts.fileSystem['main.py'] = decompiled.outfiles['main.py']
+
+                        let py = decompiled.outfiles['main.py']
+                        // console.log("###### TS1")
+                        // console.log(ts1)
+                        // console.log("###### PY")
+                        // console.log(py)
+                        // console.log("######")
+
+                        // py to ts
+                        opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
+                        // opts.fileSystem["main.ts"] = ""
+                        let ts2Res = pxt.py.py2ts(opts)
+
+                        let ts2 = ts2Res.generated["main.ts"];
+
+                        if (!ts2) {
+                            console.log("py2ts error!")
+                            console.dir(ts2Res)
+                            let errs = ts2Res.diagnostics.map(pxtc.getDiagnosticString).join()
+                            if (errs)
+                                console.log(errs)
+                            return addFailure(fn, ts2Res.diagnostics)
+                        }
+
+                        let compareBaselines = (a: string, b: string): boolean => {
+                            // Ignore whitespace
+                            a = a.replace(/\s/g, "");
+                            b = b.replace(/\s/g, "");
+
+                            return a === b;
+                        }
+
+                        // if (!compareBaselines(ts1, ts2)) {
+                        // console.log("TS mismatch :/")
+
+                        let getLines = (s: string): string[] =>
+                            [s.split("\n")
+                                // ignore function names
+                                .map(l => {
+                                    let m: RegExpExecArray;
+                                    do {
+                                        m = /function(.+)\(/.exec(l)
+                                        if (m && m.length > 1) {
+                                            l = l.replace(`function${m[1]}`, "function")
+                                        }
+                                    } while (m && m.length > 1)
+                                    return l
+                                })
+                                // ignore whitespace
+                                .map(l => l.replace(/\s/g, ""))
+                                // ignore linebreak differences
+                                .map(l => l.replace(/\n/g, ""))
+                                // ignore semi-colons
+                                .map(l => l.replace(/\;/g, ""))
+                                // ignore blank lines
+                                .filter(l => l)
+                                .join("")]
+
+                        let lns1 = getLines(ts1)
+                        let lns2 = getLines(ts2)
+                        let mismatch = lns1.length != lns2.length
+                        for (let i = 0; i < lns1.length && i < lns2.length; i++) {
+                            let l1 = lns1[i]
+                            let l2 = lns2[i]
+                            if (l1 != l2) {
+                                // TODO(dz): yay!
+                                console.log(`Mismatch on line ${i + 1}. Original:`)
+                                console.log(l1)
+                                console.log("decompiled->compiled:")
+                                console.log(l2)
+                                mismatch = true
+                                break
+                            }
+                        }
+
+                        if (mismatch) {
+                            console.log("TS mismatch :/")
+                            // TODO(dz): generate diags
+                            return addFailure(fn, [])
+                        } else {
+                            console.log("TS same :)")
                         }
 
                         // NOTE: neither of these decompile steps checks that the resulting code is correct or that
