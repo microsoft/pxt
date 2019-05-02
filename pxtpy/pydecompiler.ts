@@ -356,9 +356,9 @@ namespace pxt.py {
                 return null
             if (s.condition.left.text != result.name)
                 return null
-            if (!isConstExp(s.condition.right) || !isNumberType(s.condition.right)) {
-                // TODO allow variables?
-                // TODO restrict to numbers?
+            // TODO restrict initializers to expressions that aren't modified by the loop
+            // e.g. isConstExp(s.condition.right) but more semantic
+            if (!isNumberType(s.condition.right)) {
                 return null
             }
             let [toNum, toNumSup] = emitExp(s.condition.right)
