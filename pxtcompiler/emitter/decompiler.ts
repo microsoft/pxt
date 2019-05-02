@@ -1359,7 +1359,7 @@ ${output}</xml>`;
         }
 
         function checkConditionalExpression(n: ts.WhileStatement | ts.IfStatement) {
-            const expr: Expression = n.expression;
+            const expr = unwrapNode(n.expression);
             switch (expr.kind) {
                 case SK.TrueKeyword:
                 case SK.FalseKeyword:
