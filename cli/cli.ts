@@ -3540,8 +3540,6 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
         })
         infos.forEach(info => pxt.log(`${f}:(${info.line},${info.start}): ${info.category} ${info.messageText}`));
     }
-    // TODO(dz)
-    // snippets = snippets.filter(s => s.file.indexOf("courses-csintro-conditionals-activity-2-1") >= 0)
     return Promise.map(snippets, (snippet: CodeSnippet) => {
         const name = snippet.name;
         const fn = snippet.file || snippet.name;
