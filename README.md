@@ -106,3 +106,7 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 ## Contact Us
 
 [Get in touch](https://makecode.com/contact)
+
+## Trademarks
+
+MICROSOFT, the Microsoft Logo, and MAKECODE are registered trademarks of Microsoft Corporation. They can only be used for the purposes described in and in accordance with Microsoft’s Trademark and Brand guidelines published at https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general.aspx. If the use is not covered in Microsoft’s published guidelines or you are not sure, please consult your legal counsel or MakeCode team (makecode@microsoft.com).
