@@ -327,8 +327,9 @@ namespace pxt.py {
                 return null
 
             let initDecls = s.initializer as ts.VariableDeclarationList
-            if (initDecls.declarations.length !== 1)
+            if (initDecls.declarations.length !== 1) {
                 return null
+            }
 
             let decl = initDecls.declarations[0]
             result.name = getName(decl.name)
@@ -354,13 +355,14 @@ namespace pxt.py {
                 return null
             if (!ts.isIdentifier(s.condition.left))
                 return null
-            if (s.condition.left.text != result.name)
+            if (getName(s.condition.left) != result.name)
                 return null
             // TODO restrict initializers to expressions that aren't modified by the loop
             // e.g. isConstExp(s.condition.right) but more semantic
             if (!isNumberType(s.condition.right)) {
                 return null
             }
+
             let [toNum, toNumSup] = emitExp(s.condition.right)
             if (toNumSup.length)
                 return null

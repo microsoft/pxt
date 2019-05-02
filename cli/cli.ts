@@ -33,6 +33,7 @@ const rimraf: (f: string, opts: any, cb: (err: any, res: any) => void) => void =
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] !== "no";
 let forceLocalBuild = !!process.env["PXT_FORCE_LOCAL"];
 let forceBuild = false; // don't use cache
+let doPythonRoundTripSyntaxComparison = false
 
 Error.stackTraceLimit = 100;
 
@@ -3613,7 +3614,6 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
                         }
 
                         // decompile to python
-                        // TODO(dz): pretty refactor
                         let ts1 = opts.fileSystem["main.ts"]
                         let program = pxtc.getTSProgram(opts);
                         const decompiled = pxt.py.decompileToPythonHelper(program, "main.ts");
@@ -3623,17 +3623,10 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
                             return addFailure(fn, decompiled.diagnostics)
                         }
                         opts.fileSystem['main.py'] = decompiled.outfiles['main.py']
-
                         let py = decompiled.outfiles['main.py']
-                        // console.log("###### TS1")
-                        // console.log(ts1)
-                        // console.log("###### PY")
-                        // console.log(py)
-                        // console.log("######")
 
                         // py to ts
                         opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
-                        // opts.fileSystem["main.ts"] = ""
                         let ts2Res = pxt.py.py2ts(opts)
 
                         let ts2 = ts2Res.generated["main.ts"];
@@ -3647,19 +3640,8 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
                             return addFailure(fn, ts2Res.diagnostics)
                         }
 
-                        let compareBaselines = (a: string, b: string): boolean => {
-                            // Ignore whitespace
-                            a = a.replace(/\s/g, "");
-                            b = b.replace(/\s/g, "");
-
-                            return a === b;
-                        }
-
-                        // if (!compareBaselines(ts1, ts2)) {
-                        // console.log("TS mismatch :/")
-
-                        let getLines = (s: string): string[] =>
-                            [s.split("\n")
+                        let getComparisonString = (s: string): string =>
+                            s.split("\n")
                                 // ignore function names
                                 // e.g. function foobar() {}
                                 //   => function () {}
@@ -3679,9 +3661,9 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
                                 .map(l => {
                                     let m: RegExpExecArray;
                                     do {
-                                        m = /let .+:(.+)=\(/.exec(l)
+                                        m = /.+:(.+)[=,)]/.exec(l)
                                         if (m && m.length > 1) {
-                                            l = l.replace(`:${m[1]}=`, "=")
+                                            l = l.replace(`:${m[1]}`, "")
                                         }
                                     } while (m && m.length > 1)
                                     return l
@@ -3694,31 +3676,23 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
                                 .map(l => l.replace(/\;/g, ""))
                                 // ignore blank lines
                                 .filter(l => l)
-                                .join("")]
+                                .join("")
 
-                        let lns1 = getLines(ts1)
-                        let lns2 = getLines(ts2)
-                        let mismatch = lns1.length != lns2.length
-                        for (let i = 0; i < lns1.length && i < lns2.length; i++) {
-                            let l1 = lns1[i]
-                            let l2 = lns2[i]
-                            if (l1 != l2) {
-                                // TODO(dz): yay!
-                                console.log(`Mismatch on line ${i + 1}. Original:`)
-                                console.log(l1)
+                        if (doPythonRoundTripSyntaxComparison) {
+                            let cmp1 = getComparisonString(ts1)
+                            let cmp2 = getComparisonString(ts2)
+                            let mismatch = cmp1 != cmp2
+                            if (mismatch) {
+                                console.log(`Mismatch. Original:`)
+                                console.log(cmp1)
                                 console.log("decompiled->compiled:")
-                                console.log(l2)
-                                mismatch = true
-                                break
+                                console.log(cmp2)
+                                console.log("TS mismatch :/")
+                                // TODO: generate diags
+                                return addFailure(fn, [])
+                            } else {
+                                console.log("TS same :)")
                             }
-                        }
-
-                        if (mismatch) {
-                            console.log("TS mismatch :/")
-                            // TODO(dz): generate diags
-                            return addFailure(fn, [])
-                        } else {
-                            console.log("TS same :)")
                         }
 
                         // NOTE: neither of these decompile steps checks that the resulting code is correct or that
@@ -3749,7 +3723,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
                 ])
             }))
     }, { concurrency: 1 }).then((a: any) => {
-        pxt.log(`${successes.length}/${successes.length + failures.length} snippets compiled to blocks, ${failures.length} failed`)
+        pxt.log(`${successes.length}/${successes.length + failures.length} snippets compiled to blocks and python (and back), ${failures.length} failed`)
         if (ignoreCount > 0) {
             pxt.log(`Skipped ${ignoreCount} snippets`)
         }
