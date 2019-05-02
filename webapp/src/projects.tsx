@@ -629,7 +629,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                 case "template":
                 case "package":
                 case "hw":
-                case "forumLink":
+                case "forumUrl":
                     return true;
                 default:
                     return false;
