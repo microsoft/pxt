@@ -357,7 +357,7 @@ namespace ts.pxtc {
     }
 
     export interface CallInfo {
-        decl: Declaration;
+        decl: TypedDecl;
         qName: string;
         args: Expression[];
         isExpression: boolean;
@@ -1995,8 +1995,8 @@ ${lbl}: .short 0xffff
         }
 
         function emitCallExpression(node: CallExpression): ir.Expr {
-            let sig = checker.getResolvedSignature(node)
-            return emitCallCore(node, node.expression, node.arguments, sig)
+            const sig = checker.getResolvedSignature(node);
+            return emitCallCore(node, node.expression, node.arguments, sig);
         }
 
         function emitCallCore(
@@ -2011,6 +2011,7 @@ ${lbl}: .short 0xffff
                 decl = getDecl(funcExpr) as EmittableAsCall;
             let isMethod = false
             let isProperty = false
+
             if (decl) {
                 switch (decl.kind) {
                     // we treat properties via calls

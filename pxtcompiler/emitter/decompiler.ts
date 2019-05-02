@@ -1320,7 +1320,7 @@ ${output}</xml>`;
 
         function getWhileStatement(n: ts.WhileStatement): StatementNode {
             const r = mkStmt("device_while");
-            r.inputs = [getValue("COND", n.expression, booleanType)];
+            r.inputs = [getConditionalInput("COND", n)];
             r.handlers = [{ name: "DO", statement: getStatementBlock(n.statement) }];
             return r;
         }
@@ -1337,7 +1337,7 @@ ${output}</xml>`;
             r.handlers = [];
 
             flatif.ifStatements.forEach((stmt, i) => {
-                r.inputs.push(getValue("IF" + i, stmt.expression, booleanType));
+                r.inputs.push(getConditionalInput("IF" + i, stmt as ts.IfStatement));
                 r.handlers.push({ name: "DO" + i, statement: getStatementBlock(stmt.thenStatement) });
             });
 
@@ -1346,6 +1346,66 @@ ${output}</xml>`;
             }
 
             return r;
+        }
+
+        function getConditionalInput(name: string, stmt: ts.IfStatement | ts.WhileStatement) {
+            const err = checkConditionalExpression(stmt);
+            if (err) {
+                const expr = getTypeScriptExpressionBlock(stmt.expression);
+                return mkValue(name, expr, booleanType)
+            } else {
+                return getValue(name, stmt.expression, booleanType);
+            }
+        }
+
+        function checkConditionalExpression(n: ts.WhileStatement | ts.IfStatement) {
+            const expr = unwrapNode(n.expression);
+            switch (expr.kind) {
+                case SK.TrueKeyword:
+                case SK.FalseKeyword:
+                case SK.Identifier:
+                    return undefined;
+                case SK.BinaryExpression:
+                    return checkBooleanBinaryExpression(expr as BinaryExpression);
+                case SK.CallExpression:
+                    return checkBooleanCallExpression(expr as CallExpression);
+                case SK.PrefixUnaryExpression:
+                    if ((expr as PrefixUnaryExpression).operator === SK.ExclamationToken) {
+                        return undefined;
+                    } // else fall through
+                default:
+                    return Util.lf("Conditions must evaluate to booleans or identifiers");
+            }
+
+            function checkBooleanBinaryExpression(n: BinaryExpression) {
+                switch (n.operatorToken.kind) {
+                    case SK.EqualsEqualsToken:
+                    case SK.EqualsEqualsEqualsToken:
+                    case SK.ExclamationEqualsToken:
+                    case SK.ExclamationEqualsEqualsToken:
+                    case SK.LessThanToken:
+                    case SK.LessThanEqualsToken:
+                    case SK.GreaterThanToken:
+                    case SK.GreaterThanEqualsToken:
+                    // TODO: &&, ||, ! should check against non boolean l / r (e.g. not `1 || 2`)
+                    // https://github.com/Microsoft/pxt-arcade/issues/946
+                    case SK.AmpersandAmpersandToken:
+                    case SK.BarBarToken:
+                        return undefined;
+                    default:
+                        return Util.lf("Binary expressions in conditionals must evaluate to booleans");
+                }
+            }
+
+            function checkBooleanCallExpression(n: CallExpression) {
+                const callInfo: pxtc.CallInfo = (n.expression as any).callInfo;
+                const type = callInfo.decl.type;
+
+                if (type && type.kind === SK.BooleanKeyword) {
+                    return undefined;
+                }
+                return Util.lf("Only functions that return booleans are allowed as conditions");
+            }
         }
 
         function getForStatement(n: ts.ForStatement): StatementNode {
