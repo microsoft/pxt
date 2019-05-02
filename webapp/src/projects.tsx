@@ -568,7 +568,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             clickLabel = lf("Start Tutorial");
         }
         else if (cardType == "codeExample" || cardType == "example") clickLabel = lf("Open Example");
-        else if (cardType == "forumLink") clickLabel = lf("Open in Forum");
+        else if (cardType == "forumUrl") clickLabel = lf("Open in Forum");
         else if (cardType == "template") clickLabel = lf("New Project");
         else if (youTubeId) clickLabel = lf("Play Video");
 
@@ -579,7 +579,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             className: 'huge positive'
         }]
 
-        const isLink = (!isCodeCardType(cardType) || cardType === "forumLink") && (youTubeId || url);
+        const isLink = (!isCodeCardType(cardType) || cardType === "forumUrl") && (youTubeId || url);
         const linkHref = (youTubeId && !url) ? `https://youtu.be/${youTubeId}` :
             ((/^https:\/\//i.test(url)) || (/^\//i.test(url)) ? url : '');
 
