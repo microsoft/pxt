@@ -112,15 +112,15 @@ namespace pxtsprite {
                 .id("sprite-editor-tools")
                 .translate(0, TOOL_BUTTON_TOP);
 
-            this.pencilTool = this.initButton(lf("Pencil (p)"), "\uf040", PaintTool.Normal);
+            this.pencilTool = this.initButton(lf("Pencil"), "\uf040", PaintTool.Normal);
 
-            this.eraseTool = this.initButton(lf("Erase (e)"), "\uf12d", PaintTool.Erase);
+            this.eraseTool = this.initButton(lf("Erase"), "\uf12d", PaintTool.Erase);
             this.eraseTool.translate(1 + TOOL_BUTTON_WIDTH + INNER_BUTTON_MARGIN, 0);
 
-            this.fillTool = this.initButton(lf("Fill (b)"), "\uf102", PaintTool.Fill, true);
+            this.fillTool = this.initButton(lf("Fill"), "\uf102", PaintTool.Fill, true);
             this.fillTool.translate(0, TOOL_BUTTON_WIDTH + INNER_BUTTON_MARGIN);
 
-            this.rectangleTool = this.initButton(lf("Rectangle (r)"), "\uf096", PaintTool.Rectangle);
+            this.rectangleTool = this.initButton(lf("Rectangle"), "\uf096", PaintTool.Rectangle);
             this.rectangleTool.translate(1 + TOOL_BUTTON_WIDTH + INNER_BUTTON_MARGIN, TOOL_BUTTON_WIDTH + INNER_BUTTON_MARGIN);
 
             this.setTool(PaintTool.Normal);
@@ -178,7 +178,10 @@ namespace pxtsprite {
 
         protected initButton(title: string, icon: string, tool: PaintTool, xicon = false) {
             const btn = xicon ? mkXIconButton(icon, TOOL_BUTTON_WIDTH) : mkIconButton(icon, TOOL_BUTTON_WIDTH);
+            const shortcut = getPaintToolShortcut(tool);
+            if (shortcut) btn.shortcut(shortcut);
             btn.title(title);
+
             btn.onClick(() => {
                 this.host.setIconsToDefault();
                 this.setTool(tool);

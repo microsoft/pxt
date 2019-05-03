@@ -310,23 +310,22 @@ namespace pxtsprite {
         }
 
         switchIconTo(tool: PaintTool) {
+            if (this.activeTool === tool) return;
+
             const btn = (this.sidebar.getButtonForTool(tool) as TextButton);
+
             switch (tool) {
                 case PaintTool.Rectangle:
-                    btn.setText("\uf096");
-                    btn.title(lf("Rectangle (r)"));
+                    updateIcon(btn, "\uf096", lf("Rectangle"));
                     break;
                 case PaintTool.Circle:
-                    btn.setText("\uf10c");
-                    btn.title(lf("Circle (c)"));
+                    updateIcon(btn, "\uf10c", lf("Circle"));
                     break;
                 case PaintTool.Normal:
-                    btn.setText("\uf040");
-                    btn.title(lf("Pencil (p)"));
+                    updateIcon(btn, "\uf040", lf("Pencil"));
                     break;
                 case PaintTool.Line:
-                    btn.setText("\uf07e");
-                    btn.title(lf("Line (l)"));
+                    updateIcon(btn, "\uf07e", lf("Line"));
                     break;
                 default:  // no alternate icon, do not change
                     return;
@@ -338,10 +337,18 @@ namespace pxtsprite {
                     this.sidebar.setTool(tool);
                 }
             });
-            const activeBtn = this.sidebar.getButtonForTool(this.activeTool) as TextButton;
 
+            const activeBtn = this.sidebar.getButtonForTool(this.activeTool) as TextButton;
             if (activeBtn === btn) {
                 this.setActiveTool(tool);
+            }
+
+            function updateIcon(button: TextButton, text: string, title: string) {
+                const shortcut = getPaintToolShortcut(tool);
+
+                button.setText(text);
+                button.title(title);
+                button.shortcut(shortcut);
             }
         }
 
@@ -367,8 +374,8 @@ namespace pxtsprite {
             ].forEach(tool => {
                 if (event.key === getPaintToolShortcut(tool)) {
                     this.setIconsToDefault();
-                    this.sidebar.setTool(tool);
                     this.switchIconTo(tool);
+                    this.sidebar.setTool(tool);
                 }
             });
 
