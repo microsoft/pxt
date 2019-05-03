@@ -112,8 +112,9 @@ export function py2tsAsync(f: string): Promise<string> {
                 return opts.fileSystem["main.ts"];
             }
             else {
+                let partialOutput = generated["main.ts"]
                 let errorStr = diagnostics.map(pxtc.getDiagnosticString).join()
-                return Promise.reject(new Error(`Could not convert py to ts ${f}\n${errorStr}`))
+                return Promise.reject(new Error(`Could not convert py to ts ${f}\n${errorStr}\n${partialOutput}`))
             }
         })
 }

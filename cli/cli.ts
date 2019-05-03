@@ -3508,7 +3508,7 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
     });
 }
 
-function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> {
+function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pycheck?: boolean): Promise<void> {
     console.log(`### TESTING ${snippets.length} CodeSnippets`)
     pxt.github.forceProxy = true; // avoid throttling in CI machines
     let filenameMatch: RegExp;
@@ -3610,12 +3610,86 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
                             return addFailure(fn, bresp.diagnostics)
                         }
 
-                        // ensure decompile to python works
+                        // decompile to python
+                        let ts1 = opts.fileSystem["main.ts"]
                         let program = pxtc.getTSProgram(opts);
                         const decompiled = pxt.py.decompileToPythonHelper(program, "main.ts");
                         let pySuccess = !!decompiled.outfiles['main.py'] && decompiled.success
                         if (!pySuccess) {
+                            console.log("ts2py error")
                             return addFailure(fn, decompiled.diagnostics)
+                        }
+                        opts.fileSystem['main.py'] = decompiled.outfiles['main.py']
+                        let py = decompiled.outfiles['main.py']
+
+                        // py to ts
+                        opts.target.preferredEditor = pxt.PYTHON_PROJECT_NAME
+                        let ts2Res = pxt.py.py2ts(opts)
+
+                        let ts2 = ts2Res.generated["main.ts"];
+
+                        if (!ts2) {
+                            console.log("py2ts error!")
+                            console.dir(ts2Res)
+                            let errs = ts2Res.diagnostics.map(pxtc.getDiagnosticString).join()
+                            if (errs)
+                                console.log(errs)
+                            return addFailure(fn, ts2Res.diagnostics)
+                        }
+
+                        let getComparisonString = (s: string): string =>
+                            s.split("\n")
+                                // ignore function names
+                                // e.g. function foobar() {}
+                                //   => function () {}
+                                .map(l => {
+                                    let m: RegExpExecArray;
+                                    do {
+                                        m = /function(.+)\(/.exec(l)
+                                        if (m && m.length > 1) {
+                                            l = l.replace(`function${m[1]}`, "function")
+                                        }
+                                    } while (m && m.length > 1)
+                                    return l
+                                })
+                                // ignore type annotations on assignment statements (these tend to get erased)
+                                // e.g. let foo: number = 7
+                                //   => let foo = 7
+                                .map(l => {
+                                    let m: RegExpExecArray;
+                                    do {
+                                        m = /.+:(.+)[=,)]/.exec(l)
+                                        if (m && m.length > 1) {
+                                            l = l.replace(`:${m[1]}`, "")
+                                        }
+                                    } while (m && m.length > 1)
+                                    return l
+                                })
+                                // ignore whitespace
+                                .map(l => l.replace(/\s/g, ""))
+                                // ignore linebreak differences
+                                .map(l => l.replace(/\n/g, ""))
+                                // ignore semi-colons
+                                .map(l => l.replace(/\;/g, ""))
+                                // ignore blank lines
+                                .filter(l => l)
+                                .join("")
+
+                        if (pycheck) {
+                            let cmp1 = getComparisonString(ts1)
+                            let cmp2 = getComparisonString(ts2)
+                            let mismatch = cmp1 != cmp2
+                            if (mismatch) {
+                                console.log(`Mismatch. Original:`)
+                                console.log(cmp1)
+                                console.log("decompiled->compiled:")
+                                console.log(cmp2)
+                                console.log("TS mismatch :/")
+                                // TODO: generate more helpful diags
+                                return addFailure(fn, [])
+                            } else {
+                                console.log("TS same :)")
+                            }
                         }
 
                         // NOTE: neither of these decompile steps checks that the resulting code is correct or that
@@ -3646,7 +3720,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
                 ])
             }))
     }, { concurrency: 1 }).then((a: any) => {
-        pxt.log(`${successes.length}/${successes.length + failures.length} snippets compiled to blocks, ${failures.length} failed`)
+        pxt.log(`${successes.length}/${successes.length + failures.length} snippets compiled to blocks and python (and back), ${failures.length} failed`)
         if (ignoreCount > 0) {
             pxt.log(`Skipped ${ignoreCount} snippets`)
         }
@@ -4826,11 +4900,12 @@ function checkDocsAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
     return internalCheckDocsAsync(
         true,
         parsed.flags["re"] as string,
-        !!parsed.flags["fix"]
+        !!parsed.flags["fix"],
+        !!parsed.flags["pycheck"]
     )
 }
 
-function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: boolean): Promise<void> {
+function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: boolean, pycheck?: boolean): Promise<void> {
     if (!nodeutil.existsDirSync("docs"))
         return Promise.resolve();
     const docsRoot = nodeutil.targetDir;
@@ -4988,7 +5063,6 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
     nodeutil.mkdirP("temp");
     nodeutil.writeFileSync("temp/noSUMMARY.md", noTOCs.sort().map(p => `${Array(p.split(/[\/\\]/g).length - 1).join('     ')}* [${pxt.Util.capitalize(p.split(/[\/\\]/g).reverse()[0].split('-').join(' '))}](${p})`).join('\n'), { encoding: "utf8" });
 
-    let p = Promise.resolve();
     // test targetconfig
     if (nodeutil.fileExistsSync("targetconfig.json")) {
         const targetConfig = nodeutil.readJson("targetconfig.json") as pxt.TargetConfig;
@@ -5001,36 +5075,34 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                 gallery.forEach(gal => gal.cards.forEach((card, cardIndex) => {
                     pxt.debug(`card ${card.shortName || card.name}`);
                     switch (card.cardType) {
-                        case "tutorial":
-                            {
-                                const tutorialMd = nodeutil.resolveMd(docsRoot, card.url);
-                                const tutorial = pxt.tutorial.parseTutorial(tutorialMd);
-                                const pkgs: pxt.Map<string> = { "blocksprj": "*" };
-                                pxt.Util.jsonMergeFrom(pkgs, pxt.gallery.parsePackagesFromMarkdown(tutorialMd) || {});
-                                addSnippet(<CodeSnippet>{
-                                    name: card.name,
-                                    code: tutorial.code,
-                                    type: "blocks",
-                                    ext: "ts",
-                                    packages: pkgs
-                                }, "tutorial" + gal.name, cardIndex);
-                                break;
-                            }
-                        case "example":
-                            {
-                                const exMd = nodeutil.resolveMd(docsRoot, card.url);
-                                const prj = pxt.gallery.parseExampleMarkdown(card.name, exMd);
-                                const pkgs: pxt.Map<string> = { "blocksprj": "*" };
-                                pxt.U.jsonMergeFrom(pkgs, prj.dependencies);
-                                addSnippet(<CodeSnippet>{
-                                    name: card.name,
-                                    code: prj.filesOverride["main.ts"],
-                                    type: "blocks",
-                                    ext: "ts",
-                                    packages: pkgs
-                                }, "example" + gal.name, cardIndex);
-                                break;
-                            }
+                        case "tutorial": {
+                            const tutorialMd = nodeutil.resolveMd(docsRoot, card.url);
+                            const tutorial = pxt.tutorial.parseTutorial(tutorialMd);
+                            const pkgs: pxt.Map<string> = { "blocksprj": "*" };
+                            pxt.Util.jsonMergeFrom(pkgs, pxt.gallery.parsePackagesFromMarkdown(tutorialMd) || {});
+                            addSnippet(<CodeSnippet>{
+                                name: card.name,
+                                code: tutorial.code,
+                                type: "blocks",
+                                ext: "ts",
+                                packages: pkgs
+                            }, "tutorial" + gal.name, cardIndex);
+                            break;
+                        }
+                        case "example": {
+                            const exMd = nodeutil.resolveMd(docsRoot, card.url);
+                            const prj = pxt.gallery.parseExampleMarkdown(card.name, exMd);
+                            const pkgs: pxt.Map<string> = { "blocksprj": "*" };
+                            pxt.U.jsonMergeFrom(pkgs, prj.dependencies);
+                            addSnippet(<CodeSnippet>{
+                                name: card.name,
+                                code: prj.filesOverride["main.ts"],
+                                type: "blocks",
+                                ext: "ts",
+                                packages: pkgs
+                            }, "example" + gal.name, cardIndex);
+                            break;
+                        }
                     }
                 }));
             })
@@ -5038,8 +5110,9 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
     }
 
     pxt.log(`checked ${checked} files: ${broken} broken links, ${noTOCs.length} not in SUMMARY, ${snippets.length} snippets`);
+    let p = Promise.resolve();
     if (compileSnippets)
-        p = p.then(() => testSnippetsAsync(snippets, re));
+        p = p.then(() => testSnippetsAsync(snippets, re, pycheck));
     return p.then(() => {
         if (broken > 0) {
             const msg = `${broken} broken links found in the docs`;
@@ -5726,6 +5799,11 @@ PXT_ASMDEBUG     - embed additional information in generated binary.asm file
             },
             fix: {
                 description: "Fix links if possible"
+            },
+            pycheck: {
+                description: "Check code snippets by round-tripping to .py and comparing the "
+                    + "original and result .ts. This will generate lots of false positives but can "
+                    + "still be useful for searching for semantic issues."
             }
         }
     }, checkDocsAsync);
