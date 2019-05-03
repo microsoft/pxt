@@ -1361,7 +1361,7 @@ ${output}</xml>`;
             const err = checkConditionalExpression(expr);
             if (err) {
                 const tsExpr = getTypeScriptExpressionBlock(expr);
-                return mkValue(name, tsExpr, booleanType)
+                return mkValue(name, tsExpr, booleanType);
             } else {
                 return getValue(name, expr, booleanType);
             }
