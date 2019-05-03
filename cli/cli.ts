@@ -33,7 +33,6 @@ const rimraf: (f: string, opts: any, cb: (err: any, res: any) => void) => void =
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] !== "no";
 let forceLocalBuild = !!process.env["PXT_FORCE_LOCAL"];
 let forceBuild = false; // don't use cache
-let doPythonRoundTripSyntaxComparison = true
 
 Error.stackTraceLimit = 100;
 
@@ -3509,7 +3508,7 @@ function decompileAsyncWorker(f: string, dependency?: string): Promise<string> {
     });
 }
 
-function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> {
+function testSnippetsAsync(snippets: CodeSnippet[], re?: string, pycheck?: boolean): Promise<void> {
     console.log(`### TESTING ${snippets.length} CodeSnippets`)
     pxt.github.forceProxy = true; // avoid throttling in CI machines
     let filenameMatch: RegExp;
@@ -3676,7 +3675,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
                                 .filter(l => l)
                                 .join("")
 
-                        if (doPythonRoundTripSyntaxComparison) {
+                        if (pycheck) {
                             let cmp1 = getComparisonString(ts1)
                             let cmp2 = getComparisonString(ts2)
                             let mismatch = cmp1 != cmp2
@@ -3686,7 +3685,7 @@ function testSnippetsAsync(snippets: CodeSnippet[], re?: string): Promise<void> 
                                 console.log("decompiled->compiled:")
                                 console.log(cmp2)
                                 console.log("TS mismatch :/")
-                                // TODO: generate diags
+                                // TODO: generate more helpful diags
                                 return addFailure(fn, [])
                             } else {
                                 console.log("TS same :)")
@@ -4901,11 +4900,12 @@ function checkDocsAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
     return internalCheckDocsAsync(
         true,
         parsed.flags["re"] as string,
-        !!parsed.flags["fix"]
+        !!parsed.flags["fix"],
+        !!parsed.flags["pycheck"]
     )
 }
 
-function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: boolean): Promise<void> {
+function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: boolean, pycheck?: boolean): Promise<void> {
     if (!nodeutil.existsDirSync("docs"))
         return Promise.resolve();
     const docsRoot = nodeutil.targetDir;
@@ -5114,7 +5114,7 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
     pxt.log(`checked ${checked} files: ${broken} broken links, ${noTOCs.length} not in SUMMARY, ${snippets.length} snippets`);
     let p = Promise.resolve();
     if (compileSnippets)
-        p = p.then(() => testSnippetsAsync(snippets, re));
+        p = p.then(() => testSnippetsAsync(snippets, re, pycheck));
     return p.then(() => {
         if (broken > 0) {
             const msg = `${broken} broken links found in the docs`;
@@ -5801,6 +5801,11 @@ PXT_ASMDEBUG     - embed additional information in generated binary.asm file
             },
             fix: {
                 description: "Fix links if possible"
+            },
+            pycheck: {
+                description: "Check code snippets by round-tripping to .py and comparing the "
+                    + "original and result .ts. This will generate lots of false positives but can "
+                    + "still be useful for searching for semantic issues."
             }
         }
     }, checkDocsAsync);
