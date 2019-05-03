@@ -39,7 +39,9 @@ We'll be posting more soon on the technology behind Project Ozette, but offer th
 
 ### Counting Down to the Show
 
-- [Project Ozette: BKLYN or Bust (T minus 3 days)](/blog/ozette/bdale-tminus3)
+- [BKLYN or Bust (T minus 3 days)](/blog/ozette/bdale-tminus3)
+- [BKLYN or Bust (T minus 2 days)](/blog/ozette/bdale-tminus2)
+- [BKLYN or Bust (T minus 1 day)](/blog/ozette/bdale-tminus1)
 
 ### Debugging with JACDAC over WebUSB
 

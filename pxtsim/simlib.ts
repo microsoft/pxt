@@ -62,6 +62,10 @@ namespace pxsim {
         }
 
         listen(id: EventIDType, evid: EventIDType, handler: RefAction) {
+            // special handle for idle, start the idle timeout
+            if (id == this.schedulerID && evid == this.idleEventID)
+                this.runtime.startIdle();
+
             let q = this.start(id, evid, this.backgroundHandlerFlag, true);
             if (this.backgroundHandlerFlag)
                 q.addHandler(handler);
@@ -93,9 +97,6 @@ namespace pxsim {
 
         queue(id: EventIDType, evid: EventIDType, value: EventIDType = null) {
             if (runtime.pausedOnBreakpoint) return;
-            // special handle for idle, start the idle timeout
-            if (this.schedulerID && id == this.idleEventID)
-                this.runtime.startIdle();
             // special handling for notify one
             const notifyOne = this.notifyID && this.notifyOneID && id == this.notifyOneID;
             if (notifyOne)
