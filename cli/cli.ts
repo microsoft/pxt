@@ -5075,36 +5075,34 @@ function internalCheckDocsAsync(compileSnippets?: boolean, re?: string, fix?: bo
                 gallery.forEach(gal => gal.cards.forEach((card, cardIndex) => {
                     pxt.debug(`card ${card.shortName || card.name}`);
                     switch (card.cardType) {
-                        case "tutorial":
-                            {
-                                const tutorialMd = nodeutil.resolveMd(docsRoot, card.url);
-                                const tutorial = pxt.tutorial.parseTutorial(tutorialMd);
-                                const pkgs: pxt.Map<string> = { "blocksprj": "*" };
-                                pxt.Util.jsonMergeFrom(pkgs, pxt.gallery.parsePackagesFromMarkdown(tutorialMd) || {});
-                                addSnippet(<CodeSnippet>{
-                                    name: card.name,
-                                    code: tutorial.code,
-                                    type: "blocks",
-                                    ext: "ts",
-                                    packages: pkgs
-                                }, "tutorial" + gal.name, cardIndex);
-                                break;
-                            }
-                        case "example":
-                            {
-                                const exMd = nodeutil.resolveMd(docsRoot, card.url);
-                                const prj = pxt.gallery.parseExampleMarkdown(card.name, exMd);
-                                const pkgs: pxt.Map<string> = { "blocksprj": "*" };
-                                pxt.U.jsonMergeFrom(pkgs, prj.dependencies);
-                                addSnippet(<CodeSnippet>{
-                                    name: card.name,
-                                    code: prj.filesOverride["main.ts"],
-                                    type: "blocks",
-                                    ext: "ts",
-                                    packages: pkgs
-                                }, "example" + gal.name, cardIndex);
-                                break;
-                            }
+                        case "tutorial": {
+                            const tutorialMd = nodeutil.resolveMd(docsRoot, card.url);
+                            const tutorial = pxt.tutorial.parseTutorial(tutorialMd);
+                            const pkgs: pxt.Map<string> = { "blocksprj": "*" };
+                            pxt.Util.jsonMergeFrom(pkgs, pxt.gallery.parsePackagesFromMarkdown(tutorialMd) || {});
+                            addSnippet(<CodeSnippet>{
+                                name: card.name,
+                                code: tutorial.code,
+                                type: "blocks",
+                                ext: "ts",
+                                packages: pkgs
+                            }, "tutorial" + gal.name, cardIndex);
+                            break;
+                        }
+                        case "example": {
+                            const exMd = nodeutil.resolveMd(docsRoot, card.url);
+                            const prj = pxt.gallery.parseExampleMarkdown(card.name, exMd);
+                            const pkgs: pxt.Map<string> = { "blocksprj": "*" };
+                            pxt.U.jsonMergeFrom(pkgs, prj.dependencies);
+                            addSnippet(<CodeSnippet>{
+                                name: card.name,
+                                code: prj.filesOverride["main.ts"],
+                                type: "blocks",
+                                ext: "ts",
+                                packages: pkgs
+                            }, "example" + gal.name, cardIndex);
+                            break;
+                        }
                     }
                 }));
             })
