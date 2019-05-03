@@ -17,6 +17,8 @@ of [Adafruit Industries](https://www.adafruit.com).  They invited us to appear o
 their weekly live stream [Ask An Engineer](https://www.youtube.com/watch?v=dyFhE568-9Q),
 where we talked about [Microsoft MakeCode](https://www.makecode.com) and [MakeCode Arcade](https://arcade.makecode.com).
 
+![Montage: from Holiday Inn to Library](/static/blog/ozette/montage.jpg)
+
 ### Unracing to the Finish Line in the Basement of the Holiday Inn
 
 Well, so far I've been showing you glamourous photos from the library where we work with the designers.  The reality is that we spend a lot of our time in a rented room in the basement of the Holiday Inn (Downtown Brooklyn), squashing bugs, writing device drivers, and fabricating (soldering) the required 
@@ -30,4 +32,21 @@ The most exciting part of my time down here is the terror of watching James Devi
 - [Race 4](https://github.com/lancaster-university/codal-core/pull/83/commits/3dda49eda64797b37a511b03d577b091922de9c5)
 - [Race 5](https://github.com/lancaster-university/codal-core/pull/83/commits/c95dd23c2ac07ce1ab347803003fce1bc65f4317)
 
-Now, you might be wondering: "Tom, why didn't YOU model check James' code ages ago using all the great technology from the [Research in Software Engineering](https://research.microsoft.com/rise) group?"
+Now, you might be wondering: "Tom, why didn't YOU model check James' code ages ago using all the great technology from the [Research in Software Engineering](https://research.microsoft.com/rise) group?" Indeed, that's a very good question! The physical layer is written in C++ and heavily tied to interrupts and the properties of various on-chip hardware (DMA, GPIO, etc.); although I'm aware of research on model checking of interrupt-driven software, there was not a handy tool to apply directly to the code. Another approach we are considering is to model the JACDAC protocol using Ken McMillan's [IVy technology](http://microsoft.github.io/ivy/), which has the ability to do model-based testing.
+
+In the meantime, James has done the following:
+
+- [HACK: reset on error condition](https://github.com/lancaster-university/codal-core/commit/e16a98d9f74d588874aedbcd25d83ef0fe203b6a)
+
+So it goes...
+
+### And back to the Holiday Inn
+
+Despite the race conditions, a gaggle of teenagers from a local school coming for the 
+afternoon to learn about fahsion, party and eat pizza, we managed to make a lot of 
+progress. We are in for a long night
+back here in the basement (dare I say "all nighter") and will be back at the library
+at 7am with the hardware and software ready for incorporation into the garments (most
+of which were still being worked on late today). No pain, no gain! 
+
+![Still working in the basement of the Holiday Inn](/static/blog/ozette/backInTheDungeon.jpg)
