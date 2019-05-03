@@ -1939,14 +1939,16 @@ namespace pxt.py {
         const generated: Map<string> = {}
         diagnostics = []
 
+        // find .ts files that are copies of / shadowed by the .py files
         let pyFiles = opts.sourceFiles.filter(fn => U.endsWith(fn, ".py"))
         if (pyFiles.length == 0)
             return { generated, diagnostics }
-        let pyFilesSet = U.toDictionary(pyFiles, p => p)
-        // find .ts files that are copies of / shadowed by the .py files
-        let tsShadowFiles = opts.sourceFiles
+        let removeEnd = (file: string, ext: string) => file.substr(0, file.length - ext.length)
+        let pyFilesSet = U.toDictionary(pyFiles, p => removeEnd(p, ".py"))
+        let tsFiles = opts.sourceFiles
             .filter(fn => U.endsWith(fn, ".ts"))
-            .filter(fn => fn.substr(0, fn.length - ".ts".length) in pyFilesSet)
+        let tsShadowFiles = tsFiles
+            .filter(fn => removeEnd(fn, ".ts") in pyFilesSet)
 
         lastFile = pyFiles[0] // make sure there's some location info for errors from API init
         initApis(opts.apisInfo, tsShadowFiles)
