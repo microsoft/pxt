@@ -1,6 +1,6 @@
 declare namespace pxt {
 
-    type CodeCardType = "file" | "example" | "codeExample" | "tutorial" | "side" | "template" | "package" | "hw";
+    type CodeCardType = "file" | "example" | "codeExample" | "tutorial" | "side" | "template" | "package" | "hw" | "forumUrl";
 
     interface Map<T> {
         [index: string]: T;
