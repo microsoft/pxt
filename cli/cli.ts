@@ -33,7 +33,7 @@ const rimraf: (f: string, opts: any, cb: (err: any, res: any) => void) => void =
 let forceCloudBuild = process.env["KS_FORCE_CLOUD"] !== "no";
 let forceLocalBuild = !!process.env["PXT_FORCE_LOCAL"];
 let forceBuild = false; // don't use cache
-let doPythonRoundTripSyntaxComparison = false
+let doPythonRoundTripSyntaxComparison = true
 
 Error.stackTraceLimit = 100;
 
