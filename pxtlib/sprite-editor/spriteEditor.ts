@@ -100,12 +100,7 @@ namespace pxtsprite {
                 this.debug("gesture end (" + PaintTool[this.activeTool] + ")");
                 this.commit();
                 this.mouseDown = false;
-                if (this.activeTool == PaintTool.Circle && !this.shiftDown) {
-                    this.switchIconTo(PaintTool.Rectangle);
-                }
-                if (this.activeTool == PaintTool.Line && !this.shiftDown) {
-                    this.switchIconTo(PaintTool.Normal);
-                }
+                this.setIconsToDefault();
             });
 
             this.paintSurface.down((col, row) => {
@@ -334,11 +329,21 @@ namespace pxtsprite {
                     break;
             }
 
-            btn.onClick(() => this.sidebar.setTool(tool));
+            btn.onClick(() => {
+                this.sidebar.setTool(tool)
+                this.setIconsToDefault();
+            });
             const activeBtn = this.sidebar.getButtonForTool(this.activeTool) as TextButton;
 
             if (activeBtn === btn) {
                 this.setActiveTool(tool);
+            }
+        }
+
+        private setIconsToDefault() {
+            if (!this.shiftDown) {
+                this.switchIconTo(PaintTool.Rectangle);
+                this.switchIconTo(PaintTool.Normal);
             }
         }
 
@@ -360,6 +365,7 @@ namespace pxtsprite {
                 { key: "l", tool: PaintTool.Line }
             ].forEach(shortcut => {
                 if (event.key === shortcut.key) {
+                    this.setIconsToDefault();
                     this.sidebar.setTool(shortcut.tool);
                     this.switchIconTo(shortcut.tool);
                 }
@@ -378,8 +384,7 @@ namespace pxtsprite {
                         this.switchIconTo(PaintTool.Rectangle);
                     }
                 } else {
-                    this.switchIconTo(PaintTool.Normal);
-                    this.switchIconTo(PaintTool.Rectangle);
+                    this.setIconsToDefault();
                 }
             }
         }
