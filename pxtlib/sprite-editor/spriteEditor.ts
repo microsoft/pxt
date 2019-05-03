@@ -101,10 +101,10 @@ namespace pxtsprite {
                 this.commit();
                 this.mouseDown = false;
                 if (this.activeTool == PaintTool.Circle && !this.shiftDown) {
-                    this.switchIconBack(PaintTool.Rectangle);
+                    this.switchIconTo(PaintTool.Rectangle);
                 }
                 if (this.activeTool == PaintTool.Line && !this.shiftDown) {
-                    this.switchIconBack(PaintTool.Normal);
+                    this.switchIconTo(PaintTool.Normal);
                 }
             });
 
@@ -313,20 +313,31 @@ namespace pxtsprite {
             this.closeHandler = handler;
         }
 
-        switchIconBack(tool: PaintTool) {
-            let btn = (this.sidebar.getButtonForTool(tool) as TextButton);
-            if (tool == PaintTool.Rectangle) {
-                //Change icon back to square
-                btn.setText("\uf096");
-                btn.title(lf("Rectangle"));
-            } else if (tool == PaintTool.Normal) {
-                //Change icon back to pencil
-                btn.setText("\uf040");
-                btn.title(lf("Pencil"));
+        switchIconTo(tool: PaintTool) {
+            const btn = (this.sidebar.getButtonForTool(tool) as TextButton);
+            switch (tool) {
+                case PaintTool.Rectangle:
+                    btn.setText("\uf096");
+                    btn.title(lf("Rectangle"));
+                    break;
+                case PaintTool.Circle:
+                    btn.setText("\uf10c");
+                    btn.title(lf("Circle"));
+                    break;
+                case PaintTool.Normal:
+                    btn.setText("\uf040");
+                    btn.title(lf("Pencil"));
+                    break;
+                case PaintTool.Line:
+                    btn.setText("\uf07e");
+                    btn.title(lf("Line"));
+                    break;
             }
+
             btn.onClick(() => this.sidebar.setTool(tool));
-            if ((this.activeTool == PaintTool.Circle && tool == PaintTool.Rectangle)
-                    || (this.activeTool == PaintTool.Line && tool == PaintTool.Normal)) {
+            const activeBtn = this.sidebar.getButtonForTool(this.activeTool) as TextButton;
+
+            if (activeBtn === btn) {
                 this.setActiveTool(tool);
             }
         }
@@ -334,24 +345,25 @@ namespace pxtsprite {
         private keyDown = (event: KeyboardEvent) => {
             if (event.keyCode == 16) { // Shift
                 if (!this.shiftDown) {
-                    let btn = (this.sidebar.getButtonForTool(PaintTool.Normal) as TextButton);
-                    btn.setText("\uf07e");
-                    btn.title(lf("Line"));
-                    btn.onClick(() => this.sidebar.setTool(PaintTool.Line));
-                    if (this.activeTool == PaintTool.Normal) {
-                        this.setActiveTool(PaintTool.Line);
-                    }
-                    btn = (this.sidebar.getButtonForTool(PaintTool.Rectangle) as TextButton);
-                    btn.setText("\uf10c");
-                    btn.title(lf("Circle"));
-                    btn.onClick(() => this.sidebar.setTool(PaintTool.Circle));
-                    if (this.activeTool == PaintTool.Rectangle) {
-                        this.setActiveTool(PaintTool.Circle);
-                    }
+                    this.switchIconTo(PaintTool.Line);
+                    this.switchIconTo(PaintTool.Circle);
                 }
                 this.shiftDown = true;
             }
 
+            [
+                { key: "b", tool: PaintTool.Fill },
+                { key: "p", tool: PaintTool.Normal },
+                { key: "r", tool: PaintTool.Rectangle },
+                { key: "e", tool: PaintTool.Erase },
+                { key: "c", tool: PaintTool.Circle }, // todo: return to normal after clicking other tool
+                { key: "l", tool: PaintTool.Line }
+            ].forEach(shortcut => {
+                if (event.key === shortcut.key) {
+                    this.sidebar.setTool(shortcut.tool);
+                    this.switchIconTo(shortcut.tool);
+                }
+            });
         }
 
         private keyUp = (event: KeyboardEvent) => {
@@ -360,14 +372,14 @@ namespace pxtsprite {
                 this.shiftDown = false;
                 if (this.mouseDown) {
                     if (this.activeTool != PaintTool.Line) {
-                        this.switchIconBack(PaintTool.Normal);
+                        this.switchIconTo(PaintTool.Normal);
                     }
                     if (this.activeTool != PaintTool.Circle) {
-                        this.switchIconBack(PaintTool.Rectangle);
+                        this.switchIconTo(PaintTool.Rectangle);
                     }
                 } else {
-                    this.switchIconBack(PaintTool.Normal);
-                    this.switchIconBack(PaintTool.Rectangle);
+                    this.switchIconTo(PaintTool.Normal);
+                    this.switchIconTo(PaintTool.Rectangle);
                 }
             }
         }
