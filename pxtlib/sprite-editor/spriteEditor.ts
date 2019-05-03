@@ -318,19 +318,19 @@ namespace pxtsprite {
             switch (tool) {
                 case PaintTool.Rectangle:
                     btn.setText("\uf096");
-                    btn.title(lf("Rectangle"));
+                    btn.title(lf("Rectangle (r)"));
                     break;
                 case PaintTool.Circle:
                     btn.setText("\uf10c");
-                    btn.title(lf("Circle"));
+                    btn.title(lf("Circle (c)"));
                     break;
                 case PaintTool.Normal:
                     btn.setText("\uf040");
-                    btn.title(lf("Pencil"));
+                    btn.title(lf("Pencil (p)"));
                     break;
                 case PaintTool.Line:
                     btn.setText("\uf07e");
-                    btn.title(lf("Line"));
+                    btn.title(lf("Line (l)"));
                     break;
             }
 
