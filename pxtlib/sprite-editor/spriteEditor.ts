@@ -361,7 +361,7 @@ namespace pxtsprite {
                 { key: "p", tool: PaintTool.Normal },
                 { key: "r", tool: PaintTool.Rectangle },
                 { key: "e", tool: PaintTool.Erase },
-                { key: "c", tool: PaintTool.Circle }, // todo: return to normal after clicking other tool
+                { key: "c", tool: PaintTool.Circle },
                 { key: "l", tool: PaintTool.Line }
             ].forEach(shortcut => {
                 if (event.key === shortcut.key) {
