@@ -370,6 +370,13 @@ namespace pxtsprite {
                     this.switchIconTo(shortcut.tool);
                 }
             });
+
+            const zeroKeyCode = 48;
+            const nineKeyCode = 57;
+
+            if (event.keyCode >= zeroKeyCode && event.keyCode <= nineKeyCode) {
+                this.sidebar.setColor(event.keyCode - zeroKeyCode);
+            }
         }
 
         private keyUp = (event: KeyboardEvent) => {
