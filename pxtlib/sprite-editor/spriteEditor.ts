@@ -61,6 +61,8 @@ namespace pxtsprite {
 
         private cursorCol = 0;
         private cursorRow = 0;
+        private shiftDownCol = 0;
+        private shiftDownRow = 0;
 
         private undoStack: Bitmap[] = [];
         private redoStack: Bitmap[] = [];
@@ -100,7 +102,6 @@ namespace pxtsprite {
                 this.debug("gesture end (" + PaintTool[this.activeTool] + ")");
                 this.commit();
                 this.mouseDown = false;
-                this.setIconsToDefault();
             });
 
             this.paintSurface.down((col, row) => {
@@ -327,11 +328,15 @@ namespace pxtsprite {
                     btn.setText("\uf07e");
                     btn.title(lf("Line (l)"));
                     break;
+                default:  // no alternate icon, do not change
+                    return;
             }
 
             btn.onClick(() => {
-                this.sidebar.setTool(tool)
-                this.setIconsToDefault();
+                if (tool != PaintTool.Circle && tool != PaintTool.Line) {
+                    this.setIconsToDefault();
+                    this.sidebar.setTool(tool);
+                }
             });
             const activeBtn = this.sidebar.getButtonForTool(this.activeTool) as TextButton;
 
@@ -340,34 +345,30 @@ namespace pxtsprite {
             }
         }
 
-        private setIconsToDefault() {
-            if (!this.shiftDown) {
-                this.switchIconTo(PaintTool.Rectangle);
-                this.switchIconTo(PaintTool.Normal);
-            }
+        setIconsToDefault() {
+            this.switchIconTo(PaintTool.Rectangle);
+            this.switchIconTo(PaintTool.Normal);
         }
 
         private keyDown = (event: KeyboardEvent) => {
             if (event.keyCode == 16) { // Shift
-                if (!this.shiftDown) {
-                    this.switchIconTo(PaintTool.Line);
-                    this.switchIconTo(PaintTool.Circle);
-                }
                 this.shiftDown = true;
+                this.shiftDownCol = this.cursorCol;
+                this.shiftDownRow = this.cursorRow;
             }
 
             [
-                { key: "b", tool: PaintTool.Fill },
-                { key: "p", tool: PaintTool.Normal },
-                { key: "r", tool: PaintTool.Rectangle },
-                { key: "e", tool: PaintTool.Erase },
-                { key: "c", tool: PaintTool.Circle },
-                { key: "l", tool: PaintTool.Line }
-            ].forEach(shortcut => {
-                if (event.key === shortcut.key) {
+                PaintTool.Fill,
+                PaintTool.Normal,
+                PaintTool.Rectangle,
+                PaintTool.Erase,
+                PaintTool.Circle,
+                PaintTool.Line
+            ].forEach(tool => {
+                if (event.key === getPaintToolShortcut(tool)) {
                     this.setIconsToDefault();
-                    this.sidebar.setTool(shortcut.tool);
-                    this.switchIconTo(shortcut.tool);
+                    this.sidebar.setTool(tool);
+                    this.switchIconTo(tool);
                 }
             });
 
@@ -383,16 +384,6 @@ namespace pxtsprite {
             // If not drawing a circle, switch back to Rectangle and Pencil
             if (event.keyCode == 16) { // Shift
                 this.shiftDown = false;
-                if (this.mouseDown) {
-                    if (this.activeTool != PaintTool.Line) {
-                        this.switchIconTo(PaintTool.Normal);
-                    }
-                    if (this.activeTool != PaintTool.Circle) {
-                        this.switchIconTo(PaintTool.Rectangle);
-                    }
-                } else {
-                    this.setIconsToDefault();
-                }
             }
         }
 
