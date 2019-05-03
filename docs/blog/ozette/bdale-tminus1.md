@@ -17,8 +17,6 @@ of [Adafruit Industries](https://www.adafruit.com).  They invited us to appear o
 their weekly live stream [Ask An Engineer](https://www.youtube.com/watch?v=dyFhE568-9Q),
 where we talked about [Microsoft MakeCode](https://www.makecode.com) and [MakeCode Arcade](https://arcade.makecode.com).
 
-![Montage: from Holiday Inn to Library](/static/blog/ozette/montage.jpg)
-
 ### Unracing to the Finish Line in the Basement of the Holiday Inn
 
 Well, so far I've been showing you glamourous photos from the library where we work with the designers.  The reality is that we spend a lot of our time in a rented room in the basement of the Holiday Inn (Downtown Brooklyn), squashing bugs, writing device drivers, and fabricating (soldering) the required 
@@ -40,11 +38,18 @@ In the meantime, James has done the following:
 
 So it goes...
 
-### And back to the Holiday Inn
+### From the Holiday Inn to the Library
+
+![Montage: from Holiday Inn to Library](/static/blog/ozette/montage.jpg)
 
 Despite the race conditions, a gaggle of teenagers from a local school coming for the 
-afternoon to learn about fahsion, party and eat pizza, we managed to make a lot of 
-progress. We are in for a long night
+afternoon to learn about fashion, party and eat pizza, we managed to make a lot of 
+progress at the library (though James and Tom had to find a quieter place to work
+when the teenagers first arrived - not that hard in a library). 
+
+### And back to the Holiday Inn
+
+We are in for a long night
 back here in the basement (dare I say "all nighter") and will be back at the library
 at 7am with the hardware and software ready for incorporation into the garments (most
 of which were still being worked on late today). No pain, no gain! 
