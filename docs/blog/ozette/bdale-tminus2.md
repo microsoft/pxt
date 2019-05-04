@@ -61,7 +61,7 @@ On top of the control layer, Peli de Halleux and James Devine have written a set
 [Microsoft MakeCode](https://www.makecode.com) is web-based experience for programming microcontroller-based devices using 
 both block and text editors for learners at different levels, starting with middle school. 
 MakeCode's open source [platform](https://github.com/microsoft/pxt) provides
- a browser-based compiler from a [large subset](/language) of TypeScript to ARM machine code (the compiler is written in TypeScript too), as well as incorporating the [Blockly](https://developers.google.com/blockly/) and [Monaco](https://microsoft.github.io/monaco-editor/index.html) 
+ a browser-based compiler from a [large subset](/language) of TypeScript to ARM machine code (the compiler is written in TypeScript too), as well as incorporating the [Blockly](https://developers.google.com/blockly/) and [Monaco](https://microsoft.github.io/monaco-editor/index.html) editors.
 To date, MakeCode has been used primarily to program single devices, 
 such as the [micro:bit](https://makecode.microbit.org) and
 [Adafruit Circuit Playground Express](https://makecode.adafruit.com).
