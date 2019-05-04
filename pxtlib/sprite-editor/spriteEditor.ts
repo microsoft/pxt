@@ -211,20 +211,21 @@ namespace pxtsprite {
                 if (this.activeTool === PaintTool.Erase) {
                     this.sidebar.setTool(PaintTool.Normal);
                 } else {
-                    this.edit = this.newEdit(this.color);
+                    this.updateEdit();
                 }
             }
         }
 
         setActiveTool(tool: PaintTool) {
             this.activeTool = tool;
-            this.edit = this.newEdit(this.color)
+            this.updateEdit()
         }
 
         setToolWidth(width: number) {
             this.toolWidth = width;
-            this.edit = this.newEdit(this.color);
+            this.updateEdit();
         }
+
 
         undo() {
             if (this.undoStack.length) {
@@ -369,8 +370,8 @@ namespace pxtsprite {
                 this.shiftDown = true;
             }
 
-            if (event.keyCode == 18 ) {// Alt
-                this.discard();
+            if (event.keyCode == 18 ) { // Alt
+                this.discardEdit();
                 this.paintSurface.setEyedropperMouse(true);
                 this.altDown = true;
             }
@@ -409,9 +410,9 @@ namespace pxtsprite {
             if (event.keyCode == 16) { // Shift
                 this.shiftDown = false;
             } else if (event.keyCode == 18) { // Alt
-                this.paintSurface.setEyedropperMouse(false);
-                this.edit = this.newEdit(this.color);
                 this.altDown = false;
+                this.paintSurface.setEyedropperMouse(false);
+                this.updateEdit();
             }
         }
 
@@ -436,7 +437,7 @@ namespace pxtsprite {
             if (showOverlay) this.paintSurface.showOverlay();
 
             // Canvas size changed and some edits rely on that (like paint)
-            this.edit = this.newEdit(this.color);
+            this.updateEdit();
         }
 
         private drawCursor(col: number, row: number) {
@@ -458,7 +459,7 @@ namespace pxtsprite {
                 this.pushState(true);
                 this.paintEdit(this.edit, this.cursorCol, this.cursorRow);
                 this.state.apply(this.paintSurface.image);
-                this.edit = this.newEdit(this.color);
+                this.updateEdit();
                 this.redoStack = [];
             }
         }
@@ -474,9 +475,16 @@ namespace pxtsprite {
             this.updateUndoRedo();
         }
 
-        private discard() {
+        private discardEdit() {
             if (this.edit) {
                 this.edit = undefined;
+                this.paintSurface.repaint();
+            }
+        }
+
+        private updateEdit() {
+            if (!this.altDown) {
+                this.edit = this.newEdit(this.color);
             }
         }
 
