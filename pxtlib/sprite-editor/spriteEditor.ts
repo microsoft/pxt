@@ -124,15 +124,15 @@ namespace pxtsprite {
             this.paintSurface.leave(() => {
                 if (this.edit) {
                     this.paintSurface.repaint();
-                }
-                if (this.edit.isStarted) {
-                    this.commit();
+                    if (this.edit.isStarted) {
+                        this.commit();
+                    }
                 }
                 this.bottomBar.hideCursor();
             });
 
             this.sidebar = new SideBar(['url("#alpha-background")'].concat(this.colors), this, this.group);
-            this.sidebar.setColor(this.colors.length >= 3 ? 3 : 1);
+            this.sidebar.setColor(this.colors.length >= 3 ? 3 : 1); // colors omits 0
 
             this.header = new SpriteHeader(this);
             this.gallery = new Gallery(blocksInfo);
@@ -155,7 +155,7 @@ namespace pxtsprite {
                 this.state.set(col, row, color);
                 this.paintCell(col, row, color);
             }
-            else {
+            else if (this.edit) {
                 if (!this.edit.isStarted) {
                     this.edit.start(col, row);
                 }
@@ -370,6 +370,8 @@ namespace pxtsprite {
             }
 
             if (event.keyCode == 18 ) {// Alt
+                this.discard();
+                this.paintSurface.setEyedropperMouse(true);
                 this.altDown = true;
             }
 
@@ -392,7 +394,13 @@ namespace pxtsprite {
             const nineKeyCode = 57;
 
             if (event.keyCode >= zeroKeyCode && event.keyCode <= nineKeyCode) {
-                this.sidebar.setColor(event.keyCode - zeroKeyCode);
+                let color = event.keyCode - zeroKeyCode;
+                if (this.shiftDown) {
+                    color += 9;
+                }
+                if (color <= this.colors.length) { // colors omits 0
+                    this.sidebar.setColor(color);
+                }
             }
         }
 
@@ -400,7 +408,9 @@ namespace pxtsprite {
             // If not drawing a circle, switch back to Rectangle and Pencil
             if (event.keyCode == 16) { // Shift
                 this.shiftDown = false;
-            } else if (event.keyCode == 18) {
+            } else if (event.keyCode == 18) { // Alt
+                this.paintSurface.setEyedropperMouse(false);
+                this.edit = this.newEdit(this.color);
                 this.altDown = false;
             }
         }
@@ -462,6 +472,12 @@ namespace pxtsprite {
 
             stack.push(this.state.copy());
             this.updateUndoRedo();
+        }
+
+        private discard() {
+            if (this.edit) {
+                this.edit = undefined;
+            }
         }
 
         private restore(bitmap: Bitmap) {

@@ -32,7 +32,23 @@ namespace pxtsprite {
                 this.context.fill();
             }
 
-            this.hideOverlay();
+            this.hideOverlay()
+        }
+
+        setEyedropperMouse(on: boolean) {
+            if (on) {
+                this.paintLayer.classList.add("sprite-editor-eyedropper");
+                if (!this.lightMode) {
+                    this.backgroundLayer.classList.add("sprite-editor-eyedropper");
+                    this.overlayLayer.classList.add("sprite-editor-eyedropper");
+                }
+            } else {
+                this.paintLayer.classList.remove("sprite-editor-eyedropper");
+                if (!this.lightMode) {
+                    this.backgroundLayer.classList.remove("sprite-editor-eyedropper");
+                    this.overlayLayer.classList.remove("sprite-editor-eyedropper");
+                }
+            }
         }
 
         repaint(): void {
