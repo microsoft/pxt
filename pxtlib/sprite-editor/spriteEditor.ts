@@ -61,8 +61,6 @@ namespace pxtsprite {
 
         private cursorCol = 0;
         private cursorRow = 0;
-        private shiftDownCol = 0;
-        private shiftDownRow = 0;
 
         private undoStack: Bitmap[] = [];
         private redoStack: Bitmap[] = [];
@@ -71,8 +69,8 @@ namespace pxtsprite {
         private rows: number = 16;
         private colors: string[];
 
-
         private shiftDown: boolean = false;
+        private altDown: boolean = false;
         private mouseDown: boolean = false;
 
         private closeHandler: () => void;
@@ -94,18 +92,27 @@ namespace pxtsprite {
 
             this.paintSurface.drag((col, row) => {
                 this.debug("gesture (" + PaintTool[this.activeTool] + ")");
-                this.setCell(col, row, this.color, false);
+                if (!this.altDown) {
+                    this.setCell(col, row, this.color, false);
+                }
                 this.bottomBar.updateCursor(col, row);
             });
 
             this.paintSurface.up((col, row) => {
                 this.debug("gesture end (" + PaintTool[this.activeTool] + ")");
-                this.commit();
+                if (!this.altDown) {
+                    this.commit();
+                } else {
+                    const color = this.state.get(col, row);
+                    this.sidebar.setColor(color);
+                }
                 this.mouseDown = false;
             });
 
             this.paintSurface.down((col, row) => {
-                this.setCell(col, row, this.color, false);
+                if (!this.altDown) {
+                    this.setCell(col, row, this.color, false);
+                }
                 this.mouseDown = true;
             });
 
@@ -360,8 +367,10 @@ namespace pxtsprite {
         private keyDown = (event: KeyboardEvent) => {
             if (event.keyCode == 16) { // Shift
                 this.shiftDown = true;
-                this.shiftDownCol = this.cursorCol;
-                this.shiftDownRow = this.cursorRow;
+            }
+
+            if (event.keyCode == 18 ) {// Alt
+                this.altDown = true;
             }
 
             [
@@ -391,6 +400,8 @@ namespace pxtsprite {
             // If not drawing a circle, switch back to Rectangle and Pencil
             if (event.keyCode == 16) { // Shift
                 this.shiftDown = false;
+            } else if (event.keyCode == 18) {
+                this.altDown = false;
             }
         }
 
@@ -474,13 +485,20 @@ namespace pxtsprite {
 
         private newEdit(color: number) {
             switch (this.activeTool) {
-                case PaintTool.Normal: return new PaintEdit(this.columns, this.rows, color, this.toolWidth);
-                case PaintTool.Rectangle: return new OutlineEdit(this.columns, this.rows, color, this.toolWidth);
-                case PaintTool.Outline: return new OutlineEdit(this.columns, this.rows, color, this.toolWidth);
-                case PaintTool.Line: return new LineEdit(this.columns, this.rows, color, this.toolWidth);
-                case PaintTool.Circle: return new CircleEdit(this.columns, this.rows, color, this.toolWidth);
-                case PaintTool.Erase: return new PaintEdit(this.columns, this.rows, 0, this.toolWidth);
-                case PaintTool.Fill: return new FillEdit(this.columns, this.rows, color, this.toolWidth);
+                case PaintTool.Normal:
+                    return new PaintEdit(this.columns, this.rows, color, this.toolWidth);
+                case PaintTool.Rectangle:
+                    return new OutlineEdit(this.columns, this.rows, color, this.toolWidth);
+                case PaintTool.Outline:
+                    return new OutlineEdit(this.columns, this.rows, color, this.toolWidth);
+                case PaintTool.Line:
+                    return new LineEdit(this.columns, this.rows, color, this.toolWidth);
+                case PaintTool.Circle:
+                    return new CircleEdit(this.columns, this.rows, color, this.toolWidth);
+                case PaintTool.Erase:
+                    return new PaintEdit(this.columns, this.rows, 0, this.toolWidth);
+                case PaintTool.Fill:
+                    return new FillEdit(this.columns, this.rows, color, this.toolWidth);
             }
         }
 
