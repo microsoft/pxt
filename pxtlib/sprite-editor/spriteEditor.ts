@@ -346,11 +346,6 @@ namespace pxtsprite {
                 }
             });
 
-            const activeBtn = this.sidebar.getButtonForTool(this.activeTool) as TextButton;
-            if (activeBtn === btn) {
-                this.setActiveTool(tool);
-            }
-
             function updateIcon(button: TextButton, text: string, title: string) {
                 const shortcut = getPaintToolShortcut(tool);
 
