@@ -36,17 +36,18 @@ namespace pxtsprite {
         }
 
         setEyedropperMouse(on: boolean) {
+            const eyedropperClass = "sprite-editor-eyedropper";
             if (on) {
-                this.paintLayer.classList.add("sprite-editor-eyedropper");
+                this.paintLayer.classList.add(eyedropperClass);
                 if (!this.lightMode) {
-                    this.backgroundLayer.classList.add("sprite-editor-eyedropper");
-                    this.overlayLayer.classList.add("sprite-editor-eyedropper");
+                    this.backgroundLayer.classList.add(eyedropperClass);
+                    this.overlayLayer.classList.add(eyedropperClass);
                 }
             } else {
-                this.paintLayer.classList.remove("sprite-editor-eyedropper");
+                this.paintLayer.classList.remove(eyedropperClass);
                 if (!this.lightMode) {
-                    this.backgroundLayer.classList.remove("sprite-editor-eyedropper");
-                    this.overlayLayer.classList.remove("sprite-editor-eyedropper");
+                    this.backgroundLayer.classList.remove(eyedropperClass);
+                    this.overlayLayer.classList.remove(eyedropperClass);
                 }
             }
         }
