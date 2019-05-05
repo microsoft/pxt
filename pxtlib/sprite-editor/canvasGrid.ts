@@ -32,7 +32,7 @@ namespace pxtsprite {
                 this.context.fill();
             }
 
-            this.hideOverlay()
+            this.hideOverlay();
         }
 
         setEyedropperMouse(on: boolean) {
