@@ -483,7 +483,7 @@ namespace pxtsprite {
 
         private updateEdit() {
             if (!this.altDown) {
-                this.edit = this.newEdit(this.color);
+                this.edit = this.newEdit();
             }
         }
 
@@ -506,22 +506,22 @@ namespace pxtsprite {
             this.paintSurface.writeColor(col, row, color);
         }
 
-        private newEdit(color: number) {
+        private newEdit() {
             switch (this.activeTool) {
                 case PaintTool.Normal:
-                    return new PaintEdit(this.columns, this.rows, color, this.toolWidth);
+                    return new PaintEdit(this.columns, this.rows, this.color, this.toolWidth);
                 case PaintTool.Rectangle:
-                    return new OutlineEdit(this.columns, this.rows, color, this.toolWidth);
+                    return new OutlineEdit(this.columns, this.rows, this.color, this.toolWidth);
                 case PaintTool.Outline:
-                    return new OutlineEdit(this.columns, this.rows, color, this.toolWidth);
+                    return new OutlineEdit(this.columns, this.rows, this.color, this.toolWidth);
                 case PaintTool.Line:
-                    return new LineEdit(this.columns, this.rows, color, this.toolWidth);
+                    return new LineEdit(this.columns, this.rows, this.color, this.toolWidth);
                 case PaintTool.Circle:
-                    return new CircleEdit(this.columns, this.rows, color, this.toolWidth);
+                    return new CircleEdit(this.columns, this.rows, this.color, this.toolWidth);
                 case PaintTool.Erase:
                     return new PaintEdit(this.columns, this.rows, 0, this.toolWidth);
                 case PaintTool.Fill:
-                    return new FillEdit(this.columns, this.rows, color, this.toolWidth);
+                    return new FillEdit(this.columns, this.rows, this.color, this.toolWidth);
             }
         }
 
