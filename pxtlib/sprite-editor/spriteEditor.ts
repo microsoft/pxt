@@ -100,12 +100,14 @@ namespace pxtsprite {
 
             this.paintSurface.up((col, row) => {
                 this.debug("gesture end (" + PaintTool[this.activeTool] + ")");
-                if (!this.altDown) {
-                    this.commit();
-                } else {
+                if (this.altDown) {
                     const color = this.state.get(col, row);
                     this.sidebar.setColor(color);
+                } else {
+                    this.commit();
+                    this.shiftAction();
                 }
+
                 this.mouseDown = false;
             });
 
@@ -363,6 +365,7 @@ namespace pxtsprite {
         private keyDown = (event: KeyboardEvent) => {
             if (event.keyCode == 16) { // Shift
                 this.shiftDown = true;
+                this.shiftAction();
             }
 
             if (event.keyCode == 18 ) { // Alt
@@ -404,6 +407,7 @@ namespace pxtsprite {
             // If not drawing a circle, switch back to Rectangle and Pencil
             if (event.keyCode == 16) { // Shift
                 this.shiftDown = false;
+                this.clearShiftAction();
             } else if (event.keyCode == 18) { // Alt
                 this.altDown = false;
                 this.paintSurface.setEyedropperMouse(false);
@@ -518,6 +522,27 @@ namespace pxtsprite {
                     return new PaintEdit(this.columns, this.rows, 0, this.toolWidth);
                 case PaintTool.Fill:
                     return new FillEdit(this.columns, this.rows, color, this.toolWidth);
+            }
+        }
+
+        private shiftAction() {
+            if (!this.shiftDown || this.altDown)
+                return;
+            switch (this.activeTool) {
+                case PaintTool.Normal:
+                case PaintTool.Line:
+                    this.setCell(this.paintSurface.mouseCol, this.paintSurface.mouseRow, this.color, false);
+                    break;
+            }
+        }
+
+        private clearShiftAction() {
+            switch (this.activeTool) {
+                case PaintTool.Normal:
+                case PaintTool.Line:
+                    if (!this.mouseDown)
+                        this.updateEdit();
+                    break;
             }
         }
 
