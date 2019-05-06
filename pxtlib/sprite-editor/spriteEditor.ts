@@ -38,7 +38,6 @@ namespace pxtsprite {
 
     const WIDTH = PADDING + SIDEBAR_WIDTH + SIDEBAR_CANVAS_MARGIN + CANVAS_HEIGHT + PADDING - DROP_DOWN_PADDING * 2;
 
-
     export class SpriteEditor implements SideBarHost, SpriteHeaderHost {
         private group: svg.Group;
         private root: svg.SVG;
@@ -120,13 +119,14 @@ namespace pxtsprite {
 
             this.paintSurface.move((col, row) => {
                 this.drawCursor(col, row);
+                this.shiftAction()
                 this.bottomBar.updateCursor(col, row);
             });
 
             this.paintSurface.leave(() => {
                 if (this.edit) {
-                    this.paintSurface.repaint();
-                    if (this.edit.isStarted) {
+                    this.rePaint();
+                    if (this.edit.isStarted && this.activeTool === PaintTool.Normal) {
                         this.commit();
                     }
                 }
@@ -477,7 +477,7 @@ namespace pxtsprite {
         private discardEdit() {
             if (this.edit) {
                 this.edit = undefined;
-                this.paintSurface.repaint();
+                this.rePaint();
             }
         }
 
@@ -529,7 +529,6 @@ namespace pxtsprite {
             if (!this.shiftDown || this.altDown)
                 return;
             switch (this.activeTool) {
-                case PaintTool.Normal:
                 case PaintTool.Line:
                     this.setCell(this.paintSurface.mouseCol, this.paintSurface.mouseRow, this.color, false);
                     break;
@@ -538,10 +537,10 @@ namespace pxtsprite {
 
         private clearShiftAction() {
             switch (this.activeTool) {
-                case PaintTool.Normal:
                 case PaintTool.Line:
                     if (!this.mouseDown)
                         this.updateEdit();
+                    this.rePaint();
                     break;
             }
         }
