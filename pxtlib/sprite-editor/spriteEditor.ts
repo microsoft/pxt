@@ -538,9 +538,10 @@ namespace pxtsprite {
         private clearShiftAction() {
             switch (this.activeTool) {
                 case PaintTool.Line:
-                    if (!this.mouseDown)
+                    if (!this.mouseDown) {
                         this.updateEdit();
-                    this.rePaint();
+                        this.paintSurface.restore(this.state, true);
+                    }
                     break;
             }
         }
