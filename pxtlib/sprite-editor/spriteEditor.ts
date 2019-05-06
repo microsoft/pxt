@@ -206,7 +206,7 @@ namespace pxtsprite {
         setActiveColor(color: number, setPalette = false) {
             if (setPalette) {
             }
-            else {
+            else if (this.color != color) {
                 this.color = color;
 
                 // If the user is erasing, go back to pencil
@@ -219,13 +219,17 @@ namespace pxtsprite {
         }
 
         setActiveTool(tool: PaintTool) {
-            this.activeTool = tool;
-            this.updateEdit()
+            if (this.activeTool != tool) {
+                this.activeTool = tool;
+                this.updateEdit()
+            }
         }
 
         setToolWidth(width: number) {
-            this.toolWidth = width;
-            this.updateEdit();
+            if (this.toolWidth != width) {
+                this.toolWidth = width;
+                this.updateEdit();
+            }
         }
 
 
