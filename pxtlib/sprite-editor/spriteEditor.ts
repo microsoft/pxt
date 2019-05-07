@@ -141,15 +141,6 @@ namespace pxtsprite {
             this.bottomBar = new ReporterBar(this.group, this, REPORTER_BAR_HEIGHT);
 
             this.updateUndoRedo();
-
-            document.addEventListener("keydown", ev => {
-                if (ev.key === "Undo" || (ev.ctrlKey && ev.key === "z")) {
-                    this.undo();
-                }
-                else if (ev.key === "Redo" || (ev.ctrlKey && ev.key === "y")) {
-                    this.redo();
-                }
-            });
         }
 
         setCell(col: number, row: number, color: number, commit: boolean): void {
@@ -367,6 +358,14 @@ namespace pxtsprite {
         }
 
         private keyDown = (event: KeyboardEvent) => {
+            if (event.key === "Undo" || (event.ctrlKey && event.key === "z")) {
+                this.undo();
+                event.preventDefault();
+            } else if (event.key === "Redo" || (event.ctrlKey && event.key === "y")) {
+                this.redo();
+                event.preventDefault();
+            }
+
             if (event.keyCode == 16) { // Shift
                 this.shiftDown = true;
                 this.shiftAction();
