@@ -551,6 +551,11 @@ function msdDeployCoreAsync(res: ts.pxtc.CompileResult): Promise<void> {
     const encoding = pxt.isOutputText() ? "utf8" : "base64";
     const firmware = res.outfiles[firmwareName];
 
+    if (!firmware) { // something went wrong heres
+        pxt.reportError("compile", `${firmwareName} missing from built files (${Object.keys(res.outfiles).join(', ')})`)
+        return Promise.resolve();
+    }
+
     function copyDeployAsync() {
         return getBoardDrivesAsync()
             .then(drives => filterDrives(drives))
