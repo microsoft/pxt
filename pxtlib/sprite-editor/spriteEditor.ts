@@ -62,8 +62,8 @@ namespace pxtsprite {
         private cursorCol = 0;
         private cursorRow = 0;
 
-        private undoStack: Bitmap[] = [];
-        private redoStack: Bitmap[] = [];
+        undoStack: Bitmap[] = [];
+        redoStack: Bitmap[] = [];
 
         private columns: number = 16;
         private rows: number = 16;
@@ -442,7 +442,7 @@ namespace pxtsprite {
             }
         }
 
-        private updateUndoRedo() {
+        updateUndoRedo() {
             this.bottomBar.updateUndoRedo(this.undoStack.length === 0, this.redoStack.length === 0)
         }
 
