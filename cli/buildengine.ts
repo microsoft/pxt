@@ -562,7 +562,8 @@ function msdDeployCoreAsync(res: ts.pxtc.CompileResult): Promise<void> {
                 pxt.log(`copying ${firmwareName} to ` + drives.join(", "));
                 const writeHexFile = (drivename: string) => {
                     return writeFileAsync(path.join(drivename, firmwareName), firmware, encoding)
-                        .then(() => pxt.debug("   wrote hex file to " + drivename));
+                        .then(() => pxt.debug("   wrote to " + drivename))
+                        .catch(() => pxt.log(`   failed writing to ${drivename}`));
                 };
                 return Promise.map(drives, d => writeHexFile(d))
                     .then(() => drives.length);
