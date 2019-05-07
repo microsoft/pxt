@@ -322,6 +322,10 @@ namespace pxsim {
             this.postMessage({ type: 'mute', mute: mute } as pxsim.SimulatorMuteMessage);
         }
 
+        public stopSound() {
+            this.postMessage({ type: 'stopsound' } as pxsim.SimulatorStopSoundMessage)
+        }
+
         public isLoanedSimulator(el: HTMLElement) {
             return !!this.loanedSimulator && this.loanedIFrame() == el;
         }
@@ -529,7 +533,7 @@ namespace pxsim {
             if (!this.listener) {
                 this.listener = (ev: MessageEvent) => {
                     if (this.hwdbg) return
-                    this.handleMessage(ev.data, ev.source)
+                    this.handleMessage(ev.data, ev.source as Window)
                 }
                 window.addEventListener('message', this.listener, false);
             }
