@@ -560,9 +560,9 @@ function msdDeployCoreAsync(res: ts.pxtc.CompileResult): Promise<void> {
                     return Promise.resolve(0);
                 }
                 pxt.log(`copying ${firmwareName} to ` + drives.join(", "));
-                const writeHexFile = (filename: string) => {
-                    return writeFileAsync(path.join(filename, firmwareName), firmware, encoding)
-                        .then(() => pxt.debug("   wrote hex file to " + filename));
+                const writeHexFile = (drivename: string) => {
+                    return writeFileAsync(path.join(drivename, firmwareName), firmware, encoding)
+                        .then(() => pxt.debug("   wrote hex file to " + drivename));
                 };
                 return Promise.map(drives, d => writeHexFile(d))
                     .then(() => drives.length);
