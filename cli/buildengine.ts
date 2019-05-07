@@ -546,9 +546,10 @@ function getCSharpCommand() {
     return process.platform == "win32" ? "mcs.bat" : "mcs";
 }
 
-function msdDeployCoreAsync(res: ts.pxtc.CompileResult) {
-    const firmware = pxt.outputName()
+function msdDeployCoreAsync(res: ts.pxtc.CompileResult): Promise<void> {
+    const firmwareName = pxt.outputName()
     const encoding = pxt.isOutputText() ? "utf8" : "base64";
+    const firmware = res.outfiles[firmwareName];
 
     function copyDeployAsync() {
         return getBoardDrivesAsync()
@@ -558,10 +559,10 @@ function msdDeployCoreAsync(res: ts.pxtc.CompileResult) {
                     pxt.log("cannot find any drives to deploy to");
                     return Promise.resolve(0);
                 }
-                pxt.log(`copying ${firmware} to ` + drives.join(", "));
+                pxt.log(`copying ${firmwareName} to ` + drives.join(", "));
                 const writeHexFile = (filename: string) => {
-                    return writeFileAsync(path.join(filename, firmware), res.outfiles[firmware], encoding)
-                        .then(() => pxt.log("   wrote hex file to " + filename));
+                    return writeFileAsync(path.join(filename, firmwareName), firmware, encoding)
+                        .then(() => pxt.debug("   wrote hex file to " + filename));
                 };
                 return Promise.map(drives, d => writeHexFile(d))
                     .then(() => drives.length);
@@ -569,14 +570,13 @@ function msdDeployCoreAsync(res: ts.pxtc.CompileResult) {
     }
 
     function hidDeployAsync() {
-        const f = res.outfiles[pxtc.BINARY_UF2]
+        const f = firmware
         const blocks = pxtc.UF2.parseFile(U.stringToUint8Array(atob(f)))
         return hid.initAsync()
             .then(dev => dev.flashAsync(blocks))
     }
 
     let p = Promise.resolve();
-
     if (pxt.appTarget.compile
         && pxt.appTarget.compile.useUF2
         && !pxt.appTarget.serial.noDeploy
@@ -587,6 +587,8 @@ function msdDeployCoreAsync(res: ts.pxtc.CompileResult) {
     } else {
         p = p.then(() => copyDeployAsync())
     }
+
+    return p;
 }
 
 function getBoardDrivesAsync(): Promise<string[]> {
