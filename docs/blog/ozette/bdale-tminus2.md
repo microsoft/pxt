@@ -83,5 +83,7 @@ really love this technology!
 
 ![Smart Tattoos](/static/blog/ozette/smart_tattoo.jpg)
 
+[Tomorrow](/blog/ozette/bdale-tminus1) is the last day before the fashion show... off to the races!
+
 
 
