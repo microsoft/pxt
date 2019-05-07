@@ -582,6 +582,7 @@ function msdDeployCoreAsync(res: ts.pxtc.CompileResult): Promise<void> {
             .then(dev => dev.flashAsync(blocks))
     }
 
+    /* TODO reenable when webusb node.js caching issue is fixed
     let p = Promise.resolve();
     if (pxt.appTarget.compile
         && pxt.appTarget.compile.useUF2
@@ -593,8 +594,10 @@ function msdDeployCoreAsync(res: ts.pxtc.CompileResult): Promise<void> {
     } else {
         p = p.then(() => copyDeployAsync())
     }
-
     return p;
+    */
+
+    return copyDeployAsync();
 }
 
 function getBoardDrivesAsync(): Promise<string[]> {
