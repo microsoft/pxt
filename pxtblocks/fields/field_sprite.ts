@@ -38,6 +38,8 @@ namespace pxtblockly {
         private editor: pxtsprite.SpriteEditor;
         private state: pxtsprite.Bitmap;
         private lightMode: boolean;
+        private undoStack: pxtsprite.Bitmap[];
+        private redoStack: pxtsprite.Bitmap[];
 
         constructor(text: string, params: any, validator?: Function) {
             super(text, validator);
@@ -91,6 +93,8 @@ namespace pxtblockly {
             let contentDiv = Blockly.DropDownDiv.getContentDiv() as HTMLDivElement;
 
             this.editor = new pxtsprite.SpriteEditor(this.state, this.blocksInfo, this.lightMode);
+            this.editor.initializeUndoRedo(this.undoStack, this.redoStack);
+
             this.editor.render(contentDiv);
             this.editor.rePaint();
 
@@ -234,39 +238,12 @@ namespace pxtblockly {
         }
 
         saveOptions(): pxt.Map<string> {
-            const save: pxt.Map<string> = {};
             if (this.editor) {
-                save["undo"] = serializeBitmapStack(this.editor.undoStack);
-                save["redo"] = serializeBitmapStack(this.editor.undoStack);
+                this.undoStack = this.editor.getUndoStack();
+                this.redoStack = this.editor.getRedoStack();
             }
-            return save;
 
-            function serializeBitmapStack(bmps: pxtsprite.Bitmap[]): string {
-                return JSON.stringify(
-                    bmps.map(bmp => pxtsprite.bitmapToImageLiteral(bmp, pxt.editor.FileType.TypeScript))
-                );
-            }
-        }
-        restoreOptions(map: pxt.Map<string>): void {
-            if (!map || !this.editor) return;
-            if (map["undo"]) {
-                const parsedUndo = unSerializeBitmapStack(map["undo"]);
-                if (parsedUndo) {
-                    this.editor.undoStack = parsedUndo;
-                }
-            }
-            if (map["redo"]) {
-                const parsedRedo = unSerializeBitmapStack(map["redo"]);
-                if (parsedRedo) {
-                    this.editor.redoStack = parsedRedo;
-                }
-            }
-            function unSerializeBitmapStack(input: string): pxtsprite.Bitmap[] {
-                if (!input || input == "undefined") return undefined;
-                const parsed = JSON.parse(input);
-                return parsed.map((str: string) => pxtsprite.imageLiteralToBitmap(str));
-            }
-            this.editor.updateUndoRedo();
+            return undefined;
         }
     }
 

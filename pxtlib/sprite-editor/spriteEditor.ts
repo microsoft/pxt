@@ -62,8 +62,8 @@ namespace pxtsprite {
         private cursorCol = 0;
         private cursorRow = 0;
 
-        undoStack: Bitmap[] = [];
-        redoStack: Bitmap[] = [];
+        private undoStack: Bitmap[] = [];
+        private redoStack: Bitmap[] = [];
 
         private columns: number = 16;
         private rows: number = 16;
@@ -221,6 +221,24 @@ namespace pxtsprite {
         setToolWidth(width: number) {
             this.toolWidth = width;
             this.edit = this.newEdit(this.color);
+        }
+
+        initializeUndoRedo(undoStack: Bitmap[], redoStack: Bitmap[]) {
+            if (undoStack) {
+                this.undoStack = undoStack;
+            }
+            if (redoStack) {
+                this.redoStack = redoStack;
+            }
+            this.updateUndoRedo();
+        }
+
+        getUndoStack() {
+            return this.undoStack;
+        }
+
+        getRedoStack() {
+            return this.redoStack;
         }
 
         undo() {
@@ -442,7 +460,7 @@ namespace pxtsprite {
             }
         }
 
-        updateUndoRedo() {
+        private updateUndoRedo() {
             this.bottomBar.updateUndoRedo(this.undoStack.length === 0, this.redoStack.length === 0)
         }
 
