@@ -358,14 +358,6 @@ namespace pxtsprite {
         }
 
         private keyDown = (event: KeyboardEvent) => {
-            if (event.key === "Undo" || (event.ctrlKey && event.key === "z")) {
-                this.undo();
-                event.preventDefault();
-            } else if (event.key === "Redo" || (event.ctrlKey && event.key === "y")) {
-                this.redo();
-                event.preventDefault();
-            }
-
             if (event.keyCode == 16) { // Shift
                 this.shiftDown = true;
                 this.shiftAction();
@@ -418,14 +410,29 @@ namespace pxtsprite {
             }
         }
 
+        private undoRedoEvent = (event: KeyboardEvent) => {
+            const controlOrMeta = event.ctrlKey || event.metaKey; // ctrl on windows, meta on mac
+            if (event.key === "Undo" || (controlOrMeta && event.key === "z")) {
+                this.undo();
+                event.preventDefault();
+                event.stopPropagation();
+            } else if (event.key === "Redo" || (controlOrMeta && event.key === "y")) {
+                this.redo();
+                event.preventDefault();
+                event.stopPropagation();
+            }
+        }
+
         addKeyListeners() {
             document.addEventListener("keydown", this.keyDown);
             document.addEventListener("keyup", this.keyUp);
+            document.addEventListener("keydown", this.undoRedoEvent, true);
         }
 
         removeKeyListeners() {
             document.removeEventListener("keydown", this.keyDown);
             document.removeEventListener("keyup", this.keyUp);
+            document.removeEventListener("keydown", this.undoRedoEvent, true);
             this.paintSurface.removeMouseListeners();
         }
 
