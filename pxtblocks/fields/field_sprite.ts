@@ -94,6 +94,8 @@ namespace pxtblockly {
 
             this.editor = new pxtsprite.SpriteEditor(this.state, this.blocksInfo, this.lightMode);
             this.editor.initializeUndoRedo(this.undoStack, this.redoStack);
+            this.undoStack = this.editor.getUndoStack();
+            this.redoStack = this.editor.getRedoStack();
 
             this.editor.render(contentDiv);
             this.editor.rePaint();
@@ -235,15 +237,6 @@ namespace pxtblockly {
             }
 
             return canvas.toDataURL();
-        }
-
-        saveOptions(): pxt.Map<string> {
-            if (this.editor) {
-                this.undoStack = this.editor.getUndoStack();
-                this.redoStack = this.editor.getRedoStack();
-            }
-
-            return undefined;
         }
     }
 
