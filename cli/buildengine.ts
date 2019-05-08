@@ -575,7 +575,6 @@ function msdDeployCoreAsync(res: ts.pxtc.CompileResult): Promise<void> {
             }).then(() => { });
     }
 
-    /* TODO reenable when webusb node.js caching issue is fixed
     function hidDeployAsync() {
         const f = firmware
         const blocks = pxtc.UF2.parseFile(U.stringToUint8Array(atob(f)))
@@ -595,9 +594,6 @@ function msdDeployCoreAsync(res: ts.pxtc.CompileResult): Promise<void> {
         p = p.then(() => copyDeployAsync())
     }
     return p;
-    */
-
-    return copyDeployAsync();
 }
 
 function getBoardDrivesAsync(): Promise<string[]> {
