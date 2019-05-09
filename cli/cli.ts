@@ -22,7 +22,6 @@ import * as server from './server';
 import * as build from './buildengine';
 import * as commandParser from './commandparser';
 import * as hid from './hid';
-import * as serial from './serial';
 import * as gdb from './gdb';
 import * as clidbg from './clidbg';
 import * as pyconv from './pyconv';
@@ -4602,11 +4601,11 @@ function internalGenDocsAsync(docs: boolean, locs: boolean, fileFilter?: string,
 
 export function consoleAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
     pxt.log(`monitoring console.log`)
-    if (!serial.isInstalled() && !hid.isInstalled()) {
+    if (!hid.isInstalled()) {
         pxt.log(`console support not installed, did you run "pxt npminstallnative"?`)
         return Promise.resolve();
     }
-    return serialAsync().then(() => hid.serialAsync());
+    return hid.serialAsync();
 }
 
 export function deployAsync(parsed?: commandParser.ParsedCommand) {
@@ -4625,16 +4624,6 @@ export function runAsync(parsed?: commandParser.ParsedCommand) {
 export function testAsync() {
     return buildCoreAsync({ mode: BuildOption.Test })
         .then((compileOpts) => { });
-}
-
-export function serialAsync(parsed?: commandParser.ParsedCommand): Promise<void> {
-    if (!serial.isInstalled())
-        return Promise.resolve();
-    pxt.log(`start serial monitor`);
-    serial.monitorSerial((info, buffer) => {
-        process.stdout.write(buffer);
-    })
-    return Promise.resolve();
 }
 
 export interface SavedProject {
@@ -5533,7 +5522,6 @@ PXT_ASMDEBUG     - embed additional information in generated binary.asm file
     simpleCmd("update", "update pxt-core reference and install updated version", updateAsync, undefined, true);
     simpleCmd("install", "install new packages, or all package", installAsync, "[package1] [package2] ...");
     simpleCmd("add", "add a feature (.asm, C++ etc) to package", addAsync, "<arguments>");
-    advancedCommand("serial", "listen and print serial commands to console", serialAsync, undefined, true);
 
     p.defineCommand({
         name: "login",
@@ -5834,7 +5822,6 @@ PXT_ASMDEBUG     - embed additional information in generated binary.asm file
     advancedCommand("hiddmesg", "fetch DMESG buffer over HID and print it", hid.dmesgAsync, undefined, true);
     advancedCommand("hexdump", "dump UF2 or BIN file", hexdumpAsync, "<filename>")
     advancedCommand("hex2uf2", "convert .hex file to UF2", hex2uf2Async, "<filename>")
-    advancedCommand("flashserial", "flash over SAM-BA", serial.flashSerialAsync, "<filename>")
     p.defineCommand({
         name: "pyconv",
         help: "convert from python",
