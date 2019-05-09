@@ -223,8 +223,6 @@ namespace pxtsprite {
             }
         }
 
-<<<<<<< HEAD
-=======
         initializeUndoRedo(undoStack: Bitmap[], redoStack: Bitmap[]) {
             if (undoStack) {
                 this.undoStack = undoStack;
@@ -242,7 +240,6 @@ namespace pxtsprite {
         getRedoStack() {
             return this.redoStack.slice();
         }
->>>>>>> 56bce6d5397c9024d23e7779410b13ec60126d40
 
         undo() {
             if (this.undoStack.length) {
