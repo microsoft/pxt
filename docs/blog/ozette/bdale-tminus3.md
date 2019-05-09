@@ -24,4 +24,4 @@ debugging his [JACDAC](https://jacdac.org) protocol for plug-and-play of microco
 
 ![Peli de Halleux](/static/blog/ozette/dehalleux.jpg)
 
-The good news is that the software and hardware is working (for the most part - just a few pesky bugs to squash); the designers' garments are taking shape. Until tomorrow, when I'll tell you about all the different threads that had to be woven together in this effort!
+The good news is that the software and hardware is working (for the most part - just a few pesky bugs to squash); the designers' garments are taking shape. Until [tomorrow](/blog/ozette/bdale-tminus2), when I'll tell you about all the different threads that had to be woven together in this effort!

@@ -2103,10 +2103,10 @@ function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
                         let hexFile = path.join(hexCachePath, sha + ".hex");
 
                         if (fs.existsSync(hexFile)) {
-                            pxt.log(`native image already in offline cache for project ${dirname}: ${hexFile}`);
+                            pxt.debug(`native image already in offline cache for project ${dirname}: ${hexFile}`);
                         } else {
                             nodeutil.writeFileSync(hexFile, hex.join(os.EOL));
-                            pxt.log(`created native image in offline cache for project ${dirname}: ${hexFile}`);
+                            pxt.debug(`created native image in offline cache for project ${dirname}: ${hexFile}`);
                         }
                     }
                 })

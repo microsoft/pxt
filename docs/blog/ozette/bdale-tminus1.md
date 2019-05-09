@@ -8,7 +8,7 @@ Posted on May 2nd, 2019 by [Tom Ball](https://www.microsoft.com/en-us/research/p
 
 Catching up on more news from yesterday first: the amazing Microsoft Research Outreach team showed up at
 the Brooklyn Public Library to start interviewing us and the designers, take photos and
-videos of the work in progress, and scope out the building for good locations to live stream
+videos of the work in progress, and scope out the building for good locations to film
 Friday's show from.  Thanks to [Tara Grumm](https://www.linkedin.com/in/taragrumm/) for organizing everything!
 
 Peli, James and Tom left Teddy in the lurch in the late afternoon and went into the 

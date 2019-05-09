@@ -31,6 +31,10 @@ namespace pxsim {
         mute: boolean;
     }
 
+    export interface SimulatorStopSoundMessage extends SimulatorMessage {
+        type: "stopsound";
+    }
+
     export interface SimulatorDocMessage extends SimulatorMessage {
         type: "localtoken" | "docfailed";
         docType?: string;
@@ -243,6 +247,7 @@ namespace pxsim {
                 case "instructions": pxsim.instructions.renderInstructions(<SimulatorInstructionsMessage>data); break;
                 case "stop": stop(); break;
                 case "mute": mute((<SimulatorMuteMessage>data).mute); break;
+                case "stopsound": stopSound(); break;
                 case "print": print(); break;
                 case 'recorder': recorder(<SimulatorRecorderMessage>data); break;
                 case "screenshot": Runtime.postScreenshotAsync(<SimulatorScreenshotMessage>data).done(); break;
@@ -292,6 +297,10 @@ namespace pxsim {
 
         function mute(mute: boolean) {
             AudioContextManager.mute(mute);
+        }
+
+        function stopSound() {
+            AudioContextManager.stopAll();
         }
 
         function queue(msg: SimulatorMessage) {
