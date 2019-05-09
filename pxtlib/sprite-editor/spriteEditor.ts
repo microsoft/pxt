@@ -380,13 +380,13 @@ namespace pxtsprite {
                 this.shiftAction();
             }
 
-            if (event.keyCode == 18 ) { // Alt
+            if (event.keyCode === 18) { // Alt
                 this.discardEdit();
                 this.paintSurface.setEyedropperMouse(true);
                 this.altDown = true;
             }
 
-            const tools =  [
+            const tools = [
                 PaintTool.Fill,
                 PaintTool.Normal,
                 PaintTool.Rectangle,
@@ -419,10 +419,10 @@ namespace pxtsprite {
 
         private keyUp = (event: KeyboardEvent) => {
             // If not drawing a circle, switch back to Rectangle and Pencil
-            if (event.keyCode == 16) { // Shift
+            if (event.keyCode === 16) { // Shift
                 this.shiftDown = false;
                 this.clearShiftAction();
-            } else if (event.keyCode == 18) { // Alt
+            } else if (event.keyCode === 18) { // Alt
                 this.altDown = false;
                 this.paintSurface.setEyedropperMouse(false);
                 this.updateEdit();
