@@ -25,3 +25,4 @@ paper.fls
 paper.fdb_latexmk
 paper.aux
 tests/**/*.local.*
+package-lock.json

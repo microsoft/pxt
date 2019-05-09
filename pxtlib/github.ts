@@ -556,7 +556,10 @@ namespace pxt.github {
                     tag: rid.tag,
                     status
                 };
-            })
+            }).catch(err => {
+                pxt.reportException(err);
+                return undefined;
+            });
     }
 
     export function searchAsync(query: string, config: pxt.PackagesConfig): Promise<GitRepo[]> {
@@ -565,7 +568,7 @@ namespace pxt.github {
         let repos = query.split('|').map(parseRepoUrl).filter(repo => !!repo);
         if (repos.length > 0)
             return Promise.all(repos.map(id => repoAsync(id.path, config)))
-                .then(rs => rs.filter(r => r.status != GitRepoStatus.Banned)); // allow deep links to github repos
+                .then(rs => rs.filter(r => r && r.status != GitRepoStatus.Banned)); // allow deep links to github repos
 
         let fetch = () => useProxy()
             ? U.httpGetJsonAsync(`${pxt.Cloud.apiRoot}ghsearch/${appTarget.id}/${appTarget.platformid || appTarget.id}?q=`

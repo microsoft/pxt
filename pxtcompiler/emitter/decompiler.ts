@@ -1,4 +1,3 @@
-
 namespace ts.pxtc.decompiler {
     export enum DecompileParamKeys {
         // Field editor should decompile literal expressions in addition to
@@ -20,7 +19,7 @@ namespace ts.pxtc.decompiler {
     /**
      * Max number of blocks before we bail out of decompilation
      */
-    const MAX_BLOCKS = 1000;
+    const MAX_BLOCKS = 1500;
 
     const lowerCaseAlphabetStartCode = 97;
     const lowerCaseAlphabetEndCode = 122;
@@ -224,7 +223,7 @@ namespace ts.pxtc.decompiler {
      * names in the given file. All variables in Blockly are global, so this is
      * necessary to prevent local variables from colliding.
      */
-    export function buildRenameMap(p: Program, s: SourceFile): [RenameMap, NamesSet] {
+    export function buildRenameMap(p: Program, s: SourceFile, takenNames: NamesSet = {}): [RenameMap, NamesSet] {
         let service = ts.createLanguageService(new LSHost(p))
         const allRenames: RenameLocation[] = [];
 
@@ -233,7 +232,6 @@ namespace ts.pxtc.decompiler {
         return [new RenameMap(allRenames), names];
 
         function collectNameCollisions(): NamesSet {
-            const takenNames: NamesSet = {};
 
             checkChildren(s);
 
@@ -467,7 +465,6 @@ ${output}</xml>`;
         }
 
         function mkStmt(type: string): StatementNode {
-            countBlock();
             return {
                 kind: "statement",
                 type
@@ -475,7 +472,6 @@ ${output}</xml>`;
         }
 
         function mkExpr(type: string): ExpressionNode {
-            countBlock();
             return {
                 kind: "expr",
                 type
@@ -483,11 +479,6 @@ ${output}</xml>`;
         }
 
         function mkValue(name: string, value: ExpressionNode | TextNode, shadowType?: string, shadowMutation?: pxt.Map<string>): ValueNode {
-            if (shadowType && value.kind === "expr" && (value as ExpressionNode).type !== shadowType) {
-                // Count the shadow block that will be emitted
-                countBlock();
-            }
-
             if ((!shadowType || shadowType === numberType) && shadowMutation && shadowMutation['min'] && shadowMutation['max']) {
                 // Convert a number to a number with a slider (math_number_minmax) if min and max shadow options are defined
                 shadowType = minmaxNumberType;
@@ -654,7 +645,11 @@ ${output}</xml>`;
             }
             else {
                 const node = n as ExpressionNode;
-                const tag = shadow || node.isShadow ? "shadow" : "block";
+                const isShadow = shadow || node.isShadow;
+                const tag = isShadow ? "shadow" : "block";
+                if (!isShadow) {
+                    countBlock();
+                }
 
                 write(`<${tag} type="${U.htmlEscape(node.type)}">`)
                 emitBlockNodeCore(node);
@@ -663,6 +658,7 @@ ${output}</xml>`;
         }
 
         function openBlockTag(type: string) {
+            countBlock();
             write(`<block type="${U.htmlEscape(type)}">`)
         }
 
@@ -764,18 +760,28 @@ ${output}</xml>`;
                 return getTextJoin(n);
             }
 
+            const leftName = npp.leftName || "A";
+            const rightName = npp.rightName || "B";
+
+            let leftValue: ValueNode;
+            let rightValue: ValueNode;
+
+            if (op === "&&" || op === "||") {
+                leftValue = getConditionalInput(leftName, n.left);
+                rightValue = getConditionalInput(rightName, n.right);
+            } else  {
+                leftValue = getValue(leftName, n.left, numberType);
+                rightValue = getValue(rightName, n.right, numberType);
+            }
+
             const result = mkExpr(npp.type);
             result.fields = [];
-            result.inputs = [];
 
             if (npp.op) {
                 result.fields.push(getField("OP", npp.op))
             }
 
-            const shadowType = (op === "&&" || op === "||") ? booleanType : numberType;
-
-            result.inputs.push(getValue(npp.leftName || "A", n.left, shadowType));
-            result.inputs.push(getValue(npp.rightName || "B", n.right, shadowType));
+            result.inputs = [leftValue, rightValue];
 
             return result;
 
@@ -931,7 +937,7 @@ ${output}</xml>`;
             switch (node.operator) {
                 case SK.ExclamationToken:
                     const r = mkExpr("logic_negate");
-                    r.inputs = [getValue("BOOL", node.operand, booleanType)]
+                    r.inputs = [getConditionalInput("BOOL", node.operand)];
                     return r;
                 case SK.PlusToken:
                     return getOutputBlock(node.operand);
@@ -1135,6 +1141,9 @@ ${output}</xml>`;
                     case SK.DebuggerStatement:
                         stmt = getDebuggerStatementBlock(node);
                         break;
+                    case SK.EmptyStatement:
+                        stmt = undefined; // don't generate blocks for empty statements
+                        break;
                     case SK.EnumDeclaration:
                         // If the enum declaration made it past the checker then it is emitted elsewhere
                         return getNext();
@@ -1308,7 +1317,6 @@ ${output}</xml>`;
                         return getVariableSetOrChangeBlock(n.left as ts.Identifier, n.right, true);
                 case SK.MinusEqualsToken:
                     const r = mkStmt("variables_change");
-                    countBlock();
                     r.inputs = [mkValue("VALUE", negateNumericNode(n.right), numberType)];
                     r.fields = [getField("VAR", getVariableName(n.left as ts.Identifier))];
 
@@ -1321,7 +1329,7 @@ ${output}</xml>`;
 
         function getWhileStatement(n: ts.WhileStatement): StatementNode {
             const r = mkStmt("device_while");
-            r.inputs = [getValue("COND", n.expression, booleanType)];
+            r.inputs = [getConditionalInput("COND", n.expression)];
             r.handlers = [{ name: "DO", statement: getStatementBlock(n.statement) }];
             return r;
         }
@@ -1338,7 +1346,7 @@ ${output}</xml>`;
             r.handlers = [];
 
             flatif.ifStatements.forEach((stmt, i) => {
-                r.inputs.push(getValue("IF" + i, stmt.expression, booleanType));
+                r.inputs.push(getConditionalInput("IF" + i, (stmt as ts.IfStatement).expression));
                 r.handlers.push({ name: "DO" + i, statement: getStatementBlock(stmt.thenStatement) });
             });
 
@@ -1347,6 +1355,67 @@ ${output}</xml>`;
             }
 
             return r;
+        }
+
+        function getConditionalInput(name: string, expr: Expression) {
+            const err = checkConditionalExpression(expr);
+            if (err) {
+                const tsExpr = getTypeScriptExpressionBlock(expr);
+                return mkValue(name, tsExpr, booleanType);
+            } else {
+                return getValue(name, expr, booleanType);
+            }
+        }
+
+        function checkConditionalExpression(expr: Expression) {
+            const unwrappedExpr = unwrapNode(expr);
+
+            switch (unwrappedExpr.kind) {
+                case SK.TrueKeyword:
+                case SK.FalseKeyword:
+                case SK.Identifier:
+                    return undefined;
+                case SK.BinaryExpression:
+                    return checkBooleanBinaryExpression(unwrappedExpr as BinaryExpression);
+                case SK.CallExpression:
+                    return checkBooleanCallExpression(unwrappedExpr as CallExpression);
+                case SK.PrefixUnaryExpression:
+                    if ((unwrappedExpr as PrefixUnaryExpression).operator === SK.ExclamationToken) {
+                        return undefined;
+                    } // else fall through
+                default:
+                    return Util.lf("Conditions must evaluate to booleans or identifiers");
+            }
+
+            function checkBooleanBinaryExpression(n: BinaryExpression) {
+                switch (n.operatorToken.kind) {
+                    case SK.EqualsEqualsToken:
+                    case SK.EqualsEqualsEqualsToken:
+                    case SK.ExclamationEqualsToken:
+                    case SK.ExclamationEqualsEqualsToken:
+                    case SK.LessThanToken:
+                    case SK.LessThanEqualsToken:
+                    case SK.GreaterThanToken:
+                    case SK.GreaterThanEqualsToken:
+                    // TODO: &&, ||, ! should check against non boolean l / r (e.g. not `1 || 2`)
+                    // https://github.com/Microsoft/pxt-arcade/issues/946
+                    case SK.AmpersandAmpersandToken:
+                    case SK.BarBarToken:
+                        return undefined;
+                    default:
+                        return Util.lf("Binary expressions in conditionals must evaluate to booleans");
+                }
+            }
+
+            function checkBooleanCallExpression(n: CallExpression) {
+                const callInfo: pxtc.CallInfo = (n.expression as any).callInfo;
+                const type = callInfo.decl.type;
+
+                if (type && type.kind === SK.BooleanKeyword) {
+                    return undefined;
+                }
+                return Util.lf("Only functions that return booleans are allowed as conditions");
+            }
         }
 
         function getForStatement(n: ts.ForStatement): StatementNode {
@@ -1378,7 +1447,6 @@ ${output}</xml>`;
                         getValue("A", condition.right, numberType),
                         getValue("B", 1, numberType)
                     ];
-                    countBlock();
                     r.inputs.push(mkValue("TO", ex, wholeNumberType));
                 }
                 else if (condition.operatorToken.kind === SK.LessThanEqualsToken) {
@@ -1631,7 +1699,6 @@ ${output}</xml>`;
             const api = env.blocks.apis.byQName[info.qName];
             const comp = pxt.blocks.compileInfo(api);
 
-            countBlock();
             const r = {
                 kind: asExpression ? "expr" : "statement",
                 type: attributes.blockId
@@ -1877,7 +1944,6 @@ ${output}</xml>`;
                 case SK.BinaryExpression:
                     const op = e as BinaryExpression;
                     if (op.operatorToken.kind == SK.PlusToken && (op.right as any).text == "1") {
-                        countBlock();
                         return getOutputBlock(op.left);
                     }
                 default:
@@ -1979,6 +2045,7 @@ ${output}</xml>`;
 
         function maybeEmitEmptyOnStart() {
             if (options.alwaysEmitOnStart) {
+                countBlock();
                 write(`<block type="${ts.pxtc.ON_START_TYPE}"></block>`);
             }
         }
@@ -2135,6 +2202,7 @@ ${output}</xml>`;
             case SK.EnumDeclaration:
                 return checkEnumDeclaration(node as ts.EnumDeclaration, topLevel);
             case SK.DebuggerStatement:
+            case SK.EmptyStatement:
                 return undefined;
         }
 
@@ -2760,7 +2828,13 @@ ${output}</xml>`;
             case SK.NoSubstitutionTemplateLiteral:
                 return checkStringLiteral(n as ts.StringLiteral);
             case SK.Identifier:
-                return isUndefined(n) ? Util.lf("Undefined is not supported in blocks") : undefined;
+                if (isUndefined(n)) {
+                    return Util.lf("Undefined is not supported in blocks");
+                } else if (isDeclaredElsewhere(n as Identifier)) {
+                    return Util.lf("Variable is declared in another file");
+                } else {
+                    return undefined;
+                }
             case SK.BinaryExpression:
                 const op1 = (n as BinaryExpression).operatorToken.getText();
                 return ops[op1] ? undefined : Util.lf("Could not find operator {0}", op1);
@@ -2902,6 +2976,10 @@ ${output}</xml>`;
 
     function isUndefined(node: ts.Node) {
         return node && node.kind === SK.Identifier && (node as ts.Identifier).text === "undefined";
+    }
+
+    function isDeclaredElsewhere(node: ts.Identifier) {
+        return (node as any).identifierInfo && (node as any).identifierInfo.isGlobal;
     }
 
     function hasStatementInput(info: CallInfo, attributes: CommentAttrs): boolean {

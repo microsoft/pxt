@@ -153,30 +153,42 @@ export function showAboutDialogAsync(projectView: pxt.editor.IProjectView) {
             }
         })
 
-    core.confirmAsync({
-        header: lf("About"),
-        hideCancel: true,
-        agreeLbl: lf("Ok"),
-        agreeClass: "positive",
-        buttons,
-        jsx: <div>
-            {githubUrl && versions ?
-                renderVersionLink(pxt.appTarget.name, versions.target, `${githubUrl}/releases/tag/v${versions.target}`)
-                : undefined}
-            {versions ?
-                renderVersionLink("Microsoft MakeCode", versions.pxt, `https://github.com/Microsoft/pxt/releases/tag/v${versions.pxt}`)
-                : undefined}
-            {showCompile ?
-                renderCompileLink(compileService)
-                : undefined}
-            <p><br /></p>
-            <p>
-                {targetTheme.termsOfUseUrl ? <a target="_blank" className="item" href={targetTheme.termsOfUseUrl} rel="noopener noreferrer">{lf("Terms of Use")}</a> : undefined}
-                &nbsp;&nbsp;&nbsp; {targetTheme.privacyUrl ? <a target="_blank" className="item" href={targetTheme.privacyUrl} rel="noopener noreferrer">{lf("Privacy")}</a> : undefined}
-            </p>
-            {targetTheme.copyrightText ? <p> {targetTheme.copyrightText} </p> : undefined}
-        </div>
-    }).done();
+    pxt.targetConfigAsync()
+        .then(config => {
+            const isPxtElectron = pxt.BrowserUtils.isPxtElectron();
+            const electronManifest = config && config.electronManifest;
+            return core.confirmAsync({
+                header: lf("About"),
+                hideCancel: true,
+                agreeLbl: lf("Ok"),
+                agreeClass: "positive",
+                buttons,
+                jsx: <div>
+                    {isPxtElectron ?
+                        (!pxt.Cloud.isOnline() || !electronManifest)
+                            ? <p>{lf("Please connect to internet to check for updates")}</p>
+                            : pxt.semver.strcmp(pxt.appTarget.versions.target, electronManifest.latest) < 0
+                                ? <a href="/offline-app">{lf("An update {0} for {1} is available", electronManifest.latest, pxt.appTarget.title)}</a>
+                                : <p>{lf("{0} is up to date", pxt.appTarget.title)}</p>
+                        : undefined}
+                    {githubUrl && versions ?
+                        renderVersionLink(pxt.appTarget.name, versions.target, `${githubUrl}/releases/tag/v${versions.target}`)
+                        : undefined}
+                    {versions ?
+                        renderVersionLink("Microsoft MakeCode", versions.pxt, `https://github.com/Microsoft/pxt/releases/tag/v${versions.pxt}`)
+                        : undefined}
+                    {showCompile ?
+                        renderCompileLink(compileService)
+                        : undefined}
+                    <p><br /></p>
+                    <p>
+                        {targetTheme.termsOfUseUrl ? <a target="_blank" className="item" href={targetTheme.termsOfUseUrl} rel="noopener noreferrer">{lf("Terms of Use")}</a> : undefined}
+                        &nbsp;&nbsp;&nbsp; {targetTheme.privacyUrl ? <a target="_blank" className="item" href={targetTheme.privacyUrl} rel="noopener noreferrer">{lf("Privacy")}</a> : undefined}
+                    </p>
+                    {targetTheme.copyrightText ? <p> {targetTheme.copyrightText} </p> : undefined}
+                </div>
+            })
+        }).done();
 }
 
 
@@ -658,7 +670,7 @@ export function showImportGithubDialogAsync() {
         })).then(() => res)
 }
 
-export function showImportFileDialogAsync() {
+export function showImportFileDialogAsync(options?: pxt.editor.ImportFileOptions) {
     let input: HTMLInputElement;
     let exts = [pxt.appTarget.compile.saveAsPNG ? ".png" : ".mkcd"];
     if (pxt.appTarget.compile.hasHex) {

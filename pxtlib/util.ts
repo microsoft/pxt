@@ -417,6 +417,12 @@ namespace ts.pxtc.Util {
         return r
     }
 
+    export function toSet<T>(arr: T[], f: (t: T) => string): pxt.Map<boolean> {
+        let r: pxt.Map<boolean> = {}
+        arr.forEach(e => { r[f(e)] = true })
+        return r
+    }
+
     export interface ArrayLike<T> {
         [index: number]: T;
         length: number;
@@ -875,6 +881,59 @@ namespace ts.pxtc.Util {
             })
 
     }
+
+    export const pxtLangCookieId = "PXT_LANG";
+    export const langCookieExpirationDays = 30;
+
+    export interface Language {
+        englishName: string;
+        localizedName: string;
+    }
+
+    export const allLanguages: pxt.Map<Language> = {
+        "af": { englishName: "Afrikaans", localizedName: "Afrikaans" },
+        "ar": { englishName: "Arabic", localizedName: "العربية" },
+        "bg": { englishName: "Bulgarian", localizedName: "български" },
+        "ca": { englishName: "Catalan", localizedName: "Català" },
+        "cs": { englishName: "Czech", localizedName: "Čeština" },
+        "da": { englishName: "Danish", localizedName: "Dansk" },
+        "de": { englishName: "German", localizedName: "Deutsch" },
+        "el": { englishName: "Greek", localizedName: "Ελληνικά" },
+        "en": { englishName: "English", localizedName: "English" },
+        "es-ES": { englishName: "Spanish (Spain)", localizedName: "Español (España)" },
+        "es-MX": { englishName: "Spanish (Mexico)", localizedName: "Español (México)" },
+        "fi": { englishName: "Finnish", localizedName: "Suomi" },
+        "fr": { englishName: "French", localizedName: "Français" },
+        "fr-CA": { englishName: "French (Canada)", localizedName: "Français (Canada)" },
+        "he": { englishName: "Hebrew", localizedName: "עברית" },
+        "hr": { englishName: "Croatian", localizedName: "Hrvatski" },
+        "hu": { englishName: "Hungarian", localizedName: "Magyar" },
+        "hy-AM": { englishName: "Armenian (Armenia)", localizedName: "Հայերէն (Հայաստան)" },
+        "id": { englishName: "Indonesian", localizedName: "Bahasa Indonesia" },
+        "is": { englishName: "Icelandic", localizedName: "Íslenska" },
+        "it": { englishName: "Italian", localizedName: "Italiano" },
+        "ja": { englishName: "Japanese", localizedName: "日本語" },
+        "ko": { englishName: "Korean", localizedName: "한국어" },
+        "lt": { englishName: "Lithuanian", localizedName: "Lietuvių" },
+        "nl": { englishName: "Dutch", localizedName: "Nederlands" },
+        "no": { englishName: "Norwegian", localizedName: "Norsk" },
+        "pl": { englishName: "Polish", localizedName: "Polski" },
+        "pt-BR": { englishName: "Portuguese (Brazil)", localizedName: "Português (Brasil)" },
+        "pt-PT": { englishName: "Portuguese (Portugal)", localizedName: "Português (Portugal)" },
+        "ro": { englishName: "Romanian", localizedName: "Română" },
+        "ru": { englishName: "Russian", localizedName: "Русский" },
+        "si-LK": { englishName: "Sinhala (Sri Lanka)", localizedName: "සිංහල (ශ්රී ලංකා)" },
+        "sk": { englishName: "Slovak", localizedName: "Slovenčina" },
+        "sl": { englishName: "Slovenian", localizedName: "Slovenski" },
+        "sr": { englishName: "Serbian", localizedName: "Srpski" },
+        "sv-SE": { englishName: "Swedish (Sweden)", localizedName: "Svenska (Sverige)" },
+        "ta": { englishName: "Tamil", localizedName: "தமிழ்" },
+        "tr": { englishName: "Turkish", localizedName: "Türkçe" },
+        "uk": { englishName: "Ukrainian", localizedName: "Українська" },
+        "vi": { englishName: "Vietnamese", localizedName: "Tiếng việt" },
+        "zh-CN": { englishName: "Chinese (Simplified)", localizedName: "简体中文" },
+        "zh-TW": { englishName: "Chinese (Traditional)", localizedName: "繁体中文" },
+    };
 
     export function isLocaleEnabled(code: string): boolean {
         let [lang, baseLang] = normalizeLanguageCode(code);

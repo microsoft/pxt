@@ -546,33 +546,54 @@ function getCSharpCommand() {
     return process.platform == "win32" ? "mcs.bat" : "mcs";
 }
 
-function msdDeployCoreAsync(res: ts.pxtc.CompileResult) {
-    const firmware = pxt.outputName()
+function msdDeployCoreAsync(res: ts.pxtc.CompileResult): Promise<void> {
+    const firmwareName = pxt.outputName()
     const encoding = pxt.isOutputText() ? "utf8" : "base64";
+    const firmware = res.outfiles[firmwareName];
 
-    if (pxt.appTarget.serial && pxt.appTarget.serial.useHF2 && !pxt.appTarget.serial.noDeploy
-        && hid.isInstalled(true)) {
-        let f = res.outfiles[pxtc.BINARY_UF2]
-        let blocks = pxtc.UF2.parseFile(U.stringToUint8Array(atob(f)))
+    if (!firmware) { // something went wrong heres
+        pxt.reportError("compile", `${firmwareName} missing from built files (${Object.keys(res.outfiles).join(', ')})`)
+        return Promise.resolve();
+    }
+
+    function copyDeployAsync() {
+        return getBoardDrivesAsync()
+            .then(drives => filterDrives(drives))
+            .then(drives => {
+                if (drives.length == 0) {
+                    pxt.log("cannot find any drives to deploy to");
+                    return Promise.resolve(0);
+                }
+                pxt.log(`copying ${firmwareName} to ` + drives.join(", "));
+                const writeHexFile = (drivename: string) => {
+                    return writeFileAsync(path.join(drivename, firmwareName), firmware, encoding)
+                        .then(() => pxt.debug("   wrote to " + drivename))
+                        .catch(() => pxt.log(`   failed writing to ${drivename}`));
+                };
+                return Promise.map(drives, d => writeHexFile(d))
+                    .then(() => drives.length);
+            }).then(() => { });
+    }
+
+    function hidDeployAsync() {
+        const f = firmware
+        const blocks = pxtc.UF2.parseFile(U.stringToUint8Array(atob(f)))
         return hid.initAsync()
             .then(dev => dev.flashAsync(blocks))
     }
 
-    return getBoardDrivesAsync()
-        .then(drives => filterDrives(drives))
-        .then(drives => {
-            if (drives.length == 0) {
-                pxt.log("cannot find any drives to deploy to");
-                return Promise.resolve(0);
-            }
-            pxt.log(`copying ${firmware} to ` + drives.join(", "));
-            const writeHexFile = (filename: string) => {
-                return writeFileAsync(path.join(filename, firmware), res.outfiles[firmware], encoding)
-                    .then(() => pxt.log("   wrote hex file to " + filename));
-            };
-            return Promise.map(drives, d => writeHexFile(d))
-                .then(() => drives.length);
-        }).then(() => { });
+    let p = Promise.resolve();
+    if (pxt.appTarget.compile
+        && pxt.appTarget.compile.useUF2
+        && !pxt.appTarget.serial.noDeploy
+        && hid.isInstalled(true)) {
+        // try hid or simply bail out
+        p = p.then(() => hidDeployAsync())
+            .catch(e => copyDeployAsync());
+    } else {
+        p = p.then(() => copyDeployAsync())
+    }
+    return p;
 }
 
 function getBoardDrivesAsync(): Promise<string[]> {

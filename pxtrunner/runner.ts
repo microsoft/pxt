@@ -14,6 +14,7 @@ namespace pxt.runner {
         highContrast?: boolean;
         light?: boolean;
         fullScreen?: boolean;
+        dependencies?: string[]
     }
 
     class EditorPackage {
@@ -92,7 +93,7 @@ namespace pxt.runner {
         }
 
         private githubPackageCache: pxt.Map<Map<string>> = {};
-        downloadPackageAsync(pkg: pxt.Package) {
+        downloadPackageAsync(pkg: pxt.Package, dependencies?: string[]) {
             let proto = pkg.verProtocol()
             let cached: pxt.Map<string> = undefined;
             // cache resolve github packages
@@ -109,20 +110,26 @@ namespace pxt.runner {
                         return Promise.resolve()
                     }
                     if (proto == "empty") {
-                        epkg.setFiles(emptyPrjFiles())
+                        if (Object.keys(epkg.files).length == 0) {
+                            epkg.setFiles(emptyPrjFiles())
+                        }
+                        if (dependencies && dependencies.length) {
+                            const files = getEditorPkg(pkg).files;
+                            const cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+                            dependencies.forEach((d: string) => {
+                                addPackageToConfig(cfg, d);
+                            });
+                            files[pxt.CONFIG_NAME] = JSON.stringify(cfg, null, 4);
+                        }
                         return Promise.resolve()
                     } else if (proto == "docs") {
                         let files = emptyPrjFiles();
                         let cfg = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
                         // load all dependencies
                         pkg.verArgument().split(',').forEach(d => {
-                            let m = /^([a-zA-Z0-9_-]+)(=(.+))?$/.exec(d);
-                            if (m) {
-                                if (m[3] && this.patchDependencies(cfg, m[1], m[3]))
-                                    return;
-                                cfg.dependencies[m[1]] = m[3] || "*"
-                            } else
-                                console.warn(`unknown package syntax ${d}`)
+                            if (!addPackageToConfig(cfg, d)) {
+                                return;
+                            }
                         });
 
                         if (!cfg.yotta) cfg.yotta = {};
@@ -141,6 +148,17 @@ namespace pxt.runner {
     }
 
     export let mainPkg: pxt.MainPackage;
+
+    function addPackageToConfig(cfg: pxt.PackageConfig, dep: string) {
+        let m = /^([a-zA-Z0-9_-]+)(=(.+))?$/.exec(dep);
+        if (m) {
+            if (m[3] && this && this.patchDependencies(cfg, m[1], m[3]))
+                return false;
+            cfg.dependencies[m[1]] = m[3] || "*"
+        } else
+            console.warn(`unknown package syntax ${dep}`)
+        return true;
+    }
 
     function getEditorPkg(p: pxt.Package) {
         let r: EditorPackage = (p as any)._editorPkg
@@ -216,7 +234,7 @@ namespace pxt.runner {
     }
 
     let previousMainPackage: pxt.MainPackage = undefined;
-    function loadPackageAsync(id: string, code?: string) {
+    function loadPackageAsync(id: string, code?: string, dependencies?: string[]) {
         const verspec = id ? /\w+:\w+/.test(id) ? id : "pub:" + id : "empty:tsprj";
         let host: pxt.Host;
         let downloadPackagePromise: Promise<void>;
@@ -230,7 +248,7 @@ namespace pxt.runner {
             host = mainPkg.host();
             mainPkg = new pxt.MainPackage(host)
             mainPkg._verspec = id ? /\w+:\w+/.test(id) ? id : "pub:" + id : "empty:tsprj"
-            downloadPackagePromise = host.downloadPackageAsync(mainPkg);
+            downloadPackagePromise = host.downloadPackageAsync(mainPkg, dependencies);
             installPromise = mainPkg.installAllAsync()
             // cache previous package
             previousMainPackage = mainPkg;
@@ -298,7 +316,7 @@ namespace pxt.runner {
     }
 
     export function simulateAsync(container: HTMLElement, simOptions: SimulateOptions) {
-        return loadPackageAsync(simOptions.id)
+        return loadPackageAsync(simOptions.id, simOptions.code, simOptions.dependencies)
             .then(() => compileAsync(false, opts => {
                 if (simOptions.code) opts.fileSystem["main.ts"] = simOptions.code;
             }))
@@ -846,7 +864,7 @@ ${linkString}
                     compilePython = (pxt as any).py.decompileToPython(program, "main.ts");
 
                 // decompile to blocks
-                let apis = pxtc.getApiInfo(opts, program);
+                let apis = pxtc.getApiInfo(program, opts.jres);
                 return ts.pxtc.localizeApisAsync(apis, mainPkg)
                     .then(() => {
                         let blocksInfo = pxtc.getBlocksInfo(apis);
@@ -889,7 +907,7 @@ ${linkString}
             .then(opts => {
                 opts.ast = true
                 const resp = pxtc.compile(opts)
-                const apis = pxtc.getApiInfo(opts, resp.ast);
+                const apis = pxtc.getApiInfo(resp.ast, opts.jres);
                 return ts.pxtc.localizeApisAsync(apis, mainPkg)
                     .then(() => {
                         const blocksInfo = pxtc.getBlocksInfo(apis);

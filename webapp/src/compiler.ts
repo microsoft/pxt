@@ -32,7 +32,25 @@ function setDiagnostics(diagnostics: pxtc.KsDiagnostic[]) {
 
     let f = mainPkg.outputPkg.setFile("output.txt", output)
     // display total number of errors on the output file
-    f.numDiagnosticsOverride = diagnostics.filter(d => d.category == ts.pxtc.DiagnosticCategory.Error).length
+    const errors = diagnostics.filter(d => d.category == ts.pxtc.DiagnosticCategory.Error);
+    f.numDiagnosticsOverride = errors.length
+    reportDiagnosticErrors(errors);
+}
+
+let lastErrorCounts: string = "";
+function reportDiagnosticErrors(errors: pxtc.KsDiagnostic[]) {
+    // report to analytics;
+    if (errors && errors.length) {
+        const counts: pxt.Map<number> = {};
+        errors.filter(err => err.code).forEach(err => counts[err.code] = (counts[err.code] || 0) + 1);
+        const errorCounts = JSON.stringify(errors);
+        if (errorCounts !== lastErrorCounts) {
+            pxt.tickEvent("dianostics", counts);
+            lastErrorCounts = errorCounts;
+        }
+    } else {
+        lastErrorCounts = "";
+    }
 }
 
 let noOpAsync = new Promise<any>(() => { })
@@ -53,6 +71,7 @@ export interface CompileOptions {
     trace?: boolean;
     native?: boolean;
     debug?: boolean;
+    debugExtensionCode?: boolean;
     background?: boolean; // not explicitly requested by user (hint for simulator)
     forceEmit?: boolean;
     clickTrigger?: boolean;
@@ -89,7 +108,7 @@ export function compileAsync(options: CompileOptions = {}): Promise<pxtc.Compile
         .then(opts => {
             if (options.debug) {
                 opts.breakpoints = true;
-                opts.justMyCode = true;
+                opts.justMyCode = !options.debugExtensionCode;
                 opts.testMode = true;
             }
             if (options.trace) {

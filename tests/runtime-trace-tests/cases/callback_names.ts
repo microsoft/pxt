@@ -4,8 +4,8 @@ enum ControllerButtonEvent {
     Released
 }
 class Button {
-    public onEvent(eventType: ControllerButtonEvent, callback: (a: number, b: number) => boolean) {
-        console.log(callback(3, 5) ? "t" : "f")
+    public onEvent(eventType: ControllerButtonEvent, callback: (a: number) => boolean) {
+        console.log(callback(3) ? "t" : "f")
     }
 }
 class Controller {
@@ -34,3 +34,11 @@ class Sprites {
 }
 let sprites = new Sprites()
 sprites.onOverlap(SpriteKind.Player, SpriteKind.Projectile, () => { });
+
+class Player {
+    public onChat(msg: string, handler: () => boolean) {
+        console.log(handler() ? "t" : "f")
+    }
+}
+let player = new Player()
+player.onChat("run", function () { return true })

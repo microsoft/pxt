@@ -5,7 +5,7 @@ supported by Block-based and JavaScript editing. Examples of targets are:
 
 * https://makecode.adafruit.com (sources at https://github.com/microsoft/pxt-adafruit)
 * https://maker.makecode.com (sources at https://github.com/microsoft/pxt-maker)
-* http://microsoft.github.io/pxt-sample/ (sources at https://github.com/microsoft/pxt-sample)
+* https://microsoft.github.io/pxt-sample/ (sources at https://github.com/microsoft/pxt-sample)
 
 We assume that the reader is familiar with Node.JS, NPM, JavaScript and/or C++. If you haven't done so yet, 
 install Node.JS and the **PXT** command line

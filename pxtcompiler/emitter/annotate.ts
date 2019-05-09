@@ -1,5 +1,9 @@
 namespace ts.pxtc {
 
+    interface IdentifierInfo {
+        isGlobal: boolean;
+    }
+
     /**
      * Traverses the AST and injects information about function calls into the expression
      * nodes. The decompiler consumes this information later
@@ -16,7 +20,7 @@ namespace ts.pxtc {
         const oldTarget = pxtc.target;
         pxtc.target = compileTarget;
 
-        let src = program.getSourceFiles().filter(f => Util.endsWith(f.fileName, entryPoint))[0];
+        let src = program.getSourceFiles().filter(f => f.fileName === entryPoint)[0];
         let checker = program.getTypeChecker();
 
         recurse(src);
@@ -37,6 +41,15 @@ namespace ts.pxtc {
                         break;
                     case SyntaxKind.BinaryExpression:
                         annotateBinaryExpression(child as ts.BinaryExpression);
+                        break;
+                    case SyntaxKind.Identifier:
+                        const decl: Declaration = getDecl(child);
+                        if (decl && decl.getSourceFile().fileName !== "main.ts" && decl.kind == SyntaxKind.VariableDeclaration) {
+                            const info: IdentifierInfo = {
+                                isGlobal: true
+                            };
+                            (child as any).identifierInfo = info;
+                        }
                         break;
 
                 }

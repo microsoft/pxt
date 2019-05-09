@@ -141,6 +141,11 @@ namespace pxt.editor {
         clickTrigger?: boolean;
     }
 
+    export interface ImportFileOptions {
+        extension?: boolean;
+        openHomeIfFailed?: boolean;
+    }
+
     export interface IProjectView {
         state: IAppState;
         setState(st: IAppState): void;
@@ -194,6 +199,7 @@ namespace pxt.editor {
 
         openHome(): void;
         setTutorialStep(step: number): void;
+        setTutorialInstructionsExpanded(value: boolean): void;
         exitTutorial(): void;
         completeTutorial(): void;
         showTutorialHint(): void;
@@ -214,6 +220,7 @@ namespace pxt.editor {
         toggleTrace(intervalSpeed?: number): void;
         setTrace(enabled: boolean, intervalSpeed?: number): void;
         toggleMute(): void;
+        setMute(on: boolean): void;
         openInstructions(): void;
         closeFlyout(): void;
         printCode(): void;
@@ -265,7 +272,7 @@ namespace pxt.editor {
         showAboutDialog(): void;
 
         showImportUrlDialog(): void;
-        showImportFileDialog(): void;
+        showImportFileDialog(options?: ImportFileOptions): void;
         showImportGithubDialog(): void;
 
         showResetDialog(): void;

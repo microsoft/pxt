@@ -2,7 +2,7 @@
 
 * [Try out the editors in your browser...](https://makecode.com)
 
-[![Build Status](https://travis-ci.org/Microsoft/pxt.svg?branch=master)](https://travis-ci.org/Microsoft/pxt) 
+[![Build Status](https://travis-ci.org/microsoft/pxt.svg?branch=master)](https://travis-ci.org/microsoft/pxt) 
 [![Community Discord](https://img.shields.io/discord/448979533891371018.svg)](https://aka.ms/makecodecommunity)
 
 Microsoft MakeCode is based on the open source project [Microsoft Programming Experience Toolkit (PXT)](https://github.com/Microsoft/pxt). ``Microsoft MakeCode`` is the name in the user-facing editors, ``PXT`` is used in all the GitHub sources.
@@ -106,3 +106,7 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 ## Contact Us
 
 [Get in touch](https://makecode.com/contact)
+
+## Trademarks
+
+MICROSOFT, the Microsoft Logo, and MAKECODE are registered trademarks of Microsoft Corporation. They can only be used for the purposes described in and in accordance with Microsoft’s Trademark and Brand guidelines published at https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general.aspx. If the use is not covered in Microsoft’s published guidelines or you are not sure, please consult your legal counsel or MakeCode team (makecode@microsoft.com).

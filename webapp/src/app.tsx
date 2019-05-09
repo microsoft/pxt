@@ -570,9 +570,14 @@ export class ProjectView
 
     private autoRunBlocksSimulator = pxtc.Util.debounce(
         () => {
-            if (Util.now() - this.lastChangeTime < 1000) return;
-            if (!this.state.active)
+            if (Util.now() - this.lastChangeTime < 1000) {
+                pxt.debug(`sim: skip auto, debounced`)
                 return;
+            }
+            if (!this.state.active) {
+                pxt.debug(`sim: skip blocks auto, !active`)
+                return;
+            }
             this.runSimulator({ debug: !!this.state.debugging, background: true });
         },
         1000, true);
@@ -724,7 +729,7 @@ export class ProjectView
         return core.showLoadingAsync("updateeditorfile", lf("loading editor..."), this.setStateAsync({ updatingEditorFile: true })
             .then(() => {
                 simRunning = this.state.simState != pxt.editor.SimState.Stopped;
-                if (!this.state.currFile.virtual) { // switching to serial should not reset the sim
+                if (!this.state.currFile.virtual && !this.state.debugging) { // switching to serial should not reset the sim
                     this.stopSimulator();
                     if (simRunning || this.state.autoRun) {
                         simulator.setPending();
@@ -877,6 +882,19 @@ export class ProjectView
         else sd.collapse();
     }
 
+    setTutorialInstructionsExpanded(value: boolean): void {
+        const tutorialOptions = this.state.tutorialOptions;
+        tutorialOptions.tutorialStepExpanded = value;
+        this.setState(
+            { tutorialOptions: tutorialOptions },
+            () => {
+                if (this.editor == this.blocksEditor)
+                    this.blocksEditor.hideFlyout()
+                else if (this.editor == this.textEditor)
+                    this.textEditor.hideFlyout()
+            });
+    }
+
     setTutorialStep(step: number) {
         // save and typecheck
         this.typecheckNow();
@@ -887,10 +905,11 @@ export class ProjectView
             tc.setPopout();
             let tutorialOptions = this.state.tutorialOptions;
             tutorialOptions.tutorialStep = step;
+            tutorialOptions.tutorialStepExpanded = false;
             this.setState({ tutorialOptions: tutorialOptions });
             const fullscreen = tutorialOptions.tutorialStepInfo[step].fullscreen;
             if (fullscreen) this.showTutorialHint();
-            else this.showLightbox();
+            //else this.showLightbox();
             // Hide flyouts and popouts
             this.editor.closeFlyout();
         }
@@ -924,9 +943,9 @@ export class ProjectView
                         this.setState({ tutorialOptions: tutorialOptions });
                         const fullscreen = tutorialOptions.tutorialStepInfo[0].fullscreen;
                         if (fullscreen) this.showTutorialHint();
-                        else {
-                            this.showLightbox();
-                        }
+                        //else {
+                        //    this.showLightbox();
+                        //}
                         core.hideLoading("tutorial");
                         break;
                     case 'error':
@@ -1129,7 +1148,7 @@ export class ProjectView
                 const stepInfo = t.tutorialStepInfo;
                 const fullscreen = stepInfo[0].fullscreen;
                 if (fullscreen) this.showTutorialHint();
-                else this.showLightbox();
+                //else this.showLightbox();
             })
             .catch(e => {
                 // Failed to decompile
@@ -1215,30 +1234,30 @@ export class ProjectView
         return false
     }
 
-    importProjectCoreAsync(buf: Uint8Array) {
+    importProjectCoreAsync(buf: Uint8Array, options?: pxt.editor.ImportFileOptions) {
         return (buf[0] == '{'.charCodeAt(0) ?
             Promise.resolve(pxt.U.uint8ArrayToString(buf)) :
             pxt.lzmaDecompressAsync(buf))
             .then(contents => {
                 let data = JSON.parse(contents) as pxt.cpp.HexFile;
-                this.importHex(data);
+                this.importHex(data, options);
             }).catch(e => {
                 core.warningNotification(lf("Sorry, we could not import this project."))
                 this.openHome();
             });
     }
 
-    importHexFile(file: File) {
+    importHexFile(file: File, options?: pxt.editor.ImportFileOptions) {
         if (!file) return;
         pxt.cpp.unpackSourceFromHexFileAsync(file)
-            .then(data => this.importHex(data))
+            .then(data => this.importHex(data, options))
             .catch(e => {
                 pxt.reportException(e);
                 core.warningNotification(lf("Sorry, we could not recognize this file."))
             });
     }
 
-    importBlocksFiles(file: File) {
+    importBlocksFiles(file: File, options?: pxt.editor.ImportFileOptions) {
         if (!file) return;
         ts.pxtc.Util.fileReadAsTextAsync(file)
             .done(contents => {
@@ -1249,7 +1268,7 @@ export class ProjectView
             })
     }
 
-    importTypescriptFile(file: File) {
+    importTypescriptFile(file: File, options?: pxt.editor.ImportFileOptions) {
         if (!file) return;
         ts.pxtc.Util.fileReadAsTextAsync(file)
             .done(contents => {
@@ -1260,18 +1279,18 @@ export class ProjectView
             })
     }
 
-    importProjectFile(file: File) {
+    importProjectFile(file: File, options?: pxt.editor.ImportFileOptions) {
         if (!file) return;
         ts.pxtc.Util.fileReadAsBufferAsync(file)
-            .then(buf => this.importProjectCoreAsync(buf))
+            .then(buf => this.importProjectCoreAsync(buf, options))
     }
 
-    importPNGFile(file: File) {
+    importPNGFile(file: File, options?: pxt.editor.ImportFileOptions) {
         if (!file) return;
         ts.pxtc.Util.fileReadAsBufferAsync(file)
             .then(buf => screenshot.decodeBlobAsync("data:image/png;base64," +
                 btoa(pxt.Util.uint8ArrayToString(buf))))
-            .then(buf => this.importProjectCoreAsync(buf))
+            .then(buf => this.importProjectCoreAsync(buf, options))
     }
 
     importAssetFile(file: File) {
@@ -1283,14 +1302,13 @@ export class ProjectView
             .done()
     }
 
-    importHex(data: pxt.cpp.HexFile, createNewIfFailed: boolean = false) {
-        const targetId = pxt.appTarget.id;
+    importHex(data: pxt.cpp.HexFile, options?: pxt.editor.ImportFileOptions) {
         if (!data || !data.meta) {
             if (data && (data as any)[pxt.CONFIG_NAME]) {
                 data = cloudsync.reconstructMeta(data as any)
             } else {
                 core.warningNotification(lf("Sorry, we could not recognize this file."))
-                if (createNewIfFailed) this.openHome();
+                if (options && options.openHomeIfFailed) this.openHome();
                 return;
             }
         }
@@ -1304,10 +1322,34 @@ export class ProjectView
             const checkAsync = this.tryCheckTargetVersionAsync(data.meta.targetVersions && data.meta.targetVersions.target);
             if (checkAsync) {
                 checkAsync.done(() => {
-                    if (createNewIfFailed) this.newProject();
+                    if (options && options.openHomeIfFailed) this.newProject();
                 });
                 return;
             }
+        }
+
+        if (options && options.extension) {
+            pxt.tickEvent("import.extension");
+            const files = ts.pxtc.Util.jsonTryParse(data.source);
+            if (files) {
+                const n = data.meta.name;
+                const fn = `${data.meta.name}.json`;
+                // insert file into package
+                const mpkg = pkg.mainEditorPkg();
+                if (mpkg) {
+                    pxt.debug(`adding ${fn} to package`);
+                    // save file
+                    mpkg.setContentAsync(fn, data.source)
+                        .then(() => mpkg.updateConfigAsync(cfg => {
+                            if (!cfg.dependencies)
+                                cfg.dependencies = {};
+                            cfg.dependencies[n] = `pkg:${fn}`;
+                        }))
+                        .then(() => mpkg.savePkgAsync())
+                        .done(() => this.reloadHeaderAsync());
+                }
+            }
+            return;
         }
 
         const importer = this.hexFileImporters.filter(fi => fi.canImport(data))[0];
@@ -1321,13 +1363,13 @@ export class ProjectView
                         pxt.reportException(e, { importer: importer.id });
                         core.hideLoading("importhex");
                         core.errorNotification(lf("Oops, something went wrong when importing your project"));
-                        if (createNewIfFailed) this.openHome();
+                        if (options && options.openHomeIfFailed) this.openHome();
                     }));
         }
         else {
             core.warningNotification(lf("Sorry, we could not import this project."))
             pxt.tickEvent("warning.importfailed");
-            if (createNewIfFailed) this.openHome();
+            if (options && options.openHomeIfFailed) this.openHome();
         }
     }
 
@@ -1360,21 +1402,21 @@ export class ProjectView
         );
     }
 
-    importFile(file: File) {
+    importFile(file: File, options?: pxt.editor.ImportFileOptions) {
         if (!file || pxt.shell.isReadOnly()) return;
         if (this.isHexFile(file.name)) {
-            this.importHexFile(file)
+            this.importHexFile(file, options)
         } else if (this.isBlocksFile(file.name)) {
-            this.importBlocksFiles(file)
+            this.importBlocksFiles(file, options)
         } else if (this.isTypescriptFile(file.name)) {
-            this.importTypescriptFile(file);
+            this.importTypescriptFile(file, options);
         } else if (this.isProjectFile(file.name)) {
-            this.importProjectFile(file);
+            this.importProjectFile(file, options);
         } else if (this.isAssetFile(file.name)) {
             // assets need to go before PNG source import below, since target might want PNG assets
             this.importAssetFile(file)
         } else if (this.isPNGFile(file.name)) {
-            this.importPNGFile(file);
+            this.importPNGFile(file, options);
         } else {
             const importer = this.resourceImporters.filter(fi => fi.canImport(file))[0];
             if (importer) {
@@ -1385,11 +1427,11 @@ export class ProjectView
         }
     }
 
-    importProjectFromFileAsync(buf: Uint8Array): Promise<void> {
+    importProjectFromFileAsync(buf: Uint8Array, options?: pxt.editor.ImportFileOptions): Promise<void> {
         return pxt.lzmaDecompressAsync(buf)
             .then((project) => {
                 let hexFile = JSON.parse(project) as pxt.cpp.HexFile;
-                return this.importHex(hexFile);
+                return this.importHex(hexFile, options);
             }).catch(() => {
                 return this.newProject();
             })
@@ -1578,18 +1620,20 @@ export class ProjectView
         if (this.editor) this.editor.unloadFileAsync();
         // clear the hash
         pxt.BrowserUtils.changeHash("", true);
-        this.setState({
+        this.setStateAsync({
             home: true,
             tracing: undefined,
             fullscreen: undefined,
             tutorialOptions: undefined,
             editorState: undefined,
-            debugging: undefined
-        });
-        this.allEditors.forEach(e => e.setVisible(false));
-        this.homeLoaded();
-        this.showPackageErrorsOnNextTypecheck();
-        workspace.syncAsync().done();
+            debugging: undefined,
+            header: undefined
+        }).then(() => {
+            this.allEditors.forEach(e => e.setVisible(false));
+            this.homeLoaded();
+            this.showPackageErrorsOnNextTypecheck();
+            return workspace.syncAsync();
+        }).done();
     }
 
     private homeLoaded() {
@@ -1808,6 +1852,7 @@ export class ProjectView
             if (res) {
                 return pxt.usb.pairAsync()
                     .then(() => {
+                        cmds.setWebUSBPaired(true);
                         core.infoNotification(lf("Device paired! Try downloading now."))
                     }, (err: Error) => {
                         core.errorNotification(lf("Failed to pair the device: {0}", err.message))
@@ -1991,6 +2036,7 @@ export class ProjectView
         pxt.tickEvent(`compile.devicenotfound`);
         const ext = pxt.outputName().replace(/[^.]*/, "");
         const fn = pkg.genFileName(ext);
+        cmds.setWebUSBPaired(false);
         return core.dialogAsync({
             header: lf("Oops, we couldn't find your {0}", pxt.appTarget.appTheme.boardName),
             body: lf("Please make sure your {0} is connected and try again.", pxt.appTarget.appTheme.boardName),
@@ -2130,8 +2176,12 @@ export class ProjectView
     }
 
     toggleMute() {
-        simulator.mute(!this.state.mute);
-        this.setState({ mute: !this.state.mute });
+        this.setMute(!this.state.mute);
+    }
+
+    setMute(on: boolean) {
+        simulator.mute(on);
+        this.setState({ mute: on });
     }
 
     openInstructions() {
@@ -2198,9 +2248,10 @@ export class ProjectView
     restartSimulator() {
         const isDebug = this.state.tracing || this.state.debugging;
         if (this.state.simState == pxt.editor.SimState.Stopped
-            || simulator.driver.isDebug() != !!isDebug)
+            || simulator.driver.isDebug() != !!isDebug) {
             this.startSimulator();
-        else {
+        } else {
+            simulator.driver.stopSound();
             simulator.driver.restart(); // fast restart
         }
         // TODO: typescript breakpoints
@@ -2227,7 +2278,7 @@ export class ProjectView
     stopSimulator(unload?: boolean, opts?: pxt.editor.SimulatorStartOptions) {
         pxt.tickEvent('simulator.stop')
         const clickTrigger = opts && opts.clickTrigger;
-        pxt.debug(`stop sim (autorun ${this.state.autoRun})`)
+        pxt.debug(`sim: stop (autorun ${this.state.autoRun})`)
         if (this.runToken) {
             this.runToken.cancel()
             this.runToken = null
@@ -2250,7 +2301,7 @@ export class ProjectView
         const emptyRun = this.firstRun && opts.background && pxt.appTarget.simulator && !!pxt.appTarget.simulator.emptyRunCode
         this.firstRun = false
 
-        pxt.debug(`run sim (autorun ${this.state.autoRun})`)
+        pxt.debug(`sim: start run (autorun ${this.state.autoRun})`)
 
         if (this.runToken) this.runToken.cancel()
         let cancellationToken = new pxt.Util.CancellationToken();
@@ -2269,6 +2320,10 @@ export class ProjectView
             if (this.state.tracing)
                 opts.trace = true;
 
+            if (opts.debug) {
+                opts.debugExtensionCode = pxt.appTarget.appTheme.debugExtensionCode && !this.isBlocksActive()
+            }
+
             this.syncPreferredEditor()
 
             simulator.stop(false, true);
@@ -2276,17 +2331,20 @@ export class ProjectView
                 ? !!pxt.appTarget.simulator.autoRunLight
                 : !!pxt.appTarget.simulator.autoRun);
             const autoRun = (this.state.autoRun || !!opts.clickTrigger) && simAutoRun;
-            this.setState({ simState: pxt.editor.SimState.Starting, autoRun: autoRun });
-
             const state = this.editor.snapshotState()
-            return (emptyRun ? Promise.resolve(compiler.emptyCompileResult()) : compiler.compileAsync(opts))
+            return this.setStateAsync({ simState: pxt.editor.SimState.Starting, autoRun: autoRun })
+                .then(() => (emptyRun ? Promise.resolve(compiler.emptyCompileResult()) : compiler.compileAsync(opts)))
                 .then(resp => {
-                    if (cancellationToken.isCancelled()) return;
+                    if (cancellationToken.isCancelled()) {
+                        pxt.debug(`sim: cancelled`);
+                        return;
+                    }
                     this.clearSerial();
                     this.editor.setDiagnostics(this.editorFile, state)
 
                     if (resp.outfiles[pxtc.BINARY_JS]) {
                         if (!cancellationToken.isCancelled()) {
+                            pxt.debug(`sim: run`)
                             simulator.run(pkg.mainPkg, opts.debug, resp, this.state.mute, this.state.highContrast, pxt.options.light, opts.clickTrigger)
                             this.blocksEditor.setBreakpointsMap(resp.breakpoints);
                             this.textEditor.setBreakpointsMap(resp.breakpoints);
@@ -2294,6 +2352,7 @@ export class ProjectView
                                 // running state is set by the simulator once the iframe is loaded
                                 this.setState({ showParts: simulator.driver.runOptions.parts.length > 0 })
                             } else {
+                                pxt.debug(`sim: cancelled 2`)
                                 simulator.stop();
                                 this.setState({ simState: pxt.editor.SimState.Stopped });
                             }
@@ -2574,11 +2633,11 @@ export class ProjectView
         });
     }
 
-    showImportFileDialog() {
-        dialogs.showImportFileDialogAsync().done(res => {
+    showImportFileDialog(options?: pxt.editor.ImportFileOptions) {
+        dialogs.showImportFileDialogAsync(options).done(res => {
             if (res) {
                 pxt.tickEvent("app.open.file");
-                this.importFile(res);
+                this.importFile(res, options);
             }
         });
     }
@@ -2921,6 +2980,7 @@ export class ProjectView
         const sideDocs = !(sandbox || targetTheme.hideSideDocs);
         const tutorialOptions = this.state.tutorialOptions;
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
+        const inTutorialExpanded = inTutorial && tutorialOptions.tutorialStepExpanded;
         const inDebugMode = this.state.debugging;
         const inHome = this.state.home && !sandbox;
         const inEditor = !!this.state.header && !inHome;
@@ -2944,15 +3004,16 @@ export class ProjectView
         let rootClassList = [
             "ui",
             lightbox ? 'dimmable dimmed' : 'dimmable',
-            shouldHideEditorFloats ? " hideEditorFloats" : '',
-            shouldCollapseEditorTools ? " collapsedEditorTools" : '',
-            transparentEditorToolbar ? " transparentEditorTools" : '',
+            shouldHideEditorFloats ? "hideEditorFloats" : '',
+            shouldCollapseEditorTools ? "collapsedEditorTools" : '',
+            transparentEditorToolbar ? "transparentEditorTools" : '',
             this.state.fullscreen ? 'fullscreensim' : '',
             this.state.highContrast ? 'hc' : '',
             showSideDoc ? 'sideDocs' : '',
             pxt.shell.layoutTypeClass(),
             inHome ? 'inHome' : '',
             inTutorial ? 'tutorial' : '',
+            inTutorialExpanded ? 'tutorialExpanded' : '',
             inDebugMode ? 'debugger' : '',
             pxt.options.light ? 'light' : '',
             pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : '',
@@ -2964,6 +3025,7 @@ export class ProjectView
             isApp ? "app" : "",
             greenScreen ? "greenscreen" : "",
             logoWide ? "logo-wide" : "",
+            isHeadless ? "headless" : "",
             'full-abs'
         ];
         const rootClasses = sui.cx(rootClassList);
@@ -2988,7 +3050,7 @@ export class ProjectView
                 {inTutorial ? <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
                     <tutorial.TutorialCard ref="tutorialcard" parent={this} />
                 </div> : undefined}
-                <div id="simulator">
+                <div id="simulator" className="simulator">
                     <div id="filelist" className="ui items">
                         <div id="boardview" className={`ui vertical editorFloat`} role="region" aria-label={lf("Simulator")}>
                         </div>
@@ -3002,7 +3064,7 @@ export class ProjectView
                                 <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={this.openDeviceSerial} />
                             </div> : undefined}
                         {sandbox || isBlocks || this.editor == this.serialEditor ? undefined : <filelist.FileList parent={this} />}
-                        <div id="filelistOverlay" role="button" title={lf("Open in fullscreen")} onClick={this.toggleSimulatorFullscreen}></div>
+                        {!isHeadless && <div id="filelistOverlay" role="button" title={lf("Open in fullscreen")} onClick={this.toggleSimulatorFullscreen}></div>}
                     </div>
                 </div>
                 <div id="maineditor" className={(sandbox ? "sandbox" : "") + (inDebugMode ? "debugging" : "")} role="main" aria-hidden={inHome}>
@@ -3306,13 +3368,9 @@ async function importGithubProject(id: string) {
 }
 
 function loadHeaderBySharedId(id: string) {
-    const existing = workspace.getHeaders()
-        .filter(h => h.pubCurrent && h.pubId == id)[0]
     core.showLoading("loadingheader", lf("loading project..."));
-    (existing
-        ? theEditor.loadHeaderAsync(existing, null)
-        : workspace.installByIdAsync(id)
-            .then(hd => theEditor.loadHeaderAsync(hd, null)))
+    workspace.installByIdAsync(id)
+        .then(hd => theEditor.loadHeaderAsync(hd, null))
         .catch(core.handleNetworkError)
         .finally(() => core.hideLoading("loadingheader"));
 }
@@ -3453,7 +3511,7 @@ document.addEventListener("DOMContentLoaded", () => {
     pxt.hex.showLoading = (msg) => core.showLoading("hexcloudcompiler", msg);
     pxt.hex.hideLoading = () => core.hideLoading("hexcloudcompiler");
     pxt.docs.requireMarked = () => require("marked");
-    const importHex = (hex: pxt.cpp.HexFile, createNewIfFailed = false) => theEditor.importHex(hex, createNewIfFailed);
+    const importHex = (hex: pxt.cpp.HexFile, options?: pxt.editor.ImportFileOptions) => theEditor.importHex(hex, options);
 
     const hm = /^(https:\/\/[^/]+)/.exec(window.location.href)
     if (hm) Cloud.apiRoot = hm[1] + "/api/"
