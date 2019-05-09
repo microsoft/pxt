@@ -334,7 +334,7 @@ namespace pxtsprite {
         switchIconTo(tool: PaintTool) {
             if (this.activeTool === tool) return;
 
-            const btn = (this.sidebar.getButtonForTool(tool) as TextButton);
+            const btn = this.sidebar.getButtonForTool(tool) as TextButton;
 
             switch (tool) {
                 case PaintTool.Rectangle:
