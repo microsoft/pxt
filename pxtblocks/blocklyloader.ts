@@ -543,7 +543,9 @@ namespace pxt.blocks {
                     input.fieldRow.forEach((fieldRow: Blockly.FieldCustom) => {
                         if (fieldRow.isFieldCustom_ && fieldRow.saveOptions) {
                             const getOptions = fieldRow.saveOptions();
-                            el.setAttribute(`customfield`, JSON.stringify(getOptions));
+                            if (getOptions) {
+                                el.setAttribute(`customfield`, JSON.stringify(getOptions));
+                            }
                         }
                     })
                 })
@@ -554,7 +556,9 @@ namespace pxt.blocks {
                     input.fieldRow.forEach((fieldRow: Blockly.FieldCustom) => {
                         if (fieldRow.isFieldCustom_ && fieldRow.restoreOptions) {
                             const options = JSON.parse(saved.getAttribute(`customfield`));
-                            fieldRow.restoreOptions(options);
+                            if (options) {
+                                fieldRow.restoreOptions(options);
+                            }
                         }
                     })
                 })
