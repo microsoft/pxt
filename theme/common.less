@@ -414,6 +414,41 @@ div.simframe > iframe {
     padding: 0.3em;
 }
 
+/* Collapse/expand button for simulator, sidedocs */
+#togglesim, #sidedocstoggle {
+    position: absolute;
+    border-top-left-radius: 100px;
+    border-bottom-left-radius: 100px;
+    top: 40%;
+    height: 20%;
+    z-index: @sidedocZIndex;
+    padding: 0;
+    margin: 0;
+    background: grey;
+    box-shadow: none!important;
+    transition: none;
+
+    &:hover,
+    &:focus {
+      background: #5A5A5A;
+    }
+}
+
+// Factor in 4rem height of top bar
+#togglesim {
+    left: -21px;
+    top: calc(~'40% - 2.4rem');
+    height: calc(~'20% + 0.8rem');
+}
+
+.collapsedEditorTools #togglesim {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-top-right-radius: 100px;
+    border-bottom-right-radius: 100px;
+    left: -21px;
+}
+
 /*******************************
       Notification banner
 *******************************/
@@ -913,13 +948,25 @@ p.ui.font.small {
 
 /* >= Small Monitor (Small Monitor + Large Monitor + Wide Monitor) */
 @media only screen and (min-width: @computerBreakpoint) {
-    .collapsedEditorTools #filelist {
+    .collapsedEditorTools:not(.headless) #filelist {
+        min-width: 21px;
+        width: 21px;
+        padding: 0;
+    }
+
+    .collapsedEditorTools:not(.headless) #filelist > * {
         display: none;
     }
+
     .collapsedEditorTools #downloadArea {
         background: @editorToolsBackground;
     }
-    .collapsedEditorTools #maineditor {
+
+    .collapsedEditorTools:not(.headless) #maineditor {
+        left: 21px;
+    }
+
+    .collapsedEditorTools.headless #maineditor {
         left: 0;
     }
 }
@@ -1021,7 +1068,7 @@ p.ui.font.small {
         }
     }
     #root.collapsedEditorTools #editortools .left .buttons:first-child {
-        bottom: auto; // undo bottom positioning for collapsed toolbar
+        bottom: auto!important; // undo bottom positioning for collapsed toolbar
     }
     #maineditor {
         left: 0;
@@ -1061,6 +1108,21 @@ p.ui.font.small {
     #simulators {
         flex-direction: row;
         display: flex !important;
+    }
+    /* Simulator Toggle Button */
+    #togglesim, .collapsedEditorTools #togglesim {
+        border-top-right-radius: 100px;
+        border-top-left-radius: 100px;
+        border-bottom-right-radius: 0;
+        border-bottom-left-radius: 0;
+        top: unset;
+        left: 40%;
+        width: 20%;
+        height: unset;
+        bottom: 10rem;
+    }
+    .collapsedEditorTools #togglesim {
+        bottom: 4.7rem;
     }
     /* Hide floating editors */
     .hideEditorFloats .editorFloat {
@@ -1145,6 +1207,9 @@ p.ui.font.small {
     }
     .fullscreensim .simtoolbar .ui.button {
         font-size: 1rem;
+    }
+    .collapsedEditorTools #togglesim {
+        bottom: 3.4rem;
     }
 }
 

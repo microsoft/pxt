@@ -26,7 +26,6 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         this.openInstructions = this.openInstructions.bind(this);
         this.startStopSimulator = this.startStopSimulator.bind(this);
         this.toggleSimulatorFullscreen = this.toggleSimulatorFullscreen.bind(this);
-        this.toggleSimulatorCollapse = this.toggleSimulatorCollapse.bind(this);
         this.takeScreenshot = this.takeScreenshot.bind(this);
         this.toggleDebug = this.toggleDebug.bind(this);
     }
@@ -66,11 +65,6 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         this.props.parent.toggleSimulatorFullscreen();
     }
 
-    toggleSimulatorCollapse() {
-        pxt.tickEvent("simulator.toggleCollapse", { view: 'computer', collapsedTo: '' + !this.props.parent.state.collapseEditorTools }, { interactiveConsent: true });
-        this.props.parent.toggleSimulatorCollapse();
-    }
-
     takeScreenshot() {
         pxt.tickEvent("simulator.takescreenshot", { view: 'computer', collapsedTo: '' + !this.props.parent.state.collapseEditorTools }, { interactiveConsent: true });
         this.props.parent.downloadScreenshotAsync().done();
@@ -105,8 +99,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const fullscreen = run && !simOpts.hideFullscreen && !sandbox;
         const audio = run && targetTheme.hasAudio;
         const isHeadless = simOpts.headless;
-        const collapse = !!targetTheme.pairingButton;
-        const screenshot = !!targetTheme.simScreenshot && !inTutorial;
+        const screenshot = !!targetTheme.simScreenshot;
         const screenshotClass = !!parentState.screenshoting ? "loading" : "";
         const debugBtnEnabled = !isStarting && !isSimulatorPending;
         const runControlsEnabled = !debugging && !isStarting && !isSimulatorPending;
@@ -117,7 +110,6 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         const debugTooltip = lf("Toggle debug mode");
         const fullscreenTooltip = isFullscreen ? lf("Exit fullscreen mode") : lf("Launch in fullscreen");
         const muteTooltip = isMuted ? lf("Unmute audio") : lf("Mute audio");
-        const collapseTooltip = lf("Hide the simulator");
         const screenshotTooltip = targetTheme.simScreenshotKey ? lf("Take Screenshot (shortcut {0})", targetTheme.simScreenshotKey) : lf("Take Screenshot");
 
         return <aside className={"ui item grid centered simtoolbar" + (sandbox ? "" : " portrait ")} role="complementary" aria-label={lf("Simulator toolbar")}>
@@ -133,7 +125,6 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
             </div>}
             {!isHeadless && <div className={`ui icon tiny buttons computer only`} style={{ padding: "0" }}>
                 {screenshot && <sui.Button disabled={!isRunning} key='screenshotbtn' className={`screenshot-button ${screenshotClass}`} icon={`icon camera left`} title={screenshotTooltip} onClick={this.takeScreenshot} />}
-                {collapse && !isFullscreen && <sui.Button key='collapsebtn' className={`collapse-button`} icon={`icon toggle left`} title={collapseTooltip} onClick={this.toggleSimulatorCollapse} />}
                 {fullscreen && <sui.Button key='fullscreenbtn' className={`fullscreen-button`} icon={`xicon ${isFullscreen ? 'fullscreencollapse' : 'fullscreen'}`} title={fullscreenTooltip} onClick={this.toggleSimulatorFullscreen} />}
             </div>}
         </aside >;
