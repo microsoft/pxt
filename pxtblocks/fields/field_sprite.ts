@@ -94,13 +94,13 @@ namespace pxtblockly {
 
             this.editor = new pxtsprite.SpriteEditor(this.state, this.blocksInfo, this.lightMode);
             this.editor.initializeUndoRedo(this.undoStack, this.redoStack);
-            this.undoStack = this.editor.getUndoStack();
-            this.redoStack = this.editor.getRedoStack();
 
             this.editor.render(contentDiv);
             this.editor.rePaint();
 
             this.editor.onClose(() => {
+                this.undoStack = this.editor.getUndoStack();
+                this.redoStack = this.editor.getRedoStack();
                 Blockly.DropDownDiv.hideIfOwner(this);
             });
 

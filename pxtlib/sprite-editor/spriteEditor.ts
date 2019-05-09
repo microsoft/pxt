@@ -234,11 +234,11 @@ namespace pxtsprite {
         }
 
         getUndoStack() {
-            return this.undoStack;
+            return this.undoStack.slice();
         }
 
         getRedoStack() {
-            return this.redoStack;
+            return this.redoStack.slice();
         }
 
         undo() {
