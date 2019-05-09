@@ -369,14 +369,16 @@ namespace pxtsprite {
                 this.altDown = true;
             }
 
-            [
+            const tools =  [
                 PaintTool.Fill,
                 PaintTool.Normal,
                 PaintTool.Rectangle,
                 PaintTool.Erase,
                 PaintTool.Circle,
                 PaintTool.Line
-            ].forEach(tool => {
+            ]
+
+            tools.forEach(tool => {
                 if (event.key === getPaintToolShortcut(tool)) {
                     this.setIconsToDefault();
                     this.switchIconTo(tool);
@@ -538,21 +540,16 @@ namespace pxtsprite {
         private shiftAction() {
             if (!this.shiftDown || this.altDown)
                 return;
-            switch (this.activeTool) {
-                case PaintTool.Line:
-                    this.setCell(this.paintSurface.mouseCol, this.paintSurface.mouseRow, this.color, false);
-                    break;
+
+            if (this.activeTool === PaintTool.Line) {
+                this.setCell(this.paintSurface.mouseCol, this.paintSurface.mouseRow, this.color, false);
             }
         }
 
         private clearShiftAction() {
-            switch (this.activeTool) {
-                case PaintTool.Line:
-                    if (!this.mouseDown) {
-                        this.updateEdit();
-                        this.paintSurface.restore(this.state, true);
-                    }
-                    break;
+            if (this.activeTool === PaintTool.Line && !this.mouseDown) {
+                this.updateEdit();
+                this.paintSurface.restore(this.state, true);
             }
         }
 
