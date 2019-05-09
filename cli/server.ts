@@ -8,7 +8,6 @@ import * as child_process from 'child_process';
 import * as os from 'os';
 import * as util from 'util';
 import * as hid from './hid';
-import * as serial from './serial';
 import * as net from 'net';
 
 import U = pxt.Util;
@@ -733,17 +732,7 @@ function sendSerialMsg(msg: string) {
 }
 
 function initSerialMonitor() {
-    serial.monitorSerial(function (info, buffer) {
-        //console.log(`data received: ${buffer.length} bytes`);
-        if (wsSerialClients.length == 0) return;
-        // send it to ws clients
-        let msg = JSON.stringify({
-            type: 'serial',
-            id: info.pnpId,
-            data: buffer.toString('utf8')
-        })
-        sendSerialMsg(msg)
-    })
+    // TODO HID
 }
 
 export interface ServeOptions {
