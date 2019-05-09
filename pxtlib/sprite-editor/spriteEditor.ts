@@ -223,6 +223,24 @@ namespace pxtsprite {
             this.edit = this.newEdit(this.color);
         }
 
+        initializeUndoRedo(undoStack: Bitmap[], redoStack: Bitmap[]) {
+            if (undoStack) {
+                this.undoStack = undoStack;
+            }
+            if (redoStack) {
+                this.redoStack = redoStack;
+            }
+            this.updateUndoRedo();
+        }
+
+        getUndoStack() {
+            return this.undoStack.slice();
+        }
+
+        getRedoStack() {
+            return this.redoStack.slice();
+        }
+
         undo() {
             if (this.undoStack.length) {
                 this.debug("undo");

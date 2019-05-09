@@ -2248,9 +2248,10 @@ export class ProjectView
     restartSimulator() {
         const isDebug = this.state.tracing || this.state.debugging;
         if (this.state.simState == pxt.editor.SimState.Stopped
-            || simulator.driver.isDebug() != !!isDebug)
+            || simulator.driver.isDebug() != !!isDebug) {
             this.startSimulator();
-        else {
+        } else {
+            simulator.driver.stopSound();
             simulator.driver.restart(); // fast restart
         }
         // TODO: typescript breakpoints
