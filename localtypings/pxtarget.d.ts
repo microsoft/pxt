@@ -711,7 +711,7 @@ declare namespace ts.pxtc {
     }
 
     interface UpgradePolicy {
-        type: "api" | "blockId" | "missingPackage" | "package" | "blockValue";
+        type: "api" | "blockId" | "missingPackage" | "package" | "blockValue" | "userenum";
         map?: pxt.Map<string>;
     }
 
