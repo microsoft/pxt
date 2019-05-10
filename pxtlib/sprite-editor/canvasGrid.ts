@@ -40,18 +40,11 @@ namespace pxtsprite {
 
         setEyedropperMouse(on: boolean) {
             const eyedropperClass = "sprite-editor-eyedropper";
-            if (on) {
-                this.paintLayer.classList.add(eyedropperClass);
-                if (!this.lightMode) {
-                    this.backgroundLayer.classList.add(eyedropperClass);
-                    this.overlayLayer.classList.add(eyedropperClass);
-                }
-            } else {
-                this.paintLayer.classList.remove(eyedropperClass);
-                if (!this.lightMode) {
-                    this.backgroundLayer.classList.remove(eyedropperClass);
-                    this.overlayLayer.classList.remove(eyedropperClass);
-                }
+            const toApply = on ? pxt.svgUtil.addClass : pxt.svgUtil.removeClass;
+            toApply(this.paintLayer, eyedropperClass);
+            if (!this.lightMode) {
+                toApply(this.backgroundLayer, eyedropperClass);
+                toApply(this.overlayLayer, eyedropperClass);
             }
         }
 
