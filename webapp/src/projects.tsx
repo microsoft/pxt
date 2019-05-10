@@ -5,7 +5,7 @@ import * as ReactDOM from "react-dom";
 import * as data from "./data";
 import * as sui from "./sui";
 import * as core from "./core";
-
+import * as discourse from "./discourse";
 import * as codecard from "./codecard"
 import * as carousel from "./carousel";
 import { showAboutDialogAsync, showCloudSignInDialog } from "./dialogs";
@@ -539,8 +539,8 @@ export interface ProjectsDetailProps extends ISettingsProps {
 }
 
 export interface ProjectsDetailState {
-
 }
+
 
 export class ProjectsDetail extends data.Component<ProjectsDetailProps, ProjectsDetailState> {
 
@@ -550,11 +550,26 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
         }
 
         this.handleDetailClick = this.handleDetailClick.bind(this);
+        this.handleOpenForumUrlInEditor = this.handleOpenForumUrlInEditor.bind(this);
     }
 
     handleDetailClick() {
         const { scr, onClick } = this.props;
         onClick(scr);
+    }
+
+    handleOpenForumUrlInEditor() {
+        const { url } = this.props;
+        discourse.extractSharedIdFromPostUrl(url)
+            .then(projectId => {
+                // if we have a projectid, load it
+                if (projectId)
+                    window.location.hash = "pub:" + projectId; // triggers reload
+                else {
+                    core.warningNotification(lf("Oops, we could not find the program in the forum."));
+                }
+            })
+            .catch(core.handleNetworkError)
     }
 
     renderCore() {
@@ -579,6 +594,8 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
             className: 'huge positive'
         }]
 
+        // featured link: featured_link
+        const isForum = cardType == "forumUrl" && url;
         const isLink = (!isCodeCardType(cardType) || cardType === "forumUrl") && (youTubeId || url);
         const linkHref = (youTubeId && !url) ? `https://youtu.be/${youTubeId}` :
             ((/^https:\/\//i.test(url)) || (/^\//i.test(url)) ? url : '');
@@ -614,6 +631,13 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                                     onClick={action.onClick}
                                     onKeyDown={sui.fireClickOnEnter} />
                         )}
+                        {isForum && <sui.Button
+                            key="action_open"
+                            text={lf("Open in Editor")}
+                            className={`ui button approve`}
+                            onClick={this.handleOpenForumUrlInEditor}
+                            onKeyDown={sui.fireClickOnEnter}
+                        />}
                     </div>
                 </div>
             </div>
