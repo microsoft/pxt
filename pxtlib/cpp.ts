@@ -1048,6 +1048,7 @@ int main() {
 
         let data = JSON.stringify(creq)
         res.sha = U.sha256(data)
+        res.skipCloudBuild = !!compileService.skipCloudBuild
         res.compileData = ts.pxtc.encodeBase64(U.toUTF8(data))
         res.shimsDTS = shimsDTS.finish()
         res.enumsDTS = enumsDTS.finish()
@@ -1315,6 +1316,9 @@ namespace pxt.hex {
     }
 
     function downloadHexInfoLocalAsync(extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo> {
+        if (extInfo.skipCloudBuild)
+            return Promise.resolve({ hex: ["SKIP"] })
+
         if (pxt.webConfig && pxt.webConfig.isStatic) {
             return Util.requestAsync({
                 url: `${pxt.webConfig.cdnUrl}hexcache/${extInfo.sha}.hex`

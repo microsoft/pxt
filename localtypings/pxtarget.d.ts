@@ -186,6 +186,7 @@ declare namespace pxt {
         gittag: string;
         serviceId: string;
         buildEngine?: string;  // default is yotta, set to platformio
+        skipCloudBuild?: boolean;
     }
 
     interface AppTheme {
@@ -729,6 +730,7 @@ declare namespace ts.pxtc {
         enumsDTS: string;
         onlyPublic: boolean;
         commBase?: number;
+        skipCloudBuild?: boolean;
     }
 
     interface HexInfo {
