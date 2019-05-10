@@ -14,27 +14,40 @@ namespace pxsim {
             }
         }
 
-        export function addClass(el: SVGElement | HTMLElement, cls: string) {
-            if (el.classList) {
-                el.classList.add(cls);
-            } else {
-                const classes = el.className.split(" ") as string[];
-                if (classes.indexOf(cls) < 0) {
-                    el.className.baseVal += ' ' + cls;
+        export function addClass(el: SVGElement | HTMLElement, classes: string) {
+            classes
+                .split(" ")
+                .forEach(cls => addSingleClass(el, cls));
+
+            function addSingleClass(el: SVGElement | HTMLElement, cls: string) {
+                if (el.classList) {
+                    el.classList.add(cls);
+                } else {
+                    const classes = el.className.split(" ") as string[];
+                    if (classes.indexOf(cls) < 0) {
+                        el.className.baseVal += ' ' + cls;
+                    }
                 }
             }
         }
 
-        export function removeClass(el: SVGElement | HTMLElement, cls: string) {
-            if (el.classList) {
-                el.classList.remove(cls);
-            } else {
-                el.className.baseVal = (el.className as string)
-                                    .split(" ")
-                                    .filter(c => c != cls)
-                                    .join(" ");
+        export function removeClass(el: SVGElement | HTMLElement, classes: string) {
+            classes
+                .split(" ")
+                .forEach(cls => removeSingleClass(el, cls));
+
+            function removeSingleClass(el: SVGElement | HTMLElement, cls: string) {
+                if (el.classList) {
+                    el.classList.remove(cls);
+                } else {
+                    el.className.baseVal = (el.className as string)
+                                        .split(" ")
+                                        .filter(c => c != cls)
+                                        .join(" ");
+                }
             }
         }
+
         export function remove(element: Element) {
             element.parentElement.removeChild(element);
         }
