@@ -211,7 +211,7 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
             const menu = this.refs["menu"] as HTMLElement;
             if (dropdown.offsetLeft + menu.offsetWidth > window.innerWidth) {
                 // Add left class to the menu
-                pxsim.U.addClass(menu, 'left');
+                pxt.BrowserUtils.addClass(menu, 'left');
             }
         }
 
