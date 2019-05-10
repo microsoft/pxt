@@ -959,6 +959,7 @@ namespace pxt.BrowserUtils {
         }
     }
 
+    // Keep these helpers unified with pxtsim/utils.ts
     export function containsClass(el: SVGElement | HTMLElement, cls: string) {
         if (el.classList) {
             return el.classList.contains(cls);
